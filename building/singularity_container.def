@@ -1,0 +1,21 @@
+BootStrap: library
+From: ubuntu:20.04
+
+%setup
+    cp -R $PWD/../spatial_analysis_toolbox ${SINGULARITY_ROOTFS}/opt
+
+%post
+    apt-get -y update
+    apt-get -y install software-properties-common
+    add-apt-repository universe
+    apt-get -y update
+    apt-get -y install python3-dev
+    apt-get -y install python3-pip
+
+    python3 -m pip install numpy
+    python3 -m pip install Cython
+    python3 -m pip install /opt/spatial_analysis_toolbox
+    export DEBUG=1
+
+%environment
+    export LC_ALL=C

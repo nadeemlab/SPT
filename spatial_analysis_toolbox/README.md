@@ -1,8 +1,6 @@
 # Documentation for developers
 
-The `spatial-analysis-toolbox` is a collection of modules that do image analysis computation in the context of histopathology, and a lightweight framework for deployment of a pipeline comprised of these modules in different runtime contexts (e.g. a High-Performance Cluster or on a single machine).
-
-# Library layout
+## Library layout
 
 ```
 spatial_analysis_toolbox/
@@ -38,7 +36,7 @@ bin
 └── sat-print.py
 ```
 
-# How to create a new module
+## How to create a new module
 
 For a new computation module:
   1. Make a new subdirectory under `computation_modules`. Mimicing the overall design of the existing modules is a reasonable start. Freely use the `environment/` functionality.
@@ -51,7 +49,7 @@ For a new computation module:
 If you find that a large piece of what you need to implement is already present in an existing module, see if you can take that work out of the existing module and place it either in a module of its own or in the `environment/` area. The `environment/` area is intended for utilities, with few dependencies of their own, which might be useful to a large number of first-class, more specific modules.
 
 
-# Testing
+## Testing
 
 If you experiment with the code locally, you can run the integration tests
 

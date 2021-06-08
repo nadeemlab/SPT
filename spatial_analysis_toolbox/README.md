@@ -41,11 +41,13 @@ bin
 
 For a new computation module:
   1. Make a new subdirectory under `computation_modules`. Mimicing the overall design of the existing modules is a reasonable start. Freely use the `environment/` functionality.
-  2. Add a new workflow entry to `configuration.py`.
-  3. Update `sat-pipeline` to solicit any new configuration parameters that will be needed.
-  4. (Optional) Update `sat-analyze-results` to include your new workflow's final steps.
-  5. Add unit tests to `tests/`.
-  6. Heed the results of `pytest` or `coverage` before pushing new commits or submitting a pull request, especially if your addition required modification of existing modules. (\* Currently only integration tests are available, one for each workflow.)
+  2. Update the packages list in `setup.py` if necessary.
+  3. Add a new workflow entry to `configuration.py`.
+  4. Update `sat-pipeline` to solicit any new configuration parameters that will be needed.
+  5. Create a script in `bin/`, mimicing `sat-diffusion-analysis.py` etc., to be run by single processes/jobs.
+  6. (Optional) Update `sat-analyze-results` to include your new workflow's final steps.
+  7. Add unit tests to `tests/`.
+  8. Heed the results of `pytest` or `coverage` before pushing new commits or submitting a pull request, especially if your addition required modification of existing modules. (\* Currently only integration tests are available, one for each workflow.)
 
 If you find that a large piece of what you need to implement is already present in an existing module, see if you can take that work out of the existing module and place it either in a module of its own or in the `environment/` area. The `environment/` area is intended for utilities, with few dependencies of their own, which might be useful to a large number of first-class, more specific modules.
 

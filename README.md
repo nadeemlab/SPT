@@ -34,4 +34,4 @@ Some of the utilities depend on a Linux/Unix/macOS environment.
 
 # Customization
 
-See [Documentation for Developers](spatial_analysis_toolbox/README.md).
+See [Documentation for developers](spatial_analysis_toolbox/README.md).

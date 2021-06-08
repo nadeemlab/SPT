@@ -12,7 +12,7 @@ View it:
 firefox _build/html/spatial_analysis_toolbox.html &
 ```
 
-To install [Sphinx](https://www.sphinx-doc.org/en/master/) and the "Read the Docs" theme:
+If you haven't installed [Sphinx](https://www.sphinx-doc.org/en/master/) already, you'll need to install it and the "Read the Docs" theme:
 
 ```bash
 pip install python3-sphinx

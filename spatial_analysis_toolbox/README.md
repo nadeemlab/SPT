@@ -36,6 +36,7 @@ bin
 └── sat-print.py
 ```
 
+
 ## How to create a new module
 
 For a new computation module:
@@ -66,3 +67,8 @@ cd spatial_analysis_toolbox/tests/
 and inspect the results to verify that basic functionality remains intact.
 
 Unit tests are planned for the existing codebase.
+
+
+## Generating detailed documentation
+
+See [docs/](docs/).

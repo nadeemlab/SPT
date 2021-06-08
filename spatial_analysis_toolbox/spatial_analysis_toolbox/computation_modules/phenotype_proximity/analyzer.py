@@ -95,7 +95,8 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     def create_cell_tables(self):
         """
         Create tables, one for each source file / field of view index pair, whose
-        records correspond to individual cells, with schema:
+        records correspond to individual cells, with schema
+
           - regional compartment
           - x value
           - y value
@@ -108,6 +109,7 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
           - (general phenotype 1) membership
           - (general phenotype 2) membership
           - ...
+
         """
         self.cells = {}
 
@@ -187,7 +189,8 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
         """
         Precalculates the distances between cell pairs lying in the same field of view.
         One table is created for each source file and field of view.
-        The table schema is:
+        The table schema is
+
           - cell 1 index
           - cell 2 index
           - distance in pixels
@@ -234,15 +237,18 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
     def do_aggregation_counting(self):
         """
-        Calculates the number of cell pairs satisfying criteria:
+        Calculates the number of cell pairs satisfying criteria
+
           - source file fixed
           - source/target compartment membership
           - source phenotype membership
           - target phenotype membership
           - radius limitation
+
         for a range of parameter values.
 
-        Also calculates the number of cells satisfying criteria:
+        Also calculates the number of cells satisfying criteria
+
           - source file fixed
           - compartment membership
           - general phenotype membership

@@ -30,7 +30,7 @@ singularity exec \
  {{cli_call}} \
  > {{log_filename}} 2>&1
 '''
-    cli_call_template = '''sat-cell-phenotype-proximity-analysis.py \
+    cli_call_template = '''sat_cell_phenotype_proximity_analysis.py \
  --input-path {{input_files_path}} \
  --input-file-identifier "{{input_file_identifier}}" \
  --outcomes-file {{outcomes_file}} \

@@ -14,7 +14,7 @@
 #
 import os
 import sys
-sys.path.insert(0, '../spatial_analysis_toolbox/spatial_analysis_toolbox')
+sys.path.insert(0, '../spatial_analysis_toolbox')
 
 
 # -- Project information -----------------------------------------------------
@@ -186,3 +186,20 @@ epub_exclude_files = ['search.html']
 todo_include_todos = False
 
 add_module_names = False
+
+
+# def skip(app, what, name, obj, would_skip, options):
+#     if name == "__init__":
+#         return False
+#     return would_skip
+
+# def setup(app):
+#     app.connect("autodoc-skip-member", skip)
+
+# autoclass_content = 'both'
+
+autodoc_default_options = {
+    'member-order': 'bysource',
+    'special-members': '__init__',
+    'exclude-members': '__weakref__',
+}

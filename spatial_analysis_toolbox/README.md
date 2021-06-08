@@ -29,11 +29,11 @@ spatial_analysis_toolbox/
     └── single_job_analyzer.py
 bin
 ├── sat-analyze-results
-├── sat-cell-phenotype-proximity-analysis.py
-├── sat-diffusion-analysis.py
-├── sat-generate-jobs.py
+├── sat_cell_phenotype_proximity_analysis.py
+├── sat_diffusion_analysis.py
+├── sat_generate_jobs.py
 ├── sat-pipeline
-└── sat-print.py
+└── sat_print.py
 ```
 
 
@@ -44,7 +44,7 @@ For a new computation module:
   2. Update the packages list in `setup.py` if necessary.
   3. Add a new workflow entry to `configuration.py`.
   4. Update `sat-pipeline` to solicit any new configuration parameters that will be needed.
-  5. Create a script in `bin/`, mimicing `sat-diffusion-analysis.py` etc., to be run by single processes/jobs. This can be regarded as exposing API from your Python module to your system environment via a CLI.
+  5. Create a script in `bin/`, mimicing `sat_diffusion_analysis.py` etc., to be run by single processes/jobs. This can be regarded as exposing API from your Python module to your system environment via a CLI.
   6. (Optional) Update `sat-analyze-results` to include your new workflow's final steps.
   7. Add unit tests to `tests/`.
   8. Heed the results of `pytest` or `coverage` before pushing new commits or submitting a pull request, especially if your addition required modification of existing modules. (\* Currently only integration tests are available, one for each workflow.)

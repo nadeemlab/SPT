@@ -19,8 +19,6 @@ from spatial_analysis_toolbox.api import get_job_generator
 from spatial_analysis_toolbox.environment.configuration import workflows, config_filename  # use __init__.py system to expose these through api
 from spatial_analysis_toolbox.environment.log_formats import colorized_logger
 
-logger = colorized_logger(__name__)
-
 def get_config_parameters_from_cli():
     parser = argparse.ArgumentParser(
         description = ''.join([
@@ -153,6 +151,8 @@ def get_config_parameters():
             config.write(file)
         return parameters
 
-p = get_config_parameters()
-g = get_job_generator(**p)
-g.generate()
+if __name__=='__main__':
+    logger = colorized_logger(__name__)
+    p = get_config_parameters()
+    g = get_job_generator(**p)
+    g.generate()

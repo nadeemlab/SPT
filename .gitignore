@@ -1,2 +1,6 @@
 spatial_analysis_toolbox/spatial_analysis_toolbox.egg-info/
 **/__pycache__/
+spatial_analysis_toolbox/docs/_build/
+**/*.rst
+**/Makefile
+**/make.bat

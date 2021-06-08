@@ -9,7 +9,7 @@ Friendly HTML documentation at the module/class/function level is generated with
 
 View it:
 ```bash
-firefox _build/html/index.html &
+firefox _build/html/spatial_analysis_toolbox.html &
 ```
 
 To install [Sphinx](https://www.sphinx-doc.org/en/master/) and the "Read the Docs" theme:

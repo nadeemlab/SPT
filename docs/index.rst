@@ -8,7 +8,6 @@ Welcome to spatial_analysis_toolbox's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
 
    spatial_analysis_toolbox
 

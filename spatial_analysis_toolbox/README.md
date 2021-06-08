@@ -2,11 +2,6 @@
 
 The `spatial-analysis-toolbox` is a collection of modules that do image analysis computation in the context of histopathology, and a lightweight framework for deployment of a pipeline comprised of these modules in different runtime contexts (e.g. a High-Performance Cluster or on a single machine).
 
-|Computation module|Description|
-|------------------|-----------|
-|Diffusion|The core of this module takes as input a collection of points, and generates the associated diffusion map and diffusion Markov chain, with the aim of producing features that are characteristic of the input geometry. Taken as a whole the diffusion analysis pipeline provides statistical test results and figures that assess the efficacy of diffusion-related metrics as discriminators of selected correlates.|
-|Phenotype proximity|The core of this module takes as input two collections of points, and calculates the frequency with which a pair of points from the respective collections occur near each other. Taken as a whole the phenotype proximity analysis pipeline provides statistical test results and figures that assess the efficacy of proximity-related metrics as discriminators of selected correlates.|
-
 # Library layout
 
 ```

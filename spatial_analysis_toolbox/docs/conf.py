@@ -20,8 +20,8 @@ sys.path.insert(0, '../spatial_analysis_toolbox/spatial_analysis_toolbox')
 # -- Project information -----------------------------------------------------
 
 project = 'spatial_analysis_toolbox'
-copyright = '2021, Author'
-author = 'Author'
+copyright = '2021'
+author = 'Rami Vanguri, James Mathews, Saad Nadeem'
 
 # The short X.Y version
 version = ''

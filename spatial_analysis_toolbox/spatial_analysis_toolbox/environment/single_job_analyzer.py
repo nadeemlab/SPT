@@ -76,13 +76,20 @@ class SingleJobAnalyzer:
         else:
             row = result[0]
             input_file = row[0]
-            sha256 = row[1]
+            expected_sha256 = row[1]
             input_file = abspath(join(self.input_path, input_file))
-            bytes = None
-            with open(input_file,'rb') as f:
-                bytes = f.read()
-            hex_hash = hashlib.sha256(bytes).hexdigest()
-            if sha256 != hex_hash:
+
+            buffer_size = 65536
+            sha = hashlib.sha256()
+            with open(input_file, 'rb') as f:
+                while True:
+                    data = f.read(buffer_size)
+                    if not data:
+                        break
+                    sha.update(data)
+            sha256 = sha.hexdigest()
+
+            if sha256 != expected_sha256:
                 logger.error('File "%s" has wrong SHA256 hash.', self.input_file_identifier)
             return input_file
 

@@ -4,3 +4,10 @@ spatial_analysis_toolbox/docs/_build/
 **/*.rst
 **/Makefile
 **/make.bat
+spatial_analysis_toolbox/tests/.file_metadata.cache
+spatial_analysis_toolbox/tests/.pipeline.db
+spatial_analysis_toolbox/tests/.sat_pipeline.config
+spatial_analysis_toolbox/tests/jobs/
+spatial_analysis_toolbox/tests/output/
+spatial_analysis_toolbox/tests/schedule_local_nontumor.sh
+spatial_analysis_toolbox/tests/schedule_lsf_nontumor.sh

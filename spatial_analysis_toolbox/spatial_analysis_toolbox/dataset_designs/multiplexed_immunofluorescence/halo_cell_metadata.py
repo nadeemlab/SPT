@@ -40,17 +40,13 @@ class HALOCellMetadata(CellMetadata):
     def get_cell_info_table(self, cache_location, input_files_path, file_metadata, input_data_design):
         if not self.check_data_type(file_metadata):
             return
-
         d = input_data_design
         lookup = SampleFOVLookup()
-        v = CellMetadata.table_header_template
-        c = CellMetadata.table_header_constant_portion
         dfs = []
         for i, row in file_metadata.iterrows():
             filename = row['File name']
             sample_id = row['Sample ID']
             source_file_data = pd.read_csv(join(input_files_path, filename))
-
             if d.get_FOV_column() not in source_file_data.columns:
                 logger.error(
                     '%s not in columns of %s. Got %s',
@@ -59,34 +55,14 @@ class HALOCellMetadata(CellMetadata):
                     source_file_data.columns,
                 )
                 break
-
             self.populate_integer_indices(
                 lookup=lookup,
                 sample_id=sample_id,
                 fovs=source_file_data[d.get_FOV_column()],
             )
-
-            column_data = {}
-            sample_id_index = lookup.get_sample_index(sample_id)
-            N = source_file_data.shape[0]
-            sample_id_indices = [sample_id_index] * N
-            fov_indices = list(source_file_data.apply(lambda row: lookup.get_fov_index(sample_id, row[d.get_FOV_column()]), axis=1))
-            column_data[c['Sample ID index column name']] = sample_id_indices
-            column_data[c['Field of view index column name']] = fov_indices
-
-            phenotype_names = d.get_elementary_phenotype_names()
-            for name in phenotype_names:
-                origin = d.get_feature_name(name)
-                target = re.sub('{{channel specifier}}', name, v['positivity column name'])
-                column_data[target] = source_file_data[origin]
-
-            for name in phenotype_names:
-                target = re.sub('{{channel specifier}}', name, v['intensity column name'])
-                column_data[target] = d.get_combined_intensity(source_file_data, name)
-
-            df_i = pd.DataFrame(column_data)
-            dfs.append(df_i)
-            logger.debug('Finished pulling metadata for %s cells from source file %s/%s.', df_i.shape[0], i+1, file_metadata.shape[0])
+            column_data, number_cells = self.get_selected_columns(d, lookup, source_file_data, sample_id)
+            dfs.append(pd.DataFrame(column_data))
+            logger.debug('Finished pulling metadata for %s cells from source file %s/%s.', number_cells, i+1, file_metadata.shape[0])
         return pd.concat(dfs)
 
     def check_data_type(self, file_metadata):
@@ -107,3 +83,29 @@ class HALOCellMetadata(CellMetadata):
         ):
         lookup.add_sample_id(sample_id)
         lookup.add_fovs(sample_id, fovs)
+
+    def get_selected_columns(self, d, lookup, source_file_data, sample_id):
+        column_data = {}
+        v = CellMetadata.table_header_template
+        c = CellMetadata.table_header_constant_portion
+
+        sample_id_index = lookup.get_sample_index(sample_id)
+        N = source_file_data.shape[0]
+        sample_id_indices = [sample_id_index] * N
+        fov_indices = list(source_file_data.apply(lambda row: lookup.get_fov_index(sample_id, row[d.get_FOV_column()]), axis=1))
+        column_data[c['Sample ID index column name']] = sample_id_indices
+        column_data[c['Field of view index column name']] = fov_indices
+
+        phenotype_names = d.get_elementary_phenotype_names()
+        for name in phenotype_names:
+            origin = d.get_feature_name(name)
+            target = re.sub('{{channel specifier}}', name, v['positivity column name'])
+            column_data[target] = source_file_data[origin]
+
+        for name in phenotype_names:
+            target = re.sub('{{channel specifier}}', name, v['intensity column name'])
+            column_data[target] = d.get_combined_intensity(source_file_data, name)
+
+            number_cells = len(sample_id_indices)
+        return [column_data, number_cells]
+

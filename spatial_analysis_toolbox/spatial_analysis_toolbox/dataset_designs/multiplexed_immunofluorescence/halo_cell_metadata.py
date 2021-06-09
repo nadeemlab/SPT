@@ -106,6 +106,5 @@ class HALOCellMetadata(CellMetadata):
             target = re.sub('{{channel specifier}}', name, v['intensity column name'])
             column_data[target] = d.get_combined_intensity(source_file_data, name)
 
-            number_cells = len(sample_id_indices)
-        return [column_data, number_cells]
+        return [column_data, N]
 

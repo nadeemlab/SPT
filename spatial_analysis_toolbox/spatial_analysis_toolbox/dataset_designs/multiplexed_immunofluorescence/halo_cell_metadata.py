@@ -62,7 +62,12 @@ class HALOCellMetadata(CellMetadata):
             )
             column_data, number_cells = self.get_selected_columns(d, lookup, source_file_data, sample_id)
             dfs.append(pd.DataFrame(column_data))
-            logger.debug('Finished pulling metadata for %s cells from source file %s/%s.', number_cells, i+1, file_metadata.shape[0])
+            logger.debug(
+                'Finished pulling metadata for %s cells from source file %s/%s.',
+                number_cells,
+                i+1,
+                file_metadata.shape[0],
+            )
         return pd.concat(dfs)
 
     def check_data_type(self, file_metadata):

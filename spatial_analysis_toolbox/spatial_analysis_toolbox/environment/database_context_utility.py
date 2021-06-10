@@ -42,5 +42,6 @@ class WaitingDatabaseContextManager:
         self.connection.commit()
 
     def __exit__(self, exception_type, exception_value, traceback):
+        self.connection.commit()
         self.cursor.close()
         self.connection.close()

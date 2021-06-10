@@ -16,6 +16,7 @@ import seaborn as sns
 from scipy.cluster.hierarchy import ClusterWarning
 simplefilter('ignore', ClusterWarning)
 
+from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 from .computational_design import DiffusionDesign
 
@@ -37,7 +38,7 @@ class DiffusionAnalysisIntegrator:
         self.design = design
         self.computational_design = DiffusionDesign()
 
-    def get_dataframe_from_db(self, cursor, table_name):
+    def get_dataframe_from_db(self, table_name):
         if table_name == 'transition_probabilities':
             columns = ['id'] + self.computational_design.get_probabilities_table_header()
         elif table_name == 'job_metadata':
@@ -45,10 +46,11 @@ class DiffusionAnalysisIntegrator:
         else:
             logger.error('Table %s is not in the schema.', table_name)
             return None
-        cursor.execute(
-            'SELECT * FROM ' + table_name
-        )
-        rows = cursor.fetchall()
+
+        uri = join(self.output_path, self.computational_design.get_database_uri())
+        with WaitingDatabaseContextManager(uri) as m:
+            rows = m.execute('SELECT * FROM ' + table_name)
+
         df = pd.DataFrame(rows, columns=columns)
         return df
 
@@ -73,36 +75,23 @@ class DiffusionAnalysisIntegrator:
         return re.sub('_', ' ', s[0].upper() + s[1:len(s)].lower())
 
     def calculate(self):
-        connection = sqlite3.connect(join(self.output_path, self.computational_design.get_database_uri()))
-        cursor = connection.cursor()
-
-        probabilities = self.get_dataframe_from_db(cursor, 'transition_probabilities')
-        job_metadata = self.get_dataframe_from_db(cursor, 'job_metadata')
-
-        cursor.close()
-        connection.close()
-
+        probabilities = self.get_dataframe_from_db('transition_probabilities')
+        job_metadata = self.get_dataframe_from_db('job_metadata')
         logger.info('probabilities.shape: %s', probabilities.shape)
         logger.info('average transition probability: %s', np.mean(probabilities['transition_probability']))
-
         if not exists(self.output_path):
             mkdir(self.output_path)
-
         temporal_offsets = probabilities['temporal_offset']
         temporal_offsets = temporal_offsets[~np.isnan(temporal_offsets)]
         t_values = sorted(list(set(temporal_offsets)))
-
         outcomes_df = pd.read_csv(self.outcomes_file, sep='\t')
         columns = outcomes_df.columns
         outcomes_dict = {
             row[columns[0]]: row[columns[1]] for i, row in outcomes_df.iterrows()
         }
-
         markers = sorted(list(set(probabilities['marker'])))
         distance_types = sorted(list(set(probabilities['distance_type'])))
-
         job_metadata[['job_activity_id']] = job_metadata[['job_activity_id']].apply(pd.to_numeric)
-
         for marker in markers:
             jobs = job_metadata[(job_metadata['Job status'] == 'COMPLETE') & (job_metadata['Regional compartment'] == 'nontumor')]
             joined = pd.merge(probabilities, jobs, left_on='job_activity_id', right_on='job_activity_id', how='left', suffixes=['', '_right'])
@@ -112,7 +101,6 @@ class DiffusionAnalysisIntegrator:
                 grouped = ungrouped.groupby('Sample ID')
                 logger.info('Generating figures for %s in %s case.', marker, distance_type)
                 self.generate_figures(marker, distance_type, outcomes_dict, t_values, grouped, ungrouped)
-
         logger.info('Done generating figures.')
 
     def generate_figures(self, marker, distance_type, outcomes_dict, t_values, grouped, ungrouped):

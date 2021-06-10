@@ -308,31 +308,24 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
     def write_job_results(self, radius_limited_counts):
         df = radius_limited_counts
+        keys_list = [column_name for column_name, dtype in self.computational_design.get_cell_pair_counts_table_header()]
 
-        # Need to do the waiting thing, in case db is locked
-
-        connection = sqlite3.connect(join(self.output_path, self.computational_design.get_database_uri()))
-        cursor = connection.cursor()
-
-        for i, row in df.iterrows():
-            keys_list = [column_name for column_name, dtype in self.computational_design.get_cell_pair_counts_table_header()]
-            values_list = [
-                '"' + row['sample identifier'] + '"',
-                '"' + row['outcome assignment'] + '"',
-                '"' + row['source phenotype'] + '"',
-                '"' + row['target phenotype'] + '"',
-                '"' + row['compartment'] + '"',
-                str(int(row['distance limit in pixels'])),
-                str(float(row['cell pair count per FOV'])),
-            ]
-            keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
-            values = '( ' + ' , '.join(values_list) + ' )'
-            cmd = 'INSERT INTO cell_pair_counts ' + keys + ' VALUES ' + values +  ' ;'
-            cursor.execute(cmd)
-
-        cursor.close()
-        connection.commit()
-        connection.close()
+        uri = join(self.output_path, self.computational_design.get_database_uri())
+        with WaitingDatabaseContextManager(uri) as m:
+            for i, row in df.iterrows():
+                values_list = [
+                    '"' + row['sample identifier'] + '"',
+                    '"' + row['outcome assignment'] + '"',
+                    '"' + row['source phenotype'] + '"',
+                    '"' + row['target phenotype'] + '"',
+                    '"' + row['compartment'] + '"',
+                    str(int(row['distance limit in pixels'])),
+                    str(float(row['cell pair count per FOV'])),
+                ]
+                keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
+                values = '( ' + ' , '.join(values_list) + ' )'
+                cmd = 'INSERT INTO cell_pair_counts ' + keys + ' VALUES ' + values +  ' ;'
+                m.execute(cmd)
 
     def cell_counts_and_intensity_averages(self):
         """

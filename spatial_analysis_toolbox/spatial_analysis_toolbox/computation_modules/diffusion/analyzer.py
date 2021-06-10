@@ -92,13 +92,21 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
                 marker=marker,
             )
 
-    def start_post_jobs_step(self):
-        integration_analyzer = DiffusionAnalysisIntegrator(
-            output_path=self.output_path,
-            outcomes_file=self.outcomes_file,
-            design=self.design,
-        )
-        integration_analyzer.calculate()
+    def save_transition_probability_values(self, values=None, distance_type_str: str=None, temporal_offset=None, marker:str=None):
+        if temporal_offset is None:
+            temporal_offset = 'NULL'
+
+        uri = join(self.output_path, self.computational_design.get_database_uri())
+        with WaitingDatabaseContextManager(uri) as m:
+            for value in values:
+                m.execute(' '.join([
+                    'INSERT INTO',
+                    'transition_probabilities',
+                    '(' + ', '.join(self.computational_design.get_probabilities_table_header()) + ')',
+                    'VALUES',
+                    '(' + str(value) +', "' + distance_type_str + '", ' + str(self.get_job_index()) + ', ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'
+                ]))
+            m.commit()
 
     def save_job_metadata(self, distance_type):
         keys = self.computational_design.get_job_metadata_header()
@@ -125,18 +133,10 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         with WaitingDatabaseContextManager(uri) as m:
             m.execute_commit(cmd)
 
-    def save_transition_probability_values(self, values=None, distance_type_str: str=None, temporal_offset=None, marker:str=None):
-        if temporal_offset is None:
-            temporal_offset = 'NULL'
-
-        uri = join(self.output_path, self.computational_design.get_database_uri())
-        with WaitingDatabaseContextManager(uri) as m:
-            for value in values:
-                m.execute(' '.join([
-                    'INSERT INTO',
-                    'transition_probabilities',
-                    '(' + ', '.join(self.computational_design.get_probabilities_table_header()) + ')',
-                    'VALUES',
-                    '(' + str(value) +', "' + distance_type_str + '", ' + str(self.get_job_index()) + ', ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'
-                ]))
-            m.commit()
+    def start_post_jobs_step(self):
+        integration_analyzer = DiffusionAnalysisIntegrator(
+            output_path=self.output_path,
+            outcomes_file=self.outcomes_file,
+            design=self.design,
+        )
+        integration_analyzer.calculate()

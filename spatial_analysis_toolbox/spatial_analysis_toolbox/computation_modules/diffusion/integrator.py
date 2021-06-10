@@ -38,11 +38,10 @@ class DiffusionAnalysisIntegrator:
         self.computational_design = DiffusionDesign()
 
     def get_dataframe_from_db(self, cursor, table_name):
-        if table_name == 'distances':
-            columns = ['id'] + self.computational_design.get_distances_table_header()
+        if table_name == 'transition_probabilities':
+            columns = ['id'] + self.computational_design.get_probabilities_table_header()
         elif table_name == 'job_metadata':
-            keys = self.computational_design.get_job_metadata_header()
-            columns=['id'] + keys
+            columns=['id'] + self.computational_design.get_job_metadata_header()
         else:
             logger.error('Table %s is not in the schema.', table_name)
             return None
@@ -77,19 +76,19 @@ class DiffusionAnalysisIntegrator:
         connection = sqlite3.connect(join(self.output_path, self.computational_design.get_database_uri()))
         cursor = connection.cursor()
 
-        distances = self.get_dataframe_from_db(cursor, 'distances')
+        probabilities = self.get_dataframe_from_db(cursor, 'transition_probabilities')
         job_metadata = self.get_dataframe_from_db(cursor, 'job_metadata')
 
         cursor.close()
         connection.close()
 
-        logger.info('distances.shape: %s', distances.shape)
-        logger.info('average distance: %s', np.mean(distances['distance']))
+        logger.info('probabilities.shape: %s', probabilities.shape)
+        logger.info('average transition probability: %s', np.mean(probabilities['transition_probability']))
 
         if not exists(self.output_path):
             mkdir(self.output_path)
 
-        temporal_offsets = distances['temporal_offset']
+        temporal_offsets = probabilities['temporal_offset']
         temporal_offsets = temporal_offsets[~np.isnan(temporal_offsets)]
         t_values = sorted(list(set(temporal_offsets)))
 
@@ -99,12 +98,14 @@ class DiffusionAnalysisIntegrator:
             row[columns[0]]: row[columns[1]] for i, row in outcomes_df.iterrows()
         }
 
-        markers = sorted(list(set(distances['marker'])))
-        distance_types = sorted(list(set(distances['distance_type'])))
- 
+        markers = sorted(list(set(probabilities['marker'])))
+        distance_types = sorted(list(set(probabilities['distance_type'])))
+
+        job_metadata[['job_activity_id']] = job_metadata[['job_activity_id']].apply(pd.to_numeric)
+
         for marker in markers:
             jobs = job_metadata[(job_metadata['Job status'] == 'COMPLETE') & (job_metadata['Regional compartment'] == 'nontumor')]
-            joined = pd.merge(distances, job_metadata, left_on='job_activity_id', right_on='id', how='left', suffixes=['', '_right'])
+            joined = pd.merge(probabilities, jobs, left_on='job_activity_id', right_on='job_activity_id', how='left', suffixes=['', '_right'])
             joined = joined[joined['marker'] == marker]
             for distance_type in distance_types:
                 ungrouped = joined[joined['distance_type'] == distance_type]
@@ -132,7 +133,7 @@ class DiffusionAnalysisIntegrator:
             fig, axs = plt.subplots(1, 2, figsize=(12, 6))
             distributions_t = {}
             for sample_id, df in grouped:
-                data = list(df[df['temporal_offset'] == t]['distance'])
+                data = list(df[df['temporal_offset'] == t]['transition_probability'])
                 if sample_id in outcomes_dict:
                     outcome = outcomes_dict[sample_id]
                 else:
@@ -151,7 +152,7 @@ class DiffusionAnalysisIntegrator:
                 if o == 'unknown':
                     continue
                 o_mask = [sample_id in outcomes_dict and outcomes_dict[sample_id] == o for sample_id in ungrouped['Sample ID']]
-                data = list(ungrouped[(ungrouped['temporal_offset'] == t) & (o_mask)]['distance'])
+                data = list(ungrouped[(ungrouped['temporal_offset'] == t) & (o_mask)]['transition_probability'])
                 if np.var(data) == 0:
                     continue
                 g = sns.kdeplot(data, label=o, linewidth = 2.0, color=color_dict[o], log_scale=(False,True), ax=axs[1])
@@ -180,8 +181,13 @@ class DiffusionAnalysisIntegrator:
 
             keys = sorted(distributions_t.keys())
             distributions = [distributions_t[key] for key in keys]
-            distances = ot.dist(np.array(distributions))
-            g = sns.clustermap(distances, cbar_pos=None, row_colors=row_colors, dendrogram_ratio=0.1, xticklabels=[], yticklabels=[])
+            distributions_array = np.array(distributions)
+            shape = distributions_array.shape
+            if shape[0] <= 1 or shape[1] <= 1:
+                logger.warning('No distribution data in case %s, %s, %s', marker, t, distance_type)
+                continue
+            probabilities = ot.dist(distributions_array)
+            g = sns.clustermap(probabilities, cbar_pos=None, row_colors=row_colors, dendrogram_ratio=0.1, xticklabels=[], yticklabels=[])
             g.ax_col_dendrogram.set_title('Optimal transport distance between distributions of diffusion probability values (sample-by-sample)')
             g.fig.subplots_adjust(top=.9)
             g.ax_heatmap.tick_params(right=False, bottom=False)

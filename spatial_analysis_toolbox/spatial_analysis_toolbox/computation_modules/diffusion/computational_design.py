@@ -19,9 +19,9 @@ class DiffusionDesign(ComputationalDesign):
             'distance_type',
         ]
 
-    def get_distances_table_header(self):
+    def get_probabilities_table_header(self):
         return [
-            'distance',
+            'transition_probability',
             'distance_type',
             'job_activity_id',
             'temporal_offset',

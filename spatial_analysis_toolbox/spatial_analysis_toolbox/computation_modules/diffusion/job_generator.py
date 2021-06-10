@@ -104,21 +104,21 @@ singularity exec \
         logger.debug('Average size of job arrays is %s.', str(average))
 
     def initialize_intermediate_database(self):
-        distances_header = self.computational_design.get_distances_table_header()
+        probabilities_header = self.computational_design.get_probabilities_table_header()
 
         connection = sqlite3.connect(join(self.output_path, self.computational_design.get_database_uri()))
         cursor = connection.cursor()
-        cursor.execute('DROP TABLE IF EXISTS distances ;')
+        cursor.execute('DROP TABLE IF EXISTS transition_probabilities ;')
         cmd = ' '.join([
             'CREATE TABLE',
-            'distances',
+            'transition_probabilities',
             '(',
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
-            distances_header[0] + ' NUMERIC,',
-            distances_header[1] + ' VARCHAR(25),',
-            distances_header[2] + ' INTEGER,',
-            distances_header[3] + ' NUMERIC,',
-            distances_header[4] + ' TEXT',
+            probabilities_header[0] + ' NUMERIC,',
+            probabilities_header[1] + ' VARCHAR(25),',
+            probabilities_header[2] + ' INTEGER,',
+            probabilities_header[3] + ' NUMERIC,',
+            probabilities_header[4] + ' TEXT',
             ');',
         ])
         cursor.execute(cmd)

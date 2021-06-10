@@ -20,10 +20,14 @@ class WaitingDatabaseContextManager:
         return self
 
     def execute_commit(self, cmd):
+        return self.execute(cmd, commit=True)
+
+    def execute(self, cmd, commit=False):
         while(True):
             try:
                 result = self.cursor.execute(cmd).fetchall()
-                self.connection.commit()
+                if commit:
+                    self.connection.commit()
                 break
             except sqlite3.OperationalError as e:
                 if str(e) == 'database is locked':
@@ -33,6 +37,9 @@ class WaitingDatabaseContextManager:
                 else:
                     raise e
         return result
+
+    def commit(self):
+        self.connection.commit()
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.cursor.close()

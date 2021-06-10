@@ -77,9 +77,9 @@ class DiffusionCalculator:
 
         logger.debug('Shapes of %s+ nontumor, marked tumor, and tumor point clouds: %s %s %s',
             marker,
-            df_marked_nontumor.shape,
-            df_marked_tumor.shape,
-            df_tumor.shape,
+            df_marked_nontumor.shape if df_marked_nontumor is not None else '()',
+            df_marked_tumor.shape if df_marked_tumor is not None else '()',
+            df_tumor.shape if df_tumor is not None else '()',
         )
 
         pc = self.generate_primary_point_cloud(

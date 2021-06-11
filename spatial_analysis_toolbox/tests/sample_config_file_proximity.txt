@@ -2,9 +2,9 @@
 
 workflow = Multiplexed IF phenotype proximity
 
-input_path = ./data/colon/
-outcomes_file = ../../project_data_and_metadata/colon_msi/colon_specimen_diagnosis.tsv
-file_manifest_file = ./data/colon/file_manifest.tsv
+input_path = ./data/
+outcomes_file = ./data/diagnosis.tsv
+file_manifest_file = ./data/file_manifest.tsv
 
 job_working_directory = ./
 output_path = ./output
@@ -12,5 +12,5 @@ jobs_path = ./jobs
 schedulers_path = ./
 sif_file = ../../building/sat.sif
 runtime_platform = local
-elementary_phenotypes_file = ../../project_data_and_metadata/colon_msi/elementary_phenotypes.csv
-complex_phenotypes_file = ../../project_data_and_metadata/colon_msi/complex_phenotypes.csv
+elementary_phenotypes_file = ./data/elementary_phenotypes.csv
+complex_phenotypes_file = ./data/complex_phenotypes.csv

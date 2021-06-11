@@ -25,6 +25,8 @@ setuptools.setup(
         'spatial_analysis_toolbox.computation_modules.phenotype_proximity',
         'spatial_analysis_toolbox.environment',
         'spatial_analysis_toolbox.scripts',
+        'spatial_analysis_toolbox.applications',
+        'spatial_analysis_toolbox.applications.cell_cartoons',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

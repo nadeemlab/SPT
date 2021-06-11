@@ -18,6 +18,8 @@ Clone the repository, and install the Python package with `pip`:
 pip install spatial_analysis_toolbox/
 ```
 
+(You may need to install Python OT (POT) separately, according to their [installation instructions](https://pythonot.github.io/#installation).)
+
 Then run `sat-pipeline` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as [Platfrom LSF (Load Sharing Facility)](https://www.ibm.com/products/hpc-workload-management) jobs. In the LSF case, you must first build the library into a Singularity container by running
 
 ```bash
@@ -27,6 +29,13 @@ cd building && ./build_singularity_container.sh
 and moving the container, `sat.sif`, to an area accessible to the nodes in your cluster.
 
 If you are doing computations with lots of data, the whole pipeline might take hours to complete. If you wish to see final results based on partially-complete intermediate data, use `sat-analyze-results`.
+
+You can test if basic functionality works in your environment by running local tests:
+```bash
+cd spatial_analysis_toolbox/tests
+./test_diffusion_pipeline.sh
+./test_proximity_pipeline.sh
+```
 
 # Platform
 

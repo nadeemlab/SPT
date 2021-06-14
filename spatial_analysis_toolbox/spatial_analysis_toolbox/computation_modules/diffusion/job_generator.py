@@ -25,6 +25,7 @@ class DiffusionJobGenerator(JobGenerator):
 #BSUB -R "span[hosts=1]"
 #BSUB -R "select[hname!={{control_node_hostname}}]"
 cd {{job_working_directory}}
+export DEBUG=1
 singularity exec \
  --bind {{input_files_path}}:{{input_files_path}}\
  {{sif_file}} \
@@ -142,7 +143,6 @@ singularity exec \
     def generate_array_of_jobs(self, file_id):
         job_working_directory = self.jobs_paths.job_working_directory
         input_file_identifier = file_id
-        output_path = self.jobs_paths.output_path
         number_fovs = self.number_fovs[input_file_identifier]
         logger.debug('Number of FOVs for %s: %s', input_file_identifier, str(number_fovs))
 
@@ -154,14 +154,8 @@ singularity exec \
                     job_name = 'diffusion_' + str(job_index)
                     log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
 
-                    contents = DiffusionJobGenerator.cli_call_template
-                    contents = re.sub('{{input_file_identifier}}', '"' + input_file_identifier + '"', contents)
-                    contents = re.sub('{{fov_index}}', str(fov_index), contents)
-                    contents = re.sub('{{regional_compartment}}', rc, contents)
-                    contents = re.sub('{{job_index}}', str(job_index), contents)
-                    cli_call = contents
-
                     contents = DiffusionJobGenerator.lsf_template
+                    contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
                     contents = re.sub('{{job_name}}', job_name, contents)
                     contents = re.sub('{{log_filename}}', log_filename, contents)
                     contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
@@ -171,6 +165,14 @@ singularity exec \
                         contents,
                     )
                     bsub_job = contents
+
+                    contents = DiffusionJobGenerator.cli_call_template
+                    contents = re.sub('{{input_file_identifier}}', '"' + input_file_identifier + '"', contents)
+                    contents = re.sub('{{fov_index}}', str(fov_index), contents)
+                    contents = re.sub('{{regional_compartment}}', rc, contents)
+                    contents = re.sub('{{job_index}}', str(job_index), contents)
+                    cli_call = contents
+
                     bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
 
                     lsf_job_filename = join(self.jobs_paths.jobs_path, job_name + '.lsf')

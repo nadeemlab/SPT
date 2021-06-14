@@ -11,9 +11,9 @@ import scipy
 from scipy.spatial.distance import cdist
 from scipy.sparse import coo_matrix
 
+from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
-from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
@@ -23,19 +23,21 @@ class PhenotypeProximityCalculator:
     radius_pixels_upper_limit = 100
     radius_number_increments = 4
 
-    def __init__(self,
+    def __init__(
+        self,
         input_filename: str=None,
         sample_identifier: str=None,
-        outcomes_file: str=None,
-        output_path: str=None,
-        design=None,
+        jobs_paths: JobsPaths=None,
+        dataset_settings: DatasetSettings=None,
+        dataset_design=None,
+        computational_design=None,
     ):
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.outcomes_file = outcomes_file
-        self.output_path = output_path
-        self.design = design
-        self.computational_design = PhenotypeProximityDesign()
+        self.output_path = jobs_path.output_path
+        self.outcomes_file = dataset_settings.outcomes_file
+        self.dataset_design = dataset_design
+        self.computational_design = computational_design
 
     def calculate_proximity(self):
         outcomes_dict = self.pull_in_outcome_data()
@@ -83,8 +85,8 @@ class PhenotypeProximityCalculator:
         """
         cells = {}
 
-        signatures = self.design.get_all_phenotype_signatures()
-        signatures_by_name = {self.design.munge_name(signature) : signature for signature in signatures}
+        signatures = self.dataset_design.get_all_phenotype_signatures()
+        signatures_by_name = {self.dataset_design.munge_name(signature) : signature for signature in signatures}
         pheno_names = sorted(signatures_by_name.keys())
 
         number_fovs = 0
@@ -92,7 +94,7 @@ class PhenotypeProximityCalculator:
         df_file = pd.read_csv(filename)
 
         # Replace original FOV string descriptor with index
-        col = self.design.get_FOV_column()
+        col = self.dataset_design.get_FOV_column()
         fovs = sorted(list(set(df_file[col])))
         for i, fov in enumerate(fovs):
             df_file.loc[df_file[col] == fov, col] = i
@@ -105,24 +107,24 @@ class PhenotypeProximityCalculator:
             if 'regional compartment' in df.columns:
                 logger.error('Woops, name collision in "regional compartment". Trying to create new column.')
                 break
-            df['regional compartment'] = 'Not in ' + ';'.join(self.design.get_compartments())
-            for compartment in self.design.get_compartments():
-                signature = self.design.get_compartmental_signature(df, compartment)
+            df['regional compartment'] = 'Not in ' + ';'.join(self.dataset_design.get_compartments())
+            for compartment in self.dataset_design.get_compartments():
+                signature = self.dataset_design.get_compartmental_signature(df, compartment)
                 df.loc[signature, 'regional compartment'] = compartment
 
             # Create (x,y) values
-            xmin, xmax, ymin, ymax = self.design.get_box_limit_column_names()
+            xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
             df['x value'] = 0.5 * (df[xmax] + df[xmin])
             df['y value'] = 0.5 * (df[ymax] + df[ymin])
 
             # Add general phenotype membership columns
             for name in pheno_names:
                 signature = signatures_by_name[name]
-                df[name + ' membership'] = self.design.get_pandas_signature(df, signature)
+                df[name + ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
             phenotype_membership_columns = [name + ' membership' for name in pheno_names]
 
             # Select pertinent columns and rename
-            intensity_column_names = self.design.get_intensity_column_names()
+            intensity_column_names = self.dataset_design.get_intensity_column_names()
             inverse = {value:key for key, value in intensity_column_names.items()}
             source_columns = list(intensity_column_names.values())
             pertinent_columns = [
@@ -136,7 +138,7 @@ class PhenotypeProximityCalculator:
 
             # Convert column names into normal form as stipulated by this module
             df.rename(columns = inverse, inplace=True)
-            df.rename(columns = {self.design.get_FOV_column() : 'field of view index'}, inplace=True)
+            df.rename(columns = {self.dataset_design.get_FOV_column() : 'field of view index'}, inplace=True)
             cells[(filename, fov_index)] = df
 
             for phenotype in pheno_names:
@@ -192,15 +194,15 @@ class PhenotypeProximityCalculator:
         return cell_pairs
 
     def precalculate_masks(self, cells):
-        signatures = self.design.get_all_phenotype_signatures()
-        phenotypes = [self.design.munge_name(signature) for signature in signatures]
+        signatures = self.dataset_design.get_all_phenotype_signatures()
+        phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
         phenotype_indices = {
             (f, fov_index) : {
                 p : df.index[df[p + ' membership']] for p in phenotypes
             } for (f, fov_index), df in cells.items()
         }
 
-        compartments = self.design.get_compartments()
+        compartments = self.dataset_design.get_compartments()
         compartment_indices = {
             (f, fov_index) : {
                 c : df.index[df['regional compartment'] == c] for c in compartments
@@ -235,8 +237,8 @@ class PhenotypeProximityCalculator:
         the averages being over the cells meeting the criteria. Also calculates the
         number of cells over the total number of cells in the given field of view.
         """
-        signatures = self.design.get_all_phenotype_signatures()
-        phenotypes = [self.design.munge_name(signature) for signature in signatures]
+        signatures = self.dataset_design.get_all_phenotype_signatures()
+        phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
         combinations2 = list(combinations(phenotypes, 2))
         logger.debug('Creating radius-limited data sets for %s phenotype pairs.', len(combinations2))
         results = []
@@ -267,7 +269,7 @@ class PhenotypeProximityCalculator:
         source, target = sorted(list(pair))
         records = []
         sample_identifier = self.sample_identifier # Need to refactor the below to explicitly involve 1 source file
-        for compartment in list(set(self.design.get_compartments())) + ['all']:
+        for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
             for radius in self.get_radii_of_interest():
                 count = 0
                 for (source_filename, fov_index), distance_matrix in cell_pairs.items():

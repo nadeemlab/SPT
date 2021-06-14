@@ -34,9 +34,10 @@ class DiffusionCalculator:
         dataset_design=None,
     ):
         self.dataset_design = dataset_design
-        self.df = pd.read_csv(input_filename)
         self.fov = self.get_fov_handle_string(fov_index)
         self.regional_compartment = regional_compartment
+
+        self.df = pd.read_csv(input_filename)
         self.values = {'diffusion kernel' : None}
 
     def get_values(self, key):

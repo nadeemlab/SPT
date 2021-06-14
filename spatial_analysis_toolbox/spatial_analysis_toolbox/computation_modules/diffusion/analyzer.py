@@ -133,9 +133,9 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             m.execute_commit(cmd)
 
     def start_post_jobs_step(self):
-        integration_analyzer = DiffusionAnalysisIntegrator(
-            jobs_paths=self.jobs_paths,
-            outcomes_file=self.dataset_settings.outcomes_file,
-            computational_design=self.computational_design,
+        integrator = DiffusionAnalysisIntegrator(
+            jobs_paths = self.jobs_paths,
+            outcomes_file = self.dataset_settings.outcomes_file,
+            computational_design = self.computational_design,
         )
-        integration_analyzer.calculate()
+        integrator.calculate()

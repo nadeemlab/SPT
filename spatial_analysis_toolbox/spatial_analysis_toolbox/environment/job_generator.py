@@ -7,8 +7,9 @@ import sqlite3
 
 import pandas as pd
 
-from .log_formats import colorized_logger
+from .settings_wrappers import JobsPaths, RuntimeEnvironmentSettings, DatasetSettings
 from .pipeline_design import PipelineDesign
+from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
@@ -34,9 +35,6 @@ class JobGenerator:
     ]
 
     def __init__(self,
-        input_path: str=None,
-        file_manifest_file: str=None,
-        outcomes_file: str=None,
         job_working_directory: str='./',
         jobs_path: str='./jobs',
         logs_path: str='./logs',
@@ -44,27 +42,40 @@ class JobGenerator:
         output_path: str='./output/',
         runtime_platform: str=None,
         sif_file: str=None,
+        input_path: str=None,
+        file_manifest_file: str=None,
+        outcomes_file: str=None,
     ):
-        self.input_path = input_path
-        self.file_manifest_file = file_manifest_file
-        self.outcomes_file = outcomes_file if outcomes_file != 'None' else None
-        self.job_working_directory = job_working_directory
-        self.jobs_path = jobs_path
-        self.logs_path = logs_path
-        self.schedulers_path = schedulers_path
-        self.output_path = output_path
-        self.runtime_platform = runtime_platform
-        self.sif_file = sif_file
+        outcomes_file = outcomes_file if outcomes_file != 'None' else None
 
-        self.file_metadata = pd.read_csv(self.file_manifest_file, sep='\t')
+        self.jobs_paths = JobsPaths(
+            job_working_directory,
+            jobs_path,
+            logs_path,
+            schedulers_path,
+            output_path,
+        )
+
+        self.runtime_settings = RuntimeEnvironmentSettings(
+            runtime_platform,
+            sif_file,
+        )
+
+        self.dataset_settings = DatasetSettings(
+            input_path,
+            file_manifest_file,
+            outcomes_file,
+        )
+
+        self.file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
         self.pipeline_design = PipelineDesign()
 
     def generate(self):
         """
         This is the main exposed API call.
 
-        Generate jobs involving input files and write to the jobs subdirectory. Also
-        write scripts that schedule the jobs.
+        Generates jobs involving input files and write to the jobs subdirectory. Also
+        writes scripts that schedule the jobs.
         """
         self.initialize_job_activity_table()
         self.populate_file_metadata_table()
@@ -139,9 +150,9 @@ class JobGenerator:
         connection.close()
 
     def clean_directory_area(self):
-        self.make_fresh_directory(self.jobs_path)
-        self.make_fresh_directory(self.logs_path)
-        self.make_fresh_directory(self.output_path)
+        self.make_fresh_directory(self.jobs_paths.jobs_path)
+        self.make_fresh_directory(self.jobs_paths.logs_path)
+        self.make_fresh_directory(self.jobs_paths.output_path)
         for file in os.listdir('./'):
             if re.search('^schedule_.+sh$', file):
                 os.remove(file)
@@ -174,7 +185,7 @@ class JobGenerator:
         cursor.close()
         connection.commit()
         connection.close()
-        
+
         return index
 
     def gather_input_info(self):

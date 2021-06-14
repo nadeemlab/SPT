@@ -8,6 +8,7 @@ import hashlib
 from .job_generator import JobActivity
 from .database_context_utility import WaitingDatabaseContextManager
 from .pipeline_design import PipelineDesign
+from .settings_wrappers import JobsPaths, DatasetSettings
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -27,11 +28,13 @@ class SingleJobAnalyzer:
     gleaned from JobGenerator.
     """
     def __init__(self,
-        input_path: str=None,
+        dataset_settings: DatasetSettings=None,
+        jobs_paths: JobsPaths=None,
         input_file_identifier: str=None,
         job_index: str=None,
     ):
-        self.input_path = input_path
+        self.dataset_settings = dataset_settings
+        self.jobs_paths = jobs_paths
         self.input_file_identifier = input_file_identifier
         self.job_index = int(job_index)
         self.pipeline_design = PipelineDesign()
@@ -77,7 +80,7 @@ class SingleJobAnalyzer:
             row = result[0]
             input_file = row[0]
             expected_sha256 = row[1]
-            input_file = abspath(join(self.input_path, input_file))
+            input_file = abspath(join(self.dataset_settings.input_path, input_file))
 
             buffer_size = 65536
             sha = hashlib.sha256()

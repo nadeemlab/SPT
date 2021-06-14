@@ -6,6 +6,7 @@ from ...dataset_designs.multiplexed_immunofluorescence.design import HALOCellMet
 from ...environment.single_job_analyzer import SingleJobAnalyzer
 from ...environment.job_generator import JobActivity
 from ...environment.database_context_utility import WaitingDatabaseContextManager
+from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
 from .integrator import DiffusionAnalysisIntegrator
 from .computational_design import DiffusionDesign
@@ -18,17 +19,13 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
     def __init__(self,
         fov_index: int=None,
         regional_compartment: str=None,
-        outcomes_file: str=None,
-        output_path: str=None,
-        elementary_phenotypes_file=None,
-        complex_phenotypes_file=None,
+        dataset_design=None,
         **kwargs,
     ):
         super(DiffusionAnalyzer, self).__init__(**kwargs)
         self.regional_compartment = regional_compartment
-        self.outcomes_file = outcomes_file
-        self.output_path = output_path
-        self.design = HALOCellMetadataDesign(elementary_phenotypes_file, complex_phenotypes_file)
+
+        self.design = dataset_design
         self.computational_design = DiffusionDesign()
 
         self.retrieve_input_filename()
@@ -49,11 +46,11 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         )
         logger.info(
             'Found outcomes file at %s',
-            self.outcomes_file,
+            self.dataset_settings.outcomes_file,
         )
         logger.info(
-            'Will write results to %s',
-            self.output_path,
+            'Will write output to %s',
+            self.jobs_paths.output_path,
         )
 
     def _calculate(self):
@@ -96,7 +93,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         if temporal_offset is None:
             temporal_offset = 'NULL'
 
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
         with WaitingDatabaseContextManager(uri) as m:
             for value in values:
                 m.execute(' '.join([
@@ -129,14 +126,14 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             ';'
         ])
 
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
         with WaitingDatabaseContextManager(uri) as m:
             m.execute_commit(cmd)
 
     def start_post_jobs_step(self):
         integration_analyzer = DiffusionAnalysisIntegrator(
-            output_path=self.output_path,
-            outcomes_file=self.outcomes_file,
+            output_path=self.jobs_paths.output_path,
+            outcomes_file=self.dataset_settings.outcomes_file,
             design=self.design,
         )
         integration_analyzer.calculate()

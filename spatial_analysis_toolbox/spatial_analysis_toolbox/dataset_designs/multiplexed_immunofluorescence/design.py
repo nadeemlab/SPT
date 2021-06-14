@@ -11,14 +11,9 @@ logger = colorized_logger(__name__)
 class HALOCellMetadataDesign:
     def __init__(self,
         elementary_phenotypes_file=None,
-        complex_phenotypes_file=None,
     ):
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
-            keep_default_na=False,
-        )
-        self.complex_phenotypes = pd.read_csv(
-            complex_phenotypes_file,
             keep_default_na=False,
         )
         self.compartments = ['Non-Tumor', 'Tumor']
@@ -70,20 +65,6 @@ class HALOCellMetadataDesign:
 
     def get_elementary_phenotype_names(self):
         return list(self.elementary_phenotypes['Name'])
-
-    def get_all_phenotype_signatures(self):
-        elementary_signatures = [{name : '+'} for name in self.get_elementary_phenotype_names()]
-        complex_signatures = []
-        for i, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted([m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted([m for m in row['Negative markers'].split(';') if m != ''])
-            signature = {}
-            for marker in positive_markers:
-                signature[marker] = '+'
-            for marker in negative_markers:
-                signature[marker] = '-'
-            complex_signatures.append(signature)
-        return elementary_signatures + complex_signatures
 
     def get_box_limit_column_names(self):
         xmin = 'XMin'

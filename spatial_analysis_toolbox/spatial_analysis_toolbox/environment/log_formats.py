@@ -1,4 +1,5 @@
 import logging
+import re
 import os
 DEBUG = ('DEBUG' in os.environ)
 
@@ -31,7 +32,7 @@ class CustomFormatter(logging.Formatter):
 
 
 def colorized_logger(name):
-    logger = logging.getLogger(name)
+    logger = logging.getLogger(re.sub('^spatial_analysis_toolbox\.', '', name))
     if DEBUG:
         level = logging.DEBUG
     else:

@@ -9,41 +9,12 @@ import os
 import configparser
 
 from spatial_analysis_toolbox.api import get_design, get_integrator
-from spatial_analysis_toolbox.environment.configuration import config_filename
+from spatial_analysis_toolbox.environment.configuration import get_config_parameters_from_file
 from spatial_analysis_toolbox.environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-def get_config_file_parameters(f):
-    config = configparser.ConfigParser()
-    config.read(f)
-    parameters = dict(config['default'])
-    return parameters
-
-if not os.path.exists(config_filename):
-    logger.error('Could not locate configuration file. Running in wrong directory?')
-    exit()
-p = get_config_file_parameters(config_filename)
-w = p['workflow']
-
-if w == 'Multiplexed IF diffusion':
-    design = get_design(
-        elementary_phenotypes_file=p['elementary_phenotypes_file'],
-        complex_phenotypes_file=p['complex_phenotypes_file'],
-        workflow=w,
-    )
-
-if w == 'Multiplexed IF phenotype proximity':
-    design = get_design(
-        elementary_phenotypes_file=p['elementary_phenotypes_file'],
-        complex_phenotypes_file=p['complex_phenotypes_file'],
-        workflow=w,
-    )
-
-i = get_integrator(
-    workflow=w,
-    output_path=p['output_path'],
-    outcomes_file=p['outcomes_file'],
-    design=design,
-)
-i.calculate()
+if __name__=='__main__':
+    p = get_config_parameters_from_file()
+    i = get_integrator(**p)
+    i.calculate()

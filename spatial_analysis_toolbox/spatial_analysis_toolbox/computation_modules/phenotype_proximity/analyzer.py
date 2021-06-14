@@ -1,38 +1,39 @@
 import os
 from os.path import dirname
 
-from ...dataset_designs.multiplexed_immunofluorescence.design import HALOCellMetadataDesign
 from ...environment.single_job_analyzer import SingleJobAnalyzer
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 from .core import PhenotypeProximityCalculator
 from .integrator import PhenotypeProximityAnalysisIntegrator
+from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     def __init__(self,
-        outcomes_file: str=None,
-        output_path: str=None,
-        elementary_phenotypes_file=None,
-        complex_phenotypes_file=None,
+        dataset_design=None,
+        complex_phenotypes_file: str=None,
         **kwargs,
     ):
         super(PhenotypeProximityAnalyzer, self).__init__(**kwargs)
-        self.outcomes_file = outcomes_file
-        self.output_path = output_path
-        self.design = HALOCellMetadataDesign(elementary_phenotypes_file, complex_phenotypes_file)
+        self.dataset_design = dataset_design
+        self.computational_design = PhenotypeProximityDesign(
+            dataset_design = self.dataset_design,
+            complex_phenotypes_file = complex_phenotypes_file,
+        )
 
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()
 
         self.calculator = PhenotypeProximityCalculator(
-            input_filename=self.get_input_filename(),
-            sample_identifier=self.get_sample_identifier(),
-            outcomes_file=outcomes_file,
-            output_path=output_path,
-            design=self.design,
+            input_filename = self.get_input_filename(),
+            sample_identifier = self.get_sample_identifier(),
+            jobs_paths = self.jobs_paths,
+            dataset_settings = self.dataset_settings,
+            dataset_design = self.dataset_design,
+            computational_design = self.computational_design,
         )
 
     def first_job_started(self):
@@ -49,32 +50,32 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
         )
         logger.info(
             'Found outcomes file at %s',
-            self.outcomes_file,
+            self.dataset_settings.outcomes_file,
         )
         logger.info(
             'Will write results to %s',
-            self.output_path,
+            self.jobs_paths.output_path,
         )
 
     def _calculate(self):
         self.calculator.calculate_proximity()
 
     def start_post_jobs_step(self):
-        cell_proximity_integration = PhenotypeProximityAnalysisIntegrator(
-            output_path=self.output_path,
-            design=self.design,
+        cell_proximity_integrator = PhenotypeProximityAnalysisIntegrator(
+            jobs_paths = self.jobs_paths,
+            dataset_settings = self.dataset_settings,
+            computational_design = self.computational_design,
         )
-        cell_proximity_integration.calculate()
-
+        cell_proximity_integrator.calculate()
 
     def cell_counts_and_intensity_averages(self):
         """
         Needs to be refactored based on new indexing aggregation level.
         """
-        signatures = self.design.get_all_phenotype_signatures()
-        phenotypes = [self.design.munge_name(signature) for signature in signatures]
+        signatures = self.dataset_design.get_all_phenotype_signatures()
+        phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
         records = []
-        intensity_column_names = list(self.design.get_intensity_column_names().keys())
+        intensity_column_names = list(self.dataset_design.get_intensity_column_names().keys())
         for phenotype in phenotypes:
 
             for i, (filename, single_file_cells) in enumerate(self.cells.items()):
@@ -83,7 +84,7 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
                     index = list(df.index)
 
                     marked_fov_cells_indices = set(index).intersection(self.phenotype_indices[filename][phenotype])
-                    for compartment in list(set(self.design.get_compartments())) + ['all']:
+                    for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
                         if compartment != 'all':
                             marked_fov_cells_indices = marked_fov_cells_indices.intersection(self.compartment_indices[filename][compartment])
 

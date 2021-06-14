@@ -47,7 +47,6 @@ class JobGenerator:
         outcomes_file: str=None,
     ):
         outcomes_file = outcomes_file if outcomes_file != 'None' else None
-
         self.jobs_paths = JobsPaths(
             job_working_directory,
             jobs_path,
@@ -55,12 +54,10 @@ class JobGenerator:
             schedulers_path,
             output_path,
         )
-
         self.runtime_settings = RuntimeEnvironmentSettings(
             runtime_platform,
             sif_file,
         )
-
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,

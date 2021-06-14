@@ -26,13 +26,14 @@ class DistanceTypes(Enum):
 class DiffusionCalculator:
     distribution_sample_size_max = 200
 
-    def __init__(self,
+    def __init__(
+        self,
         input_filename: str=None,
         fov_index: int=None,
         regional_compartment: str=None,
-        design=None,
+        dataset_design=None,
     ):
-        self.design = design
+        self.dataset_design = dataset_design
         self.df = pd.read_csv(input_filename)
         self.fov = self.get_fov_handle_string(fov_index)
         self.regional_compartment = regional_compartment
@@ -49,20 +50,20 @@ class DiffusionCalculator:
             marker : '+',
             'CK' : '-',
             'Classifier Label' : 'Non-Tumor',
-            self.design.get_FOV_column() : self.fov,
+            self.dataset_design.get_FOV_column() : self.fov,
         })
 
         df_marked_tumor = self.data_along({
             marker: '+',
             'CK' : '+',
             'Classifier Label' : 'Tumor',
-            self.design.get_FOV_column() : self.fov,
+            self.dataset_design.get_FOV_column() : self.fov,
         })
 
         df_tumor = self.data_along({
             'CK' : '+',
             'Classifier Label' : 'Tumor',
-            self.design.get_FOV_column() : self.fov,
+            self.dataset_design.get_FOV_column() : self.fov,
         })
 
         enough_data_per_region = True
@@ -231,7 +232,7 @@ class DiffusionCalculator:
             return [], []
         if df.shape[0] == 0:
             return [], []
-        xmin, xmax, ymin, ymax = self.design.get_box_limit_column_names()
+        xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
         box_centers = np.concatenate(
             (
                 np.matrix(0.5 * (df[xmax] + df[xmin])),
@@ -241,13 +242,13 @@ class DiffusionCalculator:
         return box_centers
 
     def data_along(self, signature):
-        pd_signature = self.design.get_pandas_signature(self.df, signature)
+        pd_signature = self.dataset_design.get_pandas_signature(self.df, signature)
         if sum(pd_signature) == 0:
             return None
         return self.df.loc[pd_signature]
 
     def get_fov_handle_string(self, fov_index):
-        all_fovs = sorted(list(set(self.df[self.design.get_FOV_column()])))
+        all_fovs = sorted(list(set(self.df[self.dataset_design.get_FOV_column()])))
         return all_fovs[fov_index-1]
 
     def get_pertinent_point_indices(self):

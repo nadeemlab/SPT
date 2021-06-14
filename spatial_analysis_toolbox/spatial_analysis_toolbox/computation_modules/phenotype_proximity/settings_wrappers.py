@@ -8,11 +8,11 @@ class JobPaths:
         schedulers_path,
         output_path,
     ):
-        self.output_path = output_path
         self.job_working_directory = job_working_directory
         self.jobs_path = jobs_path
         self.logs_path = logs_path
         self.schedulers_path = schedulers_path
+        self.output_path = output_path
 
 
 class RuntimeEnvironmentSettings:

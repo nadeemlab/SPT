@@ -32,14 +32,9 @@ singularity exec \
  > {{log_filename}} 2>&1
 '''
     cli_call_template = '''sat_diffusion_analysis.py \
- --input-path {{input_files_path}} \
  --input-file-identifier {{input_file_identifier}} \
  --fov {{fov_index}} \
  --regional-compartment {{regional_compartment}} \
- --outcomes-file {{outcomes-file}} \
- --output-path {{output_path}} \
- --elementary-phenotypes-file {{elementary_phenotypes_file}} \
- --complex-phenotypes-file {{complex_phenotypes_file}} \
  --job-index {{job_index}} \
 '''
     file_metadata_header = '''file id\tnumber of FOVs\n
@@ -49,23 +44,27 @@ singularity exec \
     }
 
     def __init__(self,
-        elementary_phenotypes_file=None,
-        complex_phenotypes_file=None,
+        elementary_phenotypes_file: str=None,
+        complex_phenotypes_file: str=None,
         **kwargs,
     ):
         super(DiffusionJobGenerator, self).__init__(**kwargs)
+        self.dataset_design = HALOCellMetadataDesign(
+            elementary_phenotypes_file,
+        )
+        self.computational_design = DiffusionDesign(
+            dataset_design=self.dataset_design,
+            complex_phenotypes_file=complex_phenotypes_file,
+        )
+
         self.number_fovs = {}
-        self.elementary_phenotypes_file = elementary_phenotypes_file
-        self.complex_phenotypes_file = complex_phenotypes_file
-        self.design = HALOCellMetadataDesign(elementary_phenotypes_file, complex_phenotypes_file)
-        self.computational_design = DiffusionDesign()
-        self.submit_calls = {rc: [] for rc in self.design.get_regional_compartments()}
-        self.local_run_calls = {rc: [] for rc in self.design.get_regional_compartments()}
+        self.submit_calls = {rc: [] for rc in self.dataset_design.get_regional_compartments()}
+        self.local_run_calls = {rc: [] for rc in self.dataset_design.get_regional_compartments()}
 
     def gather_input_info(self):
         for i, row in self.file_metadata.iterrows():
             filename = row['File name']
-            if not exists(join(self.input_path, filename)):
+            if not exists(join(self.jobs_paths.input_path, filename)):
                 logger.warning('Data file could not be located: %s', filename)
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), filename)
 
@@ -84,7 +83,7 @@ singularity exec \
                 logger.debug('Using cached info about file %s / %s  ... %s', str(i+1), str(number_files), file_id)
             else:
                 filename = row['File name']
-                fovs = cut_by_header(join(self.input_path, filename), column=self.design.get_FOV_column())
+                fovs = cut_by_header(join(self.jobs_paths.input_path, filename), column=self.dataset_design.get_FOV_column())
                 n = len(sorted(list(set(fovs))))
                 self.number_fovs[file_id] = n
                 file_metadata.loc[file_id] = {'number of FOVs' : str(n)}
@@ -99,14 +98,14 @@ singularity exec \
             file_id = row['File ID']
             self.generate_array_of_jobs(file_id)
         logger.info('%s input files considered.', str(self.file_metadata.shape[0]))
-        logger.info('%s (arrays of) job scripts generated, written to dir %s', str(self.number_arrays_of_jobs), self.jobs_path)
+        logger.info('%s (arrays of) job scripts generated, written to dir %s', str(self.number_arrays_of_jobs), self.jobs_paths.jobs_path)
         average = sum(self.number_fovs.values()) / len(self.number_fovs)
         logger.debug('Average size of job arrays is %s.', str(average))
 
     def initialize_intermediate_database(self):
         probabilities_header = self.computational_design.get_probabilities_table_header()
 
-        connection = sqlite3.connect(join(self.output_path, self.computational_design.get_database_uri()))
+        connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))
         cursor = connection.cursor()
         cursor.execute('DROP TABLE IF EXISTS transition_probabilities ;')
         cmd = ' '.join([
@@ -141,38 +140,31 @@ singularity exec \
         connection.close()
 
     def generate_array_of_jobs(self, file_id):
-        job_working_directory = self.job_working_directory
+        job_working_directory = self.jobs_paths.job_working_directory
         input_file_identifier = file_id
-        output_path = self.output_path
+        output_path = self.jobs_paths.output_path
         number_fovs = self.number_fovs[input_file_identifier]
         logger.debug('Number of FOVs for %s: %s', input_file_identifier, str(number_fovs))
 
-        for rc in self.design.get_regional_compartments():
+        for rc in self.dataset_design.get_regional_compartments():
             if rc == 'nontumor':
                 for i in range(number_fovs):
                     fov_index = i + 1
                     job_index = self.register_job_existence()
                     job_name = 'diffusion_' + str(job_index)
-                    log_filename = join(self.logs_path, job_name + '.out')
+                    log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
 
                     contents = DiffusionJobGenerator.cli_call_template
                     contents = re.sub('{{input_file_identifier}}', '"' + input_file_identifier + '"', contents)
                     contents = re.sub('{{fov_index}}', str(fov_index), contents)
                     contents = re.sub('{{regional_compartment}}', rc, contents)
-                    contents = re.sub('{{outcomes-file}}', self.outcomes_file, contents)
-                    contents = re.sub('{{output_path}}', output_path, contents)
-                    contents = re.sub('{{elementary_phenotypes_file}}', self.elementary_phenotypes_file, contents)
-                    contents = re.sub('{{complex_phenotypes_file}}', self.complex_phenotypes_file, contents)
                     contents = re.sub('{{job_index}}', str(job_index), contents)
-                    contents = re.sub('{{input_files_path}}', self.input_path, contents)
                     cli_call = contents
 
                     contents = DiffusionJobGenerator.lsf_template
-                    contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
                     contents = re.sub('{{job_name}}', job_name, contents)
-                    contents = re.sub('{{input_files_path}}', self.input_path, contents)
                     contents = re.sub('{{log_filename}}', log_filename, contents)
-                    contents = re.sub('{{sif_file}}', self.sif_file, contents)
+                    contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
                     contents = re.sub(
                         '{{control_node_hostname}}',
                         DiffusionJobGenerator.control_node_hostnames['MSK medical physics cluster'],
@@ -181,11 +173,11 @@ singularity exec \
                     bsub_job = contents
                     bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
 
-                    lsf_job_filename = join(self.jobs_path, job_name + '.lsf')
+                    lsf_job_filename = join(self.jobs_paths.jobs_path, job_name + '.lsf')
                     with open(lsf_job_filename, 'w') as file:
                         file.write(bsub_job)
 
-                    sh_job_filename = join(self.jobs_path, job_name + '.sh')
+                    sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
                     with open(sh_job_filename, 'w') as file:
                         file.write(cli_call)
 
@@ -201,10 +193,10 @@ singularity exec \
         return re.sub(' ', r'\\ ', s)
 
     def generate_scheduler_scripts(self):
-        for rc in self.design.get_regional_compartments():
+        for rc in self.dataset_design.get_regional_compartments():
             if rc == 'nontumor':
                 script_name = 'schedule_lsf_' + rc + '.sh'
-                with open(join(self.schedulers_path, script_name), 'w') as schedule_script:
+                with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
                     num_rows = 0
                     for row in self.submit_calls[rc]:
                         schedule_script.write(row + '\n')
@@ -212,7 +204,7 @@ singularity exec \
                 logger.info('Wrote %s, which schedules %s jobs.', script_name, str(num_rows))
 
                 script_name = 'schedule_local_' + rc + '.sh'
-                with open(join(self.schedulers_path, script_name), 'w') as schedule_script:
+                with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
                     num_rows = 0
                     for row in self.local_run_calls[rc]:
                         schedule_script.write(row + '\n')

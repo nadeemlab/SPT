@@ -2,11 +2,9 @@ import os
 from os.path import join, dirname
 import re
 
-from ...dataset_designs.multiplexed_immunofluorescence.design import HALOCellMetadataDesign
 from ...environment.single_job_analyzer import SingleJobAnalyzer
 from ...environment.job_generator import JobActivity
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
 from .integrator import DiffusionAnalysisIntegrator
 from .computational_design import DiffusionDesign
@@ -17,23 +15,27 @@ logger = colorized_logger(__name__)
 
 class DiffusionAnalyzer(SingleJobAnalyzer):
     def __init__(self,
+        dataset_design=None,
+        complex_phenotypes_file: str=None,
         fov_index: int=None,
         regional_compartment: str=None,
-        dataset_design=None,
         **kwargs,
     ):
         super(DiffusionAnalyzer, self).__init__(**kwargs)
         self.regional_compartment = regional_compartment
 
-        self.design = dataset_design
-        self.computational_design = DiffusionDesign()
+        self.dataset_design = dataset_design
+        self.computational_design = DiffusionDesign(
+            dataset_design = dataset_design,
+            complex_phenotypes_file = complex_phenotypes_file,
+        )
 
         self.retrieve_input_filename()
         self.calculator = DiffusionCalculator(
             input_filename = self.get_input_filename(),
             fov_index = fov_index,
             regional_compartment = regional_compartment,
-            design = self.design,
+            dataset_design = self.dataset_design,
         )
 
     def first_job_started(self):
@@ -55,7 +57,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
 
     def _calculate(self):
         try:
-            markers = self.design.get_available_markers()
+            markers = self.dataset_design.get_available_markers()
             for distance_type in DistanceTypes:
                 for marker in markers:
                     self.dispatch_diffusion_calculation(distance_type, marker)
@@ -132,8 +134,8 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
 
     def start_post_jobs_step(self):
         integration_analyzer = DiffusionAnalysisIntegrator(
-            output_path=self.jobs_paths.output_path,
+            jobs_paths=self.jobs_paths,
             outcomes_file=self.dataset_settings.outcomes_file,
-            design=self.design,
+            computational_design=self.computational_design,
         )
         integration_analyzer.calculate()

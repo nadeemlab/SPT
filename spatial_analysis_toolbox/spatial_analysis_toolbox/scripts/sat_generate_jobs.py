@@ -18,6 +18,7 @@ import spatial_analysis_toolbox
 from spatial_analysis_toolbox.api import get_job_generator
 from spatial_analysis_toolbox.environment.configuration import workflows, config_filename  # use __init__.py system to expose these through api
 from spatial_analysis_toolbox.environment.log_formats import colorized_logger
+from spatial_analysis_toolbox.environment.configuration import get_config_parameters_from_file, write_config_parameters_to_file
 
 def get_config_parameters_from_cli():
     parser = argparse.ArgumentParser(
@@ -130,25 +131,16 @@ def get_config_parameters_from_cli():
     }
     return parameters
 
-def get_config_parameters_from_file(config_filename):
-    config = configparser.ConfigParser()
-    config.read(config_filename)
-    parameters = dict(config['default'])
-    return parameters
-
 def get_config_parameters():
     if len(sys.argv) == 1:
         if not os.path.exists(config_filename):
             logger.error('Configuration file %s does not exist.', config_filename)
             exit()
         else:
-            return get_config_parameters_from_file(config_filename)
+            return get_config_parameters_from_file()
     else:
         parameters = get_config_parameters_from_cli()
-        config = configparser.ConfigParser()
-        config['default'] = parameters
-        with open(config_filename, 'w') as file:
-            config.write(file)
+        write_config_parameters_to_file(parameters)
         return parameters
 
 if __name__=='__main__':

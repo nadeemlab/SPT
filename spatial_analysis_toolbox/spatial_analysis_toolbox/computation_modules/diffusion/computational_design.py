@@ -9,12 +9,12 @@ class DiffusionDesign(ComputationalDesign):
             complex_phenotypes_file: str=None,
             **kwargs,
         ):
+        super(ComputationalDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
         self.complex_phenotypes = pd.read_csv(
             complex_phenotypes_file,
             keep_default_na=False,
         )
-        super(ComputationalDesign, self).__init__(**kwargs)
 
     def get_database_uri(self):
         return 'diffusion.db'

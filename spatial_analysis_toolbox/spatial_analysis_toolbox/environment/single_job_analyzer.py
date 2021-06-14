@@ -28,13 +28,29 @@ class SingleJobAnalyzer:
     gleaned from JobGenerator.
     """
     def __init__(self,
-        dataset_settings: DatasetSettings=None,
-        jobs_paths: JobsPaths=None,
+        input_path: str=None,
+        file_manifest_file: str=None,
+        outcomes_file: str=None,
+        job_working_directory: str=None,
+        jobs_path: str=None,
+        logs_path: str=None,
+        schedulers_path: str=None,
+        output_path: str=None,
         input_file_identifier: str=None,
         job_index: str=None,
     ):
-        self.dataset_settings = dataset_settings
-        self.jobs_paths = jobs_paths
+        self.dataset_settings = DatasetSettings(
+            input_path,
+            file_manifest_file,
+            outcomes_file,
+        )
+        self.jobs_paths = JobsPaths(
+            job_working_directory,
+            jobs_path,
+            logs_path,
+            schedulers_path,
+            output_path,
+        )
         self.input_file_identifier = input_file_identifier
         self.job_index = int(job_index)
         self.pipeline_design = PipelineDesign()

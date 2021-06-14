@@ -35,7 +35,7 @@ You can test if basic functionality works in your environment by running local t
 cd spatial_analysis_toolbox/tests
 ./test_proximity_pipeline.sh
 ```
-A spreadsheet should be created in `output/` with some statistical test results on example data.
+A spreadsheet would be created in `output/` with some statistical test results on example data.
 
 # Platform
 

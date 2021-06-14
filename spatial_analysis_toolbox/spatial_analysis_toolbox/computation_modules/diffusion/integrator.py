@@ -16,6 +16,7 @@ import seaborn as sns
 from scipy.cluster.hierarchy import ClusterWarning
 simplefilter('ignore', ClusterWarning)
 
+from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 
@@ -27,7 +28,8 @@ class DiffusionAnalysisIntegrator:
     max_probability_value = 0.05
     histogram_resolution = 50
 
-    def __init__(self,
+    def __init__(
+        self,
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         computational_design=None,

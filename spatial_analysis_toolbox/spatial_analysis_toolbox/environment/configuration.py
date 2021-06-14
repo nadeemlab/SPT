@@ -14,9 +14,9 @@ config_filename = '.sat_pipeline.config'
 
 
 class WorkflowModules:
-    def __init__(self, generator=None, design=None, computational_design=None, analyzer=None, integrator=None):
+    def __init__(self, generator=None, dataset_design=None, computational_design=None, analyzer=None, integrator=None):
         self.generator = generator
-        self.design = design
+        self.dataset_design = dataset_design
         self.computational_design = computational_design
         self.analyzer = analyzer
         self.integrator = integrator

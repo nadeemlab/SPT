@@ -1,5 +1,5 @@
 
-class JobPaths:
+class JobsPaths:
     def __init__(
         self,
         job_working_directory,

@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind, kruskal
 
-from ...environment.settings_wrappers import JobsPaths
+from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -18,11 +18,11 @@ class PhenotypeProximityAnalysisIntegrator:
     def __init__(
         self,
         jobs_paths: JobsPaths=None,
-        outcomes_file: str=None,
+        dataset_settings: DatasetSettings=None,
         computational_design=None,
     ):
-        self.output_path = self.jobs_path.output_path
-        self.outcomes_file = outcomes_file
+        self.output_path = jobs_paths.output_path
+        self.outcomes_file = dataset_settings.outcomes_file
         self.computational_design = computational_design
         self.cell_proximity_tests = None
 

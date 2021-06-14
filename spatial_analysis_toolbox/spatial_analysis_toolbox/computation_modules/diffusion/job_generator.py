@@ -65,7 +65,7 @@ singularity exec \
     def gather_input_info(self):
         for i, row in self.file_metadata.iterrows():
             filename = row['File name']
-            if not exists(join(self.jobs_paths.input_path, filename)):
+            if not exists(join(self.dataset_settings.input_path, filename)):
                 logger.warning('Data file could not be located: %s', filename)
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), filename)
 
@@ -84,7 +84,7 @@ singularity exec \
                 logger.debug('Using cached info about file %s / %s  ... %s', str(i+1), str(number_files), file_id)
             else:
                 filename = row['File name']
-                fovs = cut_by_header(join(self.jobs_paths.input_path, filename), column=self.dataset_design.get_FOV_column())
+                fovs = cut_by_header(join(self.dataset_settings.input_path, filename), column=self.dataset_design.get_FOV_column())
                 n = len(sorted(list(set(fovs))))
                 self.number_fovs[file_id] = n
                 file_metadata.loc[file_id] = {'number of FOVs' : str(n)}

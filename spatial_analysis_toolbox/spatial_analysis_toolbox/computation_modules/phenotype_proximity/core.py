@@ -34,7 +34,7 @@ class PhenotypeProximityCalculator:
     ):
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.output_path = jobs_path.output_path
+        self.output_path = jobs_paths.output_path
         self.outcomes_file = dataset_settings.outcomes_file
         self.dataset_design = dataset_design
         self.computational_design = computational_design
@@ -85,7 +85,7 @@ class PhenotypeProximityCalculator:
         """
         cells = {}
 
-        signatures = self.dataset_design.get_all_phenotype_signatures()
+        signatures = self.computational_design.get_all_phenotype_signatures()
         signatures_by_name = {self.dataset_design.munge_name(signature) : signature for signature in signatures}
         pheno_names = sorted(signatures_by_name.keys())
 
@@ -194,7 +194,7 @@ class PhenotypeProximityCalculator:
         return cell_pairs
 
     def precalculate_masks(self, cells):
-        signatures = self.dataset_design.get_all_phenotype_signatures()
+        signatures = self.computational_design.get_all_phenotype_signatures()
         phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
         phenotype_indices = {
             (f, fov_index) : {
@@ -237,7 +237,7 @@ class PhenotypeProximityCalculator:
         the averages being over the cells meeting the criteria. Also calculates the
         number of cells over the total number of cells in the given field of view.
         """
-        signatures = self.dataset_design.get_all_phenotype_signatures()
+        signatures = self.computational_design.get_all_phenotype_signatures()
         phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
         combinations2 = list(combinations(phenotypes, 2))
         logger.debug('Creating radius-limited data sets for %s phenotype pairs.', len(combinations2))

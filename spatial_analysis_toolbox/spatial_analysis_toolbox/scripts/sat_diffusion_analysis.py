@@ -55,11 +55,11 @@ if __name__=='__main__':
     kwargs['job_index'] = args.job_index
 
     parameters = get_config_parameters_from_file()
-    kwargs['output_path'] = parameters.output_path
-    kwargs['outcomes_file'] = parameters.outcomes_file
-    kwargs['input_path'] = parameters.input_path
-    kwargs['elementary_phenotypes_file'] = parameters.elementary_phenotypes_file
-    kwargs['complex_phenotypes_file'] = parameters.complex_phenotypes_file
+    kwargs['output_path'] = parameters['output_path']
+    kwargs['outcomes_file'] = parameters['outcomes_file']
+    kwargs['input_path'] = parameters['input_path']
+    kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
+    kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
 
     a = get_analyzer(
         workflow='Multiplexed IF diffusion',

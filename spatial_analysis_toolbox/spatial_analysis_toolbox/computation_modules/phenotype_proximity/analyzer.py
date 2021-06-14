@@ -63,8 +63,7 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     def start_post_jobs_step(self):
         cell_proximity_integrator = PhenotypeProximityAnalysisIntegrator(
             jobs_paths = self.jobs_paths,
-            outcomes_file = self.dataset_settings.outcomes_file,
-            dataset_design = self.dataset_design,
+            dataset_settings = self.dataset_settings,
             computational_design = self.computational_design,
         )
         cell_proximity_integrator.calculate()

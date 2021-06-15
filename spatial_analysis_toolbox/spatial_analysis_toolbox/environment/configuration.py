@@ -1,6 +1,6 @@
 import configparser
 
-from ..dataset_designs.multiplexed_immunofluorescence.design import HALOCellMetadataDesign
+from ..dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
 from ..computation_modules.diffusion.job_generator import DiffusionJobGenerator
 from ..computation_modules.diffusion.computational_design import DiffusionDesign
 from ..computation_modules.diffusion.analyzer import DiffusionAnalyzer

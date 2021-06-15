@@ -15,6 +15,9 @@ logger = colorized_logger(__name__)
 
 
 class JobActivity(Enum):
+    """
+    Codes for job states, as they will appear in job metadata tables.
+    """
     NOT_STARTED = auto()
     RUNNING = auto()
     COMPLETE = auto()
@@ -24,8 +27,11 @@ class JobActivity(Enum):
 class JobGenerator:
     """
     An interface for pipeline job generation. Minimally assumes that the pipeline
-    acts on input files listed in a file manifest file, itself in the so-called
-    "BCDC11" format. The schema has 11 fields for each file and includes hashes.
+    acts on input files listed in a file manifest file, itself in a format
+    controlled by a relatively precise schema (distributed with the source code of
+    this package).
+
+    The schema has 11 fields for each file and includes hashes.
     """
     cached_file_metadata_header = [
         ('Input_file_identifier', 'TEXT'),
@@ -46,6 +52,35 @@ class JobGenerator:
         file_manifest_file: str=None,
         outcomes_file: str=None,
     ):
+        """
+        Args:
+            job_working_directory (str):
+                This is the directory in which jobs should run. That is, when the job
+                processes query for the current working directory, it should yield this
+                directory.
+            jobs_path (str):
+                The directory in which job script files will be written.
+            logs_path (str):
+                The directory in which log files will be written.
+            schedulers_path (str):
+                The directory in which the scripts which scheduler jobs will be written.
+            output_path (str):
+                The directory in which result tables, images, etc. will be written.
+            runtime_platform (str):
+                Currently either 'lsf' or 'local' (i.e. an HPC deployment or a local
+                run).
+            sif_file (str):
+                The Singularity container file providing this package (if applicable).
+            input_path (str):
+                The directory in which files listed in the file manifest should be
+                located.
+            file_manifest_file (str):
+                The file manifest file, in the format of the specification distributed
+                with the source code of this package.
+            outcomes_file (str):
+                A tabular text file assigning outcome values (in second column) to
+                sample identifiers (first column).
+        """
         outcomes_file = outcomes_file if outcomes_file != 'None' else None
         self.jobs_paths = JobsPaths(
             job_working_directory,
@@ -71,7 +106,7 @@ class JobGenerator:
         """
         This is the main exposed API call.
 
-        Generates jobs involving input files and write to the jobs subdirectory. Also
+        It generates jobs involving input files and write to the jobs subdirectory. Also
         writes scripts that schedule the jobs.
         """
         self.initialize_job_activity_table()
@@ -82,6 +117,10 @@ class JobGenerator:
         self.generate_scheduler_scripts()
 
     def initialize_job_activity_table(self):
+        """
+        Creates a `job_activity` table with which jobs may advertise their running
+        states to each other.
+        """
         connection = sqlite3.connect(self.pipeline_design.get_database_uri())
         cursor = connection.cursor()
         cursor.execute('DROP TABLE IF EXISTS job_activity ;')
@@ -100,6 +139,10 @@ class JobGenerator:
         connection.close()
 
     def populate_file_metadata_table(self):
+        """
+        Pulls in file metadata from the file manifest file into the database accessible
+        to all jobs.
+        """
         header = JobGenerator.cached_file_metadata_header
 
         connection = sqlite3.connect(self.pipeline_design.get_database_uri())
@@ -147,6 +190,9 @@ class JobGenerator:
         connection.close()
 
     def clean_directory_area(self):
+        """
+        Clears the jobs path, logs path, and output path from prior runs.
+        """
         self.make_fresh_directory(self.jobs_paths.jobs_path)
         self.make_fresh_directory(self.jobs_paths.logs_path)
         self.make_fresh_directory(self.jobs_paths.output_path)
@@ -155,6 +201,14 @@ class JobGenerator:
                 os.remove(file)
 
     def make_fresh_directory(self, path):
+        """
+        A utility function to make an empty directory at a given location (deleting all
+        of its contents if it already exists).
+
+        Args:
+            path (str):
+                A directory path.
+        """
         if not exists(path):
             os.mkdir(path)
         else:
@@ -194,12 +248,12 @@ class JobGenerator:
 
     def generate_all_jobs(self):
         """
-        Generate the job script files using local state.
+        Generate the job script files.
         """
         pass
 
     def generate_scheduler_scripts(self):
         """
-        Generate a bash script or scripts that schedule the jobs.
+        Generate a shell script or scripts that schedule the jobs.
         """
         pass

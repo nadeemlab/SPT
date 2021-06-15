@@ -45,39 +45,42 @@ class HALOCellMetadata(CellMetadata):
     """
     def __init__(self, **kwargs):
         super(HALOCellMetadata, self).__init__(**kwargs)
+        self.lookup = None
 
-    def get_cell_info_table(self, input_files_path, file_metadata, input_data_design):
-        """
-        Args:
-            input_files_path (str):
+    def get_sample_id_index(self, sample_id):
+        return self.lookup.get_sample_index(sample_id)
 
-            file_metadata (pd.DataFrame):
-            input_data_design:
+    def get_fov_index(self, sample_id, fov):
+        return self.lookup.get_fov_index(sample_id, fov)
 
-        """
+    def get_cell_info_table(self, input_files_path, file_metadata, dataset_design):
         if not self.check_data_type(file_metadata):
             return
-        d = input_data_design
-        lookup = SampleFOVLookup()
+        self.lookup = SampleFOVLookup()
         dfs = []
         for i, row in file_metadata.iterrows():
             filename = row['File name']
             sample_id = row['Sample ID']
             source_file_data = pd.read_csv(join(input_files_path, filename))
-            if d.get_FOV_column() not in source_file_data.columns:
+            if dataset_design.get_FOV_column() not in source_file_data.columns:
                 logger.error(
                     '%s not in columns of %s. Got %s',
-                    d.get_FOV_column(),
+                    dataset_design.get_FOV_column(),
                     filename,
                     source_file_data.columns,
                 )
                 break
             self.populate_integer_indices(
-                lookup=lookup,
+                lookup=self.lookup,
                 sample_id=sample_id,
-                fovs=source_file_data[d.get_FOV_column()],
+                fovs=source_file_data[dataset_design.get_FOV_column()],
             )
-            column_data, number_cells = self.get_selected_columns(d, lookup, source_file_data, sample_id)
+            column_data, number_cells = self.get_selected_columns(
+                dataset_design,
+                self.lookup,
+                source_file_data,
+                sample_id,
+            )
             dfs.append(pd.DataFrame(column_data))
             logger.debug(
                 'Finished pulling metadata for %s cells from source file %s/%s.',
@@ -88,6 +91,16 @@ class HALOCellMetadata(CellMetadata):
         return pd.concat(dfs)
 
     def check_data_type(self, file_metadata):
+        """
+        Args:
+            file_metadata (pandas.DataFrame):
+                Table of cell manifest files.
+
+        Returns:
+            bool:
+                True if this class supports all the file data types stipulated by the
+                file metadata records. False otherwise.
+        """
         if not 'Data type' in file_metadata.columns:
             logger.error('File metadata table missing columns "Data type".')
             return False
@@ -100,13 +113,42 @@ class HALOCellMetadata(CellMetadata):
 
     def populate_integer_indices(self,
             lookup: SampleFOVLookup=None,
-            sample_id=None,
+            sample_id: str=None,
             fovs=None
         ):
+        """
+        Registers integer indices for a group of fields of view for a given sample
+        / whole image.
+
+        Args:
+            lookup (SampleFOVLookup):
+                The lookup object to save to.
+            sample_id (str):
+                A sample identifier string, as it would appear in the file metadata
+                manifest.
+            fovs (list):
+                A list of field of view descriptor strings, as they appear in
+                HALO-exported source files.
+        """
         lookup.add_sample_id(sample_id)
         lookup.add_fovs(sample_id, fovs)
 
-    def get_selected_columns(self, d, lookup, source_file_data, sample_id):
+    def get_selected_columns(self, dataset_design, lookup, source_file_data, sample_id):
+        """
+        Retrieves, from an unprocessed source file table, only the data which is
+        stipulated to be relevant according to this class' table header templates.
+
+        Args:
+            dataset_design:
+                The wrapper object describing the input dataset.
+            lookup (SampleFOVLookup):
+                The integer index lookup table.
+            source_file_data (pandas.DataFrame):
+                The full, unprocessed table of data from a given source file.
+            sample_id (str):
+                The sample identifier identifying the sample that the given source file
+                has data about.
+        """
         column_data = {}
         v = CellMetadata.table_header_template
         c = CellMetadata.table_header_constant_portion

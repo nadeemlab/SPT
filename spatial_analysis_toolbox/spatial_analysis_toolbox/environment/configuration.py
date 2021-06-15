@@ -1,3 +1,6 @@
+"""
+Provides workflow definitions in terms of implementation classes, and configuration parameter management.
+"""
 import configparser
 
 from ..dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
@@ -14,6 +17,9 @@ config_filename = '.sat_pipeline.config'
 
 
 class WorkflowModules:
+    """
+    A wrapper object for implementation classes comprising a workflow definition.
+    """
     def __init__(self, generator=None, dataset_design=None, computational_design=None, analyzer=None, integrator=None):
         self.generator = generator
         self.dataset_design = dataset_design
@@ -39,12 +45,30 @@ workflows = {
 }
 
 def get_config_parameters_from_file():
+    """
+    Retrieves previously-serialized configuration parameters from file, using a
+    singleton pattern.
+
+    Returns:
+        dict:
+            Key-value pairs parsed using the Python standard library configparser
+            module.
+    """
     config = configparser.ConfigParser()
     config.read(config_filename)
     parameters = dict(config['default'])
     return parameters
 
 def write_config_parameters_to_file(parameters):
+    """
+    Serializes configuration parameters to file, using a singleton pattern.
+
+    Args:
+        parameters (dict):
+            Key-value pairs to record. Typically these are keyword arguments for the
+            classes constructed at initialization time for entry points into the
+            pipelines/workflows.
+    """
     config = configparser.ConfigParser()
     config['default'] = parameters
     with open(config_filename, 'w') as file:

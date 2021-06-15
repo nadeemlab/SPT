@@ -35,20 +35,3 @@ class DatasetSettings:
         self.input_path = input_path
         self.file_manifest_file = file_manifest_file
         self.outcomes_file = outcomes_file
-
-
-# The below may not be needed, since there are already wrapper-style classes about these settings:
-
-# class DatasetDesignSettings:
-#     def __init__(
-#         self,
-#         elementary_phenotypes_file,
-#     ):
-#         self.elementary_phenotypes_file = elementary_phenotypes_file
-
-# class ComputationalDesignSettings:
-#     def __init__(
-#         self,
-#         complex_phenotypes_file,
-#     ):
-#         self.complex_phenotypes_file = complex_phenotypes_file

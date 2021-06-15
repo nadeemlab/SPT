@@ -1,14 +1,14 @@
 import configparser
 
 from ..dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
-from ..computation_modules.diffusion.job_generator import DiffusionJobGenerator
-from ..computation_modules.diffusion.computational_design import DiffusionDesign
-from ..computation_modules.diffusion.analyzer import DiffusionAnalyzer
-from ..computation_modules.diffusion.integrator import DiffusionAnalysisIntegrator
-from ..computation_modules.phenotype_proximity.job_generator import PhenotypeProximityJobGenerator
-from ..computation_modules.phenotype_proximity.computational_design import PhenotypeProximityDesign
-from ..computation_modules.phenotype_proximity.analyzer import PhenotypeProximityAnalyzer
-from ..computation_modules.phenotype_proximity.integrator import PhenotypeProximityAnalysisIntegrator
+from ..workflows.diffusion.job_generator import DiffusionJobGenerator
+from ..workflows.diffusion.computational_design import DiffusionDesign
+from ..workflows.diffusion.analyzer import DiffusionAnalyzer
+from ..workflows.diffusion.integrator import DiffusionAnalysisIntegrator
+from ..workflows.phenotype_proximity.job_generator import PhenotypeProximityJobGenerator
+from ..workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
+from ..workflows.phenotype_proximity.analyzer import PhenotypeProximityAnalyzer
+from ..workflows.phenotype_proximity.integrator import PhenotypeProximityAnalysisIntegrator
 
 config_filename = '.sat_pipeline.config'
 

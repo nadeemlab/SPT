@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+This script represents a single job of the cell phenotype proximity analysis
+workflow. It is not run directly by the user.
+"""
 import os
 from os.path import join
 import argparse

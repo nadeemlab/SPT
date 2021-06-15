@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
 This convenience script exposes some hard-coded constants of the
-spatial-analysis-toolbox library to shell scripts.
-
-It is not intended to be run directly by the user, as indicated by the
-presence of the .py extension.
+spatial_analysis_toolbox library to shell scripts.
 """
 import sys
 

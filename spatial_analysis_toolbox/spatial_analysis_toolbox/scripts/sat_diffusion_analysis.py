@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+This script represents a single job of the diffusion analysis workflow. It is
+not run directly by the user.
+"""
 import os
 import argparse
 import re

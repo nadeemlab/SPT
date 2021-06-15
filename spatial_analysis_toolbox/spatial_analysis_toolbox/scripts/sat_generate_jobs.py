@@ -2,9 +2,6 @@
 """
 This script locates configuration parameters for the pipeline's job generation,
 then delegates the job generation to a more specific generator.
-
-It is not intended to be run directly by the user, as indicated by the
-presence of the .py extension.
 """
 import os
 import sys

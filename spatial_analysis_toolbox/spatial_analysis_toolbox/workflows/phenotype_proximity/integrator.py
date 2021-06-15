@@ -35,6 +35,7 @@ class PhenotypeProximityAnalysisIntegrator:
     def do_outcome_tests(self):
         """
         For each
+
           - pair of outcome values
           - compartment
           - pair of phenotypes
@@ -48,11 +49,13 @@ class PhenotypeProximityAnalysisIntegrator:
         for difference in median.
 
         Also *will* do analogous testing for each
+
           - pair of outcome values
           - compartment
           - phenotype
 
         Also *will* do analogous testing for each
+
           - pair of outcome values
           - compartment
           - phenotype

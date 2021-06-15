@@ -12,6 +12,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import pkg_resources
 import os
 import sys
 sys.path.insert(0, '../spatial_analysis_toolbox')
@@ -24,9 +25,10 @@ copyright = '2021'
 author = 'Rami Vanguri, James Mathews, Saad Nadeem'
 
 # The short X.Y version
-version = ''
+version = pkg_resources.require(project)[0].version
+
 # The full version, including alpha/beta/rc tags
-release = ''
+release = version
 
 
 # -- General configuration ---------------------------------------------------

@@ -11,7 +11,7 @@ with open(os.path.join(dir, 'requirements.txt'), 'r', encoding='utf-8') as fh:
 
 setuptools.setup(
     name='spatial-analysis-toolbox',
-    version='0.0.1',
+    version='0.1.0',
     author='Rami Vanguri, James Mathews',
     author_email='vangurir@mskcc.org',
     description='Toolbox for spatial analysis of pathology imaging.',

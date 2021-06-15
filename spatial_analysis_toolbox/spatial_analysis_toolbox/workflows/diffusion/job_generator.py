@@ -59,8 +59,11 @@ singularity exec \
         )
 
         self.number_fovs = {}
-        self.submit_calls = {rc: [] for rc in self.dataset_design.get_regional_compartments()}
-        self.local_run_calls = {rc: [] for rc in self.dataset_design.get_regional_compartments()}
+        self.submit_calls = {rc: [] for rc in self.get_regional_compartments()}
+        self.local_run_calls = {rc: [] for rc in self.get_regional_compartments()}
+
+    def get_regional_compartments(self):
+        return ('tumor', 'edge', 'nontumor')
 
     def gather_input_info(self):
         for i, row in self.file_metadata.iterrows():
@@ -146,7 +149,7 @@ singularity exec \
         number_fovs = self.number_fovs[input_file_identifier]
         logger.debug('Number of FOVs for %s: %s', input_file_identifier, str(number_fovs))
 
-        for rc in self.dataset_design.get_regional_compartments():
+        for rc in self.get_regional_compartments():
             if rc == 'nontumor':
                 for i in range(number_fovs):
                     fov_index = i + 1
@@ -195,7 +198,7 @@ singularity exec \
         return re.sub(' ', r'\\ ', s)
 
     def generate_scheduler_scripts(self):
-        for rc in self.dataset_design.get_regional_compartments():
+        for rc in self.get_regional_compartments():
             if rc == 'nontumor':
                 script_name = 'schedule_lsf_' + rc + '.sh'
                 with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:

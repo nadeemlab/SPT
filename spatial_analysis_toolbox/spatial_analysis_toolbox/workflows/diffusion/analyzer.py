@@ -57,7 +57,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
 
     def _calculate(self):
         try:
-            markers = self.dataset_design.get_available_markers()
+            markers = self.dataset_design.get_elementary_phenotype_names()
             for distance_type in DistanceTypes:
                 for marker in markers:
                     self.dispatch_diffusion_calculation(distance_type, marker)

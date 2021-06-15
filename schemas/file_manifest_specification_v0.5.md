@@ -4,7 +4,7 @@ A file manifest listing files representing data about generic scientific samples
 
 1. The manifest will follow a tabular logical data model, with one table. If a name for the table is needed, `file_manifest` or **File manifest** may be used. 
 2. Each record in the table should pertain to exactly 1 file, meaning an exact byte string materially realized in electronic storage in some standard file system (e.g. ext4, FAT32, NTFS).
-3. In all non-empty fields, the only characters allowed are the printable ASCII characters. Note that this excludes hyphen-like characters beyond the ASCII hyphen “-”, as well as so-called smart quotation symbols. No trailing or prepended spaces are allowed. Each field must contain 2 or more characters. A regex pattern enforcing these requirements is `^[!-~][ -~]*[!-~]$` 
+3. In all non-empty fields, the only characters allowed are the printable ASCII characters. Note that this excludes hyphen-like characters beyond the ASCII hyphen "-", as well as so-called smart quotation symbols. No trailing or prepended spaces are allowed. Each field must contain 2 or more characters. A regex pattern enforcing these requirements is `^[!-~][ -~]*[!-~]$`
 4. Each record should include the following 11 fields (if marked "Optional", the value may be empty to indicate that the information is not known or not applicable; otherwise it must not be empty):
 
 |Name of field|Machine-friendly name| |Description of intended string contents|

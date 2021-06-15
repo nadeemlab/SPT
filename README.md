@@ -18,7 +18,7 @@ Clone the repository, and install the Python package with `pip`:
 pip install spatial_analysis_toolbox/
 ```
 
-(You may need to install Python OT (POT) separately, according to their [installation instructions](https://pythonot.github.io/#installation).)
+(You may need to install `numpy` and `cython` separately, according to the [installation instructions for Python OT](https://pythonot.github.io/#installation).)
 
 Then run `sat-pipeline` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as [Platfrom LSF (Load Sharing Facility)](https://www.ibm.com/products/hpc-workload-management) jobs. In the LSF case, you must first build the library into a Singularity container by running
 

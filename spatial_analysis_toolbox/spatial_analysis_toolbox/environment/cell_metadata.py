@@ -64,33 +64,6 @@ class CellMetadata:
         """
         self.cells = self.load_cache_file()
 
-    def load_cache_file(self):
-        """
-        If not yet cached, creates table of cells from source files listed in the given
-        file manifest, then caches this to file.
-
-        Otherwise, loads directly from the cache file.
-
-        Returns:
-            pandas.DataFrame:
-                The table of cell metadata. The format should be as described by
-                get_metadata.
-        """
-        f = self.cache_location
-        if not exists(f):
-            logger.info('Gathering cell info from files listed in %s', self.file_manifest_file)
-            df = self.get_cell_info_table(
-                self.input_files_path,
-                self.file_metadata,
-                self.dataset_design,
-            )
-            logger.info('Finished gathering info %s cells.', df.shape[0])
-            df.to_csv(f, sep='\t', index=False)
-        else:
-            logger.info('Retrieving cached cell info.')
-            df = pd.read_csv(f, sep='\t')
-        return df
-
     def get_cell_info_table(self, input_files_path, file_metadata, dataset_design):
         """
         Args:
@@ -133,6 +106,33 @@ class CellMetadata:
                 The integer index of the field of view in the given sample.
         """
         pass
+
+    def load_cache_file(self):
+        """
+        If not yet cached, creates table of cells from source files listed in the given
+        file manifest, then caches this to file.
+
+        Otherwise, loads directly from the cache file.
+
+        Returns:
+            pandas.DataFrame:
+                The table of cell metadata. The format should be as described by
+                get_metadata.
+        """
+        f = self.cache_location
+        if not exists(f):
+            logger.info('Gathering cell info from files listed in %s', self.file_manifest_file)
+            df = self.get_cell_info_table(
+                self.input_files_path,
+                self.file_metadata,
+                self.dataset_design,
+            )
+            logger.info('Finished gathering info %s cells.', df.shape[0])
+            df.to_csv(f, sep='\t', index=False)
+        else:
+            logger.info('Retrieving cached cell info.')
+            df = pd.read_csv(f, sep='\t')
+        return df
 
     def get_metadata(self, sample_id, fov):
         """

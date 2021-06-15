@@ -62,8 +62,6 @@ def get_integrator(workflow=None, **kwargs):
     """
     Exposes pipeline analysis integrators to scripts or API users.
     """
-    # Consider pushing code like the below OUT of the constructors for the Analyzers etc., and into this "API" module ?
-    # That way the implementation classes do not need to be aware of individual keyword arguments way up at the job generation/deployment level.
     if workflow in workflows:
         DatasetDesign = get_dataset_design(workflow = workflow)
         ComputationalDesign = get_computational_design(worklow = workflow)

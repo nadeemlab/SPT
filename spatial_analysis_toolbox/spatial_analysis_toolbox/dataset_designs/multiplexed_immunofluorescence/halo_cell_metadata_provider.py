@@ -11,6 +11,11 @@ logger = colorized_logger(__name__)
 
 
 class SampleFOVLookup:
+    """
+    A wrapper around indices of sample identifier / field of view pairs. Supports
+    replacing the potentially long string identifiers with integers in certain
+    contexts.
+    """
     def __init__(self):
         self.sample_ids = []
         self.fov_descriptors = {}
@@ -34,10 +39,22 @@ class SampleFOVLookup:
 
 
 class HALOCellMetadata(CellMetadata):
+    """
+    An object to efficiently hold all cell metadata for a large bundle of source
+    files in HALO-exported format.
+    """
     def __init__(self, **kwargs):
         super(HALOCellMetadata, self).__init__(**kwargs)
 
-    def get_cell_info_table(self, cache_location, input_files_path, file_metadata, input_data_design):
+    def get_cell_info_table(self, input_files_path, file_metadata, input_data_design):
+        """
+        Args:
+            input_files_path (str):
+
+            file_metadata (pd.DataFrame):
+            input_data_design:
+
+        """
         if not self.check_data_type(file_metadata):
             return
         d = input_data_design

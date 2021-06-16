@@ -189,3 +189,5 @@ todo_include_todos = False
 
 
 add_module_names = False
+
+autodoc_default_flags = ['members', 'undoc-members', 'private-members', 'inherited-members', 'show-inheritance']

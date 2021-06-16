@@ -11,6 +11,13 @@ class DiffusionDesign(ComputationalDesign):
             complex_phenotypes_file: str=None,
             **kwargs,
         ):
+        """
+        Args:
+            dataset_design:
+                The design object describing the input data set.
+            complex_phenotypes_file (str):
+                The table of composite phenotypes to be considered.            
+        """
         super(ComputationalDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
         self.complex_phenotypes = pd.read_csv(
@@ -22,6 +29,12 @@ class DiffusionDesign(ComputationalDesign):
         return 'diffusion.db'
 
     def get_job_metadata_header(self):
+        """
+        Returns:
+            list:
+                The schema (header / column names) for the metadata related to jobs run
+                as part of the diffusion workflow.
+        """
         return [
             'Input file identifier',
             'Sample ID',
@@ -32,6 +45,12 @@ class DiffusionDesign(ComputationalDesign):
         ]
 
     def get_probabilities_table_header(self):
+        """
+        Returns:
+            list:
+                The schema (header / column names) for the primary output data resulting
+                from the diffusion calculations.
+        """
         return [
             'transition_probability',
             'distance_type',
@@ -41,6 +60,13 @@ class DiffusionDesign(ComputationalDesign):
         ]
 
     def get_all_phenotype_signatures(self):
+        """
+        Returns:
+            list:
+                The "signatures" for all the composite phenotypes described by the
+                complex_phenotypes_file table. Each signature is a dictionary with
+                keys the elementary phenotypes and values either "+" or "-".
+        """
         elementary_signatures = [{name : '+'} for name in self.dataset_design.get_elementary_phenotype_names()]
         complex_signatures = []
         for i, row in self.complex_phenotypes.iterrows():

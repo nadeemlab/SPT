@@ -34,11 +34,31 @@ class DiffusionAnalysisIntegrator:
         dataset_settings: DatasetSettings=None,
         computational_design=None,
     ):
+        """
+        Args:
+            jobs_paths (JobsPaths):
+                Convenience bundle of filesystem paths pertinent to a particular run at the job level.
+            dataset_settings (DatasetSettings):
+                Convenience bundle of paths to input dataset files.
+            computational_design:
+                Design object providing metadata specific to the diffusion pipeline.
+        """
         self.output_path = jobs_paths.output_path
         self.dataset_settings = dataset_settings
         self.computational_design = computational_design
 
     def get_dataframe_from_db(self, table_name):
+        """
+        Retrieves whole dataframe of a given table from the pipeline-specific database.
+
+        Args:
+            table_name (str):
+                Name of table in database furnished by computational design.
+
+        Returns:
+            pandas.DataFrame:
+                The whole table, in dataframe form.
+        """
         if table_name == 'transition_probabilities':
             columns = ['id'] + self.computational_design.get_probabilities_table_header()
         elif table_name == 'job_metadata':
@@ -55,6 +75,24 @@ class DiffusionAnalysisIntegrator:
         return df
 
     def create_bins(self, data, min_value, max_value, steps):
+        """
+        Convenience function to support rasterization of probability distribution known
+        through samples.
+
+        Args:
+            data (list):
+                The samples.
+            min_value (float):
+                Lower cutoff for lowest bin.
+            max_value (float):
+                Upper cutoff for highest bin.
+            steps (int):
+                Number of bins to create.
+
+        Returns:
+            list:
+                The discrete probability density function supported on the ordered bin set.
+        """
         frequencies = [0 for i in range(steps)]
         step = (max_value - min_value ) / steps
         for value in data:
@@ -65,6 +103,20 @@ class DiffusionAnalysisIntegrator:
         return [f/total for f in frequencies]
 
     def guess_round(self, t):
+        """
+        After passing through conversions in multiple systems (e.g. string
+        serialization, saving to a database), exact fixed-precision numbers represented
+        as floats can accumulate small errors. This function guesses the original
+        fixed-precision number.
+
+        Args:
+            t (float):
+                A number very close to a decimal number with few decimals.
+
+        Returns:
+            float:
+                The nearest decimal number with just a few decimals.
+        """
         r = round(t, 3)
         if abs(t - r) < 0.00001:
             return r
@@ -72,9 +124,22 @@ class DiffusionAnalysisIntegrator:
             return t
 
     def camel_case(self, s):
+        """
+        Args:
+            s (str):
+                Possibly snake case string.
+
+        Returns:
+            str:
+                (Almost) camel case version.
+        """
         return re.sub('_', ' ', s[0].upper() + s[1:len(s)].lower())
 
     def calculate(self):
+        """
+        Gathers computed values into different contextual cases, then delegates to
+        ``generate_figures``.
+        """
         probabilities = self.get_dataframe_from_db('transition_probabilities')
         job_metadata = self.get_dataframe_from_db('job_metadata')
         logger.info('probabilities.shape: %s', probabilities.shape)
@@ -104,6 +169,31 @@ class DiffusionAnalysisIntegrator:
         logger.info('Done generating figures.')
 
     def generate_figures(self, marker, distance_type, outcomes_dict, t_values, grouped, ungrouped):
+        """
+        Write figures to file that constrast distributions of computed values across
+        outcome pairs, for a given marker (elementary phenotype) and distance type
+        (underlying point-set metric).
+
+        Args:
+            marker (str):
+                An elementary phenotype name for the phenotype of consideration.
+            distance_type (DistanceTypes):
+                The point-set metric type with respect to which diffusion was
+                calculated.
+            outcomes_dict (dict):
+                The outcome / label assignment dictionary, whose keys are sample
+                identifiers.
+            t_values (list):
+                The ordered list (non-repeating) of possible temporal offset values,
+                those recorded alongside the probability values, denoting the duration
+                of run time for the Markov process.
+            grouped:
+                A version of the "ungrouped" pandas.DataFrame, grouped by sample
+                identifier value.
+            ungrouped:
+                The pandas.DataFrame of recorded transition probability values,
+                pre-restricted to the given marker and distance type.
+        """
         keys = sorted([sample_id for sample_id, df in grouped])
         outcomes = [outcomes_dict[sample_id] if sample_id in outcomes_dict.keys() else 'unknown' for sample_id in keys]
         unique_outcomes = np.unique(outcomes)

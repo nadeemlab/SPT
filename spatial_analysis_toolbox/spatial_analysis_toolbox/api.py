@@ -1,8 +1,8 @@
 """
-This module is intended to provide Python scripts with convenient access to the
-library's pipeline components which are specified by given configuration
-arguments. The functions are used by the ``scripts/*`` programs, which comprise
-the deployed pipelines by default.
+This module is intended to provide Python application scripts with convenient
+access to the library's pipeline components which are specified by given
+configuration arguments. The functions are used by the ``scripts/*`` programs,
+which make up the deployed pipelines by default.
 """
 
 from .environment.settings_wrappers import JobsPaths, DatasetSettings

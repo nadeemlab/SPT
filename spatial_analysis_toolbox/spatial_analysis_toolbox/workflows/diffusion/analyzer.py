@@ -21,6 +21,19 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         regional_compartment: str=None,
         **kwargs,
     ):
+        """
+        Args:
+            dataset_design:
+                The design object describing the input data set.
+            complex_phenotypes_file (str):
+                The table of composite phenotypes to be considered.
+            fov_index (int):
+                The integer index of the field of view to be considered by this job.
+            regional_compartment (str):
+                The regional compartment (in the sense of
+                ``diffusion.job_generator.get_regional_compartments()``) in which
+                reside the cells to be considered by this job.
+        """
         super(DiffusionAnalyzer, self).__init__(**kwargs)
         self.regional_compartment = regional_compartment
 
@@ -72,6 +85,16 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             raise e
 
     def dispatch_diffusion_calculation(self, distance_type, marker):
+        """
+        Delegates the main job calculation to ``diffusion.core``.
+
+        Args:
+            distance_type (DistanceTypes):
+                Type of distance considered as underlying point-set metric for the
+                purposes of the diffusion calculation.
+            marker (str):
+                The elementary phenotype name whose positive cells are to be considered.
+        """
         self.calculator.calculate_diffusion(distance_type, marker)
 
         values = self.calculator.get_values('diffusion kernel')
@@ -91,7 +114,28 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
                 marker=marker,
             )
 
-    def save_transition_probability_values(self, values=None, distance_type_str: str=None, temporal_offset=None, marker:str=None):
+    def save_transition_probability_values(
+        self,
+        values=None,
+        distance_type_str: str=None,
+        temporal_offset=None,
+        marker:str=None,
+    ):
+        """
+        Exports results from ``diffusion.core`` calculation.
+
+        Args:
+            values:
+                List of numeric transition probability values to save.
+            distance_type_str (str):
+                The distance type (point-set metric) for the context in which the values
+                were computed.
+            temporal_offset (float):
+                The time duration for running the Markov chain process.
+            marker (str):
+                The elementary phenotype name for the context in which the values were
+                computed.
+        """
         if temporal_offset is None:
             temporal_offset = 'NULL'
 
@@ -108,6 +152,15 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             m.commit()
 
     def save_job_metadata(self, distance_type):
+        """
+        After a given sub-job (for a particular distance type) is complete, this method
+        saves this completion state and some other information to the job metadata
+        table.
+
+        Args:
+            distance_type (DistanceTypes):
+                The point-set metric type used for the given sub-job.
+        """
         keys = self.computational_design.get_job_metadata_header()
         keys = [re.sub(' ', '_', key) for key in keys]
         values = [

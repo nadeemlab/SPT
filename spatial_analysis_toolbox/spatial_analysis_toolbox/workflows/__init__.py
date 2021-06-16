@@ -1,5 +1,5 @@
 """
-Each of these modules contains the implementation details for one full pipeline, consisting of:
+Each of these subpackages contains the implementation details for one full pipeline, consisting of:
 
 1. A **job generator**. This writes the scripts that will run in the chosen runtime context (High-Performance Computing cluster, local, etc.).
 2. A so-called **analyzer**. This represents one job's worth of computational work.

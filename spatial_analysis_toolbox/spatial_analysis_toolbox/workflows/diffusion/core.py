@@ -3,7 +3,6 @@ import math
 from math import sqrt
 
 import pandas as pd
-
 import numpy as np
 from numpy import exp, abs, zeros, ones, sum, identity, matmul
 from numpy.linalg import norm, LinAlgError

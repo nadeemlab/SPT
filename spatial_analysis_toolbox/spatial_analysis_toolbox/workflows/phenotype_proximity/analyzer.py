@@ -17,6 +17,13 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
         complex_phenotypes_file: str=None,
         **kwargs,
     ):
+        """
+        Args:
+        dataset_design:
+            The design object describing the input data set.
+        complex_phenotypes_file (str):
+            The table of composite phenotypes to be considered.
+        """
         super(PhenotypeProximityAnalyzer, self).__init__(**kwargs)
         self.dataset_design = dataset_design
         self.computational_design = PhenotypeProximityDesign(
@@ -70,7 +77,8 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
     def cell_counts_and_intensity_averages(self):
         """
-        Needs to be refactored based on new indexing aggregation level.
+        (To be deprecated / migrated. Needs to be refactored based on new indexing
+        aggregation level.)
         """
         signatures = self.dataset_design.get_all_phenotype_signatures()
         phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]

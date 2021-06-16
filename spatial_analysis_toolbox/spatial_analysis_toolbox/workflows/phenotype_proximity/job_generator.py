@@ -43,6 +43,14 @@ singularity exec \
         complex_phenotypes_file=None,
         **kwargs,
     ):
+        """
+        Args:
+            elementary_phenotypes_file (str):
+                Tabular file listing phenotypes of consideration. See dataset designs.
+            complex_phenotypes_file (str):
+                Tabular file listing composite phenotypes to consider. See
+                ``phenotype_proximity.computational_design``.
+        """
         super(PhenotypeProximityJobGenerator, self).__init__(**kwargs)
         self.dataset_design = HALOCellMetadataDesign(
             elementary_phenotypes_file,
@@ -98,6 +106,10 @@ singularity exec \
             os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
 
     def initialize_intermediate_database(self):
+        """
+        The phenotype proximity workflow uses a pipeline-specific database to store its
+        intermediate outputs. This method initializes this database's tables.
+        """
         cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
 
         connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))

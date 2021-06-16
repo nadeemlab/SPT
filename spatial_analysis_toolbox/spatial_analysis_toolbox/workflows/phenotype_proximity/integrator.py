@@ -21,12 +21,24 @@ class PhenotypeProximityAnalysisIntegrator:
         dataset_settings: DatasetSettings=None,
         computational_design=None,
     ):
+        """
+        Args:
+            jobs_paths (JobsPaths):
+                Convenience bundle of filesystem paths pertinent to a particular run at the job level.
+            dataset_settings (DatasetSettings):
+                Convenience bundle of paths to input dataset files.
+            computational_design:
+                Design object providing metadata specific to the phenotype proximity pipeline.
+        """
         self.output_path = jobs_paths.output_path
         self.outcomes_file = dataset_settings.outcomes_file
         self.computational_design = computational_design
         self.cell_proximity_tests = None
 
     def calculate(self):
+        """
+        Performs statistical comparison tests and writes results.
+        """
         cell_proximity_tests = self.do_outcome_tests()
         if cell_proximity_tests is not None:
             self.export_results(cell_proximity_tests)
@@ -47,19 +59,6 @@ class PhenotypeProximityAnalysisIntegrator:
 
         The statistical tests are t-test for difference in mean and Kruskal-Wallis test
         for difference in median.
-
-        Also *will* do analogous testing for each
-
-          - pair of outcome values
-          - compartment
-          - phenotype
-
-        Also *will* do analogous testing for each
-
-          - pair of outcome values
-          - compartment
-          - phenotype
-          - elementary phenotype (i.e. intensity type)
         """
         records = []
         df = self.retrieve_radius_limited_counts()
@@ -126,10 +125,19 @@ class PhenotypeProximityAnalysisIntegrator:
         """
         Writes the result of the statistical tests to file, in order of statistical
         significance.
+
+        Args:
+            cell_proximity_tests (pandas.DataFrame):
+                Tabular form of test results.
         """
         cell_proximity_tests.to_csv(join(self.output_path, self.computational_design.get_stats_tests_file()), index=False)
 
     def retrieve_radius_limited_counts(self):
+        """
+        Returns:
+            pandas.DataFrame:
+                Data frame version of all cell pair counts data.
+        """
         connection = sqlite3.connect(join(self.output_path, self.computational_design.get_database_uri()))
         df = pd.read_sql_query('SELECT * FROM cell_pair_counts', connection)
         df = df.rename(columns={key:re.sub('_', ' ', key) for key in df.columns})

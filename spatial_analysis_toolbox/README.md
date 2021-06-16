@@ -1,41 +1,5 @@
 # Documentation for developers
 
-## Library layout
-
-```
-spatial_analysis_toolbox/
-├── api.py
-├── computation_modules
-│   ├── diffusion
-│   │   ├── analyzer.py
-│   │   ├── computational_design.py
-│   │   ├── integrator.py
-│   │   └── job_generator.py
-│   └── phenotype_proximity
-│       ├── analyzer.py
-│       ├── computational_design.py
-│       ├── integrator.py
-│       └── job_generator.py
-├── dataset_designs
-│   └── multiplexed_immunofluorescence
-│       └── design.py
-└── environment
-    ├── computational_design.py
-    ├── configuration.py
-    ├── database_context_utility.py
-    ├── job_generator.py
-    ├── log_formats.py
-    ├── pipeline_design.py
-    └── single_job_analyzer.py
-bin
-├── sat-analyze-results
-├── sat_cell_phenotype_proximity_analysis.py
-├── sat_diffusion_analysis.py
-├── sat_generate_jobs.py
-├── sat-pipeline
-└── sat_print.py
-```
-
 
 ## How to create a new module
 

@@ -22,9 +22,10 @@ class SingleJobAnalyzer:
     initialization (in case this job is first to run) or wrap-up (in case this job
     is last to complete).
 
-    It is assumed that one job corresponds to one input file, and that metadata for
-    this file can be found in the file_metadata table of the database pointed to by
-    get_pipeline_database_uri(). The format of this metadata can be partially
+    It is assumed that one job is associated which exactly one input file (the
+    reverse is not assumed). And, moreover, that metadata for this file can be found
+    in the file_metadata table of the database pointed to by
+    ``get_pipeline_database_uri()``. The format of this metadata can be partially
     gleaned from JobGenerator.
     """
     def __init__(self,
@@ -39,6 +40,36 @@ class SingleJobAnalyzer:
         input_file_identifier: str=None,
         job_index: str=None,
     ):
+        """
+        Args:
+            input_path (str):
+                The directory in which files listed in the file manifest should be
+                located.
+            file_manifest_file (str):
+                The file manifest file, in the format of the specification distributed
+                with the source code of this package.
+            outcomes_file (str):
+                A tabular text file assigning outcome values (in second column) to
+                sample identifiers (first column).
+            job_working_directory (str):
+                This is the directory in which jobs should run. That is, when the job
+                processes query for the current working directory, it should yield this
+                directory.
+            jobs_path (str):
+                The directory in which job script files will be written.
+            logs_path (str):
+                The directory in which log files will be written.
+            schedulers_path (str):
+                The directory in which the scripts which scheduler jobs will be written.
+            output_path (str):
+                The directory in which result tables, images, etc. will be written.
+            input_file_identifier (str):
+                The identifier, as it appears in the file manifest, for the file
+                associated with this job.
+            job_index (str):
+                The string representation of the integer index of this job in the job
+                metadata table.
+        """
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,
@@ -56,18 +87,36 @@ class SingleJobAnalyzer:
         self.pipeline_design = PipelineDesign()
 
     def get_pipeline_database_uri(self):
+        """
+        See ``PipelineDesign.get_database_uri``.
+        """
         return self.pipeline_design.get_database_uri()
 
     def _calculate(self):
+        """
+        Abstract method, the implementation of which is the core/primary computation to
+        be performed by this job.
+        """
         pass
 
     def first_job_started(self):
+        """
+        Abstract method, the implementation of which is the initialization work that is
+        only performed by the first job to run.
+        """
         pass
 
     def start_post_jobs_step(self):
+        """
+        Abstract method, the implementation of which is the wrap-up work that is only
+        performed by the last job to run.
+        """
         pass
 
     def calculate(self):
+        """
+        The main calculation of this job, to be called by pipeline orchestration.
+        """
         self.register_activity(JobActivity.RUNNING)
         self._calculate()
         self.register_activity(JobActivity.COMPLETE)
@@ -79,10 +128,18 @@ class SingleJobAnalyzer:
         self.get_sample_identifier()
 
     def get_job_index(self):
+        """
+        Returns:
+            int:
+                The index of this job in the job metadata table.
+        """
         return self.job_index
 
     @lru_cache(maxsize=1)
     def get_input_filename(self):
+        """
+        Uses the file identifier to lookup and cache the name of the associated file.
+        """
         where_clause = 'Input_file_identifier="' + self.input_file_identifier + '"'
         cmd = 'SELECT File_basename, SHA256 FROM file_metadata WHERE ' + where_clause + ' ;'
         with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
@@ -114,6 +171,9 @@ class SingleJobAnalyzer:
 
     @lru_cache(maxsize=1)
     def get_sample_identifier(self):
+        """
+        Uses the file identifier to lookup and cache the associated sample identifier.
+        """
         where_clause = 'Input_file_identifier="' + self.input_file_identifier + '"'
         cmd = 'SELECT Sample_ID FROM file_metadata WHERE ' + where_clause + ' ;'
         with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
@@ -127,6 +187,11 @@ class SingleJobAnalyzer:
         return sample_identifier
 
     def register_activity(self, state):
+        """
+        Args:
+            state (JobActivity):
+                The updated job state to be advertised in the job metadata table.
+        """
         update_cmd = 'UPDATE job_activity SET Job_status ="' + state.name + '" WHERE id = ' + str(self.get_job_index()) + ' ;'
 
         if state == JobActivity.FAILED:
@@ -138,16 +203,7 @@ class SingleJobAnalyzer:
             job_statuses = {}
             with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
                 m.execute_commit(update_cmd)
-
-            # There is a race-condition-type problem here. Ideally, the above and below would execute on the database at the same time.
-            # As things stand here, the first process to run may not realize it is the first process to run because another
-            # process has intervened between the time that the given one (1) registered its "running" flag, and (2) queried for all "running" flags.
-            #
-            # Currently this is not a very important problem, because all examples of first_job_started implementations do no
-            # important work (just logging).
-
-            with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-                result = m.execute_commit('SELECT id, Job_status FROM job_activity ;')
+                result = m.execute_commit('SELECT id, Job_status FROM job_activity ;')  # There is a potential race-condition style bug here. The database will be unlocked at the end of execution of the line above this one, leaving a fraction of time during which another process may update job statuses before this process initiates/completes its query for job statuses. What is needed is an explicit lock function, to be lifted after this line's call.
                 job_statuses = {item[0] : item[1] for item in result}
 
             number_not_started = len([status for index, status in job_statuses.items() if JobActivity[status] == JobActivity.NOT_STARTED])

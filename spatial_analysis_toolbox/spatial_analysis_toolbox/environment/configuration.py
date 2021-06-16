@@ -18,7 +18,7 @@ config_filename = '.sat_pipeline.config'
 
 class WorkflowModules:
     """
-    A wrapper object for implementation classes comprising a workflow definition.
+    A wrapper object in which to list implementation classes comprising a workflow definition.
     """
     def __init__(self, generator=None, dataset_design=None, computational_design=None, analyzer=None, integrator=None):
         self.generator = generator

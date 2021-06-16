@@ -49,6 +49,14 @@ singularity exec \
         complex_phenotypes_file: str=None,
         **kwargs,
     ):
+        """
+        Args:
+            elementary_phenotypes_file (str):
+                Tabular file listing phenotypes of consideration. See dataset designs.
+            complex_phenotypes_file (str):
+                Tabular file listing composite phenotypes to consider. See
+                ``diffusion.computational_design``.
+        """
         super(DiffusionJobGenerator, self).__init__(**kwargs)
         self.dataset_design = HALOCellMetadataDesign(
             elementary_phenotypes_file,
@@ -107,6 +115,10 @@ singularity exec \
         logger.debug('Average size of job arrays is %s.', str(average))
 
     def initialize_intermediate_database(self):
+        """
+        The diffusion workflow uses a pipeline-specific database to store its
+        intermediate outputs. This method initializes this database's tables.
+        """
         probabilities_header = self.computational_design.get_probabilities_table_header()
 
         connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))
@@ -144,6 +156,13 @@ singularity exec \
         connection.close()
 
     def generate_array_of_jobs(self, file_id):
+        """
+        Generates all the jobs, one for each field of view, for the indicated file.
+
+        Args:
+            file_id (str):
+                Input file identifier, as it would appear in the file manifest file.
+        """
         job_working_directory = self.jobs_paths.job_working_directory
         input_file_identifier = file_id
         number_fovs = self.number_fovs[input_file_identifier]
@@ -194,9 +213,6 @@ singularity exec \
 
                 self.number_arrays_of_jobs += 1
 
-    def space_quote(self, s):
-        return re.sub(' ', r'\\ ', s)
-
     def generate_scheduler_scripts(self):
         for rc in self.get_regional_compartments():
             if rc == 'nontumor':
@@ -217,12 +233,11 @@ singularity exec \
                 logger.info('Wrote %s, which schedules %s jobs locally.', script_name, str(num_rows))
 
 
-def cut_by_header(input_filename, delimiter=',', column: str = None):
+def cut_by_header(input_filename, delimiter=',', column: str=None):
     """
-    This function attempts to emulate the speed and function of the
-    UNIX-style "cut" command. In the end the fastest implementation for me
-    was to use Pandas to read the whole table into memory, which doesn't
-    seem optimal.
+    This function attempts to emulate the speed and function of the UNIX-style
+    ``cut`` command for a single field. The implementation here uses Pandas to read
+    the whole table into memory; a future implementation may avert this.
 
     Args:
         input_filename (str):

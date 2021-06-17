@@ -2,9 +2,9 @@
 import os
 import configparser
 
-from spatial_analysis_toolbox.api import get_design, get_integrator
-from spatial_analysis_toolbox.environment.configuration import get_config_parameters_from_file
-from spatial_analysis_toolbox.environment.log_formats import colorized_logger
+from spatial_profiling_toolbox.api import get_design, get_integrator
+from spatial_profiling_toolbox.environment.configuration import get_config_parameters_from_file
+from spatial_profiling_toolbox.environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

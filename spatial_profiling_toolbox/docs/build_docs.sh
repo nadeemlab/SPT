@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sphinx-apidoc -M --implicit-namespaces -e -f -d1 ../spatial_analysis_toolbox -o . && \
+sphinx-apidoc -M --implicit-namespaces -e -f -d1 ../spatial_profiling_toolbox -o . && \
  rm modules.rst && \
  sed -z -i 's/Submodules\n----------//g' *.rst  && \
  sed -z -i 's/Subpackages\n-----------//g' *.rst  && \

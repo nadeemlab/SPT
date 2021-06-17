@@ -10,10 +10,10 @@ import re
 import numpy as np
 import pandas as pd
 
-import spatial_analysis_toolbox
-from spatial_analysis_toolbox.api import get_analyzer
-from spatial_analysis_toolbox.environment.configuration import get_config_parameters_from_file
-from spatial_analysis_toolbox.environment.log_formats import colorized_logger
+import spatial_profiling_toolbox
+from spatial_profiling_toolbox.api import get_analyzer
+from spatial_profiling_toolbox.environment.configuration import get_config_parameters_from_file
+from spatial_profiling_toolbox.environment.log_formats import colorized_logger
 
 if __name__=='__main__':
     logger = colorized_logger(__name__)

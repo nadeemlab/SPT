@@ -21,12 +21,12 @@ If you find that a large piece of what you need to implement is already present 
 If you experiment with the code locally, you can run the integration tests
 
 ```
-cd spatial_analysis_toolbox/tests/
+cd spatial_profiling_toolbox/tests/
 ./test_diffusion_pipeline.sh
 ```
 
 ```
-cd spatial_analysis_toolbox/tests/
+cd spatial_profiling_toolbox/tests/
 ./test_proximity_pipeline.sh
 ```
 

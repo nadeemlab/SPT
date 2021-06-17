@@ -11,11 +11,11 @@ import configparser
 
 import pandas as pd
 
-import spatial_analysis_toolbox
-from spatial_analysis_toolbox.api import get_job_generator
-from spatial_analysis_toolbox.environment.configuration import workflows, config_filename  # use __init__.py system to expose these through api
-from spatial_analysis_toolbox.environment.log_formats import colorized_logger
-from spatial_analysis_toolbox.environment.configuration import get_config_parameters_from_file, write_config_parameters_to_file
+import spatial_profiling_toolbox
+from spatial_profiling_toolbox.api import get_job_generator
+from spatial_profiling_toolbox.environment.configuration import workflows, config_filename  # use __init__.py system to expose these through api
+from spatial_profiling_toolbox.environment.log_formats import colorized_logger
+from spatial_profiling_toolbox.environment.configuration import get_config_parameters_from_file, write_config_parameters_to_file
 
 def get_config_parameters_from_cli():
     parser = argparse.ArgumentParser(

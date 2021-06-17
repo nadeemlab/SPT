@@ -44,7 +44,7 @@ def colorized_logger(name):
     Returns:
         The logger.
     """
-    logger = logging.getLogger(re.sub('^spatial_analysis_toolbox\.', '', name))
+    logger = logging.getLogger(re.sub('^spatial_profiling_toolbox\.', '', name))
     if DEBUG:
         level = logging.DEBUG
     else:

@@ -2,7 +2,7 @@ BootStrap: library
 From: ubuntu:20.04
 
 %setup
-    cp -R $PWD/../spatial_analysis_toolbox ${SINGULARITY_ROOTFS}/opt
+    cp -R $PWD/../spatial_profiling_toolbox ${SINGULARITY_ROOTFS}/opt
 
 %post
     apt-get -y update
@@ -14,7 +14,7 @@ From: ubuntu:20.04
 
     python3 -m pip install numpy
     python3 -m pip install Cython
-    python3 -m pip install /opt/spatial_analysis_toolbox
+    python3 -m pip install /opt/spatial_profiling_toolbox
     export DEBUG=1
 
 %environment

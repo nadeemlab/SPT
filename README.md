@@ -1,5 +1,5 @@
 
-The `spatial_analysis_toolbox` (SAT) is:
+The `spatial_profiling_toolbox` (SAT) is:
   - a collection of modules that do image analysis computation in the context of histopathology, together with
   - a lightweight framework for deployment of a pipeline comprised of these modules in different runtime contexts (e.g. a High-Performance Cluster or on a single machine).
 
@@ -15,7 +15,7 @@ The `spatial_analysis_toolbox` (SAT) is:
 Clone the repository, and install the Python package with `pip`:
 
 ```
-pip install spatial_analysis_toolbox/
+pip install spatial_profiling_toolbox/
 ```
 
 (You may need to install `numpy` and `cython` separately, according to the [installation instructions for Python OT](https://pythonot.github.io/#installation).)
@@ -32,7 +32,7 @@ If you are doing computations with lots of data, the whole pipeline might take h
 
 You can test if basic functionality works in your environment by running local tests:
 ```bash
-cd spatial_analysis_toolbox/tests
+cd spatial_profiling_toolbox/tests
 ./test_proximity_pipeline.sh
 ```
 A spreadsheet would be created in `output/` with some statistical test results on example data.
@@ -43,4 +43,4 @@ Some of the utilities depend on a Linux/Unix/macOS environment.
 
 # Customization
 
-See [Documentation for developers](spatial_analysis_toolbox/README.md).
+See [Documentation for developers](spatial_profiling_toolbox/README.md).

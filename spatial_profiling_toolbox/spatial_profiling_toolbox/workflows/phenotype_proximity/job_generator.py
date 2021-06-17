@@ -78,6 +78,7 @@ singularity exec \
             log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
 
             contents = PhenotypeProximityJobGenerator.lsf_template
+            contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
             contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
             contents = re.sub('{{job_name}}', '"' + job_name + '"', contents)
             contents = re.sub('{{log_filename}}', log_filename, contents)

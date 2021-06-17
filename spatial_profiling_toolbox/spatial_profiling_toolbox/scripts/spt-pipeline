@@ -219,6 +219,7 @@ echo -e "$cr$yellow$prompt_str$reset$green$START_IMMEDIATELY$reset"
 
 JOBS_PATH='jobs'
 if [[ ! -d $JOBS_PATH ]] ;
+then
     mkdir $JOBS_PATH
 fi
 JOBS_PATH=$(abspath $JOBS_PATH)

@@ -68,7 +68,7 @@ class WaitingDatabaseContextManager:
                 break
             except sqlite3.OperationalError as e:
                 if str(e) == 'database is locked':
-                    logger.debug('Database was locked, waiting %s seconds.', self.seconds)
+                    logger.debug('Database %s was locked, waiting %s seconds to retry: %s', self.uri, self.seconds, cmd)
                     time.sleep(self.seconds)
                 else:
                     raise e

@@ -20,7 +20,7 @@ pip install spatial_profiling_toolbox/
 
 (You may need to install `numpy` and `cython` separately, according to the [installation instructions for Python OT](https://pythonot.github.io/#installation).)
 
-Then run `sat-pipeline` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as [Platfrom LSF (Load Sharing Facility)](https://www.ibm.com/products/hpc-workload-management) jobs. In the LSF case, you must first build the library into a Singularity container by running
+Then run `spt-pipeline` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as [Platfrom LSF (Load Sharing Facility)](https://www.ibm.com/products/hpc-workload-management) jobs. In the LSF case, you must first build the library into a Singularity container by running
 
 ```bash
 cd building && ./build_singularity_container.sh
@@ -28,7 +28,7 @@ cd building && ./build_singularity_container.sh
 
 and moving the container, `sat.sif`, to an area accessible to the nodes in your cluster.
 
-If you are doing computations with lots of data, the whole pipeline might take hours to complete. If you wish to see final results based on partially-complete intermediate data, use `sat-analyze-results`.
+If you are doing computations with lots of data, the whole pipeline might take hours to complete. If you wish to see final results based on partially-complete intermediate data, use `spt-analyze-results`.
 
 You can test if basic functionality works in your environment by running local tests:
 ```bash

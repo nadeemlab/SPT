@@ -22,7 +22,7 @@ if __name__=='__main__':
         description = ''.join([
             'This program does calculations with multiplexed IF images. ',
             'It is formulated as a script so that it can be run as part of large HPC batches. '
-            'It generally needs to be run as part of sat-pipeline, to ensure proper initialization.',
+            'It generally needs to be run as part of spt-pipeline, to ensure proper initialization.',
         ])
     )
     parser.add_argument('--input-file-identifier',

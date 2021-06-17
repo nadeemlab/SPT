@@ -33,8 +33,8 @@ setuptools.setup(
     ],
     python_requires='>=3.7',
     scripts=[
-        'spatial_profiling_toolbox/scripts/sat-pipeline',
-        'spatial_profiling_toolbox/scripts/sat-analyze-results',
+        'spatial_profiling_toolbox/scripts/spt-pipeline',
+        'spatial_profiling_toolbox/scripts/spt-analyze-results',
         'spatial_profiling_toolbox/scripts/spt_generate_jobs.py',
         'spatial_profiling_toolbox/scripts/spt_diffusion_analysis.py',
         'spatial_profiling_toolbox/scripts/spt_cell_phenotype_proximity_analysis.py',

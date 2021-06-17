@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-``sat-pipeline`` is an interactive dialog to solicit configuration parameters for
+``spt-pipeline`` is an interactive dialog to solicit configuration parameters for
 a run of the spatial analysis toolbox pipeline. The jobs are then generated
 and scheduled or run.
 

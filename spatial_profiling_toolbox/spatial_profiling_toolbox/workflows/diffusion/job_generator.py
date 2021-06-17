@@ -32,7 +32,7 @@ singularity exec \
  {{cli_call}} \
  > {{log_filename}} 2>&1
 '''
-    cli_call_template = '''sat_diffusion_analysis.py \
+    cli_call_template = '''spt_diffusion_analysis.py \
  --input-file-identifier {{input_file_identifier}} \
  --fov {{fov_index}} \
  --regional-compartment {{regional_compartment}} \

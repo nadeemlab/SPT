@@ -35,10 +35,10 @@ setuptools.setup(
     scripts=[
         'spatial_profiling_toolbox/scripts/sat-pipeline',
         'spatial_profiling_toolbox/scripts/sat-analyze-results',
-        'spatial_profiling_toolbox/scripts/sat_generate_jobs.py',
-        'spatial_profiling_toolbox/scripts/sat_diffusion_analysis.py',
-        'spatial_profiling_toolbox/scripts/sat_cell_phenotype_proximity_analysis.py',
-        'spatial_profiling_toolbox/scripts/sat_print.py',
+        'spatial_profiling_toolbox/scripts/spt_generate_jobs.py',
+        'spatial_profiling_toolbox/scripts/spt_diffusion_analysis.py',
+        'spatial_profiling_toolbox/scripts/spt_cell_phenotype_proximity_analysis.py',
+        'spatial_profiling_toolbox/scripts/spt_print.py',
     ],
     install_requires=requirements,
 )

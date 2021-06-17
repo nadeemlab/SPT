@@ -13,7 +13,7 @@ from ..workflows.phenotype_proximity.computational_design import PhenotypeProxim
 from ..workflows.phenotype_proximity.analyzer import PhenotypeProximityAnalyzer
 from ..workflows.phenotype_proximity.integrator import PhenotypeProximityAnalysisIntegrator
 
-config_filename = '.sat_pipeline.config'
+config_filename = '.spt_pipeline.config'
 
 
 class WorkflowModules:

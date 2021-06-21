@@ -90,9 +90,9 @@ class HALOCellMetadataDesign:
                 columns pertain to the given phenotype.
         """
         e = self.elementary_phenotypes
-        row = e.loc[e['Name'] == phenotype_name]
+        row = e.loc[e['Name'] == phenotype_name].squeeze()
         value = row[metadata_file_column]
-        return value
+        return str(value)
 
     def get_cellular_sites(self):
         """

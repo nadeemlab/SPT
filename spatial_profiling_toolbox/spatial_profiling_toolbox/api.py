@@ -70,7 +70,7 @@ def get_integrator(workflow=None, **kwargs):
     """
     if workflow in workflows:
         DatasetDesign = get_dataset_design(workflow = workflow)
-        ComputationalDesign = get_computational_design(worklow = workflow)
+        ComputationalDesign = get_computational_design(workflow = workflow)
         Integrator = workflows[workflow].integrator
         return Integrator(
             jobs_paths = JobsPaths(

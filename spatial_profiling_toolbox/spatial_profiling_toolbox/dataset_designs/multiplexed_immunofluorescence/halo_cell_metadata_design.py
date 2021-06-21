@@ -91,7 +91,7 @@ class HALOCellMetadataDesign:
         """
         e = self.elementary_phenotypes
         row = e.loc[e['Name'] == phenotype_name]
-        row[metadata_file_column]
+        value = row[metadata_file_column]
         return value
 
     def get_cellular_sites(self):

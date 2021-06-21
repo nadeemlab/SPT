@@ -224,6 +224,13 @@ then
 fi
 JOBS_PATH=$(abspath $JOBS_PATH)
 
+LOGS_PATH='logs'
+if [[ ! -d $LOGS_PATH ]] ;
+then
+    mkdir $LOGS_PATH
+fi
+LOGS_PATH=$(abspath $LOGS_PATH)
+
 SCHEDULERS_PATH='./'
 SCHEDULERS_PATH=$(abspath $SCHEDULERS_PATH)
 
@@ -237,6 +244,7 @@ spt_generate_jobs.py \
     --outcomes-file $OUTCOMES_FILE \
     --output-path $OUTPUT_PATH \
     --jobs-path $JOBS_PATH \
+    --logs-path $LOGS_PATH \
     --schedulers-path $SCHEDULERS_PATH \
     --file-manifest $FILE_MANIFEST \
     --runtime-platform $RUN_PLATFORM \

@@ -75,21 +75,24 @@ class HALOCellMetadataDesign:
         ymax = 'YMax'
         return [xmin, xmax, ymin, ymax]
 
-    def get_dye_number(self, phenotype_name):
+    def get_indicator_prefix(self, phenotype_name, metadata_file_column='Column header fragment prefix'):
         """
         Args:
             phenotype_name (str):
                 One of the elementary phenotype names.
+            metadata_file_column (str):
+                The name of the column of the elementary phenotypes metadata file to
+                search through.
 
         Returns:
             str:
-                The "Dye --" prefix which appears in many CSV column names, for which
-                these columns pertain to the given phenotype.
+                The prefix which appears in many CSV column names, for which these
+                columns pertain to the given phenotype.
         """
         e = self.elementary_phenotypes
         row = e.loc[e['Name'] == phenotype_name]
-        value = int(row['Dye number'])
-        return 'Dye ' + str(value)
+        value = int(row[metadata_file_column])
+        return str(value)
 
     def get_cellular_sites(self):
         """
@@ -114,7 +117,7 @@ class HALOCellMetadataDesign:
         for site in sites:
             for e in sorted(list(self.elementary_phenotypes['Name'])):
                 parts = []
-                prefix = self.get_dye_number(e)
+                prefix = self.get_indicator_prefix(e)
                 infix = site
                 suffix = 'Intensity'
                 if site == '':
@@ -205,7 +208,7 @@ class HALOCellMetadataDesign:
                 If the key is not a phenotype name, then the key is returned unchanged.
         """
         if key in self.get_elementary_phenotype_names():
-            return self.get_dye_number(key) + ' Positive'
+            return self.get_indicator_prefix(key) + ' Positive'
         else:
             return key
 
@@ -302,7 +305,7 @@ class HALOCellMetadataDesign:
                 A list representation of the sum of the columns containing the
                 intensities at each cellular site for the given phenotype.
         """
-        prefix = self.get_dye_number(elementary_phenotype)
+        prefix = self.get_indicator_prefix(elementary_phenotype)
         suffixes = [site + ' Intensity' for site in self.get_cellular_sites()]
         feature = [' '.join([prefix, suffix]) for suffix in suffixes]
         return list(df[feature[0]] + df[feature[1]] + df[feature[2]])

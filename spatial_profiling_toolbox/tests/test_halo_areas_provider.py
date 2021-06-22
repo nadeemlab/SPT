@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import spatial_profiling_toolbox
-from spatial_profiling_toolbox.dataset_designs.multiplexed_immunofluorescence.halo_areas_provider import HALORegionalAreas
 from spatial_profiling_toolbox.dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
 
 def shorten(string):
@@ -14,7 +13,7 @@ def test_halo_areas_provider():
     dataset_design = HALOCellMetadataDesign(
         elementary_phenotypes_file = 'data/elementary_phenotypes.csv',
     )
-    areas = HALORegionalAreas(
+    areas = dataset_design.areas_provider(
         dataset_design=dataset_design,
         filename_lookup=(lambda x: 'data/example_areas_file.csv'),
     )

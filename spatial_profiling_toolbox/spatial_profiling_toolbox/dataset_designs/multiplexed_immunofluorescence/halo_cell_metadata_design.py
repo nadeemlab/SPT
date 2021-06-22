@@ -3,6 +3,7 @@ from os.path import join
 
 import pandas as pd
 
+from .halo_areas_provider import HALORegionalAreasProvider
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -31,6 +32,7 @@ class HALOCellMetadataDesign:
             keep_default_na=False,
         )
         self.compartments = ['Non-Tumor', 'Tumor']
+        self.areas_provider = HALORegionalAreasProvider
 
     def get_FOV_column(self):
         """
@@ -51,6 +53,12 @@ class HALOCellMetadataDesign:
                 appearing in some field of view of some sample.
         """
         return 'Regional areas file'
+
+    def get_cell_manifest_descriptor(self):
+        return 'HALO software cell manifest'
+
+    def get_regional_areas_table_descriptor(self):
+        return 'HALO software regional/compartment areas'
 
     def get_compartments(self):
         """

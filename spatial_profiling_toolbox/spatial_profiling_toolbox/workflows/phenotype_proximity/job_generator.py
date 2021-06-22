@@ -71,40 +71,41 @@ singularity exec \
         job_working_directory = self.jobs_paths.job_working_directory
 
         for i, row in self.file_metadata.iterrows():
-            file_id = row['File ID']
+            if row['Data type'] == self.dataset_design.get_cell_manifest_descriptor():
+                file_id = row['File ID']
 
-            job_index = self.register_job_existence()
-            job_name = 'cell_proximity_' + str(job_index)
-            log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
+                job_index = self.register_job_existence()
+                job_name = 'cell_proximity_' + str(job_index)
+                log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
 
-            contents = PhenotypeProximityJobGenerator.lsf_template
-            contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
-            contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
-            contents = re.sub('{{job_name}}', '"' + job_name + '"', contents)
-            contents = re.sub('{{log_filename}}', log_filename, contents)
-            contents = re.sub('{{control_node_hostname}}', PhenotypeProximityJobGenerator.control_node_hostnames['MSK medical physics cluster'], contents)
-            contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
-            bsub_job = contents
+                contents = PhenotypeProximityJobGenerator.lsf_template
+                contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
+                contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
+                contents = re.sub('{{job_name}}', '"' + job_name + '"', contents)
+                contents = re.sub('{{log_filename}}', log_filename, contents)
+                contents = re.sub('{{control_node_hostname}}', PhenotypeProximityJobGenerator.control_node_hostnames['MSK medical physics cluster'], contents)
+                contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
+                bsub_job = contents
 
-            contents = PhenotypeProximityJobGenerator.cli_call_template
-            contents = re.sub('{{input_file_identifier}}', file_id, contents)
-            contents = re.sub('{{job_index}}', str(job_index), contents)
-            cli_call = contents
+                contents = PhenotypeProximityJobGenerator.cli_call_template
+                contents = re.sub('{{input_file_identifier}}', file_id, contents)
+                contents = re.sub('{{job_index}}', str(job_index), contents)
+                cli_call = contents
 
-            bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
+                bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
 
-            lsf_job_filename = join(self.jobs_paths.jobs_path, job_name + '.lsf')
-            self.lsf_job_filenames.append(lsf_job_filename)
-            with open(lsf_job_filename, 'w') as file:
-                file.write(bsub_job)
+                lsf_job_filename = join(self.jobs_paths.jobs_path, job_name + '.lsf')
+                self.lsf_job_filenames.append(lsf_job_filename)
+                with open(lsf_job_filename, 'w') as file:
+                    file.write(bsub_job)
 
-            sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
-            self.sh_job_filenames.append(sh_job_filename)
-            with open(sh_job_filename, 'w') as file:
-                file.write(cli_call)
+                sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
+                self.sh_job_filenames.append(sh_job_filename)
+                with open(sh_job_filename, 'w') as file:
+                    file.write(cli_call)
 
-            st = os.stat(sh_job_filename)
-            os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
+                st = os.stat(sh_job_filename)
+                os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
 
     def initialize_intermediate_database(self):
         """

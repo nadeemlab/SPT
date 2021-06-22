@@ -7,7 +7,7 @@ from ...environment.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class HALORegionalAreas:
+class HALORegionalAreasProvider:
     def __init__(
         self,
         dataset_design=None,

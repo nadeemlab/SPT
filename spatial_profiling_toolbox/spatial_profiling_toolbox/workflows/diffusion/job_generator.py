@@ -88,18 +88,19 @@ singularity exec \
 
         number_files = self.file_metadata.shape[0]
         for i, row in self.file_metadata.iterrows():
-            file_id = row['File ID']
-            if file_id in file_metadata.index:
-                n = file_metadata.loc[file_id]['number of FOVs']
-                self.number_fovs[file_id] = n
-                logger.debug('Using cached info about file %s / %s  ... %s', str(i+1), str(number_files), file_id)
-            else:
-                filename = row['File name']
-                fovs = cut_by_header(join(self.dataset_settings.input_path, filename), column=self.dataset_design.get_FOV_column())
-                n = len(sorted(list(set(fovs))))
-                self.number_fovs[file_id] = n
-                file_metadata.loc[file_id] = {'number of FOVs' : str(n)}
-                logger.debug('Gathered input info from file %s / %s  ... %s', str(i+1), str(number_files), file_id)
+            if row['Data type'] == self.dataset_design.get_cell_manifest_descriptor():
+                file_id = row['File ID']
+                if file_id in file_metadata.index:
+                    n = file_metadata.loc[file_id]['number of FOVs']
+                    self.number_fovs[file_id] = n
+                    logger.debug('Using cached info about file %s / %s  ... %s', str(i+1), str(number_files), file_id)
+                else:
+                    filename = row['File name']
+                    fovs = cut_by_header(join(self.dataset_settings.input_path, filename), column=self.dataset_design.get_FOV_column())
+                    n = len(sorted(list(set(fovs))))
+                    self.number_fovs[file_id] = n
+                    file_metadata.loc[file_id] = {'number of FOVs' : str(n)}
+                    logger.debug('Gathered input info from file %s / %s  ... %s', str(i+1), str(number_files), file_id)
 
         file_metadata.to_csv(cache_filename, sep='\t')
 
@@ -107,8 +108,9 @@ singularity exec \
         self.number_arrays_of_jobs = 0
         self.initialize_intermediate_database()
         for i, row in self.file_metadata.iterrows():
-            file_id = row['File ID']
-            self.generate_array_of_jobs(file_id)
+            if row['Data type'] == self.dataset_design.get_cell_manifest_descriptor():
+                file_id = row['File ID']
+                self.generate_array_of_jobs(file_id)
         logger.info('%s input files considered.', str(self.file_metadata.shape[0]))
         logger.info('%s (arrays of) job scripts generated, written to dir %s', str(self.number_arrays_of_jobs), self.jobs_paths.jobs_path)
         average = sum(self.number_fovs.values()) / len(self.number_fovs)

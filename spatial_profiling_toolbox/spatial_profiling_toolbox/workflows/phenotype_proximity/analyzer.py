@@ -33,6 +33,10 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()
+        self.areas = dataset_design.areas_provider(
+            dataset_design=dataset_design,
+            filename_lookup=self.get_input_filename_by_identifier,
+        )
 
         self.calculator = PhenotypeProximityCalculator(
             input_filename = self.get_input_filename(),
@@ -45,7 +49,7 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
     def first_job_started(self):
         logger.info(
-            'Beginning multiplexed immunofluorescence cell propinquity analysis.'
+            'Beginning multiplexed immunofluorescence cell proximity analysis.'
         )
         logger.info(
             'Using multiple pixel distance thresholds: %s',

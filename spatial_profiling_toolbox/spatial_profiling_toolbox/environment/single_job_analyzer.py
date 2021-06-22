@@ -141,7 +141,7 @@ class SingleJobAnalyzer:
         See ``get_input_filename_by_identifier``. Applied to this job's specific
         ``input_file_identifier``.
         """
-        return get_input_filename_by_identifier(self.input_file_identifier)
+        return self.get_input_filename_by_identifier(self.input_file_identifier)
 
     def get_input_filename_by_identifier(self, input_file_identifier):
         """

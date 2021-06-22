@@ -52,18 +52,22 @@ class HALORegionalAreasProvider:
                 area = float(row[column])
                 self.areas[(fov, compartment)] = area
 
-    def get_area(self, fov: str=None, compartment: str=None):
-        return self.areas[(fov, compartment)]
-
     def get_units(self, compartment: str=None):
         return self.units[compartment]
 
     def get_fov_compartments(self):
         return sorted(list(self.areas.keys()))
 
+    def get_area(self, fov: str=None, compartment: str=None):
+        if not (fov, compartment) in self.areas:
+            return None
+        return self.areas[(fov, compartment)]
+
     def get_total_compartmental_area(self, fov: str=None):
         accumulator = 0
         for [variable_fov, compartment], value in self.areas.items():
             if fov == variable_fov:
                 accumulator += value
+        if accumulator == 0:
+            return None
         return accumulator

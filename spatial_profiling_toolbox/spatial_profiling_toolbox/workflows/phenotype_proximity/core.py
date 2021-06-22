@@ -301,6 +301,13 @@ class PhenotypeProximityCalculator:
                     area = self.areas.get_total_compartmental_area(fov=fov)
                 else:
                     area = self.areas.get_area(fov=fov, compartment=compartment)
+                if area is None:
+                    logger.warning(
+                        'Did not find area for "%s" compartment in field of view "%s". Skipping sample %s.',
+                        compartment,
+                        fov,
+                        sample_identifier,
+                    )
                 records.append([sample_identifier, outcomes_dict[sample_identifier], source, target, compartment, radius, count / area])
 
         return records

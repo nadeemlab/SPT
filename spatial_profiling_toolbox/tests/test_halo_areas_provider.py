@@ -15,7 +15,7 @@ def test_halo_areas_provider():
     )
     areas = dataset_design.areas_provider(
         dataset_design=dataset_design,
-        filename_lookup=(lambda x: 'data/example_areas_file.csv'),
+        regional_areas_file='data/example_areas_file.csv',
     )
     print('FOV                            Compartment          Area       Units')
     print('--------------------------------------------------------------------')

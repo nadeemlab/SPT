@@ -31,6 +31,7 @@ class PhenotypeProximityCalculator:
         dataset_settings: DatasetSettings=None,
         dataset_design=None,
         computational_design=None,
+        regional_areas_file: str=None,
     ):
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
@@ -38,6 +39,10 @@ class PhenotypeProximityCalculator:
         self.outcomes_file = dataset_settings.outcomes_file
         self.dataset_design = dataset_design
         self.computational_design = computational_design
+        self.areas = dataset_design.areas_provider(
+            dataset_design=dataset_design,
+            regional_areas_file=regional_areas_file,
+        )
 
     def calculate_proximity(self):
         outcomes_dict = self.pull_in_outcome_data()
@@ -92,6 +97,13 @@ class PhenotypeProximityCalculator:
         number_fovs = 0
         filename = self.input_filename
         df_file = pd.read_csv(filename)
+
+        # Cache original FOV strings
+        self.fov_lookup = {}
+        col = self.dataset_design.get_FOV_column()
+        fovs = sorted(list(set(df_file[col])))
+        for i, fov in enumerate(fovs):
+            self.fov_lookup[i] = fov
 
         # Replace original FOV string descriptor with index
         col = self.dataset_design.get_FOV_column()
@@ -266,6 +278,9 @@ class PhenotypeProximityCalculator:
         return radius_limited_counts
 
     def do_aggregation_one_phenotype_pair(self, pair, cell_pairs, outcomes_dict, phenotype_indices, compartment_indices):
+        """
+        Now, normalized by compartment area.
+        """
         source, target = sorted(list(pair))
         records = []
         sample_identifier = self.sample_identifier # Need to refactor the below to explicitly involve 1 source file
@@ -273,7 +288,6 @@ class PhenotypeProximityCalculator:
             for radius in self.get_radii_of_interest():
                 count = 0
                 for (source_filename, fov_index), distance_matrix in cell_pairs.items():
-                    outcome = outcomes_dict[sample_identifier]
                     rows = phenotype_indices[(source_filename, fov_index)][source]
                     cols = phenotype_indices[(source_filename, fov_index)][target]
                     if compartment != 'all':
@@ -281,8 +295,13 @@ class PhenotypeProximityCalculator:
                         cols = cols.intersection(compartment_indices[(source_filename, fov_index)][compartment])
                     p2p_distance_matrix = distance_matrix.toarray()[rows][:, cols]
                     count += np.sum( (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0) )
-                number_fovs = len(cell_pairs)
-                records.append([sample_identifier, outcome, source, target, compartment, radius, count / number_fovs])
+
+                fov = self.fov_lookup[fov_index]
+                if compartment == 'all':
+                    area = self.areas.get_total_compartmental_area(fov=fov)
+                else:
+                    area = self.areas.get_area(fov=fov, compartment=compartment)
+                records.append([sample_identifier, outcomes_dict[sample_identifier], source, target, compartment, radius, count / area])
 
         return records
 

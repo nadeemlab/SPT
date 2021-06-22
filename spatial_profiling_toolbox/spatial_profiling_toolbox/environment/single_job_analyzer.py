@@ -182,7 +182,7 @@ class SingleJobAnalyzer:
             sha256 = sha.hexdigest()
 
             if sha256 != expected_sha256:
-                logger.error('File "%s" has wrong SHA256 hash.', self.input_file_identifier)
+                logger.error('File "%s" has wrong SHA256 hash (%s ; expected %s).', input_file_identifier, sha256, expected_sha256)
             return input_file
 
     @lru_cache(maxsize=1)

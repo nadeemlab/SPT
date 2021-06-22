@@ -11,12 +11,10 @@ class HALORegionalAreasProvider:
     def __init__(
         self,
         dataset_design=None,
-        filename_lookup: (lambda x:None)=None,
+        regional_areas_file: str=None,
     ):
         self.dataset_design = dataset_design
-        file_identifier = dataset_design.get_regional_areas_file_identifier()
-        file = filename_lookup(file_identifier)
-        self.load_regional_areas(file)
+        self.load_regional_areas(regional_areas_file)
 
     def load_regional_areas(self, file):
         df = pd.read_csv(file)
@@ -54,18 +52,18 @@ class HALORegionalAreasProvider:
                 area = float(row[column])
                 self.areas[(fov, compartment)] = area
 
-    def get_area(
-        self,
-        fov: str=None,
-        compartment: str=None,
-    ):
+    def get_area(self, fov: str=None, compartment: str=None):
         return self.areas[(fov, compartment)]
 
-    def get_units(
-        self,
-        compartment: str=None,
-    ):
+    def get_units(self, compartment: str=None):
         return self.units[compartment]
 
     def get_fov_compartments(self):
         return sorted(list(self.areas.keys()))
+
+    def get_total_compartmental_area(self, fov: str=None):
+        accumulator = 0
+        for [variable_fov, compartment], value in self.areas.items():
+            if fov == variable_fov:
+                accumulator += value
+        return accumulator

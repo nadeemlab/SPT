@@ -45,6 +45,8 @@ class HALORegionalAreasProvider:
         for column, [compartment, units] in focus_columns.items():
             self.units[compartment] = units
 
+        df = self.dataset_design.normalize_fov_descriptors(df)
+
         self.areas = {}
         for i, row in df.iterrows():
             for column, [compartment, units] in focus_columns.items():

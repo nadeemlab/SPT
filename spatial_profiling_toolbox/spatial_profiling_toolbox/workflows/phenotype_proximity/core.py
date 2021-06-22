@@ -98,7 +98,10 @@ class PhenotypeProximityCalculator:
         filename = self.input_filename
         df_file = pd.read_csv(filename)
 
-        # Cache original FOV strings
+        # Normalize FOV strings
+        df_file = self.dataset_design.normalize_fov_descriptors(df_file)
+
+        # Cache original (*normalized) FOV strings
         self.fov_lookup = {}
         col = self.dataset_design.get_FOV_column()
         fovs = sorted(list(set(df_file[col])))

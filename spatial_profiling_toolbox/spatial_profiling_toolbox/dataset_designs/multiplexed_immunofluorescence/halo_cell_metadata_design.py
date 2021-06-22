@@ -42,6 +42,16 @@ class HALOCellMetadataDesign:
         """
         return 'Image Location'
 
+    def get_regional_areas_file_identifier(self):
+        """
+        Returns:
+            str:
+                The name of the file identifier (as it would appear in the file
+                manifest) that identifies the file providing areas for each compartment
+                appearing in some field of view of some sample.
+        """
+        return 'Regional areas file'
+
     def get_compartments(self):
         """
         Returns:

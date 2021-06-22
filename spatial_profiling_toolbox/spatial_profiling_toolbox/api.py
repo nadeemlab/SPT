@@ -55,7 +55,7 @@ def get_analyzer(workflow=None, **kwargs):
         Analyzer = workflows[workflow].analyzer
         return Analyzer(
             dataset_design = DatasetDesign(
-                elementary_phenotypes_file,
+                elementary_phenotypes_file = elementary_phenotypes_file,
             ),
             complex_phenotypes_file = complex_phenotypes_file,
             **kwargs,

@@ -138,14 +138,30 @@ class SingleJobAnalyzer:
     @lru_cache(maxsize=1)
     def get_input_filename(self):
         """
-        Uses the file identifier to lookup and cache the name of the associated file.
+        See ``get_input_filename_by_identifier``. Applied to this job's specific
+        ``input_file_identifier``.
         """
-        where_clause = 'Input_file_identifier="' + self.input_file_identifier + '"'
+        return get_input_filename_by_identifier(self.input_file_identifier)
+
+    def get_input_filename_by_identifier(self, input_file_identifier):
+        """
+        Uses the file identifier to lookup the name of the associated file in the file
+        metadata talbe, and cache the name of the associated file.
+
+        Args:
+            input_file_identifier (str):
+                Key to search for in the "File ID" column of the file metadata table.
+
+        Returns:
+            str:
+                The filename.
+        """
+        where_clause = 'Input_file_identifier="' + input_file_identifier + '"'
         cmd = 'SELECT File_basename, SHA256 FROM file_metadata WHERE ' + where_clause + ' ;'
         with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
             result = m.execute_commit(cmd)
         if len(result) != 1:
-            logger.error('Multiple (or no) files with ID %s ?', self.input_file_identifier)
+            logger.error('Multiple (or no) files with ID %s ?', input_file_identifier)
             input_file = None
             sha256 = None
             return

@@ -91,6 +91,13 @@ def get_config_parameters_from_cli():
         required=True,
         help='File specifying signatures for phenotype combinations of interest.',
     )
+    parser.add_argument('--logs-path',
+        dest='logs_path',
+        type=str,
+        required=True,
+        help='Path to logs.',
+    )
+    # Consider whether to make this a single default "logs"
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)

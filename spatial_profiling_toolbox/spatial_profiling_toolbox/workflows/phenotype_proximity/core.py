@@ -287,6 +287,7 @@ class PhenotypeProximityCalculator:
         for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
             for radius in self.get_radii_of_interest():
                 count = 0
+                areas_by_fov = []
                 for (source_filename, fov_index), distance_matrix in cell_pairs.items():
                     rows = phenotype_indices[(source_filename, fov_index)][source]
                     cols = phenotype_indices[(source_filename, fov_index)][target]
@@ -296,19 +297,30 @@ class PhenotypeProximityCalculator:
                     p2p_distance_matrix = distance_matrix.toarray()[rows][:, cols]
                     count += np.sum( (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0) )
 
-                fov = self.fov_lookup[fov_index]
-                if compartment == 'all':
-                    area = self.areas.get_total_compartmental_area(fov=fov)
-                else:
-                    area = self.areas.get_area(fov=fov, compartment=compartment)
-                if area is None:
+                    fov = self.fov_lookup[fov_index]
+                    if compartment == 'all':
+                        area0 = self.areas.get_total_compartmental_area(fov=fov)
+                    else:
+                        area0 = self.areas.get_area(fov=fov, compartment=compartment)
+                    if area0 is None:
+                        logger.warning(
+                            'Did not find area for "%s" compartment in field of view "%s". Skipping field of view "%s" in "%s".',
+                            compartment,
+                            fov_index,
+                            fov_index,
+                            sample_identifier,
+                        )
+                    else:
+                        areas_by_fov.append(area0)
+                if len(areas_by_fov) == 0:
                     logger.warning(
-                        'Did not find area for "%s" compartment in field of view "%s". Skipping sample %s.',
+                        'Did not find ANY area for "%s" compartment in "%s".',
                         compartment,
-                        fov,
                         sample_identifier,
                     )
-                records.append([sample_identifier, outcomes_dict[sample_identifier], source, target, compartment, radius, count / area])
+                else:
+                    area = sum(areas_by_fov) / len(areas_by_fov)
+                    records.append([sample_identifier, outcomes_dict[sample_identifier], source, target, compartment, radius, count / area])
 
         return records
 

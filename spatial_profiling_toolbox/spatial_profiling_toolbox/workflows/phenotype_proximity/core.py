@@ -287,7 +287,7 @@ class PhenotypeProximityCalculator:
         for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
             for radius in self.get_radii_of_interest():
                 count = 0
-                areas_by_fov = []
+                area = 0
                 for (source_filename, fov_index), distance_matrix in cell_pairs.items():
                     rows = phenotype_indices[(source_filename, fov_index)][source]
                     cols = phenotype_indices[(source_filename, fov_index)][target]
@@ -311,15 +311,14 @@ class PhenotypeProximityCalculator:
                             sample_identifier,
                         )
                     else:
-                        areas_by_fov.append(area0)
-                if len(areas_by_fov) == 0:
+                        area += area0
+                if area == 0:
                     logger.warning(
                         'Did not find ANY area for "%s" compartment in "%s".',
                         compartment,
                         sample_identifier,
                     )
                 else:
-                    area = sum(areas_by_fov) / len(areas_by_fov)
                     records.append([sample_identifier, outcomes_dict[sample_identifier], source, target, compartment, radius, count / area])
 
         return records

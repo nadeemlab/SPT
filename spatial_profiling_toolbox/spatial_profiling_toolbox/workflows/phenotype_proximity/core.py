@@ -213,16 +213,26 @@ class PhenotypeProximityCalculator:
         phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
         phenotype_indices = {
             (f, fov_index) : {
-                p : sorted(list(df.index[df[p + ' membership']])) for p in phenotypes
+                p : df[p + ' membership'] for p in phenotypes
             } for (f, fov_index), df in cells.items()
         }
+        # phenotype_indices = {
+        #     (f, fov_index) : {
+        #         p : sorted(list(df.index[df[p + ' membership']])) for p in phenotypes
+        #     } for (f, fov_index), df in cells.items()
+        # }
 
         compartments = self.dataset_design.get_compartments()
         compartment_indices = {
             (f, fov_index) : {
-                c : sorted(list(df.index[df['regional compartment'] == c])) for c in compartments
+                c : (df['regional compartment'] == c) for c in compartments
             } for (f, fov_index), df in cells.items()
         }
+        # compartment_indices = {
+        #     (f, fov_index) : {
+        #         c : sorted(list(df.index[df['regional compartment'] == c])) for c in compartments
+        #     } for (f, fov_index), df in cells.items()
+        # }
         return [phenotype_indices, compartment_indices]
 
     def do_aggregation_counting(self, cell_pairs, outcomes_dict, phenotype_indices, compartment_indices):
@@ -296,9 +306,12 @@ class PhenotypeProximityCalculator:
                     rows = phenotype_indices[(source_filename, fov_index)][source]
                     cols = phenotype_indices[(source_filename, fov_index)][target]
                     if compartment != 'all':
-                        rows = set(rows).intersection(compartment_indices[(source_filename, fov_index)][compartment])
-                        cols = set(cols).intersection(compartment_indices[(source_filename, fov_index)][compartment])
-                    p2p_distance_matrix = distance_matrix.toarray()[list(rows)][:, list(cols)]
+                        rows = rows & compartment_indices[(source_filename, fov_index)][compartment]
+                        cols = cols & compartment_indices[(source_filename, fov_index)][compartment]
+                        # rows = set(rows).intersection(compartment_indices[(source_filename, fov_index)][compartment])
+                        # cols = set(cols).intersection(compartment_indices[(source_filename, fov_index)][compartment])
+                    # p2p_distance_matrix = distance_matrix.toarray()[list(rows)][:, list(cols)]
+                    p2p_distance_matrix = distance_matrix.toarray()[rows][:, cols]
                     additional = np.sum( (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0) )
                     if not np.isnan(additional):
                         count += additional

@@ -59,6 +59,24 @@ class DiffusionDesign(ComputationalDesign):
             'marker',
         ]
 
+    def get_transition_probabilities_summarized_header(self):
+        """
+        Returns:
+            list:
+                The schema (header / column names) for the sample-level summary metrics
+                of the primary output data.
+        """
+        return [
+            ('Sample_ID', 'TEXT'),
+            ('Outcome_assignment', 'TEXT'),
+            ('Marker', 'TEXT'),
+            ('Diffusion_kernel_distance_type', 'TEXT'),
+            ('Temporal_offset', 'NUMERIC'),
+            ('Mean_transition_probability', 'NUMERIC'),
+            ('Median_transition_probability', 'NUMERIC'),
+            ('Variance_transition_probability', 'NUMERIC'),
+        ]
+
     def get_all_phenotype_signatures(self):
         """
         Returns:

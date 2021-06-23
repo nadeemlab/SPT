@@ -144,8 +144,7 @@ class DiffusionAnalysisIntegrator:
         job_metadata = self.get_dataframe_from_db('job_metadata')
         logger.info('probabilities.shape: %s', probabilities.shape)
         logger.info('average transition probability: %s', np.mean(probabilities['transition_probability']))
-        if not exists(self.output_path):
-            mkdir(self.output_path)
+        self.initialize_output_tables()
         temporal_offsets = probabilities['temporal_offset']
         temporal_offsets = temporal_offsets[~np.isnan(temporal_offsets)]
         t_values = sorted(list(set(temporal_offsets)))
@@ -164,9 +163,74 @@ class DiffusionAnalysisIntegrator:
             for distance_type in distance_types:
                 ungrouped = joined[joined['distance_type'] == distance_type]
                 grouped = ungrouped.groupby('Sample ID')
+                self.record_summary_of_values(marker, distance_type, outcomes_dict, t_values, grouped)
                 logger.info('Generating figures for %s in %s case.', marker, distance_type)
                 self.generate_figures(marker, distance_type, outcomes_dict, t_values, grouped, ungrouped)
         logger.info('Done generating figures.')
+
+    def initialize_output_tables(self):
+        table_name = 'transition_probabilities_summarized'
+        schema = self.computational_design.get_transition_probabilities_summarized_header()
+        uri = join(self.output_path, self.computational_design.get_database_uri())
+        with WaitingDatabaseContextManager(uri) as m:
+            m.execute_commit('DROP TABLE IF EXISTS ' + table_name + ' ;')
+            cmd = ' '.join([
+                'CREATE TABLE',
+                table_name,
+                '(',
+                'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+                ', '.join([key + ' ' + data_type for key, data_type in schema]),
+                ');',
+            ])
+            m.execute_commit(cmd)
+
+    def record_summary_of_values(self, marker, distance_type, outcomes_dict, t_values, grouped):
+        table_name = 'transition_probabilities_summarized'
+        schema = self.computational_design.get_transition_probabilities_summarized_header()
+        process_value = {
+            'TEXT' : (lambda val: '"' + str(val) + '"'),
+            'NUMERIC' : (lambda val: str(val)),
+            'INTEGER' : (lambda val: str(val)),
+        }
+        column_names = [row[0] for row in schema]
+        data_types = [row[1] for row in schema]
+        uri = join(self.output_path, self.computational_design.get_database_uri())
+        with WaitingDatabaseContextManager(uri) as m:
+            for sample_id, df in grouped:
+                if sample_id in outcomes_dict:
+                    outcome = outcomes_dict[sample_id]
+                else:
+                    logger.warning('Skipping sample %s due to unknown outcome.', sample_id)
+                    continue
+                if df.shape[0] == 0:
+                    logger.warning('Skipping sample %s due to no associated transition probability values.', sample_id)
+                    continue
+                for t in t_values:
+                    temporal_offset = self.guess_round(t)
+                    transition_probabilities = list(df[df['temporal_offset'] == t]['transition_probability'])
+                    mean_value = np.mean(transition_probabilities)
+                    median_value = np.median(transition_probabilities)
+                    variance_value = np.var(transition_probabilities)
+                    values = [
+                        sample_id,
+                        outcome,
+                        marker,
+                        distance_type,
+                        temporal_offset,
+                        mean_value,
+                        median_value,
+                        variance_value,
+                    ]
+                    processed_values = [process_value[data_types[i]](values[i]) for i in range(len(values))]
+                    cmd = ' '.join([
+                        'INSERT INTO',
+                        table_name,
+                        '(' + ', '.join(column_names) + ')',
+                        'VALUES',
+                        '( ' + ' , '.join(processed_values) + ' );'
+                    ])
+                    m.execute(cmd)
+                m.commit()
 
     def generate_figures(self, marker, distance_type, outcomes_dict, t_values, grouped, ungrouped):
         """

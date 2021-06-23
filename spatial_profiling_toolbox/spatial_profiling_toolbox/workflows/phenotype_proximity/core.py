@@ -213,14 +213,14 @@ class PhenotypeProximityCalculator:
         phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
         phenotype_indices = {
             (f, fov_index) : {
-                p : df.index[df[p + ' membership']] for p in phenotypes
+                p : sorted(list(df.index[df[p + ' membership']])) for p in phenotypes
             } for (f, fov_index), df in cells.items()
         }
 
         compartments = self.dataset_design.get_compartments()
         compartment_indices = {
             (f, fov_index) : {
-                c : df.index[df['regional compartment'] == c] for c in compartments
+                c : sorted(list(df.index[df['regional compartment'] == c])) for c in compartments
             } for (f, fov_index), df in cells.items()
         }
         return [phenotype_indices, compartment_indices]

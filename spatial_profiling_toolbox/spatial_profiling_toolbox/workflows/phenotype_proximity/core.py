@@ -195,9 +195,9 @@ class PhenotypeProximityCalculator:
             distance_matrix = cdist(df[['x value', 'y value']], df[['x value', 'y value']])
             D = distance_matrix
             D[D > L] = 0
-            D = coo_matrix(D)
             cell_pairs[(filename, fov_index)] = D
-            N = int(len(D.data) / 2)
+            D_sparse = coo_matrix(D)
+            N = int(len(D_sparse.data) / 2)
             M = df.shape[0]
             number_all_pairs = M * (M - 1) / 2
             logger.debug(
@@ -311,7 +311,8 @@ class PhenotypeProximityCalculator:
                         # rows = set(rows).intersection(compartment_indices[(source_filename, fov_index)][compartment])
                         # cols = set(cols).intersection(compartment_indices[(source_filename, fov_index)][compartment])
                     # p2p_distance_matrix = distance_matrix.toarray()[list(rows)][:, list(cols)]
-                    p2p_distance_matrix = distance_matrix.toarray()[rows][:, cols]
+                    # p2p_distance_matrix = distance_matrix.toarray()[rows][:, cols]
+                    p2p_distance_matrix = distance_matrix[rows][:, cols]
                     additional = np.sum( (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0) )
                     if not np.isnan(additional):
                         count += additional

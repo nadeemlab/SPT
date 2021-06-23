@@ -266,6 +266,7 @@ class PhenotypeProximityCalculator:
                 compartment_indices,
             )
             results.append(results_combo)
+            logger.debug('Cell pairs of types %s aggregated.', combination)
         logger.debug('All %s combinations aggregated.', len(combinations2))
         columns = [
             'sample identifier',
@@ -344,7 +345,11 @@ class PhenotypeProximityCalculator:
                 keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
                 cmd = 'INSERT INTO cell_pair_counts ' + keys + ' VALUES ' + values +  ' ;'
-                m.execute(cmd)
+                try:
+                    m.execute(cmd)
+                except Exception as e:
+                    logger.error('SQL query failed: %s', cmd)
+                    print(e)
 
     def get_radii_of_interest(self):
         """

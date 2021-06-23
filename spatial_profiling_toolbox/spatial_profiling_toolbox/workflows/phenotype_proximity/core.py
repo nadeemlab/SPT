@@ -298,7 +298,7 @@ class PhenotypeProximityCalculator:
                     if compartment != 'all':
                         rows = set(rows).intersection(compartment_indices[(source_filename, fov_index)][compartment])
                         cols = set(cols).intersection(compartment_indices[(source_filename, fov_index)][compartment])
-                    p2p_distance_matrix = distance_matrix.toarray()[rows][:, cols]
+                    p2p_distance_matrix = distance_matrix.toarray()[list(rows)][:, list(cols)]
                     count += np.sum( (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0) )
 
                     fov = self.fov_lookup[fov_index]

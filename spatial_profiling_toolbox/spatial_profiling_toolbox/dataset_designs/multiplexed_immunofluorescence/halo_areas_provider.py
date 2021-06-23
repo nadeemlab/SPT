@@ -1,6 +1,7 @@
 import re
 
 import pandas as pd
+import numpy as np
 
 from ...environment.log_formats import colorized_logger
 
@@ -52,7 +53,8 @@ class HALORegionalAreasProvider:
             for column, [compartment, units] in focus_columns.items():
                 fov = row[self.dataset_design.get_FOV_column()]
                 area = float(row[column])
-                self.areas[(fov, compartment)] = area
+                if not np.isnan(area):
+                    self.areas[(fov, compartment)] = area
 
     def get_units(self, compartment: str=None):
         return self.units[compartment]

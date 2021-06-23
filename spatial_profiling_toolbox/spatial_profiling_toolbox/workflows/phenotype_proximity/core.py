@@ -308,14 +308,11 @@ class PhenotypeProximityCalculator:
                     if compartment != 'all':
                         rows = rows & compartment_indices[(source_filename, fov_index)][compartment]
                         cols = cols & compartment_indices[(source_filename, fov_index)][compartment]
-                        # rows = set(rows).intersection(compartment_indices[(source_filename, fov_index)][compartment])
-                        # cols = set(cols).intersection(compartment_indices[(source_filename, fov_index)][compartment])
-                    # p2p_distance_matrix = distance_matrix.toarray()[list(rows)][:, list(cols)]
-                    # p2p_distance_matrix = distance_matrix.toarray()[rows][:, cols]
                     p2p_distance_matrix = distance_matrix[rows][:, cols]
                     additional = np.sum( (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0) )
-                    if not np.isnan(additional):
-                        count += additional
+                    if np.isnan(additional):
+                        continue
+                    count += additional
 
                     fov = self.fov_lookup[fov_index]
                     if compartment == 'all':
@@ -330,8 +327,8 @@ class PhenotypeProximityCalculator:
                             fov_index,
                             sample_identifier,
                         )
-                    else:
-                        area += area0
+                        continue
+                    area += area0
                 if area == 0:
                     logger.warning(
                         'Did not find ANY area for "%s" compartment in "%s".',

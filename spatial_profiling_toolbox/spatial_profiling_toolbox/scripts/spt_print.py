@@ -17,3 +17,5 @@ if __name__=='__main__':
             print(config_filename)
         if argument == 'computational-workflows':
             print('\n'.join(list(workflows.keys())))
+        if argument == 'version':
+            print(spatial_profiling_toolbox.__version__)

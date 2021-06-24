@@ -3,6 +3,7 @@ Provides workflow definitions in terms of implementation classes, and configurat
 """
 import configparser
 
+from ..__init__ import __version__
 from ..dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
 from ..workflows.diffusion.job_generator import DiffusionJobGenerator
 from ..workflows.diffusion.computational_design import DiffusionDesign
@@ -71,5 +72,6 @@ def write_config_parameters_to_file(parameters):
     """
     config = configparser.ConfigParser()
     config['default'] = parameters
+    config['static'] = {'version' : __version__}
     with open(config_filename, 'w') as file:
         config.write(file)

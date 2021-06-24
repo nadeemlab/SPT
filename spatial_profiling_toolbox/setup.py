@@ -1,5 +1,10 @@
 import setuptools
 import os
+import re
+
+def get_property(prop, project):
+    result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop), open(project + '/__init__.py').read())
+    return result.group(1)
 
 dir = os.path.dirname(__file__)
 
@@ -9,9 +14,10 @@ with open(os.path.join(dir, 'README.md'), 'r', encoding='utf-8') as fh:
 with open(os.path.join(dir, 'requirements.txt'), 'r', encoding='utf-8') as fh:
     requirements = fh.read().split('\n')
 
+version = get_property('__version__', 'spatial_profiling_toolbox'),
 setuptools.setup(
     name='spatial-profiling-toolbox',
-    version='0.4.0',
+    version=version,
     author='Rami Vanguri, James Mathews',
     author_email='vangurir@mskcc.org',
     description='Toolbox for spatial analysis of pathology imaging.',

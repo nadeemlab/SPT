@@ -74,6 +74,7 @@ class DiffusionCalculator:
     def calculate_diffusion(self, distance_type, marker):
         enough_data_per_region, df_marked_nontumor, df_marked_tumor, df_tumor = self.restrict_scope(marker)
         if not enough_data_per_region:
+            logger.debug('(Not enough data per region.)')
             return
 
         logger.debug('Shapes of %s+ nontumor, marked tumor, and tumor point clouds: %s %s %s',

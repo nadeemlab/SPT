@@ -72,6 +72,8 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         try:
             markers = self.dataset_design.get_elementary_phenotype_names()
             for distance_type in DistanceTypes:
+                if distance_type != DistanceTypes.EUCLIDEAN:
+                    continue
                 for marker in markers:
                     if not marker in ['DAPI', 'CK']:
                         self.dispatch_diffusion_calculation(distance_type, marker)

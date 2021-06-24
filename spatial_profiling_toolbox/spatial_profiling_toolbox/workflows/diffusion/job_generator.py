@@ -1,3 +1,4 @@
+import math
 import os
 from os.path import join, exists, abspath
 from os import mkdir
@@ -21,7 +22,7 @@ class DiffusionJobGenerator(JobGenerator):
 #BSUB -J {{job_name}}
 #BSUB -n "1"
 #BSUB -W 4:00
-#BSUB -R "rusage[mem=6]"
+#BSUB -R "rusage[mem={{memory_in_gb}}]"
 #BSUB -R "span[hosts=1]"
 #BSUB -R "select[hname!={{control_node_hostname}}]"
 cd {{job_working_directory}}
@@ -109,8 +110,7 @@ singularity exec \
         self.initialize_intermediate_database()
         for i, row in self.file_metadata.iterrows():
             if row['Data type'] == self.dataset_design.get_cell_manifest_descriptor():
-                file_id = row['File ID']
-                self.generate_array_of_jobs(file_id)
+                self.generate_array_of_jobs(row)
         logger.info('%s input files considered.', str(self.file_metadata.shape[0]))
         logger.info('%s (arrays of) job scripts generated, written to dir %s', str(self.number_arrays_of_jobs), self.jobs_paths.jobs_path)
         average = sum(self.number_fovs.values()) / len(self.number_fovs)
@@ -157,7 +157,7 @@ singularity exec \
         connection.commit()
         connection.close()
 
-    def generate_array_of_jobs(self, file_id):
+    def generate_array_of_jobs(self, file_record):
         """
         Generates all the jobs, one for each field of view, for the indicated file.
 
@@ -165,6 +165,8 @@ singularity exec \
             file_id (str):
                 Input file identifier, as it would appear in the file manifest file.
         """
+        file_id = file_record['File ID']
+
         job_working_directory = self.jobs_paths.job_working_directory
         input_file_identifier = file_id
         number_fovs = self.number_fovs[input_file_identifier]
@@ -177,6 +179,7 @@ singularity exec \
                     job_index = self.register_job_existence()
                     job_name = 'diffusion_' + str(job_index)
                     log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
+                    memory_in_gb = self.get_memory_requirements(file_record)
 
                     contents = DiffusionJobGenerator.lsf_template
                     contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
@@ -184,6 +187,7 @@ singularity exec \
                     contents = re.sub('{{job_name}}', job_name, contents)
                     contents = re.sub('{{log_filename}}', log_filename, contents)
                     contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
+                    contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
                     contents = re.sub(
                         '{{control_node_hostname}}',
                         DiffusionJobGenerator.control_node_hostnames['MSK medical physics cluster'],
@@ -215,6 +219,20 @@ singularity exec \
                     self.local_run_calls[rc].append(sh_job_filename)
 
                 self.number_arrays_of_jobs += 1
+
+    def get_memory_requirements(self, file_record):
+        """
+        Args:
+            file_record (dict-like):
+                Record as it would appear in the file metadata table.
+
+        Returns:
+            int:
+                The positive integer number of gigabytes to request for a job involving
+                the given input file.
+        """
+        file_size_gb = float(file_record['Size']) / pow(10, 9)
+        return 1 + math.ceil(file_size_gb * 10)
 
     def generate_scheduler_scripts(self):
         for rc in self.get_regional_compartments():

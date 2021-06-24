@@ -1,3 +1,4 @@
+import math
 import re
 import os
 from os.path import join, exists, abspath
@@ -18,8 +19,8 @@ class PhenotypeProximityJobGenerator(JobGenerator):
     lsf_template = '''#!/bin/bash
 #BSUB -J {{job_name}}
 #BSUB -n "1"
-#BSUB -W 3:00
-#BSUB -R "rusage[mem=16]"
+#BSUB -W 2:00
+#BSUB -R "rusage[mem={{memory_in_gb}}]"
 #BSUB -R "span[hosts=1]"
 #BSUB -R "select[hname!={{control_node_hostname}}]"
 cd {{job_working_directory}}
@@ -77,6 +78,7 @@ singularity exec \
                 job_index = self.register_job_existence()
                 job_name = 'cell_proximity_' + str(job_index)
                 log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
+                memory_in_gb = self.get_memory_requirements(row)
 
                 contents = PhenotypeProximityJobGenerator.lsf_template
                 contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
@@ -85,6 +87,7 @@ singularity exec \
                 contents = re.sub('{{log_filename}}', log_filename, contents)
                 contents = re.sub('{{control_node_hostname}}', PhenotypeProximityJobGenerator.control_node_hostnames['MSK medical physics cluster'], contents)
                 contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
+                contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
                 bsub_job = contents
 
                 contents = PhenotypeProximityJobGenerator.cli_call_template
@@ -106,6 +109,20 @@ singularity exec \
 
                 st = os.stat(sh_job_filename)
                 os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
+
+    def get_memory_requirements(self, file_record):
+        """
+        Args:
+            file_record (dict-like):
+                Record as it would appear in the file metadata table.
+
+        Returns:
+            int:
+                The positive integer number of gigabytes to request for a job involving
+                the given input file.
+        """
+        file_size_gb = float(file_record['Size']) / pow(10, 9)
+        return 1 + math.ceil(file_size_gb * 10)
 
     def initialize_intermediate_database(self):
         """

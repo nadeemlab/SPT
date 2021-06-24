@@ -14,7 +14,9 @@ with open(os.path.join(dir, 'README.md'), 'r', encoding='utf-8') as fh:
 with open(os.path.join(dir, 'requirements.txt'), 'r', encoding='utf-8') as fh:
     requirements = fh.read().split('\n')
 
-version = get_property('__version__', 'spatial_profiling_toolbox')
+with open(os.path.join(dir, 'spatial_profiling_toolbox', 'version.txt')) as fh:
+    version = fh.read().rstrip('\n')
+
 setuptools.setup(
     name='spatial-profiling-toolbox',
     version=version,

@@ -5,4 +5,8 @@ The ``spatial_profiling_toolbox`` (SPT) is:
 
 The source code is available `here <https://github.com/nadeemlab>`_.
 """
-__version__ = '0.4.0'
+import os
+from os.path import join, dirname
+with open(join(dirname(__file__), 'version.txt')) as file:
+    version = file.read().rstrip('\n')
+__version__ = version

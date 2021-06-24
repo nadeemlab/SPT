@@ -99,7 +99,6 @@ class DiffusionCalculator:
         logger.debug('Calculating diffusion kernel, point cloud of size %s (%s case)', pc.shape[0], distance_type.name)
         diffusion_kernel = self.calculate_diffusion_kernel(pc, distance_type)
 
-        logger.debug('Performing forward time evolution of Markov chain.')
         spectrum, diffusion_probability_matrices = self.calculate_transition_matrix_evolution(
             pc,
             diffusion_kernel,
@@ -196,6 +195,8 @@ class DiffusionCalculator:
     def calculate_transition_matrix_evolution(self, pc, diffusion_kernel, distance_type):
         if not distance_type in [DistanceTypes.OPTIMAL_TRANSPORT, DistanceTypes.EUCLIDEAN]:
             return [None, None]
+        logger.debug('Performing forward time evolution of Markov chain.')
+        logger.debug('Computing transition matrix M of size %s x %s', pc.shape[0], pc.shape[0])
 
         A = diffusion_kernel
         D = sum(A, axis=0) * identity(A.shape[0])
@@ -212,6 +213,7 @@ class DiffusionCalculator:
             logger.debug('D_alpha matrix is singular?')
             return None
         M_transition_matrix = matmul(invD_alpha, L_alpha)
+        logger.debug('Doing eigendecomposition.')
         M_vals, M_vecs = eig(M_transition_matrix)
         number_eigens = len(M_vals)
         D_size = self.get_D_size(pc, number_eigens)
@@ -219,6 +221,7 @@ class DiffusionCalculator:
         for t in np.arange(1,3,0.2):
             Dt = zeros(shape=(D_size, number_eigens))
             point_indices = self.get_pertinent_point_indices()
+            logger.debug('Looping over %s points for time step t=%s', len(point_indices), t)
             for i, point_index in enumerate(point_indices):
                 for marked_nt_point_index in range(self.number_marked_nt):
                     accumulator = 0

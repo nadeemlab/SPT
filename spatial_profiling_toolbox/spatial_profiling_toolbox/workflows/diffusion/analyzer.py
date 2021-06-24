@@ -73,7 +73,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             markers = self.dataset_design.get_elementary_phenotype_names()
             for distance_type in DistanceTypes:
                 for marker in markers:
-                    if marker != 'DAPI':
+                    if not marker in ['DAPI', 'CK']:
                         self.dispatch_diffusion_calculation(distance_type, marker)
                 logger.debug('Completed analysis %s (%s)',
                     self.get_job_index(),

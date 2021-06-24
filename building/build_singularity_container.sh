@@ -1,2 +1,3 @@
 #!/bin/bash
-sudo singularity build sat.sif singularity_container.def
+suffix=$(date +'%m-%d-%Y_%H-%M')
+sudo singularity build "spt_$suffix.sif" singularity_container.def

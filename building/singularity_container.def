@@ -12,8 +12,6 @@ From: ubuntu:20.04
     apt-get -y install python3-dev
     apt-get -y install python3-pip
 
-    python3 -m pip install numpy
-    python3 -m pip install Cython
     python3 -m pip install /opt/spatial_profiling_toolbox
     export DEBUG=1
 

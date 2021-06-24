@@ -17,10 +17,7 @@ logger = colorized_logger(__name__)
 class SingleJobAnalyzer:
     """
     An interface for a single job to be executed as part of a batch in a pipeline
-    run. It handles the boilerplate of registering the existence and state of the
-    job in a shared database. This also includes figuring out whether or not to do
-    initialization (in case this job is first to run) or wrap-up (in case this job
-    is last to complete).
+    run. It handles some "boilerplate".
 
     It is assumed that one job is associated which exactly one input file (the
     reverse is not assumed). And, moreover, that metadata for this file can be found
@@ -99,20 +96,6 @@ class SingleJobAnalyzer:
         """
         pass
 
-    def first_job_started(self):
-        """
-        Abstract method, the implementation of which is the initialization work that is
-        only performed by the first job to run.
-        """
-        pass
-
-    def start_post_jobs_step(self):
-        """
-        Abstract method, the implementation of which is the wrap-up work that is only
-        performed by the last job to run.
-        """
-        pass
-
     def calculate(self):
         """
         The main calculation of this job, to be called by pipeline orchestration.
@@ -146,7 +129,7 @@ class SingleJobAnalyzer:
     def get_input_filename_by_identifier(self, input_file_identifier):
         """
         Uses the file identifier to lookup the name of the associated file in the file
-        metadata talbe, and cache the name of the associated file.
+        metadata table, and cache the name of the associated file.
 
         Args:
             input_file_identifier (str):
@@ -204,50 +187,15 @@ class SingleJobAnalyzer:
 
     def register_activity(self, state):
         """
+        (`To be deprecated`).
+
         Args:
             state (JobActivity):
-                The updated job state to be advertised in the job metadata table.
+                The updated job state to be "advertised".
         """
-        update_cmd = 'UPDATE job_activity SET Job_status ="' + state.name + '" WHERE id = ' + str(self.get_job_index()) + ' ;'
-
-        if state == JobActivity.FAILED:
-            with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-                m.execute_commit(update_cmd)
-            logger.debug('Job with activity index %s has failed.', self.get_job_index())
-
         if state == JobActivity.RUNNING:
-            job_statuses = {}
-            with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-                m.execute_commit(update_cmd)
-                result = m.execute_commit('SELECT id, Job_status FROM job_activity ;')  # There is a potential race-condition style bug here. The database will be unlocked at the end of execution of the line above this one, leaving a fraction of time during which another process may update job statuses before this process initiates/completes its query for job statuses. What is needed is an explicit lock function, to be lifted after this line's call.
-                job_statuses = {item[0] : item[1] for item in result}
-
-            number_not_started = len([status for index, status in job_statuses.items() if JobActivity[status] == JobActivity.NOT_STARTED])
-            number_running = len([status for index, status in job_statuses.items() if JobActivity[status] == JobActivity.RUNNING])
-            number_complete = len([status for index, status in job_statuses.items() if JobActivity[status] == JobActivity.COMPLETE])
-            number_failed = len([status for index, status in job_statuses.items() if JobActivity[status] == JobActivity.FAILED])
-            number_total = len(job_statuses)
-
-            if number_running == 1 and number_not_started == number_total - 1:
-                self.first_job_started()
             logger.debug('Started job with activity index %s', self.get_job_index())
-
         if state == JobActivity.COMPLETE:
-            job_statuses = {}
-            with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-                result = m.execute_commit('SELECT id, Job_status FROM job_activity ;')
-                job_statuses = {item[0] : item[1] for item in result}
-            job_statuses = {item[0] : item[1] for item in result}
-
-            with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-                m.execute_commit(update_cmd)
-
-            number_failed = len([status for index, status in job_statuses.items() if JobActivity[status] == JobActivity.FAILED])
-            number_completed = len([status for index, status in job_statuses.items() if JobActivity[status] == JobActivity.COMPLETE])
-            number_all = len(job_statuses)
-            if number_failed + number_completed == number_all - 1:
-                logger.info('No remaining not-started jobs.')
-                logger.info('%s jobs failed.', number_failed)
-                logger.info('%s jobs completed.', number_completed)
-                logger.info('Moving on to integration stage.')
-                self.start_post_jobs_step()
+            logger.debug('Completed entire job with activity index %s', self.get_job_index())
+        if state == JobActivity.FAILED:
+            logger.debug('Job failed, job with activity index %s', self.get_job_index())

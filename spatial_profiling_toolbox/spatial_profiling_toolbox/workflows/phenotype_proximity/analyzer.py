@@ -46,37 +46,8 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
             regional_areas_file = regional_areas_file,
         )
 
-    def first_job_started(self):
-        logger.info(
-            'Beginning multiplexed immunofluorescence cell proximity analysis.'
-        )
-        logger.info(
-            'Using multiple pixel distance thresholds: %s',
-            self.calculator.get_radii_of_interest(),
-        )
-        logger.info(
-            'Input files located at %s.',
-            dirname(self.get_input_filename()),
-        )
-        logger.info(
-            'Found outcomes file at %s',
-            self.dataset_settings.outcomes_file,
-        )
-        logger.info(
-            'Will write results to %s',
-            self.jobs_paths.output_path,
-        )
-
     def _calculate(self):
         self.calculator.calculate_proximity()
-
-    def start_post_jobs_step(self):
-        cell_proximity_integrator = PhenotypeProximityAnalysisIntegrator(
-            jobs_paths = self.jobs_paths,
-            dataset_settings = self.dataset_settings,
-            computational_design = self.computational_design,
-        )
-        cell_proximity_integrator.calculate()
 
     def cell_counts_and_intensity_averages(self):
         """

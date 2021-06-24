@@ -12,7 +12,7 @@ class WaitingDatabaseContextManager:
     available, using a fixed-wait-time loop. It is designed for usage with Python's
     "with ... as" construct.
     """
-    def __init__(self, uri, seconds=0.25):
+    def __init__(self, uri, seconds=5.0):
         """
         Args:
             uri (str):

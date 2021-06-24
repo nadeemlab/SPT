@@ -51,23 +51,6 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             dataset_design = self.dataset_design,
         )
 
-    def first_job_started(self):
-        logger.info(
-            'Beginning diffusion cell geometry analysis.'
-        )
-        logger.info(
-            'Input files located at %s.',
-            dirname(self.get_input_filename()),
-        )
-        logger.info(
-            'Found outcomes file at %s',
-            self.dataset_settings.outcomes_file,
-        )
-        logger.info(
-            'Will write output to %s',
-            self.jobs_paths.output_path,
-        )
-
     def _calculate(self):
         try:
             markers = self.dataset_design.get_elementary_phenotype_names()
@@ -187,11 +170,3 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         uri = join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
         with WaitingDatabaseContextManager(uri) as m:
             m.execute_commit(cmd)
-
-    def start_post_jobs_step(self):
-        integrator = DiffusionAnalysisIntegrator(
-            jobs_paths = self.jobs_paths,
-            dataset_settings = self.dataset_settings,
-            computational_design = self.computational_design,
-        )
-        integrator.calculate()

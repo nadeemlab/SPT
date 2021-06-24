@@ -39,6 +39,7 @@ setuptools.setup(
     classifiers=[
         'Programming Language :: Python :: 3',
     ],
+    package_data={'spatial_profiling_toolbox': ['version.txt']},
     python_requires='>=3.7',
     scripts=[
         'spatial_profiling_toolbox/scripts/spt-pipeline',

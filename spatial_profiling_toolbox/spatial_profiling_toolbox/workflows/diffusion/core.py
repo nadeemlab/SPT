@@ -24,6 +24,7 @@ class DistanceTypes(Enum):
 
 class DiffusionCalculator:
     distribution_sample_size_max = 200
+    number_eigenvectors_max = 20
 
     def __init__(
         self,
@@ -214,7 +215,7 @@ class DiffusionCalculator:
             return None
         M_transition_matrix = matmul(invD_alpha, L_alpha)
         logger.debug('Doing eigendecomposition.')
-        M_vals, M_vecs = eig(M_transition_matrix)
+        M_vals, M_vecs = eig(M_transition_matrix)  # In the future, resort by absolute value of eigenvalues. Very very nearly already in this order in test cases, but not exact. If there is some other definite order that scipy.linalg is using, and this is documented, then maybe it is OK to keep it as is.
         number_eigens = len(M_vals)
         D_size = self.get_D_size(pc, number_eigens)
         diffusion_probability_matrices = {}
@@ -225,7 +226,8 @@ class DiffusionCalculator:
             for i, point_index in enumerate(point_indices):
                 for marked_nt_point_index in range(self.number_marked_nt):
                     accumulator = 0
-                    for k in range(len(M_vals)):
+                    L = min(len(M_vals), DiffusionCalculator.number_eigenvectors_max)
+                    for k in range(L):
                         vec = M_vecs[:, k]
                         val = M_vals[k]
                         accumulator += abs(val)**(2*t) * abs(vec[point_index] - vec[marked_nt_point_index])**2

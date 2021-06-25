@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This script represents a single job of the diffusion analysis workflow. It is
 not run directly by the user.

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 The ``spatial_profiling_toolbox`` (SPT) is:
   - a collection of modules that do image analysis computation in the context of histopathology, together with

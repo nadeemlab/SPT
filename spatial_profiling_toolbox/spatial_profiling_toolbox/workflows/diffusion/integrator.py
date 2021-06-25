@@ -5,6 +5,7 @@ import sqlite3
 import re
 import math
 from warnings import simplefilter
+import itertools
 
 import pandas as pd
 import numpy as np
@@ -13,6 +14,7 @@ import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import ttest_ind, kruskal
 from scipy.cluster.hierarchy import ClusterWarning
 simplefilter('ignore', ClusterWarning)
 
@@ -62,7 +64,9 @@ class DiffusionAnalysisIntegrator:
         if table_name == 'transition_probabilities':
             columns = ['id'] + self.computational_design.get_probabilities_table_header()
         elif table_name == 'job_metadata':
-            columns=['id'] + self.computational_design.get_job_metadata_header()
+            columns = ['id'] + self.computational_design.get_job_metadata_header()
+        elif table_name == 'transition_probabilities_summarized':
+            columns = ['id'] + [c[0] for c in self.computational_design.get_transition_probabilities_summarized_header()]
         else:
             logger.error('Table %s is not in the schema.', table_name)
             return None
@@ -167,6 +171,8 @@ class DiffusionAnalysisIntegrator:
                 logger.info('Generating figures for %s in %s case.', marker, distance_type)
                 self.generate_figures(marker, distance_type, outcomes_dict, t_values, grouped, ungrouped)
         logger.info('Done generating figures.')
+        self.do_outcome_tests()
+        logger.info('Done with statistical tests.')
 
     def initialize_output_tables(self):
         table_name = 'transition_probabilities_summarized'
@@ -231,6 +237,72 @@ class DiffusionAnalysisIntegrator:
                     ])
                     m.execute(cmd)
                 m.commit()
+
+    def do_outcome_tests(self):
+        df = self.get_dataframe_from_db('transition_probabilities_summarized')
+        df = df[df['Diffusion_kernel_distance_type'] == 'EUCLIDEAN']
+
+        outcomes = sorted(list(set(df['Outcome_assignment'])))
+        phenotypes = sorted(list(set(df['Marker'])))
+        t_values = sorted(list(set(df['Temporal_offset'])))
+        statistics = ['Mean', 'Median', 'Variance']
+
+        rows = []
+        for outcome1, outcome2 in itertools.combinations(outcomes, 2):
+            for phenotype in phenotypes:
+                for t in t_values:
+                        for statistic in statistics:
+                            df1 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome1)]
+                            df2 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome2)]
+                            values1 = list(df1[statistic + '_transition_probability'])
+                            values2 = list(df2[statistic + '_transition_probability'])
+
+                            if np.var(values1) == 0 or np.var(values2) == 0:
+                                continue
+
+                            s, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
+                            mean_difference = np.mean(values2) - np.mean(values1)
+                            s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
+                            median_difference = np.median(values2) - np.median(values1)
+
+                            rows.append({
+                                'outcome 1' : outcome1,
+                                'outcome 2' : outcome2,
+                                'phenotype' : phenotype,
+                                'temporal offset' : t,
+                                'tested value 1' : np.mean(values1),
+                                'tested value 2' : np.mean(values2),
+                                'first-summarization statistic tested' : statistic.lower(),
+                                'test' : 't-test',
+                                'p-value' : p_ttest,
+                                'absolute effect' : abs(mean_difference),
+                                'effect sign' : int(np.sign(mean_difference)),
+                                'p-value < 0.01' : p_ttest < 0.01,
+                            })
+
+                            rows.append({
+                                'outcome 1' : outcome1,
+                                'outcome 2' : outcome2,
+                                'phenotype' : phenotype,
+                                'temporal offset' : t,
+                                'tested value 1' : np.median(values1),
+                                'tested value 2' : np.median(values2),
+                                'first-summarization statistic tested' : statistic.lower(),
+                                'test' : 'Kruskal-Wallis',
+                                'p-value' : p_kruskal,
+                                'absolute effect' : abs(median_difference),
+                                'effect sign' : int(np.sign(median_difference)),
+                                'p-value < 0.01' : p_kruskal < 0.01,
+                            })
+        if len(rows) == 0:
+            logger.info('No non-trivial tests to perform. Probably too few values.')
+            return None
+        diffusion_value_tests = pd.DataFrame(rows)
+        sort_order = ['outcome 1', 'outcome 2', 'p-value < 0.01', 'p-value']
+        ascending = [True, True, False, True]
+        diffusion_value_tests.sort_values(by=sort_order, ascending=ascending, inplace=True)
+        diffusion_value_tests.to_csv(join(self.output_path, 'diffusion_distance_tests.csv'), index=False)
+
 
     def generate_figures(self, marker, distance_type, outcomes_dict, t_values, grouped, ungrouped):
         """

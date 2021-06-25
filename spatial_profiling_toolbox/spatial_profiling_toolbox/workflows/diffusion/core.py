@@ -219,7 +219,7 @@ class DiffusionCalculator:
         number_eigens = len(M_vals)
         D_size = self.get_D_size(pc, number_eigens)
         diffusion_probability_matrices = {}
-        for t in np.arange(1,3,0.2):
+        for t in np.arange(1,3,0.4):
             Dt = zeros(shape=(D_size, number_eigens))
             point_indices = self.get_pertinent_point_indices()
             logger.debug('Looping over %s points for time step t=%s', len(point_indices), t)

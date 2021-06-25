@@ -78,4 +78,13 @@ class WaitingDatabaseContextManager:
         """
         Explicitly commits the connection.
         """
-        self.connection.commit()
+        while(True):
+            try:
+                self.connection.commit()
+                break
+            except sqlite3.OperationalError as e:
+                if str(e) == 'database is locked':
+                    logger.debug('Database %s was locked, waiting %s seconds to retry committing.', self.uri, self.seconds)
+                    time.sleep(self.seconds)
+                else:
+                    raise e

@@ -252,8 +252,8 @@ class DiffusionAnalysisIntegrator:
             for phenotype in phenotypes:
                 for t in t_values:
                         for statistic in statistics:
-                            df1 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome1)]
-                            df2 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome2)]
+                            df1 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome1) & (df['Marker'] == phenotype)]
+                            df2 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome2) & (df['Marker'] == phenotype)]
                             values1 = list(df1[statistic + '_transition_probability'])
                             values2 = list(df2[statistic + '_transition_probability'])
 

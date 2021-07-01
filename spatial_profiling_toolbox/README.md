@@ -4,12 +4,12 @@
 ## How to create a new module
 
 For a new computation module:
-  1. Make a new subdirectory under `computation_modules`. Mimicing the overall design of the existing modules is a reasonable start. Freely use the `environment/` functionality.
+  1. Make a new subdirectory under `workflows`. Mimicing the overall design of the existing modules is a reasonable start. Freely use the `environment/` functionality.
   2. Update the packages list in `setup.py` if necessary.
   3. Add a new workflow entry to `configuration.py`.
   4. Update `spt-pipeline` to solicit any new configuration parameters that will be needed.
   5. Create a script in `bin/`, mimicing `spt_diffusion_analysis.py` etc., to be run by single processes/jobs. This can be regarded as exposing API from your Python module to your system environment via a CLI.
-  6. (Optional) Update `spt-analyze-results` to include your new workflow's final steps.
+  6. (Optional) Update `spt-analyze-results` to include your new workflow's final/integration steps.
   7. Add unit tests to `tests/`.
   8. Heed the results of `pytest` or `coverage` before pushing new commits or submitting a pull request, especially if your addition required modification of existing modules. (\* Currently only integration tests are available, one for each workflow.)
 
@@ -18,7 +18,7 @@ If you find that a large piece of what you need to implement is already present 
 
 ## Testing
 
-If you experiment with the code locally, you can run the integration tests
+If you experiment with the code locally, you can then run the integration tests
 
 ```
 cd spatial_profiling_toolbox/tests/

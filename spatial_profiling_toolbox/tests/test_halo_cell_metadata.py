@@ -7,15 +7,15 @@ from spatial_profiling_toolbox.dataset_designs.multiplexed_immunofluorescence.ha
 from spatial_profiling_toolbox.dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
 
 def test_halo_load_cell_metadata():
-    input_files_path = 'data/colon/'
-    file_manifest_file = 'data/colon/file_manifest.tsv'
-    md_path = '../../project_data_and_metadata/colon_msi/'
+    input_files_path = 'data/'
+    file_manifest_file = 'data/file_manifest.tsv'
+    md_path = 'data/'
     dataset_design = HALOCellMetadataDesign(
         elementary_phenotypes_file=join(md_path, 'elementary_phenotypes.csv'),
     )
     m = HALOCellMetadata(
         input_files_path = input_files_path,
-        input_data_design = data_design,
+        dataset_design = dataset_design,
         file_manifest_file = file_manifest_file,
     )
     m.initialize()

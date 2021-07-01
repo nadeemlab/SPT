@@ -54,11 +54,14 @@ class HALOCellMetadata(CellMetadata):
         return self.lookup.get_fov_index(sample_id, fov)
 
     def get_cell_info_table(self, input_files_path, file_metadata, dataset_design):
-        if not self.check_data_type(file_metadata):
+        if not self.check_data_type(file_metadata, dataset_design):
             return
         self.lookup = SampleFOVLookup()
         dfs = []
         for i, row in file_metadata.iterrows():
+            data_type = row['Data type']
+            if not data_type == dataset_design.get_cell_manifest_descriptor():
+                continue
             filename = row['File name']
             sample_id = row['Sample ID']
             source_file_data = pd.read_csv(join(input_files_path, filename))
@@ -75,6 +78,7 @@ class HALOCellMetadata(CellMetadata):
                 sample_id=sample_id,
                 fovs=source_file_data[dataset_design.get_FOV_column()],
             )
+
             column_data, number_cells = self.get_selected_columns(
                 dataset_design,
                 self.lookup,
@@ -90,7 +94,7 @@ class HALOCellMetadata(CellMetadata):
             )
         return pd.concat(dfs)
 
-    def check_data_type(self, file_metadata):
+    def check_data_type(self, file_metadata, dataset_design):
         """
         Args:
             file_metadata (pandas.DataFrame):
@@ -105,10 +109,12 @@ class HALOCellMetadata(CellMetadata):
             logger.error('File metadata table missing columns "Data type".')
             return False
         data_types = list(set(file_metadata['Data type']))
-        expected_data_type = 'HALO software cell manifest'
+        expected_data_type = dataset_design.get_cell_manifest_descriptor()
         if not ( (len(data_types) == 1) and (data_types[0] == expected_data_type) ):
-            logger.error('Expected "%s" in "Data type" field, got %s', expected_data_type, data_types)
-            return False
+            logger.warning('Expected entries "%s" in "Data type" field, got %s.', expected_data_type, data_types)
+            if not expected_data_type in data_types:
+                logger.error('Did not get the expected data type: %s', expected_data_type)
+                return False
         return True
 
     def populate_integer_indices(self,
@@ -152,6 +158,7 @@ class HALOCellMetadata(CellMetadata):
         column_data = {}
         v = CellMetadata.table_header_template
         c = CellMetadata.table_header_constant_portion
+        d = dataset_design
 
         sample_id_index = lookup.get_sample_index(sample_id)
         N = source_file_data.shape[0]

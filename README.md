@@ -39,7 +39,7 @@ A spreadsheet would be created in `output/` with some statistical test results o
 
 # Preparing your data
 
-The current workflows all operate on spreadsheet files exported from the [HALO](https://indicalab.com/halo/) software. Support for more generic inputs is in the works, but for now this means that you must use something like the metadata format exemplified by the [test data](spatial_profiling_toolbox/tests/data).
+The current workflows all operate on spreadsheet files exported from the [HALO](https://indicalab.com/halo/) software. Support for more generic inputs is in the works, but for now this means that you must use something like the metadata format exemplified by the [test data](spatial_profiling_toolbox/tests/data). See also the [specification](schemas/file_manifest_specification_v0.5.md) for the file manifest file.
 
 # Platform
 

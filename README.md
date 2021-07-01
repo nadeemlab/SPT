@@ -22,7 +22,7 @@ Clone the repository, and install the Python package with `pip`:
 pip install spatial_profiling_toolbox/
 ```
 
-(You may need to install `numpy` and `cython` separately, according to the [installation instructions for Python OT](https://pythonot.github.io/#installation).)
+(You may need to install `numpy` and `cython` separately, according to the [installation instructions for Python OT](https://pythonot.github.io/#installation), but in our testing we did not need to do this.)
 
 Then run `spt-pipeline` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as [Platfrom LSF (Load Sharing Facility)](https://www.ibm.com/products/hpc-workload-management) jobs. In the LSF case, you must first build the library into a Singularity container by running
 

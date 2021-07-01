@@ -26,7 +26,7 @@ Then run `spt-pipeline` to enter a dialog that solicits configuration parameters
 cd building && ./build_singularity_container.sh
 ```
 
-and moving the container, `sat.sif`, to an area accessible to the nodes in your cluster.
+and moving the container (`.sif` file) to an area accessible to the nodes in your cluster.
 
 If you are doing computations with lots of data, the whole pipeline might take hours to complete. If you wish to see final results based on partially-complete intermediate data, use `spt-analyze-results`.
 

@@ -37,6 +37,10 @@ cd spatial_profiling_toolbox/tests
 ```
 A spreadsheet would be created in `output/` with some statistical test results on example data.
 
+# Preparing your data
+
+The current workflows all operate on spreadsheet files exported from the [HALO](https://indicalab.com/halo/) software. Support for more generic inputs is in the works, but for now this means that you must use something like the metadata format exemplified by the [test data](spatial_profiling_toolbox/tests/data).
+
 # Platform
 
 Some of the utilities depend on a Linux/Unix/macOS environment.

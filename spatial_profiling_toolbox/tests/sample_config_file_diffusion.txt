@@ -1,0 +1,17 @@
+[default]
+
+workflow = Multiplexed IF diffusion
+
+input_path = ./data/
+outcomes_file = ./data/diagnosis.tsv
+file_manifest_file = ./data/file_manifest.tsv
+
+job_working_directory = ./
+output_path = ./output
+jobs_path = ./jobs
+logs_path = .logs
+schedulers_path = ./
+sif_file = ../../building/sat.sif
+runtime_platform = local
+elementary_phenotypes_file = ./data/elementary_phenotypes.csv
+complex_phenotypes_file = ./data/complex_phenotypes.csv

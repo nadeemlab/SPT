@@ -1,0 +1,8 @@
+Name,Column header fragment prefix,Indication type,Indicated item name or handle string
+CD3,Dye 1,presence of protein complex,CD3
+PDL1,Dye 2,presence of protein,PDL1
+FOXP3,Dye 3,presence of protein,FOXP3
+ICOS,Dye 4,presence of protein,ICOS
+CD8,Dye 5,presence of protein complex,CD8
+DAPI,Dye 6,presence of DNA nucleobases,adenine;thymine
+CK,Dye 7,presence of protein,CK

@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+import os
+import configparser
+
+from spatial_profiling_toolbox.api import get_integrator
+from spatial_profiling_toolbox.environment.configuration import get_config_parameters_from_file
+from spatial_profiling_toolbox.environment.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
+
+if __name__=='__main__':
+    p = get_config_parameters_from_file()
+    i = get_integrator(**p)
+    i.calculate()

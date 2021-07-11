@@ -1,5 +1,5 @@
 
-The `spatial_analysis_toolbox` (SAT) is:
+The `spatial_profiling_toolbox` (SPT) is:
   - a collection of modules that do image analysis computation in the context of histopathology, together with
   - a lightweight framework for deployment of a pipeline comprised of these modules in different runtime contexts (e.g. a High-Performance Cluster or on a single machine).
 
@@ -10,29 +10,33 @@ The `spatial_analysis_toolbox` (SAT) is:
 
 ![diffusion figure](images/example_diffusion_figure.png)
 
+# Preparing your data
+
+The current workflows all operate on spreadsheet files exported from the [HALO](https://indicalab.com/halo/) software. Support for more generic inputs is in the works, but for now this means that you must use something like the metadata format exemplified by the [test data](spatial_profiling_toolbox/tests/data). See also the [specification](schemas/file_manifest_specification_v0.5.md) for the file manifest file.
+
 # Getting started
 
 Clone the repository, and install the Python package with `pip`:
 
 ```
-pip install spatial_analysis_toolbox/
+pip install spatial_profiling_toolbox/
 ```
 
-(You may need to install `numpy` and `cython` separately, according to the [installation instructions for Python OT](https://pythonot.github.io/#installation).)
+(You may need to install `numpy` and `cython` separately, according to the [installation instructions for Python OT](https://pythonot.github.io/#installation), but in our testing we did not need to do this.)
 
-Then run `sat-pipeline` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as [Platfrom LSF (Load Sharing Facility)](https://www.ibm.com/products/hpc-workload-management) jobs. In the LSF case, you must first build the library into a Singularity container by running
+Then run `spt-pipeline` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as [Platfrom LSF (Load Sharing Facility)](https://www.ibm.com/products/hpc-workload-management) jobs. In the LSF case, you must first build the library into a Singularity container by running
 
 ```bash
 cd building && ./build_singularity_container.sh
 ```
 
-and moving the container, `sat.sif`, to an area accessible to the nodes in your cluster.
+and moving the container (`.sif` file) to an area accessible to the nodes in your cluster.
 
-If you are doing computations with lots of data, the whole pipeline might take hours to complete. If you wish to see final results based on partially-complete intermediate data, use `sat-analyze-results`.
+If you are doing computations with lots of data, the whole pipeline might take hours to complete. If you wish to see final results based on partially-complete intermediate data, use `spt-analyze-results`.
 
 You can test if basic functionality works in your environment by running local tests:
 ```bash
-cd spatial_analysis_toolbox/tests
+cd spatial_profiling_toolbox/tests
 ./test_proximity_pipeline.sh
 ```
 A spreadsheet would be created in `output/` with some statistical test results on example data.
@@ -43,4 +47,4 @@ Some of the utilities depend on a Linux/Unix/macOS environment.
 
 # Customization
 
-See [Documentation for developers](spatial_analysis_toolbox/README.md).
+See [Documentation for developers](spatial_profiling_toolbox/README.md).

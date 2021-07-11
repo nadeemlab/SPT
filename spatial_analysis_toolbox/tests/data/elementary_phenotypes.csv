@@ -1,8 +1,0 @@
-Name,Dye number,Indication type,Indicated item name or handle string
-CD3,1,presence of protein complex,CD3
-PDL1,2,presence of protein,PDL1
-FOXP3,3,presence of protein,FOXP3
-ICOS,4,presence of protein,ICOS
-CD8,5,presence of protein complex,CD8
-DAPI,6,presence of DNA nucleobases,adenine;thymine
-CK,7,presence of protein,CK

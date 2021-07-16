@@ -146,8 +146,8 @@ class DiffusionAnalysisIntegrator:
         """
         probabilities = self.get_dataframe_from_db('transition_probabilities')
         job_metadata = self.get_dataframe_from_db('job_metadata')
-        logger.info('probabilities.shape: %s', probabilities.shape)
-        logger.info('average transition probability: %s', np.mean(probabilities['transition_probability']))
+        logger.info('Value of probabilities.shape: %s', probabilities.shape)
+        logger.info('Average transition probability: %s', np.mean(probabilities['transition_probability']))
         self.initialize_output_tables()
         temporal_offsets = probabilities['temporal_offset']
         temporal_offsets = temporal_offsets[~np.isnan(temporal_offsets)]
@@ -238,6 +238,31 @@ class DiffusionAnalysisIntegrator:
                     m.execute(cmd)
                 m.commit()
 
+    def sign(self, value):
+        return 1 if value >=0 else -1
+
+    def get_extremum(self, df, sign, statistic):
+        """
+        Args:
+            df (pandas.DataFrame):
+                Dataframe with sample-level (i.e. summarized) transition probability
+                values, summarized according to 'statistic'.
+            sign (int):
+                Either 1 or -1. Whether to return the extremely large value (in case of
+                1) or the extremely small value (in case of -1).
+            statistic (str):
+                Currently either 'mean', 'median', or 'variance'.
+
+        Returns:
+            list:
+                A pair, the extreme sample ID string and the extreme value.
+        """
+        values_column = statistic + '_transition_probability'
+        df_sorted = df.sort_values(by=values_column, ascending=True if sign==-1 else False)
+        extreme_sample = list(df_sorted['Sample_ID'])[0]
+        extreme_value = float(list(df_sorted[values_column])[0])
+        return [extreme_sample, extreme_value]
+
     def do_outcome_tests(self):
         df = self.get_dataframe_from_db('transition_probabilities_summarized')
         df = df[df['Diffusion_kernel_distance_type'] == 'EUCLIDEAN']
@@ -262,8 +287,10 @@ class DiffusionAnalysisIntegrator:
 
                             s, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
                             mean_difference = np.mean(values2) - np.mean(values1)
-                            s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
-                            median_difference = np.median(values2) - np.median(values1)
+
+                            sign = self.sign(mean_difference)
+                            extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
+                            extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
 
                             rows.append({
                                 'outcome 1' : outcome1,
@@ -276,9 +303,20 @@ class DiffusionAnalysisIntegrator:
                                 'test' : 't-test',
                                 'p-value' : p_ttest,
                                 'absolute effect' : abs(mean_difference),
-                                'effect sign' : int(np.sign(mean_difference)),
+                                'effect sign' : sign,
                                 'p-value < 0.01' : p_ttest < 0.01,
+                                'extreme sample 1' : extreme_sample1,
+                                'extreme sample 2' : extreme_sample2,
+                                'extreme value 1' : extreme_value1,
+                                'extreme value 2' : extreme_value2,
                             })
+
+                            s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
+                            median_difference = np.median(values2) - np.median(values1)
+
+                            sign = self.sign(median_difference)
+                            extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
+                            extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
 
                             rows.append({
                                 'outcome 1' : outcome1,
@@ -291,8 +329,12 @@ class DiffusionAnalysisIntegrator:
                                 'test' : 'Kruskal-Wallis',
                                 'p-value' : p_kruskal,
                                 'absolute effect' : abs(median_difference),
-                                'effect sign' : int(np.sign(median_difference)),
+                                'effect sign' : sign,
                                 'p-value < 0.01' : p_kruskal < 0.01,
+                                'extreme sample 1' : extreme_sample1,
+                                'extreme sample 2' : extreme_sample2,
+                                'extreme value 1' : extreme_value1,
+                                'extreme value 2' : extreme_value2,
                             })
         if len(rows) == 0:
             logger.info('No non-trivial tests to perform. Probably too few values.')

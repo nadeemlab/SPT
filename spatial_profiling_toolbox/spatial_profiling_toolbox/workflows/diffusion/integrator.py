@@ -263,7 +263,7 @@ class DiffusionAnalysisIntegrator:
         extreme_value = float(list(df_sorted[values_column])[0])
         return [extreme_sample, extreme_value]
 
-    def get_error_estimates(self, df1, df2, statistic, ratio_threshold):
+    def get_error_estimates(self, df1, df2, statistic, ratios_threshold):
         """
         Args:
             df1 (pandas.DataFrame):

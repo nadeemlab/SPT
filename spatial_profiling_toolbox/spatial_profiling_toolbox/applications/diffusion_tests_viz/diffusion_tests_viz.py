@@ -8,12 +8,11 @@ from os import getcwd
 from os.path import exists, abspath, dirname
 
 import pandas as pd
-# import matplotlib
-# import matplotlib.pyplot as plt
 import tkinter as tk
 import tkinter.filedialog as fd
 from tkinter import ttk
 import plotly.graph_objects as go
+
 
 class ColorStack:
     """
@@ -54,37 +53,50 @@ class FigureWrapper:
         cs = ColorStack()
 
         focus_cols = ['absolute effect', 'multiplicative effect']
-        var_cols = ['phenotype', 'effect sign', 'absolute effect', 'multiplicative effect', 'temporal offset', 'tested value 1', 'tested value 2']
+        var_cols = ['phenotype', 'effect sign', 'absolute effect', 'multiplicative effect', 'lower multiplicative effect', 'upper multiplicative effect', 'temporal offset', 'tested value 1', 'tested value 2']
 
         self.fig = go.Figure()
 
         table = table[var_cols]
         last_values = {}
-        col = 'multiplicative effect'
         last_values = {}
+        lower_upper = {}
         rolling_max = 0
         for phenotype in set(table['phenotype']):
             table2 = table[table['phenotype'] == phenotype]
-            data = list(table2[col])
+            data = list(table2['multiplicative effect'])
             label = phenotype
             cs.push_label(label)
             color = cs.get_color(label)
 
             df2 = pd.DataFrame({
                 'Markov chain temporal offset' : table2['temporal offset'],
-                'multiplicative effect' : data
+                'multiplicative effect' : data,
+                'lower multiplicative effect' : table2['lower multiplicative effect'],
+                'upper multiplicative effect' : table2['upper multiplicative effect'],
             }).sort_values(by='Markov chain temporal offset', ascending=False)
 
             self.fig.add_trace(go.Scatter(
-                    x=df2['Markov chain temporal offset'],
-                    y=df2['multiplicative effect'],
-                    mode='lines+markers',
-                    name=label,
-                    line=dict(color=color, width=2),
-                    connectgaps=False,
-                ))
+                x=df2['Markov chain temporal offset'],
+                y=df2['multiplicative effect'],
+                mode='lines+markers',
+                name=label,
+                line=dict(color=color, width=2),
+                connectgaps=False,
+            ))
 
             last_values[label] = list(df2['multiplicative effect'])[0]
+
+            self.fig.add_trace(go.Scatter(
+                x=list(df2['Markov chain temporal offset']) + list(reversed(df2['Markov chain temporal offset'])),
+                y=list(df2['lower multiplicative effect']) + list(reversed(df2['upper multiplicative effect'])),
+                fill='toself',
+                fillcolor='rgba(0,100,100,100)',
+                line=dict(color='rgba(255,255,255,0)'),
+                hoverinfo='skip',
+                showlegend=False,
+            ))
+
             rolling_max = max([rolling_max] + list(df2['multiplicative effect']))
 
         range_max = max(1.0, rolling_max * 1.05)
@@ -243,8 +255,11 @@ class DiffusionTestsViz:
 
         p = self.significance_threshold
         df['multiplicative effect'] = df['tested value 2'] / df['tested value 1']
+        df['lower multiplicative effect'] =  (df['absolute effect'] + df['lower absolute deviation']) / (df['absolute effect'])
+        df['upper multiplicative effect'] =  (df['absolute effect'] + df['upper absolute deviation']) / (df['absolute effect'])
         df['p-value < ' + str(p)] = (df['p-value'] < p)
         df_significant = df[df['p-value < ' + str(p)]]
+
         return df_significant
 
     def get_test_results_file(self):

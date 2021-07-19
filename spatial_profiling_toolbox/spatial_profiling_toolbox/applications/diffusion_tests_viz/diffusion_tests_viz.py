@@ -87,9 +87,12 @@ class FigureWrapper:
 
             last_values[label] = list(df2['multiplicative effect'])[0]
 
+            t_values = list(df2['Markov chain temporal offset'])
+            uppers = list(df2['upper multiplicative effect'])
+            lowers = list(df2['lower multiplicative effect'])
             self.fig.add_trace(go.Scatter(
-                x=list(df2['Markov chain temporal offset']) + list(reversed(df2['Markov chain temporal offset'])),
-                y=list(df2['lower multiplicative effect']) + list(reversed(df2['upper multiplicative effect'])),
+                x=t_values + list(reversed(t_values)),
+                y=uppers + list(reversed(lowers)),
                 fill='toself',
                 fillcolor='rgba(0,100,100,100)',
                 line=dict(color='rgba(255,255,255,0)'),

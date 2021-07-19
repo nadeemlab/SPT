@@ -263,6 +263,29 @@ class DiffusionAnalysisIntegrator:
         extreme_value = float(list(df_sorted[values_column])[0])
         return [extreme_sample, extreme_value]
 
+    def get_error_estimates(self, df1, df2, statistic):
+        """
+        Args:
+            df1 (pandas.DataFrame):
+                First group of data.
+            df2 (pandas.DataFrame):
+                Second group of data.
+
+        Returns:
+            Mean of the negative differences between
+            (statistic)"_transition_probability" values, and mean of the positive
+            differences.
+        """
+        values_column = statistic + '_transition_probability'
+        data1 = df1[values_column]
+        data2 = df2[values_column]
+        differences = [v2-v1 for v1 in data1 for v2 in data2]
+        differences_positive = [d for d in differences if d >= 0]
+        differences_negative = [d for d in differences if d <= 0]
+        lower = np.mean(differences_negative) if len(differences_negative) > 0 else 0
+        upper = np.mean(differences_positive) if len(differences_positive) > 0 else 0
+        return [lower, upper]
+
     def do_outcome_tests(self):
         df = self.get_dataframe_from_db('transition_probabilities_summarized')
         df = df[df['Diffusion_kernel_distance_type'] == 'EUCLIDEAN']
@@ -291,6 +314,7 @@ class DiffusionAnalysisIntegrator:
                             sign = self.sign(mean_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
                             extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
+                            lower, upper = self.get_error_estimates(df1, df2, statistic)
 
                             rows.append({
                                 'outcome 1' : outcome1,
@@ -309,6 +333,8 @@ class DiffusionAnalysisIntegrator:
                                 'extreme sample 2' : extreme_sample2,
                                 'extreme value 1' : extreme_value1,
                                 'extreme value 2' : extreme_value2,
+                                'lower absolute deviation' : lower,
+                                'upper absolute deviation' : upper,
                             })
 
                             s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
@@ -317,6 +343,7 @@ class DiffusionAnalysisIntegrator:
                             sign = self.sign(median_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
                             extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
+                            lower, upper = self.get_error_estimates(df1, df2, statistic)
 
                             rows.append({
                                 'outcome 1' : outcome1,
@@ -335,6 +362,8 @@ class DiffusionAnalysisIntegrator:
                                 'extreme sample 2' : extreme_sample2,
                                 'extreme value 1' : extreme_value1,
                                 'extreme value 2' : extreme_value2,
+                                'lower absolute deviation' : lower,
+                                'upper absolute deviation' : upper,
                             })
         if len(rows) == 0:
             logger.info('No non-trivial tests to perform. Probably too few values.')

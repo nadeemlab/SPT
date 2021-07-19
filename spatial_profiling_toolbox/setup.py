@@ -35,6 +35,7 @@ setuptools.setup(
         'spatial_profiling_toolbox.scripts',
         'spatial_profiling_toolbox.applications',
         'spatial_profiling_toolbox.applications.cell_cartoons',
+        'spatial_profiling_toolbox.applications.diffusion_tests_viz',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
@@ -48,6 +49,7 @@ setuptools.setup(
         'spatial_profiling_toolbox/scripts/spt_diffusion_analysis.py',
         'spatial_profiling_toolbox/scripts/spt_cell_phenotype_proximity_analysis.py',
         'spatial_profiling_toolbox/scripts/spt_print.py',
+        'spatial_profiling_toolbox/scripts/spt-diffusion-viz',
     ],
     install_requires=requirements,
 )

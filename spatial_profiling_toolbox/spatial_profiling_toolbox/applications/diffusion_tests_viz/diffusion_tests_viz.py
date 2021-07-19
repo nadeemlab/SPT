@@ -255,8 +255,8 @@ class DiffusionTestsViz:
 
         p = self.significance_threshold
         df['multiplicative effect'] = df['tested value 2'] / df['tested value 1']
-        df['lower multiplicative effect'] =  (df['absolute effect'] + df['lower absolute deviation']) / (df['absolute effect'])
-        df['upper multiplicative effect'] =  (df['absolute effect'] + df['upper absolute deviation']) / (df['absolute effect'])
+        df['lower multiplicative effect'] = df['lower absolute deviation'] / (df['absolute effect'])
+        df['upper multiplicative effect'] = df['upper absolute deviation'] / (df['absolute effect'])
         df['p-value < ' + str(p)] = (df['p-value'] < p)
         df_significant = df[df['p-value < ' + str(p)]]
 

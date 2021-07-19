@@ -49,6 +49,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             fov_index = fov_index,
             regional_compartment = regional_compartment,
             dataset_design = self.dataset_design,
+            jobs_paths = self.jobs_paths,
         )
 
     def _calculate(self):

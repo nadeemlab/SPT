@@ -1,6 +1,8 @@
 from enum import Enum, auto
 import math
 from math import sqrt
+import os
+from os.path import join
 
 import pandas as pd
 import numpy as np
@@ -10,6 +12,7 @@ import scipy
 from scipy.linalg import inv, eig
 import ot
 from ot.lp import emd2
+import networkx as nx
 
 from ...environment.log_formats import colorized_logger
 
@@ -32,13 +35,16 @@ class DiffusionCalculator:
         fov_index: int=None,
         regional_compartment: str=None,
         dataset_design=None,
+        jobs_paths: JobsPaths=None,
     ):
         self.dataset_design = dataset_design
         self.df = pd.read_csv(input_filename)
+        self.input_filename = input_filename
         self.fov = self.get_fov_handle_string(fov_index)
         self.regional_compartment = regional_compartment
 
         self.values = {'diffusion kernel' : None}
+        self.graph_serializer = GraphMLSerializer(output_path=jobs_paths.output_path)
 
     def get_values(self, key):
         return self.values[key]
@@ -119,6 +125,8 @@ class DiffusionCalculator:
                 if len(values) > M:
                     values = np.random.choice(values, M, replace=False)
                 self.values[t] = values
+
+        self.graph_serializer.serialize(diffusion_probability_matrices, pc, self.input_filename, self.fov)
 
     def generate_primary_point_cloud(self, df_marked_nontumor, df_marked_tumor, df_tumor):
         box_centers_marked_nt = self.get_box_centers(df_marked_nontumor)
@@ -270,3 +278,61 @@ class DiffusionCalculator:
 
         if self.regional_compartment == 'nontumor':
             return range(self.number_marked_nt)
+
+
+class GraphMLSerializer:
+    def __init__(self, output_path=None, threshold=0.01):
+        self.output_path = outputh_path
+        self.threshold = threshold
+
+    def serialize(self, transition_matrices, initial_locations, input_filename, fov):
+        """
+        Args:
+            transition_matrices (dict):
+                The Markov chain transition matrices at various timepoints. The keys are
+                the float timepoints, values are numpy matrices.
+            initial_locations (list):
+                List of locations (box centers) for cells, in order to correspond to the
+                list of rows (equivalently, columns) in the transition_matrices. The
+                values should be pairs of coordinate values.
+            input_filename (str):
+                The input file from which the cell/image data were obtained.
+            fov (str):
+                The field of view which was considered for the formation of the
+                transition matrices.
+
+        Saves to GraphML file, with semantic filenames. The transition matrix entries
+        are stored as edge weightings, with names like 'weight1', 'weight2', ... .
+        """
+        t_values = sorted(list(transition_matrices.keys()))
+        N = transition_matrices[t_values[0]].shape[0]
+        Np = transition_matrices[t_values[0]].shape[1]
+        if N != len(initial_locations) or Np != len(initial_locations):
+            logger.error('Provided %s initial locations, but transition matrix is %s x %s', len(initial_locations), N, Np)
+            return
+        G = nx.Graph()
+        for k in range(N):
+            G.add_nodes(k, x=initial_locations[k][0], y=initial_locations[k][1])
+        zero_weights = {'weight' + str(i+1) : 0.0 for i in range(len(t_values))}
+
+        for t in t_values:
+            M = transition_matrix[t]
+            for i in range(N):
+                for j in range(i+1, N):
+                    if M[i][j] >= self.threshold:
+                        G.add_edge(i, j, **zero_weights)
+
+        for i, t in enumerate(t_values):
+            M = transition_matrix[t]
+            for i in range(N):
+                for j in range(i+1, N):
+                    if M[i][j] >= self.threshold:
+                        G.add_edge(i, j, {'weight' + str(i+1) : M[i][j]})
+
+        filename = sample_id + '_' + fov + '.graphml'
+        p = join(self.output_path, 'graphml')
+        if not exists(p):
+            mkdir(p)
+        full_filename = join(p, filename)
+        nx.write_graphml(G, full_filename)
+

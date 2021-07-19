@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+
+from spatial_profiling_toolbox.applications.diffusion_graphs_viz.diffusion_graphs_viz import DiffusionGraphsViz
+
+gui = DiffusionGraphsViz()

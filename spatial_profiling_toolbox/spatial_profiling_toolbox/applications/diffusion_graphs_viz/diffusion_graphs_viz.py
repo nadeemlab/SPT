@@ -20,9 +20,9 @@ class DiffusionGraphsViz:
         G = self.graph
         e0 = list(G.edges)[0]
         weighting_names = sorted(list(G.edges[e0].keys()))
-        weighting_ids = sorted([float(re.search(r'[\d\.]+$', name).group(0)) for name in weighting_names])
+        weighting_ids = sorted([int(re.search(r'[\d\.]+$', name).group(0)) for name in weighting_names])
 
-        prefixes = [re.sub(r'[\d\.]+$', '', name for name in weighting_names)]
+        prefixes = [re.sub(r'[\d\.]+$', '', name) for name in weighting_names]
         if not all([prefix == prefixes[0] for prefix in prefixes]):
             print('Error: Not all prefixes equal to "' + prefixes[0] + '"')
             exit()
@@ -58,9 +58,9 @@ class DiffusionGraphsViz:
 
         G = self.graph
         pos = nx.spring_layout(G, weight = self.weightings[self.timepoint], seed=7)
-        ax.clear()
-        nx.draw(G, with_labels=True, font_weight='bold', pos=pos, ax=ax)
-        ax.text(-0.01, -0.1, 't='+str(self.timepoint) + ' (' + self.weightings[self.timepoint] + ')', transform=ax.transAxes)
+        self.ax.clear()
+        nx.draw(G, with_labels=False, pos=pos, ax=self.ax)
+        self.ax.text(-0.01, -0.1, 'T='+str(self.timepoint) + ' (' + self.weightings[self.timepoint] + ')', transform=self.ax.transAxes)
         plt.draw()
 
     def start_showing(self):

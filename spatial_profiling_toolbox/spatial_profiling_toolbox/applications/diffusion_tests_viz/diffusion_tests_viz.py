@@ -8,12 +8,12 @@ from os import getcwd
 from os.path import exists, abspath, dirname
 
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
+# import matplotlib
+# import matplotlib.pyplot as plt
 import tkinter as tk
 import tkinter.filedialog as fd
 from tkinter import ttk
-
+import plotly.graph_objects as go
 
 class ColorStack:
     """
@@ -48,70 +48,153 @@ class ColorStack:
 
 class FigureWrapper:
     def __init__(self, significance_threshold):
-        fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-        self.fig = fig
-        self.axs = axs
         self.significance_threshold = significance_threshold
 
     def show_figures(self, key, table):
-        fig = self.fig
-        axs = self.axs
-        for ax in axs:
-            ax.clear()
-        cs = {i : ColorStack() for i in range(len(axs))}
+        cs = ColorStack()
 
         focus_cols = ['absolute effect', 'multiplicative effect']
         var_cols = ['phenotype', 'effect sign', 'absolute effect', 'multiplicative effect', 'temporal offset', 'tested value 1', 'tested value 2']
 
-        table = table[var_cols]
-        for i, col in enumerate(focus_cols):
-            for phenotype in set(table['phenotype']):
-                table2 = table[table['phenotype'] == phenotype]
-                data = list(table2[col])
-                label = phenotype
-                cs[i].push_label(label)
-                color = cs[i].get_color(label)
-                axs[i].plot(table2['temporal offset'], data, label=label)
+        self.fig = go.Figure()
 
+        table = table[var_cols]
+        last_values = {}
+        col = 'multiplicative effect'
+        last_values = {}
+        rolling_max = 0
         for phenotype in set(table['phenotype']):
             table2 = table[table['phenotype'] == phenotype]
+            data = list(table2[col])
+            label = phenotype
+            cs.push_label(label)
+            color = cs.get_color(label)
 
-            data = table2['tested value 1']
-            label = phenotype + ' (tested value 1)'
-            cs[2].push_label(label)
-            color = cs[2].get_color(label)
-            axs[2].plot(table2['temporal offset'], data, label=label)
+            df2 = pd.DataFrame({
+                'Markov chain temporal offset' : table2['temporal offset'],
+                'multiplicative effect' : data
+            }).sort_values(by='Markov chain temporal offset', ascending=False)
 
-            data = table2['tested value 2']
-            label = phenotype + ' (tested value 2)'
-            cs[2].push_label(label)
-            color = cs[2].get_color(label) # Why this?
-            axs[2].plot(table2['temporal offset'], data, label=label)
+            self.fig.add_trace(go.Scatter(
+                    x=df2['Markov chain temporal offset'],
+                    y=df2['multiplicative effect'],
+                    mode='lines+markers',
+                    name=label,
+                    line=dict(color=color, width=2),
+                    connectgaps=False,
+                ))
 
-        axs[0].set_ylabel(focus_cols[0])
-        axs[1].set_ylabel(focus_cols[1])
-        axs[2].set_ylabel('tested values')
+            last_values[label] = list(df2['multiplicative effect'])[0]
+            rolling_max = max([rolling_max] + list(df2['multiplicative effect']))
 
-        for i in range(3):
-            axs[i].set_xlabel('temporal offset (Markov chain simulation duration)')
+        range_max = max(1.0, rolling_max * 1.05)
 
-        fig.suptitle(''.join([
+        if range_max > 1.0:
+            self.fig.add_trace(go.Scatter(
+                x=[1.0, 2.8],
+                y=[1.0, 1.0],
+                mode = 'lines',
+                line = dict(color='gray', width=1, dash='dash'),
+                connectgaps=True,
+            ))
+
+        last_values = self.respace_label_locations(last_values, range_max, 0)
+
+        self.fig.update_layout(
+            xaxis=dict(
+                showline=True,
+                showgrid=False,
+                showticklabels=True,
+                linecolor='rgb(204, 204, 204)',
+                linewidth=2,
+                ticks='outside',
+                tickfont=dict(
+                    family='Arial',
+                    size=12,
+                    color='rgb(82, 82, 82)',
+                ),
+            ),
+            yaxis=dict(
+                showgrid=False,
+                zeroline=False,
+                showline=True,
+                showticklabels=True,
+            ),
+            autosize=False,
+            margin=dict(
+                autoexpand=False,
+                l=100,
+                r=20,
+                t=110,
+            ),
+            showlegend=False,
+            plot_bgcolor='white',
+        )
+
+        title = ''.join([
             key[0],
             ' vs. ',
             key[1],
-            ', testing the "',
+            '<br>',
+            'Testing the "',
             key[2],
             '" feature with ',
             key[3],
-            ' (only p < ',
+            '<br>',
+            '(only showing p < ',
             str(self.significance_threshold),
             ')',
-        ]))
+        ])
 
-        axs[0].legend()
-        axs[1].legend()
-        axs[2].legend()
+        annotations = []
 
+        for label in set(table['phenotype']):
+            annotations.append(dict(
+                xref='paper',
+                x=0.95,
+                y=last_values[label],
+                xanchor='left',
+                yanchor='middle',
+                text=label,
+                font=dict(family='Arial', size=12),
+                showarrow=False,
+            ))
+
+        annotations.append(dict(
+            xref='paper',
+            yref='paper',
+            x=0.5,
+            y=1.05,
+            xanchor='center',
+            yanchor='bottom',
+            text=title,
+            font=dict(family='Arial', size=18, color='rgb(37,37,37)'),
+            showarrow=False,
+            ))
+
+        self.fig.update_layout(
+            annotations=annotations,
+        )
+        self.fig.update_layout(
+            xaxis_title='Markov chain temporal offset',
+            yaxis_title='multiplicative effect',
+            width=800,
+            height=600,
+        )
+
+        self.fig.update_yaxes(range=[0, range_max])
+
+        self.fig.show()
+
+    def respace_label_locations(self, locations, max_value, min_value, label_height_fraction=0.06):
+        assumed_label_height = (max_value - min_value) * label_height_fraction
+        new_locations = [[key, location] for key, location in locations.items()]
+        new_locations = sorted(new_locations, key=lambda pair: pair[1])
+        for i in range(1, len(new_locations)):
+            if new_locations[i][1] - new_locations[i-1][1] < assumed_label_height:
+                new_locations[i][1] = new_locations[i-1][1] + assumed_label_height
+        new_locations = {key : location for key, location in new_locations}
+        return new_locations
 
 class DiffusionTestsViz:
     """
@@ -186,8 +269,8 @@ class DiffusionTestsViz:
         selected_variables = self.get_selected_vars()
         table = self.restrict_dataframe(self.dataframe, selected_variables)
         self.figure_wrapper.show_figures(list(selected_variables.values()), table)
-        plt.ion()
-        plt.show()
+        # plt.ion()
+        # plt.show()
 
     def get_selected_vars(self):
         return {

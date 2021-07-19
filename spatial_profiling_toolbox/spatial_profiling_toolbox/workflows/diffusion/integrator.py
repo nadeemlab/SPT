@@ -263,7 +263,7 @@ class DiffusionAnalysisIntegrator:
         extreme_value = float(list(df_sorted[values_column])[0])
         return [extreme_sample, extreme_value]
 
-    def get_error_estimates(self, df1, df2, statistic):
+    def get_error_estimates(self, df1, df2, statistic, difference_threshold):
         """
         Args:
             df1 (pandas.DataFrame):
@@ -272,16 +272,16 @@ class DiffusionAnalysisIntegrator:
                 Second group of data.
 
         Returns:
-            Mean of the negative differences between
-            (statistic)"_transition_probability" values, and mean of the positive
-            differences.
+            Mean of the differences between (statistic)"_transition_probability" values
+            that lie below difference_threshold, and the mean of the differences that
+            exceed difference_threshold.
         """
         values_column = statistic + '_transition_probability'
         data1 = df1[values_column]
         data2 = df2[values_column]
         differences = [v2-v1 for v1 in data1 for v2 in data2]
-        differences_positive = [d for d in differences if d >= 0]
-        differences_negative = [d for d in differences if d <= 0]
+        differences_positive = [d for d in differences if d >= difference_threshold]
+        differences_negative = [d for d in differences if d < difference_threshold]
         lower = np.mean(differences_negative) if len(differences_negative) > 0 else 0
         upper = np.mean(differences_positive) if len(differences_positive) > 0 else 0
         return [lower, upper]
@@ -314,7 +314,7 @@ class DiffusionAnalysisIntegrator:
                             sign = self.sign(mean_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
                             extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
-                            lower, upper = self.get_error_estimates(df1, df2, statistic)
+                            lower, upper = self.get_error_estimates(df1, df2, statistic, mean_difference)
 
                             rows.append({
                                 'outcome 1' : outcome1,
@@ -343,7 +343,7 @@ class DiffusionAnalysisIntegrator:
                             sign = self.sign(median_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
                             extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
-                            lower, upper = self.get_error_estimates(df1, df2, statistic)
+                            lower, upper = self.get_error_estimates(df1, df2, statistic, median_difference)
 
                             rows.append({
                                 'outcome 1' : outcome1,

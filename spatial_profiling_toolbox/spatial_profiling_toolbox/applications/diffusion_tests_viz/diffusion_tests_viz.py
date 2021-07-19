@@ -58,9 +58,32 @@ class FigureWrapper:
         self.fig = go.Figure()
 
         table = table[var_cols]
+
+        for phenotype in set(table['phenotype']):
+            table2 = table[table['phenotype'] == phenotype]
+            data = list(table2['multiplicative effect'])
+            label = phenotype
+
+            df2 = pd.DataFrame({
+                'Markov chain temporal offset' : table2['temporal offset'],
+                'multiplicative effect' : data,
+                'lower multiplicative effect' : table2['lower multiplicative effect'],
+                'upper multiplicative effect' : table2['upper multiplicative effect'],
+            }).sort_values(by='Markov chain temporal offset', ascending=False)
+            t_values = list(df2['Markov chain temporal offset'])
+            uppers = list(df2['upper multiplicative effect'])
+            lowers = list(df2['lower multiplicative effect'])
+            self.fig.add_trace(go.Scatter(
+                x=t_values + list(reversed(t_values)),
+                y=uppers + list(reversed(lowers)),
+                fill='toself',
+                fillcolor='rgba(230,230,230,60)',
+                line=dict(color='rgba(255,255,255,0)'),
+                hoverinfo='skip',
+                showlegend=False,
+            ))
+
         last_values = {}
-        last_values = {}
-        lower_upper = {}
         rolling_max = 0
         for phenotype in set(table['phenotype']):
             table2 = table[table['phenotype'] == phenotype]
@@ -76,6 +99,21 @@ class FigureWrapper:
                 'upper multiplicative effect' : table2['upper multiplicative effect'],
             }).sort_values(by='Markov chain temporal offset', ascending=False)
 
+            last_values[label] = list(df2['multiplicative effect'])[0]
+
+            # t_values = list(df2['Markov chain temporal offset'])
+            # uppers = list(df2['upper multiplicative effect'])
+            # lowers = list(df2['lower multiplicative effect'])
+            # self.fig.add_trace(go.Scatter(
+            #     x=t_values + list(reversed(t_values)),
+            #     y=uppers + list(reversed(lowers)),
+            #     fill='toself',
+            #     fillcolor='rgba(200,200,200,100)',
+            #     line=dict(color='rgba(255,255,255,0)'),
+            #     hoverinfo='skip',
+            #     showlegend=False,
+            # ))
+
             self.fig.add_trace(go.Scatter(
                 x=df2['Markov chain temporal offset'],
                 y=df2['multiplicative effect'],
@@ -83,21 +121,6 @@ class FigureWrapper:
                 name=label,
                 line=dict(color=color, width=2),
                 connectgaps=False,
-            ))
-
-            last_values[label] = list(df2['multiplicative effect'])[0]
-
-            t_values = list(df2['Markov chain temporal offset'])
-            uppers = list(df2['upper multiplicative effect'])
-            lowers = list(df2['lower multiplicative effect'])
-            self.fig.add_trace(go.Scatter(
-                x=t_values + list(reversed(t_values)),
-                y=uppers + list(reversed(lowers)),
-                fill='toself',
-                fillcolor='rgba(0,100,100,100)',
-                line=dict(color='rgba(255,255,255,0)'),
-                hoverinfo='skip',
-                showlegend=False,
             ))
 
             rolling_max = max([rolling_max] + list(df2['multiplicative effect']))
@@ -258,8 +281,8 @@ class DiffusionTestsViz:
 
         p = self.significance_threshold
         df['multiplicative effect'] = df['tested value 2'] / df['tested value 1']
-        df['lower multiplicative effect'] = df['lower absolute deviation'] / (df['absolute effect'])
-        df['upper multiplicative effect'] = df['upper absolute deviation'] / (df['absolute effect'])
+        df['lower multiplicative effect'] = df['lower absolute deviation']
+        df['upper multiplicative effect'] = df['upper absolute deviation']
         df['p-value < ' + str(p)] = (df['p-value'] < p)
         df_significant = df[df['p-value < ' + str(p)]]
 

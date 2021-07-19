@@ -310,7 +310,7 @@ class DiffusionAnalysisIntegrator:
 
                             s, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
                             mean_difference = np.mean(values2) - np.mean(values1)
-                            multiplicative_effect = np.mean(values2) / np.mean(values2)
+                            multiplicative_effect = np.mean(values2) / np.mean(values1)
 
                             sign = self.sign(mean_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
@@ -340,7 +340,7 @@ class DiffusionAnalysisIntegrator:
 
                             s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
                             median_difference = np.median(values2) - np.median(values1)
-                            multiplicative_effect = np.median(values2) / np.median(values2)
+                            multiplicative_effect = np.median(values2) / np.median(values1)
 
                             sign = self.sign(median_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)

@@ -263,7 +263,7 @@ class DiffusionAnalysisIntegrator:
         extreme_value = float(list(df_sorted[values_column])[0])
         return [extreme_sample, extreme_value]
 
-    def get_error_estimates(self, df1, df2, statistic, difference_threshold):
+    def get_error_estimates(self, df1, df2, statistic, ratio_threshold):
         """
         Args:
             df1 (pandas.DataFrame):
@@ -272,18 +272,18 @@ class DiffusionAnalysisIntegrator:
                 Second group of data.
 
         Returns:
-            Mean of the differences between (statistic)"_transition_probability" values
-            that lie below difference_threshold, and the mean of the differences that
-            exceed difference_threshold.
+            Mean of the ratios between (statistic)"_transition_probability" values
+            that lie below ratio_threshold, and the mean of the ratios that
+            exceed ratio_threshold.
         """
         values_column = statistic + '_transition_probability'
         data1 = df1[values_column]
         data2 = df2[values_column]
-        differences = [v2-v1 for v1 in data1 for v2 in data2]
-        differences_positive = [d for d in differences if d >= difference_threshold]
-        differences_negative = [d for d in differences if d < difference_threshold]
-        lower = np.mean(differences_negative) if len(differences_negative) > 0 else 0
-        upper = np.mean(differences_positive) if len(differences_positive) > 0 else 0
+        ratios = [v2/v1 for v1 in data1 for v2 in data2 if v1 != 0]
+        ratios_positive = [r for r in ratios if r >= ratios_threshold]
+        ratios_negative = [r for r in ratios if r < ratios_threshold]
+        lower = np.mean(ratios_negative) if len(ratios_negative) > 0 else 0
+        upper = np.mean(ratios_positive) if len(ratios_positive) > 0 else 0
         return [lower, upper]
 
     def do_outcome_tests(self):
@@ -310,11 +310,12 @@ class DiffusionAnalysisIntegrator:
 
                             s, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
                             mean_difference = np.mean(values2) - np.mean(values1)
+                            multiplicative_effect = np.mean(values2) / np.mean(values2)
 
                             sign = self.sign(mean_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
                             extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
-                            lower, upper = self.get_error_estimates(df1, df2, statistic, mean_difference)
+                            lower, upper = self.get_error_estimates(df1, df2, statistic, multiplicative_effect)
 
                             rows.append({
                                 'outcome 1' : outcome1,
@@ -339,11 +340,12 @@ class DiffusionAnalysisIntegrator:
 
                             s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
                             median_difference = np.median(values2) - np.median(values1)
+                            multiplicative_effect = np.median(values2) / np.median(values2)
 
                             sign = self.sign(median_difference)
                             extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, statistic)
                             extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, statistic)
-                            lower, upper = self.get_error_estimates(df1, df2, statistic, median_difference)
+                            lower, upper = self.get_error_estimates(df1, df2, statistic, multiplicative_effect)
 
                             rows.append({
                                 'outcome 1' : outcome1,

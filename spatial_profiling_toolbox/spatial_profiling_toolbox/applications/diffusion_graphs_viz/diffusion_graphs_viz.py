@@ -10,12 +10,13 @@ class DiffusionGraphsViz:
     def __init__(self):
         self.graph = self.retrieve_graph()
         self.weightings = self.get_weighting_names_ordered()
-        self.timepoint = 0
+        self.timepoint = -1
         self.max_timepoint = len(self.weightings)-1
         fig, ax = plt.subplots()
         self.fig = fig
         self.ax = ax
         plt.connect('key_press_event', self.handle_keypress)
+        self.positions = None
 
     def get_weighting_names_ordered(self):
         G = self.graph
@@ -59,17 +60,33 @@ class DiffusionGraphsViz:
                 return
         if event.key == 'left':
             self.timepoint -= 1
-            if self.timepoint < 0:
+            if self.timepoint < -1:
                 self.timepoint += 1
                 return
 
+        self.draw_graph()
+
+    def draw_graph(self):
         G = self.graph
-        pos = nx.spring_layout(G, weight = self.weightings[self.timepoint], seed=7)
+        initial_pos = {node : [G.nodes[node]['x_coordinate'], G.nodes[node]['y_coordinate']] for node in G.nodes}
+        if self.positions is None:
+            self.positions = {}
+            self.positions[-1] = initial_pos
+            for i in range(self.max_timepoint+1):
+                self.positions[i] = nx.spring_layout(G, weight = self.weightings[self.timepoint], seed=7, pos=self.positions[i-1])
+
+        if self.timepoint >= 0:
+            weighting_name = '(' + self.weightings[self.timepoint] + ')'
+        else:
+            weighting_name = ''
+
+        pos = self.positions[self.timepoint]
         self.ax.clear()
-        nx.draw(G, with_labels=False, pos=pos, ax=self.ax)
-        self.ax.text(-0.01, -0.1, 'T='+str(self.timepoint) + ' (' + self.weightings[self.timepoint] + ')', transform=self.ax.transAxes)
+        nx.draw(G, with_labels=False, pos=pos, ax=self.ax, node_size=30, width=0.5)
+        self.ax.text(-0.01, -0.1, 'T='+str(self.timepoint) + ' ' + weighting_name, transform=self.ax.transAxes)
         plt.draw()
 
     def start_showing(self):
+        self.draw_graph()
         plt.show()
 

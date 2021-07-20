@@ -204,7 +204,7 @@ class DiffusionCalculator:
         if self.regional_compartment == 'nontumor':
             return number_eigens
 
-    def calculate_transition_matrix_evolution(self, pc, diffusion_kernel, distance_type):
+    def calculate_transition_matrix_evolution(self, pc, diffusion_kernel, distance_type, step_size=0.4):
         if not distance_type in [DistanceTypes.OPTIMAL_TRANSPORT, DistanceTypes.EUCLIDEAN]:
             return [None, None]
         logger.debug('Performing forward time evolution of Markov chain.')
@@ -230,7 +230,7 @@ class DiffusionCalculator:
         number_eigens = len(M_vals)
         D_size = self.get_D_size(pc, number_eigens)
         diffusion_probability_matrices = {}
-        for t in np.arange(1,3,0.4):
+        for t in np.arange(1,3,step_size):
             Dt = zeros(shape=(D_size, number_eigens))
             point_indices = self.get_pertinent_point_indices()
             logger.debug('Looping over %s points for time step t=%s', len(point_indices), t)
@@ -284,7 +284,7 @@ class DiffusionCalculator:
 
 
 class GraphMLSerializer:
-    def __init__(self, output_path=None, threshold=0.001):
+    def __init__(self, output_path=None, threshold=0.01):
         self.output_path = output_path
         self.threshold = threshold
 

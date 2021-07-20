@@ -49,60 +49,70 @@ class FigureWrapper:
     def __init__(self, significance_threshold):
         self.significance_threshold = significance_threshold
 
-    def show_figures(self, key, table):
+    def show_figure(self,
+        outcome1,
+        outcome2,
+        summarization_statistic,
+        test_name,
+        table,
+    ):
+        """
+        Shows a plotly figure in the browser depicting the multiplicative effect of the
+        given pairwise comparison, against the temporal offset parameter.
+
+        :param outcome1: The first outcome label in pairwise comparison.
+        :type outcome1: str
+
+        :param outcome2: The second outcome label in pairwise comparison.
+        :type outcome2: str
+
+        :param summarization_statistic: The name of the "first summarization" statistic
+            used to reduce the distributional data to a single feature along the sample
+            set.
+        :type summarization_statistic: str
+
+        :param test_name: The name of the statistical comparison test.
+        :type test_name: str
+
+        :param table: A table with columns:
+            - "phenotype"
+            - "temporal offset"
+            - "multiplicative effect"
+        :type table: pandas.DataFrame
+        """
         cs = ColorStack()
         self.fig = go.Figure()
-        for phenotype in set(table['phenotype']):
-            table2 = table[table['phenotype'] == phenotype]
-            data = list(table2['multiplicative effect'])
-            label = phenotype
-
-            df2 = pd.DataFrame({
-                'Markov chain temporal offset' : table2['temporal offset'],
-                'multiplicative effect' : data,
-            }).sort_values(by='Markov chain temporal offset', ascending=False)
-            t_values = list(df2['Markov chain temporal offset'])
 
         last_values = {}
         rolling_max = 0
-        for phenotype in set(table['phenotype']):
-            table2 = table[table['phenotype'] == phenotype]
-            data = list(table2['multiplicative effect'])
-            label = phenotype
-            cs.push_label(label)
-            color = cs.get_color(label)
-
-            df2 = pd.DataFrame({
-                'Markov chain temporal offset' : table2['temporal offset'],
-                'multiplicative effect' : data,
-            }).sort_values(by='Markov chain temporal offset', ascending=False)
-
-            last_values[label] = list(df2['multiplicative effect'])[0]
-
+        for p in set(table['phenotype']):
+            table_p = table[table['phenotype'] == p]
+            table_p = table_p.sort_values(by='temporal offset')
+            cs.push_label(p)
             self.fig.add_trace(go.Scatter(
-                x=df2['Markov chain temporal offset'],
-                y=df2['multiplicative effect'],
+                x=table_p['temporal offset'],
+                y=table_p['multiplicative effect'],
                 mode='lines+markers',
-                name=label,
-                line=dict(color=color, width=2),
+                name=p,
+                line=dict(color=cs.get_color(p), width=2),
                 connectgaps=False,
             ))
+            table_p = table_p.sort_values(by='temporal offset', ascending=False)
+            last_values[p] = list(table_p['multiplicative effect'])[0]
+            rolling_max = max([rolling_max] + list(table_p['multiplicative effect']))
 
-            rolling_max = max([rolling_max] + list(df2['multiplicative effect']))
-
+        t_initial = sorted(list(table['temporal offset']))[0]
+        t_final = sorted(list(table['temporal offset']), reverse=True)[0]
         range_max = max(1.0, rolling_max * 1.05)
-
-        if range_max > 1.0:
-            self.fig.add_trace(go.Scatter(
-                x=[1.0, 2.8],
-                y=[1.0, 1.0],
-                mode = 'lines',
-                line = dict(color='gray', width=1, dash='dash'),
-                connectgaps=True,
-            ))
+        self.fig.add_trace(go.Scatter(
+            x=[t_initial, t_final],
+            y=[1.0, 1.0],
+            mode = 'lines',
+            line = dict(color='gray', width=1, dash='dash'),
+            connectgaps=True,
+        ))
 
         last_values = self.respace_label_locations(last_values, range_max, 0)
-
         self.fig.update_layout(
             xaxis=dict(
                 showline=True,
@@ -135,14 +145,14 @@ class FigureWrapper:
         )
 
         title = ''.join([
-            key[0],
+            outcome1,
             ' vs. ',
-            key[1],
+            outcome2,
             '<br>',
             'Testing the "',
-            key[2],
+            summarization_statistic,
             '" feature with ',
-            key[3],
+            test_name,
             '<br>',
             '(only showing p < ',
             str(self.significance_threshold),
@@ -210,15 +220,9 @@ class DiffusionTestsViz:
         self.root = tk.Tk()
         self.root.winfo_toplevel().title("Diffusion transition probability values visualization")
         self.dataframe = self.retrieve_tests_dataframe(tests_filename=tests_filename)
-        self.tk_vars = {varname : tk.StringVar() for varname in self.get_variable_names()}
-        self.table_column_association = {
-            'outcome 1' : 'outcome 1',
-            'outcome 2' : 'outcome 2',
-            'tested feature function' : 'first-summarization statistic tested',
-            'statistical test' : 'test',
-        }
+        self.tk_vars = {varname : tk.StringVar() for varname in self.get_visible_parameter_names()}
 
-        varnames = self.get_variable_names()
+        varnames = self.get_visible_parameter_names()
         comboboxes = {
             varname : ttk.Combobox(self.root, state='readonly', font=("Arial", 20), textvariable=self.tk_vars[varname]) for varname in varnames
         }
@@ -230,7 +234,7 @@ class DiffusionTestsViz:
             tk.Label(self.root, textvariable=var, font=("Arial", 20)).grid(sticky='W', row=i, column=0, padx=(10, 10), pady=(10, 10))
             var.set(key)
 
-        for key, val in self.table_column_association.items():
+        for key, val in self.get_table_column_association().items():
             comboboxes[key]['values'] = sorted(list(set(self.dataframe[val])))
             comboboxes[key].current(0)
 
@@ -244,14 +248,10 @@ class DiffusionTestsViz:
             test_results_file = self.get_test_results_file()
         df = pd.read_csv(test_results_file)
         df = df.sort_values(by='temporal offset')
-
         p = self.significance_threshold
         df['multiplicative effect'] = df['tested value 2'] / df['tested value 1']
-        df['lower multiplicative effect'] = df['lower absolute deviation']
-        df['upper multiplicative effect'] = df['upper absolute deviation']
         df['p-value < ' + str(p)] = (df['p-value'] < p)
         df_significant = df[df['p-value < ' + str(p)]]
-
         return df_significant
 
     def get_test_results_file(self):
@@ -273,17 +273,31 @@ class DiffusionTestsViz:
         return table
 
     def update_selection(self, event):
-        selected_variables = self.get_selected_vars()
-        table = self.restrict_dataframe(self.dataframe, selected_variables)
-        self.figure_wrapper.show_figures(list(selected_variables.values()), table)
+        v = self.get_selected_vars()
+        table = self.restrict_dataframe(self.dataframe, v)
+        self.figure_wrapper.show_figure(
+            v['outcome 1'],
+            v['outcome 2'],
+            v['first-summarization statistic tested'],
+            v['test'],
+            table,
+        )
 
     def get_selected_vars(self):
         return {
-            val : self.tk_vars[key].get() for key, val in self.table_column_association.items()
+            val : self.tk_vars[key].get() for key, val in self.get_table_column_association().items()
         }
 
-    def get_variable_names(self):
-        return ['outcome 1', 'outcome 2', 'tested feature function', 'statistical test']
+    def get_visible_parameter_names(self):
+        return self.get_table_column_association().keys()
+
+    def get_table_column_association(self):
+        return {
+            'outcome 1' : 'outcome 1',
+            'outcome 2' : 'outcome 2',
+            'tested feature function' : 'first-summarization statistic tested',
+            'statistical test' : 'test',
+        }
 
     def start_showing(self):
         self.root.mainloop()

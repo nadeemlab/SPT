@@ -140,6 +140,21 @@ class FigureWrapper:
             connectgaps=True,
         ))
 
+    def respace_label_locations(self,
+        locations,
+        max_value,
+        min_value,
+        label_height_fraction=0.06,
+    ):
+        assumed_label_height = (max_value - min_value) * label_height_fraction
+        new_locations = [[key, location] for key, location in locations.items()]
+        new_locations = sorted(new_locations, key=lambda pair: pair[1])
+        for i in range(1, len(new_locations)):
+            if new_locations[i][1] - new_locations[i-1][1] < assumed_label_height:
+                new_locations[i][1] = new_locations[i-1][1] + assumed_label_height
+        new_locations = {key : location for key, location in new_locations}
+        return new_locations
+
     def format_figure(self):
         self.fig.update_layout(
             xaxis=dict(
@@ -209,16 +224,6 @@ class FigureWrapper:
             height=600,
         )
 
-    def respace_label_locations(self, locations, max_value, min_value, label_height_fraction=0.06):
-        assumed_label_height = (max_value - min_value) * label_height_fraction
-        new_locations = [[key, location] for key, location in locations.items()]
-        new_locations = sorted(new_locations, key=lambda pair: pair[1])
-        for i in range(1, len(new_locations)):
-            if new_locations[i][1] - new_locations[i-1][1] < assumed_label_height:
-                new_locations[i][1] = new_locations[i-1][1] + assumed_label_height
-        new_locations = {key : location for key, location in new_locations}
-        return new_locations
-
 
 class DiffusionTestsViz:
     """
@@ -255,7 +260,7 @@ class DiffusionTestsViz:
         if not tests_filename is None:
             test_results_file = tests_filename
         else:
-            test_results_file = self.get_test_results_file()
+            test_results_file = self.solicit_test_results_file()
         df = pd.read_csv(test_results_file)
         df = df.sort_values(by='temporal offset')
         p = self.significance_threshold
@@ -264,7 +269,7 @@ class DiffusionTestsViz:
         df_significant = df[df['p-value < ' + str(p)]]
         return df_significant
 
-    def get_test_results_file(self):
+    def solicit_test_results_file(self):
         if len(sys.argv) == 2:
             test_results_file = sys.argv[1]
             if not exists(test_results_file):

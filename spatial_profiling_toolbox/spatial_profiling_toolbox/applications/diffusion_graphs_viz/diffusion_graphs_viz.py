@@ -20,6 +20,12 @@ class DiffusionGraphsViz:
         G = self.graph
         e0 = list(G.edges)[0]
         weighting_names = sorted(list(G.edges[e0].keys()))
+
+        for name in weighting_names:
+            for edge in G.edges:
+                w = G.edges[edge][name]
+                G.edges[edge][name] = 1/w if w!=0 else 1.0
+
         weighting_ids = sorted([int(re.search(r'[\d\.]+$', name).group(0)) for name in weighting_names])
 
         prefixes = [re.sub(r'[\d\.]+$', '', name) for name in weighting_names]

@@ -2,7 +2,9 @@ from enum import Enum, auto
 import math
 from math import sqrt
 import os
-from os.path import join
+from os.path import join, exists, basename
+from os import mkdir
+import re
 
 import pandas as pd
 import numpy as np
@@ -14,6 +16,7 @@ import ot
 from ot.lp import emd2
 import networkx as nx
 
+from ...environment.settings_wrappers import JobsPaths
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -126,7 +129,7 @@ class DiffusionCalculator:
                     values = np.random.choice(values, M, replace=False)
                 self.values[t] = values
 
-        self.graph_serializer.serialize(diffusion_probability_matrices, pc, self.input_filename, self.fov)
+        self.graph_serializer.serialize(diffusion_probability_matrices, pc, marker, self.input_filename, self.fov)
 
     def generate_primary_point_cloud(self, df_marked_nontumor, df_marked_tumor, df_tumor):
         box_centers_marked_nt = self.get_box_centers(df_marked_nontumor)
@@ -281,11 +284,11 @@ class DiffusionCalculator:
 
 
 class GraphMLSerializer:
-    def __init__(self, output_path=None, threshold=0.01):
-        self.output_path = outputh_path
+    def __init__(self, output_path=None, threshold=0.001):
+        self.output_path = output_path
         self.threshold = threshold
 
-    def serialize(self, transition_matrices, initial_locations, input_filename, fov):
+    def serialize(self, transition_matrices, initial_locations, phenotype, input_filename, fov):
         """
         Args:
             transition_matrices (dict):
@@ -312,27 +315,30 @@ class GraphMLSerializer:
             return
         G = nx.Graph()
         for k in range(N):
-            G.add_nodes(k, x=initial_locations[k][0], y=initial_locations[k][1])
-        zero_weights = {'weight' + str(i+1) : 0.0 for i in range(len(t_values))}
+            G.add_node(k, x_coordinate=float(initial_locations[k,0]), y_coordinate=float(initial_locations[k,1]))
+        zero_weights = {'weight' + str(i+1) : float(0.0) for i in range(len(t_values))}
 
         for t in t_values:
-            M = transition_matrix[t]
+            M = transition_matrices[t]
             for i in range(N):
                 for j in range(i+1, N):
-                    if M[i][j] >= self.threshold:
+                    if M[i][j] <= self.threshold:
                         G.add_edge(i, j, **zero_weights)
 
-        for i, t in enumerate(t_values):
-            M = transition_matrix[t]
+        for k, t in enumerate(t_values):
+            M = transition_matrices[t]
             for i in range(N):
                 for j in range(i+1, N):
-                    if M[i][j] >= self.threshold:
-                        G.add_edge(i, j, {'weight' + str(i+1) : M[i][j]})
+                    if M[i][j] <= self.threshold:
+                        G.add_edge(i, j, **{'weight' + str(k+1) : float(M[i][j])})
 
-        filename = sample_id + '_' + fov + '.graphml'
+        filename = phenotype + '_' + re.sub(r'\.csv', '', basename(input_filename)) + '_' + fov + '.graphml'
         p = join(self.output_path, 'graphml')
         if not exists(p):
             mkdir(p)
         full_filename = join(p, filename)
+        if N != len(G.nodes):
+            logger.error('Before saving, graph has %s nodes (not %s).', len(G.nodes), N)
+        logger.debug('Saving graph with %s nodes', N)
+        logger.debug('Nodes: %s', list(G.nodes))
         nx.write_graphml(G, full_filename)
-

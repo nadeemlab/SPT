@@ -80,36 +80,13 @@ class FigureWrapper:
             - "multiplicative effect"
         :type table: pandas.DataFrame
         """
-        cs = ColorStack()
         self.fig = go.Figure()
 
-        last_values = {}
-        rolling_max = 0
-        for p in set(table['phenotype']):
-            table_p = table[table['phenotype'] == p]
-            table_p = table_p.sort_values(by='temporal offset')
-            cs.push_label(p)
-            self.fig.add_trace(go.Scatter(
-                x=table_p['temporal offset'],
-                y=table_p['multiplicative effect'],
-                mode='lines+markers',
-                name=p,
-                line=dict(color=cs.get_color(p), width=2),
-                connectgaps=False,
-            ))
-            table_p = table_p.sort_values(by='temporal offset', ascending=False)
-            last_values[p] = list(table_p['multiplicative effect'])[0]
-            rolling_max = max([rolling_max] + list(table_p['multiplicative effect']))
+        last_values, rolling_max = self.add_phenotype_traces(table)
 
         t_initial = sorted(list(table['temporal offset']))[0]
         t_final = sorted(list(table['temporal offset']), reverse=True)[0]
-        self.fig.add_trace(go.Scatter(
-            x=[t_initial, t_final],
-            y=[1.0, 1.0],
-            mode = 'lines',
-            line = dict(color='gray', width=1, dash='dash'),
-            connectgaps=True,
-        ))
+        self.add_baseline(t_initial, t_final)
 
         range_max = max(1.0, rolling_max * 1.05)
         last_values = self.respace_label_locations(last_values, range_max, 0)
@@ -132,6 +109,36 @@ class FigureWrapper:
         self.annotate_traces(last_values, title)
         self.fig.update_yaxes(range=[0, range_max])
         self.fig.show()
+
+    def add_phenotype_traces(self, table):
+        last_values = {}
+        rolling_max = 0
+        cs = ColorStack()
+        for p in set(table['phenotype']):
+            table_p = table[table['phenotype'] == p]
+            table_p = table_p.sort_values(by='temporal offset')
+            cs.push_label(p)
+            self.fig.add_trace(go.Scatter(
+                x=table_p['temporal offset'],
+                y=table_p['multiplicative effect'],
+                mode='lines+markers',
+                name=p,
+                line=dict(color=cs.get_color(p), width=2),
+                connectgaps=False,
+            ))
+            table_p = table_p.sort_values(by='temporal offset', ascending=False)
+            last_values[p] = list(table_p['multiplicative effect'])[0]
+            rolling_max = max([rolling_max] + list(table_p['multiplicative effect']))
+        return [last_values, rolling_max]
+
+    def add_baseline(self, t_initial, t_final):
+        self.fig.add_trace(go.Scatter(
+            x=[t_initial, t_final],
+            y=[1.0, 1.0],
+            mode = 'lines',
+            line = dict(color='gray', width=1, dash='dash'),
+            connectgaps=True,
+        ))
 
     def format_figure(self):
         self.fig.update_layout(

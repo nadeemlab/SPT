@@ -20,7 +20,7 @@ class ColorStack:
     """
     def __init__(self):
         c = ['green', 'skyblue', 'red', 'white','purple','blue','orange','yellow']
-        self.colors = c + c + c + c + c + c + c + c + c + c
+        self.colors = c*10
         self.stack = {}
 
     def push_label(self, label):
@@ -51,14 +51,7 @@ class FigureWrapper:
 
     def show_figures(self, key, table):
         cs = ColorStack()
-
-        focus_cols = ['absolute effect', 'multiplicative effect']
-        var_cols = ['phenotype', 'effect sign', 'absolute effect', 'multiplicative effect', 'lower multiplicative effect', 'upper multiplicative effect', 'temporal offset', 'tested value 1', 'tested value 2']
-
         self.fig = go.Figure()
-
-        table = table[var_cols]
-
         for phenotype in set(table['phenotype']):
             table2 = table[table['phenotype'] == phenotype]
             data = list(table2['multiplicative effect'])
@@ -67,21 +60,8 @@ class FigureWrapper:
             df2 = pd.DataFrame({
                 'Markov chain temporal offset' : table2['temporal offset'],
                 'multiplicative effect' : data,
-                'lower multiplicative effect' : table2['lower multiplicative effect'],
-                'upper multiplicative effect' : table2['upper multiplicative effect'],
             }).sort_values(by='Markov chain temporal offset', ascending=False)
             t_values = list(df2['Markov chain temporal offset'])
-            uppers = list(df2['upper multiplicative effect'])
-            lowers = list(df2['lower multiplicative effect'])
-            self.fig.add_trace(go.Scatter(
-                x=t_values + list(reversed(t_values)),
-                y=uppers + list(reversed(lowers)),
-                fill='toself',
-                fillcolor='rgba(230,230,230,60)',
-                line=dict(color='rgba(255,255,255,0)'),
-                hoverinfo='skip',
-                showlegend=False,
-            ))
 
         last_values = {}
         rolling_max = 0
@@ -95,24 +75,9 @@ class FigureWrapper:
             df2 = pd.DataFrame({
                 'Markov chain temporal offset' : table2['temporal offset'],
                 'multiplicative effect' : data,
-                'lower multiplicative effect' : table2['lower multiplicative effect'],
-                'upper multiplicative effect' : table2['upper multiplicative effect'],
             }).sort_values(by='Markov chain temporal offset', ascending=False)
 
             last_values[label] = list(df2['multiplicative effect'])[0]
-
-            # t_values = list(df2['Markov chain temporal offset'])
-            # uppers = list(df2['upper multiplicative effect'])
-            # lowers = list(df2['lower multiplicative effect'])
-            # self.fig.add_trace(go.Scatter(
-            #     x=t_values + list(reversed(t_values)),
-            #     y=uppers + list(reversed(lowers)),
-            #     fill='toself',
-            #     fillcolor='rgba(200,200,200,100)',
-            #     line=dict(color='rgba(255,255,255,0)'),
-            #     hoverinfo='skip',
-            #     showlegend=False,
-            # ))
 
             self.fig.add_trace(go.Scatter(
                 x=df2['Markov chain temporal offset'],
@@ -234,12 +199,13 @@ class FigureWrapper:
         new_locations = {key : location for key, location in new_locations}
         return new_locations
 
+
 class DiffusionTestsViz:
     """
     A wrapper around the dynamically-selected combobox variables and other GUI elements.
     """
-    def __init__(self, tests_filename=None):
-        self.significance_threshold = 0.05
+    def __init__(self, tests_filename=None, significance_threshold=0.05):
+        self.significance_threshold = significance_threshold
 
         self.root = tk.Tk()
         self.root.winfo_toplevel().title("Diffusion transition probability values visualization")
@@ -310,8 +276,6 @@ class DiffusionTestsViz:
         selected_variables = self.get_selected_vars()
         table = self.restrict_dataframe(self.dataframe, selected_variables)
         self.figure_wrapper.show_figures(list(selected_variables.values()), table)
-        # plt.ion()
-        # plt.show()
 
     def get_selected_vars(self):
         return {

@@ -5,6 +5,7 @@ import re
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
 class DiffusionGraphsViz:
     def __init__(self):
         self.graph = self.retrieve_graph()

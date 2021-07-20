@@ -103,7 +103,6 @@ class FigureWrapper:
 
         t_initial = sorted(list(table['temporal offset']))[0]
         t_final = sorted(list(table['temporal offset']), reverse=True)[0]
-        range_max = max(1.0, rolling_max * 1.05)
         self.fig.add_trace(go.Scatter(
             x=[t_initial, t_final],
             y=[1.0, 1.0],
@@ -112,7 +111,29 @@ class FigureWrapper:
             connectgaps=True,
         ))
 
+        range_max = max(1.0, rolling_max * 1.05)
         last_values = self.respace_label_locations(last_values, range_max, 0)
+
+        self.format_figure()
+        title = ''.join([
+            outcome1,
+            ' vs. ',
+            outcome2,
+            '<br>',
+            'Testing the "',
+            summarization_statistic,
+            '" feature with ',
+            test_name,
+            '<br>',
+            '(only showing p < ',
+            str(self.significance_threshold),
+            ')',
+        ])
+        self.annotate_traces(last_values, title)
+        self.fig.update_yaxes(range=[0, range_max])
+        self.fig.show()
+
+    def format_figure(self):
         self.fig.update_layout(
             xaxis=dict(
                 showline=True,
@@ -144,24 +165,10 @@ class FigureWrapper:
             plot_bgcolor='white',
         )
 
-        title = ''.join([
-            outcome1,
-            ' vs. ',
-            outcome2,
-            '<br>',
-            'Testing the "',
-            summarization_statistic,
-            '" feature with ',
-            test_name,
-            '<br>',
-            '(only showing p < ',
-            str(self.significance_threshold),
-            ')',
-        ])
-
+    def annotate_traces(self, last_values, title):
         annotations = []
 
-        for label in set(table['phenotype']):
+        for label in last_values.keys():
             annotations.append(dict(
                 xref='paper',
                 x=0.95,
@@ -194,10 +201,6 @@ class FigureWrapper:
             width=800,
             height=600,
         )
-
-        self.fig.update_yaxes(range=[0, range_max])
-
-        self.fig.show()
 
     def respace_label_locations(self, locations, max_value, min_value, label_height_fraction=0.06):
         assumed_label_height = (max_value - min_value) * label_height_fraction

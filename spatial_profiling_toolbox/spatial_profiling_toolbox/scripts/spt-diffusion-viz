@@ -1,6 +1,24 @@
 #!/usr/bin/env python3
+import argparse
 
 from spatial_profiling_toolbox.applications.diffusion_tests_viz import DiffusionTestsViz
 
-gui = DiffusionTestsViz()
+parser = argparse.ArgumentParser(description='Visualize differential diffusion distance statistical tests.')
+parser.add_argument(
+    'filename',
+    type=str,
+    help='CSV file containing test result information.',
+)
+parser.add_argument('--save-plots-to-file',
+    dest='saveplots',
+    action='store_true',
+    help='Also save plots to file as they are viewed.',
+)
+
+args = parser.parse_args()
+
+gui = DiffusionTestsViz(
+    tests_filename=args.filename,
+    interactive_only=not args.saveplots,
+)
 gui.start_showing()

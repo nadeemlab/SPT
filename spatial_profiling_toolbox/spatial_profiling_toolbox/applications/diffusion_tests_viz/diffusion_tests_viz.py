@@ -5,7 +5,9 @@ Experimental GUI for examining statistical test results, pairwise outcome compar
 import sys
 import os
 from os import getcwd
-from os.path import exists, abspath, dirname
+from os.path import exists, abspath, dirname, join
+from os import mkdir
+import re
 
 import pandas as pd
 import tkinter as tk
@@ -55,6 +57,7 @@ class FigureWrapper:
         summarization_statistic,
         test_name,
         table,
+        also_save_to_file=False,
     ):
         """
         Shows a plotly figure in the browser depicting the multiplicative effect of the
@@ -97,9 +100,9 @@ class FigureWrapper:
             ' vs. ',
             outcome2,
             '<br>',
-            'Testing the "',
+            'Testing the ',
             summarization_statistic,
-            '" feature with ',
+            ' of diffusion distances feature with ',
             test_name,
             '<br>',
             '(only showing p < ',
@@ -108,6 +111,19 @@ class FigureWrapper:
         ])
         self.annotate_traces(last_values, title)
         self.fig.update_yaxes(range=[0, range_max])
+        if also_save_to_file:
+            filehandle = '_'.join([
+                outcome1,
+                outcome2,
+                summarization_statistic,
+                test_name,
+            ])
+            filehandle = re.sub(' ', '_', filehandle)
+            filename = filehandle + '.svg'
+            out_path = 'plotly_outputs'
+            if not exists(out_path):
+                mkdir(out_path)
+            self.fig.write_image(join('plotly_outputs', filename))
         self.fig.show()
 
     def add_phenotype_traces(self, table):
@@ -229,8 +245,9 @@ class DiffusionTestsViz:
     """
     A wrapper around the dynamically-selected combobox variables and other GUI elements.
     """
-    def __init__(self, tests_filename=None, significance_threshold=0.05):
+    def __init__(self, tests_filename=None, significance_threshold=0.05, interactive_only=True):
         self.significance_threshold = significance_threshold
+        self.interactive_only = interactive_only
 
         self.root = tk.Tk()
         self.root.winfo_toplevel().title("Diffusion transition probability values visualization")
@@ -257,10 +274,7 @@ class DiffusionTestsViz:
         self.update_selection(None)
 
     def retrieve_tests_dataframe(self, tests_filename=None):
-        if not tests_filename is None:
-            test_results_file = tests_filename
-        else:
-            test_results_file = self.solicit_test_results_file()
+        test_results_file = tests_filename
         df = pd.read_csv(test_results_file)
         df = df.sort_values(by='temporal offset')
         p = self.significance_threshold
@@ -268,19 +282,6 @@ class DiffusionTestsViz:
         df['p-value < ' + str(p)] = (df['p-value'] < p)
         df_significant = df[df['p-value < ' + str(p)]]
         return df_significant
-
-    def solicit_test_results_file(self):
-        if len(sys.argv) == 2:
-            test_results_file = sys.argv[1]
-            if not exists(test_results_file):
-                print('Test results file ' + test_results_file + ' does not exist.')
-                exit()
-        else:
-            test_results_file = fd.askopenfilename(
-                initialdir=abspath(getcwd()),
-                title='Select "diffusion_distance_tests.csv" file.',
-            )
-        return test_results_file
 
     def restrict_dataframe(self, table, selected_variables):
         for key, val in selected_variables.items():
@@ -296,6 +297,7 @@ class DiffusionTestsViz:
             v['first-summarization statistic tested'],
             v['test'],
             table,
+            also_save_to_file=not self.interactive_only,
         )
 
     def get_selected_vars(self):

@@ -3,18 +3,11 @@
 This script represents a single job of the cell phenotype proximity analysis
 workflow. It is not run directly by the user.
 """
-import os
-from os.path import join
 import argparse
 
-import spatial_profiling_toolbox
-from spatial_profiling_toolbox.api import get_analyzer
-from spatial_profiling_toolbox.environment.configuration import get_config_parameters_from_file
-from spatial_profiling_toolbox.environment.log_formats import colorized_logger
+import spatial_profiling_toolbox as spt
 
 if __name__=='__main__':
-    logger = colorized_logger(__name__)
-
     parser = argparse.ArgumentParser(
         description = ''.join([
             'This program does cell phenotype-phenotype proximity calculations in multiplexed IF images.',
@@ -41,14 +34,14 @@ if __name__=='__main__':
     kwargs['input_file_identifier'] = args.input_file_identifier
     kwargs['job_index'] = args.job_index
 
-    parameters = get_config_parameters_from_file()
+    parameters = spt.get_config_parameters_from_file()
     kwargs['input_path'] = parameters['input_path']
     kwargs['outcomes_file'] = parameters['outcomes_file']
     kwargs['output_path'] = parameters['output_path']
     kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
     kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
 
-    a = get_analyzer(
+    a = spt.get_analyzer(
         workflow='Multiplexed IF phenotype proximity',
         **kwargs,
     )

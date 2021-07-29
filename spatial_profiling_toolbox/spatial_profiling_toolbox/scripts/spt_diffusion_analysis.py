@@ -3,21 +3,11 @@
 This script represents a single job of the diffusion analysis workflow. It is
 not run directly by the user.
 """
-import os
 import argparse
-import re
 
-import numpy as np
-import pandas as pd
-
-import spatial_profiling_toolbox
-from spatial_profiling_toolbox.api import get_analyzer
-from spatial_profiling_toolbox.environment.configuration import get_config_parameters_from_file
-from spatial_profiling_toolbox.environment.log_formats import colorized_logger
+import spatial_profiling_toolbox as spt
 
 if __name__=='__main__':
-    logger = colorized_logger(__name__)
-
     parser = argparse.ArgumentParser(
         description = ''.join([
             'This program does calculations with multiplexed IF images. ',
@@ -58,14 +48,14 @@ if __name__=='__main__':
     kwargs['regional_compartment'] = args.regional_compartment
     kwargs['job_index'] = args.job_index
 
-    parameters = get_config_parameters_from_file()
+    parameters = spt.get_config_parameters_from_file()
     kwargs['output_path'] = parameters['output_path']
     kwargs['outcomes_file'] = parameters['outcomes_file']
     kwargs['input_path'] = parameters['input_path']
     kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
     kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
 
-    a = get_analyzer(
+    a = spt.get_analyzer(
         workflow='Multiplexed IF diffusion',
         **kwargs,
     )

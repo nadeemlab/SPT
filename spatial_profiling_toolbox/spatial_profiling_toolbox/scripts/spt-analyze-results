@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-import os
-import configparser
+"""
+(To be migrated to RST file)
 
-from spatial_profiling_toolbox.api import get_integrator
-from spatial_profiling_toolbox.environment.configuration import get_config_parameters_from_file
-from spatial_profiling_toolbox.environment.log_formats import colorized_logger
+``spt-analyze-results`` is a shortcut to initiating the integration analysis
+phase of the spatial analysis pipeline begun with ``spt-pipeline``, even before
+that pipeline has fully completed.
 
-logger = colorized_logger(__name__)
+The purpose is to make some results available early based on partially-complete
+computations.
+"""
+
+import spatial_profiling_toolbox as spt
 
 if __name__=='__main__':
-    p = get_config_parameters_from_file()
-    i = get_integrator(**p)
+    p = spt.get_config_parameters_from_file()
+    i = spt.get_integrator(**p)
     i.calculate()

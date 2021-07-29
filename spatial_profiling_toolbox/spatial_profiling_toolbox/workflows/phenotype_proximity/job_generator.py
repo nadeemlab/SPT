@@ -7,7 +7,7 @@ import sqlite3
 
 import pandas as pd
 
-from ...dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
+from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from ...environment.job_generator import JobGenerator, JobActivity
 from ...environment.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign

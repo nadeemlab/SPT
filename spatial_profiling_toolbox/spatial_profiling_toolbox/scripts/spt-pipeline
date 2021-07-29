@@ -1,4 +1,13 @@
 #!/bin/bash
+
+# ``spt-pipeline`` is an interactive dialog to solicit configuration parameters for
+# a run of the spatial profiling toolbox pipeline. The jobs are then generated
+# and scheduled or run.
+
+# Configuration parameters are saved to file. If this saved file is present on
+# subsequent runs, the interactive dialog is skipped.
+
+
 green="\u001b[1;32m"
 magenta="\u001b[1;35m"
 cyan="\u001b[1;36m"
@@ -19,14 +28,14 @@ function schedule_scripts {
     done
 }
 
-config_filename=$( spt_print.py config-filename )
+config_filename=$( spt-print config-filename )
 if [[ -f "$config_filename" ]]; then
     echo -e "$yellow""Regenerating jobs and scheduling them.""$reset"
     echo -e "$yellow""Using parameters from $reset""$magenta$config_filename$reset$yellow.$reset"
     echo -e "$yellow""To reconfigure, update or delete $magenta$config_filename$reset"
     spt_generate_jobs.py
     chmod +x *.sh
-    config_filename=$(spt_print.py config-filename)
+    config_filename=$(spt-print config-filename)
     RUN_PLATFORM=$(grep -oP 'runtime_platform = \K.*' $config_filename)
     schedule_scripts
     exit
@@ -50,7 +59,7 @@ function abspath {
 }
 
 workflows=()
-IFS=$'\n' read -r -d '' -a workflows < <( spt_print.py computational-workflows && printf '\0' )
+IFS=$'\n' read -r -d '' -a workflows < <( spt-print computational-workflows && printf '\0' )
 show_prompt_str () {
     echo -ne "$yellow""Enter the computational workflow type""$reset"
     echo -ne " $magenta(  "

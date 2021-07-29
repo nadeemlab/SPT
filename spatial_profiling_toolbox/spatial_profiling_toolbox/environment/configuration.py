@@ -1,10 +1,16 @@
 """
 Provides workflow definitions in terms of implementation classes, and configuration parameter management.
 """
+import importlib.resources
+import sys
+import argparse
 import configparser
+import os
+from os import getcwd
+from os.path import exists
+import re
 
-from ..__init__ import __version__
-from ..dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
+from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from ..workflows.diffusion.job_generator import DiffusionJobGenerator
 from ..workflows.diffusion.computational_design import DiffusionDesign
 from ..workflows.diffusion.analyzer import DiffusionAnalyzer
@@ -60,6 +66,12 @@ def get_config_parameters_from_file():
     parameters = dict(config['default'])
     return parameters
 
+def get_version():
+    with importlib.resources.path('spatial_profiling_toolbox', 'version.txt') as path:
+        with open(path, 'r') as file:
+            version = file.read().rstrip('\n')
+    return version
+
 def write_config_parameters_to_file(parameters):
     """
     Serializes configuration parameters to file, using a singleton pattern.
@@ -72,6 +84,136 @@ def write_config_parameters_to_file(parameters):
     """
     config = configparser.ConfigParser()
     config['default'] = parameters
-    config['static'] = {'version' : __version__}
+    config['static'] = {'version' : get_version()}
     with open(config_filename, 'w') as file:
         config.write(file)
+
+def get_config_parameters_from_cli():
+    parser = argparse.ArgumentParser(
+        description = ''.join([
+            'This script generates jobs to be run optionally on an HPC ',
+            '(High-Performance Computing) cluster using IBM\'s Platform LSF ',
+            '(Load Sharing Facility), and the commands to schedule them or run them locally. ',
+            'The jobs do calculations with histology images.',
+        ])
+    )
+    parser.add_argument('--sif-file',
+        dest='sif_file',
+        type=str,
+        required=True,
+        help='',
+    )
+    parser.add_argument('--computational-workflow',
+        dest='computational_workflow',
+        type=str,
+        required=True,
+        help='',
+    )
+    parser.add_argument('--input-path',
+        dest='input_path',
+        type=str,
+        required=True,
+        help='Path to input files.',
+    )
+    parser.add_argument('--outcomes-file',
+        dest='outcomes_file',
+        type=str,
+        required=True,
+        help='Path to tabular file containing a column of sample identifiers and a column of outcome assignments.',
+    )
+    parser.add_argument('--output-path',
+        dest='output_path',
+        type=str,
+        required=True,
+        help='Where jobs should write their output.',
+    )
+    parser.add_argument('--jobs-path',
+        dest='jobs_path',
+        type=str,
+        required=True,
+        help='Where jobs themselves should be written.',
+    )
+    parser.add_argument('--schedulers-path',
+        dest='schedulers_path',
+        type=str,
+        required=True,
+        help='Where job scheduling scripts should be written.',
+    )
+    parser.add_argument('--file-manifest',
+        dest='file_manifest_file',
+        type=str,
+        required=True,
+        help='File containing metadata for each source file. Format should be "BCDC11v5".',
+    )
+    parser.add_argument('--runtime-platform',
+        dest='runtime_platform',
+        type=str,
+        required=True,
+        help='Either "lsf" (for HPC runs) or "local".',
+    )
+    parser.add_argument('--elementary-phenotypes-file',
+        dest='elementary_phenotypes_file',
+        type=str,
+        required=True,
+        help='File containing metadata about the channels/observed phenotypes.',
+    )
+    parser.add_argument('--complex-phenotypes-file',
+        dest='complex_phenotypes_file',
+        type=str,
+        required=True,
+        help='File specifying signatures for phenotype combinations of interest.',
+    )
+    parser.add_argument('--logs-path',
+        dest='logs_path',
+        type=str,
+        required=True,
+        help='Path to logs.',
+    )
+    args = parser.parse_args()
+
+    computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
+    if computational_workflow in workflows:
+        workflow = computational_workflow
+    else:
+        logger.error('Must select --computational-workflow from among: %s', list(workflows.keys()))
+        return None
+
+    job_working_directory = getcwd()
+    sif_file = args.sif_file
+    input_path = args.input_path
+    outcomes_file = args.outcomes_file
+    output_path = args.output_path
+    jobs_path = args.jobs_path
+    schedulers_path = args.schedulers_path
+    file_manifest_file = args.file_manifest_file
+    runtime_platform = args.runtime_platform
+    elementary_phenotypes_file = args.elementary_phenotypes_file
+    complex_phenotypes_file = args.complex_phenotypes_file
+
+    parameters = {
+        'workflow' : workflow,
+        'job_working_directory' : job_working_directory,
+        'input_path' : input_path,
+        'outcomes_file' : outcomes_file,
+        'output_path' : output_path,
+        'jobs_path' : jobs_path,
+        'schedulers_path' : schedulers_path,
+        'sif_file' : sif_file,
+        'file_manifest_file' : file_manifest_file,
+        'runtime_platform' : runtime_platform,
+        'elementary_phenotypes_file' : elementary_phenotypes_file,
+        'complex_phenotypes_file' : complex_phenotypes_file,
+    }
+    return parameters
+
+def get_config_parameters():
+    if len(sys.argv) == 1:
+        if not exists(config_filename):
+            logger.error('Configuration file %s does not exist.', config_filename)
+            return None
+        else:
+            return get_config_parameters_from_file()
+    else:
+        parameters = get_config_parameters_from_cli()
+        write_config_parameters_to_file(parameters)
+        return parameters

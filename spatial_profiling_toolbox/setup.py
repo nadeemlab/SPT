@@ -1,21 +1,17 @@
 import setuptools
 import os
+from os.path import join
 import re
 
-def get_property(prop, project):
-    result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop), open(project + '/__init__.py').read())
-    return result.group(1)
+def get_file_contents(filename):
+    package_directory = os.path.dirname(__file__)
+    with open(join(package_directory, filename), 'r', encoding='utf-8') as file:
+        contents = file.read()
+    return contents
 
-dir = os.path.dirname(__file__)
-
-with open(os.path.join(dir, 'README.md'), 'r', encoding='utf-8') as fh:
-    long_description = fh.read()
-
-with open(os.path.join(dir, 'requirements.txt'), 'r', encoding='utf-8') as fh:
-    requirements = fh.read().split('\n')
-
-with open(os.path.join(dir, 'spatial_profiling_toolbox', 'version.txt')) as fh:
-    version = fh.read().rstrip('\n')
+long_description = get_file_contents('README.md')
+requirements = get_file_contents('requirements.txt').split('\n')
+version = get_file_contents(join('spatial_profiling_toolbox', 'version.txt'))
 
 setuptools.setup(
     name='spatial-profiling-toolbox',
@@ -46,12 +42,12 @@ setuptools.setup(
     scripts=[
         'spatial_profiling_toolbox/scripts/spt-pipeline',
         'spatial_profiling_toolbox/scripts/spt-analyze-results',
+        'spatial_profiling_toolbox/scripts/spt-diffusion-viz',
+        'spatial_profiling_toolbox/scripts/spt-diffusion-graphs-viz',
+        'spatial_profiling_toolbox/scripts/spt-print',
         'spatial_profiling_toolbox/scripts/spt_generate_jobs.py',
         'spatial_profiling_toolbox/scripts/spt_diffusion_analysis.py',
         'spatial_profiling_toolbox/scripts/spt_cell_phenotype_proximity_analysis.py',
-        'spatial_profiling_toolbox/scripts/spt_print.py',
-        'spatial_profiling_toolbox/scripts/spt-diffusion-viz',
-        'spatial_profiling_toolbox/scripts/spt-diffusion-graphs-viz',
     ],
     install_requires=requirements,
 )

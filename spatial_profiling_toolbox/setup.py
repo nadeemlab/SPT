@@ -1,10 +1,10 @@
 import setuptools
 import os
-from os.path import join
+from os.path import join, dirname
 import re
 
 def get_file_contents(filename):
-    package_directory = os.path.dirname(__file__)
+    package_directory = dirname(__file__)
     with open(join(package_directory, filename), 'r', encoding='utf-8') as file:
         contents = file.read()
     return contents

@@ -1,7 +1,6 @@
 spatial_profiling_toolbox/spatial_profiling_toolbox.egg-info/
 **/__pycache__/
 spatial_profiling_toolbox/docs/_build/
-**/*.rst
 **/Makefile
 **/make.bat
 spatial_profiling_toolbox/tests/.file_metadata.cache

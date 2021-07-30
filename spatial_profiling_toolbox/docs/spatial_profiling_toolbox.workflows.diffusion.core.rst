@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.workflows.diffusion.core module
-===========================================================
+core
+====
 
 .. automodule:: spatial_profiling_toolbox.workflows.diffusion.core
     :members:

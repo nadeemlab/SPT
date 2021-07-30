@@ -19,8 +19,10 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     ):
         """
         Args:
+
         dataset_design:
             The design object describing the input data set.
+
         complex_phenotypes_file (str):
             The table of composite phenotypes to be considered.
         """

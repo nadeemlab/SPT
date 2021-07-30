@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.environment.job\_generator module
-=============================================================
+job\_generator
+==============
 
 .. automodule:: spatial_profiling_toolbox.environment.job_generator
     :members:

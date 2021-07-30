@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.workflows.phenotype\_proximity.integrator module
-============================================================================
+integrator
+==========
 
 .. automodule:: spatial_profiling_toolbox.workflows.phenotype_proximity.integrator
     :members:

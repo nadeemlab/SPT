@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.environment.pipeline\_design module
-===============================================================
+pipeline\_design
+================
 
 .. automodule:: spatial_profiling_toolbox.environment.pipeline_design
     :members:

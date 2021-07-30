@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.workflows.phenotype\_proximity.job\_generator module
-================================================================================
+job\_generator
+==============
 
 .. automodule:: spatial_profiling_toolbox.workflows.phenotype_proximity.job_generator
     :members:

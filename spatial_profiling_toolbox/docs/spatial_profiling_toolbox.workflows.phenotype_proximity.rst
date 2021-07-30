@@ -1,19 +1,19 @@
-spatial\_profiling\_toolbox.workflows.phenotype\_proximity package
-==================================================================
+phenotype\_proximity
+====================
 
 .. automodule:: spatial_profiling_toolbox.workflows.phenotype_proximity
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
+
+
 
 .. toctree::
 
-   spatial_profiling_toolbox.workflows.phenotype_proximity.analyzer
-   spatial_profiling_toolbox.workflows.phenotype_proximity.computational_design
-   spatial_profiling_toolbox.workflows.phenotype_proximity.core
-   spatial_profiling_toolbox.workflows.phenotype_proximity.integrator
-   spatial_profiling_toolbox.workflows.phenotype_proximity.job_generator
+   analyzer <spatial_profiling_toolbox.workflows.phenotype_proximity.analyzer>
+   computational_design <spatial_profiling_toolbox.workflows.phenotype_proximity.computational_design>
+   core <spatial_profiling_toolbox.workflows.phenotype_proximity.core>
+   integrator <spatial_profiling_toolbox.workflows.phenotype_proximity.integrator>
+   job_generator <spatial_profiling_toolbox.workflows.phenotype_proximity.job_generator>
 

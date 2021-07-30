@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.workflows.diffusion.computational\_design module
-============================================================================
+computational\_design
+=====================
 
 .. automodule:: spatial_profiling_toolbox.workflows.diffusion.computational_design
     :members:

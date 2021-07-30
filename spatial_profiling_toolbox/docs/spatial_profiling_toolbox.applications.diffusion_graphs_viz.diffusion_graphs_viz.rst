@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.applications.diffusion\_graphs\_viz.diffusion\_graphs\_viz module
-=============================================================================================
+diffusion\_graphs\_viz
+======================
 
 .. automodule:: spatial_profiling_toolbox.applications.diffusion_graphs_viz.diffusion_graphs_viz
     :members:

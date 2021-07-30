@@ -1,15 +1,14 @@
-spatial\_profiling\_toolbox.applications.cell\_cartoons package
-===============================================================
+cell\_cartoons
+==============
 
 .. automodule:: spatial_profiling_toolbox.applications.cell_cartoons
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
+
 
 .. toctree::
 
-   spatial_profiling_toolbox.applications.cell_cartoons.application
+   application <spatial_profiling_toolbox.applications.cell_cartoons.application>
 

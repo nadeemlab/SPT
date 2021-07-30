@@ -1,15 +1,15 @@
-spatial\_profiling\_toolbox.dataset\_designs package
-====================================================
+dataset\_designs
+================
 
 .. automodule:: spatial_profiling_toolbox.dataset_designs
     :members:
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
+
+
 
 .. toctree::
 
-    spatial_profiling_toolbox.dataset_designs.multiplexed_imaging
+    multiplexed_imaging <spatial_profiling_toolbox.dataset_designs.multiplexed_imaging>
 

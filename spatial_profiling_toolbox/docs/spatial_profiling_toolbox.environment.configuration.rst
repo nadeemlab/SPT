@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.environment.configuration module
-============================================================
+configuration
+=============
 
 .. automodule:: spatial_profiling_toolbox.environment.configuration
     :members:

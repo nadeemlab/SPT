@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.environment.single\_job\_analyzer module
-====================================================================
+single\_job\_analyzer
+=====================
 
 .. automodule:: spatial_profiling_toolbox.environment.single_job_analyzer
     :members:

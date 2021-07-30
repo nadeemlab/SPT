@@ -1,16 +1,16 @@
-spatial\_profiling\_toolbox.workflows package
-=============================================
+workflows
+=========
 
 .. automodule:: spatial_profiling_toolbox.workflows
     :members:
     :undoc-members:
     :show-inheritance:
 
-Subpackages
------------
+
+
 
 .. toctree::
 
-    spatial_profiling_toolbox.workflows.diffusion
-    spatial_profiling_toolbox.workflows.phenotype_proximity
+    diffusion <spatial_profiling_toolbox.workflows.diffusion>
+    phenotype_proximity <spatial_profiling_toolbox.workflows.phenotype_proximity>
 

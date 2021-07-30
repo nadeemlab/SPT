@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.environment.log\_formats module
-===========================================================
+log\_formats
+============
 
 .. automodule:: spatial_profiling_toolbox.environment.log_formats
     :members:

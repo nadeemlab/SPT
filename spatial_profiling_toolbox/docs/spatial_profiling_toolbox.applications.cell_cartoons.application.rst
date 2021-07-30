@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.applications.cell\_cartoons.application module
-==========================================================================
+application
+===========
 
 .. automodule:: spatial_profiling_toolbox.applications.cell_cartoons.application
     :members:

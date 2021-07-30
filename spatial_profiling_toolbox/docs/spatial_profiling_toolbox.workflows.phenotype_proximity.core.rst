@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.workflows.phenotype\_proximity.core module
-======================================================================
+core
+====
 
 .. automodule:: spatial_profiling_toolbox.workflows.phenotype_proximity.core
     :members:

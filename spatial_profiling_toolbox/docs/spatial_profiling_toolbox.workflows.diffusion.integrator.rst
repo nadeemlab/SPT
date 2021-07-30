@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.workflows.diffusion.integrator module
-=================================================================
+integrator
+==========
 
 .. automodule:: spatial_profiling_toolbox.workflows.diffusion.integrator
     :members:

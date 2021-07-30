@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.applications.diffusion\_tests\_viz.diffusion\_tests\_viz module
-===========================================================================================
+diffusion\_tests\_viz
+=====================
 
 .. automodule:: spatial_profiling_toolbox.applications.diffusion_tests_viz.diffusion_tests_viz
     :members:

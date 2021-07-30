@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox.environment.computational\_design module
-====================================================================
+computational\_design
+=====================
 
 .. automodule:: spatial_profiling_toolbox.environment.computational_design
     :members:

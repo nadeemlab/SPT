@@ -10,20 +10,38 @@ def get_file_contents(filename):
     return contents
 
 long_description = get_file_contents('README.md')
-requirements = get_file_contents('requirements.txt').split('\n')
+requirements = [
+    'cycler==0.10.0',
+    'Cython==0.29.23',
+    'kiwisolver==1.3.1',
+    'matplotlib==3.4.2',
+    'numpy==1.21.0',
+    'pandas==1.1.5',
+    'Pillow==8.2.0',
+    'POT==0.7.0',
+    'pyparsing==2.4.7',
+    'python-dateutil==2.8.1',
+    'pytz==2021.1',
+    'scipy==1.7.0',
+    'seaborn==0.11.1',
+    'six==1.16.0',
+    'plotly==5.1.0',
+    'networkx==2.5.1',
+    'kaleido==0.2.1',
+]
 version = get_file_contents(join('spatial_profiling_toolbox', 'version.txt'))
 
 setuptools.setup(
     name='spatial-profiling-toolbox',
     version=version,
     author='Rami Vanguri, James Mathews',
-    author_email='vangurir@mskcc.org',
+    author_email='mathewj2@mskcc.org',
     description='Toolbox for spatial analysis of pathology imaging.',
     long_description=long_description,
     packages=[
         'spatial_profiling_toolbox',
         'spatial_profiling_toolbox.dataset_designs',
-        'spatial_profiling_toolbox.dataset_designs.multiplexed_immunofluorescence',
+        'spatial_profiling_toolbox.dataset_designs.multiplexed_imaging',
         'spatial_profiling_toolbox.workflows',
         'spatial_profiling_toolbox.workflows.diffusion',
         'spatial_profiling_toolbox.workflows.phenotype_proximity',

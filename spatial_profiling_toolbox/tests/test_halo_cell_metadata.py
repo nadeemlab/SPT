@@ -3,8 +3,8 @@ import os
 from os.path import join
 
 import spatial_profiling_toolbox
-from spatial_profiling_toolbox.dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_provider import HALOCellMetadata
-from spatial_profiling_toolbox.dataset_designs.multiplexed_immunofluorescence.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatial_profiling_toolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_provider import HALOCellMetadata
+from spatial_profiling_toolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 def test_halo_load_cell_metadata():
     input_files_path = 'data/'

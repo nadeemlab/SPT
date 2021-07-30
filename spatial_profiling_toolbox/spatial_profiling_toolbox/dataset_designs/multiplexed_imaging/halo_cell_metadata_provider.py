@@ -1,5 +1,5 @@
 import os
-from os.path import exists, join
+from os.path import join
 import re
 
 import pandas as pd
@@ -111,9 +111,16 @@ class HALOCellMetadata(CellMetadata):
         data_types = list(set(file_metadata['Data type']))
         expected_data_type = dataset_design.get_cell_manifest_descriptor()
         if not ( (len(data_types) == 1) and (data_types[0] == expected_data_type) ):
-            logger.warning('Expected entries "%s" in "Data type" field, got %s.', expected_data_type, data_types)
+            logger.warning(
+                'Expected entries "%s" in "Data type" field, got %s.',
+                expected_data_type,
+                data_types,
+            )
             if not expected_data_type in data_types:
-                logger.error('Did not get the expected data type: %s', expected_data_type)
+                logger.error(
+                    'Did not get the expected data type: %s',
+                    expected_data_type,
+                )
                 return False
         return True
 
@@ -163,7 +170,10 @@ class HALOCellMetadata(CellMetadata):
         sample_id_index = lookup.get_sample_index(sample_id)
         N = source_file_data.shape[0]
         sample_id_indices = [sample_id_index] * N
-        fov_indices = list(source_file_data.apply(lambda row: lookup.get_fov_index(sample_id, row[d.get_FOV_column()]), axis=1))
+        fov_indices = list(source_file_data.apply(
+            lambda row: lookup.get_fov_index(sample_id, row[d.get_FOV_column()]),
+            axis=1,
+        ))
         column_data[c['Sample ID index column name']] = sample_id_indices
         column_data[c['Field of view index column name']] = fov_indices
 

@@ -49,9 +49,12 @@ class FrontProximityCalculator:
         }
         return outcomes_dict
 
-    def get_phenotype_names(self):
+    def get_phenotype_signatures_by_name(self):
         signatures = self.computational_design.get_all_phenotype_signatures()
-        signatures_by_name = {self.dataset_design.munge_name(signature) : signature for signature in signatures}
+        return {self.dataset_design.munge_name(signature) : signature for signature in signatures}
+
+    def get_phenotype_names(self):
+        signatures_by_name = self.get_phenotype_signatures_by_name()
         pheno_names = sorted(signatures_by_name.keys())
         return pheno_names
 
@@ -93,13 +96,14 @@ class FrontProximityCalculator:
 
             for compartment in self.dataset_design.get_compartments():
                 signature = self.dataset_design.get_compartmental_signature(df, compartment)
-                df.loc[signature, 'compartment'] = compartment
+                df.loc[signature, 'regional compartment'] = compartment
 
             xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
             df['x value'] = 0.5 * (df[xmax] + df[xmin])
             df['y value'] = 0.5 * (df[ymax] + df[ymin])
 
             # Add general phenotype membership columns
+            signatures_by_name = self.get_phenotype_signatures_by_name()
             for name in pheno_names:
                 signature = signatures_by_name[name]
                 df[name + ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
@@ -150,9 +154,19 @@ class FrontProximityCalculator:
             all_points = [(x_values[i], y_values[i]) for i in range(len(cell_indices))]
             for compartment in self.dataset_design.get_compartments():
                 compartment_points = [(x_values[i], y_values[i]) for i in range(len(cell_indices)) if compartment_assignments[i] == compartment]
+                if len(compartment_points) < 3:
+                    logger.debug('Fewer then 3 points in %s compartment in %s, %s',
+                        compartment,
+                        self.sample_identifier,
+                        fov_index,
+                    )
+                    continue
                 tree = KDTree(compartment_points)
                 distances, indices = tree.query(all_points)
                 for i in range(len(cell_indices)):
+                    compartment_i = compartment_assignments[i]
+                    if compartment_i == compartment:
+                        continue
                     I = cell_indices[i]
                     for phenotype in self.get_phenotype_names():
                         if df.loc[I, phenotype + ' membership']:
@@ -161,7 +175,7 @@ class FrontProximityCalculator:
                                 int(fov_index),
                                 str(outcome),
                                 str(phenotype),
-                                str(compartment_assignments[i]),
+                                str(compartment_i),
                                 str(compartment),
                                 float(distances[i]),
                             ])
@@ -184,7 +198,7 @@ class FrontProximityCalculator:
                 ]
                 keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = 'INSERT INTO cell_pair_counts ' + keys + ' VALUES ' + values +  ' ;'
+                cmd = 'INSERT INTO cell_front_distances ' + keys + ' VALUES ' + values +  ' ;'
                 try:
                     m.execute(cmd)
                 except Exception as e:

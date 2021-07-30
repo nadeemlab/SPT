@@ -140,7 +140,7 @@ singularity exec \
             '(',
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
             ' , '.join([
-                column_name + ' ' + data_type_descriptor for column_name, data_type_descriptor in cell_pair_counts_header
+                column_name + ' ' + data_type_descriptor for column_name, data_type_descriptor in cell_front_distances_header
             ]),
             ');',
         ])

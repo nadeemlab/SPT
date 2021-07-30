@@ -46,6 +46,7 @@ setuptools.setup(
         'spatial_profiling_toolbox.workflows',
         'spatial_profiling_toolbox.workflows.diffusion',
         'spatial_profiling_toolbox.workflows.phenotype_proximity',
+        'spatial_profiling_toolbox.workflows.front_proximity',
         'spatial_profiling_toolbox.environment',
         'spatial_profiling_toolbox.scripts',
         'spatial_profiling_toolbox.applications',

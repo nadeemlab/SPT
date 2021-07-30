@@ -9,7 +9,8 @@ def get_file_contents(filename):
         contents = file.read()
     return contents
 
-long_description = get_file_contents('README.md')
+long_description = """[Documentation](https://spatialprofilingtoolbox.readthedocs.io)
+"""
 requirements = [
     'cycler==0.10.0',
     'Cython==0.29.23',

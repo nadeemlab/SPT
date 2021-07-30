@@ -9,6 +9,7 @@ The source code is available `here <https://github.com/nadeemlab>`_.
 
 from .applications.diffusion_graphs_viz.diffusion_graphs_viz import DiffusionGraphsViz
 from .applications.diffusion_tests_viz import DiffusionTestsViz
+from .applications.front_proximity_viz import FrontProximityViz
 from .environment.configuration import get_config_parameters
 from .environment.configuration import get_config_parameters_from_file
 from .environment.configuration import config_filename

@@ -64,6 +64,7 @@ setuptools.setup(
         'spatial_profiling_toolbox/scripts/spt-analyze-results',
         'spatial_profiling_toolbox/scripts/spt-diffusion-viz',
         'spatial_profiling_toolbox/scripts/spt-diffusion-graphs-viz',
+        'spatial_profiling_toolbox/scripts/spt-front-proximity-viz',
         'spatial_profiling_toolbox/scripts/spt-print',
         'spatial_profiling_toolbox/scripts/spt_generate_jobs.py',
         'spatial_profiling_toolbox/scripts/spt_diffusion_analysis.py',

@@ -20,10 +20,11 @@ class FrontProximityDesign(ComputationalDesign):
         """
         super(ComputationalDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
-        self.complex_phenotypes = pd.read_csv(
-            complex_phenotypes_file,
-            keep_default_na=False,
-        )
+        if not complex_phenotypes_file is None:
+            self.complex_phenotypes = pd.read_csv(
+                complex_phenotypes_file,
+                keep_default_na=False,
+            )
 
     def get_database_uri(self):
         return 'front_proximity.db'

@@ -61,7 +61,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = None
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-    'style_nav_header_background': '#177507',
+    'style_nav_header_background': '#62a859',
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

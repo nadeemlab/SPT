@@ -19,6 +19,10 @@ from ..workflows.phenotype_proximity.job_generator import PhenotypeProximityJobG
 from ..workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
 from ..workflows.phenotype_proximity.analyzer import PhenotypeProximityAnalyzer
 from ..workflows.phenotype_proximity.integrator import PhenotypeProximityAnalysisIntegrator
+from ..workflows.front_proximity.job_generator import FrontProximityJobGenerator
+from ..workflows.front_proximity.computational_design import FrontProximityDesign
+from ..workflows.front_proximity.analyzer import FrontProximityAnalyzer
+from ..workflows.front_proximity.integrator import FrontProximityAnalysisIntegrator
 
 config_filename = '.spt_pipeline.config'
 
@@ -48,6 +52,13 @@ workflows = {
         computational_design = PhenotypeProximityDesign,
         analyzer = PhenotypeProximityAnalyzer,
         integrator = PhenotypeProximityAnalysisIntegrator,
+    ),
+    'Multiplexed IF front proximity' : WorkflowModules(
+        generator = FrontProximityJobGenerator,
+        dataset_design = HALOCellMetadataDesign,
+        computational_design = FrontProximityDesign,
+        analyzer = FrontProximityAnalyzer,
+        integrator = FrontProximityAnalysisIntegrator,
     ),
 }
 

@@ -67,6 +67,7 @@ setuptools.setup(
         'spatial_profiling_toolbox/scripts/spt_generate_jobs.py',
         'spatial_profiling_toolbox/scripts/spt_diffusion_analysis.py',
         'spatial_profiling_toolbox/scripts/spt_cell_phenotype_proximity_analysis.py',
+        'spatial_profiling_toolbox/scripts/spt_front_proximity_analysis.py',
     ],
     install_requires=requirements,
 )

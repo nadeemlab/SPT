@@ -10,7 +10,7 @@ The ``spatial_profiling_toolbox`` (SPT) is:
 
 
 .. list-table::
-   :widths: 2, 6, 2
+   :widths: 2, 2, 2
    :header-rows: 1
 
    * - Computation module

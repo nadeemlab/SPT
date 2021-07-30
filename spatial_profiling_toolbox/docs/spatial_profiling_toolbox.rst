@@ -1,5 +1,5 @@
-spatial\_profiling\_toolbox package
-===================================
+spatial\_profiling\_toolbox
+===========================
 
 .. automodule:: spatial_profiling_toolbox
     :members:

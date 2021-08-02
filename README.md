@@ -1,1 +1,1 @@
-See the [documentation](https://spatialprofilingtoolbox.readthedocs.io) on ReadTheDocs.
+See the [documentation](https://spatialprofilingtoolbox.readthedocs.io) on Read The Docs.

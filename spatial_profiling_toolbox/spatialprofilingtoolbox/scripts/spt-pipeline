@@ -22,9 +22,9 @@ function schedule_scripts {
 
 config_filename=$( spt-print config-filename )
 if [[ -f "$config_filename" ]]; then
-    echo -e "$yellow""Regenerating jobs and scheduling them.""$reset"
-    echo -e "$yellow""Using parameters from $reset""$magenta$config_filename$reset$yellow.$reset"
-    echo -e "$yellow""To reconfigure, update or delete $magenta$config_filename$reset"
+    printf "$yellow""Regenerating jobs and scheduling them.""$reset\n"
+    printf "$yellow""Using parameters from $reset""$magenta$config_filename$reset$yellow.$reset\n"
+    printf "$yellow""To reconfigure, update or delete $magenta$config_filename$reset\n"
     spt-generate-jobs
     chmod +x *.sh
     config_filename=$(spt-print config-filename)
@@ -53,20 +53,20 @@ function abspath {
 workflows=()
 IFS=$'\n' read -r -d '' -a workflows < <( spt-print computational-workflows && printf '\0' )
 show_prompt_str () {
-    echo -ne "$yellow""Enter the computational workflow type""$reset"
-    echo -ne " $magenta(  "
+    printf "$yellow""Enter the computational workflow type""$reset"
+    printf " $magenta(  "
     first_entry=""
     for workflow in "${workflows[@]}"
     do
         if [[ "$first_entry" == "" ]];
         then
-            echo -ne "$cyan$workflow$reset  "
+            printf "$cyan$workflow$reset  "
             first_entry="0"
         else
-            echo -ne "$magenta$workflow$reset  "
+            printf "$magenta$workflow$reset  "
         fi
     done
-    echo -ne "$magenta)$reset$yellow: $reset"
+    printf "$magenta)$reset$yellow: $reset"
 }
 
 COMPUTATIONAL_WORKFLOW="none"
@@ -90,56 +90,56 @@ do
 
     if [[ "$COMPUTATIONAL_WORKFLOW" != "none" ]];
     then
-        echo -ne "$cr"
+        printf "$cr"
         show_prompt_str
-        echo -ne "$green$COMPUTATIONAL_WORKFLOW$reset"
+        printf "$green$COMPUTATIONAL_WORKFLOW$reset"
         echo
     fi
 done
 
 SIF_PATH=""
 prompt_str="Enter the Singularity container file (.sif) containing the toolbox: "
-echo -en "$yellow$prompt_str$reset"
+printf "$yellow$prompt_str$reset"
 while [[ "$SIF_PATH" = "" ]];
 do
     read -e SIF_PATH
 done
 SIF_PATH=$(abspath $SIF_PATH)
-echo -e "$cr$yellow$prompt_str$reset$green$SIF_PATH$reset"
+printf "$cr$yellow$prompt_str$reset$green$SIF_PATH$reset\n"
 
 INPUT_PATH=""
 prompt_str="Enter the path containing input cell location CSV files: "
-echo -en "$yellow$prompt_str$reset"
+printf "$yellow$prompt_str$reset"
 while [[ "$INPUT_PATH" = "" ]];
 do
     read -e INPUT_PATH
 done
 INPUT_PATH=$(abspath $INPUT_PATH)
-echo -e "$cr$yellow$prompt_str$reset$green$INPUT_PATH$reset"
+printf "$cr$yellow$prompt_str$reset$green$INPUT_PATH$reset\n"
 
 FILE_MANIFEST=""
 prompt_str="Enter the file manifest file: "
-echo -en "$yellow$prompt_str$reset"
+printf "$yellow$prompt_str$reset"
 while [[ "$FILE_MANIFEST" = "" ]];
 do
     read -e FILE_MANIFEST
 done
 FILE_MANIFEST=$(abspath $FILE_MANIFEST)
-echo -e "$cr$yellow$prompt_str$reset$green$FILE_MANIFEST$reset"
+printf "$cr$yellow$prompt_str$reset$green$FILE_MANIFEST$reset\n"
 
 OUTCOMES_FILE=""
 prompt_str="Enter the file containing outcomes data (or \"$magenta""None""$reset$yellow\"): "
-echo -en "$yellow$prompt_str$reset"
+printf "$yellow$prompt_str$reset"
 while [[ "$OUTCOMES_FILE" = "" ]];
 do
     read -e OUTCOMES_FILE
 done
 OUTCOMES_FILE=$(abspath $OUTCOMES_FILE)
-echo -e "$cr$yellow$prompt_str$reset$green$OUTCOMES_FILE$reset"
+printf "$cr$yellow$prompt_str$reset$green$OUTCOMES_FILE$reset\n"
 
 # OUTPUT_PATH=""
 # prompt_str="Enter the path to which the jobs themselves should write output (default ""$reset$magenta""output/""$reset$yellow""): "
-# echo -en "$yellow$prompt_str$reset"
+# printf "$yellow$prompt_str$reset"
 # read -e OUTPUT_PATH
 # if [[ "$OUTPUT_PATH" = "" ]];
 # then
@@ -157,30 +157,30 @@ COMPLEX_PHENOTYPES_FILE="none"
 if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF diffusion" || "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF phenotype proximity" ]];
 then
     prompt_str="Enter the file containing metadata for the channels/observed phenotypes: "
-    echo -en "$yellow$prompt_str$reset"
+    printf "$yellow$prompt_str$reset"
     while [[ "$ELEMENTARY_PHENOTYPES_FILE" = "none" || "$ELEMENTARY_PHENOTYPES_FILE" = "" ]];
     do
         read -e ELEMENTARY_PHENOTYPES_FILE
     done
     ELEMENTARY_PHENOTYPES_FILE=$(abspath $ELEMENTARY_PHENOTYPES_FILE)
-    echo -e "$cr$yellow$prompt_str$reset$green$ELEMENTARY_PHENOTYPES_FILE$reset"
+    printf "$cr$yellow$prompt_str$reset$green$ELEMENTARY_PHENOTYPES_FILE$reset\n"
 
     COMPLEX_PHENOTYPES_FILE=""
     prompt_str="Enter the file that lists composite phenotypes of interest: "
-    echo -en "$yellow$prompt_str$reset"
+    printf "$yellow$prompt_str$reset"
     while [[ "$COMPLEX_PHENOTYPES_FILE" = "none" || "$COMPLEX_PHENOTYPES_FILE" = "" ]];
     do
         read -e COMPLEX_PHENOTYPES_FILE
     done
     COMPLEX_PHENOTYPES_FILE=$(abspath $COMPLEX_PHENOTYPES_FILE)
-    echo -e "$cr$yellow$prompt_str$reset$green$COMPLEX_PHENOTYPES_FILE$reset"
+    printf "$cr$yellow$prompt_str$reset$green$COMPLEX_PHENOTYPES_FILE$reset\n"
 fi
 
 RUN_PLATFORM=""
 prompt_str="Select runtime platform: (""$reset$cyan""lsf""$reset$magenta  local""$reset$yellow""): "
 while [[ "$RUN_PLATFORM" != "lsf" && "$RUN_PLATFORM" != "local" ]];
 do
-    echo -en "$yellow$prompt_str$reset"
+    printf "$yellow$prompt_str$reset"
     read -e RUN_PLATFORM
     if [[ "$RUN_PLATFORM" = "" ]];
     then
@@ -193,15 +193,15 @@ do
         bsub_location=$(command -v bsub)
         if [[ "$bsub_location" == "" ]];
         then
-            echo -e "$cyan""bsub""$reset$red"" command not found and is required to schedule LSF jobs. Choose runtime platform ""$reset$magenta""local""$reset"
+            printf "$cyan""bsub""$reset$red"" command not found and is required to schedule LSF jobs. Choose runtime platform ""$reset$magenta""local""$reset\n"
             RUN_PLATFORM=""
         fi
     fi
-done && echo -e "$cr$yellow$prompt_str$reset$green$RUN_PLATFORM$reset"
+done && printf "$cr$yellow$prompt_str$reset$green$RUN_PLATFORM$reset\n"
 
 START_IMMEDIATELY=""
 prompt_str="Schedule immediately? (""$reset$cyan""Y""$reset$magenta/n""$reset$yellow""): "
-echo -en "$yellow$prompt_str$reset"
+printf "$yellow$prompt_str$reset"
 read -e START_IMMEDIATELY
 if [[ "$START_IMMEDIATELY" = "" ]];
 then
@@ -216,7 +216,7 @@ if [[ "$START_IMMEDIATELY" != "Y" ]];
 then
     START_IMMEDIATELY="n"
 fi
-echo -e "$cr$yellow$prompt_str$reset$green$START_IMMEDIATELY$reset"
+printf "$cr$yellow$prompt_str$reset$green$START_IMMEDIATELY$reset\n"
 
 JOBS_PATH='jobs'
 if [[ ! -d $JOBS_PATH ]] ;
@@ -235,8 +235,8 @@ LOGS_PATH=$(abspath $LOGS_PATH)
 SCHEDULERS_PATH='./'
 SCHEDULERS_PATH=$(abspath $SCHEDULERS_PATH)
 
-echo -e "$yellow""Job scripts will be written to $green$JOBS_PATH$reset"
-echo -e "$yellow""scheduler scripts to ""$green$SCHEDULERS_PATH$reset"
+printf "$yellow""Job scripts will be written to $green$JOBS_PATH$reset\n"
+printf "$yellow""Scheduler scripts will be written to ""$green$SCHEDULERS_PATH$reset\n"
 
 spt-generate-jobs \
     --sif-file $SIF_PATH \

@@ -57,7 +57,10 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
 language = None
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+not_ready_docs = [
+    'spatialprofilingtoolbox.applications.cell_cartoons*',
+]
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store'] + not_ready_docs
 pygments_style = None
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
@@ -69,9 +72,9 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_logo = '_static/spt_logo.png'
+# html_logo = '_static/spt_logo.png'
 
-htmlhelp_basename = 'schurtransformdoc'
+htmlhelp_basename = 'sptdoc'
 
 # -- Extension configuration -------------------------------------------------
 add_module_names = False

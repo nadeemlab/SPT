@@ -10,7 +10,7 @@ The purpose is to make some results available early based on partially-complete
 computations.
 """
 
-import spatial_profiling_toolbox as spt
+import spatialprofilingtoolbox as spt
 
 if __name__=='__main__':
     p = spt.get_config_parameters_from_file()

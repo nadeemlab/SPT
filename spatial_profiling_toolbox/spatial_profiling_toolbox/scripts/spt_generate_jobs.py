@@ -3,7 +3,7 @@
 This script locates configuration parameters for the pipeline's job generation,
 then delegates the job generation to a more specific generator.
 """
-import spatial_profiling_toolbox as spt
+import spatialprofilingtoolbox as spt
 
 if __name__=='__main__':
     p = spt.get_config_parameters()

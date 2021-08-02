@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 
-import spatial_profiling_toolbox as spt
-from spatial_profiling_toolbox import DiffusionGraphsViz
+import spatialprofilingtoolbox as spt
+from spatialprofilingtoolbox import DiffusionGraphsViz
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Visualize diffusion distance.')

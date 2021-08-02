@@ -5,7 +5,7 @@ workflow. It is not run directly by the user.
 """
 import argparse
 
-import spatial_profiling_toolbox as spt
+import spatialprofilingtoolbox as spt
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

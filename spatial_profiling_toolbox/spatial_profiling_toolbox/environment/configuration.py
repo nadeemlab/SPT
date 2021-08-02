@@ -78,7 +78,7 @@ def get_config_parameters_from_file():
     return parameters
 
 def get_version():
-    with importlib.resources.path('spatial_profiling_toolbox', 'version.txt') as path:
+    with importlib.resources.path('spatialprofilingtoolbox', 'version.txt') as path:
         with open(path, 'r') as file:
             version = file.read().rstrip('\n')
     return version

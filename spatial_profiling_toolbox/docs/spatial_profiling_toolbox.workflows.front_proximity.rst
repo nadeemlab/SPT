@@ -1,7 +1,7 @@
 front\_proximity
 ================
 
-.. automodule:: spatial_profiling_toolbox.workflows.front_proximity
+.. automodule:: spatialprofilingtoolbox.workflows.front_proximity
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,9 +11,9 @@ front\_proximity
 
 .. toctree::
 
-   analyzer <spatial_profiling_toolbox.workflows.front_proximity.analyzer>
-   computational_design <spatial_profiling_toolbox.workflows.front_proximity.computational_design>
-   core <spatial_profiling_toolbox.workflows.front_proximity.core>
-   integrator <spatial_profiling_toolbox.workflows.front_proximity.integrator>
-   job_generator <spatial_profiling_toolbox.workflows.front_proximity.job_generator>
+   analyzer <spatialprofilingtoolbox.workflows.front_proximity.analyzer>
+   computational_design <spatialprofilingtoolbox.workflows.front_proximity.computational_design>
+   core <spatialprofilingtoolbox.workflows.front_proximity.core>
+   integrator <spatialprofilingtoolbox.workflows.front_proximity.integrator>
+   job_generator <spatialprofilingtoolbox.workflows.front_proximity.job_generator>
 

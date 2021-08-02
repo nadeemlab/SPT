@@ -6,5 +6,5 @@ Table of Contents
    :maxdepth: 1
 
    readme
-   Library docs <spatial_profiling_toolbox>
+   Library docs <spatialprofilingtoolbox>
    genindexplaceholder

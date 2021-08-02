@@ -1,7 +1,7 @@
 environment
 ===========
 
-.. automodule:: spatial_profiling_toolbox.environment
+.. automodule:: spatialprofilingtoolbox.environment
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,13 +11,13 @@ environment
 
 .. toctree::
 
-   cell_metadata <spatial_profiling_toolbox.environment.cell_metadata>
-   computational_design <spatial_profiling_toolbox.environment.computational_design>
-   configuration <spatial_profiling_toolbox.environment.configuration>
-   database_context_utility <spatial_profiling_toolbox.environment.database_context_utility>
-   job_generator <spatial_profiling_toolbox.environment.job_generator>
-   log_formats <spatial_profiling_toolbox.environment.log_formats>
-   pipeline_design <spatial_profiling_toolbox.environment.pipeline_design>
-   settings_wrappers <spatial_profiling_toolbox.environment.settings_wrappers>
-   single_job_analyzer <spatial_profiling_toolbox.environment.single_job_analyzer>
+   cell_metadata <spatialprofilingtoolbox.environment.cell_metadata>
+   computational_design <spatialprofilingtoolbox.environment.computational_design>
+   configuration <spatialprofilingtoolbox.environment.configuration>
+   database_context_utility <spatialprofilingtoolbox.environment.database_context_utility>
+   job_generator <spatialprofilingtoolbox.environment.job_generator>
+   log_formats <spatialprofilingtoolbox.environment.log_formats>
+   pipeline_design <spatialprofilingtoolbox.environment.pipeline_design>
+   settings_wrappers <spatialprofilingtoolbox.environment.settings_wrappers>
+   single_job_analyzer <spatialprofilingtoolbox.environment.single_job_analyzer>
 

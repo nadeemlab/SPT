@@ -1,7 +1,7 @@
 configuration
 =============
 
-.. automodule:: spatial_profiling_toolbox.environment.configuration
+.. automodule:: spatialprofilingtoolbox.environment.configuration
     :members:
     :undoc-members:
     :show-inheritance:

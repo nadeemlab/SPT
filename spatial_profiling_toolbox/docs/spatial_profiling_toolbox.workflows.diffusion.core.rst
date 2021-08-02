@@ -1,7 +1,7 @@
 core
 ====
 
-.. automodule:: spatial_profiling_toolbox.workflows.diffusion.core
+.. automodule:: spatialprofilingtoolbox.workflows.diffusion.core
     :members:
     :undoc-members:
     :show-inheritance:

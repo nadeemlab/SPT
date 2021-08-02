@@ -1,7 +1,7 @@
 phenotype\_proximity
 ====================
 
-.. automodule:: spatial_profiling_toolbox.workflows.phenotype_proximity
+.. automodule:: spatialprofilingtoolbox.workflows.phenotype_proximity
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,9 +11,9 @@ phenotype\_proximity
 
 .. toctree::
 
-   analyzer <spatial_profiling_toolbox.workflows.phenotype_proximity.analyzer>
-   computational_design <spatial_profiling_toolbox.workflows.phenotype_proximity.computational_design>
-   core <spatial_profiling_toolbox.workflows.phenotype_proximity.core>
-   integrator <spatial_profiling_toolbox.workflows.phenotype_proximity.integrator>
-   job_generator <spatial_profiling_toolbox.workflows.phenotype_proximity.job_generator>
+   analyzer <spatialprofilingtoolbox.workflows.phenotype_proximity.analyzer>
+   computational_design <spatialprofilingtoolbox.workflows.phenotype_proximity.computational_design>
+   core <spatialprofilingtoolbox.workflows.phenotype_proximity.core>
+   integrator <spatialprofilingtoolbox.workflows.phenotype_proximity.integrator>
+   job_generator <spatialprofilingtoolbox.workflows.phenotype_proximity.job_generator>
 

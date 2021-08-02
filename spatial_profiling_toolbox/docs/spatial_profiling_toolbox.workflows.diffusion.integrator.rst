@@ -1,7 +1,7 @@
 integrator
 ==========
 
-.. automodule:: spatial_profiling_toolbox.workflows.diffusion.integrator
+.. automodule:: spatialprofilingtoolbox.workflows.diffusion.integrator
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,7 +1,7 @@
 diffusion
 =========
 
-.. automodule:: spatial_profiling_toolbox.workflows.diffusion
+.. automodule:: spatialprofilingtoolbox.workflows.diffusion
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,9 +11,9 @@ diffusion
 
 .. toctree::
 
-   analyzer <spatial_profiling_toolbox.workflows.diffusion.analyzer>
-   computational_design <spatial_profiling_toolbox.workflows.diffusion.computational_design>
-   core <spatial_profiling_toolbox.workflows.diffusion.core>
-   integrator <spatial_profiling_toolbox.workflows.diffusion.integrator>
-   job_generator <spatial_profiling_toolbox.workflows.diffusion.job_generator>
+   analyzer <spatialprofilingtoolbox.workflows.diffusion.analyzer>
+   computational_design <spatialprofilingtoolbox.workflows.diffusion.computational_design>
+   core <spatialprofilingtoolbox.workflows.diffusion.core>
+   integrator <spatialprofilingtoolbox.workflows.diffusion.integrator>
+   job_generator <spatialprofilingtoolbox.workflows.diffusion.job_generator>
 

@@ -1,7 +1,7 @@
 
 Overview
 --------
-The ``spatial_profiling_toolbox`` (SPT) is:
+The ``spatialprofilingtoolbox`` (SPT) is:
   - a collection of modules that do image analysis computation in the context of
     histopathology, together with
   - a lightweight framework for deployment of a pipeline comprised of these
@@ -29,14 +29,14 @@ The ``spatial_profiling_toolbox`` (SPT) is:
 Preparing your data
 -------------------
 
-The current workflows all operate on spreadsheet files exported from the `HALO <https://indicalab.com/halo/>`_ software. Support for more generic inputs is in the works, but for now this means that you must use something like the metadata format exemplified by the `test data <https://github.com/nadeemlab/SPT/tree/main/spatial_profiling_toolbox/tests/data>`_. See also the `specification <https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md>`_ for the file manifest file.
+The current workflows all operate on spreadsheet files exported from the `HALO <https://indicalab.com/halo/>`_ software. Support for more generic inputs is in the works, but for now this means that you must use something like the metadata format exemplified by the `test data <https://github.com/nadeemlab/SPT/tree/main/spatialprofilingtoolbox/tests/data>`_. See also the `specification <https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md>`_ for the file manifest file.
 
 Getting started
 ---------------
 
 Install from `PyPI <https://pypi.org/project/spatialprofilingtoolbox/>`_::
 
-    pip install spatial_profiling_toolbox
+    pip install spatialprofilingtoolbox
 
 Use ``spt-pipeline`` to enter a dialog that solicits configuration parameters for your run. You will be given the option to run locally or to schedule the pipeline as `Platfrom LSF <https://www.ibm.com/products/hpc-workload-management>`_ jobs. In the LSF case, you must first build the library into a Singularity container by running ::
 

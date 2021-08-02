@@ -1,7 +1,7 @@
 applications
 ============
 
-.. automodule:: spatial_profiling_toolbox.applications
+.. automodule:: spatialprofilingtoolbox.applications
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,8 +11,8 @@ applications
 
 .. toctree::
 
-    cell_cartoons <spatial_profiling_toolbox.applications.cell_cartoons>
-    diffusion_graphs_viz <spatial_profiling_toolbox.applications.diffusion_graphs_viz.diffusion_graphs_viz>
-    diffusion_tests_viz <spatial_profiling_toolbox.applications.diffusion_tests_viz.diffusion_tests_viz>
+    cell_cartoons <spatialprofilingtoolbox.applications.cell_cartoons>
+    diffusion_graphs_viz <spatialprofilingtoolbox.applications.diffusion_graphs_viz.diffusion_graphs_viz>
+    diffusion_tests_viz <spatialprofilingtoolbox.applications.diffusion_tests_viz.diffusion_tests_viz>
 
 

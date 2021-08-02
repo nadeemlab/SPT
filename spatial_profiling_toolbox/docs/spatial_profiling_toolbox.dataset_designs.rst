@@ -1,7 +1,7 @@
 dataset\_designs
 ================
 
-.. automodule:: spatial_profiling_toolbox.dataset_designs
+.. automodule:: spatialprofilingtoolbox.dataset_designs
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,5 +11,5 @@ dataset\_designs
 
 .. toctree::
 
-    multiplexed_imaging <spatial_profiling_toolbox.dataset_designs.multiplexed_imaging>
+    multiplexed_imaging <spatialprofilingtoolbox.dataset_designs.multiplexed_imaging>
 

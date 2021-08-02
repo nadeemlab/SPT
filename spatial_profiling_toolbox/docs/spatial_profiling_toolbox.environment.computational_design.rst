@@ -1,7 +1,7 @@
 computational\_design
 =====================
 
-.. automodule:: spatial_profiling_toolbox.environment.computational_design
+.. automodule:: spatialprofilingtoolbox.environment.computational_design
     :members:
     :undoc-members:
     :show-inheritance:

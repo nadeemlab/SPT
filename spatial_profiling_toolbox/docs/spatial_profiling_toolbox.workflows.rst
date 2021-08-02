@@ -1,7 +1,7 @@
 workflows
 =========
 
-.. automodule:: spatial_profiling_toolbox.workflows
+.. automodule:: spatialprofilingtoolbox.workflows
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,7 +11,7 @@ workflows
 
 .. toctree::
 
-    diffusion <spatial_profiling_toolbox.workflows.diffusion>
-    phenotype_proximity <spatial_profiling_toolbox.workflows.phenotype_proximity>
-    front_proximity <spatial_profiling_toolbox.workflows.front_proximity>
+    diffusion <spatialprofilingtoolbox.workflows.diffusion>
+    phenotype_proximity <spatialprofilingtoolbox.workflows.phenotype_proximity>
+    front_proximity <spatialprofilingtoolbox.workflows.front_proximity>
 

@@ -1,7 +1,7 @@
 cell\_cartoons
 ==============
 
-.. automodule:: spatial_profiling_toolbox.applications.cell_cartoons
+.. automodule:: spatialprofilingtoolbox.applications.cell_cartoons
     :members:
     :undoc-members:
     :show-inheritance:
@@ -10,5 +10,5 @@ cell\_cartoons
 
 .. toctree::
 
-   application <spatial_profiling_toolbox.applications.cell_cartoons.application>
+   application <spatialprofilingtoolbox.applications.cell_cartoons.application>
 

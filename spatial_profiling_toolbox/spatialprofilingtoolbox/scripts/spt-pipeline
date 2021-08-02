@@ -1,15 +1,15 @@
 #!/bin/bash
 
-green="\u001b[1;32m"
-magenta="\u001b[1;35m"
-cyan="\u001b[1;36m"
-yellow="\u001b[33m"
-red="\u001b[31m"
-bold_red="\u001b[31;1m"
-blue="\u001b[34m"
-reset="\u001b[0m"
-cr="\033[F"
-upline="\033[A"
+green="\e[1;32m"
+magenta="\e[1;35m"
+cyan="\e[1;36m"
+yellow="\e[33m"
+red="\e[31m"
+bold_red="\e[31;1m"
+blue="\e[34m"
+reset="\e[0m"
+cr="\e[F"
+upline="\e[A"
 
 function schedule_scripts {
     for script in schedule_$RUN_PLATFORM*.sh
@@ -28,7 +28,7 @@ if [[ -f "$config_filename" ]]; then
     spt-generate-jobs
     chmod +x *.sh
     config_filename=$(spt-print config-filename)
-    RUN_PLATFORM=$(grep -oP 'runtime_platform = \K.*' $config_filename)
+    RUN_PLATFORM=$(grep 'runtime_platform = .*$' $config_filename | grep -oE '\w+$')
     schedule_scripts
     exit
 fi

@@ -8,7 +8,7 @@ def get_file_contents(filename):
         contents = file.read()
     return contents
 
-long_description = """[Documentation](https://spatialprofilingtoolbox.readthedocs.io)
+long_description = """[Documentation](https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html)
 """
 requirements = [
     'cycler==0.10.0',
@@ -75,8 +75,8 @@ setuptools.setup(
     ],
     install_requires=requirements,
     project_urls = {
-        'Documentation': 'https://spatialprofilingtoolbox.readthedocs.io',
+        'Documentation': 'https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html',
         'Source code': 'https://github.com/nadeemlab/SPT'
     },
-    url = 'https://spatialprofilingtoolbox.readthedocs.io',
+    url = 'https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html',
 )

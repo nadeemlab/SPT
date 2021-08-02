@@ -65,7 +65,7 @@ If these criteria are met, the script then proceeds to:
 8. Uses `twine` to upload the distributables to PyPI.
 
 Notes:
-- The PyPI upload requires that you have set up the API token correctly.
+- The PyPI upload requires that you have set up the API token correctly. Log in to your PyPI account to set this up.
 - You may wish to "activate" the specific tagged version that is created, by logging in to readthedocs and fiddling with the settings. You can generally choose which version/branch is used for autogenerating and serving the documentation.
 
 

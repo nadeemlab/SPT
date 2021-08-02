@@ -33,7 +33,7 @@ if [[ -f "$config_filename" ]]; then
     echo -e "$yellow""Regenerating jobs and scheduling them.""$reset"
     echo -e "$yellow""Using parameters from $reset""$magenta$config_filename$reset$yellow.$reset"
     echo -e "$yellow""To reconfigure, update or delete $magenta$config_filename$reset"
-    spt_generate_jobs.py
+    spt-generate-jobs
     chmod +x *.sh
     config_filename=$(spt-print config-filename)
     RUN_PLATFORM=$(grep -oP 'runtime_platform = \K.*' $config_filename)
@@ -246,7 +246,7 @@ SCHEDULERS_PATH=$(abspath $SCHEDULERS_PATH)
 echo -e "$yellow""Job scripts will be written to $green$JOBS_PATH$reset"
 echo -e "$yellow""scheduler scripts to ""$green$SCHEDULERS_PATH$reset"
 
-spt_generate_jobs.py \
+spt-generate-jobs \
     --sif-file $SIF_PATH \
     --computational-workflow "$COMPUTATIONAL_WORKFLOW" \
     --input-path $INPUT_PATH \

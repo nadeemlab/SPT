@@ -49,7 +49,7 @@ The `autorelease.sh` script is provided to assist with the coordination and basi
 
 It checks that:
 
-1. You are on the `main` branch.
+1. You are (currently) on the `main` branch.
 2. `spatialprofilingtoolbox/version.txt` has been modified (as it would be after a normal commit in case the above-mentioned git hook is installed, or after a manual version number change).
 3. No other files under git version control have been modified.
 

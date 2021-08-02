@@ -32,13 +32,15 @@ sphinx-apidoc . -o docs/
 
 to generate the Makefile. (Sometimes superfluous files are created this way; you can ignore them.)
 
-Then you build with
+Then you build locally with
 
 ```bash
 make html
 ```
 
-The documentation can then be viewed by pointing your browser to `_build/html/index.html` .
+The documentation can then be previewed by pointing your browser to `_build/html/index.html` .
+
+The real documentation is built server-side on Read the Docs' servers, triggered by new commits to certain branches. To set this up, you need to log in to your account on Read the Docs and point it to your repository and desired branch.
 
 
 Semi-automated release

@@ -33,6 +33,7 @@ class CellMetadata:
         ):
         """
         Args:
+
             dataset_design:
                 Object providing get_elementary_phenotype_names, get_pandas_signature,
                 get_combined_intensity, and get_box_limit_column_names.

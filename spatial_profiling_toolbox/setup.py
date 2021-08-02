@@ -56,6 +56,9 @@ setuptools.setup(
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: Apache Software License',
+        'Topic :: Scientific/Engineering',
+        'Intended Audience :: Science/Research',
     ],
     package_data={'spatialprofilingtoolbox': ['version.txt']},
     python_requires='>=3.7',
@@ -72,4 +75,9 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt_front_proximity_analysis.py',
     ],
     install_requires=requirements,
+    project_urls = {
+        'Documentation': 'https://spatialprofilingtoolbox.readthedocs.io',
+        'Source code': 'https://github.com/nadeemlab/SPT'
+    },
+    url = 'https://spatialprofilingtoolbox.readthedocs.io',
 )

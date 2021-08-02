@@ -1,7 +1,5 @@
-spatial\_profiling\_toolbox.scripts namespace
-=============================================
-
-
+scripts
+=======
 
 .. toctree::
 

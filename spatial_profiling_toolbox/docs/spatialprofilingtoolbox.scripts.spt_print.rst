@@ -1,10 +1,6 @@
-spt\_print
-=====================================================
+spt-print
+=========
 
-.. automodule:: spatialprofilingtoolbox.scripts.spt_print
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-* :ref:`genindex`
+This convenience script exposes some hard-coded constants of the
+spatialprofilingtoolbox library to shell scripts.
 

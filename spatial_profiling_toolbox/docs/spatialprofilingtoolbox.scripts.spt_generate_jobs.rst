@@ -1,7 +1,5 @@
-spatial\_profiling\_toolbox.scripts.spt\_generate\_jobs module
-==============================================================
+spt\_generate\_jobs
+===================
 
-.. automodule:: spatialprofilingtoolbox.scripts.spt_generate_jobs
-    :members:
-    :undoc-members:
-    :show-inheritance:
+This script locates configuration parameters for the pipeline's job generation,
+then delegates the job generation to a more specific generator.

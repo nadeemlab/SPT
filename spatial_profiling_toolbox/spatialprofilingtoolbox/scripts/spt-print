@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-This convenience script exposes some hard-coded constants of the
-spatialprofilingtoolbox library to shell scripts.
-"""
 import sys
 
 import spatialprofilingtoolbox as spt

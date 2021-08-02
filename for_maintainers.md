@@ -112,3 +112,6 @@ Use
 ```bash
 pylint --output-format=colorized spatialprofilingtoolbox/
 ```
+
+If you haven't already installed pylint, use `pip install pylint` .
+

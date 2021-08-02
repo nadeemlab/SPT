@@ -2,7 +2,7 @@
 import argparse
 
 import spatial_profiling_toolbox as spt
-from spt import FrontProximityViz
+from spatial_profiling_toolbox import FrontProximityViz
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Visualize density of cells with respect to proximity to regional/compartment front or boundary.')

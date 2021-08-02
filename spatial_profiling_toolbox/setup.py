@@ -53,6 +53,7 @@ setuptools.setup(
         'spatial_profiling_toolbox.applications.cell_cartoons',
         'spatial_profiling_toolbox.applications.diffusion_tests_viz',
         'spatial_profiling_toolbox.applications.diffusion_graphs_viz',
+        'spatial_profiling_toolbox.applications.front_proximity_viz',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

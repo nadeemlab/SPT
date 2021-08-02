@@ -8,12 +8,11 @@ from os import getcwd
 from os.path import exists, abspath, dirname, join
 from os import mkdir
 import re
+import sqlite3
 
 import pandas as pd
-import tkinter as tk
-import tkinter.filedialog as fd
-from tkinter import ttk
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 
 from ...workflows.front_proximity.computational_design import FrontProximityDesign
 
@@ -51,9 +50,118 @@ class ColorStack:
 class FrontProximityViz:
     def __init__(self, distances_db_uri=None):
         self.dataframe = self.retrieve_distances_dataframe(uri=distances_db_uri, table_name='cell_front_distances')
-        print(self.dataframe.shape)
-        print(self.dataframe)
+
         self.fig = go.Figure()
+
+        # 461ca28c204fac2ac619e2d81902afc4
+        # 2779f21192cb0ce1479b2bf7fb20ebba
+        # 5e1b6c32494caf1be6c9a68b136a2840
+        # 3d25f72e8ca948280b7bfeb9de03944f
+        # 33c794a479e571ae50518546555b9480
+        # 2cc18c6561b05abb1a1a95d15130a1d3
+
+        # sample_identifier = '2779f21192cb0ce1479b2bf7fb20ebba'
+        # fov_index = 0
+        # compartment = 'Tumor'
+        # other_compartment = 'Non-Tumor'
+        # hist_data1, group_labels1 = self.get_distances_along(
+        #     sample_identifier=sample_identifier,
+        #     fov_index=fov_index,
+        #     compartment=compartment,
+        #     other_compartment=other_compartment,
+        # )
+
+        # caption_text = self.get_caption_text(
+        #     sample_identifier = sample_identifier,
+        #     fov_index = fov_index,
+        #     compartment = compartment,
+        #     other_compartment = other_compartment,
+        # )
+
+        caption_text = ''
+
+        # sample_identifier2 = '5e1b6c32494caf1be6c9a68b136a2840'
+        fov_index = 0
+        compartment = 'Tumor'
+        other_compartment = 'Non-Tumor'
+        # hist_data2, group_labels2 = self.get_distances_along(
+        #     sample_identifier=sample_identifier2,
+        #     fov_index=fov_index,
+        #     compartment=compartment,
+        #     other_compartment=other_compartment,
+        # )
+
+        sample_identifiers = list(set(self.dataframe['sample_identifier']))
+
+        all_hist_data = []
+        all_group_labels = []
+        sizes = []
+        for sample_identifier in sample_identifiers:
+            hist_data, group_labels = self.get_distances_along(
+                sample_identifier=sample_identifier,
+                fov_index=fov_index,
+                compartment=compartment,
+                other_compartment=other_compartment,
+            )
+            all_hist_data = all_hist_data + hist_data
+            all_group_labels = all_group_labels + group_labels
+            sizes.append(len(group_labels))
+
+        indicator_function = {sample_identifier : [False]*sum(sizes) for sample_identifier in sample_identifiers}
+        offset = 0
+        for i, sample_identifier in enumerate(sample_identifiers):
+            for j in range(sizes[i]):
+                indicator_function[sample_identifier][offset + j] = True
+            offset += sizes[i]
+
+        self.fig = ff.create_distplot(hist_data=all_hist_data, group_labels=all_group_labels, bin_size=50)
+
+                        # dict(
+                        #     args=['visible', indicator_function[sample_identifier]],
+                        #     label=sample_identifier,
+                        #     method='restyle'
+                        # ),
+                        # dict(
+                        #     args=['visible', indicator_function[sample_identifier2]],
+                        #     label=sample_identifier2,
+                        #     method='restyle'
+                        # )
+
+        self.fig.update_layout(
+            updatemenus=[
+                dict(
+                    buttons=list([
+                        dict(
+                            args=['visible', indicator_function[sample_identifier]],
+                            label=sample_identifier,
+                            method='restyle'
+                        ) for sample_identifier in sample_identifiers
+                    ]),
+                    direction="down",
+                    pad={"r": 10, "t": 10},
+                    showactive=True,
+                    x=0.1,
+                    xanchor="right",
+                    y=1.1,
+                    yanchor="top"
+                ),
+            ]
+        )
+
+        self.fig.update_layout(
+            annotations=[
+                dict(
+                    text=caption_text,
+                    showarrow=False,
+                    x=0,
+                    y=-0.05,
+                    yref="paper",
+                    align="left",
+                )
+            ]
+        )
+
+
         # cs = ColorStack()
         # for p in set(table['phenotype']):
         #     table_p = table[table['phenotype'] == p]
@@ -141,9 +249,49 @@ class FrontProximityViz:
         #             height=600,
         #         )
 
+    def get_distances_along(self,
+        sample_identifier=None,
+        fov_index=None,
+        compartment=None,
+        other_compartment=None,
+    ):
+        fov_index = 0
+        compartment = 'Tumor'
+        other_compartment = 'Non-Tumor'
+        df = self.dataframe[
+            (self.dataframe['sample_identifier'] == sample_identifier) &
+            (self.dataframe['fov_index'] == fov_index) &
+            (self.dataframe['compartment'] == compartment) &
+            (self.dataframe['other_compartment'] == other_compartment)
+        ]
+        grouped = df.groupby('phenotype')
+        hist_data_labels = [(list(g['distance_to_front_in_pixels']), key) for key, g in grouped]
+        group_labels = [row[1] for row in hist_data_labels if len(row[0]) > 2]
+        hist_data = [row[0] for row in hist_data_labels if len(row[0]) > 2]
+        return [hist_data, group_labels]
+
+    def get_caption_text(self,
+            sample_identifier = None,
+            fov_index = None,
+            compartment = None,
+            other_compartment = None,
+        ):
+        return ''.join([
+            'Sample ',
+            sample_identifier,
+            ', ',
+            'FOV ',
+            str(fov_index),
+            ', ',
+            'cells in ',
+            compartment,
+            ' with respect to front with ',
+            other_compartment,
+        ])
+
     def retrieve_distances_dataframe(self, uri: str=None, table_name: str=None):
         connection = sqlite3.connect(uri)
-        df = pd.read_sql_table(table_name, connection)
+        df = pd.read_sql_query('SELECT * from ' + table_name, connection)
         connection.close()
         return df
 

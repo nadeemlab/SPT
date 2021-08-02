@@ -32,7 +32,7 @@ requirements = [
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
 
 setuptools.setup(
-    name='SPT',
+    name='spatialprofilingtoolbox',
     version=version,
     author='Rami Vanguri, James Mathews',
     author_email='mathewj2@mskcc.org',

@@ -161,13 +161,11 @@ Supported workflows
        | of producing features that are characteristic of the input geometry.
      - Rami Vanguri
 
-.. image :: _static/example_diffusion_figure.png
-   :target: _static/example_diffusion_figure.png
 
 Preparing your data
 -------------------
 
-The current workflows all operate on spreadsheet files exported from the `HALO <https://indicalab.com/halo/>`_ software. Support for more generic inputs is in the works, but for now this means that you must use something like the metadata format exemplified by the `test data <https://github.com/nadeemlab/SPT/tree/main/spatialprofilingtoolbox/tests/data>`_. See also the `specification <https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md>`_ for the file manifest file.
+The current workflows all operate on spreadsheet files exported from the `HALO <https://indicalab.com/halo/>`_ software. The metadata format is exemplified by the `test data <https://github.com/nadeemlab/SPT/tree/main/tests/data>`_. See also the `specification <https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md>`_ for a file manifest file, used to keep all metadata for a dataset organized.
 
 Getting started
 ---------------

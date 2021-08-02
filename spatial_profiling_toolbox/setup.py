@@ -70,7 +70,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',
         'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt_generate_jobs.py',
-        'spatialprofilingtoolbox/scripts/spt_diffusion_analysis.py',
+        'spatialprofilingtoolbox/scripts/spt-diffusion-analysis',
         'spatialprofilingtoolbox/scripts/spt-cell-phenotype-proximity-analysis',
         'spatialprofilingtoolbox/scripts/spt_front_proximity_analysis.py',
     ],

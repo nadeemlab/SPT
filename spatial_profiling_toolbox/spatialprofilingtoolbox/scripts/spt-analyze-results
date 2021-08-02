@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""
-(To be migrated to RST file)
-
-``spt-analyze-results`` is a shortcut to initiating the integration analysis
-phase of the spatial analysis pipeline begun with ``spt-pipeline``, even before
-that pipeline has fully completed.
-
-The purpose is to make some results available early based on partially-complete
-computations.
-"""
 
 import spatialprofilingtoolbox as spt
 

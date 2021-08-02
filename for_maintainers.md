@@ -1,3 +1,5 @@
+Guide to maintaining the SPT package and repository
+===================================================
 1. [Version number tracking](#Version-number-tracking)
 2. [Documentation builds](#Documentation-builds)
 3. [Semi-automated release](#Semi-automated-release)
@@ -6,7 +8,7 @@
 6. [Testing that new functionality does not break existing functionality](#Testing-that-new-functionality-does-not-break-existing-functionality)
 
 Version number tracking
-=======================
+-----------------------
 The "master" copy of the current version number is located at [spatialprofilingtoolbox/version.txt](spatialprofilingtoolbox/version.txt) and is part of the package distribution.
 
 A git hook, [hooks/post-commit](hooks/post-commit), is provided to assist with version number tracking. If you install it to `.git/hooks/`, it will automatically increment the 3rd (most minor) version number on every commit.
@@ -15,7 +17,7 @@ Note that integrating this hook into your workflow requires a little care when m
 
 
 Documentation builds
-====================
+--------------------
 The documentation is built with [Sphinx](https://www.sphinx-doc.org/en/master/) on [Read the Docs](readthedocs.org). Sphinx does have the capability of generating a whole set of .rst source files for an entire Python package, but one typically doesn't use this for the following reason: When the module/directory structure changes, running the complete Sphinx autogeneration will not overwrite some things that need updating and will not delete deprecated items. So one would need to do a completely new build, obliterating any manually-edited .rst source files.
 
 Consequently the best workflow is to add new .rst files as needed by hand, following the pattern displayed by the existing documentation. This way one also gets sorely-needed control over exact titles and subtitles as well as the full capabilities of reStructuredText documents in the Sphinx context (with its extensive system of directives).
@@ -40,7 +42,7 @@ The documentation can then be viewed by pointing your browser to `_build/html/in
 
 
 Semi-automated release
-======================
+----------------------
 The `autorelease.sh` script is provided to assist with the coordination and basic checks involved with releasing to PyPI and Read The Docs.
 
 It checks that:
@@ -66,7 +68,7 @@ Notes:
 
 
 Adding new functionality
-========================
+------------------------
 Typically new functionality is added by creating new subpackages or new submodules (Python source files), or scripts. One should typically also add some unit tests to `tests`.
 
 One can generally add the functionality of an entirely new workflow by doing the following steps:
@@ -79,12 +81,12 @@ One can generally add the functionality of an entirely new workflow by doing the
 
 
 Documenting new functionality
-=============================
+-----------------------------
 Copy the format and filename conventions of the .rst files under `docs/` .
 
 
 Testing that new functionality does not break existing functionality
-====================================================================
+--------------------------------------------------------------------
 Run unit tests with:
 
 ```bash

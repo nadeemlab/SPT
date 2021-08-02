@@ -10,7 +10,7 @@ Note that integrating this hook into your workflow requires a little care when m
 
 Documentation builds
 ====================
-The documentation relies on Sphinx. Sphinx does have the capability of generating a whole set of .rst source files for an entire Python package, but one typically doesn't use this for the following reason: When the module/directory structure changes, running the complete Sphinx autogeneration will not overwrite some things that need updating and will not delete deprecated items. So one would need to do a completely new build, obliterating any manually-edited .rst source files.
+The documentation is build with [Sphinx](https://www.sphinx-doc.org/en/master/) on [Read the Docs](readthedocs.org). Sphinx does have the capability of generating a whole set of .rst source files for an entire Python package, but one typically doesn't use this for the following reason: When the module/directory structure changes, running the complete Sphinx autogeneration will not overwrite some things that need updating and will not delete deprecated items. So one would need to do a completely new build, obliterating any manually-edited .rst source files.
 
 Consequently the best workflow is to add new .rst files as needed by hand, following the pattern displayed by the existing documentation. This way one also gets sorely-needed control over exact titles and subtitles as well as the full capabilities of reStructuredText documents in the Sphinx context (with its extensive system of directives).
 

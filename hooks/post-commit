@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# "Install" this git hook by copying it to .git/hooks/
+# It increments the version number on every commit.
+
 location="spatialprofilingtoolbox/version.txt"
 version=$(cat "$location")
 

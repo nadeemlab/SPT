@@ -1,3 +1,7 @@
+#!/bin/bash
+
+# A convenience script to clean out python-related cache files.
+# For safety, it is interactive, telling what will be removed and asking if this is desired before taking any action.
 
 BOLD_RED='\e[1;31m'
 BOLD_GREEN='\e[1;32m'

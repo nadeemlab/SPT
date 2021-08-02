@@ -1,0 +1,91 @@
+
+Version number tracking
+=======================
+The "master" copy of the current version number is located at [spatialprofilingtoolbox/version.txt](spatialprofilingtoolbox/version.txt) and is part of the package distribution.
+
+A git hook, [hooks/post-commit](hooks/post-commit), is provided to assist with version number tracking. If you install it to `.git/hooks/`, it will automatically increment the 3rd (most minor) version number on every commit.
+
+Note that integrating this hook into your workflow requires a little care when merging branches. Typically one would need to delete `spatialprofilingtoolbox/version.txt` before checking out a different branch, since this text file will always be in the "modified" state right after a commit. (This is essentially because there is no "pre-commit hook".)
+
+
+Documentation builds
+====================
+The documentation relies on Sphinx. Sphinx does have the capability of generating a whole set of .rst source files for an entire Python package, but one typically doesn't use this for the following reason: When the module/directory structure changes, running the complete Sphinx autogeneration will not overwrite some things that need updating and will not delete deprecated items. So one would need to do a completely new build, obliterating any manually-edited .rst source files.
+
+Consequently the best workflow is to add new .rst files as needed by hand, following the pattern displayed by the existing documentation. This way one also gets sorely-needed control over exact titles and subtitles as well as the full capabilities of reStructuredText documents in the Sphinx context (with its extensive system of directives).
+
+Thankfully, the autodoc functionality of Sphinx allows you to automatically incorporate the information present in all docstrings, using directives carefully placed in your manually written reStructuredText documents. These direct Sphinx to use updated docstrings on every `make html` build. I have found it to be necessary to install the package itself (it is still unclear to me whether the source tree is actually used by Sphinx in local builds).
+
+When first setting up your repository, you use something like
+
+```bash
+sphinx-apidoc . -o docs/
+```
+
+to generate the Makefile. (Sometimes superfluous files are created this way; you can ignore them.)
+
+Then you build with
+
+```bash
+make html
+```
+
+The documentation can then be viewed by pointing your browser to `_build/html/index.html` .
+
+
+Semi-automated release
+======================
+The `autorelease.sh` script is provided to assist with the coordination and basic checks involved with releasing to PyPI and Read The Docs.
+
+It checks that:
+
+1. You are on the `main` branch.
+2. `spatialprofilingtoolbox/version.txt` has been modified (as it would be after a normal commit).
+3. No other files under git version control have been modified.
+
+If these criteria are met, the script then proceeds to:
+
+1. Let you know what the version number is for the release that is about to take place.
+2. Removes previously-built distributables from `dist/` .
+3. Builds a new suite of distributables into `dist/` .
+4. Makes a new commit, in which the only change is the version text file.
+5. Tags the commit with the version number.
+6. Pushes the new commit.
+7. Merges the updates into the stipulated "release to" branch (currently `prerelease`).
+8. Uses `twine` to upload the distributables to PyPI.
+
+The PyPI upload requires that you have set up the API token correctly.
+
+
+Adding new functionality
+========================
+Typically new functionality is added by creating new subpackages or new submodules (Python source files), or scripts. One should typically also add some unit tests to `tests`.
+
+One can generally add the functionality of an entirely new workflow by doing the following steps:
+
+1. Copy the structure of one of the subpackages under `workflows/`, e.g. `phenotype_proximity`, into a new subdirectory with a new name.
+2. Modify the class names and specific functions (most extensively under `core.py`, but in all of the other source files as well).
+3. Add a new entry to `spatialprofilingtoolbox.environment.configuration.workflows` .
+4. Create scripts under `spatialprofilingtoolbox/scripts/` exposing your new classes/functions (e.g. by following the pattern of `spt-cell-phenotype-proximity-analysis`).
+
+
+Documenting new functionality
+=============================
+Copy the format and filename conventions of the .rst files under `docs/` .
+
+
+Testing that new functionality does not break existing functionality
+====================================================================
+Run unit tests with:
+
+```bash
+pytest .
+```
+
+Also run the integration tests:
+
+```bash
+cd tests/
+./test_diffusion_pipeline.sh
+./test_proximity_pipeline.sh
+```

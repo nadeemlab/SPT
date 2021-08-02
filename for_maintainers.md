@@ -1,3 +1,9 @@
+1. [Version number tracking](#Version-number-tracking)
+2. Documentation builds
+3. Semi-automated release
+4. Adding new functionality
+5. Documenting new functionality
+6. Testing that new functionality does not break existing functionality
 
 Version number tracking
 =======================

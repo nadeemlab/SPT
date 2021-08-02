@@ -69,6 +69,7 @@ One can generally add the functionality of an entirely new workflow by doing the
 2. Modify the class names and specific functions (most extensively under `core.py`, but in all of the other source files as well).
 3. Add a new entry to `spatialprofilingtoolbox.environment.configuration.workflows` .
 4. Create scripts under `spatialprofilingtoolbox/scripts/` exposing your new classes/functions (e.g. by following the pattern of `spt-cell-phenotype-proximity-analysis`).
+5. If special configuration parameters are needed by your new workflow, modify `scripts/spt-pipeline` accordingly.
 
 
 Documenting new functionality

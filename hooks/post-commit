@@ -1,5 +1,5 @@
 #!/bin/bash
-location="spatial_profiling_toolbox/spatial_profiling_toolbox/version.txt"
+location="spatial_profiling_toolbox/spatialprofilingtoolbox/version.txt"
 version=$(cat "$location")
 
 if [[ "$OSTYPE" == "darwin"* ]]; then

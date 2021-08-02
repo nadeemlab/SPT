@@ -54,7 +54,9 @@ If these criteria are met, the script then proceeds to:
 7. Merges the updates into the stipulated "release to" branch (currently `prerelease`).
 8. Uses `twine` to upload the distributables to PyPI.
 
-The PyPI upload requires that you have set up the API token correctly.
+Notes:
+- The PyPI upload requires that you have set up the API token correctly.
+- You may wish to "activate" the specific tagged version that is created, by logging in to readthedocs and fiddling with the settings. You can generally choose which version/branch is used for autogenerating and serving the documentation.
 
 
 Adding new functionality

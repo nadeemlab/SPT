@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('../'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'spatial_profiling_toolbox'
+project = 'spatialprofilingtoolbox'
 copyright = '2021'
 author = 'Rami Vanguri, James Mathews, Saad Nadeem'
 

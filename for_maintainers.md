@@ -51,7 +51,7 @@ If these criteria are met, the script then proceeds to:
 4. Makes a new commit, in which the only change is the version text file.
 5. Tags the commit with the version number.
 6. Pushes the new commit.
-7. Merges the updates into the stipulated "release to" branch (currently `prerelease`).
+7. Merges the updates into the stipulated "release to" branch (currently `prerelease`), the one being monitored by readthedocs for the purposes of autogenerating the documentation.
 8. Uses `twine` to upload the distributables to PyPI.
 
 Notes:

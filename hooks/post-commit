@@ -1,7 +1,14 @@
 #!/bin/bash
 location="spatial_profiling_toolbox/spatial_profiling_toolbox/version.txt"
 version=$(cat "$location")
-prefix=$(echo "$version" | grep -oP '^([\d]+\.[\d]+\.)')
-microversion=$(echo "$version" | grep -oP '([\d]+)$')
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    prefix=$(echo "$version" | grep -oE '^([\d]+\.[\d]+\.)')
+    microversion=$(echo "$version" | grep -oE '([\d]+)$')
+else
+    prefix=$(echo "$version" | grep -oP '^([\d]+\.[\d]+\.)')
+    microversion=$(echo "$version" | grep -oP '([\d]+)$')
+fi
+
 microversion=$(( microversion + 1 ))
 echo "$prefix$microversion" > $location

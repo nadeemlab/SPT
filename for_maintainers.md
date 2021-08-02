@@ -6,6 +6,7 @@ Guide to maintaining the SPT package and repository
 4. [Adding new functionality](#Adding-new-functionality)
 5. [Documenting new functionality](#Documenting-new-functionality)
 6. [Testing that new functionality does not break existing functionality](#Testing-that-new-functionality-does-not-break-existing-functionality)
+7. [Assess compliance with conventions and do some error checking](#Assess-compliance-with-conventions-and-do-some-error-checking)
 
 Version number tracking
 -----------------------
@@ -101,4 +102,13 @@ Also run the integration tests:
 cd tests/
 ./test_diffusion_pipeline.sh
 ./test_proximity_pipeline.sh
+```
+
+
+Assess compliance with conventions and do some error checking
+-------------------------------------------------------------
+Use
+
+```bash
+pylint --output-format=colorized spatialprofilingtoolbox/
 ```

@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# ``spt-pipeline`` is an interactive dialog to solicit configuration parameters for
-# a run of the spatial profiling toolbox pipeline. The jobs are then generated
-# and scheduled or run.
-
-# Configuration parameters are saved to file. If this saved file is present on
-# subsequent runs, the interactive dialog is skipped.
-
-
 green="\u001b[1;32m"
 magenta="\u001b[1;35m"
 cyan="\u001b[1;36m"

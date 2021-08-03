@@ -1,17 +1,23 @@
 #!/bin/bash
 
-green="\e[1;32m"
-magenta="\e[1;35m"
-cyan="\e[1;36m"
-yellow="\e[33m"
-red="\e[31m"
-bold_red="\e[31;1m"
-blue="\e[34m"
+green="\e[0;32m"
+magenta="\e[0;35m"
+cyan="\e[0;36m"
+bold_cyan="\e[1;36m"
+yellow="\e[0;33m"
+red="\e[0;31m"
+blue="\e[0;34m"
 reset="\e[0m"
+
+script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
+
+function logstyle-printf() {
+    printf "[$script_file] $1"
+}
 
 current_branch=$(git branch | grep '^* ')
 if [[ "$current_branch" != "* main" ]]; then
-    printf "$red""Do autoreleasing from branch main.$reset\n"
+    logstyle-printf "$red""Do autoreleasing from branch main.$reset\n"
     exit
 fi
 
@@ -49,41 +55,41 @@ fi
 
 if [[ "$status" == "11" ]];
 then
-    printf "$red""Version has changed, but found another change. Not ready to autorelease.$reset\n"
+    logstyle-printf "$red""Version has changed, but found another change. Not ready to autorelease.$reset\n"
     exit
 fi
 
 if [[ "$status" == "0x" ]];
 then
-    printf "$red""Version has not changed, so not ready to autorelease.$reset\n"
-    printf "$yellow""Maybe you need one last commit?$reset\n"
+    logstyle-printf "$red""Version has not changed, so not ready to autorelease.$reset\n"
+    logstyle-printf "$yellow""Maybe you need one last commit?$reset\n"
     exit
 fi
 
-printf "$green""Ready to autorelease: Version is updated, and everything else under version control is unmodified.$reset\n"
-printf "$green""Building package.$reset\n"
+logstyle-printf "$green""Ready to autorelease: Version is updated, and everything else under version control is unmodified.$reset\n"
+logstyle-printf "$green""Building package.$reset\n"
 if test -d 'dist'; then
     rm dist/*
 fi
 python3 -m build 1>/dev/null
-printf "$green""Built:$reset\n"
+logstyle-printf "$green""Built:$reset\n"
 for f in dist/*;
 do
-    printf "$yellow""    $f$reset\n"
+    logstyle-printf "$yellow""    $f$reset\n"
 done
 version=$(cat spatialprofilingtoolbox/version.txt)
-printf "$green""Committing this version:$reset$cyan v$version$reset\n"
+logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset\n"
 git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \
     git commit -m "Autoreleasing v$version" 1>/dev/null 2> stderr.txt && \
     git tag v$version 1>/dev/null 2> stderr.txt && \
     git push 1>/dev/null 2> stderr.txt && \
     git push origin v$version 1>/dev/null 2> stderr.txt && \
-    printf "$green""Pushed ""$cyan""v$version$reset$green to remote.$reset\n" && \
-    printf "$green""Migrating updates to $release_to_branch branch.$reset\n" && \
+    logstyle-printf "$green""Pushed ""$bold_cyan""v$version$reset$green to remote.$reset\n" && \
+    logstyle-printf "$green""Migrating updates to $release_to_branch branch.$reset\n" && \
     rm spatialprofilingtoolbox/version.txt && \
     git checkout $release_to_branch 1>/dev/null 2> stderr.txt && \
     git merge main 1>/dev/null 2> stderr.txt && \
     git push 1>/dev/null 2> stderr.txt && \
     git checkout main 1>/dev/null 2> stderr.txt && \
     python3 -m twine upload --repository spatialprofilingtoolbox dist/* && \
-    printf "$green""Done.$reset\n"
+    logstyle-printf "$green""Done.$reset\n"

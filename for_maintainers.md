@@ -25,23 +25,16 @@ Consequently the best workflow is to add new .rst files as needed by hand, follo
 
 Thankfully, the autodoc functionality of Sphinx allows you to automatically incorporate the information present in all docstrings, using directives carefully placed in your manually written reStructuredText documents. These direct Sphinx to use updated docstrings on every `make html` build. I have found it to be necessary to install the package itself (it is still unclear to me whether the source tree is actually used by Sphinx in local builds).
 
-When first setting up your repository, you use something like
+I didn't commit the Makefile that `sphinx-quickstart` generates, because this is presumably environment-specific. However I do not know how to generate it otherwise, and running `sphinx-quickstart` again would overwrite all the configuration saved to `conf.py`. Thus for a local build, you must use the non-make workflow:
 
 ```bash
-sphinx-apidoc . -o docs/
+cd docs/
+sphinx-build -b html . _build
 ```
 
-to generate the Makefile. (Sometimes superfluous files are created this way; you can ignore them.)
+The documentation can then be previewed by pointing your browser to `_build/index.html` .
 
-Then you build locally with
-
-```bash
-make html
-```
-
-The documentation can then be previewed by pointing your browser to `_build/html/index.html` .
-
-The real documentation is built server-side on Read the Docs' servers, triggered by new commits to certain branches. To set this up, you need to log in to your account on Read the Docs and point it to your repository and desired branch.
+The real documentation is built server-side on Read the Docs' servers, triggered by new commits to certain branches. To set this up, you need to log in to your account on Read the Docs and point it to your repository and desired branch. Read the Docs just scans `conf.py` to learn all it needs to know about the configuration in order to build.
 
 
 Semi-automated release

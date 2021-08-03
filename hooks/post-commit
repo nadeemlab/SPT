@@ -15,4 +15,4 @@ else
 fi
 
 microversion=$(( microversion + 1 ))
-echo "$prefix$microversion" > $location
+echo -n "$prefix$microversion" > $location

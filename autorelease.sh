@@ -72,10 +72,10 @@ if [[ ( "$FOUND_VERSION_CHANGE" == "1" ) && ( "$FOUND_ANOTHER_CHANGE" == "0" ) ]
         printf "$green""Pushed v$version to remote.$reset\n" && \
         printf "$green""Migrating updates to $release_to_branch branch.$reset\n" && \
         rm spatialprofilingtoolbox/version.txt && \
-        git checkout $release_to_branch 1>/dev/null && \
+        git checkout $release_to_branch 1>/dev/null 2> stderr.txt && \
         git merge main 1>/dev/null  && \
         git push 1>/dev/null && \
-        git checkout main 1>/dev/null && \
+        git checkout main 1>/dev/null 2> stderr.txt && \
         python3 -m twine upload --repository spatialprofilingtoolbox dist/* && \
         printf "$green""Done.$reset\n"
 fi

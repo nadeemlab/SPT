@@ -63,8 +63,8 @@ if [[ ( "$FOUND_VERSION_CHANGE" == "1" ) && ( "$FOUND_ANOTHER_CHANGE" == "0" ) ]
     done
     version=$(cat spatialprofilingtoolbox/version.txt)
     printf "$green""Committing this version:$reset$yellow v$version$reset\n"
-    git add spatialprofilingtoolbox/version.txt && \
-        git commit -m "Autoreleasing v$version" && \
+    git add spatialprofilingtoolbox/version.txt 1>/dev/null && \
+        git commit -m "Autoreleasing v$version" 1>/dev/null && \
         git tag v$version 1>/dev/null && \
         git push 1>/dev/null && \
         git push origin v$version 1>/dev/null && \

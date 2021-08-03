@@ -85,8 +85,8 @@ git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \
     git tag v$version 1>/dev/null 2> stderr.txt && \
     git push 1>/dev/null 2> stderr.txt && \
     git push origin v$version 1>/dev/null 2> stderr.txt && \
-    logstyle-printf "$green""Pushed ""$bold_cyan""v$version$reset$green to remote.$reset\n" && \
-    logstyle-printf "$green""Migrating updates to $release_to_branch branch.$reset\n" && \
+    logstyle-printf "$green""Pushed ""$bold_cyan""v$version$reset$green on remote branch$reset$yellow main$reset$green .\n" && \
+    logstyle-printf "$green""Migrating updates to $reset$yellow$release_to_branch$reset$green branch.$reset\n" && \
     rm spatialprofilingtoolbox/version.txt && \
     git checkout $release_to_branch 1>/dev/null 2> stderr.txt && \
     git merge main 1>/dev/null 2> stderr.txt && \

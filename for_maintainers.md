@@ -23,7 +23,7 @@ The documentation is built with [Sphinx](https://www.sphinx-doc.org/en/master/) 
 
 Consequently the best workflow is to add new .rst files as needed by hand, following the pattern displayed by the existing documentation. This way one also gets sorely-needed control over exact titles and subtitles as well as the full capabilities of reStructuredText documents in the Sphinx context (with its extensive system of directives).
 
-Thankfully, the autodoc functionality of Sphinx allows you to automatically incorporate the information present in all docstrings, using directives carefully placed in your manually written reStructuredText documents. These direct Sphinx to use updated docstrings on every `make html` build. I have found it to be necessary to install the package itself (it is still unclear to me whether the source tree is actually used by Sphinx in local builds).
+Thankfully, the autodoc functionality of Sphinx allows you to automatically incorporate the information present in all docstrings, using directives carefully placed in your manually written reStructuredText documents. These direct Sphinx to use updated docstrings on every build. I have found it to be necessary to install the package itself (it is still unclear to me whether the source tree is actually used by Sphinx in local builds).
 
 I didn't commit the Makefile that `sphinx-quickstart` generates, because this is presumably environment-specific. However I do not know how to generate it otherwise, and running `sphinx-quickstart` again would overwrite all the configuration saved to `conf.py`. Thus for a local build, you must use the non-make workflow:
 
@@ -39,7 +39,7 @@ The real documentation is built server-side on Read the Docs' servers, triggered
 
 Semi-automated release
 ----------------------
-The `autorelease.sh` script is provided to assist with the coordination and basic checks involved with releasing to PyPI and Read The Docs.
+A proper Continuous Integration / Continuous Deployment (CICD) system like Travis CI or CircleCI may be overkill for this package at this time. Instead, the `autorelease.sh` script is provided to assist with the coordination and basic checks involved with releasing to PyPI and Read the Docs.
 
 It checks that:
 
@@ -74,6 +74,7 @@ One can generally add the functionality of an entirely new workflow by doing the
 3. Add a new entry to `spatialprofilingtoolbox.environment.configuration.workflows` .
 4. Create scripts under `spatialprofilingtoolbox/scripts/` exposing your new classes/functions (e.g. by following the pattern of `spt-cell-phenotype-proximity-analysis`).
 5. If special configuration parameters are needed by your new workflow, modify `scripts/spt-pipeline` accordingly.
+6. (Optional) The convention is for primary workflows to have the capability of running entirely "headless" with no user input. Thus any GUIs for investigating the resulting output should live as their own standalone scripts under `spatialprofilingtoolbox/scripts/`, or potentially with additional dependency on a new application module under `spatialprofilingtoolbox/applications/`.
 
 
 Documenting new functionality

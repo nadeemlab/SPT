@@ -91,12 +91,15 @@ class FrontProximityViz:
         #     other_compartment=other_compartment,
         # )
 
-        sample_identifiers = list(set(self.dataframe['sample_identifier']))
+        pairs_duplicated = [(row['sample_identifier'], row['fov_index']) for i, row in self.dataframe.iterrows()]
+        # sample_identifiers = list(set(self.dataframe['sample_identifier']))
+        fov_identifiers = set(pairs_duplicated)
 
         all_hist_data = []
         all_group_labels = []
         sizes = []
-        for sample_identifier in sample_identifiers:
+        # for sample_identifier in sample_identifiers:
+        for sample_identifier, fov_index in fov_identifiers:
             hist_data, group_labels = self.get_distances_along(
                 sample_identifier=sample_identifier,
                 fov_index=fov_index,
@@ -107,60 +110,35 @@ class FrontProximityViz:
             all_group_labels = all_group_labels + group_labels
             sizes.append(len(group_labels))
 
-        indicator_function = {sample_identifier : [False]*sum(sizes) for sample_identifier in sample_identifiers}
+        # indicator_function = {sample_identifier : [False]*(sum(sizes)) for sample_identifier in sample_identifiers}
+        indicator_function = {sample_fov : [False]*(sum(sizes)) for sample_fov in fov_identifiers}
         offset = 0
-        for i, sample_identifier in enumerate(sample_identifiers):
+        for i, sample_fov in enumerate(fov_identifiers):
             for j in range(sizes[i]):
-                indicator_function[sample_identifier][offset + j] = True
+                indicator_function[sample_fov][offset + j] = True
             offset += sizes[i]
 
         self.fig = ff.create_distplot(hist_data=all_hist_data, group_labels=all_group_labels, bin_size=50)
-
-                        # dict(
-                        #     args=['visible', indicator_function[sample_identifier]],
-                        #     label=sample_identifier,
-                        #     method='restyle'
-                        # ),
-                        # dict(
-                        #     args=['visible', indicator_function[sample_identifier2]],
-                        #     label=sample_identifier2,
-                        #     method='restyle'
-                        # )
-
         self.fig.update_layout(
             updatemenus=[
                 dict(
                     buttons=list([
                         dict(
-                            args=['visible', indicator_function[sample_identifier]],
-                            label=sample_identifier,
+                            args=['visible', indicator_function[sample_fov]],
+                            label='Sample ID, FOV: ' + str(sample_fov),
                             method='restyle'
-                        ) for sample_identifier in sample_identifiers
+                        ) for sample_fov in fov_identifiers
                     ]),
                     direction="down",
                     pad={"r": 10, "t": 10},
                     showactive=True,
                     x=0.1,
                     xanchor="right",
-                    y=1.1,
-                    yanchor="top"
+                    y=1.2,
+                    yanchor="top",
                 ),
             ]
         )
-
-        self.fig.update_layout(
-            annotations=[
-                dict(
-                    text=caption_text,
-                    showarrow=False,
-                    x=0,
-                    y=-0.05,
-                    yref="paper",
-                    align="left",
-                )
-            ]
-        )
-
 
         # cs = ColorStack()
         # for p in set(table['phenotype']):

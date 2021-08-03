@@ -5,14 +5,17 @@ import spatialprofilingtoolbox as spt
 from spatialprofilingtoolbox import FrontProximityViz
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Visualize density of cells with respect to proximity to regional/compartment front or boundary.')
+    parser = argparse.ArgumentParser(
+        description=''.join([
+            'Visualize density of cells with respect to proximity',
+            'to regional/compartment front or boundary.'
+        ])
+    )
     parser.add_argument(
         'filename',
         type=str,
         help='Sqlite database file containing the cell distance data.',
     )
-
     args = parser.parse_args()
-
     gui = FrontProximityViz(distances_db_uri=args.filename)
     gui.start_showing()

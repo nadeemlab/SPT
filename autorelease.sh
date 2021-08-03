@@ -8,11 +8,12 @@ yellow="\e[0;33m"
 red="\e[0;31m"
 blue="\e[0;34m"
 reset="\e[0m"
+source_note_color="\e[34;40m"
 
 script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 
 function logstyle-printf() {
-    printf "[$script_file] $1"
+    printf "$source_note_color[$script_file]$reset $1"
 }
 
 current_branch=$(git branch | grep '^* ')

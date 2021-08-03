@@ -56,7 +56,7 @@ single local machine).
            <ul>
                <li class="ok-item">Spatial transcriptomics emphasis</li>
                <li class="ok-item">Native support for specific imaging platforms</li>
-               <li class="unspecified-item"><a href="https://anndata.readthedocs.io/en/stable/">AnnData</a> for generic input</li>
+               <li class="ok-item"><a href="https://anndata.readthedocs.io/en/stable/">AnnData</a> for generic input</li>
            </ul>
        </td>
        <td>

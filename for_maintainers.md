@@ -14,7 +14,7 @@ The "master" copy of the current version number is located at [spatialprofilingt
 
 A git hook, [hooks/post-commit](hooks/post-commit), is provided to assist with version number tracking. If you install it to `.git/hooks/`, it will automatically increment the 3rd (most minor) version number on every commit.
 
-Note that integrating this hook into your workflow requires a little care when merging branches. Typically one would need to delete `spatialprofilingtoolbox/version.txt` before checking out a different branch, since this text file will always be in the "modified" state right after a commit. (This is essentially because there is no "pre-commit hook".)
+Note that integrating this hook into your workflow requires a little care when merging branches. Typically one would need to delete `spatialprofilingtoolbox/version.txt` before checking out a different branch, since this text file will always be in the "modified" state right after a commit. (This is essentially because there is no possibility of a "pre-commit hook".)
 
 
 Documentation builds

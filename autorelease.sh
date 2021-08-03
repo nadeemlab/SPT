@@ -65,16 +65,16 @@ if [[ ( "$FOUND_VERSION_CHANGE" == "1" ) && ( "$FOUND_ANOTHER_CHANGE" == "0" ) ]
     printf "$green""Committing this version:$reset$yellow v$version$reset\n"
     git add spatialprofilingtoolbox/version.txt && \
         git commit -m "Autoreleasing v$version" && \
-        git tag v$version && \
+        git tag v$version 1>/dev/null && \
         git push 1>/dev/null && \
-        git push origin v$version && \
+        git push origin v$version 1>/dev/null && \
         printf "$green""Pushed v$version to remote.$reset\n" && \
         printf "$green""Migrating updates to $release_to_branch branch.$reset\n" && \
         rm spatialprofilingtoolbox/version.txt && \
-        git checkout $release_to_branch && \
-        git merge main && \
+        git checkout $release_to_branch 1>/dev/null && \
+        git merge main 1>/dev/null  && \
         git push 1>/dev/null && \
-        git checkout main && \
+        git checkout main 1>/dev/null && \
         python3 -m twine upload --repository spatialprofilingtoolbox dist/* && \
         printf "$green""Done.$reset\n"
 fi

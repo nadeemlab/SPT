@@ -3,8 +3,8 @@ Overview
 --------
 This a pre-release version of SPT, the ``spatialprofilingtoolbox``.
 
-The SPT modules do image analysis computation in the context of histopathology,
-and a lightweight framework is provided to deploy a pipeline comprised of these
+The SPT modules do image analysis computation in the context of histopathology.
+A lightweight framework is also provided to deploy a pipeline comprised of these
 modules in different runtime contexts (e.g. a High-Performance Cluster or on a
 single local machine).
 

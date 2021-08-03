@@ -139,7 +139,7 @@ Supported workflows
    :header-rows: 1
    :widths: 1 3 1
 
-   * - Computation module
+   * - 
      - Description
      - Original author
    * - Phenotype proximity

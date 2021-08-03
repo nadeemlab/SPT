@@ -137,20 +137,9 @@ done
 OUTCOMES_FILE=$(abspath $OUTCOMES_FILE)
 printf "$cr$yellow$prompt_str$reset$green$OUTCOMES_FILE$reset\n"
 
-# OUTPUT_PATH=""
-# prompt_str="Enter the path to which the jobs themselves should write output (default ""$reset$magenta""output/""$reset$yellow""): "
-# printf "$yellow$prompt_str$reset"
-# read -e OUTPUT_PATH
-# if [[ "$OUTPUT_PATH" = "" ]];
-# then
-#     OUTPUT_PATH="output/"
-#     echo
-# fi
 OUTPUT_PATH="output/"
 mkdir $OUTPUT_PATH
 OUTPUT_PATH=$(abspath $OUTPUT_PATH)
-# echo -e "$cr$yellow$prompt_str$reset$green$OUTPUT_PATH$reset"
-
 
 ELEMENTARY_PHENOTYPES_FILE="none"
 COMPLEX_PHENOTYPES_FILE="none"

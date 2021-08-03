@@ -5,7 +5,7 @@ docs/_build/
 **/make.bat
 tests/.file_metadata.cache
 tests/.pipeline.db
-tests/.sat_pipeline.config
+tests/.spt_pipeline.config
 tests/jobs/
 tests/output/
 tests/schedule_local_nontumor.sh

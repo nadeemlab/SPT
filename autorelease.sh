@@ -73,17 +73,17 @@ do
 done
 version=$(cat spatialprofilingtoolbox/version.txt)
 printf "$green""Committing this version:$reset$yellow v$version$reset\n"
-git add spatialprofilingtoolbox/version.txt 1>/dev/null && \
-    git commit -m "Autoreleasing v$version" 1>/dev/null && \
-    git tag v$version 1>/dev/null && \
-    git push 1>/dev/null && \
-    git push origin v$version 1>/dev/null && \
+git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \
+    git commit -m "Autoreleasing v$version" 1>/dev/null 2> stderr.txt && \
+    git tag v$version 1>/dev/null 2> stderr.txt && \
+    git push 1>/dev/null 2> stderr.txt && \
+    git push origin v$version 1>/dev/null 2> stderr.txt && \
     printf "$green""Pushed v$version to remote.$reset\n" && \
     printf "$green""Migrating updates to $release_to_branch branch.$reset\n" && \
     rm spatialprofilingtoolbox/version.txt && \
     git checkout $release_to_branch 1>/dev/null 2> stderr.txt && \
-    git merge main 1>/dev/null  && \
-    git push 1>/dev/null && \
+    git merge main 1>/dev/null 2> stderr.txt && \
+    git push 1>/dev/null 2> stderr.txt && \
     git checkout main 1>/dev/null 2> stderr.txt && \
     python3 -m twine upload --repository spatialprofilingtoolbox dist/* && \
     printf "$green""Done.$reset\n"

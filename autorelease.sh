@@ -1,8 +1,17 @@
 #!/bin/bash
 
+green="\e[1;32m"
+magenta="\e[1;35m"
+cyan="\e[1;36m"
+yellow="\e[33m"
+red="\e[31m"
+bold_red="\e[31;1m"
+blue="\e[34m"
+reset="\e[0m"
+
 current_branch=$(git branch | grep '^* ')
 if [[ "$current_branch" != "* main" ]]; then
-    echo "Do autoreleasing from branch main."
+    printf "$red""Do autoreleasing from branch main.$reset\n"
     exit
 fi
 
@@ -30,41 +39,43 @@ while IFS= read -r line
 done
 
 if [[ ( "$FOUND_VERSION_CHANGE" == "1" ) && ( "$FOUND_ANOTHER_CHANGE" == "1" ) ]]; then
-    echo "Version has changed, but found another change. Not ready to autorelease."
+    printf "$red""Version has changed, but found another change. Not ready to autorelease.$reset\n"
     exit
 fi
 
 if [[ ( "$FOUND_VERSION_CHANGE" == "0" ) ]]; then
-    echo "Version has not changed, so not ready to autorelease. Maybe you need one last commit."
+    printf "$red""Version has not changed, so not ready to autorelease.$reset\n"
+    printf "$yellow""Maybe you need one last commit?$reset\n"
     exit
 fi
 
 if [[ ( "$FOUND_VERSION_CHANGE" == "1" ) && ( "$FOUND_ANOTHER_CHANGE" == "0" ) ]]; then
-    echo "Ready to autorelease; version is updated, and everything else is the same."
-    echo "Building package."
+    printf "$green""Ready to autorelease: Version is updated, and everything else under version control is unmodified.$reset\n"
+    printf "$green""Building package.$reset\n"
     if test -d 'dist'; then
         rm dist/*
     fi
     python3 -m build 1>/dev/null
-    echo "Built:"
+    printf "$green""Built:$reset\n"
     for f in dist/*;
     do
-        echo "    $f"
+        printf "$yellow""    $f$reset\n"
     done
     version=$(cat spatialprofilingtoolbox/version.txt)
-    echo "Committing this version: v$version"
+    printf "$green""Committing this version:$reset$yellow v$version$reset\n"
     git add spatialprofilingtoolbox/version.txt && \
         git commit -m "Autoreleasing v$version" && \
         git tag v$version && \
         git push 1>/dev/null && \
         git push origin v$version && \
-        echo "Pushed v$version to remote." && \
-        echo "Migrating updates to $release_to_branch branch." && \
+        printf "$green""Pushed v$version to remote.$reset\n" && \
+        printf "$green""Migrating updates to $release_to_branch branch.$reset\n" && \
         rm spatialprofilingtoolbox/version.txt && \
         git checkout $release_to_branch && \
         git merge main && \
         git push 1>/dev/null && \
         git checkout main && \
-        python3 -m twine upload --repository spatialprofilingtoolbox dist/*
+        python3 -m twine upload --repository spatialprofilingtoolbox dist/* && \
+        printf "$green""Done.$reset\n"
 fi
 }

@@ -1,24 +1,18 @@
 #!/usr/bin/env python3
-"""
-Experimental GUI for examining statistical test results, pairwise outcome comparison of diffusion probability values.
-"""
-import sys
-import os
-from os import getcwd
-from os.path import exists, abspath, dirname, join
-from os import mkdir
-import re
 import sqlite3
 
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
+from plotly.subplots import make_subplots
 
 from ...workflows.front_proximity.computational_design import FrontProximityDesign
+from ...environment.log_formats import colorized_logger
+logger = colorized_logger(__name__)
 
 class ColorStack:
     """
-    A convenience function for assigning qualitatively distinct colors for the UI elements.
+    A convenience function for assigning qualitatively distinct colors to UI elements.
     """
     def __init__(self):
         c = ['green', 'skyblue', 'red', 'white','purple','blue','orange','yellow']
@@ -48,86 +42,240 @@ class ColorStack:
 
 
 class FrontProximityViz:
+    """
+    This application allows the user to select a field of view in a given image, and
+    a pair of region classes, and then shows a plot of the distribution of the
+    distance-to-front values by phenotype.
+    """
     def __init__(self, distances_db_uri=None):
-        self.dataframe = self.retrieve_distances_dataframe(uri=distances_db_uri, table_name='cell_front_distances')
-
+        """
+        :param distances_db_uri: The URI of the database containing the output of the
+            front proximity pipeline.
+        :type distances_db_uri: str
+        """
+        self.dataframe = self.retrieve_distances_dataframe(
+            uri=distances_db_uri,
+            table_name='cell_front_distances',
+        )
         self.fig = go.Figure()
 
-        # 461ca28c204fac2ac619e2d81902afc4
-        # 2779f21192cb0ce1479b2bf7fb20ebba
-        # 5e1b6c32494caf1be6c9a68b136a2840
-        # 3d25f72e8ca948280b7bfeb9de03944f
-        # 33c794a479e571ae50518546555b9480
-        # 2cc18c6561b05abb1a1a95d15130a1d3
+        self.dataframe = self.dataframe.sort_values(by=[
+            'sample_identifier',
+            'fov_index',
+            'compartment',
+            'other_compartment',
+        ]).reset_index(drop=True)
+        tuples_duplicated = [
+            (row['sample_identifier'], row['fov_index']) for i, row in self.dataframe.iterrows()
+        ]
+        case_identifiers = sorted(list(set(tuples_duplicated)))
 
-        # sample_identifier = '2779f21192cb0ce1479b2bf7fb20ebba'
-        # fov_index = 0
-        # compartment = 'Tumor'
-        # other_compartment = 'Non-Tumor'
-        # hist_data1, group_labels1 = self.get_distances_along(
-        #     sample_identifier=sample_identifier,
-        #     fov_index=fov_index,
-        #     compartment=compartment,
-        #     other_compartment=other_compartment,
-        # )
+        compartment_pairs = [
+            tuple(sorted([row['compartment'], row['other_compartment']])) for i, row in self.dataframe.iterrows()
+        ]
+        compartment_pairs = list(set(compartment_pairs))
+        if len(compartment_pairs) > 1:
+            logger.error('Encountered more than 1 possible compartment pair: %s', compartment_pairs)
+            return
+        compartment_pair = compartment_pairs[0]
 
-        # caption_text = self.get_caption_text(
-        #     sample_identifier = sample_identifier,
-        #     fov_index = fov_index,
-        #     compartment = compartment,
-        #     other_compartment = other_compartment,
-        # )
+        all_hist_data1 = []
+        all_group_labels1 = []
+        sizes1 = []
 
-        caption_text = ''
-
-        # sample_identifier2 = '5e1b6c32494caf1be6c9a68b136a2840'
-        fov_index = 0
-        compartment = 'Tumor'
-        other_compartment = 'Non-Tumor'
-        # hist_data2, group_labels2 = self.get_distances_along(
-        #     sample_identifier=sample_identifier2,
-        #     fov_index=fov_index,
-        #     compartment=compartment,
-        #     other_compartment=other_compartment,
-        # )
-
-        pairs_duplicated = [(row['sample_identifier'], row['fov_index']) for i, row in self.dataframe.iterrows()]
-        # sample_identifiers = list(set(self.dataframe['sample_identifier']))
-        fov_identifiers = set(pairs_duplicated)
-
-        all_hist_data = []
-        all_group_labels = []
-        sizes = []
-        # for sample_identifier in sample_identifiers:
-        for sample_identifier, fov_index in fov_identifiers:
-            hist_data, group_labels = self.get_distances_along(
+        all_hist_data2 = []
+        all_group_labels2 = []
+        sizes2 = []
+        for sample_identifier, fov_index in case_identifiers:
+            hist_data1, group_labels1 = self.get_distances_along(
                 sample_identifier=sample_identifier,
                 fov_index=fov_index,
-                compartment=compartment,
-                other_compartment=other_compartment,
+                compartment=compartment_pair[0],
+                other_compartment=compartment_pair[1],
             )
-            all_hist_data = all_hist_data + hist_data
-            all_group_labels = all_group_labels + group_labels
-            sizes.append(len(group_labels))
+            hist_data2, group_labels2 = self.get_distances_along(
+                sample_identifier=sample_identifier,
+                fov_index=fov_index,
+                compartment=compartment_pair[1],
+                other_compartment=compartment_pair[0],
+            )
 
-        # indicator_function = {sample_identifier : [False]*(sum(sizes)) for sample_identifier in sample_identifiers}
-        indicator_function = {sample_fov : [False]*(sum(sizes)) for sample_fov in fov_identifiers}
+            all_hist_data1 = all_hist_data1 + hist_data1
+            all_group_labels1 = all_group_labels1 + group_labels1
+            sizes1.append(len(group_labels1))
+
+            all_hist_data2 = all_hist_data2 + hist_data2
+            all_group_labels2 = all_group_labels2 + group_labels2
+            sizes2.append(len(group_labels2))
+
+        indicator_function1 = {case : [False]*(sum(sizes1)) for case in case_identifiers}
         offset = 0
-        for i, sample_fov in enumerate(fov_identifiers):
-            for j in range(sizes[i]):
-                indicator_function[sample_fov][offset + j] = True
-            offset += sizes[i]
+        for i, case in enumerate(case_identifiers):
+            for j in range(sizes1[i]):
+                indicator_function1[case][offset + j] = True
+            offset += sizes1[i]
 
-        self.fig = ff.create_distplot(hist_data=all_hist_data, group_labels=all_group_labels, bin_size=50)
-        self.fig.update_layout(
+        indicator_function2 = {case : [False]*(sum(sizes1)) for case in case_identifiers}
+        offset = 0
+        for i, case in enumerate(case_identifiers):
+            for j in range(sizes2[i]):
+                indicator_function2[case][offset + j] = True
+            offset += sizes2[i]
+
+        fig1 = ff.create_distplot(
+            hist_data=all_hist_data1,
+            group_labels=all_group_labels1,
+            bin_size=25,
+        )
+
+        fig2 = ff.create_distplot(
+            hist_data=all_hist_data2,
+            group_labels=all_group_labels2,
+            bin_size=25,
+        )
+
+        # fig1.update_layout(
+        #     updatemenus=[
+        #         dict(
+        #             buttons=list([
+        #                 dict(
+        #                     args=['visible', indicator_function1[case]],
+        #                     label=''.join([
+        #                         'Sample ID, FOV: ',
+        #                         str((case[0],case[1])),
+        #                     ]),
+        #                     method='restyle',
+        #                 ) for case in case_identifiers
+        #             ]),
+        #             direction="down",
+        #             pad={"r": 10, "t": 10},
+        #             showactive=True,
+        #             x=0.1,
+        #             xanchor="right",
+        #             y=1.2,
+        #             yanchor="top",
+        #         ),
+        #     ]
+        # )
+
+        # fig2.update_layout(
+        #     updatemenus=[
+        #         dict(
+        #             buttons=list([
+        #                 dict(
+        #                     args=['visible', indicator_function2[case]],
+        #                     label=''.join([
+        #                         'Sample ID, FOV: ',
+        #                         str((case[0],case[1])),
+        #                     ]),
+        #                     method='restyle',
+        #                 ) for case in case_identifiers
+        #             ]),
+        #             direction="down",
+        #             pad={"r": 10, "t": 10},
+        #             showactive=True,
+        #             x=0.1,
+        #             xanchor="right",
+        #             y=1.2,
+        #             yanchor="top",
+        #         ),
+        #     ]
+        # )
+
+
+        fig = make_subplots(rows=1, cols=2)
+
+        # fig.add_trace(
+        #     go.Histogram(fig1['data'][0], marker_color='blue'),
+        #     row=1, col=1,
+        # )
+        # fig.add_trace(
+        #     go.Histogram(fig1['data'][1], marker_color='red'),
+        #     row=1, col=1,
+        # )
+        # fig.add_trace(
+        #     go.Scatter(fig1['data'][0 + sum(sizes1)], line=dict(color='blue', width=0.5)),
+        #     row=1, col=1,
+        # )
+        # fig.add_trace(
+        #     go.Scatter(fig1['data'][1 + 0 + sum(sizes1)], line=dict(color='red', width=0.5)),
+        #     row=1, col=1,
+        # )
+
+        count = 0
+        case_relevant_indices = {case : [] for case in case_identifiers}
+
+        offset = 0
+        for i, size in enumerate(sizes1):
+            case = case_identifiers[i]
+            for j in range(size):
+                fig.add_trace(
+                    go.Histogram(fig1['data'][offset + j], nbinsx=25),
+                    row=1, col=1
+                )
+                case_relevant_indices[case].append(count)
+                count += 1
+                fig.add_trace(
+                    go.Scatter(fig1['data'][offset + j + sum(sizes1)], line=dict(width=0.5)),
+                    row=1, col=1,
+                )
+                case_relevant_indices[case].append(count)
+                count += 1
+
+            offset += size
+
+        offset = 0
+        for i, size in enumerate(sizes2):
+            case = case_identifiers[i]
+            for j in range(size):
+                fig.add_trace(
+                    go.Histogram(fig2['data'][offset + j], nbinsx=25),
+                    row=1, col=2,
+                )
+                case_relevant_indices[case].append(count)
+                count += 1
+                fig.add_trace(
+                    go.Scatter(fig2['data'][offset + j + sum(sizes2)], line=dict(width=0.5)),
+                    row=1, col=2,
+                )
+                case_relevant_indices[case].append(count)
+                count += 1
+
+            offset += size
+
+        indicator_function = {
+            case : [(c in case_relevant_indices[case]) for c in range(count)] for case in case_identifiers
+        }
+
+        fig.add_trace(
+            go.Histogram(fig2['data'][0], marker_color='green'),
+            row=1, col=2,
+        )
+        fig.add_trace(
+            go.Histogram(fig2['data'][1], marker_color='orange'),
+            row=1, col=2,
+        )
+        # fig.add_trace(
+        #     go.Scatter(fig2['data'][2], line=dict(color='green', width=0.5)),
+        #     row=1, col=2,
+        # )
+        # fig.add_trace(
+        #     go.Scatter(fig2['data'][3], line=dict(color='orange', width=0.5)),
+        #     row=1, col=2,
+        # )
+
+        fig.update_layout(
             updatemenus=[
                 dict(
                     buttons=list([
                         dict(
-                            args=['visible', indicator_function[sample_fov]],
-                            label='Sample ID, FOV: ' + str(sample_fov),
-                            method='restyle'
-                        ) for sample_fov in fov_identifiers
+                            args=['visible', indicator_function[case]],
+                            label=''.join([
+                                'Sample ID, FOV: ',
+                                str((case[0],case[1])),
+                            ]),
+                            method='restyle',
+                        ) for case in case_identifiers
                     ]),
                     direction="down",
                     pad={"r": 10, "t": 10},
@@ -140,92 +288,10 @@ class FrontProximityViz:
             ]
         )
 
-        # cs = ColorStack()
-        # for p in set(table['phenotype']):
-        #     table_p = table[table['phenotype'] == p]
-        #     table_p = table_p.sort_values(by='temporal offset')
-        #     cs.push_label(p)
-        #     self.fig.add_trace(go.Scatter(
-        #         x=table_p['temporal offset'],
-        #         y=table_p['multiplicative effect'],
-        #         mode='lines+markers',
-        #         name=p,
-        #         line=dict(color=cs.get_color(p), width=2),
-        #         connectgaps=False,
-        #     ))
-        #     table_p = table_p.sort_values(by='temporal offset', ascending=False)
-        #     last_values[p] = list(table_p['multiplicative effect'])[0]
-        #     rolling_max = max([rolling_max] + list(table_p['multiplicative effect']))
 
-        # self.fig.update_layout(
-        #     xaxis=dict(
-        #         showline=True,
-        #         showgrid=False,
-        #         showticklabels=True,
-        #         linecolor='rgb(204, 204, 204)',
-        #         linewidth=2,
-        #         ticks='outside',
-        #         tickfont=dict(
-        #             family='Arial',
-        #             size=12,
-        #             color='rgb(82, 82, 82)',
-        #         ),
-        #     ),
-        #     yaxis=dict(
-        #         showgrid=False,
-        #         zeroline=False,
-        #         showline=True,
-        #         showticklabels=True,
-        #     ),
-        #     autosize=False,
-        #     margin=dict(
-        #         autoexpand=False,
-        #         l=100,
-        #         r=20,
-        #         t=110,
-        #     ),
-        #     showlegend=False,
-        #     plot_bgcolor='white',
-        # )
-
+        self.fig = fig
 
         # # self.fig.write_image(join('plotly_outputs', filename))
-
-        # annotations = []
-
-        # for label in last_values.keys():
-        #     annotations.append(dict(
-        #         xref='paper',
-        #         x=0.95,
-        #         y=last_values[label],
-        #         xanchor='left',
-        #         yanchor='middle',
-        #         text=label,
-        #         font=dict(family='Arial', size=12),
-        #         showarrow=False,
-        #     ))
-
-        # annotations.append(dict(
-        #     xref='paper',
-        #     yref='paper',
-        #     x=0.5,
-        #     y=1.05,
-        #     xanchor='center',
-        #     yanchor='bottom',
-        #     text=title,
-        #     font=dict(family='Arial', size=18, color='rgb(37,37,37)'),
-        #     showarrow=False,
-        # ))
-
-        #         self.fig.update_layout(
-        #             annotations=annotations,
-        #         )
-        #         self.fig.update_layout(
-        #             xaxis_title='Markov chain temporal offset',
-        #             yaxis_title='multiplicative effect',
-        #             width=800,
-        #             height=600,
-        #         )
 
     def get_distances_along(self,
         sample_identifier=None,
@@ -233,9 +299,6 @@ class FrontProximityViz:
         compartment=None,
         other_compartment=None,
     ):
-        fov_index = 0
-        compartment = 'Tumor'
-        other_compartment = 'Non-Tumor'
         df = self.dataframe[
             (self.dataframe['sample_identifier'] == sample_identifier) &
             (self.dataframe['fov_index'] == fov_index) &
@@ -243,7 +306,7 @@ class FrontProximityViz:
             (self.dataframe['other_compartment'] == other_compartment)
         ]
         grouped = df.groupby('phenotype')
-        hist_data_labels = [(list(g['distance_to_front_in_pixels']), key) for key, g in grouped]
+        hist_data_labels = [(list(g['distance_to_front_in_pixels']), key + ' ' + compartment) for key, g in grouped]
         group_labels = [row[1] for row in hist_data_labels if len(row[0]) > 2]
         hist_data = [row[0] for row in hist_data_labels if len(row[0]) > 2]
         return [hist_data, group_labels]

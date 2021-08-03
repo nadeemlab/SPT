@@ -9,6 +9,7 @@ bold_red="\e[31;1m"
 blue="\e[34m"
 reset="\e[0m"
 
+
 current_branch=$(git branch | grep '^* ')
 if [[ "$current_branch" != "* main" ]]; then
     printf "$red""Do autoreleasing from branch main.$reset\n"
@@ -23,8 +24,8 @@ git status -s |
 {
 while IFS= read -r line
   do
-    is_modified_file=$(echo "$line" | grep -oE '^ M ')
-    if [[ "$is_modified_file" == ' M ' ]]; then
+    is_modified_file=$(echo "$line" | grep -oE '^ ?M')
+    if [[ "$is_modified_file" == ' M' || "$is_modified_file" == 'M' ]]; then
         if [[ "$line" == ' M spatialprofilingtoolbox/version.txt' ]]; then
             FOUND_VERSION_CHANGE=1
         else

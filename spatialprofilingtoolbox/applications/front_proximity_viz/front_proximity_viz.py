@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+"""
+This application allows the user to select a field of view in a given image, and
+a pair of region classes, and then shows a plot of the distribution of the
+distance-to-front values by phenotype.
+
+If outcome data is provided, outcome-specific distribution plots are available.
+"""
 import sqlite3
 
 import pandas as pd
@@ -10,42 +17,10 @@ from ...workflows.front_proximity.computational_design import FrontProximityDesi
 from ...environment.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-class ColorStack:
-    """
-    A convenience function for assigning qualitatively distinct colors to UI elements.
-    """
-    def __init__(self):
-        c = ['green', 'skyblue', 'red', 'white','purple','blue','orange','yellow']
-        self.colors = c*10
-        self.stack = {}
-
-    def push_label(self, label):
-        """
-        Assign a color to the given label.
-
-        :param label: The label for some UI element.
-        :type label: str (or other hashable type)
-        """
-        if label in self.stack:
-            return
-        else:
-            self.stack[label] = self.colors[len(self.stack)]
-
-    def get_color(self, label):
-        """
-        Retrieve an assigned color.
-
-        :param label: The label to lookup.
-        :type label: str (or other hashable type)
-        """
-        return self.stack[label]
-
 
 class FrontProximityViz:
     """
-    This application allows the user to select a field of view in a given image, and
-    a pair of region classes, and then shows a plot of the distribution of the
-    distance-to-front values by phenotype.
+    The main class of the front proximity visualization application.
     """
     def __init__(self, distances_db_uri=None):
         """
@@ -53,34 +28,15 @@ class FrontProximityViz:
             front proximity pipeline.
         :type distances_db_uri: str
         """
-        self.dataframe = self.retrieve_distances_dataframe(
-            uri=distances_db_uri,
-            table_name='cell_front_distances',
-        )
+        dataframe = self.retrieve_distances_dataframe(uri=distances_db_uri)
 
-        all_samples = self.dataframe.copy()
-        all_samples['sample_identifier'] = [
-            '(all ' + outcome + ')' for outcome in all_samples['outcome_assignment']
-        ]
-        all_samples['fov_index'] = [
-            '(all ' + outcome + ')' for outcome in all_samples['outcome_assignment']
-        ]
-
-        self.dataframe = pd.concat([self.dataframe, all_samples])
-
-        self.dataframe = self.dataframe.sort_values(by=[
-            'sample_identifier',
-            'fov_index',
-            'compartment',
-            'other_compartment',
-        ]).reset_index(drop=True)
         tuples_duplicated = [
-            (row['sample_identifier'], row['fov_index']) for i, row in self.dataframe.iterrows()
+            (row['sample_identifier'], row['fov_index']) for i, row in dataframe.iterrows()
         ]
         case_identifiers = sorted(list(set(tuples_duplicated)))
 
         compartment_pairs = [
-            tuple(sorted([row['compartment'], row['other_compartment']])) for i, row in self.dataframe.iterrows()
+            tuple(sorted([row['compartment'], row['other_compartment']])) for i, row in dataframe.iterrows()
         ]
         compartment_pairs = list(set(compartment_pairs))
         if len(compartment_pairs) > 1:
@@ -97,12 +53,14 @@ class FrontProximityViz:
         sizes2 = []
         for sample_identifier, fov_index in case_identifiers:
             hist_data1, group_labels1 = self.get_distances_along(
+                dataframe,
                 sample_identifier=sample_identifier,
                 fov_index=fov_index,
                 compartment=compartment_pair[0],
                 other_compartment=compartment_pair[1],
             )
             hist_data2, group_labels2 = self.get_distances_along(
+                dataframe,
                 sample_identifier=sample_identifier,
                 fov_index=fov_index,
                 compartment=compartment_pair[1],
@@ -122,13 +80,11 @@ class FrontProximityViz:
             group_labels=all_group_labels1,
             bin_size=25,
         )
-
         fig2 = ff.create_distplot(
             hist_data=all_hist_data2,
             group_labels=all_group_labels2,
             bin_size=25,
         )
-
         fig = make_subplots(
             rows=1,
             cols=2,
@@ -212,16 +168,36 @@ class FrontProximityViz:
         self.fig = fig
 
     def get_distances_along(self,
+        dataframe,
         sample_identifier=None,
         fov_index=None,
         compartment=None,
         other_compartment=None,
     ):
-        df = self.dataframe[
-            (self.dataframe['sample_identifier'] == sample_identifier) &
-            (self.dataframe['fov_index'] == fov_index) &
-            (self.dataframe['compartment'] == compartment) &
-            (self.dataframe['other_compartment'] == other_compartment)
+        """
+        :param sample_identifier: A sample identifier value.
+        :type sample_identifier: str
+
+        :param fov_index: A field of view index value.
+        :type fov_index: int
+
+        :param compartment: The compartment whose cells will be the domain of the
+            distance values retrieved.
+        :type compartment: str
+
+        :param other_compartment: The other compartment, whose boundary or front with
+            the main compartment is considered.
+        :type other_compartment: str
+
+        :return: The pair [histogram data, group labels] as required for a plotly
+            distplot, for the distance data restricted to the given context's value.
+        :rtype: list
+        """
+        df = dataframe[
+            (dataframe['sample_identifier'] == sample_identifier) &
+            (dataframe['fov_index'] == fov_index) &
+            (dataframe['compartment'] == compartment) &
+            (dataframe['other_compartment'] == other_compartment)
         ]
         grouped = df.groupby('phenotype')
         hist_data_labels = [(list(g['distance_to_front_in_pixels']), key + ' ' + compartment) for key, g in grouped]
@@ -229,30 +205,41 @@ class FrontProximityViz:
         hist_data = [row[0] for row in hist_data_labels if len(row[0]) > 2]
         return [hist_data, group_labels]
 
-    def get_caption_text(self,
-            sample_identifier = None,
-            fov_index = None,
-            compartment = None,
-            other_compartment = None,
-        ):
-        return ''.join([
-            'Sample ',
-            sample_identifier,
-            ', ',
-            'FOV ',
-            str(fov_index),
-            ', ',
-            'cells in ',
-            compartment,
-            ' with respect to front with ',
-            other_compartment,
-        ])
+    def retrieve_distances_dataframe(self, uri: str=None):
+        """
+        :param uri: The URI of the database containing the output of the front proximity
+            pipeline.
+        :type uri: str
 
-    def retrieve_distances_dataframe(self, uri: str=None, table_name: str=None):
+        :return: The table of distance-to-front values, by sample, field of view, and
+            compartment pair.
+        :rtype: pandas.DataFrame
+        """
         connection = sqlite3.connect(uri)
+        table_name='cell_front_distances'
         df = pd.read_sql_query('SELECT * from ' + table_name, connection)
         connection.close()
+
+        if len(set(df['outcome_assignment'])) > 1:
+            all_samples = df.copy()
+            all_samples['sample_identifier'] = [
+                '(all ' + outcome + ')' for outcome in all_samples['outcome_assignment']
+            ]
+            all_samples['fov_index'] = [
+                '(all ' + outcome + ')' for outcome in all_samples['outcome_assignment']
+            ]
+            df = pd.concat([df, all_samples])
+
+        df = df.sort_values(by=[
+            'sample_identifier',
+            'fov_index',
+            'compartment',
+            'other_compartment',
+        ]).reset_index(drop=True)
         return df
 
     def start_showing(self):
+        """
+        Begins displaying the plots.
+        """
         self.fig.show()

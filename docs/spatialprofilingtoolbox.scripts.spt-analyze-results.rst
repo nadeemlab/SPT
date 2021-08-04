@@ -1,7 +1,7 @@
 spt-analyze-results
 ===================
 
-``spt-analyze-results`` is a shortcut to initiating the integration analysis
+``spt-analyze-results`` is a shortcut to initiating the integration
 phase of the analysis pipeline begun with ``spt-pipeline``, even before that
 pipeline has fully completed.
 

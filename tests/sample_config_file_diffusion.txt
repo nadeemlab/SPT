@@ -13,5 +13,6 @@ logs_path = .logs
 schedulers_path = ./
 sif_file = ../../building/sat.sif
 runtime_platform = local
+excluded_hostname = NO_EXCLUDED_HOSTNAME
 elementary_phenotypes_file = ./data/elementary_phenotypes.csv
 complex_phenotypes_file = ./data/complex_phenotypes.csv

@@ -21,7 +21,7 @@ __version__ = get_version()
 
 def get_job_generator(workflow=None, **kwargs):
     """
-    Exposes job generators to scripts or API users.
+    Exposes job generators to scripts.
     """
     if workflow in workflows:
         return workflows[workflow].generator(**kwargs)
@@ -31,7 +31,7 @@ def get_job_generator(workflow=None, **kwargs):
 
 def get_dataset_design(workflow=None):
     """
-    Exposes design parameters to scripts or API users.
+    Exposes design parameters to scripts.
     """
     if workflow in workflows:
         return workflows[workflow].dataset_design
@@ -41,7 +41,7 @@ def get_dataset_design(workflow=None):
 
 def get_computational_design(workflow=None):
     """
-    Exposes design parameters to scripts or API users.
+    Exposes design parameters to scripts.
     """
     if workflow in workflows:
         return workflows[workflow].computational_design
@@ -51,7 +51,7 @@ def get_computational_design(workflow=None):
 
 def get_analyzer(workflow=None, **kwargs):
     """
-    Exposes pipeline analyzers to scripts or API users.
+    Exposes pipeline analyzers to scripts.
     """
     if workflow in workflows:
         elementary_phenotypes_file = kwargs['elementary_phenotypes_file']
@@ -74,7 +74,7 @@ def get_analyzer(workflow=None, **kwargs):
 
 def get_integrator(workflow=None, **kwargs):
     """
-    Exposes pipeline analysis integrators to scripts or API users.
+    Exposes pipeline analysis integrators to scripts.
     """
     if workflow in workflows:
         DatasetDesign = get_dataset_design(workflow = workflow)

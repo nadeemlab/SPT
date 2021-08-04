@@ -24,7 +24,7 @@ class DiffusionJobGenerator(JobGenerator):
 #BSUB -W 4:00
 #BSUB -R "rusage[mem={{memory_in_gb}}]"
 #BSUB -R "span[hosts=1]"
-#BSUB -R "select[hname!={{control_node_hostname}}]"
+#BSUB -R "select[hname!={{excluded_hostname}}]"
 cd {{job_working_directory}}
 export DEBUG=1
 singularity exec \
@@ -41,9 +41,6 @@ singularity exec \
 '''
     file_metadata_header = '''file id\tnumber of FOVs\n
 '''
-    control_node_hostnames = {
-        'MSK medical physics cluster' : 'plvimphctrl1',
-    }
 
     def __init__(self,
         elementary_phenotypes_file: str=None,
@@ -188,11 +185,7 @@ singularity exec \
                     contents = re.sub('{{log_filename}}', log_filename, contents)
                     contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
                     contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
-                    contents = re.sub(
-                        '{{control_node_hostname}}',
-                        DiffusionJobGenerator.control_node_hostnames['MSK medical physics cluster'],
-                        contents,
-                    )
+                    contents = re.sub('{{excluded_hostname}}', self.excluded_hostname, contents)
                     bsub_job = contents
 
                     contents = DiffusionJobGenerator.cli_call_template

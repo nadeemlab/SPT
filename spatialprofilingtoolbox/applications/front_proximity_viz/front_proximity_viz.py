@@ -57,7 +57,16 @@ class FrontProximityViz:
             uri=distances_db_uri,
             table_name='cell_front_distances',
         )
-        self.fig = go.Figure()
+
+        all_samples = self.dataframe.copy()
+        all_samples['sample_identifier'] = [
+            '(all ' + outcome + ')' for outcome in all_samples['outcome_assignment']
+        ]
+        all_samples['fov_index'] = [
+            '(all ' + outcome + ')' for outcome in all_samples['outcome_assignment']
+        ]
+
+        self.dataframe = pd.concat([self.dataframe, all_samples])
 
         self.dataframe = self.dataframe.sort_values(by=[
             'sample_identifier',
@@ -108,20 +117,6 @@ class FrontProximityViz:
             all_group_labels2 = all_group_labels2 + group_labels2
             sizes2.append(len(group_labels2))
 
-        indicator_function1 = {case : [False]*(sum(sizes1)) for case in case_identifiers}
-        offset = 0
-        for i, case in enumerate(case_identifiers):
-            for j in range(sizes1[i]):
-                indicator_function1[case][offset + j] = True
-            offset += sizes1[i]
-
-        indicator_function2 = {case : [False]*(sum(sizes1)) for case in case_identifiers}
-        offset = 0
-        for i, case in enumerate(case_identifiers):
-            for j in range(sizes2[i]):
-                indicator_function2[case][offset + j] = True
-            offset += sizes2[i]
-
         fig1 = ff.create_distplot(
             hist_data=all_hist_data1,
             group_labels=all_group_labels1,
@@ -134,89 +129,29 @@ class FrontProximityViz:
             bin_size=25,
         )
 
-        # fig1.update_layout(
-        #     updatemenus=[
-        #         dict(
-        #             buttons=list([
-        #                 dict(
-        #                     args=['visible', indicator_function1[case]],
-        #                     label=''.join([
-        #                         'Sample ID, FOV: ',
-        #                         str((case[0],case[1])),
-        #                     ]),
-        #                     method='restyle',
-        #                 ) for case in case_identifiers
-        #             ]),
-        #             direction="down",
-        #             pad={"r": 10, "t": 10},
-        #             showactive=True,
-        #             x=0.1,
-        #             xanchor="right",
-        #             y=1.2,
-        #             yanchor="top",
-        #         ),
-        #     ]
-        # )
+        fig = make_subplots(
+            rows=1,
+            cols=2,
+            subplot_titles=(
+                compartment_pair[0] + ' cells, distance to ' + compartment_pair[1] + ' region',
+                compartment_pair[1] + ' cells, distance to ' + compartment_pair[0] + ' region',
+            ),
+        )
 
-        # fig2.update_layout(
-        #     updatemenus=[
-        #         dict(
-        #             buttons=list([
-        #                 dict(
-        #                     args=['visible', indicator_function2[case]],
-        #                     label=''.join([
-        #                         'Sample ID, FOV: ',
-        #                         str((case[0],case[1])),
-        #                     ]),
-        #                     method='restyle',
-        #                 ) for case in case_identifiers
-        #             ]),
-        #             direction="down",
-        #             pad={"r": 10, "t": 10},
-        #             showactive=True,
-        #             x=0.1,
-        #             xanchor="right",
-        #             y=1.2,
-        #             yanchor="top",
-        #         ),
-        #     ]
-        # )
-
-
-        fig = make_subplots(rows=1, cols=2)
-
-        # fig.add_trace(
-        #     go.Histogram(fig1['data'][0], marker_color='blue'),
-        #     row=1, col=1,
-        # )
-        # fig.add_trace(
-        #     go.Histogram(fig1['data'][1], marker_color='red'),
-        #     row=1, col=1,
-        # )
-        # fig.add_trace(
-        #     go.Scatter(fig1['data'][0 + sum(sizes1)], line=dict(color='blue', width=0.5)),
-        #     row=1, col=1,
-        # )
-        # fig.add_trace(
-        #     go.Scatter(fig1['data'][1 + 0 + sum(sizes1)], line=dict(color='red', width=0.5)),
-        #     row=1, col=1,
-        # )
-
-        count = 0
         case_relevant_indices = {case : [] for case in case_identifiers}
-
         offset = 0
+        count = 0
         for i, size in enumerate(sizes1):
             case = case_identifiers[i]
             for j in range(size):
                 fig.add_trace(
-                    go.Histogram(fig1['data'][offset + j], nbinsx=25),
-                    row=1, col=1
+                    go.Histogram(fig1['data'][offset + j], nbinsx=20, visible=(i == 0)),
+                    row=1, col=1,
                 )
                 case_relevant_indices[case].append(count)
                 count += 1
                 fig.add_trace(
-                    go.Scatter(fig1['data'][offset + j + sum(sizes1)], line=dict(width=0.5)),
+                    go.Scatter(fig1['data'][offset + j + sum(sizes1)], line=dict(width=0.5), visible=(i == 0)),
                     row=1, col=1,
                 )
                 case_relevant_indices[case].append(count)
@@ -229,13 +164,13 @@ class FrontProximityViz:
             case = case_identifiers[i]
             for j in range(size):
                 fig.add_trace(
-                    go.Histogram(fig2['data'][offset + j], nbinsx=25),
+                    go.Histogram(fig2['data'][offset + j], nbinsx=20, visible=(i == 0)),
                     row=1, col=2,
                 )
                 case_relevant_indices[case].append(count)
                 count += 1
                 fig.add_trace(
-                    go.Scatter(fig2['data'][offset + j + sum(sizes2)], line=dict(width=0.5)),
+                    go.Scatter(fig2['data'][offset + j + sum(sizes2)], line=dict(width=0.5), visible=(i == 0)),
                     row=1, col=2,
                 )
                 case_relevant_indices[case].append(count)
@@ -247,23 +182,6 @@ class FrontProximityViz:
             case : [(c in case_relevant_indices[case]) for c in range(count)] for case in case_identifiers
         }
 
-        fig.add_trace(
-            go.Histogram(fig2['data'][0], marker_color='green'),
-            row=1, col=2,
-        )
-        fig.add_trace(
-            go.Histogram(fig2['data'][1], marker_color='orange'),
-            row=1, col=2,
-        )
-        # fig.add_trace(
-        #     go.Scatter(fig2['data'][2], line=dict(color='green', width=0.5)),
-        #     row=1, col=2,
-        # )
-        # fig.add_trace(
-        #     go.Scatter(fig2['data'][3], line=dict(color='orange', width=0.5)),
-        #     row=1, col=2,
-        # )
-
         fig.update_layout(
             updatemenus=[
                 dict(
@@ -271,15 +189,18 @@ class FrontProximityViz:
                         dict(
                             args=['visible', indicator_function[case]],
                             label=''.join([
-                                'Sample ID, FOV: ',
-                                str((case[0],case[1])),
+                                'Sample ID: ',
+                                case[0],
+                                '   ',
+                                'FOV: ',
+                                str(case[1]),
                             ]),
                             method='restyle',
                         ) for case in case_identifiers
                     ]),
                     direction="down",
                     pad={"r": 10, "t": 10},
-                    showactive=True,
+                    showactive=False,
                     x=0.1,
                     xanchor="right",
                     y=1.2,
@@ -288,10 +209,7 @@ class FrontProximityViz:
             ]
         )
 
-
         self.fig = fig
-
-        # # self.fig.write_image(join('plotly_outputs', filename))
 
     def get_distances_along(self,
         sample_identifier=None,

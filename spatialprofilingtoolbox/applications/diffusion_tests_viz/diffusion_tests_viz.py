@@ -16,9 +16,12 @@ from os import mkdir
 import re
 
 import pandas as pd
-import tkinter as tk
-import tkinter.filedialog as fd
-from tkinter import ttk
+try:
+    import tkinter as tk
+    import tkinter.filedialog as fd
+    from tkinter import ttk
+except ModuleNotFoundError:
+    print('Python standard library module tkinter somehow not available.')
 import plotly.graph_objects as go
 
 from ...environment.log_formats import colorized_logger

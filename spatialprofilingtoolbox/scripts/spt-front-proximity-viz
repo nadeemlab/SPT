@@ -16,6 +16,16 @@ if __name__=='__main__':
         type=str,
         help='sqlite database file containing the cell distance data.',
     )
+    parser.add_argument(
+        '--drop-compartment',
+        dest='drop_compartments',
+        default=[],
+        action='append',
+    )
     args = parser.parse_args()
-    gui = FrontProximityViz(distances_db_uri=args.filename)
+    print(args.drop_compartments)
+    gui = FrontProximityViz(
+        distances_db_uri=args.filename,
+        drop_compartments=args.drop_compartments,
+    )
     gui.start_showing()

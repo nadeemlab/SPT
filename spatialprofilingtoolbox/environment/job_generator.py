@@ -51,6 +51,7 @@ class JobGenerator:
         input_path: str=None,
         file_manifest_file: str=None,
         outcomes_file: str=None,
+        excluded_hostname: str='NO_EXCLUDED_HOSTNAME',
     ):
         """
         Args:
@@ -80,6 +81,8 @@ class JobGenerator:
             outcomes_file (str):
                 A tabular text file assigning outcome values (in second column) to
                 sample identifiers (first column).
+            excluded_hostname (str):
+                The name of a host to avoid deploying to (e.g. a control node).
         """
         outcomes_file = outcomes_file if outcomes_file != 'None' else None
         self.jobs_paths = JobsPaths(
@@ -101,6 +104,7 @@ class JobGenerator:
 
         self.file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
         self.pipeline_design = PipelineDesign()
+        self.excluded_hostname = excluded_hostname
 
     def generate(self):
         """

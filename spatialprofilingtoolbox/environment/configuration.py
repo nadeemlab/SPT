@@ -180,6 +180,12 @@ def get_config_parameters_from_cli():
         required=True,
         help='Path to logs.',
     )
+    parser.add_argument('--excluded-hostname',
+        dest='excluded_hostname',
+        type=str,
+        required=True,
+        help='The name of a host to exclude for deployment (e.g. a control node).',
+    )
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
@@ -200,6 +206,7 @@ def get_config_parameters_from_cli():
     runtime_platform = args.runtime_platform
     elementary_phenotypes_file = args.elementary_phenotypes_file
     complex_phenotypes_file = args.complex_phenotypes_file
+    excluded_hostname = args.excluded_hostname
 
     parameters = {
         'workflow' : workflow,
@@ -214,6 +221,7 @@ def get_config_parameters_from_cli():
         'runtime_platform' : runtime_platform,
         'elementary_phenotypes_file' : elementary_phenotypes_file,
         'complex_phenotypes_file' : complex_phenotypes_file,
+        'excluded_hostname' : excluded_hostname,
     }
     return parameters
 

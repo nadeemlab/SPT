@@ -14,7 +14,7 @@ if __name__=='__main__':
     parser.add_argument(
         'filename',
         type=str,
-        help='Sqlite database file containing the cell distance data.',
+        help='sqlite database file containing the cell distance data.',
     )
     args = parser.parse_args()
     gui = FrontProximityViz(distances_db_uri=args.filename)

@@ -188,6 +188,18 @@ do
     fi
 done && printf "$cr$yellow$prompt_str$reset$green$RUN_PLATFORM$reset\n"
 
+EXCLUDED_HOSTNAME=""
+prompt_str="Enter the name of a host name to exclude from deployment (e.g. a control node): "
+printf "$yellow$prompt_str$reset"
+while [[ "$EXCLUDED_HOSTNAME" = "" ]];
+do
+    read -e EXCLUDED_HOSTNAME
+done
+printf "$cr$yellow$prompt_str$reset$green$EXCLUDED_HOSTNAME$reset\n"
+if [[ "$EXCLUDED_HOSTNAME" == "" ]]; then
+    EXCLUDED_HOSTNAME="NO_EXCLUDED_HOSTNAME"
+fi
+
 START_IMMEDIATELY=""
 prompt_str="Schedule immediately? (""$reset$cyan""Y""$reset$magenta/n""$reset$yellow""): "
 printf "$yellow$prompt_str$reset"
@@ -240,6 +252,7 @@ spt-generate-jobs \
     --runtime-platform $RUN_PLATFORM \
     --elementary-phenotypes-file $ELEMENTARY_PHENOTYPES_FILE \
     --complex-phenotypes-file $COMPLEX_PHENOTYPES_FILE \
+    --excluded-hostname $EXCLUDED_HOSTNAME
 
 chmod +x *.sh
 

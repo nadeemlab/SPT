@@ -20,7 +20,7 @@ class FrontProximityJobGenerator(JobGenerator):
 #BSUB -W 2:00
 #BSUB -R "rusage[mem={{memory_in_gb}}]"
 #BSUB -R "span[hosts=1]"
-#BSUB -R "select[hname!={{control_node_hostname}}]"
+#BSUB -R "select[hname!={{excluded_hostname}}]"
 cd {{job_working_directory}}
 export DEBUG=1
 singularity exec \
@@ -29,13 +29,10 @@ singularity exec \
  {{cli_call}} \
  > {{log_filename}} 2>&1
 '''
-    cli_call_template = '''spt_front_proximity_analysis.py \
+    cli_call_template = '''spt-front-proximity-analysis \
  --input-file-identifier "{{input_file_identifier}}" \
  --job-index {{job_index}} \
 '''
-    control_node_hostnames = {
-        'MSK medical physics cluster' : 'plvimphctrl1',
-    }
 
     def __init__(self,
         elementary_phenotypes_file=None,
@@ -85,7 +82,7 @@ singularity exec \
                 contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
                 contents = re.sub('{{job_name}}', '"' + job_name + '"', contents)
                 contents = re.sub('{{log_filename}}', log_filename, contents)
-                contents = re.sub('{{control_node_hostname}}', FrontProximityJobGenerator.control_node_hostnames['MSK medical physics cluster'], contents)
+                contents = re.sub('{{excluded_hostname}}', self.excluded_hostname, contents)
                 contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
                 contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
                 bsub_job = contents

@@ -168,7 +168,7 @@ class DiffusionGraphsViz:
         Begin showing plots.
         """
         if self.interactive:
-            self.draw_graph()
+            self.draw_graph(self.timepoint)
             plt.show()
         else:
             for t in range(-1, self.max_timepoint + 1):

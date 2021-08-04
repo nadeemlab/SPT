@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
-Experimental GUI for examining statistical test results, pairwise outcome comparison of diffusion probability values.
+This application plots statistical outcome-to-outcome testing of diffusion
+distance values, by phenotype and by "temporal offset" or timepoint pertaining
+to the diffusion Markov chain.
+
+It runs in interactive mode, generating figures in-browser with plotly as you
+select options in a separate window. Optionally, it saves each figure to file as
+it is shown.
 """
 import sys
 import os
@@ -14,6 +20,9 @@ import tkinter as tk
 import tkinter.filedialog as fd
 from tkinter import ttk
 import plotly.graph_objects as go
+
+from ...environment.log_formats import colorized_logger
+logger = colorized_logger(__name__)
 
 
 class ColorStack:
@@ -48,6 +57,9 @@ class ColorStack:
 
 
 class FigureWrapper:
+    """
+    Class to wrap the plotly figure.
+    """
     def __init__(self, significance_threshold):
         self.significance_threshold = significance_threshold
 
@@ -243,7 +255,7 @@ class FigureWrapper:
 
 class DiffusionTestsViz:
     """
-    A wrapper around the dynamically-selected combobox variables and other GUI elements.
+    The GUI application/window for parameter selection.
     """
     def __init__(self, tests_filename=None, significance_threshold=0.05, interactive_only=True):
         self.significance_threshold = significance_threshold
@@ -252,6 +264,12 @@ class DiffusionTestsViz:
         self.root = tk.Tk()
         self.root.winfo_toplevel().title("Diffusion transition probability values visualization")
         self.dataframe = self.retrieve_tests_dataframe(tests_filename=tests_filename)
+        if len(self.dataframe) == 0:
+            logger.error(
+                'No statistically significant results to show, at threshold %s',
+                significance_threshold,
+            )
+            return
         self.tk_vars = {varname : tk.StringVar() for varname in self.get_visible_parameter_names()}
 
         varnames = self.get_visible_parameter_names()

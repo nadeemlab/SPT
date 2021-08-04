@@ -1,7 +1,6 @@
 """
 This application plots the result of outcome-to-outcome statistical testing
-involving the diffusion distances, by phenotype and by "temporal offset"
-pertaining to the diffusion Markov chain.
+involving the diffusion distances.
 """
 
 from .diffusion_tests_viz import DiffusionTestsViz

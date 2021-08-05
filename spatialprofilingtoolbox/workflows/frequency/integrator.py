@@ -39,6 +39,7 @@ class FrequencyAnalysisIntegrator:
         """
         Performs statistical comparison tests and writes results.
         """
+        logger.info('Starting stats.')
         frequency_tests = self.do_outcome_tests()
         if frequency_tests is not None:
             self.export_results(frequency_tests)

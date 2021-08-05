@@ -198,6 +198,12 @@ def get_config_parameters_from_cli():
         required=True,
         help='The name of a host to exclude for deployment (e.g. a control node).',
     )
+    parser.add_argument('--skip-integrity-check',
+        dest='skip_integrity_check',
+        type=str,
+        required=True,
+        help='Whether to skip calculation of input file checksums in some cases.',
+    )
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
@@ -219,6 +225,7 @@ def get_config_parameters_from_cli():
     elementary_phenotypes_file = args.elementary_phenotypes_file
     complex_phenotypes_file = args.complex_phenotypes_file
     excluded_hostname = args.excluded_hostname
+    skip_integrity_check = True if args.skip_integrity_check == 'True' else False
 
     parameters = {
         'workflow' : workflow,
@@ -235,6 +242,8 @@ def get_config_parameters_from_cli():
         'complex_phenotypes_file' : complex_phenotypes_file,
         'excluded_hostname' : excluded_hostname,
     }
+    if skip_integrity_check:
+        parameters['skip_integrity_check'] = True
     return parameters
 
 def get_config_parameters():

@@ -5,6 +5,7 @@ workflow = Multiplexed IF frequency
 input_path = ./data/
 outcomes_file = ./data/diagnosis.tsv
 file_manifest_file = ./data/file_manifest.tsv
+skip_integrity_check = True
 
 job_working_directory = ./
 output_path = ./output

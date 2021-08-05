@@ -25,6 +25,7 @@ if __name__=='__main__':
     kwargs['output_path'] = parameters['output_path']
     kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
     kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
+    kwargs['skip_integrity_check'] = True if 'skip_integrity_check' in parameters else False
 
     a = spt.get_analyzer(
         workflow='Multiplexed IF frequency',

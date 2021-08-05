@@ -35,6 +35,7 @@ singularity exec \
     def __init__(self,
         elementary_phenotypes_file=None,
         complex_phenotypes_file=None,
+        skip_integrity_check=False,
         **kwargs,
     ):
         """

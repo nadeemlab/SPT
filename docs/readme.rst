@@ -1,4 +1,3 @@
-
 Overview
 --------
 This a pre-release version of SPT, the ``spatialprofilingtoolbox``.

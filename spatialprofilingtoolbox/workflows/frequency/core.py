@@ -1,5 +1,6 @@
 import os
 from os.path import join
+import sqlite3
 
 import pandas as pd
 
@@ -128,25 +129,8 @@ class FrequencyCalculator:
         header = self.computational_design.get_cells_header(style='sql')
         keys_list = [column_name for column_name, dtype in header]
         uri = join(self.output_path, self.computational_design.get_database_uri())
-        with WaitingDatabaseContextManager(uri) as m:
-            for i, row in cells.iterrows():
-                row_ordered = [row[key] for key in keys_list]
-                values_list = [
-                    '"' + row_ordered[0] + '"',
-                    str(row_ordered[1]),
-                    '"' + row_ordered[2] + '"',
-                    '"' + row_ordered[3] + '"',
-                    str(float(row_ordered[4])),
-                ] + [str(row_ordered[j]) for j in range(5, len(keys_list))]
-
-                keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
-                values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = 'INSERT INTO cells ' + keys + ' VALUES ' + values +  ' ;'
-                try:
-                    m.execute(cmd)
-                except Exception as e:
-                    logger.error('SQL query failed: %s', cmd)
-                    print(e)
+        connection = sqlite3.connect(uri)
+        cells.to_sql('cells', connection, if_exists='replace')
 
     def write_fov_lookup_table(self, fov_lookup):
         keys_list = [column_name for column_name, dtype in self.computational_design.get_fov_lookup_header()]

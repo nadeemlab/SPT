@@ -23,6 +23,6 @@ suffix="v$version""_""$datestring"
 filename="spt_$suffix.sif"
 
 TMPDIR=/singularity
-RECIPEPATH=$(abspath singularity_container.def))
+RECIPEPATH=$(abspath singularity_container.def)
 SIFPATH="$filename"
 dzdo build singularity --tmpdir=${TMPDIR} ${SIFPATH} ${RECIPEPATH}

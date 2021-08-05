@@ -1,13 +1,13 @@
-# import os
-# from os.path import join
-# import sqlite3
-# import itertools
-# import re
+import os
+from os.path import join
+import re
+import itertools
 
-# import pandas as pd
-# import numpy as np
-# from scipy.stats import ttest_ind, kruskal
+import pandas as pd
+import numpy as np
+from scipy.stats import ttest_ind, kruskal
 
+from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
 
@@ -39,107 +39,185 @@ class FrequencyAnalysisIntegrator:
         """
         Performs statistical comparison tests and writes results.
         """
-        # frequency_tests = self.do_outcome_tests()
-        # if frequency_tests is not None:
-        #     self.export_results(frequency_tests)
-        # logger.info('Done exporting stats.')
-        logger.info('<Stats calculation not implemented>')
+        frequency_tests = self.do_outcome_tests()
+        if frequency_tests is not None:
+            self.export_results(frequency_tests)
+        logger.info('Done exporting stats.')
 
-    # def do_outcome_tests(self):
-    #     """
-    #     For each
+    def do_outcome_tests(self):
+        cells = self.get_dataframe_from_db('cells')
+        phenotype_columns = [column for column in cells.columns if re.search('membership$', str(column))]
 
-    #       - pair of outcome values
-    #       - compartment
-    #       - pair of phenotypes
-    #       - radius limit value
+        for phenotype in phenotype_columns:
+            mask = (cells[phenotype] == 1)
+            cells.loc[mask, phenotype] = cells['cell_area']
 
-    #     calculates p-values and effect size for statistical testing for difference of
-    #     distributions, one for each outcome value, of cell pair count per FOV values as
-    #     the source file varies (within a given outcome assignment class).
+        sum_columns = {p : re.sub('membership', 'cell area sum', p) for p in phenotype_columns}
+        summed_cell_areas = cells.groupby(['sample_identifier', 'fov_index', 'compartment'], as_index=False).agg(
+            **{
+                column : pd.NamedAgg(column=p, aggfunc='sum') for p, column in sum_columns.items()
+            },
+            **{
+                'outcome_assignment' : pd.NamedAgg(column='outcome_assignment', aggfunc=lambda x:list(x)[0]),
+            }
+        )
 
-    #     The statistical tests are t-test for difference in mean and Kruskal-Wallis test
-    #     for difference in median.
-    #     """
-    #     records = []
-    #     df = self.retrieve_radius_limited_counts()
-    #     outcomes = sorted(list(set(df['outcome assignment']).difference(set(['unknown']))))
-    #     for outcome1, outcome2 in itertools.combinations(outcomes, 2):
-    #         subselection1 = df[df['outcome assignment'] == outcome1]
-    #         subselection2 = df[df['outcome assignment'] == outcome2]
-    #         c = ['source phenotype', 'target phenotype', 'compartment', 'distance limit in pixels']
-    #         grouped1 = subselection1.groupby(c)
-    #         grouped2 = subselection2.groupby(c)
-    #         cases = set(grouped1.indices.keys()).intersection(set(grouped2.indices.keys()))
-    #         for case in cases:
-    #             [source_phenotype, target_phenotype, compartment, radius] = case
-    #             values1 = grouped1.get_group(case)['cell pair count per FOV']
-    #             values2 = grouped2.get_group(case)['cell pair count per FOV']
-    #             if len(values1) < 3 or len(values2) < 3:
-    #                 continue
-    #             if np.var(values1) == 0 or np.var(values2) == 0:
-    #                 continue
-    #             statistic, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
-    #             mean_difference = values2.mean() - values1.mean()
-    #             statistic, p_kruskal = kruskal(values1, values2, nan_policy='omit')
-    #             median_difference = values2.median() - values1.median()
-    #             records.append({
-    #                 'outcome 1' : outcome1,
-    #                 'outcome 2' : outcome2,
-    #                 'source phenotype' : source_phenotype,
-    #                 'target phenotype' : target_phenotype,
-    #                 'compartment' : compartment,
-    #                 'distance limit in pixels' : radius,
-    #                 'tested value 1' : values1.mean(),
-    #                 'tested value 2' : values2.mean(),
-    #                 'test' : 't-test',
-    #                 'p-value' : p_ttest,
-    #                 'absolute effect' : abs(mean_difference),
-    #                 'effect sign' : int(np.sign(mean_difference)),
-    #                 'p-value < 0.01' : p_ttest < 0.01,
-    #             })
-    #             records.append({
-    #                 'outcome 1' : outcome1,
-    #                 'outcome 2' : outcome2,
-    #                 'source phenotype' : source_phenotype,
-    #                 'target phenotype' : target_phenotype,
-    #                 'compartment' : compartment,
-    #                 'distance limit in pixels' : radius,
-    #                 'tested value 1' : values1.median(),
-    #                 'tested value 2' : values2.median(),
-    #                 'test' : 'Kruskal-Wallis',
-    #                 'p-value' : p_kruskal,
-    #                 'absolute effect' : abs(median_difference),
-    #                 'effect sign' : int(np.sign(median_difference)),
-    #                 'p-value < 0.01' : p_kruskal < 0.01,
-    #             })
-    #     if len(records) == 0:
-    #         logger.info('No non-trivial tests to perform. Probably too few values.')
-    #         return None
-    #     frequency_tests = pd.DataFrame(records)
-    #     sort_order = ['outcome 1', 'outcome 2', 'p-value < 0.01', 'absolute effect', 'p-value']
-    #     ascending = [True, True, False, False, True]
-    #     frequency_tests.sort_values(by=sort_order, ascending=ascending, inplace=True)
-    #     return frequency_tests
+        average_columns = {sum_columns[p] : re.sub('membership', 'cell area average per FOV', p) for p in phenotype_columns}
+        averaged_cell_areas = summed_cell_areas.groupby(['sample_identifier', 'compartment'], as_index=False).agg(
+            **{
+                column : pd.NamedAgg(column=p, aggfunc='mean') for p, column in average_columns.items()
+            },
+            **{
+                'outcome_assignment' : pd.NamedAgg(column='outcome_assignment', aggfunc=lambda x:list(x)[0]),
+            }
+        )
 
-    # def export_results(self, frequency_tests):
-    #     """
-    #     Writes the result of the statistical tests to file, in order of statistical
-    #     significance.
+        outcomes = sorted(list(set(cells['outcome_assignment'])))
+        rows = []
+        phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
 
-    #     Args:
-    #         frequency_tests (pandas.DataFrame):
-    #             Tabular form of test results.
-    #     """
-    #     frequency_tests.to_csv(join(self.output_path, self.computational_design.get_stats_tests_file()), index=False)
+        for compartment, df in averaged_cell_areas.groupby(['compartment']):
+            for outcome1, outcome2 in itertools.combinations(outcomes, 2):
+                for name in phenotype_names:
+                    column = name + ' cell area average per FOV'
+                    df1 = df[df['outcome_assignment'] == outcome1][['sample_identifier', column]]
+                    df2 = df[df['outcome_assignment'] == outcome2][['sample_identifier', column]]
+                    values1 = list(df1[column])
+                    values2 = list(df2[column])
 
-    # def retrieve_radius_limited_counts(self):
-    #     """
-    #     Returns:
-    #         pandas.DataFrame:
-    #             Data frame version of all cell pair counts data.
-    #     """
-    #     connection = sqlite3.connect(join(self.output_path, self.computational_design.get_database_uri()))
-    #     df = pd.read_sql_query('SELECT * FROM cell_pair_counts', connection)
-    #     df = df.rename(columns={key:re.sub('_', ' ', key) for key in df.columns})
-    #     return df
+                    if np.var(values1) == 0 or np.var(values2) == 0:
+                        continue
+
+                    s, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
+                    mean_difference = np.mean(values2) - np.mean(values1)
+                    multiplicative_effect = np.mean(values2) / np.mean(values1)
+
+                    sign = self.sign(mean_difference)
+                    extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, column)
+                    extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, column)
+
+                    rows.append({
+                        'outcome 1' : outcome1,
+                        'outcome 2' : outcome2,
+                        'phenotype' : name,
+                        'compartment' : compartment,
+                        'tested value 1' : np.mean(values1),
+                        'tested value 2' : np.mean(values2),
+                        'test' : 't-test',
+                        'p-value' : p_ttest,
+                        'absolute effect' : abs(mean_difference),
+                        'effect sign' : sign,
+                        'p-value < 0.01' : p_ttest < 0.01,
+                        'extreme sample 1' : extreme_sample1,
+                        'extreme sample 2' : extreme_sample2,
+                        'extreme value 1' : extreme_value1,
+                        'extreme value 2' : extreme_value2,
+                    })
+
+                    s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
+                    median_difference = np.median(values2) - np.median(values1)
+                    multiplicative_effect = np.median(values2) / np.median(values1)
+
+                    sign = self.sign(median_difference)
+                    extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, column)
+                    extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, column)
+
+                    rows.append({
+                        'outcome 1' : outcome1,
+                        'outcome 2' : outcome2,
+                        'phenotype' : name,
+                        'compartment' : compartment,
+                        'tested value 1' : np.median(values1),
+                        'tested value 2' : np.median(values2),
+                        'test' : 'Kruskal-Wallis',
+                        'p-value' : p_kruskal,
+                        'absolute effect' : abs(median_difference),
+                        'effect sign' : sign,
+                        'p-value < 0.01' : p_kruskal < 0.01,
+                        'extreme sample 1' : extreme_sample1,
+                        'extreme sample 2' : extreme_sample2,
+                        'extreme value 1' : extreme_value1,
+                        'extreme value 2' : extreme_value2,
+                    })
+
+        if len(rows) == 0:
+            logger.info('No non-trivial tests to perform. Probably too few values.')
+            return None
+        frequency_tests = pd.DataFrame(rows)
+        sort_order = ['outcome 1', 'outcome 2', 'p-value < 0.01', 'p-value']
+        ascending = [True, True, False, True]
+        frequency_tests.sort_values(by=sort_order, ascending=ascending, inplace=True)
+        return frequency_tests
+
+    def export_results(self, frequency_tests):
+        """
+        Writes the result of the statistical tests to file, in order of statistical
+        significance.
+
+        Args:
+            frequency_tests (pandas.DataFrame):
+                Tabular form of test results.
+        """
+        frequency_tests.to_csv(join(self.output_path, self.computational_design.get_stats_tests_file()), index=False)
+
+    def get_dataframe_from_db(self, table_name):
+        """
+        Retrieves whole dataframe of a given table from the pipeline-specific database.
+
+        Args:
+            table_name (str):
+                Name of table in database furnished by computational design.
+
+        Returns:
+            pandas.DataFrame:
+                The whole table, in dataframe form.
+        """
+        if table_name == 'cells':
+            columns = ['id'] + [entry[0] for entry in self.computational_design.get_cells_header()]
+        elif table_name == 'fov_lookup':
+            columns = ['id'] + [entry[0] for entry in self.computational_design.get_fov_lookup_header()]
+        else:
+            logger.error('Table %s is not in the schema.', table_name)
+            return None
+
+        uri = join(self.output_path, self.computational_design.get_database_uri())
+        with WaitingDatabaseContextManager(uri) as m:
+            rows = m.execute('SELECT * FROM ' + table_name)
+
+        df = pd.DataFrame(rows, columns=columns)
+        if table_name == 'cells':
+            df.rename(columns=self.get_column_renaming('cells'), inplace=True)
+        return df
+
+    def get_column_renaming(self, table_name):
+        renaming = {}
+        if table_name == 'cells':
+            h1 = self.computational_design.get_cells_header_variable_portion(style='sql')
+            h2 = self.computational_design.get_cells_header_variable_portion(style='readable')
+            renaming = {h1[i][0] : h2[i][0] for i in range(len(h1))}
+        return renaming
+
+    def get_extremum(self, df, sign, column):
+        """
+        Args:
+            df (pandas.DataFrame):
+                Dataframe with sample-level (i.e. summarized) transition probability
+                values, summarized according to 'statistic'.
+            sign (int):
+                Either 1 or -1. Whether to return the extremely large value (in case of
+                1) or the extremely small value (in case of -1).
+            column (str):
+                To consider.
+
+        Returns:
+            list:
+                A pair, the extreme sample ID string and the extreme value.
+        """
+        values_column = column
+        df_sorted = df.sort_values(by=values_column, ascending=True if sign==-1 else False)
+        extreme_sample = list(df_sorted['sample_identifier'])[0]
+        extreme_value = float(list(df_sorted[values_column])[0])
+        return [extreme_sample, extreme_value]
+
+    def sign(self, value):
+        return 1 if value >=0 else -1

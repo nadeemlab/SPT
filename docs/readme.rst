@@ -136,12 +136,8 @@ Supported workflows
 -------------------
 
 .. list-table::
-   :header-rows: 1
-   :widths: 1 3 1
+   :widths: 1 3
 
-   * - 
-     - Description
-     - Original author
    * - Phenotype proximity
      - | The core module takes as input two collections of points, and
        | calculates the average frequency with which a point of one set appears
@@ -149,17 +145,17 @@ Supported workflows
        | balanced/symmetric mode, it calculates instead the frequency of
        | occurence of a pair of points from the respective sets within the
        | specified distance range.
-     - Rami Vanguri
    * - Front proximity
      - | The core module calculates the distribution of the distances between
        | the points of a given subset and the front or boundary between two
        | given regions.
-     - Eeshaan Rehani
    * - Diffusion
      - | The core module takes as input a collection of points, and generates
        | the associated diffusion map and diffusion Markov chain, with the aim
        | of producing features that are characteristic of the input geometry.
-     - Rami Vanguri
+   * - Frequency
+     - | The core module calculates phenotype frequency metrics, without regard 
+       | to spatial information.
 
 
 Preparing your data

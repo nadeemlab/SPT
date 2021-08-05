@@ -215,6 +215,8 @@ class FrequencyAnalysisIntegrator:
         """
         values_column = column
         df_sorted = df.sort_values(by=values_column, ascending=True if sign==-1 else False)
+        if df_sorted.shape[0] == 0:
+            return ['none', -1]
         extreme_sample = list(df_sorted['sample_identifier'])[0]
         extreme_value = float(list(df_sorted[values_column])[0])
         return [extreme_sample, extreme_value]

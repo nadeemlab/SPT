@@ -143,16 +143,16 @@ class FrequencyAnalysisIntegrator:
                     })
 
                     if details > 0:
-                        logger.debug('Logging details in selected statistical test case %s.', details)
-                        logger.debug('Outcome pair: %s, %s', outcome1, outcome2)
-                        logger.debug('Compartment: %s', compartment)
-                        logger.debug('Phenotype: %s', name)
+                        logger.info('Logging details in selected statistical test case %s.', details)
+                        logger.info('Outcome pair: %s, %s', outcome1, outcome2)
+                        logger.info('Compartment: %s', compartment)
+                        logger.info('Phenotype: %s', name)
                         dict1 = {row['sample_identifier'] : row[column] for i, row in df1.iterrows()}
-                        logger.debug('Cell areas summed over FOVs 1: %s', dict1)
+                        logger.info('Cell areas summed over FOVs 1: %s', dict1)
                         dict2 = {row['sample_identifier'] : row[column] for i, row in df2.iterrows()}
-                        logger.debug('Cell areas summed over FOVs 2: %s', dict2)
-                        logger.debug('Number of values 1: %s', len(dict1))
-                        logger.debug('Number of values 2: %s', len(dict2))
+                        logger.info('Cell areas summed over FOVs 2: %s', dict2)
+                        logger.info('Number of values 1: %s', len(dict1))
+                        logger.info('Number of values 2: %s', len(dict2))
                         details -= 1
 
         if len(rows) == 0:

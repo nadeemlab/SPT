@@ -25,4 +25,4 @@ filename="spt_$suffix.sif"
 TMPDIR=/singularity
 RECIPEPATH=$(abspath singularity_container.def)
 SIFPATH="$filename"
-dzdo build singularity --tmpdir=${TMPDIR} ${SIFPATH} ${RECIPEPATH}
+dzdo singularity build --tmpdir=${TMPDIR} ${SIFPATH} ${RECIPEPATH}

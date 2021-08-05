@@ -130,9 +130,7 @@ class FrequencyCalculator:
         keys_list = [column_name for column_name, dtype in header]
         uri = join(self.output_path, self.computational_design.get_database_uri())
         connection = sqlite3.connect(uri)
-        chunksize = int(999 / len(header)) - 1
-        logger.info('Writing to cells table, using chunk size %s.', chunksize)
-        cells.to_sql('cells', connection, if_exists='replace', method='multi', chunksize=chunksize)
+        cells.to_sql('cells', connection, if_exists='replace')
         connection.commit()
         connection.close()
 

@@ -130,7 +130,7 @@ class FrequencyCalculator:
         keys_list = [column_name for column_name, dtype in header]
         uri = join(self.output_path, self.computational_design.get_database_uri())
         connection = sqlite3.connect(uri)
-        cells.to_sql('cells', connection, if_exists='replace')
+        cells.to_sql('cells', connection, if_exists='replace', method='multi')
 
     def write_fov_lookup_table(self, fov_lookup):
         keys_list = [column_name for column_name, dtype in self.computational_design.get_fov_lookup_header()]

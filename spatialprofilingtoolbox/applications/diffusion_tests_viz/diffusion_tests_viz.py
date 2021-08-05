@@ -30,7 +30,8 @@ logger = colorized_logger(__name__)
 
 class ColorStack:
     """
-    A convenience function for assigning qualitatively distinct colors for the UI elements.
+    A convenience function for assigning qualitatively distinct colors for the UI
+    elements.
     """
     def __init__(self):
         c = ['green', 'skyblue', 'red', 'white','purple','blue','orange','yellow']

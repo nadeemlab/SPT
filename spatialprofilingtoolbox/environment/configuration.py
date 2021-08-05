@@ -23,6 +23,11 @@ from ..workflows.front_proximity.job_generator import FrontProximityJobGenerator
 from ..workflows.front_proximity.computational_design import FrontProximityDesign
 from ..workflows.front_proximity.analyzer import FrontProximityAnalyzer
 from ..workflows.front_proximity.integrator import FrontProximityAnalysisIntegrator
+from ..workflows.frequency.job_generator import FrequencyJobGenerator
+from ..workflows.frequency.computational_design import FrequencyDesign
+from ..workflows.frequency.analyzer import FrequencyAnalyzer
+from ..workflows.frequency.integrator import FrequencyAnalysisIntegrator
+# Migrate above imports down to workflow modules
 
 config_filename = '.spt_pipeline.config'
 
@@ -59,6 +64,13 @@ workflows = {
         computational_design = FrontProximityDesign,
         analyzer = FrontProximityAnalyzer,
         integrator = FrontProximityAnalysisIntegrator,
+    ),
+    'Multiplexed IF frequency' : WorkflowModules(
+        generator = FrequencyJobGenerator,
+        dataset_design = HALOCellMetadataDesign,
+        computational_design = FrequencyDesign,
+        analyzer = FrequencyAnalyzer,
+        integrator = FrequencyAnalysisIntegrator,
     ),
 }
 

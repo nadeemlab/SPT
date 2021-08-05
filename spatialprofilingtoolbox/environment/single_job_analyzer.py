@@ -19,7 +19,7 @@ class SingleJobAnalyzer:
     An interface for a single job to be executed as part of a batch in a pipeline
     run. It handles some "boilerplate".
 
-    It is assumed that one job is associated which exactly one input file (the
+    It is generally assumed that one job is associated which exactly one input file (the
     reverse is not assumed). And, moreover, that metadata for this file can be found
     in the file_metadata table of the database pointed to by
     ``get_pipeline_database_uri()``. The format of this metadata can be partially

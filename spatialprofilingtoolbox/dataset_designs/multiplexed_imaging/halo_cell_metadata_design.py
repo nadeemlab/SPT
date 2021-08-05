@@ -45,6 +45,14 @@ class HALOCellMetadataDesign:
         """
         return 'Image Location'
 
+    @staticmethod
+    def get_cell_area_column():
+        """
+        :return: The name of the table column containing cell area values.
+        :rtype: str
+        """
+        return 'Cell Area'
+
     def normalize_fov_descriptors(self, df):
         """
         Args:
@@ -84,7 +92,8 @@ class HALOCellMetadataDesign:
         """
         return 'Regional areas file'
 
-    def get_cell_manifest_descriptor(self):
+    @staticmethod
+    def get_cell_manifest_descriptor():
         return 'HALO software cell manifest'
 
     def get_regional_areas_table_descriptor(self):

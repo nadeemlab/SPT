@@ -86,7 +86,7 @@ singularity exec \
 
         number_files = self.file_metadata.shape[0]
         for i, row in self.file_metadata.iterrows():
-            if row['Data type'] == self.dataset_design.get_cell_manifest_descriptor():
+            if row['Data type'] == HALOCellMetadataDesign.get_cell_manifest_descriptor():
                 file_id = row['File ID']
                 if file_id in file_metadata.index:
                     n = file_metadata.loc[file_id]['number of FOVs']
@@ -106,7 +106,7 @@ singularity exec \
         self.number_arrays_of_jobs = 0
         self.initialize_intermediate_database()
         for i, row in self.file_metadata.iterrows():
-            if row['Data type'] == self.dataset_design.get_cell_manifest_descriptor():
+            if row['Data type'] == HALOCellMetadataDesign.get_cell_manifest_descriptor():
                 self.generate_array_of_jobs(row)
         logger.info('%s input files considered.', str(self.file_metadata.shape[0]))
         logger.info('%s (arrays of) job scripts generated, written to dir %s', str(self.number_arrays_of_jobs), self.jobs_paths.jobs_path)

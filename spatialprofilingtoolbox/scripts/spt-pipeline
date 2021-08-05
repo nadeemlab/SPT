@@ -143,7 +143,7 @@ OUTPUT_PATH=$(abspath $OUTPUT_PATH)
 
 ELEMENTARY_PHENOTYPES_FILE="none"
 COMPLEX_PHENOTYPES_FILE="none"
-if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF diffusion" || "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF phenotype proximity" || "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF front proximity" ]];
+if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF diffusion" || "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF phenotype proximity" || "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF front proximity" || "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF frequency" ]];
 then
     prompt_str="Enter the file containing metadata for the channels/observed phenotypes: "
     printf "$yellow$prompt_str$reset"

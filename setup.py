@@ -46,6 +46,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.workflows.diffusion',
         'spatialprofilingtoolbox.workflows.phenotype_proximity',
         'spatialprofilingtoolbox.workflows.front_proximity',
+        'spatialprofilingtoolbox.workflows.frequency',
         'spatialprofilingtoolbox.environment',
         'spatialprofilingtoolbox.applications',
         'spatialprofilingtoolbox.applications.cell_cartoons',
@@ -72,6 +73,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-diffusion-analysis',
         'spatialprofilingtoolbox/scripts/spt-cell-phenotype-proximity-analysis',
         'spatialprofilingtoolbox/scripts/spt-front-proximity-analysis',
+        'spatialprofilingtoolbox/scripts/spt-frequency-analysis',
     ],
     install_requires=requirements,
     project_urls = {

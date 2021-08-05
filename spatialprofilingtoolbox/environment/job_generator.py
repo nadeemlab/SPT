@@ -38,6 +38,7 @@ class JobGenerator:
         ('Sample_ID', 'TEXT'),
         ('SHA256', 'CHAR(64)'),
         ('File_basename', 'TEXT'),
+        ('Data_type', 'TEXT'),
     ]
 
     def __init__(self,
@@ -170,6 +171,7 @@ class JobGenerator:
             filename = row['File name']
             sample_id = row['Sample ID']
             sha256 = row['Checksum']
+            datatype = row['Data type']
             if row['Checksum scheme'] != 'SHA256':
                 logger.error('Checksum for file with id "%s" is not SHA256. Cannot check file integrity.', file_id)
             if not re.match('^[a-f0-9]{64}$', sha256):
@@ -179,6 +181,7 @@ class JobGenerator:
                 '"' + sample_id + '"',
                 '"' + sha256 + '"',
                 '"' + filename + '"',
+                '"' + datatype + '"',
             ])
             cmd = ' '.join([
                 'INSERT INTO',

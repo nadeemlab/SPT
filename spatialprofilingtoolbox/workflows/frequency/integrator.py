@@ -64,11 +64,10 @@ class FrequencyAnalysisIntegrator:
         )
 
         fov_lookup = self.get_dataframe_from_db('fov_lookup')
-        fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
-        example_sample_identifier = list(cells['sample_identifier'])[0]
-        example_phenotype = list(sum_columns.values())[0]
         example_compartment = list(cells['compartment'])[0]
-        logger.debug('Logging sample %s areas of phenotype "%s", in %s.', example_sample_identifier, example_phenotype, example_compartment)
+        fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows() if row['compartment'] == example_compartment}
+        example_phenotype = list(sum_columns.values())[0]
+        logger.debug('Logging cell areas of phenotype "%s", in %s.', example_phenotype, example_compartment)
         a = summed_cell_areas
         example_areas = [
             (fov_lookup_dict[(r['sample_identifier'], r['fov_index'])], r[example_phenotype]) for i, r in a.iterrows()

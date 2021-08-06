@@ -61,9 +61,9 @@ class FrequencyAnalysisIntegrator:
         example_phenotype = 'ICOS+ cell area sum'
         logger.debug('FOV %s, i.e. "%s".', example_fov_index, example_fov_string)
         sample_focused_cells = cells[(cells['fov_index'] == example_fov_index)].sort_values(by='cell_area')
+        logger.debug(sample_focused_cells)
+        logger.debug('(Table has %s rows.)', sample_focused_cells.shape[0])
         logger.debug('Other values of fov_index: %s', list(cells['fov_index'])[0:5])
-        logger.debug(fov_focused_cells)
-        logger.debug('(Table has %s rows.)', fov_focused_cells.shape[0])
 
         sum_columns = {p : re.sub('membership', 'cell area sum', p) for p in phenotype_columns}
         summed_cell_areas = cells.groupby(['sample_identifier', 'fov_index', 'compartment'], as_index=False).agg(

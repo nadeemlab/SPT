@@ -82,10 +82,29 @@ class FrequencyAnalysisIntegrator:
             }
         )
 
-        example_phenotype = list(sum_columns.values())[0]
+        compartmental_areas = cells.groupby(['sample_identifier', 'fov_index', 'compartment'], as_index=False).agg(
+            **{ 'compartmental total cell area' : pd.NamedAgg(column='cell_area', aggfunc='sum') }
+        )
+        compartmental_areas = {
+            (r['sample_identifier'], r['fov_index'], r['compartment']) : r['compartmental total cell area']
+            for i, r in compartmental_areas.iterrows()
+        }
+        logger.debug(
+            'Compartmental total areas:\n%s',
+            '\n'.join([fov_lookup_dict[(key[0], key[1])] + ' ' + str(key[2]) + ': ' + str(value) for key, value in compartmental_areas.items()]),
+        )
+
+        summed_cell_areas['compartmental total cell area'] = [
+            compartmental_areas[r['sample_identifier'], r['fov_index'], r['compartment']] for i, r in summed_cell_areas.iterrows()
+        ]
+        normalized_sum_columns = {p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns}
+        for p in phenotype_columns:
+            summed_cell_areas[normalized_sum_columns[p]] = summed_cell_areas[sum_columns[p]] / summed_cell_areas['compartmental total cell area']
+
+        example_phenotype = list(normalized_sum_columns.values())[0]
         example_compartment = list(cells['compartment'])[0]
         logger.debug(
-            'Logging cell areas of phenotype "%s", in %s.',
+            'Logging "%s", in %s.',
             example_phenotype,
             example_compartment,
         )
@@ -94,9 +113,9 @@ class FrequencyAnalysisIntegrator:
             for i, r in summed_cell_areas.iterrows() if r['compartment'] == example_compartment
         ]
         string_rep = '\n'.join([' '.join([str(elt) for elt in row]) for row in example_areas])
-        logger.debug('FOV cell areas:\n%s', string_rep)
+        logger.debug('FOV (compartmentally-normalized) cell area fractions:\n%s', string_rep)
 
-        average_columns = {sum_columns[p] : re.sub('membership', 'cell area average per FOV', p) for p in phenotype_columns}
+        average_columns = {normalized_sum_columns[p] : re.sub('membership', 'normalized cell area average per FOV', p) for p in phenotype_columns}
         averaged_cell_areas = summed_cell_areas.groupby(['sample_identifier', 'compartment'], as_index=False).agg(
             **{
                 column : pd.NamedAgg(column=p, aggfunc='mean') for p, column in average_columns.items()
@@ -114,7 +133,7 @@ class FrequencyAnalysisIntegrator:
         for compartment, df in averaged_cell_areas.groupby(['compartment']):
             for outcome1, outcome2 in itertools.combinations(outcomes, 2):
                 for name in phenotype_names:
-                    column = name + ' cell area average per FOV'
+                    column = name + ' normalized cell area average per FOV'
                     df1 = df[df['outcome_assignment'] == outcome1][['sample_identifier', column]]
                     df2 = df[df['outcome_assignment'] == outcome2][['sample_identifier', column]]
                     values1 = list(df1[column])

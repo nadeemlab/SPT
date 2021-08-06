@@ -70,7 +70,7 @@ class FrequencyAnalysisIntegrator:
         logger.debug('Logging cell areas of phenotype "%s", in %s.', example_phenotype, example_compartment)
         a = summed_cell_areas
         example_areas = [
-            (fov_lookup_dict[(r['sample_identifier'], r['fov_index'])], r[example_phenotype]) for i, r in a.iterrows() if row['compartment'] == example_compartment
+            (fov_lookup_dict[(r['sample_identifier'], r['fov_index'])], r[example_phenotype]) for i, r in a.iterrows() if r['compartment'] == example_compartment
         ]
         string_rep = '\n'.join([' '.join([str(elt) for elt in row]) for row in example_areas])
         logger.debug('FOV cell areas: %s', string_rep)

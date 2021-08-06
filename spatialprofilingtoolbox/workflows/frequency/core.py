@@ -130,7 +130,8 @@ class FrequencyCalculator:
         keys_list = [column_name for column_name, dtype in header]
         uri = join(self.output_path, self.computational_design.get_database_uri())
         connection = sqlite3.connect(uri)
-        cells.to_sql('cells', connection, if_exists='replace')
+        cells.reset_index(drop=True, inplace=True)
+        cells.to_sql('cells', connection, if_exists='append', index_label='id')
         connection.commit()
         connection.close()
 

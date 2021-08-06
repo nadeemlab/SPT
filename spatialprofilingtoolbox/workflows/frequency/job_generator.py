@@ -63,7 +63,6 @@ singularity exec \
         pass
 
     def generate_all_jobs(self):
-        self.initialize_intermediate_database()
         job_working_directory = self.jobs_paths.job_working_directory
 
         all_memory_requirements = []
@@ -108,6 +107,34 @@ singularity exec \
         st = os.stat(sh_job_filename)
         os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
 
+        self.initialize_intermediate_database()
+
+    def get_memory_requirements(self, file_record):
+        """
+        :param file_record: Record as it would appear in the file metadata table.
+        :type file_record: dict-like
+
+        :return: The positive integer number of gigabytes to request for a job involving
+            the given input file.
+        :rtype: int
+        """
+        file_size_gb = float(file_record['Size']) / pow(10, 9)
+        return 1 + math.ceil(file_size_gb * 10)
+
+    def generate_scheduler_scripts(self):
+        deployment_platform = self.runtime_settings.runtime_platform
+        if deployment_platform == 'lsf':
+            script_name = 'schedule_lsf_frequency.sh'
+            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                for lsf_job_filename in self.lsf_job_filenames:
+                    schedule_script.write('bsub < ' + lsf_job_filename + '\n')
+
+        if deployment_platform == 'local':
+            script_name = 'schedule_local_frequency.sh'
+            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                for sh_job_filename in self.sh_job_filenames:
+                    schedule_script.write(sh_job_filename + '\n')
+
     def initialize_intermediate_database(self):
         """
         The frequency workflow uses a pipeline-specific database to store its
@@ -150,29 +177,3 @@ singularity exec \
         cursor.close()
         connection.commit()
         connection.close()
-
-    def get_memory_requirements(self, file_record):
-        """
-        :param file_record: Record as it would appear in the file metadata table.
-        :type file_record: dict-like
-
-        :return: The positive integer number of gigabytes to request for a job involving
-            the given input file.
-        :rtype: int
-        """
-        file_size_gb = float(file_record['Size']) / pow(10, 9)
-        return 1 + math.ceil(file_size_gb * 10)
-
-    def generate_scheduler_scripts(self):
-        deployment_platform = self.runtime_settings.runtime_platform
-        if deployment_platform == 'lsf':
-            script_name = 'schedule_lsf_frequency.sh'
-            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-                for lsf_job_filename in self.lsf_job_filenames:
-                    schedule_script.write('bsub < ' + lsf_job_filename + '\n')
-
-        if deployment_platform == 'local':
-            script_name = 'schedule_local_frequency.sh'
-            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-                for sh_job_filename in self.sh_job_filenames:
-                    schedule_script.write(sh_job_filename + '\n')

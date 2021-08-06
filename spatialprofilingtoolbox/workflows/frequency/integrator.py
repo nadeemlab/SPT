@@ -55,15 +55,22 @@ class FrequencyAnalysisIntegrator:
 
         fov_lookup = self.get_dataframe_from_db('fov_lookup')
         fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
-        example_sample_identifier = 'S12-35339'
-        example_fov_string = 'S12-35339 Colon P20 CD3, Foxp1, PDL1, ICOS, CD8, panCK+CK7+CAM5.2_[52469,12927]_component_data.tif'
-        example_fov_index = [fov_index for (s, fov_index), fov in fov_lookup_dict.items() if fov == example_fov_string][0]
-        example_phenotype = 'ICOS+ cell area sum'
-        logger.debug('FOV %s, i.e. "%s".', example_fov_index, example_fov_string)
-        sample_focused_cells = cells[(cells['fov_index'] == example_fov_index)].sort_values(by='cell_area')
-        logger.debug(sample_focused_cells)
+        example_sample_identifier = list(cells['sample_identifier'])[0]
+        example_fov_index = list(cells['fov_index'])[0]
+        example_fov_string = fov_lookup_dict[(example_sample_identifier, example_fov_index)]
+        condition = (
+            (cells['sample_identifier'] == example_sample_identifier) &
+            (cells['fov_index'] == example_fov_index)
+        )
+        logger.debug(
+            'Logging cells areas in sample %s FOV %s, i.e. "%s".',
+            example_sample_identifier,
+            example_fov_index,
+            example_fov_string,
+        )
+        sample_focused_cells = cells[condition].sort_values(by='cell_area')
+        logger.debug('(Transposed for readability:)\n%s', sample_focused_cells.transpose().to_string())
         logger.debug('(Table has %s rows.)', sample_focused_cells.shape[0])
-        logger.debug('Other values of fov_index: %s', list(cells['fov_index'])[0:5])
 
         sum_columns = {p : re.sub('membership', 'cell area sum', p) for p in phenotype_columns}
         summed_cell_areas = cells.groupby(['sample_identifier', 'fov_index', 'compartment'], as_index=False).agg(
@@ -75,14 +82,19 @@ class FrequencyAnalysisIntegrator:
             }
         )
 
+        example_phenotype = list(sum_columns.values())[0]
         example_compartment = list(cells['compartment'])[0]
-        logger.debug('Logging cell areas of phenotype "%s", in %s.', example_phenotype, example_compartment)
-        a = summed_cell_areas
+        logger.debug(
+            'Logging cell areas of phenotype "%s", in %s.',
+            example_phenotype,
+            example_compartment,
+        )
         example_areas = [
-            (fov_lookup_dict[(r['sample_identifier'], r['fov_index'])], r[example_phenotype]) for i, r in a.iterrows() if r['compartment'] == example_compartment
+            (fov_lookup_dict[(r['sample_identifier'], r['fov_index'])], r[example_phenotype])
+            for i, r in summed_cell_areas.iterrows() if r['compartment'] == example_compartment
         ]
         string_rep = '\n'.join([' '.join([str(elt) for elt in row]) for row in example_areas])
-        logger.debug('FOV cell areas: %s', string_rep)
+        logger.debug('FOV cell areas:\n%s', string_rep)
 
         average_columns = {sum_columns[p] : re.sub('membership', 'cell area average per FOV', p) for p in phenotype_columns}
         averaged_cell_areas = summed_cell_areas.groupby(['sample_identifier', 'compartment'], as_index=False).agg(

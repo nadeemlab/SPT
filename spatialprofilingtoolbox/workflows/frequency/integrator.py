@@ -129,7 +129,7 @@ class FrequencyAnalysisIntegrator:
         rows = []
         phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
 
-        debug_details = 3
+        test_case = 1
         for compartment, df in averaged_cell_areas.groupby(['compartment']):
             for outcome1, outcome2 in itertools.combinations(outcomes, 2):
                 for name in phenotype_names:
@@ -194,18 +194,17 @@ class FrequencyAnalysisIntegrator:
                         'extreme value 2' : extreme_value2,
                     })
 
-                    if debug_details > 0:
-                        logger.debug('Logging details in selected statistical test case %s.', debug_details)
-                        logger.debug('Outcome pair: %s, %s', outcome1, outcome2)
-                        logger.debug('Compartment: %s', compartment)
-                        logger.debug('Phenotype: %s', name)
-                        dict1 = {row['sample_identifier'] : row[column] for i, row in df1.iterrows()}
-                        logger.debug('Normalized cell areas averaged over FOVs 1: %s', dict1)
-                        dict2 = {row['sample_identifier'] : row[column] for i, row in df2.iterrows()}
-                        logger.debug('Normalized cell areas averaged over FOVs 2: %s', dict2)
-                        logger.debug('Number of values 1: %s', len(dict1))
-                        logger.debug('Number of values 2: %s', len(dict2))
-                        debug_details -= 1
+                    logger.debug('Logging details in statistical test case %s.', test_case)
+                    test_case += 1
+                    logger.debug('Outcome pair: %s, %s', outcome1, outcome2)
+                    logger.debug('Compartment: %s', compartment)
+                    logger.debug('Phenotype: %s', name)
+                    dict1 = {row['sample_identifier'] : row[column] for i, row in df1.iterrows()}
+                    logger.debug('Normalized cell areas averaged over FOVs 1: %s', dict1)
+                    dict2 = {row['sample_identifier'] : row[column] for i, row in df2.iterrows()}
+                    logger.debug('Normalized cell areas averaged over FOVs 2: %s', dict2)
+                    logger.debug('Number of values 1: %s', len(dict1))
+                    logger.debug('Number of values 2: %s', len(dict2))
 
         if len(rows) == 0:
             logger.info('No non-trivial tests to perform. Probably too few values.')

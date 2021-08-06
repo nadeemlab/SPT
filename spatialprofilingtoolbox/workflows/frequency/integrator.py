@@ -65,8 +65,8 @@ class FrequencyAnalysisIntegrator:
 
         fov_lookup = self.get_dataframe_from_db('fov_lookup')
         fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
-        example_phenotype = list(sum_columns.values())[0]
-        example_compartment = list(cells['compartment'])[0]
+        example_phenotype = 'ICOS+ cell area sum'
+        example_compartment = list(cells['compartment'])[-1]
         logger.debug('Logging cell areas of phenotype "%s", in %s.', example_phenotype, example_compartment)
         a = summed_cell_areas
         example_areas = [

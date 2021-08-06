@@ -63,6 +63,19 @@ class FrequencyAnalysisIntegrator:
             }
         )
 
+        fov_lookup = self.get_dataframe_from_db('fov_lookup')
+        fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
+        example_sample_identifier = list(cells['sample_identifier'])[0]
+        example_phenotype = list(sum_columns.values())[0]
+        example_compartment = list(cells['compartment'])[0]
+        logger.debug('Logging sample %s areas of phenotype "%s", in %s.', example_sample_identifier, example_phenotype, example_compartment)
+        a = summed_cell_areas
+        example_areas = [
+            (fov_lookup_dict[(r['sample_identifier'], r['fov_index'])], r[example_phenotype]) for i, r in a.iterrows()
+        ]
+        string_rep = '\n'.join([' '.join([str(elt) for elt in row]) for row in example_areas])
+        logger.debug('FOV cell areas: %s', string_rep)
+
         average_columns = {sum_columns[p] : re.sub('membership', 'cell area average per FOV', p) for p in phenotype_columns}
         averaged_cell_areas = summed_cell_areas.groupby(['sample_identifier', 'compartment'], as_index=False).agg(
             **{
@@ -77,7 +90,7 @@ class FrequencyAnalysisIntegrator:
         rows = []
         phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
 
-        details = 5
+        debug_details = 3
         for compartment, df in averaged_cell_areas.groupby(['compartment']):
             for outcome1, outcome2 in itertools.combinations(outcomes, 2):
                 for name in phenotype_names:
@@ -142,18 +155,18 @@ class FrequencyAnalysisIntegrator:
                         'extreme value 2' : extreme_value2,
                     })
 
-                    if details > 0:
-                        logger.info('Logging details in selected statistical test case %s.', details)
-                        logger.info('Outcome pair: %s, %s', outcome1, outcome2)
-                        logger.info('Compartment: %s', compartment)
-                        logger.info('Phenotype: %s', name)
+                    if debug_details > 0:
+                        logger.debug('Logging details in selected statistical test case %s.', details)
+                        logger.debug('Outcome pair: %s, %s', outcome1, outcome2)
+                        logger.debug('Compartment: %s', compartment)
+                        logger.debug('Phenotype: %s', name)
                         dict1 = {row['sample_identifier'] : row[column] for i, row in df1.iterrows()}
-                        logger.info('Cell areas summed over FOVs 1: %s', dict1)
+                        logger.debug('Cell areas summed over FOVs 1: %s', dict1)
                         dict2 = {row['sample_identifier'] : row[column] for i, row in df2.iterrows()}
-                        logger.info('Cell areas summed over FOVs 2: %s', dict2)
-                        logger.info('Number of values 1: %s', len(dict1))
-                        logger.info('Number of values 2: %s', len(dict2))
-                        details -= 1
+                        logger.debug('Cell areas summed over FOVs 2: %s', dict2)
+                        logger.debug('Number of values 1: %s', len(dict1))
+                        logger.debug('Number of values 2: %s', len(dict2))
+                        debug_details -= 1
 
         if len(rows) == 0:
             logger.info('No non-trivial tests to perform. Probably too few values.')

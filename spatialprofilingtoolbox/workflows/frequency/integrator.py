@@ -60,7 +60,8 @@ class FrequencyAnalysisIntegrator:
         example_fov_index = [fov_index for (s, fov_index), fov in fov_lookup_dict.items() if fov == example_fov_string][0]
         example_phenotype = 'ICOS+ cell area sum'
         logger.debug('FOV %s, i.e. "%s".', example_fov_index, example_fov_string)
-        fov_focused_cells = cells[(cells['fov_index'] == str(example_fov_index))].sort_values(by='cell_area')
+        sample_focused_cells = cells[(cells['fov_index'] == example_fov_index)].sort_values(by='cell_area')
+        logger.debug('Other values of fov_index: %s', list(cells['fov_index'])[0:5])
         logger.debug(fov_focused_cells)
         logger.debug('(Table has %s rows.)', fov_focused_cells.shape[0])
 

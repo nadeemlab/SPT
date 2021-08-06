@@ -57,7 +57,6 @@ class FrequencyAnalysisIntegrator:
         fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
         example_sample_identifier = 'S12-35339'
         example_fov_string = 'S12-35339 Colon P20 CD3, Foxp1, PDL1, ICOS, CD8, panCK+CK7+CAM5.2_[52469,12927]_component_data.tif'
-        print(sorted(list(fov_lookup_dict.values())))
         example_fov_index = [fov_index for (s, fov_index), fov in fov_lookup_dict.items() if fov == example_fov_string][0]
         example_phenotype = 'ICOS+ cell area sum'
         logger.debug('FOV %s.', example_fov_string)

@@ -200,9 +200,9 @@ class FrequencyAnalysisIntegrator:
                         logger.debug('Compartment: %s', compartment)
                         logger.debug('Phenotype: %s', name)
                         dict1 = {row['sample_identifier'] : row[column] for i, row in df1.iterrows()}
-                        logger.debug('Cell areas summed over FOVs 1: %s', dict1)
+                        logger.debug('Normalized cell areas averaged over FOVs 1: %s', dict1)
                         dict2 = {row['sample_identifier'] : row[column] for i, row in df2.iterrows()}
-                        logger.debug('Cell areas summed over FOVs 2: %s', dict2)
+                        logger.debug('Normalized cell areas averaged over FOVs 2: %s', dict2)
                         logger.debug('Number of values 1: %s', len(dict1))
                         logger.debug('Number of values 2: %s', len(dict2))
                         debug_details -= 1

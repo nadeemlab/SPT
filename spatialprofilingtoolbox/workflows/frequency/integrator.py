@@ -53,6 +53,18 @@ class FrequencyAnalysisIntegrator:
             mask = (cells[phenotype] == 1)
             cells.loc[mask, phenotype] = cells['cell_area']
 
+        fov_lookup = self.get_dataframe_from_db('fov_lookup')
+        fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
+        example_sample_identifier = 'S12-35339'
+        example_fov_string = 'S12-35339 Colon P20 CD3, Foxp1, PDL1, ICOS, CD8, panCK+CK7+CAM5.2_[52469,12927]_component_data.tif'
+        print(sorted(list(fov_lookup_dict.values())))
+        example_fov_index = [fov_index for (s, fov_index), fov in fov_lookup_dict.items() if fov == example_fov_string][0]
+        example_phenotype = 'ICOS+ cell area sum'
+        logger.debug('FOV %s.', example_fov_string)
+        fov_focused_cells = cells[(cells['sample_identifier'] == example_sample_identifier)  & (cells['fov_index'] == 0)].sort_values(by='cell_area')
+        logger.debug(fov_focused_cells)
+        logger.debug('(Table has %s rows.', fov_focused_cells.shape[0])
+
         sum_columns = {p : re.sub('membership', 'cell area sum', p) for p in phenotype_columns}
         summed_cell_areas = cells.groupby(['sample_identifier', 'fov_index', 'compartment'], as_index=False).agg(
             **{
@@ -63,9 +75,6 @@ class FrequencyAnalysisIntegrator:
             }
         )
 
-        fov_lookup = self.get_dataframe_from_db('fov_lookup')
-        fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
-        example_phenotype = 'ICOS+ cell area sum'
         example_compartment = list(cells['compartment'])[0]
         logger.debug('Logging cell areas of phenotype "%s", in %s.', example_phenotype, example_compartment)
         a = summed_cell_areas

@@ -156,7 +156,7 @@ class FrequencyAnalysisIntegrator:
                     })
 
                     if debug_details > 0:
-                        logger.debug('Logging details in selected statistical test case %s.', details)
+                        logger.debug('Logging details in selected statistical test case %s.', debug_details)
                         logger.debug('Outcome pair: %s, %s', outcome1, outcome2)
                         logger.debug('Compartment: %s', compartment)
                         logger.debug('Phenotype: %s', name)

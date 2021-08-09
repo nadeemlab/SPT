@@ -48,11 +48,11 @@ singularity exec \
     ):
         """
         :param elementary_phenotypes_file: Tabular file listing phenotypes of
-            consideration. See py:mod:`spatialprofilingtoolbox.dataset_designs`.
+            consideration. See :py:mod:`spatialprofilingtoolbox.dataset_designs`.
         :type elementary_phenotypes_file: str
 
         :param complex_phenotypes_file: Tabular file listing composite phenotypes to
-            consider. See py:mod:`spatialprofilingtoolbox.dataset_designs`.
+            consider. See :py:mod:`spatialprofilingtoolbox.dataset_designs`.
         :type complex_phenotypes_file: str
         """
         super().__init__(**kwargs)

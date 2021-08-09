@@ -1,3 +1,9 @@
+"""
+These functions provide detailed data-specific logging for the cell phenotype
+frequency workflow. The log messages are intended to aid in tracking data value
+provenance in particular runs.
+"""
+
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -5,12 +11,13 @@ logger = colorized_logger(__name__)
 
 class FrequencyDataLogger:
     """
-    These functions provide detailed data-specific logging for the cell phenotype
-    frequency workflow. The log messages are intended to aid in tracking data value
-    provenance in particular runs.
+    Convenience class.
     """
     @staticmethod
     def log_cell_areas_one_fov(cells, fov_lookup_dict):
+        """
+        Reports the cells areas for a single FOV in a single image, by phenotype.
+        """
         example_sample_identifier = list(cells['sample_identifier'])[0]
         example_fov_index = list(cells['fov_index'])[0]
         example_fov_string = fov_lookup_dict[(example_sample_identifier, example_fov_index)]
@@ -33,6 +40,10 @@ class FrequencyDataLogger:
 
     @staticmethod
     def log_normalization_factors(areas_all_phenotypes_dict):
+        """
+        Reports the summed cell areas over all phenotypes and FOVs in a given
+        compartment, one value for each sample and compartment type.
+        """
         logger.debug(
             'Compartmental areas, total over all phenotypes and FOVs (sample fixed):\n%s',
             '\n'.join([
@@ -51,6 +62,9 @@ class FrequencyDataLogger:
 
     @staticmethod
     def log_normalized_areas(cells, area_sums, normalized_sum_columns):
+        """
+        Reports the cell areas after normalization.
+        """
         example_phenotype = list(normalized_sum_columns.values())[0]
         example_compartment = list(cells['compartment'])[0]
         logger.debug(
@@ -67,6 +81,9 @@ class FrequencyDataLogger:
 
     @staticmethod
     def log_test_input(row, df1, df2):
+        """
+        Reports information about the input to one instance of a statistical test.
+        """
         phenotype_name = row['phenotype']
         phenotype_column = phenotype_name + ' normalized cell area sum'
         logger.debug('Logging details in one statistical test case.')

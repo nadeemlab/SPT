@@ -1,4 +1,8 @@
-import os
+"""
+The integration phase of the cell phenotype frequency workflow combines data
+across samples and performs tests for statistically-significant differences
+between outcome groups.
+"""
 from os.path import join
 import re
 import itertools
@@ -17,9 +21,7 @@ logger = colorized_logger(__name__)
 
 class FrequencyAnalysisIntegrator:
     """
-    The integration phase of the cell phenotype frequency workflow combines data
-    across samples and performs tests for statistically-significant differences
-    between outcome groups.
+    Main class of the integration phase.
     """
     def __init__(
         self,
@@ -56,15 +58,17 @@ class FrequencyAnalysisIntegrator:
         else:
             logger.warning('Test results not generated.')
 
-    def do_outcome_tests(self):
+    def create_area_sums(self):
         """
-        For each phenotype and compartment type:
+        Preprocessing step to create a sample-level feature which consists of normalized
+        area sums per phenotype.
 
-        1. Sums over FOVs, and over cells, the cell areas belonging to that phenotype and
-           compartment type.
-        2. Normalizes over the total cell areas independently of phenotype.
-        3. Tests resulting feature over sample set for outcome pair comparison. Tests are
-           t-test and Kruskal-Wallis.
+        :return:
+            - ``area_sums``. The table containing the normalized sums and
+              contextual/case identifiers.
+            - ``phenotype_names``. Byproduct, provided for convenience.
+            - ``outcomes``. Byproduct, provided for convenience.
+        :rtype: pandas.DataFrame, list, list
         """
         cells = self.get_dataframe_from_db('cells')
         phenotype_columns = self.overlay_areas_on_masks(cells)
@@ -77,20 +81,36 @@ class FrequencyAnalysisIntegrator:
         areas_all_phenotypes_dict = self.overlay_area_total_all_phenotypes(cells, area_sums)
         FrequencyDataLogger.log_normalization_factors(areas_all_phenotypes_dict)
 
-        normalized_sum_columns = self.add_normalized_columns(area_sums, phenotype_columns, sum_columns)
+        normalized_sum_columns = self.add_normalized_columns(
+            area_sums,
+            phenotype_columns,
+            sum_columns,
+        )
         FrequencyDataLogger.log_normalized_areas(cells, area_sums, normalized_sum_columns)
 
-        outcomes = sorted(list(set(cells['outcome_assignment'])))
         phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
+        outcomes = sorted(list(set(cells['outcome_assignment'])))
+        return [area_sums, phenotype_names, outcomes]
+
+    def do_outcome_tests(self):
+        """
+        For each phenotype and compartment type:
+
+        1. Sums over FOVs, and over cells, the cell areas belonging to that phenotype and
+           compartment type.
+        2. Normalizes over the total cell areas independently of phenotype.
+        3. Tests resulting feature over sample set for outcome pair comparison. Tests are
+           t-test and Kruskal-Wallis.
+        """
+        area_sums, phenotype_names, outcomes = self.create_area_sums()
         rows = []
-        for compartment, df in area_sums.groupby(['compartment']):
+        for compartment, table in area_sums.groupby(['compartment']):
             for outcome1, outcome2 in itertools.combinations(outcomes, 2):
                 for phenotype_name in phenotype_names:
                     row, df1, df2 = self.get_test_result_row(
                         compartment,
-                        df,
-                        outcome1,
-                        outcome2,
+                        table,
+                        (outcome1, outcome2),
                         phenotype_name,
                         test='t-test',
                     )
@@ -99,9 +119,8 @@ class FrequencyAnalysisIntegrator:
 
                     row, df1, df2 = self.get_test_result_row(
                         compartment,
-                        df,
-                        outcome1,
-                        outcome2,
+                        table,
+                        (outcome1, outcome2),
                         phenotype_name,
                         test='Kruskal-Wallis',
                     )
@@ -115,12 +134,15 @@ class FrequencyAnalysisIntegrator:
             logger.info('No non-trivial tests to perform. Probably too few values.')
             return None
         frequency_tests = pd.DataFrame(rows)
-        sort_order = ['outcome 1', 'outcome 2', 'p-value < 0.01', 'p-value']
-        ascending = [True, True, False, True]
-        frequency_tests.sort_values(by=sort_order, ascending=ascending, inplace=True)
+        frequency_tests.sort_values(
+            by=['outcome 1', 'outcome 2', 'p-value < 0.01', 'p-value'],
+            ascending=[True, True, False, True],
+            inplace=True,
+        )
         return frequency_tests
 
-    def overlay_areas_on_masks(self, cells):
+    @staticmethod
+    def overlay_areas_on_masks(cells):
         """
         Copies the "cell_area" column over the phenotype membership mask columns.
 
@@ -140,7 +162,8 @@ class FrequencyAnalysisIntegrator:
             cells.loc[mask, phenotype] = cells['cell_area']
         return phenotype_columns
 
-    def sum_areas_over_compartments_per_phenotype(self, cells, phenotype_columns):
+    @staticmethod
+    def sum_areas_over_compartments_per_phenotype(cells, phenotype_columns):
         """
         Sums cell areas over all FOVs for a given named compartment type and phenotype,
         in a given slide/sample.
@@ -181,11 +204,12 @@ class FrequencyAnalysisIntegrator:
         )
         return [area_sums, sum_columns]
 
-    def overlay_area_total_all_phenotypes(self, cells, area_sums):
+    @staticmethod
+    def overlay_area_total_all_phenotypes(cells, area_sums):
         """
         Calculates total cell areas (independent of phenotypes) from ``cells``, and adds
         this data as a new column in-place into the ``area_sums`` table. The new column
-        is "compartmental total cell area". 
+        is "compartmental total cell area".
 
         :param cells: The cells table.
         :type cells: pandas.DataFrame
@@ -212,7 +236,8 @@ class FrequencyAnalysisIntegrator:
         ]
         return areas_all_phenotypes_dict
 
-    def add_normalized_columns(self, area_sums, phenotype_columns, sum_columns):
+    @staticmethod
+    def add_normalized_columns(area_sums, phenotype_columns, sum_columns):
         """
         :param area_sums: The table with cell area sums, after
             :py:meth:`overlay_area_total_all_phenotypes` has added the
@@ -234,17 +259,115 @@ class FrequencyAnalysisIntegrator:
         normalized_sum_columns = {
             p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns
         }
-        for p in phenotype_columns:
-            normalized = normalized_sum_columns[p]
-            summed = sum_columns[p]
+        for phenotype in phenotype_columns:
+            normalized = normalized_sum_columns[phenotype]
+            summed = sum_columns[phenotype]
             area_sums[normalized] = area_sums[summed] / area_sums['cell area all phenotypes']
         return normalized_sum_columns
 
-    def get_test_result_row(self,
+    @staticmethod
+    def gather_test_inputs(
+            table,
+            phenotype_name,
+            outcome_pair,
+            test,
+        ):
+        """
+        :param table: Table with aggregated normalized cell area data.
+        :type table: pandas.DataFrame
+
+        :param phenotype_name: The name of the cell phenotype to restrict to.
+        :type phenotype_name: str
+
+        :param outcome_pair: Pair of outcome labels to consider.
+        :type outcome_pair: tuple
+
+        :param test: Name of the statistical test requested.
+        :type test: str
+
+        :return:
+            - "column". The name of the column with numerical data in it.
+            - "df1". The first restricted dataframe.
+            - "df2". The second restricted dataframe.
+            - "values1". The first values list.
+            - "values2". The second values list.
+            - "test". Test name (as supplied as an argument).
+        :rtype: dict
+        """
+        column = phenotype_name + ' normalized cell area sum'
+        df1 = table[table['outcome_assignment'] == outcome_pair[0]][['sample_identifier', column]]
+        df2 = table[table['outcome_assignment'] == outcome_pair[1]][['sample_identifier', column]]
+        values1 = list(df1[column])
+        values2 = list(df2[column])
+        return {
+            'column' : column,
+            'df1' : df1,
+            'df2' : df2,
+            'values1' : values1,
+            'values2' : values2,
+            'test' : test,
+        }
+
+    @staticmethod
+    def do_single_test(test_inputs):
+        """
+        :param test_inputs: Aggregation of test inputs:
+
+            - "values1". First list of numeric values.
+            - "values2". Second list of numeric values.
+            - "test". The name of the test to perform.
+        :type test_inputs: dict
+
+        :return:
+            - "p". Numeric p-value.
+            - "difference". Absolute effect, difference between tested values.
+            - "multiplicative effect". Ratio of tested values (or "NaN" if division by
+              zero.)
+            - "tested value 1". The statistic value on the first group of values.
+            - "tested value 2". The statistic value on the second group of values.
+        :rtype: dict
+        """
+        i = test_inputs
+        if np.var(i['values1']) == 0 or np.var(i['values2']) == 0:
+            return None
+        test_tested_functions = {
+            't-test' : (ttest_ind, np.mean),
+            'Kruskal-Wallis' : (kruskal, np.median),
+        }
+        test = i['test']
+        test_function = test_tested_functions[test][0]
+        tested_function = test_tested_functions[test][1]
+        if i['test'] == 't-test':
+            _, p_value = test_function(
+                i['values1'],
+                i['values2'],
+                nan_policy='omit',
+                equal_var=False,
+            )
+        if i['test'] == 'Kruskal-Wallis':
+            _, p_value = test_function(
+                i['values1'],
+                i['values2'],
+                nan_policy='omit',
+            )
+        difference = tested_function(i['values2']) - tested_function(i['values1'])
+        if tested_function(i['values1']) != 0:
+            multiplicative_effect = tested_function(i['values2']) / tested_function(i['values1'])
+        else:
+            multiplicative_effect = 'NaN'
+        return {
+            'p' : p_value,
+            'difference' : difference,
+            'multiplicative effect' : multiplicative_effect,
+            'tested value 1' : tested_function(test_inputs['values1']),
+            'tested value 2' : tested_function(test_inputs['values2']),
+        }
+
+    @staticmethod
+    def get_test_result_row(
         compartment,
-        df,
-        outcome1,
-        outcome2,
+        table,
+        outcome_pair,
         phenotype_name,
         test: str=None,
     ):
@@ -252,17 +375,14 @@ class FrequencyAnalysisIntegrator:
         :param compartment: The compartment/region name in which to consider cells.
         :type compartment: str
 
-        :param df: The table with normalized summed cell areas/fractions,
+        :param table: The table with normalized summed cell areas/fractions,
             already aggregated over cells in each sample/compartment. Must be already
             restricted to ``compartment``. The main column in which numerical data must
             be found is of the form "<phenotype name> normalized cell area sum".
-        :type df: pandas.DataFrame
+        :type table: pandas.DataFrame
 
-        :param outcome1: Outome label.
-        :type outcome1: str
-
-        :param outcome2: The other outcome label.
-        :type outcome2: str
+        :param outcome_pair: The 2 outcome labels.
+        :type outcome_pair: tuple
 
         :param phenotype_name: The name of the (composite) phenotype to consider.
         :type phenotype_name: str
@@ -280,50 +400,49 @@ class FrequencyAnalysisIntegrator:
               table, restricted also the outcome 2. Provided for convenience/inspection.
         :rtype: dict, pandas.DataFrame, pandas.DataFrame
         """
-        column = phenotype_name + ' normalized cell area sum'
-        df1 = df[df['outcome_assignment'] == outcome1][['sample_identifier', column]]
-        df2 = df[df['outcome_assignment'] == outcome2][['sample_identifier', column]]
-        values1 = list(df1[column])
-        values2 = list(df2[column])
-        if np.var(values1) == 0 or np.var(values2) == 0:
-            return [None, df1, df2]
-        test_tested_functions = {
-            't-test' : (ttest_ind, np.mean),
-            'Kruskal-Wallis' : (kruskal, np.median),
-        }
-        test_function = test_tested_functions[test][0]
-        tested_function = test_tested_functions[test][1]
-        if test == 't-test':
-            s, p = test_function(values1, values2, equal_var=False, nan_policy='omit')
-        if test == 'Kruskal-Wallis':
-            s, p = test_function(values1, values2, nan_policy='omit')
-        difference = tested_function(values2) - tested_function(values1)
-        if tested_function(values1) != 0:
-            multiplicative_effect = tested_function(values2) / tested_function(values1) # check zero
-        else:
-            multiplicative_effect = 'NaN'
-        sign = FrequencyAnalysisIntegrator.sign(difference)
-        extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(df1, -1*sign, column)
-        extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(df2, sign, column)
+        test_inputs = FrequencyAnalysisIntegrator.gather_test_inputs(
+            table,
+            phenotype_name,
+            outcome_pair,
+            test,
+        )
+
+        test_results = FrequencyAnalysisIntegrator.do_single_test(test_inputs)
+        if test_results is None:
+            return [None, None, None]
+
+        sign = FrequencyAnalysisIntegrator.sign(test_results['difference'])
+
+        extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(
+            test_inputs['df1'],
+            -1 * sign,
+            test_inputs['column'],
+        )
+        extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(
+            test_inputs['df2'],
+            sign,
+            test_inputs['column'],
+        )
+
         row = {
-            'outcome 1' : outcome1,
-            'outcome 2' : outcome2,
+            'outcome 1' : outcome_pair[0],
+            'outcome 2' : outcome_pair[1],
             'phenotype' : phenotype_name,
             'compartment' : compartment,
-            'tested value 1' : tested_function(values1),
-            'tested value 2' : tested_function(values2),
+            'tested value 1' : test_results['tested value 1'],
+            'tested value 2' : test_results['tested value 2'],
             'test' : test,
-            'p-value' : p,
-            'absolute effect' : abs(difference),
-            'multiplicative effect' : str(multiplicative_effect),
+            'p-value' : test_results['p'],
+            'absolute effect' : abs(test_results['difference']),
+            'multiplicative effect' : str(test_results['multiplicative effect']),
             'effect sign' : sign,
-            'p-value < 0.01' : p < 0.01,
+            'p-value < 0.01' : test_results['p'] < 0.01,
             'extreme sample 1' : extreme_sample1,
             'extreme sample 2' : extreme_sample2,
             'extreme value 1' : extreme_value1,
             'extreme value 2' : extreme_value2,
         }
-        return [row, df1, df2]
+        return [row, test_inputs['df1'], test_inputs['df2']]
 
     def export_results(self, frequency_tests):
         """
@@ -331,10 +450,13 @@ class FrequencyAnalysisIntegrator:
         significance.
 
         :param frequency_tests: Table of test results.
-            See :py:meth:`get_test_result_row`. 
+            See :py:meth:`get_test_result_row`.
         :type frequency_tests: pandas.DataFrame
         """
-        frequency_tests.to_csv(join(self.output_path, self.computational_design.get_stats_tests_file()), index=False)
+        frequency_tests.to_csv(join(
+            self.output_path,
+            self.computational_design.get_stats_tests_file(),
+        ), index=False)
 
     def get_dataframe_from_db(self, table_name):
         """
@@ -348,21 +470,25 @@ class FrequencyAnalysisIntegrator:
         :rtype: pandas.DataFrame
         """
         if table_name == 'cells':
-            columns = ['id'] + [entry[0] for entry in self.computational_design.get_cells_header()]
+            columns = ['id'] + [
+                entry[0] for entry in self.computational_design.get_cells_header()
+            ]
         elif table_name == 'fov_lookup':
-            columns = ['id'] + [entry[0] for entry in self.computational_design.get_fov_lookup_header()]
+            columns = ['id'] + [
+                entry[0] for entry in self.computational_design.get_fov_lookup_header()
+            ]
         else:
             logger.error('Table %s is not in the schema.', table_name)
             return None
 
         uri = join(self.output_path, self.computational_design.get_database_uri())
-        with WaitingDatabaseContextManager(uri) as m:
-            rows = m.execute('SELECT * FROM ' + table_name)
+        with WaitingDatabaseContextManager(uri) as manager:
+            rows = manager.execute('SELECT * FROM ' + table_name)
 
-        df = pd.DataFrame(rows, columns=columns)
+        table = pd.DataFrame(rows, columns=columns)
         if table_name == 'cells':
-            df.rename(columns=self.get_column_renaming('cells'), inplace=True)
-        return df
+            table.rename(columns=self.get_column_renaming('cells'), inplace=True)
+        return table
 
     def get_column_renaming(self, table_name):
         """
@@ -376,16 +502,16 @@ class FrequencyAnalysisIntegrator:
         """
         renaming = {}
         if table_name == 'cells':
-            h1 = self.computational_design.get_cells_header_variable_portion(style='sql')
-            h2 = self.computational_design.get_cells_header_variable_portion(style='readable')
-            renaming = {h1[i][0] : h2[i][0] for i in range(len(h1))}
+            header1 = self.computational_design.get_cells_header_variable_portion(style='sql')
+            header2 = self.computational_design.get_cells_header_variable_portion(style='readable')
+            renaming = {header1[i][0] : header2[i][0] for i in range(len(header1))}
         return renaming
 
     @staticmethod
-    def get_extremum(df, sign, column):
+    def get_extremum(table, sign, column):
         """
-        :param df: Table with sample-level (i.e. summarized) feature values.
-        :type df: pandas.DataFrame
+        :param table: Table with sample-level (i.e. summarized) feature values.
+        :type table: pandas.DataFrame
 
         :param sign: Either 1 or -1. Whether to return the extremely large value (in
             case 1) or the extremely small value (in case -1).
@@ -400,11 +526,11 @@ class FrequencyAnalysisIntegrator:
         :rtype: str, float
         """
         values_column = column
-        df_sorted = df.sort_values(by=values_column, ascending=True if sign==-1 else False)
-        if df_sorted.shape[0] == 0:
+        table_sorted = table.sort_values(by=values_column, ascending=True if sign==-1 else False)
+        if table_sorted.shape[0] == 0:
             return ['none', -1]
-        extreme_sample = list(df_sorted['sample_identifier'])[0]
-        extreme_value = float(list(df_sorted[values_column])[0])
+        extreme_sample = list(table_sorted['sample_identifier'])[0]
+        extreme_value = float(list(table_sorted[values_column])[0])
         return [extreme_sample, extreme_value]
 
     def get_fov_lookup_dict(self):
@@ -423,4 +549,11 @@ class FrequencyAnalysisIntegrator:
 
     @staticmethod
     def sign(value):
+        """
+        :param value: Numeric value
+        :type value: float
+
+        :return: 1 or -1.
+        :rtype: int
+        """
         return 1 if value >=0 else -1

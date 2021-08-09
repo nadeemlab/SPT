@@ -34,6 +34,7 @@ class FrequencyAnalysisIntegrator:
         self.outcomes_file = dataset_settings.outcomes_file
         self.computational_design = computational_design
         self.frequency_tests = None
+        self._fov_lookup_dict = None
 
     def calculate(self):
         """
@@ -43,97 +44,91 @@ class FrequencyAnalysisIntegrator:
         frequency_tests = self.do_outcome_tests()
         if frequency_tests is not None:
             self.export_results(frequency_tests)
-        logger.info('Done exporting stats.')
+            logger.info('Done exporting stats.')
+        else:
+            logger.warning('Test results not generated.')
 
-    def do_outcome_tests(self):
-        cells = self.get_dataframe_from_db('cells')
-        phenotype_columns = [column for column in cells.columns if re.search('membership$', str(column))]
+    def get_fov_lookup_dict(self):
+        if self._fov_lookup_dict is None:
+            fov_lookup = self.get_dataframe_from_db('fov_lookup')
+            self._fov_lookup_dict = {
+                (row['sample_identifier'], row['fov_index']) : row['fov_string']
+                for i, row in fov_lookup.iterrows()
+            }
+        return self._fov_lookup_dict
 
+    def overlay_areas_on_masks(self, cells):
+        phenotype_columns = [
+            column for column in cells.columns if re.search('membership$', str(column))
+        ]
         for phenotype in phenotype_columns:
             mask = (cells[phenotype] == 1)
             cells.loc[mask, phenotype] = cells['cell_area']
+        return phenotype_columns
 
-        fov_lookup = self.get_dataframe_from_db('fov_lookup')
-        fov_lookup_dict = {(row['sample_identifier'], row['fov_index']) : row['fov_string'] for i, row in fov_lookup.iterrows()}
-        example_sample_identifier = list(cells['sample_identifier'])[0]
-        example_fov_index = list(cells['fov_index'])[0]
-        example_fov_string = fov_lookup_dict[(example_sample_identifier, example_fov_index)]
-        condition = (
-            (cells['sample_identifier'] == example_sample_identifier) &
-            (cells['fov_index'] == example_fov_index)
+    def sum_areas_over_compartments_per_phenotype(self, cells, phenotype_columns):
+        sum_columns = {
+            p : re.sub('membership$', 'cell area sum', p)
+            for p in phenotype_columns
+        }
+        area_aggregation = {
+            sum_column : pd.NamedAgg(column=phenotype_column, aggfunc='sum')
+            for phenotype_column, sum_column in sum_columns.items()
+        }
+        select_0 = lambda x: list(x)[0]
+        outcome_passthrough = {
+            'outcome_assignment' : pd.NamedAgg(column='outcome_assignment', aggfunc=select_0),
+        }
+        individual_compartments = ['sample_identifier', 'compartment']
+        area_sums = cells.groupby(individual_compartments, as_index=False).agg(
+            **area_aggregation,
+            **outcome_passthrough,
         )
-        logger.debug(
-            'Logging cells areas in sample %s FOV %s, i.e. "%s".',
-            example_sample_identifier,
-            example_fov_index,
-            example_fov_string,
-        )
-        sample_focused_cells = cells[condition].sort_values(by='cell_area')
-        logger.debug('(Transposed for readability:)\n%s', sample_focused_cells.transpose().to_string())
-        logger.debug('(Table has %s rows.)', sample_focused_cells.shape[0])
+        return [area_sums, sum_columns]
 
-        sum_columns = {p : re.sub('membership', 'cell area sum', p) for p in phenotype_columns}
-        summed_cell_areas = cells.groupby(['sample_identifier', 'fov_index', 'compartment'], as_index=False).agg(
-            **{
-                column : pd.NamedAgg(column=p, aggfunc='sum') for p, column in sum_columns.items()
-            },
-            **{
-                'outcome_assignment' : pd.NamedAgg(column='outcome_assignment', aggfunc=lambda x:list(x)[0]),
-            }
+    def do_outcome_tests(self):
+        cells = self.get_dataframe_from_db('cells')
+        phenotype_columns = self.overlay_areas_on_masks(cells)
+        self.log_cell_areas_one_fov(cells)
+
+        area_sums, sum_columns = self.sum_areas_over_compartments_per_phenotype(
+            cells,
+            phenotype_columns,
         )
 
-        compartmental_areas = cells.groupby(['sample_identifier', 'fov_index', 'compartment'], as_index=False).agg(
+        sample_combined_compartments = ['sample_identifier', 'compartment']
+        areas_all_phenotypes = cells.groupby(sample_combined_compartments, as_index=False).agg(
             **{ 'compartmental total cell area' : pd.NamedAgg(column='cell_area', aggfunc='sum') }
         )
-        compartmental_areas = {
-            (r['sample_identifier'], r['fov_index'], r['compartment']) : r['compartmental total cell area']
-            for i, r in compartmental_areas.iterrows()
+        areas_all_phenotypes_dict = {
+            (r['sample_identifier'], r['compartment']) : r['compartmental total cell area']
+            for i, r in areas_all_phenotypes.iterrows()
         }
-        logger.debug(
-            'Compartmental total areas:\n%s',
-            '\n'.join([fov_lookup_dict[(key[0], key[1])] + ' ' + str(key[2]) + ': ' + str(value) for key, value in compartmental_areas.items()]),
-        )
 
-        summed_cell_areas['compartmental total cell area'] = [
-            compartmental_areas[r['sample_identifier'], r['fov_index'], r['compartment']] for i, r in summed_cell_areas.iterrows()
+        self.log_normalization_factors(areas_all_phenotypes_dict)
+
+        area_sums['cell area all phenotypes'] = [
+            areas_all_phenotypes_dict[(r['sample_identifier'], r['compartment'])]
+            for i, r in area_sums.iterrows()
         ]
-        normalized_sum_columns = {p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns}
+        normalized_sum_columns = {
+            p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns
+        }
         for p in phenotype_columns:
-            summed_cell_areas[normalized_sum_columns[p]] = summed_cell_areas[sum_columns[p]] / summed_cell_areas['compartmental total cell area']
+            normalized = normalized_sum_columns[p]
+            summed = sum_columns[p]
+            area_sums[normalized] = area_sums[summed] / area_sums['cell area all phenotypes']
 
-        example_phenotype = list(normalized_sum_columns.values())[0]
-        example_compartment = list(cells['compartment'])[0]
-        logger.debug(
-            'Logging "%s", in %s.',
-            example_phenotype,
-            example_compartment,
-        )
-        example_areas = [
-            (fov_lookup_dict[(r['sample_identifier'], r['fov_index'])], r[example_phenotype])
-            for i, r in summed_cell_areas.iterrows() if r['compartment'] == example_compartment
-        ]
-        string_rep = '\n'.join([' '.join([str(elt) for elt in row]) for row in example_areas])
-        logger.debug('FOV (compartmentally-normalized) cell area fractions:\n%s', string_rep)
-
-        average_columns = {normalized_sum_columns[p] : re.sub('membership', 'normalized cell area average per FOV', p) for p in phenotype_columns}
-        averaged_cell_areas = summed_cell_areas.groupby(['sample_identifier', 'compartment'], as_index=False).agg(
-            **{
-                column : pd.NamedAgg(column=p, aggfunc='mean') for p, column in average_columns.items()
-            },
-            **{
-                'outcome_assignment' : pd.NamedAgg(column='outcome_assignment', aggfunc=lambda x:list(x)[0]),
-            }
-        )
+        self.log_normalized_areas(cells, area_sums, normalized_sum_columns)
 
         outcomes = sorted(list(set(cells['outcome_assignment'])))
         rows = []
         phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
 
-        test_case = 1
-        for compartment, df in averaged_cell_areas.groupby(['compartment']):
+        for compartment, df in area_sums.groupby(['compartment']):
             for outcome1, outcome2 in itertools.combinations(outcomes, 2):
                 for name in phenotype_names:
-                    column = name + ' normalized cell area average per FOV'
+                    column = name + ' normalized cell area sum'
                     df1 = df[df['outcome_assignment'] == outcome1][['sample_identifier', column]]
                     df2 = df[df['outcome_assignment'] == outcome2][['sample_identifier', column]]
                     values1 = list(df1[column])
@@ -146,9 +141,9 @@ class FrequencyAnalysisIntegrator:
                     mean_difference = np.mean(values2) - np.mean(values1)
                     multiplicative_effect = np.mean(values2) / np.mean(values1)
 
-                    sign = self.sign(mean_difference)
-                    extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, column)
-                    extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, column)
+                    sign = FrequencyAnalysisIntegrator.sign(mean_difference)
+                    extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(df1, -1*sign, column)
+                    extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(df2, sign, column)
 
                     rows.append({
                         'outcome 1' : outcome1,
@@ -172,9 +167,9 @@ class FrequencyAnalysisIntegrator:
                     median_difference = np.median(values2) - np.median(values1)
                     multiplicative_effect = np.median(values2) / np.median(values1)
 
-                    sign = self.sign(median_difference)
-                    extreme_sample1, extreme_value1 = self.get_extremum(df1, -1*sign, column)
-                    extreme_sample2, extreme_value2 = self.get_extremum(df2, sign, column)
+                    sign = FrequencyAnalysisIntegrator.sign(median_difference)
+                    extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(df1, -1*sign, column)
+                    extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(df2, sign, column)
 
                     rows.append({
                         'outcome 1' : outcome1,
@@ -194,8 +189,7 @@ class FrequencyAnalysisIntegrator:
                         'extreme value 2' : extreme_value2,
                     })
 
-                    logger.debug('Logging details in statistical test case %s.', test_case)
-                    test_case += 1
+                    logger.debug('Logging details in one statistical test case.')
                     logger.debug('Outcome pair: %s, %s', outcome1, outcome2)
                     logger.debug('Compartment: %s', compartment)
                     logger.debug('Phenotype: %s', name)
@@ -263,7 +257,8 @@ class FrequencyAnalysisIntegrator:
             renaming = {h1[i][0] : h2[i][0] for i in range(len(h1))}
         return renaming
 
-    def get_extremum(self, df, sign, column):
+    @staticmethod
+    def get_extremum(df, sign, column):
         """
         Args:
             df (pandas.DataFrame):
@@ -287,5 +282,60 @@ class FrequencyAnalysisIntegrator:
         extreme_value = float(list(df_sorted[values_column])[0])
         return [extreme_sample, extreme_value]
 
-    def sign(self, value):
+    @staticmethod
+    def sign(value):
         return 1 if value >=0 else -1
+
+    def log_cell_areas_one_fov(self, cells):
+        fov_lookup_dict = self.get_fov_lookup_dict()
+        example_sample_identifier = list(cells['sample_identifier'])[0]
+        example_fov_index = list(cells['fov_index'])[0]
+        example_fov_string = fov_lookup_dict[(example_sample_identifier, example_fov_index)]
+        condition = (
+            (cells['sample_identifier'] == example_sample_identifier) &
+            (cells['fov_index'] == example_fov_index)
+        )
+        logger.debug(
+            'Logging cells areas in sample %s FOV %s, i.e. "%s".',
+            example_sample_identifier,
+            example_fov_index,
+            example_fov_string,
+        )
+        sample_focused_cells = cells[condition].sort_values(by='cell_area')
+        logger.debug(
+            '(Transposed for readability:)\n%s',
+            sample_focused_cells.transpose().to_string(),
+        )
+        logger.debug('(Table has %s rows.)', sample_focused_cells.shape[0])
+
+    def log_normalization_factors(self, areas_all_phenotypes_dict):
+        logger.debug(
+            'Compartmental areas, total over all phenotypes and FOVs (sample fixed):\n%s',
+            '\n'.join([
+                ''.join([
+                    'Sample ID: ',
+                    key[0],
+                    ', ',
+                    'Compartment: ',
+                    key[1],
+                    ', ',
+                    'Cell area: ',
+                    str(value),
+                ]) for key, value in areas_all_phenotypes_dict.items()
+            ]),
+        )
+
+    def log_normalized_areas(self, cells, area_sums, normalized_sum_columns):
+        example_phenotype = list(normalized_sum_columns.values())[0]
+        example_compartment = list(cells['compartment'])[0]
+        logger.debug(
+            'Logging "%s", in %s.',
+            example_phenotype,
+            example_compartment,
+        )
+        example_areas = [
+            (r['sample_identifier'], r['compartment'], r[example_phenotype])
+            for i, r in area_sums.iterrows() if r['compartment'] == example_compartment
+        ]
+        string_rep = '\n'.join([' '.join([str(elt) for elt in row]) for row in example_areas])
+        logger.debug('Normalized cell area fractions:\n%s', string_rep)

@@ -86,6 +86,98 @@ class FrequencyAnalysisIntegrator:
         )
         return [area_sums, sum_columns]
 
+    def overlay_area_total_all_phenotypes(self, cells, area_sums):
+        sample_combined_compartments = ['sample_identifier', 'compartment']
+        areas_all_phenotypes = cells.groupby(sample_combined_compartments, as_index=False).agg(
+            **{ 'compartmental total cell area' : pd.NamedAgg(column='cell_area', aggfunc='sum') }
+        )
+        areas_all_phenotypes_dict = {
+            (r['sample_identifier'], r['compartment']) : r['compartmental total cell area']
+            for i, r in areas_all_phenotypes.iterrows()
+        }
+        area_sums['cell area all phenotypes'] = [
+            areas_all_phenotypes_dict[(r['sample_identifier'], r['compartment'])]
+            for i, r in area_sums.iterrows()
+        ]
+        return areas_all_phenotypes_dict
+
+    def add_normalized_columns(self, area_sums, phenotype_columns, sum_columns):
+        normalized_sum_columns = {
+            p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns
+        }
+        for p in phenotype_columns:
+            normalized = normalized_sum_columns[p]
+            summed = sum_columns[p]
+            area_sums[normalized] = area_sums[summed] / area_sums['cell area all phenotypes']
+        return normalized_sum_columns
+
+    def get_test_result_row(self,
+        compartment,
+        df,
+        outcome1,
+        outcome2,
+        phenotype_name,
+        test: str=None,
+    ):
+        column = phenotype_name + ' normalized cell area sum'
+        df1 = df[df['outcome_assignment'] == outcome1][['sample_identifier', column]]
+        df2 = df[df['outcome_assignment'] == outcome2][['sample_identifier', column]]
+        values1 = list(df1[column])
+        values2 = list(df2[column])
+        if np.var(values1) == 0 or np.var(values2) == 0:
+            return [None, df1, df2]
+        test_tested_functions = {
+            't-test' : (ttest_ind, np.mean),
+            'Kruskal-Wallis' : (kruskal, np.median),
+        }
+        test_function = test_tested_functions[test][0]
+        tested_function = test_tested_functions[test][1]
+        if test == 't-test':
+            s, p = test_function(values1, values2, equal_var=False, nan_policy='omit')
+        if test == 'Kruskal-Wallis':
+            s, p = test_function(values1, values2, nan_policy='omit')
+        difference = tested_function(values2) - tested_function(values1)
+        if tested_function(values1) != 0:
+            multiplicative_effect = tested_function(values2) / tested_function(values1) # check zero
+        else:
+            multiplicative_effect = 'NaN'
+        sign = FrequencyAnalysisIntegrator.sign(difference)
+        extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(df1, -1*sign, column)
+        extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(df2, sign, column)
+        row = {
+            'outcome 1' : outcome1,
+            'outcome 2' : outcome2,
+            'phenotype' : phenotype_name,
+            'compartment' : compartment,
+            'tested value 1' : tested_function(values1),
+            'tested value 2' : tested_function(values2),
+            'test' : test,
+            'p-value' : p,
+            'absolute effect' : abs(difference),
+            'multiplicative effect' : str(multiplicative_effect),
+            'effect sign' : sign,
+            'p-value < 0.01' : p < 0.01,
+            'extreme sample 1' : extreme_sample1,
+            'extreme sample 2' : extreme_sample2,
+            'extreme value 1' : extreme_value1,
+            'extreme value 2' : extreme_value2,
+        }
+        return [row, df1, df2]
+
+    def log_test_input(self, row, df1, df2):
+        phenotype_name = row['phenotype']
+        phenotype_column = phenotype_name + ' normalized cell area sum'
+        logger.debug('Logging details in one statistical test case.')
+        logger.debug('Outcome pair: %s, %s', row['outcome 1'], row['outcome 2'])
+        logger.debug('Compartment: %s', row['compartment'])
+        logger.debug('Phenotype: %s', row['phenotype'])
+        dict1 = {row['sample_identifier'] : row[phenotype_column] for i, row in df1.iterrows()}
+        logger.debug('Cell areas summed over FOVs and normalized (1): %s', dict1)
+        dict2 = {row['sample_identifier'] : row[phenotype_column] for i, row in df2.iterrows()}
+        logger.debug('Cell areas summed over FOVs and normalized (2): %s', dict2)
+        logger.debug('Number of values 1: %s', len(dict1))
+        logger.debug('Number of values 2: %s', len(dict2))
+
     def do_outcome_tests(self):
         cells = self.get_dataframe_from_db('cells')
         phenotype_columns = self.overlay_areas_on_masks(cells)
@@ -95,110 +187,43 @@ class FrequencyAnalysisIntegrator:
             cells,
             phenotype_columns,
         )
-
-        sample_combined_compartments = ['sample_identifier', 'compartment']
-        areas_all_phenotypes = cells.groupby(sample_combined_compartments, as_index=False).agg(
-            **{ 'compartmental total cell area' : pd.NamedAgg(column='cell_area', aggfunc='sum') }
-        )
-        areas_all_phenotypes_dict = {
-            (r['sample_identifier'], r['compartment']) : r['compartmental total cell area']
-            for i, r in areas_all_phenotypes.iterrows()
-        }
-
+        areas_all_phenotypes_dict = self.overlay_area_total_all_phenotypes(cells, area_sums)
         self.log_normalization_factors(areas_all_phenotypes_dict)
 
-        area_sums['cell area all phenotypes'] = [
-            areas_all_phenotypes_dict[(r['sample_identifier'], r['compartment'])]
-            for i, r in area_sums.iterrows()
-        ]
-        normalized_sum_columns = {
-            p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns
-        }
-        for p in phenotype_columns:
-            normalized = normalized_sum_columns[p]
-            summed = sum_columns[p]
-            area_sums[normalized] = area_sums[summed] / area_sums['cell area all phenotypes']
-
+        normalized_sum_columns = self.add_normalized_columns(area_sums, phenotype_columns, sum_columns)
         self.log_normalized_areas(cells, area_sums, normalized_sum_columns)
 
         outcomes = sorted(list(set(cells['outcome_assignment'])))
-        rows = []
         phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
 
+        rows = []
         for compartment, df in area_sums.groupby(['compartment']):
             for outcome1, outcome2 in itertools.combinations(outcomes, 2):
-                for name in phenotype_names:
-                    column = name + ' normalized cell area sum'
-                    df1 = df[df['outcome_assignment'] == outcome1][['sample_identifier', column]]
-                    df2 = df[df['outcome_assignment'] == outcome2][['sample_identifier', column]]
-                    values1 = list(df1[column])
-                    values2 = list(df2[column])
+                for phenotype_name in phenotype_names:
+                    row, df1, df2 = self.get_test_result_row(
+                        compartment,
+                        df,
+                        outcome1,
+                        outcome2,
+                        phenotype_name,
+                        test='t-test',
+                    )
+                    if not row is None:
+                        rows.append(row)
 
-                    if np.var(values1) == 0 or np.var(values2) == 0:
-                        continue
+                    row, df1, df2 = self.get_test_result_row(
+                        compartment,
+                        df,
+                        outcome1,
+                        outcome2,
+                        phenotype_name,
+                        test='Kruskal-Wallis',
+                    )
+                    if not row is None:
+                        rows.append(row)
 
-                    s, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
-                    mean_difference = np.mean(values2) - np.mean(values1)
-                    multiplicative_effect = np.mean(values2) / np.mean(values1)
-
-                    sign = FrequencyAnalysisIntegrator.sign(mean_difference)
-                    extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(df1, -1*sign, column)
-                    extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(df2, sign, column)
-
-                    rows.append({
-                        'outcome 1' : outcome1,
-                        'outcome 2' : outcome2,
-                        'phenotype' : name,
-                        'compartment' : compartment,
-                        'tested value 1' : np.mean(values1),
-                        'tested value 2' : np.mean(values2),
-                        'test' : 't-test',
-                        'p-value' : p_ttest,
-                        'absolute effect' : abs(mean_difference),
-                        'effect sign' : sign,
-                        'p-value < 0.01' : p_ttest < 0.01,
-                        'extreme sample 1' : extreme_sample1,
-                        'extreme sample 2' : extreme_sample2,
-                        'extreme value 1' : extreme_value1,
-                        'extreme value 2' : extreme_value2,
-                    })
-
-                    s, p_kruskal = kruskal(values1, values2, nan_policy='omit')
-                    median_difference = np.median(values2) - np.median(values1)
-                    multiplicative_effect = np.median(values2) / np.median(values1)
-
-                    sign = FrequencyAnalysisIntegrator.sign(median_difference)
-                    extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(df1, -1*sign, column)
-                    extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(df2, sign, column)
-
-                    rows.append({
-                        'outcome 1' : outcome1,
-                        'outcome 2' : outcome2,
-                        'phenotype' : name,
-                        'compartment' : compartment,
-                        'tested value 1' : np.median(values1),
-                        'tested value 2' : np.median(values2),
-                        'test' : 'Kruskal-Wallis',
-                        'p-value' : p_kruskal,
-                        'absolute effect' : abs(median_difference),
-                        'effect sign' : sign,
-                        'p-value < 0.01' : p_kruskal < 0.01,
-                        'extreme sample 1' : extreme_sample1,
-                        'extreme sample 2' : extreme_sample2,
-                        'extreme value 1' : extreme_value1,
-                        'extreme value 2' : extreme_value2,
-                    })
-
-                    logger.debug('Logging details in one statistical test case.')
-                    logger.debug('Outcome pair: %s, %s', outcome1, outcome2)
-                    logger.debug('Compartment: %s', compartment)
-                    logger.debug('Phenotype: %s', name)
-                    dict1 = {row['sample_identifier'] : row[column] for i, row in df1.iterrows()}
-                    logger.debug('Normalized cell areas averaged over FOVs 1: %s', dict1)
-                    dict2 = {row['sample_identifier'] : row[column] for i, row in df2.iterrows()}
-                    logger.debug('Normalized cell areas averaged over FOVs 2: %s', dict2)
-                    logger.debug('Number of values 1: %s', len(dict1))
-                    logger.debug('Number of values 2: %s', len(dict2))
+                    if not row is None:
+                        self.log_test_input(row, df1, df2)
 
         if len(rows) == 0:
             logger.info('No non-trivial tests to perform. Probably too few values.')

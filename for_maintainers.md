@@ -97,6 +97,7 @@ cd tests/
 ./test_diffusion_pipeline.sh
 ./test_proximity_pipeline.sh
 ./test_front_proximity_pipeline.sh
+./test_frequency_pipeline.sh
 ```
 
 

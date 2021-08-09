@@ -106,10 +106,14 @@ singularity exec \
         with open(lsf_job_filename, 'w') as file:
             file.write(bsub_job)
 
+        sh_command = ' '.join([
+            cli_call,
+            re.sub('{{log_filename}}', log_filename, '> {{log_filename}} 2>&1')
+        ])
         sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
         self.sh_job_filenames.append(sh_job_filename)
         with open(sh_job_filename, 'w') as file:
-            file.write(cli_call)
+            file.write(sh_command)
 
         chmod(sh_job_filename, os.stat(sh_job_filename).st_mode | stat.S_IEXEC)
 

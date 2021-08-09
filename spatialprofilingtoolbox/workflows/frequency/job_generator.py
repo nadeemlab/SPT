@@ -35,7 +35,7 @@ singularity exec \
  --bind {{input_files_path}}:{{input_files_path}}\
  {{sif_file}} \
  {{cli_call}} \
- > {{log_filename}} 2>&1
+ &> {{log_filename}} 
 '''
     cli_call_template = '''spt-frequency-analysis \
 '''
@@ -108,7 +108,7 @@ singularity exec \
 
         sh_command = ' '.join([
             cli_call,
-            re.sub('{{log_filename}}', log_filename, '> {{log_filename}} 2>&1')
+            re.sub('{{log_filename}}', log_filename, ' &> {{log_filename}}\n')
         ])
         sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
         self.sh_job_filenames.append(sh_job_filename)

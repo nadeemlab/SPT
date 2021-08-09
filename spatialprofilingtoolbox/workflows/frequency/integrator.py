@@ -121,6 +121,17 @@ class FrequencyAnalysisIntegrator:
         return frequency_tests
 
     def overlay_areas_on_masks(self, cells):
+        """
+        Copies the "cell_area" column over the phenotype membership mask columns.
+
+        :param cells: The cells table with phenotype membership 0/1 masks with column
+            names of the form "<phenotype name> membership", as well as column
+            "cell_area".
+        :type cells: pandas.DataFrame
+
+        :return: ``phenotype_columns`` byproduct, list of membership columns.
+        :rtype: list
+        """
         phenotype_columns = [
             column for column in cells.columns if re.search('membership$', str(column))
         ]
@@ -130,6 +141,27 @@ class FrequencyAnalysisIntegrator:
         return phenotype_columns
 
     def sum_areas_over_compartments_per_phenotype(self, cells, phenotype_columns):
+        """
+        Sums cell areas over all FOVs for a given named compartment type and phenotype,
+        in a given slide/sample.
+
+        :param cells: The cells table with phenotype membership area-weighted masks,
+            with column names of the form "<phenotype name> membership", as well as
+            columns:
+
+            - "sample_identifier"
+            - "compartment"
+            - "outcome_assignment"
+        :type cells: pandas.DataFrame
+
+        :return:
+            - ``area_sums``. Aggregation of the cells table, with new columns given by
+              ``sum_columns``.
+            - ``sum_columns``. The new columns dictionary, in terms of original columns.
+              The values of this dictionary have the form
+              "<phenotype name> cell area sum".
+        :rtype: pandas.Dataframe, dict
+        """
         sum_columns = {
             p : re.sub('membership$', 'cell area sum', p)
             for p in phenotype_columns
@@ -150,6 +182,22 @@ class FrequencyAnalysisIntegrator:
         return [area_sums, sum_columns]
 
     def overlay_area_total_all_phenotypes(self, cells, area_sums):
+        """
+        Calculates total cell areas (independent of phenotypes) from ``cells``, and adds
+        this data as a new column in-place into the ``area_sums`` table. The new column
+        is "compartmental total cell area". 
+
+        :param cells: The cells table.
+        :type cells: pandas.DataFrame
+
+        :param area_sums: The ``area_sums`` table. See
+            :py:meth:`sum_areas_over_compartments_per_phenotype`.
+        :type area_sums: pandas.DataFrame
+
+        :return: ``areas_all_phenotypes_dict``. Dictionary providing the newly-computed
+            area values as a function of the pair (sample identifier, compartment).
+        :rtype: dict
+        """
         sample_combined_compartments = ['sample_identifier', 'compartment']
         areas_all_phenotypes = cells.groupby(sample_combined_compartments, as_index=False).agg(
             **{ 'compartmental total cell area' : pd.NamedAgg(column='cell_area', aggfunc='sum') }
@@ -165,6 +213,24 @@ class FrequencyAnalysisIntegrator:
         return areas_all_phenotypes_dict
 
     def add_normalized_columns(self, area_sums, phenotype_columns, sum_columns):
+        """
+        :param area_sums: The table with cell area sums, after
+            :py:meth:`overlay_area_total_all_phenotypes` has added the
+            phenotype-agnostic normalization factor.
+        :type area_sums: pandas.DataFrame
+
+        :param phenotype_columns: The names of the phenotype membership mask columns.
+        :type phenotype_columns: list
+
+        :param sum_columns: Mapping from phenotype names to corresponding
+            summed-cell-area columns.
+        :type sum_columns: dict
+
+        :return: ``normalized_sum_columns``. Byproduct, dictionary providing mapping
+            from (the values of) ``sum_columns`` to the column name of the corresponding
+            normalized version.
+        :rtype: dict
+        """
         normalized_sum_columns = {
             p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns
         }
@@ -182,6 +248,38 @@ class FrequencyAnalysisIntegrator:
         phenotype_name,
         test: str=None,
     ):
+        """
+        :param compartment: The compartment/region name in which to consider cells.
+        :type compartment: str
+
+        :param df: The table with normalized summed cell areas/fractions,
+            already aggregated over cells in each sample/compartment. Must be already
+            restricted to ``compartment``. The main column in which numerical data must
+            be found is of the form "<phenotype name> normalized cell area sum".
+        :type df: pandas.DataFrame
+
+        :param outcome1: Outome label.
+        :type outcome1: str
+
+        :param outcome2: The other outcome label.
+        :type outcome2: str
+
+        :param phenotype_name: The name of the (composite) phenotype to consider.
+        :type phenotype_name: str
+
+        :param test: Either "t-test" or "Kruskal-Wallis".
+        :type test: str
+
+        :return:
+            - ``row``. Dictionary providing contextual information (compartment,
+              phenotype, outcomes, test name), as well as the test result p-values,
+              effect sizes, and extreme-sample examples.
+            - ``df1``. The phenotype- and compartment-restricted abbreviated area sums
+              table, restricted also the outcome 1. Provided for convenience/inspection.
+            - ``df2``. The phenotype- and compartment-restricted abbreviated area sums
+              table, restricted also the outcome 2. Provided for convenience/inspection.
+        :rtype: dict, pandas.DataFrame, pandas.DataFrame
+        """
         column = phenotype_name + ' normalized cell area sum'
         df1 = df[df['outcome_assignment'] == outcome1][['sample_identifier', column]]
         df2 = df[df['outcome_assignment'] == outcome2][['sample_identifier', column]]
@@ -232,9 +330,9 @@ class FrequencyAnalysisIntegrator:
         Writes the result of the statistical tests to file, in order of statistical
         significance.
 
-        Args:
-            frequency_tests (pandas.DataFrame):
-                Tabular form of test results.
+        :param frequency_tests: Table of test results.
+            See :py:meth:`get_test_result_row`. 
+        :type frequency_tests: pandas.DataFrame
         """
         frequency_tests.to_csv(join(self.output_path, self.computational_design.get_stats_tests_file()), index=False)
 
@@ -242,13 +340,12 @@ class FrequencyAnalysisIntegrator:
         """
         Retrieves whole dataframe of a given table from the pipeline-specific database.
 
-        Args:
-            table_name (str):
-                Name of table in database furnished by computational design.
+        :param table_name: Name of a table in the database described in the
+            computational design object.
+        :type table_name: str
 
-        Returns:
-            pandas.DataFrame:
-                The whole table, in dataframe form.
+        :return: The whole table, in dataframe form.
+        :rtype: pandas.DataFrame
         """
         if table_name == 'cells':
             columns = ['id'] + [entry[0] for entry in self.computational_design.get_cells_header()]
@@ -268,6 +365,15 @@ class FrequencyAnalysisIntegrator:
         return df
 
     def get_column_renaming(self, table_name):
+        """
+        :param table_name: Name of a table in the database described in the
+            computational design object.
+        :type table_name: str
+
+        :return: ``renaming``. A dictionary that provided a renaming of column names
+            from SQL-appropriate escaped versions to their more human-readable versions.
+        :rtype: dict
+        """
         renaming = {}
         if table_name == 'cells':
             h1 = self.computational_design.get_cells_header_variable_portion(style='sql')
@@ -278,19 +384,20 @@ class FrequencyAnalysisIntegrator:
     @staticmethod
     def get_extremum(df, sign, column):
         """
-        Args:
-            df (pandas.DataFrame):
-                Dataframe with sample-level (i.e. summarized) transition probability
-                values, summarized according to 'statistic'.
-            sign (int):
-                Either 1 or -1. Whether to return the extremely large value (in case of
-                1) or the extremely small value (in case of -1).
-            column (str):
-                To consider.
+        :param df: Table with sample-level (i.e. summarized) feature values.
+        :type df: pandas.DataFrame
 
-        Returns:
-            list:
-                A pair, the extreme sample ID string and the extreme value.
+        :param sign: Either 1 or -1. Whether to return the extremely large value (in
+            case 1) or the extremely small value (in case -1).
+        :type sign: int
+
+        :param column: The name of the column with numerical data to consider.
+        :type column: str
+
+        :return:
+            - ``extreme_sample``. Sample identifier of the extreme sample.
+            - ``extreme_value``. The numeric extreme value.
+        :rtype: str, float
         """
         values_column = column
         df_sorted = df.sort_values(by=values_column, ascending=True if sign==-1 else False)
@@ -301,6 +408,11 @@ class FrequencyAnalysisIntegrator:
         return [extreme_sample, extreme_value]
 
     def get_fov_lookup_dict(self):
+        """
+        :return: The lookup between pairs (sample identifier, fov index integer) and the
+            string descriptor of the FOV.
+        :rtype: dict
+        """
         if self._fov_lookup_dict is None:
             fov_lookup = self.get_dataframe_from_db('fov_lookup')
             self._fov_lookup_dict = {

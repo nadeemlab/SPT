@@ -4,6 +4,11 @@ logger = colorized_logger(__name__)
 
 
 class FrequencyDataLogger:
+    """
+    These functions provide detailed data-specific logging for the cell phenotype
+    frequency workflow. The log messages are intended to aid in tracking data value
+    provenance in particular runs.
+    """
     @staticmethod
     def log_cell_areas_one_fov(cells, fov_lookup_dict):
         example_sample_identifier = list(cells['sample_identifier'])[0]

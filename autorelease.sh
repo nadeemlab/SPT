@@ -8,7 +8,7 @@ yellow="\e[0;33m"
 red="\e[0;31m"
 blue="\e[0;34m"
 reset="\e[0m"
-source_note_color="\e[34;40m"
+source_note_color="\e[36;40m"
 
 script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 

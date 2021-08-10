@@ -39,6 +39,8 @@ The real documentation is built server-side on Read the Docs' servers, triggered
 
 Semi-automated release
 ----------------------
+![autorelease illustration](autorelease_illustration.png)
+
 A proper Continuous Integration / Continuous Deployment (CICD) system like Travis CI or CircleCI may be overkill for this package at this time. Instead, the `autorelease.sh` script is provided to assist with the coordination and basic checks involved with releasing to PyPI and Read the Docs.
 
 It checks that:

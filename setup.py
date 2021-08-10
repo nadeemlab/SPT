@@ -8,7 +8,7 @@ def get_file_contents(filename):
         contents = file.read()
     return contents
 
-long_description = """[Documentation](https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html)
+long_description = """See the [user documentation](https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html).
 """
 requirements = [
     'cycler==0.10.0',
@@ -38,6 +38,7 @@ setuptools.setup(
     author_email='mathewj2@mskcc.org',
     description='Toolbox for spatial analysis of pathology images.',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     packages=[
         'spatialprofilingtoolbox',
         'spatialprofilingtoolbox.dataset_designs',

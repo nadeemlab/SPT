@@ -204,6 +204,12 @@ def get_config_parameters_from_cli():
         required=True,
         help='Whether to skip calculation of input file checksums in some cases.',
     )
+    parser.add_argument('--balanced',
+        dest='balanced',
+        type=str,
+        required=True,
+        help='Whether to do balanced or unbalanced workflow.',
+    )
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
@@ -226,6 +232,7 @@ def get_config_parameters_from_cli():
     complex_phenotypes_file = args.complex_phenotypes_file
     excluded_hostname = args.excluded_hostname
     skip_integrity_check = True if args.skip_integrity_check == 'True' else False
+    balanced = True if args.balanced == 'True' else False
 
     parameters = {
         'workflow' : workflow,
@@ -244,6 +251,8 @@ def get_config_parameters_from_cli():
     }
     if skip_integrity_check:
         parameters['skip_integrity_check'] = True
+    if balanced:
+        parameters['balanced'] = True
     return parameters
 
 def get_config_parameters():

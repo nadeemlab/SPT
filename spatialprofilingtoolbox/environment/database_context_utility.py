@@ -66,12 +66,12 @@ class WaitingDatabaseContextManager:
                 if commit:
                     self.connection.commit()
                 break
-            except sqlite3.OperationalError as e:
-                if str(e) == 'database is locked':
+            except sqlite3.OperationalError as exception:
+                if str(exception) == 'database is locked':
                     logger.debug('Database %s was locked, waiting %s seconds to retry: %s', self.uri, self.seconds, cmd)
                     time.sleep(self.seconds)
                 else:
-                    raise e
+                    raise exception
         return result
 
     def commit(self):
@@ -82,9 +82,9 @@ class WaitingDatabaseContextManager:
             try:
                 self.connection.commit()
                 break
-            except sqlite3.OperationalError as e:
-                if str(e) == 'database is locked':
+            except sqlite3.OperationalError as exception:
+                if str(exception) == 'database is locked':
                     logger.debug('Database %s was locked, waiting %s seconds to retry committing.', self.uri, self.seconds)
                     time.sleep(self.seconds)
                 else:
-                    raise e
+                    raise exception

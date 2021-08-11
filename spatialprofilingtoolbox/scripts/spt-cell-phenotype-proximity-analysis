@@ -36,6 +36,9 @@ if __name__=='__main__':
     kwargs['output_path'] = parameters['output_path']
     kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
     kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
+    if 'balanced' in parameters:
+        if parameters['balanced'] == 'True':
+            kwargs['balanced'] = True
 
     a = spt.get_analyzer(
         workflow='Multiplexed IF phenotype proximity',

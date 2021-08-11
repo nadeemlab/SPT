@@ -80,6 +80,25 @@ def get_integrator(workflow=None, **kwargs):
         DatasetDesign = get_dataset_design(workflow = workflow)
         ComputationalDesign = get_computational_design(workflow = workflow)
         Integrator = workflows[workflow].integrator
+        if workflow == 'Multiplexed IF phenotype proximity':
+            if 'balanced' in kwargs:
+                balanced = kwargs['balanced']
+            else:
+                balanced = False
+            computational_design = ComputationalDesign(
+                dataset_design = DatasetDesign(
+                    kwargs['elementary_phenotypes_file'],
+                ),
+                complex_phenotypes_file = kwargs['complex_phenotypes_file'],
+                balanced = balanced,
+            )
+        else:
+            computational_design = ComputationalDesign(
+                dataset_design = DatasetDesign(
+                    kwargs['elementary_phenotypes_file'],
+                ),
+                complex_phenotypes_file = kwargs['complex_phenotypes_file'],
+            )
         return Integrator(
             jobs_paths = JobsPaths(
                 kwargs['job_working_directory'],
@@ -93,12 +112,7 @@ def get_integrator(workflow=None, **kwargs):
                 kwargs['file_manifest_file'],
                 kwargs['outcomes_file'],
             ),
-            computational_design = ComputationalDesign(
-                dataset_design = DatasetDesign(
-                    kwargs['elementary_phenotypes_file'],
-                ),
-                complex_phenotypes_file = kwargs['complex_phenotypes_file'],
-            ),
+            computational_design = computational_design,
         )
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))

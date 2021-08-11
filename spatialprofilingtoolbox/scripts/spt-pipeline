@@ -165,6 +165,21 @@ then
     printf "$cr$yellow$prompt_str$reset$green$COMPLEX_PHENOTYPES_FILE$reset\n"
 fi
 
+BALANCED=""
+prompt_str="Balanced/symmetric analysis with respect to phenotype pairs? (Y/n): "
+printf "$yellow$prompt_str$reset"
+while [[ "$BALANCED" = "" ]];
+do
+    read -e BALANCED
+done
+printf "$cr$yellow$prompt_str$reset$green$BALANCED$reset\n"
+if [[ "$BALANCED" == "" ]]; then
+    BALANCED="False"
+fi
+if [[ ( "$BALANCED" == "Y" ) || ( "$BALANCED" == "y" ) ]]; then
+    BALANCED="True"
+fi
+
 RUN_PLATFORM=""
 prompt_str="Select runtime platform: (""$reset$cyan""lsf""$reset$magenta  local""$reset$yellow""): "
 while [[ "$RUN_PLATFORM" != "lsf" && "$RUN_PLATFORM" != "local" ]];
@@ -269,6 +284,7 @@ spt-generate-jobs \
     --complex-phenotypes-file $COMPLEX_PHENOTYPES_FILE \
     --excluded-hostname $EXCLUDED_HOSTNAME \
     --skip-integrity-check $SKIP_INTEGRITY_CHECK \
+    --balanced $BALANCED \
 
 chmod +x *.sh
 

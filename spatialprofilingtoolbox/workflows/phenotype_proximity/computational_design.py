@@ -40,13 +40,15 @@ class PhenotypeProximityDesign(ComputationalDesign):
     def get_database_uri():
         return 'phenotype_proximity.db'
 
-    @staticmethod
-    def get_stats_tests_file():
+    def get_stats_tests_file(self):
         """
         :return: The filename to use when writing the statistical test results.
         :rtype: str
         """
-        return 'phenotype_2_phenotype_proximity_tests.csv'
+        if self.balanced:
+            return 'phenotype_2_phenotype_balanced_proximity_tests.csv'
+        else:
+            return 'phenotype_2_phenotype_proximity_tests.csv'
 
     @staticmethod
     def get_cell_pair_counts_table_header():
@@ -103,3 +105,11 @@ class PhenotypeProximityDesign(ComputationalDesign):
         :rtype: list
         """
         return sorted(list(self.get_all_phenotype_signatures(by_name=True).keys()))
+
+    @staticmethod
+    def get_primary_output_feature_name():
+        """
+        :return: The name of the main numerical feature produced by the jobs.
+        :rtype: str
+        """
+        return 'cell pair count per FOV'

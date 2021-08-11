@@ -44,6 +44,10 @@ class PhenotypeProximityAnalysisIntegrator:
         """
         Performs statistical comparison tests and writes results to file.
         """
+        logger.info(
+            'Doing %s phenotype proximity workflow integration phase.',
+            'balanced' if self.computational_design.balanced else 'unbalanced',
+        )
         cell_proximity_tests = self.do_outcome_tests()
         if cell_proximity_tests is not None:
             self.export_results(cell_proximity_tests)
@@ -56,12 +60,12 @@ class PhenotypeProximityAnalysisIntegrator:
 
     def do_outcome_tests(self):
         """
-        For each
+        For each:
 
-          - pair of outcome values
-          - compartment
-          - pair of phenotypes
-          - radius limit value
+        - pair of outcome values
+        - compartment
+        - pair of phenotypes
+        - radius limit value
 
         calculates p-values and effect size for statistical testing for difference of
         distributions, one for each outcome value, of normalized cell pair counts the
@@ -90,8 +94,9 @@ class PhenotypeProximityAnalysisIntegrator:
             cases = set(grouped1.indices.keys()).intersection(set(grouped2.indices.keys()))
             for case in cases:
                 [source_phenotype, target_phenotype, compartment, radius] = case
-                values1 = grouped1.get_group(case)['cell pair count per FOV']
-                values2 = grouped2.get_group(case)['cell pair count per FOV']
+                feature = self.computational_design.get_primary_output_feature_name()
+                values1 = grouped1.get_group(case)[feature]
+                values2 = grouped2.get_group(case)[feature]
                 if len(values1) < 3 or len(values2) < 3:
                     continue
                 if np.var(values1) == 0 or np.var(values2) == 0:

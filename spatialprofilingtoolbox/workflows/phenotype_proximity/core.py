@@ -78,6 +78,11 @@ class PhenotypeProximityCalculator:
 
         Aggregates and writes counts to database.
         """
+        logger.info(
+            'Started core calculation, %s, for %s.',
+            'balanced' if self.computational_design.balanced else 'unbalanced',
+            self.input_filename,
+        )
         cells = self.create_cell_tables()
         cell_pairs = self.create_cell_pairs_tables(cells)
         phenotype_indices, compartment_indices = self.precalculate_masks(cells)
@@ -317,6 +322,13 @@ class PhenotypeProximityCalculator:
 
         return [phenotype_indices, compartment_indices]
 
+    def get_considered_phenotype_pairs(self):
+        phenotypes = self.computational_design.get_all_phenotype_names()
+        if self.computational_design.balanced:
+            return list(combinations(phenotypes, 2))
+        else:
+            return [(p1, p2) for p1 in phenotypes for p2 in phenotypes]
+
     def do_aggregation_counting(self,
         cell_pairs,
         phenotype_indices,
@@ -335,8 +347,7 @@ class PhenotypeProximityCalculator:
         :return: Table of radius-limited counts.
         :rtype: pandas.DataFrame
         """
-        phenotypes = self.computational_design.get_all_phenotype_names()
-        combinations2 = list(combinations(phenotypes, 2))
+        combinations2 = self.get_considered_phenotype_pairs()
         logger.debug(
             'Creating radius-limited data sets for %s phenotype pairs.',
             len(combinations2),
@@ -359,7 +370,7 @@ class PhenotypeProximityCalculator:
             'target phenotype',
             'compartment',
             'distance limit in pixels',
-            'cell pair count per FOV',
+            self.computational_design.get_primary_output_feature_name(),
         ]
         radius_limited_counts = pd.DataFrame(
             PhenotypeProximityCalculator.flatten_lists(results),
@@ -393,11 +404,16 @@ class PhenotypeProximityCalculator:
         :return: Table of radius-limited counts for just this one phenotype pair.
         :rtype: pandas.DataFrame
         """
-        source, target = sorted(list(pair))
+        balanced = self.computational_design.balanced
+        if balanced:
+            source, target = sorted(list(pair))
+        else:
+            source, target = [pair[0], pair[1]]
         records = []
         for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
             for radius in PhenotypeProximityCalculator.get_radii_of_interest():
                 count = 0
+                source_count = 0
                 area = 0
                 for fov_index, distance_matrix in cell_pairs.items():
                     rows = phenotype_indices[fov_index][source]
@@ -412,6 +428,7 @@ class PhenotypeProximityCalculator:
                     if np.isnan(additional):
                         continue
                     count += additional
+                    source_count += sum(rows)
 
                     fov = self.fov_lookup[fov_index]
                     if compartment == 'all':
@@ -437,7 +454,19 @@ class PhenotypeProximityCalculator:
                         compartment,
                         self.sample_identifier,
                     )
+                elif source_count == 0:
+                    logger.warning(
+                        'No cells of "source" phenotype %s in %s, %s, within %s .',
+                        source,
+                        self.sample_identifier,
+                        compartment,
+                        radius,
+                    )
                 else:
+                    if balanced:
+                        feature_value = count / area
+                    else:
+                        feature_value = ( count / area ) / (source_count) # See GitHub issue #20
                     records.append([
                         self.sample_identifier,
                         self.outcome,
@@ -445,7 +474,7 @@ class PhenotypeProximityCalculator:
                         target,
                         compartment,
                         radius,
-                        count / area,
+                        feature_value,
                     ])
         return records
 
@@ -467,7 +496,7 @@ class PhenotypeProximityCalculator:
                     '"' + row['target phenotype'] + '"',
                     '"' + row['compartment'] + '"',
                     str(int(row['distance limit in pixels'])),
-                    str(float(row['cell pair count per FOV'])),
+                    str(float(row[self.computational_design.get_primary_output_feature_name()])),
                 ]
                 keys = '( ' + ' , '.join(keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'

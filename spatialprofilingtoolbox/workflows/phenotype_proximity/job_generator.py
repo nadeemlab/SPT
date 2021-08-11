@@ -45,6 +45,7 @@ singularity exec \
     def __init__(self,
         elementary_phenotypes_file=None,
         complex_phenotypes_file=None,
+        balanced: bool=False,
         **kwargs,
     ):
         """
@@ -55,6 +56,11 @@ singularity exec \
         :param complex_phenotypes_file: Tabular file listing composite phenotypes to
             consider.
         :type complex_phenotypes_file: str
+
+        :param balanced: Whether to use balanced or unbalanced treatment of phenotype
+            pairs.
+        :type balanced: bool
+        :
         """
         super().__init__(**kwargs)
         self.dataset_design = HALOCellMetadataDesign(

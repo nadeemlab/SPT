@@ -264,3 +264,19 @@ class JobGenerator:
         Generate a shell script or scripts that schedule the jobs.
         """
         pass
+
+    @staticmethod
+    def apply_replacements(template, replacements):
+        """
+        :param template: Input with some template values to be filled in.
+        :type template: str
+
+        :param replacements: Mapping from template indicator to replacement strings.
+        :type replacements: str
+
+        :return: replaced
+        :rtype: str
+        """
+        for key, value in replacements.items():
+            template = re.sub(key, value, template)
+        return template

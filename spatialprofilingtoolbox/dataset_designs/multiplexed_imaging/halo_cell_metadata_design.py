@@ -58,15 +58,8 @@ class HALOCellMetadataDesign:
         Args:
             df (pandas.DataFrame):
                 Dataframe containing a field of view descriptor column.
-
-        Returns:
-            pandas.DataFrame:
-                The same dataframe, with all field of view descriptors replaced with a
-                normal form of this descriptor.
         """
-        col = self.get_FOV_column()
-        df[col] = df[col].apply(self.normalize_fov_descriptor)
-        return df
+        df[self.get_FOV_column()] = df[self.get_FOV_column()].apply(self.normalize_fov_descriptor)
 
     def normalize_fov_descriptor(self, fov):
         """

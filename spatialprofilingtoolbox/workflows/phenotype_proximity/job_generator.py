@@ -1,14 +1,17 @@
+"""
+Generation of the job scripts and job scheduling scripts for the proximity
+workflow.
+"""
 import math
 import re
 import os
-from os.path import join, exists, abspath
+from os import chmod
+from os.path import join
 import stat
 import sqlite3
 
-import pandas as pd
-
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from ...environment.job_generator import JobGenerator, JobActivity
+from ...environment.job_generator import JobGenerator
 from ...environment.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 
@@ -16,6 +19,9 @@ logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityJobGenerator(JobGenerator):
+    """
+    The main class of the job generator.
+    """
     lsf_template = '''#!/bin/bash
 #BSUB -J {{job_name}}
 #BSUB -n "1"
@@ -42,14 +48,15 @@ singularity exec \
         **kwargs,
     ):
         """
-        Args:
-            elementary_phenotypes_file (str):
-                Tabular file listing phenotypes of consideration. See dataset designs.
-            complex_phenotypes_file (str):
-                Tabular file listing composite phenotypes to consider. See
-                ``phenotype_proximity.computational_design``.
+        :param elementary_phenotypes_file: Tabular file listing phenotypes of
+            consideration.
+        :type elementary_phenotypes_file: str
+
+        :param complex_phenotypes_file: Tabular file listing composite phenotypes to
+            consider.
+        :type complex_phenotypes_file: str
         """
-        super(PhenotypeProximityJobGenerator, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.dataset_design = HALOCellMetadataDesign(
             elementary_phenotypes_file,
         )
@@ -57,7 +64,6 @@ singularity exec \
             dataset_design=self.dataset_design,
             complex_phenotypes_file=complex_phenotypes_file,
         )
-
         self.lsf_job_filenames = []
         self.sh_job_filenames = []
 
@@ -66,31 +72,33 @@ singularity exec \
 
     def generate_all_jobs(self):
         self.initialize_intermediate_database()
-        job_working_directory = self.jobs_paths.job_working_directory
-
-        for i, row in self.file_metadata.iterrows():
+        for _, row in self.file_metadata.iterrows():
             if row['Data type'] == HALOCellMetadataDesign.get_cell_manifest_descriptor():
-                file_id = row['File ID']
-
                 job_index = self.register_job_existence()
                 job_name = 'cell_proximity_' + str(job_index)
                 log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
-                memory_in_gb = self.get_memory_requirements(row)
+                memory = PhenotypeProximityJobGenerator.get_memory_requirements(row)
 
-                contents = PhenotypeProximityJobGenerator.lsf_template
-                contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
-                contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
-                contents = re.sub('{{job_name}}', '"' + job_name + '"', contents)
-                contents = re.sub('{{log_filename}}', log_filename, contents)
-                contents = re.sub('{{excluded_hostname}}', self.excluded_hostname, contents)
-                contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
-                contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
-                bsub_job = contents
+                bsub_job = JobGenerator.apply_replacements(
+                    PhenotypeProximityJobGenerator.lsf_template,
+                    {
+                        '{{input_files_path}}' : self.dataset_settings.input_path,
+                        '{{job_working_directory}}' : self.jobs_paths.job_working_directory,
+                        '{{job_name}}': '"' + job_name + '"',
+                        '{{log_filename}}': log_filename,
+                        '{{excluded_hostname}}': self.excluded_hostname,
+                        '{{sif_file}}' : self.runtime_settings.sif_file,
+                        '{{memory_in_gb}}' : str(memory),
+                    }
+                )
 
-                contents = PhenotypeProximityJobGenerator.cli_call_template
-                contents = re.sub('{{input_file_identifier}}', file_id, contents)
-                contents = re.sub('{{job_index}}', str(job_index), contents)
-                cli_call = contents
+                cli_call = JobGenerator.apply_replacements(
+                    PhenotypeProximityJobGenerator.cli_call_template,
+                    {
+                        '{{input_file_identifier}}' : row['File ID'],
+                        '{{job_index}}' : str(job_index),
+                    }
+                )
 
                 bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
 
@@ -102,21 +110,23 @@ singularity exec \
                 sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
                 self.sh_job_filenames.append(sh_job_filename)
                 with open(sh_job_filename, 'w') as file:
-                    file.write(cli_call)
+                    file.write(''.join([
+                        cli_call,
+                        '\n ',
+                        re.sub('{{log_filename}}', log_filename, '> {{log_filename}} 2>&1'),
+                    ]))
 
-                st = os.stat(sh_job_filename)
-                os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
+                chmod(sh_job_filename, os.stat(sh_job_filename).st_mode | stat.S_IEXEC)
 
-    def get_memory_requirements(self, file_record):
+    @staticmethod
+    def get_memory_requirements(file_record):
         """
-        Args:
-            file_record (dict-like):
-                Record as it would appear in the file metadata table.
+        :param file_record: Record as it would appear in the file metadata table.
+        :type file_record: dict
 
-        Returns:
-            int:
-                The positive integer number of gigabytes to request for a job involving
-                the given input file.
+        :return: ``memory_in_gb``. The positive integer number of gigabytes to request
+            for a job involving the given input file.
+        :rtype: int
         """
         file_size_gb = float(file_record['Size']) / pow(10, 9)
         return 1 + math.ceil(file_size_gb * 10)
@@ -128,7 +138,12 @@ singularity exec \
         """
         cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
 
-        connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))
+        connection = sqlite3.connect(
+            join(
+                self.jobs_paths.output_path,
+                self.computational_design.get_database_uri(),
+            )
+        )
         cursor = connection.cursor()
         cursor.execute('DROP TABLE IF EXISTS cell_pair_counts ;')
         cmd = ' '.join([
@@ -137,7 +152,8 @@ singularity exec \
             '(',
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
             ' , '.join([
-                column_name + ' ' + data_type_descriptor for column_name, data_type_descriptor in cell_pair_counts_header
+                column_name + ' ' + data_type_descriptor
+                for column_name, data_type_descriptor in cell_pair_counts_header
             ]),
             ');',
         ])

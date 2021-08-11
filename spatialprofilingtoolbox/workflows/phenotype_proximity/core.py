@@ -1,13 +1,14 @@
-import os
+"""
+The core calculator for the proximity calculation on a single source file.
+"""
 from os.path import join
-import math
-from math import exp, log, pow
-import itertools
+from math import exp, log
+from math import pow as math_pow
 from itertools import combinations
+import sqlite3
 
 import pandas as pd
 import numpy as np
-import scipy
 from scipy.spatial.distance import cdist
 from scipy.sparse import coo_matrix
 
@@ -19,6 +20,9 @@ logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityCalculator:
+    """
+    The main class of the calculator.
+    """
     radius_pixels_lower_limit = 10
     radius_pixels_upper_limit = 100
     radius_number_increments = 4
@@ -33,245 +37,315 @@ class PhenotypeProximityCalculator:
         computational_design=None,
         regional_areas_file: str=None,
     ):
+        """
+        :param input_filename: The filename for the source file with cell data.
+        :type input_filename: str
+
+        :param sample_identifier: The sample associated with this source file.
+        :type sample_identifier: str
+
+        :param jobs_paths: Convenience bundle of paths.
+        :type jobs_paths: JobsPaths
+
+        :param dataset_settings: Dataset-specific paths and settings.
+        :type dataset_settings: DatasetSettings
+
+        :param dataset_design: The design object for the input dataset.
+
+        :param computational_design: The design object for the proximity workflow.
+
+        :param regional_areas_file: The file containing total areas of classified
+            regions.
+        :type regional_areas_file: str
+        """
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
         self.output_path = jobs_paths.output_path
-        self.outcomes_file = dataset_settings.outcomes_file
+        self.outcome = self.pull_in_outcome_data(dataset_settings.outcomes_file)[
+            sample_identifier
+        ]
         self.dataset_design = dataset_design
         self.computational_design = computational_design
         self.areas = dataset_design.areas_provider(
             dataset_design=dataset_design,
             regional_areas_file=regional_areas_file,
         )
+        self.fov_lookup = {}
 
     def calculate_proximity(self):
-        outcomes_dict = self.pull_in_outcome_data()
+        """
+        The main exposed entrypoint into the calculation.
+
+        Aggregates and writes counts to database.
+        """
         cells = self.create_cell_tables()
         cell_pairs = self.create_cell_pairs_tables(cells)
         phenotype_indices, compartment_indices = self.precalculate_masks(cells)
         radius_limited_counts = self.do_aggregation_counting(
             cell_pairs,
-            outcomes_dict,
             phenotype_indices,
             compartment_indices,
         )
         self.write_cell_pair_counts(radius_limited_counts)
 
-    def pull_in_outcome_data(self):
+    @staticmethod
+    def pull_in_outcome_data(outcomes_file):
         """
         Parses outcome assignments from file.
-        Saves to outcomes_dict.
+
+        :return: ``outcomes_dict``. Mapping of sample identifiers to outcome labels.
+        :rtype: dict
         """
-        outcomes_df = pd.read_csv(self.outcomes_file, sep='\t')
-        columns = outcomes_df.columns
+        outcomes_table = pd.read_csv(outcomes_file, sep='\t')
+        columns = outcomes_table.columns
         outcomes_dict = {
-            row[columns[0]]: row[columns[1]] for i, row in outcomes_df.iterrows()
+            row[columns[0]]: row[columns[1]] for i, row in outcomes_table.iterrows()
         }
         return outcomes_dict
 
-    def create_cell_tables(self):
+    def cache_fov_strings(self, table_file):
         """
-        Create tables, one for each source file / field of view index pair, whose
-        records correspond to individual cells, with schema
-
-          - regional compartment
-          - x value
-          - y value
-          - (elementary phenotype 1) (cellular site 1) intensity
-          - (elementary phenotype 2) (cellular site 1) intensity
-          - ...
-          - (elementary phenotype 1) (cellular site 2) intensity
-          - (elementary phenotype 2) (cellular site 2) intensity
-          - ...
-          - (general phenotype 1) membership
-          - (general phenotype 2) membership
-          - ...
-
+        :param table_file: Table with cell data.
+        :type table_file: pandas.DataFrame
         """
-        cells = {}
-
-        signatures = self.computational_design.get_all_phenotype_signatures()
-        signatures_by_name = {self.dataset_design.munge_name(signature) : signature for signature in signatures}
-        pheno_names = sorted(signatures_by_name.keys())
-
-        number_fovs = 0
-        filename = self.input_filename
-        df_file = pd.read_csv(filename)
-
-        # Normalize FOV strings
-        df_file = self.dataset_design.normalize_fov_descriptors(df_file)
-
-        # Cache original (*normalized) FOV strings
-        self.fov_lookup = {}
-        col = self.dataset_design.get_FOV_column()
-        fovs = sorted(list(set(df_file[col])))
+        fovs = sorted(list(set(table_file[self.dataset_design.get_FOV_column()])))
         for i, fov in enumerate(fovs):
             self.fov_lookup[i] = fov
 
-        # Replace original FOV string descriptor with index
-        col = self.dataset_design.get_FOV_column()
-        fovs = sorted(list(set(df_file[col])))
+    def replace_fov_strings_with_index(self, table_file):
+        """
+        :param table_file: Table with cell data.
+        :type table_file: pandas.DataFrame
+        """
+        fov_column = self.dataset_design.get_FOV_column()
+        fovs = sorted(list(set(table_file[fov_column])))
         for i, fov in enumerate(fovs):
-            df_file.loc[df_file[col] == fov, col] = i
-        number_fovs += len(fovs)
-        number_cells_by_phenotype = {phenotype : 0 for phenotype in pheno_names}
-        for fov_index, df_fov in df_file.groupby(col):
-            df = df_fov.copy()
-            df = df.reset_index(drop=True)
-            # Create compartment assignment stipulated by design
-            if 'regional compartment' in df.columns:
-                logger.error('Woops, name collision in "regional compartment". Trying to create new column.')
-                break
-            df['regional compartment'] = 'Not in ' + ';'.join(self.dataset_design.get_compartments())
-            for compartment in self.dataset_design.get_compartments():
-                signature = self.dataset_design.get_compartmental_signature(df, compartment)
-                df.loc[signature, 'regional compartment'] = compartment
+            table_file.loc[table_file[fov_column] == fov, fov_column] = i
 
-            # Create (x,y) values
-            xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
-            df['x value'] = 0.5 * (df[xmax] + df[xmin])
-            df['y value'] = 0.5 * (df[ymax] + df[ymin])
+    def add_compartment_information(self, table):
+        """
+        :param table: Table with cell data.
+        :type table: pandas.DataFrame
+        """
+        if 'regional compartment' in table.columns:
+            logger.error(
+                'Woops, name collision in "regional compartment". Trying to create new column.'
+            )
+            return
+        compartments = self.dataset_design.get_compartments()
+        table['regional compartment'] = 'Not in ' + ';'.join(compartments)
+        for compartment in compartments:
+            signature = self.dataset_design.get_compartmental_signature(table, compartment)
+            table.loc[signature, 'regional compartment'] = compartment
 
-            # Add general phenotype membership columns
-            for name in pheno_names:
-                signature = signatures_by_name[name]
-                df[name + ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
-            phenotype_membership_columns = [name + ' membership' for name in pheno_names]
+    def add_box_centers(self, table):
+        """
+        :param table: Table with cell data.
+        :type table: pandas.DataFrame
+        """
+        xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
+        table['x value'] = 0.5 * (table[xmax] + table[xmin])
+        table['y value'] = 0.5 * (table[ymax] + table[ymin])
 
-            # Select pertinent columns and rename
-            intensity_column_names = self.dataset_design.get_intensity_column_names()
-            inverse = {value:key for key, value in intensity_column_names.items()}
-            source_columns = list(intensity_column_names.values())
-            pertinent_columns = [
-                'regional compartment',
-                'x value',
-                'y value',
-            ] + source_columns + phenotype_membership_columns
+    def add_membership(self, table):
+        """
+        :param table: Table with cell data.
+        :type table: pandas.DataFrame
+        """
+        signatures_by_name = self.computational_design.get_all_phenotype_signatures(by_name=True)
+        for name, signature in signatures_by_name.items():
+            table[name + ' membership'] = self.dataset_design.get_pandas_signature(table, signature)
 
-            # Omit data not used in this pipeline
-            df = df[pertinent_columns]
+    def restrict_to_pertinent_columns(self, table):
+        """
+        :param table: Table with cell data.
+        :type table: pandas.DataFrame
+        """
+        signatures_by_name = self.computational_design.get_all_phenotype_signatures(by_name=True)
+        phenotype_membership_columns = [
+            name + ' membership' for name, _ in signatures_by_name.items()
+        ]
+        intensity_column_names = self.dataset_design.get_intensity_column_names()
+        inverse = {value:key for key, value in intensity_column_names.items()}
+        source_columns = list(intensity_column_names.values())
+        pertinent_columns = [
+            'regional compartment',
+            'x value',
+            'y value',
+        ] + source_columns + phenotype_membership_columns
+        table.drop(
+            [column for column in table.columns if not column in pertinent_columns],
+            axis=1,
+            inplace=True,
+        )
+        table.rename(columns = inverse, inplace=True)
+        table.rename(columns = {
+            self.dataset_design.get_FOV_column() : 'field of view index'
+        }, inplace=True)
 
-            # Convert column names into normal form as stipulated by this module
-            df.rename(columns = inverse, inplace=True)
-            df.rename(columns = {self.dataset_design.get_FOV_column() : 'field of view index'}, inplace=True)
-            cells[(filename, fov_index)] = df
+    def create_cell_tables(self):
+        """
+        Create tables, one for each field of view in the given source file, whose
+        records correspond to  individual cells. The schema is:
 
-            for phenotype in pheno_names:
-                n = number_cells_by_phenotype[phenotype]
-                number_cells_by_phenotype[phenotype] = n + sum(df[name + ' membership'])
+        - "regional compartment"
+        - "x value"
+        - "y value"
+        - "<elementary phenotype 1> <cellular site 1> intensity"
+        - "<elementary phenotype 2> <cellular site 1> intensity"
+        - ...
+        - "<elementary phenotype 1> <cellular site 2> intensity"
+        - "<elementary phenotype 2> <cellular site 2> intensity"
+        - ...
+        - "<general phenotype 1> membership"
+        - "<general phenotype 2> membership"
+        - ...
+
+        :return: Dictionary whose keys are field of view integer indices and values are
+            tables of cells.
+        :rtype: dict
+        """
+        table_file = pd.read_csv(self.input_filename)
+        self.dataset_design.normalize_fov_descriptors(table_file)
+        self.cache_fov_strings(table_file)
+        self.replace_fov_strings_with_index(table_file)
+
+        cells = {}
+        phenotype_names = self.computational_design.get_all_phenotype_names()
+        number_cells_by_phenotype = {phenotype : 0 for phenotype in phenotype_names}
+        grouped = table_file.groupby(self.dataset_design.get_FOV_column())
+        for fov_index, table_fov in grouped:
+            table = table_fov.copy()
+            table = table.reset_index(drop=True)
+            self.add_compartment_information(table)
+            self.add_box_centers(table)
+            self.add_membership(table)
+            self.restrict_to_pertinent_columns(table)
+            cells[fov_index] = table
+
+            for phenotype in phenotype_names:
+                number_cells_by_phenotype[phenotype] += sum(table[phenotype + ' membership'])
+
         most_frequent = sorted(
-            [(k, v) for k, v in number_cells_by_phenotype.items()],
+            list(number_cells_by_phenotype.items()),
             key=lambda x: x[1],
             reverse=True
         )[0]
         logger.debug(
             '%s cells parsed from file. Most frequent signature %s (%s)',
-            df_file.shape[0],
+            table_file.shape[0],
             most_frequent[0],
             most_frequent[1],
         )
-        logger.debug('Completed cell table collation.')
+        logger.debug(
+            'Completed cell table collation from input file %s.',
+            self.input_filename,
+        )
         return cells
 
     def create_cell_pairs_tables(self, cells):
         """
         Precalculates the distances between cell pairs lying in the same field of view.
-        One table is created for each source file and field of view.
-        The table schema is
+        One table is created for each source file and field of view. The table schema
+        is:
 
-          - cell 1 index
-          - cell 2 index
-          - distance in pixels
+        - cell 1 index
+        - cell 2 index
+        - distance in pixels
+
+        :param cells: Input collection of cells tables, see
+            :py:meth:`create_cell_tables`.
+        :type cells: dict
+
+        :return: Dictionary whose keys are field of view integer indices and values are
+            tables of cell pairs.
+        :rtype: dict
         """
         cell_pairs = {}
-        logger.debug('Calculating cell pair distances.')
         logger.debug(
-            'Logging: (number of cells in fov, number of cell pairs used, fraction of possible pairs)'
+            'Calculating cell pair distances for cells from %s.',
+            self.input_filename,
         )
-        L = PhenotypeProximityCalculator.radius_pixels_upper_limit
-        logger.debug('Only using pairs of pixel distance less than %s', L)
-        K = len(cells)
-        for i, ((filename, fov_index), df) in enumerate(cells.items()):
-            distance_matrix = cdist(df[['x value', 'y value']], df[['x value', 'y value']])
-            D = distance_matrix
-            D[D > L] = 0
-            cell_pairs[(filename, fov_index)] = D
-            D_sparse = coo_matrix(D)
-            N = int(len(D_sparse.data) / 2)
-            M = df.shape[0]
-            number_all_pairs = M * (M - 1) / 2
+        logger.debug(
+            'Logging per FOV: (number of cells, number cell pairs used, fraction of possible pairs)'
+        )
+        limit = PhenotypeProximityCalculator.radius_pixels_upper_limit
+        logger.debug('Only using pairs of pixel distance less than %s', limit)
+        for _, (fov_index, table) in enumerate(cells.items()):
+            distance_matrix = cdist(table[['x value', 'y value']], table[['x value', 'y value']])
+            distance_matrix[distance_matrix > limit] = 0
+            cell_pairs[fov_index] = distance_matrix
+            sparse = coo_matrix(distance_matrix)
+            number_pairs = int(len(sparse.data) / 2)
+            number_cells = table.shape[0]
+            number_all_pairs = number_cells * (number_cells - 1) / 2
             logger.debug(
-                'File,fov %s/%s: (%s, %s, %s%%)',
-                i, K, M, N,
-                int(100 * 100 * N / number_all_pairs) / 100,
+                'FOV %s: (%s, %s, %s%%)',
+                fov_index,
+                number_cells,
+                number_pairs,
+                int(100 * number_pairs / number_all_pairs) / 100,
             )
-        logger.debug('Completed (field of view limited) cell pair distances calculation.')
+        logger.debug(
+            'Completed (field of view limited) cell pair distances calculation in %s.',
+            self.input_filename,
+        )
         return cell_pairs
 
     def precalculate_masks(self, cells):
-        signatures = self.computational_design.get_all_phenotype_signatures()
-        phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
+        """
+        :param cells: Cells tables by field of view integer index.
+        :type cells: dict
+
+        :return: A 2-element list, phenotype and compartment masks.
+        :rtype: list
+        """
+        phenotypes = self.computational_design.get_all_phenotype_names()
+
         phenotype_indices = {
-            (f, fov_index) : {
-                p : df[p + ' membership'] for p in phenotypes
-            } for (f, fov_index), df in cells.items()
+            fov_index : {
+                p : table[p + ' membership'] for p in phenotypes
+            } for fov_index, table in cells.items()
         }
-        # phenotype_indices = {
-        #     (f, fov_index) : {
-        #         p : sorted(list(df.index[df[p + ' membership']])) for p in phenotypes
-        #     } for (f, fov_index), df in cells.items()
-        # }
 
         compartments = self.dataset_design.get_compartments()
         compartment_indices = {
-            (f, fov_index) : {
-                c : (df['regional compartment'] == c) for c in compartments
-            } for (f, fov_index), df in cells.items()
+            fov_index : {
+                c : (table['regional compartment'] == c) for c in compartments
+            } for fov_index, table in cells.items()
         }
-        # compartment_indices = {
-        #     (f, fov_index) : {
-        #         c : sorted(list(df.index[df['regional compartment'] == c])) for c in compartments
-        #     } for (f, fov_index), df in cells.items()
-        # }
+
         return [phenotype_indices, compartment_indices]
 
-    def do_aggregation_counting(self, cell_pairs, outcomes_dict, phenotype_indices, compartment_indices):
+    def do_aggregation_counting(self,
+        cell_pairs,
+        phenotype_indices,
+        compartment_indices,
+    ):
         """
-        Calculates the number of cell pairs satisfying criteria
+        :param cell_pairs: See :py:meth:`create_cell_pairs_tables`.
+        :type cell_pairs: dict
 
-          - source file fixed
-          - source/target compartment membership
-          - source phenotype membership
-          - target phenotype membership
-          - radius limitation
+        :param phenotype_indices: See :py:meth:`precalculate_masks`.
+        :type phenotype_indices: dict
 
-        for a range of parameter values.
+        :param compartment_indices: See :py:meth:`precalculate_masks`.
+        :type compartment_indices: dict
 
-        Also calculates the number of cells satisfying criteria
-
-          - source file fixed
-          - compartment membership
-          - general phenotype membership
-          - field of view membership
-
-        In the above, also calculates
-          - (elementary phenotype 1) membership intensity average
-          - (elementary phenotype 2) membership intensity average
-          - ...
-
-        the averages being over the cells meeting the criteria. Also calculates the
-        number of cells over the total number of cells in the given field of view.
+        :return: Table of radius-limited counts.
+        :rtype: pandas.DataFrame
         """
-        signatures = self.computational_design.get_all_phenotype_signatures()
-        phenotypes = [self.dataset_design.munge_name(signature) for signature in signatures]
+        phenotypes = self.computational_design.get_all_phenotype_names()
         combinations2 = list(combinations(phenotypes, 2))
-        logger.debug('Creating radius-limited data sets for %s phenotype pairs.', len(combinations2))
+        logger.debug(
+            'Creating radius-limited data sets for %s phenotype pairs.',
+            len(combinations2),
+        )
         results = []
         for combination in combinations2:
             results_combo = self.do_aggregation_one_phenotype_pair(
                 combination,
                 cell_pairs,
-                outcomes_dict,
                 phenotype_indices,
                 compartment_indices,
             )
@@ -287,29 +361,54 @@ class PhenotypeProximityCalculator:
             'distance limit in pixels',
             'cell pair count per FOV',
         ]
-        radius_limited_counts = pd.DataFrame(self.flatten_lists(results), columns=columns)
-        logger.debug('Completed counting cell pairs in "%s" under radius constraint.', self.input_filename)
+        radius_limited_counts = pd.DataFrame(
+            PhenotypeProximityCalculator.flatten_lists(results),
+            columns=columns,
+        )
+        logger.debug(
+            'Completed counting cell pairs in "%s" under radius constraint.',
+            self.input_filename,
+        )
         return radius_limited_counts
 
-    def do_aggregation_one_phenotype_pair(self, pair, cell_pairs, outcomes_dict, phenotype_indices, compartment_indices):
+    def do_aggregation_one_phenotype_pair(self,
+        pair,
+        cell_pairs,
+        phenotype_indices,
+        compartment_indices,
+    ):
         """
-        Now, normalized by compartment area.
+        :param pairs: Pair of phenotype names.
+        :type pairs: 2-tuple
+
+        :param cell_pairs: See :py:meth:`create_cell_pairs_tables`.
+        :type cell_pairs: dict
+
+        :param phenotype_indices: See :py:meth:`precalculate_masks`.
+        :type phenotype_indices: dict
+
+        :param compartment_indices: See :py:meth:`precalculate_masks`.
+        :type compartment_indices: dict
+
+        :return: Table of radius-limited counts for just this one phenotype pair.
+        :rtype: pandas.DataFrame
         """
         source, target = sorted(list(pair))
         records = []
-        sample_identifier = self.sample_identifier # Need to refactor the below to explicitly involve 1 source file
         for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
-            for radius in self.get_radii_of_interest():
+            for radius in PhenotypeProximityCalculator.get_radii_of_interest():
                 count = 0
                 area = 0
-                for (source_filename, fov_index), distance_matrix in cell_pairs.items():
-                    rows = phenotype_indices[(source_filename, fov_index)][source]
-                    cols = phenotype_indices[(source_filename, fov_index)][target]
+                for fov_index, distance_matrix in cell_pairs.items():
+                    rows = phenotype_indices[fov_index][source]
+                    cols = phenotype_indices[fov_index][target]
                     if compartment != 'all':
-                        rows = rows & compartment_indices[(source_filename, fov_index)][compartment]
-                        cols = cols & compartment_indices[(source_filename, fov_index)][compartment]
+                        rows = rows & compartment_indices[fov_index][compartment]
+                        cols = cols & compartment_indices[fov_index][compartment]
                     p2p_distance_matrix = distance_matrix[rows][:, cols]
-                    additional = np.sum( (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0) )
+                    additional = np.sum(
+                        (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0)
+                    )
                     if np.isnan(additional):
                         continue
                     count += additional
@@ -321,11 +420,14 @@ class PhenotypeProximityCalculator:
                         area0 = self.areas.get_area(fov=fov, compartment=compartment)
                     if area0 is None:
                         logger.warning(
-                            'Did not find area for "%s" compartment in field of view "%s". Skipping field of view "%s" in "%s".',
+                            ''.join([
+                                'Did not find area for "%s" compartment in field of view "%s".',
+                                ' Skipping field of view "%s" in "%s".',
+                            ]),
                             compartment,
                             fov_index,
                             fov_index,
-                            sample_identifier,
+                            self.sample_identifier,
                         )
                         continue
                     area += area0
@@ -333,19 +435,31 @@ class PhenotypeProximityCalculator:
                     logger.warning(
                         'Did not find ANY area for "%s" compartment in "%s".',
                         compartment,
-                        sample_identifier,
+                        self.sample_identifier,
                     )
                 else:
-                    records.append([sample_identifier, outcomes_dict[sample_identifier], source, target, compartment, radius, count / area])
-
+                    records.append([
+                        self.sample_identifier,
+                        self.outcome,
+                        source,
+                        target,
+                        compartment,
+                        radius,
+                        count / area,
+                    ])
         return records
 
     def write_cell_pair_counts(self, radius_limited_counts):
-        keys_list = [column_name for column_name, dtype in self.computational_design.get_cell_pair_counts_table_header()]
+        """
+        :param radius_limited_counts: Cell pair counts table.
+        :type radius_limited_counts: pandas.DataFrame
+        """
+        header = self.computational_design.get_cell_pair_counts_table_header()
+        keys_list = [column_name for column_name, dtype in header]
 
         uri = join(self.output_path, self.computational_design.get_database_uri())
-        with WaitingDatabaseContextManager(uri) as m:
-            for i, row in radius_limited_counts.iterrows():
+        with WaitingDatabaseContextManager(uri) as manager:
+            for _, row in radius_limited_counts.iterrows():
                 values_list = [
                     '"' + row['sample identifier'] + '"',
                     '"' + row['outcome assignment'] + '"',
@@ -355,28 +469,37 @@ class PhenotypeProximityCalculator:
                     str(int(row['distance limit in pixels'])),
                     str(float(row['cell pair count per FOV'])),
                 ]
-                keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
+                keys = '( ' + ' , '.join(keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
                 cmd = 'INSERT INTO cell_pair_counts ' + keys + ' VALUES ' + values +  ' ;'
                 try:
-                    m.execute(cmd)
-                except Exception as e:
+                    manager.execute(cmd)
+                except sqlite3.OperationalError as exception:
                     logger.error('SQL query failed: %s', cmd)
-                    print(e)
+                    print(exception)
 
-    def get_radii_of_interest(self):
+    @staticmethod
+    def get_radii_of_interest():
         """
         Creates a scale-adjusted range of values between the stipulated lower and upper
         limits, with the stipulated number of increments.
         """
-        r = PhenotypeProximityCalculator.radius_pixels_lower_limit
-        R = PhenotypeProximityCalculator.radius_pixels_upper_limit
-        N = PhenotypeProximityCalculator.radius_number_increments
+        limit_lower = PhenotypeProximityCalculator.radius_pixels_lower_limit
+        limit_upper = PhenotypeProximityCalculator.radius_pixels_upper_limit
+        increments = PhenotypeProximityCalculator.radius_number_increments
 
-        a = math.exp((math.log(R / r) / N))
-        return [int(r * math.pow(a, i)) for i in range(N + 1)]
+        base = exp((log(limit_upper / limit_lower) / increments))
+        return [int(limit_lower * math_pow(base, i)) for i in range(increments + 1)]
 
-    def flatten_lists(self, the_lists):
+    @staticmethod
+    def flatten_lists(the_lists):
+        """
+        :param the_lists: List of lists to be flattened into a single list.
+        :type the_lists: list
+
+        :return: The flattened list.
+        :rtype: list
+        """
         result = []
         for _list in the_lists:
             result += _list

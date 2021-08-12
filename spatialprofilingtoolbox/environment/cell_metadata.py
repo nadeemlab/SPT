@@ -29,29 +29,29 @@ class CellMetadata:
             dataset_design=None,
             file_manifest_file: str=None,
             input_files_path: str=None,
-            cache_location: str=None,
+            cache_location: str='.cell_metadata.tsv.cache',
         ):
         """
-        Args:
+        :param dataset_design:
+            Object providing get_elementary_phenotype_names, get_pandas_signature,
+            get_combined_intensity, and get_box_limit_column_names.
+        :type dataset_design:
 
-            dataset_design:
-                Object providing get_elementary_phenotype_names, get_pandas_signature,
-                get_combined_intensity, and get_box_limit_column_names.
-            file_manifest_file (str):
-                Path to the manifest of source files containing cell-level information.
-            input_file_path (str):
-                The path to the directory containing the input files described the
-                file manifest.
-            cache_location (str):
-                (Optional) An alternative file location to cache the cell-related
-                tables.
+        :param file_manifest_file: Path to the manifest of source files containing
+            cell-level information.
+        :type file_manifest_file: str
+
+        :param input_file_path: The path to the directory containing the input files
+            described the file manifest.
+        :type input_file_path: str
+
+        :param cache_location: (Optional) An alternative file location to cache the
+            cell-related tables.
+        :type cache_location: str
         """
         self.input_files_path = input_files_path
         self.dataset_design = dataset_design
-        if cache_location is None:
-            self.cache_location = CellMetadata.default_cache_location
-        else:
-            self.cache_location = cache_location
+        self.cache_location = cache_location
         self.file_manifest_file = file_manifest_file
         self.file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         self.cells = pd.DataFrame()
@@ -67,46 +67,46 @@ class CellMetadata:
 
     def get_cell_info_table(self, input_files_path, file_metadata, dataset_design):
         """
-        Args:
-            input_files_path (str):
-                Path to directory containing input files described by the file manifest.
-            file_metadata (pandas.DataFrame):
-                Table of file metadata, from file_manifest_file.
-            dataset_design:
-                Dataset design object.
+        :param input_files_path: Path to directory containing input files described by
+            the file manifest.
+        :type input_files_path: str
 
-        Returns:
-            pandas.DataFrame:
-                The table of cell metadata. The format should be as described by
-                get_metadata.
+        :param file_metadata: Table of file metadata.
+        :type file_metadata: pandas.DataFrame
+
+        :param dataset_design: Dataset design object.
+
+        :return: The table of cell metadata. The format should be as described by
+            :py:meth:`get_metadata`.
+        :rtype: pandas.DataFrame
         """
         pass
 
     def get_sample_id_index(self, sample_id):
         """
-        Args:
-            sample_id (str):
-                A sample identifier.
+        :param sample_id: A sample identifier.
+        :type sample_id: str
 
-        Returns:
-            int:
-                The integer index of the sample identifier.
+        :return: The integer index of the sample identifier.
+        :rtype: int
         """
         pass
 
     def get_fov_index(self, sample_id, fov):
         """
-        Args:
-            sample_id (str):
-                A sample identifier.
-            fov (str):
-                A field of view identifier string.
+        :param sample_id: A sample identifier.
+        :type sample_id: str
 
-        Returns:
-            int:
-                The integer index of the field of view in the given sample.
+        :param fov: A field of view identifier string.
+        :type fov: str
+
+        :return: The integer index of the field of view in the given sample.
+        :rtype: int
         """
         pass
+
+    def get_cells_table(self):
+        return self.cells
 
     def load_cache_file(self):
         """
@@ -115,40 +115,38 @@ class CellMetadata:
 
         Otherwise, loads directly from the cache file.
 
-        Returns:
-            pandas.DataFrame:
-                The table of cell metadata. The format should be as described by
-                get_metadata.
+        :return: The table of cell metadata. The format should be as described by
+            :py:meth:`get_metadata`.
+        :rtype: pandas.DataFrame
         """
-        f = self.cache_location
-        if not exists(f):
+        if not exists(self.cache_location):
             logger.info('Gathering cell info from files listed in %s', self.file_manifest_file)
-            df = self.get_cell_info_table(
+            table = self.get_cell_info_table(
                 self.input_files_path,
                 self.file_metadata,
                 self.dataset_design,
             )
-            logger.info('Finished gathering info %s cells.', df.shape[0])
-            df.to_csv(f, sep='\t', index=False)
+            logger.info('Finished gathering info %s cells.', table.shape[0])
+            table.to_csv(self.cache_location, sep='\t', index=False)
+            self.write_lookup()
         else:
             logger.info('Retrieving cached cell info.')
-            df = pd.read_csv(f, sep='\t')
-        return df
+            table = pd.read_csv(self.cache_location, sep='\t')
+            self.load_lookup()
+        return table
 
     def get_metadata(self, sample_id, fov):
         """
-        Args:
-            sample_id (str):
-                The sample identifier for the given whole image.
+        :param sample_id: The sample identifier for the given whole image.
+        :type sample_id: str
 
-            fov (str):
-                The string identifying a given field of view in the whole image.
+        :param fov: The string identifying a given field of view in the whole image.
+        :type fov: str
 
-        Returns:
-            pandas.DataFrame:
-                A table containing metadata about all the cells in the given field of
-                view. The format is specified by instantiating the table_header_template
-                once for each phenotype/channel described by the given dataset_design.
+        :return: A table containing metadata about all the cells in the given field of
+            view. The format is specified by instantiating the table_header_template
+            once for each phenotype/channel described by the given dataset_design.
+        :rtype: pandas.DataFrame
         """
         c = self.cells
         sample_id_index = self.get_sample_id_index(sample_id)

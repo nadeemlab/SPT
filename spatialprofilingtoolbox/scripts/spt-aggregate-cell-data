@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 
 import spatialprofilingtoolbox as spt
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_provider import HALOCellMetadata

@@ -75,6 +75,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-cell-phenotype-proximity-analysis',
         'spatialprofilingtoolbox/scripts/spt-front-proximity-analysis',
         'spatialprofilingtoolbox/scripts/spt-frequency-analysis',
+        'spatialprofilingtoolbox/scripts/spt-aggregate-cell-data',
     ],
     install_requires=requirements,
     project_urls = {

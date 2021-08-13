@@ -68,7 +68,7 @@ class PhenotypeProximityAnalysisIntegrator:
         - radius limit value
 
         calculates p-values and effect size for statistical testing for difference of
-        distributions, one for each outcome value, of normalized cell pair counts the
+        distributions, one for each outcome value, of normalized cell pair counts as the
         source file varies (within a given outcome assignment class).
 
         The statistical tests are t-test for difference in mean and Kruskal-Wallis test

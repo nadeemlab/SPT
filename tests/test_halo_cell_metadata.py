@@ -22,7 +22,7 @@ def test_halo_load_cell_metadata():
 
     outcomes_file = join(dirname(__file__), 'data', 'diagnosis.tsv')
     m.write_subsampled(max_per_sample = 10, outcomes_file = outcomes_file)
-
+    m.write_subsampled(max_per_sample = 20, outcomes_file = outcomes_file, omit_column='DAPI')
 
 if __name__=='__main__':
     test_halo_load_cell_metadata()

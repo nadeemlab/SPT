@@ -8,10 +8,8 @@ from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metad
 def do_aggregation():
     parser = argparse.ArgumentParser(
         description = ''.join([
-            'This program does cell phenotype-to-region-front proximity calculations in ',
-            'multiplexed IF images.',
-            'It is formulated as a script so that it can be run as part of large HPC batches. '
-            'It generally needs to be run as part of spt-pipeline, to ensure initialization.',
+            'This script aggregates all input cell data from an spt-pipeline run',
+            'into a single batch, and does subsampling.',
         ])
     )
     parser.add_argument('--max-per-sample',
@@ -20,6 +18,13 @@ def do_aggregation():
         required=False,
         default=100,
         help='The maximum number of cells to draw from each sample/image.',
+    )
+    parser.add_argument('--omit-column',
+        dest='omit_column',
+        type=str,
+        required=False,
+        default=None,
+        help='A data column to omit ',
     )
     args = parser.parse_args()
 
@@ -36,6 +41,7 @@ def do_aggregation():
     cell_data.write_subsampled(
     	max_per_sample = args.max_per_sample,
     	outcomes_file = parameters['outcomes_file'],
+        omit_column = args.omit_column,
     )
 
 if __name__=='__main__':

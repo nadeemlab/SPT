@@ -246,7 +246,11 @@ class HALOCellMetadata(CellMetadata):
         }
         return outcomes_dict
 
-    def write_subsampled(self, max_per_sample: int=100, outcomes_file: str=None):
+    def write_subsampled(self,
+            max_per_sample: int=100,
+            outcomes_file: str=None,
+            omit_column: str=None,
+        ):
         """
         Writes subsampled version of the cells table:
 
@@ -264,9 +268,23 @@ class HALOCellMetadata(CellMetadata):
         :param outcomes_file: (Optional) Filename for tabular file with sample
             identifier column and outcome label column.
         :type outcomes_file: str
+
+        :param omit_column: The name of a column whose data to omit from the output.
+            Note that if a *dichotomized* row is all zeros after omission of this
+            column, i.e. if this column is the only one making the row non-trivial,
+            then this row will also be omitted. This amounts to a filtering operation.
+        :type omit_column: str
         """
-        cells = self.get_cells_table()
+        cells = self.get_cells_table().copy(deep=True)
         cells.drop(columns=['Field of view index'], inplace=True)
+
+        if omit_column:
+            cells.drop(columns=[omit_column + '+'], inplace=True)
+            trivial_rows = [
+                index for index, row in cells.iterrows()
+                if all([row[c]==0 for c in HALOCellMetadata.get_dichotomized_columns(cells)])
+            ]
+            cells.drop(index=trivial_rows, inplace=True)
 
         subsampled = cells.groupby('Sample ID index').sample(n=max_per_sample, replace=True)
         subsampled['Sample ID'] = [

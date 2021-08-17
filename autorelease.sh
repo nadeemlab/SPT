@@ -12,8 +12,13 @@ clearline="\e[1K\r"
 source_note_color="\e[36;40m"
 
 script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
-
 start_time=$SECONDS
+if [[ "$1" == "skip-singularity" ]];
+then
+    skip_singularity=1
+else
+    skip_singularity=0
+fi
 
 function wrapup-previous-timed() {
     units="seconds "
@@ -162,6 +167,20 @@ rm -rf venv/
 
 source tests/cleaning.sh
 _cleanup
+
+logstyle-printf "$green""Building singularity container.$reset" timed-command
+cd building/
+./build_singularity_container.sh 1>/dev/null 2> stderr.txt
+if [[ "$?" == "1" ]];
+then
+    logstyle-printf "$red""Something went wrong in building singularity container.$reset"
+    exit
+fi
+
+# temp guard
+exit
+exit
+exit
 
 version=$(cat spatialprofilingtoolbox/version.txt)
 logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset" timed-command

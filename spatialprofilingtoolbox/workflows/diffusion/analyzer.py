@@ -136,7 +136,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             for value in values:
                 m.execute(' '.join([
                     'INSERT INTO',
-                    'diffusion_distances',
+                    self.computational_design.get_diffusion_distances_table_name(),
                     '(' + ', '.join(self.computational_design.get_probabilities_table_header()) + ')',
                     'VALUES',
                     '(' + str(value) +', "' + distance_type_str + '", ' + str(self.get_job_index()) + ', ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'

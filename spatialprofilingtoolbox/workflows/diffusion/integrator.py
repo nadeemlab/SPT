@@ -61,7 +61,7 @@ class DiffusionAnalysisIntegrator:
             pandas.DataFrame:
                 The whole table, in dataframe form.
         """
-        if table_name == 'diffusion_distances':
+        if table_name == self.computational_design.get_diffusion_distances_table_name():
             columns = ['id'] + self.computational_design.get_probabilities_table_header()
         elif table_name == 'job_metadata':
             columns = ['id'] + self.computational_design.get_job_metadata_header()
@@ -144,7 +144,9 @@ class DiffusionAnalysisIntegrator:
         Gathers computed values into different contextual cases, then delegates to
         ``generate_figures``.
         """
-        probabilities = self.get_dataframe_from_db('diffusion_distances')
+        probabilities = self.get_dataframe_from_db(
+            self.computational_design.get_diffusion_distances_table_name()
+        )
         job_metadata = self.get_dataframe_from_db('job_metadata')
         logger.info('Value of probabilities.shape: %s', probabilities.shape)
         logger.info('Average diffusion distance: %s', np.mean(probabilities['diffusion_distance']))

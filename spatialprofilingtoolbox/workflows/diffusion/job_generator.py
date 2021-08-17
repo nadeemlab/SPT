@@ -124,10 +124,11 @@ singularity exec \
 
         connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))
         cursor = connection.cursor()
-        cursor.execute('DROP TABLE IF EXISTS diffusion_distances ;')
+        table_name = self.computational_design.get_diffusion_distances_table_name()
+        cursor.execute('DROP TABLE IF EXISTS ' + table_name + ' ;')
         cmd = ' '.join([
             'CREATE TABLE',
-            'diffusion_distances',
+            table_name,
             '(',
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
             probabilities_header[0] + ' NUMERIC,',

@@ -35,6 +35,9 @@ class DiffusionDesign(ComputationalDesign):
     def get_database_uri(self):
         return 'diffusion.db'
 
+    def get_diffusion_distances_table_name(self):
+        return 'diffusion_distances'
+
     def get_job_metadata_header(self):
         """
         Returns:

@@ -20,23 +20,30 @@ function logstyle-printf() {
     then
         units="seconds"
         elapsed=$(( SECONDS - start_time ))
-        message="$SAVED_MESSAGE"
+        char_width=${#elapsed}
+        padding=$(( 4 - char_width ))
+        control_char="s"
+        bar="$script_file %-$padding$control_char$elapsed $units"
+        echo -ne "$clearline"
+        printf "$source_note_color[$bar]$reset $SAVED_MESSAGE\n"
+        unset TIME_NEXT
     else
         units="       "
         elapsed=""
-        message="$1"
+        char_width=${#elapsed}
+        padding=$(( 4 - char_width ))
+        control_char="s"
+        bar="$script_file %-$padding$control_char$elapsed $units"
+        echo -ne "$clearline"
+        printf "$source_note_color[$bar]$reset $1\n"
     fi
+
+    units="       "
+    elapsed=""
     char_width=${#elapsed}
     padding=$(( 4 - char_width ))
     control_char="s"
     bar="$script_file %-$padding$control_char$elapsed $units"
-
-    if [[ "$TIME_NEXT" == "1" ]];
-    then
-        echo -ne "$clearline"
-        printf "$source_note_color[$bar]$reset $message\n"
-        unset TIME_NEXT
-    fi
 
     if [[ "$2" == "timed-command" ]];
     then

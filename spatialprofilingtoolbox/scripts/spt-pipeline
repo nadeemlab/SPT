@@ -221,14 +221,14 @@ if [[ "$EXCLUDED_HOSTNAME" == "" ]]; then
 fi
 
 SKIP_INTEGRITY_CHECK=""
-prompt_str="Skip file integrity checks? (Y/n): "
+prompt_str="Skip file integrity checks? (y/N): "
 printf "$yellow$prompt_str$reset"
 while [[ "$SKIP_INTEGRITY_CHECK" = "" ]];
 do
     read -e SKIP_INTEGRITY_CHECK
 done
 printf "$cr$yellow$prompt_str$reset$green$SKIP_INTEGRITY_CHECK$reset\n"
-if [[ "$SKIP_INTEGRITY_CHECK" == "n" ]]; then
+if [[ "$SKIP_INTEGRITY_CHECK" == "n" || "$SKIP_INTEGRITY_CHECK" == "N" ]]; then
     SKIP_INTEGRITY_CHECK="False"
 fi
 if [[ ( "$SKIP_INTEGRITY_CHECK" == "Y" ) || ( "$SKIP_INTEGRITY_CHECK" == "y" ) ]]; then

@@ -121,7 +121,7 @@ function clean_exit() {
     exit
 }
 
-logstyle-printf "$green""Installing wheel into virtual environment.$reset"
+logstyle-printf "$green""Installing wheel into virtual environment.$reset" timed-command
 python3 -m venv venv
 source venv/bin/activate
 for wheel in dist/*.whl;
@@ -131,7 +131,7 @@ done
 
 pip install pytest 1>/dev/null 2> stderr.txt
 
-logstyle-printf "$green""Running unit tests.$reset"
+logstyle-printf "$green""Running unit tests.$reset" timed-command
 cd tests/
 outcome=$(python -m pytest -q . | tail -n1 | grep "[0-9]\+ \(failed\|errors\)")
 if [[ ! "$outcome" == "" ]]; then
@@ -139,7 +139,7 @@ if [[ ! "$outcome" == "" ]]; then
     clean_exit
 fi
 
-logstyle-printf "$green""Running integration tests.$reset"
+logstyle-printf "$green""Running integration tests.$reset" timed-command
 outcome=$(./tests_integration.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in")
 if [[ "$outcome" == "" ]]; then
     logstyle-printf "$red""Something went wrong in integration tests.$reset"
@@ -159,7 +159,7 @@ exit
 exit
 
 version=$(cat spatialprofilingtoolbox/version.txt)
-logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset"
+logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset" timed-command
 git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \
     git commit -m "Autoreleasing v$version" 1>/dev/null 2> stderr.txt && \
     git tag v$version 1>/dev/null 2> stderr.txt && \

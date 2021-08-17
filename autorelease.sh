@@ -35,7 +35,7 @@ function logstyle-printf() {
 
     if [[ "$TIME_NEXT" == "1" ]];
     then
-        printf "$source_note_color[$bar]$reset $MESSAGE"
+        printf "$source_note_color[$bar]$reset $message"
     fi
 
     if [[ "$2" == "timed-command" ]];
@@ -43,9 +43,9 @@ function logstyle-printf() {
         TIME_NEXT=1
         start_time=$SECONDS
         SAVED_MESSAGE="$1"
-        printf "$source_note_color[$bar]$reset $MESSAGE"
+        printf "$source_note_color[$bar]$reset $message"
     else
-        printf "$source_note_color[$bar]$reset $MESSAGE\n"
+        printf "$source_note_color[$bar]$reset $message\n"
     fi
 }
 

@@ -177,6 +177,6 @@ git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \
     git merge main 1>/dev/null 2> stderr.txt && \
     git push 1>/dev/null 2> stderr.txt && \
     git checkout main 1>/dev/null 2> stderr.txt && \
-    logstyle-printf "$green""Uploading to PyPI.$reset" && \
+    logstyle-printf "$green""Uploading to PyPI.$reset" timed-command && \
     python3 -m twine upload --repository spatialprofilingtoolbox dist/* && \
     logstyle-printf "$green""Done.$reset"

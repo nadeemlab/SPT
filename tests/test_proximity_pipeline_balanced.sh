@@ -2,7 +2,10 @@
 
 export DEBUG=1
 rm -rf output/
-rm schedule_*
+for script in schedule_*.sh;
+do
+    rm $script
+done
 cp sample_config_file_proximity_balanced.txt .spt_pipeline.config
 spt-pipeline
 spt-analyze-results

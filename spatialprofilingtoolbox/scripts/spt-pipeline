@@ -167,22 +167,38 @@ fi
 
 if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF phenotype proximity" ]] ;
 then
-    BALANCED=""
     prompt_str="Balanced/symmetric analysis with respect to phenotype pairs? (y/N): "
     printf "$yellow$prompt_str$reset"
-    while [[ "$BALANCED" = "" ]];
-    do
-        read -e BALANCED
-    done
-    printf "$cr$yellow$prompt_str$reset$green$BALANCED$reset\n"
-    if [[ "$BALANCED" == "" ]]; then
-        BALANCED="False"
-    fi
-    if [[ ( "$BALANCED" == "Y" ) || ( "$BALANCED" == "y" ) ]]; then
+    read -e BALANCED
+    if [[ ( "$BALANCED" == "Y" ) || ( "$BALANCED" == "y" ) ]];
+    then
         BALANCED="True"
     fi
+    if [[ ! "$BALANCED" == "True" ]];
+    then
+        BALANCED="False"
+    fi
+    printf "$cr$yellow$prompt_str$reset$green$BALANCED$reset\n"
 else
     BALANCED="False"
+fi
+
+if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF diffusion" ]] ;
+then
+    prompt_str="Save GraphML representation of diffusion distances for every phenotype mask? (Y/n): "
+    printf "$yellow$prompt_str$reset"
+    read -e SAVE_GRAPHML
+    if [[ ( "$SAVE_GRAPHML" == "Y" ) || ( "$SAVE_GRAPHML" == "y" ) ]];
+    then
+        SAVE_GRAPHML="True"
+    fi
+    if [[ ! "$SAVE_GRAPHML" == "True" ]];
+    then
+        SAVE_GRAPHML="False"
+    fi
+    printf "$cr$yellow$prompt_str$reset$green$SAVE_GRAPHML$reset\n"
+else
+    SAVE_GRAPHML="False"    
 fi
 
 RUN_PLATFORM=""
@@ -290,6 +306,7 @@ spt-generate-jobs \
     --excluded-hostname $EXCLUDED_HOSTNAME \
     --skip-integrity-check $SKIP_INTEGRITY_CHECK \
     --balanced $BALANCED \
+    --save-graphml $SAVE_GRAPHML \
 
 chmod +x *.sh
 

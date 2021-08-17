@@ -268,7 +268,7 @@ class DiffusionTestsViz:
         self.interactive_only = interactive_only
 
         self.root = tk.Tk()
-        self.root.winfo_toplevel().title("Diffusion transition probability values visualization")
+        self.root.winfo_toplevel().title("Diffusion diffusion distance values visualization")
         self.dataframe = self.retrieve_tests_dataframe(tests_filename=tests_filename)
         if len(self.dataframe) == 0:
             logger.error(

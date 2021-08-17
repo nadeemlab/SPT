@@ -45,6 +45,7 @@ singularity exec \
     def __init__(self,
         elementary_phenotypes_file: str=None,
         complex_phenotypes_file: str=None,
+        save_graphml: bool=False,
         **kwargs,
     ):
         """
@@ -62,6 +63,7 @@ singularity exec \
         self.computational_design = DiffusionDesign(
             dataset_design=self.dataset_design,
             complex_phenotypes_file=complex_phenotypes_file,
+            save_graphml=save_graphml,
         )
 
         self.number_fovs = {}
@@ -122,10 +124,10 @@ singularity exec \
 
         connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))
         cursor = connection.cursor()
-        cursor.execute('DROP TABLE IF EXISTS transition_probabilities ;')
+        cursor.execute('DROP TABLE IF EXISTS diffusion_distances ;')
         cmd = ' '.join([
             'CREATE TABLE',
-            'transition_probabilities',
+            'diffusion_distances',
             '(',
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
             probabilities_header[0] + ' NUMERIC,',

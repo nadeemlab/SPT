@@ -9,6 +9,7 @@ class DiffusionDesign(ComputationalDesign):
             self,
             dataset_design=None,
             complex_phenotypes_file: str=None,
+            save_graphml: bool=False,
             **kwargs,
         ):
         """
@@ -16,7 +17,9 @@ class DiffusionDesign(ComputationalDesign):
             dataset_design:
                 The design object describing the input data set.
             complex_phenotypes_file (str):
-                The table of composite phenotypes to be considered.            
+                The table of composite phenotypes to be considered.
+            save_graphml (bool):
+                Whether to save GraphML files as additional output.
         """
         super(ComputationalDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
@@ -24,6 +27,10 @@ class DiffusionDesign(ComputationalDesign):
             complex_phenotypes_file,
             keep_default_na=False,
         )
+        self.save_graphml = save_graphml
+
+    def should_save_graphml(self):
+        return self.save_graphml
 
     def get_database_uri(self):
         return 'diffusion.db'
@@ -52,14 +59,14 @@ class DiffusionDesign(ComputationalDesign):
                 from the diffusion calculations.
         """
         return [
-            'transition_probability',
+            'diffusion_distance',
             'distance_type',
             'job_activity_id',
             'temporal_offset',
             'marker',
         ]
 
-    def get_transition_probabilities_summarized_header(self):
+    def get_diffusion_distances_summarized_header(self):
         """
         Returns:
             list:
@@ -72,9 +79,9 @@ class DiffusionDesign(ComputationalDesign):
             ('Marker', 'TEXT'),
             ('Diffusion_kernel_distance_type', 'TEXT'),
             ('Temporal_offset', 'NUMERIC'),
-            ('Mean_transition_probability', 'NUMERIC'),
-            ('Median_transition_probability', 'NUMERIC'),
-            ('Variance_transition_probability', 'NUMERIC'),
+            ('Mean_diffusion_distance', 'NUMERIC'),
+            ('Median_diffusion_distance', 'NUMERIC'),
+            ('Variance_diffusion_distance', 'NUMERIC'),
         ]
 
     def get_all_phenotype_signatures(self):

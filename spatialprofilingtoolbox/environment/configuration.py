@@ -210,6 +210,16 @@ def get_config_parameters_from_cli():
         required=True,
         help='Whether to do balanced or unbalanced workflow.',
     )
+    parser.add_argument('--save-graphml',
+        dest='save_graphml',
+        type=str,
+        required=True,
+        help=''.join([
+            'Whether to save GraphML graphical representation of diffusion distance ',
+            'matrices. This may require a lot of disk space; approximately 200 GB for ',
+            'a 500-image run with 10 channels. and a few thousand cells per image.'
+        ])
+    )
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
@@ -234,6 +244,7 @@ def get_config_parameters_from_cli():
     excluded_hostname = args.excluded_hostname
     skip_integrity_check = True if args.skip_integrity_check == 'True' else False
     balanced = True if args.balanced == 'True' else False
+    save_graphml = True if args.save_graphml == 'True' else False
 
     parameters = {
         'workflow' : workflow,
@@ -255,6 +266,8 @@ def get_config_parameters_from_cli():
         parameters['skip_integrity_check'] = True
     if balanced:
         parameters['balanced'] = True
+    if save_graphml:
+        parameters['graphml'] = True
     return parameters
 
 def get_config_parameters():

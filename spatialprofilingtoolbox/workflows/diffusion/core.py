@@ -38,16 +38,19 @@ class DiffusionCalculator:
         fov_index: int=None,
         regional_compartment: str=None,
         dataset_design=None,
+        computational_design=None,
         jobs_paths: JobsPaths=None,
     ):
         self.dataset_design = dataset_design
+        self.computational_design = computational_design
         self.df = pd.read_csv(input_filename)
         self.input_filename = input_filename
         self.fov = self.get_fov_handle_string(fov_index)
         self.regional_compartment = regional_compartment
 
         self.values = {'diffusion kernel' : None}
-        self.graph_serializer = GraphMLSerializer(output_path=jobs_paths.output_path)
+        if self.computational_design.should_save_graphml():
+            self.graph_serializer = GraphMLSerializer(output_path=jobs_paths.output_path)
 
     def get_values(self, key):
         return self.values[key]
@@ -129,7 +132,14 @@ class DiffusionCalculator:
                     values = np.random.choice(values, M, replace=False)
                 self.values[t] = values
 
-        self.graph_serializer.serialize(diffusion_probability_matrices, pc, marker, self.input_filename, self.fov)
+        if self.computational_design.should_save_graphml():
+            self.graph_serializer.serialize(
+                diffusion_probability_matrices,
+                pc,
+                marker,
+                self.input_filename,
+                self.fov,
+            )
 
     def generate_primary_point_cloud(self, df_marked_nontumor, df_marked_tumor, df_tumor):
         box_centers_marked_nt = self.get_box_centers(df_marked_nontumor)
@@ -208,7 +218,7 @@ class DiffusionCalculator:
         if not distance_type in [DistanceTypes.OPTIMAL_TRANSPORT, DistanceTypes.EUCLIDEAN]:
             return [None, None]
         logger.debug('Performing forward time evolution of Markov chain.')
-        logger.debug('Computing transition matrix M of size %s x %s', pc.shape[0], pc.shape[0])
+        logger.debug('Computing diffusion distance matrix M of size %s x %s', pc.shape[0], pc.shape[0])
 
         A = diffusion_kernel
         D = sum(A, axis=0) * identity(A.shape[0])
@@ -288,15 +298,15 @@ class GraphMLSerializer:
         self.output_path = output_path
         self.threshold = threshold
 
-    def serialize(self, transition_matrices, initial_locations, phenotype, input_filename, fov):
+    def serialize(self, diffusion_distance_matrices, initial_locations, phenotype, input_filename, fov):
         """
         Args:
-            transition_matrices (dict):
+            diffusion_distance_matrices (dict):
                 The Markov chain transition matrices at various timepoints. The keys are
                 the float timepoints, values are numpy matrices.
             initial_locations (list):
                 List of locations (box centers) for cells, in order to correspond to the
-                list of rows (equivalently, columns) in the transition_matrices. The
+                list of rows (equivalently, columns) in the diffusion_distance_matrices. The
                 values should be pairs of coordinate values.
             input_filename (str):
                 The input file from which the cell/image data were obtained.
@@ -304,14 +314,14 @@ class GraphMLSerializer:
                 The field of view which was considered for the formation of the
                 transition matrices.
 
-        Saves to GraphML file, with semantic filenames. The transition matrix entries
+        Saves to GraphML file, with semantic filenames. The diffusion distance matrix entries
         are stored as edge weightings, with names like 'weight1', 'weight2', ... .
         """
-        t_values = sorted(list(transition_matrices.keys()))
-        N = transition_matrices[t_values[0]].shape[0]
-        Np = transition_matrices[t_values[0]].shape[1]
+        t_values = sorted(list(diffusion_distance_matrices.keys()))
+        N = diffusion_distance_matrices[t_values[0]].shape[0]
+        Np = diffusion_distance_matrices[t_values[0]].shape[1]
         if N != len(initial_locations) or Np != len(initial_locations):
-            logger.error('Provided %s initial locations, but transition matrix is %s x %s', len(initial_locations), N, Np)
+            logger.error('Provided %s initial locations, but diffusion distance matrix is %s x %s', len(initial_locations), N, Np)
             return
         G = nx.Graph()
         for k in range(N):
@@ -319,14 +329,14 @@ class GraphMLSerializer:
         zero_weights = {'weight' + str(i+1) : float(0.0) for i in range(len(t_values))}
 
         for t in t_values:
-            M = transition_matrices[t]
+            M = diffusion_distance_matrices[t]
             for i in range(N):
                 for j in range(i+1, N):
                     if M[i][j] <= self.threshold:
                         G.add_edge(i, j, **zero_weights)
 
         for k, t in enumerate(t_values):
-            M = transition_matrices[t]
+            M = diffusion_distance_matrices[t]
             for i in range(N):
                 for j in range(i+1, N):
                     if M[i][j] <= self.threshold:

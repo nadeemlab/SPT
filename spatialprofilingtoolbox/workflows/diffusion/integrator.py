@@ -61,12 +61,12 @@ class DiffusionAnalysisIntegrator:
             pandas.DataFrame:
                 The whole table, in dataframe form.
         """
-        if table_name == 'transition_probabilities':
+        if table_name == 'diffusion_distances':
             columns = ['id'] + self.computational_design.get_probabilities_table_header()
         elif table_name == 'job_metadata':
             columns = ['id'] + self.computational_design.get_job_metadata_header()
-        elif table_name == 'transition_probabilities_summarized':
-            columns = ['id'] + [c[0] for c in self.computational_design.get_transition_probabilities_summarized_header()]
+        elif table_name == 'diffusion_distances_summarized':
+            columns = ['id'] + [c[0] for c in self.computational_design.get_diffusion_distances_summarized_header()]
         else:
             logger.error('Table %s is not in the schema.', table_name)
             return None
@@ -144,10 +144,10 @@ class DiffusionAnalysisIntegrator:
         Gathers computed values into different contextual cases, then delegates to
         ``generate_figures``.
         """
-        probabilities = self.get_dataframe_from_db('transition_probabilities')
+        probabilities = self.get_dataframe_from_db('diffusion_distances')
         job_metadata = self.get_dataframe_from_db('job_metadata')
         logger.info('Value of probabilities.shape: %s', probabilities.shape)
-        logger.info('Average transition probability: %s', np.mean(probabilities['transition_probability']))
+        logger.info('Average diffusion distance: %s', np.mean(probabilities['diffusion_distance']))
         self.initialize_output_tables()
         temporal_offsets = probabilities['temporal_offset']
         temporal_offsets = temporal_offsets[~np.isnan(temporal_offsets)]
@@ -175,8 +175,8 @@ class DiffusionAnalysisIntegrator:
         logger.info('Done with statistical tests.')
 
     def initialize_output_tables(self):
-        table_name = 'transition_probabilities_summarized'
-        schema = self.computational_design.get_transition_probabilities_summarized_header()
+        table_name = 'diffusion_distances_summarized'
+        schema = self.computational_design.get_diffusion_distances_summarized_header()
         uri = join(self.output_path, self.computational_design.get_database_uri())
         with WaitingDatabaseContextManager(uri) as m:
             m.execute_commit('DROP TABLE IF EXISTS ' + table_name + ' ;')
@@ -191,8 +191,8 @@ class DiffusionAnalysisIntegrator:
             m.execute_commit(cmd)
 
     def record_summary_of_values(self, marker, distance_type, outcomes_dict, t_values, grouped):
-        table_name = 'transition_probabilities_summarized'
-        schema = self.computational_design.get_transition_probabilities_summarized_header()
+        table_name = 'diffusion_distances_summarized'
+        schema = self.computational_design.get_diffusion_distances_summarized_header()
         process_value = {
             'TEXT' : (lambda val: '"' + str(val) + '"'),
             'NUMERIC' : (lambda val: str(val)),
@@ -209,14 +209,14 @@ class DiffusionAnalysisIntegrator:
                     logger.warning('Skipping sample %s due to unknown outcome.', sample_id)
                     continue
                 if df.shape[0] == 0:
-                    logger.warning('Skipping sample %s due to no associated transition probability values.', sample_id)
+                    logger.warning('Skipping sample %s due to no associated diffusion distance values.', sample_id)
                     continue
                 for t in t_values:
                     temporal_offset = self.guess_round(t)
-                    transition_probabilities = list(df[df['temporal_offset'] == t]['transition_probability'])
-                    mean_value = np.mean(transition_probabilities)
-                    median_value = np.median(transition_probabilities)
-                    variance_value = np.var(transition_probabilities)
+                    diffusion_distances = list(df[df['temporal_offset'] == t]['diffusion_distance'])
+                    mean_value = np.mean(diffusion_distances)
+                    median_value = np.median(diffusion_distances)
+                    variance_value = np.var(diffusion_distances)
                     values = [
                         sample_id,
                         outcome,
@@ -245,7 +245,7 @@ class DiffusionAnalysisIntegrator:
         """
         Args:
             df (pandas.DataFrame):
-                Dataframe with sample-level (i.e. summarized) transition probability
+                Dataframe with sample-level (i.e. summarized) diffusion distance
                 values, summarized according to 'statistic'.
             sign (int):
                 Either 1 or -1. Whether to return the extremely large value (in case of
@@ -257,14 +257,14 @@ class DiffusionAnalysisIntegrator:
             list:
                 A pair, the extreme sample ID string and the extreme value.
         """
-        values_column = statistic + '_transition_probability'
+        values_column = statistic + '_diffusion_distance'
         df_sorted = df.sort_values(by=values_column, ascending=True if sign==-1 else False)
         extreme_sample = list(df_sorted['Sample_ID'])[0]
         extreme_value = float(list(df_sorted[values_column])[0])
         return [extreme_sample, extreme_value]
 
     def do_outcome_tests(self):
-        df = self.get_dataframe_from_db('transition_probabilities_summarized')
+        df = self.get_dataframe_from_db('diffusion_distances_summarized')
         df = df[df['Diffusion_kernel_distance_type'] == 'EUCLIDEAN']
 
         outcomes = sorted(list(set(df['Outcome_assignment'])))
@@ -279,8 +279,8 @@ class DiffusionAnalysisIntegrator:
                         for statistic in statistics:
                             df1 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome1) & (df['Marker'] == phenotype)]
                             df2 = df[(df['Temporal_offset'] == t) & (df['Outcome_assignment'] == outcome2) & (df['Marker'] == phenotype)]
-                            values1 = list(df1[statistic + '_transition_probability'])
-                            values2 = list(df2[statistic + '_transition_probability'])
+                            values1 = list(df1[statistic + '_diffusion_distance'])
+                            values2 = list(df2[statistic + '_diffusion_distance'])
 
                             if np.var(values1) == 0 or np.var(values2) == 0:
                                 continue
@@ -371,7 +371,7 @@ class DiffusionAnalysisIntegrator:
                 A version of the "ungrouped" pandas.DataFrame, grouped by sample
                 identifier value.
             ungrouped:
-                The pandas.DataFrame of recorded transition probability values,
+                The pandas.DataFrame of recorded diffusion distance values,
                 pre-restricted to the given marker and distance type.
         """
         keys = sorted([sample_id for sample_id, df in grouped])
@@ -391,7 +391,7 @@ class DiffusionAnalysisIntegrator:
             fig, axs = plt.subplots(1, 2, figsize=(12, 6))
             distributions_t = {}
             for sample_id, df in grouped:
-                data = list(df[df['temporal_offset'] == t]['transition_probability'])
+                data = list(df[df['temporal_offset'] == t]['diffusion_distance'])
                 if sample_id in outcomes_dict:
                     outcome = outcomes_dict[sample_id]
                 else:
@@ -410,7 +410,7 @@ class DiffusionAnalysisIntegrator:
                 if o == 'unknown':
                     continue
                 o_mask = [sample_id in outcomes_dict and outcomes_dict[sample_id] == o for sample_id in ungrouped['Sample ID']]
-                data = list(ungrouped[(ungrouped['temporal_offset'] == t) & (o_mask)]['transition_probability'])
+                data = list(ungrouped[(ungrouped['temporal_offset'] == t) & (o_mask)]['diffusion_distance'])
                 if np.var(data) == 0:
                     continue
                 g = sns.kdeplot(data, label=o, linewidth = 2.0, color=color_dict[o], log_scale=(False,True), ax=axs[1])
@@ -421,7 +421,7 @@ class DiffusionAnalysisIntegrator:
                     DiffusionAnalysisIntegrator.max_probability_value,
                 )
                 axs[j].set_ylim(0.1, 1000)
-                axs[j].set_xlabel('point-to-point diffusion probability after time t=' + str(self.guess_round(t)))
+                axs[j].set_xlabel('point-to-point diffusion distance after time t=' + str(self.guess_round(t)))
                 axs[j].set_ylabel('density')
 
             axs[1].legend()
@@ -446,7 +446,7 @@ class DiffusionAnalysisIntegrator:
                 continue
             probabilities = ot.dist(distributions_array)
             g = sns.clustermap(probabilities, cbar_pos=None, row_colors=row_colors, dendrogram_ratio=0.1, xticklabels=[], yticklabels=[])
-            g.ax_col_dendrogram.set_title('Optimal transport distance between distributions of diffusion probability values (sample-by-sample)')
+            g.ax_col_dendrogram.set_title('Optimal transport distance between distributions of diffusion distance values (sample-by-sample)')
             g.fig.subplots_adjust(top=.9)
             g.ax_heatmap.tick_params(right=False, bottom=False)
             pdf.savefig(g.fig)

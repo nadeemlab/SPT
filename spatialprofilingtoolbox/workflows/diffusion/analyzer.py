@@ -19,6 +19,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         complex_phenotypes_file: str=None,
         fov_index: int=None,
         regional_compartment: str=None,
+        save_graphml: bool=False,
         **kwargs,
     ):
         """
@@ -33,14 +34,17 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
                 The regional compartment (in the sense of
                 ``diffusion.job_generator.get_regional_compartments()``) in which
                 reside the cells to be considered by this job.
+            save_graphml (bool):
+                Whether to save GraphML files as additional output.
         """
-        super(DiffusionAnalyzer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.regional_compartment = regional_compartment
 
         self.dataset_design = dataset_design
         self.computational_design = DiffusionDesign(
             dataset_design = dataset_design,
             complex_phenotypes_file = complex_phenotypes_file,
+            save_graphml = save_graphml,
         )
 
         self.retrieve_input_filename()
@@ -49,6 +53,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             fov_index = fov_index,
             regional_compartment = regional_compartment,
             dataset_design = self.dataset_design,
+            computational_design = self.computational_design,
             jobs_paths = self.jobs_paths,
         )
 
@@ -86,7 +91,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
 
         values = self.calculator.get_values('diffusion kernel')
         if values is not None:
-            self.save_transition_probability_values(
+            self.save_diffusion_distance_values(
                 values=values,
                 distance_type_str=distance_type.name,
                 marker=marker,
@@ -94,14 +99,14 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
 
         for t in self.calculator.get_temporal_offsets():
             values = self.calculator.get_values(t)
-            self.save_transition_probability_values(
+            self.save_diffusion_distance_values(
                 values=values,
                 distance_type_str=distance_type.name,
                 temporal_offset=t,
                 marker=marker,
             )
 
-    def save_transition_probability_values(
+    def save_diffusion_distance_values(
         self,
         values=None,
         distance_type_str: str=None,
@@ -113,7 +118,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
 
         Args:
             values:
-                List of numeric transition probability values to save.
+                List of numeric diffusion distance values to save.
             distance_type_str (str):
                 The distance type (point-set metric) for the context in which the values
                 were computed.
@@ -131,7 +136,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             for value in values:
                 m.execute(' '.join([
                     'INSERT INTO',
-                    'transition_probabilities',
+                    'diffusion_distances',
                     '(' + ', '.join(self.computational_design.get_probabilities_table_header()) + ')',
                     'VALUES',
                     '(' + str(value) +', "' + distance_type_str + '", ' + str(self.get_job_index()) + ', ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'

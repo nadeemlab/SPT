@@ -50,6 +50,8 @@ if __name__=='__main__':
     kwargs['input_path'] = parameters['input_path']
     kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
     kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
+    if 'save_graphml' in parameters:
+        kwargs['save_graphml'] = parameters['save_graphml']
 
     a = spt.get_analyzer(
         workflow='Multiplexed IF diffusion',

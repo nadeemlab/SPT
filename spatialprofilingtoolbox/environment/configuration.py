@@ -225,6 +225,7 @@ def get_config_parameters_from_cli():
     outcomes_file = args.outcomes_file
     output_path = args.output_path
     jobs_path = args.jobs_path
+    logs_path = args.logs_path
     schedulers_path = args.schedulers_path
     file_manifest_file = args.file_manifest_file
     runtime_platform = args.runtime_platform
@@ -241,6 +242,7 @@ def get_config_parameters_from_cli():
         'outcomes_file' : outcomes_file,
         'output_path' : output_path,
         'jobs_path' : jobs_path,
+        'logs_path' : logs_path,
         'schedulers_path' : schedulers_path,
         'sif_file' : sif_file,
         'file_manifest_file' : file_manifest_file,

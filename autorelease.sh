@@ -18,7 +18,7 @@ start_time=$SECONDS
 function logstyle-printf() {
     if [[ "$TIME_NEXT" == "1" ]];
     then
-        units="seconds"
+        units="seconds "
         elapsed=$(( SECONDS - start_time ))
         char_width=${#elapsed}
         padding=$(( 4 - char_width ))
@@ -29,7 +29,7 @@ function logstyle-printf() {
         unset TIME_NEXT
     fi
 
-    units="       "
+    units="        "
     elapsed=""
     char_width=${#elapsed}
     padding=$(( 4 - char_width ))

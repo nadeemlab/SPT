@@ -43,7 +43,7 @@ function logstyle-printf() {
         TIME_NEXT=1
         start_time=$SECONDS
         SAVED_MESSAGE="$1"
-        logstyle-printf "$1 "
+        printf "$source_note_color[$bar]$reset $MESSAGE"
     else
         printf "$source_note_color[$bar]$reset $MESSAGE\n"
     fi

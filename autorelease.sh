@@ -18,7 +18,6 @@ start_time=$SECONDS
 function logstyle-printf() {
     if [[ "$TIME_NEXT" == "1" ]];
     then
-        unset TIME_NEXT
         units="seconds"
         elapsed=$(( SECONDS - start_time ))
         message="$SAVED_MESSAGE"
@@ -36,6 +35,7 @@ function logstyle-printf() {
     if [[ "$TIME_NEXT" == "1" ]];
     then
         printf "$source_note_color[$bar]$reset $message"
+        unset TIME_NEXT
     fi
 
     if [[ "$2" == "timed-command" ]];

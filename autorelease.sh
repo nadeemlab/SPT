@@ -127,7 +127,7 @@ done
 
 installed=$(pip3 freeze | grep spatialprofilingtoolbox | wc -l)
 if [[ "$installed" == "1" ]]; then
-    pip3 uninstall -y spatialprofilingtoolbox 1>/dev/null 2> stderr.txt
+    pip3 uninstall -y spatialprofilingtoolbox 1>/dev/null 2>/dev/null
 fi
 
 function clean_exit() {
@@ -141,10 +141,10 @@ python3 -m venv venv
 source venv/bin/activate
 for wheel in dist/*.whl;
 do
-    pip install $wheel 1>/dev/null 2> stderr.txt
+    pip install $wheel 1>/dev/null 2>/dev/null
 done
 
-pip install pytest 1>/dev/null 2> stderr.txt
+pip install pytest 1>/dev/null 2>/dev/null
 
 logstyle-printf "$green""Running unit tests.$reset" timed-command
 cd tests/
@@ -170,32 +170,31 @@ _cleanup
 
 logstyle-printf "$green""Building singularity container.$reset" timed-command
 cd building/
-./build_singularity_container.sh 1>/dev/null 2> stderr.txt
+./build_singularity_container.sh 1>/dev/null 2>/dev/null
 if [[ "$?" == "1" ]];
 then
     logstyle-printf "$red""Something went wrong in building singularity container.$reset"
     exit
 fi
-
-# temp guard
-exit
-exit
-exit
+logstyle-printf "$green""Built:$reset"
+cd ..
+file=$(ls -1rt building/*.sif | tail -n1)
+logstyle-printf "$yellow""    $file$reset"
 
 version=$(cat spatialprofilingtoolbox/version.txt)
 logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset" timed-command
-git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \
-    git commit -m "Autoreleasing v$version" 1>/dev/null 2> stderr.txt && \
-    git tag v$version 1>/dev/null 2> stderr.txt && \
-    git push 1>/dev/null 2> stderr.txt && \
-    git push origin v$version 1>/dev/null 2> stderr.txt && \
+git add spatialprofilingtoolbox/version.txt 1>/dev/null 2>/dev/null && \
+    git commit -m "Autoreleasing v$version" 1>/dev/null 2>/dev/null && \
+    git tag v$version 1>/dev/null 2>/dev/null && \
+    git push 1>/dev/null 2>/dev/null && \
+    git push origin v$version 1>/dev/null 2>/dev/null && \
     logstyle-printf "$green""Pushed ""$bold_cyan""v$version$reset$green on remote branch$reset$yellow main$reset$green ." && \
     logstyle-printf "$green""Migrating updates to $reset$yellow$release_to_branch$reset$green branch.$reset" && \
     rm spatialprofilingtoolbox/version.txt && \
-    git checkout $release_to_branch 1>/dev/null 2> stderr.txt && \
-    git merge main 1>/dev/null 2> stderr.txt && \
-    git push 1>/dev/null 2> stderr.txt && \
-    git checkout main 1>/dev/null 2> stderr.txt && \
+    git checkout $release_to_branch 1>/dev/null 2>/dev/null && \
+    git merge main 1>/dev/null 2>/dev/null && \
+    git push 1>/dev/null 2>/dev/null && \
+    git checkout main 1>/dev/null 2>/dev/null && \
     logstyle-printf "$green""Uploading to PyPI.$reset" timed-command && \
     python3 -m twine upload --repository spatialprofilingtoolbox dist/* && \
     logstyle-printf "$green""Done.$reset"

@@ -65,8 +65,7 @@ class FrontProximityCalculator:
         filename = self.input_filename
         df_file = pd.read_csv(filename)
 
-        # Normalize FOV strings
-        df_file = self.dataset_design.normalize_fov_descriptors(df_file)
+        self.dataset_design.normalize_fov_descriptors(df_file)
 
         # Cache original (*normalized) FOV strings
         self.fov_lookup = {}

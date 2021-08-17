@@ -53,25 +53,33 @@ class HALOCellMetadataDesign:
         """
         return 'Cell Area'
 
-    def normalize_fov_descriptors(self, df):
+    def normalize_fov_descriptors(self, table):
         """
-        Args:
-            df (pandas.DataFrame):
-                Dataframe containing a field of view descriptor column.
+        Modifies field of view descriptor column of ``table`` *in-place*, sanitizes each
+        according to the assumption that each value is a Windows-style path string
+        for which only the file basename is needed.
+
+        This was needed because in some datasets, field of view descriptors were not
+        used consistently. Note that this function may be deprecated if a more rigorous
+        data model is eventually enforced with respect to the field of view descriptor
+        strings.
+
+        :param table: Dataframe containing a field of view descriptor column.
+        :type table: pandas.DataFrame
         """
-        df[self.get_FOV_column()] = df[self.get_FOV_column()].apply(self.normalize_fov_descriptor)
+        table[self.get_FOV_column()] = table[self.get_FOV_column()].apply(self.normalize_fov_descriptor)
 
     def normalize_fov_descriptor(self, fov):
         """
-        Args:
-            fov (str):
-                A field of view descriptor string to normalize (i.e. to put into normal
-                form).
+        Returns an normalized path string (file basename).
 
-        Returns:
-            str:
-                The normal form. Currently just the file basename, assuming that the
-                original descriptor is a Windows-style file path string.
+        :param fov: A field of view descriptor string to normalize (i.e. to put into
+            normal form).
+        :type fov: str
+
+        :return: The normal form. Currently just the file basename, assuming that the
+            original descriptor is a Windows-style file path string.
+        :rtype: str
         """
         return pathlib.PureWindowsPath(fov).name
 
@@ -198,10 +206,10 @@ class HALOCellMetadataDesign:
         name = ''.join(feature_list)
         return name
 
-    def get_pandas_signature(self, df, signature):
+    def get_pandas_signature(self, table, signature):
         """
         Args:
-            df (pd.DataFrame):
+            table (pd.DataFrame):
                 The HALO cell metadata dataframe, unprocessed.
             signature (dict):
                 The keys are typically phenotype names and the values are "+" or "-". If
@@ -211,22 +219,22 @@ class HALOCellMetadataDesign:
 
         Returns:
             pd.Series:
-                The boolean series indicating the records in df that express the
+                The boolean series indicating the records in table that express the
                 provided signature.
         """
         if signature is None:
             logger.error('Can not get subset with no information about signature (None).')
             return None
-        if df is None:
-            logger.error('Can not find subset of empty data; df is None.')
+        if table is None:
+            logger.error('Can not find subset of empty data; table is None.')
             return None
         fn = self.get_feature_name
         v = self.interpret_value_specification
         for key in signature.keys():
             feature_name = fn(key)
-            if not feature_name in df.columns:
-                logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(df.columns))
-        pandas_signature = self.non_infix_bitwise_AND([df[fn(key)] == v(value) for key, value in signature.items()])
+            if not feature_name in table.columns:
+                logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(table.columns))
+        pandas_signature = self.non_infix_bitwise_AND([table[fn(key)] == v(value) for key, value in signature.items()])
         return pandas_signature
 
     def non_infix_bitwise_AND(self, args):
@@ -287,17 +295,17 @@ class HALOCellMetadataDesign:
         else:
             return value
 
-    def get_compartmental_signature(self, df, compartment):
+    def get_compartmental_signature(self, table, compartment):
         """
         Args:
-            df (pd.DataFrame):
+            table (pd.DataFrame):
                 The HALO cell metadata dataframe, unprocessed.
             compartment (str):
                 The name of a compartment to focus on.
 
         Returns:
             pd.Series:
-                The boolean series indicating the records in df (i.e. cells) which
+                The boolean series indicating the records in table (i.e. cells) which
                 should be regarded as part of the given compartment. This is currently
                 just finding the records marked for this compartment, but more
                 functionality may need to be modified for specific cases (e.g. involving
@@ -307,45 +315,45 @@ class HALOCellMetadataDesign:
         signature = None
 
         if compartment == 'Non-Tumor':
-            signature = self.non_tumor_stromal_scope_signature(df)
+            signature = self.non_tumor_stromal_scope_signature(table)
         if compartment == 'Tumor':
-            signature = self.tumor_scope_signature(df)
+            signature = self.tumor_scope_signature(table)
 
         if signature is None:
             logger.error('Could not define compartment %s', compartment)
-            return [False for i in range(df.shape[0])]
+            return [False for i in range(table.shape[0])]
         else:
             return signature
 
-    def non_tumor_stromal_scope_signature(self, df, include=None):
+    def non_tumor_stromal_scope_signature(self, table, include=None):
         signature = {
             'Classifier Label' : 'Stroma',
         }
         if include:
             signature[include] = '+'
-        s1 = self.get_pandas_signature(df, signature)
+        s1 = self.get_pandas_signature(table, signature)
 
         signature = {
             'Classifier Label' : 'Non-Tumor',
         }
         if include:
             signature[include] = '+'
-        s2 = self.get_pandas_signature(df, signature)
+        s2 = self.get_pandas_signature(table, signature)
 
         return (s1 | s2)
 
-    def tumor_scope_signature(self, df, include=None):
+    def tumor_scope_signature(self, table, include=None):
         signature = {
             'Classifier Label' : 'Tumor',
         }
         if include:
             signature[include] = '+'
-        return self.get_pandas_signature(df, signature)
+        return self.get_pandas_signature(table, signature)
 
-    def get_combined_intensity(self, df, elementary_phenotype):
+    def get_combined_intensity(self, table, elementary_phenotype):
         """
         Args:
-            df (pd.DataFrame):
+            table (pd.DataFrame):
                 The HALO cell metadata dataframe, unprocessed.
             elementary_phenotype (str):
                 The name of a phenotype/channel.
@@ -358,4 +366,4 @@ class HALOCellMetadataDesign:
         prefix = self.get_indicator_prefix(elementary_phenotype)
         suffixes = [site + ' Intensity' for site in self.get_cellular_sites()]
         feature = [' '.join([prefix, suffix]) for suffix in suffixes]
-        return list(df[feature[0]] + df[feature[1]] + df[feature[2]])
+        return list(table[feature[0]] + table[feature[1]] + table[feature[2]])

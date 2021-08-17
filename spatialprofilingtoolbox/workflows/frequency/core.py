@@ -118,7 +118,7 @@ class FrequencyCalculator:
         fov_lookup = {}
         for filename, sample_identifier in self.sample_identifiers_by_file.items():
             table_file = pd.read_csv(filename)
-            table_file = self.dataset_design.normalize_fov_descriptors(table_file)
+            self.dataset_design.normalize_fov_descriptors(table_file)
 
             col = self.dataset_design.get_FOV_column()
             fovs = sorted(list(set(table_file[col])))

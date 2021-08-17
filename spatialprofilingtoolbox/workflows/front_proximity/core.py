@@ -154,7 +154,7 @@ class FrontProximityCalculator:
             for compartment in self.dataset_design.get_compartments():
                 compartment_points = [(x_values[i], y_values[i]) for i in range(len(cell_indices)) if compartment_assignments[i] == compartment]
                 if len(compartment_points) < 3:
-                    logger.debug('Fewer then 3 points in %s compartment in %s, %s',
+                    logger.debug('Fewer than 3 points in %s compartment in %s, %s',
                         compartment,
                         self.sample_identifier,
                         fov_index,

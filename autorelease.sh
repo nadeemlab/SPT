@@ -100,7 +100,7 @@ then
 fi
 
 logstyle-printf "$green""Ready to autorelease: Version is updated, and everything else under version control is unmodified.$reset"
-logstyle-printf "$green""Building package.$reset"
+logstyle-printf "$green""Building package.$reset" timed-command
 if test -d 'dist'; then
     rm dist/*
 fi

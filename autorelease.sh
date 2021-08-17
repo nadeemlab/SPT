@@ -15,18 +15,22 @@ script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 
 start_time=$SECONDS
 
+function wrapup-previous-timed() {
+    units="seconds "
+    elapsed=$(( SECONDS - start_time ))
+    char_width=${#elapsed}
+    padding=$(( 4 - char_width ))
+    control_char="s"
+    bar="$script_file %-$padding$control_char$elapsed $units"
+    echo -ne "$clearline"
+    printf "$source_note_color[$bar]$reset $SAVED_MESSAGE\n"
+    unset TIME_NEXT
+}
+
 function logstyle-printf() {
     if [[ "$TIME_NEXT" == "1" ]];
     then
-        units="seconds "
-        elapsed=$(( SECONDS - start_time ))
-        char_width=${#elapsed}
-        padding=$(( 4 - char_width ))
-        control_char="s"
-        bar="$script_file %-$padding$control_char$elapsed $units"
-        echo -ne "$clearline"
-        printf "$source_note_color[$bar]$reset $SAVED_MESSAGE\n"
-        unset TIME_NEXT
+        wrapup-previous-timed
     fi
 
     units="        "

@@ -92,9 +92,11 @@ do
     pip install $wheel 1>/dev/null 2> stderr.txt
 done
 
+pip install pytest
+
 logstyle-printf "$green""Running unit tests.$reset\n"
 cd tests/
-outcome=$(pytest -q . | tail -n1 | grep "[0-9]\+ failed")
+outcome=$(python -m pytest -q . | tail -n1 | grep "[0-9]\+ \(failed\|errors\)")
 echo "Outcome: $outcome"
 if [[ ! "$outcome" == "" ]]; then
     logstyle-printf "$red""Something went wrong in unit tests.$reset\n"

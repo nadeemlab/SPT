@@ -78,6 +78,44 @@ for f in dist/*;
 do
     logstyle-printf "$yellow""    $f$reset\n"
 done
+
+installed=$(pip3 freeze | grep spatialprofilingtoolbox | wc -l)
+if [[ "$installed" == "1" ]]; then
+    pip3 uninstall spatialprofilingtoolbox
+fi
+
+logstyle-printf "$green""Installing wheel into virtual environment.$reset\n"
+python3 -m venv venv
+source venv/bin/activate
+for wheel in dist/*.whl;
+do
+    pip install $wheel 1>/dev/null 2> stderr.txt
+done
+
+logstyle-printf "$green""Running unit tests.$reset\n"
+cd tests/
+outcome=$(pytest -q . | tail -n1 | grep "[0-9]\+ failed")
+if [[ ! "$outcome" == "" ]]; then
+    logstyle-printf "$red""Something went wrong in unit tests.$reset\n"
+    exit
+fi
+
+logstyle-printf "$green""Running integration tests.$reset\n"
+outcome=$(./tests_integration.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in")
+if [[ "$outcome" == "" ]]; then
+    logstyle-printf "$red""Something went wrong in integration tests.$reset\n"
+    exit
+fi
+
+deactivate
+rm -rf venv/
+
+source tests/cleaning.sh
+_cleanup
+
+# Just for testing autorelease! Remove this
+exit
+
 version=$(cat spatialprofilingtoolbox/version.txt)
 logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset\n"
 git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \

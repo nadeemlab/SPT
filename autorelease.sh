@@ -13,7 +13,9 @@ source_note_color="\e[36;40m"
 script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 
 function logstyle-printf() {
-    printf "$source_note_color[$script_file]$reset $1"
+    elapsed_minutes=$(bc <<< "scale=2; $SECONDS/60")
+    units="m"
+    printf "$source_note_color[$script_file $elapsed_minutes$units%5s]$reset $1"
 }
 
 current_branch=$(git branch | grep '^* ')

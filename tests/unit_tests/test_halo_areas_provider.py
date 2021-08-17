@@ -12,7 +12,7 @@ def shorten(string):
         return string
 
 def test_halo_areas_provider():
-    input_files_path = join(dirname(__file__), 'data')
+    input_files_path = join(dirname(__file__), '..', 'data')
     elementary_phenotypes_file = join(input_files_path, 'elementary_phenotypes.csv')
     regional_areas_file = join(input_files_path, 'example_areas_file.csv')
     dataset_design = HALOCellMetadataDesign(

@@ -27,15 +27,6 @@ function logstyle-printf() {
         echo -ne "$clearline"
         printf "$source_note_color[$bar]$reset $SAVED_MESSAGE\n"
         unset TIME_NEXT
-    else
-        units="       "
-        elapsed=""
-        char_width=${#elapsed}
-        padding=$(( 4 - char_width ))
-        control_char="s"
-        bar="$script_file %-$padding$control_char$elapsed $units"
-        echo -ne "$clearline"
-        printf "$source_note_color[$bar]$reset $1\n"
     fi
 
     units="       "
@@ -50,9 +41,9 @@ function logstyle-printf() {
         TIME_NEXT=1
         start_time=$SECONDS
         SAVED_MESSAGE="$1"
-        printf "$source_note_color[$bar]$reset $message"
+        printf "$source_note_color[$bar]$reset $1"
     else
-        printf "$source_note_color[$bar]$reset $message\n"
+        printf "$source_note_color[$bar]$reset $1\n"
     fi
 }
 

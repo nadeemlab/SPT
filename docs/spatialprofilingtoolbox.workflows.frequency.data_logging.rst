@@ -1,7 +1,7 @@
 data_logging
 ============
 
-.. automodule:: spatialprofilingtoolbox.workflows.frequency.data_logging
+.. automodule:: spatialprofilingtoolbox.workflows.density.data_logging
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,6 +1,6 @@
 [default]
 
-workflow = Multiplexed IF frequency
+workflow = Multiplexed IF density
 
 input_path = ./data/
 outcomes_file = ./data/diagnosis.tsv

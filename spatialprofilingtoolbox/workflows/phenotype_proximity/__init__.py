@@ -1,6 +1,6 @@
 """
 The core of this module takes as input two collections of points, and calculates
-the frequency with which a pair of points from the respective collections occur
+the density with which a pair of points from the respective collections occur
 near each other, per unit cell area. In an unbalanced mode, it calculates, for
 cells of a given phenotype, the average number of neighbors of another given
 phenotype.

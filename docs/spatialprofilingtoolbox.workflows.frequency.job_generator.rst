@@ -1,7 +1,7 @@
 job\_generator
 ==============
 
-.. automodule:: spatialprofilingtoolbox.workflows.frequency.job_generator
+.. automodule:: spatialprofilingtoolbox.workflows.density.job_generator
     :members:
     :undoc-members:
     :show-inheritance:

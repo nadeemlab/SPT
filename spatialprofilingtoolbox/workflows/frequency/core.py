@@ -14,7 +14,7 @@ from ...environment.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class FrequencyCalculator:
+class DensityCalculator:
     """
     The main class of the core calculator.
     """
@@ -42,7 +42,7 @@ class FrequencyCalculator:
             input data being provided.
 
         :param computational_design: Design object providing metadata specific to the
-            frequency workflow.
+            density workflow.
         """
         self.sample_identifiers_by_file = sample_identifiers_by_file
         self.output_path = jobs_paths.output_path
@@ -50,11 +50,11 @@ class FrequencyCalculator:
         self.dataset_design = dataset_design
         self.computational_design = computational_design
 
-    def calculate_frequency(self):
+    def calculate_density(self):
         """
         Writes cell data to the database.
 
-        Note that in the frequency analysis workflow, most calculation takes place in
+        Note that in the density analysis workflow, most calculation takes place in
         the "integration" phase.
         """
         outcomes_dict = self.pull_in_outcome_data(self.outcomes_file)

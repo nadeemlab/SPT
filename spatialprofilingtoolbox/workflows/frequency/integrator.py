@@ -1,5 +1,5 @@
 """
-The integration phase of the cell phenotype frequency workflow combines data
+The integration phase of the cell phenotype density workflow combines data
 across samples and performs tests for statistically-significant differences
 between outcome groups.
 """
@@ -14,12 +14,12 @@ from scipy.stats import ttest_ind, kruskal
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
-from .data_logging import FrequencyDataLogger
+from .data_logging import DensityDataLogger
 
 logger = colorized_logger(__name__)
 
 
-class FrequencyAnalysisIntegrator:
+class DensityAnalysisIntegrator:
     """
     Main class of the integration phase.
     """
@@ -38,12 +38,12 @@ class FrequencyAnalysisIntegrator:
         :type dataset_settings: DatasetSettings
 
         :param computational_design: Design object providing metadata specific to the
-            frequency workflow.
+            density workflow.
         """
         self.output_path = jobs_paths.output_path
         self.outcomes_file = dataset_settings.outcomes_file
         self.computational_design = computational_design
-        self.frequency_tests = None
+        self.density_tests = None
         self._fov_lookup_dict = None
 
     def calculate(self):
@@ -51,9 +51,9 @@ class FrequencyAnalysisIntegrator:
         Performs statistical comparison tests and writes results.
         """
         logger.info('Starting stats.')
-        frequency_tests = self.do_outcome_tests()
-        if frequency_tests is not None:
-            self.export_results(frequency_tests)
+        density_tests = self.do_outcome_tests()
+        if density_tests is not None:
+            self.export_results(density_tests)
             logger.info('Done exporting stats.')
         else:
             logger.warning('Test results not generated.')
@@ -72,21 +72,21 @@ class FrequencyAnalysisIntegrator:
         """
         cells = self.get_dataframe_from_db('cells')
         phenotype_columns = self.overlay_areas_on_masks(cells)
-        FrequencyDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
+        DensityDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
 
         area_sums, sum_columns = self.sum_areas_over_compartments_per_phenotype(
             cells,
             phenotype_columns,
         )
         areas_all_phenotypes_dict = self.overlay_area_total_all_phenotypes(cells, area_sums)
-        FrequencyDataLogger.log_normalization_factors(areas_all_phenotypes_dict)
+        DensityDataLogger.log_normalization_factors(areas_all_phenotypes_dict)
 
         normalized_sum_columns = self.add_normalized_columns(
             area_sums,
             phenotype_columns,
             sum_columns,
         )
-        FrequencyDataLogger.log_normalized_areas(cells, area_sums, normalized_sum_columns)
+        DensityDataLogger.log_normalized_areas(cells, area_sums, normalized_sum_columns)
 
         phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
         outcomes = sorted(list(set(cells['outcome_assignment'])))
@@ -128,18 +128,18 @@ class FrequencyAnalysisIntegrator:
                         rows.append(row)
 
                     if not row is None:
-                        FrequencyDataLogger.log_test_input(row, df1, df2)
+                        DensityDataLogger.log_test_input(row, df1, df2)
 
         if len(rows) == 0:
             logger.info('No non-trivial tests to perform. Probably too few values.')
             return None
-        frequency_tests = pd.DataFrame(rows)
-        frequency_tests.sort_values(
+        density_tests = pd.DataFrame(rows)
+        density_tests.sort_values(
             by=['outcome 1', 'outcome 2', 'p-value < 0.01', 'p-value'],
             ascending=[True, True, False, True],
             inplace=True,
         )
-        return frequency_tests
+        return density_tests
 
     @staticmethod
     def overlay_areas_on_masks(cells):
@@ -400,25 +400,25 @@ class FrequencyAnalysisIntegrator:
               table, restricted also the outcome 2. Provided for convenience/inspection.
         :rtype: dict, pandas.DataFrame, pandas.DataFrame
         """
-        test_inputs = FrequencyAnalysisIntegrator.gather_test_inputs(
+        test_inputs = DensityAnalysisIntegrator.gather_test_inputs(
             table,
             phenotype_name,
             outcome_pair,
             test,
         )
 
-        test_results = FrequencyAnalysisIntegrator.do_single_test(test_inputs)
+        test_results = DensityAnalysisIntegrator.do_single_test(test_inputs)
         if test_results is None:
             return [None, None, None]
 
-        sign = FrequencyAnalysisIntegrator.sign(test_results['difference'])
+        sign = DensityAnalysisIntegrator.sign(test_results['difference'])
 
-        extreme_sample1, extreme_value1 = FrequencyAnalysisIntegrator.get_extremum(
+        extreme_sample1, extreme_value1 = DensityAnalysisIntegrator.get_extremum(
             test_inputs['df1'],
             -1 * sign,
             test_inputs['column'],
         )
-        extreme_sample2, extreme_value2 = FrequencyAnalysisIntegrator.get_extremum(
+        extreme_sample2, extreme_value2 = DensityAnalysisIntegrator.get_extremum(
             test_inputs['df2'],
             sign,
             test_inputs['column'],
@@ -444,16 +444,16 @@ class FrequencyAnalysisIntegrator:
         }
         return [row, test_inputs['df1'], test_inputs['df2']]
 
-    def export_results(self, frequency_tests):
+    def export_results(self, density_tests):
         """
         Writes the result of the statistical tests to file, in order of statistical
         significance.
 
-        :param frequency_tests: Table of test results.
+        :param density_tests: Table of test results.
             See :py:meth:`get_test_result_row`.
-        :type frequency_tests: pandas.DataFrame
+        :type density_tests: pandas.DataFrame
         """
-        frequency_tests.to_csv(join(
+        density_tests.to_csv(join(
             self.output_path,
             self.computational_design.get_stats_tests_file(),
         ), index=False)

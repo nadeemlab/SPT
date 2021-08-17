@@ -139,9 +139,9 @@ Supported workflows
 
    * - Phenotype proximity
      - | The core module takes as input two collections of points, and
-       | calculates the average frequency with which a point of one set appears
+       | calculates the average density with which a point of one set appears
        | within a specified distance from a given point of the other set. In a
-       | balanced/symmetric mode, it calculates instead the frequency of
+       | balanced/symmetric mode, it calculates instead the density of
        | occurence of a pair of points from the respective sets within the
        | specified distance range.
    * - Front proximity
@@ -152,8 +152,8 @@ Supported workflows
      - | The core module takes as input a collection of points, and generates
        | the associated diffusion map and diffusion Markov chain, with the aim
        | of producing features that are characteristic of the input geometry.
-   * - Frequency
-     - | The core module calculates phenotype frequency metrics, without regard 
+   * - Density
+     - | The core module calculates phenotype density metrics, without regard 
        | to spatial information.
 
 

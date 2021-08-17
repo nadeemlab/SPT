@@ -1,6 +1,6 @@
 """
 This is the module in which should be registered any metadata related to the
-design of the cell phenotype frequency analysis workflow.
+design of the cell phenotype density analysis workflow.
 """
 import re
 
@@ -9,7 +9,7 @@ import pandas as pd
 from ...environment.computational_design import ComputationalDesign
 
 
-class FrequencyDesign(ComputationalDesign):
+class DensityDesign(ComputationalDesign):
     """
     The design object.
     """
@@ -37,7 +37,7 @@ class FrequencyDesign(ComputationalDesign):
 
     @staticmethod
     def get_database_uri():
-        return 'frequency.db'
+        return 'density.db'
 
     @staticmethod
     def get_stats_tests_file():
@@ -45,7 +45,7 @@ class FrequencyDesign(ComputationalDesign):
         :return: The filename to use when writing the statistical test results.
         :rtype: str
         """
-        return 'frequency_tests.csv'
+        return 'density_tests.csv'
 
     def get_cells_header(self, style='readable'):
         """
@@ -57,7 +57,7 @@ class FrequencyDesign(ComputationalDesign):
             column name followed by a SQL datatype name.
         :rtype: list
         """
-        constant_portion = FrequencyDesign.get_cells_header_constant_portion()
+        constant_portion = DensityDesign.get_cells_header_constant_portion()
         variable_portion = self.get_cells_header_variable_portion(style=style)
         return constant_portion + variable_portion
 

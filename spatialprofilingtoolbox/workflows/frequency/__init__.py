@@ -1,4 +1,4 @@
 """
-This module computes basic frequency statistics for each phenotype, without
+This module computes basic density statistics for each phenotype, without
 regard to spatial information.
 """

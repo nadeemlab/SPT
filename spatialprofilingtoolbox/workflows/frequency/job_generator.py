@@ -1,6 +1,6 @@
 """
 The generator of the job scripts and job scheduling scripts for the cell
-phenotype frequency analysis workflow.
+phenotype density analysis workflow.
 """
 from math import ceil
 import re
@@ -13,12 +13,12 @@ import sqlite3
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from ...environment.job_generator import JobGenerator
 from ...environment.log_formats import colorized_logger
-from .computational_design import FrequencyDesign
+from .computational_design import DensityDesign
 
 logger = colorized_logger(__name__)
 
 
-class FrequencyJobGenerator(JobGenerator):
+class DensityJobGenerator(JobGenerator):
     """
     The main class of the job generation.
     """
@@ -37,7 +37,7 @@ singularity exec \
  {{cli_call}} \
  &> {{log_filename}} 
 '''
-    cli_call_template = '''spt-frequency-analysis \
+    cli_call_template = '''spt-density-analysis \
 '''
 
     def __init__(self,
@@ -59,7 +59,7 @@ singularity exec \
         self.dataset_design = HALOCellMetadataDesign(
             elementary_phenotypes_file,
         )
-        self.computational_design = FrequencyDesign(
+        self.computational_design = DensityDesign(
             dataset_design=self.dataset_design,
             complex_phenotypes_file=complex_phenotypes_file,
         )
@@ -77,10 +77,10 @@ singularity exec \
                 all_memory_requirements.append(self.get_memory_requirements(row))
 
         job_index = self.register_job_existence()
-        job_name = 'frequency_' + str(job_index)
+        job_name = 'density_' + str(job_index)
         log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
 
-        contents = FrequencyJobGenerator.lsf_template
+        contents = DensityJobGenerator.lsf_template
         contents = re.sub(
             '{{input_files_path}}',
             self.dataset_settings.input_path,
@@ -98,7 +98,7 @@ singularity exec \
         contents = re.sub('{{memory_in_gb}}', str(max(all_memory_requirements)), contents)
         bsub_job = contents
 
-        cli_call = FrequencyJobGenerator.cli_call_template
+        cli_call = DensityJobGenerator.cli_call_template
         bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
 
         lsf_job_filename = join(self.jobs_paths.jobs_path, job_name + '.lsf')
@@ -135,20 +135,20 @@ singularity exec \
     def generate_scheduler_scripts(self):
         deployment_platform = self.runtime_settings.runtime_platform
         if deployment_platform == 'lsf':
-            script_name = 'schedule_lsf_frequency.sh'
+            script_name = 'schedule_lsf_density.sh'
             with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
                 for lsf_job_filename in self.lsf_job_filenames:
                     schedule_script.write('bsub < ' + lsf_job_filename + '\n')
 
         if deployment_platform == 'local':
-            script_name = 'schedule_local_frequency.sh'
+            script_name = 'schedule_local_density.sh'
             with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
                 for sh_job_filename in self.sh_job_filenames:
                     schedule_script.write(sh_job_filename + '\n')
 
     def initialize_intermediate_database(self):
         """
-        The frequency workflow uses a pipeline-specific database to store its
+        The density workflow uses a pipeline-specific database to store its
         intermediate outputs. This method initializes this database's tables.
         """
         cells_header = self.computational_design.get_cells_header(style='sql')

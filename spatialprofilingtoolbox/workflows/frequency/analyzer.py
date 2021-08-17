@@ -1,5 +1,5 @@
 """
-The parallelizable, job-level analysis stage of the cell phenotype frequency
+The parallelizable, job-level analysis stage of the cell phenotype density
 analysis workflow.
 """
 from os.path import join, abspath
@@ -8,13 +8,13 @@ import hashlib
 from ...environment.single_job_analyzer import SingleJobAnalyzer
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
-from .core import FrequencyCalculator
-from .computational_design import FrequencyDesign
+from .core import DensityCalculator
+from .computational_design import DensityDesign
 
 logger = colorized_logger(__name__)
 
 
-class FrequencyAnalyzer(SingleJobAnalyzer):
+class DensityAnalyzer(SingleJobAnalyzer):
     """
     The main class of the job.
     """
@@ -34,12 +34,12 @@ class FrequencyAnalyzer(SingleJobAnalyzer):
         """
         super().__init__(job_index=job_index, **kwargs)
         self.dataset_design = dataset_design
-        self.computational_design = FrequencyDesign(
+        self.computational_design = DensityDesign(
             dataset_design = self.dataset_design,
             complex_phenotypes_file = complex_phenotypes_file,
         )
         sample_identifiers_by_file = self.retrieve_cell_input_file_info(skip_integrity_check)
-        self.calculator = FrequencyCalculator(
+        self.calculator = DensityCalculator(
             sample_identifiers_by_file = sample_identifiers_by_file,
             jobs_paths = self.jobs_paths,
             dataset_settings = self.dataset_settings,
@@ -47,10 +47,10 @@ class FrequencyAnalyzer(SingleJobAnalyzer):
             computational_design = self.computational_design,
         )
         logger.info('Job started.')
-        logger.info('Note: The "frequency" workflow operates as a single job.')
+        logger.info('Note: The "density" workflow operates as a single job.')
 
     def _calculate(self):
-        self.calculator.calculate_frequency()
+        self.calculator.calculate_density()
 
     def retrieve_cell_input_file_info(self, skip_integrity_check):
         """

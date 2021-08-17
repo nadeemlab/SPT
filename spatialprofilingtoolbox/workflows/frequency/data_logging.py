@@ -1,6 +1,6 @@
 """
 These functions provide detailed data-specific logging for the cell phenotype
-frequency workflow. The log messages are intended to aid in tracking data value
+density workflow. The log messages are intended to aid in tracking data value
 provenance in particular runs.
 """
 
@@ -9,7 +9,7 @@ from ...environment.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class FrequencyDataLogger:
+class DensityDataLogger:
     """
     Convenience class.
     """

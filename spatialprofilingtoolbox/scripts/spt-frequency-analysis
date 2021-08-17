@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This script represents a single job of the frequency analysis workflow. It
+This script represents a single job of the density analysis workflow. It
 is not run directly by the user.
 """
 import argparse
@@ -10,7 +10,7 @@ import spatialprofilingtoolbox as spt
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         description = ''.join([
-            'This program does cell phenotype frequency calculations in ',
+            'This program does cell phenotype density calculations in ',
             'multiplexed IF images, not taking into account spatial information.',
             'It is formulated as a script so that it can be run as part of large HPC batches. '
             'It generally needs to be run as part of spt-pipeline, to ensure initialization.',
@@ -28,7 +28,7 @@ if __name__=='__main__':
     kwargs['skip_integrity_check'] = True if 'skip_integrity_check' in parameters else False
 
     a = spt.get_analyzer(
-        workflow='Multiplexed IF frequency',
+        workflow='Multiplexed IF density',
         **kwargs,
     )
     a.calculate()

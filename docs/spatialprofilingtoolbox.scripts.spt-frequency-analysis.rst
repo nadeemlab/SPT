@@ -1,5 +1,5 @@
-spt-frequency-analysis
+spt-density-analysis
 ======================
 
-This script represents a single job of the frequency analysis workflow. It is
+This script represents a single job of the density analysis workflow. It is
 not run directly by the user.

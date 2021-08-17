@@ -1,7 +1,7 @@
 analyzer
 ========
 
-.. automodule:: spatialprofilingtoolbox.workflows.frequency.analyzer
+.. automodule:: spatialprofilingtoolbox.workflows.density.analyzer
     :members:
     :undoc-members:
     :show-inheritance:

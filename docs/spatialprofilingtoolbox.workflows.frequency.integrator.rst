@@ -1,7 +1,7 @@
 integrator
 ==========
 
-.. automodule:: spatialprofilingtoolbox.workflows.frequency.integrator
+.. automodule:: spatialprofilingtoolbox.workflows.density.integrator
     :members:
     :undoc-members:
     :show-inheritance:

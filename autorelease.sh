@@ -15,12 +15,12 @@ script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 start_time=$SECONDS
 
 function logstyle-printf() {
-    elapsed_seconds=$(( SECONDS - start_time ))
-    char_width=${#elapsed_minutes}
+    elapsed=$(( SECONDS - start_time ))
+    char_width=${#elapsed}
     padding=$(( 4 - char_width ))
     units="seconds"
     control_char="s"
-    printf "$source_note_color[$script_file %-$padding$control_char$elapsed_minutes $units]$reset $1"
+    printf "$source_note_color[$script_file %-$padding$control_char$elapsed $units]$reset $1"
 }
 
 current_branch=$(git branch | grep '^* ')

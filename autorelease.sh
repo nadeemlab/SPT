@@ -84,6 +84,12 @@ if [[ "$installed" == "1" ]]; then
     pip3 uninstall -y spatialprofilingtoolbox 1>/dev/null 2> stderr.txt
 fi
 
+function clean_exit() {
+    deactivate
+    rm -rf venv/
+    exit
+}
+
 logstyle-printf "$green""Installing wheel into virtual environment.$reset\n"
 python3 -m venv venv
 source venv/bin/activate
@@ -92,23 +98,21 @@ do
     pip install $wheel 1>/dev/null 2> stderr.txt
 done
 
-pip install pytest
+pip install pytest 1>/dev/null 2> stderr.txt
 
 logstyle-printf "$green""Running unit tests.$reset\n"
 cd tests/
 outcome=$(python -m pytest -q . | tail -n1 | grep "[0-9]\+ \(failed\|errors\)")
-echo "Outcome: $outcome"
 if [[ ! "$outcome" == "" ]]; then
     logstyle-printf "$red""Something went wrong in unit tests.$reset\n"
-    exit
+    clean_exit
 fi
 
 logstyle-printf "$green""Running integration tests.$reset\n"
 outcome=$(./tests_integration.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in")
-echo "Outcome: $outcome"
 if [[ "$outcome" == "" ]]; then
     logstyle-printf "$red""Something went wrong in integration tests.$reset\n"
-    exit
+    clean_exit
 fi
 
 deactivate

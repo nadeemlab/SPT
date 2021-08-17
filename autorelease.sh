@@ -105,7 +105,13 @@ fi
 logstyle-printf "$green""Ready to autorelease: Version is updated, and everything else under version control is unmodified.$reset"
 logstyle-printf "$green""Building package.$reset" timed-command
 if test -d 'dist'; then
-    rm dist/*
+    for file in dist/*;
+    do
+        if test -f "$file";
+        then
+            rm $file
+        fi
+    done
 fi
 python3 -m build 1>/dev/null
 logstyle-printf "$green""Built:$reset"

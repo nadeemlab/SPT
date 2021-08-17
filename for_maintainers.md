@@ -49,20 +49,11 @@ It checks that:
 2. `spatialprofilingtoolbox/version.txt` has been modified (as it would be after a normal commit in case the above-mentioned git hook is installed, or after a manual version number change).
 3. No other files under git version control have been modified.
 
-If these criteria are met, the script then proceeds to:
-
-1. Let you know what the version number is for the release that is about to take place.
-2. Removes previously-built distributables from `dist/` .
-3. Builds a new suite of distributables into `dist/` .
-4. Makes a new commit, in which the only change is the version text file.
-5. Tags the commit with the version number.
-6. Pushes the new commit.
-7. Merges the updates into the stipulated "release to" branch (currently `prerelease`), the one being monitored by readthedocs for the purposes of autogenerating the documentation.
-8. Uses `twine` to upload the distributables to PyPI.
+If these criteria are met, the script then proceeds to run unit and integration tests, build a singularity container in which the package is installed, pushes new code to trigger a documentation build and uploads to PyPI using `twine`.
 
 Notes:
 - The PyPI upload requires that you have set up the API token correctly. Log in to your PyPI account to set this up.
-- You may wish to "activate" the specific tagged version that is created, by logging in to readthedocs and fiddling with the settings. You can generally choose which version/branch is used for autogenerating and serving the documentation.
+- You may wish to "activate" the documentation for the specific tagged version that is created, by logging in to Read the Docs and fiddling with the settings. You can generally choose which version/branch is used for autogenerating and serving the documentation.
 
 
 Adding new functionality

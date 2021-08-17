@@ -13,10 +13,11 @@ source_note_color="\e[36;40m"
 script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 
 function logstyle-printf() {
-    elapsed_minutes=$(bc <<< "scale=2; $SECONDS/60")
+    elapsed_seconds="$SECONDS"
+    SECONDS=0
     char_width=${#elapsed_minutes}
-    padding=$(( 6 - char_width ))
-    units="mins"
+    padding=$(( 4 - char_width ))
+    units="seconds"
     control_char="s"
     printf "$source_note_color[$script_file %-$padding$control_char$elapsed_minutes $units]$reset $1"
 }

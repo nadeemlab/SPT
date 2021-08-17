@@ -8,7 +8,7 @@ function _cleanup() {
             rm $file
         fi
     done
-    for directory in jobs logs output ;
+    for directory in jobs logs output __pycache__ ;
     do
         if [[ -d $directory ]];
         then

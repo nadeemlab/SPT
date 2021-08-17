@@ -165,19 +165,24 @@ then
     printf "$cr$yellow$prompt_str$reset$green$COMPLEX_PHENOTYPES_FILE$reset\n"
 fi
 
-BALANCED=""
-prompt_str="Balanced/symmetric analysis with respect to phenotype pairs? (Y/n): "
-printf "$yellow$prompt_str$reset"
-while [[ "$BALANCED" = "" ]];
-do
-    read -e BALANCED
-done
-printf "$cr$yellow$prompt_str$reset$green$BALANCED$reset\n"
-if [[ "$BALANCED" == "" ]]; then
+if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF phenotype proximity" ]] ;
+then
+    BALANCED=""
+    prompt_str="Balanced/symmetric analysis with respect to phenotype pairs? (y/N): "
+    printf "$yellow$prompt_str$reset"
+    while [[ "$BALANCED" = "" ]];
+    do
+        read -e BALANCED
+    done
+    printf "$cr$yellow$prompt_str$reset$green$BALANCED$reset\n"
+    if [[ "$BALANCED" == "" ]]; then
+        BALANCED="False"
+    fi
+    if [[ ( "$BALANCED" == "Y" ) || ( "$BALANCED" == "y" ) ]]; then
+        BALANCED="True"
+    fi
+else
     BALANCED="False"
-fi
-if [[ ( "$BALANCED" == "Y" ) || ( "$BALANCED" == "y" ) ]]; then
-    BALANCED="True"
 fi
 
 RUN_PLATFORM=""

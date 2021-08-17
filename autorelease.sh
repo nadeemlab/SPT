@@ -163,11 +163,6 @@ rm -rf venv/
 source tests/cleaning.sh
 _cleanup
 
-# Just for testing autorelease! Remove this
-exit
-exit
-exit
-
 version=$(cat spatialprofilingtoolbox/version.txt)
 logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset" timed-command
 git add spatialprofilingtoolbox/version.txt 1>/dev/null 2> stderr.txt && \

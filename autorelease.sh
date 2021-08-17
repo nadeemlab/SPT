@@ -22,6 +22,7 @@ function logstyle-printf() {
         units="seconds"
         elapsed=$(( SECONDS - start_time ))
         message="$SAVED_MESSAGE"
+        echo -ne "$clearline"
     else
         units="       "
         elapsed=""
@@ -44,7 +45,7 @@ function logstyle-printf() {
         SAVED_MESSAGE="$1"
         logstyle-printf "$1 "
     else
-        printf "$source_note_color[$bar]$reset $MESSAGE"
+        printf "$source_note_color[$bar]$reset $MESSAGE\n"
     fi
 }
 

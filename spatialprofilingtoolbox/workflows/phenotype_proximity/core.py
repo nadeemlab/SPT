@@ -414,7 +414,6 @@ class PhenotypeProximityCalculator:
             for radius in PhenotypeProximityCalculator.get_radii_of_interest():
                 count = 0
                 source_count = 0
-                area = 0
                 for fov_index, distance_matrix in cell_pairs.items():
                     rows = phenotype_indices[fov_index][source]
                     cols = phenotype_indices[fov_index][target]
@@ -430,31 +429,35 @@ class PhenotypeProximityCalculator:
                     count += additional
                     source_count += sum(rows)
 
-                    fov = self.fov_lookup[fov_index]
-                    if compartment == 'all':
-                        area0 = self.areas.get_total_compartmental_area(fov=fov)
-                    else:
-                        area0 = self.areas.get_area(fov=fov, compartment=compartment)
-                    if area0 is None:
+                if balanced:
+                    area = 0
+                    for fov_index, distance_matrix in cell_pairs.items():
+                        fov = self.fov_lookup[fov_index]
+                        if compartment == 'all':
+                            area0 = self.areas.get_total_compartmental_area(fov=fov)
+                        else:
+                            area0 = self.areas.get_area(fov=fov, compartment=compartment)
+                        if area0 is None:
+                            logger.warning(
+                                ''.join([
+                                    'Did not find area for "%s" compartment in field of view "%s".',
+                                    ' Skipping field of view "%s" in "%s".',
+                                ]),
+                                compartment,
+                                fov_index,
+                                fov_index,
+                                self.sample_identifier,
+                            )
+                            continue
+                        area += area0
+                    if area == 0:
                         logger.warning(
-                            ''.join([
-                                'Did not find area for "%s" compartment in field of view "%s".',
-                                ' Skipping field of view "%s" in "%s".',
-                            ]),
+                            'Did not find ANY area for "%s" compartment in "%s".',
                             compartment,
-                            fov_index,
-                            fov_index,
                             self.sample_identifier,
                         )
-                        continue
-                    area += area0
-                if area == 0:
-                    logger.warning(
-                        'Did not find ANY area for "%s" compartment in "%s".',
-                        compartment,
-                        self.sample_identifier,
-                    )
-                elif source_count == 0:
+
+                if source_count == 0:
                     logger.warning(
                         'No cells of "source" phenotype %s in %s, %s, within %s .',
                         source,
@@ -466,7 +469,7 @@ class PhenotypeProximityCalculator:
                     if balanced:
                         feature_value = count / area
                     else:
-                        feature_value = ( count / area ) / (source_count) # See GitHub issue #20
+                        feature_value = count / source_count # See GitHub issue #20
                     records.append([
                         self.sample_identifier,
                         self.outcome,

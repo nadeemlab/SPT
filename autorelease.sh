@@ -18,7 +18,7 @@ function logstyle-printf() {
     padding=$(( 6 - char_width ))
     units="mins"
     control_char="s"
-    printf "$source_note_color[$script_file $elapsed_minutes%-$padding$control_char $units]$reset $1"
+    printf "$source_note_color[$script_file %-$padding$control_char$elapsed_minutes $units]$reset $1"
 }
 
 current_branch=$(git branch | grep '^* ')

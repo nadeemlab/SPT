@@ -8,6 +8,7 @@ yellow="\e[0;33m"
 red="\e[0;31m"
 blue="\e[0;34m"
 reset="\e[0m"
+clearline="\e[1K"
 source_note_color="\e[36;40m"
 
 script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
@@ -15,27 +16,31 @@ script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 start_time=$SECONDS
 
 function logstyle-printf() {
-    if [[ "$2" == "timed-command" ]];
-    then
-        TIME_NEXT=1
-        start_time=$SECONDS
-    fi
-
     if [[ "$TIME_NEXT" == "1" ]];
     then
         unset TIME_NEXT
         units="seconds"
         elapsed=$(( SECONDS - start_time ))
+        message="$SAVED_MESSAGE"
     else
         units="       "
         elapsed=""
+        message="$1"
     fi
     char_width=${#elapsed}
     padding=$(( 4 - char_width ))
     control_char="s"
     bar="$script_file %-$padding$control_char$elapsed $units"
 
-    printf "$source_note_color[$bar]$reset $1"
+    printf "$source_note_color[$bar]$reset $MESSAGE"
+
+    if [[ "$2" == "timed-command" ]];
+    then
+        TIME_NEXT=1
+        start_time=$SECONDS
+        SAVED_MESSAGE="$1"
+        logstyle-printf $1
+    fi
 }
 
 current_branch=$(git branch | grep '^* ')

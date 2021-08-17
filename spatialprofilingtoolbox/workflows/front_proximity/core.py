@@ -128,11 +128,11 @@ class FrontProximityCalculator:
 
             for phenotype in pheno_names:
                 n = number_cells_by_phenotype[phenotype]
-                number_cells_by_phenotype[phenotype] = n + sum(df[name + ' membership'])
+                number_cells_by_phenotype[phenotype] = n + sum(df[phenotype + ' membership'])
         most_frequent = sorted(
             [(k, v) for k, v in number_cells_by_phenotype.items()],
             key=lambda x: x[1],
-            reverse=True
+            reverse=True,
         )[0]
         logger.debug(
             '%s cells parsed from file. Most frequent signature %s (%s)',

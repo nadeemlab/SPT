@@ -115,6 +115,7 @@ if [[ "$outcome" == "" ]]; then
     clean_exit
 fi
 
+cd ..
 deactivate
 rm -rf venv/
 

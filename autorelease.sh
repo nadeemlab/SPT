@@ -21,7 +21,6 @@ function logstyle-printf() {
         units="seconds"
         elapsed=$(( SECONDS - start_time ))
         message="$SAVED_MESSAGE"
-        echo -ne "$clearline"
     else
         units="       "
         elapsed=""
@@ -34,7 +33,8 @@ function logstyle-printf() {
 
     if [[ "$TIME_NEXT" == "1" ]];
     then
-        printf "$source_note_color[$bar]$reset $message"
+        echo -ne "$clearline"
+        printf "$source_note_color[$bar]$reset $message\n"
         unset TIME_NEXT
     fi
 

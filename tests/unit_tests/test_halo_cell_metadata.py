@@ -7,8 +7,6 @@ from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metad
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 def test_halo_load_cell_metadata():
-    assert False
-
     input_files_path = join(dirname(__file__), '..', 'data')
     elementary_phenotypes_file = join(input_files_path, 'elementary_phenotypes.csv')
     file_manifest_file = join(input_files_path, 'file_manifest.tsv')

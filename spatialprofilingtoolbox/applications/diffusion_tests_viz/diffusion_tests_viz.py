@@ -15,17 +15,19 @@ from os.path import exists, abspath, dirname, join
 from os import mkdir
 import re
 
-import pandas as pd
 try:
     import tkinter as tk
     import tkinter.filedialog as fd
     from tkinter import ttk
 except ModuleNotFoundError:
-    print('Python standard library module tkinter somehow not available.')
+    with open('err.log', 'w') as file:
+        file.write('Python standard library module tkinter somehow not available.\n')
+import pandas as pd
 import plotly.graph_objects as go
 
 from ...environment.log_formats import colorized_logger
 logger = colorized_logger(__name__)
+
 
 
 class ColorStack:

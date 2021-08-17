@@ -3,14 +3,31 @@ import sys
 
 import spatialprofilingtoolbox as spt
 
+class ExposedInfo:
+    info = {
+        'config-filename' : spt.config_filename,
+        'computational-workflows' : list(spt.workflows.keys()),
+        'version' : spt.__version__,
+    }
+
+    @staticmethod
+    def print(handle):
+        if handle in ExposedInfo.info:
+            item = ExposedInfo.info[handle]
+            if isinstance(item, list):
+                printable = '\n'.join([str(element) for element in item])
+            else:
+                printable = str(item)
+            print(printable)
+        else:
+            for handle in ExposedInfo.info:
+                print(handle)
+
 if __name__=='__main__':
     cli_arguments = sys.argv
-    N = len(cli_arguments)
-    if N == 2:
+    number_arguments = len(cli_arguments)
+    if number_arguments == 2:
         argument = cli_arguments[1]
-        if argument == 'config-filename':
-            print(spt.config_filename)
-        if argument == 'computational-workflows':
-            print('\n'.join(list(spt.workflows.keys())))
-        if argument == 'version':
-            print(spt.__version__)
+        ExposedInfo.print(argument)
+    else:
+        ExposedInfo.print(None)

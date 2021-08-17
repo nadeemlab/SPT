@@ -48,8 +48,9 @@ It checks that:
 1. You are (currently) on the `main` branch.
 2. `spatialprofilingtoolbox/version.txt` has been modified (as it would be after a normal commit in case the above-mentioned git hook is installed, or after a manual version number change).
 3. No other files under git version control have been modified.
+4. Unit and integration tests pass.
 
-If these criteria are met, the script then proceeds to run unit and integration tests, build a singularity container in which the package is installed, pushes new code to trigger a documentation build and uploads to PyPI using `twine`.
+If these criteria are met, the script proceeds to build a singularity container in which the package is installed, push new code to trigger a documentation build, and upload distributables to PyPI using `twine`.
 
 Notes:
 - The PyPI upload requires that you have set up the API token correctly. Log in to your PyPI account to set this up.

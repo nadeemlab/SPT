@@ -136,8 +136,8 @@ class PhenotypeProximityAnalysisIntegrator:
                     'p-value < 0.01' : p_kruskal < 0.01,
                 })
 
-                keyed_values1 = '\n'.join([str( (row['sample identifier'], row[feature]) ) for i, row in grouped1.get_group(case).iterrows()])
-                keyed_values2 = '\n'.join([str( (row['sample identifier'], row[feature]) ) for i, row in grouped2.get_group(case).iterrows()])
+                keyed_values1 = ' '.join([str( (row['sample identifier'], row[feature]) ) for i, row in grouped1.get_group(case).iterrows()])
+                keyed_values2 = ' '.join([str( (row['sample identifier'], row[feature]) ) for i, row in grouped2.get_group(case).iterrows()])
 
                 logger.debug(
                     'For "%s" vs "%s", phenotype pair (%s, %s), %s, pixels < %s, did t-test and KW on values: (1) %s   (2) %s',

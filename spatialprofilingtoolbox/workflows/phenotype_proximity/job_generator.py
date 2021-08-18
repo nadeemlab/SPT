@@ -60,7 +60,6 @@ singularity exec \
         :param balanced: Whether to use balanced or unbalanced treatment of phenotype
             pairs.
         :type balanced: bool
-        :
         """
         super().__init__(**kwargs)
         self.dataset_design = HALOCellMetadataDesign(

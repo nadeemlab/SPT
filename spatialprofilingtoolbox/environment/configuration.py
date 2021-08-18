@@ -267,7 +267,7 @@ def get_config_parameters_from_cli():
     if balanced:
         parameters['balanced'] = True
     if save_graphml:
-        parameters['graphml'] = True
+        parameters['save_graphml'] = True
     return parameters
 
 def get_config_parameters():

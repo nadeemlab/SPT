@@ -17,7 +17,6 @@ requirements = [
     'matplotlib==3.4.2',
     'numpy==1.21.0',
     'pandas==1.1.5',
-    'Pillow==8.2.0',
     'POT==0.7.0',
     'pyparsing==2.4.7',
     'python-dateutil==2.8.1',

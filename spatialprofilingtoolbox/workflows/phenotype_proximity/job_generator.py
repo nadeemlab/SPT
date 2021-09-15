@@ -150,10 +150,10 @@ singularity exec \
             )
         )
         cursor = connection.cursor()
-        cursor.execute('DROP TABLE IF EXISTS cell_pair_counts ;')
+        cursor.execute('DROP TABLE IF EXISTS %s ;' % self.computational_design.get_cell_pair_counts_table_name())
         cmd = ' '.join([
             'CREATE TABLE',
-            'cell_pair_counts',
+            self.computational_design.get_cell_pair_counts_table_name(),
             '(',
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
             ' , '.join([

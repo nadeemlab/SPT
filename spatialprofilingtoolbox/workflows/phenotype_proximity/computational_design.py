@@ -51,6 +51,10 @@ class PhenotypeProximityDesign(ComputationalDesign):
             return 'phenotype_2_phenotype_proximity_tests.csv'
 
     @staticmethod
+    def get_cell_pair_counts_table_name():
+        return 'phenotype_proximity_metrics'
+
+    @staticmethod
     def get_cell_pair_counts_table_header():
         """
         :return: A list of 2-tuples, each of which is a column name followed by
@@ -65,7 +69,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
             ('target_phenotype', 'TEXT'),
             ('compartment', 'TEXT'),
             ('distance_limit_in_pixels', 'INTEGER'),
-            ('cell_pair_count_per_FOV', 'NUMERIC'),
+            ('phenotype_proximity_metric', 'NUMERIC'),
         ]
 
     def get_all_phenotype_signatures(self, by_name=False):
@@ -112,4 +116,4 @@ class PhenotypeProximityDesign(ComputationalDesign):
         :return: The name of the main numerical feature produced by the jobs.
         :rtype: str
         """
-        return 'cell pair count per FOV'
+        return 'phenotype proximity metric'

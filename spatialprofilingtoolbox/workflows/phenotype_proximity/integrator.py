@@ -182,7 +182,57 @@ class PhenotypeProximityAnalysisIntegrator:
         """
         uri = join(self.output_path, self.computational_design.get_database_uri())
         connection = sqlite3.connect(uri)
-        table = pd.read_sql_query('SELECT * FROM cell_pair_counts', connection)
-        table = table.rename(columns={key:re.sub('_', ' ', key) for key in table.columns})
+        table_unaggregated = pd.read_sql_query('SELECT * FROM %s' % self.computational_design.get_cell_pair_counts_table_name(), connection)
         connection.close()
+        table = self.do_aggregation_over_different_files(table_unaggregated)
+        self.add_balance_metadata(table)
+        self.overwrite_radius_limited_counts(table)
+        table = table.rename(columns={key:re.sub('_', ' ', key) for key in table.columns})
         return table
+
+    def do_aggregation_over_different_files(self, table):
+        """
+        :param table: Table of cell pair counts.
+        :type table: pandas.DataFrame
+
+        :return table: Same table, but with main column *averaged* over cases of
+            multiple files associated with the same sample.
+        :type table: pandas.DataFrame
+        """
+        table.drop('id', 1, inplace=True)
+        table = table.groupby([
+            'sample_identifier',
+            'outcome_assignment',
+            'source_phenotype',
+            'target_phenotype',
+            'compartment',
+            'distance_limit_in_pixels',
+        ], as_index=False).agg('mean')
+        table.reset_index(inplace=True)
+        table.rename(columns={'index' : 'id'}, inplace=True)
+        return table
+
+    def add_balance_metadata(self, table):
+        """
+        :param table: Table to which to add metadata tag/column indicating the balance
+            type.
+        :type table: pandas.DataFrame
+        """
+        if self.computational_design.balanced:
+            table['balance_type'] = 'cell pair counts per slide area'
+        else:
+            table['balance_type'] = 'number of neighbor cells of target type, averaged over cells of source type'
+
+    def overwrite_radius_limited_counts(self, table):
+        """
+        :param table: Table of cell pair counts.
+        :type table: pandas.DataFrame
+        """
+        uri = join(self.output_path, self.computational_design.get_database_uri())
+        connection = sqlite3.connect(uri)
+        table.to_sql(
+            self.computational_design.get_cell_pair_counts_table_name(),
+            connection,
+            if_exists='replace',
+        )
+        connection.close()

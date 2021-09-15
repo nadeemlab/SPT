@@ -503,7 +503,7 @@ class PhenotypeProximityCalculator:
                 ]
                 keys = '( ' + ' , '.join(keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = 'INSERT INTO cell_pair_counts ' + keys + ' VALUES ' + values +  ' ;'
+                cmd = ('INSERT INTO %s ' % self.computational_design.get_cell_pair_counts_table_name()) + keys + ' VALUES ' + values +  ' ;'
                 try:
                     manager.execute(cmd)
                 except sqlite3.OperationalError as exception:

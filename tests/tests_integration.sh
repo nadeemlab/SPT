@@ -6,11 +6,11 @@ set -e
 source integration_tests/com.lehmannro.assert.sh/assert.sh
 
 self_name=`basename "$0"`
-source_note_color="\e[36;40m"
-yellow="\e[33m"
-reset="\e[0m"
-back4="\e[4D"
-blink="\e[5m"
+source_note_color="\033[36;40m"
+yellow="\033[33m"
+reset="\033[0m"
+back4="\033[4D"
+blink="\033[5m"
 
 for script in integration_tests/*.sh;
 do

@@ -64,12 +64,14 @@ class PhenotypeProximityDesign(ComputationalDesign):
         """
         return [
             ('sample_identifier', 'TEXT'),
+            ('input_filename', 'TEXT'),
             ('outcome_assignment', 'TEXT'),
             ('source_phenotype', 'TEXT'),
             ('target_phenotype', 'TEXT'),
             ('compartment', 'TEXT'),
             ('distance_limit_in_pixels', 'INTEGER'),
             ('phenotype_proximity_metric', 'NUMERIC'),
+            ('source_phenotype_count', 'INTEGER'),
         ]
 
     def get_all_phenotype_signatures(self, by_name=False):
@@ -111,9 +113,26 @@ class PhenotypeProximityDesign(ComputationalDesign):
         return sorted(list(self.get_all_phenotype_signatures(by_name=True).keys()))
 
     @staticmethod
-    def get_primary_output_feature_name():
+    def get_primary_output_feature_name(style='readable'):
         """
         :return: The name of the main numerical feature produced by the jobs.
         :rtype: str
         """
-        return 'phenotype proximity metric'
+        if style == 'readable':
+            return 'phenotype proximity metric'
+        if style == 'sql':
+            return 'phenotype_proximity_metric'
+
+    @staticmethod
+    def get_aggregated_metric_name(style='readable'):
+        if style == 'readable':
+            return 'aggregated metric'
+        if style == 'sql':
+            return 'aggregated_metric'
+
+    def get_metric_description(self):
+        if self.balanced:
+            return 'cell pair counts per unit slide area'
+        else:
+            return 'number of neighbor cells of target type, averaged over cells of source type'
+

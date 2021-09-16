@@ -365,13 +365,15 @@ class PhenotypeProximityCalculator:
         logger.debug('All %s combinations aggregated.', len(combinations2))
         columns = [
             'sample identifier',
+            'input filename',
             'outcome assignment',
             'source phenotype',
             'target phenotype',
             'compartment',
             'distance limit in pixels',
             self.computational_design.get_primary_output_feature_name(),
-        ]
+            'source phenotype count',
+        ] # Get this from computational design??
         radius_limited_counts = pd.DataFrame(
             PhenotypeProximityCalculator.flatten_lists(results),
             columns=columns,
@@ -472,12 +474,14 @@ class PhenotypeProximityCalculator:
                         feature_value = count / source_count # See GitHub issue #20
                     records.append([
                         self.sample_identifier,
+                        self.input_filename,
                         self.outcome,
                         source,
                         target,
                         compartment,
                         radius,
                         feature_value,
+                        source_count,
                     ])
         return records
 
@@ -494,13 +498,15 @@ class PhenotypeProximityCalculator:
             for _, row in radius_limited_counts.iterrows():
                 values_list = [
                     '"' + row['sample identifier'] + '"',
+                    '"' + row['input filename'] + '"',
                     '"' + row['outcome assignment'] + '"',
                     '"' + row['source phenotype'] + '"',
                     '"' + row['target phenotype'] + '"',
                     '"' + row['compartment'] + '"',
                     str(int(row['distance limit in pixels'])),
                     str(float(row[self.computational_design.get_primary_output_feature_name()])),
-                ]
+                    str(int(row['source phenotype count'])),
+                ] # Make this programmatic over the headers provided by computational design???
                 keys = '( ' + ' , '.join(keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
                 cmd = ('INSERT INTO %s ' % self.computational_design.get_cell_pair_counts_table_name()) + keys + ' VALUES ' + values +  ' ;'

@@ -47,7 +47,7 @@ Install from `PyPI <https://pypi.org/project/spatialprofilingtoolbox/>`_::
 
 All workflows are configured by running ``spt-pipeline`` in your desired run directory.
 
-Note: *You will be given the option to run locally or to schedule the pipeline as* `Platfrom LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, you must first build the library into a Singularity container by cloning the source code repository, then running* ::
+**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platfrom LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, you must first build the library into a Singularity container by cloning the source code repository, then running* ::
 
     cd building && ./build_singularity_container.sh
 
@@ -71,7 +71,7 @@ The parameters selected during the dialog are saved in a configuration file call
    jobs_path = ./SPT/jobs
    logs_path = ./SPT/logs
    schedulers_path = ./SPT/
-   sif_file = ./SPT/building/spt_v0.5.72_08-17-2021_17-07.sif
+   sif_file = ./SPT/building/spt_v0.5.69_08-17-2021_17-07.sif
    file_manifest_file = ./SPT/tests/data/file_manifest.tsv
    runtime_platform = local
    elementary_phenotypes_file = ./SPT/tests/data/elementary_phenotypes.csv
@@ -80,7 +80,7 @@ The parameters selected during the dialog are saved in a configuration file call
    save_graphml = True
 
    [static]
-   version = 0.5.72
+   version = 0.5.69
 
 For headless (that is, non-interactive) runs, just save the desired parameters in ``.spt-pipeline.config``. The next call of ``spt-pipeline`` will initiate the pipeline rather than the configuration dialog.
 
@@ -137,8 +137,7 @@ To see plots of the distributions, use:
 
    spt-front-proximity-viz output/front_proximity.db --drop-compartment="<ignorable compartment name>"
 
-.. note::
-    The ``--drop-compartment`` option should be provided as many times as necessary to remove from consideration all compartments/regions in excess of the two you wish to focus on. If only two compartment designations appear in your metadata files, then this option is not necessary.
+**Note**: *The* ``--drop-compartment`` *option should be provided as many times as necessary to remove from consideration all compartments/regions in excess of the two you wish to focus on. If only two compartment designations appear in your metadata files, then this option is not necessary.*
 
 .. image:: docs/_static/front_proximity_example.png
    :target: docs/_static/front_proximity_example.png

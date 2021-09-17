@@ -2,7 +2,7 @@
 .. image:: docs/_static/SPT_logo_blue_on_transparent_small.png
    :target: docs/_static/SPT_logo_blue_on_transparent_small.png
 
-(Documentation for `developers on Read the Docs <https://spatialprofilingtoolbox.readthedocs.io>`_ ; documentation for `package maintainers <for_maintainers.md>`_.)
+(Documentation for developers `Read the Docs <https://spatialprofilingtoolbox.readthedocs.io>`_. Documentation for `package maintainers <for_maintainers.md>`_.)
 
 The SPT modules do image analysis computation in the context of histopathology.
 A lightweight framework is also provided to deploy a pipeline comprised of these
@@ -47,14 +47,13 @@ Install from `PyPI <https://pypi.org/project/spatialprofilingtoolbox/>`_::
 
 All workflows are configured by running ``spt-pipeline`` in your desired run directory.
 
-.. note::
-    You will be given the option to run locally or to schedule the pipeline as `Platfrom LSF <https://www.ibm.com/products/hpc-workload-management>`_ jobs. In the LSF case, you must first build the library into a Singularity container by cloning the source code repository, then running ::
+Note: *You will be given the option to run locally or to schedule the pipeline as `Platfrom LSF <https://www.ibm.com/products/hpc-workload-management>`_ jobs. In the LSF case, you must first build the library into a Singularity container by cloning the source code repository, then running* ::
 
-        cd building && ./build_singularity_container.sh
+    cd building && ./build_singularity_container.sh
 
-    and moving the container (``.sif`` file) to an area accessible to the nodes in your cluster.
+and moving the container (``.sif`` file) to an area accessible to the nodes in your cluster.
 
-    To avoid the need for this step, a future version of SPT may use Docker containers on a public registry.
+To avoid the need for this step, a future version of SPT may use Docker containers on a public registry.
 
 Example answers to the ``spt-pipeline`` prompts are shown below for the phenotype proximity workflow, using the test data that ships with the SPT source code. There are slight variations depending on the workflow.
 

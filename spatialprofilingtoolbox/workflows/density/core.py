@@ -6,6 +6,8 @@ from os.path import join
 import sqlite3
 
 import pandas as pd
+import scipy
+from scipy.spatial import KDTree
 
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
@@ -101,6 +103,41 @@ class DensityCalculator:
         pheno_names = sorted(signatures_by_name.keys())
         return pheno_names
 
+    def add_nearest_cell_data(self, table, compartment):
+        compartments = self.dataset_design.get_compartments()
+        cell_indices = list(table.index)
+        xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
+        table['x value'] = 0.5 * (table[xmax] + table[xmin])
+        table['y value'] = 0.5 * (table[ymax] + table[ymin])
+        signature = self.dataset_design.get_compartmental_signature(table, compartment)
+        if sum(signature) == 0:
+            for i in range(len(cell_indices)):
+                I = cell_indices[i]
+                distance = -1
+                table.loc[I, 'distance to nearest cell ' + compartment] = distance
+        else:
+            compartment_cells = table[signature]
+            compartment_points = [
+                (row['x value'], row['y value'])
+                for i, row in compartment_cells.iterrows()
+            ]
+            all_points = [
+                (row['x value'], row['y value'])
+                for i, row in table.iterrows()
+            ]
+            tree = KDTree(compartment_points)
+            distances, indices = tree.query(all_points)
+            for i in range(len(cell_indices)):
+                I = cell_indices[i]
+                compartment_i = table.loc[I, 'compartment']
+                if compartment_i == compartment:
+                    distance = 0
+                if compartment_i not in compartments:
+                    distance = -1
+                else:
+                    distance = distances[i]
+                table.loc[I, 'distance to nearest cell ' + compartment] = distance
+
     def create_cell_table(self, outcomes_dict):
         """
         :param outcomes_dict: Mapping from sample identifiers to outcome labels.
@@ -148,6 +185,10 @@ class DensityCalculator:
                     table[name + ' membership'] = ints
                 phenotype_membership_columns = [name + ' membership' for name in pheno_names]
 
+                for compartment in all_compartments:
+                    self.add_nearest_cell_data(table, compartment)
+                nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in all_compartments]
+
                 table['sample_identifier'] = sample_identifier
                 table['outcome_assignment'] = outcomes_dict[sample_identifier]
 
@@ -157,7 +198,7 @@ class DensityCalculator:
                     'outcome_assignment',
                     'compartment',
                     self.dataset_design.get_cell_area_column(),
-                ] + phenotype_membership_columns
+                ] + phenotype_membership_columns + nearest_cell_columns
 
                 table = table[pertinent_columns]
                 table.rename(columns = {

@@ -94,7 +94,7 @@ class PhenotypeProximityAnalysisIntegrator:
             cases = set(grouped1.indices.keys()).intersection(set(grouped2.indices.keys()))
             for case in cases:
                 [source_phenotype, target_phenotype, compartment, radius] = case
-                feature = self.computational_design.get_primary_output_feature_name()
+                feature = self.computational_design.get_aggregated_metric_name()
                 values1 = grouped1.get_group(case)[feature]
                 values2 = grouped2.get_group(case)[feature]
                 if len(values1) < 3 or len(values2) < 3:
@@ -186,7 +186,7 @@ class PhenotypeProximityAnalysisIntegrator:
         connection.close()
         table = self.do_aggregation_over_different_files(table_unaggregated)
         self.add_balance_metadata(table)
-        self.overwrite_radius_limited_counts(table)
+        self.save_aggregated_radius_limited_counts(table)
         table = table.rename(columns={key:re.sub('_', ' ', key) for key in table.columns})
         return table
 
@@ -195,22 +195,50 @@ class PhenotypeProximityAnalysisIntegrator:
         :param table: Table of cell pair counts.
         :type table: pandas.DataFrame
 
-        :return table: Same table, but with main column *averaged* over cases of
-            multiple files associated with the same sample.
+        :return table: Same table, but with main column *weighted-averaged* over cases
+            of multiple files associated with the same sample, with weights the source
+            phenotype counts in the unbalanced case. In the balanced case, the cell
+            pair counts per unit slide area may simply be summed.
         :type table: pandas.DataFrame
         """
         table.drop('id', 1, inplace=True)
-        table = table.groupby([
+
+        case_classifiers = [
             'sample_identifier',
             'outcome_assignment',
             'source_phenotype',
             'target_phenotype',
             'compartment',
             'distance_limit_in_pixels',
-        ], as_index=False).agg('mean')
+        ] # Get this from computational design!!
+        if self.computational_design.balanced:
+            table = table.groupby(case_classifiers, as_index=False).agg('sum')
+            f1 = self.computational_design.get_primary_output_feature_name(style='sql')
+            f2 = self.computational_design.get_aggregated_metric_name(style='sql')
+            table.rename(columns={f1 : f2}, inplace=True)
+        else:
+            agg = self.custom_per_sample_aggregation_function
+            table = table.groupby(case_classifiers, as_index=False).apply(agg)
+
         table.reset_index(inplace=True)
         table.rename(columns={'index' : 'id'}, inplace=True)
         return table
+
+    def custom_per_sample_aggregation_function(self, sub_table):
+        metric = self.computational_design.get_primary_output_feature_name(style='sql')
+        multiplied = [
+            row[metric] * row['source_phenotype_count']
+            for i, row in sub_table.iterrows()
+        ]
+        denominator = sum(sub_table['source_phenotype_count'])
+        if denominator == 0:
+            frac = -1
+        else:
+            frac = sum(multiplied) / denominator
+        return pd.Series({
+            self.computational_design.get_aggregated_metric_name(style='sql') : frac,
+            'source_phenotype_count' : denominator,
+        })
 
     def add_balance_metadata(self, table):
         """
@@ -218,12 +246,9 @@ class PhenotypeProximityAnalysisIntegrator:
             type.
         :type table: pandas.DataFrame
         """
-        if self.computational_design.balanced:
-            table['balance_type'] = 'cell pair counts per slide area'
-        else:
-            table['balance_type'] = 'number of neighbor cells of target type, averaged over cells of source type'
+        table['metric_type'] = self.computational_design.get_metric_description()
 
-    def overwrite_radius_limited_counts(self, table):
+    def save_aggregated_radius_limited_counts(self, table):
         """
         :param table: Table of cell pair counts.
         :type table: pandas.DataFrame
@@ -231,7 +256,7 @@ class PhenotypeProximityAnalysisIntegrator:
         uri = join(self.output_path, self.computational_design.get_database_uri())
         connection = sqlite3.connect(uri)
         table.to_sql(
-            self.computational_design.get_cell_pair_counts_table_name(),
+            self.computational_design.get_cell_pair_counts_table_name() + '_aggregated',
             connection,
             if_exists='replace',
         )

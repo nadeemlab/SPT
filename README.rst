@@ -1,6 +1,7 @@
 
 .. image:: docs/_static/SPT_logo_blue_on_transparent_small.png
    :target: docs/_static/SPT_logo_blue_on_transparent_small.png
+   :align: center
 
 (Documentation for developers on `Read the Docs <https://spatialprofilingtoolbox.readthedocs.io>`_. Documentation for `package maintainers <for_maintainers.md>`_.)
 

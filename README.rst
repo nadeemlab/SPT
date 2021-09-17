@@ -51,9 +51,7 @@ Note: *You will be given the option to run locally or to schedule the pipeline a
 
     cd building && ./build_singularity_container.sh
 
-and moving the container (``.sif`` file) to an area accessible to the nodes in your cluster.
-
-To avoid the need for this step, a future version of SPT may use Docker containers on a public registry.
+*and moving the container (``.sif`` file) to an area accessible to the nodes in your cluster. To avoid the need for this step, a future version of SPT may use Docker containers on a public registry.*
 
 Example answers to the ``spt-pipeline`` prompts are shown below for the phenotype proximity workflow, using the test data that ships with the SPT source code. There are slight variations depending on the workflow.
 

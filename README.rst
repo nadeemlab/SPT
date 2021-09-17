@@ -1,4 +1,4 @@
-![alttext](docs/docs/_static/SPT_logo_blue_on_transparent_small.png)
+
 .. image:: docs/_static/SPT_logo_blue_on_transparent_small.png
    :target: docs/_static/SPT_logo_blue_on_transparent_small.png
 

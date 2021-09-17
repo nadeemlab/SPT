@@ -1,8 +1,8 @@
 
-.. raw:: html
-   <p align="center">
-   <img width="416" height="152" src="docs/_static/SPT_logo_blue_on_transparent.png">
-   </p>
+.. figure:: docs/_static/SPT_logo_blue_on_transparent.png
+   :target: docs/_static/SPT_logo_blue_on_transparent.png
+   :align: center
+   :width: 400
 
 (Documentation for developers on `Read the Docs <https://spatialprofilingtoolbox.readthedocs.io>`_. Documentation for `package maintainers <for_maintainers.md>`_.)
 

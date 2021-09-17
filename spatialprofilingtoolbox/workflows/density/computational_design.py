@@ -17,6 +17,7 @@ class DensityDesign(ComputationalDesign):
             self,
             dataset_design=None,
             complex_phenotypes_file: str=None,
+            use_intensities: bool=False,
             **kwargs,
         ):
         """
@@ -26,6 +27,9 @@ class DensityDesign(ComputationalDesign):
         :param complex_phenotypes_file: The table of composite phenotypes to be
             considered.
         :type complex_phenotypes_file: str
+
+        :param use_intensities: Whether to use continuous channel intensity values.
+        :type use_intensities: bool
         """
         super().__init__(**kwargs)
         self.dataset_design = dataset_design
@@ -34,6 +38,7 @@ class DensityDesign(ComputationalDesign):
                 complex_phenotypes_file,
                 keep_default_na=False,
             )
+        self.use_intensities = use_intensities
 
     @staticmethod
     def get_database_uri():
@@ -101,6 +106,8 @@ class DensityDesign(ComputationalDesign):
                 re.sub(' ', r'$SPACE', name) for name in phenotype_membership_columns
             ]
 
+        intensity_columns = self.get_intensity_columns()
+
         compartments = self.dataset_design.get_compartments()
         nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in compartments]
         if style == 'sql':
@@ -110,8 +117,23 @@ class DensityDesign(ComputationalDesign):
         return [
             (column_name, 'INTEGER') for column_name in phenotype_membership_columns
         ] + [
+            (column_name, 'NUMERIC') for column_name in intensity_columns
+        ] + [
             (column_name, 'NUMERIC') for column_name in nearest_cell_columns
         ]
+
+    def get_intensity_columns(self, format='list'):
+        if self.use_intensities:
+            intensity_names = self.dataset_design.get_elementary_phenotype_names()
+            intensity_columns = sorted([name + ' intensity' for name in intensity_names])
+            if style == 'sql':
+                intensity_columns = [
+                    re.sub(' ', '_', c) for c in intensity_columns
+                ]
+            intensity_dict = 
+        else:
+            intensity_columns = []
+        return intensity_columns
 
     @staticmethod
     def get_fov_lookup_header():

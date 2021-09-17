@@ -2,7 +2,7 @@
 .. image:: docs/_static/SPT_logo_blue_on_transparent_small.png
    :target: docs/_static/SPT_logo_blue_on_transparent_small.png
 
-`Developers documentation <https://spatialprofilingtoolbox.readthedocs.io>`_ on Read The Docs. `Documentation for maintainers <for_maintainers.md>`_.
+(`Developers documentation <https://spatialprofilingtoolbox.readthedocs.io>`_ on Read The Docs. `Documentation for maintainers <for_maintainers.md>`_.)
 
 The SPT modules do image analysis computation in the context of histopathology.
 A lightweight framework is also provided to deploy a pipeline comprised of these
@@ -16,18 +16,18 @@ Supported workflows
    :widths: 1 3
    :align: center
 
-   * - :ref:`Phenotype proximity<phenotype-proximity-workflow>`
+   * - :ref:`Phenotype proximity workflow`
      - | The core module takes as input two collections of points, and calculates the average density with
        | which a point of one set appears within a specified distance from a given point of the other set.
        | In a balanced/symmetric mode, it calculates instead the density of occurence of a pair of points
        | from the respective sets within the specified distance range.
-   * - :ref:`Density<density-workflow>`
+   * - :ref:`Density workflow`
      - | The core module calculates phenotype density metrics, without regard to spatial information. This
        | means cell counts per unit cell area in a given compartment or region belonging to a given phenotype.
-   * - :ref:`Front proximity<front-proximity-workflow>`
+   * - :ref:`Front proximity workflow`
      - | The core module calculates the distribution of the distances between the points of a given subset
        | and the front or boundary between two given regions.
-   * - :ref:`Diffusion<diffusion-workflow>`
+   * - :ref:`Diffusion workflow`
      - | The core module takes as input a collection of points, and generates the associated diffusion map
        | and diffusion Markov chain, with the aim of producing features that are characteristic of the
        | input geometry.

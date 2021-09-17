@@ -8,7 +8,7 @@ def get_file_contents(filename):
         contents = file.read()
     return contents
 
-long_description = """See the [user documentation](https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html).
+long_description = """See the [user documentation](https://github.com/nadeemlab/SPT).
 """
 requirements = [
     'cycler==0.10.0',

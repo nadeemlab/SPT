@@ -16,18 +16,18 @@ Supported workflows
    :widths: 1 3
    :align: center
 
-   * - :ref:`Phenotype proximity workflow`
+   * - `Phenotype proximity workflow`_
      - | The core module takes as input two collections of points, and calculates the average density with
        | which a point of one set appears within a specified distance from a given point of the other set.
        | In a balanced/symmetric mode, it calculates instead the density of occurence of a pair of points
        | from the respective sets within the specified distance range.
-   * - :ref:`Density workflow`
+   * - `Density workflow`_
      - | The core module calculates phenotype density metrics, without regard to spatial information. This
        | means cell counts per unit cell area in a given compartment or region belonging to a given phenotype.
-   * - :ref:`Front proximity workflow`
+   * - `Front proximity workflow`_
      - | The core module calculates the distribution of the distances between the points of a given subset
        | and the front or boundary between two given regions.
-   * - :ref:`Diffusion workflow`
+   * - `Diffusion workflow`_
      - | The core module takes as input a collection of points, and generates the associated diffusion map
        | and diffusion Markov chain, with the aim of producing features that are characteristic of the
        | input geometry.

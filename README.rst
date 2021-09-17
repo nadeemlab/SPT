@@ -2,7 +2,7 @@
 .. image:: docs/_static/SPT_logo_blue_on_transparent_small.png
    :target: docs/_static/SPT_logo_blue_on_transparent_small.png
 
-(Documentation for developers `Read the Docs <https://spatialprofilingtoolbox.readthedocs.io>`_. Documentation for `package maintainers <for_maintainers.md>`_.)
+(Documentation for developers on `Read the Docs <https://spatialprofilingtoolbox.readthedocs.io>`_. Documentation for `package maintainers <for_maintainers.md>`_.)
 
 The SPT modules do image analysis computation in the context of histopathology.
 A lightweight framework is also provided to deploy a pipeline comprised of these

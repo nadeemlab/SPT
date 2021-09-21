@@ -220,6 +220,14 @@ def get_config_parameters_from_cli():
             'a 500-image run with 10 channels. and a few thousand cells per image.'
         ])
     )
+    parser.add_argument('--use-intensities',
+        dest='use_intensities',
+        type=str,
+        required=True,
+        help=''.join([
+            'Whether to involves intensity information for weighting.',
+        ])
+    )
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
@@ -245,6 +253,7 @@ def get_config_parameters_from_cli():
     skip_integrity_check = True if args.skip_integrity_check == 'True' else False
     balanced = True if args.balanced == 'True' else False
     save_graphml = True if args.save_graphml == 'True' else False
+    use_intensities = True if args.use_intensities == 'True' else False
 
     parameters = {
         'workflow' : workflow,
@@ -268,6 +277,8 @@ def get_config_parameters_from_cli():
         parameters['balanced'] = True
     if save_graphml:
         parameters['save_graphml'] = True
+    if use_intensities:
+        parameters['use_intensities'] = True
     return parameters
 
 def get_config_parameters():

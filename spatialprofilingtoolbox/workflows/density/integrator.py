@@ -501,6 +501,8 @@ class DensityAnalysisIntegrator:
         with WaitingDatabaseContextManager(uri) as manager:
             rows = manager.execute('SELECT * FROM ' + table_name)
 
+        logger.debug('self.computational_design.use_intensities: %s', self.computational_design.use_intensities)
+        logger.debug('Pulling data from "cells" table. Schema has %s columns: %s', len(columns), columns)
         table = pd.DataFrame(rows, columns=columns)
         if table_name == 'cells':
             table.rename(columns=self.get_column_renaming('cells'), inplace=True)

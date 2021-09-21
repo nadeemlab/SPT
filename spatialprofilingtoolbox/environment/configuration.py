@@ -27,6 +27,9 @@ from ..workflows.density.job_generator import DensityJobGenerator
 from ..workflows.density.computational_design import DensityDesign
 from ..workflows.density.analyzer import DensityAnalyzer
 from ..workflows.density.integrator import DensityAnalysisIntegrator
+from .log_formats import colorized_logger
+logger = colorized_logger(__name__)
+
 # Migrate above imports down to workflow modules
 
 config_filename = '.spt_pipeline.config'
@@ -87,6 +90,9 @@ def get_config_parameters_from_file():
     config = configparser.ConfigParser()
     config.read(config_filename)
     parameters = dict(config['default'])
+    version = dict(config['static'])['version']
+    if version != get_version():
+        logger.warning('The version of this running instance of SPT (%s) does not match the version that generated configuration file (namely %s).', get_version(), version)
     return parameters
 
 def get_version():

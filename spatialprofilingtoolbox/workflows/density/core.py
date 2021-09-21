@@ -194,7 +194,7 @@ class DensityCalculator:
 
                 if self.computational_design.use_intensities:
                     self.overlay_intensities(table)
-                intensity_columns = self.computational_design.get_intensity_columns()
+                intensity_columns = self.computational_design.get_intensity_columns(values_only=True)
 
                 pertinent_columns = [
                     'sample_identifier',
@@ -226,9 +226,10 @@ class DensityCalculator:
         return pd.concat(cell_groups), fov_lookup
 
     def overlay_intensities(self, table):
-        for phenotype in self.dataset_design.get_elementary_phenotype_names():
-            I = self.dataset_design.get_combined_intensity(table, phenotype)
-            table[]
+        intensity_columns = self.computational_design.get_intensity_columns()
+        for phenotype_name, column_name in intensity_columns:
+            I = self.dataset_design.get_combined_intensity(table, phenotype_name)
+            table[column_name] = I
 
     def write_cell_table(self, cells):
         """

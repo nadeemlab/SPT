@@ -106,7 +106,7 @@ class DensityDesign(ComputationalDesign):
                 re.sub(' ', r'$SPACE', name) for name in phenotype_membership_columns
             ]
 
-        intensity_columns = self.get_intensity_columns()
+        intensity_columns = self.get_intensity_columns(style=style, values_only=True)
 
         compartments = self.dataset_design.get_compartments()
         nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in compartments]
@@ -122,15 +122,17 @@ class DensityDesign(ComputationalDesign):
             (column_name, 'NUMERIC') for column_name in nearest_cell_columns
         ]
 
-    def get_intensity_columns(self, format='list'):
+    def get_intensity_columns(self, style='readable', values_only=False):
         if self.use_intensities:
             intensity_names = self.dataset_design.get_elementary_phenotype_names()
-            intensity_columns = sorted([name + ' intensity' for name in intensity_names])
+            intensity_columns = [(name, name + ' intensity') for name in intensity_names]
+            intensity_columns = sorted(intensity_columns, key=lambda pair: pair[0])
             if style == 'sql':
                 intensity_columns = [
-                    re.sub(' ', '_', c) for c in intensity_columns
+                    (name, re.sub(' ', '_', c)) for name, c in intensity_columns
                 ]
-            intensity_dict = 
+            if values_only:
+                intensity_columns = [pair[1] for pair in intensity_columns]
         else:
             intensity_columns = []
         return intensity_columns

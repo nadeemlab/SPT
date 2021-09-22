@@ -43,9 +43,8 @@ singularity exec \
 '''
 
     def __init__(self,
-        elementary_phenotypes_file: str=None,
-        complex_phenotypes_file: str=None,
-        save_graphml: bool=False,
+        dataset_design=None,
+        computational_design: DiffusionDesign=None,
         **kwargs,
     ):
         """
@@ -57,14 +56,8 @@ singularity exec \
                 ``diffusion.computational_design``.
         """
         super(DiffusionJobGenerator, self).__init__(**kwargs)
-        self.dataset_design = HALOCellMetadataDesign(
-            elementary_phenotypes_file,
-        )
-        self.computational_design = DiffusionDesign(
-            dataset_design=self.dataset_design,
-            complex_phenotypes_file=complex_phenotypes_file,
-            save_graphml=save_graphml,
-        )
+        self.dataset_design = dataset_design
+        self.computational_design = computational_design
 
         self.number_fovs = {}
         self.submit_calls = {rc: [] for rc in self.get_regional_compartments()}

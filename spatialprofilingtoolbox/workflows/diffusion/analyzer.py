@@ -37,7 +37,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             save_graphml (bool):
                 Whether to save GraphML files as additional output.
         """
-        super().__init__(**kwargs)
+        super(DiffusionAnalyzer, self).__init__(**kwargs)
         self.regional_compartment = regional_compartment
 
         self.dataset_design = dataset_design

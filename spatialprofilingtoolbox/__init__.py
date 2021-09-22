@@ -24,17 +24,25 @@ def get_job_generator(workflow=None, **kwargs):
     Exposes job generators to scripts.
     """
     if workflow in workflows:
-        return workflows[workflow].generator(**kwargs)
+        dataset_design = get_dataset_design(workflow = workflow, **kwargs)
+        computational_design = get_computational_design(workflow = workflow, **kwargs)
+
+        Generator = workflows[workflow].generator
+        return Generator(
+            dataset_design = dataset_design,
+            computational_design = computational_design,
+            **kwargs,
+        )
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
-def get_dataset_design(workflow=None):
+def get_dataset_design(workflow=None, **kwargs):
     """
     Exposes design parameters to scripts.
     """
     if workflow in workflows:
-        return workflows[workflow].dataset_design
+        return workflows[workflow].dataset_design(**kwargs)
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
@@ -48,42 +56,9 @@ def get_computational_design(workflow=None, **kwargs):
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
-    DatasetDesign = get_dataset_design(workflow = workflow)
 
-    if workflow == 'Multiplexed IF phenotype proximity':
-        if 'balanced' in kwargs:
-            balanced = kwargs['balanced']
-        else:
-            balanced = False
-        computational_design = ComputationalDesign(
-            dataset_design = DatasetDesign(
-                kwargs['elementary_phenotypes_file'],
-            ),
-            complex_phenotypes_file = kwargs['complex_phenotypes_file'],
-            balanced = balanced,
-        )
-        return computational_design
-
-    if workflow == 'Multiplexed IF density':
-        if 'use_intensities' in kwargs:
-            use_intensities = kwargs['use_intensities']
-        else:
-            use_intensities = False
-        computational_design = ComputationalDesign(
-            dataset_design = DatasetDesign(
-                kwargs['elementary_phenotypes_file'],
-            ),
-            complex_phenotypes_file = kwargs['complex_phenotypes_file'],
-            use_intensities = use_intensities,
-        )
-        return computational_design
-
-    computational_design = ComputationalDesign(
-        dataset_design = DatasetDesign(
-            kwargs['elementary_phenotypes_file'],
-        ),
-        complex_phenotypes_file = kwargs['complex_phenotypes_file'],
-    )
+    dataset_design = get_dataset_design(workflow = workflow, **kwargs)
+    computational_design = ComputationalDesign(dataset_design = dataset_design, **kwargs)
     return computational_design
 
 def get_analyzer(workflow=None, **kwargs):
@@ -91,45 +66,50 @@ def get_analyzer(workflow=None, **kwargs):
     Exposes pipeline analyzers to scripts.
     """
     if workflow in workflows:
-        elementary_phenotypes_file = kwargs['elementary_phenotypes_file']
-        complex_phenotypes_file = kwargs['complex_phenotypes_file']
-        del kwargs['elementary_phenotypes_file']
-        del kwargs['complex_phenotypes_file']
+        dataset_design = get_dataset_design(workflow = workflow, **kwargs)
+        computational_design = get_computational_design(workflow = workflow, **kwargs)
 
-        DatasetDesign = get_dataset_design(workflow = workflow)
         Analyzer = workflows[workflow].analyzer
         return Analyzer(
-            dataset_design = DatasetDesign(
-                elementary_phenotypes_file = elementary_phenotypes_file,
-            ),
-            complex_phenotypes_file = complex_phenotypes_file,
+            dataset_design = dataset_design,
+            computational_design = computational_design,
             **kwargs,
         )
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
+def get_jobs_paths(**kwargs):
+    return JobsPaths(
+        kwargs['job_working_directory'],
+        kwargs['jobs_path'],
+        kwargs['logs_path'],
+        kwargs['schedulers_path'],
+        kwargs['output_path'],
+    )
+
+def get_dataset_settings(**kwargs):
+    return DatasetSettings(
+        kwargs['input_path'],
+        kwargs['file_manifest_file'],
+        kwargs['outcomes_file'],
+    )
+
 def get_integrator(workflow=None, **kwargs):
     """
     Exposes pipeline analysis integrators to scripts.
     """
     if workflow in workflows:
+        jobs_paths = get_jobs_paths(**kwargs)
+        dataset_settings = get_dataset_settings(**kwargs)
         computational_design = get_computational_design(workflow = workflow, **kwargs)
+
         Integrator = workflows[workflow].integrator
         return Integrator(
-            jobs_paths = JobsPaths(
-                kwargs['job_working_directory'],
-                kwargs['jobs_path'],
-                kwargs['logs_path'],
-                kwargs['schedulers_path'],
-                kwargs['output_path'],
-            ),
-            dataset_settings = DatasetSettings(
-                kwargs['input_path'],
-                kwargs['file_manifest_file'],
-                kwargs['outcomes_file'],
-            ),
+            jobs_paths = jobs_paths,
+            dataset_settings = dataset_settings,
             computational_design = computational_design,
+            **kwargs,
         )
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))

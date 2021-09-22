@@ -230,9 +230,7 @@ def get_config_parameters_from_cli():
         dest='use_intensities',
         type=str,
         required=True,
-        help=''.join([
-            'Whether to involves intensity information for weighting.',
-        ])
+        help='Whether to involves intensity information for weighting.',
     )
     args = parser.parse_args()
 

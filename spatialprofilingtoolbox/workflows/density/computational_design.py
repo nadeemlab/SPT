@@ -31,7 +31,7 @@ class DensityDesign(ComputationalDesign):
         :param use_intensities: Whether to use continuous channel intensity values.
         :type use_intensities: bool
         """
-        super().__init__(**kwargs)
+        super(DensityDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
         if not complex_phenotypes_file is None:
             self.complex_phenotypes = pd.read_csv(

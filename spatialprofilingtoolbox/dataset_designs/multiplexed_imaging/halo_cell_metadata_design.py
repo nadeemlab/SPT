@@ -17,6 +17,7 @@ class HALOCellMetadataDesign:
     """
     def __init__(self,
         elementary_phenotypes_file: str=None,
+        **kwargs,
     ):
         """
         Args:

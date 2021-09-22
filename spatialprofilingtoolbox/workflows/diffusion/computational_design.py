@@ -21,7 +21,7 @@ class DiffusionDesign(ComputationalDesign):
             save_graphml (bool):
                 Whether to save GraphML files as additional output.
         """
-        super(ComputationalDesign, self).__init__(**kwargs)
+        super(DiffusionDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
         self.complex_phenotypes = pd.read_csv(
             complex_phenotypes_file,

@@ -183,6 +183,24 @@ else
     BALANCED="False"
 fi
 
+if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF density" ]] ;
+then
+    prompt_str="Use intensity weighting? (y/N): "
+    printf "$yellow$prompt_str$reset"
+    read -e USE_INTENSITIES
+    if [[ ( "$USE_INTENSITIES" == "Y" ) || ( "$USE_INTENSITIES" == "y" ) ]];
+    then
+        USE_INTENSITIES="True"
+    fi
+    if [[ ! "$USE_INTENSITIES" == "True" ]];
+    then
+        USE_INTENSITIES="False"
+    fi
+    printf "$cr$yellow$prompt_str$reset$green$USE_INTENSITIES$reset\n"
+else
+    USE_INTENSITIES="False"
+fi
+
 if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF diffusion" ]] ;
 then
     prompt_str="Save GraphML representation of diffusion distances for every phenotype mask? (Y/n): "
@@ -306,6 +324,7 @@ spt-generate-jobs \
     --excluded-hostname $EXCLUDED_HOSTNAME \
     --skip-integrity-check $SKIP_INTEGRITY_CHECK \
     --balanced $BALANCED \
+    --use-intensities $USE_INTENSITIES \
     --save-graphml $SAVE_GRAPHML \
 
 chmod +x *.sh

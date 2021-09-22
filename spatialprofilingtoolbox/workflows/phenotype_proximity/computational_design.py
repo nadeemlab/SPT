@@ -15,6 +15,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
         dataset_design=None,
         complex_phenotypes_file: str=None,
         balanced: bool=False,
+        use_intensities: bool=False,
         **kwargs,
     ):
         """
@@ -28,13 +29,14 @@ class PhenotypeProximityDesign(ComputationalDesign):
             pairs.
         :type balanced: bool
         """
-        super().__init__(**kwargs)
+        super(PhenotypeProximityDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
         self.complex_phenotypes = pd.read_csv(
             complex_phenotypes_file,
             keep_default_na=False,
         )
         self.balanced = balanced
+        self.use_intensities = use_intensities
 
     @staticmethod
     def get_database_uri():

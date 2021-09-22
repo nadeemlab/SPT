@@ -28,6 +28,7 @@ class DensityAnalysisIntegrator:
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         computational_design=None,
+        **kwargs,
     ):
         """
         :param jobs_paths: Convenience bundle of filesystem paths pertinent to a

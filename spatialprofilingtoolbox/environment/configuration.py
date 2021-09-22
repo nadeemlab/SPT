@@ -288,7 +288,7 @@ def get_config_parameters_from_cli():
     return parameters
 
 def get_config_parameters():
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1: # Need to make the CLI args and config file in closer alignment
         if not exists(config_filename):
             logger.error('Configuration file %s does not exist.', config_filename)
             return None

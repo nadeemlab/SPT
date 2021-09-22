@@ -39,15 +39,52 @@ def get_dataset_design(workflow=None):
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
-def get_computational_design(workflow=None):
+def get_computational_design(workflow=None, **kwargs):
     """
     Exposes design parameters to scripts.
     """
     if workflow in workflows:
-        return workflows[workflow].computational_design
+        ComputationalDesign = workflows[workflow].computational_design
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
+    DatasetDesign = get_dataset_design(workflow = workflow)
+
+    if workflow == 'Multiplexed IF phenotype proximity':
+        if 'balanced' in kwargs:
+            balanced = kwargs['balanced']
+        else:
+            balanced = False
+        computational_design = ComputationalDesign(
+            dataset_design = DatasetDesign(
+                kwargs['elementary_phenotypes_file'],
+            ),
+            complex_phenotypes_file = kwargs['complex_phenotypes_file'],
+            balanced = balanced,
+        )
+        return computational_design
+
+    if workflow == 'Multiplexed IF density':
+        if 'use_intensities' in kwargs:
+            use_intensities = kwargs['use_intensities']
+        else:
+            use_intensities = False
+        computational_design = ComputationalDesign(
+            dataset_design = DatasetDesign(
+                kwargs['elementary_phenotypes_file'],
+            ),
+            complex_phenotypes_file = kwargs['complex_phenotypes_file'],
+            use_intensities = use_intensities,
+        )
+        return computational_design
+
+    computational_design = ComputationalDesign(
+        dataset_design = DatasetDesign(
+            kwargs['elementary_phenotypes_file'],
+        ),
+        complex_phenotypes_file = kwargs['complex_phenotypes_file'],
+    )
+    return computational_design
 
 def get_analyzer(workflow=None, **kwargs):
     """
@@ -77,28 +114,8 @@ def get_integrator(workflow=None, **kwargs):
     Exposes pipeline analysis integrators to scripts.
     """
     if workflow in workflows:
-        DatasetDesign = get_dataset_design(workflow = workflow)
-        ComputationalDesign = get_computational_design(workflow = workflow)
+        computational_design = get_computational_design(workflow = workflow, **kwargs)
         Integrator = workflows[workflow].integrator
-        if workflow == 'Multiplexed IF phenotype proximity':
-            if 'balanced' in kwargs:
-                balanced = kwargs['balanced']
-            else:
-                balanced = False
-            computational_design = ComputationalDesign(
-                dataset_design = DatasetDesign(
-                    kwargs['elementary_phenotypes_file'],
-                ),
-                complex_phenotypes_file = kwargs['complex_phenotypes_file'],
-                balanced = balanced,
-            )
-        else:
-            computational_design = ComputationalDesign(
-                dataset_design = DatasetDesign(
-                    kwargs['elementary_phenotypes_file'],
-                ),
-                complex_phenotypes_file = kwargs['complex_phenotypes_file'],
-            )
         return Integrator(
             jobs_paths = JobsPaths(
                 kwargs['job_working_directory'],

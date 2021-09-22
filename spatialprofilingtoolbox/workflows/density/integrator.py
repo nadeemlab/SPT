@@ -76,6 +76,10 @@ class DensityAnalysisIntegrator:
 
         if self.computational_design.use_intensities:
             self.overlay_intensity_on_masks(cells)
+            logger.debug('(Now logging intensity-weighted cell areas)')
+            DensityDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
+        else:
+            logger.debug('(Not using intensity information.)')
 
         area_sums, sum_columns = self.sum_areas_over_compartments_per_phenotype(
             cells,
@@ -162,11 +166,10 @@ class DensityAnalysisIntegrator:
         ]
         for phenotype in phenotype_columns:
             mask = (cells[phenotype] == 1)
-            cells.loc[mask, phenotype] = cells['cell_area']
+            cells.loc[mask, phenotype] = cells.loc[mask, 'cell_area']
         return phenotype_columns
 
-    @staticmethod
-    def overlay_intensity_on_masks(cells):
+    def overlay_intensity_on_masks(self, cells):
         """
         Multiplies whatever appears in the given phenotype columns by the corresponding channel intensity.
 
@@ -174,7 +177,7 @@ class DensityAnalysisIntegrator:
         :type cells: pandas.DataFrame
         """
         for phenotype_name, intensity_column_name in self.computational_design.get_intensity_columns():
-            phenotype_mask_column = phenotype_name + '$SPACEmembership'
+            phenotype_mask_column = phenotype_name + '+' + ' membership'
             new_values = cells[phenotype_mask_column] * cells[intensity_column_name]
             cells[phenotype_mask_column] = new_values
 

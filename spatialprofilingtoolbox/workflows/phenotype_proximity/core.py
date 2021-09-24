@@ -14,6 +14,7 @@ from scipy.sparse import coo_matrix
 
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
+from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 

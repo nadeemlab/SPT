@@ -36,8 +36,11 @@ class Dichotomizer:
             logarithm.
         :type floor_value: float
         """
-        n = dataset_design.get_intensity_column_name(phenotype_name)
-        X = table[dataset_design.get_intensity_column_name(phenotype_name)]
+        intensity = dataset_design.get_intensity_column_name(phenotype_name)
+        if not intensity in table.columns:
+            logger.error('%s intensity column not present; can not dichotomize.', phenotype_name)
+            return
+        X = table[intensity]
         Y0 = [log10(x) if x > 0 else floor_value for x in X]
         Y = np.array(Y0)
         Y = Y.reshape(-1, 1)

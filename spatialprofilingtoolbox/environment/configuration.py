@@ -30,7 +30,7 @@ from ..workflows.density.integrator import DensityAnalysisIntegrator
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-# Migrate above imports down to workflow modules
+# Migrate above imports down to workflow modules?
 
 config_filename = '.spt_pipeline.config'
 

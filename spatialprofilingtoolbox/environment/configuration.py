@@ -27,6 +27,9 @@ from ..workflows.density.job_generator import DensityJobGenerator
 from ..workflows.density.computational_design import DensityDesign
 from ..workflows.density.analyzer import DensityAnalyzer
 from ..workflows.density.integrator import DensityAnalysisIntegrator
+from .log_formats import colorized_logger
+logger = colorized_logger(__name__)
+
 # Migrate above imports down to workflow modules
 
 config_filename = '.spt_pipeline.config'
@@ -87,6 +90,9 @@ def get_config_parameters_from_file():
     config = configparser.ConfigParser()
     config.read(config_filename)
     parameters = dict(config['default'])
+    version = dict(config['static'])['version']
+    if version != get_version():
+        logger.warning('The version of this running instance of SPT (%s) does not match the version that generated configuration file (namely %s).', get_version(), version)
     return parameters
 
 def get_version():
@@ -220,6 +226,12 @@ def get_config_parameters_from_cli():
             'a 500-image run with 10 channels. and a few thousand cells per image.'
         ])
     )
+    parser.add_argument('--use-intensities',
+        dest='use_intensities',
+        type=str,
+        required=True,
+        help='Whether to involves intensity information for weighting.',
+    )
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
@@ -245,6 +257,7 @@ def get_config_parameters_from_cli():
     skip_integrity_check = True if args.skip_integrity_check == 'True' else False
     balanced = True if args.balanced == 'True' else False
     save_graphml = True if args.save_graphml == 'True' else False
+    use_intensities = True if args.use_intensities == 'True' else False
 
     parameters = {
         'workflow' : workflow,
@@ -268,10 +281,12 @@ def get_config_parameters_from_cli():
         parameters['balanced'] = True
     if save_graphml:
         parameters['save_graphml'] = True
+    if use_intensities:
+        parameters['use_intensities'] = True
     return parameters
 
 def get_config_parameters():
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1: # Need to make the CLI args and config file in closer alignment
         if not exists(config_filename):
             logger.error('Configuration file %s does not exist.', config_filename)
             return None

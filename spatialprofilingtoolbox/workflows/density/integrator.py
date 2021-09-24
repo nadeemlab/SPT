@@ -28,6 +28,7 @@ class DensityAnalysisIntegrator:
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         computational_design=None,
+        **kwargs,
     ):
         """
         :param jobs_paths: Convenience bundle of filesystem paths pertinent to a
@@ -73,6 +74,13 @@ class DensityAnalysisIntegrator:
         cells = self.get_dataframe_from_db('cells')
         phenotype_columns = self.overlay_areas_on_masks(cells)
         DensityDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
+
+        if self.computational_design.use_intensities:
+            self.overlay_intensity_on_masks(cells)
+            logger.debug('(Now logging intensity-weighted cell areas)')
+            DensityDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
+        else:
+            logger.debug('(Not using intensity information.)')
 
         area_sums, sum_columns = self.sum_areas_over_compartments_per_phenotype(
             cells,
@@ -159,22 +167,20 @@ class DensityAnalysisIntegrator:
         ]
         for phenotype in phenotype_columns:
             mask = (cells[phenotype] == 1)
-            cells.loc[mask, phenotype] = cells['cell_area']
+            cells.loc[mask, phenotype] = cells.loc[mask, 'cell_area']
         return phenotype_columns
 
-    @staticmethod
-    def overlay_intensity_on_masks(cells, phenotype_columns, intensity_channel_names):
+    def overlay_intensity_on_masks(self, cells):
         """
         Multiplies whatever appears in the given phenotype columns by the corresponding channel intensity.
 
         :param cells: The cells table.
         :type cells: pandas.DataFrame
         """
-        for phenotype in phenotype_columns:
-            mask = (cells[phenotype] != 0)
-            intensity_channel = cells.loc[mask, intensity_channel_names[phenotype]]
-            new_values = cells.loc[mask, phenotype] * intensity_channel
-            cells.loc[mask, phenotype] = new_values
+        for phenotype_name, intensity_column_name in self.computational_design.get_intensity_columns():
+            phenotype_mask_column = phenotype_name + '+' + ' membership'
+            new_values = cells[phenotype_mask_column] * cells[intensity_column_name]
+            cells[phenotype_mask_column] = new_values
 
     @staticmethod
     def sum_areas_over_compartments_per_phenotype(cells, phenotype_columns):
@@ -499,6 +505,8 @@ class DensityAnalysisIntegrator:
         with WaitingDatabaseContextManager(uri) as manager:
             rows = manager.execute('SELECT * FROM ' + table_name)
 
+        logger.debug('self.computational_design.use_intensities: %s', self.computational_design.use_intensities)
+        logger.debug('Pulling data from "cells" table. Schema has %s columns: %s', len(columns), columns)
         table = pd.DataFrame(rows, columns=columns)
         if table_name == 'cells':
             table.rename(columns=self.get_column_renaming('cells'), inplace=True)

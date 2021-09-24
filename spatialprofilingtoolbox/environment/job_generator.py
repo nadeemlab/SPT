@@ -53,6 +53,7 @@ class JobGenerator:
         file_manifest_file: str=None,
         outcomes_file: str=None,
         excluded_hostname: str='NO_EXCLUDED_HOSTNAME',
+        **kwargs,
     ):
         """
         Args:

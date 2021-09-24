@@ -15,6 +15,7 @@ from scipy.sparse import coo_matrix
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
+from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
@@ -34,7 +35,7 @@ class PhenotypeProximityCalculator:
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         dataset_design=None,
-        computational_design=None,
+        computational_design: PhenotypeProximityDesign=None,
         regional_areas_file: str=None,
     ):
         """

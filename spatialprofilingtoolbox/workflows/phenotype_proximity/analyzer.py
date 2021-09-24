@@ -15,9 +15,9 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     The main class of the single job.
     """
     def __init__(self,
-        dataset_design=None,
+        dataset_design: PhenotypeProximityDesign=None,
         complex_phenotypes_file: str=None,
-        balanced: bool=False,
+        computational_design: PhenotypeProximityDesign=None,
         **kwargs,
     ):
         """
@@ -31,13 +31,9 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
             pairs.
         :type balanced: bool
         """
-        super().__init__(**kwargs)
+        super(PhenotypeProximityAnalyzer, self).__init__(**kwargs)
         self.dataset_design = dataset_design
-        self.computational_design = PhenotypeProximityDesign(
-            dataset_design = self.dataset_design,
-            complex_phenotypes_file = complex_phenotypes_file,
-            balanced = balanced,
-        )
+        self.computational_design = computational_design
 
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()

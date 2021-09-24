@@ -6,6 +6,9 @@ class ComputationalDesign:
     particular pipeline/workflow's computation stage. This, as opposed to the input
     data parsing stage, for example.
     """
+    def __init__(self, **kwargs):
+        pass
+
     def get_database_uri(self):
         """
         Each computational workflow may request persistent storage of intermediate data.

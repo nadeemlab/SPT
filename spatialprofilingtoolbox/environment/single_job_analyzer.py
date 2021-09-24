@@ -106,28 +106,8 @@ class SingleJobAnalyzer:
         The main calculation of this job, to be called by pipeline orchestration.
         """
         self.register_activity(JobActivity.RUNNING)
-        self.preprocess()
         self._calculate()
         self.register_activity(JobActivity.COMPLETE)
-
-    def preprocess(self, table):
-        if self.computational_design.dichotomize:
-            for phenotype in self.dataset_design.get_elementary_phenotype_names():
-                intensity = self.dataset_design.get_intensity_column_name(phenotype_name)
-                if not intensity in table.columns:
-                    self.dataset_design.add_combined_intensity_column(table, phenotype)
-                Dichotomizer.dichotomize(
-                    phenotype,
-                    table,
-                    dataset_design=self.dataset_design,
-                )
-                feature = dataset_design.get_feature_name(phenotype)
-                number_positives = sum(cells[feature])
-                logger.info(
-                    'Dichotomization column "%s" written. %s positives.',
-                    feature,
-                    number_positives,
-                )
 
     def retrieve_input_filename(self):
         self.get_input_filename()

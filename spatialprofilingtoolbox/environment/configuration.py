@@ -93,6 +93,20 @@ def get_config_parameters_from_file():
     version = dict(config['static'])['version']
     if version != get_version():
         logger.warning('The version of this running instance of SPT (%s) does not match the version that generated configuration file (namely %s).', get_version(), version)
+
+    bool_parameters = [
+        'skip_integrity_check',
+        'balanced',
+        'save_graphml',
+        'use_intensities',
+        'dichotomize',
+    ]
+    for name in bool_parameters:
+        if name in parameters and parameters[name] == 'True':
+            parameters[name] = True
+        else:
+            parameters[name] = False
+
     return parameters
 
 def get_version():
@@ -236,7 +250,7 @@ def get_config_parameters_from_cli():
         dest='dichotomize',
         type=str,
         required=True,
-        help='Whether to do dichotomization of continuous variables..',
+        help='Whether to do dichotomization of continuous variables.',
     )
     args = parser.parse_args()
 

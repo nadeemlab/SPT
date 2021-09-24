@@ -19,7 +19,7 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()
-        file_id = dataset_design.get_regional_areas_file_identifier()
+        file_id = self.dataset_design.get_regional_areas_file_identifier()
         regional_areas_file = self.get_input_filename_by_identifier(file_id)
 
         self.calculator = PhenotypeProximityCalculator(

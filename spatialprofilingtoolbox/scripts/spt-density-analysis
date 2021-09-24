@@ -26,6 +26,7 @@ if __name__=='__main__':
     kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
     kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
     kwargs['skip_integrity_check'] = True if 'skip_integrity_check' in parameters else False
+    kwargs['use_intensities'] = True if ('use_intensities' in parameters and parameters['use_intensities'] == 'True') else False
 
     a = spt.get_analyzer(
         workflow='Multiplexed IF density',

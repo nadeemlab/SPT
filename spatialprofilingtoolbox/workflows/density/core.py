@@ -192,13 +192,17 @@ class DensityCalculator:
                 table['sample_identifier'] = sample_identifier
                 table['outcome_assignment'] = outcomes_dict[sample_identifier]
 
+                if self.computational_design.use_intensities:
+                    self.overlay_intensities(table)
+                intensity_columns = self.computational_design.get_intensity_columns()
+
                 pertinent_columns = [
                     'sample_identifier',
                     self.dataset_design.get_FOV_column(),
                     'outcome_assignment',
                     'compartment',
                     self.dataset_design.get_cell_area_column(),
-                ] + phenotype_membership_columns + nearest_cell_columns
+                ] + phenotype_membership_columns + intensity_columns + nearest_cell_columns
 
                 table = table[pertinent_columns]
                 table.rename(columns = {
@@ -220,6 +224,11 @@ class DensityCalculator:
             logger.debug('%s cells parsed from file %s.', table_file.shape[0], filename)
         logger.debug('Completed cell table collation.')
         return pd.concat(cell_groups), fov_lookup
+
+    def overlay_intensities(self, table):
+        for phenotype in self.dataset_design.get_elementary_phenotype_names():
+            I = self.dataset_design.get_combined_intensity(table, phenotype)
+            table[]
 
     def write_cell_table(self, cells):
         """

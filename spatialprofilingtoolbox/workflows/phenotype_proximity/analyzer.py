@@ -14,26 +14,8 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     """
     The main class of the single job.
     """
-    def __init__(self,
-        dataset_design: PhenotypeProximityDesign=None,
-        complex_phenotypes_file: str=None,
-        computational_design: PhenotypeProximityDesign=None,
-        **kwargs,
-    ):
-        """
-        :param dataset_design: The design object describing the input data set.
-
-        :param complex_phenotypes_file: The table of composite phenotypes to be
-            considered.
-        :type complex_phenotypes_file: str
-
-        :param balanced: Whether to use balanced or unbalanced treatment of phenotype
-            pairs.
-        :type balanced: bool
-        """
+    def __init__(self, **kwargs):
         super(PhenotypeProximityAnalyzer, self).__init__(**kwargs)
-        self.dataset_design = dataset_design
-        self.computational_design = computational_design
 
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()

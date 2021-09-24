@@ -15,38 +15,21 @@ logger = colorized_logger(__name__)
 
 class DiffusionAnalyzer(SingleJobAnalyzer):
     def __init__(self,
-        dataset_design=None,
-        complex_phenotypes_file: str=None,
         fov_index: int=None,
         regional_compartment: str=None,
-        save_graphml: bool=False,
         **kwargs,
     ):
         """
         Args:
-            dataset_design:
-                The design object describing the input data set.
-            complex_phenotypes_file (str):
-                The table of composite phenotypes to be considered.
             fov_index (int):
                 The integer index of the field of view to be considered by this job.
             regional_compartment (str):
                 The regional compartment (in the sense of
                 ``diffusion.job_generator.get_regional_compartments()``) in which
                 reside the cells to be considered by this job.
-            save_graphml (bool):
-                Whether to save GraphML files as additional output.
         """
         super(DiffusionAnalyzer, self).__init__(**kwargs)
         self.regional_compartment = regional_compartment
-
-        self.dataset_design = dataset_design
-        self.computational_design = DiffusionDesign(
-            dataset_design = dataset_design,
-            complex_phenotypes_file = complex_phenotypes_file,
-            save_graphml = save_graphml,
-        )
-
         self.retrieve_input_filename()
         self.calculator = DiffusionCalculator(
             input_filename = self.get_input_filename(),

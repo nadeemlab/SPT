@@ -36,6 +36,8 @@ class SingleJobAnalyzer:
         output_path: str=None,
         input_file_identifier: str=None,
         job_index: str=None,
+        dataset_design=None,
+        computational_design=None,
         **kwargs,
     ):
         """
@@ -83,6 +85,8 @@ class SingleJobAnalyzer:
         self.input_file_identifier = input_file_identifier
         self.job_index = int(job_index)
         self.pipeline_design = PipelineDesign()
+        self.dataset_design = dataset_design
+        self.computational_design = computational_design
 
     def get_pipeline_database_uri(self):
         """
@@ -102,8 +106,28 @@ class SingleJobAnalyzer:
         The main calculation of this job, to be called by pipeline orchestration.
         """
         self.register_activity(JobActivity.RUNNING)
+        self.preprocess()
         self._calculate()
         self.register_activity(JobActivity.COMPLETE)
+
+    def preprocess(self, table):
+        if self.computational_design.dichotomize:
+            for phenotype in self.dataset_design.get_elementary_phenotype_names():
+                intensity = self.dataset_design.get_intensity_column_name(phenotype_name)
+                if not intensity in table.columns:
+                    self.dataset_design.add_combined_intensity_column(table, phenotype)
+                Dichotomizer.dichotomize(
+                    phenotype,
+                    table,
+                    dataset_design=self.dataset_design,
+                )
+                feature = dataset_design.get_feature_name(phenotype)
+                number_positives = sum(cells[feature])
+                logger.info(
+                    'Dichotomization column "%s" written. %s positives.',
+                    feature,
+                    number_positives,
+                )
 
     def retrieve_input_filename(self):
         self.get_input_filename()

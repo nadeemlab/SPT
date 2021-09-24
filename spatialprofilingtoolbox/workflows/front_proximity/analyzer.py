@@ -10,27 +10,8 @@ logger = colorized_logger(__name__)
 
 
 class FrontProximityAnalyzer(SingleJobAnalyzer):
-    def __init__(self,
-        dataset_design=None,
-        complex_phenotypes_file: str=None,
-        **kwargs,
-    ):
-        """
-        Args:
-
-        dataset_design:
-            The design object describing the input data set.
-
-        complex_phenotypes_file (str):
-            The table of composite phenotypes to be considered.
-        """
+    def __init__(self, **kwargs):
         super(FrontProximityAnalyzer, self).__init__(**kwargs)
-        self.dataset_design = dataset_design
-        self.computational_design = FrontProximityDesign(
-            dataset_design = self.dataset_design,
-            complex_phenotypes_file = complex_phenotypes_file,
-        )
-
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()
 

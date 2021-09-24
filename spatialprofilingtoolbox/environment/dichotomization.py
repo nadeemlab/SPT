@@ -1,3 +1,7 @@
+"""
+A self-contained module for performing lightweight thresholding of continuous
+variables.
+"""
 import math
 from math import log10
 from math import sqrt
@@ -7,7 +11,6 @@ import numpy as np
 import pandas as pd
 from sklearn.mixture import GaussianMixture
 from sklearn.exceptions import ConvergenceWarning
-
 warnings.simplefilter('error', ConvergenceWarning)
 
 from .log_formats import colorized_logger
@@ -70,7 +73,10 @@ class Dichotomizer:
             estimator.fit(Y)
         except ConvergenceWarning:
             convergence_failed = True
-            logger.debug('Gaussian mixture model estimation failed to converge. Phenotype %s', phenotype_name)
+            logger.debug(
+                'Gaussian mixture model estimation failed to converge. Phenotype %s',
+                phenotype_name,
+            )
 
         means = [estimator.means_[i][0] for i in range(number_populations)]
         threshold = sum(means) / len(means)

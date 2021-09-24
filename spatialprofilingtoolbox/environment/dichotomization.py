@@ -1,10 +1,14 @@
 import math
 from math import log10
 from math import sqrt
+import warnings
 
 import numpy as np
 import pandas as pd
 from sklearn.mixture import GaussianMixture
+from sklearn.exceptions import ConvergenceWarning
+
+warnings.simplefilter('error', ConvergenceWarning)
 
 from .log_formats import colorized_logger
 
@@ -13,7 +17,13 @@ logger = colorized_logger(__name__)
 
 class Dichotomizer:
     @staticmethod
-    def dichotomize(phenotype_name, table, dataset_design=None, floor_value=-10.0):
+    def dichotomize(
+            phenotype_name,
+            table,
+            dataset_design=None,
+            floor_value: float=-10.0,
+            enable_overwrite_warning: bool=True,
+        ):
         """
         In-place adds (or overwrites) the phenotype positivity column in ``table``, by
         dichotomizing the values in the intensity column according to the procedure:
@@ -35,6 +45,10 @@ class Dichotomizer:
         :param floor_value: The value to use in case of non-positive inputs to the
             logarithm.
         :type floor_value: float
+
+        :param enable_overwrite_warning: Default True. Whether to warn about ovewriting
+            an already existing binary column.
+        :type enable_overwrite_warning: bool
         """
         intensity = dataset_design.get_intensity_column_name(phenotype_name)
         if not intensity in table.columns:
@@ -51,12 +65,18 @@ class Dichotomizer:
             random_state=0,
         )
         estimator.means_init = np.array([[-1], [1]])
-        estimator.fit(Y)
+        convergence_failed = False
+        try:
+            estimator.fit(Y)
+        except ConvergenceWarning:
+            convergence_failed = True
+            logger.debug('Gaussian mixture model estimation failed to converge. Phenotype %s', phenotype_name)
+
         means = [estimator.means_[i][0] for i in range(number_populations)]
         threshold = sum(means) / len(means)
         thresholded = [1 if y > threshold else 0 for y in Y0]
 
         feature = dataset_design.get_feature_name(phenotype_name)
-        if feature in table.columns:
+        if feature in table.columns and enable_overwrite_warning:
             logger.warning('Input data table already has "%s"; overwriting it.', feature)
         table[dataset_design.get_feature_name(phenotype_name)] = thresholded

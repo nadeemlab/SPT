@@ -49,3 +49,4 @@ class Calculator:
                 )
         else:
             logger.info('Not performing thresholding.')
+

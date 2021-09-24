@@ -16,6 +16,7 @@ import ot
 from ot.lp import emd2
 import networkx as nx
 
+from ...environment.calculator import Calculator
 from ...environment.settings_wrappers import JobsPaths
 from ...environment.log_formats import colorized_logger
 
@@ -28,7 +29,7 @@ class DistanceTypes(Enum):
     CURVATURE = auto()
 
 
-class DiffusionCalculator:
+class DiffusionCalculator(Calculator):
     distribution_sample_size_max = 200
     number_eigenvectors_max = 20
 
@@ -37,12 +38,10 @@ class DiffusionCalculator:
         input_filename: str=None,
         fov_index: int=None,
         regional_compartment: str=None,
-        dataset_design=None,
-        computational_design=None,
         jobs_paths: JobsPaths=None,
+        **kwargs,
     ):
-        self.dataset_design = dataset_design
-        self.computational_design = computational_design
+        super(DiffusionCalculator, self).__init__(**kwargs)
         self.df = pd.read_csv(input_filename)
         self.input_filename = input_filename
         self.fov = self.get_fov_handle_string(fov_index)

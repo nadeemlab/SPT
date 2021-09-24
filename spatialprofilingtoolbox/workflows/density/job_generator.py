@@ -43,7 +43,8 @@ singularity exec \
     def __init__(self,
         elementary_phenotypes_file=None,
         complex_phenotypes_file=None,
-        skip_integrity_check=False,
+        skip_integrity_check: bool=False,
+        use_intensities: bool=False,
         **kwargs,
     ):
         """
@@ -54,6 +55,9 @@ singularity exec \
         :param complex_phenotypes_file: Tabular file listing composite phenotypes to
             consider. See :py:mod:`spatialprofilingtoolbox.dataset_designs`.
         :type complex_phenotypes_file: str
+
+        :param use_intensities: Whether to use continuous channel intensity values.
+        :type use_intensities: bool
         """
         super().__init__(**kwargs)
         self.dataset_design = HALOCellMetadataDesign(
@@ -62,6 +66,7 @@ singularity exec \
         self.computational_design = DensityDesign(
             dataset_design=self.dataset_design,
             complex_phenotypes_file=complex_phenotypes_file,
+            use_intensities=use_intensities,
         )
 
         self.lsf_job_filenames = []

@@ -163,6 +163,20 @@ class DensityAnalysisIntegrator:
         return phenotype_columns
 
     @staticmethod
+    def overlay_intensity_on_masks(cells, phenotype_columns, intensity_channel_names):
+        """
+        Multiplies whatever appears in the given phenotype columns by the corresponding channel intensity.
+
+        :param cells: The cells table.
+        :type cells: pandas.DataFrame
+        """
+        for phenotype in phenotype_columns:
+            mask = (cells[phenotype] != 0)
+            intensity_channel = cells.loc[mask, intensity_channel_names[phenotype]]
+            new_values = cells.loc[mask, phenotype] * intensity_channel
+            cells.loc[mask, phenotype] = new_values
+
+    @staticmethod
     def sum_areas_over_compartments_per_phenotype(cells, phenotype_columns):
         """
         Sums cell areas over all FOVs for a given named compartment type and phenotype,

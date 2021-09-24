@@ -23,6 +23,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
         complex_phenotypes_file: str=None,
         job_index: int=0,
         skip_integrity_check=False,
+        use_intensities: bool=False,
         **kwargs,
     ):
         """
@@ -31,12 +32,16 @@ class DensityAnalyzer(SingleJobAnalyzer):
         :param complex_phenotypes_file: The table of composite phenotypes to be
             considered.
         :type complex_phenotypes_file: str
+
+        :param use_intensities: Whether to use continuous channel intensity values.
+        :type use_intensities: bool
         """
         super().__init__(job_index=job_index, **kwargs)
         self.dataset_design = dataset_design
         self.computational_design = DensityDesign(
             dataset_design = self.dataset_design,
             complex_phenotypes_file = complex_phenotypes_file,
+            use_intensities = use_intensities,
         )
         sample_identifiers_by_file = self.retrieve_cell_input_file_info(skip_integrity_check)
         self.calculator = DensityCalculator(

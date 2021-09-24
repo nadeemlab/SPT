@@ -72,7 +72,7 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# html_logo = '_static/spt_logo.png'
+html_logo = '_static/SPT_logo_blue_on_transparent.png'
 
 htmlhelp_basename = 'sptdoc'
 

@@ -36,6 +36,7 @@ class SingleJobAnalyzer:
         output_path: str=None,
         input_file_identifier: str=None,
         job_index: str=None,
+        **kwargs,
     ):
         """
         Args:

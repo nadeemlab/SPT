@@ -73,7 +73,7 @@ class HALOCellMetadata(CellMetadata):
     files in HALO-exported format.
     """
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(HALOCellMetadata, self).__init__(**kwargs)
         self.lookup = SampleFOVLookup()
 
     def load_lookup(self):

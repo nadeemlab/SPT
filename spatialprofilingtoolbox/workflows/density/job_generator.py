@@ -41,10 +41,9 @@ singularity exec \
 '''
 
     def __init__(self,
-        elementary_phenotypes_file=None,
-        complex_phenotypes_file=None,
+        dataset_design=None,
+        computational_design: DensityDesign=None,
         skip_integrity_check: bool=False,
-        use_intensities: bool=False,
         **kwargs,
     ):
         """
@@ -59,15 +58,9 @@ singularity exec \
         :param use_intensities: Whether to use continuous channel intensity values.
         :type use_intensities: bool
         """
-        super().__init__(**kwargs)
-        self.dataset_design = HALOCellMetadataDesign(
-            elementary_phenotypes_file,
-        )
-        self.computational_design = DensityDesign(
-            dataset_design=self.dataset_design,
-            complex_phenotypes_file=complex_phenotypes_file,
-            use_intensities=use_intensities,
-        )
+        super(DensityJobGenerator, self).__init__(**kwargs)
+        self.dataset_design = dataset_design
+        self.computational_design = computational_design
 
         self.lsf_job_filenames = []
         self.sh_job_filenames = []

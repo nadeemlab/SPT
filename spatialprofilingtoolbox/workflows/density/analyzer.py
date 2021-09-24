@@ -36,7 +36,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
         :param use_intensities: Whether to use continuous channel intensity values.
         :type use_intensities: bool
         """
-        super().__init__(job_index=job_index, **kwargs)
+        super(DensityAnalyzer, self).__init__(job_index=job_index, **kwargs)
         self.dataset_design = dataset_design
         self.computational_design = DensityDesign(
             dataset_design = self.dataset_design,

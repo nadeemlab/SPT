@@ -12,6 +12,7 @@ from scipy.stats import ttest_ind, kruskal
 
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
+from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
@@ -24,7 +25,8 @@ class PhenotypeProximityAnalysisIntegrator:
         self,
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
-        computational_design=None,
+        computational_design: PhenotypeProximityDesign=None,
+        **kwargs,
     ):
         """
         :param jobs_paths: Convenience bundle of paths.

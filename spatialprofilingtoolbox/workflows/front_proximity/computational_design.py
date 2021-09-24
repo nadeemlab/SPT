@@ -18,7 +18,7 @@ class FrontProximityDesign(ComputationalDesign):
             complex_phenotypes_file (str):
                 The table of composite phenotypes to be considered.            
         """
-        super(ComputationalDesign, self).__init__(**kwargs)
+        super(FrontProximityDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
         if not complex_phenotypes_file is None:
             self.complex_phenotypes = pd.read_csv(

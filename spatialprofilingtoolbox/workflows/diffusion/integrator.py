@@ -35,6 +35,7 @@ class DiffusionAnalysisIntegrator:
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         computational_design=None,
+        **kwargs,
     ):
         """
         Args:

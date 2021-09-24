@@ -230,7 +230,13 @@ def get_config_parameters_from_cli():
         dest='use_intensities',
         type=str,
         required=True,
-        help='Whether to involves intensity information for weighting.',
+        help='Whether to involve intensity information for weighting.',
+    )
+    parser.add_argument('--dichotomize',
+        dest='dichotomize',
+        type=str,
+        required=True,
+        help='Whether to do dichotomization of continuous variables..',
     )
     args = parser.parse_args()
 
@@ -258,6 +264,7 @@ def get_config_parameters_from_cli():
     balanced = True if args.balanced == 'True' else False
     save_graphml = True if args.save_graphml == 'True' else False
     use_intensities = True if args.use_intensities == 'True' else False
+    dichotomize = True if args.dichotomize == 'True' else False
 
     parameters = {
         'workflow' : workflow,
@@ -283,6 +290,8 @@ def get_config_parameters_from_cli():
         parameters['save_graphml'] = True
     if use_intensities:
         parameters['use_intensities'] = True
+    if dichotomize:
+        parameters['dichotomize'] = True
     return parameters
 
 def get_config_parameters():

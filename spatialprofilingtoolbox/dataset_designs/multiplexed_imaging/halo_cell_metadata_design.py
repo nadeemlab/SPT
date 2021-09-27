@@ -329,8 +329,10 @@ class HALOCellMetadataDesign:
 
         if compartment == 'Non-Tumor':
             signature = self.non_tumor_stromal_scope_signature(table)
-        if compartment == 'Tumor':
+        elif compartment == 'Tumor':
             signature = self.tumor_scope_signature(table)
+        elif compartment in self.get_compartments():
+            signature = self.get_pandas_signature(table, {'Classifier Label' : compartment})
 
         if signature is None:
             logger.error('Could not define compartment %s', compartment)

@@ -210,7 +210,7 @@ class PhenotypeProximityCalculator(Calculator):
             tables of cells.
         :rtype: dict
         """
-        table_file = pd.read_csv(self.input_filename)
+        table_file = self.get_table(self.input_filename)
         self.dataset_design.normalize_fov_descriptors(table_file)
         self.cache_fov_strings(table_file)
         self.replace_fov_strings_with_index(table_file)

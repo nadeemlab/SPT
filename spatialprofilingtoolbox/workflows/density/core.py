@@ -147,7 +147,6 @@ class DensityCalculator(Calculator):
         cell_groups = []
         fov_lookup = {}
         for filename, sample_identifier in self.sample_identifiers_by_file.items():
-            # table_file = pd.read_csv(filename)
             table_file = self.get_table(filename)
             self.dataset_design.normalize_fov_descriptors(table_file)
 

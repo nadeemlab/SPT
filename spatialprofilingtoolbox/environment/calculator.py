@@ -50,3 +50,7 @@ class Calculator:
         else:
             logger.info('Not performing thresholding.')
 
+        fov = self.dataset_design.get_FOV_column()
+        if fov in table.columns:
+            str_values = [str(element) for element in table[fov]]
+            table[fov] = str_values

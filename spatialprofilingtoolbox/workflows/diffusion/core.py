@@ -42,7 +42,7 @@ class DiffusionCalculator(Calculator):
         **kwargs,
     ):
         super(DiffusionCalculator, self).__init__(**kwargs)
-        self.df = pd.read_csv(input_filename)
+        self.df = self.get_table(input_filename)
         self.input_filename = input_filename
         self.fov = self.get_fov_handle_string(fov_index)
         self.regional_compartment = regional_compartment

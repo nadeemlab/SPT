@@ -62,7 +62,7 @@ class FrontProximityCalculator:
 
         number_fovs = 0
         filename = self.input_filename
-        df_file = pd.read_csv(filename)
+        df_file = self.get_table(filename)
 
         self.dataset_design.normalize_fov_descriptors(df_file)
 

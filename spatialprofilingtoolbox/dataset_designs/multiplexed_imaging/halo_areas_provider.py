@@ -19,6 +19,9 @@ class HALORegionalAreasProvider:
 
     def load_regional_areas(self, file):
         df = pd.read_csv(file)
+        fov = self.dataset_design.get_FOV_column()
+        str_values = [str(e) for e in df[fov]]
+        df[fov] = str_values
 
         compartments = '(' + '|'.join(self.dataset_design.get_compartments()) + ')'
         whitespace = ' +'

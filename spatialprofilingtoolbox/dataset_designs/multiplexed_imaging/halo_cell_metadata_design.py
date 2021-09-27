@@ -83,7 +83,10 @@ class HALOCellMetadataDesign:
             original descriptor is a Windows-style file path string.
         :rtype: str
         """
-        return pathlib.PureWindowsPath(fov).name
+        if r'\\' in fov:
+            return pathlib.PureWindowsPath(fov).name
+        else:
+            return fov
 
     def get_regional_areas_file_identifier(self):
         """

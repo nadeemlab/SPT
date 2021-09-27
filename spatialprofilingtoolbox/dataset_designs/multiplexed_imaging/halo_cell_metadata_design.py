@@ -376,6 +376,9 @@ class HALOCellMetadataDesign:
                 A list representation of the sum of the columns containing the
                 intensities at each cellular site for the given phenotype.
         """
+        intensity_column = self.get_intensity_column_name(elementary_phenotype)
+        if intensity_column in table.columns:
+            return table[intensity_column]
         prefix = self.get_indicator_prefix(elementary_phenotype)
         suffixes = [site + ' Intensity' for site in self.get_cellular_sites()]
         feature = [' '.join([prefix, suffix]) for suffix in suffixes]

@@ -30,7 +30,7 @@ from ..workflows.density.integrator import DensityAnalysisIntegrator
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-# Migrate above imports down to workflow modules
+# Migrate above imports down to workflow modules?
 
 config_filename = '.spt_pipeline.config'
 
@@ -93,6 +93,20 @@ def get_config_parameters_from_file():
     version = dict(config['static'])['version']
     if version != get_version():
         logger.warning('The version of this running instance of SPT (%s) does not match the version that generated configuration file (namely %s).', get_version(), version)
+
+    bool_parameters = [
+        'skip_integrity_check',
+        'balanced',
+        'save_graphml',
+        'use_intensities',
+        'dichotomize',
+    ]
+    for name in bool_parameters:
+        if name in parameters and parameters[name] == 'True':
+            parameters[name] = True
+        else:
+            parameters[name] = False
+
     return parameters
 
 def get_version():
@@ -230,7 +244,13 @@ def get_config_parameters_from_cli():
         dest='use_intensities',
         type=str,
         required=True,
-        help='Whether to involves intensity information for weighting.',
+        help='Whether to involve intensity information for weighting.',
+    )
+    parser.add_argument('--dichotomize',
+        dest='dichotomize',
+        type=str,
+        required=True,
+        help='Whether to do dichotomization of continuous variables.',
     )
     args = parser.parse_args()
 
@@ -258,6 +278,7 @@ def get_config_parameters_from_cli():
     balanced = True if args.balanced == 'True' else False
     save_graphml = True if args.save_graphml == 'True' else False
     use_intensities = True if args.use_intensities == 'True' else False
+    dichotomize = True if args.dichotomize == 'True' else False
 
     parameters = {
         'workflow' : workflow,
@@ -283,6 +304,8 @@ def get_config_parameters_from_cli():
         parameters['save_graphml'] = True
     if use_intensities:
         parameters['use_intensities'] = True
+    if dichotomize:
+        parameters['dichotomize'] = True
     return parameters
 
 def get_config_parameters():

@@ -4,9 +4,9 @@ This is the Spatial Profiling Toolbox package. The source code is available
 `here <https://github.com/nadeemlab/SPT>`_.
 """
 
-from .applications.diffusion_graphs_viz.diffusion_graphs_viz import DiffusionGraphsViz
-from .applications.diffusion_tests_viz import DiffusionTestsViz
-from .applications.front_proximity_viz import FrontProximityViz
+from .applications.diffusion_graphs_viz.diffusion_graphs_viz import DiffusionGraphsViz # Migrate this import to application script only?
+from .applications.diffusion_tests_viz import DiffusionTestsViz # Same
+from .applications.front_proximity_viz import FrontProximityViz # Same
 from .environment.configuration import get_config_parameters
 from .environment.configuration import get_config_parameters_from_file
 from .environment.configuration import config_filename
@@ -68,7 +68,6 @@ def get_analyzer(workflow=None, **kwargs):
     if workflow in workflows:
         dataset_design = get_dataset_design(workflow = workflow, **kwargs)
         computational_design = get_computational_design(workflow = workflow, **kwargs)
-
         Analyzer = workflows[workflow].analyzer
         return Analyzer(
             dataset_design = dataset_design,

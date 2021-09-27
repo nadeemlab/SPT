@@ -27,6 +27,7 @@ requirements = [
     'plotly==5.1.0',
     'networkx==2.5.1',
     'kaleido==0.2.1',
+    'scikit-learn==0.24.1',
 ]
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
 

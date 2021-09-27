@@ -3,33 +3,10 @@
 This script represents a single job of the density analysis workflow. It
 is not run directly by the user.
 """
-import argparse
 
 import spatialprofilingtoolbox as spt
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(
-        description = ''.join([
-            'This program does cell phenotype density calculations in ',
-            'multiplexed IF images, not taking into account spatial information.',
-            'It is formulated as a script so that it can be run as part of large HPC batches. '
-            'It generally needs to be run as part of spt-pipeline, to ensure initialization.',
-        ])
-    )
-    args = parser.parse_args()
-    kwargs = {}
-
     parameters = spt.get_config_parameters_from_file()
-    kwargs['input_path'] = parameters['input_path']
-    kwargs['outcomes_file'] = parameters['outcomes_file']
-    kwargs['output_path'] = parameters['output_path']
-    kwargs['elementary_phenotypes_file'] = parameters['elementary_phenotypes_file']
-    kwargs['complex_phenotypes_file'] = parameters['complex_phenotypes_file']
-    kwargs['skip_integrity_check'] = True if 'skip_integrity_check' in parameters else False
-    kwargs['use_intensities'] = True if ('use_intensities' in parameters and parameters['use_intensities'] == 'True') else False
-
-    a = spt.get_analyzer(
-        workflow='Multiplexed IF density',
-        **kwargs,
-    )
+    a = spt.get_analyzer(**parameters)
     a.calculate()

@@ -2,7 +2,7 @@
 
 export DEBUG=1
 rm -rf output/
-cp integration_tests/example_config_files/front_proximity.txt .spt_pipeline.config
+cp integration_tests/example_config_files/density_with_thresholding.txt .spt_pipeline.config
 spt-pipeline
 spt-analyze-results &> logs/integration.txt
 rm .spt_pipeline.config

@@ -36,6 +36,8 @@ class SingleJobAnalyzer:
         output_path: str=None,
         input_file_identifier: str=None,
         job_index: str=None,
+        dataset_design=None,
+        computational_design=None,
         **kwargs,
     ):
         """
@@ -83,6 +85,8 @@ class SingleJobAnalyzer:
         self.input_file_identifier = input_file_identifier
         self.job_index = int(job_index)
         self.pipeline_design = PipelineDesign()
+        self.dataset_design = dataset_design
+        self.computational_design = computational_design
 
     def get_pipeline_database_uri(self):
         """

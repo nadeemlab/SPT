@@ -11,12 +11,13 @@ from scipy.spatial import KDTree
 
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
+from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class DensityCalculator:
+class DensityCalculator(Calculator):
     """
     The main class of the core calculator.
     """
@@ -25,8 +26,7 @@ class DensityCalculator:
         sample_identifiers_by_file: dict=None,
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
-        dataset_design=None,
-        computational_design=None,
+        **kwargs,
     ):
         """
         :param sample_identifers_by_file: Association of input data files to
@@ -39,18 +39,11 @@ class DensityCalculator:
 
         :param dataset_settings: Convenience bundle of paths to input dataset files.
         :type dataset_settings: DatasetSettings
-
-        :param dataset_design: Design object providing metadata about the *kind* of
-            input data being provided.
-
-        :param computational_design: Design object providing metadata specific to the
-            density workflow.
         """
+        super(DensityCalculator, self).__init__(**kwargs)
         self.sample_identifiers_by_file = sample_identifiers_by_file
         self.output_path = jobs_paths.output_path
         self.outcomes_file = dataset_settings.outcomes_file
-        self.dataset_design = dataset_design
-        self.computational_design = computational_design
 
     def calculate_density(self):
         """
@@ -154,7 +147,8 @@ class DensityCalculator:
         cell_groups = []
         fov_lookup = {}
         for filename, sample_identifier in self.sample_identifiers_by_file.items():
-            table_file = pd.read_csv(filename)
+            # table_file = pd.read_csv(filename)
+            table_file = self.get_table(filename)
             self.dataset_design.normalize_fov_descriptors(table_file)
 
             col = self.dataset_design.get_FOV_column()

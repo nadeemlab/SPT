@@ -19,30 +19,11 @@ class DensityAnalyzer(SingleJobAnalyzer):
     The main class of the job.
     """
     def __init__(self,
-        dataset_design=None,
-        complex_phenotypes_file: str=None,
         job_index: int=0,
         skip_integrity_check=False,
-        use_intensities: bool=False,
         **kwargs,
     ):
-        """
-        :param dataset_design: The design object describing the input data set.
-
-        :param complex_phenotypes_file: The table of composite phenotypes to be
-            considered.
-        :type complex_phenotypes_file: str
-
-        :param use_intensities: Whether to use continuous channel intensity values.
-        :type use_intensities: bool
-        """
         super(DensityAnalyzer, self).__init__(job_index=job_index, **kwargs)
-        self.dataset_design = dataset_design
-        self.computational_design = DensityDesign(
-            dataset_design = self.dataset_design,
-            complex_phenotypes_file = complex_phenotypes_file,
-            use_intensities = use_intensities,
-        )
         sample_identifiers_by_file = self.retrieve_cell_input_file_info(skip_integrity_check)
         self.calculator = DensityCalculator(
             sample_identifiers_by_file = sample_identifiers_by_file,

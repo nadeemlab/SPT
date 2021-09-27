@@ -14,13 +14,14 @@ from scipy.sparse import coo_matrix
 
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
+from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
 
-class PhenotypeProximityCalculator:
+class PhenotypeProximityCalculator(Calculator):
     """
     The main class of the calculator.
     """
@@ -34,9 +35,8 @@ class PhenotypeProximityCalculator:
         sample_identifier: str=None,
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
-        dataset_design=None,
-        computational_design: PhenotypeProximityDesign=None,
         regional_areas_file: str=None,
+        **kwargs,
     ):
         """
         :param input_filename: The filename for the source file with cell data.
@@ -59,16 +59,15 @@ class PhenotypeProximityCalculator:
             regions.
         :type regional_areas_file: str
         """
+        super(PhenotypeProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
         self.output_path = jobs_paths.output_path
         self.outcome = self.pull_in_outcome_data(dataset_settings.outcomes_file)[
             sample_identifier
         ]
-        self.dataset_design = dataset_design
-        self.computational_design = computational_design
-        self.areas = dataset_design.areas_provider(
-            dataset_design=dataset_design,
+        self.areas = self.dataset_design.areas_provider(
+            dataset_design=self.dataset_design,
             regional_areas_file=regional_areas_file,
         )
         self.fov_lookup = {}

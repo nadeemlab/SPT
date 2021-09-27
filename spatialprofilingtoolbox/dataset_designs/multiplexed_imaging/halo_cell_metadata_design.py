@@ -368,3 +368,15 @@ class HALOCellMetadataDesign:
         suffixes = [site + ' Intensity' for site in self.get_cellular_sites()]
         feature = [' '.join([prefix, suffix]) for suffix in suffixes]
         return list(table[feature[0]] + table[feature[1]] + table[feature[2]])
+
+    def add_combined_intensity_column(self, table, elementary_phenotype):
+        for phenotype in self.get_elementary_phenotype_names():
+            column = self.get_intensity_column_name(phenotype)
+            table[column] = self.get_combined_intensity(table, phenotype)
+
+    def get_intensity_column_name(self, elementary_phenotype):
+        """
+        Currently only used for manually-created intensity column.
+        """
+        return self.get_indicator_prefix(elementary_phenotype) + ' Intensity'
+

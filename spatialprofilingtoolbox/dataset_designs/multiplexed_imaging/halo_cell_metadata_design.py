@@ -335,7 +335,7 @@ class HALOCellMetadataDesign:
             signature = self.get_pandas_signature(table, {'Classifier Label' : compartment})
 
         if signature is None:
-            logger.error('Could not define compartment %s', compartment)
+            logger.error('Could not define compartment %s, from among %s', compartment, self.get_compartments())
             return [False for i in range(table.shape[0])]
         else:
             return signature

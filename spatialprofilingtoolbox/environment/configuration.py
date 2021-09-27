@@ -252,6 +252,12 @@ def get_config_parameters_from_cli():
         required=True,
         help='Whether to do dichotomization of continuous variables.',
     )
+    parser.add_argument('--compartments',
+        dest='compartments',
+        type=str,
+        required=True,
+        help='Compartment names, comma separated.',
+    )
     args = parser.parse_args()
 
     computational_workflow = re.sub(r'\\ ', ' ', args.computational_workflow)
@@ -306,6 +312,11 @@ def get_config_parameters_from_cli():
         parameters['use_intensities'] = True
     if dichotomize:
         parameters['dichotomize'] = True
+
+    compartments = args.compartments
+    if compartments != '':
+        compartments_list = [c.strip(' ') for c in compartments.split(',')]
+        parameters['compartments'] = compartments_list
     return parameters
 
 def get_config_parameters():

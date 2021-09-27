@@ -17,6 +17,7 @@ class HALOCellMetadataDesign:
     """
     def __init__(self,
         elementary_phenotypes_file: str=None,
+        compartments: list=['Non-Tumor', 'Tumor'],
         **kwargs,
     ):
         """
@@ -33,7 +34,7 @@ class HALOCellMetadataDesign:
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-        self.compartments = ['Non-Tumor', 'Tumor']
+        self.compartments = compartments
         self.areas_provider = HALORegionalAreasProvider
 
     def get_FOV_column(self):

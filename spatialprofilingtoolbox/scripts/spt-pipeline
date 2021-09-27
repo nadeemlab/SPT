@@ -163,6 +163,15 @@ then
     done
     COMPLEX_PHENOTYPES_FILE=$(abspath $COMPLEX_PHENOTYPES_FILE)
     printf "$cr$yellow$prompt_str$reset$green$COMPLEX_PHENOTYPES_FILE$reset\n"
+
+    COMPARTMENTS=""
+    prompt_str="Enter comma-separated list of compartment names: "
+    printf "$yellow$prompt_str$reset"
+    while [[ "$COMPARTMENTS" = "none" ]];
+    do
+        read -e COMPARTMENTS
+    done
+    printf "$cr$yellow$prompt_str$reset$green$COMPARTMENTS$reset\n"
 fi
 
 if [[ "$COMPUTATIONAL_WORKFLOW" = "Multiplexed IF phenotype proximity" ]] ;
@@ -321,6 +330,7 @@ spt-generate-jobs \
     --runtime-platform $RUN_PLATFORM \
     --elementary-phenotypes-file $ELEMENTARY_PHENOTYPES_FILE \
     --complex-phenotypes-file $COMPLEX_PHENOTYPES_FILE \
+    --compartments "$COMPARTMENTS" \
     --excluded-hostname $EXCLUDED_HOSTNAME \
     --skip-integrity-check $SKIP_INTEGRITY_CHECK \
     --balanced $BALANCED \

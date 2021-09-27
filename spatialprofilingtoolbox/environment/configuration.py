@@ -75,6 +75,13 @@ workflows = {
         analyzer = DensityAnalyzer,
         integrator = DensityAnalysisIntegrator,
     ),
+    'Dichotomization' : WorkflowModules(
+        generator = None,
+        dataset_design = HALOCellMetadataDesign,
+        computational_design = DensityDesign,
+        analyzer = None,
+        integrator = None,
+    ),
 }
 
 def get_config_parameters_from_file():

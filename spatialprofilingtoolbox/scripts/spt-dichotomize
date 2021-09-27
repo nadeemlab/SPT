@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+import os
+from os.path import join
+
+import pandas as pd
+
+import spatialprofilingtoolbox as spt
+from spatialprofilingtoolbox import get_dataset_design
+from spatialprofilingtoolbox import get_computational_design
+from spatialprofilingtoolbox.environment.calculator import Calculator
+
+def get_cell_manifest_filenames(parameters, dataset_design):
+    file_manifest_file = join(parameters['input_path'], parameters['file_manifest_file'])
+    file_manifest = pd.read_csv(file_manifest_file)
+    filenames = [
+        row['File name']
+        for i, row in file_manifest.iterrows() if dataset_design.validate_cell_manifest_descriptor(row['Data type'])
+    ]
+    return filenames
+
+def do_dichotomization():
+    parameters = spt.get_config_parameters_from_file()
+    parameters['dichotomizer'] = True
+    dataset_design = get_dataset_design(workflow='Dichotomization', **parameters)
+    computational_design = get_computational_design(workflow='Dichotomization', **parameters)
+    calculator = Calculator(
+        dataset_design=dataset_design,
+        computational_design=computational_design,
+    )
+    output_path = parameters['output_path']
+    filenames = get_cell_manifest_filenames(parameters, dataset_design)
+    for filename in filenames:
+        table = calculator.get_table(filename)
+        table.to_csv(join(output_path, filename), index=False)
+
+    print('Wrote thresholding-added versions of each cell manifest to %s' % output_path)
+
+if __name__=='__main__':
+    do_dichotomization()

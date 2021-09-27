@@ -244,6 +244,7 @@ class PhenotypeProximityAnalysisIntegrator:
             frac = -1
         else:
             frac = sum(multiplied) / denominator
+        logger.debug('One instance of source phenotype weighting completed on a subtable.')
         return pd.Series({
             self.computational_design.get_aggregated_metric_name(style='sql') : frac,
             'source_phenotype_count' : denominator,

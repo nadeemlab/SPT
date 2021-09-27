@@ -64,7 +64,7 @@ singularity exec \
         job_working_directory = self.jobs_paths.job_working_directory
 
         for i, row in self.file_metadata.iterrows():
-            if row['Data type'] == HALOCellMetadataDesign.get_cell_manifest_descriptor():
+            if HALOCellMetadataDesign.validate_cell_manifest_descriptor(row['Data type']):
                 file_id = row['File ID']
 
                 job_index = self.register_job_existence()

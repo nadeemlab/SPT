@@ -98,6 +98,14 @@ class HALOCellMetadataDesign:
     def get_cell_manifest_descriptor():
         return 'HALO software cell manifest'
 
+    @staticmethod
+    def validate_cell_manifest_descriptor(descriptor):
+        return descriptor in [
+            HALOCellMetadataDesign.get_cell_manifest_descriptor(),
+            'simulated HALO-exported cell manifest',
+        ]
+        return 'HALO software cell manifest'
+
     def get_regional_areas_table_descriptor(self):
         return 'HALO software regional/compartment areas'
 

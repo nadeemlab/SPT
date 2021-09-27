@@ -73,7 +73,7 @@ singularity exec \
     def generate_all_jobs(self):
         self.initialize_intermediate_database()
         for _, row in self.file_metadata.iterrows():
-            if row['Data type'] == HALOCellMetadataDesign.get_cell_manifest_descriptor():
+            if HALOCellMetadataDesign.validate_cell_manifest_descriptor(row['Data type']):
                 job_index = self.register_job_existence()
                 job_name = 'cell_proximity_' + str(job_index)
                 log_filename = join(self.jobs_paths.logs_path, job_name + '.out')

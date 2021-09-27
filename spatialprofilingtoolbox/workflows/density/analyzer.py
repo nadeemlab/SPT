@@ -59,7 +59,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
 
         sample_identifiers_by_file = {}
         for row in result:
-            if row[3] != self.dataset_design.get_cell_manifest_descriptor():
+            if ! self.dataset_design.validate_cell_manifest_descriptor(row[3]):
                 continue
             input_file = row[0]
             sample_identifier = row[1]

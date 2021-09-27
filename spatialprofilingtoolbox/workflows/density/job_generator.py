@@ -71,7 +71,7 @@ singularity exec \
     def generate_all_jobs(self):
         all_memory_requirements = []
         for _, row in self.file_metadata.iterrows():
-            if row['Data type'] == HALOCellMetadataDesign.get_cell_manifest_descriptor():
+            if HALOCellMetadataDesign.validate_cell_manifest_descriptor(row['Data type']):
                 all_memory_requirements.append(self.get_memory_requirements(row))
 
         job_index = self.register_job_existence()

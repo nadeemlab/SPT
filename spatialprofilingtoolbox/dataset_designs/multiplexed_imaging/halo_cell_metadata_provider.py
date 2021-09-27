@@ -94,7 +94,7 @@ class HALOCellMetadata(CellMetadata):
         dfs = []
         for i, row in file_metadata.iterrows():
             data_type = row['Data type']
-            if not data_type == dataset_design.get_cell_manifest_descriptor():
+            if not dataset_design.validate_cell_manifest_descriptor(data_type):
                 continue
             filename = row['File name']
             sample_id = row['Sample ID']
@@ -141,8 +141,7 @@ class HALOCellMetadata(CellMetadata):
             logger.error('File metadata table missing columns "Data type".')
             return False
         data_types = list(set(file_metadata['Data type']))
-        expected_data_type = dataset_design.get_cell_manifest_descriptor()
-        if not (expected_data_type in data_types):
+        if not any([dataset_design.validate_cell_manifest_descriptor(data_type) for data_type in data_types]):
             logger.warning(
                 'Expected at least 1 "%s" in "Data type" field.',
                 expected_data_type,

@@ -107,6 +107,12 @@ def get_config_parameters_from_file():
         else:
             parameters[name] = False
 
+    if 'compartments' in parameters:
+        compartments = parameters['compartments']
+        if compartments != '':
+            compartments_list = [c.strip(' ') for c in compartments.split(',')]
+            parameters['compartments'] = compartments_list
+
     return parameters
 
 def get_version():

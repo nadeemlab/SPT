@@ -220,7 +220,14 @@ class PhenotypeProximityAnalysisIntegrator:
             table.rename(columns={f1 : f2}, inplace=True)
         else:
             agg = self.custom_per_sample_aggregation_function
+            logger.debug(
+                'Started grouping %s x %s table by case classifiers: %s',
+                table.shape[0],
+                table.shape[1],
+                case_classifiers,
+            )
             table = table.groupby(case_classifiers, as_index=False).apply(agg)
+            logger.debug('Done grouping.')
 
         table.reset_index(inplace=True)
         table.rename(columns={'index' : 'id'}, inplace=True)

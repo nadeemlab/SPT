@@ -126,6 +126,12 @@ def write_config_parameters_to_file(parameters):
             pipelines/workflows.
     """
     config = configparser.ConfigParser()
+    if 'compartments' in parameters:
+        compartments = parameters['compartments']
+        if compartments != '':
+            compartments_list = [c.strip(' ') for c in compartments.split(',')]
+            parameters['compartments'] = compartments_list
+
     config['default'] = parameters
     config['static'] = {'version' : get_version()}
     with open(config_filename, 'w') as file:

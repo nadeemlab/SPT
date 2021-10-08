@@ -49,11 +49,11 @@ Install from `PyPI <https://pypi.org/project/spatialprofilingtoolbox/>`_::
 
 All workflows are configured by running ``spt-pipeline`` in your desired run directory.
 
-**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platfrom LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, you must first build the library into a Singularity container by cloning the source code repository, then running* ::
+**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed `Singularity <https://sylabs.io/singularity/>`_, you must first pull the Singularity container from Docker Hub using:
 
-    cd building && ./build_singularity_container.sh
+    singularity pull jimmymathews/spt:0.7.19
 
-*and moving the container (``.sif`` file) to an area accessible to the nodes in your cluster. To avoid the need for this step, a future version of SPT may use Docker containers on a public registry.*
+*(using the correct version number) and moving the container ``.sif`` file to an area accessible to the nodes in your cluster.*
 
 Example answers to the ``spt-pipeline`` prompts are shown below for the phenotype proximity workflow, using the test data that ships with the SPT source code. There are slight variations depending on the workflow.
 

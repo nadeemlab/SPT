@@ -51,7 +51,7 @@ All workflows are configured by running ``spt-pipeline`` in your desired run dir
 
 **Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed* `Singularity <https://sylabs.io/singularity/>`_ *, you must first pull the Singularity container from Docker Hub using* ::
 
-    singularity pull jimmymathews/spt:0.7.19
+    singularity pull docker://jimmymathews/spt:0.7.19
 
 *(using the correct version number) and moving the container ``.sif`` file to an area accessible to the nodes in your cluster.*
 

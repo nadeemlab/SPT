@@ -11,3 +11,4 @@ tests/output/
 tests/schedule_local_nontumor.sh
 tests/schedule_lsf_nontumor.sh
 tests/.cell_metadata.tsv.cache
+dist/*

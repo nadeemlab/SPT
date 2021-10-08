@@ -13,12 +13,6 @@ source_note_color="\e[36;40m"
 
 script_file=$(echo "$0" | grep -oE "[a-zA-Z0-9_]+.sh$")
 start_time=$SECONDS
-if [[ "$1" == "skip-singularity" ]];
-then
-    skip_singularity=1
-else
-    skip_singularity=0
-fi
 
 function wrapup-previous-timed() {
     units="seconds "
@@ -168,23 +162,23 @@ rm -rf venv/
 source tests/cleaning.sh
 _cleanup
 
-if [[ "$skip_singularity" == "0" ]];
+version=$(cat spatialprofilingtoolbox/version.txt)
+
+logstyle-printf "$green""Building Docker container.$reset" timed-command
+cat building/Dockerfile.template | sed "s/{{version}}/$version/g" > Dockerfile
+REQS=$(sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt)
+awk -i inplace -v r="$REQS" '{gsub(/{{install requirements.txt}}/,r)}1' Dockerfile
+docker build -t jimmymathews/spt:$version .
+docker push jimmymathews/spt:$version
+
+if [[ "$?" == "1" ]];
 then
-    logstyle-printf "$green""Building singularity container.$reset" timed-command
-    cd building/
-    ./build_singularity_container.sh 1>/dev/null 2>/dev/null
-    if [[ "$?" == "1" ]];
-    then
-        logstyle-printf "$red""Something went wrong in building singularity container.$reset"
-        exit
-    fi
-    logstyle-printf "$green""Built:$reset"
-    cd ..
-    file=$(ls -1rt building/*.sif | tail -n1)
-    logstyle-printf "$yellow""    $file$reset"
+    logstyle-printf "$red""Something went wrong in building Docker container.$reset"
+    exit
 fi
 
-version=$(cat spatialprofilingtoolbox/version.txt)
+logstyle-printf "$green""Built.$reset"
+
 logstyle-printf "$green""Committing this version:$reset$bold_cyan v$version$reset" timed-command
 git add spatialprofilingtoolbox/version.txt 1>/dev/null 2>/dev/null && \
     git commit -m "Autoreleasing v$version" 1>/dev/null 2>/dev/null && \

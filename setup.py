@@ -11,22 +11,20 @@ def get_file_contents(filename):
 long_description = """See the [user documentation](https://github.com/nadeemlab/SPT).
 """
 requirements = [
-    'cycler==0.10.0',
     'Cython==0.29.23',
-    'kiwisolver==1.3.1',
     'matplotlib==3.4.2',
-    'numpy==1.21.0',
-    'pandas==1.1.5',
-    'POT==0.7.0',
     'pyparsing==2.4.7',
     'python-dateutil==2.8.1',
     'pytz==2021.1',
-    'scipy==1.7.0',
-    'seaborn==0.11.1',
     'six==1.16.0',
-    'plotly==5.1.0',
     'networkx==2.5.1',
+    'POT==0.7.0',
+    'seaborn==0.11.1',
+    'plotly==5.1.0',
     'kaleido==0.2.1',
+    'numpy==1.21.0',
+    'pandas==1.3.3',
+    'scipy==1.7.1',
     'scikit-learn==0.24.1',
 ]
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))

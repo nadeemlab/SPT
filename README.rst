@@ -49,7 +49,7 @@ Install from `PyPI <https://pypi.org/project/spatialprofilingtoolbox/>`_::
 
 All workflows are configured by running ``spt-pipeline`` in your desired run directory.
 
-**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed `Singularity <https://sylabs.io/singularity/>`_, you must first pull the Singularity container from Docker Hub using*:
+**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed `Singularity <https://sylabs.io/singularity/>`_, you must first pull the Singularity container from Docker Hub using* ::
 
     singularity pull jimmymathews/spt:0.7.19
 

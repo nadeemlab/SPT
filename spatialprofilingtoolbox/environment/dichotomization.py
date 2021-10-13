@@ -33,7 +33,7 @@ class Dichotomizer:
 
         1. Logarithm of values.
         2. Gaussian mixture model with 2 populations.
-        3. Standard-deviation-weighted average of the means as threshold.
+        3. Ordinary mean of the means as threshold.
         4. Dichotomize with respect to the threshold.
 
         :param phenotype_name: An elementary phenotype name, is it appears in the

@@ -48,13 +48,7 @@ singularity exec \
         **kwargs,
     ):
         """
-        :param elementary_phenotypes_file: Tabular file listing phenotypes of
-            consideration.
-        :type elementary_phenotypes_file: str
-
-        :param complex_phenotypes_file: Tabular file listing composite phenotypes to
-            consider.
-        :type complex_phenotypes_file: str
+        :param dataset_design: The design object for the input dataset.
 
         :param balanced: Whether to use balanced or unbalanced treatment of phenotype
             pairs.

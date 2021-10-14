@@ -74,7 +74,6 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-front-proximity-analysis',
         'spatialprofilingtoolbox/scripts/spt-density-analysis',
         'spatialprofilingtoolbox/scripts/spt-aggregate-cell-data',
-        'spatialprofilingtoolbox/scripts/spt-dichotomize',
     ],
     install_requires=requirements,
     project_urls = {

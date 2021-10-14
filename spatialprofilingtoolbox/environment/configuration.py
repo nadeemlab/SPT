@@ -28,13 +28,6 @@ workflows = {
     **phenotype_proximity_workflow,
     **front_proximity_workflow,
     **density_workflow,
-    'Dichotomization' : WorkflowModules(
-        generator = None,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = None,
-        analyzer = None,
-        integrator = None,
-    ),
 }
 
 

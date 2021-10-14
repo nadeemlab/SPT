@@ -11,78 +11,32 @@ from os.path import exists
 import re
 
 from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from ..workflows.diffusion.job_generator import DiffusionJobGenerator
-from ..workflows.diffusion.computational_design import DiffusionDesign
-from ..workflows.diffusion.analyzer import DiffusionAnalyzer
-from ..workflows.diffusion.integrator import DiffusionAnalysisIntegrator
-from ..workflows.phenotype_proximity.job_generator import PhenotypeProximityJobGenerator
-from ..workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
-from ..workflows.phenotype_proximity.analyzer import PhenotypeProximityAnalyzer
-from ..workflows.phenotype_proximity.integrator import PhenotypeProximityAnalysisIntegrator
-from ..workflows.front_proximity.job_generator import FrontProximityJobGenerator
-from ..workflows.front_proximity.computational_design import FrontProximityDesign
-from ..workflows.front_proximity.analyzer import FrontProximityAnalyzer
-from ..workflows.front_proximity.integrator import FrontProximityAnalysisIntegrator
-from ..workflows.density.job_generator import DensityJobGenerator
-from ..workflows.density.computational_design import DensityDesign
-from ..workflows.density.analyzer import DensityAnalyzer
-from ..workflows.density.integrator import DensityAnalysisIntegrator
+
+from .workflow_modules import WorkflowModules
+from ..workflows.diffusion import components as diffusion_workflow
+from ..workflows.phenotype_proximity import components as phenotype_proximity_workflow
+from ..workflows.front_proximity import components as front_proximity_workflow
+from ..workflows.density import components as density_workflow
+
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-# Migrate above imports down to workflow modules?
-
 config_filename = '.spt_pipeline.config'
 
-
-class WorkflowModules:
-    """
-    A wrapper object in which to list implementation classes comprising a workflow definition.
-    """
-    def __init__(self, generator=None, dataset_design=None, computational_design=None, analyzer=None, integrator=None):
-        self.generator = generator
-        self.dataset_design = dataset_design
-        self.computational_design = computational_design
-        self.analyzer = analyzer
-        self.integrator = integrator
-
 workflows = {
-    'Multiplexed IF diffusion' : WorkflowModules(
-        generator = DiffusionJobGenerator,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = DiffusionDesign,
-        analyzer = DiffusionAnalyzer,
-        integrator = DiffusionAnalysisIntegrator,
-    ),
-    'Multiplexed IF phenotype proximity' : WorkflowModules(
-        generator = PhenotypeProximityJobGenerator,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = PhenotypeProximityDesign,
-        analyzer = PhenotypeProximityAnalyzer,
-        integrator = PhenotypeProximityAnalysisIntegrator,
-    ),
-    'Multiplexed IF front proximity' : WorkflowModules(
-        generator = FrontProximityJobGenerator,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = FrontProximityDesign,
-        analyzer = FrontProximityAnalyzer,
-        integrator = FrontProximityAnalysisIntegrator,
-    ),
-    'Multiplexed IF density' : WorkflowModules(
-        generator = DensityJobGenerator,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = DensityDesign,
-        analyzer = DensityAnalyzer,
-        integrator = DensityAnalysisIntegrator,
-    ),
+    **diffusion_workflow,
+    **phenotype_proximity_workflow,
+    **front_proximity_workflow,
+    **density_workflow,
     'Dichotomization' : WorkflowModules(
         generator = None,
         dataset_design = HALOCellMetadataDesign,
-        computational_design = DensityDesign,
+        computational_design = None,
         analyzer = None,
         integrator = None,
     ),
 }
+
 
 def get_config_parameters_from_file():
     """

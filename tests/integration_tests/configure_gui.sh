@@ -9,13 +9,11 @@ if {$force_conservative} {
 	}
 }
 
-rm .spt_pipeline.json
-
 set timeout -1
 spawn spt-configure
 match_max 100000
-expect -exact "\[33m\[0m\r
-\[33m SPT version \[0m\[1;36m0.7.21\[0m\[33m\[0m\r
+expect "\[33m\[0m\r
+\[33m SPT version \[0m\[1;36m*\[0m\[33m\[0m\r
 \[33m \[0m\[34mhttps://github.com/nadeemlab/SPT\[0m\[33m\[0m\r
 \[33m\[0m\r
 \[33mThis dialog solicits parameters for your SPT pipeline run and generates a JSON\[0m\r

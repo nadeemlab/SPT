@@ -3,6 +3,6 @@
 import spatialprofilingtoolbox as spt
 
 if __name__=='__main__':
-    p = spt.get_config_parameters_from_file()
+    p = spt.get_config_parameters()
     i = spt.get_integrator(**p)
     i.calculate()

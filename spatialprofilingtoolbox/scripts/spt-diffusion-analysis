@@ -41,7 +41,7 @@ if __name__=='__main__':
     kwargs['fov_index'] = args.input_fov
     kwargs['regional_compartment'] = args.regional_compartment
     kwargs['job_index'] = args.job_index
-    parameters = spt.get_config_parameters_from_file()
+    parameters = spt.get_config_parameters()
     parameters = {**kwargs, **parameters}
     a = spt.get_analyzer(**parameters)
     a.calculate()

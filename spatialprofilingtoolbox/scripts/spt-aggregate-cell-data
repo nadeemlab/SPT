@@ -28,7 +28,7 @@ def do_aggregation():
     )
     args = parser.parse_args()
 
-    parameters = spt.get_config_parameters_from_file()
+    parameters = spt.get_config_parameters()
     dataset_design = HALOCellMetadataDesign(
         elementary_phenotypes_file=parameters['elementary_phenotypes_file'],
     )

@@ -9,8 +9,7 @@ import os
 from os import getcwd
 from os.path import exists
 import re
-
-from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+import json
 
 from .workflow_modules import WorkflowModules
 from ..workflows.diffusion import components as diffusion_workflow
@@ -21,7 +20,7 @@ from ..workflows.density import components as density_workflow
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-config_filename = '.spt_pipeline.config'
+config_filename = '.spt_pipeline.json'
 
 workflows = {
     **diffusion_workflow,
@@ -30,42 +29,45 @@ workflows = {
     **density_workflow,
 }
 
-
 def get_config_parameters_from_file():
     """
-    Retrieves previously-serialized configuration parameters from file, using a
-    singleton pattern.
+    Retrieves previously-serialized configuration parameters from file.
 
-    Returns:
-        dict:
-            Key-value pairs parsed using the Python standard library configparser
-            module.
+    :return: The parameters.
+    :rtype: dict
     """
-    config = configparser.ConfigParser()
-    config.read(config_filename)
-    parameters = dict(config['default'])
-    version = dict(config['static'])['version']
-    if version != get_version():
-        logger.warning('The version of this running instance of SPT (%s) does not match the version that generated configuration file (namely %s).', get_version(), version)
+    # config = configparser.ConfigParser()
+    # config.read(config_filename)
+    # parameters = dict(config['default'])
+    parameters = json.load(config_filename)
+    # version = dict(config['static'])['version']
+    if 'SPT version' in parameters:
+        version = parameters['SPT version']
+        if version != get_version():
+            logger.warning(
+                'The version of this running instance of SPT (%s) does not match the version that generated configuration file (namely %s).',
+                get_version(),
+                version,
+            )
 
-    bool_parameters = [
-        'skip_integrity_check',
-        'balanced',
-        'save_graphml',
-        'use_intensities',
-        'dichotomize',
-    ]
-    for name in bool_parameters:
-        if name in parameters and parameters[name] == 'True':
-            parameters[name] = True
-        else:
-            parameters[name] = False
+    # bool_parameters = [
+    #     'skip_integrity_check',
+    #     'balanced',
+    #     'save_graphml',
+    #     'use_intensities',
+    #     'dichotomize',
+    # ]
+    # for name in bool_parameters:
+    #     if name in parameters and parameters[name] == 'True':
+    #         parameters[name] = True
+    #     else:
+    #         parameters[name] = False
 
-    if 'compartments' in parameters:
-        compartments = parameters['compartments']
-        if compartments != '':
-            compartments_list = [c.strip(' ') for c in compartments.split(',')]
-            parameters['compartments'] = compartments_list
+    # if 'compartments' in parameters:
+    #     compartments = parameters['compartments']
+    #     if compartments != '':
+    #         compartments_list = [c.strip(' ') for c in compartments.split(',')]
+    #         parameters['compartments'] = compartments_list
 
     return parameters
 
@@ -285,14 +287,28 @@ def get_config_parameters_from_cli():
         parameters['compartments'] = compartments_list
     return parameters
 
-def get_config_parameters():
-    if len(sys.argv) == 1: # Need to make the CLI args and config file in closer alignment
-        if not exists(config_filename):
-            logger.error('Configuration file %s does not exist.', config_filename)
-            return None
-        else:
-            return get_config_parameters_from_file()
-    else:
-        parameters = get_config_parameters_from_cli()
-        write_config_parameters_to_file(parameters)
-        return parameters
+def get_config_parameters(json_string=None):
+    supplied_json_string = not json_string is None
+    has_config_file = exists(config_filename)
+
+    if supplied_json_string and has_config_file:
+        logger.error(
+            'Configuration file %s exists, but you are also supplying json_string.',
+            config_filename,
+        )
+        return None
+
+    if (not supplied_json_string) and (not has_config_file):
+        logger.error(
+            ''.join([
+                'Configuration file %s does not exist, and you did not supply ',
+                'json_string. Try spt-configure.'
+            ]),
+            config_filename
+        )
+        return None
+
+    if has_config_file:
+        json_string = open(config_filename, 'rt').read()
+
+    return json.loads(json_string)

@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parameters = {}
 
     pp.print('')
-    pp.print(' SPT version %s', spt.get_version(), fill_colors='boldcyan')
+    pp.print(' spt_version %s', spt.get_version(), fill_colors='boldcyan')
     pp.print(' %s', 'https://github.com/nadeemlab/SPT', fill_colors='blue')
     pp.print('')
     pp.print('This dialog solicits parameters for your SPT pipeline run and generates a JSON')
@@ -207,7 +207,7 @@ if __name__ == '__main__':
         os.mkdir(logs_path)
     parameters['logs_path'] = abspath(logs_path)
 
-    parameters['SPT version'] = spt.get_version()
+    parameters['spt_version'] = spt.get_version()
 
     json_string = json.dumps(parameters, indent=4) + '\n'
     open(spt.config_filename, 'wt').write(json_string)

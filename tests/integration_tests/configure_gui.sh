@@ -1,6 +1,6 @@
 #!/usr/bin/expect -f
 
-set force_conservative 0  ;# set to 1 to force conservative mode even if
+set force_conservative 0  ;
 if {$force_conservative} {
 	set send_slow {1 .1}
 	proc send {ignore arg} {
@@ -13,7 +13,7 @@ set timeout -1
 spawn spt-configure
 match_max 100000
 expect "\[33m\[0m\r
-\[33m SPT version \[0m\[1;36m*\[0m\[33m\[0m\r
+\[33m spt_version \[0m\[1;36m*\[0m\[33m\[0m\r
 \[33m \[0m\[34mhttps://github.com/nadeemlab/SPT\[0m\[33m\[0m\r
 \[33m\[0m\r
 \[33mThis dialog solicits parameters for your SPT pipeline run and generates a JSON\[0m\r

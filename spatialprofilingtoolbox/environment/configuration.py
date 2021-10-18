@@ -59,4 +59,13 @@ def get_config_parameters(json_string=None):
     if has_config_file:
         json_string = open(config_filename, 'rt').read()
 
+    version_specifier = 'spt_version'
+    if version_specifier in json_string:
+        if json_string[version_specifier] != get_version():
+            logger.warning(
+                'Version mentioned in configuration file is %s, but running version of SPT is %s.',
+                json_string[version_specifier],
+                get_version(),
+            )
+
     return json.loads(json_string)

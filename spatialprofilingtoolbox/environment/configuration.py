@@ -1,5 +1,6 @@
 """
-Provides workflow definitions in terms of implementation classes, and configuration parameter management.
+Provides workflow definitions in terms of implementation classes, and
+configuration parameter management.
 """
 import importlib.resources
 import sys

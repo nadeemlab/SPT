@@ -63,7 +63,6 @@ setuptools.setup(
     python_requires='>=3.7',
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-configure',
-        'spatialprofilingtoolbox/scripts/spt-pipeline',
         'spatialprofilingtoolbox/scripts/spt-analyze-results',
         'spatialprofilingtoolbox/scripts/spt-diffusion-viz',
         'spatialprofilingtoolbox/scripts/spt-diffusion-graphs-viz',

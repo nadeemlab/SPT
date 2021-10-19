@@ -5,6 +5,8 @@ analysis workflow.
 from os.path import join, abspath
 import hashlib
 
+import pandas as pd
+
 from ...environment.single_job_analyzer import SingleJobAnalyzer
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
@@ -50,15 +52,13 @@ class DensityAnalyzer(SingleJobAnalyzer):
             with the files.
         :rtype: dict
         """
-        cmd = 'SELECT File_basename, Sample_ID, SHA256, Data_type FROM file_metadata ;'
-        with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as manager:
-            result = manager.execute_commit(cmd)
-
         if skip_integrity_check:
             logger.info('Skipping file integrity checks.')
 
+        file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
+
         sample_identifiers_by_file = {}
-        for row in result:
+        for i, row in file_metadata.iterrows():
             if not self.dataset_design.validate_cell_manifest_descriptor(row[3]):
                 continue
             input_file = row[0]

@@ -16,12 +16,6 @@ class SingleJobAnalyzer:
     """
     An interface for a single job to be executed as part of a batch in a pipeline
     run. It handles some "boilerplate".
-
-    It is generally assumed that one job is associated which exactly one input file (the
-    reverse is not assumed). And, moreover, that metadata for this file can be found
-    in the file_metadata table of the database pointed to by
-    ``get_pipeline_database_uri()``. The format of this metadata can be partially
-    gleaned from JobGenerator.
     """
     def __init__(self,
         input_path: str=None,
@@ -75,15 +69,8 @@ class SingleJobAnalyzer:
             output_path,
         )
         self.input_file_identifier = input_file_identifier
-        self.pipeline_design = PipelineDesign()
         self.dataset_design = dataset_design
         self.computational_design = computational_design
-
-    def get_pipeline_database_uri(self):
-        """
-        See ``PipelineDesign.get_database_uri``.
-        """
-        return self.pipeline_design.get_database_uri()
 
     def _calculate(self):
         """

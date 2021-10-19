@@ -30,6 +30,6 @@ if __name__=='__main__':
     parameters['input_file_identifier'] = args.input_file_identifier
     parameters['fov_index'] = args.input_fov
     parameters['regional_compartment'] = args.regional_compartment
-    parameters = {**parmeters, **spt.get_config_parameters()}
+    parameters = {**parameters, **spt.get_config_parameters()}
     a = spt.get_analyzer(**parameters)
     a.calculate()

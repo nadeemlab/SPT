@@ -3,6 +3,7 @@
     "input_path" : "./data/",
     "outcomes_file" : "./data/diagnosis.tsv",
     "file_manifest_file" : "./data/file_manifest.tsv",
+    "compartments" : ["Tumor", "Non-Tumor"],
     "skip_integrity_check" : true,
     "job_working_directory" : "./",
     "output_path" : "./output",
@@ -12,7 +13,5 @@
     "sif_file" : "../../building/sat.sif",
     "runtime_platform" : "local",
     "excluded_hostname" : "NO_EXCLUDED_HOSTNAME",
-    "elementary_phenotypes_file" : "./data/elementary_phenotypes.csv",
-    "complex_phenotypes_file" : "./data/complex_phenotypes.csv",
     "spt_version" : "0.7.21"
 }

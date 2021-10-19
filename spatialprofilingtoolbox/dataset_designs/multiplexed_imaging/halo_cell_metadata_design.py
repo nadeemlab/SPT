@@ -5,7 +5,8 @@ from os.path import join
 import pandas as pd
 
 from .halo_areas_provider import HALORegionalAreasProvider
-from ...environment.configuration import get_input_filename_by_identifier
+from ...environment.file_io import get_input_filename_by_identifier
+from ...environment.settings_wrappers import DatasetSettings
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

@@ -2,6 +2,8 @@ import functools
 from functools import lru_cache
 import hashlib
 
+import pandas as pd
+
 from .job_generator import JobActivity
 from .database_context_utility import WaitingDatabaseContextManager
 from .pipeline_design import PipelineDesign
@@ -180,7 +182,7 @@ class SingleJobAnalyzer:
         """
         Uses the file identifier to lookup and cache the associated sample identifier.
         """
-        file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
+        file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
         records = file_metadata[file_metadata['File ID'] == self.input_file_identifier]
         for i, row in records.iterrows():
             sample_identifier = row['Sample ID']

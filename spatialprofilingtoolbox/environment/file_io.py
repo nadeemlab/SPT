@@ -1,6 +1,6 @@
 import os
 from os import mkdir
-from os.path import exists, abspath
+from os.path import exists, abspath, join
 import hashlib
 
 from .log_formats import colorized_logger
@@ -134,8 +134,10 @@ def get_input_filename_by_identifier(
             )
             continue
         intact_files.append(input_file)
-    if len(intact_files) > 0:
+    if len(intact_files) > 1:
         logger.error('File identifier "%s" duplicated.', input_file_identifier)
+        return None
     if len(intact_files) == 0:
         logger.error('File identifier "%s" not found.', input_file_identifier)
+        return None
     return intact_files[0]

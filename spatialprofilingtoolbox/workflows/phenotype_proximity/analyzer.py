@@ -2,7 +2,10 @@
 A single job of the proximity workflow.
 """
 
+import pandas as pd
+
 from ...environment.single_job_analyzer import SingleJobAnalyzer
+from ...environment.file_io import get_input_filename_by_identifier
 from ...environment.log_formats import colorized_logger
 from .core import PhenotypeProximityCalculator
 from .computational_design import PhenotypeProximityDesign
@@ -20,7 +23,11 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()
         file_id = self.dataset_design.get_regional_areas_file_identifier()
-        regional_areas_file = self.get_input_filename_by_identifier(file_id)
+        regional_areas_file = get_input_filename_by_identifier(
+            dataset_settings = self.dataset_settings,
+            file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
+            input_file_identifier = file_id,
+        )
 
         self.calculator = PhenotypeProximityCalculator(
             input_filename = self.get_input_filename(),

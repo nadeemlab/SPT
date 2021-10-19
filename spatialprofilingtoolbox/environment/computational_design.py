@@ -9,7 +9,24 @@ class ComputationalDesign:
     Subclass this object to collect together any metadata that is specific to a
     particular pipeline/workflow's computation stage.
     """
-    def __init__(self, dichotomize: bool=False, **kwargs):
+    def __init__(self,
+        complex_phenotypes_file: str=None,
+        dichotomize: bool=False,
+        **kwargs,
+    ):
+        """
+        :param complex_phenotypes_file: The table of composite phenotypes to be
+            considered.
+        :type complex_phenotypes_file: str
+
+        :param dichotomize: Default False. Whether to do auto-thresholding to
+            dichotomize the continuous input variables.
+        :type dichotomize: bool
+        """
+        self.complex_phenotypes = pd.read_csv(
+            complex_phenotypes_file,
+            keep_default_na=False,
+        )
         self.dichotomize = dichotomize
 
     def get_database_uri(self):

@@ -13,31 +13,20 @@ class DensityDesign(ComputationalDesign):
     """
     The design object.
     """
-    def __init__(
-            self,
-            dataset_design=None,
-            complex_phenotypes_file: str=None,
-            use_intensities: bool=False,
-            **kwargs,
-        ):
+    def __init__(self,
+        dataset_design=None,
+        use_intensities: bool=False,
+        **kwargs,
+    ):
         """
         :param dataset_design: The design object describing the acceptable input data
             sets.
-
-        :param complex_phenotypes_file: The table of composite phenotypes to be
-            considered.
-        :type complex_phenotypes_file: str
 
         :param use_intensities: Whether to use continuous channel intensity values.
         :type use_intensities: bool
         """
         super(DensityDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
-        if not complex_phenotypes_file is None:
-            self.complex_phenotypes = pd.read_csv(
-                complex_phenotypes_file,
-                keep_default_na=False,
-            )
         self.use_intensities = use_intensities
 
     @staticmethod

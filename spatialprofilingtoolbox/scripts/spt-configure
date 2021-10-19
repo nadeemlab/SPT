@@ -113,18 +113,6 @@ if __name__ == '__main__':
         validator=path_validator,
     )
 
-    parameters['elementary_phenotypes_file'] = pp.prompt(
-        'Enter the file containing metadata for the channels/observed phenotypes:',
-        validator=path_validator,
-    )
-    parameters['elementary_phenotypes_file'] = abspath(parameters['elementary_phenotypes_file'])
-
-    parameters['complex_phenotypes_file'] = pp.prompt(
-        'Enter the file that lists composite phenotypes of interest:',
-        validator=path_validator,
-    )
-    parameters['complex_phenotypes_file'] = abspath(parameters['complex_phenotypes_file'])
-
     compartments = pp.prompt(
         'Enter comma-separated list of compartment names:',
     )

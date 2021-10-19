@@ -5,26 +5,15 @@ from ...environment.computational_design import ComputationalDesign
 
 
 class FrontProximityDesign(ComputationalDesign):
-    def __init__(
-            self,
-            dataset_design=None,
-            complex_phenotypes_file: str=None,
-            **kwargs,
-        ):
+    def __init__(self,
+        dataset_design=None,
+        **kwargs,
+    ):
         """
-        Args:
-            dataset_design:
-                The design object describing the input data set.
-            complex_phenotypes_file (str):
-                The table of composite phenotypes to be considered.            
+        :param dataset_design: The design object describing the input data set.
         """
         super(FrontProximityDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
-        if not complex_phenotypes_file is None:
-            self.complex_phenotypes = pd.read_csv(
-                complex_phenotypes_file,
-                keep_default_na=False,
-            )
 
     def get_database_uri(self):
         return 'front_proximity.db'

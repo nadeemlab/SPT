@@ -9,6 +9,7 @@ from .job_generator import JobActivity
 from .database_context_utility import WaitingDatabaseContextManager
 from .pipeline_design import PipelineDesign
 from .settings_wrappers import JobsPaths, DatasetSettings
+from .configuration import get_input_filename_by_identifier
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -129,66 +130,64 @@ class SingleJobAnalyzer:
         See ``get_input_filename_by_identifier``. Applied to this job's specific
         ``input_file_identifier``.
         """
-        return self.get_input_filename_by_identifier(self.input_file_identifier)
+        return get_input_filename_by_identifier(
+            dataset_settings = self.dataset_settings,
+            file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
+            input_file_identifier = self.input_file_identifier,
+        )
 
-    def get_input_filename_by_identifier(self, input_file_identifier):
-        """
-        Uses the file identifier to lookup the name of the associated file in the file
-        metadata table, and cache the name of the associated file.
+    # def get_input_filename_by_identifier(self, input_file_identifier):
+    #     """
+    #     Uses the file identifier to lookup the name of the associated file in the file
+    #     metadata table, and cache the name of the associated file.
 
-        Args:
-            input_file_identifier (str):
-                Key to search for in the "File ID" column of the file metadata table.
+    #     Args:
+    #         input_file_identifier (str):
+    #             Key to search for in the "File ID" column of the file metadata table.
 
-        Returns:
-            str:
-                The filename.
-        """
-        where_clause = 'Input_file_identifier="' + input_file_identifier + '"'
-        cmd = 'SELECT File_basename, SHA256 FROM file_metadata WHERE ' + where_clause + ' ;'
-        with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-            result = m.execute_commit(cmd)
-        if len(result) != 1:
-            logger.error('Multiple (or no) files with ID %s ?', input_file_identifier)
-            input_file = None
-            sha256 = None
-            return
-        else:
-            row = result[0]
-            input_file = row[0]
-            expected_sha256 = row[1]
-            input_file = abspath(join(self.dataset_settings.input_path, input_file))
+    #     Returns:
+    #         str:
+    #             The filename.
+    #     """
+    #     where_clause = 'Input_file_identifier="' + input_file_identifier + '"'
+    #     cmd = 'SELECT File_basename, SHA256 FROM file_metadata WHERE ' + where_clause + ' ;'
+    #     with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
+    #         result = m.execute_commit(cmd)
+    #     if len(result) != 1:
+    #         logger.error('Multiple (or no) files with ID %s ?', input_file_identifier)
+    #         input_file = None
+    #         sha256 = None
+    #         return
+    #     else:
+    #         row = result[0]
+    #         input_file = row[0]
+    #         expected_sha256 = row[1]
+    #         input_file = abspath(join(self.dataset_settings.input_path, input_file))
 
-            buffer_size = 65536
-            sha = hashlib.sha256()
-            with open(input_file, 'rb') as f:
-                while True:
-                    data = f.read(buffer_size)
-                    if not data:
-                        break
-                    sha.update(data)
-            sha256 = sha.hexdigest()
+    #         buffer_size = 65536
+    #         sha = hashlib.sha256()
+    #         with open(input_file, 'rb') as f:
+    #             while True:
+    #                 data = f.read(buffer_size)
+    #                 if not data:
+    #                     break
+    #                 sha.update(data)
+    #         sha256 = sha.hexdigest()
 
-            if sha256 != expected_sha256:
-                logger.error('File "%s" has wrong SHA256 hash (%s ; expected %s).', input_file_identifier, sha256, expected_sha256)
-            return input_file
+    #         if sha256 != expected_sha256:
+    #             logger.error('File "%s" has wrong SHA256 hash (%s ; expected %s).', input_file_identifier, sha256, expected_sha256)
+    #         return input_file
 
     @lru_cache(maxsize=1)
     def get_sample_identifier(self):
         """
         Uses the file identifier to lookup and cache the associated sample identifier.
         """
-        where_clause = 'Input_file_identifier="' + self.input_file_identifier + '"'
-        cmd = 'SELECT Sample_ID FROM file_metadata WHERE ' + where_clause + ' ;'
-        with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-            result = m.execute_commit(cmd)
-        if len(result) != 1:
-            logger.error('Multiple files with ID %s ?', self.input_file_identifier)
-            sample_identifier = None
-        else:
-            row = result[0]
-            sample_identifier = row[0]
-        return sample_identifier
+        file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
+        records = file_metadata[file_metadata['File ID'] == self.input_file_identifier]
+        for i, row in records.iterrows():
+            sample_identifier = row['Sample ID']
+            return sample_identifier
 
     def register_activity(self, state):
         """

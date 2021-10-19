@@ -13,7 +13,6 @@ class PhenotypeProximityDesign(ComputationalDesign):
     """
     def __init__(self,
         dataset_design=None,
-        complex_phenotypes_file: str=None,
         balanced: bool=False,
         use_intensities: bool=False,
         **kwargs,
@@ -21,20 +20,15 @@ class PhenotypeProximityDesign(ComputationalDesign):
         """
         :param dataset_design: The design object describing the input data set.
 
-        :param complex_phenotypes_file: The table of composite phenotypes to be
-            considered.
-        :type complex_phenotypes_file: str
-
         :param balanced: Whether to use balanced or unbalanced treatment of phenotype
             pairs.
         :type balanced: bool
+
+        :param use_intensities: Whether to use continue intensity values.
+        :type use_intensities: bool
         """
         super(PhenotypeProximityDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
-        self.complex_phenotypes = pd.read_csv(
-            complex_phenotypes_file,
-            keep_default_na=False,
-        )
         self.balanced = balanced
         self.use_intensities = use_intensities
 

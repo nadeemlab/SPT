@@ -40,14 +40,9 @@ singularity exec \
         **kwargs,
     ):
         """
-        Args:
+        :param dataset_design: The design object for the input dataset.
 
-            elementary_phenotypes_file (str):
-                Tabular file listing phenotypes of consideration. See dataset designs.
-
-            complex_phenotypes_file (str):
-                Tabular file listing composite phenotypes to consider. See
-                ``phenotype_proximity.computational_design``.
+        :param computational_design: The design object describing this workflow.
         """
         super(FrontProximityJobGenerator, self).__init__(**kwargs)
         self.dataset_design = dataset_design

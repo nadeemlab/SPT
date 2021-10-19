@@ -5,28 +5,19 @@ from ...environment.computational_design import ComputationalDesign
 
 
 class DiffusionDesign(ComputationalDesign):
-    def __init__(
-            self,
-            dataset_design=None,
-            complex_phenotypes_file: str=None,
-            save_graphml: bool=False,
-            **kwargs,
-        ):
+    def __init__(self,
+        dataset_design=None,
+        save_graphml: bool=False,
+        **kwargs,
+    ):
         """
-        Args:
-            dataset_design:
-                The design object describing the input data set.
-            complex_phenotypes_file (str):
-                The table of composite phenotypes to be considered.
-            save_graphml (bool):
-                Whether to save GraphML files as additional output.
+        :param dataset_design: The design object describing the input data set.
+
+        :param save_graphml: Whether to save GraphML files as additional output.
+        :type save_graphml: bool
         """
         super(DiffusionDesign, self).__init__(**kwargs)
         self.dataset_design = dataset_design
-        self.complex_phenotypes = pd.read_csv(
-            complex_phenotypes_file,
-            keep_default_na=False,
-        )
         self.save_graphml = save_graphml
 
     def should_save_graphml(self):

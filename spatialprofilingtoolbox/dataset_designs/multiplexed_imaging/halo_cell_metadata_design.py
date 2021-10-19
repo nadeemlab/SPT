@@ -5,6 +5,7 @@ from os.path import join
 import pandas as pd
 
 from .halo_areas_provider import HALORegionalAreasProvider
+from ...environment.configuration import get_input_filename_by_identifier
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -16,20 +17,38 @@ class HALOCellMetadataDesign:
     exported from the HALO software.
     """
     def __init__(self,
-        elementary_phenotypes_file: str=None,
-        compartments: list=['Non-Tumor', 'Tumor'],
+        input_path: str=None,
+        file_manifest_file: str=None,
+        outcomes_file: str=None,
+        compartments: list=None,
         **kwargs,
     ):
         """
-        Args:
-            elementary_phenotypes_file (str):
-                This should be a tabular, CSV file, whose records correspond to the
-                channels of the original image data. At the very least a "Name" column
-                and a "Dye number" column should be provided. Other columns that could
-                be helpful for interpreting the dataset are "Indication type" (e.g.
-                "presence of protein"), "Indicated item name or handle string" (e.g. the
-                HUGO gene symbol for the indicated protein).
+        :param input_path: Path to input data files.
+        :type input_path: str
+
+        :param file_manifest_file: The file manifest listing the input files.
+        :type file_manifest_file: str
+
+        :param file_manifest_file: File containing list of input data files, including
+            metadata files. This manifest should include one CSV file entry with File
+            ID "Elementary phenotypes file".
+        :type file_manifest_file: str
+
+        :param compartments: The names of the regional compartments as the appear in
+            cell manifest files.
+        :type compartment: list
         """
+        self.dataset_settings = DatasetSettings(
+            input_path,
+            file_manifest_file,
+            outcomes_file,
+        )
+        elementary_phenotypes_file = get_input_filename_by_identifier(
+            dataset_settings = self.dataset_settings,
+            file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
+            input_file_identifier = 'Elementary phenotypes file',
+        )
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
             keep_default_na=False,

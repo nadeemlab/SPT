@@ -5,11 +5,7 @@ import spatialprofilingtoolbox as spt
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
-        description = ''.join([
-            'This program does calculations with multiplexed IF images. ',
-            'It is formulated as a script so that it can be run as part of large HPC batches. '
-            'It generally needs to be run as part of spt-pipeline, to ensure proper initialization.',
-        ])
+        description = 'This program does calculations with multiplexed IF images.'
     )
     parser.add_argument('--input-file-identifier',
         dest='input_file_identifier',
@@ -27,21 +23,13 @@ if __name__=='__main__':
         dest='regional_compartment',
         type=str,
         required=True,
-        help='?',
-    )
-    parser.add_argument('--job-index',
-        dest='job_index',
-        type=str,
-        required=True,
-        help='Integer index into job activity table.',
+        help='Compartment.',
     )
     args = parser.parse_args()
-    kwargs = {}
-    kwargs['input_file_identifier'] = args.input_file_identifier
-    kwargs['fov_index'] = args.input_fov
-    kwargs['regional_compartment'] = args.regional_compartment
-    kwargs['job_index'] = args.job_index
-    parameters = spt.get_config_parameters()
-    parameters = {**kwargs, **parameters}
+    parameters = {}
+    parameters['input_file_identifier'] = args.input_file_identifier
+    parameters['fov_index'] = args.input_fov
+    parameters['regional_compartment'] = args.regional_compartment
+    parameters = {**parmeters, **spt.get_config_parameters()}
     a = spt.get_analyzer(**parameters)
     a.calculate()

@@ -39,14 +39,6 @@ expect -exact "data/file_manifest.tsv\r
 \[33mEnter the file containing outcomes:\[0m "
 send -- "data/diagnosis.tsv\r"
 expect -exact "data/diagnosis.tsv\r
-\[33mEnter the file containing metadata for the channels/observed phenotypes:\[0m "
-send -- "data/elementary_phenote"
-expect -exact " "
-send -- "ypes.csv\r"
-expect -exact "ypes.csv\r
-\[33mEnter the file that lists composite phenotypes of interest:\[0m "
-send -- "data/complex_phenotypes.csv\r"
-expect -exact "data/complex_phenotypes.csv\r
 \[33mEnter comma-separated list of compartment names:\[0m "
 send -- "Tumor,Non-Tumor\r"
 expect -exact "Tumor,Non-Tumor\r

@@ -1,15 +1,12 @@
-import os
-from os.path import join, abspath
 import functools
 from functools import lru_cache
-import re
 import hashlib
 
 from .job_generator import JobActivity
 from .database_context_utility import WaitingDatabaseContextManager
 from .pipeline_design import PipelineDesign
 from .settings_wrappers import JobsPaths, DatasetSettings
-from .configuration import get_input_filename_by_identifier
+from .file_io import get_input_filename_by_identifier
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

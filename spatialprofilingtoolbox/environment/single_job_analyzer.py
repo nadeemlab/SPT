@@ -4,9 +4,7 @@ import hashlib
 
 import pandas as pd
 
-from .job_generator import JobActivity
 from .database_context_utility import WaitingDatabaseContextManager
-from .pipeline_design import PipelineDesign
 from .settings_wrappers import JobsPaths, DatasetSettings
 from .file_io import get_input_filename_by_identifier
 from .log_formats import colorized_logger
@@ -34,7 +32,6 @@ class SingleJobAnalyzer:
         schedulers_path: str=None,
         output_path: str=None,
         input_file_identifier: str=None,
-        job_index: str=None,
         dataset_design=None,
         computational_design=None,
         **kwargs,
@@ -65,9 +62,6 @@ class SingleJobAnalyzer:
             input_file_identifier (str):
                 The identifier, as it appears in the file manifest, for the file
                 associated with this job.
-            job_index (str):
-                The string representation of the integer index of this job in the job
-                metadata table.
         """
         self.dataset_settings = DatasetSettings(
             input_path,
@@ -81,7 +75,6 @@ class SingleJobAnalyzer:
             output_path,
         )
         self.input_file_identifier = input_file_identifier
-        self.job_index = int(job_index)
         self.pipeline_design = PipelineDesign()
         self.dataset_design = dataset_design
         self.computational_design = computational_design
@@ -103,23 +96,13 @@ class SingleJobAnalyzer:
         """
         The main calculation of this job, to be called by pipeline orchestration.
         """
-        self.register_activity(JobActivity.RUNNING)
-        self._calculate()
-        self.register_activity(JobActivity.COMPLETE)
+        self._calculate() # Now consider removing this layer of indirection
 
     def retrieve_input_filename(self):
         self.get_input_filename()
 
     def retrieve_sample_identifier(self):
         self.get_sample_identifier()
-
-    def get_job_index(self):
-        """
-        Returns:
-            int:
-                The index of this job in the job metadata table.
-        """
-        return self.job_index
 
     @lru_cache(maxsize=1)
     def get_input_filename(self):
@@ -133,48 +116,6 @@ class SingleJobAnalyzer:
             input_file_identifier = self.input_file_identifier,
         )
 
-    # def get_input_filename_by_identifier(self, input_file_identifier):
-    #     """
-    #     Uses the file identifier to lookup the name of the associated file in the file
-    #     metadata table, and cache the name of the associated file.
-
-    #     Args:
-    #         input_file_identifier (str):
-    #             Key to search for in the "File ID" column of the file metadata table.
-
-    #     Returns:
-    #         str:
-    #             The filename.
-    #     """
-    #     where_clause = 'Input_file_identifier="' + input_file_identifier + '"'
-    #     cmd = 'SELECT File_basename, SHA256 FROM file_metadata WHERE ' + where_clause + ' ;'
-    #     with WaitingDatabaseContextManager(self.get_pipeline_database_uri()) as m:
-    #         result = m.execute_commit(cmd)
-    #     if len(result) != 1:
-    #         logger.error('Multiple (or no) files with ID %s ?', input_file_identifier)
-    #         input_file = None
-    #         sha256 = None
-    #         return
-    #     else:
-    #         row = result[0]
-    #         input_file = row[0]
-    #         expected_sha256 = row[1]
-    #         input_file = abspath(join(self.dataset_settings.input_path, input_file))
-
-    #         buffer_size = 65536
-    #         sha = hashlib.sha256()
-    #         with open(input_file, 'rb') as f:
-    #             while True:
-    #                 data = f.read(buffer_size)
-    #                 if not data:
-    #                     break
-    #                 sha.update(data)
-    #         sha256 = sha.hexdigest()
-
-    #         if sha256 != expected_sha256:
-    #             logger.error('File "%s" has wrong SHA256 hash (%s ; expected %s).', input_file_identifier, sha256, expected_sha256)
-    #         return input_file
-
     @lru_cache(maxsize=1)
     def get_sample_identifier(self):
         """
@@ -185,18 +126,3 @@ class SingleJobAnalyzer:
         for i, row in records.iterrows():
             sample_identifier = row['Sample ID']
             return sample_identifier
-
-    def register_activity(self, state):
-        """
-        (`To be deprecated`).
-
-        Args:
-            state (JobActivity):
-                The updated job state to be "advertised".
-        """
-        if state == JobActivity.RUNNING:
-            logger.debug('Started job with activity index %s', self.get_job_index())
-        if state == JobActivity.COMPLETE:
-            logger.debug('Completed entire job with activity index %s', self.get_job_index())
-        if state == JobActivity.FAILED:
-            logger.debug('Job failed, job with activity index %s', self.get_job_index())

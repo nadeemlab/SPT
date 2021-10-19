@@ -50,6 +50,8 @@ singularity exec \
         """
         :param dataset_design: The design object for the input dataset.
 
+        :param computational_design: The design object describing this workflow.
+
         :param balanced: Whether to use balanced or unbalanced treatment of phenotype
             pairs.
         :type balanced: bool

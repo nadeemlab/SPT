@@ -47,16 +47,13 @@ singularity exec \
         **kwargs,
     ):
         """
-        :param elementary_phenotypes_file: Tabular file listing phenotypes of
-            consideration. See :py:mod:`spatialprofilingtoolbox.dataset_designs`.
-        :type elementary_phenotypes_file: str
+        :param dataset_design: The design object describing the input data set.
 
-        :param complex_phenotypes_file: Tabular file listing composite phenotypes to
-            consider. See :py:mod:`spatialprofilingtoolbox.dataset_designs`.
-        :type complex_phenotypes_file: str
+        :param computational_design: The design object describing this workflow.
 
-        :param use_intensities: Whether to use continuous channel intensity values.
-        :type use_intensities: bool
+        :param skip_integrity_check: Default False. If True, checking SHA256 sums is
+            skipped to save time.
+        :type skip_integrity_check: bool
         """
         super(DensityJobGenerator, self).__init__(**kwargs)
         self.dataset_design = dataset_design

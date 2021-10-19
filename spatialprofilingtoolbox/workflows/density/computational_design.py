@@ -14,19 +14,14 @@ class DensityDesign(ComputationalDesign):
     The design object.
     """
     def __init__(self,
-        dataset_design=None,
         use_intensities: bool=False,
         **kwargs,
     ):
         """
-        :param dataset_design: The design object describing the acceptable input data
-            sets.
-
         :param use_intensities: Whether to use continuous channel intensity values.
         :type use_intensities: bool
         """
         super(DensityDesign, self).__init__(**kwargs)
-        self.dataset_design = dataset_design
         self.use_intensities = use_intensities
 
     @staticmethod

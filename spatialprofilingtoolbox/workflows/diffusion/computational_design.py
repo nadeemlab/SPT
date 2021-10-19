@@ -6,18 +6,14 @@ from ...environment.computational_design import ComputationalDesign
 
 class DiffusionDesign(ComputationalDesign):
     def __init__(self,
-        dataset_design=None,
         save_graphml: bool=False,
         **kwargs,
     ):
         """
-        :param dataset_design: The design object describing the input data set.
-
         :param save_graphml: Whether to save GraphML files as additional output.
         :type save_graphml: bool
         """
         super(DiffusionDesign, self).__init__(**kwargs)
-        self.dataset_design = dataset_design
         self.save_graphml = save_graphml
 
     def should_save_graphml(self):

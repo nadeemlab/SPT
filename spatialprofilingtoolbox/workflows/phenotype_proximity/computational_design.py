@@ -12,14 +12,11 @@ class PhenotypeProximityDesign(ComputationalDesign):
     The design object.
     """
     def __init__(self,
-        dataset_design=None,
         balanced: bool=False,
         use_intensities: bool=False,
         **kwargs,
     ):
         """
-        :param dataset_design: The design object describing the input data set.
-
         :param balanced: Whether to use balanced or unbalanced treatment of phenotype
             pairs.
         :type balanced: bool
@@ -28,7 +25,6 @@ class PhenotypeProximityDesign(ComputationalDesign):
         :type use_intensities: bool
         """
         super(PhenotypeProximityDesign, self).__init__(**kwargs)
-        self.dataset_design = dataset_design
         self.balanced = balanced
         self.use_intensities = use_intensities
 

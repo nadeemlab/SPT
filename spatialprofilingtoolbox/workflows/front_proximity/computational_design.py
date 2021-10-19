@@ -6,14 +6,12 @@ from ...environment.computational_design import ComputationalDesign
 
 class FrontProximityDesign(ComputationalDesign):
     def __init__(self,
-        dataset_design=None,
         **kwargs,
     ):
         """
         :param dataset_design: The design object describing the input data set.
         """
         super(FrontProximityDesign, self).__init__(**kwargs)
-        self.dataset_design = dataset_design
 
     def get_database_uri(self):
         return 'front_proximity.db'

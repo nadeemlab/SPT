@@ -43,7 +43,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
         return 'phenotype_proximity.db'
 
     @staticmethod
-    def get_stats_tests_file(self):
+    def get_stats_tests_file():
         """
         :return: The filename to use when writing the statistical test results.
         :rtype: str

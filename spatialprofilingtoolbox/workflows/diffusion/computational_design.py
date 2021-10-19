@@ -32,13 +32,20 @@ class DiffusionDesign(ComputationalDesign):
     def should_save_graphml(self):
         return self.save_graphml
 
-    def get_database_uri(self):
+    @staticmethod
+    def get_database_uri():
         return 'diffusion.db'
 
-    def get_diffusion_distances_table_name(self):
+    @staticmethod
+    def get_stats_tests_file():
+        return 'diffusion_distance_tests.csv'
+
+    @staticmethod
+    def get_diffusion_distances_table_name():
         return 'diffusion_distances'
 
-    def get_job_metadata_header(self):
+    @staticmethod
+    def get_job_metadata_header():
         """
         Returns:
             list:
@@ -54,7 +61,8 @@ class DiffusionDesign(ComputationalDesign):
             'distance_type',
         ]
 
-    def get_probabilities_table_header(self):
+    @staticmethod
+    def get_probabilities_table_header():
         """
         Returns:
             list:
@@ -69,7 +77,8 @@ class DiffusionDesign(ComputationalDesign):
             'marker',
         ]
 
-    def get_diffusion_distances_summarized_header(self):
+    @staticmethod
+    def get_diffusion_distances_summarized_header():
         """
         Returns:
             list:

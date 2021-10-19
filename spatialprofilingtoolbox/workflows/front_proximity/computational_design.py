@@ -30,7 +30,7 @@ class FrontProximityDesign(ComputationalDesign):
         return 'front_proximity.db'
 
     @staticmethod
-    def get_stats_tests_file(self):
+    def get_stats_tests_file():
         """
         Returns:
             str:

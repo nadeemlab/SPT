@@ -36,9 +36,6 @@ expect -exact "data/\r
 \[33mEnter the file manifest file:\[0m "
 send -- "data/file_manifest.tsv\r"
 expect -exact "data/file_manifest.tsv\r
-\[33mEnter the file containing outcomes:\[0m "
-send -- "data/diagnosis.tsv\r"
-expect -exact "data/diagnosis.tsv\r
 \[33mEnter comma-separated list of compartment names:\[0m "
 send -- "Tumor,Non-Tumor\r"
 expect -exact "Tumor,Non-Tumor\r

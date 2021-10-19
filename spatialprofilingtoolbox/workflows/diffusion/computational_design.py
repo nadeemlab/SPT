@@ -32,23 +32,6 @@ class DiffusionDesign(ComputationalDesign):
         return 'diffusion_distances'
 
     @staticmethod
-    def get_job_metadata_header():
-        """
-        Returns:
-            list:
-                The schema (header / column names) for the metadata related to jobs run
-                as part of the diffusion workflow.
-        """
-        return [
-            'Input file identifier',
-            'Sample ID',
-            'Job status',
-            'Regional compartment',
-            'job_activity_id',
-            'distance_type',
-        ]
-
-    @staticmethod
     def get_probabilities_table_header():
         """
         Returns:
@@ -59,7 +42,7 @@ class DiffusionDesign(ComputationalDesign):
         return [
             'diffusion_distance',
             'distance_type',
-            'job_activity_id',
+            'job_identifier',
             'temporal_offset',
             'marker',
         ]

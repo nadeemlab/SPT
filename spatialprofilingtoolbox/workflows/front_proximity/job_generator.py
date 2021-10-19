@@ -6,7 +6,7 @@ import stat
 import sqlite3
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from ...environment.job_generator import JobGenerator, JobActivity
+from ...environment.job_generator import JobGenerator
 from ...environment.log_formats import colorized_logger
 from .computational_design import FrontProximityDesign
 

@@ -65,8 +65,6 @@ class DiffusionAnalysisIntegrator:
         """
         if table_name == self.computational_design.get_diffusion_distances_table_name():
             columns = ['id'] + self.computational_design.get_probabilities_table_header()
-        elif table_name == 'job_metadata':
-            columns = ['id'] + self.computational_design.get_job_metadata_header()
         elif table_name == 'diffusion_distances_summarized':
             columns = ['id'] + [c[0] for c in self.computational_design.get_diffusion_distances_summarized_header()]
         else:
@@ -149,7 +147,6 @@ class DiffusionAnalysisIntegrator:
         probabilities = self.get_dataframe_from_db(
             self.computational_design.get_diffusion_distances_table_name()
         )
-        job_metadata = self.get_dataframe_from_db('job_metadata')
         logger.info('Value of probabilities.shape: %s', probabilities.shape)
         logger.info('Average diffusion distance: %s', np.mean(probabilities['diffusion_distance']))
         self.initialize_output_tables()
@@ -163,10 +160,8 @@ class DiffusionAnalysisIntegrator:
         }
         markers = sorted(list(set(probabilities['marker'])))
         distance_types = sorted(list(set(probabilities['distance_type'])))
-        job_metadata[['job_activity_id']] = job_metadata[['job_activity_id']].apply(pd.to_numeric)
         for marker in markers:
-            jobs = job_metadata[(job_metadata['Job status'] == 'COMPLETE') & (job_metadata['Regional compartment'] == 'nontumor')]
-            joined = pd.merge(probabilities, jobs, left_on='job_activity_id', right_on='job_activity_id', how='left', suffixes=['', '_right'])
+            joined = probabilities
             joined = joined[joined['marker'] == marker]
             for distance_type in distance_types:
                 ungrouped = joined[joined['distance_type'] == distance_type]

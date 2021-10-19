@@ -10,7 +10,7 @@ import sqlite3
 import pandas as pd
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from ...environment.job_generator import JobGenerator, JobActivity
+from ...environment.job_generator import JobGenerator
 from ...environment.log_formats import colorized_logger
 from .computational_design import DiffusionDesign
 
@@ -37,7 +37,6 @@ singularity exec \
  --input-file-identifier {{input_file_identifier}} \
  --fov {{fov_index}} \
  --regional-compartment {{regional_compartment}} \
- --job-index {{job_index}} \
 '''
     file_metadata_header = '''file id\tnumber of FOVs\n
 '''
@@ -112,10 +111,16 @@ singularity exec \
         """
         probabilities_header = self.computational_design.get_probabilities_table_header()
 
-        connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))
+        connection = sqlite3.connect(
+            join(
+                self.jobs_paths.output_path,
+                self.computational_design.get_database_uri(),
+            ),
+        )
         cursor = connection.cursor()
         table_name = self.computational_design.get_diffusion_distances_table_name()
         cursor.execute('DROP TABLE IF EXISTS ' + table_name + ' ;')
+        # Migrate below to documented schema in line with other workflows
         cmd = ' '.join([
             'CREATE TABLE',
             table_name,
@@ -123,22 +128,9 @@ singularity exec \
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
             probabilities_header[0] + ' NUMERIC,',
             probabilities_header[1] + ' VARCHAR(25),',
-            probabilities_header[2] + ' INTEGER,',
+            probabilities_header[2] + ' TEXT,',
             probabilities_header[3] + ' NUMERIC,',
             probabilities_header[4] + ' TEXT',
-            ');',
-        ])
-        cursor.execute(cmd)
-
-        cursor.execute('DROP TABLE IF EXISTS job_metadata ;')
-        keys = self.computational_design.get_job_metadata_header()
-        keys = [re.sub(' ', '_', key) for key in keys]
-        cmd = ' '.join([
-            'CREATE TABLE',
-            'job_metadata',
-            '(',
-            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
-            ', '.join([key + ' TEXT' for key in keys]),
             ');',
         ])
         cursor.execute(cmd)
@@ -162,12 +154,13 @@ singularity exec \
         number_fovs = self.number_fovs[input_file_identifier]
         logger.debug('Number of FOVs for %s: %s', input_file_identifier, str(number_fovs))
 
+        job_count = 0
         for rc in self.get_regional_compartments():
             if rc == 'nontumor':
                 for i in range(number_fovs):
                     fov_index = i + 1
-                    job_index = self.register_job_existence()
-                    job_name = 'diffusion_' + str(job_index)
+                    job_name = 'diffusion_' + str(job_count)
+                    job_count += 1
                     log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
                     memory_in_gb = self.get_memory_requirements(file_record)
 
@@ -185,7 +178,6 @@ singularity exec \
                     contents = re.sub('{{input_file_identifier}}', '"' + input_file_identifier + '"', contents)
                     contents = re.sub('{{fov_index}}', str(fov_index), contents)
                     contents = re.sub('{{regional_compartment}}', rc, contents)
-                    contents = re.sub('{{job_index}}', str(job_index), contents)
                     cli_call = contents
 
                     bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)

@@ -3,7 +3,6 @@ from os.path import join, dirname
 import re
 
 from ...environment.single_job_analyzer import SingleJobAnalyzer
-from ...environment.job_generator import JobActivity
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 from .integrator import DiffusionAnalysisIntegrator
@@ -20,17 +19,19 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         **kwargs,
     ):
         """
-        Args:
-            fov_index (int):
-                The integer index of the field of view to be considered by this job.
-            regional_compartment (str):
-                The regional compartment (in the sense of
-                ``diffusion.job_generator.get_regional_compartments()``) in which
-                reside the cells to be considered by this job.
+        :param fov_index: The integer index of the field of view to be considered by
+        this job.
+        :type fov_index: int
+
+        :param regional_compartment: The regional compartment (in the sense of
+        ``diffusion.job_generator.get_regional_compartments()``) in which reside
+        the cells to be considered by this job.
+        :type regional_compartment: str
         """
         super(DiffusionAnalyzer, self).__init__(**kwargs)
         self.regional_compartment = regional_compartment
         self.retrieve_input_filename()
+        self.fov_index = fov_index
         self.calculator = DiffusionCalculator(
             input_filename = self.get_input_filename(),
             fov_index = fov_index,
@@ -47,28 +48,27 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
                 if distance_type != DistanceTypes.EUCLIDEAN:
                     continue
                 for marker in markers:
-                    if not marker in ['DAPI', 'CK']:
+                    if not marker in ['DAPI', 'CK']: # Factor this out!
                         self.dispatch_diffusion_calculation(distance_type, marker)
                 logger.debug('Completed analysis %s (%s)',
-                    self.get_job_index(),
+                    self.get_job_descriptor(),
                     distance_type.name,
                 )
-                self.save_job_metadata(distance_type)
         except Exception as e:
             logger.error('Job failed: %s', e)
-            self.register_activity(JobActivity.FAILED)
             raise e
 
     def dispatch_diffusion_calculation(self, distance_type, marker):
         """
         Delegates the main job calculation to ``diffusion.core``.
 
-        Args:
-            distance_type (DistanceTypes):
-                Type of distance considered as underlying point-set metric for the
-                purposes of the diffusion calculation.
-            marker (str):
-                The elementary phenotype name whose positive cells are to be considered.
+        :param distance_type: Type of distance considered as underlying point-set
+            metric for the purposes of the diffusion calculation.
+        :type distace_type: DistanceTypes
+        
+        :param marker: The elementary phenotype name whose positive cells are to be
+            considered.
+        :type marker: str
         """
         self.calculator.calculate_diffusion(distance_type, marker)
 
@@ -89,8 +89,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
                 marker=marker,
             )
 
-    def save_diffusion_distance_values(
-        self,
+    def save_diffusion_distance_values(self,
         values=None,
         distance_type_str: str=None,
         temporal_offset=None,
@@ -99,17 +98,19 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         """
         Exports results from ``diffusion.core`` calculation.
 
-        Args:
-            values:
-                List of numeric diffusion distance values to save.
-            distance_type_str (str):
-                The distance type (point-set metric) for the context in which the values
-                were computed.
-            temporal_offset (float):
-                The time duration for running the Markov chain process.
-            marker (str):
-                The elementary phenotype name for the context in which the values were
-                computed.
+        :param values: List of numeric diffusion distance values to save.
+        :type values: list
+
+        :param distance_type_str: The distance type (point-set metric) for the context
+        in which the values were computed.
+        :type distance_type_str: str
+
+        :param temporal_offset: The time duration for running the Markov chain process.
+        :type temporal_offset: float
+
+        :param marker: The elementary phenotype name for the context in which the
+            values were computed.
+        :type marker: str
         """
         if temporal_offset is None:
             temporal_offset = 'NULL'
@@ -122,40 +123,12 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
                     self.computational_design.get_diffusion_distances_table_name(),
                     '(' + ', '.join(self.computational_design.get_probabilities_table_header()) + ')',
                     'VALUES',
-                    '(' + str(value) +', "' + distance_type_str + '", ' + str(self.get_job_index()) + ', ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'
+                    '(' + str(value) +', "' + distance_type_str + '", ' + str(self.get_job_descriptor()) + ', ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'
                 ]))
             m.commit()
 
-    def save_job_metadata(self, distance_type):
-        """
-        After a given sub-job (for a particular distance type) is complete, this method
-        saves this completion state and some other information to the job metadata
-        table.
-
-        Args:
-            distance_type (DistanceTypes):
-                The point-set metric type used for the given sub-job.
-        """
-        keys = self.computational_design.get_job_metadata_header()
-        keys = [re.sub(' ', '_', key) for key in keys]
-        values = [
+    def get_job_descriptor(self):
+        return 'file ID "%s" and FOV index "%s"' % (
             self.input_file_identifier,
-            self.get_sample_identifier(),
-            JobActivity.COMPLETE.name,
-            self.regional_compartment,
-            self.job_index,
-            distance_type.name,
-        ]
-
-        cmd = ' '.join([
-            'INSERT INTO',
-            'job_metadata',
-            '( ' + ', '.join(keys) + ' )',
-            'VALUES',
-            '( ' + ', '.join(['"' + str(value) + '"' for value in values]) + ' )',
-            ';'
-        ])
-
-        uri = join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
-        with WaitingDatabaseContextManager(uri) as m:
-            m.execute_commit(cmd)
+            self.fov_index,
+        )

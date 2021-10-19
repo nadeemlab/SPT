@@ -9,6 +9,7 @@ import pandas as pd
 import scipy
 from scipy.spatial import KDTree
 
+from ...environment.file_io import get_outcomes_files
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
@@ -43,7 +44,7 @@ class DensityCalculator(Calculator):
         super(DensityCalculator, self).__init__(**kwargs)
         self.sample_identifiers_by_file = sample_identifiers_by_file
         self.output_path = jobs_paths.output_path
-        self.outcomes_file = dataset_settings.outcomes_file
+        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
 
     def calculate_density(self):
         """

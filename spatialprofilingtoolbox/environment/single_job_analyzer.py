@@ -28,7 +28,6 @@ class SingleJobAnalyzer:
     def __init__(self,
         input_path: str=None,
         file_manifest_file: str=None,
-        outcomes_file: str=None,
         job_working_directory: str=None,
         jobs_path: str=None,
         logs_path: str=None,
@@ -73,7 +72,6 @@ class SingleJobAnalyzer:
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,
-            outcomes_file,
         )
         self.jobs_paths = JobsPaths(
             job_working_directory,

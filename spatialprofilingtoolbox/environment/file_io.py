@@ -141,3 +141,11 @@ def get_input_filename_by_identifier(
         logger.error('File identifier "%s" not found.', input_file_identifier)
         return None
     return intact_files[0]
+
+def get_outcomes_files(dataset_settings):
+    outcomes_files = get_input_filenames_by_data_type(
+        dataset_settings = dataset_settings,
+        file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t'),
+        data_type = 'Outcome',
+    )
+    return outcomes_files

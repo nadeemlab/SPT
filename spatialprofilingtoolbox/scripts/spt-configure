@@ -108,11 +108,6 @@ if __name__ == '__main__':
         validator=path_validator,
     )
 
-    parameters['outcomes_file'] = pp.prompt(
-        'Enter the file containing outcomes:',
-        validator=path_validator,
-    )
-
     compartments = pp.prompt(
         'Enter comma-separated list of compartment names:',
     )

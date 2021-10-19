@@ -1,4 +1,5 @@
 
+from ...environment.file_io import get_outcomes_files
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
 
@@ -23,7 +24,7 @@ class FrontProximityAnalysisIntegrator:
                 Design object providing metadata specific to the front proximity pipeline.
         """
         self.output_path = jobs_paths.output_path
-        self.outcomes_file = dataset_settings.outcomes_file
+        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
         self.computational_design = computational_design
         self.cell_proximity_tests = None
 

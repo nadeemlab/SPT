@@ -91,7 +91,6 @@ def get_dataset_settings(**kwargs):
     return DatasetSettings(
         kwargs['input_path'],
         kwargs['file_manifest_file'],
-        kwargs['outcomes_file'],
     )
 
 def get_integrator(workflow=None, **kwargs):

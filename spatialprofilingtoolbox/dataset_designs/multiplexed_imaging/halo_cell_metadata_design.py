@@ -20,7 +20,6 @@ class HALOCellMetadataDesign:
     def __init__(self,
         input_path: str=None,
         file_manifest_file: str=None,
-        outcomes_file: str=None,
         compartments: list=None,
         **kwargs,
     ):
@@ -43,7 +42,6 @@ class HALOCellMetadataDesign:
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,
-            outcomes_file,
         )
         elementary_phenotypes_file = get_input_filename_by_identifier(
             dataset_settings = self.dataset_settings,

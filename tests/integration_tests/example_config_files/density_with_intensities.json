@@ -1,7 +1,6 @@
 {
     "workflow" : "Multiplexed IF density",
     "input_path" : "./data/",
-    "outcomes_file" : "./data/diagnosis.tsv",
     "file_manifest_file" : "./data/file_manifest.tsv",
     "compartments" : ["Tumor", "Non-Tumor"],
     "skip_integrity_check" : true,

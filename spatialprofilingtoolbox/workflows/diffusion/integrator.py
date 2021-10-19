@@ -18,6 +18,7 @@ from scipy.stats import ttest_ind, kruskal
 from scipy.cluster.hierarchy import ClusterWarning
 simplefilter('ignore', ClusterWarning)
 
+from ...environment.file_io import get_outcomes_files
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
@@ -30,8 +31,7 @@ class DiffusionAnalysisIntegrator:
     max_probability_value = 0.05
     histogram_resolution = 50
 
-    def __init__(
-        self,
+    def __init__(self,
         jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         computational_design=None,
@@ -49,6 +49,7 @@ class DiffusionAnalysisIntegrator:
         self.output_path = jobs_paths.output_path
         self.dataset_settings = dataset_settings
         self.computational_design = computational_design
+        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
 
     def get_dataframe_from_db(self, table_name):
         """
@@ -155,7 +156,7 @@ class DiffusionAnalysisIntegrator:
         temporal_offsets = probabilities['temporal_offset']
         temporal_offsets = temporal_offsets[~np.isnan(temporal_offsets)]
         t_values = sorted(list(set(temporal_offsets)))
-        outcomes_df = pd.read_csv(self.dataset_settings.outcomes_file, sep='\t')
+        outcomes_df = pd.read_csv(self.outcomes_file, sep='\t')
         columns = outcomes_df.columns
         outcomes_dict = {
             row[columns[0]]: row[columns[1]] for i, row in outcomes_df.iterrows()

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 
+import pandas as pd
+
 import spatialprofilingtoolbox as spt
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_provider import HALOCellMetadata
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.environment.file_io import get_outcomes_files
+
 
 def do_aggregation():
     parser = argparse.ArgumentParser(
@@ -36,9 +40,11 @@ def do_aggregation():
         file_manifest_file = parameters['file_manifest_file'],
     )
     cell_data.initialize()
+
+    outcomes_files = get_outcomes_files(dataset_design.dataset_settings)
     cell_data.write_subsampled(
     	max_per_sample = args.max_per_sample,
-    	outcomes_file = parameters['outcomes_file'],
+    	outcomes_file = outcomes_files[0],
         omit_column = args.omit_column,
     )
 

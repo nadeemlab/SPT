@@ -12,6 +12,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from scipy.sparse import coo_matrix
 
+from ...environment.file_io import get_outcomes_files
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
@@ -63,7 +64,8 @@ class PhenotypeProximityCalculator(Calculator):
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
         self.output_path = jobs_paths.output_path
-        self.outcome = self.pull_in_outcome_data(dataset_settings.outcomes_file)[
+        outcomes_file = get_outcomes_files(dataset_settings)[0]
+        self.outcome = self.pull_in_outcome_data(outcomes_file)[
             sample_identifier
         ]
         self.areas = self.dataset_design.areas_provider(

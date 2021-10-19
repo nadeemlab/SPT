@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind, kruskal
 
+from ...environment.file_io import get_outcomes_files
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.settings_wrappers import JobsPaths, DatasetSettings
 from ...environment.log_formats import colorized_logger
@@ -42,7 +43,7 @@ class DensityAnalysisIntegrator:
             density workflow.
         """
         self.output_path = jobs_paths.output_path
-        self.outcomes_file = dataset_settings.outcomes_file
+        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
         self.computational_design = computational_design
         self.density_tests = None
         self._fov_lookup_dict = None

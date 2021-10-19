@@ -43,6 +43,7 @@ class DiffusionDesign(ComputationalDesign):
             'diffusion_distance',
             'distance_type',
             'job_identifier',
+            'sample_id',
             'temporal_offset',
             'marker',
         ]

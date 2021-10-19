@@ -123,12 +123,12 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
                     self.computational_design.get_diffusion_distances_table_name(),
                     '(' + ', '.join(self.computational_design.get_probabilities_table_header()) + ')',
                     'VALUES',
-                    '(' + str(value) +', "' + distance_type_str + '", ' + str(self.get_job_descriptor()) + ', ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'
+                    '(' + str(value) +', "' + distance_type_str + '", "' + str(self.get_job_descriptor()) + '", "' + str(self.get_sample_identifier()) + '", ' + str(temporal_offset) + ', ' + '"' + marker + '"' + ' ' + ');'
                 ]))
             m.commit()
 
     def get_job_descriptor(self):
-        return 'file ID "%s" and FOV index "%s"' % (
+        return 'file ID %s and FOV index %s' % (
             self.input_file_identifier,
             self.fov_index,
         )

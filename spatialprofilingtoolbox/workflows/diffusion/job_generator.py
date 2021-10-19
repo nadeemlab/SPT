@@ -96,6 +96,7 @@ singularity exec \
     def generate_all_jobs(self):
         self.number_arrays_of_jobs = 0
         self.initialize_intermediate_database()
+        self.job_count = 0
         for i, row in self.file_metadata.iterrows():
             if HALOCellMetadataDesign.validate_cell_manifest_descriptor(row['Data type']):
                 self.generate_array_of_jobs(row)
@@ -129,8 +130,9 @@ singularity exec \
             probabilities_header[0] + ' NUMERIC,',
             probabilities_header[1] + ' VARCHAR(25),',
             probabilities_header[2] + ' TEXT,',
-            probabilities_header[3] + ' NUMERIC,',
-            probabilities_header[4] + ' TEXT',
+            probabilities_header[3] + ' TEXT,',
+            probabilities_header[4] + ' NUMERIC,',
+            probabilities_header[5] + ' TEXT',
             ');',
         ])
         cursor.execute(cmd)
@@ -154,13 +156,12 @@ singularity exec \
         number_fovs = self.number_fovs[input_file_identifier]
         logger.debug('Number of FOVs for %s: %s', input_file_identifier, str(number_fovs))
 
-        job_count = 0
         for rc in self.get_regional_compartments():
             if rc == 'nontumor':
                 for i in range(number_fovs):
                     fov_index = i + 1
-                    job_name = 'diffusion_' + str(job_count)
-                    job_count += 1
+                    job_name = 'diffusion_' + str(self.job_count)
+                    self.job_count += 1
                     log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
                     memory_in_gb = self.get_memory_requirements(file_record)
 

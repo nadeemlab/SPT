@@ -165,7 +165,7 @@ class DiffusionAnalysisIntegrator:
             joined = joined[joined['marker'] == marker]
             for distance_type in distance_types:
                 ungrouped = joined[joined['distance_type'] == distance_type]
-                grouped = ungrouped.groupby('Sample ID')
+                grouped = ungrouped.groupby('sample_id')
                 self.record_summary_of_values(marker, distance_type, outcomes_dict, t_values, grouped)
                 logger.info('Generating figures for %s in %s case.', marker, distance_type)
                 self.generate_figures(marker, distance_type, outcomes_dict, t_values, grouped, ungrouped)
@@ -413,7 +413,7 @@ class DiffusionAnalysisIntegrator:
             for o in np.unique(outcomes):
                 if o == 'unknown':
                     continue
-                o_mask = [sample_id in outcomes_dict and outcomes_dict[sample_id] == o for sample_id in ungrouped['Sample ID']]
+                o_mask = [sample_id in outcomes_dict and outcomes_dict[sample_id] == o for sample_id in ungrouped['sample_id']]
                 data = list(ungrouped[(ungrouped['temporal_offset'] == t) & (o_mask)]['diffusion_distance'])
                 if np.var(data) == 0:
                     continue

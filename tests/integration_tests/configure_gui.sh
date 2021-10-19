@@ -1,10 +1,10 @@
 #!/usr/bin/expect -f
 
-set force_conservative 0  ;
+set force_conservative 1  ;
 if {$force_conservative} {
-	set send_slow {1 .1}
+	set send_slow {1 .01}
 	proc send {ignore arg} {
-		sleep .1
+		sleep .05
 		exp_send -s -- $arg
 	}
 }
@@ -27,7 +27,7 @@ expect "\[33m\[0m\r
 \[33mEnter the computational workflow type:\[0m "
 send -- "Multiplexed IF phenotype proximity\r"
 expect -exact "Multiplexed IF phenotype proximity\r
-\[33mEnter the Singularity continer file (.sif) containing the toolbox:\[0m "
+\[33mEnter the Singularity container file (.sif) containing the toolbox:\[0m "
 send -- "example.sif\r"
 expect -exact "example.sif\r
 \[33mEnter the path containing input CSV files pertaining to cells:\[0m "

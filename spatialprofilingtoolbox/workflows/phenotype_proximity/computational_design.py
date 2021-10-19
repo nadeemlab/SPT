@@ -42,15 +42,13 @@ class PhenotypeProximityDesign(ComputationalDesign):
     def get_database_uri():
         return 'phenotype_proximity.db'
 
+    @staticmethod
     def get_stats_tests_file(self):
         """
         :return: The filename to use when writing the statistical test results.
         :rtype: str
         """
-        if self.balanced:
-            return 'phenotype_2_phenotype_balanced_proximity_tests.csv'
-        else:
-            return 'phenotype_2_phenotype_proximity_tests.csv'
+        return 'phenotype_2_phenotype_proximity_tests.csv'
 
     @staticmethod
     def get_cell_pair_counts_table_name():

@@ -226,21 +226,25 @@ singularity exec \
     def generate_scheduler_scripts(self):
         for rc in self.get_regional_compartments():
             if rc == 'nontumor':
-                script_name = 'schedule_lsf_' + rc + '.sh'
-                with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-                    num_rows = 0
-                    for row in self.submit_calls[rc]:
-                        schedule_script.write(row + '\n')
-                        num_rows+=1
-                logger.info('Wrote %s, which schedules %s jobs.', script_name, str(num_rows))
+                deployment_platform = self.runtime_settings.runtime_platform
 
-                script_name = 'schedule_local_' + rc + '.sh'
-                with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-                    num_rows = 0
-                    for row in self.local_run_calls[rc]:
-                        schedule_script.write(row + '\n')
-                        num_rows+=1
-                logger.info('Wrote %s, which schedules %s jobs locally.', script_name, str(num_rows))
+                if deployment_platform == 'lsf':
+                    script_name = 'schedule_lsf_' + rc + '.sh'
+                    with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                        num_rows = 0
+                        for row in self.submit_calls[rc]:
+                            schedule_script.write(row + '\n')
+                            num_rows+=1
+                    logger.info('Wrote %s, which schedules %s jobs.', script_name, str(num_rows))
+
+                if deployment_platform == 'local':
+                    script_name = 'schedule_local_' + rc + '.sh'
+                    with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                        num_rows = 0
+                        for row in self.local_run_calls[rc]:
+                            schedule_script.write(row + '\n')
+                            num_rows+=1
+                    logger.info('Wrote %s, which schedules %s jobs locally.', script_name, str(num_rows))
 
 
 def cut_by_header(input_filename, delimiter=',', column: str=None):

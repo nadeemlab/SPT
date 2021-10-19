@@ -157,12 +157,16 @@ singularity exec \
         connection.close()
 
     def generate_scheduler_scripts(self):
-        script_name = 'schedule_lsf_cell_proximity.sh'
-        with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-            for lsf_job_filename in self.lsf_job_filenames:
-                schedule_script.write('bsub < ' + lsf_job_filename + '\n')
+        deployment_platform = self.runtime_settings.runtime_platform
 
-        script_name = 'schedule_local_cell_proximity.sh'
-        with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-            for sh_job_filename in self.sh_job_filenames:
-                schedule_script.write(sh_job_filename + '\n')
+        if deployment_platform == 'lsf':
+            script_name = 'schedule_lsf_cell_proximity.sh'
+            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                for lsf_job_filename in self.lsf_job_filenames:
+                    schedule_script.write('bsub < ' + lsf_job_filename + '\n')
+
+        if deployment_platform == 'local':
+            script_name = 'schedule_local_cell_proximity.sh'
+            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                for sh_job_filename in self.sh_job_filenames:
+                    schedule_script.write(sh_job_filename + '\n')

@@ -1,12 +1,7 @@
 #!/bin/bash
 
 export DEBUG=1
-rm -rf output/
 cp integration_tests/example_config_files/density_with_intensities.json .spt_pipeline.json
-spt-pipeline
-spt-analyze-results &> logs/integration.txt
-rm .spt_pipeline.json
-for script in schedule_*.sh;
-do
-    rm $script
-done
+source test_run_pipeline.sh
+
+check_output_file_sum dbf42ceb177c23de7f56ff876320a0bad8bf2ba6bfe08a56c25ba3d02085b848 output/density_tests.csv

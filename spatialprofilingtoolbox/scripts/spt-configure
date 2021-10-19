@@ -82,7 +82,7 @@ if __name__ == '__main__':
     )
 
     parameters['sif_path'] = pp.prompt(
-        'Enter the Singularity continer file (.sif) containing the toolbox:',
+        'Enter the Singularity container file (.sif) containing the toolbox:',
     )
 
     yes_pattern = '([yY]|[yY]es)'
@@ -192,20 +192,8 @@ if __name__ == '__main__':
         skip_integrity_check = False
     parameters['skip_integrity_check'] = skip_integrity_check
 
-    output_path='output/'
-    if not exists(output_path):
-        os.mkdir(output_path)
-    parameters['output_path'] = abspath(output_path)
-
-    jobs_path='jobs/'
-    if not exists(jobs_path):
-        os.mkdir(jobs_path)
-    parameters['jobs_path'] = abspath(jobs_path)
-
-    logs_path='logs/'
-    if not exists(logs_path):
-        os.mkdir(logs_path)
-    parameters['logs_path'] = abspath(logs_path)
+    dirs = spt.create_output_directories()
+    parameters = {**parameters, **dirs}
 
     parameters['spt_version'] = spt.get_version()
 

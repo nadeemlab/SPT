@@ -8,7 +8,7 @@ import argparse
 import configparser
 import os
 from os import getcwd
-from os.path import exists
+from os.path import exists, abspath
 import re
 import json
 
@@ -60,13 +60,35 @@ def get_config_parameters(json_string=None):
     if has_config_file:
         json_string = open(config_filename, 'rt').read()
 
+    parameters = json.loads(json_string)
+
     version_specifier = 'spt_version'
-    if version_specifier in json_string:
-        if json_string[version_specifier] != get_version():
+    if version_specifier in parameters:
+        if parameters[version_specifier] != get_version():
             logger.warning(
                 'Version mentioned in configuration file is %s, but running version of SPT is %s.',
-                json_string[version_specifier],
+                parameters[version_specifier],
                 get_version(),
             )
 
-    return json.loads(json_string)
+    return parameters
+
+def create_output_directories():
+    dirs = {}
+
+    output_path='output/'
+    if not exists(output_path):
+        os.mkdir(output_path)
+    dirs['output_path'] = abspath(output_path)
+
+    jobs_path='jobs/'
+    if not exists(jobs_path):
+        os.mkdir(jobs_path)
+    dirs['jobs_path'] = abspath(jobs_path)
+
+    logs_path='logs/'
+    if not exists(logs_path):
+        os.mkdir(logs_path)
+    dirs['logs_path'] = abspath(logs_path)
+
+    return dirs

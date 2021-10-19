@@ -1,5 +1,5 @@
 import os
-from os.path import join, exists, abspath
+from os.path import join, exists, abspath, isfile
 import re
 import hashlib
 from enum import Enum, auto
@@ -210,19 +210,19 @@ class JobGenerator:
 
     def make_fresh_directory(self, path):
         """
-        A utility function to make an empty directory at a given location (deleting all
-        of its contents if it already exists).
+        A utility function to clear/delete all *files* in a given directory.
 
-        Args:
-            path (str):
-                A directory path.
+        :param path: A directory path.
+        :type path: str
         """
         if not exists(path):
             os.mkdir(path)
         else:
             files = os.listdir(path)
             for file in files:
-                os.remove(join(path, file))
+                full_path = join(path, file)
+                if isfile(full_path):
+                    os.remove(full_path)
 
     def register_job_existence(self):
         """

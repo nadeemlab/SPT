@@ -121,14 +121,20 @@ class DiffusionCalculator(Calculator):
         values = values[values != 0]
         M = DiffusionCalculator.distribution_sample_size_max
         if len(values) > M:
-            values = np.random.choice(values, M, replace=False)
+            rng = np.random.default_rng(52)
+            indices = rng.integers(low=0, high=len(values)-1, size=M)
+            new_values = [values[i] for i in indices]
+            values = new_values
         self.values['diffusion kernel'] = values
 
         if diffusion_probability_matrices is not None:
             for t, Dt in diffusion_probability_matrices.items():
                 values = np.ravel(Dt)
                 if len(values) > M:
-                    values = np.random.choice(values, M, replace=False)
+                    rng = np.random.default_rng(52)
+                    indices = rng.integers(low=0, high=len(values)-1, size=M)
+                    new_values = [values[i] for i in indices]
+                    values = new_values
                 self.values[t] = values
 
         if self.computational_design.should_save_graphml():

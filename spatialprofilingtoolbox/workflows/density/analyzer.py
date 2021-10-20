@@ -58,12 +58,14 @@ class DensityAnalyzer(SingleJobAnalyzer):
         file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
 
         sample_identifiers_by_file = {}
+        logger.debug(file_metadata)
         for i, row in file_metadata.iterrows():
-            if not self.dataset_design.validate_cell_manifest_descriptor(row[3]):
+            logger.debug(row['Data type'])
+            if not self.dataset_design.validate_cell_manifest_descriptor(row['Data type']):
                 continue
-            input_file = row[0]
-            sample_identifier = row[1]
-            expected_sha256 = row[2]
+            input_file = row['File name']
+            sample_identifier = row['Sample ID']
+            expected_sha256 = row['Checksum']
             input_file = abspath(join(self.dataset_settings.input_path, input_file))
 
             if not skip_integrity_check:
@@ -79,7 +81,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
                 if sha256 != expected_sha256:
                     logger.error(
                         'File "%s" has wrong SHA256 hash (%s ; expected %s).',
-                        row[0],
+                        row['File name'],
                         sha256,
                         expected_sha256,
                     )

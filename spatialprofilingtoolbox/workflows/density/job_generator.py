@@ -71,8 +71,7 @@ singularity exec \
             if HALOCellMetadataDesign.validate_cell_manifest_descriptor(row['Data type']):
                 all_memory_requirements.append(self.get_memory_requirements(row))
 
-        job_index = self.register_job_existence()
-        job_name = 'density_' + str(job_index)
+        job_name = 'density'
         log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
 
         contents = DensityJobGenerator.lsf_template

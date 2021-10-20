@@ -39,7 +39,6 @@ singularity exec \
 '''
     cli_call_template = '''spt-cell-phenotype-proximity-analysis \
  --input-file-identifier "{{input_file_identifier}}" \
- --job-index {{job_index}} \
 '''
 
     def __init__(self,
@@ -68,10 +67,11 @@ singularity exec \
 
     def generate_all_jobs(self):
         self.initialize_intermediate_database()
+        job_count = 0
         for _, row in self.file_metadata.iterrows():
             if HALOCellMetadataDesign.validate_cell_manifest_descriptor(row['Data type']):
-                job_index = self.register_job_existence()
-                job_name = 'cell_proximity_' + str(job_index)
+                job_name = 'cell_proximity_' + str(job_count)
+                job_count += 1
                 log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
                 memory = PhenotypeProximityJobGenerator.get_memory_requirements(row)
 
@@ -92,7 +92,6 @@ singularity exec \
                     PhenotypeProximityJobGenerator.cli_call_template,
                     {
                         '{{input_file_identifier}}' : row['File ID'],
-                        '{{job_index}}' : str(job_index),
                     }
                 )
 

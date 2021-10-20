@@ -3,3 +3,7 @@
 export DEBUG=1
 cp integration_tests/example_config_files/proximity_with_thresholding.json .spt_pipeline.json
 source test_run_pipeline.sh
+
+cat phenotype_2_phenotype_proximity_tests.csv | sort > phenotype_2_phenotype_proximity_tests.csv.normalized
+check_output_file_sum e1cc2488dae516452f378ea14393040bc251166142f54c0516cbc14c6d850a8b phenotype_2_phenotype_proximity_tests.csv.normalized
+rm phenotype_2_phenotype_proximity_tests.csv.normalized

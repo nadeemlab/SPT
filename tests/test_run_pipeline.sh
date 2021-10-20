@@ -13,13 +13,13 @@ check_output_file_sum() {
     fi
 }
 
-spt-generate-jobs
+spt-pipeline generate-jobs
 for script in schedule_*.sh;
 do
     chmod +x $script
     ./$script
 done
-spt-analyze-results &> logs/integration.txt
+spt-pipeline aggregate-results &> logs/integration.txt
 rm .spt_pipeline.json
 for script in schedule_*.sh;
 do

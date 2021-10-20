@@ -3,14 +3,19 @@ import argparse
 
 import spatialprofilingtoolbox as spt
 
+
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         description = 'The entry point into SPT (Spatial Profiling Toolbox) commands.'
     )
+    generate_jobs = 'generate-jobs'
+    configure = 'configure'
+    single_job = 'single-job'
+    aggregate_results = 'aggregate-results'
     parser.add_argument(
         'command_token',
         nargs='?',
-        choices = ['configure', 'single-job', 'aggregate-results'],
+        choices = [configure, single_job, aggregate_results],
     )
     parser.add_argument('--input-file-identifier',
         dest='input_file_identifier',
@@ -30,16 +35,20 @@ if __name__=='__main__':
     parameters['fov_index'] = args.fov_index
 
     command = args.command_token
-    if command == 'configure':
+    if command == configure:
         spt.configuration_dialog()
         exit()
 
     parameters = {**parameters, **spt.get_config_parameters()}
 
-    if command == 'single-job':
+    if command == generate_jobs:
+        job_generator = spt.get_job_generator(**parameters)
+        job_generator.generate()
+
+    if command == single_job:
         analyzer = spt.get_analyzer(**parameters)
         analyzer.calculate()
 
-    if command == 'aggregate-results':
+    if command == aggregate_results:
         integrator = spt.get_integrator(**parameters)
         integrator.calculate()

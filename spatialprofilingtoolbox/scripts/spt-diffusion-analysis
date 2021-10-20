@@ -19,17 +19,10 @@ if __name__=='__main__':
         required=True,
         help='Ordinality of field of view to consider (i.e. one-based integer index).',
     )
-    parser.add_argument('--regional-compartment',
-        dest='regional_compartment',
-        type=str,
-        required=True,
-        help='Compartment.',
-    )
     args = parser.parse_args()
     parameters = {}
     parameters['input_file_identifier'] = args.input_file_identifier
     parameters['fov_index'] = args.input_fov
-    parameters['regional_compartment'] = args.regional_compartment
     parameters = {**parameters, **spt.get_config_parameters()}
     a = spt.get_analyzer(**parameters)
     a.calculate()

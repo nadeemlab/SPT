@@ -10,7 +10,7 @@ if {$force_conservative} {
 }
 
 set timeout -1
-spawn spt-configure
+spawn spt-pipeline configure
 match_max 100000
 expect "\[33m\[0m\r
 \[33m spt_version \[0m\[1;36m*\[0m\[33m\[0m\r

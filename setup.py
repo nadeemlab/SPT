@@ -48,6 +48,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.workflows.density',
         'spatialprofilingtoolbox.environment',
         'spatialprofilingtoolbox.applications',
+        'spatialprofilingtoolbox.applications.configuration_ui',
         'spatialprofilingtoolbox.applications.cell_cartoons',
         'spatialprofilingtoolbox.applications.diffusion_tests_viz',
         'spatialprofilingtoolbox.applications.diffusion_graphs_viz',
@@ -62,7 +63,7 @@ setuptools.setup(
     package_data={'spatialprofilingtoolbox': ['version.txt']},
     python_requires='>=3.7',
     scripts=[
-        'spatialprofilingtoolbox/scripts/spt-configure',
+        'spatialprofilingtoolbox/scripts/spt-pipeline',
         'spatialprofilingtoolbox/scripts/spt-analyze-results',
         'spatialprofilingtoolbox/scripts/spt-diffusion-viz',
         'spatialprofilingtoolbox/scripts/spt-diffusion-graphs-viz',

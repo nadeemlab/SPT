@@ -156,48 +156,47 @@ singularity exec \
         number_fovs = self.number_fovs[input_file_identifier]
         logger.debug('Number of FOVs for %s: %s', input_file_identifier, str(number_fovs))
 
-        for rc in self.get_regional_compartments():
-            if rc == 'nontumor':
-                for i in range(number_fovs):
-                    fov_index = i + 1
-                    job_name = 'diffusion_' + str(self.job_count)
-                    self.job_count += 1
-                    log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
-                    memory_in_gb = self.get_memory_requirements(file_record)
+        rc = 'nontumor'
+        for i in range(number_fovs):
+            fov_index = i + 1
+            job_name = 'diffusion_' + str(self.job_count)
+            self.job_count += 1
+            log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
+            memory_in_gb = self.get_memory_requirements(file_record)
 
-                    contents = DiffusionJobGenerator.lsf_template
-                    contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
-                    contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
-                    contents = re.sub('{{job_name}}', job_name, contents)
-                    contents = re.sub('{{log_filename}}', log_filename, contents)
-                    contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
-                    contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
-                    contents = re.sub('{{excluded_hostname}}', self.excluded_hostname, contents)
-                    bsub_job = contents
+            contents = DiffusionJobGenerator.lsf_template
+            contents = re.sub('{{input_files_path}}', self.dataset_settings.input_path, contents)
+            contents = re.sub('{{job_working_directory}}', job_working_directory, contents)
+            contents = re.sub('{{job_name}}', job_name, contents)
+            contents = re.sub('{{log_filename}}', log_filename, contents)
+            contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
+            contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
+            contents = re.sub('{{excluded_hostname}}', self.excluded_hostname, contents)
+            bsub_job = contents
 
-                    contents = DiffusionJobGenerator.cli_call_template
-                    contents = re.sub('{{input_file_identifier}}', '"' + input_file_identifier + '"', contents)
-                    contents = re.sub('{{fov_index}}', str(fov_index), contents)
-                    contents = re.sub('{{regional_compartment}}', rc, contents)
-                    cli_call = contents
+            contents = DiffusionJobGenerator.cli_call_template
+            contents = re.sub('{{input_file_identifier}}', '"' + input_file_identifier + '"', contents)
+            contents = re.sub('{{fov_index}}', str(fov_index), contents)
+            contents = re.sub('{{regional_compartment}}', rc, contents)
+            cli_call = contents
 
-                    bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
+            bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
 
-                    lsf_job_filename = join(self.jobs_paths.jobs_path, job_name + '.lsf')
-                    with open(lsf_job_filename, 'w') as file:
-                        file.write(bsub_job)
+            lsf_job_filename = join(self.jobs_paths.jobs_path, job_name + '.lsf')
+            with open(lsf_job_filename, 'w') as file:
+                file.write(bsub_job)
 
-                    sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
-                    with open(sh_job_filename, 'w') as file:
-                        file.write(cli_call)
+            sh_job_filename = join(self.jobs_paths.jobs_path, job_name + '.sh')
+            with open(sh_job_filename, 'w') as file:
+                file.write(cli_call)
 
-                    st = os.stat(sh_job_filename)
-                    os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
+            st = os.stat(sh_job_filename)
+            os.chmod(sh_job_filename, st.st_mode | stat.S_IEXEC)
 
-                    self.submit_calls[rc].append('bsub < ' + lsf_job_filename)
-                    self.local_run_calls[rc].append(sh_job_filename)
+            self.submit_calls[rc].append('bsub < ' + lsf_job_filename)
+            self.local_run_calls[rc].append(sh_job_filename)
 
-                self.number_arrays_of_jobs += 1
+        self.number_arrays_of_jobs += 1
 
     def get_memory_requirements(self, file_record):
         """

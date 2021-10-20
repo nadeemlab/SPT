@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+import argparse
+
+import spatialprofilingtoolbox as spt
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'The entry point into SPT (Spatial Profiling Toolbox) commands.'
+    )
+    parser.add_argument(
+        'command_token',
+        nargs='?',
+        choices = ['configure', 'single-job', 'aggregate-results'],
+    )
+    parser.add_argument('--input-file-identifier',
+        dest='input_file_identifier',
+        type=str,
+        required=False,
+        help='An input file identifier, as it appears in the file manifest.',
+    )
+    parser.add_argument('--fov',
+        dest='fov_index',
+        type=int,
+        required=False,
+        help='Indication of field of view to consider (one-based integer index). Only pertains to some workflows.',
+    )
+    args = parser.parse_args()
+    parameters = {}
+    parameters['input_file_identifier'] = args.input_file_identifier
+    parameters['fov_index'] = args.fov_index
+
+    command = args.command_token
+    if command == 'configure':
+        spt.configuration_dialog()
+        exit()
+
+    parameters = {**parameters, **spt.get_config_parameters()}
+
+    if command == 'single-job':
+        analyzer = spt.get_analyzer(**parameters)
+        analyzer.calculate()
+
+    if command == 'aggregate-results':
+        integrator = spt.get_integrator(**parameters)
+        integrator.calculate()

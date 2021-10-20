@@ -4,6 +4,6 @@ export DEBUG=1
 cp integration_tests/example_config_files/proximity_balanced.json .spt_pipeline.json
 source test_run_pipeline.sh
 
-cat phenotype_2_phenotype_proximity_tests.csv | sort > phenotype_2_phenotype_proximity_tests.csv.normalized
-check_output_file_sum 7275d91114cb0ea285c81f09590a52d08f6b2693685f84763884bf5f6272ddc2 phenotype_2_phenotype_proximity_tests.csv.normalized
-rm phenotype_2_phenotype_proximity_tests.csv.normalized
+cat output/phenotype_2_phenotype_proximity_tests.csv | sort > output/phenotype_2_phenotype_proximity_tests.csv.normalized
+check_output_file_sum 7275d91114cb0ea285c81f09590a52d08f6b2693685f84763884bf5f6272ddc2 output/phenotype_2_phenotype_proximity_tests.csv.normalized
+rm output/phenotype_2_phenotype_proximity_tests.csv.normalized

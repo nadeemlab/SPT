@@ -37,7 +37,7 @@ singularity exec \
  {{cli_call}} \
  &> {{log_filename}} 
 '''
-    cli_call_template = '''spt-density-analysis \
+    cli_call_template = '''spt-pipeline single-job \
 '''
 
     def __init__(self,

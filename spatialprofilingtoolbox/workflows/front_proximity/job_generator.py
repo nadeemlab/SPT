@@ -29,7 +29,7 @@ singularity exec \
  {{cli_call}} \
  > {{log_filename}} 2>&1
 '''
-    cli_call_template = '''spt-front-proximity-analysis \
+    cli_call_template = '''spt-pipeline single-job \
  --input-file-identifier "{{input_file_identifier}}" \
 '''
 

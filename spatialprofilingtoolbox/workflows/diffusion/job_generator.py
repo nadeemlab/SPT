@@ -33,10 +33,9 @@ singularity exec \
  {{cli_call}} \
  > {{log_filename}} 2>&1
 '''
-    cli_call_template = '''spt-diffusion-analysis \
+    cli_call_template = '''spt-pipeline single-job \
  --input-file-identifier {{input_file_identifier}} \
  --fov {{fov_index}} \
- --regional-compartment {{regional_compartment}} \
 '''
     file_metadata_header = '''file id\tnumber of FOVs\n
 '''
@@ -177,7 +176,6 @@ singularity exec \
             contents = DiffusionJobGenerator.cli_call_template
             contents = re.sub('{{input_file_identifier}}', '"' + input_file_identifier + '"', contents)
             contents = re.sub('{{fov_index}}', str(fov_index), contents)
-            contents = re.sub('{{regional_compartment}}', rc, contents)
             cli_call = contents
 
             bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)

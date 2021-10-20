@@ -14,9 +14,8 @@ from ...environment.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class FrontProximityCalculator:
-    def __init__(
-        self,
+class FrontProximityCalculator(Calculator):
+    def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
         jobs_paths: JobsPaths=None,

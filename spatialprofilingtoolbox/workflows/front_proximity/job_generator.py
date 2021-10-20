@@ -31,7 +31,6 @@ singularity exec \
 '''
     cli_call_template = '''spt-front-proximity-analysis \
  --input-file-identifier "{{input_file_identifier}}" \
- --job-index {{job_index}} \
 '''
 
     def __init__(self,
@@ -58,12 +57,13 @@ singularity exec \
         self.initialize_intermediate_database()
         job_working_directory = self.jobs_paths.job_working_directory
 
+        job_count = 0
         for i, row in self.file_metadata.iterrows():
             if HALOCellMetadataDesign.validate_cell_manifest_descriptor(row['Data type']):
                 file_id = row['File ID']
 
-                job_index = self.register_job_existence()
-                job_name = 'cell_proximity_' + str(job_index)
+                job_name = 'cell_proximity_' + str(job_count)
+                job_count += 1
                 log_filename = join(self.jobs_paths.logs_path, job_name + '.out')
                 memory_in_gb = self.get_memory_requirements(row)
 
@@ -79,7 +79,6 @@ singularity exec \
 
                 contents = FrontProximityJobGenerator.cli_call_template
                 contents = re.sub('{{input_file_identifier}}', file_id, contents)
-                contents = re.sub('{{job_index}}', str(job_index), contents)
                 cli_call = contents
 
                 bsub_job = re.sub('{{cli_call}}', cli_call, bsub_job)
@@ -137,12 +136,15 @@ singularity exec \
         connection.close()
 
     def generate_scheduler_scripts(self):
-        script_name = 'schedule_lsf_front_proximity.sh'
-        with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-            for lsf_job_filename in self.lsf_job_filenames:
-                schedule_script.write('bsub < ' + lsf_job_filename + '\n')
+        deployment_platform = self.runtime_settings.runtime_platform
+        if deployment_platform == 'lsf':
+            script_name = 'schedule_lsf_front_proximity.sh'
+            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                for lsf_job_filename in self.lsf_job_filenames:
+                    schedule_script.write('bsub < ' + lsf_job_filename + '\n')
 
-        script_name = 'schedule_local_front_proximity.sh'
-        with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
-            for sh_job_filename in self.sh_job_filenames:
-                schedule_script.write(sh_job_filename + '\n')
+        if deployment_platform == 'local':
+            script_name = 'schedule_local_front_proximity.sh'
+            with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
+                for sh_job_filename in self.sh_job_filenames:
+                    schedule_script.write(sh_job_filename + '\n')

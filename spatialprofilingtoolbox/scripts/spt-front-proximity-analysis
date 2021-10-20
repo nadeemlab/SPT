@@ -22,16 +22,9 @@ if __name__=='__main__':
         required=True,
         help='The input file to process.',
     )
-    parser.add_argument('--job-index',
-        dest='job_index',
-        type=str,
-        required=True,
-        help='Integer index into job activity table.',
-    )
     args = parser.parse_args()
     kwargs = {}
     kwargs['input_file_identifier'] = args.input_file_identifier
-    kwargs['job_index'] = args.job_index
     parameters = spt.get_config_parameters()
     parameters = {**kwargs, **parameters}
     a = spt.get_analyzer(**parameters)

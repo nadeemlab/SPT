@@ -11,7 +11,6 @@
     "schedulers_path" : "./",
     "sif_file" : "../../building/sat.sif",
     "runtime_platform" : "local",
-    "excluded_hostname" : "NO_EXCLUDED_HOSTNAME",
     "dichotomize" : true,
     "spt_version" : "0.7.21"
 }

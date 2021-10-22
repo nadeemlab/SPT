@@ -22,4 +22,7 @@ function _cleanup() {
             rm $tsv_file
         fi
     done
+
+    rm normalized1
+    rm normalized2
 }

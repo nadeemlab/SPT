@@ -4,4 +4,13 @@ export DEBUG=1
 cp integration_tests/example_config_files/density_with_thresholding.json .spt_pipeline.json
 source test_run_pipeline.sh
 
-check_output_file_sum 1ee5b418d3c2348fc84713c2282326e6d8046d9f97f7c55c2f648605fe51f909 output/density_tests.csv
+odir=reference_outputs/density_with_thresholding
+filename=density_tests.csv
+cat output/$filename | sort > normalized1
+cat $odir/$filename | sort > normalized2
+if cmp -s normalized1 normalized2;
+then
+    exit 0
+else
+    exit 1
+fi

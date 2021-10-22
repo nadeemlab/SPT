@@ -6,7 +6,10 @@ import spatialprofilingtoolbox as spt
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
-        description = 'The entry point into SPT (Spatial Profiling Toolbox) commands.'
+        description = ''.join([
+            'The entry point into SPT (Spatial Profiling Toolbox) ',
+            'commands.',
+        ])
     )
     generate_jobs = 'generate-jobs'
     configure = 'configure'
@@ -27,7 +30,10 @@ if __name__=='__main__':
         dest='fov_index',
         type=int,
         required=False,
-        help='Indication of field of view to consider (one-based integer index). Only pertains to some workflows.',
+        help=''.join([
+            'Indication of field of view to consider (one-based integer ',
+            'index).Only pertains to some workflows.',
+        ])
     )
     args = parser.parse_args()
     parameters = {}

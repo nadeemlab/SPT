@@ -111,7 +111,6 @@ class DiffusionCalculator(Calculator):
             return
         logger.debug('Calculating diffusion kernel, point cloud of size %s (%s case)', pc.shape[0], distance_type.name)
         diffusion_kernel = self.calculate_diffusion_kernel(pc, distance_type)
-
         spectrum, diffusion_probability_matrices = self.calculate_transition_matrix_evolution(
             pc,
             diffusion_kernel,
@@ -171,6 +170,7 @@ class DiffusionCalculator(Calculator):
                 return box_centers_marked_nt
             return np.concatenate([box_centers_marked_nt, box_centers_marked_t])
 
+        logger.debug('regional_compartment: %s', self.regional_compartment)
         if self.regional_compartment in ['edge', 'nontumor']:
             return box_centers_marked_nt
 

@@ -4,6 +4,13 @@ export DEBUG=1
 cp integration_tests/example_config_files/proximity_balanced.json .spt_pipeline.json
 source test_run_pipeline.sh
 
-cat output/phenotype_2_phenotype_proximity_tests.csv | sort > output/phenotype_2_phenotype_proximity_tests.csv.normalized
-check_output_file_sum 7275d91114cb0ea285c81f09590a52d08f6b2693685f84763884bf5f6272ddc2 output/phenotype_2_phenotype_proximity_tests.csv.normalized
-rm output/phenotype_2_phenotype_proximity_tests.csv.normalized
+odir=reference_outputs/proximity_balanced
+filename=phenotype_2_phenotype_proximity_tests.csv
+cat output/$filename | sort > normalized1
+cat $odir/$filename | sort > normalized2
+if cmp -s normalized1 normalized2;
+then
+    exit 0
+else
+    exit 1
+fi

@@ -15,7 +15,7 @@ logger = colorized_logger(__name__)
 class DiffusionAnalyzer(SingleJobAnalyzer):
     def __init__(self,
         fov_index: int=None,
-        regional_compartment: str=None,
+        regional_compartment: str='nontumor',
         **kwargs,
     ):
         """
@@ -73,7 +73,6 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         self.calculator.calculate_diffusion(distance_type, marker)
 
         values = self.calculator.get_values('diffusion kernel')
-        logger.debug('values: %s', values)
         if values is not None:
             self.save_diffusion_distance_values(
                 values=values,

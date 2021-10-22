@@ -8,7 +8,7 @@ odir=reference_outputs/diffusion
 filename=diffusion_distance_tests.csv
 cat output/$filename | sort > normalized1
 cat $odir/$filename | sort > normalized2
-if cmp -s normalized1 normalized2;
+if numpy-cmp normalized1 normalized2;
 then
     exit 0
 else

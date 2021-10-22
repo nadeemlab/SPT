@@ -8,7 +8,7 @@ odir=reference_outputs/density_with_thresholding
 filename=density_tests.csv
 cat output/$filename | sort > normalized1
 cat $odir/$filename | sort > normalized2
-if cmp -s normalized1 normalized2;
+if numpy-cmp normalized1 normalized2;
 then
     exit 0
 else

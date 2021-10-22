@@ -23,6 +23,12 @@ function _cleanup() {
         fi
     done
 
-    rm normalized1
-    rm normalized2
+    if [[ -f normalized1 ]];
+    then
+        rm normalized1
+    fi
+    if [[ -f normalized2 ]];
+    then
+        rm normalized2
+    fi
 }

@@ -64,6 +64,7 @@ setuptools.setup(
     python_requires='>=3.7',
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-pipeline',
+        'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',
         'spatialprofilingtoolbox/scripts/spt-diffusion-viz',
         'spatialprofilingtoolbox/scripts/spt-diffusion-graphs-viz',
         'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',

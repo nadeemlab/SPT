@@ -31,4 +31,9 @@ function _cleanup() {
     then
         rm normalized2
     fi
+
+    if [[ -f 'example_merged.db' ]];
+    then
+        rm 'example_merged.db'
+    fi
 }

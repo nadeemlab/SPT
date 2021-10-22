@@ -3,7 +3,7 @@
 source cleaning.sh
 
 set -e
-source integration_tests/com.lehmannro.assert.sh/assert.sh
+source integration_tests/com.lehmannro.assert/assert.sh
 
 self_name=`basename "$0"`
 source_note_color="\033[36;40m"

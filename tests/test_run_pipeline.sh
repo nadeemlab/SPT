@@ -25,18 +25,3 @@ for script in schedule_*.sh;
 do
     rm $script
 done
-
-numpy-cmp() {
-    f1=$1
-    f2=$2
-    cat $f1 | sed 's/\(\.[0-9]\{7\}\)\([0-9]\+\),/\1,/g' > abbreviated1
-    cat $f2 | sed 's/\(\.[0-9]\{7\}\)\([0-9]\+\),/\1,/g' > abbreviated2
-    if cmp -s abbreviated1 abbreviated2;
-    then
-        rm abbreviated1 abbreviated2
-        return 0
-    else
-        rm abbreviated1 abbreviated2
-        return 1
-    fi
-}

@@ -37,8 +37,12 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
     parameters = {}
-    parameters['input_file_identifier'] = args.input_file_identifier
-    parameters['fov_index'] = args.fov_index
+    value = args.input_file_identifier
+    if value is not None:
+        parameters['input_file_identifier'] = value
+    value = args.fov_index
+    if value is not None:
+        parameters['fov_index'] = value
 
     command = args.command_token
     if command == configure:

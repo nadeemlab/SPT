@@ -28,7 +28,6 @@ class DensityJobGenerator(JobGenerator):
 #BSUB -W 2:00
 #BSUB -R "rusage[mem={{memory_in_gb}}]"
 #BSUB -R "span[hosts=1]"
-#BSUB -R "select[hname!={{excluded_hostname}}]"
 cd {{job_working_directory}}
 export DEBUG=1
 singularity exec \
@@ -87,7 +86,6 @@ singularity exec \
         )
         contents = re.sub('{{job_name}}', '"' + job_name + '"', contents)
         contents = re.sub('{{log_filename}}', log_filename, contents)
-        contents = re.sub('{{excluded_hostname}}', self.excluded_hostname, contents)
         contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
         contents = re.sub('{{memory_in_gb}}', str(max(all_memory_requirements)), contents)
         bsub_job = contents
@@ -140,6 +138,9 @@ singularity exec \
                 for sh_job_filename in self.sh_job_filenames:
                     schedule_script.write(sh_job_filename + '\n')
 
+        if deployment_platform == 'nextflow':
+            self.generate_nextflow_script()
+
     def initialize_intermediate_database(self):
         """
         The density workflow uses a pipeline-specific database to store its
@@ -182,3 +183,7 @@ singularity exec \
         cursor.close()
         connection.commit()
         connection.close()
+
+    @staticmethod
+    def job_specification_attributes(self):
+        return []

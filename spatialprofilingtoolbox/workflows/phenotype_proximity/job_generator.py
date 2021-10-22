@@ -28,7 +28,6 @@ class PhenotypeProximityJobGenerator(JobGenerator):
 #BSUB -W 2:00
 #BSUB -R "rusage[mem={{memory_in_gb}}]"
 #BSUB -R "span[hosts=1]"
-#BSUB -R "select[hname!={{excluded_hostname}}]"
 cd {{job_working_directory}}
 export DEBUG=1
 singularity exec \
@@ -82,7 +81,6 @@ singularity exec \
                         '{{job_working_directory}}' : self.jobs_paths.job_working_directory,
                         '{{job_name}}': '"' + job_name + '"',
                         '{{log_filename}}': log_filename,
-                        '{{excluded_hostname}}': self.excluded_hostname,
                         '{{sif_file}}' : self.runtime_settings.sif_file,
                         '{{memory_in_gb}}' : str(memory),
                     }
@@ -171,3 +169,10 @@ singularity exec \
             with open(join(self.jobs_paths.schedulers_path, script_name), 'w') as schedule_script:
                 for sh_job_filename in self.sh_job_filenames:
                     schedule_script.write(sh_job_filename + '\n')
+
+        if deployment_platform == 'nextflow':
+            self.generate_nextflow_script()
+
+    @staticmethod
+    def job_specification_attributes(self):
+        return ['input_file_identifier']

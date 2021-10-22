@@ -148,6 +148,9 @@ class JobGenerator:
         """
         pass
 
+    def generate_nextflow_script(self):
+        
+
     @staticmethod
     def apply_replacements(template, replacements):
         """

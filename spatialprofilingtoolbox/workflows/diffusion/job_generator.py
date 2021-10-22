@@ -24,7 +24,6 @@ class DiffusionJobGenerator(JobGenerator):
 #BSUB -W 4:00
 #BSUB -R "rusage[mem={{memory_in_gb}}]"
 #BSUB -R "span[hosts=1]"
-#BSUB -R "select[hname!={{excluded_hostname}}]"
 cd {{job_working_directory}}
 export DEBUG=1
 singularity exec \
@@ -170,7 +169,6 @@ singularity exec \
             contents = re.sub('{{log_filename}}', log_filename, contents)
             contents = re.sub('{{sif_file}}', self.runtime_settings.sif_file, contents)
             contents = re.sub('{{memory_in_gb}}', str(memory_in_gb), contents)
-            contents = re.sub('{{excluded_hostname}}', self.excluded_hostname, contents)
             bsub_job = contents
 
             contents = DiffusionJobGenerator.cli_call_template
@@ -232,6 +230,13 @@ singularity exec \
                             schedule_script.write(row + '\n')
                             num_rows+=1
                     logger.info('Wrote %s, which schedules %s jobs locally.', script_name, str(num_rows))
+
+                if deployment_platform == 'nextflow':
+                    self.generate_nextflow_script()
+
+    @staticmethod
+    def job_specification_attributes(self):
+        return ['input_file_identifier', 'fov']
 
 
 def cut_by_header(input_filename, delimiter=',', column: str=None):

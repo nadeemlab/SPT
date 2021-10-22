@@ -47,7 +47,7 @@ if __name__=='__main__':
     command = args.command_token
     if command == configure:
         spt.configuration_dialog()
-        exit()
+        command = generate_jobs
 
     parameters = {**parameters, **spt.get_config_parameters()}
 

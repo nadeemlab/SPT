@@ -1,0 +1,13 @@
+
+spt-pipeline single-job --input-file-identifier="fid12345"
+spt-pipeline single-job --input-file-identifier="fid123456"
+spt-pipeline single-job --input-file-identifier="fid1234567"
+spt-pipeline single-job --input-file-identifier="fid12345678"
+
+spt-merge-sqlite-dbs f1.db f2.db f3.db f4.db --output="same_name.db"
+
+spt-pipeline aggregate-results
+
+{{intermediate database filename}}
+
+{{final output files}}

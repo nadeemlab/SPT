@@ -73,6 +73,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         self.calculator.calculate_diffusion(distance_type, marker)
 
         values = self.calculator.get_values('diffusion kernel')
+        logger.debug('values: %s', values)
         if values is not None:
             self.save_diffusion_distance_values(
                 values=values,
@@ -114,7 +115,6 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         """
         if temporal_offset is None:
             temporal_offset = 'NULL'
-
         uri = join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
         with WaitingDatabaseContextManager(uri) as m:
             for value in values:

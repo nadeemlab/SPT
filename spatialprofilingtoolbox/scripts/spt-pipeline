@@ -15,7 +15,7 @@ if __name__=='__main__':
     parser.add_argument(
         'command_token',
         nargs='?',
-        choices = [configure, single_job, aggregate_results],
+        choices = [generate_jobs, configure, single_job, aggregate_results],
     )
     parser.add_argument('--input-file-identifier',
         dest='input_file_identifier',

@@ -32,7 +32,7 @@ if __name__=='__main__':
         required=False,
         help=''.join([
             'Indication of field of view to consider (one-based integer ',
-            'index).Only pertains to some workflows.',
+            'index). Only pertains to some workflows.',
         ])
     )
     args = parser.parse_args()

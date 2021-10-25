@@ -149,7 +149,11 @@ class JobGenerator:
         pass
 
     def generate_nextflow_script(self):
-        
+        """
+        Generate a Nextflow script for whole-pipeline orchestration.
+        """
+        attributes = self.job_specification_attributes()
+        logger.debug(attributes)
 
     @staticmethod
     def apply_replacements(template, replacements):
@@ -166,3 +170,6 @@ class JobGenerator:
         for key, value in replacements.items():
             template = re.sub(key, value, template)
         return template
+
+    def job_specification_attributes(self):
+        pass

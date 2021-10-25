@@ -173,6 +173,5 @@ singularity exec \
         if deployment_platform == 'nextflow':
             self.generate_nextflow_script()
 
-    @staticmethod
     def job_specification_attributes(self):
         return ['input_file_identifier']

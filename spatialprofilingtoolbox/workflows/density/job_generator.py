@@ -184,6 +184,5 @@ singularity exec \
         connection.commit()
         connection.close()
 
-    @staticmethod
     def job_specification_attributes(self):
         return []

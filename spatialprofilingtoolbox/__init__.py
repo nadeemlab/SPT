@@ -25,18 +25,19 @@ def get_job_generator(workflow=None, **kwargs):
     Exposes job generators to scripts.
     """
     if workflow in workflows:
-        dataset_design = get_dataset_design(workflow = workflow, **kwargs)
-        computational_design = get_computational_design(workflow = workflow, **kwargs)
+        dataset_design_class = get_dataset_design_class(workflow = workflow, **kwargs)
 
         Generator = workflows[workflow].generator
         return Generator(
-            dataset_design = dataset_design,
-            computational_design = computational_design,
+            dataset_design_class = dataset_design_class,
             **kwargs,
         )
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
+
+def get_dataset_design_class(workflow=None, **kwargs):
+    return workflows[workflow].dataset_design
 
 def get_dataset_design(workflow=None, **kwargs):
     """
@@ -82,9 +83,6 @@ def get_analyzer(workflow=None, **kwargs):
 def get_jobs_paths(**kwargs):
     return JobsPaths(
         kwargs['job_working_directory'],
-        kwargs['jobs_path'],
-        kwargs['logs_path'],
-        kwargs['schedulers_path'],
         kwargs['output_path'],
     )
 

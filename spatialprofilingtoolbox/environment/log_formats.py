@@ -2,7 +2,7 @@ import logging
 import re
 import os
 DEBUG = ('DEBUG' in os.environ)
-
+SUPPRESS_SPT_LOGS = ('SUPPRESS_SPT_LOGS' in os.environ)
 
 class CustomFormatter(logging.Formatter):
     grey = '\x1b[38;21m'
@@ -47,6 +47,8 @@ def colorized_logger(name):
     logger = logging.getLogger(re.sub('^spatialprofilingtoolbox\.', '', name))
     if DEBUG:
         level = logging.DEBUG
+    elif SUPPRESS_SPT_LOGS:
+        level = logging.ERROR
     else:
         level = logging.INFO
     logger.setLevel(level)

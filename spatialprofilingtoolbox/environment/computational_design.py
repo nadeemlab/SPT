@@ -14,17 +14,22 @@ class ComputationalDesign:
     """
     def __init__(self,
         dataset_design=None,
+        intermediate_database_filename: str=None,
         dichotomize: bool=False,
         **kwargs,
     ):
         """
         :param dataset_design: The design object describing the input data set.
 
+        :param intermediate_database_filename: Name for sqlite database.
+        :type intermediate_database_filename: str
+
         :param dichotomize: Default False. Whether to do auto-thresholding to
             dichotomize the continuous input variables.
         :type dichotomize: bool
         """
         self.dataset_design = dataset_design
+        self.intermediate_database_filename = intermediate_database_filename
         self.dataset_settings = self.dataset_design.dataset_settings
         complex_phenotypes_file = get_input_filename_by_identifier(
             dataset_settings = self.dataset_settings,
@@ -38,15 +43,4 @@ class ComputationalDesign:
         self.dichotomize = dichotomize
 
     def get_database_uri(self):
-        """
-        Each computational workflow may request persistent storage of intermediate data.
-        The implementation class should provide the URI of the database in which to
-        store this data.
-
-        Currently, only local sqlite databases are supported. Future version may
-        support remote SQL database connections.
-
-        :return: The Uniform Resource Identifier (URI) identifying the database.
-        :rtype: str
-        """
-        pass
+        return self.intermediate_database_filename

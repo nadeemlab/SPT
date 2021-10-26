@@ -3,6 +3,7 @@ import sys
 
 import spatialprofilingtoolbox as spt
 
+
 class ExposedInfo:
     info = {
         'config-filename' : spt.config_filename,
@@ -19,9 +20,10 @@ class ExposedInfo:
             else:
                 printable = str(item)
             print(printable)
-        else:
-            for handle in ExposedInfo.info:
-                print(handle)
+            return
+
+        for handle in list(ExposedInfo.info.keys()) + list(ExposedInfo.delayed_retrieval_info.keys()):
+            print(handle)
 
 if __name__=='__main__':
     cli_arguments = sys.argv

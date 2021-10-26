@@ -4,6 +4,7 @@ analysis workflow.
 """
 from os.path import join, abspath
 import hashlib
+import sqlite3
 
 import pandas as pd
 
@@ -21,11 +22,10 @@ class DensityAnalyzer(SingleJobAnalyzer):
     The main class of the job.
     """
     def __init__(self,
-        job_index: int=0,
         skip_integrity_check=False,
         **kwargs,
     ):
-        super(DensityAnalyzer, self).__init__(job_index=job_index, **kwargs)
+        super(DensityAnalyzer, self).__init__(**kwargs)
         sample_identifiers_by_file = self.retrieve_cell_input_file_info(skip_integrity_check)
         self.calculator = DensityCalculator(
             sample_identifiers_by_file = sample_identifiers_by_file,
@@ -87,3 +87,44 @@ class DensityAnalyzer(SingleJobAnalyzer):
                     )
             sample_identifiers_by_file[input_file] = sample_identifier
         return sample_identifiers_by_file
+
+    def initialize_intermediate_database(self):
+        """
+        The density workflow uses a pipeline-specific database to store its
+        intermediate outputs. This method initializes this database's tables.
+        """
+        cells_header = self.computational_design.get_cells_header(style='sql')
+        connection = sqlite3.connect(
+            join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
+        )
+        cursor = connection.cursor()
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            'cells',
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            ', '.join([' '.join(entry) for entry in cells_header]),
+            ');',
+        ])
+        cursor.execute(cmd)
+        cursor.close()
+        connection.commit()
+        connection.close()
+
+        fov_lookup_header = self.computational_design.get_fov_lookup_header()
+        connection = sqlite3.connect(
+            join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
+        )
+        cursor = connection.cursor()
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            'fov_lookup',
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            ', '.join([' '.join(entry) for entry in fov_lookup_header]),
+            ');',
+        ])
+        cursor.execute(cmd)
+        cursor.close()
+        connection.commit()
+        connection.close()

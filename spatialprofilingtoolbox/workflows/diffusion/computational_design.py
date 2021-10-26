@@ -20,8 +20,8 @@ class DiffusionDesign(ComputationalDesign):
         return self.save_graphml
 
     @staticmethod
-    def get_database_uri():
-        return 'diffusion.db'
+    def get_regional_compartments():
+        return ('tumor', 'edge', 'nontumor')
 
     @staticmethod
     def get_stats_tests_file():

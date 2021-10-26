@@ -25,10 +25,6 @@ class DensityDesign(ComputationalDesign):
         self.use_intensities = use_intensities
 
     @staticmethod
-    def get_database_uri():
-        return 'density.db'
-
-    @staticmethod
     def get_stats_tests_file():
         """
         :return: The filename to use when writing the statistical test results.

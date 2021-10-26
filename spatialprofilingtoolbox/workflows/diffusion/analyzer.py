@@ -1,6 +1,7 @@
 import os
 from os.path import join, dirname
 import re
+import sqlite3
 
 from ...environment.single_job_analyzer import SingleJobAnalyzer
 from ...environment.database_context_utility import WaitingDatabaseContextManager
@@ -131,3 +132,38 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             self.input_file_identifier,
             self.fov_index,
         )
+
+    def initialize_intermediate_database(self):
+        """
+        The diffusion workflow uses a pipeline-specific database to store its
+        intermediate outputs. This method initializes this database's tables.
+        """
+        probabilities_header = self.computational_design.get_probabilities_table_header()
+
+        connection = sqlite3.connect(
+            join(
+                self.jobs_paths.output_path,
+                self.computational_design.get_database_uri(),
+            ),
+        )
+        cursor = connection.cursor()
+        table_name = self.computational_design.get_diffusion_distances_table_name()
+        # Migrate below to documented schema in line with other workflows
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            table_name,
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            probabilities_header[0] + ' NUMERIC,',
+            probabilities_header[1] + ' VARCHAR(25),',
+            probabilities_header[2] + ' TEXT,',
+            probabilities_header[3] + ' TEXT,',
+            probabilities_header[4] + ' NUMERIC,',
+            probabilities_header[5] + ' TEXT',
+            ');',
+        ])
+        cursor.execute(cmd)
+
+        cursor.close()
+        connection.commit()
+        connection.close()

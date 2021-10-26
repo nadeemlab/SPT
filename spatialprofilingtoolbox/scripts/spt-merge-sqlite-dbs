@@ -2,6 +2,7 @@
 import os
 from os.path import exists
 import sqlite3
+import re
 import argparse
 
 import pandas as pd
@@ -9,7 +10,9 @@ import pandas as pd
 def get_table_names(uri):
     connection = sqlite3.connect(uri)
     result = connection.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    return sorted([name[0] for name in result.fetchall()])
+    table_names = sorted([name[0] for name in result.fetchall()])
+    table_names = [t for t in table_names if not re.search('^sqlite', t)]
+    return table_names
 
 def get_column_names(table_name, db):
     connection = sqlite3.connect(db)
@@ -64,8 +67,9 @@ if __name__=='__main__':
 
     table_names = get_table_names(input_dbs[0])
     for input_db in input_dbs:
-        if table_names != get_table_names(input_db):
-            print('Table names do not match in input databases. Aborting.')
+        these_table_names = get_table_names(input_db)
+        if table_names != these_table_names:
+            print('Table names %s and %s do not match in input databases. Aborting.' % (table_names, these_table_names))
             exit()
         for name in table_names:
             migrate_table(name, input_db, output_db)

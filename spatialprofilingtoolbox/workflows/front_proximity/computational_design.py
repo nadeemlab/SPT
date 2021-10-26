@@ -13,9 +13,6 @@ class FrontProximityDesign(ComputationalDesign):
         """
         super(FrontProximityDesign, self).__init__(**kwargs)
 
-    def get_database_uri(self):
-        return 'front_proximity.db'
-
     @staticmethod
     def get_stats_tests_file():
         """

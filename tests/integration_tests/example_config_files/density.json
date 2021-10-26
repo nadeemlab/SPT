@@ -6,10 +6,6 @@
     "skip_integrity_check" : true,
     "job_working_directory" : "./",
     "output_path" : "./output",
-    "jobs_path" : "./jobs",
-    "logs_path" : "./logs",
-    "schedulers_path" : "./",
-    "sif_file" : "../../building/sat.sif",
     "runtime_platform" : "local",
     "spt_version" : "0.7.21"
 }

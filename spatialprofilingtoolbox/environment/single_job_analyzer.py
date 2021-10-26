@@ -21,9 +21,6 @@ class SingleJobAnalyzer:
         input_path: str=None,
         file_manifest_file: str=None,
         job_working_directory: str=None,
-        jobs_path: str=None,
-        logs_path: str=None,
-        schedulers_path: str=None,
         output_path: str=None,
         input_file_identifier: str=None,
         dataset_design=None,
@@ -45,12 +42,6 @@ class SingleJobAnalyzer:
                 This is the directory in which jobs should run. That is, when the job
                 processes query for the current working directory, it should yield this
                 directory.
-            jobs_path (str):
-                The directory in which job script files will be written.
-            logs_path (str):
-                The directory in which log files will be written.
-            schedulers_path (str):
-                The directory in which the scripts which scheduler jobs will be written.
             output_path (str):
                 The directory in which result tables, images, etc. will be written.
             input_file_identifier (str):
@@ -63,9 +54,6 @@ class SingleJobAnalyzer:
         )
         self.jobs_paths = JobsPaths(
             job_working_directory,
-            jobs_path,
-            logs_path,
-            schedulers_path,
             output_path,
         )
         self.input_file_identifier = input_file_identifier
@@ -83,7 +71,8 @@ class SingleJobAnalyzer:
         """
         The main calculation of this job, to be called by pipeline orchestration.
         """
-        self._calculate() # Now consider removing this layer of indirection
+        self.initialize_intermediate_database()
+        self._calculate()
 
     def retrieve_input_filename(self):
         self.get_input_filename()
@@ -113,3 +102,6 @@ class SingleJobAnalyzer:
         for i, row in records.iterrows():
             sample_identifier = row['Sample ID']
             return sample_identifier
+
+    def initialize_intermediate_database(self):
+        pass

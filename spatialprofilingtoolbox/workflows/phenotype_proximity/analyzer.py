@@ -1,6 +1,9 @@
 """
 A single job of the proximity workflow.
 """
+import os
+from os.path import join
+import sqlite3
 
 import pandas as pd
 
@@ -41,3 +44,24 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
     def _calculate(self):
         self.calculator.calculate_proximity()
+
+    def initialize_intermediate_database(self):
+        cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
+
+        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        cursor = connection.cursor()
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            self.computational_design.get_cell_pair_counts_table_name(),
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            ' , '.join([
+                column_name + ' ' + data_type_descriptor
+                for column_name, data_type_descriptor in cell_pair_counts_header
+            ]),
+            ');',
+        ])
+        cursor.execute(cmd)
+        cursor.close()
+        connection.commit()
+        connection.close()

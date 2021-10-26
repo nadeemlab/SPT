@@ -1,9 +1,5 @@
 import os
-from os.path import join, exists, abspath, isfile
-import re
-import hashlib
-from enum import Enum, auto
-import sqlite3
+from os.path import join, exists, isfile
 
 import pandas as pd
 
@@ -22,65 +18,56 @@ class JobGenerator:
 
     The schema has 11 fields for each file and includes hashes.
     """
-    cached_file_metadata_header = [
-        ('Input_file_identifier', 'TEXT'),
-        ('Sample_ID', 'TEXT'),
-        ('SHA256', 'CHAR(64)'),
-        ('File_basename', 'TEXT'),
-        ('Data_type', 'TEXT'),
-    ]
-
     def __init__(self,
         job_working_directory: str='./',
-        jobs_path: str='./jobs',
-        logs_path: str='./logs',
-        schedulers_path: str='./',
         output_path: str='./output/',
         runtime_platform: str=None,
-        sif_file: str=None,
         input_path: str=None,
         file_manifest_file: str=None,
-        excluded_hostname: str='NO_EXCLUDED_HOSTNAME',
+        job_specification_table: str=None,
+        job_inputs: str=None,
+        dataset_design_class=None,
         **kwargs,
     ):
         """
-        Args:
-            job_working_directory (str):
-                This is the directory in which jobs should run. That is, when the job
-                processes query for the current working directory, it should yield this
-                directory.
-            jobs_path (str):
-                The directory in which job script files will be written.
-            logs_path (str):
-                The directory in which log files will be written.
-            schedulers_path (str):
-                The directory in which the scripts which scheduler jobs will be written.
-            output_path (str):
-                The directory in which result tables, images, etc. will be written.
-            runtime_platform (str):
-                Currently either 'lsf' or 'local' (i.e. an HPC deployment or a local
-                run).
-            sif_file (str):
-                The Singularity container file providing this package (if applicable).
-            input_path (str):
-                The directory in which files listed in the file manifest should be
-                located.
-            file_manifest_file (str):
-                The file manifest file, in the format of the specification distributed
-                with the source code of this package.
-            excluded_hostname (str):
-                The name of a host to avoid deploying to (e.g. a control node).
+        :param job_working_directory: This is the directory in which jobs should run.
+            That is, when the job processes query for the current working directory, it
+            should yield this directory.
+        :type job_working_directory: str
+
+        :param output_path: The directory in which result tables, images, etc. will be
+            written.
+        :type output_path: str
+
+        :param runtime_platform: Currently either 'lsf' or 'local' (i.e. an HPC
+            deployment or a local run). Will be only 'nextflow' in the future, with no
+            need for this option.
+        :type runtime_platform: str
+
+        :param input_path: The directory in which files listed in the file manifest
+            should be located.
+        :type input_path: str
+
+        :param file_manifest_file: The file manifest file, in the format of the
+            specification distributed with the source code of this package.
+        :type file_manifest_file: str
+
+        :param job_specification_table: Output file to write to.
+        :type job_specification_table: str
+
+        :param job_inputs: Output file to which to write list of additional inputs.
+        :type job_inputs: str
+
+        :param dataset_design_class: Class of design object representing input data set.
         """
+        self.job_specification_table = job_specification_table
+        self.job_inputs = job_inputs
         self.jobs_paths = JobsPaths(
             job_working_directory,
-            jobs_path,
-            logs_path,
-            schedulers_path,
             output_path,
         )
         self.runtime_settings = RuntimeEnvironmentSettings(
             runtime_platform,
-            sif_file,
         )
         self.dataset_settings = DatasetSettings(
             input_path,
@@ -88,30 +75,75 @@ class JobGenerator:
         )
 
         self.file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
-        self.excluded_hostname = excluded_hostname
+        self.dataset_design_class = dataset_design_class
 
     def generate(self):
         """
-        This is the main exposed API call.
-
-        It generates jobs involving input files and write to the jobs subdirectory. Also
-        writes scripts that schedule the jobs.
+        This is the main exposed API call. Should generate the job specification table.
         """
         self.gather_input_info()
         self.clean_directory_area()
-        self.generate_all_jobs()
-        self.generate_scheduler_scripts()
+        self.generate_job_specification_table()
+
+    def generate_job_specification_table(self):
+        """
+        Prepares the job specification table for the nextflow script.
+        """
+        attributes = sorted(self.job_specification_attributes())
+        logger.debug(attributes)
+        if self.job_specification_table is None:
+            logger.error('You must specify job_specification_table (a filename).')
+            return
+
+        filename = self.job_specification_table
+
+        if attributes == []:
+            df = pd.DataFrame([{'job_index' : 0}])
+            df.to_csv(filename, index=False)
+        
+        if attributes == ['input_file_identifier']:
+            rows = []
+            job_count = 0
+            for i, file_row in self.file_metadata.iterrows():
+                descriptor = file_row['Data type']
+                validated = self.dataset_design_class.validate_cell_manifest_descriptor(descriptor)
+                if validated:
+                    input_file_identifier = file_row['File ID']
+                    input_filename = file_row['File name']
+                    full_filename = join(self.dataset_settings.input_path, input_filename)
+                    job_index = job_count
+                    job_count += 1
+                    rows.append({
+                        'job_index' : job_index,
+                        'input_file_identifier' : input_file_identifier,
+                        'input_filename' : full_filename,
+                    })
+            df = pd.DataFrame(rows)
+            columns = df.columns
+            df = df[sorted(columns)]
+            df.to_csv(filename, index=False)
+
+        if attributes == ['fov_index', 'input_file_identifier']:
+            logger.error('2 attributes not implemented.')
+
+    def list_auxiliary_job_inputs(self):
+        """
+        Prepares the list of additional job input files. Just includes every file in
+        the file manifest which is not determined to be a cell manifest.
+        """
+        filenames = []
+        for i, file_row in self.file_metadata.iterrows():
+            descriptor = file_row['Data type']
+            validated = self.dataset_design_class.validate_cell_manifest_descriptor(descriptor)
+            if not validated:
+                input_filename = file_row['File name']
+                full_filename = join(self.dataset_settings.input_path, input_filename)
+                filenames.append(full_filename)
+        df = pd.DataFrame({'filename' : filenames})
+        df.to_csv(self.job_inputs, index=False, header=False)
 
     def clean_directory_area(self):
-        """
-        Clears the jobs path, logs path, and output path from prior runs.
-        """
-        self.make_fresh_directory(self.jobs_paths.jobs_path)
-        self.make_fresh_directory(self.jobs_paths.logs_path)
         self.make_fresh_directory(self.jobs_paths.output_path)
-        for file in os.listdir('./'):
-            if re.search('^schedule_.+sh$', file):
-                os.remove(file)
 
     def make_fresh_directory(self, path):
         """
@@ -129,47 +161,28 @@ class JobGenerator:
                 if isfile(full_path):
                     os.remove(full_path)
 
+    @staticmethod
+    def get_memory_requirements(file_record):
+        """
+        :param file_record: Record as it would appear in the file metadata table.
+        :type file_record: dict
+
+        :return: ``memory_in_gb``. The positive integer number of gigabytes to request
+            for a job involving the given input file.
+        :rtype: int
+
+        * May be deprecated in the future.
+        """
+        file_size_gb = float(file_record['Size']) / pow(10, 9)
+        return 1 + math.ceil(file_size_gb * 10)
+
     def gather_input_info(self):
         """
         Bring into object-local state all information about the input files needed to
-        specify the jobs.
+        specify (enumerate/name) the jobs.
         """
         pass
-
-    def generate_all_jobs(self):
-        """
-        Generate the job script files.
-        """
-        pass
-
-    def generate_scheduler_scripts(self):
-        """
-        Generate a shell script or scripts that schedule the jobs.
-        """
-        pass
-
-    def generate_nextflow_script(self):
-        """
-        Generate a Nextflow script for whole-pipeline orchestration.
-        """
-        attributes = self.job_specification_attributes()
-        logger.debug(attributes)
-
-    @staticmethod
-    def apply_replacements(template, replacements):
-        """
-        :param template: Input with some template values to be filled in.
-        :type template: str
-
-        :param replacements: Mapping from template indicator to replacement strings.
-        :type replacements: str
-
-        :return: replaced
-        :rtype: str
-        """
-        for key, value in replacements.items():
-            template = re.sub(key, value, template)
-        return template
 
     def job_specification_attributes(self):
         pass
+

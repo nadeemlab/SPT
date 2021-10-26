@@ -338,19 +338,14 @@ class DiffusionAnalysisIntegrator:
                                 'extreme value 2' : extreme_value2,
                             })
         if len(rows) == 0:
-            logger.info('No non-trivial tests to perform. Probably too few values.')
-            return None
+            logger.warning('No non-trivial tests to perform. Probably too few values.')
+            return
         diffusion_value_tests = pd.DataFrame(rows)
         sort_order = ['outcome 1', 'outcome 2', 'p-value < 0.01', 'p-value']
         ascending = [True, True, False, True]
         diffusion_value_tests.sort_values(by=sort_order, ascending=ascending, inplace=True)
-        diffusion_value_tests.to_csv(
-            join(
-                self.output_path,
-                self.computational_design.get_stats_tests_file(),
-            ),
-            index=False,
-        )
+        tests_str = diffusion_value_tests.to_csv(index=False)
+        print(tests_str)
 
     def generate_figures(self, marker, distance_type, outcomes_dict, t_values, grouped, ungrouped):
         """

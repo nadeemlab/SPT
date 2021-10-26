@@ -474,10 +474,8 @@ class DensityAnalysisIntegrator:
             See :py:meth:`get_test_result_row`.
         :type density_tests: pandas.DataFrame
         """
-        density_tests.to_csv(join(
-            self.output_path,
-            self.computational_design.get_stats_tests_file(),
-        ), index=False)
+        tests_str = density_tests.to_csv(index=False)
+        print(tests_str)
 
     def get_dataframe_from_db(self, table_name):
         """

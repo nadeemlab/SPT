@@ -54,12 +54,8 @@ class PhenotypeProximityAnalysisIntegrator:
         cell_proximity_tests = self.do_outcome_tests()
         if cell_proximity_tests is not None:
             self.export_results(cell_proximity_tests)
-            logger.info(
-                'Done exporting stats for phenotype proximity workflow to %s.',
-                self.computational_design.get_stats_tests_file(),
-            )
         else:
-            logger.info('No stats to export for phenotype proximity workflow.')
+            logger.warning('No stats to export for phenotype proximity workflow.')
 
     def do_outcome_tests(self):
         """
@@ -170,13 +166,8 @@ class PhenotypeProximityAnalysisIntegrator:
         :param cell_proximity_tests: Tabular form of test results.
         :type cell_proximity_tests: pandas.DataFrame
         """
-        cell_proximity_tests.to_csv(
-            join(
-                self.output_path,
-                self.computational_design.get_stats_tests_file(),
-            ),
-            index=False,
-        )
+        tests_str = cell_proximity_tests.to_csv(index=False)
+        print(tests_str)
 
     def retrieve_radius_limited_counts(self):
         """

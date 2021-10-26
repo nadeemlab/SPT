@@ -29,14 +29,6 @@ class PhenotypeProximityDesign(ComputationalDesign):
         self.use_intensities = use_intensities
 
     @staticmethod
-    def get_stats_tests_file():
-        """
-        :return: The filename to use when writing the statistical test results.
-        :rtype: str
-        """
-        return 'phenotype_2_phenotype_proximity_tests.csv'
-
-    @staticmethod
     def get_cell_pair_counts_table_name():
         return 'phenotype_proximity_metrics'
 

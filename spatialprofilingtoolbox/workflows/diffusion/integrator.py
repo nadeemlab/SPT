@@ -71,7 +71,7 @@ class DiffusionAnalysisIntegrator:
             logger.error('Table %s is not in the schema.', table_name)
             return None
 
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as m:
             rows = m.execute('SELECT * FROM ' + table_name)
 
@@ -176,7 +176,7 @@ class DiffusionAnalysisIntegrator:
     def initialize_output_tables(self):
         table_name = 'diffusion_distances_summarized'
         schema = self.computational_design.get_diffusion_distances_summarized_header()
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as m:
             m.execute_commit('DROP TABLE IF EXISTS ' + table_name + ' ;')
             cmd = ' '.join([
@@ -199,7 +199,7 @@ class DiffusionAnalysisIntegrator:
         }
         column_names = [row[0] for row in schema]
         data_types = [row[1] for row in schema]
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as m:
             for sample_id, df in grouped:
                 if sample_id in outcomes_dict:

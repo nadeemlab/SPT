@@ -24,10 +24,6 @@ class DiffusionDesign(ComputationalDesign):
         return ('tumor', 'edge', 'nontumor')
 
     @staticmethod
-    def get_stats_tests_file():
-        return 'diffusion_distance_tests.csv'
-
-    @staticmethod
     def get_diffusion_distances_table_name():
         return 'diffusion_distances'
 

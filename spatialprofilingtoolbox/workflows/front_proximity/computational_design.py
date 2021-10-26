@@ -13,15 +13,6 @@ class FrontProximityDesign(ComputationalDesign):
         """
         super(FrontProximityDesign, self).__init__(**kwargs)
 
-    @staticmethod
-    def get_stats_tests_file():
-        """
-        Returns:
-            str:
-                The filename to use when writing the statistical test results.
-        """
-        return 'front_2_phenotype_proximity_tests.csv'
-
     def get_cell_front_distances_header(self):
         """
         Returns:

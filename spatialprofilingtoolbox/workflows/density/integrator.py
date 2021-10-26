@@ -502,7 +502,7 @@ class DensityAnalysisIntegrator:
             logger.error('Table %s is not in the schema.', table_name)
             return None
 
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as manager:
             rows = manager.execute('SELECT * FROM ' + table_name)
 

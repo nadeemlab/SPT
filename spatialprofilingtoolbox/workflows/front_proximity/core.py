@@ -182,7 +182,7 @@ class FrontProximityCalculator(Calculator):
     def write_cell_front_distance_records(self, distance_records):
         keys_list = [column_name for column_name, dtype in self.computational_design.get_cell_front_distances_header()]
 
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as m:
             for row in distance_records:
                 values_list = [

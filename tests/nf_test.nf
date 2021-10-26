@@ -74,12 +74,20 @@ process merge_databases {
 
     output:
     file 'merged.db'
-    stdout emit: x
 
     script:
     """
     spt-merge-sqlite-dbs $all_database_filenames --output=merged.db
     """
+}
+
+process aggregate_results {
+    input:
+    path config_file
+    path merged_database
+
+    output:
+    
 }
 
 workflow {
@@ -89,10 +97,9 @@ workflow {
     retrieve_file_manifest_file(config_file_ch).map{ file(it) }.set{ file_manifest_ch }
 
     generate_jobs(config_file_ch, file_manifest_ch)
-        .map{ file(it) }
-        .splitCsv(header:true)
-        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index) }
-        .set { jobs_ch }
+        .splitCsv(header: true)
+        .map { row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index) }
+        .set{ jobs_ch }
 
     list_auxiliary_job_inputs(config_file_ch, file_manifest_ch)
         .map{ file(it) }
@@ -112,7 +119,9 @@ workflow {
         .set{ all_intermediate_database_filenames }
 
     merge_databases(all_intermediate_databases, all_intermediate_database_filenames)
-    merge_databases.out.x.view()
+        .set{ merged_database_ch }
+
+    aggregate_results(config_file_ch, merged_database_ch)
 }
 
 // process single_job {

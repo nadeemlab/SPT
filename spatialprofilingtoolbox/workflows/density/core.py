@@ -232,7 +232,7 @@ class DensityCalculator(Calculator):
         :param cells: Table of cell areas with sample ID, outcome, etc.
         :type cells: pandas.DataFrame
         """
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         cells.reset_index(drop=True, inplace=True)
         cells.to_sql('cells', connection, if_exists='append', index_label='id')
@@ -250,7 +250,7 @@ class DensityCalculator(Calculator):
         keys_list = [
             column_name for column_name, dtype in self.computational_design.get_fov_lookup_header()
         ]
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as manager:
             for (sample_identifier, fov_index), fov_string in fov_lookup.items():
                 values_list = [

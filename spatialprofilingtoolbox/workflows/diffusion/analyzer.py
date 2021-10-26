@@ -115,7 +115,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         """
         if temporal_offset is None:
             temporal_offset = 'NULL'
-        uri = join(self.jobs_paths.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as m:
             for value in values:
                 m.execute(' '.join([
@@ -140,12 +140,7 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         """
         probabilities_header = self.computational_design.get_probabilities_table_header()
 
-        connection = sqlite3.connect(
-            join(
-                self.jobs_paths.output_path,
-                self.computational_design.get_database_uri(),
-            ),
-        )
+        connection = sqlite3.connect(self.computational_design.get_database_uri())
         cursor = connection.cursor()
         table_name = self.computational_design.get_diffusion_distances_table_name()
         # Migrate below to documented schema in line with other workflows

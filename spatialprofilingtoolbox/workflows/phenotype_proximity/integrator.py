@@ -183,7 +183,7 @@ class PhenotypeProximityAnalysisIntegrator:
         :return table: Data frame version of all cell pair counts data.
         :type table: pandas.DataFrame
         """
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         table_unaggregated = pd.read_sql_query('SELECT * FROM %s' % self.computational_design.get_cell_pair_counts_table_name(), connection)
         connection.close()
@@ -263,7 +263,7 @@ class PhenotypeProximityAnalysisIntegrator:
         :param table: Table of cell pair counts.
         :type table: pandas.DataFrame
         """
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         table.to_sql(
             self.computational_design.get_cell_pair_counts_table_name() + '_aggregated',

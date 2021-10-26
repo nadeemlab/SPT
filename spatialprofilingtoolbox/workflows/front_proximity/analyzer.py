@@ -35,7 +35,7 @@ class FrontProximityAnalyzer(SingleJobAnalyzer):
         """
         cell_front_distances_header = self.computational_design.get_cell_front_distances_header()
 
-        connection = sqlite3.connect(join(self.jobs_paths.output_path, self.computational_design.get_database_uri()))
+        connection = sqlite3.connect(self.computational_design.get_database_uri())
         cursor = connection.cursor()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',

@@ -24,14 +24,6 @@ class DensityDesign(ComputationalDesign):
         super(DensityDesign, self).__init__(**kwargs)
         self.use_intensities = use_intensities
 
-    @staticmethod
-    def get_stats_tests_file():
-        """
-        :return: The filename to use when writing the statistical test results.
-        :rtype: str
-        """
-        return 'density_tests.csv'
-
     def get_cells_header(self, style='readable'):
         """
         :param style: Either "readable" or "sql". See

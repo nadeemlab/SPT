@@ -30,8 +30,7 @@ class PhenotypeProximityCalculator(Calculator):
     radius_pixels_upper_limit = 100
     radius_number_increments = 4
 
-    def __init__(
-        self,
+    def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
         jobs_paths: JobsPaths=None,
@@ -495,7 +494,7 @@ class PhenotypeProximityCalculator(Calculator):
         header = self.computational_design.get_cell_pair_counts_table_header()
         keys_list = [column_name for column_name, dtype in header]
 
-        uri = join(self.output_path, self.computational_design.get_database_uri())
+        uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as manager:
             for _, row in radius_limited_counts.iterrows():
                 values_list = [

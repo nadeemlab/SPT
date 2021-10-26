@@ -86,7 +86,7 @@ class JobGenerator:
 
         if attributes == []:
             df = pd.DataFrame([{'job_index' : 0}])
-            table_str = df.to_csv(index=False)
+            table_str = df.to_csv(index=False, header=True)
         
         if attributes == ['input_file_identifier']:
             rows = []
@@ -101,14 +101,14 @@ class JobGenerator:
                     job_index = job_count
                     job_count += 1
                     rows.append({
-                        'job_index' : job_index,
                         'input_file_identifier' : input_file_identifier,
                         'input_filename' : full_filename,
+                        'job_index' : job_index,
                     })
             df = pd.DataFrame(rows)
             columns = df.columns
             df = df[sorted(columns)]
-            table_str = df.to_csv(index=False)
+            table_str = df.to_csv(index=False, header=True)
 
         if attributes == ['fov_index', 'input_file_identifier']:
             logger.error('2 attributes not implemented.')

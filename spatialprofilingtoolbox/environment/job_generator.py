@@ -76,8 +76,6 @@ class JobGenerator:
         """
         This is the main exposed API call. Should generate the job specification table.
         """
-        self.gather_input_info()
-        self.clean_directory_area()
         self.generate_job_specification_table()
 
     def generate_job_specification_table(self):
@@ -134,25 +132,6 @@ class JobGenerator:
         df = pd.DataFrame({'filename' : filenames})
         df.to_csv(self.job_inputs, index=False, header=False)
 
-    def clean_directory_area(self):
-        self.make_fresh_directory(self.jobs_paths.output_path)
-
-    def make_fresh_directory(self, path):
-        """
-        A utility function to clear/delete all *files* in a given directory.
-
-        :param path: A directory path.
-        :type path: str
-        """
-        if not exists(path):
-            os.mkdir(path)
-        else:
-            files = os.listdir(path)
-            for file in files:
-                full_path = join(path, file)
-                if isfile(full_path):
-                    os.remove(full_path)
-
     @staticmethod
     def get_memory_requirements(file_record):
         """
@@ -167,13 +146,6 @@ class JobGenerator:
         """
         file_size_gb = float(file_record['Size']) / pow(10, 9)
         return 1 + math.ceil(file_size_gb * 10)
-
-    def gather_input_info(self):
-        """
-        Bring into object-local state all information about the input files needed to
-        specify (enumerate/name) the jobs.
-        """
-        pass
 
     def job_specification_attributes(self):
         pass

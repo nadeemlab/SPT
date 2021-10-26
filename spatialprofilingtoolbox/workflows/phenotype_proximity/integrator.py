@@ -189,7 +189,7 @@ class PhenotypeProximityAnalysisIntegrator:
             pair counts per unit slide area may simply be summed.
         :type table: pandas.DataFrame
         """
-        table.drop('id', 1, inplace=True)
+        # table.drop('id', 1, inplace=True)
 
         case_classifiers = [
             'sample_identifier',

@@ -24,7 +24,6 @@ class JobGenerator:
         runtime_platform: str=None,
         input_path: str=None,
         file_manifest_file: str=None,
-        job_specification_table: str=None,
         job_inputs: str=None,
         dataset_design_class=None,
         **kwargs,
@@ -52,15 +51,11 @@ class JobGenerator:
             specification distributed with the source code of this package.
         :type file_manifest_file: str
 
-        :param job_specification_table: Output file to write to.
-        :type job_specification_table: str
-
         :param job_inputs: Output file to which to write list of additional inputs.
         :type job_inputs: str
 
         :param dataset_design_class: Class of design object representing input data set.
         """
-        self.job_specification_table = job_specification_table
         self.job_inputs = job_inputs
         self.jobs_paths = JobsPaths(
             job_working_directory,
@@ -90,16 +85,10 @@ class JobGenerator:
         Prepares the job specification table for the nextflow script.
         """
         attributes = sorted(self.job_specification_attributes())
-        logger.debug(attributes)
-        if self.job_specification_table is None:
-            logger.error('You must specify job_specification_table (a filename).')
-            return
-
-        filename = self.job_specification_table
 
         if attributes == []:
             df = pd.DataFrame([{'job_index' : 0}])
-            df.to_csv(filename, index=False)
+            table_str = df.to_csv(index=False)
         
         if attributes == ['input_file_identifier']:
             rows = []
@@ -121,10 +110,13 @@ class JobGenerator:
             df = pd.DataFrame(rows)
             columns = df.columns
             df = df[sorted(columns)]
-            df.to_csv(filename, index=False)
+            table_str = df.to_csv(index=False)
 
         if attributes == ['fov_index', 'input_file_identifier']:
             logger.error('2 attributes not implemented.')
+            return
+
+        print(table_str)
 
     def list_auxiliary_job_inputs(self):
         """

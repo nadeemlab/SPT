@@ -36,14 +36,6 @@ if __name__=='__main__':
             'index). Only pertains to some workflows.',
         ])
     )
-    parser.add_argument('--job-specification-table',
-        dest='job_specification_table',
-        type=str,
-        required=False,
-        help=''.join([
-            'Filename for output table of job specification tuples.',
-        ])
-    )
     parser.add_argument('--job-inputs',
         dest='job_inputs',
         type=str,
@@ -68,9 +60,6 @@ if __name__=='__main__':
     value = args.fov_index
     if value is not None:
         parameters['fov_index'] = value
-    value = args.job_specification_table
-    if value is not None:
-        parameters['job_specification_table'] = value
     value = args.job_inputs
     if value is not None:
         parameters['job_inputs'] = value

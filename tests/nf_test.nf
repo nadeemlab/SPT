@@ -43,11 +43,11 @@ process generate_jobs {
     path file_manifest_file
 
     output:
-    path 'job_specification_table.csv'
+    stdout
 
     script:
     """
-    spt-pipeline generate-jobs --job-specification-table=job_specification_table.csv
+    spt-pipeline generate-jobs
     """
 }
 

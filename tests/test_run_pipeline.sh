@@ -1,3 +1,3 @@
 #!/bin/bash
 
-nextflow spt_pipeline.nf
+nextflow ../deployment/spt_pipeline.nf

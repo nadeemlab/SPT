@@ -14,5 +14,5 @@ class FrontProximityJobGenerator(JobGenerator):
     def gather_input_info(self):
         pass
 
-    def job_specification_attributes(self):
-        return ['input_file_identifier']
+    def job_specification_by_file(self):
+        return True

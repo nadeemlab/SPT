@@ -123,6 +123,6 @@ class JobGenerator:
         file_size_gb = float(file_record['Size']) / pow(10, 9)
         return 1 + math.ceil(file_size_gb * 10)
 
-    def job_specification_attributes(self):
+    def job_specification_by_file(self):
         pass
 

@@ -15,15 +15,10 @@ logger = colorized_logger(__name__)
 
 class DiffusionAnalyzer(SingleJobAnalyzer):
     def __init__(self,
-        fov_index: int=None,
         regional_compartment: str='nontumor',
         **kwargs,
     ):
         """
-        :param fov_index: The integer index of the field of view to be considered by
-        this job.
-        :type fov_index: int
-
         :param regional_compartment: The regional compartment (in the sense of
         ``diffusion.job_generator.get_regional_compartments()``) in which reside
         the cells to be considered by this job.
@@ -32,28 +27,34 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         super(DiffusionAnalyzer, self).__init__(**kwargs)
         self.regional_compartment = regional_compartment
         self.retrieve_input_filename()
-        self.fov_index = fov_index
-        self.calculator = DiffusionCalculator(
-            input_filename = self.get_input_filename(),
-            fov_index = fov_index,
-            regional_compartment = regional_compartment,
-            dataset_design = self.dataset_design,
-            computational_design = self.computational_design,
-        )
+        input_filename = self.get_input_filename()
 
     def _calculate(self):
         try:
-            markers = self.dataset_design.get_elementary_phenotype_names()
-            for distance_type in DistanceTypes:
-                if distance_type != DistanceTypes.EUCLIDEAN:
-                    continue
-                for marker in markers:
-                    if not marker in ['DAPI', 'CK']: # Factor this out!
-                        self.dispatch_diffusion_calculation(distance_type, marker)
-                logger.debug('Completed analysis %s (%s)',
-                    self.get_job_descriptor(),
-                    distance_type.name,
+            fovs = cut_by_header(join(self.dataset_settings.input_path, filename), column=self.dataset_design.get_FOV_column())
+            number_fovs = len(sorted(list(set(fovs))))
+            for fov_index in range(1, 1+number_fovs):
+                self.fov_index = fov_index
+                self.calculator = DiffusionCalculator(
+                    input_filename = self.input_filename,
+                    fov_index = fov_index,
+                    regional_compartment = regional_compartment,
+                    dataset_design = self.dataset_design,
+                    computational_design = self.computational_design,
                 )
+
+                markers = self.dataset_design.get_elementary_phenotype_names()
+                for distance_type in DistanceTypes:
+                    if distance_type != DistanceTypes.EUCLIDEAN:
+                        continue
+                    for marker in markers:
+                        if not marker in ['DAPI', 'CK']: # Factor this out!
+                            self.dispatch_diffusion_calculation(distance_type, marker)
+                    logger.debug('Completed analysis %s, %s, (%s)',
+                        self.get_job_descriptor(),
+                        fov_index,
+                        distance_type.name,
+                    )
         except Exception as e:
             logger.error('Job failed: %s', e)
             raise e
@@ -161,3 +162,25 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         cursor.close()
         connection.commit()
         connection.close()
+
+def cut_by_header(input_filename, delimiter=',', column: str=None):
+    """
+    This function attempts to emulate the speed and function of the UNIX-style
+    ``cut`` command for a single field. The implementation here uses Pandas to read
+    the whole table into memory; a future implementation may avert this.
+    Args:
+        input_filename (str):
+            Input CSV-style file.
+        delimiter (str):
+            Delimiter character.
+        column (str):
+            The header value for the column you want returned.
+    Returns:
+        values (list):
+            The single column of values.
+    """
+    if not column:
+        logger.error('"column" is a mandatory argument.')
+        raise ValueError
+    df = pd.read_csv(input_filename, delimiter=delimiter)
+    return list(df[column])

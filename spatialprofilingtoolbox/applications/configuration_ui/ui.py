@@ -204,17 +204,6 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
             save_graphml = False
         parameters['save_graphml'] = save_graphml
 
-    pp.print('Runtime platforms:')
-    platforms = ['lsf', 'local']
-    pp.show_list(platforms)
-    parameters['run_platform'] = pp.prompt(
-        'Select runtime platform:',
-        validator = {
-            'checker' : (lambda response: response in platforms),
-            'otherwise' : 'Select from the available runtime platforms.',
-        }
-    )
-
     skip_integrity_check = pp.prompt(
         'Skip file integrity check?',
         validator = bool_validator,

@@ -41,12 +41,6 @@ send -- "Tumor,Non-Tumor\r"
 expect -exact "Tumor,Non-Tumor\r
 \[33mBalanced/symmetric analysis with respect to phenotype pairs?\[0m "
 send -- "No\r"
-expect -exact "No\r
-\[33mRuntime platforms:\[0m\r
-\[33m \[0m\[36mlsf\[0m\[33m\[0m\r
-\[33m \[0m\[36mlocal\[0m\[33m\[0m\r
-\[33mSelect runtime platform:\[0m "
-send -- "local\r"
 expect -exact "local\r
 \[33mSkip file integrity check?\[0m "
 send -- "No\r"

@@ -1,15 +1,3 @@
-class JobsPaths:
-    """
-    A convenience bundle object to store directory paths pertinent to generic jobs.
-    """
-    def __init__(
-        self,
-        job_working_directory,
-        output_path,
-    ):
-        self.job_working_directory = job_working_directory
-        self.output_path = './' # testing
-
 
 class RuntimeEnvironmentSettings:
     """

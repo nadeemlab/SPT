@@ -23,7 +23,6 @@ class FrontProximityAnalysisIntegrator:
             computational_design:
                 Design object providing metadata specific to the front proximity pipeline.
         """
-        self.output_path = jobs_paths.output_path
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
         self.computational_design = computational_design
         self.cell_proximity_tests = None

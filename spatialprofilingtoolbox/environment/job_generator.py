@@ -20,7 +20,6 @@ class JobGenerator:
     """
     def __init__(self,
         job_working_directory: str='./',
-        output_path: str='./output/',
         runtime_platform: str=None,
         input_path: str=None,
         file_manifest_file: str=None,
@@ -33,10 +32,6 @@ class JobGenerator:
             That is, when the job processes query for the current working directory, it
             should yield this directory.
         :type job_working_directory: str
-
-        :param output_path: The directory in which result tables, images, etc. will be
-            written.
-        :type output_path: str
 
         :param runtime_platform: Currently either 'lsf' or 'local' (i.e. an HPC
             deployment or a local run). Will be only 'nextflow' in the future, with no
@@ -59,7 +54,6 @@ class JobGenerator:
         self.job_inputs = job_inputs
         self.jobs_paths = JobsPaths(
             job_working_directory,
-            output_path,
         )
         self.runtime_settings = RuntimeEnvironmentSettings(
             runtime_platform,

@@ -9,26 +9,6 @@ from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-def create_output_directories():
-    dirs = {}
-
-    output_path='output/'
-    if not exists(output_path):
-        mkdir(output_path)
-    dirs['output_path'] = abspath(output_path)
-
-    jobs_path='jobs/'
-    if not exists(jobs_path):
-        mkdir(jobs_path)
-    dirs['jobs_path'] = abspath(jobs_path)
-
-    logs_path='logs/'
-    if not exists(logs_path):
-        mkdir(logs_path)
-    dirs['logs_path'] = abspath(logs_path)
-
-    return dirs
-
 def get_input_filenames_by_data_type(
     dataset_settings=None,
     file_metadata=None,

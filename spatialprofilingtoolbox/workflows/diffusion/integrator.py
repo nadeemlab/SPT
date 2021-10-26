@@ -46,7 +46,6 @@ class DiffusionAnalysisIntegrator:
             computational_design:
                 Design object providing metadata specific to the diffusion pipeline.
         """
-        self.output_path = jobs_paths.output_path
         self.dataset_settings = dataset_settings
         self.computational_design = computational_design
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
@@ -381,7 +380,7 @@ class DiffusionAnalysisIntegrator:
         color_dict=dict(zip(unique_outcomes, np.array(colors)))
         row_colors = [color_dict[outcome] for outcome in outcomes]
 
-        p = join(self.output_path, distance_type)
+        p = distance_type
         if not exists(p):
             mkdir(p)
 

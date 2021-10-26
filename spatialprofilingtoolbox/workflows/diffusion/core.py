@@ -49,7 +49,7 @@ class DiffusionCalculator(Calculator):
 
         self.values = {'diffusion kernel' : None}
         if self.computational_design.should_save_graphml():
-            self.graph_serializer = GraphMLSerializer(output_path=jobs_paths.output_path)
+            self.graph_serializer = GraphMLSerializer()
 
     def get_values(self, key):
         return self.values[key]
@@ -300,8 +300,7 @@ class DiffusionCalculator(Calculator):
 
 
 class GraphMLSerializer:
-    def __init__(self, output_path=None, threshold=0.01):
-        self.output_path = output_path
+    def __init__(self, threshold=0.01):
         self.threshold = threshold
 
     def serialize(self, diffusion_distance_matrices, initial_locations, phenotype, input_filename, fov):
@@ -349,7 +348,7 @@ class GraphMLSerializer:
                         G.add_edge(i, j, **{'weight' + str(k+1) : float(M[i][j])})
 
         filename = phenotype + '_' + re.sub(r'\.csv', '', basename(input_filename)) + '_' + fov + '.graphml'
-        p = join(self.output_path, 'graphml')
+        p = 'graphml'
         if not exists(p):
             mkdir(p)
         full_filename = join(p, filename)

@@ -43,7 +43,6 @@ class DensityCalculator(Calculator):
         """
         super(DensityCalculator, self).__init__(**kwargs)
         self.sample_identifiers_by_file = sample_identifiers_by_file
-        self.output_path = jobs_paths.output_path
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
 
     def calculate_density(self):

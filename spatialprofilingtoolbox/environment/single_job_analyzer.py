@@ -21,7 +21,6 @@ class SingleJobAnalyzer:
         input_path: str=None,
         file_manifest_file: str=None,
         job_working_directory: str=None,
-        output_path: str=None,
         input_file_identifier: str=None,
         dataset_design=None,
         computational_design=None,
@@ -42,8 +41,6 @@ class SingleJobAnalyzer:
                 This is the directory in which jobs should run. That is, when the job
                 processes query for the current working directory, it should yield this
                 directory.
-            output_path (str):
-                The directory in which result tables, images, etc. will be written.
             input_file_identifier (str):
                 The identifier, as it appears in the file manifest, for the file
                 associated with this job.
@@ -54,7 +51,6 @@ class SingleJobAnalyzer:
         )
         self.jobs_paths = JobsPaths(
             job_working_directory,
-            output_path,
         )
         self.input_file_identifier = input_file_identifier
         self.dataset_design = dataset_design

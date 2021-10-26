@@ -42,7 +42,6 @@ class DensityAnalysisIntegrator:
         :param computational_design: Design object providing metadata specific to the
             density workflow.
         """
-        self.output_path = jobs_paths.output_path
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
         self.computational_design = computational_design
         self.density_tests = None

@@ -7,7 +7,6 @@ import json
 from ... import config_filename
 from ... import get_version
 from ... import workflows
-from ... import create_output_directories
 
 
 class DialogSolicitor:
@@ -226,8 +225,7 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
         skip_integrity_check = False
     parameters['skip_integrity_check'] = skip_integrity_check
 
-    dirs = create_output_directories()
-    parameters = {**parameters, **dirs}
+    parameters = {**parameters}
 
     parameters['spt_version'] = get_version()
 

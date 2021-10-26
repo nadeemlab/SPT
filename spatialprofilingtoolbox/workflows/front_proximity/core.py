@@ -25,7 +25,6 @@ class FrontProximityCalculator(Calculator):
         super(FrontProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.output_path = jobs_paths.output_path
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
 
     def calculate_front_proximity(self):

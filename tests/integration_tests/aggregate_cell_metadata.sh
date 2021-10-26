@@ -6,3 +6,4 @@ spt-aggregate-cell-data --max-per-sample 5
 spt-aggregate-cell-data --max-per-sample 10
 spt-aggregate-cell-data --max-per-sample 57
 rm .spt_pipeline.json
+rm cell_metadata_*.csv

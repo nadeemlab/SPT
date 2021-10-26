@@ -5,6 +5,5 @@
     "compartments" : ["Tumor", "Non-Tumor"],
     "skip_integrity_check" : false,
     "save_graphml" : true,
-    "runtime_platform" : "local",
     "spt_version" : "0.7.21"
 }

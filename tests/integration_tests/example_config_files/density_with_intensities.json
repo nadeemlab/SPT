@@ -4,7 +4,6 @@
     "file_manifest_file" : "file_manifest.tsv",
     "compartments" : ["Tumor", "Non-Tumor"],
     "skip_integrity_check" : true,
-    "runtime_platform" : "local",
     "use_intensities" : true,
     "spt_version" : "0.7.21"
 }

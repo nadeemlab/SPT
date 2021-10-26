@@ -3,7 +3,7 @@ from os.path import join, exists, isfile
 
 import pandas as pd
 
-from .settings_wrappers import RuntimeEnvironmentSettings, DatasetSettings
+from .settings_wrappers import DatasetSettings
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -19,7 +19,6 @@ class JobGenerator:
     The schema has 11 fields for each file and includes hashes.
     """
     def __init__(self,
-        runtime_platform: str=None,
         input_path: str=None,
         file_manifest_file: str=None,
         job_inputs: str=None,
@@ -27,11 +26,6 @@ class JobGenerator:
         **kwargs,
     ):
         """
-        :param runtime_platform: Currently either 'lsf' or 'local' (i.e. an HPC
-            deployment or a local run). Will be only 'nextflow' in the future, with no
-            need for this option.
-        :type runtime_platform: str
-
         :param input_path: The directory in which files listed in the file manifest
             should be located.
         :type input_path: str
@@ -46,9 +40,6 @@ class JobGenerator:
         :param dataset_design_class: Class of design object representing input data set.
         """
         self.job_inputs = job_inputs
-        self.runtime_settings = RuntimeEnvironmentSettings(
-            runtime_platform,
-        )
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,

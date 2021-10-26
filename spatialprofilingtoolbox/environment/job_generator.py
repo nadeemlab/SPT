@@ -58,7 +58,7 @@ class JobGenerator:
         """
         Prepares the job specification table for the nextflow script.
         """
-        attributes = sorted(self.job_specification_attributes())
+        attributes = ['input_file_identifier'] if self.job_specification_by_file() else []
 
         if attributes == []:
             df = pd.DataFrame([{'job_index' : 0}])
@@ -85,10 +85,6 @@ class JobGenerator:
             columns = df.columns
             df = df[sorted(columns)]
             table_str = df.to_csv(index=False, header=True)
-
-        if attributes == ['fov_index', 'input_file_identifier']:
-            logger.error('2 attributes not implemented.')
-            return
 
         print(table_str)
 

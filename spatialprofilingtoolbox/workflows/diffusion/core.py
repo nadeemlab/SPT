@@ -17,7 +17,6 @@ from ot.lp import emd2
 import networkx as nx
 
 from ...environment.calculator import Calculator
-from ...environment.settings_wrappers import JobsPaths
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -38,7 +37,6 @@ class DiffusionCalculator(Calculator):
         input_filename: str=None,
         fov_index: int=None,
         regional_compartment: str=None,
-        jobs_paths: JobsPaths=None,
         **kwargs,
     ):
         super(DiffusionCalculator, self).__init__(**kwargs)

@@ -5,7 +5,7 @@ import hashlib
 import pandas as pd
 
 from .database_context_utility import WaitingDatabaseContextManager
-from .settings_wrappers import JobsPaths, DatasetSettings
+from .settings_wrappers import DatasetSettings
 from .file_io import get_input_filename_by_identifier
 from .log_formats import colorized_logger
 
@@ -20,7 +20,6 @@ class SingleJobAnalyzer:
     def __init__(self,
         input_path: str=None,
         file_manifest_file: str=None,
-        job_working_directory: str=None,
         input_file_identifier: str=None,
         dataset_design=None,
         computational_design=None,
@@ -37,10 +36,6 @@ class SingleJobAnalyzer:
             outcomes_file (str):
                 A tabular text file assigning outcome values (in second column) to
                 sample identifiers (first column).
-            job_working_directory (str):
-                This is the directory in which jobs should run. That is, when the job
-                processes query for the current working directory, it should yield this
-                directory.
             input_file_identifier (str):
                 The identifier, as it appears in the file manifest, for the file
                 associated with this job.
@@ -48,9 +43,6 @@ class SingleJobAnalyzer:
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,
-        )
-        self.jobs_paths = JobsPaths(
-            job_working_directory,
         )
         self.input_file_identifier = input_file_identifier
         self.dataset_design = dataset_design

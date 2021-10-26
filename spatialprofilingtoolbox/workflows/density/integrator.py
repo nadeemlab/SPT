@@ -13,7 +13,7 @@ from scipy.stats import ttest_ind, kruskal
 
 from ...environment.file_io import get_outcomes_files
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ...environment.settings_wrappers import JobsPaths, DatasetSettings
+from ...environment.settings_wrappers import DatasetSettings
 from ...environment.log_formats import colorized_logger
 from .data_logging import DensityDataLogger
 
@@ -24,18 +24,12 @@ class DensityAnalysisIntegrator:
     """
     Main class of the integration phase.
     """
-    def __init__(
-        self,
-        jobs_paths: JobsPaths=None,
+    def __init__(self,
         dataset_settings: DatasetSettings=None,
         computational_design=None,
         **kwargs,
     ):
         """
-        :param jobs_paths: Convenience bundle of filesystem paths pertinent to a
-            particular run at the job level.
-        :type jobs_paths: JobsPaths
-
         :param dataset_settings: Convenience bundle of paths to input dataset files.
         :type dataset_settings: DatasetSettings
 

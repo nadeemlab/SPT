@@ -13,7 +13,7 @@ from scipy.spatial.distance import cdist
 from scipy.sparse import coo_matrix
 
 from ...environment.file_io import get_outcomes_files
-from ...environment.settings_wrappers import JobsPaths, DatasetSettings
+from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
@@ -33,7 +33,6 @@ class PhenotypeProximityCalculator(Calculator):
     def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
-        jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         regional_areas_file: str=None,
         **kwargs,
@@ -44,9 +43,6 @@ class PhenotypeProximityCalculator(Calculator):
 
         :param sample_identifier: The sample associated with this source file.
         :type sample_identifier: str
-
-        :param jobs_paths: Convenience bundle of paths.
-        :type jobs_paths: JobsPaths
 
         :param dataset_settings: Dataset-specific paths and settings.
         :type dataset_settings: DatasetSettings
@@ -62,7 +58,6 @@ class PhenotypeProximityCalculator(Calculator):
         super(PhenotypeProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.output_path = jobs_paths.output_path
         outcomes_file = get_outcomes_files(dataset_settings)[0]
         self.outcome = self.pull_in_outcome_data(outcomes_file)[
             sample_identifier

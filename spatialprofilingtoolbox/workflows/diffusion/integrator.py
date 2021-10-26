@@ -19,7 +19,7 @@ from scipy.cluster.hierarchy import ClusterWarning
 simplefilter('ignore', ClusterWarning)
 
 from ...environment.file_io import get_outcomes_files
-from ...environment.settings_wrappers import JobsPaths, DatasetSettings
+from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 
@@ -32,15 +32,12 @@ class DiffusionAnalysisIntegrator:
     histogram_resolution = 50
 
     def __init__(self,
-        jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         computational_design=None,
         **kwargs,
     ):
         """
         Args:
-            jobs_paths (JobsPaths):
-                Convenience bundle of filesystem paths pertinent to a particular run at the job level.
             dataset_settings (DatasetSettings):
                 Convenience bundle of paths to input dataset files.
             computational_design:

@@ -35,7 +35,6 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
         self.calculator = PhenotypeProximityCalculator(
             input_filename = self.get_input_filename(),
             sample_identifier = self.get_sample_identifier(),
-            jobs_paths = self.jobs_paths,
             dataset_settings = self.dataset_settings,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,

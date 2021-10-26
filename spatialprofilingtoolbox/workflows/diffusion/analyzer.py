@@ -39,7 +39,6 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
             regional_compartment = regional_compartment,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
-            jobs_paths = self.jobs_paths,
         )
 
     def _calculate(self):

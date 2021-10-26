@@ -13,7 +13,7 @@ from .environment.configuration import get_config_parameters
 from .environment.configuration import get_version
 from .applications.configuration_ui.ui import configuration_dialog
 
-from .environment.settings_wrappers import JobsPaths, DatasetSettings
+from .environment.settings_wrappers import DatasetSettings
 from .environment.log_formats import colorized_logger
 __logger = colorized_logger(__name__)
 
@@ -79,12 +79,6 @@ def get_analyzer(workflow=None, **kwargs):
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
-def get_jobs_paths(**kwargs):
-    return JobsPaths(
-        kwargs['job_working_directory'],
-        kwargs['output_path'],
-    )
-
 def get_dataset_settings(**kwargs):
     return DatasetSettings(
         kwargs['input_path'],
@@ -96,13 +90,11 @@ def get_integrator(workflow=None, **kwargs):
     Exposes pipeline analysis integrators to scripts.
     """
     if workflow in workflows:
-        jobs_paths = get_jobs_paths(**kwargs)
         dataset_settings = get_dataset_settings(**kwargs)
         computational_design = get_computational_design(workflow = workflow, **kwargs)
 
         Integrator = workflows[workflow].integrator
         return Integrator(
-            jobs_paths = jobs_paths,
             dataset_settings = dataset_settings,
             computational_design = computational_design,
             **kwargs,

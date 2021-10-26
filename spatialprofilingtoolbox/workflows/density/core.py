@@ -10,7 +10,7 @@ import scipy
 from scipy.spatial import KDTree
 
 from ...environment.file_io import get_outcomes_files
-from ...environment.settings_wrappers import JobsPaths, DatasetSettings
+from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
@@ -25,7 +25,6 @@ class DensityCalculator(Calculator):
     def __init__(
         self,
         sample_identifiers_by_file: dict=None,
-        jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         **kwargs,
     ):
@@ -33,10 +32,6 @@ class DensityCalculator(Calculator):
         :param sample_identifers_by_file: Association of input data files to
             corresponding samples.
         :type sample_identifiers_by_file: dict
-
-        :param jobs_paths: Convenience bundle of filesystem paths pertinent to a
-            particular run at the job level.
-        :type jobs_paths: JobsPaths
 
         :param dataset_settings: Convenience bundle of paths to input dataset files.
         :type dataset_settings: DatasetSettings

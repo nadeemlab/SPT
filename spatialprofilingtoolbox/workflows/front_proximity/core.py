@@ -7,7 +7,7 @@ from scipy.spatial import KDTree
 
 from ...environment.file_io import get_outcomes_files
 from ...environment.calculator import Calculator
-from ...environment.settings_wrappers import JobsPaths, DatasetSettings
+from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 
@@ -18,7 +18,6 @@ class FrontProximityCalculator(Calculator):
     def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
-        jobs_paths: JobsPaths=None,
         dataset_settings: DatasetSettings=None,
         **kwargs,
     ):

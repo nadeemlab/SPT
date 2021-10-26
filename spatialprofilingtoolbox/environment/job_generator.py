@@ -3,7 +3,7 @@ from os.path import join, exists, isfile
 
 import pandas as pd
 
-from .settings_wrappers import JobsPaths, RuntimeEnvironmentSettings, DatasetSettings
+from .settings_wrappers import RuntimeEnvironmentSettings, DatasetSettings
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -19,7 +19,6 @@ class JobGenerator:
     The schema has 11 fields for each file and includes hashes.
     """
     def __init__(self,
-        job_working_directory: str='./',
         runtime_platform: str=None,
         input_path: str=None,
         file_manifest_file: str=None,
@@ -28,11 +27,6 @@ class JobGenerator:
         **kwargs,
     ):
         """
-        :param job_working_directory: This is the directory in which jobs should run.
-            That is, when the job processes query for the current working directory, it
-            should yield this directory.
-        :type job_working_directory: str
-
         :param runtime_platform: Currently either 'lsf' or 'local' (i.e. an HPC
             deployment or a local run). Will be only 'nextflow' in the future, with no
             need for this option.
@@ -52,9 +46,6 @@ class JobGenerator:
         :param dataset_design_class: Class of design object representing input data set.
         """
         self.job_inputs = job_inputs
-        self.jobs_paths = JobsPaths(
-            job_working_directory,
-        )
         self.runtime_settings = RuntimeEnvironmentSettings(
             runtime_platform,
         )

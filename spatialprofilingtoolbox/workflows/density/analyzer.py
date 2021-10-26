@@ -29,7 +29,6 @@ class DensityAnalyzer(SingleJobAnalyzer):
         sample_identifiers_by_file = self.retrieve_cell_input_file_info(skip_integrity_check)
         self.calculator = DensityCalculator(
             sample_identifiers_by_file = sample_identifiers_by_file,
-            jobs_paths = self.jobs_paths,
             dataset_settings = self.dataset_settings,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,

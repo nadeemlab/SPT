@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import argparse
+import os
+from os.path import join
 
 import pandas as pd
 
@@ -33,6 +35,8 @@ def do_aggregation():
     args = parser.parse_args()
 
     parameters = spt.get_config_parameters()
+    parameters['file_manifest_file'] = join(parameters['input_path'], parameters['file_manifest_file'])
+
     dataset_design = HALOCellMetadataDesign(**parameters)
     cell_data = HALOCellMetadata(
         input_files_path = parameters['input_path'],

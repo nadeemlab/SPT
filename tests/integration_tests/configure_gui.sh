@@ -27,21 +27,18 @@ expect "\[33m\[0m\r
 \[33mEnter the computational workflow type:\[0m "
 send -- "Multiplexed IF phenotype proximity\r"
 expect -exact "Multiplexed IF phenotype proximity\r
-\[33mEnter the Singularity container file (.sif) containing the toolbox:\[0m "
-send -- "example.sif\r"
-expect -exact "example.sif\r
 \[33mEnter the path containing input CSV files pertaining to cells:\[0m "
 send -- "data/\r"
 expect -exact "data/\r
 \[33mEnter the file manifest file:\[0m "
-send -- "data/file_manifest.tsv\r"
-expect -exact "data/file_manifest.tsv\r
+send -- "file_manifest.tsv\r"
+expect -exact "file_manifest.tsv\r
 \[33mEnter comma-separated list of compartment names:\[0m "
 send -- "Tumor,Non-Tumor\r"
 expect -exact "Tumor,Non-Tumor\r
 \[33mBalanced/symmetric analysis with respect to phenotype pairs?\[0m "
 send -- "No\r"
-expect -exact "local\r
+expect -exact "No\r
 \[33mSkip file integrity check?\[0m "
 send -- "No\r"
 expect eof

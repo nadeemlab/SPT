@@ -123,16 +123,12 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
     workflow_names = sorted(list(workflows.keys()))
     pp.print('Workflows:')
     pp.show_list(workflow_names)
-    parameters['computational_workflow'] = pp.prompt(
+    parameters['workflow'] = pp.prompt(
         'Enter the computational workflow type:',
         validator = {
             'checker' : (lambda w: w in workflow_names),
             'otherwise' : 'Choose a valid workflow name.',
         },
-    )
-
-    parameters['sif_path'] = pp.prompt(
-        'Enter the Singularity container file (.sif) containing the toolbox:',
     )
 
     yes_pattern = '([yY]|[yY]es)'
@@ -155,7 +151,6 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
 
     parameters['file_manifest'] = pp.prompt(
         'Enter the file manifest file:',
-        validator=path_validator,
     )
 
     compartments = pp.prompt(
@@ -167,7 +162,7 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
 
     from spatialprofilingtoolbox.workflows.phenotype_proximity import components
     workflow_name = list(components.keys())[0]
-    if parameters['computational_workflow'] == workflow_name:
+    if parameters['workflow'] == workflow_name:
         balanced = pp.prompt(
             'Balanced/symmetric analysis with respect to phenotype pairs?',
             validator = bool_validator,
@@ -180,7 +175,7 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
 
     from spatialprofilingtoolbox.workflows.density import components
     workflow_name = list(components.keys())[0]
-    if parameters['computational_workflow'] == workflow_name:
+    if parameters['workflow'] == workflow_name:
         use_intensities = pp.prompt(
             'Use intensity weighting?',
             validator = bool_validator,
@@ -193,7 +188,7 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
 
     from spatialprofilingtoolbox.workflows.diffusion import components
     workflow_name = list(components.keys())[0]
-    if parameters['computational_workflow'] == workflow_name:
+    if parameters['workflow'] == workflow_name:
         save_graphml = pp.prompt(
             'Save GraphML represetation of diffusion distances for every phenotype mask?',
             validator = bool_validator,

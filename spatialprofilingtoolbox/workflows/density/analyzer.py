@@ -2,7 +2,7 @@
 The parallelizable, job-level analysis stage of the cell phenotype density
 analysis workflow.
 """
-from os.path import join, abspath
+from os.path import join, abspath, basename
 import hashlib
 import sqlite3
 
@@ -57,9 +57,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
         file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
 
         sample_identifiers_by_file = {}
-        logger.debug(file_metadata)
         for i, row in file_metadata.iterrows():
-            logger.debug(row['Data type'])
             if not self.dataset_design.validate_cell_manifest_descriptor(row['Data type']):
                 continue
             input_file = row['File name']
@@ -84,7 +82,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
                         sha256,
                         expected_sha256,
                     )
-            sample_identifiers_by_file[input_file] = sample_identifier
+            sample_identifiers_by_file[basename(input_file)] = sample_identifier
         return sample_identifiers_by_file
 
     def initialize_intermediate_database(self):

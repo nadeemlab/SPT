@@ -482,11 +482,11 @@ class DensityAnalysisIntegrator:
         :rtype: pandas.DataFrame
         """
         if table_name == 'cells':
-            columns = ['id'] + [
-                entry[0] for entry in self.computational_design.get_cells_header()
+            columns = [
+                entry[0] for entry in self.computational_design.get_cells_header(style='sql')
             ]
         elif table_name == 'fov_lookup':
-            columns = ['id'] + [
+            columns = [
                 entry[0] for entry in self.computational_design.get_fov_lookup_header()
             ]
         else:
@@ -495,7 +495,8 @@ class DensityAnalysisIntegrator:
 
         uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as manager:
-            rows = manager.execute('SELECT * FROM ' + table_name)
+            columns_str = ', '.join(columns)
+            rows = manager.execute('SELECT %s FROM %s' % (columns_str, table_name))
 
         logger.debug('self.computational_design.use_intensities: %s', self.computational_design.use_intensities)
         logger.debug('Pulling data from "cells" table. Schema has %s columns: %s', len(columns), columns)

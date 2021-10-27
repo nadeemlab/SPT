@@ -60,11 +60,15 @@ class JobGenerator:
         """
         attributes = ['input_file_identifier'] if self.job_specification_by_file() else []
 
-        if attributes == []:
-            df = pd.DataFrame([{'job_index' : 0}])
+        if not self.job_specification_by_file():
+            df = pd.DataFrame([{
+                'input_file_identifier': 'all files',
+                'input_filename': 'all filenames',
+                'job_index' : 0,
+            }])
             table_str = df.to_csv(index=False, header=True)
         
-        if attributes == ['input_file_identifier']:
+        if self.job_specification_by_file():
             rows = []
             job_count = 0
             for i, file_row in self.file_metadata.iterrows():
@@ -97,7 +101,7 @@ class JobGenerator:
         for i, file_row in self.file_metadata.iterrows():
             descriptor = file_row['Data type']
             validated = self.dataset_design_class.validate_cell_manifest_descriptor(descriptor)
-            if not validated:
+            if (not validated) or (not self.job_specification_by_file()):
                 input_filename = file_row['File name']
                 full_filename = join(self.dataset_settings.input_path, input_filename)
                 filenames.append(full_filename)

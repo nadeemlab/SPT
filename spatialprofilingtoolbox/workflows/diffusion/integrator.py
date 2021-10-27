@@ -60,16 +60,19 @@ class DiffusionAnalysisIntegrator:
                 The whole table, in dataframe form.
         """
         if table_name == self.computational_design.get_diffusion_distances_table_name():
-            columns = ['id'] + self.computational_design.get_probabilities_table_header()
+            columns = self.computational_design.get_probabilities_table_header()
         elif table_name == 'diffusion_distances_summarized':
-            columns = ['id'] + [c[0] for c in self.computational_design.get_diffusion_distances_summarized_header()]
+            columns = [c[0] for c in self.computational_design.get_diffusion_distances_summarized_header()]
         else:
             logger.error('Table %s is not in the schema.', table_name)
             return None
 
         uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as m:
-            rows = m.execute('SELECT * FROM ' + table_name)
+            columns_str = ', '.join(columns)
+            query = 'SELECT %s FROM %s' % (columns_str, table_name)
+            logger.debug('Query: %s', query)
+            rows = m.execute(query)
 
         df = pd.DataFrame(rows, columns=columns)
         return df
@@ -143,7 +146,13 @@ class DiffusionAnalysisIntegrator:
         probabilities = self.get_dataframe_from_db(
             self.computational_design.get_diffusion_distances_table_name()
         )
+        probabilities['diffusion_distance'] = pd.to_numeric(probabilities['diffusion_distance'])
+        probabilities['temporal_offset'] = pd.to_numeric(probabilities['temporal_offset'])
+
         logger.info('Value of probabilities.shape: %s', probabilities.shape)
+
+        logger.debug('probabilities.columns : %s', probabilities.columns)
+
         logger.info('Average diffusion distance: %s', np.mean(probabilities['diffusion_distance']))
         self.initialize_output_tables()
         temporal_offsets = probabilities['temporal_offset']

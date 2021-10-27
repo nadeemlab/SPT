@@ -2,6 +2,7 @@ import os
 from os.path import join, dirname
 import re
 import sqlite3
+import pandas as pd
 
 from ...environment.single_job_analyzer import SingleJobAnalyzer
 from ...environment.database_context_utility import WaitingDatabaseContextManager
@@ -28,17 +29,18 @@ class DiffusionAnalyzer(SingleJobAnalyzer):
         self.regional_compartment = regional_compartment
         self.retrieve_input_filename()
         input_filename = self.get_input_filename()
+        self.input_filename = input_filename
 
     def _calculate(self):
         try:
-            fovs = cut_by_header(join(self.dataset_settings.input_path, filename), column=self.dataset_design.get_FOV_column())
+            fovs = cut_by_header(self.input_filename, column=self.dataset_design.get_FOV_column())
             number_fovs = len(sorted(list(set(fovs))))
             for fov_index in range(1, 1+number_fovs):
                 self.fov_index = fov_index
                 self.calculator = DiffusionCalculator(
                     input_filename = self.input_filename,
                     fov_index = fov_index,
-                    regional_compartment = regional_compartment,
+                    regional_compartment = self.regional_compartment,
                     dataset_design = self.dataset_design,
                     computational_design = self.computational_design,
                 )

@@ -98,7 +98,7 @@ process aggregate_results {
     """
     cp intermediate.0.db intermediate.db
     spt-pipeline aggregate-results --intermediate-database-filename=intermediate.db > stats_tests.csv
-    """
+        """
 }
 
 workflow {

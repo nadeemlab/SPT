@@ -168,8 +168,8 @@ logstyle-printf "$green""Building Docker container.$reset" timed-command
 cat building/Dockerfile.template | sed "s/{{version}}/$version/g" > Dockerfile
 REQS=$(sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt)
 awk -i inplace -v r="$REQS" '{gsub(/{{install requirements.txt}}/,r)}1' Dockerfile
-docker build -t jimmymathews/spt:$version .
-docker push jimmymathews/spt:$version
+docker build -t nadeemlab/spt:$version .
+docker push nadeemlab/spt:$version
 
 if [[ "$?" == "1" ]];
 then

@@ -2,6 +2,8 @@
 import os
 from os.path import join, dirname
 
+os.environ['FIND_FILES_USING_PATH'] = '1'
+
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
@@ -13,11 +15,13 @@ def shorten(string):
 
 def test_halo_areas_provider():
     input_files_path = join(dirname(__file__), '..', 'data')
-    elementary_phenotypes_file = join(input_files_path, 'elementary_phenotypes.csv')
-    regional_areas_file = join(input_files_path, 'example_areas_file.csv')
+    file_manifest_file = 'file_manifest.tsv'
     dataset_design = HALOCellMetadataDesign(
-        elementary_phenotypes_file = elementary_phenotypes_file,
+        input_path = input_files_path,
+        file_manifest_file = file_manifest_file,
+        compartments=['Tumor','Non-Tumor'],
     )
+    regional_areas_file = 'example_areas_file.csv'
     areas = dataset_design.areas_provider(
         dataset_design=dataset_design,
         regional_areas_file=regional_areas_file,

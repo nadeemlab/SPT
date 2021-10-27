@@ -1,4 +1,7 @@
 import re
+import os
+from os.path import join
+FIND_FILES_USING_PATH = ('FIND_FILES_USING_PATH' in os.environ)
 
 import pandas as pd
 import numpy as np
@@ -9,8 +12,7 @@ logger = colorized_logger(__name__)
 
 
 class HALORegionalAreasProvider:
-    def __init__(
-        self,
+    def __init__(self,
         dataset_design=None,
         regional_areas_file: str=None,
     ):
@@ -18,6 +20,8 @@ class HALORegionalAreasProvider:
         self.load_regional_areas(regional_areas_file)
 
     def load_regional_areas(self, file):
+        if FIND_FILES_USING_PATH:
+            file = join(self.dataset_design.dataset_settings.input_path, file)
         df = pd.read_csv(file)
         fov = self.dataset_design.get_FOV_column()
         str_values = [str(e) for e in df[fov]]

@@ -3,6 +3,8 @@ import os
 from os.path import join, dirname
 import warnings
 
+os.environ['FIND_FILES_USING_PATH'] = '1'
+
 import pandas as pd
 import pytest
 
@@ -13,12 +15,12 @@ from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metad
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_thresholding():
     input_files_path = join(dirname(__file__), '..', 'data')
-    elementary_phenotypes_file = join(input_files_path, 'elementary_phenotypes.csv')
+    file_manifest_file = 'file_manifest.tsv'
     dataset_design = HALOCellMetadataDesign(
-        elementary_phenotypes_file=elementary_phenotypes_file,
+        input_path = input_files_path,
+        file_manifest_file = file_manifest_file,
     )
-    file_manifest_file = join(input_files_path, 'file_manifest.tsv')
-    file_manifest = pd.read_csv(file_manifest_file, sep='\t')
+    file_manifest = pd.read_csv(dataset_design.dataset_settings.file_manifest_file, sep='\t')
     cell_manifest = HALOCellMetadataDesign.get_cell_manifest_descriptor()
     input_files = file_manifest[file_manifest['Data type'] == cell_manifest]['File name']
     for filename in input_files:

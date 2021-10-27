@@ -1,3 +1,7 @@
+import os
+from os.path import join
+FIND_FILES_USING_PATH = ('FIND_FILES_USING_PATH' in os.environ)
+
 
 class DatasetSettings:
     """
@@ -8,6 +12,8 @@ class DatasetSettings:
         input_path,
         file_manifest_file,
     ):
-        # self.input_path = './' # testing
         self.input_path = input_path
-        self.file_manifest_file = file_manifest_file
+        if FIND_FILES_USING_PATH:
+            self.file_manifest_file = join(input_path, file_manifest_file)
+        else:
+            self.file_manifest_file = file_manifest_file

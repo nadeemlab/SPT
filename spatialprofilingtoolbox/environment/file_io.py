@@ -2,6 +2,7 @@ import os
 from os import mkdir
 from os.path import exists, abspath, join
 import hashlib
+FIND_FILES_USING_PATH = ('FIND_FILES_USING_PATH' in os.environ)
 
 import pandas as pd
 
@@ -40,7 +41,8 @@ def get_input_filenames_by_data_type(
         expected_sha256 = row['Checksum']
         input_file_identifier = row['File ID']
         input_file = row['File name']
-        # input_file = abspath(join(dataset_settings.input_path, input_file))
+        if FIND_FILES_USING_PATH:
+            input_file = abspath(join(dataset_settings.input_path, input_file))
 
         buffer_size = 65536
         sha = hashlib.sha256()
@@ -95,7 +97,8 @@ def get_input_filename_by_identifier(
         expected_sha256 = row['Checksum']
         input_file_identifier = row['File ID']
         input_file = row['File name']
-        # input_file = abspath(join(dataset_settings.input_path, input_file))
+        if FIND_FILES_USING_PATH:
+            input_file = abspath(join(dataset_settings.input_path, input_file))
 
         buffer_size = 65536
         sha = hashlib.sha256()

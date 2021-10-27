@@ -2,4 +2,4 @@
 // working on an LSF-managed cluster and you want `nextflow` calls to use
 // the cluster resources.
 
-process.executor = lsf
+process.executor = 'lsf'

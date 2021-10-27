@@ -1,0 +1,5 @@
+// "Install" this config file to be the file $HOME/.nextflow/config if are
+// working on an LSF-managed cluster and you want `nextflow` calls to use
+// the cluster resources.
+
+process.executor = lsf

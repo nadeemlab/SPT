@@ -149,7 +149,7 @@ if [[ ! "$outcome" == "" ]]; then
 fi
 
 logstyle-printf "$green""Running integration tests.$reset" timed-command
-outcome=$(./tests_integration.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in")
+outcome=$(./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in")
 if [[ "$outcome" == "" ]]; then
     logstyle-printf "$red""Something went wrong in integration tests.$reset"
     clean_exit

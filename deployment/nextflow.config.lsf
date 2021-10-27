@@ -3,3 +3,5 @@
 // the cluster resources.
 
 process.executor = 'lsf'
+process.container = 'nadeemlab/spt:latest'
+docker.enabled = true

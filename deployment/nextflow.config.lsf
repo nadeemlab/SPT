@@ -4,7 +4,16 @@
 
 process.executor = 'lsf'
 
-// process.container = 'nadeemlab/spt:latest'
-process.container = 'nadeemlab/spt-test:latest'
+// Docker
 
-docker.enabled = true
+// process.container = 'nadeemlab/spt:latest'
+// process.container = 'nadeemlab/spt-test:latest'
+// docker.enabled = true
+
+// Singularity
+
+process.container = ''
+// Your path to SIF file here. Can get with `singularity pull repo`.
+
+singularity.autoMounts = true
+singularity.enabled = true

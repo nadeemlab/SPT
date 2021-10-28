@@ -178,6 +178,7 @@ REQS=$(sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt)
 awk -i inplace -v r="$REQS" '{gsub(/{{install requirements.txt}}/,r)}1' Dockerfile
 docker build -t $docker_org_name/$target_repo:$version -t $docker_org_name/$target_repo:latest .
 docker push $docker_org_name/$target_repo:$version
+docker push $docker_org_name/$target_repo:latest
 
 if [[ "$?" == "1" ]];
 then

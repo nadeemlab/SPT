@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if [[ "$1" = "prod" ]];
+then
+    target_repo="spt"
+else
+    target_repo="spt-test"
+fi
+docker_org_name="nadeemlab"
+
 green="\e[0;32m"
 magenta="\e[0;35m"
 cyan="\e[0;36m"
@@ -168,8 +176,8 @@ logstyle-printf "$green""Building Docker container.$reset" timed-command
 cat building/Dockerfile.template | sed "s/{{version}}/$version/g" > Dockerfile
 REQS=$(sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt)
 awk -i inplace -v r="$REQS" '{gsub(/{{install requirements.txt}}/,r)}1' Dockerfile
-docker build -t jimmymathews/spt:$version .
-docker push jimmymathews/spt:$version
+docker build -t $docker_org_name/$target_repo:$version .
+docker push $docker_org_name/$target_repo:$version
 
 if [[ "$?" == "1" ]];
 then

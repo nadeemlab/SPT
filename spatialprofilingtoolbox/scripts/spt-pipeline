@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import subprocess
+from shutil import which
 
 import spatialprofilingtoolbox as spt
 
@@ -93,5 +94,12 @@ if __name__=='__main__':
         integrator.calculate()
 
     if (not command in commands) or command == run:
+        if which('nextflow') is None:
+            print('Installing nextflow.')
+            subprocess.run(['curl', '-s', 'https://get.nextflow.io', '-o', 'nfdownload.sh'])
+            subprocess.run(['bash', 'nfdownload.sh'])
+        if which('nextflow') is None:
+            print('Still can not find nextflow after attempted install. Aborting.')
+            exit()
         spt.write_out_nextflow_script()
         subprocess.run(['nextflow', spt.nf_script_file])

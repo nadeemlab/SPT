@@ -60,7 +60,7 @@ def get_config_parameters(json_string=None):
         logger.error(
             ''.join([
                 'Configuration file %s does not exist, and you did not supply ',
-                'json_string. Try spt-configu'
+                'json_string. Try spt-configure'
             ]),
             config_filename
         )

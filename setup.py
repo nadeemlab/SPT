@@ -60,7 +60,7 @@ setuptools.setup(
         'Topic :: Scientific/Engineering',
         'Intended Audience :: Science/Research',
     ],
-    package_data={'spatialprofilingtoolbox': ['version.txt']},
+    package_data={'spatialprofilingtoolbox': ['version.txt', 'spt_pipeline.nf']},
     python_requires='>=3.7',
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-pipeline',

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import subprocess
 
 import spatialprofilingtoolbox as spt
 
@@ -16,10 +17,12 @@ if __name__=='__main__':
     configure = 'configure'
     single_job = 'single-job'
     aggregate_results = 'aggregate-results'
+    run = 'run'
+    commands = [generate_jobs, list_auxiliary_job_inputs, configure, single_job, aggregate_results, run]
     parser.add_argument(
         'command_token',
         nargs='?',
-        choices = [generate_jobs, list_auxiliary_job_inputs, configure, single_job, aggregate_results],
+        choices = commands,
     )
     parser.add_argument('--input-file-identifier',
         dest='input_file_identifier',
@@ -88,3 +91,7 @@ if __name__=='__main__':
     if command == aggregate_results:
         integrator = spt.get_integrator(**parameters)
         integrator.calculate()
+
+    if (not command in commands) or command == run:
+        spt.write_out_nextflow_script()
+        subprocess.run(['nextflow', spt.nf_script_file])

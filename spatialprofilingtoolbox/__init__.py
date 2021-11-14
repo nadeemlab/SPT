@@ -11,6 +11,8 @@ from .environment.configuration import config_filename
 from .environment.configuration import workflows
 from .environment.configuration import get_config_parameters
 from .environment.configuration import get_version
+from .environment.configuration import write_out_nextflow_script
+from .environment.configuration import nf_script_file
 from .applications.configuration_ui.ui import configuration_dialog
 
 from .environment.settings_wrappers import DatasetSettings

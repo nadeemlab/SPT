@@ -1,59 +1,48 @@
 
-.. figure:: docs/_static/SPT_logo_blue_on_transparent.png
-   :target: docs/_static/SPT_logo_blue_on_transparent.png
-   :align: center
-   :width: 400
+<p align="center">
+<img src="docs/_static/SPT_logo_blue_on_transparent.png" width="400">
+</p>
 
-<div style="display: inline-block;">
-<img src="docs/_static/SPT_logo_blue_on_transparent.png">
-</div>
+[Supported workflows](#Supported-workflows) | [Preparing your data](#Preparing-your-data) | [Getting started](#Getting-started) | [Examples](#Examples) | [Read the Docs](https://spatialprofilingtoolbox.readthedocs.io)
 
-`Read the Docs <https://spatialprofilingtoolbox.readthedocs.io>`_
-
-The SPT modules do image analysis computation in the context of histopathology.
-A lightweight framework is also provided to deploy a pipeline comprised of these
-modules in different runtime contexts (e.g. a High-Performance Cluster or on a
-single local machine).
+The SPT modules do image analysis computation in the context of histopathology. A lightweight framework is also provided to deploy a pipeline comprised of these modules in different runtime contexts (e.g. a High-Performance Cluster or on a single local machine).
 
 Supported workflows
 -------------------
-
-.. list-table::
-   :widths: 1 3
-   :align: center
-
-   * - `Phenotype proximity workflow`_
-     - | The core module takes as input two collections of points, and calculates the average density with
-       | which a point of one set appears within a specified distance from a given point of the other set.
-       | In a balanced/symmetric mode, it calculates instead the density of occurence of a pair of points
-       | from the respective sets within the specified distance range.
-   * - `Density workflow`_
-     - | The core module calculates phenotype density metrics, without regard to spatial information. This
-       | means cell counts per unit cell area in a given compartment or region belonging to a given phenotype.
-   * - `Front proximity workflow`_
-     - | The core module calculates the distribution of the distances between the points of a given subset
-       | and the front or boundary between two given regions.
-   * - `Diffusion workflow`_
-     - | The core module takes as input a collection of points, and generates the associated diffusion map
-       | and diffusion Markov chain, with the aim of producing features that are characteristic of the
-       | input geometry.
-
+- **Phenotype proximity workflow**. The core module takes as input two collections of points, and calculates the average density with which a point of one set appears within a specified distance from a given point of the other set. In a balanced/symmetric mode, it calculates instead the density of occurence of a pair of points from the respective sets within the specified distance range.
+- **Density workflow**. The core module calculates phenotype density metrics, without regard to spatial information. This means cell counts per unit cell area in a given compartment or region belonging to a given phenotype.
+- **Front proximity workflow**. The core module calculates the distribution of the distances between the points of a given subset and the front or boundary between two given regions.
+- **Diffusion workflow**. The core module takes as input a collection of points, and generates the associated diffusion map and diffusion Markov chain, with the aim of producing features that are characteristic of the input geometry.
 
 Preparing your data
 -------------------
-
-The current workflows all operate on spreadsheet files exported from the `HALO <https://indicalab.com/halo/>`_ software. The metadata format is exemplified by the `test data <https://github.com/nadeemlab/SPT/tree/main/tests/data>`_. See also the `specification <https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md>`_ for a file manifest file, used to keep all metadata for a dataset organized.
+The current workflows all operate on spreadsheet files mimicing that of object/cell manifests exported from the [HALO](https://indicalab.com/halo/) software. The metadata format is exemplified by the [test data](https://github.com/nadeemlab/SPT/tree/main/tests/data). See also the [specification](https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md) for a file manifest file, used to keep all metadata for a dataset organized.
 
 Getting started
 ---------------
+Thanks to the Nextflow engine, getting started is fairly straightforward whether you will be running on your local machine or on a High-Performance Cluster for large datasets.
 
-Install from `PyPI <https://pypi.org/project/spatialprofilingtoolbox/>`_::
+These instructions assume you are working on a Linux/Unix-style environment (though a Windows deployment should work using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)).
 
-    pip install spatialprofilingtoolbox
+After ensuring Java 8+ is installed, install [Nextflow](https://www.nextflow.io/):
+
+```sh
+curl -s https://get.nextflow.io | bash
+```
+
+
+
+
+
+Install from [PyPI](https://pypi.org/project/spatialprofilingtoolbox/):
+
+```sh
+pip install spatialprofilingtoolbox
+```
 
 All workflows are configured by running ``spt-pipeline`` in your desired run directory.
 
-**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed* `Singularity <https://sylabs.io/singularity/>`_ *, you must first pull the Singularity container from Docker Hub using* ::
+**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed* [Singularity](https://sylabs.io/singularity/) *, you must first pull the Singularity container from Docker Hub using* :
 
     singularity pull docker://jimmymathews/spt:0.7.19
 
@@ -61,12 +50,12 @@ All workflows are configured by running ``spt-pipeline`` in your desired run dir
 
 Example answers to the ``spt-pipeline`` prompts are shown below for the phenotype proximity workflow, using the test data that ships with the SPT source code. There are slight variations depending on the workflow.
 
-.. image:: docs/_static/dialog_example.png
+.. image: docs/_static/dialog_example.png
    :target: docs/_static/dialog_example.png
 
 The parameters selected during the dialog are saved in a configuration file called ``.spt-pipeline.config``:
 
-.. code-block:: ini
+.. code-block: ini
 
    [default]
    workflow = Multiplexed IF phenotype proximity
@@ -109,7 +98,7 @@ High values for this metric may be due to overall higher counts for the target p
 
 The results of this pipeline are saved to ``output/phenotype_2_phenotype_proximity_tests.csv``. Example rows from this table are shown below:
 
-.. image:: docs/_static/p2p_example.png
+.. image: docs/_static/p2p_example.png
    :target: docs/_static/p2p_example.png
 
 Each row records the result of a test for statistically-significant difference between the values of the phenotype proximity metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
@@ -124,7 +113,7 @@ One of the simplest and most readily available metrics for dissociated cell popu
 
 The results of this pipeline are saved to ``output/density_tests.csv``. Example rows from this table are shown below:
 
-.. image:: docs/_static/density_example.png
+.. image: docs/_static/density_example.png
    :target: docs/_static/density_example.png
 
 Each row records the result of a test for statistically-significant difference between the values of the density metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
@@ -139,39 +128,39 @@ In this workflow we calculate the **front proximity metric**: *the distance from
 
 To see plots of the distributions, use:
 
-.. code-block:: bash
+.. code-block: bash
 
    spt-front-proximity-viz output/front_proximity.db --drop-compartment="<ignorable compartment name>"
 
 **Note**: *The* ``--drop-compartment`` *option should be provided as many times as necessary to remove from consideration all compartments/regions in excess of the two you wish to focus on. If only two compartment designations appear in your metadata files, then this option is not necessary.*
 
-.. image:: docs/_static/front_proximity_example.png
+.. image: docs/_static/front_proximity_example.png
    :target: docs/_static/front_proximity_example.png
 
 .. _diffusion-workflow:
 
 Diffusion workflow
 ^^^^^^^^^^^^^^^^^^
-`Spectral geometry <https://en.wikipedia.org/wiki/Diffusion_map>`_ is the study of the global spatial information in a metric space discerned via the eigenanalysis of linear operators involving all points of the space. Typically the linear operators themselves are defined by the consideration of local point-to-point interactions, while the spectral decomposition is thought to represent the overall coupling of these local interactions into the coherent whole metric space.
+[Spectral geometry](https://en.wikipedia.org/wiki/Diffusion_map) is the study of the global spatial information in a metric space discerned via the eigenanalysis of linear operators involving all points of the space. Typically the linear operators themselves are defined by the consideration of local point-to-point interactions, while the spectral decomposition is thought to represent the overall coupling of these local interactions into the coherent whole metric space.
 
 Here we calculate the **diffusion distance**: *the distance between each pair of cells after applying the diffusion map, i.e. evaluating eigenfunctions for the Laplace operator on each cell*. This distance depends on a "pseudo-time" unit, or scale, the amount of time to run forward a diffusion process Markov chain closely related to the diffusion map.
 
 Unless ``save_graphml=False``, this pipeline saves GraphML files containing diffusion-distance-weighted networks on the cell sets belonging to a given point, located in ``output/graphml/*``. Visualize them as shown below:
 
-.. code-block:: bash
+.. code-block: bash
 
    spt-diffusion-graphs-viz --color=lightcoral --caption="CD8+ cells" output/graphml/CD8_example.graphml
 
-.. image:: docs/_static/diffusion_graphs_viz_example.png
+.. image: docs/_static/diffusion_graphs_viz_example.png
    :target: docs/_static/diffusion_graphs_viz_example.png
 
 This pipeline also saves statistical test results to ``output/diffusion_distance_tests.csv`` which assess the efficacy of the diffusion distance distributions as discriminators of given outcomes. To visualize the trend of the significant tests as the pseudo-time unit varies, use:
 
-.. code-block:: bash
+.. code-block: bash
 
    spt-diffusion-viz output/diffusion_distance_tests.csv
 
-.. image:: docs/_static/diffusion_tests_example.png
+.. image: docs/_static/diffusion_tests_example.png
    :target: docs/_static/diffusion_tests_example.png
 
 

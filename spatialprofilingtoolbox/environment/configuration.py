@@ -17,6 +17,7 @@ from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 config_filename = '.spt_pipeline.json'
+nf_script_file = 'spt_pipeline.nf'
 
 workflows = {
     **diffusion_workflow,
@@ -30,6 +31,17 @@ def get_version():
         with open(path, 'r') as file:
             version = file.read().rstrip('\n')
     return version
+
+def write_out_nextflow_script():
+    nf_script = None
+    with importlib.resources.path('spatialprofilingtoolbox', nf_script_file) as path:
+        with open(path, 'rt') as file:
+            nf_script = file.read().rstrip('\n')
+    if nf_script:
+        with open(os.getcwd(), 'wt') as file:
+            file.write(nf_script)
+    else:
+        logger.error('Could not load %s', nf_script_file)
 
 def get_config_parameters(json_string=None):
     supplied_json_string = not json_string is None

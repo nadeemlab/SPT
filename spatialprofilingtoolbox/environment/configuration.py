@@ -4,7 +4,9 @@ configuration parameter management.
 """
 import importlib.resources
 import os
-from os.path import exists, abspath
+from os.path import abspath
+from os.path import exists
+from os.path import join
 import json
 
 from .workflow_modules import WorkflowModules
@@ -38,7 +40,7 @@ def write_out_nextflow_script():
         with open(path, 'rt') as file:
             nf_script = file.read().rstrip('\n')
     if nf_script:
-        with open(os.getcwd(), 'wt') as file:
+        with open(join(os.getcwd(), nf_script_file), 'wt') as file:
             file.write(nf_script)
     else:
         logger.error('Could not load %s', nf_script_file)

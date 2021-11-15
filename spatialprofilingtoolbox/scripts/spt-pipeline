@@ -21,7 +21,8 @@ if __name__=='__main__':
     single_job = 'single-job'
     aggregate_results = 'aggregate-results'
     run = 'run'
-    commands = [generate_jobs, list_auxiliary_job_inputs, single_job, aggregate_results, run]
+    configure = 'configure'
+    commands = [generate_jobs, list_auxiliary_job_inputs, single_job, aggregate_results, run, configure]
     parser.add_argument(
         'command_token',
         nargs='?',
@@ -76,6 +77,8 @@ if __name__=='__main__':
     command = args.command_token
 
     parameters = {**parameters, **spt.get_config_parameters()}
+    if command == configure:
+        exit()
 
     if command == list_auxiliary_job_inputs:
         job_generator = spt.get_job_generator(**parameters)

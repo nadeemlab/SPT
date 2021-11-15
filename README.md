@@ -35,7 +35,11 @@ If you just want to try this out, without [preparing your own input data](#Prepa
 
 ![config dialog](docs/_static/dialog_example.png)
 
-You can also skip this dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`.
+You can also skip this dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script `[spt_pipeline.nf](spatialprofilingtoolbox/spt_pipeline.nf)` to your working directory and then use Nextflow directly:
+
+```
+nextflow spt_pipeline.nf
+```
 
 **LSF**. The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management) on which [Singularity](https://sylabs.io/singularity/) is installed. Every HPC is configured differently with respect to shared file system resources, and few HPCs allow the Docker daemon that would permit automatic container usage. For this reason it is currently necessary to manually pull the singularity container from a public registry,
 

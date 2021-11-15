@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 
-import spatialprofilingtoolbox as spt
-from spatialprofilingtoolbox import DiffusionTestsViz
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.applications.diffusion_tests_viz import DiffusionTestsViz
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Visualize differential diffusion distance statistical tests.')

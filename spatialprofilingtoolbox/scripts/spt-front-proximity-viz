@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 
-import spatialprofilingtoolbox as spt
-from spatialprofilingtoolbox import FrontProximityViz
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.applications.front_proximity_viz import FrontProximityViz
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

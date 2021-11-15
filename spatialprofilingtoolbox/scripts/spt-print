@@ -22,7 +22,7 @@ class ExposedInfo:
             print(printable)
             return
 
-        for handle in list(ExposedInfo.info.keys()) + list(ExposedInfo.delayed_retrieval_info.keys()):
+        for handle in list(ExposedInfo.info.keys()):
             print(handle)
 
 if __name__=='__main__':

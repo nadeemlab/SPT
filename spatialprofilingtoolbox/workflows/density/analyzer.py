@@ -26,64 +26,19 @@ class DensityAnalyzer(SingleJobAnalyzer):
         **kwargs,
     ):
         super(DensityAnalyzer, self).__init__(**kwargs)
-        sample_identifiers_by_file = self.retrieve_cell_input_file_info(skip_integrity_check)
+        self.retrieve_input_filename()
+        self.retrieve_sample_identifier()
         self.calculator = DensityCalculator(
-            sample_identifiers_by_file = sample_identifiers_by_file,
+            input_filename = self.get_input_filename(),
+            sample_identifier = self.get_sample_identifier(),
             dataset_settings = self.dataset_settings,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
         )
-        logger.info('Job started.')
-        logger.info('Note: The "density" workflow operates as a single job.')
+        logger.info('Density job started.')
 
     def _calculate(self):
         self.calculator.calculate_density()
-
-    def retrieve_cell_input_file_info(self, skip_integrity_check):
-        """
-        :param skip_integrity_check: Whether to calculate checksums and verify that they
-            match what appears in the manifest. This option is provided to speed up
-            repeated runs.
-        :type skip_integrity_check: bool
-
-        :return: Information about the input files with cell data. A dictionary whose
-            keys are absolute file paths, and values are sample identifiers associated
-            with the files.
-        :rtype: dict
-        """
-        if skip_integrity_check:
-            logger.info('Skipping file integrity checks.')
-
-        file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
-
-        sample_identifiers_by_file = {}
-        for i, row in file_metadata.iterrows():
-            if not self.dataset_design.validate_cell_manifest_descriptor(row['Data type']):
-                continue
-            input_file = row['File name']
-            sample_identifier = row['Sample ID']
-            expected_sha256 = row['Checksum']
-            input_file = abspath(join(self.dataset_settings.input_path, input_file))
-
-            if not skip_integrity_check:
-                buffer_size = 65536
-                sha = hashlib.sha256()
-                with open(input_file, 'rb') as file:
-                    while True:
-                        data = file.read(buffer_size)
-                        if not data:
-                            break
-                        sha.update(data)
-                sha256 = sha.hexdigest()
-                if sha256 != expected_sha256:
-                    logger.error(
-                        'File "%s" has wrong SHA256 hash (%s ; expected %s).',
-                        row['File name'],
-                        sha256,
-                        expected_sha256,
-                    )
-            sample_identifiers_by_file[basename(input_file)] = sample_identifier
-        return sample_identifiers_by_file
 
     def initialize_intermediate_database(self):
         """

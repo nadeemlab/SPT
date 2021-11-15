@@ -24,20 +24,24 @@ class DensityCalculator(Calculator):
     """
     def __init__(
         self,
-        sample_identifiers_by_file: dict=None,
+        input_filename: str=None,
+        sample_identifier: str=None,
         dataset_settings: DatasetSettings=None,
         **kwargs,
     ):
         """
-        :param sample_identifers_by_file: Association of input data files to
-            corresponding samples.
-        :type sample_identifiers_by_file: dict
+        :param input_filename: The filename for the source file with cell data.
+        :type input_filename: str
+
+        :param sample_identifier: The sample associated with this source file.
+        :type sample_identifier: str
 
         :param dataset_settings: Convenience bundle of paths to input dataset files.
         :type dataset_settings: DatasetSettings
         """
         super(DensityCalculator, self).__init__(**kwargs)
-        self.sample_identifiers_by_file = sample_identifiers_by_file
+        self.input_filename = input_filename
+        self.sample_identifier = sample_identifier
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
 
     def calculate_density(self):
@@ -141,75 +145,77 @@ class DensityCalculator(Calculator):
 
         cell_groups = []
         fov_lookup = {}
-        for filename, sample_identifier in self.sample_identifiers_by_file.items():
-            table_file = self.get_table(filename)
-            self.dataset_design.normalize_fov_descriptors(table_file)
+        # for filename, sample_identifier in self.sample_identifiers_by_file.items():
+        filename = self.input_filename
+        sample_identifier = self.sample_identifier
+        table_file = self.get_table(filename)
+        self.dataset_design.normalize_fov_descriptors(table_file)
 
-            col = self.dataset_design.get_FOV_column()
-            fovs = sorted(list(set(table_file[col])))
-            for i, fov in enumerate(fovs):
-                fov_lookup[(sample_identifier, i)] = fov
-                table_file.loc[table_file[col] == fov, col] = i
+        col = self.dataset_design.get_FOV_column()
+        fovs = sorted(list(set(table_file[col])))
+        for i, fov in enumerate(fovs):
+            fov_lookup[(sample_identifier, i)] = fov
+            table_file.loc[table_file[col] == fov, col] = i
 
-            for _, table_fov in table_file.groupby(col):
-                table = table_fov.copy()
-                table = table.reset_index(drop=True)
+        for _, table_fov in table_file.groupby(col):
+            table = table_fov.copy()
+            table = table.reset_index(drop=True)
 
-                if 'compartment' in table.columns:
-                    logger.error('Woops, name collision "compartment".')
-                    break
-                all_compartments = self.dataset_design.get_compartments()
-                table['compartment'] = 'Not in ' + ';'.join(all_compartments)
+            if 'compartment' in table.columns:
+                logger.error('Woops, name collision "compartment".')
+                break
+            all_compartments = self.dataset_design.get_compartments()
+            table['compartment'] = 'Not in ' + ';'.join(all_compartments)
 
-                for compartment in self.dataset_design.get_compartments():
-                    signature = self.dataset_design.get_compartmental_signature(table, compartment)
-                    table.loc[signature, 'compartment'] = compartment
+            for compartment in self.dataset_design.get_compartments():
+                signature = self.dataset_design.get_compartmental_signature(table, compartment)
+                table.loc[signature, 'compartment'] = compartment
 
-                signatures_by_name = self.get_phenotype_signatures_by_name()
-                for name in pheno_names:
-                    signature = signatures_by_name[name]
-                    bools = self.dataset_design.get_pandas_signature(table, signature)
-                    ints = [1 if value else 0 for value in bools]
-                    table[name + ' membership'] = ints
-                phenotype_membership_columns = [name + ' membership' for name in pheno_names]
+            signatures_by_name = self.get_phenotype_signatures_by_name()
+            for name in pheno_names:
+                signature = signatures_by_name[name]
+                bools = self.dataset_design.get_pandas_signature(table, signature)
+                ints = [1 if value else 0 for value in bools]
+                table[name + ' membership'] = ints
+            phenotype_membership_columns = [name + ' membership' for name in pheno_names]
 
-                for compartment in all_compartments:
-                    self.add_nearest_cell_data(table, compartment)
-                nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in all_compartments]
+            for compartment in all_compartments:
+                self.add_nearest_cell_data(table, compartment)
+            nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in all_compartments]
 
-                table['sample_identifier'] = sample_identifier
-                table['outcome_assignment'] = outcomes_dict[sample_identifier]
+            table['sample_identifier'] = sample_identifier
+            table['outcome_assignment'] = outcomes_dict[sample_identifier]
 
-                if self.computational_design.use_intensities:
-                    self.overlay_intensities(table)
-                intensity_columns = self.computational_design.get_intensity_columns(values_only=True)
+            if self.computational_design.use_intensities:
+                self.overlay_intensities(table)
+            intensity_columns = self.computational_design.get_intensity_columns(values_only=True)
 
-                pertinent_columns = [
-                    'sample_identifier',
-                    self.dataset_design.get_FOV_column(),
-                    'outcome_assignment',
-                    'compartment',
-                    self.dataset_design.get_cell_area_column(),
-                ] + phenotype_membership_columns + intensity_columns + nearest_cell_columns
+            pertinent_columns = [
+                'sample_identifier',
+                self.dataset_design.get_FOV_column(),
+                'outcome_assignment',
+                'compartment',
+                self.dataset_design.get_cell_area_column(),
+            ] + phenotype_membership_columns + intensity_columns + nearest_cell_columns
 
-                table = table[pertinent_columns]
-                table.rename(columns = {
-                    self.dataset_design.get_FOV_column() : 'fov_index',
-                    self.dataset_design.get_cell_area_column() : 'cell_area',
-                }, inplace=True)
+            table = table[pertinent_columns]
+            table.rename(columns = {
+                self.dataset_design.get_FOV_column() : 'fov_index',
+                self.dataset_design.get_cell_area_column() : 'cell_area',
+            }, inplace=True)
 
-                header1 = self.computational_design.get_cells_header_variable_portion(
-                    style='readable',
-                )
-                header2 = self.computational_design.get_cells_header_variable_portion(
-                    style='sql',
-                )
-                table.rename(columns = {
-                    header1[i][0] : header2[i][0] for i in range(len(header1))
-                }, inplace=True)
+            header1 = self.computational_design.get_cells_header_variable_portion(
+                style='readable',
+            )
+            header2 = self.computational_design.get_cells_header_variable_portion(
+                style='sql',
+            )
+            table.rename(columns = {
+                header1[i][0] : header2[i][0] for i in range(len(header1))
+            }, inplace=True)
 
-                cell_groups.append(table)
-            logger.debug('%s cells parsed from file %s.', table_file.shape[0], filename)
+            cell_groups.append(table)
+        logger.debug('%s cells parsed from file %s.', table_file.shape[0], filename)
         logger.debug('Completed cell table collation.')
         return pd.concat(cell_groups), fov_lookup
 

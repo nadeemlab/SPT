@@ -20,4 +20,4 @@ class DensityJobGenerator(JobGenerator):
         pass
 
     def job_specification_by_file(self):
-        return False
+        return True

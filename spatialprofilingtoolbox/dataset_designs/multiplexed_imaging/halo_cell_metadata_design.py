@@ -192,7 +192,7 @@ class HALOCellMetadataDesign:
         """
         return ['Cytoplasm', 'Nucleus', 'Membrane']
 
-    def get_intensity_column_names(self):
+    def get_intensity_column_names(self, with_sites=True):
         """
         Returns:
             list:
@@ -201,7 +201,7 @@ class HALOCellMetadataDesign:
         """
         columns_by_elementary_phenotype = {}
         sites = self.get_cellular_sites()
-        if sites == []:
+        if not with_sites:
             sites = ['']
         for site in sites:
             for e in sorted(list(self.elementary_phenotypes['Name'])):

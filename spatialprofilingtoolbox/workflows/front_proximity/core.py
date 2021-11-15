@@ -95,6 +95,9 @@ class FrontProximityCalculator(Calculator):
 
             # Select pertinent columns and rename
             intensity_column_names = self.dataset_design.get_intensity_column_names()
+            if any([not c in df.columns for c in intensity_column_names.values()]):
+                intensity_column_names = self.dataset_design.get_intensity_column_names(with_sites=False)
+
             inverse = {value:key for key, value in intensity_column_names.items()}
             source_columns = list(intensity_column_names.values())
             pertinent_columns = [

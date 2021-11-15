@@ -29,47 +29,21 @@ The instructions for getting started are basically the same whether you will be 
 pip install spatialprofilingtoolbox
 ```
 
-`spt-pipeline`
+Now you just do `spt-pipeline` in the directory you want all of the outputs created. On the first run, you will be prompted to choose which computations to do, where the input data is stored, etc.
 
-**Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed* [Singularity](https://sylabs.io/singularity/) *, you must first pull the Singularity container from Docker Hub using* :
+If you just want to try this out, without [preparing your own input data](#Preparing-your-data) as described above, you can clone this repository, do `cd tests/`, and use the test data in `tests/data/` by answering the prompts as shown:
 
-    singularity pull docker://jimmymathews/spt:0.7.19
+![config dialog](docs/_static/dialog_example.png)
 
-*(using the correct version number) and moving the container `.sif` file to an area accessible to the nodes in your cluster.*
+You can also skip this dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`.
 
-Example answers to the `spt-pipeline` prompts are shown below for the phenotype proximity workflow, using the test data that ships with the SPT source code. There are slight variations depending on the workflow.
+**LSF**. The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management) on which [Singularity](https://sylabs.io/singularity/) is installed. Every HPC is configured differently with respect to shared file system resources, and few HPCs allow the Docker daemon that would permit automatic container usage. For this reason it is currently necessary to manually pull the singularity container from a public registry,
 
-.. image: docs/_static/dialog_example.png
-   :target: docs/_static/dialog_example.png
+```sh
+singularity pull docker://nadeemlab/spt:latest
+```
 
-The parameters selected during the dialog are saved in a configuration file called `.spt-pipeline.config`:
-
-.. code-block: ini
-
-   [default]
-   workflow = Multiplexed IF phenotype proximity
-   job_working_directory = ./SPT/
-   input_path = ./SPT/tests/data
-   outcomes_file = ./SPT/tests/data/diagnosis.tsv
-   output_path = ./SPT/output
-   jobs_path = ./SPT/jobs
-   logs_path = ./SPT/logs
-   schedulers_path = ./SPT/
-   sif_file = ./SPT/building/spt_v0.5.69_08-17-2021_17-07.sif
-   file_manifest_file = ./SPT/tests/data/file_manifest.tsv
-   runtime_platform = local
-   elementary_phenotypes_file = ./SPT/tests/data/elementary_phenotypes.csv
-   complex_phenotypes_file = ./SPT/tests/data/complex_phenotypes.csv
-   excluded_hostname = none
-   save_graphml = True
-
-   [static]
-   version = 0.5.69
-
-For headless (that is, non-interactive) runs, just save the desired parameters in `.spt-pipeline.config`. The next call of `spt-pipeline` will initiate the pipeline rather than the configuration dialog.
-
-After all jobs have completed, use `spt-analyze-results` to do the final aggregation step and to run statistical tests. You can also use `spt-analyze-results` *before* all jobs have completed, to see final results based on partially-completed intermediate data.
-
+and move the resulting `.sif` file to a shared area accessible to the nodes in your cluster.
 
 Examples
 --------

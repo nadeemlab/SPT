@@ -35,7 +35,7 @@ If you just want to try this out, without [preparing your own input data](#Prepa
 
 ![config dialog](docs/_static/dialog_example.png)
 
-You can also skip this dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script `[spt_pipeline.nf](spatialprofilingtoolbox/spt_pipeline.nf)` to your working directory and then use Nextflow directly:
+You can also skip this dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script [`spt_pipeline.nf`](spatialprofilingtoolbox/spt_pipeline.nf) to your working directory and then use Nextflow directly:
 
 ```
 nextflow spt_pipeline.nf
@@ -49,7 +49,7 @@ singularity pull docker://nadeemlab/spt:latest
 
 and move the resulting `.sif` file to a shared area accessible to the nodes in your cluster.
 
-You must then add the path to this `.sif` file to the configuration file `[here](deployment/nextflow.config.lsf)`, and "install" this configuration file into your home directory to be a file named `$HOME/.nextflow/config`.
+You must then add the path to this `.sif` file to the configuration file [here](deployment/nextflow.config.lsf), and "install" this configuration file into your home directory to be a file named `$HOME/.nextflow/config`.
 
 Examples
 --------

@@ -29,7 +29,7 @@ The instructions for getting started are basically the same whether you will be 
 pip install spatialprofilingtoolbox
 ```
 
-Now you just do `spt-pipeline` in the directory you want all of the outputs created. On the first run, you will be prompted to choose which computations to do, where the input data is stored, etc.
+Now you just do `spt-pipeline` in the directory where you want all of the outputs to be created. On the first run, you will be prompted to choose which computations to do, where the input data is stored, etc.
 
 If you just want to try this out, without [preparing your own input data](#Preparing-your-data) as described above, you can clone this repository, do `cd tests/`, and use the test data in `tests/data/` by answering the prompts as shown:
 

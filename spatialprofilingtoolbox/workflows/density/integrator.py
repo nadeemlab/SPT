@@ -91,7 +91,8 @@ class DensityAnalysisIntegrator:
         DensityDataLogger.log_normalized_areas(cells, area_sums, normalized_sum_columns)
 
         phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
-        outcomes = sorted(list(set(cells['outcome_assignment'])))
+        values = list(set(cells['outcome_assignment']))
+        outcomes = sorted([value if not value is None else 'None' for value in values])
         return [area_sums, phenotype_names, outcomes]
 
     def do_outcome_tests(self):

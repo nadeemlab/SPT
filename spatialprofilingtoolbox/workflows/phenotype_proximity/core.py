@@ -89,21 +89,6 @@ class PhenotypeProximityCalculator(Calculator):
         )
         self.write_cell_pair_counts(radius_limited_counts)
 
-    @staticmethod
-    def pull_in_outcome_data(outcomes_file):
-        """
-        Parses outcome assignments from file.
-
-        :return: ``outcomes_dict``. Mapping of sample identifiers to outcome labels.
-        :rtype: dict
-        """
-        outcomes_table = pd.read_csv(outcomes_file, sep='\t')
-        columns = outcomes_table.columns
-        outcomes_dict = {
-            row[columns[0]]: row[columns[1]] for i, row in outcomes_table.iterrows()
-        }
-        return outcomes_dict
-
     def cache_fov_strings(self, table_file):
         """
         :param table_file: Table with cell data.

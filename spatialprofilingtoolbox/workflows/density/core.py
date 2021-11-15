@@ -59,23 +59,6 @@ class DensityCalculator(Calculator):
         self.write_fov_lookup_table(fov_lookup)
         logger.info('Finished writing cells and fov lookup helper.')
 
-    @staticmethod
-    def pull_in_outcome_data(outcomes_file):
-        """
-        :param outcomes_file: Name of file with outcomes data.
-        :type outcomes_file: str
-
-        :return outcomes: Dictionary whose keys are sample identifiers, and values are
-            outcome labels.
-        :rtype outcomes: dict
-        """
-        outcomes_table = pd.read_csv(outcomes_file, sep='\t')
-        columns = outcomes_table.columns
-        outcomes_dict = {
-            row[columns[0]]: row[columns[1]] for i, row in outcomes_table.iterrows()
-        }
-        return outcomes_dict
-
     def get_phenotype_signatures_by_name(self):
         """
         Munges composite phenotype signature names from their markers.

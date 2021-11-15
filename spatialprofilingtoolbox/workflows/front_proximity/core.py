@@ -34,18 +34,6 @@ class FrontProximityCalculator(Calculator):
         self.write_cell_front_distance_records(distance_records)
         logger.debug('Finished writing cell front distances in sample %s.', self.sample_identifier)
 
-    def pull_in_outcome_data(self):
-        """
-        Parses outcome assignments from file.
-        Saves to outcomes_dict.
-        """
-        outcomes_df = pd.read_csv(self.outcomes_file, sep='\t')
-        columns = outcomes_df.columns
-        outcomes_dict = {
-            row[columns[0]]: row[columns[1]] for i, row in outcomes_df.iterrows()
-        }
-        return outcomes_dict
-
     def get_phenotype_signatures_by_name(self):
         signatures = self.computational_design.get_all_phenotype_signatures()
         return {self.dataset_design.munge_name(signature) : signature for signature in signatures}

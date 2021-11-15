@@ -29,6 +29,23 @@ class Calculator:
         self.preprocess(table_from_file)
         return table_from_file
 
+    @staticmethod
+    def pull_in_outcome_data(outcomes_file):
+        """
+        :param outcomes_file: Name of file with outcomes data.
+        :type outcomes_file: str
+
+        :return outcomes: Dictionary whose keys are sample identifiers, and values are
+            outcome labels.
+        :rtype outcomes: dict
+        """
+        outcomes_table = pd.read_csv(outcomes_file, sep='\t')
+        columns = outcomes_table.columns
+        outcomes_dict = {
+            row[columns[0]]: str(row[columns[1]]) for i, row in outcomes_table.iterrows()
+        }
+        return outcomes_dict
+
     def preprocess(self, table):
         if self.computational_design.dichotomize:
             for phenotype in self.dataset_design.get_elementary_phenotype_names():

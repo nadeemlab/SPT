@@ -50,7 +50,7 @@ You can also skip the dialog by creating the configuration file `.spt_pipeline.j
 nextflow spt_pipeline.nf
 ```
 
-**LSF**. The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management) on which [Singularity](https://sylabs.io/singularity/) is installed. However every HPC is configured differently with respect to shared file system resources, and few HPCs allow the Docker daemon that would permit automatic container usage. For this reason it is currently necessary to manually pull the singularity container from a public registry,
+**LSF**. The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management) on which [Singularity](https://sylabs.io/singularity/) is installed. However every HPC is configured differently with respect to shared file system resources, and few HPCs allow the Docker daemon that would permit automatic container usage. For this reason it is currently necessary to manually pull the Docker container "as" a singularity container from our public registry,
 
 ```sh
 singularity pull docker://nadeemlab/spt:latest
@@ -58,7 +58,7 @@ singularity pull docker://nadeemlab/spt:latest
 
 and move the resulting `.sif` file to a shared area accessible to the nodes in your cluster.
 
-You must then add the path to this `.sif` file to a copy of the configuration file [here](deployment/nextflow.config.lsf) installed into `$HOME/.nextflow/config`.
+You must then add the path to this `.sif` file to a manually-created copy of the configuration file [here](deployment/nextflow.config.lsf), which you must install into `$HOME/.nextflow/config`.
 
 Examples
 --------

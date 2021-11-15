@@ -43,7 +43,9 @@ Now you just do `spt-pipeline` in the directory where you want all of the output
 
 If you just want to try this out, without [preparing your own input data](#Preparing-your-data) as described above, you can clone this repository, do `cd tests/`, and use the test data in `tests/data/` by answering the prompts as shown:
 
-![config dialog](docs/_static/dialog_example.png)
+<p align="center">
+<img src="docs/_static/dialog_example.png" alt="config dialog">
+</p>
 
 You can also skip the dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script [`spt_pipeline.nf`](spatialprofilingtoolbox/spt_pipeline.nf) to your working directory and then use Nextflow directly:
 

@@ -27,7 +27,7 @@ class FrontProximityCalculator(Calculator):
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
 
     def calculate_front_proximity(self):
-        outcomes_dict = self.pull_in_outcome_data()
+        outcomes_dict = self.pull_in_outcome_data(self.outcomes_file)
         outcome = outcomes_dict[self.sample_identifier]
         cells = self.create_cell_tables()
         distance_records = self.calculate_front_distance_records(cells, outcome)

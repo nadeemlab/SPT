@@ -5,6 +5,7 @@
 <p align="center">
 <a href="https://github.com/nadeemlab/SPT#Supported-workflows">Supported workflows</a>
  | <a href="https://github.com/nadeemlab/SPT#Preparing-your-data">Preparing your data</a>
+ | <a href="https://github.com/nadeemlab/SPT#Prerequisites">Prerequisites</a>
  | <a href="https://github.com/nadeemlab/SPT#Getting-started">Getting started</a>
  | <a href="https://github.com/nadeemlab/SPT#Examples">Examples</a>
  | <a href="https://spatialprofilingtoolbox.readthedocs.io">Read the Docs</a>
@@ -23,8 +24,8 @@ Preparing your data
 -------------------
 The current workflows all operate on spreadsheet files mimicing that of object/cell manifests exported from the [HALO](https://indicalab.com/halo/) software. The metadata format is exemplified by the [test data](https://github.com/nadeemlab/SPT/tree/main/tests/data). See also the [specification](https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md) for a file manifest file, used to keep all metadata for a dataset organized.
 
-Prequisites
------------
+Prerequisites
+-------------
 The instructions are basically the same whether you will be running on your local machine, on a High-Performance Cluster for large datasets, or another runtime context, with slight differences noted where applicable.
 
 1. Ensure a Linux/Unix-style environment (though a Windows deployment may work using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)).

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cp integration_tests/example_config_files/diffusion.json .spt_pipeline.json
-source test_run_pipeline.sh
+spt-pipeline

@@ -4,9 +4,9 @@ from os.path import abspath
 import re
 import json
 
-from ... import config_filename
-from ... import get_version
-from ... import workflows
+from ...environment.configuration_settings import workflows
+from ...environment.configuration_settings import config_filename
+from ...environment.configuration_settings import get_version
 
 
 class DialogSolicitor:
@@ -149,7 +149,7 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
     )
     parameters['input_path'] = abspath(parameters['input_path'])
 
-    parameters['file_manifest'] = pp.prompt(
+    parameters['file_manifest_file'] = pp.prompt(
         'Enter the file manifest file:',
     )
 

@@ -9,30 +9,14 @@ from os.path import exists
 from os.path import join
 import json
 
-from .workflow_modules import WorkflowModules
-from ..workflows.diffusion import components as diffusion_workflow
-from ..workflows.phenotype_proximity import components as phenotype_proximity_workflow
-from ..workflows.front_proximity import components as front_proximity_workflow
-from ..workflows.density import components as density_workflow
+from ..applications.configuration_ui.ui import configuration_dialog
+from .configuration_settings import config_filename
+from .configuration_settings import get_version
 
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-config_filename = '.spt_pipeline.json'
 nf_script_file = 'spt_pipeline.nf'
-
-workflows = {
-    **diffusion_workflow,
-    **phenotype_proximity_workflow,
-    **front_proximity_workflow,
-    **density_workflow,
-}
-
-def get_version():
-    with importlib.resources.path('spatialprofilingtoolbox', 'version.txt') as path:
-        with open(path, 'r') as file:
-            version = file.read().rstrip('\n')
-    return version
 
 def write_out_nextflow_script():
     nf_script = None
@@ -57,20 +41,13 @@ def get_config_parameters(json_string=None):
         return None
 
     if (not supplied_json_string) and (not has_config_file):
-        logger.error(
-            ''.join([
-                'Configuration file %s does not exist, and you did not supply ',
-                'json_string. Try spt-configure'
-            ]),
-            config_filename
-        )
-        return None
+        configuration_dialog()
+        json_string = open(config_filename, 'rt').read()
 
-    if has_config_file:
+    if (not supplied_json_string) and has_config_file:
         json_string = open(config_filename, 'rt').read()
 
     parameters = json.loads(json_string)
-
     version_specifier = 'spt_version'
     if version_specifier in parameters:
         if parameters[version_specifier] != get_version():

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import argparse
 import subprocess
+from subprocess import PIPE
 from shutil import which
+import os
+from os.path import join
 
 import spatialprofilingtoolbox as spt
 
@@ -15,11 +18,10 @@ if __name__=='__main__':
     )
     generate_jobs = 'generate-jobs'
     list_auxiliary_job_inputs = 'list-auxiliary-job-inputs'
-    configure = 'configure'
     single_job = 'single-job'
     aggregate_results = 'aggregate-results'
     run = 'run'
-    commands = [generate_jobs, list_auxiliary_job_inputs, configure, single_job, aggregate_results, run]
+    commands = [generate_jobs, list_auxiliary_job_inputs, single_job, aggregate_results, run]
     parser.add_argument(
         'command_token',
         nargs='?',
@@ -72,8 +74,6 @@ if __name__=='__main__':
         parameters['intermediate_database_filename'] = value
 
     command = args.command_token
-    if command == configure:
-        spt.configuration_dialog()
 
     parameters = {**parameters, **spt.get_config_parameters()}
 
@@ -94,12 +94,24 @@ if __name__=='__main__':
         integrator.calculate()
 
     if (not command in commands) or command == run:
+        nextflow_invoker = ['nextflow']
         if which('nextflow') is None:
             print('Installing nextflow.')
-            subprocess.run(['curl', '-s', 'https://get.nextflow.io', '-o', 'nfdownload.sh'])
-            subprocess.run(['bash', 'nfdownload.sh'])
+            download_file = join(os.getcwd(), 'nfdownload.sh')
+            subprocess.run(['curl', '-s', 'https://get.nextflow.io', '-o', download_file])
+            subprocess.run(['bash', download_file])
+            path_string = os.environ['PATH']
+            paths = path_string.strip('\n').split(':')
+            if not '~/bin' in paths:
+                print('Warning: ~/bin/ is not on the executable path, so nextflow will only be installed in this exact directory.')
+                nextflow_invoker = ['bash', download_file]
+            else:
+                nf_runner = join(os.environ['HOME'], 'bin/nextflow')
+                subprocess.run(['mv', download_file, nf_runner])
+                subprocess.run(['chmod', '+x', nf_runner])
+
         if which('nextflow') is None:
             print('Still can not find nextflow after attempted install. Aborting.')
             exit()
         spt.write_out_nextflow_script()
-        subprocess.run(['nextflow', spt.nf_script_file])
+        subprocess.run(nextflow_invoker + [spt.nf_script_file])

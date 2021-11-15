@@ -7,10 +7,10 @@ This is the Spatial Profiling Toolbox package. The source code is available
 from .applications.diffusion_graphs_viz.diffusion_graphs_viz import DiffusionGraphsViz # Migrate this import to application script only?
 from .applications.diffusion_tests_viz import DiffusionTestsViz # Same
 from .applications.front_proximity_viz import FrontProximityViz # Same
-from .environment.configuration import config_filename
-from .environment.configuration import workflows
+from .environment.configuration_settings import config_filename
+from .environment.configuration_settings import workflows
+from .environment.configuration_settings import get_version
 from .environment.configuration import get_config_parameters
-from .environment.configuration import get_version
 from .environment.configuration import write_out_nextflow_script
 from .environment.configuration import nf_script_file
 from .applications.configuration_ui.ui import configuration_dialog

@@ -20,40 +20,32 @@ The current workflows all operate on spreadsheet files mimicing that of object/c
 
 Getting started
 ---------------
-Thanks to the Nextflow engine, getting started is fairly straightforward whether you will be running on your local machine or on a High-Performance Cluster for large datasets.
+Thanks to the [Nextflow](https://www.nextflow.io/) engine, getting started is fairly straightforward whether you will be running on your local machine or on a High-Performance Cluster for large datasets.
 
 These instructions assume you are working on a Linux/Unix-style environment (though a Windows deployment should work using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)).
 
-After ensuring Java 8+ is installed, install [Nextflow](https://www.nextflow.io/):
+First ensure that Java 8+ is installed. This is needed for Nextflow. If you do not already have Nextflow, it will be installed by the first invocation of `spt-pipeline`.
 
-```sh
-curl -s https://get.nextflow.io | bash
-```
-
-
-
-
-
-Install from [PyPI](https://pypi.org/project/spatialprofilingtoolbox/):
+Install the SPT tools from [PyPI](https://pypi.org/project/spatialprofilingtoolbox/):
 
 ```sh
 pip install spatialprofilingtoolbox
 ```
 
-All workflows are configured by running ``spt-pipeline`` in your desired run directory.
+All workflows are configured by running `spt-pipeline configure` in your desired run directory.
 
 **Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed* [Singularity](https://sylabs.io/singularity/) *, you must first pull the Singularity container from Docker Hub using* :
 
     singularity pull docker://jimmymathews/spt:0.7.19
 
-*(using the correct version number) and moving the container ``.sif`` file to an area accessible to the nodes in your cluster.*
+*(using the correct version number) and moving the container `.sif` file to an area accessible to the nodes in your cluster.*
 
-Example answers to the ``spt-pipeline`` prompts are shown below for the phenotype proximity workflow, using the test data that ships with the SPT source code. There are slight variations depending on the workflow.
+Example answers to the `spt-pipeline` prompts are shown below for the phenotype proximity workflow, using the test data that ships with the SPT source code. There are slight variations depending on the workflow.
 
 .. image: docs/_static/dialog_example.png
    :target: docs/_static/dialog_example.png
 
-The parameters selected during the dialog are saved in a configuration file called ``.spt-pipeline.config``:
+The parameters selected during the dialog are saved in a configuration file called `.spt-pipeline.config`:
 
 .. code-block: ini
 
@@ -77,9 +69,9 @@ The parameters selected during the dialog are saved in a configuration file call
    [static]
    version = 0.5.69
 
-For headless (that is, non-interactive) runs, just save the desired parameters in ``.spt-pipeline.config``. The next call of ``spt-pipeline`` will initiate the pipeline rather than the configuration dialog.
+For headless (that is, non-interactive) runs, just save the desired parameters in `.spt-pipeline.config`. The next call of `spt-pipeline` will initiate the pipeline rather than the configuration dialog.
 
-After all jobs have completed, use ``spt-analyze-results`` to do the final aggregation step and to run statistical tests. You can also use ``spt-analyze-results`` *before* all jobs have completed, to see final results based on partially-completed intermediate data.
+After all jobs have completed, use `spt-analyze-results` to do the final aggregation step and to run statistical tests. You can also use `spt-analyze-results` *before* all jobs have completed, to see final results based on partially-completed intermediate data.
 
 
 Examples
@@ -96,7 +88,7 @@ As one possible answer to this question, here we calculate the **(unbalanced) ph
 
 High values for this metric may be due to overall higher counts for the target phenotype, as opposed to any spatial phenomenon. However, for small distance limits, comparatively high values for the proximity metric may indicate that the cells of the target phenotype are somehow attracted to or stimulated by cells of the source phenotype.
 
-The results of this pipeline are saved to ``output/phenotype_2_phenotype_proximity_tests.csv``. Example rows from this table are shown below:
+The results of this pipeline are saved to `output/phenotype_2_phenotype_proximity_tests.csv`. Example rows from this table are shown below:
 
 .. image: docs/_static/p2p_example.png
    :target: docs/_static/p2p_example.png
@@ -111,7 +103,7 @@ Some biological phenomena may be detectable already in dissociated "signal" not 
 
 One of the simplest and most readily available metrics for dissociated cell populations in histology slides is the **phenotype density**: *the fraction of the cell area occupied by cells of a given phenotype, out of the total cell area*.
 
-The results of this pipeline are saved to ``output/density_tests.csv``. Example rows from this table are shown below:
+The results of this pipeline are saved to `output/density_tests.csv`. Example rows from this table are shown below:
 
 .. image: docs/_static/density_example.png
    :target: docs/_static/density_example.png
@@ -124,7 +116,7 @@ Front proximity workflow
 ^^^^^^^^^^^^^^^^^^^^^^^^
 For a cell in a given biologically-meaningful region, distance to the front or boundary with a specific other region may be an important indicator of the probability of participation in processes of interaction between the two regions. For example, between tumor and stromal regions.
 
-In this workflow we calculate the **front proximity metric**: *the distance from each cell to the front between two given regions*. The values are then stratified by cell phenotype and saved to the file ``output/front_proximity.db``.
+In this workflow we calculate the **front proximity metric**: *the distance from each cell to the front between two given regions*. The values are then stratified by cell phenotype and saved to the file `output/front_proximity.db`.
 
 To see plots of the distributions, use:
 
@@ -132,7 +124,7 @@ To see plots of the distributions, use:
 
    spt-front-proximity-viz output/front_proximity.db --drop-compartment="<ignorable compartment name>"
 
-**Note**: *The* ``--drop-compartment`` *option should be provided as many times as necessary to remove from consideration all compartments/regions in excess of the two you wish to focus on. If only two compartment designations appear in your metadata files, then this option is not necessary.*
+**Note**: *The* `--drop-compartment` *option should be provided as many times as necessary to remove from consideration all compartments/regions in excess of the two you wish to focus on. If only two compartment designations appear in your metadata files, then this option is not necessary.*
 
 .. image: docs/_static/front_proximity_example.png
    :target: docs/_static/front_proximity_example.png
@@ -145,7 +137,7 @@ Diffusion workflow
 
 Here we calculate the **diffusion distance**: *the distance between each pair of cells after applying the diffusion map, i.e. evaluating eigenfunctions for the Laplace operator on each cell*. This distance depends on a "pseudo-time" unit, or scale, the amount of time to run forward a diffusion process Markov chain closely related to the diffusion map.
 
-Unless ``save_graphml=False``, this pipeline saves GraphML files containing diffusion-distance-weighted networks on the cell sets belonging to a given point, located in ``output/graphml/*``. Visualize them as shown below:
+Unless `save_graphml=False`, this pipeline saves GraphML files containing diffusion-distance-weighted networks on the cell sets belonging to a given point, located in `output/graphml/*`. Visualize them as shown below:
 
 .. code-block: bash
 
@@ -154,7 +146,7 @@ Unless ``save_graphml=False``, this pipeline saves GraphML files containing diff
 .. image: docs/_static/diffusion_graphs_viz_example.png
    :target: docs/_static/diffusion_graphs_viz_example.png
 
-This pipeline also saves statistical test results to ``output/diffusion_distance_tests.csv`` which assess the efficacy of the diffusion distance distributions as discriminators of given outcomes. To visualize the trend of the significant tests as the pseudo-time unit varies, use:
+This pipeline also saves statistical test results to `output/diffusion_distance_tests.csv` which assess the efficacy of the diffusion distance distributions as discriminators of given outcomes. To visualize the trend of the significant tests as the pseudo-time unit varies, use:
 
 .. code-block: bash
 

@@ -5,7 +5,7 @@
 
 [Supported workflows](#Supported-workflows) | [Preparing your data](#Preparing-your-data) | [Getting started](#Getting-started) | [Examples](#Examples) | [Read the Docs](https://spatialprofilingtoolbox.readthedocs.io)
 
-The SPT modules do image analysis computation in the context of histopathology. A lightweight framework is also provided to deploy a pipeline comprised of these modules in different runtime contexts (e.g. a High-Performance Cluster or on a single local machine).
+The SPT modules do image analysis computation in the context of histopathology. For the convenience of automatic usage in different runtime contexts, the pipelines are orchestrated with [Nextflow](https://www.nextflow.io/).
 
 Supported workflows
 -------------------
@@ -20,19 +20,16 @@ The current workflows all operate on spreadsheet files mimicing that of object/c
 
 Getting started
 ---------------
-Thanks to the [Nextflow](https://www.nextflow.io/) engine, getting started is fairly straightforward whether you will be running on your local machine or on a High-Performance Cluster for large datasets.
+The instructions for getting started are basically the same whether you will be running on your local machine, on a High-Performance Cluster for large datasets, or another runtime context, with slight differences noted where applicable.
 
-These instructions assume you are working on a Linux/Unix-style environment (though a Windows deployment should work using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)).
-
-First ensure that Java 8+ is installed. This is needed for Nextflow. If you do not already have Nextflow, it will be installed by the first invocation of `spt-pipeline`.
-
-Install the SPT tools from [PyPI](https://pypi.org/project/spatialprofilingtoolbox/):
-
+1. Ensure a Linux/Unix-style environment (though a Windows deployment should work using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)).
+2. Install Java 8+, if it is not already installed. This is needed for Nextflow. If you do not already have Nextflow installed, it will be installed by the first invocation of `spt-pipeline`.
+3. Install the SPT tools from [PyPI](https://pypi.org/project/spatialprofilingtoolbox/):
 ```sh
 pip install spatialprofilingtoolbox
 ```
 
-All workflows are configured by running `spt-pipeline configure` in your desired run directory.
+`spt-pipeline`
 
 **Note**: *You will be given the option to run locally or to schedule the pipeline as* `Platform LSF <https://www.ibm.com/products/hpc-workload-management>`_ *jobs. In the LSF case, assuming your administrators have installed* [Singularity](https://sylabs.io/singularity/) *, you must first pull the Singularity container from Docker Hub using* :
 

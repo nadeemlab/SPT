@@ -61,7 +61,7 @@ singularity pull docker://nadeemlab/spt:latest
 
 and move the resulting `.sif` file to a shared area accessible to the nodes in your cluster.
 
-You must then add the path to this `.sif` file to a manually-created copy of the configuration file [here](deployment/nextflow.config.lsf), which you must install into `$HOME/.nextflow/config`.
+You must then add the path to this `.sif` file to a manually-created copy of the configuration file [here](deployment/nextflow.config.lsf), which you must install into `$HOME/.nextflow/config` (that is, once installed the file should have base filename `config`).
 
 Examples
 --------

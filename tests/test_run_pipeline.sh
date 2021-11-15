@@ -1,3 +1,3 @@
 #!/bin/bash
 
-nextflow ../deployment/spt_pipeline.nf
+nextflow ../spatialprofilingtoolbox/spt_pipeline.nf

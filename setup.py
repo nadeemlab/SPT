@@ -23,7 +23,7 @@ requirements = [
     'plotly==5.1.0',
     'kaleido==0.2.1',
     'numpy==1.21.0',
-    'pandas==1.1.5',
+    'pandas>=1.1.5',
     'scipy==1.7.1',
     'scikit-learn==0.24.1',
 ]

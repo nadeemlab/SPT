@@ -110,7 +110,7 @@ The results of this pipeline are saved to `results/stats_tests.csv`. If no cell 
 
 Each row records the result of a test for statistically-significant difference between the values of the density metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
 
-**Intensity information**. To weight cells by the intensity value of a given channel in the density calculation, set `use_intensities : true` in configuration (or answer "yes" to the configuration dialog prompt regarding intensity usage.)
+**Intensity information**. To weight cells by the intensity value of a given channel in the density calculation, set `"use_intensities" : true` in the configuration file (or answer "yes" to the configuration dialog prompt regarding intensity usage.)
 
 ### Front proximity workflow
 
@@ -138,9 +138,9 @@ To see plots of the distributions, use:
 spt-front-proximity-viz results/intermediate.db --drop-compartment="<ignorable compartment name>"
 ```
 
-Plot rendering for about 500 MB (8 million cells) took 5 minutes on a workstation laptop. To monitor the progress, enable [debug logs](#Logs).
-
 **Note**: *The* `--drop-compartment` *option should be provided as many times as necessary to remove from consideration all compartments/regions in excess of the two you wish to focus on. If only two compartment designations appear in your metadata files, then this option is not necessary.*
+
+Plot rendering for about 500 MB (8 million cells) took 5 minutes on a workstation laptop. To monitor the progress, enable [debug logs](#Logs).
 
 <p align="center">
 <img src="docs/_static/front_proximity_example.png">

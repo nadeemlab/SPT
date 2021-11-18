@@ -172,7 +172,7 @@ class PhenotypeProximityCalculator(Calculator):
     def create_cell_tables(self):
         """
         Create tables, one for each field of view in the given source file, whose
-        records correspond to  individual cells. The schema is:
+        records correspond to individual cells. The schema is:
 
         - "regional compartment"
         - "x value"

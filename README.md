@@ -53,7 +53,8 @@ You can also skip the dialog by creating the configuration file `.spt_pipeline.j
 nextflow spt_pipeline.nf
 ```
 
-**LSF**. The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management) on which [Singularity](https://sylabs.io/singularity/) is installed. However every HPC is configured differently with respect to shared file system resources, and few HPCs allow the Docker daemon that would permit automatic container usage. For this reason it is currently necessary to manually pull the Docker container "as" a singularity container from our public registry,
+#### LSF
+The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management) on which [Singularity](https://sylabs.io/singularity/) is installed. However every HPC is configured differently with respect to shared file system resources, and few HPCs allow the Docker daemon that would permit automatic container usage. For this reason it is currently necessary to manually pull the Docker container "as" a singularity container from our public registry,
 
 ```sh
 singularity pull docker://nadeemlab/spt:latest
@@ -62,6 +63,14 @@ singularity pull docker://nadeemlab/spt:latest
 and move the resulting `.sif` file to a shared area accessible to the nodes in your cluster.
 
 You must then add the path to this `.sif` file to a manually-created copy of the configuration file [here](deployment/nextflow.config.lsf), which you must install into `$HOME/.nextflow/config` (that is, once installed the file should have base filename `config`).
+
+#### Logs
+SPT modules are designed to be silent on standard output by default. To enable logs to monitor operation, use:
+
+```sh
+export ENABLE_BASIC_SPT_LOGS=1
+export ENABLE_ALSO_SPT_DEBUG_LOGS=1
+```
 
 Examples
 --------
@@ -93,7 +102,7 @@ One of the simplest and most readily available metrics for dissociated cell popu
 
 **phenotype density**: *The fraction of the cell area occupied by cells of a given phenotype, out of the total cell area*.
 
-The results of this pipeline are saved to `results/stats_tests.csv`. Example rows from this table are shown below:
+The results of this pipeline are saved to `results/stats_tests.csv`. If no cell area data is provided, a default constant value is used. Example rows from this table are shown below:
 
 <p align="center">
 <img src="docs/_static/density_example.png">
@@ -101,19 +110,35 @@ The results of this pipeline are saved to `results/stats_tests.csv`. Example row
 
 Each row records the result of a test for statistically-significant difference between the values of the density metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
 
+**Intensity information**. To weight cells by the intensity value of a given channel in the density calculation, set `use_intensities : true` in configuration (or answer "yes" to the configuration dialog prompt regarding intensity usage.)
+
 ### Front proximity workflow
 
 The histology images and metadata supporting this example and the following example are a colon cancer dataset that will be made publicly available.
 
 For a cell in a given biologically-meaningful region, distance to the front or boundary with a specific other region may be an important indicator of the probability of participation in processes of interaction between the two regions. For example, between tumor and stromal regions.
 
-In this workflow we calculate the **front proximity metric**: *the distance from each cell to the front between two given regions*. The values are then stratified by cell phenotype and saved to the file `output/front_proximity.db`.
+In this workflow we calculate:
+
+**front proximity metric**: *the distance from each cell to the front between two given regions*.
+
+The values are then stratified by cell phenotype and saved to the SQLite database `results/intermediate.db`. The table `cell_front_distances` includes columns:
+
+- `sample_identifier`
+- `fov_index`
+- `outcome_assignment`
+- `phenotype`
+- `compartment`
+- `other_compartment`
+- `distance_to_front_in_pixels`
 
 To see plots of the distributions, use:
 
 ```sh
-spt-front-proximity-viz output/front_proximity.db --drop-compartment="<ignorable compartment name>"
+spt-front-proximity-viz results/intermediate.db --drop-compartment="<ignorable compartment name>"
 ```
+
+Plot rendering for about 500 MB (8 million cells) took 5 minutes on a workstation laptop. To monitor the progress, enable [debug logs](#Logs).
 
 **Note**: *The* `--drop-compartment` *option should be provided as many times as necessary to remove from consideration all compartments/regions in excess of the two you wish to focus on. If only two compartment designations appear in your metadata files, then this option is not necessary.*
 

@@ -65,30 +65,35 @@ You must then add the path to this `.sif` file to a manually-created copy of the
 
 Examples
 --------
-The histology images and metadata supporting the following examples are a colon cancer dataset that will be made publicly available.
+The dataset analyzed in the following examples is imaging mass cytometry of breast cancer tissue microarrays, published [here](https://doi.org/10.5281/zenodo.3518283). For the purpose of phenotyping, continuous intensity values were dichotomized using a [log transformation and 2-population Gaussian mixture model](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/environment/dichotomization.py).
 
 ### Phenotype proximity workflow
-A basic question concerning the spatial information provided by multiplexed images of cells is: What characterizes the spatial relationship between the arrangements of cells belonging to two given phenotypes?
 
-As one possible answer to this question, here we calculate the **(unbalanced) phenotype proximity metric**: *the average number of cells of a given target phenotype which occur within a prescribed (pixel) distance of a given cell of a given source phenotype, the average being over all such cells, i.e. those of the source phenotype*.
+A basic question concerning the spatial information provided by cell imaging is: What characterizes the spatial relationship between the arrangements of cells belonging to two given phenotypes?
+
+As an answer to this question, here we calculate:
+
+**(unbalanced) phenotype proximity metric**: *The average number of cells of a given target phenotype which occur within a prescribed (pixel) distance of a given cell of a given source phenotype, the average being over all such cells, i.e. those of the source phenotype*.
 
 High values for this metric may be due to overall higher counts for the target phenotype, as opposed to any spatial phenomenon. However, for small distance limits, comparatively high values for the proximity metric may indicate that the cells of the target phenotype are somehow attracted to or stimulated by cells of the source phenotype.
 
-The results of this pipeline are saved to `output/phenotype_2_phenotype_proximity_tests.csv`. Example rows from this table are shown below:
+The results of this pipeline are saved to `results/stats_tests.csv`. The most significant rows for a given pair of outcome values (in this case diagonosed intrinsic subtypes) are shown below:
 
 <p align="center">
-<img src="docs/_static/p2p_example.png">
+<img src="docs/_static/pp_bc.png">
 </p>
 
-Each row records the result of a test for statistically-significant difference between the values of the phenotype proximity metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
+Each row records the result of a test for statistically-significant difference between the values of the phenotype proximity metric in 2 different sample groups, when restricted to a given region or compartment of a given image when regional information is available.
 
 ### Density workflow
 
 Some biological phenomena may be detectable already in dissociated "signal" not involving the spatial information present in images.
 
-One of the simplest and most readily available metrics for dissociated cell populations in histology slides is the **phenotype density**: *the fraction of the cell area occupied by cells of a given phenotype, out of the total cell area*.
+One of the simplest and most readily available metrics for dissociated cell populations in histology slides is:
 
-The results of this pipeline are saved to `output/density_tests.csv`. Example rows from this table are shown below:
+**phenotype density**: *The fraction of the cell area occupied by cells of a given phenotype, out of the total cell area*.
+
+The results of this pipeline are saved to `results/stats_tests.csv`. Example rows from this table are shown below:
 
 <p align="center">
 <img src="docs/_static/density_example.png">
@@ -97,6 +102,8 @@ The results of this pipeline are saved to `output/density_tests.csv`. Example ro
 Each row records the result of a test for statistically-significant difference between the values of the density metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
 
 ### Front proximity workflow
+
+The histology images and metadata supporting this example and the following example are a colon cancer dataset that will be made publicly available.
 
 For a cell in a given biologically-meaningful region, distance to the front or boundary with a specific other region may be an important indicator of the probability of participation in processes of interaction between the two regions. For example, between tumor and stromal regions.
 

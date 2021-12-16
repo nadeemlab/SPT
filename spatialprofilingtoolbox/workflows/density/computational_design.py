@@ -68,11 +68,11 @@ class DensityDesign(ComputationalDesign):
         :rtype: list
         """
         signatures = self.get_all_phenotype_signatures()
-        phenotype_names = [self.dataset_design.munge_name(signature) for signature in signatures]
+        phenotype_names = sorted([self.dataset_design.munge_name(signature) for signature in signatures])
         if style == 'sql':
             phenotype_names = [re.sub(r'\+', r'$PLUS', name) for name in phenotype_names]
             phenotype_names = [re.sub('-', r'$MINUS', name) for name in phenotype_names]
-        phenotype_membership_columns = sorted([name + ' membership' for name in phenotype_names])
+        phenotype_membership_columns = [name + ' membership' for name in phenotype_names]
         if style == 'sql':
             phenotype_membership_columns = [
                 re.sub(' ', r'$SPACE', name) for name in phenotype_membership_columns

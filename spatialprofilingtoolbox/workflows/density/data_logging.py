@@ -14,6 +14,26 @@ class DensityDataLogger:
     Convenience class.
     """
     @staticmethod
+    def log_number_by_type(computational_design, cells, style='sql'):
+        header1 = computational_design.get_cells_header_variable_portion(
+            style='readable',
+        )
+        if style == 'readable':
+            header2 = header1
+        else:
+            header2 = computational_design.get_cells_header_variable_portion(
+                style='sql',
+            )
+        readable_names =  {
+            header2[i][0] : header1[i][0] for i in range(len(header1))
+        }
+        for item in header2:
+            pheno = item[0]
+            readable = readable_names[pheno]
+            number = cells[cells[pheno] == 1].shape[0]
+            logger.debug('%s cells (header value: %s). Count is  %s.', readable, pheno, number)
+
+    @staticmethod
     def log_cell_areas_one_fov(cells, fov_lookup_dict):
         """
         Reports the cells areas for a single FOV in a single image, by phenotype.
@@ -32,11 +52,13 @@ class DensityDataLogger:
             example_fov_string,
         )
         sample_focused_cells = cells[condition].sort_values(by='cell_area')
+        truncation = 100
+        head = sample_focused_cells.head(truncation)
         logger.debug(
             '(Transposed for readability:)\n%s',
-            sample_focused_cells.transpose().to_string(),
+            head.transpose().to_string(),
         )
-        logger.debug('(Table has %s rows.)', sample_focused_cells.shape[0])
+        logger.debug('(Table has %s rows, above is truncated at %s)', sample_focused_cells.shape[0], truncation)
 
     @staticmethod
     def log_normalization_factors(areas_all_phenotypes_dict):

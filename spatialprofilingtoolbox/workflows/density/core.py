@@ -14,6 +14,7 @@ from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
+from .data_logging import DensityDataLogger
 
 logger = colorized_logger(__name__)
 
@@ -55,6 +56,7 @@ class DensityCalculator(Calculator):
         logger.info('Pulled outcome data, %s assignments.', len(outcomes_dict))
         cells, fov_lookup = self.create_cell_table(outcomes_dict)
         logger.info('Aggregated %s cells into table.', cells.shape[0])
+        DensityDataLogger.log_number_by_type(self.computational_design, cells)
         self.write_cell_table(cells)
         self.write_fov_lookup_table(fov_lookup)
         logger.info('Finished writing cells and fov lookup helper.')
@@ -218,6 +220,15 @@ class DensityCalculator(Calculator):
         uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         cells.reset_index(drop=True, inplace=True)
+        c = cells.columns
+        schema_columns = self.computational_design.get_cells_header(style='sql')
+        if all([c[i] == schema_columns[i][0] for i in range(len(c))]):
+            logger.debug('Cells table to be written has correct (normalized, ordered) sql-style header values.')
+        else:
+            logger.debug('Cells table to be written has INCORRECT sql-style header values.')
+            if set(c) == set(schema_columns):
+                logger.debug('At least the sets are the same, only the order is wrong.')
+            logger.error('Cannot write cell table with wrong headers.')
         cells.to_sql('cells', connection, if_exists='append', index_label='id')
         connection.commit()
         connection.close()

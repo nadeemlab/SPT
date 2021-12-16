@@ -66,6 +66,9 @@ class DensityAnalysisIntegrator:
         :rtype: pandas.DataFrame, list, list
         """
         cells = self.get_dataframe_from_db('cells')
+        logger.debug('Basic information on the cells table pulled from sqlite:')
+        DensityDataLogger.log_number_by_type(self.computational_design, cells, style='readable')
+
         phenotype_columns = self.overlay_areas_on_masks(cells)
         DensityDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
 

@@ -1,8 +1,7 @@
 import logging
 import re
-import os
-ENABLE_ALSO_SPT_DEBUG_LOGS = ('ENABLE_ALSO_SPT_DEBUG_LOGS' in os.environ)
-ENABLE_BASIC_SPT_LOGS = ('ENABLE_BASIC_SPT_LOGS' in os.environ)
+ENABLE_BASIC_SPT_LOGS = True
+ENABLE_ALSO_SPT_DEBUG_LOGS = True
 
 class CustomFormatter(logging.Formatter):
     grey = '\x1b[38;21m'

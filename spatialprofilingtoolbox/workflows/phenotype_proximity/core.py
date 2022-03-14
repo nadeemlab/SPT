@@ -11,6 +11,8 @@ import pandas as pd
 import numpy as np
 from scipy.spatial.distance import cdist
 from scipy.sparse import coo_matrix
+import sklearn
+from sklearn.neighbors import BallTree
 
 from ...environment.file_io import get_outcomes_files
 from ...environment.settings_wrappers import DatasetSettings
@@ -80,9 +82,10 @@ class PhenotypeProximityCalculator(Calculator):
             self.input_filename,
         )
         cells = self.create_cell_tables()
-        cell_pairs = self.create_cell_pairs_tables(cells)
+        cell_pairs = self.create_cell_trees(cells)
         phenotype_indices, compartment_indices = self.precalculate_masks(cells)
         radius_limited_counts = self.do_aggregation_counting(
+            cells,
             cell_pairs,
             phenotype_indices,
             compartment_indices,
@@ -229,54 +232,47 @@ class PhenotypeProximityCalculator(Calculator):
         )
         return cells
 
-    def create_cell_pairs_tables(self, cells):
+    def create_cell_trees(self, cells):
         """
-        Precalculates the distances between cell pairs lying in the same field of view.
-        One table is created for each source file and field of view. The table schema
-        is:
-
-        - cell 1 index
-        - cell 2 index
-        - distance in pixels
-
         :param cells: Input collection of cells tables, see
             :py:meth:`create_cell_tables`.
         :type cells: dict
 
         :return: Dictionary whose keys are field of view integer indices and values are
-            tables of cell pairs.
+            sklearn.neighbors.BallTree objects.
         :rtype: dict
         """
-        cell_pairs = {}
+        cell_trees = {}
         logger.debug(
-            'Calculating cell pair distances for cells from %s.',
+            'Calculating cell trees for cells from %s.',
             self.input_filename,
         )
-        logger.debug(
-            'Logging per FOV: (number of cells, number cell pairs used, fraction of possible pairs)'
-        )
-        limit = PhenotypeProximityCalculator.radius_pixels_upper_limit
-        logger.debug('Only using pairs of pixel distance less than %s', limit)
+        # logger.debug(
+        #     'Logging per FOV: (number of cells, number cell pairs used, fraction of possible pairs)'
+        # )
+        # limit = PhenotypeProximityCalculator.radius_pixels_upper_limit
+        # logger.debug('Only using pairs of pixel distance less than %s', limit)
         for _, (fov_index, table) in enumerate(cells.items()):
-            distance_matrix = cdist(table[['x value', 'y value']], table[['x value', 'y value']])
-            distance_matrix[distance_matrix > limit] = 0
-            cell_pairs[fov_index] = distance_matrix
-            sparse = coo_matrix(distance_matrix)
-            number_pairs = int(len(sparse.data) / 2)
-            number_cells = table.shape[0]
-            number_all_pairs = number_cells * (number_cells - 1) / 2
-            logger.debug(
-                'FOV %s: (%s, %s, %s%%)',
-                fov_index,
-                number_cells,
-                number_pairs,
-                int(100 * number_pairs / number_all_pairs) / 100,
-            )
+            # distance_matrix = cdist(table[['x value', 'y value']], table[['x value', 'y value']])
+            # distance_matrix[distance_matrix > limit] = 0
+            # cell_pairs[fov_index] = distance_matrix
+            # sparse = coo_matrix(distance_matrix)
+            # number_pairs = int(len(sparse.data) / 2)
+            # number_cells = table.shape[0]
+            # number_all_pairs = number_cells * (number_cells - 1) / 2
+            # logger.debug(
+            #     'FOV %s: (%s, %s, %s%%)',
+            #     fov_index,
+            #     number_cells,
+            #     number_pairs,
+            #     int(100 * number_pairs / number_all_pairs) / 100,
+            # )
+            cell_trees[fov_index] = BallTree(table[['x value', 'y value']].to_numpy())
         logger.debug(
-            'Completed (field of view limited) cell pair distances calculation in %s.',
+            'Completed (field of view limited) cell tree construction from %s.',
             self.input_filename,
         )
-        return cell_pairs
+        return cell_trees
 
     def precalculate_masks(self, cells):
         """
@@ -311,13 +307,14 @@ class PhenotypeProximityCalculator(Calculator):
             return [(p1, p2) for p1 in phenotypes for p2 in phenotypes]
 
     def do_aggregation_counting(self,
-        cell_pairs,
+        cells,
+        cell_trees,
         phenotype_indices,
         compartment_indices,
     ):
         """
-        :param cell_pairs: See :py:meth:`create_cell_pairs_tables`.
-        :type cell_pairs: dict
+        :param cell_trees: See :py:meth:`create_cell_trees`.
+        :type cell_trees: dict
 
         :param phenotype_indices: See :py:meth:`precalculate_masks`.
         :type phenotype_indices: dict
@@ -330,20 +327,21 @@ class PhenotypeProximityCalculator(Calculator):
         """
         combinations2 = self.get_considered_phenotype_pairs()
         logger.debug(
-            'Creating radius-limited data sets for %s phenotype pairs.',
+            'Creating radius-limited counts for %s phenotype pairs.',
             len(combinations2),
         )
         results = []
         for combination in combinations2:
             results_combo = self.do_aggregation_one_phenotype_pair(
                 combination,
-                cell_pairs,
+                cells,
+                cell_trees,
                 phenotype_indices,
                 compartment_indices,
             )
             results.append(results_combo)
-            logger.debug('Cell pairs of types %s aggregated.', combination)
-        logger.debug('All %s combinations aggregated.', len(combinations2))
+            logger.debug('Cell pairs of types %s counted.', combination)
+        logger.debug('All %s combinations counted.', len(combinations2))
         columns = [
             'sample identifier',
             'input filename',
@@ -367,7 +365,8 @@ class PhenotypeProximityCalculator(Calculator):
 
     def do_aggregation_one_phenotype_pair(self,
         pair,
-        cell_pairs,
+        cells,
+        cell_trees,
         phenotype_indices,
         compartment_indices,
     ):
@@ -375,8 +374,11 @@ class PhenotypeProximityCalculator(Calculator):
         :param pairs: Pair of phenotype names.
         :type pairs: 2-tuple
 
-        :param cell_pairs: See :py:meth:`create_cell_pairs_tables`.
-        :type cell_pairs: dict
+        :param cells: Values are pairs, FOV index and cell table.
+        :type cells: dict
+
+        :param cell_trees: See :py:meth:`create_cell_trees`.
+        :type cell_trees: dict
 
         :param phenotype_indices: See :py:meth:`precalculate_masks`.
         :type phenotype_indices: dict
@@ -397,24 +399,43 @@ class PhenotypeProximityCalculator(Calculator):
             for radius in PhenotypeProximityCalculator.get_radii_of_interest():
                 count = 0
                 source_count = 0
-                for fov_index, distance_matrix in cell_pairs.items():
+                # for fov_index, tree in cell_trees.items():
+                for _, (fov_index, table) in enumerate(cells.items()):
                     rows = phenotype_indices[fov_index][source]
                     cols = phenotype_indices[fov_index][target]
                     if compartment != 'all':
                         rows = rows & compartment_indices[fov_index][compartment]
                         cols = cols & compartment_indices[fov_index][compartment]
-                    p2p_distance_matrix = distance_matrix[rows][:, cols]
-                    additional = np.sum(
-                        (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0)
+
+                    tree = cell_trees[fov_index]
+                    source_cell_locations = table.loc[rows][['x value', 'y value']]
+                    if source_cell_locations.shape[0] == 0:
+                        continue
+                    indices = tree.query_radius(
+                        source_cell_locations,
+                        radius,
+                        return_distance=False,
                     )
+
+                    additional = sum([
+                        len(set(i).intersection(set(cols)))
+                        for i in indices
+                    ])
+
+                    # p2p_distance_matrix = distance_matrix[rows][:, cols]
+                    # additional = np.sum(
+                    #     (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0)
+                    # )
+
                     if np.isnan(additional):
                         continue
+
                     count += additional
                     source_count += sum(rows)
 
                 if balanced:
                     area = 0
-                    for fov_index, distance_matrix in cell_pairs.items():
+                    for _, (fov_index, table) in enumerate(cells.items()):
                         fov = self.fov_lookup[fov_index]
                         if compartment == 'all':
                             area0 = self.areas.get_total_compartmental_area(fov=fov)

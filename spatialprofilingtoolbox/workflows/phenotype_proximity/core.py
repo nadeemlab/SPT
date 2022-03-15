@@ -247,26 +247,7 @@ class PhenotypeProximityCalculator(Calculator):
             'Calculating cell trees for cells from %s.',
             self.input_filename,
         )
-        # logger.debug(
-        #     'Logging per FOV: (number of cells, number cell pairs used, fraction of possible pairs)'
-        # )
-        # limit = PhenotypeProximityCalculator.radius_pixels_upper_limit
-        # logger.debug('Only using pairs of pixel distance less than %s', limit)
         for _, (fov_index, table) in enumerate(cells.items()):
-            # distance_matrix = cdist(table[['x value', 'y value']], table[['x value', 'y value']])
-            # distance_matrix[distance_matrix > limit] = 0
-            # cell_pairs[fov_index] = distance_matrix
-            # sparse = coo_matrix(distance_matrix)
-            # number_pairs = int(len(sparse.data) / 2)
-            # number_cells = table.shape[0]
-            # number_all_pairs = number_cells * (number_cells - 1) / 2
-            # logger.debug(
-            #     'FOV %s: (%s, %s, %s%%)',
-            #     fov_index,
-            #     number_cells,
-            #     number_pairs,
-            #     int(100 * number_pairs / number_all_pairs) / 100,
-            # )
             cell_trees[fov_index] = BallTree(table[['x value', 'y value']].to_numpy())
         logger.debug(
             'Completed (field of view limited) cell tree construction from %s.',
@@ -399,7 +380,6 @@ class PhenotypeProximityCalculator(Calculator):
             for radius in PhenotypeProximityCalculator.get_radii_of_interest():
                 count = 0
                 source_count = 0
-                # for fov_index, tree in cell_trees.items():
                 for _, (fov_index, table) in enumerate(cells.items()):
                     rows = phenotype_indices[fov_index][source]
                     cols = phenotype_indices[fov_index][target]

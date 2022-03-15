@@ -406,6 +406,7 @@ class PhenotypeProximityCalculator(Calculator):
                         continue
 
                     count += additional
+                    count -= sum(rows & cols)
                     source_count += sum(rows)
 
                 if balanced:

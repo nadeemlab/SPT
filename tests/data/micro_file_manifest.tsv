@@ -1,5 +1,5 @@
 File ID	Project ID	File name	Sample ID	Availability	URL	Network 	Data type	Checksum	Checksum scheme	Size
-cell manifest 1	test dataset for proximity	cell_manifest_1.csv	sample 1	test	network	HALO software cell manifest	fc368e461f1cdad2a38c8209c45d5e049b723a4add58179d271cc21f0e904f0f	SHA256	34556
+cell manifest 1	test dataset for proximity	cell_manifest_1.csv	sample 1	test	network	HALO software cell manifest	d6095d9d68ab66c44b4de2a60ed639814b283680b09f96e496969d2b88cedd68	SHA256	34564
 Regional areas file	test dataset for proximity	test_areas_file.csv	None	test		MSK medical physics cluster	HALO software regional/compartment areas	4113dbbb28915056aebc172f680e8ed4f489b985df6d57c5651b980042bbb117	SHA256	60
 Elementary phenotypes file	test dataset for proximity	elementary_phenotypes.csv	None	test		MSK medical physics cluster	Manifest of basic channels/phenotypes	c0e30613e173e28abac120812def1f484db6ac0dfea9d0303d8e61f25a753b5c	SHA256	368
 Complex phenotypes file	test dataset for proximity	complex_phenotypes.csv	None	test		MSK medical physics cluster	Manifest of channel/phenotype combinations	137a610a3d9cf20fcdade79a964b3d2781174be5a20603533fec1c82e261d647	SHA256	249

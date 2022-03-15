@@ -64,7 +64,7 @@ def test_proximity_counting():
         ),
     )
 
-    if os.environ['TEST_PROXIMITY_WITH_PAIRS']:
+    if 'TEST_PROXIMITY_WITH_PAIRS' in os.environ:
         cells = calc.create_cell_tables()
         cell_pairs = calc.create_cell_pairs_tables(cells)
         phenotype_indices, compartment_indices = calc.precalculate_masks(cells)
@@ -95,16 +95,24 @@ def test_proximity_counting():
 
         a = calc.do_aggregation_one_phenotype_pair(
             ['FOXP3+', 'CD3+'],
+            cells,
             cell_trees,
             phenotype_indices,
             compartment_indices,        
         )
         if set(correct_answers['group 1']) != set([tuple(l) for l in a]):
             print('Incorrect proximity counts in group 1.')
+            for i in range(len(a)):
+                got = tuple(a[i])
+                expected = correct_answers['group 1'][i]
+                if got != expected:
+                    print('Got/expected:\n %s \n %s' % (got, expected))
+                    print('')
             raise ValueError
 
         a = calc.do_aggregation_one_phenotype_pair(
             ['FOXP3+', 'PDL1+'],
+            cells,
             cell_trees,
             phenotype_indices,
             compartment_indices,        

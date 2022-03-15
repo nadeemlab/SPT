@@ -418,14 +418,9 @@ class PhenotypeProximityCalculator(Calculator):
                     )
 
                     additional = sum([
-                        len(set(i).intersection(set(cols)))
+                        sum(cols[i])
                         for i in indices
                     ])
-
-                    # p2p_distance_matrix = distance_matrix[rows][:, cols]
-                    # additional = np.sum(
-                    #     (p2p_distance_matrix < radius) & (p2p_distance_matrix > 0)
-                    # )
 
                     if np.isnan(additional):
                         continue

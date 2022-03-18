@@ -8,6 +8,7 @@ from os.path import abspath
 from os.path import exists
 from os.path import join
 import json
+import re
 
 from ..applications.configuration_ui.ui import configuration_dialog
 from .configuration_settings import config_filename

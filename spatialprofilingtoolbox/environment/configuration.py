@@ -23,7 +23,7 @@ nf_config_file = {
 }
 
 def write_out_nextflow_script():
-    for filename in [nf_script_file] + list(nf_config_file.values):
+    for filename in [nf_script_file] + list(nf_config_file.values()):
         contents = None
         with importlib.resources.path('spatialprofilingtoolbox', filename) as path:
             with open(path, 'rt') as file:

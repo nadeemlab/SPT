@@ -74,9 +74,9 @@ singularity pull docker://nadeemlab/spt:latest
 
 and move the resulting `.sif` file to a shared area accessible to the nodes in your cluster.
 
-Then use `spt-pipeline write-nextflow-script` to generate `nextflow.config.lsf`, in which you should add the path to your `.sif` file.
+Now run `spt-pipeline configure` and supply the path to your SIF file.
 
-Finally, run `spt-pipeline run`, or, more explicitly:
+Finally, use `spt-pipeline run`, or, more explicitly:
 
 ```sh
 nextflow -c nextflow.config.lsf run spt_pipeline.nf

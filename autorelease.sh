@@ -156,11 +156,16 @@ if [[ ! "$outcome" == "" ]]; then
     clean_exit
 fi
 
-logstyle-printf "$green""Running integration tests.$reset" timed-command
-outcome=$(./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in")
-if [[ "$outcome" == "" ]]; then
-    logstyle-printf "$red""Something went wrong in integration tests.$reset"
-    clean_exit
+if [[ "$1" == "skip-integration-tests" || "$1" == "skip-integration-tests" ]];
+then
+    logstyle-printf "$green""Skipping integration tests.$reset"
+else
+    logstyle-printf "$green""Running integration tests.$reset" timed-command
+    outcome=$(./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in")
+    if [[ "$outcome" == "" ]]; then
+        logstyle-printf "$red""Something went wrong in integration tests.$reset"
+        clean_exit
+    fi
 fi
 
 cd ..

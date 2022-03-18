@@ -7,7 +7,7 @@ process.executor = 'local'
 
 // Singularity
 // process.container = 'spt_latest.sif'
-// Your path to SIF file here. Get the SIF file with `singularity pull nadeemlab/spt:latest`.
+// The path to the SIF file you supplied should appear above. Get the SIF file with `singularity pull nadeemlab/spt:latest`.
 
-singularity.autoMounts = true
-singularity.enabled = true
+// singularity.autoMounts = true
+// singularity.enabled = true

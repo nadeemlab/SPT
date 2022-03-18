@@ -22,7 +22,7 @@ nf_config_file = {
     'local' : 'nextflow.config.local',
 }
 
-def write_out_nextflow_script():
+def write_out_nextflow_script(sif_file):
     for filename in [nf_script_file] + list(nf_config_file.values()):
         contents = None
         with importlib.resources.path('spatialprofilingtoolbox', filename) as path:
@@ -30,6 +30,7 @@ def write_out_nextflow_script():
                 contents = file.read().rstrip('\n')
         if contents:
             if not exists(join(os.getcwd(), filename)):
+                contents = re.sub("'spt_latest\.sif'", "'" + sif_file + "'", contents)
                 with open(join(os.getcwd(), filename), 'wt') as file:
                     file.write(contents)
         else:

@@ -39,7 +39,19 @@ Install the SPT tools from [PyPI](https://pypi.org/project/spatialprofilingtoolb
 pip install spatialprofilingtoolbox
 ```
 
-Now you just do `spt-pipeline` in the directory where you want all of the outputs to be created. On the first run, you will be prompted to choose which computations to do, where the input data is stored, etc.
+Now run
+
+```sh
+spt-pipeline configure
+```
+
+in a clean directory. You will be prompted to choose which computations to do, where the input data is stored, etc.
+
+Then:
+
+```sh
+spt-pipeline run
+```
 
 If you just want to try this out, without [preparing your own input data](#Preparing-your-data) as described above, you can clone this repository, do `cd tests/`, and use the test data in `tests/data/` by answering the prompts as shown:
 
@@ -47,7 +59,7 @@ If you just want to try this out, without [preparing your own input data](#Prepa
 <img src="docs/_static/dialog_example.png" alt="config dialog">
 </p>
 
-You can also skip the dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script [`spt_pipeline.nf`](spatialprofilingtoolbox/spt_pipeline.nf) and to your working directory and then use Nextflow directly:
+You can also **skip the configuration dialog** by creating `.spt_pipeline.json` in your working directory before running `spt-pipeline`, for example copied from a previous run. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script [`spt_pipeline.nf`](spatialprofilingtoolbox/spt_pipeline.nf) and to your working directory and use Nextflow directly:
 
 ```
 nextflow spt_pipeline.nf
@@ -64,7 +76,7 @@ and move the resulting `.sif` file to a shared area accessible to the nodes in y
 
 Then use `spt-pipeline write-nextflow-script` to generate `nextflow.config.lsf`, in which you should add the path to your `.sif` file.
 
-Finally, run `spt-pipeline`, or, more explicitly:
+Finally, run `spt-pipeline run`, or, more explicitly:
 
 ```sh
 nextflow -c nextflow.config.lsf run spt_pipeline.nf

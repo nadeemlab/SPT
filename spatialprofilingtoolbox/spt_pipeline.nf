@@ -102,7 +102,7 @@ process aggregate_results {
 }
 
 workflow {
-    config_filename = "spt-print config-filename".execute().text.trim()
+    config_filename = ".spt_pipeline.json"
     channel.value(config_filename)
         .map{ file(it) }
         .set{ config_file_ch }

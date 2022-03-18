@@ -156,7 +156,7 @@ if [[ ! "$outcome" == "" ]]; then
     clean_exit
 fi
 
-if [[ "$1" == "skip-integration-tests" || "$1" == "skip-integration-tests" ]];
+if [[ "$1" == "skip-integration-tests" || "$2" == "skip-integration-tests" ]];
 then
     logstyle-printf "$green""Skipping integration tests.$reset"
 else

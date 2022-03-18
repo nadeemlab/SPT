@@ -47,7 +47,7 @@ If you just want to try this out, without [preparing your own input data](#Prepa
 <img src="docs/_static/dialog_example.png" alt="config dialog">
 </p>
 
-You can also skip the dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script [`spt_pipeline.nf`](spatialprofilingtoolbox/spt_pipeline.nf) to your working directory and then use Nextflow directly:
+You can also skip the dialog by creating the configuration file `.spt_pipeline.json` in your working directory before running `spt-pipeline`. Moreover if you prefer a more "Nextflow native" deployment, you can just copy the script [`spt_pipeline.nf`](spatialprofilingtoolbox/spt_pipeline.nf) and to your working directory and then use Nextflow directly:
 
 ```
 nextflow spt_pipeline.nf
@@ -62,14 +62,12 @@ singularity pull docker://nadeemlab/spt:latest
 
 and move the resulting `.sif` file to a shared area accessible to the nodes in your cluster.
 
-You must then add the path to this `.sif` file to a manually-created copy of the configuration file [here](deployment/nextflow.config.lsf), which you must install into `$HOME/.nextflow/config` (that is, once installed the file should have base filename `config`).
+Then use `spt-pipeline write-nextflow-script` to generate `nextflow.config.lsf`, in which you should add the path to your `.sif` file.
 
-#### Logs
-SPT modules are designed to be silent on standard output by default. To enable logs to monitor operation, use:
+Finally, run `spt-pipeline`, or, more explicitly:
 
 ```sh
-export ENABLE_BASIC_SPT_LOGS=1
-export ENABLE_ALSO_SPT_DEBUG_LOGS=1
+nextflow -c nextflow.config.lsf run spt_pipeline.nf
 ```
 
 Examples

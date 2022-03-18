@@ -29,8 +29,9 @@ def write_out_nextflow_script():
             with open(path, 'rt') as file:
                 contents = file.read().rstrip('\n')
         if contents:
-            with open(join(os.getcwd(), filename), 'wt') as file:
-                file.write(contents)
+            if not exists(join(os.getcwd(), filename)):
+                with open(join(os.getcwd(), filename), 'wt') as file:
+                    file.write(contents)
         else:
             logger.error('Could not load %s', filename)
 

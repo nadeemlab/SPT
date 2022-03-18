@@ -30,7 +30,8 @@ def write_out_nextflow_script(sif_file):
                 contents = file.read().rstrip('\n')
         if contents:
             if not exists(join(os.getcwd(), filename)):
-                contents = re.sub("'spt_latest\.sif'", "'" + sif_file + "'", contents)
+                if sif_file:
+                    contents = re.sub("'spt_latest\.sif'", "'" + sif_file + "'", contents)
                 with open(join(os.getcwd(), filename), 'wt') as file:
                     file.write(contents)
         else:

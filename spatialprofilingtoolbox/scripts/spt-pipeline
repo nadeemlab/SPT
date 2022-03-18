@@ -82,7 +82,7 @@ if __name__=='__main__':
 
     parameters = {**parameters, **spt.get_config_parameters()}
     if command == configure:
-        spt.write_out_nextflow_script()
+        spt.write_out_nextflow_script(parameters['sif_file'] if 'sif_file' in parameters else None)
         exit()
 
     if command == list_auxiliary_job_inputs:

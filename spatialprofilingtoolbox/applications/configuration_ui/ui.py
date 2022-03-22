@@ -199,6 +199,13 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
             save_graphml = False
         parameters['save_graphml'] = save_graphml
 
+    sif_file = pp.prompt(
+        'If using singularity container SIF file, supply the path to it here (otherwise enter the empty string)'
+    )
+    if not sif_file in [None, '']:
+        if exists(sif_file):
+            parameters['sif_file'] = sif_file
+
     skip_integrity_check = pp.prompt(
         'Skip file integrity check?',
         validator = bool_validator,

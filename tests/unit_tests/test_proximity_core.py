@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 os.environ['FIND_FILES_USING_PATH'] = '1'
 
 import pandas as pd
@@ -38,6 +38,16 @@ correct_answers = {
     ]
 }
 
+def normalize_path(p):
+    return abspath(p)
+
+def normalize_path_in_record(r):
+    r2 = list(r)
+    r2[1] = normalize_path(r[1])
+    return tuple(r2)
+
+def normalize_path_in_all_records(records):
+    return [normalize_path_in_record(r) for r in records]
 
 def test_proximity_counting():
     input_files_path = join(dirname(__file__), '..', 'data')
@@ -75,7 +85,7 @@ def test_proximity_counting():
             phenotype_indices,
             compartment_indices,        
         )
-        if set(correct_answers['group 1']) != set([tuple(l) for l in a]):
+        if set(normalize_path_in_all_records(correct_answers['group 1'])) != set(normalize_path_in_all_records([tuple(l) for l in a])):
             print('Incorrect proximity counts in group 1.')
             raise ValueError
 
@@ -85,8 +95,8 @@ def test_proximity_counting():
             phenotype_indices,
             compartment_indices,        
         )
-        if set(correct_answers['group 2']) != set([tuple(l) for l in a]):
-            print('Incorrect proximity counts in group 1.')
+        if set(normalize_path_in_all_records(correct_answers['group 2'])) != set(normalize_path_in_all_records([tuple(l) for l in a])):
+            print('Incorrect proximity counts in group 2.')
             raise ValueError
     else:
         cells = calc.create_cell_tables()
@@ -100,7 +110,7 @@ def test_proximity_counting():
             phenotype_indices,
             compartment_indices,        
         )
-        if set(correct_answers['group 1']) != set([tuple(l) for l in a]):
+        if set(normalize_path_in_all_records(correct_answers['group 1'])) != set(normalize_path_in_all_records([tuple(l) for l in a])):
             print('Incorrect proximity counts in group 1.')
             for i in range(len(a)):
                 got = tuple(a[i])
@@ -117,8 +127,8 @@ def test_proximity_counting():
             phenotype_indices,
             compartment_indices,        
         )
-        if set(correct_answers['group 2']) != set([tuple(l) for l in a]):
-            print('Incorrect proximity counts in group 1.')
+        if set(normalize_path_in_all_records(correct_answers['group 2'])) != set(normalize_path_in_all_records([tuple(l) for l in a])):
+            print('Incorrect proximity counts in group 2.')
             raise ValueError
 
 

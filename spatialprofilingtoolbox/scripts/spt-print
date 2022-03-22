@@ -6,7 +6,6 @@ import spatialprofilingtoolbox as spt
 
 class ExposedInfo:
     info = {
-        'config-filename' : spt.config_filename,
         'computational-workflows' : list(spt.workflows.keys()),
         'version' : spt.__version__,
     }

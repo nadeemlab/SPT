@@ -1,0 +1,13 @@
+
+process.executor = 'lsf'
+
+// Docker
+// process.container = 'nadeemlab/spt:latest'
+// docker.enabled = true
+
+// Singularity
+process.container = 'spt_latest.sif'
+// The path to the SIF file you supplied should appear above. Get the SIF file with `singularity pull nadeemlab/spt:latest`.
+
+singularity.autoMounts = true
+singularity.enabled = true

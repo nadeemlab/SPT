@@ -22,7 +22,8 @@ if __name__=='__main__':
     aggregate_results = 'aggregate-results'
     run = 'run'
     configure = 'configure'
-    commands = [generate_jobs, list_auxiliary_job_inputs, single_job, aggregate_results, run, configure]
+    write_nextflow_script = 'write-nextflow-script'
+    commands = [generate_jobs, list_auxiliary_job_inputs, single_job, aggregate_results, run, configure, write_nextflow_script]
     parser.add_argument(
         'command_token',
         nargs='?',
@@ -76,8 +77,12 @@ if __name__=='__main__':
 
     command = args.command_token
 
+    if not command in commands:
+        exit()
+
     parameters = {**parameters, **spt.get_config_parameters()}
     if command == configure:
+        spt.write_out_nextflow_script(parameters['sif_file'] if 'sif_file' in parameters else None)
         exit()
 
     if command == list_auxiliary_job_inputs:
@@ -96,25 +101,18 @@ if __name__=='__main__':
         integrator = spt.get_integrator(**parameters)
         integrator.calculate()
 
-    if (not command in commands) or command == run:
-        nextflow_invoker = ['nextflow']
-        if which('nextflow') is None:
-            print('Installing nextflow.')
-            download_file = join(os.getcwd(), 'nfdownload.sh')
-            subprocess.run(['curl', '-s', 'https://get.nextflow.io', '-o', download_file])
-            subprocess.run(['bash', download_file])
-            path_string = os.environ['PATH']
-            paths = path_string.strip('\n').split(':')
-            if not '~/bin' in paths:
-                print('Warning: ~/bin/ is not on the executable path, so nextflow will only be installed in this exact directory.')
-                nextflow_invoker = ['bash', download_file]
-            else:
-                nf_runner = join(os.environ['HOME'], 'bin/nextflow')
-                subprocess.run(['mv', download_file, nf_runner])
-                subprocess.run(['chmod', '+x', nf_runner])
+    if command == write_nextflow_script:
+        spt.write_out_nextflow_script(parameters['sif_file'] if 'sif_file' in parameters else None)
 
-        if which('nextflow') is None:
-            print('Still can not find nextflow after attempted install. Aborting.')
+    if command == run:
+        if which('bsub') is None:
+            config_file = spt.nf_config_file['local']
+        else:
+            config_file = spt.nf_config_file['lsf']
+        nextflow_invoker = ['nextflow', '-c', config_file, 'run', spt.nf_script_file]
+        if which(nextflow_invoker[0]) is None:
+            print('You must install nextflow. The following command may do this:')
+            print('  ' + ' '.join(['curl', '-s', 'https://get.nextflow.io', '|', 'bash']))
             exit()
-        spt.write_out_nextflow_script()
-        subprocess.run(nextflow_invoker + [spt.nf_script_file])
+        spt.write_out_nextflow_script(parameters['sif_file'] if 'sif_file' in parameters else None)
+        subprocess.run(nextflow_invoker)

@@ -65,7 +65,7 @@ You can also **skip the configuration dialog** by creating `.spt_pipeline.json` 
 nextflow spt_pipeline.nf
 ```
 
-#### LSF
+### LSF
 The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management) on which [Singularity](https://sylabs.io/singularity/) is installed. However every HPC is configured differently with respect to shared file system resources, and few HPCs allow the Docker daemon that would permit automatic container usage. For this reason it is currently necessary to manually pull the Docker container "as" a singularity container from our public registry,
 
 ```sh
@@ -81,6 +81,27 @@ Finally, use `spt-pipeline run`, or, more explicitly:
 ```sh
 nextflow -c nextflow.config.lsf run spt_pipeline.nf
 ```
+
+### Monitoring output
+SPT generates verbose logs, which Nextflow sends to files `work/*/*/.command.log` .
+
+A convenient way to monitor these is to use [`multitail`](https://github.com/halturin/multitail). `multitail` can be used from a local `make` build of the source. If there are many user applications running, you may need to increase certain file-monitoring limits:
+
+```sh
+sudo sysctl fs.inotify.max_user_instances=8192
+sudo sysctl -p
+```
+
+Monitor the logs from each process deployed by Nextflow:
+
+```sh
+multitail -cT ANSI $(find work/*/*/\.command.log | tr '\n' 'X' | sed 's/X/ -cT ANSI /g')
+```
+
+Common `multitail` commands:
+- `d` brings up a list of the windows, to be deleted on `<ENTER>`. Helpful when there are lots of windows.
+- `q` quits.
+- `ctrl-h` brings up a list of other commands.
 
 Examples
 --------

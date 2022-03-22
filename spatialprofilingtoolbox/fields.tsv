@@ -1,0 +1,102 @@
+Name	Label	Table	Property	Primary key group	Foreign table	Foreign key	Ordinality
+identifier	Identifier	Subject	Identifier	1			1
+species	Species	Subject	Biological species				2
+sex	Sex	Subject	Phenotypic sex				3
+birth_date	Birth date	Subject	Date of birth				4
+death_date	Death date	Subject	Date of death				5
+cause_of_death	Cause of death	Subject	Cause of death				6
+subject	Subject	Diagnosis	Study subject		Subject	Identifier	1
+disease	Disease	Diagnosis	Disease considered				2
+result	Result	Diagnosis	Diagnosis result				3
+assessor	Assessor	Diagnosis	Diagnosis assessor				4
+date	Date	Diagnosis	Date of diagnosis				5
+identifier	Identifier	Diagnostic selection criterion	Identifier	1			1
+disease	Disease	Diagnostic selection criterion	Disease				2
+result	Result	Diagnostic selection criterion	Diagnosis result				3
+specimen	Specimen	Specimen collection process	Extracted subspecimen	1			1
+source	Source	Specimen collection process	Source biospecimen				2
+source_site	Source site	Specimen collection process	Subspecimen extraction site				3
+source_age	Source age	Specimen collection process	Biospecimen age at event				4
+extraction_date	Extraction date	Specimen collection process	Event date				5
+study	Study	Specimen collection process	Biospecimen collection study		Specimen collection study	Name	6
+name	Name	Specimen collection study	Name	1			1
+extraction_method	Extraction method	Specimen collection study	Subspecimen extraction method				2
+preservation_method	Preservation method	Specimen collection study	Biospecimen preservation method				3
+storage_location	Storage location	Specimen collection study	Biospecimen storage location				4
+inception_date	Inception date	Specimen collection study	Date of inception				5
+conclusion_date	Conclusion date	Specimen collection study	Date of conclusion				6
+slide	Slide	Histology assessment process	Histology slide		Specimen collection process	Specimen	1
+assay	Assay	Histology assessment process	Histology assay				2
+result	Result	Histology assessment process	Assay result				3
+assessor	Assessor	Histology assessment process	Assay performer				4
+assessment_date	Assessment date	Histology assessment process	Event date				5
+identifier	Identifier	Specimen data measurement process	Identifier	1			1
+specimen	Specimen	Specimen data measurement process	Biospecimen analyzed		Specimen collection process	Specimen	2
+specimen_age	Specimen age	Specimen data measurement process	Biospecimen age at event				3
+date_of_measurement	Date of measurement	Specimen data measurement process	Event date				4
+study	Study	Specimen data measurement process	Biospecimen data measurement study		Specimen measurement study	Name	5
+name	Name	Specimen measurement study	Name	1			1
+assay	Assay	Specimen measurement study	Measurement assay				2
+machine	Machine	Specimen measurement study	Measurement apparatus				3
+software	Software	Specimen measurement study	Measurement apparatus software	 			4
+inception_date	Inception date	Specimen measurement study	Date of inception				5
+conclusion_date	Conclusion date	Specimen measurement study	Date of conclusion				6
+file_name	File name	Data file	File basename				1
+file_format	File format	Data file	File syntax format				2
+contents_format	Contents format	Data file	File content structure specification				3
+size	Size	Data file	File size				4
+sha256_hash	SHA256 hash	Data file	File hash SHA256	1			5
+source_generation_process	Source generation process	Data file	Data file generation source process		Specimen data measurement process	Identifier	6
+identifier	Identifier	Histological structure	Identifier	1			1
+anatomical_entity	Anatomical entity	Histological structure	Anatomical entity				2
+histological_structure	Histological structure	Histological structure identification	Histological structure	1	Histological structure	Identifier	1
+slide	Slide	Histological structure identification	Histology slide		Specimen collection process	Specimen	2
+shape_file	Shape file	Histological structure identification	Coordinate shape specification		Shape file	Identifier	3
+plane_coordinates_reference	Plane coordinates reference	Histological structure identification	Plane coordinates reference system		Plane coordinates reference system	Name	4
+identification_method	Identification method	Histological structure identification	Histological structure identification method				5
+identification_date	Identification date	Histological structure identification	Event date				6
+annotator	Annotator	Histological structure identification	Histological structure identification performer				7
+identifier	Identifier	Shape file	Identifier	1			1
+geometry_specification_file_format	Geometry specification file format	Shape file	Shape specification file format				2
+base64_contents	Base64 contents	Shape file	Base64 file contents				3
+name	Name	Plane coordinates reference system	Name	1			1
+reference_point	Reference point	Plane coordinates reference system	Coordinate system reference point				2
+reference_point_coordinate_1	Reference point coordinate 1	Plane coordinates reference system	Coordinate system reference point 1				3
+reference_point_coordinate_2	Reference point coordinate 2	Plane coordinates reference system	Coordinate system reference point 2				4
+reference_orientation	Reference orientation	Plane coordinates reference system	Coordinate system orientation specification				5
+length_unit	Length unit	Plane coordinates reference system	Coordinate system unit				6
+histological_structure	Histological structure	Expression quantification	Subject of quantification		Histological structure	Identifier	1
+target	Target	Expression quantification	Chemical species quantified		Chemical species	Identifier	2
+quantity	Quantity	Expression quantification	Expression quantity				3
+unit	Unit	Expression quantification	Unit				4
+quantification_method	Quantification method	Expression quantification	Method of marker quantification				5
+discrete_value	Discrete value	Expression quantification	Discrete value				6
+discretization_method	Discretization method	Expression quantification	Method of marker discretization				7
+identifier	Identifier	Biological marking system	Identifier	1			1
+target	Target	Biological marking system	Chemical species		Chemical species	Identifier	2
+antibody	Antibody	Biological marking system	Marking antibody				3
+marking_mechanism	Marking mechanism	Biological marking system	Mechanism of target marking				4
+study	Study	Biological marking system	Biospecimen data measurement study		Specimen measurement study	Name	5
+identifier	Identifier	Chemical species	Identifier	1			1
+symbol	Symbol	Chemical species	Chemical species symbol				2
+name	Name	Chemical species	Name				3
+chemical_structure_class	Chemical structure class	Chemical species	Chemical species structure class				4
+identifier	Identifier	Cell phenotype	Identifier	1			1
+symbol	Symbol	Cell phenotype	Cell phenotype symbol				2
+name	Name	Cell phenotype	Name				3
+cell_phenotype	Cell phenotype	Cell phenotype criterion	Cell phenotype		Cell phenotype	Identifier	1
+marker	Marker	Cell phenotype criterion	Cell phenotype criterion marker		Chemical species	Identifier	2
+polarity	Polarity	Cell phenotype criterion	Cell phenotype criterion polarity				3
+study	Study	Cell phenotype criterion	Data analysis study		Data analysis study	Name	4
+name	Name	Data analysis study	Name	1			1
+identifier	Identifier	Feature specification	Identifier	1			1
+derivation_method	Derivation method	Feature specification	Feature derivation method				2
+study	Study	Feature specification	Data analysis study		Data analysis study	Name	3
+feature_specification	Feature specification	Feature specifier	Feature specification	1	Feature specification	Identifier	1
+specifier	Specifier	Feature specifier	Specifier				2
+ordinality	Ordinality	Feature specifier	Ordinality				3
+selection_criterion_1	Selection criterion 1	Two-cohort feature association test	Diagnostic selection criterion		Diagnostic selection criterion	Identifier	1
+selection_criterion_2	Selection criterion 2	Two-cohort feature association test	Diagnostic selection criterion		Diagnostic selection criterion	Identifier	2
+test	Test	Two-cohort feature association test	Statistical test				3
+p_value	p-value	Two-cohort feature association test	Test probability value				4
+feature_tested	Feature tested	Two-cohort feature association test	Feature specification		Feature specification	Identifier	5

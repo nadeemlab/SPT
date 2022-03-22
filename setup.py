@@ -26,6 +26,7 @@ requirements = [
     'pandas>=1.1.5',
     'scipy==1.7.1',
     'scikit-learn==0.24.1',
+    'psycopg2-binary==2.9.3',
 ]
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
 
@@ -65,6 +66,7 @@ setuptools.setup(
             'spt_pipeline.nf',
             'nextflow.config.lsf',
             'nextflow.config.local',
+            'fields.tsv',
         ]},
     python_requires='>=3.7',
     scripts=[

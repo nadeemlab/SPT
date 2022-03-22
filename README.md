@@ -82,6 +82,28 @@ Finally, use `spt-pipeline run`, or, more explicitly:
 nextflow -c nextflow.config.lsf run spt_pipeline.nf
 ```
 
+#### Monitoring output
+
+SPT generates verbose logs, which Nextflow sends to files `work/*/*/.command.log` .
+
+A convenient way to monitor these is to use [`multitail`](https://github.com/halturin/multitail). `multitail` can be used from a local `make` build of the source. You may need to increase certain file-monitoring limits:
+
+```sh
+sudo sysctl fs.inotify.max_user_instances=8192
+sudo sysctl -p
+```
+
+Monitor the logs from each process deployed by Nextflow:
+
+```sh
+multitail -cT ANSI $(find work/*/*/\.command.log | tr '\n' 'X' | sed 's/X/ -cT ANSI /g')
+```
+
+Helpful `multitail` commands:
+- `d` brings up a list of the windows, to be deleted on `<ENTER>`. Helpful when there are lots of windows.
+- `q` quits.
+- `ctrl-h` brings up a list of other commands.
+
 Examples
 --------
 The dataset analyzed in the following examples is imaging mass cytometry of breast cancer tissue microarrays, published [here](https://doi.org/10.5281/zenodo.3518283). For the purpose of phenotyping, continuous intensity values were dichotomized using a [log transformation and 2-population Gaussian mixture model](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/environment/dichotomization.py).

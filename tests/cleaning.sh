@@ -37,3 +37,8 @@ function _cleanup() {
         rm 'example_merged.db'
     fi
 }
+
+function _test_cleanup() {
+    rm -rf work/
+    rm -rf .nextflow/
+}

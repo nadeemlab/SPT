@@ -246,36 +246,57 @@ class DataSkimmer:
         else:
             return max(known_integer_identifiers) + 1
 
-    def check_exists(self, tablename, record, cursor):
+    def check_exists(self, tablename, record, cursor, no_primary=False):
         """
         Assumes that the first entry in records is a fiat identifier, omitted for 
         the purpose of checking pre-existence of the record.
+
+        Returns pair:
+        - was_found (bool)
+        - key
+
+        If no_primary = True, no fiat identifier column is assumed at all, and a key
+        value of None is returned.
         """
         fields = self.get_field_names(tablename)
         primary = fields[0]['Name']
+        if no_primary:
+            primary = 'COUNT(*)'
+            identifying_record = record
+            identifying_fields = fields
+        else:
+            identifying_record = record[1:]
+            identifying_fields = fields[1:]
         query = 'SELECT ' + primary + ' FROM ' + tablename + ' WHERE ' + ' AND '.join(
                 [
-                    fields[i]['Name'] + ' = %s '
-                    for i in range(1, len(fields))
+                    field['Name'] + ' = %s '
+                    for field in identifying_fields
                 ]
             ) + ' ;'
-        cursor.execute(query, tuple(record[1:]))
-        rows = cursor.fetchall()
-        if len(rows) == 0:
-            return [False, None]
-        if len(rows) > 1:
-            logger.warning('"%s" contains duplicates records.', tablename)
-        key = rows[0][0]
-        return [True, key]
+        cursor.execute(query, tuple(identifying_record))
+        if not no_primary:
+            rows = cursor.fetchall()
+            if len(rows) == 0:
+                return [False, None]
+            if len(rows) > 1:
+                logger.warning('"%s" contains duplicates records.', tablename)
+            key = rows[0][0]
+            return [True, key]
+        else:
+            count = cursor.fetchall()[0][0]
+            if count == 0:
+                return [False, None]
+            else:
+                return [True, None]
 
     def parse_channels_and_phenotypes(self):
         """
         Retrieve the phenotype and channel metadata, and parse records for:
         - chemical species
-        - cell phenotype
-        - cell phenotype criterion
         - biological marking system
+        - cell phenotype
         - data analysis study
+        - cell phenotype criterion
         """
         elementary_phenotypes_file = get_input_filename_by_identifier(
             dataset_settings = self.dataset_settings,
@@ -285,8 +306,8 @@ class DataSkimmer:
             dataset_settings = self.dataset_settings,
             input_file_identifier = 'Complex phenotypes file',
         )
-        elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',')
-        composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',')
+        elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',', na_filter=False)
+        composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',', na_filter=False)
 
         file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
         project_handle = sorted(list(set(file_metadata['Project ID']).difference([''])))[0]
@@ -294,10 +315,6 @@ class DataSkimmer:
         measurement_study = project_handle + ' - measurement'
 
         cursor = self.connection.cursor()
-        cursor.execute(
-            self.generate_basic_insert_query('data_analysis_study'),
-            (data_analysis_study, ),
-        )
 
         identifier = self.get_next_integer_identifier('chemical_species', cursor)
         initial_value = identifier
@@ -347,21 +364,71 @@ class DataSkimmer:
                 )
         logger.info('Saved %s biological marking system records.', identifier - initial_value)
 
-            # cursor.execute(
-            #     self.generate_basic_insert_query('cell_phenotype'),
-            #     ( ),
-            # )
-            # cursor.execute(
-            #     self.generate_basic_insert_query('cell_phenotype_criterion'),
-            #     ( ),
-            # )
-            # cursor.execute(
-            #     self.generate_basic_insert_query('biological_marking_system'),
-            #     ( ),
-            # )
+        cursor.execute(
+            self.generate_basic_insert_query('data_analysis_study'),
+            (data_analysis_study, ),
+        )
 
-        # def create_ _record( ):
-        #     return ( )
+        identifier = self.get_next_integer_identifier('cell_phenotype', cursor)
+        initial_value = identifier
+        cell_phenotype_identifiers_by_symbol = {}
+        number_criterion_records = 0
+        for i, phenotype in composite_phenotypes.iterrows():
+            symbol = phenotype['Name']
+            record = (identifier, symbol, '')
+            was_found, key = self.check_exists('cell_phenotype', record, cursor)
+            if not was_found:
+                cursor.execute(
+                    self.generate_basic_insert_query('cell_phenotype'),
+                    record,
+                )
+                cell_phenotype_identifiers_by_symbol[symbol] = identifier
+                identifier = identifier + 1
+            else:
+                cell_phenotype_identifiers_by_symbol[symbol] = key
+                logger.debug(
+                    '"cell_phenotype" %s already exists.',
+                    str([''] + list(record[1:])),
+                )
+            positive_markers = set(str(phenotype['Positive markers']).split(';')).difference([''])
+            negative_markers = set(str(phenotype['Negative markers']).split(';')).difference([''])
+            missing = positive_markers.union(negative_markers).difference(
+                chemical_species_identifiers_by_symbol.keys()
+            )
+            if len(missing) > 0:
+                logger.warning(
+                    'Markers %s are part of phenotype %s but do not represent any known "chemical_species". This marker is skipped.',
+                    missing,
+                    record,
+                )
+            signature = [
+                ('positive', chemical_species_identifiers_by_symbol[m])
+                for m in set(positive_markers).difference(missing)
+            ] + [
+                ('negative', chemical_species_identifiers_by_symbol[m])
+                for m in set(negative_markers).difference(missing)
+            ]
+            for polarity, chemical_species_identifier in signature:
+                record = (
+                    cell_phenotype_identifiers_by_symbol[phenotype['Name']],
+                    chemical_species_identifier,
+                    polarity,
+                    data_analysis_study,
+                )
+                was_found, _ = self.check_exists('cell_phenotype_criterion', record, cursor, no_primary=True)
+                if not was_found:
+                    cursor.execute(
+                        self.generate_basic_insert_query('cell_phenotype_criterion'),
+                        record,
+                    )
+                    number_criterion_records += 1
+                else:
+                    logger.debug(
+                        '"cell_phenotype_criterion" %s already exists.',
+                        str(record),
+                    )
+        logger.info('Saved %s cell phenotype records.', identifier - initial_value)
+        logger.info('Saved %s cell phenotype criterion records.', number_criterion_records)
 
         logger.info(
             'Parsed records implied by "%s" and "%s".',

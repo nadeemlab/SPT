@@ -49,13 +49,17 @@ class DataSkimmer:
         string = string.lower()
         return string
 
-    def generate_basic_insert_query(self, tablename):
+    def get_field_names(self, tablename):
         fields = [
             field
             for i, field in self.fields.iterrows()
             if self.normalize(field['Table']) == self.normalize(tablename)
         ]
         fields_sorted = sorted(fields, key=lambda field: int(field['Ordinality']))
+        return fields_sorted
+
+    def generate_basic_insert_query(self, tablename):
+        fields_sorted = self.get_field_names(tablename)
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join([field['Name'] for field in fields_sorted]) + ') '
             'VALUES (' + ', '.join(['%s']*len(fields_sorted)) + ') '
@@ -167,7 +171,7 @@ class DataSkimmer:
         )
 
         for i, cell_manifest in cell_manifests.iterrows():
-            logger.debug('Considering file "%s" .', cell_manifest['File ID'])
+            logger.debug('Considering "%s" file "%s" .', halo_data_type, cell_manifest['File ID'])
             subject_id = cell_manifest['Sample ID']
             subspecimen_identifier = subject_id + ' subspecimen'
             cursor.execute(
@@ -223,13 +227,149 @@ class DataSkimmer:
         self.connection.commit()
         cursor.close()
 
+    def is_integer(self, i):
+        if isinstance(i, int):
+            return True
+        if re.match('^[1-9][0-9]*$', i):
+            return True
+        return False
+
+    def get_next_integer_identifier(self, tablename, cursor, key_name = 'identifier'):
+        cursor.execute('SELECT %s FROM %s;' % (key_name, tablename))
+        try:
+            identifiers = cursor.fetchall()
+        except psycopg2.ProgrammingError as e:
+            return 0
+        known_integer_identifiers = [int(i[0]) for i in identifiers if self.is_integer(i[0])]
+        if len(known_integer_identifiers) == 0:
+            return 0
+        else:
+            return max(known_integer_identifiers) + 1
+
+    def check_exists(self, tablename, record, cursor):
+        """
+        Assumes that the first entry in records is a fiat identifier, omitted for 
+        the purpose of checking pre-existence of the record.
+        """
+        fields = self.get_field_names(tablename)
+        primary = fields[0]['Name']
+        query = 'SELECT ' + primary + ' FROM ' + tablename + ' WHERE ' + ' AND '.join(
+                [
+                    fields[i]['Name'] + ' = %s '
+                    for i in range(1, len(fields))
+                ]
+            ) + ' ;'
+        cursor.execute(query, tuple(record[1:]))
+        rows = cursor.fetchall()
+        if len(rows) == 0:
+            return [False, None]
+        if len(rows) > 1:
+            logger.warning('"%s" contains duplicates records.', tablename)
+        key = rows[0][0]
+        return [True, key]
+
     def parse_channels_and_phenotypes(self):
-        pass
-        # chemical species
-        # cell phenotype
-        # cell phenotype criterion
-        # biological marking system
-        # data analysis study
+        """
+        Retrieve the phenotype and channel metadata, and parse records for:
+        - chemical species
+        - cell phenotype
+        - cell phenotype criterion
+        - biological marking system
+        - data analysis study
+        """
+        elementary_phenotypes_file = get_input_filename_by_identifier(
+            dataset_settings = self.dataset_settings,
+            input_file_identifier = 'Elementary phenotypes file',
+        )
+        composite_phenotypes_file = get_input_filename_by_identifier(
+            dataset_settings = self.dataset_settings,
+            input_file_identifier = 'Complex phenotypes file',
+        )
+        elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',')
+        composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',')
+
+        file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
+        project_handle = sorted(list(set(file_metadata['Project ID']).difference([''])))[0]
+        data_analysis_study = project_handle + ' - data analysis'
+        measurement_study = project_handle + ' - measurement'
+
+        cursor = self.connection.cursor()
+        cursor.execute(
+            self.generate_basic_insert_query('data_analysis_study'),
+            (data_analysis_study, ),
+        )
+
+        identifier = self.get_next_integer_identifier('chemical_species', cursor)
+        initial_value = identifier
+        chemical_species_identifiers_by_symbol = {}
+        for i, phenotype in elementary_phenotypes.iterrows():
+            symbol = phenotype['Name']
+            chemical_structure_class = phenotype['Indication type']
+            record = (str(identifier), symbol, '', chemical_structure_class)
+            was_found, key = self.check_exists('chemical_species', record, cursor)
+            if not was_found:
+                cursor.execute(
+                    self.generate_basic_insert_query('chemical_species'),
+                    record,
+                )
+                chemical_species_identifiers_by_symbol[symbol] = identifier
+                identifier = identifier + 1
+            else:
+                chemical_species_identifiers_by_symbol[symbol] = key
+                logger.debug(
+                    '"chemical_species" %s already exists.',
+                    str([''] + list(record[1:])),
+                )
+        logger.info('Saved %s chemical species records.', identifier - initial_value)
+
+        identifier = self.get_next_integer_identifier('biological_marking_system', cursor)
+        initial_value = identifier
+        for i, phenotype in elementary_phenotypes.iterrows():
+            symbol = phenotype['Name']
+            record = (
+                str(identifier),
+                str(chemical_species_identifiers_by_symbol[symbol]),
+                '',
+                '',
+                measurement_study,
+            )
+            was_found, key = self.check_exists('biological_marking_system', record, cursor)
+            if not was_found:
+                cursor.execute(
+                    self.generate_basic_insert_query('biological_marking_system'),
+                    record,
+                )
+                identifier = identifier + 1
+            else:
+                logger.debug(
+                    '"biological_marking_system" %s already exists.',
+                    str([''] + list(record[1:])),
+                )
+        logger.info('Saved %s biological marking system records.', identifier - initial_value)
+
+            # cursor.execute(
+            #     self.generate_basic_insert_query('cell_phenotype'),
+            #     ( ),
+            # )
+            # cursor.execute(
+            #     self.generate_basic_insert_query('cell_phenotype_criterion'),
+            #     ( ),
+            # )
+            # cursor.execute(
+            #     self.generate_basic_insert_query('biological_marking_system'),
+            #     ( ),
+            # )
+
+        # def create_ _record( ):
+        #     return ( )
+
+        logger.info(
+            'Parsed records implied by "%s" and "%s".',
+            elementary_phenotypes_file,
+            composite_phenotypes_file,
+        )
+        self.connection.commit()
+        cursor.close()
 
     def parse_cell_manifests(self):
         pass

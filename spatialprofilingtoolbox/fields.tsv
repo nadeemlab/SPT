@@ -41,11 +41,11 @@ machine	Machine	Specimen measurement study	Measurement apparatus				3
 software	Software	Specimen measurement study	Measurement apparatus software	 			4
 inception_date	Inception date	Specimen measurement study	Date of inception				5
 conclusion_date	Conclusion date	Specimen measurement study	Date of conclusion				6
-file_name	File name	Data file	File basename				1
-file_format	File format	Data file	File syntax format				2
-contents_format	Contents format	Data file	File content structure specification				3
-size	Size	Data file	File size				4
-sha256_hash	SHA256 hash	Data file	File hash SHA256	1			5
+sha256_hash	SHA256 hash	Data file	File hash SHA256	1			1
+file_name	File name	Data file	File basename				2
+file_format	File format	Data file	File syntax format				3
+contents_format	Contents format	Data file	File content structure specification				4
+size	Size	Data file	File size				5
 source_generation_process	Source generation process	Data file	Data file generation source process		Specimen data measurement process	Identifier	6
 identifier	Identifier	Histological structure	Identifier	1			1
 anatomical_entity	Anatomical entity	Histological structure	Anatomical entity				2

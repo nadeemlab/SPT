@@ -24,7 +24,7 @@ def test_data_skimmer():
     PATHSTUDIES_DB_USER
     PATHSTUDIES_DB_PASSWORD
     """
-    spt_pipeline_json = open('./integration_tests/example_config_files/proximity.json', 'rt').read()
+    spt_pipeline_json = open('./unit_tests/proximity_skimming.json', 'rt').read()
     parameters = spt.get_config_parameters(json_string=spt_pipeline_json)
 
     input_files_path = join(dirname(__file__), '..', 'data')

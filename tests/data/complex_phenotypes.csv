@@ -1,5 +1,5 @@
 Name,Phenotype handle string,Positive markers,Negative markers
-cytotoxic T cell,TH,CD3,CD8;FOXP3
+helper T cell,TH,CD3,CD8;FOXP3
 CD8+ICOS+,,CD8;ICOS,
 CD3+ICOS+,,CD3;ICOS,
 FOXP3+ICOS+,,FOXP3;ICOS,

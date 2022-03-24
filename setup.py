@@ -27,6 +27,7 @@ requirements = [
     'scipy==1.7.1',
     'scikit-learn==0.24.1',
     'psycopg2-binary==2.9.3',
+    'pyshp==2.2.0',
 ]
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
 

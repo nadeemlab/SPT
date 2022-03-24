@@ -50,7 +50,7 @@ source_generation_process	Source generation process	Data file	Data file generati
 identifier	Identifier	Histological structure	Identifier	1			1
 anatomical_entity	Anatomical entity	Histological structure	Anatomical entity				2
 histological_structure	Histological structure	Histological structure identification	Histological structure	1	Histological structure	Identifier	1
-slide	Slide	Histological structure identification	Histology slide		Specimen collection process	Specimen	2
+data_source	Data source	Histological structure identification	Data file		Data file	SHA256 hash	2
 shape_file	Shape file	Histological structure identification	Coordinate shape specification		Shape file	Identifier	3
 plane_coordinates_reference	Plane coordinates reference	Histological structure identification	Plane coordinates reference system		Plane coordinates reference system	Name	4
 identification_method	Identification method	Histological structure identification	Histological structure identification method				5

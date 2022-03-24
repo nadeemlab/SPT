@@ -52,6 +52,11 @@ process generate_jobs {
 }
 
 process single_job {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 4
+
     input:
     path config_file
     path file_manifest_file

@@ -1,6 +1,10 @@
 
 process.executor = 'lsf'
 
+// process {
+	clusterOptions = '-R select[hname!="{{ host_to_exclude }}"]'
+}
+
 // Docker
 // process.container = 'nadeemlab/spt:latest'
 // docker.enabled = true

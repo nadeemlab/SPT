@@ -200,11 +200,17 @@ def configuration_dialog(source: DialogSolicitor=CLI()):
         parameters['save_graphml'] = save_graphml
 
     sif_file = pp.prompt(
-        'If using singularity container SIF file, supply the path to it here (otherwise enter the empty string)'
+        'If using singularity container SIF file, supply the path to it here (otherwise enter the empty string):'
     )
     if not sif_file in [None, '']:
         if exists(sif_file):
             parameters['sif_file'] = sif_file
+
+    excluded_host_name = pp.prompt(
+        'If using a cluster, if desired supply the name of a host to exclude (otherwise enter the empty string):'
+    )
+    if not excluded_host_name in [None, '']:
+        parameters['excluded_host_name'] = excluded_host_name
 
     skip_integrity_check = pp.prompt(
         'Skip file integrity check?',

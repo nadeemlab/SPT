@@ -82,7 +82,10 @@ if __name__=='__main__':
 
     parameters = {**parameters, **spt.get_config_parameters()}
     if command == configure:
-        spt.write_out_nextflow_script(parameters['sif_file'] if 'sif_file' in parameters else None)
+        spt.write_out_nextflow_script(
+            parameters['sif_file'] if 'sif_file' in parameters else None,
+            excluded_host_name = parameters['excluded_host_name'] if 'excluded_host_name' in parameters else None,
+        )
         exit()
 
     if command == list_auxiliary_job_inputs:
@@ -102,7 +105,10 @@ if __name__=='__main__':
         integrator.calculate()
 
     if command == write_nextflow_script:
-        spt.write_out_nextflow_script(parameters['sif_file'] if 'sif_file' in parameters else None)
+        spt.write_out_nextflow_script(
+            parameters['sif_file'] if 'sif_file' in parameters else None,
+            excluded_host_name = parameters['excluded_host_name'] if 'excluded_host_name' in parameters else None,
+        )
 
     if command == run:
         if which('bsub') is None:
@@ -114,5 +120,8 @@ if __name__=='__main__':
             print('You must install nextflow. The following command may do this:')
             print('  ' + ' '.join(['curl', '-s', 'https://get.nextflow.io', '|', 'bash']))
             exit()
-        spt.write_out_nextflow_script(parameters['sif_file'] if 'sif_file' in parameters else None)
+        spt.write_out_nextflow_script(
+            parameters['sif_file'] if 'sif_file' in parameters else None,
+            excluded_host_name = parameters['excluded_host_name'] if 'excluded_host_name' in parameters else None,
+        )
         subprocess.run(nextflow_invoker)

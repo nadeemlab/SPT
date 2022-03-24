@@ -2,7 +2,7 @@
 process.executor = 'lsf'
 
 // process {
-	clusterOptions = '-R select[hname!="{{ host_to_exclude }}"]'
+    clusterOptions = "-R select[hname!={{ host_to_exclude }}]"
 }
 
 // Docker

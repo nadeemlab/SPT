@@ -49,6 +49,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.workflows.front_proximity',
         'spatialprofilingtoolbox.workflows.density',
         'spatialprofilingtoolbox.environment',
+        'spatialprofilingtoolbox.environment.source_file_parsers',
         'spatialprofilingtoolbox.applications',
         'spatialprofilingtoolbox.applications.configuration_ui',
         'spatialprofilingtoolbox.applications.cell_cartoons',

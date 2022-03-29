@@ -41,4 +41,8 @@ function _cleanup() {
 function _test_cleanup() {
     rm -rf work/
     rm -rf .nextflow/
+    if [[ -f .spt_pipeline.json ]];
+    then
+        rm .spt_pipeline.json
+    fi
 }

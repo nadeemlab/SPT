@@ -39,19 +39,55 @@ def test_data_skimmer():
         input_files_path,
         file_manifest_file,
     )
-    if 'PATHSTUDIES_DB_ENDPOINT' in os.environ:
-        endpoint = os.environ['PATHSTUDIES_DB_ENDPOINT']
-        user = os.environ['PATHSTUDIES_DB_USER']
-        password = os.environ['PATHSTUDIES_DB_PASSWORD']
+    with DataSkimmer(
+        dataset_settings=dataset_settings,
+        dataset_design=dataset_design,
+    ) as skimmer:
+        skimmer.skim_initial_data()
+
+def test_data_skimmer_incomplete_credentials():
+    spt_pipeline_json = open('./unit_tests/proximity_skimming.json', 'rt').read()
+    parameters = spt.get_config_parameters(json_string=spt_pipeline_json)
+
+    input_files_path = join(dirname(__file__), '..', 'data')
+    file_manifest_file = 'file_manifest.tsv'
+    dataset_design = HALOCellMetadataDesign(
+        input_path = input_files_path,
+        file_manifest_file = file_manifest_file,
+        compartments = parameters['compartments'],
+    )
+    file_manifest = pd.read_csv(join(input_files_path, file_manifest_file), sep='\t')
+    dataset_settings = DatasetSettings(
+        input_files_path,
+        file_manifest_file,
+    )
+    credential_parameters = [
+        'PATHSTUDIES_DB_ENDPOINT',
+        'PATHSTUDIES_DB_USER',
+        'PATHSTUDIES_DB_PASSWORD',
+    ]
+    cached = {}
+    for c in credential_parameters:
+        if c in os.environ:
+            cached[c] = os.environ[c]
+            del os.environ[c]
+    os.environ['PATHSTUDIES_DB_ENDPOINT'] = ''
+    try:
         with DataSkimmer(
-            endpoint=endpoint,
-            user=user,
-            password=password,
             dataset_settings=dataset_settings,
             dataset_design=dataset_design,
         ) as skimmer:
             skimmer.skim_initial_data()
+        raise Exception('Incomplete credentials not caught.')
+    except EnvironmentError:
+        for c in os.environ:
+            if c in cached:
+                os.environ[c] = cached[c]
+            else:
+                del os.environ[c]
 
 
 if __name__=='__main__':
+    test_data_skimmer_incomplete_credentials()
     test_data_skimmer()
+

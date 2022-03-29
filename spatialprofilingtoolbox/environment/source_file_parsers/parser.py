@@ -1,13 +1,32 @@
 import psycopg2
 import re
+import enum
+from enum import Enum
+from enum import auto
 
 from ..log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
+class DBBackend(Enum):
+    SQLITE = auto()
+    POSTGRES = auto()
+
+
 class SourceFileSemanticParser:
+    def __init__(self, db_backend):
+        self.db_backend = db_backend
+
     def parse(self, connection, fields, dataset_settings, dataset_design):
         pass
+
+    def get_placeholder(self):
+        placeholder = None
+        if self.db_backend == DBBackend.SQLITE:
+            placeholder = '?'
+        if self.db_backend == DBBackend.POSTGRES:
+            placeholder = '%s'
+        return placeholder
 
     def normalize(self, string):
         string = re.sub('[ \-]', '_', string)
@@ -27,7 +46,7 @@ class SourceFileSemanticParser:
         fields_sorted = self.get_field_names(tablename, fields)
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join([field['Name'] for field in fields_sorted]) + ') '
-            'VALUES (' + ', '.join(['%s']*len(fields_sorted)) + ') '
+            'VALUES (' + ', '.join([self.get_placeholder()]*len(fields_sorted)) + ') '
             'ON CONFLICT DO NOTHING;'
         )
         return query
@@ -74,7 +93,7 @@ class SourceFileSemanticParser:
             identifying_fields = fields[1:]
         query = 'SELECT ' + primary + ' FROM ' + tablename + ' WHERE ' + ' AND '.join(
                 [
-                    field['Name'] + ' = %s '
+                    field['Name'] + ' = %s ' % self.get_placeholder()
                     for field in identifying_fields
                 ]
             ) + ' ;'

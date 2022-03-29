@@ -69,6 +69,7 @@ setuptools.setup(
             'nextflow.config.lsf',
             'nextflow.config.local',
             'fields.tsv',
+            'pathology_schema.sql',
         ]},
     python_requires='>=3.7',
     scripts=[

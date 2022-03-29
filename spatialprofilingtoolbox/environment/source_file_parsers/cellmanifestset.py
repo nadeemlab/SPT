@@ -12,6 +12,9 @@ logger = colorized_logger(__name__)
 
 
 class CellManifestSetParser(SourceFileSemanticParser):
+    def __init__(self, **kwargs):
+        super(CellManifestSetParser, self).__init__(**kwargs)
+
     def parse(self, connection, fields, dataset_settings, dataset_design):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source

@@ -7,6 +7,9 @@ logger = colorized_logger(__name__)
 
 
 class ChannelsPhenotypesParser(SourceFileSemanticParser):
+    def __init__(self, **kwargs):
+        super(ChannelsPhenotypesParser, self).__init__(**kwargs)
+
     def parse(self, connection, fields, dataset_settings, dataset_design):
         """
         Retrieve the phenotype and channel metadata, and parse records for:

@@ -7,6 +7,9 @@ logger = colorized_logger(__name__)
 
 
 class OutcomesParser(SourceFileSemanticParser):
+    def __init__(self, **kwargs):
+        super(OutcomesParser, self).__init__(**kwargs)
+
     def parse(self, connection, fields, dataset_settings, dataset_design):
         """
         Retrieve outcome data in the same way that the main workflows do, and parse

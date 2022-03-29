@@ -1,6 +1,7 @@
 import io
 from io import BytesIO as StringIO
 import base64
+import mmap
 
 import shapefile
 import pandas as pd
@@ -8,12 +9,14 @@ import pandas as pd
 from ..file_io import compute_sha256
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceFileSemanticParser
+from .parser import DBBackend
 from ..log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
 class CellManifestsParser(SourceFileSemanticParser):
-    def __init__(self, chemical_species_identifiers_by_symbol):
+    def __init__(self, chemical_species_identifiers_by_symbol, **kwargs):
+        super(CellManifestsParser, self).__init__(**kwargs)
         self.chemical_species_identifiers_by_symbol = chemical_species_identifiers_by_symbol
 
     def parse(self, connection, fields, dataset_settings, dataset_design):
@@ -139,13 +142,22 @@ class CellManifestsParser(SourceFileSemanticParser):
                         'expression_quantification',
                     ]
                     for tablename in tablenames:
-                        values_file_contents = '\n'.join([
-                            '\t'.join(r) for r in records[tablename]
-                        ]).encode('utf-8')
-                        with mmap.mmap(-1, len(values_file_contents)) as mm:
-                            mm.write(values_file_contents)
-                            mm.seek(0)
-                            cursor.copy_from(mm, tablename)
+                        if self.db_backend == DBBackend.POSTGRES:
+                            values_file_contents = '\n'.join([
+                                '\t'.join(r) for r in records[tablename]
+                            ]).encode('utf-8')
+                            with mmap.mmap(-1, len(values_file_contents)) as mm:
+                                mm.write(values_file_contents)
+                                mm.seek(0)
+                                cursor.copy_from(mm, tablename)
+                        if self.db_backend == DBBackend.SQLITE:
+                            f = [field[0] for field in self.get_field_names(tablename, fields)]
+                            width = len(f)
+                            query = ''.join([
+                                'INSERT INTO %s(%s) ' % (tablename, ','.join(f)),
+                                'VALUES (%s)' % ','.join([self.get_placeholder()] * width),
+                            ])
+                            cursor.executemany(query, records[tablename])
             logger.info('Parsed records for %s cells from "%s".', cells.shape[0], sha256_hash)
 
         connection.commit()
@@ -155,7 +167,7 @@ class CellManifestsParser(SourceFileSemanticParser):
         query = (
             'SELECT COUNT(*) '
             'FROM histological_structure_identification '
-            'WHERE data_source = %s ;'
+            'WHERE data_source = %s ;' % self.get_placeholder()
         )
         cursor.execute(query, (sha256_hash,))
         count = cursor.fetchall()[0][0]

@@ -45,4 +45,8 @@ function _test_cleanup() {
     then
         rm .spt_pipeline.json
     fi
+    if [[ -f pathstudies.db ]];
+    then
+        rm pathstudies.db
+    fi
 }

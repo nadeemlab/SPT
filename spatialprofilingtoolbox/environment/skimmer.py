@@ -15,7 +15,6 @@ logger = colorized_logger(__name__)
 from .source_file_parsers import *
 
 
-
 class DataSkimmer:
     def __init__(self, dataset_settings, dataset_design):
         connectivity = False

@@ -43,7 +43,7 @@ def test_data_skimmer():
         dataset_settings=dataset_settings,
         dataset_design=dataset_design,
     ) as skimmer:
-        skimmer.skim_initial_data()
+        skimmer.parse()
 
 def test_data_skimmer_incomplete_credentials():
     spt_pipeline_json = open('./unit_tests/proximity_skimming.json', 'rt').read()
@@ -77,7 +77,7 @@ def test_data_skimmer_incomplete_credentials():
             dataset_settings=dataset_settings,
             dataset_design=dataset_design,
         ) as skimmer:
-            skimmer.skim_initial_data()
+            skimmer.parse()
         raise Exception('Incomplete credentials not caught.')
     except EnvironmentError:
         for c in os.environ:

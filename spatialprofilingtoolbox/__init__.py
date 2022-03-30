@@ -14,6 +14,7 @@ from .environment.configuration import nf_config_file
 from .applications.configuration_ui.ui import configuration_dialog
 
 from .environment.settings_wrappers import DatasetSettings
+from .environment.skimmer import DataSkimmer
 from .environment.log_formats import colorized_logger
 __logger = colorized_logger(__name__)
 
@@ -34,6 +35,12 @@ def get_job_generator(workflow=None, **kwargs):
     else:
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
+
+def get_semantic_source_parser(workflow=None, **kwargs):
+    return DataSkimmer(
+        dataset_settings = get_dataset_settings(**kwargs),
+        dataset_design = get_dataset_design(workflow=workflow, **kwargs),
+    )
 
 def get_dataset_design_class(workflow=None, **kwargs):
     return workflows[workflow].dataset_design

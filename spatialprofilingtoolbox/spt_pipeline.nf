@@ -51,6 +51,35 @@ process generate_jobs {
     """
 }
 
+process list_all_jobs_inputs {
+    input:
+    path config_file
+    path file_manifest_file
+
+    output:
+    path 'all_jobs_input_files.txt'
+
+    script:
+    """
+    spt-pipeline list-all-jobs-inputs --all-jobs-inputs=all_jobs_input_files.txt
+    """
+}
+
+process semantic_parsing {
+    input:
+    path config_file
+    path file_manifest_file
+    path extra_dependencies
+
+    output:
+    path 'normalized_source_data.db'
+
+    script:
+    """
+    spt-pipeline semantic-parse
+    """
+}
+
 process single_job {
     input:
     path config_file
@@ -134,6 +163,22 @@ workflow {
         .map{ file(it.trim()) }
         .collect()
         .set{ auxiliary_job_input_files_ch }
+
+    list_all_jobs_inputs(
+        config_file_ch,
+        file_manifest_ch,
+    )
+        .map{ file(it) }
+        .splitText(by: 1)
+        .map{ file(it.trim()) }
+        .collect()
+        .set{ all_job_input_files_ch }
+
+    semantic_parsing(
+        config_file_ch,
+        file_manifest_ch,
+        all_job_input_files_ch,
+    )
 
     single_job(
         config_file_ch,

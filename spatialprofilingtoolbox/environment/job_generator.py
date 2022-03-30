@@ -22,6 +22,7 @@ class JobGenerator:
         input_path: str=None,
         file_manifest_file: str=None,
         job_inputs: str=None,
+        all_jobs_inputs: str=None,
         dataset_design_class=None,
         **kwargs,
     ):
@@ -40,11 +41,11 @@ class JobGenerator:
         :param dataset_design_class: Class of design object representing input data set.
         """
         self.job_inputs = job_inputs
+        self.all_jobs_inputs = all_jobs_inputs
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,
         )
-
         self.file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
         self.dataset_design_class = dataset_design_class
 
@@ -107,6 +108,20 @@ class JobGenerator:
                 filenames.append(full_filename)
         df = pd.DataFrame({'filename' : filenames})
         df.to_csv(self.job_inputs, index=False, header=False)
+
+    def list_all_jobs_inputs(self):
+        """
+        Prepares the list of additional job input files. Just includes every file in
+        the file manifest which is not determined to be a cell manifest.
+        """
+        filenames = []
+        for i, file_row in self.file_metadata.iterrows():
+            input_filename = file_row['File name']
+            full_filename = join(self.dataset_settings.input_path, input_filename)
+            filenames.append(full_filename)
+        df = pd.DataFrame({'filename' : filenames})
+        print(self.all_jobs_inputs)
+        df.to_csv(self.all_jobs_inputs, index=False, header=False)
 
     @staticmethod
     def get_memory_requirements(file_record):

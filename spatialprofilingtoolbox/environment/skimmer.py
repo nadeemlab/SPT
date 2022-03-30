@@ -64,7 +64,7 @@ class DataSkimmer:
         if self.db_backend == DBBackend.SQLITE:
             with importlib.resources.path('spatialprofilingtoolbox', 'pathology_schema.sql') as path:
                 create_db_script = open(path).read()
-            pathstudies = 'pathstudies.db'
+            pathstudies = 'normalized_source_data.db'
             if exists(pathstudies):
                 remove(pathstudies)
             self.connection = sqlite3.connect(pathstudies)
@@ -91,7 +91,7 @@ class DataSkimmer:
         except:
             return False
 
-    def skim_initial_data(self):
+    def parse(self):
         with importlib.resources.path('spatialprofilingtoolbox', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 

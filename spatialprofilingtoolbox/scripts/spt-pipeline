@@ -17,13 +17,15 @@ if __name__=='__main__':
         ])
     )
     generate_jobs = 'generate-jobs'
+    semantic_parse = 'semantic-parse'
     list_auxiliary_job_inputs = 'list-auxiliary-job-inputs'
+    list_all_jobs_inputs = 'list-all-jobs-inputs'
     single_job = 'single-job'
     aggregate_results = 'aggregate-results'
     run = 'run'
     configure = 'configure'
     write_nextflow_script = 'write-nextflow-script'
-    commands = [generate_jobs, list_auxiliary_job_inputs, single_job, aggregate_results, run, configure, write_nextflow_script]
+    commands = [generate_jobs, semantic_parse, list_auxiliary_job_inputs, list_all_jobs_inputs, single_job, aggregate_results, run, configure, write_nextflow_script]
     parser.add_argument(
         'command_token',
         nargs='?',
@@ -52,6 +54,14 @@ if __name__=='__main__':
             'Filename for output list of additional inputs to every job.',
         ])
     )
+    parser.add_argument('--all-jobs-inputs',
+        dest='all_jobs_inputs',
+        type=str,
+        required=False,
+        help=''.join([
+            'Filename for output list of additional inputs to all jobs.',
+        ])
+    )
     parser.add_argument('--intermediate-database-filename',
         dest='intermediate_database_filename',
         type=str,
@@ -71,6 +81,9 @@ if __name__=='__main__':
     value = args.job_inputs
     if value is not None:
         parameters['job_inputs'] = value
+    value = args.all_jobs_inputs
+    if value is not None:
+        parameters['all_jobs_inputs'] = value
     value = args.intermediate_database_filename
     if value is not None:
         parameters['intermediate_database_filename'] = value
@@ -89,9 +102,17 @@ if __name__=='__main__':
         job_generator = spt.get_job_generator(**parameters)
         job_generator.list_auxiliary_job_inputs()
 
+    if command == list_all_jobs_inputs:
+        job_generator = spt.get_job_generator(**parameters)
+        job_generator.list_all_jobs_inputs()
+
     if command == generate_jobs:
         job_generator = spt.get_job_generator(**parameters)
         job_generator.generate()
+
+    if command == semantic_parse:
+        with spt.get_semantic_source_parser(**parameters) as parser:
+            parser.parse()
 
     if command == single_job:
         analyzer = spt.get_analyzer(**parameters)

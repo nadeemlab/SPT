@@ -96,6 +96,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                         symbol : dataset_design.get_combined_intensity(batch_cells, symbol)
                         for symbol in channel_symbols
                     }
+                    logger.debug('Starting batch of cells that begins at index %s.', start)
                     cell_index_error_count = 0
                     for j, cell in batch_cells.iterrows():
                         histological_structure_identifier = str(histological_structure_identifier_index)

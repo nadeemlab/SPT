@@ -134,6 +134,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                                     cell_index_error_count += 1
                                 if cell_index_error_count == 5:
                                     logger.debug('Suppressing further cell index error messages.')
+                                    cell_index_error_count += 1
                                 continue
                             target = self.chemical_species_identifiers_by_symbol[symbol]
                             quantity = intensities[symbol][j]

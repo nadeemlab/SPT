@@ -39,7 +39,10 @@ expect -exact "Tumor,Non-Tumor\r
 \[33mBalanced/symmetric analysis with respect to phenotype pairs?\[0m "
 send -- "No\r"
 expect -exact "No\r
-\[33mIf using singularity container SIF file, supply the path to it here (otherwise enter the empty string)\[0m "
+\[33mIf using singularity container SIF file, supply the path to it here (otherwise enter the empty string):\[0m "
+send -- "\r"
+expect -exact "\r
+\[33mIf using a cluster, if desired supply the name of a host to exclude (otherwise enter the empty string):\[0m "
 send -- "\r"
 expect -exact "\r
 \[33mSkip file integrity check?\[0m "

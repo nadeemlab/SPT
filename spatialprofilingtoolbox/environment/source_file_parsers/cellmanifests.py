@@ -95,6 +95,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                         symbol : dataset_design.get_combined_intensity(batch_cells, symbol)
                         for symbol in channel_symbols
                     }
+                    cell_index_error_count = 0
                     for j, cell in batch_cells.iterrows():
                         histological_structure_identifier = str(histological_structure_identifier_index)
                         histological_structure_identifier_index += 1
@@ -120,6 +121,18 @@ class CellManifestsParser(SourceFileSemanticParser):
                             '',
                         ))
                         for symbol in channel_symbols:
+                            if len(intensities[symbol]) >= j:
+                                if cell_index_error_count < 5:
+                                    logger.warning(
+                                        'Intensity channel %s has %s elements, but looking for value for cell with index %s.',
+                                        symbol,
+                                        len(intensities[symbol]),
+                                        j,
+                                    )
+                                    cell_index_error_count += 1
+                                if cell_index_error_count == 5:
+                                    logger.debug('Suppressing further cell index error messages.')
+                                continue
                             target = self.chemical_species_identifiers_by_symbol[symbol]
                             quantity = intensities[symbol][j]
                             if quantity in [None, '']:

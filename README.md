@@ -85,13 +85,15 @@ nextflow -c nextflow.config.lsf run spt_pipeline.nf
 ### Monitoring output
 SPT generates verbose logs, which Nextflow sends to files `work/*/*/.command.log` .
 
-A convenient way to monitor these is to use [`multitail`](https://github.com/halturin/multitail). `multitail` can be used from a local `make` build of the source. If there are many user applications running, you may need to increase certain file-monitoring limits:
+A convenient way to monitor these is:
 
 ```sh
-sudo sysctl fs.inotify.max_user_instances=8192
-sudo sysctl -p
+tail -f $(find work/*/*/\.command.log)
 ```
 
+Since new log files are created as the workflow progresses, you may need to run this command multiple times.
+
+Another way monitor the log files is to use [`multitail`](https://github.com/halturin/multitail). `multitail` can be used from a local `make` build of its source code.
 Monitor the logs from each process deployed by Nextflow:
 
 ```sh
@@ -102,6 +104,14 @@ Common `multitail` commands:
 - `d` brings up a list of the windows, to be deleted on `<ENTER>`. Helpful when there are lots of windows.
 - `q` quits.
 - `ctrl-h` brings up a list of other commands.
+
+Note: If there are many user applications running, you may need to increase certain file-monitoring limits:
+
+```sh
+sudo sysctl fs.inotify.max_user_instances=8192
+sudo sysctl -p
+```
+
 
 Examples
 --------

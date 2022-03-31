@@ -36,6 +36,11 @@ function _cleanup() {
     then
         rm 'example_merged.db'
     fi
+
+    if [[ -f .spt_pipeline.json ]];
+    then
+        rm .spt_pipeline.json
+    fi
 }
 
 function _test_cleanup() {

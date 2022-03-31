@@ -121,7 +121,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                             '',
                         ))
                         for symbol in channel_symbols:
-                            if len(intensities[symbol]) >= j:
+                            if len(intensities[symbol]) <= j:
                                 if cell_index_error_count < 5:
                                     logger.warning(
                                         'Intensity channel %s has %s elements, but looking for value for cell with index %s.',

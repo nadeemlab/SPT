@@ -82,9 +82,10 @@ class CellManifestsParser(SourceFileSemanticParser):
                 )
                 continue
             elif count == 0:
-                chunk_size = 1000
+                chunk_size = 10000
                 for start in range(0, cells.shape[0], chunk_size):
-                    batch_cells = cells.iloc[start:start + chunk_size]
+                    batch_cells_reference = cells.iloc[start:start + chunk_size]
+                    batch_cells = batch_cells_reference.reset_index(drop=True)
                     records = {
                         'histological_structure' : [],
                         'shape_file' : [],

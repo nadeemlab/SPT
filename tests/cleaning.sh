@@ -41,6 +41,11 @@ function _cleanup() {
     then
         rm .spt_pipeline.json
     fi
+
+    if [[ -f normalized_source_data.db ]];
+    then
+        rm normalized_source_data.db
+    fi
 }
 
 function _test_cleanup() {
@@ -50,8 +55,8 @@ function _test_cleanup() {
     then
         rm .spt_pipeline.json
     fi
-    if [[ -f pathstudies.db ]];
+    if [[ -f normalized_source_data.db ]];
     then
-        rm pathstudies.db
+        rm normalized_source_data.db
     fi
 }

@@ -153,6 +153,7 @@ cd tests/
 outcome=$(python -m pytest -q . | tail -n1 | grep "[0-9]\+ \(failed\|errors\)")
 if [[ ! "$outcome" == "" ]]; then
     logstyle-printf "$red""Something went wrong in unit tests.$reset"
+    echo "'$outcome'"
     clean_exit
 fi
 

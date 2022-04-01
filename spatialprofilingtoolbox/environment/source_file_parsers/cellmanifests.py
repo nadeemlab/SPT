@@ -13,6 +13,10 @@ from .parser import DBBackend
 from ..log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
+from ..performance_timer import PerformanceTimer
+
+record_performance = True
+
 
 class CellManifestsParser(SourceFileSemanticParser):
     def __init__(self, chemical_species_identifiers_by_symbol, **kwargs):
@@ -27,6 +31,9 @@ class CellManifestsParser(SourceFileSemanticParser):
         - shape file
         - expression quantification
         """
+        if record_performance:
+            t = PerformanceTimer()
+            t.record_timepoint('Initial')
         file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t')
         halo_data_type = 'HALO software cell manifest'
         cell_manifests = file_metadata[
@@ -45,9 +52,15 @@ class CellManifestsParser(SourceFileSemanticParser):
             self.chemical_species_identifiers_by_symbol.keys()
         ).difference(missing_channel_symbols)
 
+
         cursor = connection.cursor()
+        if record_performance:
+            t.record_timepoint('Cursor opened')
         histological_structure_identifier_index = self.get_next_integer_identifier('histological_structure', cursor)
         shape_file_identifier_index = self.get_next_integer_identifier('shape_file', cursor)
+        if record_performance:
+            t.record_timepoint('Retrieved next integer identifiers')
+            file_count = 1
         for i, cell_manifest in cell_manifests.iterrows():
             logger.debug(
                 'Considering contents of "%s" file "%s".',
@@ -82,8 +95,12 @@ class CellManifestsParser(SourceFileSemanticParser):
                 )
                 continue
             elif count == 0:
+                if record_performance:
+                    t.record_timepoint('Retrieved and hashed a cell manifest')
                 chunk_size = 10000
                 for start in range(0, cells.shape[0], chunk_size):
+                    if record_performance:
+                        t.record_timepoint('Starting a chunk')
                     batch_cells_reference = cells.iloc[start:start + chunk_size]
                     batch_cells = batch_cells_reference.reset_index(drop=True)
                     records = {
@@ -92,18 +109,28 @@ class CellManifestsParser(SourceFileSemanticParser):
                         'histological_structure_identification' : [],
                         'expression_quantification' : [],
                     }
+                    if record_performance:
+                        t.record_timepoint('Subsetted cells dataframe on chunk')
                     intensities = {
                         symbol : dataset_design.get_combined_intensity(batch_cells, symbol)
                         for symbol in channel_symbols
                     }
+                    if record_performance:
+                        t.record_timepoint('Retrieved intensities on chunk')
                     logger.debug('Starting batch of cells that begins at index %s.', start)
                     cell_index_error_count = 0
+                    if record_performance:
+                        t.record_timepoint('Started per-cell iteration')
                     for j, cell in batch_cells.iterrows():
                         histological_structure_identifier = str(histological_structure_identifier_index)
                         histological_structure_identifier_index += 1
                         shape_file_identifier = str(shape_file_identifier_index)
                         shape_file_identifier_index += 1
+                        if record_performance:
+                            t.record_timepoint('Beginning of one cell iteration')
                         shape_file_contents = self.create_shape_file(cell, dataset_design)
+                        if record_performance:
+                            t.record_timepoint('Created shapefile contents')
                         records['histological_structure'].append((
                             histological_structure_identifier,
                             'cell',
@@ -122,6 +149,8 @@ class CellManifestsParser(SourceFileSemanticParser):
                             '',
                             '',
                         ))
+                        if record_performance:
+                            t.record_timepoint('Added one new record by appending fields to all lists')
                         for symbol in channel_symbols:
                             if len(intensities[symbol]) <= j:
                                 if cell_index_error_count < 5:
@@ -136,11 +165,17 @@ class CellManifestsParser(SourceFileSemanticParser):
                                     logger.debug('Suppressing further cell index error messages.')
                                     cell_index_error_count += 1
                                 continue
+                            if record_performance:
+                                t.record_timepoint('Starting channel consideration for one cell')
                             target = self.chemical_species_identifiers_by_symbol[symbol]
                             quantity = intensities[symbol][j]
+                            if record_performance:
+                                t.record_timepoint('Retrieved quantification')
                             if quantity in [None, '']:
                                 continue
                             discrete_value = cell[dataset_design.get_feature_name(symbol)]
+                            if record_performance:
+                                t.record_timepoint('Retrieved discretization')
                             records['expression_quantification'].append((
                                 histological_structure_identifier,
                                 target,
@@ -150,6 +185,8 @@ class CellManifestsParser(SourceFileSemanticParser):
                                 'positive' if discrete_value == 1 else 'negative',
                                 '',
                             ))
+                            if record_performance:
+                                t.record_timepoint('Finished one cell iteration')
 
                     tablenames = [
                         'histological_structure',
@@ -158,6 +195,8 @@ class CellManifestsParser(SourceFileSemanticParser):
                         'expression_quantification',
                     ]
                     for tablename in tablenames:
+                        if record_performance:
+                            t.record_timepoint('Started inserting one chunk')
                         if self.db_backend == DBBackend.POSTGRES:
                             values_file_contents = '\n'.join([
                                 '\t'.join(r) for r in records[tablename]
@@ -174,7 +213,13 @@ class CellManifestsParser(SourceFileSemanticParser):
                                 'VALUES (%s)' % ','.join([self.get_placeholder()] * width),
                             ])
                             cursor.executemany(query, records[tablename])
+                        if record_performance:
+                            t.record_timepoint('Finished inserting one chunk')
             logger.info('Parsed records for %s cells from "%s".', cells.shape[0], sha256_hash)
+            if record_performance:
+                t.record_timepoint('Completed cell manifest parsing')
+                logger.debug('Performance report %s:\n' % file_count + t.report(as_string=True, by='total time spent'))
+                file_count += 1
 
         connection.commit()
         cursor.close()

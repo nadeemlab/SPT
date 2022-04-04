@@ -116,6 +116,11 @@ process merge_databases {
 }
 
 process aggregate_results {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 6
+
     publishDir 'results'
 
     input:

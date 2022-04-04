@@ -111,12 +111,22 @@ class CellManifestsParser(SourceFileSemanticParser):
                     }
                     if record_performance:
                         t.record_timepoint('Subsetted cells dataframe on chunk')
+
                     intensities = {
                         symbol : dataset_design.get_combined_intensity(batch_cells, symbol)
                         for symbol in channel_symbols
                     }
                     if record_performance:
                         t.record_timepoint('Retrieved intensities on chunk')
+
+                    discretizations = {
+                        symbol : batch_cells[dataset_design.get_feature_name(symbol)]
+                        for symbol in channel_symbols
+                    }
+                    if record_performance:
+                        t.record_timepoint('Retrieved discretizations on chunk')
+
+
                     logger.debug('Starting batch of cells that begins at index %s.', start)
                     cell_index_error_count = 0
                     if record_performance:
@@ -173,7 +183,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                                 t.record_timepoint('Retrieved quantification')
                             if quantity in [None, '']:
                                 continue
-                            discrete_value = cell[dataset_design.get_feature_name(symbol)]
+                            discrete_value = discretizations[symbol][j]
                             if record_performance:
                                 t.record_timepoint('Retrieved discretization')
                             records['expression_quantification'].append((

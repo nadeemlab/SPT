@@ -1,7 +1,6 @@
 **.egg-info/
 **/__pycache__/
 docs/_build/
-**/Makefile
 **/make.bat
 tests/.file_metadata.cache
 tests/.pipeline.db

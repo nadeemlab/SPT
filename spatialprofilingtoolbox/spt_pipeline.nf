@@ -66,6 +66,8 @@ process list_all_jobs_inputs {
 }
 
 process semantic_parsing {
+    publishDir 'results'
+
     input:
     path config_file
     path file_manifest_file

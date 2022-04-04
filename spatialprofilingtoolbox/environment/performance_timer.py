@@ -5,6 +5,19 @@ import numpy as np
 
 
 class PerformanceTimer:
+    """
+    An object of this class makes it easy to track which part of complex
+    branching code is taking a long time, with only a few additional lines of
+    monitoring code.
+
+    Use record_timepoint at key moments, supplying a short message/title that
+    indicates what the context, typically an indication of what has just completed.
+    Whenever you want to assess the time performance, use report (as_string=True)
+    to get a markdown representation of a table of times, on the basis of *pairs*
+    of code locations (as indicated by your messages) occurring consecutively.
+    Included in the report are fraction of time spent, total time spent (seconds),
+    average time spent per occurrence, frequency of occurrence.
+    """
     def __init__(self):
         self.times = {}
         self.previous_time = None

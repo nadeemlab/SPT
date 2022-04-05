@@ -1,6 +1,8 @@
 SHELL = /bin/bash
 .DELETE_ON_ERROR:
 
+$(shell chmod +x building/check_for_credentials.py)
+
 .PHONY: (\
 	release \
 	all-external-pushes \
@@ -11,14 +13,31 @@ SHELL = /bin/bash
 	clean \
 )
 
+PLACEHOLDERS = .all-credentials-available .pypi-credentials-available .docker-credentials-available .git-credentials-available
+
 release: all-external-pushes
 
-all-external-pushes: twine-upload docker-push source-push
+all-external-pushes: twine-upload docker-push source-code-push
+
+docker-push: .all-credentials-available
+
+twine-upload: .all-credentials-available
+
+source-code-push: .all-credentials-available twine-upload
 
 .all-credentials-available: .pypi-credentials-available .docker-credentials-available .git-credentials-available
 
 .pypi-credentials-available:
-	touch .pypi-credentials-available
+	@building/check_for_credentials.py pypi > outcome.txt; \
+    if [[ "$$?" != "0" ]]; then exit 1; fi; \
+    flag=$(cat outcome.txt); rm outcome.txt; \
+    if [[ $$flag == "0" ]]; \
+    then echo >&2 "There are no usable PyPI credentials at ~/.pypirc . )"; \
+    exit 1; \
+    else \
+    echo >&2 "Found PyPI credentials at ~/.pypirc ."; \
+    touch .pypi-credentials-available; \
+    fi;
 
 .docker-credentials-available:
 	touch .docker-credentials-available
@@ -26,8 +45,8 @@ all-external-pushes: twine-upload docker-push source-push
 .git-credentials-available:
 	touch .git-credentials-available
 
-committed-source:
-	check that git registers no changes except version
+# committed-source:
+# 	check that git registers no changes except version
 
 build:
 
@@ -41,18 +60,7 @@ build:
 
 .test: unit-tests integration-tests
 
-
-docker-push: .all-credentials-available
-
-twine-upload: .all-credentials-available
-
-source-code-push: twine-upload
-
 clean:
-
-
-
-
 
 # Makefile migration
 

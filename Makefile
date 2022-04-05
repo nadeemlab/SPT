@@ -15,7 +15,7 @@ $(shell chmod +x building/check_for_credentials.py)
 
 PLACEHOLDERS = .all-credentials-available .pypi-credentials-available .docker-credentials-available .git-credentials-available
 
-release: all-external-pushes
+release: all-external-pushes clean
 
 all-external-pushes: twine-upload docker-push source-code-push
 
@@ -26,6 +26,7 @@ twine-upload: .all-credentials-available
 source-code-push: .all-credentials-available twine-upload
 
 .all-credentials-available: .pypi-credentials-available .docker-credentials-available .git-credentials-available
+	@touch .all-credentials-available
 
 .pypi-credentials-available:
 	@building/check_for_credentials.py pypi > outcome.txt; \
@@ -52,24 +53,30 @@ source-code-push: .all-credentials-available twine-upload
     fi;
 
 .git-credentials-available:
-	touch .git-credentials-available
+	@touch .git-credentials-available
 
-# committed-source:
-# 	check that git registers no changes except version
+committed-source:
+	@echo 'cs'
+	#check that git registers no changes except version
 
 build:
+	@echo 'bb'
+	#check that git registers no changes except version
 
 .unit-tests: build
-	touch .unit-tests
+	@touch .unit-tests
 
 .nextflow-available:
-	touch .nextflow-available
+	@touch .nextflow-available
 
 .integration-tests: .nextflow-available
+	@touch .integration-tests
 
-.test: unit-tests integration-tests
+.test: .unit-tests .integration-tests
+	@touch .test
 
 clean:
+	@-rm ${PLACEHOLDERS}
 
 # Makefile migration
 

@@ -40,7 +40,16 @@ source-code-push: .all-credentials-available twine-upload
     fi;
 
 .docker-credentials-available:
-	touch .docker-credentials-available
+	@building/check_for_credentials.py docker > outcome.txt; \
+    if [[ "$$?" != "0" ]]; then exit 1; fi; \
+    flag=$(cat outcome.txt); rm outcome.txt; \
+    if [[ $$flag == "0" ]]; \
+    then echo >&2 "There are no usable Docker credentials at ~/.docker/config.json . )"; \
+    exit 1; \
+    else \
+    echo >&2 "Found Docker credentials at ~/.docker/config.json ."; \
+    touch .docker-credentials-available; \
+    fi;
 
 .git-credentials-available:
 	touch .git-credentials-available

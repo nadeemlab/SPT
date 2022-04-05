@@ -9,14 +9,14 @@ import sys
 
 class CredentialChecker:
     def __init__(self):
-        self.accounts = ['pypi', 'docker', 'github']
+        self.accounts = ['pypi', 'docker', 'github',]
 
-    def found(self):
-        print('1', end='')
+    def found(self, account):
+        print('\'found\'', end='')
         exit()
 
-    def not_found(self):
-        print('0', end='')
+    def not_found(self, account):
+        print('\'not_found\'', end='')
         exit()
 
     def check_for_credentials(self, account):
@@ -24,27 +24,24 @@ class CredentialChecker:
             config = configparser.ConfigParser()
             pypirc = join(os.environ['HOME'], '.pypirc')
             if not exists(pypirc):
-                self.not_found()
+                self.not_found(account)
             config.read(pypirc)
             if not 'spatialprofilingtoolbox' in config.sections():
-                self.not_found()
+                self.not_found(account)
             fields = ['repository', 'username', 'password']
             if not all([x in config['spatialprofilingtoolbox'] for x in fields]):
-                self.not_found()
-            self.found()
+                self.not_found(account)
+            self.found(account)
         if account == 'docker':
             configfile = join(os.environ['HOME'], '.docker', 'config.json')
             if not exists(configfile):
-                self.not_found()
+                self.not_found(account)
             config = json.loads(open(configfile, 'rt').read())
             if not 'auths' in config:
-                self.not_found()
+                self.not_found(account)
             if len(config['auths'].keys()) == 0:
-                self.not_found()
-            key = list(config['auths'].keys())[0]
-            if not 'auth' in config['auths'][key]:
-                self.not_found()
-            self.found()
+                self.not_found(account)
+            self.found(account)
 
     def explain_arguments(self):
         print('Need to supply one of: %s' % str(self.accounts))

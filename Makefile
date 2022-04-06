@@ -61,12 +61,12 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	nextflow-available \
 	clean \
 )
-RESET="\033[0m"
-NOTE_COLOR="\033[0m"
-NOTE_COLOR_FINAL="\033[32;1m"
-ERROR_COLOR="\033[31;1m"
-DOTS_COLOR="\033[33m"
-PADDING=...............................................................
+RESET:="\033[0m"
+NOTE_COLOR:="\033[0m"
+NOTE_COLOR_FINAL:="\033[32;1m"
+ERROR_COLOR:="\033[31;1m"
+DOTS_COLOR:="\033[33m"
+PADDING:=...............................................................
 SPACE:=" "
 COMMMA:=,
 
@@ -100,7 +100,8 @@ WHEEL_NAME := spatialprofilingtoolbox-${SPT_VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
 DOCKER_TEST_REPO := spt-test
-PYTHON = python3
+PYTHON := python3
+RELEASE_TO_BRANCH := prerelease
 
 # Rules
 release: all-external-pushes clean
@@ -127,6 +128,17 @@ docker-test-repo-push: .docker-credentials-available
         exit 1; \
     fi;
 
+.docker-credentials-available:
+	@printf $(call color_in_progress,'Searching ~/.docker/config.json for docker credentials')
+	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
+    then  \
+        printf $(call color_final,'Found.') ; \
+        touch .docker-credentials-available; \
+    else \
+        printf $(call color_error,'Not found.') ; \
+        exit 1; \
+    fi;
+
 docker-push: docker-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION}
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
@@ -144,17 +156,6 @@ docker-test-build: Dockerfile repository-is-clean
 	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest . >/dev/null 2>&1
 	@printf $(call color_final,'Built.')
-
-.docker-credentials-available:
-	@printf $(call color_in_progress,'Searching ~/.docker/config.json for docker credentials')
-	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
-    then  \
-        printf $(call color_final,'Found.') ; \
-        touch .docker-credentials-available; \
-    else \
-        printf $(call color_error,'Not found.') ; \
-        exit 1; \
-    fi;
 
 Dockerfile: .version-updated
 	@printf $(call color_in_progress,'Generating Dockerfile')
@@ -194,15 +195,22 @@ on-main-branch:
 	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
     if [[ $$BRANCH != "main" ]]; \
     then \
-        printf $(call color,'Do release actions from the main branch (not "$$BRANCH").'); \
+        printf $(call color_error,'Do release actions from the main branch (not $$BRANCH).'); \
         exit 1; \
     fi
 
 twine-upload: .package-build
 
-source-code-release-push:
+source-code-release-push: on-main-branch
+	@rm spatialprofilingtoolbox/version.txt
+	@git checkout ${RELEASE_TO_BRANCH} >/dev/null 2>&1
+	@git merge main >/dev/null 2>&1
+	@git push >/dev/null 2>&1
+	@git checkout main >/dev/null 2>&1
 
-source-code-main-push: .package-build
+source-code-main-push: .package-build .commit-source-code
+	@git push >/dev/null 2>&1
+	@git push origin v${SPT_VERSION} >/dev/null 2>&1
 
 .test: .unit-tests .integration-tests
 	@touch .test
@@ -229,7 +237,7 @@ nextflow-available:
 	@source venv/bin/activate ; \
     for wheel in dist/*.whl; \
     do \
-        pip install $$wheel 1>/dev/null 2>/dev/null; \
+        pip install $$wheel >/dev/null 2>&1; \
     done
 	@touch .installed-in-venv
 	@printf $(call color_final,'Installed.')

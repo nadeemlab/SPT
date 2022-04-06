@@ -75,7 +75,7 @@ RIGHT_PAREN:=)
 # Functions
 credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
 color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
-color_final = ${NOTE_COLOR_FINAL}$1${RESET}"\n"
+color_final = "[ $2s ] "${NOTE_COLOR_FINAL}$1${RESET}"\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"
 
 # Run-time variables
@@ -121,9 +121,11 @@ docker-test-repo-push: .docker-credentials-available
 
 .pypi-credentials-available:
 	@printf $(call color_in_progress,'Searching ~/.pypirc for PyPI credentials')
+	@date +%s > current_time.txt
 	@if [[ "${PYPI_CREDENTIALS}" == "'found'" ]]; \
-    then  \
-        printf $(call color_final,'Found.') ; \
+    then \
+        initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+        printf $(call color_final,'Found.',$$((now_secs - initial))) ; \
         touch .pypi-credentials-available; \
     else \
         printf $(call color_error,'Not found.') ; \
@@ -132,9 +134,11 @@ docker-test-repo-push: .docker-credentials-available
 
 .docker-credentials-available:
 	@printf $(call color_in_progress,'Searching ~/.docker/config.json for docker credentials')
+	@date +%s > current_time.txt
 	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
     then  \
-        printf $(call color_final,'Found.') ; \
+        initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+        printf $(call color_final,'Found.',$$((now_secs - initial))) ; \
         touch .docker-credentials-available; \
     else \
         printf $(call color_error,'Not found.') ; \
@@ -147,8 +151,10 @@ docker-push: docker-build
 
 docker-build: Dockerfile repository-is-clean .commit-source-code
 	@printf $(call color_in_progress,'Building Docker container')
+	@date +%s > current_time.txt
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest . >/dev/null 2>&1
-	@printf $(call color_final,'Built.')
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    printf $(call color_final,'Built.',$$((now_secs - initial)))
 
 docker-test-repo-push: docker-test-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION}
@@ -156,18 +162,22 @@ docker-test-repo-push: docker-test-build
 
 docker-test-build: Dockerfile repository-is-clean
 	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
+	@date +%s > current_time.txt
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest . >/dev/null 2>&1
-	@printf $(call color_final,'Built.')
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    printf $(call color_final,'Built.',$$((now_secs - initial)))
 
 Dockerfile: .version-updated
 	@printf $(call color_in_progress,'Generating Dockerfile')
+	@date +%s > current_time.txt
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
 	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
 	@rm requirements_docker.txt
 	@sed -i '' "s/{{version}}/${SPT_VERSION}/g" Dockerfile
 	@sed -i '' "s/{{install requirements.txt}}//g" Dockerfile
-	@printf $(call color_final,'Generated.')
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    printf $(call color_final,'Generated.',$$((now_secs - initial)))
 
 .commit-source-code: repository-is-clean on-main-branch .package-build
 	@git add spatialprofilingtoolbox/version.txt
@@ -197,7 +207,7 @@ on-main-branch:
 	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
     if [[ $$BRANCH != "main" ]]; \
     then \
-        printf $(call color_error,'Do release actions from the main branch (not $$BRANCH).'); \
+        printf $(call color_error,"Do release actions from the main branch (not $$BRANCH)."); \
         exit 1; \
     fi
 
@@ -220,17 +230,21 @@ source-code-main-push: .package-build .commit-source-code
 
 .unit-tests: .installed-in-venv
 	@printf $(call color_in_progress,'Doing unit tests')
-	@cd tests/; \
-    outcome=$$(python -m pytest -q . | tail -n1 | grep "[0-9]\+ \${LEFT_PAREN}failed\|errors\${RIGHT_PAREN}" ); \
-    if [[ \"$$outcome\" != "" ]]; \
+	@date +%s > current_time.txt
+	@outcome=$$(cd tests/; source ../venv/bin/activate; python -m pytest -q . | tail -n1 | grep "[0-9]\+ \${LEFT_PAREN}failed\|errors\${RIGHT_PAREN}" ); \
+    if [[ "$$outcome" != "" ]]; \
     then \
+        source venv/bin/activate; \
+        cd tests/; \
         python -m pytest; \
-        $(call color_error,'Something went wrong in unit tests.'); \
+        printf $(call color_error,'Something went wrong in unit tests.'); \
         cd ../; \
+        deactivate; \
         exit 1; \
     fi; \
-    cd ../; \
-	@printf $(call color_final,'Passed.')
+    cd ../
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    printf $(call color_final,'Passed.',$$((now_secs - initial)))
 	@touch .unit-tests
 
 .integration-tests: nextflow-available .installed-in-venv
@@ -246,9 +260,12 @@ nextflow-available:
 
 .installed-in-venv: .package-build
 	@printf $(call color_in_progress,'Creating venv')
+	@date +%s > current_time.txt
 	@${PYTHON} -m venv venv;
-	@printf $(call color_final,'Created.')
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    printf $(call color_final,'Created.',$$((now_secs - initial)))
 	@printf $(call color_in_progress,'Installing spatialprofilingtoolbox into venv')
+	@date +%s > current_time.txt
 	@source venv/bin/activate ; \
     for wheel in dist/*.whl; \
     do \
@@ -256,15 +273,18 @@ nextflow-available:
     done; \
     pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv
-	@printf $(call color_final,'Installed.')
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    printf $(call color_final,'Installed.',$$((now_secs - initial)))
 
 .package-build: dist/${WHEEL_NAME}
 	@touch .package-build
 
 dist/${WHEEL_NAME}:
 	@printf $(call color_in_progress,'Building spatialprofilingtoolbox==${SPT_VERSION}')
+	@date +%s > current_time.txt
 	@${PYTHON} -m build 1>/dev/null
-	@printf $(call color_final,'Built.')
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    printf $(call color_final,'Built.',$$((now_secs - initial)))
 
 clean:
 	@rm -f ${PLACEHOLDERS}

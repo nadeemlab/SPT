@@ -68,7 +68,8 @@ NOTE_COLOR_FINAL="\033[32;1m"
 ERROR_COLOR="\033[31;1m"
 DOTS_COLOR="\033[33m"
 PADDING=...............................................................
-SPACE=" "
+SPACE:=" "
+COMMMA:=,
 
 # Functions
 credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
@@ -185,8 +186,10 @@ repository-is-clean: .version-updated no-other-changes
 no-other-changes:
 	@if [[ "$$(${BIN}/check_commit_state.sh something-else-updated)" == "yes" ]]; \
     then \
-        printf $(call color_error,'Start with a clean repository, with only a version.txt update.');\
+        printf $(call color_error,'Start with a clean repository${COMMA} with only a version.txt update.'); \
         exit 1; \
+    else \
+        printf "huh?"; \
     fi
 
 on-main-branch:

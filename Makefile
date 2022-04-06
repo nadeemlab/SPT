@@ -105,20 +105,20 @@ inform-credential-availability:
 docker-push: docker-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} && \
     docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest && \
-    $(info Pushed ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged "latest"))
+    echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged 'latest'))"
 
 docker-build: Dockerfile repository-is-clean commit-source-code
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_REPO}:latest . && \
-    $(info Built Docker container.)
+    echo "Built Docker container."
 
 docker-test-repo-push: docker-test-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} && \
     docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest && \
-    $(info Pushed ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged "latest"))
+    echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged 'latest'))"
 
 docker-test-build: Dockerfile repository-is-clean
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_TEST_REPO}:latest . && \
-    $(info Built Docker container (for upload to test repository).)
+    echo "Built Docker container (for upload to test repository)."
 
 Dockerfile: version-updated
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt

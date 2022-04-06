@@ -258,7 +258,7 @@ source-code-main-push: .package-build .commit-source-code
 	@printf $(call color_in_progress,'Doing integration tests')
 	@date +%s > current_time.txt
 	@outcome=$$(cd tests/; source ../venv/bin/activate; ./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in"); \
-    if [[ "$$outcome" != "" ]]; \
+    if [[ "$$outcome" == "" ]]; \
     then \
         printf $(call color_error,'Something went wrong in integration tests.'); \
         exit 1; \

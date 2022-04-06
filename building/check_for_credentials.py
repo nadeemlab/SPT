@@ -9,7 +9,7 @@ import sys
 
 class CredentialChecker:
     def __init__(self):
-        self.accounts = ['pypi', 'docker', 'github',]
+        self.accounts = ['pypi', 'docker']
 
     def found(self, account):
         print('\'found\'', end='')

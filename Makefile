@@ -1,13 +1,20 @@
 .help:
 	#
 	# This is mainly a lightweight release-management script for coordinated
-	# DockerHub, GitHub, and PyPI releases of SPT (spatialprofilingtoolbox).
+	# PyPI, DockerHub, and GitHub releases of SPT (spatialprofilingtoolbox).
 	#
 	# The default target (achieved with "make") is
 	#
 	#     make release
 	#
-	# You can also use it for code testing:
+	# The above includes code testing.
+	#
+	# You can also release just the Docker image, to a test DockerHub repository,
+	# with no code testing:
+	#
+	#     make test-release
+	#
+	# You can also do just code testing:
 	#
 	#     make test
 	#
@@ -38,15 +45,22 @@ SHELL := /bin/bash
 .DELETE_ON_ERROR:
 BIN=${PWD}/building
 $(shell chmod +x ${BIN}/check_for_credentials.py)
+$(shell chmod +x ${BIN}/check_commit_state.sh)
 .PHONY: (\
 	release \
 	all-external-pushes \
 	twine-upload \
 	docker-push \
-	source-code-push \
+	docker-build \
+	docker-test-push \
+	docker-test-build \
+	source-code-release-push \
+	source-code-main-push \
+	package-build \
 	inform-credential-availability \
-	committed-source \
+	repository-is-clean \
 	version-updated \
+	no-other-changes \
 	clean \
 )
 
@@ -57,35 +71,87 @@ inform_of_availability = $(if $(filter 'found', $1),$(info $2),$(info $3))
 # Run-time variables
 PYPI_CREDENTIALS := $(call credentials_available,pypi)
 DOCKER_CREDENTIALS := $(call credentials_available,docker)
-GITHUB_CREDENTIALS := $(call credentials_available,github)
 PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests
+SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
+DOCKER_ORG_NAME := nadeemlab
+DOCKER_REPO := spt
+DOCKER_REPO_TEST := spt-test
+PYTHON = python3
 
 # Rules
 release: all-external-pushes clean
 
-all-external-pushes: twine-upload docker-push source-code-push
+test-release: docker-test-repo-push
 
-docker-push twine-upload source-code-push: all-credentials-available
+all-external-pushes: twine-upload docker-push source-code-release-push
 
-.all-credentials-available:
-	@if [[ $$PYPI_CREDENTIALS == "found" && $$DOCKER_CREDENTIALS == "found" && $$GITHUB_CREDENTIALS == "found" ]]; \
+docker-push twine-upload source-code-release-push: .all-credentials-available source-code-main-push
+
+.all-credentials-available: inform-credential-availability
+	@if [[ "${PYPI_CREDENTIALS}" == "'found'" && "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
     then  \
         touch .all-credentials-available; \
     else \
-    	echo "Some credentials not found."; \
-    	exit 1; \
+        exit 1; \
     fi;
 
+docker-push: docker-build
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION}
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
+	$(info Pushed ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged "latest"))
+
+docker-build: Dockerfile repository-is-clean commit-source-code
+	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_REPO}:latest .
+
+docker-test-repo-push: docker-test-build
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION}
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
+	$(info Pushed ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged "latest"))
+
+docker-test-build: Dockerfile repository-is-clean
+	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_TEST_REPO}:latest .
+
+Dockerfile: version-updated
+	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
+	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
+    { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
+	@sed -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
+	@rm requirements_docker.txt
+
+commit-source-code: repository-is-clean package-build
+	@git add spatialprofilingtoolbox/version.txt
+	@git commit -m "Autoreleasing v${SPT_VERSION}"
+	@git tag v${SPT_VERSION}
+
+repository-is-clean: version-updated no-other-changes
+
 version-updated:
+	@if [[ "$$(${BIN}/check_commit_state.sh version-updated)" != "yes" ]]; \
+    then \
+        echo "version.txt must be updated."; \
+        exit 1; \
+    fi
+
+no-other-changes:
+	@if [[ "$$(${BIN}/check_commit_state.sh something-else-updated)" == "yes" ]]; \
+    then \
+        echo "Start with a clean repository, with only a version.txt update.";\
+        exit 1; \
+    fi
+
+package-build:
+	@${PYTHON} -m build 1>/dev/null
+	@echo "Built spatialprofilingtoolbox==${SPT_VERSION}."
+
+twine-upload: package-build
+
+source-code-release-push:
+
+source-code-main-push: package-build
 
 inform-credential-availability:
 	$(call inform_of_availability,${PYPI_CREDENTIALS},Found PyPI credentials at ~/.pypirc .,There are no usable PyPI credentials at ~/.pypirc .)
 	$(call inform_of_availability,${DOCKER_CREDENTIALS},Found docker credentials at ~/.docker/config.json .,There are no usable docker credentials at ~/.docker/config.json .)
-	$(call inform_of_availability,${GITHUB_CREDENTIALS},Found GitHub credentials satisfactory for write access to this repository.,Did not find GitHub credentials satisfactory for write access to this repository.)
-
-committed-source:
-	@echo 'cs'
-	#check that git registers no changes except version
 
 build:
 	@echo 'bb'
@@ -105,6 +171,9 @@ build:
 
 clean:
 	@rm -f ${PLACEHOLDERS}
+	@rm -f Dockerfile
+	@rm -rf dist/
+	@rm -rf build/
 
 help: .help
 

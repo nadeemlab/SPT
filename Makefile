@@ -137,7 +137,7 @@ on-main-branch:
 	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
     if [[ $$BRANCH != "main" ]]; \
     then \
-        echo "Do release actions from the main branch."; \
+        echo "Do release actions from the main branch (not "$$BRANCH")."; \
         exit 1; \
     fi
 

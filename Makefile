@@ -55,7 +55,6 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	docker-test-push \
 	source-code-release-push \
 	source-code-main-push \
-	inform-credential-availability \
 	on-main-branch \
 	repository-is-clean \
 	no-other-changes \
@@ -73,7 +72,6 @@ COMMMA:=,
 
 # Functions
 credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
-inform_of_availability = $(if $(filter 'found', $1),$(info $2),$(info $3))
 color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
 color_final = ${NOTE_COLOR_FINAL}$1${RESET}"\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"
@@ -89,6 +87,7 @@ endif
 PLACEHOLDERS := \
 	.all-credentials-available \
 	.docker-credentials-available \
+	.pypi-credentials-available \
 	.test \
 	.unit-tests \
 	.integration-tests \
@@ -114,25 +113,30 @@ docker-push twine-upload source-code-release-push: .all-credentials-available so
 
 docker-test-repo-push: .docker_credentials_available
 
-.all-credentials-available: inform-credential-availability
-	@if [[ "${PYPI_CREDENTIALS}" == "'found'" && "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
+.all-credentials-available: .pypi-credentials-available .docker-credentials-available
+	@touch .all-credentials-available
+
+.pypi-credentials-available:
+	@printf $(call color_in_progress,'Searching ~/.pypirc for PyPI credentials')
+	@if [[ "${PYPI_CREDENTIALS}" == "'found'" ]]; \
     then  \
-        touch .all-credentials-available; \
+        printf $(call color_final,'Found.') ; \
+        touch .pypi-credentials-available; \
     else \
+        printf $(call color_error,'Not found.') ; \
         exit 1; \
     fi;
 
-.docker_credentials_available:
+.docker-credentials-available:
+	@printf $(call color_in_progress,'Searching ~/.docker/config.json for docker credentials')
 	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
     then  \
+        printf $(call color_final,'Found.') ; \
         touch .docker-credentials-available; \
     else \
+        printf $(call color_error,'Not found.') ; \
         exit 1; \
     fi;
-
-inform-credential-availability:
-	$(call inform_of_availability,${PYPI_CREDENTIALS},Found PyPI credentials at ~/.pypirc .,There are no usable PyPI credentials at ~/.pypirc .)
-	$(call inform_of_availability,${DOCKER_CREDENTIALS},Found docker credentials at ~/.docker/config.json .,There are no usable docker credentials at ~/.docker/config.json .)
 
 docker-push: docker-build
 	@printf $(call color_in_progress,'Pushing ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged latest))')

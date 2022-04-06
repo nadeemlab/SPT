@@ -73,7 +73,7 @@ ifneq ("$(wildcard nextflow)","")
 else
 	NEXTFLOW := $(if $(shell which nextflow),$(shell which nextflow),)
 endif
-PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests .commit-source-code .version-updated .installed-in-venv
+PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests .commit-source-code .version-updated .installed-in-venv .package-build
 SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
 WHEEL_NAME := spatialprofilingtoolbox-${SPT_VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
@@ -129,7 +129,7 @@ Dockerfile: .version-updated
 	@sed -i "s/{{install requirements.txt}}//g" Dockerfile
 	@echo "Generated Dockerfile."
 
-.commit-source-code: repository-is-clean on-main-branch package-build
+.commit-source-code: repository-is-clean on-main-branch .package-build
 	@git add spatialprofilingtoolbox/version.txt
 	@git commit -m "Autoreleasing v${SPT_VERSION}"
 	@git tag v${SPT_VERSION}
@@ -161,11 +161,11 @@ on-main-branch:
         exit 1; \
     fi
 
-twine-upload: package-build
+twine-upload: .package-build
 
 source-code-release-push:
 
-source-code-main-push: package-build
+source-code-main-push: .package-build
 
 .test: .unit-tests .integration-tests
 	@touch .test
@@ -183,7 +183,7 @@ nextflow-available:
         exit 1; \
     fi
 
-.installed-in-venv: package-build
+.installed-in-venv: .package-build
 	@${PYTHON} -m venv venv ; \
     source venv/bin/activate ; \
     for wheel in dist/*.whl; \
@@ -193,7 +193,8 @@ nextflow-available:
 	@touch .installed-in-venv
 	@echo "Installed spatialprofilingtoolbox into venv."
 
-package-build: dist/${WHEEL_NAME}
+.package-build: dist/${WHEEL_NAME}
+	@touch .package-build
 
 dist/${WHEEL_NAME}:
 	@${PYTHON} -m build 1>/dev/null

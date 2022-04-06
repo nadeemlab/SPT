@@ -55,6 +55,7 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	source-code-release-push \
 	source-code-main-push \
 	inform-credential-availability \
+	on-main-branch \
 	repository-is-clean \
 	version-updated \
 	no-other-changes \
@@ -124,13 +125,21 @@ Dockerfile: version-updated
 	@sed -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
 	@rm requirements_docker.txt
 
-.commit-source-code: repository-is-clean package-build
+.commit-source-code: repository-is-clean on-main-branch package-build
 	@git add spatialprofilingtoolbox/version.txt
 	@git commit -m "Autoreleasing v${SPT_VERSION}"
 	@git tag v${SPT_VERSION}
 	@touch .commit-source-code
 
 repository-is-clean: version-updated no-other-changes
+
+on-main-branch:
+	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
+    if [[ $$BRANCH != "main" ]]; \
+    then \
+        echo "Do release actions from the main branch."; \
+        exit 1; \
+    fi
 
 version-updated:
 	@if [[ "$$(${BIN}/check_commit_state.sh version-updated)" != "yes" ]]; \

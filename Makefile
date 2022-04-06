@@ -84,7 +84,7 @@ PYTHON = python3
 # Rules
 release: all-external-pushes clean
 
-test-release: docker-test-repo-push
+test-release: docker-test-repo-push clean
 
 all-external-pushes: twine-upload docker-push source-code-release-push
 

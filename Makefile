@@ -48,6 +48,7 @@ $(shell chmod +x ${BIN}/check_for_credentials.py)
 $(shell chmod +x ${BIN}/check_commit_state.sh)
 .PHONY: (\
 	release \
+	test-release \
 	all-external-pushes \
 	twine-upload \
 	docker-push \
@@ -73,7 +74,7 @@ ifneq ("$(wildcard nextflow)","")
 else
 	NEXTFLOW := $(if $(shell which nextflow),$(shell which nextflow),)
 endif
-PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests .commit-source-code .version-updated .installed-in-venv .package-build
+PLACEHOLDERS := .all-credentials-available .docker-credentials-available .test .unit-tests .integration-tests .commit-source-code .version-updated .installed-in-venv .package-build
 SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
 WHEEL_NAME := spatialprofilingtoolbox-${SPT_VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
@@ -90,10 +91,20 @@ all-external-pushes: twine-upload docker-push source-code-release-push
 
 docker-push twine-upload source-code-release-push: .all-credentials-available source-code-main-push
 
+docker-test-repo-push: .docker_credentials_available
+
 .all-credentials-available: inform-credential-availability
 	@if [[ "${PYPI_CREDENTIALS}" == "'found'" && "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
     then  \
         touch .all-credentials-available; \
+    else \
+        exit 1; \
+    fi;
+
+.docker_credentials_available:
+	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
+    then  \
+        touch .docker-credentials-available; \
     else \
         exit 1; \
     fi;
@@ -107,7 +118,7 @@ docker-push: docker-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
 	@echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged 'latest'))"
 
-docker-build: Dockerfile repository-is-clean commit-source-code
+docker-build: Dockerfile repository-is-clean .commit-source-code
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest .
 	@echo "Built Docker container."
 

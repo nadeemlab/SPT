@@ -69,6 +69,8 @@ DOTS_COLOR:="\033[33m"
 PADDING:=...............................................................
 SPACE:=" "
 COMMMA:=,
+LEFT_PAREN:=(
+RIGHT_PAREN:=)
 
 # Functions
 credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
@@ -200,6 +202,7 @@ on-main-branch:
     fi
 
 twine-upload: .package-build
+	@${PYTHON} -m twine upload --repository spatialprofilingtoolbox dist/*
 
 source-code-release-push: on-main-branch
 	@rm spatialprofilingtoolbox/version.txt
@@ -216,6 +219,18 @@ source-code-main-push: .package-build .commit-source-code
 	@touch .test
 
 .unit-tests: .installed-in-venv
+	@printf $(call color_in_progress,'Doing unit tests')
+	@cd tests/; \
+    outcome=$$(python -m pytest -q . | tail -n1 | grep "[0-9]\+ \${LEFT_PAREN}failed\|errors\${RIGHT_PAREN}" ); \
+    if [[ \"$$outcome\" != "" ]]; \
+    then \
+        python -m pytest; \
+        $(call color_error,'Something went wrong in unit tests.'); \
+        cd ../; \
+        exit 1; \
+    fi; \
+    cd ../; \
+	@printf $(call color_final,'Passed.')
 	@touch .unit-tests
 
 .integration-tests: nextflow-available .installed-in-venv
@@ -238,7 +253,8 @@ nextflow-available:
     for wheel in dist/*.whl; \
     do \
         pip install $$wheel >/dev/null 2>&1; \
-    done
+    done; \
+    pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv
 	@printf $(call color_final,'Installed.')
 

@@ -51,12 +51,9 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	all-external-pushes \
 	twine-upload \
 	docker-push \
-	docker-build \
 	docker-test-push \
-	docker-test-build \
 	source-code-release-push \
 	source-code-main-push \
-	package-build \
 	inform-credential-availability \
 	repository-is-clean \
 	version-updated \
@@ -71,7 +68,12 @@ inform_of_availability = $(if $(filter 'found', $1),$(info $2),$(info $3))
 # Run-time variables
 PYPI_CREDENTIALS := $(call credentials_available,pypi)
 DOCKER_CREDENTIALS := $(call credentials_available,docker)
-PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests
+ifneq ("$(wildcard nextflow)","")
+    NEXTFLOW := ./nextflow
+else
+	NEXTFLOW := $(if $(shell which nextflow),$(shell which nextflow),)
+endif
+PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests .commit-source-code
 SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
@@ -94,6 +96,10 @@ docker-push twine-upload source-code-release-push: .all-credentials-available so
     else \
         exit 1; \
     fi;
+
+inform-credential-availability:
+	$(call inform_of_availability,${PYPI_CREDENTIALS},Found PyPI credentials at ~/.pypirc .,There are no usable PyPI credentials at ~/.pypirc .)
+	$(call inform_of_availability,${DOCKER_CREDENTIALS},Found docker credentials at ~/.docker/config.json .,There are no usable docker credentials at ~/.docker/config.json .)
 
 docker-push: docker-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION}
@@ -118,10 +124,11 @@ Dockerfile: version-updated
 	@sed -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
 	@rm requirements_docker.txt
 
-commit-source-code: repository-is-clean package-build
+.commit-source-code: repository-is-clean package-build
 	@git add spatialprofilingtoolbox/version.txt
 	@git commit -m "Autoreleasing v${SPT_VERSION}"
 	@git tag v${SPT_VERSION}
+	@touch .commit-source-code
 
 repository-is-clean: version-updated no-other-changes
 
@@ -139,35 +146,31 @@ no-other-changes:
         exit 1; \
     fi
 
-package-build:
-	@${PYTHON} -m build 1>/dev/null
-	@echo "Built spatialprofilingtoolbox==${SPT_VERSION}."
-
 twine-upload: package-build
 
 source-code-release-push:
 
 source-code-main-push: package-build
 
-inform-credential-availability:
-	$(call inform_of_availability,${PYPI_CREDENTIALS},Found PyPI credentials at ~/.pypirc .,There are no usable PyPI credentials at ~/.pypirc .)
-	$(call inform_of_availability,${DOCKER_CREDENTIALS},Found docker credentials at ~/.docker/config.json .,There are no usable docker credentials at ~/.docker/config.json .)
-
-build:
-	@echo 'bb'
-	#check that git registers no changes except version
-
-.unit-tests: build
-	@touch .unit-tests
-
-.nextflow-available:
-	@touch .nextflow-available
-
-.integration-tests: .nextflow-available
-	@touch .integration-tests
-
 .test: .unit-tests .integration-tests
 	@touch .test
+
+.unit-tests: package-build
+	@touch .unit-tests
+
+.integration-tests: nextflow-available package-build
+	@touch .integration-tests
+
+nextflow-available:
+	@if [[ "${NEXTFLOW}" == "" ]]; \
+    then \
+        echo "You need to install nextflow." ; \
+        exit 1; \
+    fi
+
+package-build:
+	@${PYTHON} -m build 1>/dev/null
+	@echo "Built spatialprofilingtoolbox==${SPT_VERSION}."
 
 clean:
 	@rm -f ${PLACEHOLDERS}

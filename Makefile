@@ -46,6 +46,7 @@ SHELL := /bin/bash
 BIN=${PWD}/building
 $(shell chmod +x ${BIN}/check_for_credentials.py)
 $(shell chmod +x ${BIN}/check_commit_state.sh)
+$(shell chmod +x tests/do_all_integration_tests.sh)
 .PHONY: (\
 	release \
 	test-release \
@@ -75,7 +76,7 @@ RIGHT_PAREN:=)
 # Functions
 credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
 color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
-color_final = "[ $2s ] "${NOTE_COLOR_FINAL}$1${RESET}"\n"
+color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=$$(echo '---------------' | sed 's/-/./g'); insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"
 
 # Run-time variables
@@ -125,7 +126,8 @@ docker-test-repo-push: .docker-credentials-available
 	@if [[ "${PYPI_CREDENTIALS}" == "'found'" ]]; \
     then \
         initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-        printf $(call color_final,'Found.',$$((now_secs - initial))) ; \
+        ((transpired=now_secs - initial)); \
+        printf $(call color_final,'Found.',$$transpired"s") ; \
         touch .pypi-credentials-available; \
     else \
         printf $(call color_error,'Not found.') ; \
@@ -138,7 +140,8 @@ docker-test-repo-push: .docker-credentials-available
 	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
     then  \
         initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-        printf $(call color_final,'Found.',$$((now_secs - initial))) ; \
+        ((transpired=now_secs - initial)); \
+        printf $(call color_final,'Found.',$$transpired"s") ; \
         touch .docker-credentials-available; \
     else \
         printf $(call color_error,'Not found.') ; \
@@ -154,7 +157,8 @@ docker-build: Dockerfile repository-is-clean .commit-source-code
 	@date +%s > current_time.txt
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest . >/dev/null 2>&1
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    printf $(call color_final,'Built.',$$((now_secs - initial)))
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Built.',$$transpired"s")
 
 docker-test-repo-push: docker-test-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION}
@@ -165,7 +169,8 @@ docker-test-build: Dockerfile repository-is-clean
 	@date +%s > current_time.txt
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest . >/dev/null 2>&1
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    printf $(call color_final,'Built.',$$((now_secs - initial)))
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Built.',$$transpired"s")
 
 Dockerfile: .version-updated
 	@printf $(call color_in_progress,'Generating Dockerfile')
@@ -177,7 +182,8 @@ Dockerfile: .version-updated
 	@sed -i '' "s/{{version}}/${SPT_VERSION}/g" Dockerfile
 	@sed -i '' "s/{{install requirements.txt}}//g" Dockerfile
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    printf $(call color_final,'Generated.',$$((now_secs - initial)))
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Generated.',$$transpired"s")
 
 .commit-source-code: repository-is-clean on-main-branch .package-build
 	@git add spatialprofilingtoolbox/version.txt
@@ -244,26 +250,42 @@ source-code-main-push: .package-build .commit-source-code
     fi; \
     cd ../
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    printf $(call color_final,'Passed.',$$((now_secs - initial)))
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .unit-tests
 
 .integration-tests: nextflow-available .installed-in-venv
+	@printf $(call color_in_progress,'Doing integration tests')
+	@date +%s > current_time.txt
+	@outcome=$$(cd tests/; source ../venv/bin/activate; ./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in"); \
+    if [[ "$$outcome" != "" ]]; \
+    then \
+        printf $(call color_error,'Something went wrong in integration tests.'); \
+        exit 1; \
+    fi; \
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .integration-tests
 
 nextflow-available:
+	@printf $(call color_in_progress,'Searching for Nextflow installation')
 	@$(info Nextflow entrypoint at: ${NEXTFLOW})
 	@if [[ "${NEXTFLOW}" == "" ]]; \
     then \
         printf $(call color_error,'You need to install nextflow.') ; \
         exit 1; \
-    fi
+    fi; \
+    ((transpired=now_secs - initial)); \
+	@printf $(call color_final,${NEXTFLOW},$$transpired"s")
 
 .installed-in-venv: .package-build
 	@printf $(call color_in_progress,'Creating venv')
 	@date +%s > current_time.txt
 	@${PYTHON} -m venv venv;
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    printf $(call color_final,'Created.',$$((now_secs - initial)))
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Created.',$$transpired"s")
 	@printf $(call color_in_progress,'Installing spatialprofilingtoolbox into venv')
 	@date +%s > current_time.txt
 	@source venv/bin/activate ; \
@@ -274,7 +296,8 @@ nextflow-available:
     pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    printf $(call color_final,'Installed.',$$((now_secs - initial)))
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Installed.',$$transpired"s")
 
 .package-build: dist/${WHEEL_NAME}
 	@touch .package-build
@@ -284,7 +307,8 @@ dist/${WHEEL_NAME}:
 	@date +%s > current_time.txt
 	@${PYTHON} -m build 1>/dev/null
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    printf $(call color_final,'Built.',$$((now_secs - initial)))
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Built.',$$transpired"s")
 
 clean:
 	@rm -f ${PLACEHOLDERS}

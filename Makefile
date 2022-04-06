@@ -75,6 +75,7 @@ else
 endif
 PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests .commit-source-code .version-updated .installed-in-venv
 SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
+WHEEL_NAME := spatialprofilingtoolbox-${SPT_VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
 DOCKER_TEST_REPO := spt-test
@@ -192,7 +193,9 @@ nextflow-available:
 	@touch .installed-in-venv
 	@echo "Installed spatialprofilingtoolbox into venv."
 
-package-build:
+package-build: dist/${WHEEL_NAME}
+
+dist/${WHEEL_NAME}:
 	@${PYTHON} -m build 1>/dev/null
 	@echo "Built spatialprofilingtoolbox==${SPT_VERSION}."
 

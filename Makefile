@@ -188,8 +188,6 @@ no-other-changes:
     then \
         printf $(call color_error,'Start with a clean repository${COMMA} with only a version.txt update.'); \
         exit 1; \
-    else \
-        printf "huh?"; \
     fi
 
 on-main-branch:

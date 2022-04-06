@@ -109,6 +109,7 @@ docker-push: docker-build
 
 docker-build: Dockerfile repository-is-clean commit-source-code
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_REPO}:latest .
+	$(info Built Docker container.)
 
 docker-test-repo-push: docker-test-build
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION}
@@ -117,6 +118,7 @@ docker-test-repo-push: docker-test-build
 
 docker-test-build: Dockerfile repository-is-clean
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_TEST_REPO}:latest .
+	$(info Built Docker container (for upload to test repository).)
 
 Dockerfile: version-updated
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
@@ -133,14 +135,6 @@ Dockerfile: version-updated
 
 repository-is-clean: version-updated no-other-changes
 
-on-main-branch:
-	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
-    if [[ $$BRANCH != "main" ]]; \
-    then \
-        echo "Do release actions from the main branch (not "$$BRANCH")."; \
-        exit 1; \
-    fi
-
 version-updated:
 	@if [[ "$$(${BIN}/check_commit_state.sh version-updated)" != "yes" ]]; \
     then \
@@ -152,6 +146,14 @@ no-other-changes:
 	@if [[ "$$(${BIN}/check_commit_state.sh something-else-updated)" == "yes" ]]; \
     then \
         echo "Start with a clean repository, with only a version.txt update.";\
+        exit 1; \
+    fi
+
+on-main-branch:
+	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
+    if [[ $$BRANCH != "main" ]]; \
+    then \
+        echo "Do release actions from the main branch (not "$$BRANCH")."; \
         exit 1; \
     fi
 
@@ -186,6 +188,16 @@ clean:
 	@rm -f Dockerfile
 	@rm -rf dist/
 	@rm -rf build/
+	@rm -rf spatialprofilingtoolbox.egg-info/
+	@rm -rf docs/_build/
+	@rm -f tests/.nextflow.log*
+	@rm -rf tests/.nextflow
+	@rm -rf tests/work
+	@rm -rf tests/results
+	@rm -f tests/.spt_pipeline.json
+	@rm -f tests/spt_pipeline.nf
+	@rm -f tests/nextflow.config.lsf
+	@rm -f tests/nextflow.config.local
 
 help: .help
 

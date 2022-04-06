@@ -1,9 +1,9 @@
-.help:
+help:
 	#
 	# This is mainly a lightweight release-management script for coordinated
 	# PyPI, DockerHub, and GitHub releases of SPT (spatialprofilingtoolbox).
 	#
-	# The default target (achieved with "make") is
+	# The primary target is:
 	#
 	#     make release
 	#
@@ -59,12 +59,23 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	on-main-branch \
 	repository-is-clean \
 	no-other-changes \
+	nextflow-available \
 	clean \
 )
+RESET="\033[0m"
+NOTE_COLOR="\033[0m"
+NOTE_COLOR_FINAL="\033[32;1m"
+ERROR_COLOR="\033[31;1m"
+DOTS_COLOR="\033[33m"
+PADDING=...............................................................
+SPACE=" "
 
 # Functions
 credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
 inform_of_availability = $(if $(filter 'found', $1),$(info $2),$(info $3))
+color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
+color_final = ${NOTE_COLOR_FINAL}$1${RESET}"\n"
+color_error = ${ERROR_COLOR}$1${RESET}"\n"
 
 # Run-time variables
 PYPI_CREDENTIALS := $(call credentials_available,pypi)
@@ -74,7 +85,16 @@ ifneq ("$(wildcard nextflow)","")
 else
 	NEXTFLOW := $(if $(shell which nextflow),$(shell which nextflow),)
 endif
-PLACEHOLDERS := .all-credentials-available .docker-credentials-available .test .unit-tests .integration-tests .commit-source-code .version-updated .installed-in-venv .package-build
+PLACEHOLDERS := \
+	.all-credentials-available \
+	.docker-credentials-available \
+	.test \
+	.unit-tests \
+	.integration-tests \
+	.commit-source-code \
+	.version-updated \
+	.installed-in-venv \
+	.package-build
 SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
 WHEEL_NAME := spatialprofilingtoolbox-${SPT_VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
@@ -114,31 +134,36 @@ inform-credential-availability:
 	$(call inform_of_availability,${DOCKER_CREDENTIALS},Found docker credentials at ~/.docker/config.json .,There are no usable docker credentials at ~/.docker/config.json .)
 
 docker-push: docker-build
+	@printf $(call color_in_progress,'Pushing ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged latest))')
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION}
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
-	@echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged 'latest'))"
+	@printf $(call color_final,'Pushed.')
 
 docker-build: Dockerfile repository-is-clean .commit-source-code
+	@printf $(call color_in_progress,'Building Docker container')
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest .
-	@echo "Built Docker container."
+	@printf $(call color_final,'Built.')
 
 docker-test-repo-push: docker-test-build
+	@printf $(call color_in_progress,'Pushing ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged latest))')
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION}
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
-	@echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged 'latest'))"
+	@printf $(call color_final,'Pushed.')
 
 docker-test-build: Dockerfile repository-is-clean
+	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest .
-	@echo "Built Docker container (for upload to test repository)."
+	@printf $(call color_final,'Built.')
 
 Dockerfile: .version-updated
+	@printf $(call color_in_progress,'Generating Dockerfile')
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
 	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
 	@rm requirements_docker.txt
-	@sed -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
-	@sed -i "s/{{install requirements.txt}}//g" Dockerfile
-	@echo "Generated Dockerfile."
+	@sed -i '' "s/{{version}}/${SPT_VERSION}/g" Dockerfile
+	@sed -i '' "s/{{install requirements.txt}}//g" Dockerfile
+	@printf $(call color_final,'Generated.')
 
 .commit-source-code: repository-is-clean on-main-branch .package-build
 	@git add spatialprofilingtoolbox/version.txt
@@ -151,7 +176,7 @@ repository-is-clean: .version-updated no-other-changes
 .version-updated:
 	@if [[ "$$(${BIN}/check_commit_state.sh version-updated)" != "yes" ]]; \
     then \
-        echo "version.txt must be updated."; \
+        printf $(call color_error,'version.txt must be updated.'); \
         exit 1; \
     else \
         touch .version-updated; \
@@ -160,7 +185,7 @@ repository-is-clean: .version-updated no-other-changes
 no-other-changes:
 	@if [[ "$$(${BIN}/check_commit_state.sh something-else-updated)" == "yes" ]]; \
     then \
-        echo "Start with a clean repository, with only a version.txt update.";\
+        printf $(call color_error,'Start with a clean repository, with only a version.txt update.');\
         exit 1; \
     fi
 
@@ -168,7 +193,7 @@ on-main-branch:
 	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
     if [[ $$BRANCH != "main" ]]; \
     then \
-        echo "Do release actions from the main branch (not "$$BRANCH")."; \
+        printf $(call color,'Do release actions from the main branch (not "$$BRANCH").'); \
         exit 1; \
     fi
 
@@ -188,28 +213,33 @@ source-code-main-push: .package-build
 	@touch .integration-tests
 
 nextflow-available:
+	@$(info Nextflow entrypoint at: ${NEXTFLOW})
 	@if [[ "${NEXTFLOW}" == "" ]]; \
     then \
-        echo "You need to install nextflow." ; \
+        printf $(call color_error,'You need to install nextflow.') ; \
         exit 1; \
     fi
 
 .installed-in-venv: .package-build
-	@${PYTHON} -m venv venv ; \
-    source venv/bin/activate ; \
+	@printf $(call color_in_progress,'Creating venv')
+	@${PYTHON} -m venv venv;
+	@printf $(call color_final,'Created.')
+	@printf $(call color_in_progress,'Installing spatialprofilingtoolbox into venv')
+	@source venv/bin/activate ; \
     for wheel in dist/*.whl; \
     do \
         pip install $$wheel 1>/dev/null 2>/dev/null; \
     done
 	@touch .installed-in-venv
-	@echo "Installed spatialprofilingtoolbox into venv."
+	@printf $(call color_final,'Installed.')
 
 .package-build: dist/${WHEEL_NAME}
 	@touch .package-build
 
 dist/${WHEEL_NAME}:
+	@printf $(call color_in_progress,'Building spatialprofilingtoolbox==${SPT_VERSION}')
 	@${PYTHON} -m build 1>/dev/null
-	@echo "Built spatialprofilingtoolbox==${SPT_VERSION}."
+	@printf $(call color_final,'Built.')
 
 clean:
 	@rm -f ${PLACEHOLDERS}
@@ -227,8 +257,7 @@ clean:
 	@rm -f tests/nextflow.config.lsf
 	@rm -f tests/nextflow.config.local
 	@rm -rf venv/
-
-help: .help
+	@rm -rf tests/unit_tests/__pycache__/
 
 # Makefile migration
 

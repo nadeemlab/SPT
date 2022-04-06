@@ -78,7 +78,7 @@ PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests 
 SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
-DOCKER_REPO_TEST := spt-test
+DOCKER_TEST_REPO := spt-test
 PYTHON = python3
 
 # Rules

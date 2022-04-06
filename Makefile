@@ -76,7 +76,7 @@ RIGHT_PAREN:=)
 # Functions
 credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
 color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
-color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=$$(echo '---------------' | sed 's/-/./g'); insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
+color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=..............................; insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"
 
 # Run-time variables
@@ -270,14 +270,13 @@ source-code-main-push: .package-build .commit-source-code
 
 nextflow-available:
 	@printf $(call color_in_progress,'Searching for Nextflow installation')
-	@$(info Nextflow entrypoint at: ${NEXTFLOW})
 	@if [[ "${NEXTFLOW}" == "" ]]; \
     then \
         printf $(call color_error,'You need to install nextflow.') ; \
         exit 1; \
     fi; \
     ((transpired=now_secs - initial)); \
-	@printf $(call color_final,${NEXTFLOW},$$transpired"s")
+	printf $(call color_final,${NEXTFLOW},$$transpired"s")
 
 .installed-in-venv: .package-build
 	@printf $(call color_in_progress,'Creating venv')

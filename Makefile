@@ -128,10 +128,8 @@ docker-test-repo-push: .docker-credentials-available
     fi;
 
 docker-push: docker-build
-	@printf $(call color_in_progress,'Pushing ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} \(also tagged latest\)')
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION}
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
-	@printf $(call color_final,'Pushed.')
 
 docker-build: Dockerfile repository-is-clean .commit-source-code
 	@printf $(call color_in_progress,'Building Docker container')
@@ -139,13 +137,11 @@ docker-build: Dockerfile repository-is-clean .commit-source-code
 	@printf $(call color_final,'Built.')
 
 docker-test-repo-push: docker-test-build
-	@printf $(call color_in_progress,'Pushing ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} \(also tagged latest\)')
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION}
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
-	@printf $(call color_final,'Pushed.')
 
 docker-test-build: Dockerfile repository-is-clean
-	@printf $(call color_in_progress,'Building Docker container \(for upload to test repository\)')
+	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest . >/dev/null 2>&1
 	@printf $(call color_final,'Built.')
 

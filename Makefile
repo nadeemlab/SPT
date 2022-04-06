@@ -111,7 +111,7 @@ all-external-pushes: twine-upload docker-push source-code-release-push
 
 docker-push twine-upload source-code-release-push: .all-credentials-available source-code-main-push
 
-docker-test-repo-push: .docker_credentials_available
+docker-test-repo-push: .docker-credentials-available
 
 .all-credentials-available: .pypi-credentials-available .docker-credentials-available
 	@touch .all-credentials-available
@@ -127,7 +127,7 @@ docker-test-repo-push: .docker_credentials_available
         exit 1; \
     fi;
 
-docker-push: docker-build .docker-credentials-available
+docker-push: docker-build
 	@printf $(call color_in_progress,'Pushing ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged latest))')
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION}
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest

@@ -117,15 +117,16 @@ docker-test-repo-push: docker-test-build
 	@echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged 'latest'))"
 
 docker-test-build: Dockerfile repository-is-clean
-	docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest .
+	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest .
 	@echo "Built Docker container (for upload to test repository)."
 
 Dockerfile: .version-updated
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
 	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
-	@sed -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
 	@rm requirements_docker.txt
+	@sed -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
+	@sed -i "s/{{install requirements.txt}}//g" Dockerfile
 	@echo "Generated Dockerfile ."
 
 .commit-source-code: repository-is-clean on-main-branch package-build

@@ -57,7 +57,6 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	inform-credential-availability \
 	on-main-branch \
 	repository-is-clean \
-	version-updated \
 	no-other-changes \
 	clean \
 )

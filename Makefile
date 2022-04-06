@@ -74,7 +74,7 @@ ifneq ("$(wildcard nextflow)","")
 else
 	NEXTFLOW := $(if $(shell which nextflow),$(shell which nextflow),)
 endif
-PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests .commit-source-code
+PLACEHOLDERS := .all-credentials-available .test .unit-tests .integration-tests .commit-source-code .version-updated
 SPT_VERSION := $(shell cat spatialprofilingtoolbox/version.txt)
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
@@ -120,7 +120,7 @@ docker-test-build: Dockerfile repository-is-clean
 	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_TEST_REPO}:latest .
 	@echo "Built Docker container (for upload to test repository)."
 
-Dockerfile: version-updated
+Dockerfile: .version-updated
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
 	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
@@ -134,13 +134,15 @@ Dockerfile: version-updated
 	@git tag v${SPT_VERSION}
 	@touch .commit-source-code
 
-repository-is-clean: version-updated no-other-changes
+repository-is-clean: .version-updated no-other-changes
 
-version-updated:
+.version-updated:
 	@if [[ "$$(${BIN}/check_commit_state.sh version-updated)" != "yes" ]]; \
     then \
         echo "version.txt must be updated."; \
         exit 1; \
+    else \
+        touch .version-updated; \
     fi
 
 no-other-changes:

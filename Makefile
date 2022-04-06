@@ -103,22 +103,22 @@ inform-credential-availability:
 	$(call inform_of_availability,${DOCKER_CREDENTIALS},Found docker credentials at ~/.docker/config.json .,There are no usable docker credentials at ~/.docker/config.json .)
 
 docker-push: docker-build
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} && \
-    docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest && \
-    echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged 'latest'))"
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION}
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
+	@echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} (also tagged 'latest'))"
 
 docker-build: Dockerfile repository-is-clean commit-source-code
-	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_REPO}:latest . && \
-    echo "Built Docker container."
+	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_REPO}:latest .
+	@echo "Built Docker container."
 
 docker-test-repo-push: docker-test-build
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} && \
-    docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest && \
-    echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged 'latest'))"
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION}
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
+	@echo "Pushed ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} (also tagged 'latest'))"
 
 docker-test-build: Dockerfile repository-is-clean
-	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_TEST_REPO}:latest . && \
-    echo "Built Docker container (for upload to test repository)."
+	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:${SPT_VERSION} -t ${DOCKER_REPO_NAME}/${DOCKER_TEST_REPO}:latest .
+	@echo "Built Docker container (for upload to test repository)."
 
 Dockerfile: version-updated
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
@@ -126,6 +126,7 @@ Dockerfile: version-updated
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
 	@sed -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
 	@rm requirements_docker.txt
+	@echo "Generated Dockerfile ."
 
 .commit-source-code: repository-is-clean on-main-branch package-build
 	@git add spatialprofilingtoolbox/version.txt

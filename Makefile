@@ -302,8 +302,7 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
 	@touch .update-version;
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
-    version=$$(cat ${VERSION_FILE}) ;\
-    printf $(call color_final,$$version,$$transpired"s");
+    printf $(call color_final,'Updated.',$$transpired"s");
 
 .controlled-source-files-unchanged:
 	@if [[ "$$(${BIN}/check_commit_state.sh)" == "yes" ]]; \
@@ -329,8 +328,7 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
 	@touch .package-build
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
-    version=$$(cat ${VERSION_FILE}) ;\
-    printf $(call color_final,"Built $$version.",$$transpired"s")
+    printf $(call color_final,"Built.",$$transpired"s")
 
 clean: clean-tests
 	@rm -f ${PLACEHOLDERS}

@@ -280,7 +280,7 @@ nextflow-available:
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     version=$$(cat ${VERSION_FILE}) ;\
-    printf $(call color_final,'Built $$version.',$$transpired"s")
+    printf $(call color_final,"Built $$version.",$$transpired"s")
 
 .update-version-and-commit: repository-is-clean on-main-branch ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
 	@printf $(call color_in_progress,'Updating version and commit source')

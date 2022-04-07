@@ -55,8 +55,6 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	docker-test-push \
 	source-code-release-push \
 	source-code-main-push \
-	on-main-branch \
-	repository-is-clean \
 	no-other-changes \
 	nextflow-available \
 	clean \
@@ -89,7 +87,9 @@ PLACEHOLDERS := \
 	.integration-tests \
 	.update-version-and-commit \
 	.installed-in-venv \
-	.package-build
+	.package-build \
+	.on-main-branch \
+	.repository-is-clean
 VERSION_FILE := spatialprofilingtoolbox/version.txt
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
@@ -156,7 +156,7 @@ docker-push: docker-build
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
 
-docker-build: Dockerfile repository-is-clean .package-build
+docker-build: Dockerfile .repository-is-clean .package-build
 	@printf $(call color_in_progress,'Building Docker container')
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
@@ -170,7 +170,7 @@ docker-test-repo-push: docker-test-build
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
 
-docker-test-build: Dockerfile repository-is-clean
+docker-test-build: Dockerfile .repository-is-clean
 	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
@@ -196,7 +196,7 @@ Dockerfile: .update-version-and-commit ${BIN}/Dockerfile.template ${LIBRARY_META
 twine-upload: .package-build
 	@${PYTHON} -m twine upload --repository spatialprofilingtoolbox dist/*
 
-source-code-release-push: on-main-branch
+source-code-release-push: .on-main-branch
 	@git checkout ${RELEASE_TO_BRANCH} >/dev/null 2>&1
 	@git merge main >/dev/null 2>&1
 	@git push >/dev/null 2>&1
@@ -282,7 +282,7 @@ nextflow-available:
     version=$$(cat ${VERSION_FILE}) ;\
     printf $(call color_final,"Built $$version.",$$transpired"s")
 
-.update-version-and-commit: repository-is-clean on-main-branch ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
+.update-version-and-commit: .repository-is-clean .on-main-branch ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
 	@printf $(call color_in_progress,'Updating version and commit source')
 	@date +%s > current_time.txt
 	@if [[ "$$OSTYPE" == "darwin"* ]]; \
@@ -308,7 +308,8 @@ nextflow-available:
     version=$$(cat ${VERSION_FILE}) ;\
     printf $(call color_final,$$version,$$transpired"s");
 
-repository-is-clean: controlled-source-files-unchanged
+.repository-is-clean: controlled-source-files-unchanged
+	@touch .repository-is-clean
 
 controlled-source-files-unchanged:
 	@if [[ "$$(${BIN}/check_commit_state.sh)" == "yes" ]]; \
@@ -317,13 +318,14 @@ controlled-source-files-unchanged:
         exit 1; \
     fi
 
-on-main-branch:
+.on-main-branch:
 	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
     if [[ $$BRANCH != "main" ]]; \
     then \
         printf $(call color_error,"Do release actions from the main branch (not $$BRANCH)."); \
         exit 1; \
     fi
+	@touch .on-main-branch
 
 clean: clean-tests
 	@rm -f ${PLACEHOLDERS}

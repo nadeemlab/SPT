@@ -107,8 +107,7 @@ credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
 color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
 color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=..............................; insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"
-spt_version = $(shell cat ${VERSION_FILE})
-wheel_name = spatialprofilingtoolbox-$(call spt_version)-py3-none-any.whl
+wheel_name = spatialprofilingtoolbox-$(shell cat ${VERSION_FILE})-py3-none-any.whl
 
 # Rules
 release: all-external-pushes
@@ -153,25 +152,29 @@ docker-test-repo-push: .docker-credentials-available
     fi;
 
 docker-push: docker-build
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$(call spt_version)
+	@version=$$(cat ${VERSION_FILE}) ;\
+	docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
 
 docker-build: Dockerfile repository-is-clean .package-build
 	@printf $(call color_in_progress,'Building Docker container')
 	@date +%s > current_time.txt
-	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$(call spt_version) -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest . >/dev/null 2>&1
+	@version=$$(cat ${VERSION_FILE}) ;\
+	docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest . >/dev/null 2>&1
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
 docker-test-repo-push: docker-test-build
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$(call spt_version)
+	@version=$$(cat ${VERSION_FILE}) ;\
+	docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
 
 docker-test-build: Dockerfile repository-is-clean
 	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
 	@date +%s > current_time.txt
-	@docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$(call spt_version) -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest . >/dev/null 2>&1
+	@version=$$(cat ${VERSION_FILE}) ;\
+	docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest . >/dev/null 2>&1
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
@@ -183,7 +186,8 @@ Dockerfile: .update-version-and-commit ${BIN}/Dockerfile.template ${LIBRARY_META
 	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
 	@rm requirements_docker.txt
-	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{version}}/$(call spt_version)/g" Dockerfile
+	@version=$$(cat ${VERSION_FILE}) ;\
+	source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{version}}/$$version/g" Dockerfile
 	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{install requirements.txt}}//g" Dockerfile
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
@@ -200,7 +204,8 @@ source-code-release-push: on-main-branch
 
 source-code-main-push: .test .update-version-and-commit
 	@git push >/dev/null 2>&1
-	@git push origin v$(call spt_version) >/dev/null 2>&1
+	@version=$$(cat ${VERSION_FILE}) ;\
+	git push origin v$$version >/dev/null 2>&1
 
 .test: .unit-tests ${INTEGRATION_TESTS}
 	@touch .test
@@ -268,34 +273,38 @@ nextflow-available:
     printf $(call color_final,'Installed.',$$transpired"s")
 
 .package-build: .update-version-and-commit
-	@printf $(call color_in_progress,'Building spatialprofilingtoolbox==$(call spt_version)')
+	@printf $(call color_in_progress,'Building spatialprofilingtoolbox')
 	@date +%s > current_time.txt
 	@${PYTHON} -m build 1>/dev/null
 	@touch .package-build
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Built.',$$transpired"s")
+    version=$$(cat ${VERSION_FILE}) ;\
+    printf $(call color_final,'Built $$version.',$$transpired"s")
 
 .update-version-and-commit: repository-is-clean on-main-branch ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
 	@printf $(call color_in_progress,'Updating version and commit source')
 	@date +%s > current_time.txt
 	@if [[ "$$OSTYPE" == "darwin"* ]]; \
     then \
-        prefix=$$(echo "$(call spt_version)" | grep -o '^[0-9]\+\.[0-9]\+\.'); \
-        microversion=$$(echo "$(call spt_version)" | grep -o '[0-9]\+$$'); \
+        version=$$(cat ${VERSION_FILE}) ;\
+        prefix=$$(echo "$$version" | grep -o '^[0-9]\+\.[0-9]\+\.'); \
+        microversion=$$(echo "$$version" | grep -o '[0-9]\+$$'); \
     else \
-        prefix=$$(echo "$(call spt_version)" | grep -oP '^([\d]+\.[\d]+\.)'); \
-        microversion=$$(echo "$(call spt_version)" | grep -oP '([\d]+)$$'); \
+        version=$$(cat ${VERSION_FILE}) ;\
+        prefix=$$(echo "$$version" | grep -oP '^([\d]+\.[\d]+\.)'); \
+        microversion=$$(echo "$$version" | grep -oP '([\d]+)$$'); \
     fi; \
     microversion=$$(( microversion + 1 )); \
     echo -n "$$prefix$$microversion" > ${VERSION_FILE};
 	@git add ${VERSION_FILE} >/dev/null 2>&1
-	@git commit -m "Autoreleasing v$(call spt_version)" >/dev/null 2>&1
-	@git tag v${call spt_version} >/dev/null 2>&1
+	@git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
+	@git tag v$$version >/dev/null 2>&1
 	@touch .update-version-and-commit
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
-    printf $(call color_final,$(call spt_version),$$transpired"s");
+    version=$$(cat ${VERSION_FILE}) ;\
+    printf $(call color_final,$$version,$$transpired"s");
 
 repository-is-clean: controlled-source-files-unchanged
 

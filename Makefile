@@ -25,11 +25,11 @@ help:
 	#
 	# The following conventions are used:
 	#
-	# - Targets starting with '.' like '.all-credentials-available' (except
-	#   '.help') create empty files that are placeholders indicating an
-	#   environment or build state. They are all deleted on `make clean`, which
-	#   you generally do not need to run manually. This usage is called "empty
-	#   target files to record events" in the GNU Make documentation.
+	# - Targets starting with '.' like '.all-credentials-available' create empty
+	#   files that are placeholders indicating an environment or build state. They
+	#   are all deleted on `make clean`, which you generally do not need to run
+	#   manually. This usage is called "empty target files to record events" in
+	#   the GNU Make documentation.
 	# - Most other targets are "PHONY", meaning that their recipes are always run
 	#   again whenever these targets are checked for completion. This is because
 	#   this Makefile is used for coordinating release actions rather than builds

@@ -1,15 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <html>
 <head>
+<style>
+body {
+    font-family: sans-serif;
+    user-select: none;
+}
+div.textcontainer {
+    width: 80%;
+    margin: auto;
+}
+div.commandbox {
+    background: #eff3f5;
+    border: solid gray 1px;
+    font-weight: bold;
+    padding: 10px;
+    margin: 0 0 10px 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+div.codebox {
+    background: #eef5f7;
+    border: dotted gray 1px;
+    padding: 10px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+</style>
 </head>
 <body>
+<div class="textcontainer">
+<h1>SPT documentation for maintenance and development</h1>
 <p>SPT uses <a href="https://www.gnu.org/software/make/">Make</a> to coordinate <a href="https://github.com/nadeemlab/SPT">code</a>, <a href="https://pypi.org/project/spatialprofilingtoolbox/">package</a>, <a href="https://hub.docker.com/repository/docker/nadeemlab/spt">container</a>, and <a href="https://spatialprofilingtoolbox.readthedocs.io">documentation</a> releases (rather than a more sophisticated CICD system).</p>
 
 <p>Some behaviors are documented as Makefile help:</p>
 
-<p><code>make help</code></p>
+<div class="commandbox"><code>make help</code></div>
 
-<pre style="border: solid gray 1px">
+<div class="codebox">
+<pre>
 #
 # This is mainly a lightweight release-management script for coordinated
 # PyPI, DockerHub, and GitHub releases of SPT (spatialprofilingtoolbox).
@@ -36,11 +65,11 @@
 #
 # The following conventions are used:
 #
-# - Targets starting with '.' like '.all-credentials-available' (except
-#   '.help') create empty files that are placeholders indicating an
-#   environment or build state. They are all deleted on `make clean`, which
-#   you generally do not need to run manually. This usage is called "empty
-#   target files to record events" in the GNU Make documentation.
+# - Targets starting with '.' like '.all-credentials-available' create empty
+#   files that are placeholders indicating an environment or build state. They
+#   are all deleted on `make clean`, which you generally do not need to run
+#   manually. This usage is called "empty target files to record events" in
+#   the GNU Make documentation.
 # - Most other targets are "PHONY", meaning that their recipes are always run
 #   again whenever these targets are checked for completion. This is because
 #   this Makefile is used for coordinating release actions rather than builds
@@ -51,12 +80,14 @@
 #     make help
 #
 </pre>
+</div>
 
 <p>The primary function is:</p>
 
-<p><code>make release</code></p>
+<div class="commandbox"><code>make release</code></div>
 
-<pre style="border: solid gray 1px">
+<div class="codebox">
+<pre>
 Building spatialprofilingtoolbox==0.9.75 <span style="color:olive;">.....................</span> <span style="font-weight:bold;color:green;">Built.</span> ........................ 11s
 Searching ~/.pypirc for PyPI credentials <span style="color:olive;">.....................</span> <span style="font-weight:bold;color:green;">Found.</span> ........................ 0s
 Searching ~/.docker/config.json for docker credentials <span style="color:olive;">.......</span> <span style="font-weight:bold;color:green;">Found.</span> ........................ 0s
@@ -104,6 +135,7 @@ c9671a069ae4: Layer already exists
 33567021a86e: Layer already exists
 latest: digest: sha256:049878700552386812b95c32c811e5b4ab5eef2b03eaa2039d07e7d5be58b582 size: 6199
 </pre>
+</div>
 
 <p>For this to work, you'll need to have write access to the GitHub repository, PyPI credentials or token authorizing push access to the package index, and DockerHub credentials authorizing container push access.</p>
 
@@ -115,12 +147,11 @@ latest: digest: sha256:049878700552386812b95c32c811e5b4ab5eef2b03eaa2039d07e7d5b
 
 <p>For more information, see the <a href="https://github.com/nadeemlab/SPT/blob/main/Makefile">Makefile itself</a>.</p>
 
-
+<!-- 
 <h3>Version number tracking</h3>
 <p>
 The "master" copy of the current version number is located at <a href="https://github.com/nadeemlab/SPT/blob/main/SPT/spatialprofilingtoolbox/version.txt"><code>spatialprofilingtoolbox/version.txt</code></a> and is part of the package distribution.
 </p>
-
 <p>
 A git hook, <a href="https://github.com/nadeemlab/SPT/blob/main/hooks/post-commit"><code>hooks/post-commit</code></a>, is provided to assist with version number tracking. If you install it to `.git/hooks/`, it will automatically increment the 3rd (most minor) version number on every commit. Otherwise you should <i>manually increment</i> the value in <code>version.txt</code> before <code>make release</code>.
 </p>
@@ -128,9 +159,9 @@ A git hook, <a href="https://github.com/nadeemlab/SPT/blob/main/hooks/post-commi
 <p>
 Note that integrating this hook into your workflow requires a little care when merging branches. Typically one would want to delete `spatialprofilingtoolbox/version.txt` before checking out a different branch, since this text file will always be in the "modified" state right after a commit. This is essentially because there is no possibility of a "pre-commit hook".
 </p>
+-->
 
-
-<h3>Documentation builds</h3>
-<p>The documentation is built with <a href="https://www.sphinx-doc.org/en/master/">Sphinx</a> on <a href="readthedocs.org">Read the Docs</a>, triggered by code releases on a prescribed branch.</p>
+<p><i>Note</i>: The documentation is built with <a href="https://www.sphinx-doc.org/en/master/">Sphinx</a> on <a href="https://spatialprofilingtoolbox.readthedocs.io">Read the Docs</a>, triggered by code releases on a prescribed branch.</p>
+</div>
 </body>
 </html>

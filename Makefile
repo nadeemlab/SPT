@@ -55,7 +55,6 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	docker-test-push \
 	source-code-release-push \
 	source-code-main-push \
-	no-other-changes \
 	clean \
 )
 RESET:="\033[0m"
@@ -84,7 +83,8 @@ PLACEHOLDERS := \
 	.test \
 	.unit-tests \
 	.integration-tests \
-	.update-version-and-commit \
+	.update-version \
+	.commit-source \
 	.installed-in-venv \
 	.package-build \
 	.on-main-branch \
@@ -156,7 +156,7 @@ docker-push: docker-build
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
 
-docker-build: Dockerfile .repository-is-clean .package-build
+docker-build: Dockerfile .repository-is-clean .commit-source
 	@printf $(call color_in_progress,'Building Docker container')
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
@@ -179,7 +179,7 @@ docker-test-build: Dockerfile .repository-is-clean
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
-Dockerfile: .update-version-and-commit ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
+Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
 	@printf $(call color_in_progress,'Generating Dockerfile')
 	@date +%s > current_time.txt
 	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
@@ -202,7 +202,7 @@ source-code-release-push: .on-main-branch
 	@git push >/dev/null 2>&1
 	@git checkout main >/dev/null 2>&1
 
-source-code-main-push: .test .update-version-and-commit
+source-code-main-push: .test .update-version .commit-source
 	@git push >/dev/null 2>&1
 	@version=$$(cat ${VERSION_FILE}) ;\
 	git push origin v$$version >/dev/null 2>&1
@@ -273,18 +273,8 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Installed.',$$transpired"s")
 
-.package-build: ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
-	@printf $(call color_in_progress,'Building spatialprofilingtoolbox')
-	@date +%s > current_time.txt
-	@${PYTHON} -m build 1>/dev/null
-	@touch .package-build
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    version=$$(cat ${VERSION_FILE}) ;\
-    printf $(call color_final,"Built $$version.",$$transpired"s")
-
-.update-version-and-commit: .repository-is-clean .on-main-branch .package-build
-	@printf $(call color_in_progress,'Updating version and commit source')
+.update-version: .repository-is-clean .on-main-branch
+	@printf $(call color_in_progress,'Updating version')
 	@date +%s > current_time.txt
 	@if [[ "$$OSTYPE" == "darwin"* ]]; \
     then \
@@ -297,17 +287,26 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
         microversion=$$(echo "$$version" | grep -oP '([\d]+)$$'); \
     fi; \
     microversion=$$(( microversion + 1 )); \
-    echo -n "$$prefix$$microversion" > ${VERSION_FILE};
+    echo -n "$$prefix$$microversion" > ${VERSION_FILE}; \
+	@touch .commit-source;
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    version=$$(cat ${VERSION_FILE}) ;\
+    printf $(call color_final,$$version,$$transpired"s");
+
+.commit-source: .update-version .package-build
+	@printf $(call color_in_progress,'Committing source')
+	@date +%s > current_time.txt
 	@git add ${VERSION_FILE} >/dev/null 2>&1
 	@version=$$(cat ${VERSION_FILE}) ;\
     git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
 	@version=$$(cat ${VERSION_FILE}) ;\
     git tag v$$version >/dev/null 2>&1
-	@touch .update-version-and-commit
+	@touch .commit-source
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     version=$$(cat ${VERSION_FILE}) ;\
-    printf $(call color_final,$$version,$$transpired"s");
+    printf $(call color_final,'Committed.',$$transpired"s");
 
 .repository-is-clean: controlled-source-files-unchanged
 	@touch .repository-is-clean
@@ -327,6 +326,16 @@ controlled-source-files-unchanged:
         exit 1; \
     fi
 	@touch .on-main-branch
+
+.package-build: ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
+	@printf $(call color_in_progress,'Building spatialprofilingtoolbox')
+	@date +%s > current_time.txt
+	@${PYTHON} -m build 1>/dev/null
+	@touch .package-build
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    version=$$(cat ${VERSION_FILE}) ;\
+    printf $(call color_final,"Built $$version.",$$transpired"s")
 
 clean: clean-tests
 	@rm -f ${PLACEHOLDERS}

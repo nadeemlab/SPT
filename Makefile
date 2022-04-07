@@ -79,7 +79,7 @@ color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDI
 color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=..............................; insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"
 
-# Run-time variables
+# Run-time and configuration variables
 PYPI_CREDENTIALS := $(call credentials_available,pypi)
 DOCKER_CREDENTIALS := $(call credentials_available,docker)
 ifneq ("$(wildcard nextflow)","")
@@ -107,9 +107,9 @@ PYTHON := python3
 RELEASE_TO_BRANCH := prerelease
 
 # Rules
-release: all-external-pushes clean
+release: all-external-pushes
 
-test-release: docker-test-repo-push clean
+test-release: docker-test-repo-push
 
 all-external-pushes: twine-upload docker-push source-code-release-push
 

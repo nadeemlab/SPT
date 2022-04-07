@@ -287,7 +287,7 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
         microversion=$$(echo "$$version" | grep -oP '([\d]+)$$'); \
     fi; \
     microversion=$$(( microversion + 1 )); \
-    echo -n "$$prefix$$microversion" > ${VERSION_FILE}; \
+    echo -n "$$prefix$$microversion" > ${VERSION_FILE};
 	@touch .commit-source;
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \

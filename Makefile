@@ -227,7 +227,7 @@ source-code-release-push: on-main-branch
 	@git push >/dev/null 2>&1
 	@git checkout main >/dev/null 2>&1
 
-source-code-main-push: .package-build .commit-source-code
+source-code-main-push: .test .commit-source-code
 	@git push >/dev/null 2>&1
 	@git push origin v${SPT_VERSION} >/dev/null 2>&1
 
@@ -253,20 +253,6 @@ source-code-main-push: .package-build .commit-source-code
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .unit-tests
-
-# .integration-tests: nextflow-available .installed-in-venv
-# 	@printf $(call color_in_progress,'Doing integration tests')
-# 	@date +%s > current_time.txt
- 	@outcome=$$(cd tests/; source ../venv/bin/activate; ./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in"); \
-#     if [[ "$$outcome" == "" ]]; \
-#     then \
-#         printf $(call color_error,'Something went wrong in integration tests.'); \
-#         exit 1; \
-#     fi
-# 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-#     ((transpired=now_secs - initial)); \
-#     printf $(call color_final,'Passed.',$$transpired"s")
-# 	@touch .integration-tests
 
 ${INTEGRATION_TESTS} : nextflow-available .installed-in-venv
 	@script=$$(echo $@ | sed 's/^\.//g'); printf $(call color_in_progress,'Integration test '$@)

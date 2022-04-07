@@ -262,7 +262,7 @@ source-code-main-push: .package-build .commit-source-code
     then \
         printf $(call color_error,'Something went wrong in integration tests.'); \
         exit 1; \
-    fi; \
+    fi
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Passed.',$$transpired"s")
@@ -281,7 +281,7 @@ nextflow-available:
 .installed-in-venv: .package-build
 	@printf $(call color_in_progress,'Creating venv')
 	@date +%s > current_time.txt
-	@${PYTHON} -m venv venv;
+	@${PYTHON} -m venv venv
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Created.',$$transpired"s")

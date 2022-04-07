@@ -205,6 +205,8 @@ source-code-main-push: .test .commit-new-version
 	@version=$$(cat ${VERSION_FILE}) ;\
 	git push origin v$$version >/dev/null 2>&1
 
+test: .test
+
 .test: .unit-tests ${INTEGRATION_TESTS}
 	@touch .test
 

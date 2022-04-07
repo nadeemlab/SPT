@@ -68,6 +68,7 @@ LEFT_PAREN:=(
 RIGHT_PAREN:=)
 
 # Run-time and configuration variables
+credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
 PYPI_CREDENTIALS := $(call credentials_available,pypi)
 DOCKER_CREDENTIALS := $(call credentials_available,docker)
 ifneq ("$(wildcard nextflow)","")
@@ -100,8 +101,7 @@ LIBRARY_METADATA := setup.py requirements.txt
 UNIT_TEST_SOURCES := $(shell find tests/unit_tests/*.py)
 INTEGRATION_TEST_SOURCES := $(shell find tests/integration_tests/*.sh)
 
-# Functions
-credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
+# Display functions
 color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
 color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=..............................; insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"

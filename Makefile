@@ -84,12 +84,12 @@ PLACEHOLDERS := \
 	.unit-tests \
 	.integration-tests \
 	.update-version \
-	.commit-source \
+	.commit-new-version \
 	.installed-in-venv \
 	.package-build \
 	.on-main-branch \
 	.nextflow-available \
-	.repository-is-clean
+	.controlled-source-files-unchanged
 VERSION_FILE := spatialprofilingtoolbox/version.txt
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
@@ -107,7 +107,6 @@ credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
 color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
 color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=..............................; insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
 color_error = ${ERROR_COLOR}$1${RESET}"\n"
-wheel_name = spatialprofilingtoolbox-$(shell cat ${VERSION_FILE})-py3-none-any.whl
 
 # Rules
 release: all-external-pushes
@@ -156,7 +155,7 @@ docker-push: docker-build
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
 
-docker-build: Dockerfile .repository-is-clean .commit-source
+docker-build: Dockerfile .controlled-source-files-unchanged .commit-new-version
 	@printf $(call color_in_progress,'Building Docker container')
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
@@ -170,7 +169,7 @@ docker-test-repo-push: docker-test-build
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
 
-docker-test-build: Dockerfile .repository-is-clean
+docker-test-build: Dockerfile .controlled-source-files-unchanged
 	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
@@ -202,7 +201,7 @@ source-code-release-push: .on-main-branch
 	@git push >/dev/null 2>&1
 	@git checkout main >/dev/null 2>&1
 
-source-code-main-push: .test .update-version .commit-source
+source-code-main-push: .test .update-version .commit-new-version
 	@git push >/dev/null 2>&1
 	@version=$$(cat ${VERSION_FILE}) ;\
 	git push origin v$$version >/dev/null 2>&1
@@ -273,7 +272,7 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Installed.',$$transpired"s")
 
-.update-version: .repository-is-clean .on-main-branch
+.update-version: .controlled-source-files-unchanged .on-main-branch
 	@printf $(call color_in_progress,'Updating version')
 	@date +%s > current_time.txt
 	@if [[ "$$OSTYPE" == "darwin"* ]]; \
@@ -288,13 +287,13 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
     fi; \
     microversion=$$(( microversion + 1 )); \
     echo -n "$$prefix$$microversion" > ${VERSION_FILE};
-	@touch .commit-source;
+	@touch .commit-new-version;
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     version=$$(cat ${VERSION_FILE}) ;\
     printf $(call color_final,$$version,$$transpired"s");
 
-.commit-source: .update-version .package-build
+.commit-new-version: .update-version .package-build
 	@printf $(call color_in_progress,'Committing source')
 	@date +%s > current_time.txt
 	@git add ${VERSION_FILE} >/dev/null 2>&1
@@ -302,16 +301,13 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
     git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
 	@version=$$(cat ${VERSION_FILE}) ;\
     git tag v$$version >/dev/null 2>&1
-	@touch .commit-source
+	@touch .commit-new-version
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     version=$$(cat ${VERSION_FILE}) ;\
     printf $(call color_final,'Committed.',$$transpired"s");
 
-.repository-is-clean: controlled-source-files-unchanged
-	@touch .repository-is-clean
-
-controlled-source-files-unchanged:
+.controlled-source-files-unchanged:
 	@if [[ "$$(${BIN}/check_commit_state.sh)" == "yes" ]]; \
     then \
         printf $(call color_error,'Start with a clean repository.'); \

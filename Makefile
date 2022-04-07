@@ -298,9 +298,10 @@ nextflow-available:
     microversion=$$(( microversion + 1 )); \
     echo -n "$$prefix$$microversion" > ${VERSION_FILE};
 	@git add ${VERSION_FILE} >/dev/null 2>&1
-	@git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
 	@version=$$(cat ${VERSION_FILE}) ;\
-	git tag v$$version >/dev/null 2>&1
+    git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
+	@version=$$(cat ${VERSION_FILE}) ;\
+    git tag v$$version >/dev/null 2>&1
 	@touch .update-version-and-commit
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \

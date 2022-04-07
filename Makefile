@@ -56,7 +56,6 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	source-code-release-push \
 	source-code-main-push \
 	no-other-changes \
-	nextflow-available \
 	clean \
 )
 RESET:="\033[0m"
@@ -89,6 +88,7 @@ PLACEHOLDERS := \
 	.installed-in-venv \
 	.package-build \
 	.on-main-branch \
+	.nextflow-available \
 	.repository-is-clean
 VERSION_FILE := spatialprofilingtoolbox/version.txt
 DOCKER_ORG_NAME := nadeemlab
@@ -230,7 +230,7 @@ source-code-main-push: .test .update-version-and-commit
     printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .unit-tests
 
-${INTEGRATION_TESTS} : nextflow-available .installed-in-venv ${INTEGRATION_TEST_SOURCES}
+${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST_SOURCES}
 	@script=$$(echo $@ | sed 's/^\.//g'); printf $(call color_in_progress,'Integration test '$@)
 	@date +%s > current_time.txt
 	@script=$$(echo $@ | sed 's/^\.//g'); \
@@ -242,13 +242,14 @@ ${INTEGRATION_TESTS} : nextflow-available .installed-in-venv ${INTEGRATION_TEST_
     printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .integration-tests
 
-nextflow-available:
+.nextflow-available:
 	@printf $(call color_in_progress,'Searching for Nextflow installation')
 	@if [[ "${NEXTFLOW}" == "" ]]; \
     then \
         printf $(call color_error,'You need to install nextflow.') ; \
         exit 1; \
     fi; \
+    touch .nextflow-available;\
     ((transpired=now_secs - initial)); \
 	printf $(call color_final,${NEXTFLOW},$$transpired"s")
 
@@ -272,7 +273,7 @@ nextflow-available:
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Installed.',$$transpired"s")
 
-.package-build: .update-version-and-commit
+.package-build: ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
 	@printf $(call color_in_progress,'Building spatialprofilingtoolbox')
 	@date +%s > current_time.txt
 	@${PYTHON} -m build 1>/dev/null
@@ -282,7 +283,7 @@ nextflow-available:
     version=$$(cat ${VERSION_FILE}) ;\
     printf $(call color_final,"Built $$version.",$$transpired"s")
 
-.update-version-and-commit: .repository-is-clean .on-main-branch ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
+.update-version-and-commit: .repository-is-clean .on-main-branch .package-build
 	@printf $(call color_in_progress,'Updating version and commit source')
 	@date +%s > current_time.txt
 	@if [[ "$$OSTYPE" == "darwin"* ]]; \

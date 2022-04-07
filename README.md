@@ -9,7 +9,7 @@
  | <a href="https://github.com/nadeemlab/SPT#Getting-started">Getting started</a>
  | <a href="https://github.com/nadeemlab/SPT#Examples">Examples</a>
  | <a href="https://spatialprofilingtoolbox.readthedocs.io">Read the Docs</a>
- | <a href="https://raw.githubusercontent.com/nadeemlab/SPT/main/maintenance.html" download="maintenance.html">Maintenance</a>
+ | <a href="https://nadeemlab.github.io/SPT/">Maintenance</a>
 </p>
 
 The SPT modules do image analysis computation in the context of histopathology. For the convenience of automatic usage in different runtime contexts, the pipelines are orchestrated with [Nextflow](https://www.nextflow.io/).

@@ -46,7 +46,6 @@ SHELL := /bin/bash
 BIN :=${PWD}/building
 $(shell chmod +x ${BIN}/check_for_credentials.py)
 $(shell chmod +x ${BIN}/check_commit_state.sh)
-$(shell chmod +x tests/do_all_integration_tests.sh)
 .PHONY: (\
 	release \
 	test-release \
@@ -105,8 +104,7 @@ DOCKER_REPO := spt
 DOCKER_TEST_REPO := spt-test
 PYTHON := python3
 RELEASE_TO_BRANCH := prerelease
-INTEGRATION_TESTS := $(shell find . -maxdepth 1 -regex '\(.*\.sh\|.*\.py\)' | sed 's:\./:\.:g')
-INTEGRATION_TESTS_PATH := tests/integration_tests
+INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '\(.*\.sh\|.*\.py\)' | sed 's:^\./:\.:g')
 
 # Rules
 release: all-external-pushes
@@ -259,7 +257,7 @@ source-code-main-push: .package-build .commit-source-code
 # .integration-tests: nextflow-available .installed-in-venv
 # 	@printf $(call color_in_progress,'Doing integration tests')
 # 	@date +%s > current_time.txt
-# 	@outcome=$$(cd tests/; source ../venv/bin/activate; ./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in"); \
+ 	@outcome=$$(cd tests/; source ../venv/bin/activate; ./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in"); \
 #     if [[ "$$outcome" == "" ]]; \
 #     then \
 #         printf $(call color_error,'Something went wrong in integration tests.'); \
@@ -271,9 +269,12 @@ source-code-main-push: .package-build .commit-source-code
 # 	@touch .integration-tests
 
 ${INTEGRATION_TESTS} : nextflow-available .installed-in-venv
-	@script=$$(echo $@ | sed 's/\.//g'); printf $(call color_in_progress,'Integration test $$script')
+	@script=$$(echo $@ | sed 's/^\.//g'); printf $(call color_in_progress,'Integration test '$@)
 	@date +%s > current_time.txt
-	@script=$$(echo $@ | sed 's/\.//g'); ${INTEGRATION_TESTS_PATH}/$$script
+	@script=$$(echo $@ | sed 's/^\.//g'); \
+    source venv/bin/activate; \
+    cd tests/; \
+    ./integration_tests/$$script >/dev/null 2>&1
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Passed.',$$transpired"s")
@@ -328,6 +329,7 @@ clean: clean-tests
 	@rm -rf spatialprofilingtoolbox.egg-info/
 	@rm -rf docs/_build/
 	@rm -rf venv/
+	@rm -rf current_time.txt
 
 clean-tests:
 	@rm -f tests/.nextflow.log*
@@ -339,3 +341,5 @@ clean-tests:
 	@rm -f tests/nextflow.config.lsf
 	@rm -f tests/nextflow.config.local
 	@rm -rf tests/unit_tests/__pycache__/
+	@rm -rf tests/normalized_source_data.db
+	@rm -rf tests/example_merged.db

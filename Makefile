@@ -326,25 +326,3 @@ clean:
 	@rm -f tests/nextflow.config.local
 	@rm -rf venv/
 	@rm -rf tests/unit_tests/__pycache__/
-
-# Makefile migration
-
-# Checks correct branch (main)
-# Checks version.txt for update
-# Checks that other git-controlled source files are *unchanged*
-# Cleans previous dist/ artifacts
-# Build wheels
-# Start up venv
-# Install built wheel into venv
-# Install pytest into venv
-# Unit testing in venv
-# Integration tests in venv (also uses nextflow...)
-# Some test artifact cleanup
-# Create Docker file from template and version and requirements; depends on prod or test/dev
-# Docker push (depends on credentials)
-# Git add version and commit
-# Git tag the version
-# Git push
-# Git merge into release/prerelease branch
-# twine upload to PyPI (depends on credentials)
-

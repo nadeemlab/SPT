@@ -82,7 +82,6 @@ PLACEHOLDERS := \
 	.pypi-credentials-available \
 	.test \
 	.unit-tests \
-	.integration-tests \
 	.update-version \
 	.commit-new-version \
 	.installed-in-venv \
@@ -201,7 +200,7 @@ source-code-release-push: .on-main-branch
 	@git push >/dev/null 2>&1
 	@git checkout main >/dev/null 2>&1
 
-source-code-main-push: .test .update-version .commit-new-version
+source-code-main-push: .test .commit-new-version
 	@git push >/dev/null 2>&1
 	@version=$$(cat ${VERSION_FILE}) ;\
 	git push origin v$$version >/dev/null 2>&1
@@ -239,7 +238,6 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Passed.',$$transpired"s")
-	@touch .integration-tests
 
 .nextflow-available:
 	@printf $(call color_in_progress,'Searching for Nextflow installation')
@@ -272,6 +270,20 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Installed.',$$transpired"s")
 
+.commit-new-version: .update-version .package-build
+	@printf $(call color_in_progress,'Committing source')
+	@date +%s > current_time.txt
+	@git add ${VERSION_FILE} >/dev/null 2>&1
+	@version=$$(cat ${VERSION_FILE}) ;\
+    git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
+	@version=$$(cat ${VERSION_FILE}) ;\
+    git tag v$$version >/dev/null 2>&1
+	@touch .commit-new-version
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    version=$$(cat ${VERSION_FILE}) ;\
+    printf $(call color_final,'Committed.',$$transpired"s");
+
 .update-version: .controlled-source-files-unchanged .on-main-branch
 	@printf $(call color_in_progress,'Updating version')
 	@date +%s > current_time.txt
@@ -287,25 +299,11 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
     fi; \
     microversion=$$(( microversion + 1 )); \
     echo -n "$$prefix$$microversion" > ${VERSION_FILE};
-	@touch .commit-new-version;
+	@touch .update-version;
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     version=$$(cat ${VERSION_FILE}) ;\
     printf $(call color_final,$$version,$$transpired"s");
-
-.commit-new-version: .update-version .package-build
-	@printf $(call color_in_progress,'Committing source')
-	@date +%s > current_time.txt
-	@git add ${VERSION_FILE} >/dev/null 2>&1
-	@version=$$(cat ${VERSION_FILE}) ;\
-    git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
-	@version=$$(cat ${VERSION_FILE}) ;\
-    git tag v$$version >/dev/null 2>&1
-	@touch .commit-new-version
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    version=$$(cat ${VERSION_FILE}) ;\
-    printf $(call color_final,'Committed.',$$transpired"s");
 
 .controlled-source-files-unchanged:
 	@if [[ "$$(${BIN}/check_commit_state.sh)" == "yes" ]]; \
@@ -313,6 +311,7 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
         printf $(call color_error,'Start with a clean repository.'); \
         exit 1; \
     fi
+	@touch .controlled-source-files-unchanged
 
 .on-main-branch:
 	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \

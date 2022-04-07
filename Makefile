@@ -55,6 +55,7 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	source-code-release-push \
 	source-code-main-push \
 	clean \
+	clean-tests \
 )
 RESET:="\033[0m"
 NOTE_COLOR:="\033[0m"
@@ -196,7 +197,7 @@ twine-upload: .package-build
 source-code-release-push: .on-main-branch
 	@git checkout ${RELEASE_TO_BRANCH} >/dev/null 2>&1
 	@git merge main >/dev/null 2>&1
-	@git push >/dev/null 2>&1
+	@git push
 	@git checkout main >/dev/null 2>&1
 
 source-code-main-push: .test .commit-new-version
@@ -207,7 +208,7 @@ source-code-main-push: .test .commit-new-version
 .test: .unit-tests ${INTEGRATION_TESTS}
 	@touch .test
 
-.unit-tests: .installed-in-venv ${UNIT_TEST_SOURCES}
+.unit-tests: clean-tests .installed-in-venv ${UNIT_TEST_SOURCES}
 	@printf $(call color_in_progress,'Doing unit tests')
 	@date +%s > current_time.txt
 	@outcome=$$(cd tests/; source ../venv/bin/activate; python -m pytest -q . | tail -n1 | grep "[0-9]\+ \${LEFT_PAREN}failed\|errors\${RIGHT_PAREN}" ); \
@@ -227,7 +228,7 @@ source-code-main-push: .test .commit-new-version
     printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .unit-tests
 
-${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST_SOURCES}
+${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTEGRATION_TEST_SOURCES}
 	@script=$$(echo $@ | sed 's/^\.//g'); printf $(call color_in_progress,'Integration test '$@)
 	@date +%s > current_time.txt
 	@script=$$(echo $@ | sed 's/^\.//g'); \

@@ -104,7 +104,7 @@ DOCKER_REPO := spt
 DOCKER_TEST_REPO := spt-test
 PYTHON := python3
 RELEASE_TO_BRANCH := prerelease
-INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '\(.*\.sh\|.*\.py\)' | sed 's:^\./:\.:g')
+INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '.*\.sh$$' | sed 's:^\./:\.:g')
 
 # Rules
 release: all-external-pushes

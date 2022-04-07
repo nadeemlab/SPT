@@ -105,6 +105,8 @@ DOCKER_REPO := spt
 DOCKER_TEST_REPO := spt-test
 PYTHON := python3
 RELEASE_TO_BRANCH := prerelease
+INTEGRATION_TESTS := $(shell find . -maxdepth 1 -regex '\(.*\.sh\|.*\.py\)' | sed 's:\./:\.:g')
+INTEGRATION_TESTS_PATH := tests/integration_tests
 
 # Rules
 release: all-external-pushes
@@ -231,7 +233,7 @@ source-code-main-push: .package-build .commit-source-code
 	@git push >/dev/null 2>&1
 	@git push origin v${SPT_VERSION} >/dev/null 2>&1
 
-.test: .unit-tests .integration-tests
+.test: .unit-tests ${INTEGRATION_TESTS}
 	@touch .test
 
 .unit-tests: .installed-in-venv
@@ -254,15 +256,24 @@ source-code-main-push: .package-build .commit-source-code
     printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .unit-tests
 
-.integration-tests: nextflow-available .installed-in-venv
-	@printf $(call color_in_progress,'Doing integration tests')
+# .integration-tests: nextflow-available .installed-in-venv
+# 	@printf $(call color_in_progress,'Doing integration tests')
+# 	@date +%s > current_time.txt
+# 	@outcome=$$(cd tests/; source ../venv/bin/activate; ./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in"); \
+#     if [[ "$$outcome" == "" ]]; \
+#     then \
+#         printf $(call color_error,'Something went wrong in integration tests.'); \
+#         exit 1; \
+#     fi
+# 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+#     ((transpired=now_secs - initial)); \
+#     printf $(call color_final,'Passed.',$$transpired"s")
+# 	@touch .integration-tests
+
+${INTEGRATION_TESTS} : nextflow-available .installed-in-venv
+	@script=$$(echo $@ | sed 's/\.//g'); printf $(call color_in_progress,'Integration test $$script')
 	@date +%s > current_time.txt
-	@outcome=$$(cd tests/; source ../venv/bin/activate; ./do_all_integration_tests.sh | tail -n1 | grep "all [0-9]\+ SPT workflows integration tests passed in"); \
-    if [[ "$$outcome" == "" ]]; \
-    then \
-        printf $(call color_error,'Something went wrong in integration tests.'); \
-        exit 1; \
-    fi
+	@script=$$(echo $@ | sed 's/\.//g'); ${INTEGRATION_TESTS_PATH}/$$script
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Passed.',$$transpired"s")
@@ -309,13 +320,16 @@ dist/${WHEEL_NAME}:
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
-clean:
+clean: clean-tests
 	@rm -f ${PLACEHOLDERS}
 	@rm -f Dockerfile
 	@rm -rf dist/
 	@rm -rf build/
 	@rm -rf spatialprofilingtoolbox.egg-info/
 	@rm -rf docs/_build/
+	@rm -rf venv/
+
+clean-tests:
 	@rm -f tests/.nextflow.log*
 	@rm -rf tests/.nextflow
 	@rm -rf tests/work
@@ -324,5 +338,4 @@ clean:
 	@rm -f tests/spt_pipeline.nf
 	@rm -f tests/nextflow.config.lsf
 	@rm -f tests/nextflow.config.local
-	@rm -rf venv/
 	@rm -rf tests/unit_tests/__pycache__/

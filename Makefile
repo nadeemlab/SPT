@@ -43,7 +43,7 @@ help:
 # Environment setup
 SHELL := /bin/bash
 .DELETE_ON_ERROR:
-BIN=${PWD}/building
+BIN :=${PWD}/building
 $(shell chmod +x ${BIN}/check_for_credentials.py)
 $(shell chmod +x ${BIN}/check_commit_state.sh)
 $(shell chmod +x tests/do_all_integration_tests.sh)
@@ -179,8 +179,8 @@ Dockerfile: .version-updated
 	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
 	@rm requirements_docker.txt
-	@sed -i '' "s/{{version}}/${SPT_VERSION}/g" Dockerfile
-	@sed -i '' "s/{{install requirements.txt}}//g" Dockerfile
+	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{version}}/${SPT_VERSION}/g" Dockerfile
+	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{install requirements.txt}}//g" Dockerfile
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Generated.',$$transpired"s")

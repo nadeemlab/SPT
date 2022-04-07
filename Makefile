@@ -327,7 +327,7 @@ ${INTEGRATION_TESTS} : .nextflow-available .installed-in-venv ${INTEGRATION_TEST
 	@touch .package-build
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
-    printf $(call color_final,"Built.",$$transpired"s")
+    printf $(call color_final,'Built.',$$transpired"s")
 
 clean: clean-tests
 	@rm -f ${PLACEHOLDERS}

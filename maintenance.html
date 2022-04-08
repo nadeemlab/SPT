@@ -142,25 +142,11 @@ latest: digest: sha256:646fc01b070bc345016718690bfb01d5223c42a0e57c7857d521de45e
 
 <p>To capture the make output as colorized HTML, as shown above, install <a href="https://github.com/theZiz/aha">aha</a> and then use:</p>
 
-<p>
+<div class="commandblock">
 <code>make release | tee >(aha > log_release.html)</code>
-</p>
+</div>
 
 <p>For more information, see the <a href="https://github.com/nadeemlab/SPT/blob/main/Makefile">Makefile itself</a>.</p>
-
-<!-- 
-<h3>Version number tracking</h3>
-<p>
-The "master" copy of the current version number is located at <a href="https://github.com/nadeemlab/SPT/blob/main/SPT/spatialprofilingtoolbox/version.txt"><code>spatialprofilingtoolbox/version.txt</code></a> and is part of the package distribution.
-</p>
-<p>
-A git hook, <a href="https://github.com/nadeemlab/SPT/blob/main/hooks/post-commit"><code>hooks/post-commit</code></a>, is provided to assist with version number tracking. If you install it to `.git/hooks/`, it will automatically increment the 3rd (most minor) version number on every commit. Otherwise you should <i>manually increment</i> the value in <code>version.txt</code> before <code>make release</code>.
-</p>
-
-<p>
-Note that integrating this hook into your workflow requires a little care when merging branches. Typically one would want to delete `spatialprofilingtoolbox/version.txt` before checking out a different branch, since this text file will always be in the "modified" state right after a commit. This is essentially because there is no possibility of a "pre-commit hook".
-</p>
--->
 
 <p><i>Note</i>: The documentation is built with <a href="https://www.sphinx-doc.org/en/master/">Sphinx</a> on <a href="https://spatialprofilingtoolbox.readthedocs.io">Read the Docs</a>, triggered by code releases on a prescribed branch.</p>
 </div>

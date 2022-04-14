@@ -25,12 +25,6 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
 
         self.retrieve_input_filename()
         self.retrieve_sample_identifier()
-        file_id = self.dataset_design.get_regional_areas_file_identifier()
-        regional_areas_file = get_input_filename_by_identifier(
-            dataset_settings = self.dataset_settings,
-            file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
-            input_file_identifier = file_id,
-        )
 
         self.calculator = PhenotypeProximityCalculator(
             input_filename = self.get_input_filename(),
@@ -38,7 +32,6 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
             dataset_settings = self.dataset_settings,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
-            regional_areas_file = regional_areas_file,
         )
 
     def _calculate(self):

@@ -36,7 +36,6 @@ class PhenotypeProximityCalculator(Calculator):
         input_filename: str=None,
         sample_identifier: str=None,
         dataset_settings: DatasetSettings=None,
-        regional_areas_file: str=None,
         **kwargs,
     ):
         """
@@ -52,10 +51,6 @@ class PhenotypeProximityCalculator(Calculator):
         :param dataset_design: The design object for the input dataset.
 
         :param computational_design: The design object for the proximity workflow.
-
-        :param regional_areas_file: The file containing total areas of classified
-            regions.
-        :type regional_areas_file: str
         """
         super(PhenotypeProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
@@ -64,10 +59,6 @@ class PhenotypeProximityCalculator(Calculator):
         self.outcome = self.pull_in_outcome_data(outcomes_file)[
             sample_identifier
         ]
-        self.areas = self.dataset_design.areas_provider(
-            dataset_design=self.dataset_design,
-            regional_areas_file=regional_areas_file,
-        )
         self.fov_lookup = {}
 
     def calculate_proximity(self):

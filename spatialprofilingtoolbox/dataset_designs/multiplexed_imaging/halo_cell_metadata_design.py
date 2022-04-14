@@ -4,7 +4,6 @@ from os.path import join
 
 import pandas as pd
 
-from .halo_areas_provider import HALORegionalAreasProvider
 from ...environment.file_io import get_input_filename_by_identifier
 from ...environment.settings_wrappers import DatasetSettings
 from ...environment.log_formats import colorized_logger
@@ -53,7 +52,6 @@ class HALOCellMetadataDesign:
             keep_default_na=False,
         )
         self.compartments = compartments
-        self.areas_provider = HALORegionalAreasProvider
 
     def get_FOV_column(self):
         """
@@ -106,16 +104,6 @@ class HALOCellMetadataDesign:
         else:
             return fov
 
-    def get_regional_areas_file_identifier(self):
-        """
-        Returns:
-            str:
-                The name of the file identifier (as it would appear in the file
-                manifest) that identifies the file providing areas for each compartment
-                appearing in some field of view of some sample.
-        """
-        return 'Regional areas file'
-
     @staticmethod
     def get_cell_manifest_descriptor():
         return 'HALO software cell manifest'
@@ -127,9 +115,6 @@ class HALOCellMetadataDesign:
             'simulated HALO-exported cell manifest',
         ]
         return 'HALO software cell manifest'
-
-    def get_regional_areas_table_descriptor(self):
-        return 'HALO software regional/compartment areas'
 
     def get_compartments(self):
         """

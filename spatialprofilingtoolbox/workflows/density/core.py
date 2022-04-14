@@ -173,7 +173,9 @@ class DensityCalculator(Calculator):
 
             if self.computational_design.use_intensities:
                 self.overlay_intensities(table)
-            intensity_columns = self.computational_design.get_intensity_columns(values_only=True)
+                intensity_columns = self.computational_design.get_intensity_columns(values_only=True)
+            else:
+                intensity_columns = []
 
             pertinent_columns = [
                 'sample_identifier',

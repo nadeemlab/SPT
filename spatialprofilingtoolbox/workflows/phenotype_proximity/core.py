@@ -161,7 +161,7 @@ class PhenotypeProximityCalculator(Calculator):
             'regional compartment',
             'x value',
             'y value',
-        ] + source_columns + phenotype_membership_columns
+        ] + source_columns + phenotype_membership_columns + [self.dataset_design.get_cell_area_column()]
         table.drop(
             [column for column in table.columns if not column in pertinent_columns],
             axis=1,
@@ -410,29 +410,12 @@ class PhenotypeProximityCalculator(Calculator):
                     source_count += sum(rows)
 
                 if balanced:
-                    area = 0
-                    for _, (fov_index, table) in enumerate(cells.items()):
-                        fov = self.fov_lookup[fov_index]
-                        if compartment == 'all':
-                            area0 = self.areas.get_total_compartmental_area(fov=fov)
-                        else:
-                            area0 = self.areas.get_area(fov=fov, compartment=compartment)
-                        if area0 is None:
-                            logger.warning(
-                                ''.join([
-                                    'Did not find area for "%s" compartment in field of view "%s".',
-                                    ' Skipping field of view "%s" in "%s".',
-                                ]),
-                                compartment,
-                                fov_index,
-                                fov_index,
-                                self.sample_identifier,
-                            )
-                            continue
-                        area += area0
+                    area = sum(table.loc[compartment_indices[fov_index][compartment]][
+                        self.dataset_design.get_cell_area_column()
+                    ])
                     if area == 0:
                         logger.warning(
-                            'Did not find ANY area for "%s" compartment in "%s".',
+                            'Area computation failed for compartment "%s" in "%s".',
                             compartment,
                             self.sample_identifier,
                         )

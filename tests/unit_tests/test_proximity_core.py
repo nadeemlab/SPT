@@ -66,7 +66,6 @@ def test_proximity_counting():
             input_files_path,
             file_manifest_file,
         ),
-        regional_areas_file = list(file_manifest[file_manifest['File ID'] == dataset_design.get_regional_areas_file_identifier()]['File name'])[0],
         dataset_design = dataset_design,
         computational_design= PhenotypeProximityDesign(
             dataset_design = dataset_design,

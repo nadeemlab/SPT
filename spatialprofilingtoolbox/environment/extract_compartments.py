@@ -4,16 +4,15 @@ import csv
 
 import pandas as pd
 
-from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-def extract_compartments(dataset_settings):
+def extract_compartments(dataset_settings, cell_manifest_descriptor):
     compartments = []
     file_manifest = pd.read_csv(dataset_settings.file_manifest_file, sep='\t', na_filter=False)
     for i, row in file_manifest.iterrows():
-        if row['Data type'] == HALOCellMetadataDesign.get_cell_manifest_descriptor():
+        if row['Data type'] == cell_manifest_descriptor:
             filename = join(dataset_settings.input_path, row['File name'])
             new_compartments = extract_compartments_single_file(filename)
             compartments = list(set(compartments).union(new_compartments))

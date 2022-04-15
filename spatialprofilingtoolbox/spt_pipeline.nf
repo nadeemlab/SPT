@@ -65,6 +65,20 @@ process list_all_jobs_inputs {
     """
 }
 
+process list_all_compartments {
+    input:
+    path config_file
+    path file_manifest_file
+
+    output:
+    path 'compartments.txt'
+
+    script:
+    """
+    spt-pipeline list-all-compartments --compartments-file=compartments.txt
+    """
+}
+
 process semantic_parsing {
     publishDir 'results'
 
@@ -72,6 +86,7 @@ process semantic_parsing {
     path config_file
     path file_manifest_file
     path extra_dependencies
+    path compartments,
 
     output:
     path 'normalized_source_data.db'
@@ -93,6 +108,7 @@ process single_job {
     path file_manifest_file
     tuple val(input_file_identifier), file(input_filename), val(job_index)
     path extra_dependencies
+    path compartments
 
     output:
     file "intermediate${job_index}.db"
@@ -130,6 +146,7 @@ process aggregate_results {
     path file_manifest_file
     path 'intermediate.0.db'
     path extra_dependencies
+    path compartments
 
     output:
     file 'intermediate.db'
@@ -186,10 +203,21 @@ workflow {
         .collect()
         .set{ all_job_input_files_ch }
 
+    list_all_compartments(
+        config_file_ch,
+        file_manifest_ch,
+    )
+        .map{ file(it) }
+        .splitText(by: 1)
+        .map{ file(it.trim()) }
+        .collect()
+        .set{ all_compartments_ch }
+
     semantic_parsing(
         config_file_ch,
         file_manifest_ch,
         all_job_input_files_ch,
+        compartments_ch,
     )
 
     single_job(
@@ -197,6 +225,7 @@ workflow {
         file_manifest_ch,
         jobs_ch,
         auxiliary_job_input_files_ch,
+        compartments_ch,
     )
         .collect()
         .set{ all_intermediate_databases }
@@ -212,5 +241,6 @@ workflow {
         file_manifest_ch,
         merged_database_ch,
         auxiliary_job_input_files_ch,
+        compartments_ch,
     )
 }

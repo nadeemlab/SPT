@@ -4,6 +4,7 @@ from os.path import join, exists, isfile
 import pandas as pd
 
 from .settings_wrappers import DatasetSettings
+from .extract_compartments import extract_compartments
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -23,6 +24,7 @@ class JobGenerator:
         file_manifest_file: str=None,
         job_inputs: str=None,
         all_jobs_inputs: str=None,
+        compartments_file: str=None,
         dataset_design_class=None,
         **kwargs,
     ):
@@ -42,6 +44,7 @@ class JobGenerator:
         """
         self.job_inputs = job_inputs
         self.all_jobs_inputs = all_jobs_inputs
+        self.compartments_file = compartments_file
         self.dataset_settings = DatasetSettings(
             input_path,
             file_manifest_file,
@@ -122,6 +125,15 @@ class JobGenerator:
         df = pd.DataFrame({'filename' : filenames})
         print(self.all_jobs_inputs)
         df.to_csv(self.all_jobs_inputs, index=False, header=False)
+
+    def list_all_compartments(self):
+        compartments = extract_compartments(
+            self.dataset_settings,
+            self.dataset_design_class.get_cell_manifest_descriptor(),
+        )
+        df = pd.DataFrame({'compartment' : compartments})
+        print(compartments)
+        df.to_csv(self.compartments_file, index=False, header=False)
 
     @staticmethod
     def get_memory_requirements(file_record):

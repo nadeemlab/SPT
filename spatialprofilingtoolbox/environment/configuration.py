@@ -67,12 +67,4 @@ def get_config_parameters(json_string=None):
     if not 'file_manifest_file' in parameters:
         parameters['file_manifest_file'] = 'file_manifest.tsv'
 
-    if not 'compartments' in parameters:
-        parameters['compartments'] = extract_compartments(
-            dataset_settings = DatasetSettings(
-                parameters['input_path'],
-                parameters['file_manifest_file'],
-            )
-        )
-
     return parameters

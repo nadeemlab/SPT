@@ -20,12 +20,13 @@ if __name__=='__main__':
     semantic_parse = 'semantic-parse'
     list_auxiliary_job_inputs = 'list-auxiliary-job-inputs'
     list_all_jobs_inputs = 'list-all-jobs-inputs'
+    list_all_compartments = 'list-all-compartments'
     single_job = 'single-job'
     aggregate_results = 'aggregate-results'
     run = 'run'
     configure = 'configure'
     write_nextflow_script = 'write-nextflow-script'
-    commands = [generate_jobs, semantic_parse, list_auxiliary_job_inputs, list_all_jobs_inputs, single_job, aggregate_results, run, configure, write_nextflow_script]
+    commands = [generate_jobs, semantic_parse, list_auxiliary_job_inputs, list_all_jobs_inputs, list_all_compartments, single_job, aggregate_results, run, configure, write_nextflow_script]
     parser.add_argument(
         'command_token',
         nargs='?',
@@ -62,6 +63,14 @@ if __name__=='__main__':
             'Filename for output list of additional inputs to all jobs.',
         ])
     )
+    parser.add_argument('--compartments-file',
+        dest='compartments_file',
+        type=str,
+        required=False,
+        help=''.join([
+            'Filename for output list of compartment names.',
+        ])
+    )
     parser.add_argument('--intermediate-database-filename',
         dest='intermediate_database_filename',
         type=str,
@@ -84,6 +93,9 @@ if __name__=='__main__':
     value = args.all_jobs_inputs
     if value is not None:
         parameters['all_jobs_inputs'] = value
+    value = args.compartments_file
+    if value is not None:
+        parameters['compartments_file'] = value
     value = args.intermediate_database_filename
     if value is not None:
         parameters['intermediate_database_filename'] = value
@@ -108,6 +120,10 @@ if __name__=='__main__':
     if command == list_all_jobs_inputs:
         job_generator = spt.get_job_generator(**parameters)
         job_generator.list_all_jobs_inputs()
+
+    if command == list_all_compartments:
+        job_generator = spt.get_job_generator(**parameters)
+        job_generator.list_all_compartments()
 
     if command == generate_jobs:
         job_generator = spt.get_job_generator(**parameters)

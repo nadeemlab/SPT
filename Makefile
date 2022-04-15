@@ -264,6 +264,11 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@source venv/bin/activate ; \
     for wheel in dist/*.whl; \
     do \
+        found=$$(pip freeze | grep -o spatialprofilingtoolbox | head -n1);\
+        if [[ "$$found" == "spatialprofilingtoolbox" ]]; \
+        then \
+            pip uninstall -y -q spatialprofilingtoolbox; \
+        fi ;\
         pip install $$wheel >/dev/null 2>&1; \
     done; \
     pip install pytest >/dev/null 2>&1;

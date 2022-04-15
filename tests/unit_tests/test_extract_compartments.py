@@ -6,6 +6,9 @@ os.environ['FIND_FILES_USING_PATH'] = '1'
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.environment.configuration import get_config_parameters
+from spatialprofilingtoolbox.environment.settings_wrappers import DatasetSettings
+from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.environment.extract_compartments import extract_compartments
 
 def test_extract_compartments():
     config_filename = join(
@@ -15,17 +18,24 @@ def test_extract_compartments():
         'example_config_files',
         'density.json',
     )
-    parameters = get_config_parameters(json_string=open(config_filename, 'rt').read())
-    if (not 'compartments' in parameters):
+
+    compartments = extract_compartments(
+        DatasetSettings(
+            input_path=join(dirname(__file__), '..', 'data'),
+            file_manifest_file='file_manifest.tsv',
+        ),
+        HALOCellMetadataDesign.get_cell_manifest_descriptor(),
+    )
+
+    if not compartments:
         raise ValueError(
-            '"compartments" key completely missing from configuration. Keys: %s' %
-            list(parameters.keys()),
+            '"compartments" not generated at all.'
         )
     else:
-        if parameters['compartments'] == []:
+        if compartments == []:
             raise ValueError('Compartments list empty, not extracted.')
         else:
-            if parameters['compartments'] != ['Non-Tumor', 'Stroma', 'Tumor']:
+            if compartments != ['Non-Tumor', 'Stroma', 'Tumor']:
                 raise ValueError('Compartments list not exactly as expected.')
 
 if __name__=='__main__':

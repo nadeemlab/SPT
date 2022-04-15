@@ -1,4 +1,4 @@
 {
     "workflow" : "Multiplexed IF density",
-    "input_path" : "./data/",
+    "input_path" : "./data/"
 }

@@ -1,12 +1,14 @@
 import pathlib
 import os
 from os.path import join
+from os.path import exists
 
 import pandas as pd
 
 from ...environment.file_io import get_input_filename_by_identifier
 from ...environment.settings_wrappers import DatasetSettings
 from ...environment.log_formats import colorized_logger
+from ...environment.extract_compartments import extract_compartments
 
 logger = colorized_logger(__name__)
 
@@ -51,7 +53,20 @@ class HALOCellMetadataDesign:
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-        self.compartments = compartments
+        if compartments:
+            self.compartments = compartments
+        else:
+            if not 'compartments_file' in kwargs:
+                compartments_file = 'compartments.txt'
+            else:
+                compartments_file = kwargs['compartments_file']
+            if not exists(compartments_file):
+                self.compartments = extract_compartments(
+                    self.dataset_settings,
+                    HALOCellMetadataDesign.get_cell_manifest_descriptor(),
+                )
+            else:
+                self.compartments = open(compartments_file, 'rt').read().strip('\n').split('\n')
 
     def get_FOV_column(self):
         """

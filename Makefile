@@ -191,7 +191,7 @@ Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Generated.',$$transpired"s")
 
-twine-upload: .package-build
+twine-upload: .commit-new-version .package-build
 	@${PYTHON} -m twine upload --repository spatialprofilingtoolbox dist/*
 
 source-code-release-push: .on-main-branch

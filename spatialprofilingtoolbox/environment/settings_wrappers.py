@@ -1,6 +1,7 @@
 import os
 from os.path import join
 FIND_FILES_USING_PATH = ('FIND_FILES_USING_PATH' in os.environ)
+# When running under Nextflow, dependence on files via absolute paths are prohibited
 
 
 class DatasetSettings:

@@ -13,6 +13,8 @@ import re
 from ..applications.configuration_ui.ui import configuration_dialog
 from .configuration_settings import config_filename
 from .configuration_settings import get_version
+from .extract_compartments import extract_compartments
+from .settings_wrappers import DatasetSettings
 
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
@@ -64,6 +66,14 @@ def get_config_parameters(json_string=None):
 
     if not 'file_manifest_file' in parameters:
         parameters['file_manifest_file'] = 'file_manifest.tsv'
+
+    if not 'compartments' in parameters:
+        parameters['compartments'] = extract_compartments(
+            dataset_settings = DatasetSettings(
+                parameters['input_path'],
+                parameters['file_manifest_file'],
+            )
+        )
 
     version_specifier = 'spt_version'
     if version_specifier in parameters:

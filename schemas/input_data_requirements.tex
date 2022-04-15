@@ -11,7 +11,7 @@
 \usepackage{textcomp}
 
 \usepackage{xcolor}
-
+\usepackage{varwidth}
 \setlength{\footskip}{.2 in}
 \setlength{\headheight}{.1 in}
 \setlength{\parindent}{0pt}
@@ -30,6 +30,8 @@
 \author{}
 \maketitle
 
+\begin{center}
+\begin{varwidth}{0.4\textwidth}
 \begin{enumerate}
   \itemsep0em
   \item{\label{ch}Channel information file}
@@ -39,6 +41,10 @@
   \item{\label{files}Files manifest file}
   \item{\label{run}Analysis configuration file}
 \end{enumerate}
+\end{varwidth}
+\end{center}
+
+\newpage
 
 \subsection*{(\ref{ch}) Channel information file}
 A CSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/elementary_phenotypes.csv}{example})
@@ -63,7 +69,7 @@ A CSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/elementa
   \item[]{\colorbox{yellow!25}{\texttt{Classifier Label}}}
 \end{itemize}
 
-In addition, for each channel, the following column with \colorbox{yellow!25}{\texttt{$\langle$prefix$\rangle$}} filled in from part (\ref{ch}):
+In addition, for each channel, a column with the following form (\colorbox{yellow!25}{\texttt{$\langle$prefix$\rangle$}} refers to (\ref{ch})):
 
 \begin{itemize}
   \itemsep0em
@@ -99,27 +105,34 @@ The positive and negative marker values should be semi-colon delimited strings, 
 
 The \colorbox{yellow!25}{\texttt{Sample ID}} values should correspond to one of the \colorbox{yellow!25}{\texttt{Sample ID}} values in part (\ref{files}).
 
-\subsection*{(\ref{files}) Files manifest file} A TSV file listing all of the above files (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/file_manifest.tsv}{example}), containing at least the following fields:
-
-\begin{itemize}
-  \itemsep0em
-  \item[]{\colorbox{yellow!25}{\texttt{File ID}} \hspace{0.5pc} An identifier for the file, unique within this dataset. Certain values are required: ``Elementary phenotypes file", ``Complex phenotypes file", for the corresponding files (\ref{ch}) and (\ref{pheno}).}
-  \item[]{\colorbox{yellow!25}{\texttt{Project ID}} \hspace{0.5pc} A tag for this dataset or project, for downstream disambiguation.}
-  \item[]{\colorbox{yellow!25}{\texttt{File name}} \hspace{0.5pc} The actual name to use to find this file in the dataset (without path information).}
-  \item[]{\colorbox{yellow!25}{\texttt{Sample ID}} \hspace{0.5pc} The identifier for the sample associated with this data file, in case the data file is so associated (e.g. one of the HALO-exported cell CSVs).}
-  \item[]{\colorbox{yellow!25}{\texttt{Data type}} \hspace{0.5pc} A tag for this file data type. The only required values are ``HALO software cell manifest" and ``Outcome", for (\ref{cells}) and (\ref{outcomes}) respectively.}
-\end{itemize}
-
 \subsection*{(\ref{run}) Analysis configuration file}
 A JSON file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/integration_tests/example_config_files/density.json}{example}) called \colorbox{gray!20}{\texttt{.spt{\textunderscore}pipeline.json}}, located in a run directory of your choice, with at least the following keys:
 
 \begin{itemize}
   \itemsep0em
-  \item[]{ \colorbox{yellow!25}{\texttt{workflow}} One of the following: \colorbox{gray!20}{\texttt{Multiplexed IF density}}, \colorbox{gray!20}{\texttt{Multiplexed IF phenotype proximity}}, \colorbox{gray!20}{\texttt{Multiplexed IF front proximity}}, \colorbox{gray!20}{\texttt{Multiplexed IF diffusion}}}.
+  \item[]{ \colorbox{yellow!25}{\texttt{workflow}} One of the following: \begin{itemize}\itemsep0em\item[]{\colorbox{gray!20}{\texttt{Multiplexed IF density}}} \item[]{\colorbox{gray!20}{\texttt{Multiplexed IF phenotype proximity}}} \item[]{\colorbox{gray!20}{\texttt{Multiplexed IF front proximity}}} \item[]{\colorbox{gray!20}{\texttt{Multiplexed IF diffusion}}} \end{itemize}}
   \item[]{ \colorbox{yellow!25}{\texttt{input{\textunderscore}path}} The filesystem path to the directory containing all input files.}
-  \item[]{ \colorbox{yellow!25}{\texttt{file{\textunderscore}manifest{\textunderscore}file}} The filename of the file manifest file (\ref{files}).}
-  \item[]{ \colorbox{yellow!25}{\texttt{compartments}} }
 \end{itemize}
+
+The key \colorbox{yellow!25}{\texttt{file{\textunderscore}manifest{\textunderscore}file}} is optional, with default value \colorbox{gray!20}{\texttt{file{\textunderscore}manifest.tsv}}.
+
+The key \colorbox{yellow!25}{\texttt{compartments}} for a list of compartment names (appearing in the \colorbox{yellow!25}{\texttt{Classifier Label}} field) is also optional, in cases where a subset of the compartments that appear should be specified.
+
+The key \colorbox{yellow!25}{\texttt{sif{\textunderscore}file}} should be provided if deploying on an LSF cluster, with value the full path to the Singularity container image of SPT.
+
+The key \colorbox{yellow!25}{\texttt{excluded{\textunderscore}host{\textunderscore}name}} should be provided if deploying on a LSF cluster which is misconfigured to allow jobs to be scheduled on the control/head node.
+
+\subsection*{(\ref{files}) Files manifest file} A TSV file listing all of the above files (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/file_manifest.tsv}{example}), containing at least the following fields:
+
+\begin{itemize}
+  \itemsep0em
+  \item[]{\colorbox{yellow!25}{\texttt{File ID}} \hspace{0.5pc} An identifier for the file, unique within this dataset. Certain values are required: \colorbox{gray!20}{\texttt{Elementary phenotypes file}}, \colorbox{gray!20}{\texttt{Complex phenotypes file}}, for the corresponding files (\ref{ch}) and (\ref{pheno}).}
+  \item[]{\colorbox{yellow!25}{\texttt{Project ID}} \hspace{0.5pc} A tag for this dataset or project, for downstream disambiguation.}
+  \item[]{\colorbox{yellow!25}{\texttt{File name}} \hspace{0.5pc} The actual name to use to find this file in the dataset (without path information).}
+  \item[]{\colorbox{yellow!25}{\texttt{Sample ID}} \hspace{0.5pc} The identifier for the sample associated with this data file, in case the data file is so associated (e.g. one of the HALO-exported cell CSVs).}
+  \item[]{\colorbox{yellow!25}{\texttt{Data type}} \hspace{0.5pc} A tag for this file data type. The only required values are \colorbox{gray!20}{\texttt{HALO software cell manifest}} and \colorbox{gray!20}{\texttt{Outcome}}, for (\ref{cells}) and (\ref{outcomes}) respectively.}
+\end{itemize}
+
 
 \end{document}
 

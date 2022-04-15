@@ -1,9 +1,6 @@
 {
     "workflow" : "Multiplexed IF diffusion",
     "input_path" : "./data/",
-    "file_manifest_file" : "file_manifest.tsv",
     "compartments" : ["Tumor", "Non-Tumor"],
-    "skip_integrity_check" : false,
-    "save_graphml" : true,
-    "spt_version" : "0.7.21"
+    "save_graphml" : true
 }

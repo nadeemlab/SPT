@@ -22,7 +22,6 @@ class DensityAnalyzer(SingleJobAnalyzer):
     The main class of the job.
     """
     def __init__(self,
-        skip_integrity_check=False,
         **kwargs,
     ):
         super(DensityAnalyzer, self).__init__(**kwargs)

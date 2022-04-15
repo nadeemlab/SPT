@@ -75,13 +75,4 @@ def get_config_parameters(json_string=None):
             )
         )
 
-    version_specifier = 'spt_version'
-    if version_specifier in parameters:
-        if parameters[version_specifier] != get_version():
-            logger.debug(
-                'Version mentioned in configuration file is %s, but running version of SPT is %s.',
-                parameters[version_specifier],
-                get_version(),
-            )
-
     return parameters

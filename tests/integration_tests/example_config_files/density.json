@@ -1,7 +1,4 @@
 {
     "workflow" : "Multiplexed IF density",
     "input_path" : "./data/",
-    "file_manifest_file" : "file_manifest.tsv",
-    "skip_integrity_check" : true,
-    "spt_version" : "0.7.21"
 }

@@ -52,26 +52,9 @@ def get_input_filenames_by_data_type(
     intact_files = []
     records = file_metadata[file_metadata['Data type'] == data_type]
     for i, row in records.iterrows():
-        # if row['Checksum scheme'] != 'SHA256':
-        #     logger.error('Checksum scheme should be SHA256.')
-        #     return
-
-        # expected_sha256 = row['Checksum']
-        # input_file_identifier = row['File ID']
         input_file = row['File name']
         if FIND_FILES_USING_PATH:
             input_file = abspath(join(dataset_settings.input_path, input_file))
-
-        # sha256 = compute_sha256(input_file)
-
-        # if sha256 != expected_sha256:
-        #     logger.error(
-        #         'File "%s" has wrong SHA256 hash (%s ; expected %s).',
-        #         input_file_identifier,
-        #         sha256,
-        #         expected_sha256,
-        #     )
-        #     continue
         intact_files.append(input_file)
     return intact_files
 
@@ -107,34 +90,10 @@ def get_input_filename_by_identifier(
             file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t')
     records = file_metadata[file_metadata['File ID'] == input_file_identifier]
     for i, row in records.iterrows():
-        # if row['Checksum scheme'] != 'SHA256':
-        #     logger.error('Checksum scheme should be SHA256.')
-        #     return
-
-        # expected_sha256 = row['Checksum']
         input_file_identifier = row['File ID']
         input_file = row['File name']
         if FIND_FILES_USING_PATH:
             input_file = abspath(join(dataset_settings.input_path, input_file))
-
-        # buffer_size = 65536
-        # sha = hashlib.sha256()
-        # with open(input_file, 'rb') as f:
-        #     while True:
-        #         data = f.read(buffer_size)
-        #         if not data:
-        #             break
-        #         sha.update(data)
-        # sha256 = sha.hexdigest()
-
-        # if sha256 != expected_sha256:
-        #     logger.error(
-        #         'File "%s" has wrong SHA256 hash (%s ; expected %s).',
-        #         input_file_identifier,
-        #         sha256,
-        #         expected_sha256,
-        #     )
-        #     continue
         intact_files.append(input_file)
     if len(intact_files) > 1:
         logger.error('File identifier "%s" duplicated.', input_file_identifier)

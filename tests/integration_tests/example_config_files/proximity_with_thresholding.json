@@ -1,9 +1,6 @@
 {
     "workflow" : "Multiplexed IF phenotype proximity",
     "input_path" : "./data/",
-    "file_manifest_file" : "file_manifest.tsv",
     "compartments" : ["Tumor", "Non-Tumor"],
-    "skip_integrity_check" : true,
-    "dichotomize" : true,
-    "spt_version" : "0.7.21"
+    "dichotomize" : true
 }

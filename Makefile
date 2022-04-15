@@ -252,7 +252,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
     ((transpired=now_secs - initial)); \
 	printf $(call color_final,${NEXTFLOW},$$transpired"s")
 
-.installed-in-venv: .package-build
+.installed-in-venv: ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
 	@printf $(call color_in_progress,'Creating venv')
 	@date +%s > current_time.txt
 	@${PYTHON} -m venv venv
@@ -262,15 +262,12 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@printf $(call color_in_progress,'Installing spatialprofilingtoolbox into venv')
 	@date +%s > current_time.txt
 	@source venv/bin/activate ; \
-    for wheel in dist/*.whl; \
-    do \
-        found=$$(pip freeze | grep -o spatialprofilingtoolbox | head -n1);\
-        if [[ "$$found" == "spatialprofilingtoolbox" ]]; \
-        then \
-            pip uninstall -y -q spatialprofilingtoolbox; \
-        fi ;\
-        pip install $$wheel >/dev/null 2>&1; \
-    done; \
+    found=$$(pip freeze | grep -o spatialprofilingtoolbox | head -n1);\
+    if [[ "$$found" == "spatialprofilingtoolbox" ]]; \
+    then \
+        pip uninstall -y -q spatialprofilingtoolbox; \
+    fi ;\
+    pip install . >/dev/null 2>&1; \
     pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \

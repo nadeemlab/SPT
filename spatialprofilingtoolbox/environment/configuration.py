@@ -61,6 +61,10 @@ def get_config_parameters(json_string=None):
         json_string = open(config_filename, 'rt').read()
 
     parameters = json.loads(json_string)
+
+    if not 'file_manifest_file' in parameters:
+        parameters['file_manifest_file'] = 'file_manifest.tsv'
+
     version_specifier = 'spt_version'
     if version_specifier in parameters:
         if parameters[version_specifier] != get_version():

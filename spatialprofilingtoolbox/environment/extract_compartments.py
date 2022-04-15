@@ -1,5 +1,6 @@
 import os
 from os.path import join
+FIND_FILES_USING_PATH = ('FIND_FILES_USING_PATH' in os.environ)
 import csv
 
 import pandas as pd
@@ -13,7 +14,10 @@ def extract_compartments(dataset_settings, cell_manifest_descriptor):
     file_manifest = pd.read_csv(dataset_settings.file_manifest_file, sep='\t', na_filter=False)
     for i, row in file_manifest.iterrows():
         if row['Data type'] == cell_manifest_descriptor:
-            filename = join(dataset_settings.input_path, row['File name'])
+            if FIND_FILES_USING_PATH:
+                filename = join(dataset_settings.input_path, row['File name'])
+            else:
+                filename = row['File name']
             new_compartments = extract_compartments_single_file(filename)
             compartments = list(set(compartments).union(new_compartments))
     return sorted(compartments)

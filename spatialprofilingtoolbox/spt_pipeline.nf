@@ -17,7 +17,10 @@ process retrieve_file_manifest_file {
 
     parameters = json.load(open('$config_file', 'rt'))
     input_path = parameters['input_path']
-    manifest = parameters['file_manifest_file']
+    if 'file_manifest_file' in parameters:
+        manifest = parameters['file_manifest_file']
+    else:
+        manifest = 'file_manifest.tsv'
     file_manifest_file = join(input_path, manifest)
     print(file_manifest_file, end='')
     """
@@ -69,6 +72,7 @@ process list_all_compartments {
     input:
     path config_file
     path file_manifest_file
+    path extra_dependencies
 
     output:
     path 'compartments.txt'
@@ -86,7 +90,7 @@ process semantic_parsing {
     path config_file
     path file_manifest_file
     path extra_dependencies
-    path compartments,
+    path compartments
 
     output:
     path 'normalized_source_data.db'
@@ -206,12 +210,13 @@ workflow {
     list_all_compartments(
         config_file_ch,
         file_manifest_ch,
+        all_job_input_files_ch,
     )
         .map{ file(it) }
         .splitText(by: 1)
         .map{ file(it.trim()) }
         .collect()
-        .set{ all_compartments_ch }
+        .set{ compartments_ch }
 
     semantic_parsing(
         config_file_ch,

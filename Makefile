@@ -149,12 +149,25 @@ docker-test-repo-push: .docker-credentials-available
         exit 1; \
     fi;
 
+.docker-daemon-running:
+	@printf $(call color_in_progress,'Checking on Docker daemon')
+	@date +%s > current_time.txt
+	@if (! $$(docker stats --no-stream >/dev/null 2>&1;) ); \
+    then \
+        printf $(call color_error,'Not running.') ; \
+        exit 1; \
+    fi ;
+	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    touch .docker-daemon-running; \
+    printf $(call color_final,'Running.',$$transpired"s")
+
 docker-push: docker-build
 	@version=$$(cat ${VERSION_FILE}) ;\
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
 
-docker-build: Dockerfile .controlled-source-files-unchanged .commit-new-version
+docker-build: Dockerfile .docker-daemon-running .controlled-source-files-unchanged .commit-new-version
 	@printf $(call color_in_progress,'Building Docker container')
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
@@ -168,11 +181,11 @@ docker-test-repo-push: docker-test-build
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
 
-docker-test-build: Dockerfile .controlled-source-files-unchanged
+docker-test-build: Dockerfile .docker-daemon-running .controlled-source-files-unchanged
 	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
 	@date +%s > current_time.txt
-	@version=$$(cat ${VERSION_FILE}) ;\
-	docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest . >/dev/null 2>&1
+	@version=$$(cat ${VERSION_FILE}); \
+    docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest .
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")

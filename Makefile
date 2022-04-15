@@ -263,11 +263,8 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@date +%s > current_time.txt
 	@source venv/bin/activate ; \
     found=$$(pip freeze | grep -o spatialprofilingtoolbox | head -n1);\
-    if [[ "$$found" == "spatialprofilingtoolbox" ]]; \
-    then \
-        pip uninstall -y -q spatialprofilingtoolbox; \
-    fi ;\
-    pip install . >/dev/null 2>&1; \
+    pip install -q -r requirements.txt; \
+    python setup.py install >/dev/null 2>&1; \
     pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv
 	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \

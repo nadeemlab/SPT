@@ -38,5 +38,6 @@ def test_extract_compartments():
             if compartments != ['Non-Tumor', 'Stroma', 'Tumor']:
                 raise ValueError('Compartments list not exactly as expected.')
 
+
 if __name__=='__main__':
     test_extract_compartments()

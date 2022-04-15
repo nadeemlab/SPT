@@ -26,7 +26,7 @@
 
 \begin{document}
 
-\title{Input data requirements for SPT v0.9.105}
+\title{Input data requirements for SPT v0.9.68}
 \author{}
 \maketitle
 
@@ -46,7 +46,7 @@
 
 \newpage
 
-\subsection*{(\ref{ch}) Channel information file}
+\subsection*{\ref{ch} Channel information file}
 A CSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/elementary_phenotypes.csv}{example})
  with at least the following fields:
 
@@ -56,7 +56,7 @@ A CSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/elementa
   \item[]{\colorbox{yellow!25}{\texttt{Column header fragment prefix}}}
 \end{itemize}
 
-\subsection*{(\ref{cells}) HALO-exported cell table files} A set of HALO-exported CSV files (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/2779f21192cb0ce1479b2bf7fb20ebba.csv}{example}), each with at least the following fields:
+\subsection*{\ref{cells} HALO-exported cell table files} A set of HALO-exported CSV files (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/2779f21192cb0ce1479b2bf7fb20ebba.csv}{example}), each with at least the following fields:
 
 \begin{itemize}
   \itemsep0em
@@ -84,7 +84,7 @@ In addition, if intensity information is provided, SPT will make use of it in so
   \item[]{\colorbox{yellow!25}{\texttt{$\langle$prefix$\rangle$ Intensity}}}
 \end{itemize}
 
-\subsection*{(\ref{pheno}) Phenotype definition table file} A CSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/complex_phenotypes.csv}{example}), with at least the following fields:
+\subsection*{\ref{pheno} Phenotype definition table file} A CSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/complex_phenotypes.csv}{example}), with at least the following fields:
 
 \begin{itemize}
   \itemsep0em
@@ -95,7 +95,7 @@ In addition, if intensity information is provided, SPT will make use of it in so
 
 The positive and negative marker values should be semi-colon delimited strings, with each entry one of the \colorbox{yellow!25}{\texttt{Name}} values from part (\ref{ch}).
 
-\subsection*{(\ref{outcomes}) Outcomes file} A TSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/diagnosis.tsv}{example}), containing at least 2 columns:
+\subsection*{\ref{outcomes} Outcomes file} A TSV file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/diagnosis.tsv}{example}), containing at least 2 columns:
 
 \begin{itemize}
   \itemsep0em
@@ -105,7 +105,7 @@ The positive and negative marker values should be semi-colon delimited strings, 
 
 The \colorbox{yellow!25}{\texttt{Sample ID}} values should correspond to one of the \colorbox{yellow!25}{\texttt{Sample ID}} values in part (\ref{files}).
 
-\subsection*{(\ref{files}) Files manifest file} A TSV file listing all of the above files (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/file_manifest.tsv}{example}), containing at least the following fields:
+\subsection*{\ref{files} Files manifest file} A TSV file listing all of the above files (\href{https://github.com/nadeemlab/SPT/blob/main/tests/data/file_manifest.tsv}{example}), containing at least the following fields:
 
 \begin{itemize}
   \itemsep0em
@@ -116,7 +116,7 @@ The \colorbox{yellow!25}{\texttt{Sample ID}} values should correspond to one of 
   \item[]{\colorbox{yellow!25}{\texttt{Data type}} \hspace{0.5pc} A tag for this file data type. The only required values are \colorbox{gray!20}{\texttt{HALO software cell manifest}} and \colorbox{gray!20}{\texttt{Outcome}}, for (\ref{cells}) and (\ref{outcomes}) respectively.}
 \end{itemize}
 
-\subsection*{(\ref{run}) Analysis configuration file}
+\subsection*{\ref{run} Analysis configuration file}
 A JSON file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/integration_tests/example_config_files/density.json}{example}) called \colorbox{gray!20}{\texttt{.spt{\textunderscore}pipeline.json}}, located in a run directory of your choice, with at least the following keys:
 
 \begin{itemize}

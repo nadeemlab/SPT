@@ -115,7 +115,8 @@ process single_job {
     path compartments
 
     output:
-    file "intermediate${job_index}.db"
+    path "intermediate${job_index}.db", emit: sqldb
+    path "intermediate${job_index}.csv", emit: performancereport
 
     script:
     """
@@ -127,9 +128,11 @@ process merge_databases {
     input:
     path all_databases
     val all_database_filenames
+    path all_performance_reports
 
     output:
-    file 'merged.db'
+    path 'merged.db', emit: sqldb
+    path 'performance_report.md', emit: performancereport
 
     script:
     """
@@ -149,18 +152,21 @@ process aggregate_results {
     path config_file
     path file_manifest_file
     path 'intermediate.0.db'
+    path 'performance_report.0.md'
     path extra_dependencies
     path compartments
 
     output:
     file 'intermediate.db'
     file 'stats_tests.csv'
+    file 'performance_report.md'
 
     script:
     """
     cp intermediate.0.db intermediate.db
+    cp performance_report.0.md performance_report.md
     spt-pipeline aggregate-results --intermediate-database-filename=intermediate.db > stats_tests.csv
-        """
+    """
 }
 
 workflow {
@@ -212,10 +218,6 @@ workflow {
         file_manifest_ch,
         all_job_input_files_ch,
     )
-        .map{ file(it) }
-        .splitText(by: 1)
-        .map{ file(it.trim()) }
-        .collect()
         .set{ compartments_ch }
 
     semantic_parsing(
@@ -232,19 +234,39 @@ workflow {
         auxiliary_job_input_files_ch,
         compartments_ch,
     )
+        .set { single_job_results_ch }
+
+    single_job_results_ch
+        .sqldb
         .collect()
         .set{ all_intermediate_databases }
+
+    single_job_results_ch
+        .performancereport
+        .collect()
+        .set{ all_performance_reports_ch }
 
     merge_databases(
         all_intermediate_databases,
         all_intermediate_database_filenames,
-    )
+        all_performance_reports_ch,
+    ).set{ merged_db_ch }
+
+    merged_db_ch
+        .sqldb
+        .collect()
         .set{ merged_database_ch }
+
+    merged_db_ch
+        .performancereport
+        .collect()
+        .set{ performance_report_ch }
 
     aggregate_results(
         config_file_ch,
         file_manifest_ch,
         merged_database_ch,
+        performance_report_ch,
         auxiliary_job_input_files_ch,
         compartments_ch,
     )

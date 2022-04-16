@@ -82,6 +82,7 @@ class DiffusionCalculator(Calculator):
         return [enough_data_per_region, df_marked_nontumor, df_marked_tumor, df_tumor]
 
     def calculate_diffusion(self, distance_type, marker):
+        self.timer.record_timepoint('Starting one job diffusion calculation')
         enough_data_per_region, df_marked_nontumor, df_marked_tumor, df_tumor = self.restrict_scope(marker)
 
         if not enough_data_per_region:
@@ -101,6 +102,7 @@ class DiffusionCalculator(Calculator):
             df_marked_tumor,
             df_tumor,
         )
+        self.timer.record_timepoint('Finished generating point cloud')
         if pc is None:
             logger.warning(
                 'Primary point cloud is empty. (%s+)',
@@ -109,11 +111,13 @@ class DiffusionCalculator(Calculator):
             return
         logger.debug('Calculating diffusion kernel, point cloud of size %s (%s case)', pc.shape[0], distance_type.name)
         diffusion_kernel = self.calculate_diffusion_kernel(pc, distance_type)
+        self.timer.record_timepoint('Finished calculating diffusion kernel')
         spectrum, diffusion_probability_matrices = self.calculate_transition_matrix_evolution(
             pc,
             diffusion_kernel,
             distance_type,
         )
+        self.timer.record_timepoint('Finished calculating transition matrix')
 
         values = np.ravel(diffusion_kernel)
         values = values[values != 0]
@@ -124,6 +128,7 @@ class DiffusionCalculator(Calculator):
             new_values = [values[i] for i in indices]
             values = new_values
         self.values['diffusion kernel'] = values
+        self.timer.record_timepoint('Finished stashing diffusion kernel')
 
         if diffusion_probability_matrices is not None:
             for t, Dt in diffusion_probability_matrices.items():
@@ -134,6 +139,7 @@ class DiffusionCalculator(Calculator):
                     new_values = [values[i] for i in indices]
                     values = new_values
                 self.values[t] = values
+        self.timer.record_timepoint('Finished stashing values')
 
         if self.computational_design.should_save_graphml():
             self.graph_serializer.serialize(
@@ -143,6 +149,9 @@ class DiffusionCalculator(Calculator):
                 self.input_filename,
                 self.fov,
             )
+
+        self.timer.record_timepoint('Completed diffusion one job')
+        self.wrap_up_timer()
 
     def generate_primary_point_cloud(self, df_marked_nontumor, df_marked_tumor, df_tumor):
         box_centers_marked_nt = self.get_box_centers(df_marked_nontumor)

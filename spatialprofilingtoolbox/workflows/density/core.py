@@ -52,7 +52,9 @@ class DensityCalculator(Calculator):
         Note that in the density analysis workflow, most calculation takes place in
         the "integration" phase.
         """
+        self.timer.record_timepoint('Starting calculation of density')
         outcomes_dict = self.pull_in_outcome_data(self.outcomes_file)
+        self.timer.record_timepoint('Finished pulling outcomes')
         logger.info('Pulled outcome data, %s assignments.', len(outcomes_dict))
         cells, fov_lookup = self.create_cell_table(outcomes_dict)
         logger.info('Aggregated %s cells into table.', cells.shape[0])
@@ -60,6 +62,7 @@ class DensityCalculator(Calculator):
         self.write_cell_table(cells)
         self.write_fov_lookup_table(fov_lookup)
         logger.info('Finished writing cells and fov lookup helper.')
+        self.wrap_up_timer()
 
     def get_phenotype_signatures_by_name(self):
         """
@@ -133,19 +136,25 @@ class DensityCalculator(Calculator):
         # for filename, sample_identifier in self.sample_identifiers_by_file.items():
         filename = self.input_filename
         sample_identifier = self.sample_identifier
+        self.timer.record_timepoint('Start reading table')
         table_file = self.get_table(filename)
+        self.timer.record_timepoint('Finished reading table')
         self.dataset_design.normalize_fov_descriptors(table_file)
+        self.timer.record_timepoint('Finished normalizing FOV strings in place')
 
         col = self.dataset_design.get_FOV_column()
         fovs = sorted(list(set(table_file[col])))
         for i, fov in enumerate(fovs):
             fov_lookup[(sample_identifier, i)] = fov
             table_file.loc[table_file[col] == fov, col] = i
+        self.timer.record_timepoint('Finished converting FOVs to integers')
 
         for _, table_fov in table_file.groupby(col):
+            self.timer.record_timepoint('Start per-FOV cell table parsing')
             table = table_fov.copy()
+            self.timer.record_timepoint('Finished copying FOV cells table')
             table = table.reset_index(drop=True)
-
+            self.timer.record_timepoint('Finished reseting cells table index')
             if 'compartment' in table.columns:
                 logger.error('Woops, name collision "compartment".')
                 break
@@ -155,24 +164,29 @@ class DensityCalculator(Calculator):
             for compartment in self.dataset_design.get_compartments():
                 signature = self.dataset_design.get_compartmental_signature(table, compartment)
                 table.loc[signature, 'compartment'] = compartment
+            self.timer.record_timepoint('Copy compartment column')
 
             signatures_by_name = self.get_phenotype_signatures_by_name()
+            self.timer.record_timepoint('Start creating membership column')
             for name in pheno_names:
                 signature = signatures_by_name[name]
                 bools = self.dataset_design.get_pandas_signature(table, signature)
                 ints = [1 if value else 0 for value in bools]
                 table[name + ' membership'] = ints
             phenotype_membership_columns = [name + ' membership' for name in pheno_names]
+            self.timer.record_timepoint('Finished creating membership columns')
 
+            self.timer.record_timepoint('Adding distance-to-nearest data')
             for compartment in all_compartments:
                 self.add_nearest_cell_data(table, compartment)
             nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in all_compartments]
-
+            self.timer.record_timepoint('Finished adding distance-to-nearest data')
             table['sample_identifier'] = sample_identifier
             table['outcome_assignment'] = outcomes_dict[sample_identifier]
 
             if self.computational_design.use_intensities:
                 self.overlay_intensities(table)
+                self.timer.record_timepoint('Overlaid intensities')
                 intensity_columns = self.computational_design.get_intensity_columns(values_only=True)
             else:
                 intensity_columns = []
@@ -186,6 +200,7 @@ class DensityCalculator(Calculator):
             ] + phenotype_membership_columns + intensity_columns + nearest_cell_columns
 
             table = table[pertinent_columns]
+            self.timer.record_timepoint('Restricted copy to subset of columns')
             table.rename(columns = {
                 self.dataset_design.get_FOV_column() : 'fov_index',
                 self.dataset_design.get_cell_area_column() : 'cell_area',
@@ -202,6 +217,7 @@ class DensityCalculator(Calculator):
             }, inplace=True)
 
             cell_groups.append(table)
+            self.timer.record_timepoint('Finished parsing one FOV cell table')
         logger.debug('%s cells parsed from file %s.', table_file.shape[0], filename)
         logger.debug('Completed cell table collation.')
         return pd.concat(cell_groups), fov_lookup
@@ -219,6 +235,7 @@ class DensityCalculator(Calculator):
         :param cells: Table of cell areas with sample ID, outcome, etc.
         :type cells: pandas.DataFrame
         """
+        self.timer.record_timepoint('Writing parsed cells to file')
         uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         cells.reset_index(drop=True, inplace=True)
@@ -234,6 +251,7 @@ class DensityCalculator(Calculator):
         cells.to_sql('cells', connection, if_exists='append', index_label='id')
         connection.commit()
         connection.close()
+        self.timer.record_timepoint('Done writing parsed cells to file')
 
     def write_fov_lookup_table(self, fov_lookup):
         """
@@ -262,3 +280,4 @@ class DensityCalculator(Calculator):
                 except sqlite3.OperationalError as exception:
                     logger.error('SQL query failed: %s', cmd)
                     print(exception)
+        self.timer.record_timepoint('Done writing FOV lookup')

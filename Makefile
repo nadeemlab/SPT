@@ -81,6 +81,7 @@ PLACEHOLDERS := \
 	.all-credentials-available \
 	.docker-credentials-available \
 	.pypi-credentials-available \
+	.docker-daemon-running\
 	.test \
 	.unit-tests \
 	.update-version \

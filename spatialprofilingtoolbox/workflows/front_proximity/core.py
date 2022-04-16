@@ -27,12 +27,17 @@ class FrontProximityCalculator(Calculator):
         self.outcomes_file = get_outcomes_files(dataset_settings)[0]
 
     def calculate_front_proximity(self):
+        self.timer.record_timepoint('Started front proximity one job')
         outcomes_dict = self.pull_in_outcome_data(self.outcomes_file)
         outcome = outcomes_dict[self.sample_identifier]
         cells = self.create_cell_tables()
+        self.timer.record_timepoint('Finished cell table creation')
         distance_records = self.calculate_front_distance_records(cells, outcome)
+        self.timer.record_timepoint('Finished calculating front distance')
         self.write_cell_front_distance_records(distance_records)
+        self.timer.record_timepoint('Finished writing front distance')
         logger.debug('Finished writing cell front distances in sample %s.', self.sample_identifier)
+        self.timer.record_timepoint('Completed front proximity one job')
         self.wrap_up_timer()
 
     def get_phenotype_signatures_by_name(self):

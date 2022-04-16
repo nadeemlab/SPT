@@ -49,12 +49,13 @@ def aggregate_performance_reports(input_dbs):
         pd.read_csv(f).drop(columns=['average time spent', 'fraction'])
         for f in filenames
     ]
-    df = pd.concat(dfs).groupby(['from', 'to']).sum().reset_index()
-    df['average time spent'] = df['total time spent'] / df['frequency']
-    df['fraction'] = df['total time spent'] / sum(df['total time spent'])
-    df.sort_values(by='fraction', inplace=True, ascending=False)
-    with open('performance_report.md', 'wt') as f:
-        f.write(df.to_markdown(index=False) + '\n')
+    if len(dfs) > 0:
+        df = pd.concat(dfs).groupby(['from', 'to']).sum().reset_index()
+        df['average time spent'] = df['total time spent'] / df['frequency']
+        df['fraction'] = df['total time spent'] / sum(df['total time spent'])
+        df.sort_values(by='fraction', inplace=True, ascending=False)
+        with open('performance_report.md', 'wt') as f:
+            f.write(df.to_markdown(index=False) + '\n')
 
 
 if __name__=='__main__':

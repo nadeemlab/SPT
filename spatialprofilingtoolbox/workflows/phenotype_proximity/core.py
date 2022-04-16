@@ -416,11 +416,6 @@ class PhenotypeProximityCalculator(Calculator):
                         return_distance=False,
                     )
                     self.timer.record_timepoint('Completed tree query at radius')
-
-                    # additional = sum([
-                    #     sum(cols[i])
-                    #     for i in indices
-                    # ])
                     target_indices = set([i for i in range(len(cols)) if cols[i]])
                     additional = sum([len(target_indices.intersection(i)) for i in indices])
                     self.timer.record_timepoint('Completed counting result in target phenotype')

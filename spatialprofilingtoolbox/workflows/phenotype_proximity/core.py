@@ -72,6 +72,7 @@ class PhenotypeProximityCalculator(Calculator):
             'balanced' if self.computational_design.balanced else 'unbalanced',
             self.input_filename,
         )
+        self.timer.record_timepoint('Started cell table calculation')
         cells = self.create_cell_tables()
         cell_pairs = self.create_cell_trees(cells)
         phenotype_indices, compartment_indices = self.precalculate_masks(cells)
@@ -82,6 +83,8 @@ class PhenotypeProximityCalculator(Calculator):
             compartment_indices,
         )
         self.write_cell_pair_counts(radius_limited_counts)
+        self.timer.record_timepoint('Finished writing pair counts')
+        self.wrap_up_timer()
 
     def cache_fov_strings(self, table_file):
         """
@@ -185,26 +188,40 @@ class PhenotypeProximityCalculator(Calculator):
             tables of cells.
         :rtype: dict
         """
+        self.timer.record_timepoint('Started loading cell table into memory')
         table_file = self.get_table(self.input_filename)
+        self.timer.record_timepoint('Finished loading cell table')
         self.dataset_design.normalize_fov_descriptors(table_file)
         self.cache_fov_strings(table_file)
         self.replace_fov_strings_with_index(table_file)
 
+        self.timer.record_timepoint('Done normalizing FOV strings')
         cells = {}
         phenotype_names = self.computational_design.get_all_phenotype_names()
         number_cells_by_phenotype = {phenotype : 0 for phenotype in phenotype_names}
+        self.timer.record_timepoint('Started grouping by FOV')
         grouped = table_file.groupby(self.dataset_design.get_FOV_column())
+        self.timer.record_timepoint('Finished grouping by FOV')
         for fov_index, table_fov in grouped:
+            self.timer.record_timepoint('Started one FOV cell table iteration')
             table = table_fov.copy()
+            self.timer.record_timepoint('Done copying table')
             table = table.reset_index(drop=True)
+            self.timer.record_timepoint('Done reseting index table')
             self.add_compartment_information(table)
+            self.timer.record_timepoint('Done adding compartments')
             self.add_box_centers(table)
+            self.timer.record_timepoint('Done adding box center')
             self.add_membership(table)
+            self.timer.record_timepoint('Done adding membership columns')
             self.restrict_to_pertinent_columns(table)
+            self.timer.record_timepoint('Done restricting to pertinent columns')
             cells[fov_index] = table
+            self.timer.record_timepoint('Done saving one FOV cell table')
 
             for phenotype in phenotype_names:
                 number_cells_by_phenotype[phenotype] += sum(table[phenotype + ' membership'])
+            self.timer.record_timepoint('Done one FOV recording counts by phenotype')
 
         most_frequent = sorted(
             list(number_cells_by_phenotype.items()),
@@ -234,6 +251,7 @@ class PhenotypeProximityCalculator(Calculator):
         :rtype: dict
         """
         cell_trees = {}
+        self.timer.record_timepoint('Started creating cell trees')
         logger.debug(
             'Calculating cell trees for cells from %s.',
             self.input_filename,
@@ -244,6 +262,7 @@ class PhenotypeProximityCalculator(Calculator):
             'Completed (field of view limited) cell tree construction from %s.',
             self.input_filename,
         )
+        self.timer.record_timepoint('Done creating cell trees')
         return cell_trees
 
     def precalculate_masks(self, cells):
@@ -261,6 +280,7 @@ class PhenotypeProximityCalculator(Calculator):
                 p : table[p + ' membership'] for p in phenotypes
             } for fov_index, table in cells.items()
         }
+        self.timer.record_timepoint('Done creating phenotype masks')
 
         compartments = self.dataset_design.get_compartments()
         compartment_indices = {
@@ -268,6 +288,7 @@ class PhenotypeProximityCalculator(Calculator):
                 c : (table['regional compartment'] == c) for c in compartments
             } for fov_index, table in cells.items()
         }
+        self.timer.record_timepoint('Done creating compartment masks')
 
         return [phenotype_indices, compartment_indices]
 
@@ -303,6 +324,7 @@ class PhenotypeProximityCalculator(Calculator):
             len(combinations2),
         )
         results = []
+        self.timer.record_timepoint('Done retrieving phenotype pairs')
         for combination in combinations2:
             results_combo = self.do_aggregation_one_phenotype_pair(
                 combination,
@@ -313,6 +335,7 @@ class PhenotypeProximityCalculator(Calculator):
             )
             results.append(results_combo)
             logger.debug('Cell pairs of types %s counted.', combination)
+        self.timer.record_timepoint('Done aggregating over all phenotype pairs')
         logger.debug('All %s combinations counted.', len(combinations2))
         columns = [
             'sample identifier',
@@ -329,6 +352,7 @@ class PhenotypeProximityCalculator(Calculator):
             PhenotypeProximityCalculator.flatten_lists(results),
             columns=columns,
         )
+        self.timer.record_timepoint('Done flattening into radius-limit counts')
         logger.debug(
             'Completed counting cell pairs in "%s" under radius constraint.',
             self.input_filename,
@@ -371,15 +395,19 @@ class PhenotypeProximityCalculator(Calculator):
             for radius in PhenotypeProximityCalculator.get_radii_of_interest():
                 count = 0
                 source_count = 0
+                self.timer.record_timepoint('Started one compartment/radius/phenotype pair')
                 for _, (fov_index, table) in enumerate(cells.items()):
                     rows = phenotype_indices[fov_index][source]
                     cols = phenotype_indices[fov_index][target]
+                    self.timer.record_timepoint('Retrieved phenotype masks')
                     if compartment != 'all':
                         rows = rows & compartment_indices[fov_index][compartment]
                         cols = cols & compartment_indices[fov_index][compartment]
-
+                        self.timer.record_timepoint('Overlaid compartment masks')
                     tree = cell_trees[fov_index]
+                    self.timer.record_timepoint('Retrieved cell tree')
                     source_cell_locations = table.loc[rows][['x value', 'y value']]
+                    self.timer.record_timepoint('Retrieved cell locations')
                     if source_cell_locations.shape[0] == 0:
                         continue
                     indices = tree.query_radius(
@@ -387,11 +415,15 @@ class PhenotypeProximityCalculator(Calculator):
                         radius,
                         return_distance=False,
                     )
+                    self.timer.record_timepoint('Completed tree query at radius')
 
-                    additional = sum([
-                        sum(cols[i])
-                        for i in indices
-                    ])
+                    # additional = sum([
+                    #     sum(cols[i])
+                    #     for i in indices
+                    # ])
+                    target_indices = set([i for i in range(len(cols)) if cols[i]])
+                    additional = sum([len(target_indices.intersection(i)) for i in indices])
+                    self.timer.record_timepoint('Completed counting result in target phenotype')
 
                     if np.isnan(additional):
                         continue
@@ -399,6 +431,7 @@ class PhenotypeProximityCalculator(Calculator):
                     count += additional
                     count -= sum(rows & cols)
                     source_count += sum(rows)
+                    self.timer.record_timepoint('Finished aggregation iteration')
 
                 if balanced:
                     area = sum(table.loc[compartment_indices[fov_index][compartment]][
@@ -435,6 +468,7 @@ class PhenotypeProximityCalculator(Calculator):
                         feature_value,
                         source_count,
                     ])
+        self.timer.record_timepoint('Completed aggregation one phenotype pair')
         return records
 
     def write_cell_pair_counts(self, radius_limited_counts):
@@ -467,6 +501,7 @@ class PhenotypeProximityCalculator(Calculator):
                 except sqlite3.OperationalError as exception:
                     logger.error('SQL query failed: %s', cmd)
                     print(exception)
+        self.timer.record_timepoint('Done writing cell pair counts to file')
 
     @staticmethod
     def get_radii_of_interest():

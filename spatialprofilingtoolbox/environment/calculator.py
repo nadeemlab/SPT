@@ -2,6 +2,7 @@
 import pandas as pd
 
 from .dichotomization import Dichotomizer
+from .performance_timer import PerformanceTimer
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -23,6 +24,11 @@ class Calculator:
         """
         self.dataset_design = dataset_design
         self.computational_design = computational_design
+        self.timer = PerformanceTimer()
+
+    def wrap_up_timer(self):
+        df = self.timer.report(by='fraction')
+        df.to_csv(self.computational_design.get_performance_report_filename(), index=False)
 
     def get_table(self, filename):
         table_from_file = pd.read_csv(filename)

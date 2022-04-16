@@ -44,3 +44,6 @@ class ComputationalDesign:
 
     def get_database_uri(self):
         return self.intermediate_database_filename
+
+    def get_performance_report_filename(self):
+        return self.intermediate_database_filename.rstrip('.db') + '.csv'

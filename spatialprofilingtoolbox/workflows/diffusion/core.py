@@ -143,6 +143,7 @@ class DiffusionCalculator(Calculator):
                 self.input_filename,
                 self.fov,
             )
+        self.wrap_up_timer()
 
     def generate_primary_point_cloud(self, df_marked_nontumor, df_marked_tumor, df_tumor):
         box_centers_marked_nt = self.get_box_centers(df_marked_nontumor)

@@ -33,6 +33,7 @@ class FrontProximityCalculator(Calculator):
         distance_records = self.calculate_front_distance_records(cells, outcome)
         self.write_cell_front_distance_records(distance_records)
         logger.debug('Finished writing cell front distances in sample %s.', self.sample_identifier)
+        self.wrap_up_timer()
 
     def get_phenotype_signatures_by_name(self):
         signatures = self.computational_design.get_all_phenotype_signatures()

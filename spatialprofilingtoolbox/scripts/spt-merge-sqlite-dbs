@@ -36,6 +36,27 @@ def migrate_table(table_name, input_db, output_db):
     df.to_sql(table_name, connection, if_exists='append', index=False)
     connection.close()
 
+def compute_performance_filename(db_filename):
+    return db_filename.rstrip('.db') + '.csv'
+
+def aggregate_performance_reports(input_dbs):
+    filenames = [
+        compute_performance_filename(f)
+        for f in input_dbs
+        if exists(compute_performance_filename(f))
+    ]
+    dfs = [
+        pd.read_csv(f).drop(columns=['average time spent', 'fraction'])
+        for f in filenames
+    ]
+    df = pd.concat(dfs).groupby(['from', 'to']).sum().reset_index()
+    df['average time spent'] = df['total time spent'] / df['frequency']
+    df['fraction'] = df['total time spent'] / sum(df['total time spent'])
+    df.sort_values(by='fraction', inplace=True, ascending=False)
+    with open('performance_report.md', 'wt') as f:
+        f.write(df.to_markdown(index=False) + '\n')
+
+
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         description = ''.join([
@@ -73,3 +94,5 @@ if __name__=='__main__':
             exit()
         for name in table_names:
             migrate_table(name, input_db, output_db)
+
+    aggregate_performance_reports(input_dbs)

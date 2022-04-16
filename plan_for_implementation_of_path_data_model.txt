@@ -41,5 +41,4 @@ General-purpose db-related behaviors:
 - For a given table, count how many records are part of a given study. Mainly to check for 0, so bulk-load is sanctioned.
 - Complete a set of records to include automatically generated identifiers. E.g. consecutive integers starting from the maximum value of the existing identifiers, in case they will always be integers ... or even just the maximum of the ones which *are* integers ... Is auto-increment available on a per-query basis? Doesn't look like it.
 - Bulk load a set of (complete) records. Use pagination to overcome possible dropped-packets-style errors. Use python standard library mmap file, and psycopg2 (the postgres driver for Python) copy_to(file, tablename).
-- 
-
+-

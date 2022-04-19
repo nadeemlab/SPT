@@ -37,9 +37,15 @@ def get_job_generator(workflow=None, **kwargs):
         raise TypeError
 
 def get_semantic_source_parser(workflow=None, **kwargs):
+    s = 'skip_semantic_parse'
+    if s in kwargs:
+        skip_semantic_parse = kwargs[s]
+    else:
+        skip_semantic_parse = None
     return DataSkimmer(
         dataset_settings = get_dataset_settings(**kwargs),
         dataset_design = get_dataset_design(workflow=workflow, **kwargs),
+        skip_semantic_parse = skip_semantic_parse,
     )
 
 def get_dataset_design_class(workflow=None, **kwargs):

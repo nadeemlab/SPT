@@ -16,14 +16,22 @@ from .source_file_parsers import *
 
 
 class DataSkimmer:
-    def __init__(self, dataset_settings, dataset_design):
+    def __init__(self, dataset_settings, dataset_design, skip_semantic_parse=None):
         connectivity = False
         self.db_backend = None
 
+        skip = False
+        if not skip_semantic_parse is None:
+            if skip_semantic_parse in [True, 'true', 'True', '1', 1]:
+                skip = True
+                logger.info('Skipping semantic parse unless database credentials are provided.')
+
         connectivity = self.check_internet_connectivity()
         if not connectivity:
-            logger.info('No internet connection. Using local sqlite database.')
-            self.db_backend = DBBackend.SQLITE
+            logger.info('No internet connection.')
+            if not skip:
+                logger.info('Using sqlite backend.')
+                self.db_backend = DBBackend.SQLITE
 
         if connectivity:
             credential_parameters = [
@@ -37,8 +45,10 @@ class DataSkimmer:
                 logger.info('Found database credentials %s', credential_parameters)
                 self.db_backend = DBBackend.POSTGRES
             if not any(found):
-                logger.info('Using sqlite backend (no database credentials found).')
-                self.db_backend = DBBackend.SQLITE
+                logger.info('No database credentials found.')
+                if not skip:
+                    logger.info('Using sqlite backend.')
+                    self.db_backend = DBBackend.SQLITE
             else:
                 if not all(found):
                     logger.error(
@@ -92,6 +102,11 @@ class DataSkimmer:
             return False
 
     def parse(self):
+        if not self.connection:
+            logger.debug('No database connection was initialized. Skipping semantic parse.')
+            with open('normalized_source_data.db', 'w') as f:
+                f.write('')
+            return
         with importlib.resources.path('spatialprofilingtoolbox', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 

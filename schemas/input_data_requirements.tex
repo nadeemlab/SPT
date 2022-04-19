@@ -129,6 +129,8 @@ The key \colorbox{yellow!25}{\texttt{file{\textunderscore}manifest{\textundersco
 
 The key \colorbox{yellow!25}{\texttt{compartments}} for a list of compartment names (appearing in the \colorbox{yellow!25}{\texttt{Classifier Label}} field) is also optional, in cases where a subset of the compartments that appear should be specified.
 
+The key \colorbox{yellow!25}{\texttt{skip{\textunderscore}semantic{\textunderscore}parse}} is optional, with default value \colorbox{gray!20}{\texttt{false}}. If \colorbox{gray!20}{\texttt{true}}, aggregation of input data into a normalized database is skipped.
+
 The key \colorbox{yellow!25}{\texttt{sif{\textunderscore}file}} should be provided if deploying on an LSF cluster, with value the full path to the Singularity container image of SPT.
 
 The key \colorbox{yellow!25}{\texttt{excluded{\textunderscore}host{\textunderscore}name}} should be provided if deploying on a LSF cluster which is misconfigured to allow jobs to be scheduled on the control/head node.

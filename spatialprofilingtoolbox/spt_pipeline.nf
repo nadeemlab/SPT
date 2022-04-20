@@ -96,6 +96,11 @@ process list_all_compartments {
 }
 
 process semantic_parsing {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 5
+
     publishDir 'results'
 
     input:

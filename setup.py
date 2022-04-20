@@ -11,7 +11,7 @@ def get_file_contents(filename):
 long_description = """See the [user documentation](https://github.com/nadeemlab/SPT).
 """
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
-requirements = get_file_contents(join('./', 'requirements.txt')).rstrip('\n').split('\n')
+requirements = get_file_contents(join('spatialprofilingtoolbox', 'requirements.txt')).rstrip('\n').split('\n')
 
 setuptools.setup(
     name='spatialprofilingtoolbox',

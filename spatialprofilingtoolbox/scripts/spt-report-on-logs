@@ -34,7 +34,7 @@ class LogParsingError(Exception):
 
 class LogParser:
     def __init__(self, path):
-        self.path
+        self.path = path
         self.extractions = {}
         self.performance_report_base64 = ''
         self.performance_report_contents = ''

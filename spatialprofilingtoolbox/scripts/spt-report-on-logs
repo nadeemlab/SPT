@@ -34,7 +34,6 @@ class LogParsingError(Exception):
 
 class LogParser:
     def __init__(self, path):
-        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs(path)
         self.extractions = {}
         self.performance_report_base64 = ''
         self.performance_report_contents = ''
@@ -71,6 +70,8 @@ class LogParser:
             raise LogParsingError('Essential log or config file not found: %s' % target)
 
     def parse(self):
+        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs(path)
+
         self.extractions['Dataset'] = self.extract_exact(
             'Dataset/project: ([\w \d\,\./\?\(\)\-]+)$'
         )[0]

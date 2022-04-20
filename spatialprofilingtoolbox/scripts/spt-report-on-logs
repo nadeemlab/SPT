@@ -208,7 +208,7 @@ class LogParser:
                         break
                 if match:
                     return match.groups(1)
-        raise LogParsingError('Essential pattern not found in log files.')
+        raise LogParsingError('Essential pattern not found in log files: %s', % pattern)
 
     def extract_job_reports(self):
         job_reports = []
@@ -326,7 +326,7 @@ class LogReportAggregator:
                 parser.parse()
             except LogParsingError as e:
                 print(e)
-                print('Warning: Parsing error for run located at %s .' % parser.get_path())
+                print('Warning: Parsing error for run located at: %s' % parser.get_path())
 
     def aggregate_reports_dataframe(self):
         rows = [parser.get_extractions_ordered() for parser in self.parsers]

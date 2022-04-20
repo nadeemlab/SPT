@@ -11,6 +11,7 @@ import datetime
 import collections
 from collections import OrderedDict
 import importlib.resources
+import base64
 
 import pandas as pd
 import jinja2
@@ -25,7 +26,7 @@ jinja_environment.filters['quote_hash'] = quote_hash
 
 class LogParser:
     def __init__(self, file_inputs, path):
-        self.log_files, self.config_file, self.nextflow_log = self.get_inputs(file_inputs, path)
+        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs(file_inputs, path)
         self.extractions = {}
         self.ansi_escape = re.compile(r'''
             \x1B  # ESC
@@ -43,6 +44,7 @@ class LogParser:
         filenames = {
             'config' : join(path, '.spt_pipeline.json'),
             'nextflow log' : join(path, '.nextflow.log'),
+            'performance report' : join(path, 'results', 'performance_report.md')
         }
         discovered_logs = glob.glob(join(path, 'work/*/*/.command.log'))
         log_files = [
@@ -51,13 +53,14 @@ class LogParser:
         ]
         config_file = self.extract_from_available(file_inputs, filenames['config'])
         nextflow_log = self.extract_from_available(file_inputs, filenames['nextflow log'])
+        performance_report = self.extract_from_available(file_inputs, filenames['performance report'])
         if len(log_files) == 0:
             raise ValueError('No log files found.')
         if config_file is None:
             raise ValueError('Not found: %s' % filenames['config'])
         if nextflow_log is None:
             raise ValueError('Not found: %s' % filenames['nextflow log'])
-        return [log_files, config_file, nextflow_log]
+        return [log_files, config_file, nextflow_log, performance_report]
 
     def extract_from_available(self, file_inputs, target):
         files = [f for f in file_inputs if basename(f) == target]
@@ -129,6 +132,12 @@ class LogParser:
 
         self.extractions['Longest job time'] = sorted(job_reports, key=lambda x: -x['duration']
         )[0]['duration minutes']
+
+        self.performance_report_contents = open(self.performance_report, 'rt').read()
+
+        message_bytes = self.performance_report_contents.encode('ascii')
+        base64_bytes = base64.b64encode(message_bytes)
+        self.performance_report_base64 = base64_bytes.decode('ascii')
 
     def get_total_runtime(self):
         nf_header = open(self.nextflow_log, 'rt').readline().rstrip('\n')
@@ -314,8 +323,9 @@ class LogReportAggregator:
                 log_report_template = open(path, 'rt').read()
                 template = jinja_environment.from_string(log_report_template)
                 rendered = template.render(
-                    header=LogParser.get_order(),
-                    rows=[parser.get_extractions_ordered() for parser in self.parsers],
+                    header=LogParser.get_order() + ['CPU usage'],
+                    rows=[parser.get_extractions_ordered() + [i] for i, parser in enumerate(self.parsers)],
+                    base64_contents=[parser.performance_report_base64 for parser in self.parsers],
                 )
         if format_description == 'TSV':
             rendered = table.to_csv(index=False, sep='\t')

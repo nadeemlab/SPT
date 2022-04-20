@@ -43,6 +43,7 @@ class LogParsingError(Exception):
     def __str__(self):
         return(repr(self.message))
 
+
 class LSFPreambleSkipper:
     def __init__ (self, filename):
         header = open(filename, 'rt').readline().rstrip('\n')
@@ -131,7 +132,7 @@ class LogParser:
                 break
 
         config = json.loads(open(self.config_file, 'rt').read())
-        self.extractions['Workflow'] = config['workflow']
+        self.extractions['Workflow'] = config['workflow'].lstrip('Multiplexed IF ')
 
         year = self.extract_exact('Run date year: (\d+)$', lines_limit = 2)
         if not year:

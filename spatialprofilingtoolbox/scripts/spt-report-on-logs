@@ -23,6 +23,18 @@ def quote_hash(input):
     return re.sub('\#', '\\#', input)
 jinja_environment.filters['quote_hash'] = quote_hash
 
+ansi_escape = re.compile(r'''
+    \x1B  # ESC
+    (?:   # 7-bit C1 Fe (except CSI)
+        [@-Z\\-_]
+    |     # or [ for CSI, followed by a control sequence
+        \[
+        [0-?]*  # Parameter bytes
+        [ -/]*  # Intermediate bytes
+        [@-~]   # Final byte
+    )
+''', re.VERBOSE)
+
 
 class LogParsingError(Exception):
     def __init__(self, message):
@@ -31,6 +43,34 @@ class LogParsingError(Exception):
     def __str__(self):
         return(repr(self.message))
 
+class LSFPreambleSkipper:
+    def __init__ (self, filename):
+        header = open(log, 'rt').readline().rstrip('\n')
+        if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
+            seek_to_stdout_capture = True
+        else:
+            seek_to_stdout_capture = False
+        self.f = open(filename, mode)
+        if seek_to_stdout_capture:
+            line = None
+            while line != 'The output (if any) follows:\n'::
+                line = self.f.readline()
+            self.f.readline()
+            position = self.f.tell()
+
+            line = self.f.readline()
+            line = ansi_escape.sub('', line)
+            while re.search('^WARNING: ', line):
+                position = self.f.tell()
+                line = self.f.readline()
+                line = ansi_escape.sub('', line)
+            self.f.seek(position)
+
+    def __enter__ (self):
+        return self.f
+
+    def __exit__ (self, exc_type, exc_value, traceback):
+        self.f.close()
 
 class LogParser:
     def __init__(self, path):
@@ -38,17 +78,6 @@ class LogParser:
         self.extractions = {}
         self.performance_report_base64 = ''
         self.performance_report_contents = ''
-        self.ansi_escape = re.compile(r'''
-            \x1B  # ESC
-            (?:   # 7-bit C1 Fe (except CSI)
-                [@-Z\\-_]
-            |     # or [ for CSI, followed by a control sequence
-                \[
-                [0-?]*  # Parameter bytes
-                [ -/]*  # Intermediate bytes
-                [@-~]   # Final byte
-            )
-        ''', re.VERBOSE)
 
     def get_path(self):
         return self.path
@@ -83,18 +112,7 @@ class LogParser:
 
         for log in self.log_files:
             count = None
-            header = open(log, 'rt').readline().rstrip('\n')
-            if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
-                seek_to_stdout_capture = True
-            else:
-                seek_to_stdout_capture = False
-            with open(log, 'rt') as f:
-                if seek_to_stdout_capture:
-                    line = None
-                    while line != 'The output (if any) follows:\n':
-                        line = f.readline()
-                    f.readline()
-                    line = None
+            with LSFPreambleSkipper(log) as f:
                 line = f.readline().rstrip('\n')
                 if line == 'input_file_identifier,input_filename,job_index':
                     count = len(f.readlines()) - 1
@@ -103,17 +121,7 @@ class LogParser:
                 break
 
         for log in self.log_files:
-            if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
-                seek_to_stdout_capture = True
-            else:
-                seek_to_stdout_capture = False
-            with open(log, 'rt') as f:
-                if seek_to_stdout_capture:
-                    line = None
-                    while line != 'The output (if any) follows:\n':
-                        line = f.readline()
-                    f.readline()
-                    line = None
+            with LSFPreambleSkipper(log) as f:
                 line = f.readline()
                 match = re.match('^SPT v(\d+\.\d+\.\d+)$', line)
                 if match:
@@ -211,19 +219,9 @@ class LogParser:
 
     def extract_exact(self, pattern, lines_limit=1):
         for log in self.log_files:
-            header = open(log, 'rt').readline().rstrip('\n')
-            if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
-                seek_to_stdout_capture = True
-            else:
-                seek_to_stdout_capture = False
-            with open(log, 'rt') as f:
+            with LSFPreambleSkipper(log) as f:
                 line_count = 0
                 line = None
-                if seek_to_stdout_capture:
-                    while line != 'The output (if any) follows:\n':
-                        line = f.readline()
-                    f.readline()
-                    line = None
                 while line_count < lines_limit and line != '':
                     line = f.readline()
                     line_count = line_count + 1
@@ -285,7 +283,7 @@ class LogParser:
         return duration
 
     def parse_log_line(self, line):
-        ansi_cleaned = self.ansi_escape.sub('', line)
+        ansi_cleaned = ansi_escape.sub('', line)
         pattern = '^0?(\d+)-0?(\d+) 0?(\d+):0?(\d+):0?(\d+) \[ *(\w+) *\] [\w\d\.\_]+: (.*)$'
         match = re.match(pattern, ansi_cleaned)
         parsed_tokens = {}

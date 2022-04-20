@@ -45,15 +45,15 @@ class LogParsingError(Exception):
 
 class LSFPreambleSkipper:
     def __init__ (self, filename):
-        header = open(log, 'rt').readline().rstrip('\n')
+        header = open(filename, 'rt').readline().rstrip('\n')
         if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
             seek_to_stdout_capture = True
         else:
             seek_to_stdout_capture = False
-        self.f = open(filename, mode)
+        self.f = open(filename, 'rt')
         if seek_to_stdout_capture:
             line = None
-            while line != 'The output (if any) follows:\n'::
+            while line != 'The output (if any) follows:\n':
                 line = self.f.readline()
             self.f.readline()
             position = self.f.tell()

@@ -196,7 +196,7 @@ class LogParser:
                 line_count = 0
                 line = None
                 if seek_to_stdout_capture:
-                    while line != 'The output (if any) follows:':
+                    while line != 'The output (if any) follows:\n':
                         line = f.readline()
                     f.readline()
                     line = None

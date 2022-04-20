@@ -34,6 +34,7 @@ class LogParsingError(Exception):
 
 class LogParser:
     def __init__(self, path):
+        self.path
         self.extractions = {}
         self.performance_report_base64 = ''
         self.performance_report_contents = ''
@@ -49,7 +50,11 @@ class LogParser:
             )
         ''', re.VERBOSE)
 
-    def get_inputs(self, path):
+    def get_path(self):
+        return self.path
+
+    def get_inputs(self):
+        path = self.get_path()
         filenames = {
             'config' : join(path, '.spt_pipeline.json'),
             'nextflow log' : join(path, '.nextflow.log'),

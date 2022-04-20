@@ -99,7 +99,7 @@ PYTHON := python3
 RELEASE_TO_BRANCH := prerelease
 INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '.*\.sh$$' | sed 's:^\./:\.:g')
 LIBRARY_SOURCES := $(shell find spatialprofilingtoolbox/)
-LIBRARY_METADATA := setup.py requirements.txt
+LIBRARY_METADATA := setup.py spatialprofilingtoolbox/requirements.txt
 UNIT_TEST_SOURCES := $(shell find tests/unit_tests/*.py)
 INTEGRATION_TEST_SOURCES := $(shell find tests/integration_tests/*.sh)
 

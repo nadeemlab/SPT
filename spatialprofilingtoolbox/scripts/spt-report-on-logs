@@ -55,8 +55,7 @@ class LSFPreambleSkipper:
         self.f = open(filename, 'rt')
         if seek_to_stdout_capture:
             line = None
-            while line != 'The output (if any) follows:\n':
-                print('(In %s, did not match:) ' % filename + str(line), file=sys.stderr)
+            while line != 'The output (if any) follows:\n': # There is a failure mode; need to put a guard based on the line length for the expected preambles. Failure mode when job was cancelled, different message intervenes here.
                 line = self.f.readline()
             self.f.readline()
             position = self.f.tell()

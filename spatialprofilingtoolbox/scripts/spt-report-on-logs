@@ -75,7 +75,7 @@ class LogParser:
             raise LogParsingError('Essential log or config file not found: %s' % target)
 
     def parse(self):
-        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs(path)
+        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs()
 
         self.extractions['Dataset'] = self.extract_exact(
             'Dataset/project: ([\w \d\,\./\?\(\)\-]+)$'

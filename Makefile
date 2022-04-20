@@ -194,7 +194,7 @@ docker-test-build: Dockerfile .docker-daemon-running .controlled-source-files-un
 Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
 	@printf $(call color_in_progress,'Generating Dockerfile')
 	@date +%s > current_time.txt
-	@sed "s/^/RUN pip install --no-cache-dir /g" requirements.txt > requirements_docker.txt
+	@sed "s/^/RUN pip install --no-cache-dir /g" spatialprofilingtoolbox/requirements.txt > requirements_docker.txt
 	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
 	@rm requirements_docker.txt
@@ -277,7 +277,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@date +%s > current_time.txt
 	@source venv/bin/activate ; \
     found=$$(pip freeze | grep -o spatialprofilingtoolbox | head -n1);\
-    pip install -q -r requirements.txt; \
+    pip install -q -r spatialprofilingtoolbox/requirements.txt; \
     python setup.py install >/dev/null 2>&1; \
     pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv

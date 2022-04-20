@@ -137,6 +137,11 @@ process single_job {
 }
 
 process merge_databases {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 6
+
     input:
     path all_databases
     val all_database_filenames

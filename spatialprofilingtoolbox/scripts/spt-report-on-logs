@@ -46,10 +46,10 @@ class LogParser:
             'nextflow log' : join(path, '.nextflow.log'),
             'performance report' : join(path, 'results', 'performance_report.md')
         }
-        discovered_logs = glob.glob(join(path, 'work/*/*/.command.log'))
+        discovered_logs = glob.glob(join(path, 'work/*/*/.command.err')) + glob.glob(join(path, 'work/*/*/.command.log'))
         log_files = [
             f for f in file_inputs + discovered_logs
-            if (not basename(f) in filenames.values()) and re.search('\.log$', f)
+            if (not basename(f) in filenames.values()) and re.search('\.(err|log)$', f)
         ]
         config_file = self.extract_from_available(file_inputs, filenames['config'])
         nextflow_log = self.extract_from_available(file_inputs, filenames['nextflow log'])

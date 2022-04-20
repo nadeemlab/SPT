@@ -208,7 +208,7 @@ class LogParser:
                         break
                 if match:
                     return match.groups(1)
-        raise LogParsingError('Essential pattern not found in log files: %s', % pattern)
+        raise LogParsingError('Essential pattern not found in log files: %s' % pattern)
 
     def extract_job_reports(self):
         job_reports = []

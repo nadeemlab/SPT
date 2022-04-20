@@ -83,7 +83,17 @@ class LogParser:
 
         for log in self.log_files:
             count = None
+            header = open(log, 'rt').readline().rstrip('\n')
+            if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
+                seek_to_stdout_capture = True
+            else:
+                seek_to_stdout_capture = False
             with open(log, 'rt') as f:
+                if seek_to_stdout_capture:
+                    while line != 'The output (if any) follows:\n':
+                        line = f.readline()
+                    f.readline()
+                    line = None
                 line = f.readline().rstrip('\n')
                 if line == 'input_file_identifier,input_filename,job_index':
                     count = len(f.readlines()) - 1
@@ -92,10 +102,22 @@ class LogParser:
                 break
 
         for log in self.log_files:
-            line = open(log, 'rt').readline()
-            match = re.match('^SPT v(\d+\.\d+\.\d+)$', line)
-            if match:
-                self.extractions['SPT'] = 'v' + match.groups(1)[0]
+            if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
+                seek_to_stdout_capture = True
+            else:
+                seek_to_stdout_capture = False
+            with open(log, 'rt') as f:
+                if seek_to_stdout_capture:
+                    while line != 'The output (if any) follows:\n':
+                        line = f.readline()
+                    f.readline()
+                    line = None
+                line = f.readline()
+                match = re.match('^SPT v(\d+\.\d+\.\d+)$', line)
+                if match:
+                    self.extractions['SPT'] = 'v' + match.groups(1)[0]
+                    break
+            if 'SPT' in self.extractions:
                 break
 
         config = json.loads(open(self.config_file, 'rt').read())

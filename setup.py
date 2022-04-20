@@ -11,7 +11,7 @@ def get_file_contents(filename):
 long_description = """See the [user documentation](https://github.com/nadeemlab/SPT).
 """
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
-requirements = get_file_contents('requirements.txt').rstrip('\n').split('\n')
+requirements = get_file_contents(join('spatialprofilingtoolbox', 'requirements.txt')).rstrip('\n').split('\n')
 
 setuptools.setup(
     name='spatialprofilingtoolbox',
@@ -47,6 +47,7 @@ setuptools.setup(
     ],
     package_data={'spatialprofilingtoolbox': [
             'version.txt',
+            'requirements.txt',
             'spt_pipeline.nf',
             'nextflow.config.lsf',
             'nextflow.config.local',

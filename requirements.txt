@@ -16,3 +16,4 @@ scikit-learn==0.24.1
 psycopg2-binary==2.9.3
 pyshp==2.2.0
 tabulate==0.8.9
+Jinja2==3.0.1

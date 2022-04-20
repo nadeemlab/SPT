@@ -1,5 +1,6 @@
 import os
 from os.path import join, exists, isfile
+import datetime
 
 import pandas as pd
 
@@ -111,6 +112,12 @@ class JobGenerator:
                 filenames.append(full_filename)
         df = pd.DataFrame({'filename' : filenames})
         df.to_csv(self.job_inputs, index=False, header=False)
+        project_handle = sorted(list(set(self.file_metadata['Project ID']).difference([''])))[0]
+        if project_handle != '':
+            logger.info('Dataset/project: %s', project_handle)
+            current = datetime.datetime.now()
+            year = current.date().strftime("%Y")
+            logger.info('Run date year: %s', year)
 
     def list_all_jobs_inputs(self):
         """

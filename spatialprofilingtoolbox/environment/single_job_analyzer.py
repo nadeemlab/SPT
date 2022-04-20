@@ -1,6 +1,9 @@
 import functools
 from functools import lru_cache
 import hashlib
+from itertools import (takewhile,repeat)
+import os
+from os.path import getsize
 
 import pandas as pd
 
@@ -60,7 +63,21 @@ class SingleJobAnalyzer:
         The main calculation of this job, to be called by pipeline orchestration.
         """
         self.initialize_intermediate_database()
+        logger.info('Started core calculator job.')
+        self.log_file_info()
         self._calculate()
+        logger.info('Completed core calculator job.')
+
+    def log_file_info(self):
+        filename = self.get_input_filename()
+        number_cells = self.raw_count(filename) - 1
+        logger.info('%s cells to be parsed from source file.', number_cells)
+        logger.info('Cells source file has size %s bytes.', getsize(filename))
+
+    def raw_count(self, filename):
+        f = open(filename, 'rb')
+        bufgen = takewhile(lambda x: x, (f.raw.read(1024*1024) for _ in repeat(None)))
+        return sum( buf.count(b'\n') for buf in bufgen )
 
     def retrieve_input_filename(self):
         self.get_input_filename()

@@ -1,0 +1,37 @@
+<html>
+<head>
+<style>
+table.logreport td, table.logreport th{
+    font-family: sans-serif;
+    padding: 10px;
+}
+table.logreport th{
+    font-weight: bold;
+    background: #e2e2e2;
+}
+table.logreport td{
+    text-align: left;
+    background: #efefef;
+}
+</style>
+</head>
+<body>
+
+<table class="logreport">
+<tr>
+{% for entry in header %}
+<th>{{ entry }}</th>
+{% endfor %}
+</tr>
+{% for row in rows %}
+    <tr>
+    {% for entry in row %}
+        <td>
+        {{ entry }}
+        </td>
+    {% endfor %}
+    </tr>
+{%- endfor %}
+</table>
+</body>
+</html>

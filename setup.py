@@ -10,27 +10,8 @@ def get_file_contents(filename):
 
 long_description = """See the [user documentation](https://github.com/nadeemlab/SPT).
 """
-requirements = [
-    'Cython==0.29.23',
-    'matplotlib==3.4.2',
-    'pyparsing==2.4.7',
-    'python-dateutil==2.8.1',
-    'pytz==2021.1',
-    'six==1.16.0',
-    'networkx==2.5.1',
-    'POT==0.7.0',
-    'seaborn==0.11.1',
-    'plotly==5.1.0',
-    'kaleido==0.2.1',
-    'numpy==1.21.0',
-    'pandas>=1.1.5',
-    'scipy==1.7.1',
-    'scikit-learn==0.24.1',
-    'psycopg2-binary==2.9.3',
-    'pyshp==2.2.0',
-    'tabulate==0.8.9',
-]
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
+requirements = get_file_contents(join('./', 'requirements.txt')).rstrip('\n').split('\n')
 
 setuptools.setup(
     name='spatialprofilingtoolbox',
@@ -71,6 +52,8 @@ setuptools.setup(
             'nextflow.config.local',
             'fields.tsv',
             'pathology_schema.sql',
+            'log_table.tex.jinja',
+            'log_table.html.jinja',
         ]},
     python_requires='>=3.7',
     scripts=[
@@ -81,6 +64,8 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',
         'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt-aggregate-cell-data',
+        'spatialprofilingtoolbox/scripts/spt-report-on-logs',
+        'spatialprofilingtoolbox/scripts/spt-strip-work-to-logs',
     ],
     install_requires=requirements,
     project_urls = {

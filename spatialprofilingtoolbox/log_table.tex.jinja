@@ -1,0 +1,12 @@
+\documentclass{article}
+\begin{document}
+
+\begin{tabular}{ {% for entry in rows[0] %} c {% endfor %} }
+{% for row in rows %}
+    {% for entry in row -%}
+        {{ " " }}{{ entry|quote_hash }}{{ " " }} {% if not loop.last -%} & {%- endif %}
+    {%- endfor %} \\
+{%- endfor %}
+\end{tabular}
+
+\end{document}

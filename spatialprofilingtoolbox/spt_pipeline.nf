@@ -26,6 +26,18 @@ process retrieve_file_manifest_file {
     """
 }
 
+process report_version {
+    output:
+    stdout
+
+    script:
+    """
+    #!/bin/bash
+    echo -n "SPT v"
+    spt-print version
+    """
+}
+
 process list_auxiliary_job_inputs {
     input:
     path config_file
@@ -178,6 +190,8 @@ workflow {
     retrieve_file_manifest_file(config_file_ch)
         .map{ file(it) }
         .set{ file_manifest_ch }
+
+    report_version().set{ version_print }
 
     generate_jobs(
         config_file_ch,

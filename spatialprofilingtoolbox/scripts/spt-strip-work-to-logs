@@ -1,0 +1,18 @@
+#!/bin/bash
+
+remove_all_non_log_files()
+{
+    for f in $(find work/ | grep -v '\.command\.log$');
+    do
+        if [[ -f "$f" ]];
+        then
+            rm $f
+        fi
+        if [[ -L "$f" ]];
+        then
+            rm $f
+        fi
+    done    
+}
+
+remove_all_non_log_files

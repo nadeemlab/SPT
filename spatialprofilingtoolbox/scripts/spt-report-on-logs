@@ -188,7 +188,7 @@ class LogParser:
     def extract_exact(self, pattern, lines_limit=1):
         for log in self.log_files:
             header = open(log, 'rt').readline().rstrip('\n')
-            if re.match('^Started at (\w+) (\w+) (\d+) (\d+):(\d+):(\d+) (\d+)$', header):
+            if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
                 seek_to_stdout_capture = True
             else:
                 seek_to_stdout_capture = False

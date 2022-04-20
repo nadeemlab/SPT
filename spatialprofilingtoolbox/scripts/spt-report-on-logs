@@ -349,8 +349,8 @@ class LogReportAggregator:
             try:
                 parser.parse()
             except LogParsingError as e:
-                print(e)
-                print('Warning: Parsing error for run located at: %s' % parser.get_path())
+                print('Warning: Parsing error for run located at: %s' % parser.get_path(), file=sys.stderr)
+                print(e, file=sys.stderr)
 
     def aggregate_reports_dataframe(self):
         rows = [parser.get_extractions_ordered() for parser in self.parsers]

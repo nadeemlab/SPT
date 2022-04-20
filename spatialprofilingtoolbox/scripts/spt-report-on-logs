@@ -24,10 +24,20 @@ def quote_hash(input):
 jinja_environment.filters['quote_hash'] = quote_hash
 
 
+class LogParsingError(Exception):
+    def __init__(self, value):
+        self.message = message
+
+    def __str__(self):
+        return(repr(self.message))
+
+
 class LogParser:
-    def __init__(self, file_inputs, path):
-        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs(file_inputs, path)
+    def __init__(self, path):
+        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs(path)
         self.extractions = {}
+        self.performance_report_base64 = ''
+        self.performance_report_contents = ''
         self.ansi_escape = re.compile(r'''
             \x1B  # ESC
             (?:   # 7-bit C1 Fe (except CSI)
@@ -40,39 +50,25 @@ class LogParser:
             )
         ''', re.VERBOSE)
 
-    def get_inputs(self, file_inputs, path):
+    def get_inputs(self, path):
         filenames = {
             'config' : join(path, '.spt_pipeline.json'),
             'nextflow log' : join(path, '.nextflow.log'),
             'performance report' : join(path, 'results', 'performance_report.md')
         }
-        discovered_logs = glob.glob(join(path, 'work/*/*/.command.err')) + glob.glob(join(path, 'work/*/*/.command.log'))
-        log_files = [
-            f for f in file_inputs + discovered_logs
-            if (not basename(f) in filenames.values()) and re.search('\.(err|log)$', f)
-        ]
-        config_file = self.extract_from_available(file_inputs, filenames['config'])
-        nextflow_log = self.extract_from_available(file_inputs, filenames['nextflow log'])
-        performance_report = self.extract_from_available(file_inputs, filenames['performance report'])
+        config_file = self.check_file(filenames['config'])
+        nextflow_log = self.check_file(filenames['nextflow log'])
+        performance_report = self.check_file(filenames['performance report'])
+        log_files = glob.glob(join(path, 'work/*/*/.command.log'))
         if len(log_files) == 0:
-            raise ValueError('No log files found.')
-        if config_file is None:
-            raise ValueError('Not found: %s' % filenames['config'])
-        if nextflow_log is None:
-            raise ValueError('Not found: %s' % filenames['nextflow log'])
+            raise LogParsingError('No log files found.')
         return [log_files, config_file, nextflow_log, performance_report]
 
-    def extract_from_available(self, file_inputs, target):
-        files = [f for f in file_inputs if basename(f) == target]
-        file = None
-        if len(files) > 1:
-            raise ValueError('Too many %s supplied.' % target)
-        elif len(files) == 0:
-            if exists(target):
-                file = target
-        elif len(files) == 1:
-            file = files[0]
-        return file
+    def check_file(self, target):
+        if exists(target):
+            return target
+        else:
+            raise LogParsingError('Essential log or config file not found: %s' % target)
 
     def parse(self):
         self.extractions['Dataset'] = self.extract_exact(
@@ -139,6 +135,16 @@ class LogParser:
         base64_bytes = base64.b64encode(message_bytes)
         self.performance_report_base64 = base64_bytes.decode('ascii')
 
+        self.validate_all_extractions_found()
+
+    def validate_all_extractions_found(self):
+        failed = [
+            key for key in LogParser.get_order()
+            if (not key in self.extractions) or (self.extractions[key] in self.extractions)
+        ]
+        if len(failed) > 0:
+            raise LogParsingError('Some extractions not made: %s' % str(sorted(failed)))
+
     def get_total_runtime(self):
         nf_header = open(self.nextflow_log, 'rt').readline().rstrip('\n')
         timestamp1 = self.parse_nextflow_timestamp(nf_header)
@@ -154,17 +160,17 @@ class LogParser:
             minute = int(search.groups(1)[3])
             second = float(search.groups(1)[4])
             return (month, day, hour, minute, second)
-        return None
+        raise LogParsingError('Could not parse Nextflow log timestamp.')
 
     def get_last_line(self, filename):
         with open(filename, 'rb') as f:
-            try:  # catch OSError in case of a one line file 
+            try:
                 f.seek(-2, os.SEEK_END)
                 while f.read(1) != b'\n':
                     f.seek(-2, os.SEEK_CUR)
             except OSError:
                 f.seek(0)
-            last_line = f.readline().decode()
+            last_line = f.readline().decode()        
         return last_line
 
     def format_duration(self, duration):
@@ -175,9 +181,19 @@ class LogParser:
 
     def extract_exact(self, pattern, lines_limit=1):
         for log in self.log_files:
+            header = open(log, 'rt').readline().rstrip('\n')
+            if re.match('^Started at (\w+) (\w+) (\d+) (\d+):(\d+):(\d+) (\d+)$', header):
+                seek_to_stdout_capture = True
+            else:
+                seek_to_stdout_capture = False
             with open(log, 'rt') as f:
                 line_count = 0
                 line = None
+                if seek_to_stdout_capture:
+                    while line != 'The output (if any) follows:':
+                        line = f.readline()
+                    f.readline()
+                    line = None
                 while line_count < lines_limit and line != '':
                     line = f.readline()
                     line_count = line_count + 1
@@ -186,7 +202,7 @@ class LogParser:
                         break
                 if match:
                     return match.groups(1)
-        return None
+        raise LogParsingError('Essential pattern not found in log files.')
 
     def extract_job_reports(self):
         job_reports = []
@@ -217,7 +233,7 @@ class LogParser:
                 if len(job_report) > 0:
                     job_reports.append(job_report)
         if len(job_reports) == 0:
-            raise ValueError('No job info could be extracted.')
+            raise LogParsingError('No job info could be extracted.')
         return job_reports
 
     def days_diff(self, month1, month2, day1, day2):
@@ -227,7 +243,7 @@ class LogParser:
             days_in_month = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
             return day2 + days_in_month[month1 - 1] - day1
         else:
-            raise ValueError('Month duration unreasonable, from %s to %s.' % (month1, month2))
+            raise LogParsingError('Month duration unreasonable, from %s to %s.' % (month1, month2))
 
     def get_timedelta(self, t1, t2):
         duration = datetime.timedelta(
@@ -273,13 +289,11 @@ class LogParser:
         return order
 
     def get_extractions_ordered(self):
-        return [str(self.extractions[key]) for key in LogParser.get_order()]
-
-    def get_extractions_ordered_dict(self):
-        return OrderedDict([
-            (key, self.extractions[key])
+        return [
+            str(self.extractions[key]) if key in self.extractions else '*'
             for key in LogParser.get_order()
-        ])
+        ]
+
 
 class LogReportAggregator:
     def __init__(self, format_handle=None):
@@ -287,7 +301,7 @@ class LogReportAggregator:
         for root, dirs, files in os.walk('.'):
             if ('work' in dirs) and ('.nextflow.log' in files) and ('.spt_pipeline.json' in files):
                 working_directories.append(root)
-        self.parsers = [LogParser([], path) for path in working_directories]
+        self.parsers = [LogParser(path) for path in working_directories]
         self.format_handle = format_handle
 
     @staticmethod
@@ -302,7 +316,11 @@ class LogReportAggregator:
 
     def retrieve_reports(self):
         for parser in self.parsers:
-            parser.parse()
+            try:
+                parser.parse()
+            except LogParsingError as e:
+                print(e)
+                print('Warning: Parsing error for run located at %s .' % parser.get_path())
 
     def aggregate_reports_dataframe(self):
         rows = [parser.get_extractions_ordered() for parser in self.parsers]

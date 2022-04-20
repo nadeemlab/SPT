@@ -56,7 +56,7 @@ class LSFPreambleSkipper:
         if seek_to_stdout_capture:
             line = None
             while line != 'The output (if any) follows:\n':
-                print('(Did not match:) ' + line, file=sys.stderr)
+                print('(In %s, did not match:) ' % filename + line, file=sys.stderr)
                 line = self.f.readline()
             self.f.readline()
             position = self.f.tell()

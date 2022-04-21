@@ -309,8 +309,8 @@ class LogParser:
 
     def get_sort_key(self):
         return (
-            self.extractions['Dataset'],
-            self.extractions['Workflow'],
+            self.extractions['Dataset'] if 'Dataset' in self.extractions else '*',
+            self.extractions['Workflow'] if 'Workflow' in self.extractions else '*',
         )
 
     @staticmethod

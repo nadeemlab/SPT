@@ -307,6 +307,12 @@ class LogParser:
     def get_extractions(self):
         return self.extractions
 
+    def get_sort_key(self):
+        return (
+            self.extractions['Dataset'],
+            self.extractions['Workflow'],
+        )
+
     @staticmethod
     def get_order():
         order = [
@@ -375,10 +381,11 @@ class LogReportAggregator:
             with importlib.resources.path('spatialprofilingtoolbox', 'log_table.html.jinja') as path:
                 log_report_template = open(path, 'rt').read()
                 template = jinja_environment.from_string(log_report_template)
+                ordered_parsers = sorted(self.parsers, key=lambda p: p.get_sort_key())
                 rendered = template.render(
                     header=LogParser.get_order() + ['CPU usage'],
-                    rows=[parser.get_extractions_ordered() + [i] for i, parser in enumerate(self.parsers)],
-                    base64_contents=[parser.performance_report_base64 for parser in self.parsers],
+                    rows=[parser.get_extractions_ordered() + [i] for i, parser in enumerate(ordered_parsers)],
+                    base64_contents=[parser.performance_report_base64 for parser in ordered_parsers],
                 )
         if format_description == 'TSV':
             rendered = table.to_csv(index=False, sep='\t')

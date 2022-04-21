@@ -366,7 +366,7 @@ class LogReportAggregator:
     def aggregate_reports_dataframe(self):
         rows = [parser.get_extractions_ordered() for parser in self.parsers]
         column_names = LogParser.get_order()
-        return pd.DataFrame(rows, columns=column_names)
+        return pd.DataFrame(rows, columns=column_names).sort_values(by=['Dataset', 'Workflow'])
 
     def textual_render(self, format_description):
         table = self.aggregate_reports_dataframe()

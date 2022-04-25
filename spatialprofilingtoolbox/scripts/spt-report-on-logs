@@ -266,7 +266,8 @@ class LogParser:
                     job_report['duration'] = duration
                     job_report['duration minutes'] = self.format_duration(duration)
                 if len(job_report) > 0:
-                    job_reports.append(job_report)
+                    if not 'duration' in job_report:
+                        job_reports.append(job_report)
         if len(job_reports) == 0:
             raise LogParsingError('No job info could be extracted.')
         return job_reports

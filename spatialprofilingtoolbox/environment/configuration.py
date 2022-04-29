@@ -26,28 +26,29 @@ nf_config_file = {
 }
 
 def write_out_nextflow_script(sif_file, excluded_host_name=None, parameters={}):
-    contents = None
-    with importlib.resources.path('spatialprofilingtoolbox', nf_script_file) as path:
-        with open(path, 'rt') as file:
-            contents = file.read().rstrip('\n')
-    if contents:
-        if not exists(join(os.getcwd(), nf_script_file)):
-            workflow_='{{ workflow }}'
-            input_path_='{{ input_path }}'
-            skip_semantic_parse='{{ skip_semantic_parse }}'
+    if parameters != {}:
+        contents = None
+        with importlib.resources.path('spatialprofilingtoolbox', nf_script_file) as path:
+            with open(path, 'rt') as file:
+                contents = file.read().rstrip('\n')
+        if contents:
+            if not exists(join(os.getcwd(), nf_script_file)):
+                workflow_='{{ workflow }}'
+                input_path_='{{ input_path }}'
+                skip_semantic_parse='{{ skip_semantic_parse }}'
 
-            contents = re.sub('{{ workflow }}', parameters['workflow'], contents)
-            contents = re.sub('{{ input_path }}', parameters['input_path'], contents)
-            if not 'skip_semantic_parse' in parameters:
-                parameters['skip_semantic_parse'] = 'false'
-            else:
-                parameters['skip_semantic_parse'] = 'true' if (parameters['skip_semantic_parse'] == True or parameters['skip_semantic_parse'] == 'true') else 'false'
-            contents = re.sub('{{ skip_semantic_parse }}', parameters['skip_semantic_parse'], contents)
+                contents = re.sub('{{ workflow }}', parameters['workflow'], contents)
+                contents = re.sub('{{ input_path }}', parameters['input_path'], contents)
+                if not 'skip_semantic_parse' in parameters:
+                    parameters['skip_semantic_parse'] = 'false'
+                else:
+                    parameters['skip_semantic_parse'] = 'true' if (parameters['skip_semantic_parse'] == True or parameters['skip_semantic_parse'] == 'true') else 'false'
+                contents = re.sub('{{ skip_semantic_parse }}', parameters['skip_semantic_parse'], contents)
 
-            with open(join(os.getcwd(), nf_script_file), 'wt') as file:
-                file.write(contents)
-    else:
-        logger.error('Could not load %s', filename)
+                with open(join(os.getcwd(), nf_script_file), 'wt') as file:
+                    file.write(contents)
+        else:
+            logger.error('Could not load %s', nf_script_file)
 
     for filename in list(nf_config_file.values()):
         contents = None

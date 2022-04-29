@@ -162,4 +162,5 @@ if __name__=='__main__':
             parameters['sif_file'] if 'sif_file' in parameters else None,
             excluded_host_name = parameters['excluded_host_name'] if 'excluded_host_name' in parameters else None,
         )
+        print(' '.join(nextflow_invoker))
         subprocess.run(nextflow_invoker)

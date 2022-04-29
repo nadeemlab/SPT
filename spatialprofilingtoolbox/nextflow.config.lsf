@@ -11,5 +11,5 @@ process.executor = 'lsf'
 process.container = 'spt_latest.sif'
 // The path to the SIF file you supplied should appear above. Get the SIF file with `singularity pull nadeemlab/spt:latest`.
 
-singularity.autoMounts = true
+// singularity.autoMounts = true
 singularity.enabled = true

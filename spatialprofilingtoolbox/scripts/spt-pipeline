@@ -110,6 +110,7 @@ if __name__=='__main__':
         spt.write_out_nextflow_script(
             parameters['sif_file'] if 'sif_file' in parameters else None,
             excluded_host_name = parameters['excluded_host_name'] if 'excluded_host_name' in parameters else None,
+            parameters=parameters,
         )
         exit()
 

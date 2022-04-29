@@ -1,6 +1,30 @@
 
 nextflow.enable.dsl = 2
 
+workflow_='{{ workflow }}'
+input_path_='{{ input_path }}'
+skip_semantic_parse_='{{ skip_semantic_parse }}'
+
+process write_config_file {
+    output:
+    path '.spt_pipeline.json'
+
+    script:
+    """
+    #!/usr/bin/env python3
+    import json
+
+    config = {}
+    config['workflow'] = '$workflow_'
+    config['input_path'] = '$input_path_'
+    if '$skip_semantic_parse_' != '':
+        config['skip_semantic_parse'] = True if '$skip_semantic_parse_' == 'true' else False
+
+    with open('.spt_pipeline.json', 'wt') as f:
+        f.write(json.dumps(config, indent=4))
+    """
+}
+
 process retrieve_file_manifest_file {
     input:
     path config_file
@@ -193,9 +217,10 @@ process aggregate_results {
 
 workflow {
     config_filename = ".spt_pipeline.json"
-    channel.value(config_filename)
-        .map{ file(it) }
-        .set{ config_file_ch }
+    // channel.value(config_filename)
+    //     .map{ file(it) }
+    //     .set{ config_file_ch }
+    write_config_file().set{ config_file_ch }
 
     retrieve_file_manifest_file(config_file_ch)
         .map{ file(it) }

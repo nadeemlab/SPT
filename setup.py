@@ -33,7 +33,6 @@ setuptools.setup(
         'spatialprofilingtoolbox.environment',
         'spatialprofilingtoolbox.environment.source_file_parsers',
         'spatialprofilingtoolbox.applications',
-        'spatialprofilingtoolbox.applications.configuration_ui',
         'spatialprofilingtoolbox.applications.cell_cartoons',
         'spatialprofilingtoolbox.applications.diffusion_tests_viz',
         'spatialprofilingtoolbox.applications.diffusion_graphs_viz',

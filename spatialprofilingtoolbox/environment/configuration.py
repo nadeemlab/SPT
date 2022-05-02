@@ -15,7 +15,6 @@ from jinja2 import Environment
 from jinja2 import BaseLoader
 jinja_environment = Environment(loader=BaseLoader)
 
-from ..applications.configuration_ui.ui import configuration_dialog
 from .configuration_settings import config_filename
 from .configuration_settings import get_version
 from .extract_compartments import extract_compartments
@@ -86,8 +85,7 @@ def get_config_parameters(json_string=None):
         return None
 
     if (not supplied_json_string) and (not has_config_file):
-        configuration_dialog()
-        json_string = open(config_filename, 'rt').read()
+        raise Exception('Deprecation of configuration dialog')
 
     if (not supplied_json_string) and has_config_file:
         json_string = open(config_filename, 'rt').read()

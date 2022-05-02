@@ -20,7 +20,7 @@ workflow_names = [
     diffusion_name,
     phenotype_proximity_name,
     front_proximity_name,
-    density_workflow_name,
+    density_name,
 ]
 
 config_filename = '.spt_pipeline.json'

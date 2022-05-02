@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+import argparse
+from shutil import which
+import os
+import stat
+from os.path import isdir
+from os.path import exists
+from os.path import join
+from os.path import abspath
+from os import getcwd
+import importlib.resources
+
+import jinja2
+from jinja2 import Environment
+from jinja2 import BaseLoader
+jinja_environment = Environment(loader=BaseLoader)
+
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.configuration_settings import workflow_names
+
+file_manifest_file = 'file_manifest.tsv'
+nf_config_file = 'nextflow.config'
+nf_pipeline_file = 'main.nf'
+
+def retrieve_from_library(filename):
+    contents = None
+    with importlib.resources.path('spatialprofilingtoolbox', filename) as path:
+        with open(path, 'rt') as file:
+            contents = file.read()
+    if contents is None:
+        raise Exception('Could not locate library file %s' % filename)
+    return contents
+
+def write_config_file(variables):
+    contents = retrieve_from_library(nf_config_file + '.jinja')
+    template = jinja_environment.from_string(contents)
+    config_file = template.render(**variables)
+    with open(join(getcwd(), nf_config_file), 'wt') as file:
+        file.write(config_file)
+
+def write_pipeline_script():
+    contents = retrieve_from_library(nf_pipeline_file)
+    with open(join(os.getcwd(), nf_pipeline_file), 'wt') as file:
+        file.write(contents)
+
+def record_configuration_command(variables):
+    tokens = ['spt-configure']
+    tokens.append('--workflow="%s"' % variables['workflow'])
+    if variables['executor'] == 'local':
+        tokens.append('--local')
+    if variables['executor'] == 'lsf':
+        tokens.append('--lsf')
+    input_path = abspath(variables['input_path'])
+    if ' ' in input_path:
+        input_path = "'%s'" % input_path
+    tokens.append('--input-path=%s' % input_path)
+    if 'sif_file' in variables:
+        sif_file = abspath(variables['sif_file'])
+        if ' ' in sif_file:
+            sif_file = "'%s'" % sif_file
+        tokens.append('--sif-file=%s')
+    command = ' \\\n '.join(tokens)
+    with open('configure.sh', 'wt') as file:
+        file.write('#!/bin/sh\n\n')
+        file.write(command)
+        file.write('\n')
+    with open('run.sh', 'wt') as file:
+        file.write('#!/bin/sh\n\n')
+        file.write('nextflow run .\n')
+
+    st = os.stat('configure.sh')
+    os.chmod('configure.sh', st.st_mode | stat.S_IEXEC)
+    st = os.stat('run.sh')
+    os.chmod('run.sh', st.st_mode | stat.S_IEXEC)
+
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'Configure an SPT (spatialprofilingtoolbox) run in the current directory.'
+    )
+    parser.add_argument(
+        '--workflow',
+        choices=workflow_names,
+        help='',
+        required=True,
+    )
+    parser.add_argument(
+        '--input-path',
+        dest='input_path',
+        type=str,
+        required=True,
+        help='Path to directory containing input data files. (For example, file_manifest.tsv).',
+    )
+    parser.add_argument(
+        '--sif-file',
+        dest='sif_file',
+        type=str,
+        required=False,
+        help='Path to SPT Singularity container. Can be obtained with singularity pull docker://nadeemlab/spt:latest',
+    )
+    parser.add_argument(
+        '--local',
+        action='store_true',
+        default=False,
+        help='Use this flag to get Nextflow to deploy processes locally on a given machine.'
+    )
+    parser.add_argument(
+        '--lsf',
+        action='store_true',
+        default=False,
+        help='Use this flag to get Nextflow to attempt to deploy processes as Platform LSF jobs on an HPC cluster.',
+    )
+    args = parser.parse_args()
+
+    variables = {}
+
+    if args.local and args.lsf:
+        raise ValueError('Specify either --local or --lsf as the deployment environment but not both.')
+    if (not args.local) and (not args.lsf):
+        if not which('bsub') is None:
+            variables['executor'] = 'lsf'
+        else:
+            variables['executor'] = 'local'
+    else:
+        if args.local:
+            variables['executor'] = 'local'
+        if args.lsf:
+            variables['executor'] = 'lsf'
+
+    variables['workflow'] = args.workflow
+
+    if isdir(args.input_path):
+        file_manifest_path = join(args.input_path, file_manifest_file)
+        if exists(file_manifest_path):
+            variables['input_path'] = args.input_path
+        else:
+            raise FileNotFoundError(file_manifest_path)
+    else:
+        raise FileNotFoundError(args.input_path)
+
+    if not args.sif_file is None:
+        if exists(args.sif_file):
+            variables['sif_file'] = args.sif_file
+        else:
+            raise FileNotFoundError(args.sif_file)
+
+    write_config_file(variables)
+    write_pipeline_script()
+    record_configuration_command(variables)

@@ -110,6 +110,13 @@ if __name__=='__main__':
         default=False,
         help='Use this flag to get Nextflow to attempt to deploy processes as Platform LSF jobs on an HPC cluster.',
     )
+    parser.add_argument(
+        '--excluded-host',
+        dest='excluded_host',
+        type=str,
+        required=False,
+        help='If a machine must not have LSF jobs scheduled on it, supply its hostname here.',
+    )
     args = parser.parse_args()
 
     variables = {}
@@ -143,6 +150,9 @@ if __name__=='__main__':
             variables['sif_file'] = args.sif_file
         else:
             raise FileNotFoundError(args.sif_file)
+
+    if not args.excluded_host is None:
+        variables['excluded_host'] = excluded_host
 
     write_config_file(variables)
     write_pipeline_script()

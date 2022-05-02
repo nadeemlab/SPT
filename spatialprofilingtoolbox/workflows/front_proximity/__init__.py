@@ -13,8 +13,9 @@ from .analyzer import FrontProximityAnalyzer
 from .computational_design import FrontProximityDesign
 from .integrator import FrontProximityAnalysisIntegrator
 
+name = 'Multiplexed IF front proximity'
 components = {
-    'Multiplexed IF front proximity' : WorkflowModules(
+    name : WorkflowModules(
         generator = FrontProximityJobGenerator,
         dataset_design = HALOCellMetadataDesign,
         computational_design = FrontProximityDesign,

@@ -10,6 +10,11 @@ from os.path import join
 import json
 import re
 
+import jinja2
+from jinja2 import Environment
+from jinja2 import BaseLoader
+jinja_environment = Environment(loader=BaseLoader)
+
 from ..applications.configuration_ui.ui import configuration_dialog
 from .configuration_settings import config_filename
 from .configuration_settings import get_version
@@ -19,11 +24,12 @@ from .settings_wrappers import DatasetSettings
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-nf_script_file = 'spt_pipeline.nf'
-nf_config_file = {
-    'lsf' : 'nextflow.config.lsf',
-    'local' : 'nextflow.config.local',
-}
+nf_script_file = 'main.nf'
+nf_config_file = 'nextflow.config'
+# nf_config_file = {
+#     'lsf' : 'nextflow.config.lsf',
+#     'local' : 'nextflow.config.local',
+# }
 
 def write_out_nextflow_script(sif_file, excluded_host_name=None, parameters={}):
     if parameters != {}:

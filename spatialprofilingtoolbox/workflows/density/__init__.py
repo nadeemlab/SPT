@@ -11,8 +11,9 @@ from .analyzer import DensityAnalyzer
 from .computational_design import DensityDesign
 from .integrator import DensityAnalysisIntegrator
 
+name = 'Multiplexed IF density'
 components =  {
-    'Multiplexed IF density' : WorkflowModules(
+    name : WorkflowModules(
         generator = DensityJobGenerator,
         dataset_design = HALOCellMetadataDesign,
         computational_design = DensityDesign,

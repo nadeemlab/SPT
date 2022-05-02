@@ -48,9 +48,8 @@ setuptools.setup(
     package_data={'spatialprofilingtoolbox': [
             'version.txt',
             'requirements.txt',
-            'spt_pipeline.nf',
-            'nextflow.config.lsf',
-            'nextflow.config.local',
+            'main.nf',
+            'nextflow.config.jinja',
             'fields.tsv',
             'pathology_schema.sql',
             'log_table.tex.jinja',
@@ -58,6 +57,7 @@ setuptools.setup(
         ]},
     python_requires='>=3.7',
     scripts=[
+        'spatialprofilingtoolbox/scripts/spt-configure',
         'spatialprofilingtoolbox/scripts/spt-pipeline',
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',
         'spatialprofilingtoolbox/scripts/spt-diffusion-viz',
@@ -66,7 +66,6 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt-aggregate-cell-data',
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
-        'spatialprofilingtoolbox/scripts/spt-strip-work-to-logs',
     ],
     install_requires=requirements,
     project_urls = {

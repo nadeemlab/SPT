@@ -18,8 +18,9 @@ from .analyzer import PhenotypeProximityAnalyzer
 from .computational_design import PhenotypeProximityDesign
 from .integrator import PhenotypeProximityAnalysisIntegrator
 
+name = 'Multiplexed IF phenotype proximity'
 components = {
-    'Multiplexed IF phenotype proximity' : WorkflowModules(
+    name : WorkflowModules(
         generator = PhenotypeProximityJobGenerator,
         dataset_design = HALOCellMetadataDesign,
         computational_design = PhenotypeProximityDesign,

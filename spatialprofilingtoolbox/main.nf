@@ -1,9 +1,7 @@
 
 nextflow.enable.dsl = 2
 
-workflow_='{{ workflow }}'
-input_path_='{{ input_path }}'
-skip_semantic_parse_='{{ skip_semantic_parse }}'
+skip_semantic_parse_='true'
 
 process write_config_file {
     output:

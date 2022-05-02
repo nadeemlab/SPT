@@ -15,8 +15,9 @@ from .analyzer import DiffusionAnalyzer
 from .computational_design import DiffusionDesign
 from .integrator import DiffusionAnalysisIntegrator
 
+name = 'Multiplexed IF diffusion'
 components =  {
-    'Multiplexed IF diffusion' : WorkflowModules(
+    name : WorkflowModules(
         generator = DiffusionJobGenerator,
         dataset_design = HALOCellMetadataDesign,
         computational_design = DiffusionDesign,

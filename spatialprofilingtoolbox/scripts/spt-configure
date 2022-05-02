@@ -59,11 +59,16 @@ def record_configuration_command(variables):
         if ' ' in sif_file:
             sif_file = "'%s'" % sif_file
         tokens.append('--sif-file=%s')
+    if 'excluded_host' in variables:
+        tokens.append('--excluded-host=%s' % variables['excluded_host'])
+
     command = ' \\\n '.join(tokens)
+
     with open('configure.sh', 'wt') as file:
         file.write('#!/bin/sh\n\n')
         file.write(command)
         file.write('\n')
+
     with open('run.sh', 'wt') as file:
         file.write('#!/bin/sh\n\n')
         file.write('nextflow run .\n')
@@ -72,7 +77,6 @@ def record_configuration_command(variables):
     os.chmod('configure.sh', st.st_mode | stat.S_IEXEC)
     st = os.stat('run.sh')
     os.chmod('run.sh', st.st_mode | stat.S_IEXEC)
-
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -152,7 +156,7 @@ if __name__=='__main__':
             raise FileNotFoundError(args.sif_file)
 
     if not args.excluded_host is None:
-        variables['excluded_host'] = excluded_host
+        variables['excluded_host'] = args.excluded_host
 
     write_config_file(variables)
     write_pipeline_script()

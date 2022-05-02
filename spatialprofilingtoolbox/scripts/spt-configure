@@ -89,7 +89,7 @@ if __name__=='__main__':
         dest='input_path',
         type=str,
         required=True,
-        help='Path to directory containing input data files. (For example, file_manifest.tsv).',
+        help='Path to directory containing input data files. (For example, containing file_manifest.tsv).',
     )
     parser.add_argument(
         '--sif-file',

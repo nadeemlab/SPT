@@ -5,20 +5,11 @@ from os.path import dirname
 os.environ['FIND_FILES_USING_PATH'] = '1'
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.configuration import get_config_parameters
 from spatialprofilingtoolbox.environment.settings_wrappers import DatasetSettings
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from spatialprofilingtoolbox.environment.extract_compartments import extract_compartments
 
 def test_extract_compartments():
-    config_filename = join(
-        dirname(__file__),
-        '..',
-        'integration_tests',
-        'example_config_files',
-        'density.json',
-    )
-
     compartments = extract_compartments(
         DatasetSettings(
             input_path=join(dirname(__file__), '..', 'data'),

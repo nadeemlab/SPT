@@ -214,10 +214,6 @@ process aggregate_results {
 }
 
 workflow {
-    config_filename = ".spt_pipeline.json"
-    // channel.value(config_filename)
-    //     .map{ file(it) }
-    //     .set{ config_file_ch }
     write_config_file().set{ config_file_ch }
 
     retrieve_file_manifest_file(config_file_ch)

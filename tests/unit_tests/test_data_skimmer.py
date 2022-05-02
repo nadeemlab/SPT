@@ -11,7 +11,6 @@ from spatialprofilingtoolbox.environment.settings_wrappers import DatasetSetting
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflows.phenotype_proximity.core import PhenotypeProximityCalculator
 from spatialprofilingtoolbox.workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
-from spatialprofilingtoolbox.environment.configuration import get_config_parameters
 from spatialprofilingtoolbox.environment.skimmer import DataSkimmer
 import spatialprofilingtoolbox as spt
 
@@ -24,15 +23,12 @@ def test_data_skimmer():
     PATHSTUDIES_DB_USER
     PATHSTUDIES_DB_PASSWORD
     """
-    spt_pipeline_json = open('./unit_tests/proximity_skimming.json', 'rt').read()
-    parameters = spt.get_config_parameters(json_string=spt_pipeline_json)
-
     input_files_path = join(dirname(__file__), '..', 'data')
     file_manifest_file = 'file_manifest.tsv'
     dataset_design = HALOCellMetadataDesign(
         input_path = input_files_path,
         file_manifest_file = file_manifest_file,
-        compartments = parameters['compartments'],
+        compartments = ['Tumor', 'Non-Tumor'],
     )
     file_manifest = pd.read_csv(join(input_files_path, file_manifest_file), sep='\t')
     dataset_settings = DatasetSettings(
@@ -46,15 +42,12 @@ def test_data_skimmer():
         skimmer.parse()
 
 def test_data_skimmer_incomplete_credentials():
-    spt_pipeline_json = open('./unit_tests/proximity_skimming.json', 'rt').read()
-    parameters = spt.get_config_parameters(json_string=spt_pipeline_json)
-
     input_files_path = join(dirname(__file__), '..', 'data')
     file_manifest_file = 'file_manifest.tsv'
     dataset_design = HALOCellMetadataDesign(
         input_path = input_files_path,
         file_manifest_file = file_manifest_file,
-        compartments = parameters['compartments'],
+        compartments = ['Tumor', 'Non-Tumor'],
     )
     file_manifest = pd.read_csv(join(input_files_path, file_manifest_file), sep='\t')
     dataset_settings = DatasetSettings(

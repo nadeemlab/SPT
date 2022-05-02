@@ -1,6 +1,0 @@
-{
-    "workflow" : "Multiplexed IF diffusion",
-    "input_path" : "./data/",
-    "compartments" : ["Tumor", "Non-Tumor"],
-    "save_graphml" : true
-}

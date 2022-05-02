@@ -58,7 +58,6 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',
         'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',
         'spatialprofilingtoolbox/scripts/spt-print',
-        'spatialprofilingtoolbox/scripts/spt-aggregate-cell-data',
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
     ],
     install_requires=requirements,

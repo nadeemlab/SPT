@@ -1,6 +1,0 @@
-{
-    "workflow" : "Multiplexed IF phenotype proximity",
-    "input_path" : "./data/",
-    "compartments" : ["Tumor", "Non-Tumor"],
-    "balanced" : true
-}

@@ -1,5 +1,0 @@
-{
-    "workflow" : "Multiplexed IF density",
-    "input_path" : "./data/",
-    "skip_semantic_parse" : true
-}

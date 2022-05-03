@@ -16,7 +16,7 @@ process echo_environment_variables {
     """
 }
 
-process generate_job_specifications {
+process generate_run_information {
     input:
     val workflow
     path file_manifest_file
@@ -28,7 +28,7 @@ process generate_job_specifications {
 
     script:
     """
-    spt-generate-job-specifications \
+    spt-generate-run-information \
      --workflow='$workflow' \
      --file-manifest-file='$file_manifest_file' \
      --input-path='$input_path' \
@@ -56,6 +56,8 @@ process query_for_compartments_file {
     if [[ "\$(cat found)" == "0" ]];
     then
         echo -n "$input_path/$file_manifest_file" > compartments_filename
+        # This is a workaround. NF does not seem to support behavior
+        # conditional on existence/non-existence of a given file.
     fi
     """
 }
@@ -178,17 +180,25 @@ workflow {
     environment_ch.input_path.map{ it.text }
         .set{ input_path_ch }
 
-    generate_job_specifications(
+    generate_run_information(
         workflow_ch,
         file_manifest_ch,
         input_path_ch,
-    ).set { specifications_ch }
+    ).set { job_info_ch }
 
-    specifications_ch
+    job_info_ch
         .job_specification_table
         .splitCsv(header: true)
         .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index) }
         .set{ job_specifications_ch }
+
+    job_info_ch
+        .dataset_metadata_files_list
+        .map{ file(it) }
+        .splitText(by: 1)
+        .map{ file(it.trim()) }
+        .collect()
+        .set{ dataset_metadata_files_ch }
 
     job_specifications_ch
         .map{ row -> row[1] }
@@ -207,14 +217,6 @@ workflow {
     )
         .compartments_file
         .set{ compartments_ch }
-
-    specifications_ch
-        .dataset_metadata_files_list
-        .map{ file(it) }
-        .splitText(by: 1)
-        .map{ file(it.trim()) }
-        .collect()
-        .set{ dataset_metadata_files_ch }
 
 
     job_specifications_ch

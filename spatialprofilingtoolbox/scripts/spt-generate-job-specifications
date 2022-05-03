@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.configuration_settings import workflows
-from spatialprofilingtoolbox.environment.configuration_settings import workflow_names
+from spatialprofilingtoolbox.workflows import workflows
+from spatialprofilingtoolbox.workflows import workflow_names
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

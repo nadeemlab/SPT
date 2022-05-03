@@ -1,17 +1,5 @@
 import importlib.resources
 
-from ..workflows.density import components as density_workflow
-from ..workflows.phenotype_proximity import components as phenotype_proximity_workflow
-from ..workflows.front_proximity import components as front_proximity_workflow
-
-workflows = {
-    **density_workflow,
-    **phenotype_proximity_workflow,
-    **front_proximity_workflow,
-}
-
-workflow_names = list(workflows.keys())
-
 file_manifest_filename = 'file_manifest.tsv'
 
 def get_version():

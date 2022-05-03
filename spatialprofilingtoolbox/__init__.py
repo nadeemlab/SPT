@@ -4,7 +4,7 @@ This is the Spatial Profiling Toolbox package. The source code is available
 `here <https://github.com/nadeemlab/SPT>`_.
 """
 
-from .environment.configuration_settings import workflows
+from .workflows import workflows
 from .environment.configuration_settings import get_version
 
 from .environment.skimmer import DataSkimmer

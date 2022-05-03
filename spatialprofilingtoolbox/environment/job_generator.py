@@ -36,47 +36,39 @@ class JobGenerator:
         :param job_inputs: Output file to which to write list of additional inputs.
         :type job_inputs: str
         """
+        self.dataset_design_class = dataset_design_class
+        self.input_path = input_path
         self.job_inputs = job_inputs
         self.all_jobs_inputs = all_jobs_inputs
         self.compartments_file = compartments_file
         self.file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
-        self.dataset_design_class = dataset_design_class
 
     def print_job_specification_table(self):
         """
         Prepares the job specification table for the orchestrator.
         """
-        attributes = ['input_file_identifier'] if self.job_specification_by_file() else []
+        attributes = ['input_file_identifier']
 
-        if not self.job_specification_by_file():
-            df = pd.DataFrame([{
-                'input_file_identifier': 'all files',
-                'input_filename': 'all filenames',
-                'job_index' : 0,
-            }])
-            table_str = df.to_csv(index=False, header=True)
-        
-        if self.job_specification_by_file():
-            rows = []
-            job_count = 0
-            for i, file_row in self.file_metadata.iterrows():
-                descriptor = file_row['Data type']
-                validated = self.dataset_design_class.validate_cell_manifest_descriptor(descriptor)
-                if validated:
-                    input_file_identifier = file_row['File ID']
-                    input_filename = file_row['File name']
-                    full_filename = join(self.input_path, input_filename)
-                    job_index = job_count
-                    job_count += 1
-                    rows.append({
-                        'input_file_identifier' : input_file_identifier,
-                        'input_filename' : full_filename,
-                        'job_index' : job_index,
-                    })
-            df = pd.DataFrame(rows)
-            columns = df.columns
-            df = df[sorted(columns)]
-            table_str = df.to_csv(index=False, header=True)
+        rows = []
+        job_count = 0
+        for i, file_row in self.file_metadata.iterrows():
+            descriptor = file_row['Data type']
+            validated = self.dataset_design_class.validate_cell_manifest_descriptor(descriptor)
+            if validated:
+                input_file_identifier = file_row['File ID']
+                input_filename = file_row['File name']
+                full_filename = join(self.input_path, input_filename)
+                job_index = job_count
+                job_count += 1
+                rows.append({
+                    'input_file_identifier' : input_file_identifier,
+                    'input_filename' : full_filename,
+                    'job_index' : job_index,
+                })
+        df = pd.DataFrame(rows)
+        columns = df.columns
+        df = df[sorted(columns)]
+        table_str = df.to_csv(index=False, header=True)
 
         print(table_str)
 

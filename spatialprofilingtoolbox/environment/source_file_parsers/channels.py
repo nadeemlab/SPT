@@ -1,5 +1,6 @@
 import pandas as pd
 
+from ..configuration_settings import file_manifest_filename
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceFileSemanticParser
 from ..log_formats import colorized_logger
@@ -10,7 +11,7 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(ChannelsPhenotypesParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, dataset_settings, dataset_design):
+    def parse(self, connection, fields, dataset_design):
         """
         Retrieve the phenotype and channel metadata, and parse records for:
         - chemical species
@@ -20,17 +21,15 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
         - cell phenotype criterion
         """
         elementary_phenotypes_file = get_input_filename_by_identifier(
-            dataset_settings = dataset_settings,
             input_file_identifier = 'Elementary phenotypes file',
         )
         composite_phenotypes_file = get_input_filename_by_identifier(
-            dataset_settings = dataset_settings,
             input_file_identifier = 'Complex phenotypes file',
         )
         elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',', na_filter=False)
         composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',', na_filter=False)
 
-        file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t')
+        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
         project_handle = sorted(list(set(file_metadata['Project ID']).difference([''])))[0]
         data_analysis_study = project_handle + ' - data analysis'
         measurement_study = project_handle + ' - measurement'

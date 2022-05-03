@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 from os.path import join, dirname, abspath
-os.environ['FIND_FILES_USING_PATH'] = '1'
 
 import pandas as pd
 
@@ -9,7 +8,6 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.workflows.phenotype_proximity.core import PhenotypeProximityCalculator
 from spatialprofilingtoolbox.workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from spatialprofilingtoolbox.environment.settings_wrappers import DatasetSettings
 
 correct_answers = {
     'group 1' : [
@@ -62,10 +60,6 @@ def test_proximity_counting():
     calc = PhenotypeProximityCalculator(
         input_filename = join(input_files_path, 'cell_manifest_1.csv'),
         sample_identifier = 'sample 1',
-        dataset_settings = DatasetSettings(
-            input_files_path,
-            file_manifest_file,
-        ),
         dataset_design = dataset_design,
         computational_design= PhenotypeProximityDesign(
             dataset_design = dataset_design,

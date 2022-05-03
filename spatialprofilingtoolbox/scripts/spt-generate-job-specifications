@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.configuration_settings import workflows
+from spatialprofilingtoolbox.environment.configuration_settings import workflow_names
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'Create a list of core, parallelizable job specifications for a given SPT workflow.'
+    )
+    parser.add_argument(
+        '--workflow',
+        dest='workflow',
+        type=str,
+        choices=workflow_names,
+        required=True,
+    )
+    parser.add_argument(
+        '--input-path',
+        dest='input_path',
+        type=str,
+        required=True,
+    )
+    args = parser.parse_args()
+    workflow = args.workflow
+    input_path = args.input_path
+    Generator = workflows[workflow].generator
+    DatasetDesign = workflows[workflow].dataset_design
+    job_generator = Generator(
+        dataset_design_class=DatasetDesign,
+        input_path=input_path,
+    )
+    job_generator.print_job_specification_table()

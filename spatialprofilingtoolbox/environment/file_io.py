@@ -2,10 +2,10 @@ import os
 from os import mkdir
 from os.path import exists, abspath, join
 import hashlib
-FIND_FILES_USING_PATH = ('FIND_FILES_USING_PATH' in os.environ)
 
 import pandas as pd
 
+from .configuration_settings import file_manifest_filename
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
@@ -22,19 +22,11 @@ def compute_sha256(input_file):
     return sha.hexdigest()
 
 def get_input_filenames_by_data_type(
-    dataset_settings=None,
-    file_metadata=None,
     data_type: str=None,
 ):
     """
     Retrieves from the file metadata table the names of all files with the given
     "Data type" field.
-
-    :param dataset_settings: Wrapper around some input data settings (e.g. paths).
-    :type dataset_settings: DatasetSettings
-
-    :param file_metadata: The table of files.
-    :type file_metadata: pd.DataFrame
 
     :param data_type: The file type descriptor.
     :type data_type: str
@@ -42,33 +34,16 @@ def get_input_filenames_by_data_type(
     :return: The list of filenames.
     :rtype: list
     """
-    if file_metadata is None:
-        if dataset_settings is None:
-            logger.error(
-                'You need to supply at least one of "dataset_settings" or "file_metadata" to find all files of a given type.'
-            )
-        else:
-            file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t')
-    intact_files = []
+    file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
     records = file_metadata[file_metadata['Data type'] == data_type]
-    for i, row in records.iterrows():
-        input_file = row['File name']
-        if FIND_FILES_USING_PATH:
-            input_file = abspath(join(dataset_settings.input_path, input_file))
-        intact_files.append(input_file)
-    return intact_files
+    return list(records['File name'])
 
 def get_input_filename_by_identifier(
-    dataset_settings=None,
-    file_metadata=None,
     input_file_identifier: str=None,
 ):
     """
     Uses the file identifier to lookup the name of the associated file in the file
     metadata table, and cache the name of the associated file.
-
-    :param dataset_settings: Wrapper around some input data settings (e.g. paths).
-    :type dataset_settings: DatasetSettings
 
     :param file_metadata: The table of files.
     :type file_metadata: pd.DataFrame
@@ -80,32 +55,16 @@ def get_input_filename_by_identifier(
     :return: The filename.
     :rtype: str
     """
-    intact_files = []
-    if file_metadata is None:
-        if dataset_settings is None:
-            logger.error(
-                'You need to supply at least one of "dataset_settings" or "file_metadata" to find all files of a given type.'
-            )
-        else:
-            file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t')
+    file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
     records = file_metadata[file_metadata['File ID'] == input_file_identifier]
-    for i, row in records.iterrows():
-        input_file_identifier = row['File ID']
-        input_file = row['File name']
-        if FIND_FILES_USING_PATH:
-            input_file = abspath(join(dataset_settings.input_path, input_file))
-        intact_files.append(input_file)
-    if len(intact_files) > 1:
+    filenames = list(records['File name'])
+    if len(filenames) > 1:
         logger.error('File identifier "%s" duplicated.', input_file_identifier)
         return None
-    if len(intact_files) == 0:
+    if len(filenames) == 0:
         logger.error('File identifier "%s" not found.', input_file_identifier)
         return None
-    return intact_files[0]
+    return filenames[0]
 
-def get_outcomes_files(dataset_settings):
-    outcomes_files = get_input_filenames_by_data_type(
-        dataset_settings = dataset_settings,
-        data_type = 'Outcome',
-    )
-    return outcomes_files
+def get_outcomes_files():
+    return get_input_filenames_by_data_type(data_type='Outcome')

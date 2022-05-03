@@ -30,7 +30,6 @@ class DensityAnalyzer(SingleJobAnalyzer):
         self.calculator = DensityCalculator(
             input_filename = self.get_input_filename(),
             sample_identifier = self.get_sample_identifier(),
-            dataset_settings = self.dataset_settings,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
         )

@@ -10,7 +10,7 @@ class OutcomesParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(OutcomesParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, dataset_settings, dataset_design):
+    def parse(self, connection, fields, dataset_design):
         """
         Retrieve outcome data in the same way that the main workflows do, and parse
         records for:
@@ -25,7 +25,7 @@ class OutcomesParser(SourceFileSemanticParser):
         def create_diagnosis_record(sample_id, result, column_name):
             return (sample_id, column_name, result, '', '')
 
-        for outcomes_file in get_outcomes_files(dataset_settings):
+        for outcomes_file in get_outcomes_files():
             logger.debug('Considering %s', outcomes_file)
             outcomes = pd.read_csv(outcomes_file, sep='\t', na_filter=False)
             sample_ids = sorted(list(set(outcomes['Sample ID'])))

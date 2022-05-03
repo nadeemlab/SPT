@@ -6,6 +6,7 @@ import mmap
 import shapefile
 import pandas as pd
 
+from ..configuration_settings import file_manifest_filename
 from ..file_io import compute_sha256
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceFileSemanticParser
@@ -23,7 +24,7 @@ class CellManifestsParser(SourceFileSemanticParser):
         super(CellManifestsParser, self).__init__(**kwargs)
         self.chemical_species_identifiers_by_symbol = chemical_species_identifiers_by_symbol
 
-    def parse(self, connection, fields, dataset_settings, dataset_design):
+    def parse(self, connection, fields, dataset_design):
         """
         Retrieve each cell manifest, and parse records for:
         - histological structure identification
@@ -34,7 +35,7 @@ class CellManifestsParser(SourceFileSemanticParser):
         if record_performance:
             t = PerformanceTimer()
             t.record_timepoint('Initial')
-        file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t')
+        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
         halo_data_type = 'HALO software cell manifest'
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
@@ -68,7 +69,6 @@ class CellManifestsParser(SourceFileSemanticParser):
                 cell_manifest['File ID'],
             )
             filename = get_input_filename_by_identifier(
-                dataset_settings = dataset_settings,
                 input_file_identifier = cell_manifest['File ID'],
             )
             sha256_hash = compute_sha256(filename)

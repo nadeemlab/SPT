@@ -10,6 +10,7 @@ import pytest
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.environment.dichotomization import Dichotomizer
+from spatialprofilingtoolbox.environment.configuration_settings import file_manifest_filename
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
@@ -20,7 +21,7 @@ def test_thresholding():
         input_path = input_files_path,
         file_manifest_file = file_manifest_file,
     )
-    file_manifest = pd.read_csv(dataset_design.dataset_settings.file_manifest_file, sep='\t')
+    file_manifest = pd.read_csv(file_manifest_filename, sep='\t')
     cell_manifest = HALOCellMetadataDesign.get_cell_manifest_descriptor()
     input_files = file_manifest[file_manifest['Data type'] == cell_manifest]['File name']
     for filename in input_files:

@@ -7,8 +7,8 @@ from os.path import getsize
 
 import pandas as pd
 
+from .configuration_settings import file_manifest_filename
 from .database_context_utility import WaitingDatabaseContextManager
-from .settings_wrappers import DatasetSettings
 from .file_io import get_input_filename_by_identifier
 from .log_formats import colorized_logger
 
@@ -43,10 +43,6 @@ class SingleJobAnalyzer:
                 The identifier, as it appears in the file manifest, for the file
                 associated with this job.
         """
-        self.dataset_settings = DatasetSettings(
-            input_path,
-            file_manifest_file,
-        )
         self.input_file_identifier = input_file_identifier
         self.dataset_design = dataset_design
         self.computational_design = computational_design
@@ -92,8 +88,6 @@ class SingleJobAnalyzer:
         ``input_file_identifier``.
         """
         return get_input_filename_by_identifier(
-            dataset_settings = self.dataset_settings,
-            file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
             input_file_identifier = self.input_file_identifier,
         )
 
@@ -102,7 +96,7 @@ class SingleJobAnalyzer:
         """
         Uses the file identifier to lookup and cache the associated sample identifier.
         """
-        file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t')
+        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
         records = file_metadata[file_metadata['File ID'] == self.input_file_identifier]
         for i, row in records.iterrows():
             sample_identifier = row['Sample ID']

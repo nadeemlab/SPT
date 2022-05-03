@@ -16,7 +16,7 @@ from .source_file_parsers import *
 
 
 class DataSkimmer:
-    def __init__(self, dataset_settings, dataset_design, skip_semantic_parse=None):
+    def __init__(self, dataset_design, skip_semantic_parse=None):
         connectivity = False
         self.db_backend = None
 
@@ -83,7 +83,6 @@ class DataSkimmer:
             cursor.executescript(create_db_script)
             cursor.close()
 
-        self.dataset_settings = dataset_settings
         self.dataset_design = dataset_design
 
     def __enter__(self):
@@ -110,7 +109,7 @@ class DataSkimmer:
         with importlib.resources.path('spatialprofilingtoolbox', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
-        args = [self.connection, fields, self.dataset_settings, self.dataset_design]
+        args = [self.connection, fields, self.dataset_design]
         OutcomesParser(db_backend=self.db_backend).parse(*args)
         CellManifestSetParser(db_backend=self.db_backend).parse(*args)
         chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(db_backend=self.db_backend).parse(*args)

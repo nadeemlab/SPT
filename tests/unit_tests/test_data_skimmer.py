@@ -7,7 +7,6 @@ os.environ['FIND_FILES_USING_PATH'] = '1'
 import pandas as pd
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.settings_wrappers import DatasetSettings
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflows.phenotype_proximity.core import PhenotypeProximityCalculator
 from spatialprofilingtoolbox.workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
@@ -31,12 +30,7 @@ def test_data_skimmer():
         compartments = ['Tumor', 'Non-Tumor'],
     )
     file_manifest = pd.read_csv(join(input_files_path, file_manifest_file), sep='\t')
-    dataset_settings = DatasetSettings(
-        input_files_path,
-        file_manifest_file,
-    )
     with DataSkimmer(
-        dataset_settings=dataset_settings,
         dataset_design=dataset_design,
     ) as skimmer:
         skimmer.parse()
@@ -50,10 +44,6 @@ def test_data_skimmer_incomplete_credentials():
         compartments = ['Tumor', 'Non-Tumor'],
     )
     file_manifest = pd.read_csv(join(input_files_path, file_manifest_file), sep='\t')
-    dataset_settings = DatasetSettings(
-        input_files_path,
-        file_manifest_file,
-    )
     credential_parameters = [
         'PATHSTUDIES_DB_ENDPOINT',
         'PATHSTUDIES_DB_USER',
@@ -67,7 +57,6 @@ def test_data_skimmer_incomplete_credentials():
     os.environ['PATHSTUDIES_DB_ENDPOINT'] = ''
     try:
         with DataSkimmer(
-            dataset_settings=dataset_settings,
             dataset_design=dataset_design,
         ) as skimmer:
             skimmer.parse()

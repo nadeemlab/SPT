@@ -4,6 +4,7 @@ import re
 
 import pandas as pd
 
+from ..configuration_settings import file_manifest_filename
 from ..file_io import get_input_filename_by_identifier
 from ..file_io import compute_sha256
 from .parser import SourceFileSemanticParser
@@ -15,7 +16,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(CellManifestSetParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, dataset_settings, dataset_design):
+    def parse(self, connection, fields, dataset_design):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source
         file), and parse records for:
@@ -25,7 +26,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
         - specimen data measurement process
         - data file
         """
-        file_metadata = pd.read_csv(dataset_settings.file_manifest_file, sep='\t')
+        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
         halo_data_type = 'HALO software cell manifest'
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
@@ -93,7 +94,6 @@ class CellManifestSetParser(SourceFileSemanticParser):
                 ),
             )
             filename = get_input_filename_by_identifier(
-                dataset_settings = dataset_settings,
                 input_file_identifier = cell_manifest['File ID'],
             )
             sha256_hash = compute_sha256(filename)

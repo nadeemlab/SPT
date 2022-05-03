@@ -6,7 +6,6 @@ from os.path import exists
 import pandas as pd
 
 from ...environment.file_io import get_input_filename_by_identifier
-from ...environment.settings_wrappers import DatasetSettings
 from ...environment.log_formats import colorized_logger
 from ...environment.extract_compartments import extract_compartments
 
@@ -40,13 +39,7 @@ class HALOCellMetadataDesign:
             cell manifest files.
         :type compartment: list
         """
-        self.dataset_settings = DatasetSettings(
-            input_path,
-            file_manifest_file,
-        )
         elementary_phenotypes_file = get_input_filename_by_identifier(
-            dataset_settings = self.dataset_settings,
-            file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
             input_file_identifier = 'Elementary phenotypes file',
         )
         self.elementary_phenotypes = pd.read_csv(
@@ -62,7 +55,6 @@ class HALOCellMetadataDesign:
                 compartments_file = kwargs['compartments_file']
             if not exists(compartments_file):
                 self.compartments = extract_compartments(
-                    self.dataset_settings,
                     HALOCellMetadataDesign.get_cell_manifest_descriptor(),
                 )
             else:

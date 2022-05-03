@@ -11,7 +11,6 @@ import numpy as np
 from scipy.stats import ttest_ind, kruskal
 
 from ...environment.file_io import get_outcomes_files
-from ...environment.settings_wrappers import DatasetSettings
 from ...environment.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 
@@ -23,17 +22,13 @@ class PhenotypeProximityAnalysisIntegrator:
     The main class of the integration phase.
     """
     def __init__(self,
-        dataset_settings: DatasetSettings=None,
         computational_design: PhenotypeProximityDesign=None,
         **kwargs,
     ):
         """
-        :param dataset_settings: Dataset-specific paths and settings.
-        :type dataset_settings: DatasetSettings
-
         :param computational_design: The design object for the proximity workflow.
         """
-        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
+        self.outcomes_file = get_outcomes_files()[0]
         self.computational_design = computational_design
         self.cell_proximity_tests = None
 

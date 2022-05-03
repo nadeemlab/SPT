@@ -14,9 +14,3 @@ class PhenotypeProximityJobGenerator(JobGenerator):
         **kwargs,
     ):
         super(PhenotypeProximityJobGenerator, self).__init__(**kwargs)
-
-    def gather_input_info(self):
-        pass
-
-    def job_specification_by_file(self):
-        return True

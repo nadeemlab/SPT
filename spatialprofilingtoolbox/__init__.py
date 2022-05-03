@@ -7,28 +7,11 @@ This is the Spatial Profiling Toolbox package. The source code is available
 from .environment.configuration_settings import workflows
 from .environment.configuration_settings import get_version
 
-from .environment.settings_wrappers import DatasetSettings
 from .environment.skimmer import DataSkimmer
 from .environment.log_formats import colorized_logger
 __logger = colorized_logger(__name__)
 
 __version__ = get_version()
-
-def get_job_generator(workflow=None, **kwargs):
-    """
-    Exposes job generators to scripts.
-    """
-    if workflow in workflows:
-        dataset_design_class = get_dataset_design_class(workflow = workflow, **kwargs)
-
-        Generator = workflows[workflow].generator
-        return Generator(
-            dataset_design_class = dataset_design_class,
-            **kwargs,
-        )
-    else:
-        __logger.error('Workflow "%s" not supported.', str(workflow))
-        raise TypeError
 
 def get_semantic_source_parser(workflow=None, **kwargs):
     s = 'skip_semantic_parse'
@@ -37,13 +20,9 @@ def get_semantic_source_parser(workflow=None, **kwargs):
     else:
         skip_semantic_parse = None
     return DataSkimmer(
-        dataset_settings = get_dataset_settings(**kwargs),
         dataset_design = get_dataset_design(workflow=workflow, **kwargs),
         skip_semantic_parse = skip_semantic_parse,
     )
-
-def get_dataset_design_class(workflow=None, **kwargs):
-    return workflows[workflow].dataset_design
 
 def get_dataset_design(workflow=None, **kwargs):
     """
@@ -86,23 +65,15 @@ def get_analyzer(workflow=None, **kwargs):
         __logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
-def get_dataset_settings(**kwargs):
-    return DatasetSettings(
-        kwargs['input_path'],
-        kwargs['file_manifest_file'],
-    )
-
 def get_integrator(workflow=None, **kwargs):
     """
     Exposes pipeline analysis integrators to scripts.
     """
     if workflow in workflows:
-        dataset_settings = get_dataset_settings(**kwargs)
         computational_design = get_computational_design(workflow = workflow, **kwargs)
 
         Integrator = workflows[workflow].integrator
         return Integrator(
-            dataset_settings = dataset_settings,
             computational_design = computational_design,
             **kwargs,
         )

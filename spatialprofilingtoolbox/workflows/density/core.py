@@ -10,7 +10,6 @@ import scipy
 from scipy.spatial import KDTree
 
 from ...environment.file_io import get_outcomes_files
-from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
@@ -27,7 +26,6 @@ class DensityCalculator(Calculator):
         self,
         input_filename: str=None,
         sample_identifier: str=None,
-        dataset_settings: DatasetSettings=None,
         **kwargs,
     ):
         """
@@ -36,14 +34,11 @@ class DensityCalculator(Calculator):
 
         :param sample_identifier: The sample associated with this source file.
         :type sample_identifier: str
-
-        :param dataset_settings: Convenience bundle of paths to input dataset files.
-        :type dataset_settings: DatasetSettings
         """
         super(DensityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
+        self.outcomes_file = get_outcomes_files()[0]
 
     def calculate_density(self):
         """

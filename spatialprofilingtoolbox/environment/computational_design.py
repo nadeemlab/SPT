@@ -30,10 +30,7 @@ class ComputationalDesign:
         """
         self.dataset_design = dataset_design
         self.intermediate_database_filename = intermediate_database_filename
-        self.dataset_settings = self.dataset_design.dataset_settings
         complex_phenotypes_file = get_input_filename_by_identifier(
-            dataset_settings = self.dataset_settings,
-            file_metadata = pd.read_csv(self.dataset_settings.file_manifest_file, sep='\t'),
             input_file_identifier = 'Complex phenotypes file',
         )
         self.complex_phenotypes = pd.read_csv(

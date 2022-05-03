@@ -10,9 +10,9 @@ workflows = {
     **front_proximity_workflow,
 }
 
-workflow_names = list(workflow.keys())
+workflow_names = list(workflows.keys())
 
-config_filename = '.spt_pipeline.json'
+file_manifest_filename = 'file_manifest.tsv'
 
 def get_version():
     with importlib.resources.path('spatialprofilingtoolbox', 'version.txt') as path:

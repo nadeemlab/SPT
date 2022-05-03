@@ -15,7 +15,6 @@ import sklearn
 from sklearn.neighbors import BallTree
 
 from ...environment.file_io import get_outcomes_files
-from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
@@ -35,7 +34,6 @@ class PhenotypeProximityCalculator(Calculator):
     def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
-        dataset_settings: DatasetSettings=None,
         **kwargs,
     ):
         """
@@ -45,9 +43,6 @@ class PhenotypeProximityCalculator(Calculator):
         :param sample_identifier: The sample associated with this source file.
         :type sample_identifier: str
 
-        :param dataset_settings: Dataset-specific paths and settings.
-        :type dataset_settings: DatasetSettings
-
         :param dataset_design: The design object for the input dataset.
 
         :param computational_design: The design object for the proximity workflow.
@@ -55,7 +50,7 @@ class PhenotypeProximityCalculator(Calculator):
         super(PhenotypeProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        outcomes_file = get_outcomes_files(dataset_settings)[0]
+        outcomes_file = get_outcomes_files()[0]
         self.outcome = self.pull_in_outcome_data(outcomes_file)[
             sample_identifier
         ]

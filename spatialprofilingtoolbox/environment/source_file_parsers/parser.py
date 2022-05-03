@@ -17,7 +17,7 @@ class SourceFileSemanticParser:
     def __init__(self, db_backend):
         self.db_backend = db_backend
 
-    def parse(self, connection, fields, dataset_settings, dataset_design):
+    def parse(self, connection, fields, dataset_design):
         pass
 
     def get_placeholder(self):

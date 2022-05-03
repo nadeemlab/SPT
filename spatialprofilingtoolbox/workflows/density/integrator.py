@@ -13,7 +13,6 @@ from scipy.stats import ttest_ind, kruskal
 
 from ...environment.file_io import get_outcomes_files
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ...environment.settings_wrappers import DatasetSettings
 from ...environment.log_formats import colorized_logger
 from .data_logging import DensityDataLogger
 
@@ -25,18 +24,14 @@ class DensityAnalysisIntegrator:
     Main class of the integration phase.
     """
     def __init__(self,
-        dataset_settings: DatasetSettings=None,
         computational_design=None,
         **kwargs,
     ):
         """
-        :param dataset_settings: Convenience bundle of paths to input dataset files.
-        :type dataset_settings: DatasetSettings
-
         :param computational_design: Design object providing metadata specific to the
             density workflow.
         """
-        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
+        self.outcomes_file = get_outcomes_files()[0]
         self.computational_design = computational_design
         self.density_tests = None
         self._fov_lookup_dict = None

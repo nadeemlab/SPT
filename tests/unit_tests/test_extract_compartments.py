@@ -2,19 +2,13 @@
 import os
 from os.path import join
 from os.path import dirname
-os.environ['FIND_FILES_USING_PATH'] = '1'
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.settings_wrappers import DatasetSettings
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from spatialprofilingtoolbox.environment.extract_compartments import extract_compartments
 
 def test_extract_compartments():
-    compartments = extract_compartments(
-        DatasetSettings(
-            input_path=join(dirname(__file__), '..', 'data'),
-            file_manifest_file='file_manifest.tsv',
-        ),
+    compartments = extract_compartments( #input_path=join(dirname(__file__), '..', 'data'), file_manifest_file='file_manifest.tsv',
         HALOCellMetadataDesign.get_cell_manifest_descriptor(),
     )
 

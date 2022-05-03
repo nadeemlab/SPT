@@ -7,7 +7,6 @@ from scipy.spatial import KDTree
 
 from ...environment.file_io import get_outcomes_files
 from ...environment.calculator import Calculator
-from ...environment.settings_wrappers import DatasetSettings
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 
@@ -18,13 +17,12 @@ class FrontProximityCalculator(Calculator):
     def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
-        dataset_settings: DatasetSettings=None,
         **kwargs,
     ):
         super(FrontProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.outcomes_file = get_outcomes_files(dataset_settings)[0]
+        self.outcomes_file = get_outcomes_files()[0]
 
     def calculate_front_proximity(self):
         self.timer.record_timepoint('Started front proximity one job')

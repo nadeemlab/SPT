@@ -114,10 +114,6 @@ if __name__=='__main__':
         job_generator = spt.get_job_generator(**parameters)
         job_generator.list_all_compartments()
 
-    if command == generate_jobs:
-        job_generator = spt.get_job_generator(**parameters)
-        job_generator.generate()
-
     if command == semantic_parse:
         with spt.get_semantic_source_parser(**parameters) as parser:
             parser.parse()

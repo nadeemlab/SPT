@@ -3,6 +3,17 @@ nextflow.enable.dsl = 2
 
 skip_semantic_parse_='true'
 
+process retrieve_file_manifest_filename {
+    output:
+    stdout
+
+    script:
+    """
+    #!/bin/bash
+    echo -n "$file_manifest_filename_"
+    """
+}
+
 process report_version {
     output:
     stdout
@@ -31,14 +42,13 @@ process list_auxiliary_job_inputs {
 process generate_job_specifications {
     input:
     path file_manifest_file
-    val input_path
 
     output:
     stdout
 
     script:
     """
-    spt-generate-job-specifications --workflow='$workflow_' --input-path='$input_path'
+    spt-generate-job-specifications --workflow='$workflow_' --input-path='$input_path_'
     """
 }
 
@@ -163,7 +173,7 @@ process aggregate_results {
 }
 
 workflow {
-    Channel.value($file_manifest_file_)
+    retrieve_file_manifest_filename()
         .map{ file(it) }
         .set{ file_manifest_ch }
 

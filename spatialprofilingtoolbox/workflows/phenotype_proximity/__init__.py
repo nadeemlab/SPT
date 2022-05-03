@@ -26,5 +26,5 @@ components = {
         computational_design = PhenotypeProximityDesign,
         analyzer = PhenotypeProximityAnalyzer,
         integrator = PhenotypeProximityAnalysisIntegrator,
-    ),	
+    ),
 }

@@ -59,7 +59,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-query-for-file-by-data-type',
         'spatialprofilingtoolbox/scripts/spt-extract-compartments',
         'spatialprofilingtoolbox/scripts/spt-core-job',
-        'spatialprofilingtoolbox/scripts/spt-pipeline',
+        'spatialprofilingtoolbox/scripts/spt-aggregate-core-results',
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',
         'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',
         'spatialprofilingtoolbox/scripts/spt-print',

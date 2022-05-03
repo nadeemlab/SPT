@@ -76,17 +76,6 @@ if __name__=='__main__':
         ])
     )
 
-
-    parser.add_argument('--fov',
-        dest='fov_index',
-        type=int,
-        required=False,
-        help=''.join([
-            'Indication of field of view to consider (one-based integer ',
-            'index). Only pertains to some workflows.',
-        ])
-    )
-
     parameters = vars(parser.parse_args())
     analyzer = get_analyzer(**parameters)
     analyzer.calculate()

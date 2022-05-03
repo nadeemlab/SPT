@@ -37,6 +37,26 @@ class ComputationalDesign:
         )
         self.dichotomize = dichotomize
 
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        parser.add_argument(
+            '--intermediate-database-filename',
+            dest='intermediate_database_filename',
+            type=str,
+            required=True,
+        )
+        parser.add_argument(
+            '--composite-phenotypes-file',
+            dest='composite_phenotypes_file',
+            type=str,
+            required=True,
+        )
+        parser.add_argument(
+            '--dichotomize',
+            dest='dichotomize',
+            action='store_true',
+        )
+
     def get_database_uri(self):
         return self.intermediate_database_filename
 

@@ -29,6 +29,19 @@ class PhenotypeProximityDesign(ComputationalDesign):
         self.use_intensities = use_intensities
 
     @staticmethod
+    def solicit_cli_arguments(parser):
+        parser.add_argument(
+            '--use-intensities',
+            dest='use_intensities',
+            action='store_true',
+        )
+        parser.add_argument(
+            '--balanced',
+            dest='balanced',
+            action='store_true',
+        )
+
+    @staticmethod
     def get_cell_pair_counts_table_name():
         return 'phenotype_proximity_metrics'
 

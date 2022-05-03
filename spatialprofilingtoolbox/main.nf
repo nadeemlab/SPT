@@ -188,11 +188,12 @@ process aggregate_results {
     publishDir 'results'
 
     input:
-    path file_manifest_file
     path 'intermediate.0.db'
     path 'performance_report.0.md'
-    path extra_dependencies
+    path elementary_phenotypes
+    path composite_phenotypes
     path compartments
+    path outcomes_file
 
     output:
     file 'intermediate.db'
@@ -203,7 +204,13 @@ process aggregate_results {
     """
     cp intermediate.0.db intermediate.db
     cp performance_report.0.md performance_report.md
-    spt-pipeline aggregate-results --intermediate-database-filename=intermediate.db > stats_tests.csv
+    spt-aggregate-core-results \
+     --intermediate-database-filename=intermediate.db \
+     --elementary-phenotypes-file='$elementary_phenotypes' \
+     --composite-phenotypes-file='$composite_phenotypes' \
+     --compartments-file='$compartments' \
+     --outcomes-file='$outcomes_file' \
+     --stats-tests-file=stats_tests.csv
     """
 }
 
@@ -324,10 +331,11 @@ workflow {
         .set{ performance_report_ch }
 
     aggregate_results(
-        file_manifest_ch,
         merged_database_ch,
         performance_report_ch,
-        dataset_metadata_files_ch,
+        elementary_phenotypes_ch,
+        composite_phenotypes_ch,
         compartments_ch,
+        outcomes_file_ch,
     )
 }

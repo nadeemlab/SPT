@@ -25,13 +25,6 @@ class JobGenerator:
         dataset_design_class=None,
         **kwargs,
     ):
-        """
-        :param dataset_design_class: Class of design object representing input data set.
-
-        :param input_path: The directory in which files listed in the file manifest
-            should be located.
-        :type input_path: str
-        """
         self.input_path = input_path
         self.dataset_design_class = dataset_design_class
         if not exists(file_manifest_file):

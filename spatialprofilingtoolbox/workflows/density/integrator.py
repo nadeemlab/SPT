@@ -36,14 +36,14 @@ class DensityAnalysisIntegrator:
         self.density_tests = None
         self._fov_lookup_dict = None
 
-    def calculate(self):
+    def calculate(self, filename):
         """
         Performs statistical comparison tests and writes results.
         """
         logger.info('Starting stats.')
         density_tests = self.do_outcome_tests()
         if density_tests is not None:
-            self.export_results(density_tests)
+            self.export_results(density_tests, filename)
             logger.info('Done exporting stats.')
         else:
             logger.warning('Test results not generated.')
@@ -457,7 +457,7 @@ class DensityAnalysisIntegrator:
         }
         return [row, test_inputs['df1'], test_inputs['df2']]
 
-    def export_results(self, density_tests):
+    def export_results(self, density_tests, filename):
         """
         Writes the result of the statistical tests to file, in order of statistical
         significance.
@@ -466,8 +466,7 @@ class DensityAnalysisIntegrator:
             See :py:meth:`get_test_result_row`.
         :type density_tests: pandas.DataFrame
         """
-        tests_str = density_tests.to_csv(index=False)
-        print(tests_str)
+        tests_str = density_tests.to_csv(filename, index=False)
 
     def get_dataframe_from_db(self, table_name):
         """

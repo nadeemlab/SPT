@@ -84,14 +84,6 @@ if __name__=='__main__':
         help='Filename for output, the composite phenotypes filename.',
     )
 
-    # parser.add_argument(
-    #     '--outcomes-filename',
-    #     dest='outcomes_filename',
-    #     type=str,
-    #     required=True,
-    #     help='Filename for output, the composite phenotypes filename.',
-    # )
-
     args = parser.parse_args()
 
     if not exists(args.file_manifest_file):

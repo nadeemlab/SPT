@@ -28,6 +28,21 @@ class HALOCellMetadataDesign:
         )
         self.compartments = open(compartments_file, 'rt').read().strip('\n').split('\n')
 
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        parser.add_argument(
+            '--elementary-phenotypes-file',
+            dest='elementary_phenotypes_file',
+            type=str,
+            required=True,
+        )
+        parser.add_argument(
+            '--compartments-file',
+            dest='compartments_file',
+            type=str,
+            required=True,
+        )
+
     def get_FOV_column(self):
         """
         Returns:

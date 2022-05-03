@@ -55,7 +55,6 @@ setuptools.setup(
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-configure',
         'spatialprofilingtoolbox/scripts/spt-generate-run-information',
-        'spatialprofilingtoolbox/scripts/spt-query-for-compartments-file',
         'spatialprofilingtoolbox/scripts/spt-query-for-file-by-identifier',
         'spatialprofilingtoolbox/scripts/spt-query-for-file-by-data-type',
         'spatialprofilingtoolbox/scripts/spt-extract-compartments',

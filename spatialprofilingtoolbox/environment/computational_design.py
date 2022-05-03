@@ -16,6 +16,7 @@ class ComputationalDesign:
         dataset_design=None,
         intermediate_database_filename: str=None,
         dichotomize: bool=False,
+        composite_phenotypes_file:str = None,
         **kwargs,
     ):
         """
@@ -30,11 +31,8 @@ class ComputationalDesign:
         """
         self.dataset_design = dataset_design
         self.intermediate_database_filename = intermediate_database_filename
-        complex_phenotypes_file = get_input_filename_by_identifier(
-            input_file_identifier = 'Complex phenotypes file',
-        )
         self.complex_phenotypes = pd.read_csv(
-            complex_phenotypes_file,
+            composite_phenotypes_file,
             keep_default_na=False,
         )
         self.dichotomize = dichotomize

@@ -54,9 +54,12 @@ setuptools.setup(
     python_requires='>=3.7',
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-configure',
-        'spatialprofilingtoolbox/scripts/spt-generate-job-specifications',
+        'spatialprofilingtoolbox/scripts/spt-generate-run-information',
         'spatialprofilingtoolbox/scripts/spt-query-for-compartments-file',
+        'spatialprofilingtoolbox/scripts/spt-query-for-file-by-identifier',
+        'spatialprofilingtoolbox/scripts/spt-query-for-file-by-data-type',
         'spatialprofilingtoolbox/scripts/spt-extract-compartments',
+        'spatialprofilingtoolbox/scripts/spt-core-job',
         'spatialprofilingtoolbox/scripts/spt-pipeline',
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',
         'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',

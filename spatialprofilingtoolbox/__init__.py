@@ -5,6 +5,7 @@ This is the Spatial Profiling Toolbox package. The source code is available
 """
 
 from .workflows import workflows
+from .workflows import workflow_names
 from .environment.configuration_settings import get_version
 
 # from .environment.skimmer import DataSkimmer

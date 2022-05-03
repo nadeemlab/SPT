@@ -23,6 +23,7 @@ def compute_sha256(input_file):
 
 def get_input_filenames_by_data_type(
     data_type: str=None,
+    file_manifest_filename: str=None,
 ):
     """
     Retrieves from the file metadata table the names of all files with the given
@@ -34,6 +35,8 @@ def get_input_filenames_by_data_type(
     :return: The list of filenames.
     :rtype: list
     """
+    if file_manifest_filename is None:
+        raise ValueError('Need to supply file_manifest_filename.')
     file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
     records = file_metadata[file_metadata['Data type'] == data_type]
     return list(records['File name'])

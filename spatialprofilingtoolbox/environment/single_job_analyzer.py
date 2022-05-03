@@ -1,5 +1,3 @@
-import functools
-from functools import lru_cache
 import hashlib
 from itertools import (takewhile,repeat)
 import os
@@ -21,9 +19,9 @@ class SingleJobAnalyzer:
     run. It handles some "boilerplate".
     """
     def __init__(self,
-        input_path: str=None,
-        file_manifest_file: str=None,
         input_file_identifier: str=None,
+        input_filename: str=None,
+        sample_identifier: str=None,
         dataset_design=None,
         computational_design=None,
         **kwargs,
@@ -44,6 +42,8 @@ class SingleJobAnalyzer:
                 associated with this job.
         """
         self.input_file_identifier = input_file_identifier
+        self.input_filename = input_filename
+        self.sample_identifier = sample_identifier
         self.dataset_design = dataset_design
         self.computational_design = computational_design
 
@@ -52,6 +52,9 @@ class SingleJobAnalyzer:
         Abstract method, the implementation of which is the core/primary computation to
         be performed by this job.
         """
+        pass
+
+    def initialize_intermediate_database(self):
         pass
 
     def calculate(self):
@@ -75,32 +78,8 @@ class SingleJobAnalyzer:
         bufgen = takewhile(lambda x: x, (f.raw.read(1024*1024) for _ in repeat(None)))
         return sum( buf.count(b'\n') for buf in bufgen )
 
-    def retrieve_input_filename(self):
-        self.get_input_filename()
-
-    def retrieve_sample_identifier(self):
-        self.get_sample_identifier()
-
-    @lru_cache(maxsize=1)
     def get_input_filename(self):
-        """
-        See ``get_input_filename_by_identifier``. Applied to this job's specific
-        ``input_file_identifier``.
-        """
-        return get_input_filename_by_identifier(
-            input_file_identifier = self.input_file_identifier,
-        )
+        return self.input_filename
 
-    @lru_cache(maxsize=1)
     def get_sample_identifier(self):
-        """
-        Uses the file identifier to lookup and cache the associated sample identifier.
-        """
-        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
-        records = file_metadata[file_metadata['File ID'] == self.input_file_identifier]
-        for i, row in records.iterrows():
-            sample_identifier = row['Sample ID']
-            return sample_identifier
-
-    def initialize_intermediate_database(self):
-        pass
+        return self.sample_identifier

@@ -9,7 +9,6 @@ import pandas as pd
 import scipy
 from scipy.spatial import KDTree
 
-from ...environment.file_io import get_outcomes_files
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
@@ -26,6 +25,7 @@ class DensityCalculator(Calculator):
         self,
         input_filename: str=None,
         sample_identifier: str=None,
+        outcome: str=None,
         **kwargs,
     ):
         """
@@ -38,7 +38,7 @@ class DensityCalculator(Calculator):
         super(DensityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.outcomes_file = get_outcomes_files()[0]
+        self.outcome = outcome
 
     def calculate_density(self):
         """
@@ -48,10 +48,7 @@ class DensityCalculator(Calculator):
         the "integration" phase.
         """
         self.timer.record_timepoint('Starting calculation of density')
-        outcomes_dict = self.pull_in_outcome_data(self.outcomes_file)
-        self.timer.record_timepoint('Finished pulling outcomes')
-        logger.info('Pulled outcome data, %s assignments.', len(outcomes_dict))
-        cells, fov_lookup = self.create_cell_table(outcomes_dict)
+        cells, fov_lookup = self.create_cell_table()
         logger.info('Aggregated %s cells into table.', cells.shape[0])
         DensityDataLogger.log_number_by_type(self.computational_design, cells)
         self.write_cell_table(cells)
@@ -113,11 +110,8 @@ class DensityCalculator(Calculator):
                     distance = distances[i]
                 table.loc[I, 'distance to nearest cell ' + compartment] = distance
 
-    def create_cell_table(self, outcomes_dict):
+    def create_cell_table(self):
         """
-        :param outcomes_dict: Mapping from sample identifiers to outcome labels.
-        :type outcomes_dict: dict
-
         :return:
             - `cells`. Table of cell data.
             - `fov_lookup`. FOV descriptor strings in terms of pairs (sample identifier,
@@ -177,7 +171,7 @@ class DensityCalculator(Calculator):
             nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in all_compartments]
             self.timer.record_timepoint('Finished adding distance-to-nearest data')
             table['sample_identifier'] = sample_identifier
-            table['outcome_assignment'] = outcomes_dict[sample_identifier]
+            table['outcome_assignment'] = self.outcome
 
             if self.computational_design.use_intensities:
                 self.overlay_intensities(table)

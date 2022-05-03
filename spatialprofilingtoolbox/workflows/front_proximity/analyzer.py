@@ -23,6 +23,10 @@ class FrontProximityAnalyzer(SingleJobAnalyzer):
             computational_design = self.computational_design,
         )
 
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        pass
+
     def _calculate(self):
         self.calculator.calculate_front_proximity()
 

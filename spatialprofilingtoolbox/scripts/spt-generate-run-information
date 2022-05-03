@@ -49,6 +49,13 @@ if __name__=='__main__':
         ''',
     )
     parser.add_argument(
+        '--outcomes-file',
+        dest='outcomes_file',
+        type=str,
+        required=True,
+        help='File containing outcome assignments to Sample ID values.',
+    )
+    parser.add_argument(
         '--job-specification-table',
         dest='job_specification_table',
         type=str,
@@ -62,24 +69,42 @@ if __name__=='__main__':
         required=True,
         help='Filename for output, list of dataset metadata filenames.',
     )
+    parser.add_argument(
+        '--elementary-phenotypes-filename',
+        dest='elementary_phenotypes_filename',
+        type=str,
+        required=True,
+        help='Filename for output, the elementary phenotypes filename.',
+    )
+    parser.add_argument(
+        '--composite-phenotypes-filename',
+        dest='composite_phenotypes_filename',
+        type=str,
+        required=True,
+        help='Filename for output, the composite phenotypes filename.',
+    )
+
+    # parser.add_argument(
+    #     '--outcomes-filename',
+    #     dest='outcomes_filename',
+    #     type=str,
+    #     required=True,
+    #     help='Filename for output, the composite phenotypes filename.',
+    # )
+
     args = parser.parse_args()
 
-    workflow = args.workflow
-    file_manifest_file = args.file_manifest_file
-    input_path = args.input_path
-    job_specification_table_filename = args.job_specification_table
-    dataset_metadata_files_list_file = args.dataset_metadata_files_list_file
+    if not exists(args.file_manifest_file):
+        raise FileNotFoundError(args.file_manifest_file)
 
-    if not exists(file_manifest_file):
-        raise FileNotFoundError(file_manifest_file)
-
-    Generator = workflows[workflow].generator
-    DatasetDesign = workflows[workflow].dataset_design
+    Generator = workflows[args.workflow].generator
+    DatasetDesign = workflows[args.workflow].dataset_design
     job_generator = Generator(
-        file_manifest_file=file_manifest_file,
-        input_path=input_path,
+        file_manifest_file=args.file_manifest_file,
+        input_path=args.input_path,
         dataset_design_class=DatasetDesign,
     )
-    job_generator.write_job_specification_table(job_specification_table_filename)
-    job_generator.write_dataset_metadata_files_list(dataset_metadata_files_list_file)
-
+    job_generator.write_job_specification_table(args.job_specification_table, args.outcomes_file)
+    job_generator.write_dataset_metadata_files_list(args.dataset_metadata_files_list_file)
+    job_generator.write_elementary_phenotypes_filename(args.elementary_phenotypes_filename)
+    job_generator.write_composite_phenotypes_filename(args.composite_phenotypes_filename)

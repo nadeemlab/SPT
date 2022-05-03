@@ -25,8 +25,6 @@ class DensityAnalyzer(SingleJobAnalyzer):
         **kwargs,
     ):
         super(DensityAnalyzer, self).__init__(**kwargs)
-        self.retrieve_input_filename()
-        self.retrieve_sample_identifier()
         self.calculator = DensityCalculator(
             input_filename = self.get_input_filename(),
             sample_identifier = self.get_sample_identifier(),
@@ -34,6 +32,10 @@ class DensityAnalyzer(SingleJobAnalyzer):
             computational_design = self.computational_design,
         )
         logger.info('Density job started.')
+
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        pass
 
     def _calculate(self):
         self.calculator.calculate_density()

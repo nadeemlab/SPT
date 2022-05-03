@@ -8,7 +8,6 @@ from os.path import join
 
 import spatialprofilingtoolbox as spt
 
-
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         description = ''.join([
@@ -16,58 +15,20 @@ if __name__=='__main__':
             'commands.',
         ])
     )
-    generate_jobs = 'generate-jobs'
-    single_job = 'single-job'
     aggregate_results = 'aggregate-results'
-    commands = [generate_jobs, single_job, aggregate_results]
+    commands = [aggregate_results]
     parser.add_argument(
         'command_token',
         nargs='?',
         choices = commands,
     )
-    parser.add_argument('--input-file-identifier',
-        dest='input_file_identifier',
-        type=str,
-        required=False,
-        help='An input file identifier, as it appears in the file manifest.',
-    )
-    parser.add_argument('--fov',
-        dest='fov_index',
-        type=int,
-        required=False,
-        help=''.join([
-            'Indication of field of view to consider (one-based integer ',
-            'index). Only pertains to some workflows.',
-        ])
-    )
-    parser.add_argument('--intermediate-database-filename',
-        dest='intermediate_database_filename',
-        type=str,
-        required=False,
-        help=''.join([
-            'Filename for sqlite database file storing intermediate results.',
-        ])
-    )
     args = parser.parse_args()
     parameters = {}
-    value = args.input_file_identifier
-    if value is not None:
-        parameters['input_file_identifier'] = value
-    value = args.fov_index
-    if value is not None:
-        parameters['fov_index'] = value
-    value = args.intermediate_database_filename
-    if value is not None:
-        parameters['intermediate_database_filename'] = value
 
     command = args.command_token
 
     if not command in commands:
         exit()
-
-    if command == single_job:
-        analyzer = spt.get_analyzer(**parameters)
-        analyzer.calculate()
 
     if command == aggregate_results:
         integrator = spt.get_integrator(**parameters)

@@ -16,15 +16,42 @@ process echo_environment_variables {
     """
 }
 
+process query_for_outcomes_file {
+    input:
+    path file_manifest_file
+    val input_path
+
+    output:
+    path 'outcomes_filename', emit: outcomes_file
+    path 'found', emit: found
+
+    script:
+    """
+    spt-query-for-file-by-data-type \
+     --data-type='Outcome' \
+     --input-path='$input_path' \
+     --file-manifest-file='$file_manifest_file' \
+     --retrieved-filename-file=outcomes_filename \
+     --found-status-file=found
+    if [[ "\$(cat found)" == "0" ]];
+    then
+        echo -n "$input_path/$file_manifest_file" > outcomes_filename
+    fi
+    """    
+}
+
 process generate_run_information {
     input:
     val workflow
     path file_manifest_file
     val input_path
+    path outcomes_file
 
     output:
     path 'job_specification_table.csv', emit: job_specification_table
     path 'dataset_metadata_files_list.txt', emit: dataset_metadata_files_list
+    path 'elementary_phenotypes_filename', emit: elementary_phenotypes_filename
+    path 'composite_phenotypes_filename', emit: composite_phenotypes_filename
 
     script:
     """
@@ -32,8 +59,11 @@ process generate_run_information {
      --workflow='$workflow' \
      --file-manifest-file='$file_manifest_file' \
      --input-path='$input_path' \
+     --outcomes-file='$outcomes_file' \
      --job-specification-table=job_specification_table.csv \
-     --dataset-metadata-files-list-file=dataset_metadata_files_list.txt
+     --dataset-metadata-files-list-file=dataset_metadata_files_list.txt \
+     --elementary-phenotypes-filename=elementary_phenotypes_filename \
+     --composite-phenotypes-filename=composite_phenotypes_filename
     """
 }
 
@@ -48,16 +78,15 @@ process query_for_compartments_file {
 
     script:
     """
-    spt-query-for-compartments-file \
+    spt-query-for-file-by-identifier \
+     --file-identifier='Compartments file' \
      --input-path='$input_path' \
      --file-manifest-file='$file_manifest_file' \
-     --compartments-list-file=compartments_filename \
+     --retrieved-filename-file=compartments_filename \
      --found-status-file=found
     if [[ "\$(cat found)" == "0" ]];
     then
         echo -n "$input_path/$file_manifest_file" > compartments_filename
-        # This is a workaround. NF does not seem to support behavior
-        # conditional on existence/non-existence of a given file.
     fi
     """
 }
@@ -75,7 +104,7 @@ process extract_compartments {
     """
     if [[ "\$(cat $found)" == "1" ]];
     then
-        cat $compartments_file_if_known > .compartments.txt
+        cp $compartments_file_if_known .compartments.txt
     else
         spt-extract-compartments \
          $cell_manifest_files \
@@ -84,16 +113,18 @@ process extract_compartments {
     """
 }
 
-process single_job {
+process core_job {
     memory { 2.GB * task.attempt }
 
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     maxRetries 4
 
     input:
+    val workflow
     path file_manifest_file
-    tuple val(input_file_identifier), file(input_filename), val(job_index)
-    path extra_dependencies
+    tuple val(input_file_identifier), file(input_filename), val(job_index), val(sample_identifier), val(outcome)
+    path elementary_phenotypes
+    path composite_phenotypes
     path compartments
 
     output:
@@ -102,7 +133,16 @@ process single_job {
 
     script:
     """
-    spt-pipeline single-job --input-file-identifier="$input_file_identifier" --intermediate-database-filename=intermediate${job_index}.db
+    spt-core-job \
+     --workflow='$workflow' \
+     --input-file-identifier='$input_file_identifier' \
+     --input-filename='$input_filename' \
+     --sample-identifier='$sample_identifier' \
+     --outcome='$outcome' \
+     --elementary-phenotypes-file='$elementary_phenotypes' \
+     --composite-phenotypes-file='$composite_phenotypes' \
+     --compartments-file='$compartments' \
+     --intermediate-database-filename=intermediate${job_index}.db
     """
 }
 
@@ -180,25 +220,44 @@ workflow {
     environment_ch.input_path.map{ it.text }
         .set{ input_path_ch }
 
+    query_for_outcomes_file(
+        file_manifest_ch,
+        input_path_ch,
+    )
+        .outcomes_file
+        .map{ file(it.text) }
+        .set{ outcomes_file_ch }
+
     generate_run_information(
         workflow_ch,
         file_manifest_ch,
         input_path_ch,
-    ).set { job_info_ch }
+        outcomes_file_ch,
+    ).set { run_information_ch }
 
-    job_info_ch
+    run_information_ch
         .job_specification_table
         .splitCsv(header: true)
-        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index) }
+        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index, row.sample_identifier, row.outcome) }
         .set{ job_specifications_ch }
 
-    job_info_ch
+    run_information_ch
         .dataset_metadata_files_list
         .map{ file(it) }
         .splitText(by: 1)
         .map{ file(it.trim()) }
         .collect()
         .set{ dataset_metadata_files_ch }
+
+    run_information_ch
+        .elementary_phenotypes_filename
+        .map{ file(it.text) }
+        .set{ elementary_phenotypes_ch }
+
+    run_information_ch
+        .composite_phenotypes_filename
+        .map{ file(it.text) }
+        .set{ composite_phenotypes_ch }
 
     job_specifications_ch
         .map{ row -> row[1] }
@@ -219,6 +278,17 @@ workflow {
         .set{ compartments_ch }
 
 
+    core_job(
+        workflow_ch,
+        file_manifest_ch,
+        job_specifications_ch,
+        elementary_phenotypes_ch,
+        composite_phenotypes_ch,
+        compartments_ch,
+    )
+        .set { core_job_results_ch }
+
+
     job_specifications_ch
         .map{ row -> "intermediate" + row[2] + ".db" }
         .collect()
@@ -227,20 +297,12 @@ workflow {
 
     report_version().set{ version_print }
 
-    single_job(
-        file_manifest_ch,
-        job_specifications_ch,
-        dataset_metadata_files_ch,
-        compartments_ch,
-    )
-        .set { single_job_results_ch }
-
-    single_job_results_ch
+    core_job_results_ch
         .sqldb
         .collect()
         .set{ all_intermediate_databases }
 
-    single_job_results_ch
+    core_job_results_ch
         .performancereport
         .collect()
         .set{ all_performance_reports_ch }

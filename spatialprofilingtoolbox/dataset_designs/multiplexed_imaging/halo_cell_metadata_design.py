@@ -18,47 +18,15 @@ class HALOCellMetadataDesign:
     exported from the HALO software.
     """
     def __init__(self,
-        input_path: str=None,
-        file_manifest_file: str=None,
-        compartments: list=None,
+        elementary_phenotypes_file: str=None,
+        compartments_file: str=None,
         **kwargs,
     ):
-        """
-        :param input_path: Path to input data files.
-        :type input_path: str
-
-        :param file_manifest_file: The file manifest listing the input files.
-        :type file_manifest_file: str
-
-        :param file_manifest_file: File containing list of input data files, including
-            metadata files. This manifest should include one CSV file entry with File
-            ID "Elementary phenotypes file".
-        :type file_manifest_file: str
-
-        :param compartments: The names of the regional compartments as the appear in
-            cell manifest files.
-        :type compartment: list
-        """
-        elementary_phenotypes_file = get_input_filename_by_identifier(
-            input_file_identifier = 'Elementary phenotypes file',
-        )
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-        if compartments:
-            self.compartments = compartments
-        else:
-            if not 'compartments_file' in kwargs:
-                compartments_file = 'compartments.txt'
-            else:
-                compartments_file = kwargs['compartments_file']
-            if not exists(compartments_file):
-                self.compartments = extract_compartments(
-                    HALOCellMetadataDesign.get_cell_manifest_descriptor(),
-                )
-            else:
-                self.compartments = open(compartments_file, 'rt').read().strip('\n').split('\n')
+        self.compartments = open(compartments_file, 'rt').read().strip('\n').split('\n')
 
     def get_FOV_column(self):
         """

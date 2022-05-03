@@ -3,51 +3,6 @@ nextflow.enable.dsl = 2
 
 skip_semantic_parse_='true'
 
-process write_config_file {
-    output:
-    path '.spt_pipeline.json'
-
-    script:
-    """
-    #!/usr/bin/env python3
-    import json
-
-    config = {}
-    config['workflow'] = '$workflow_'
-    config['input_path'] = '$input_path_'
-    if '$skip_semantic_parse_' != '':
-        config['skip_semantic_parse'] = True if '$skip_semantic_parse_' == 'true' else False
-
-    with open('.spt_pipeline.json', 'wt') as f:
-        f.write(json.dumps(config, indent=4))
-    """
-}
-
-process retrieve_file_manifest_file {
-    input:
-    path config_file
-
-    output:
-    stdout
-
-    script:
-    """
-    #!/usr/bin/env python3
-    import os
-    from os.path import join
-    import json
-
-    parameters = json.load(open('$config_file', 'rt'))
-    input_path = parameters['input_path']
-    if 'file_manifest_file' in parameters:
-        manifest = parameters['file_manifest_file']
-    else:
-        manifest = 'file_manifest.tsv'
-    file_manifest_file = join(input_path, manifest)
-    print(file_manifest_file, end='')
-    """
-}
-
 process report_version {
     output:
     stdout
@@ -62,7 +17,6 @@ process report_version {
 
 process list_auxiliary_job_inputs {
     input:
-    path config_file
     path file_manifest_file
 
     output:
@@ -74,23 +28,22 @@ process list_auxiliary_job_inputs {
     """
 }
 
-process generate_jobs {
+process generate_job_specifications {
     input:
-    path config_file
     path file_manifest_file
+    val input_path
 
     output:
     stdout
 
     script:
     """
-    spt-pipeline generate-jobs
+    spt-generate-job-specifications --workflow='$workflow_' --input-path='$input_path'
     """
 }
 
 process list_all_jobs_inputs {
     input:
-    path config_file
     path file_manifest_file
 
     output:
@@ -104,7 +57,6 @@ process list_all_jobs_inputs {
 
 process list_all_compartments {
     input:
-    path config_file
     path file_manifest_file
     path extra_dependencies
 
@@ -126,7 +78,6 @@ process semantic_parsing {
     publishDir 'results'
 
     input:
-    path config_file
     path file_manifest_file
     path extra_dependencies
     path compartments
@@ -147,7 +98,6 @@ process single_job {
     maxRetries 4
 
     input:
-    path config_file
     path file_manifest_file
     tuple val(input_file_identifier), file(input_filename), val(job_index)
     path extra_dependencies
@@ -193,7 +143,6 @@ process aggregate_results {
     publishDir 'results'
 
     input:
-    path config_file
     path file_manifest_file
     path 'intermediate.0.db'
     path 'performance_report.0.md'
@@ -214,16 +163,13 @@ process aggregate_results {
 }
 
 workflow {
-    write_config_file().set{ config_file_ch }
-
-    retrieve_file_manifest_file(config_file_ch)
+    Channel.value($file_manifest_file_)
         .map{ file(it) }
         .set{ file_manifest_ch }
 
     report_version().set{ version_print }
 
-    generate_jobs(
-        config_file_ch,
+    generate_job_specifications(
         file_manifest_ch,
     )
         .splitCsv(header: true)
@@ -237,7 +183,6 @@ workflow {
         .set{ all_intermediate_database_filenames }
 
     list_auxiliary_job_inputs(
-        config_file_ch,
         file_manifest_ch,
     )
         .map{ file(it) }
@@ -247,7 +192,6 @@ workflow {
         .set{ auxiliary_job_input_files_ch }
 
     list_all_jobs_inputs(
-        config_file_ch,
         file_manifest_ch,
     )
         .map{ file(it) }
@@ -257,21 +201,18 @@ workflow {
         .set{ all_job_input_files_ch }
 
     list_all_compartments(
-        config_file_ch,
         file_manifest_ch,
         all_job_input_files_ch,
     )
         .set{ compartments_ch }
 
     semantic_parsing(
-        config_file_ch,
         file_manifest_ch,
         all_job_input_files_ch,
         compartments_ch,
     )
 
     single_job(
-        config_file_ch,
         file_manifest_ch,
         jobs_ch,
         auxiliary_job_input_files_ch,
@@ -306,7 +247,6 @@ workflow {
         .set{ performance_report_ch }
 
     aggregate_results(
-        config_file_ch,
         file_manifest_ch,
         merged_database_ch,
         performance_report_ch,

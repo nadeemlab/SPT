@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+import argparse
+import os
+from os.path import join
+
+import pandas as pd
+
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
+from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+compartment_file_identifier = HALOCellMetadataDesign.get_compartment_file_identifier()
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'Scan file manifest for compartment names list file.',
+    )
+    parser.add_argument(
+        '--input-path',
+        dest='input_path',
+        type=str,
+        required=True,
+    )
+    parser.add_argument(
+        '--file-manifest-file',
+        dest='file_manifest_file',
+        type=str,
+        required=True,
+    )
+    parser.add_argument(
+        '--compartments-list-file',
+        dest='compartments_list_file',
+        type=str,
+        required=True,
+        help='Filename for output list of compartment names.',
+    )
+    parser.add_argument(
+        '--found-status-file',
+        dest='found_status_file',
+        type=str,
+        required=True,
+        help='Filename for output file containing "found" status flag (0 for no, 1 for yes).',
+    )
+    args = parser.parse_args()
+
+    compartments_filename = get_input_filename_by_identifier(
+        input_file_identifier=compartment_file_identifier,
+        file_manifest_filename=args.file_manifest_file,
+    )
+    if compartments_filename is None:
+        compartments_filename = ''
+        status = '0'
+    else:
+        compartments_filename = join(args.input_path, compartments_filename)
+        status = '1'
+
+    with open(args.compartments_list_file, 'wt') as file:
+        file.write(compartments_filename)
+
+    with open(args.found_status_file, 'wt') as file:
+        file.write(status)

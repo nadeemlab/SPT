@@ -40,6 +40,7 @@ def get_input_filenames_by_data_type(
 
 def get_input_filename_by_identifier(
     input_file_identifier: str=None,
+    file_manifest_filename: str=None,
 ):
     """
     Uses the file identifier to lookup the name of the associated file in the file
@@ -55,6 +56,8 @@ def get_input_filename_by_identifier(
     :return: The filename.
     :rtype: str
     """
+    if file_manifest_filename is None:
+        raise ValueError('Need to supply file_manifest_filename.')
     file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
     records = file_metadata[file_metadata['File ID'] == input_file_identifier]
     filenames = list(records['File name'])

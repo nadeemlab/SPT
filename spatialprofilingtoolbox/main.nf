@@ -37,50 +37,48 @@ process generate_job_specifications {
     """
 }
 
+process query_for_compartments_file {
+    input:
+    path file_manifest_file
+    val input_path
+
+    output:
+    path 'compartments_filename', emit: compartments_file
+    path 'found', emit: found
+
+    script:
+    """
+    spt-query-for-compartments-file \
+     --input-path='$input_path' \
+     --file-manifest-file='$file_manifest_file' \
+     --compartments-list-file=compartments_filename \
+     --found-status-file=found
+    if [[ "\$(cat found)" == "0" ]];
+    then
+        echo -n "$input_path/$file_manifest_file" > compartments_filename
+    fi
+    """
+}
+
 process extract_compartments {
     input:
+    path compartments_file_if_known
+    path found
     path cell_manifest_files
 
     output:
-    path 'compartments.txt'
+    path '.compartments.txt', emit: compartments_file
 
     script:
     """
-    spt-extract-compartments $cell_manifest_files --compartments-list-file=compartments.txt
-    """
-}
-
-process report_version {
-    output:
-    stdout
-
-    script:
-    """
-    #!/bin/bash
-    echo -n "SPT v"
-    spt-print version
-    """
-}
-
-process semantic_parsing {
-    memory { 2.GB * task.attempt }
-
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 5
-
-    publishDir 'results'
-
-    input:
-    path file_manifest_file
-    path extra_dependencies
-    path compartments
-
-    output:
-    path 'normalized_source_data.db'
-
-    script:
-    """
-    spt-pipeline semantic-parse
+    if [[ "\$(cat $found)" == "1" ]];
+    then
+        cat $compartments_file_if_known > .compartments.txt
+    else
+        spt-extract-compartments \
+         $cell_manifest_files \
+         --compartments-list-file=.compartments.txt
+    fi
     """
 }
 
@@ -103,6 +101,18 @@ process single_job {
     script:
     """
     spt-pipeline single-job --input-file-identifier="$input_file_identifier" --intermediate-database-filename=intermediate${job_index}.db
+    """
+}
+
+process report_version {
+    output:
+    stdout
+
+    script:
+    """
+    #!/bin/bash
+    echo -n "SPT v"
+    spt-print version
     """
 }
 
@@ -182,7 +192,21 @@ workflow {
 
     job_specifications_ch
         .map{ row -> row[1] }
+        .collect()
         .set{ cell_manifest_files_ch }
+
+    query_for_compartments_file(
+        file_manifest_ch,
+        input_path_ch,
+    ).set{ compartments_query_ch }
+
+    extract_compartments(
+        compartments_query_ch.compartments_file.map{ file(it.text) },
+        compartments_query_ch.found,
+        cell_manifest_files_ch,
+    )
+        .compartments_file
+        .set{ compartments_ch }
 
     specifications_ch
         .dataset_metadata_files_list
@@ -192,6 +216,7 @@ workflow {
         .collect()
         .set{ dataset_metadata_files_ch }
 
+
     job_specifications_ch
         .map{ row -> "intermediate" + row[2] + ".db" }
         .collect()
@@ -199,11 +224,6 @@ workflow {
         .set{ all_intermediate_database_filenames }
 
     report_version().set{ version_print }
-
-    extract_compartments(
-        cell_manifest_files_ch,
-    )
-        .set{ compartments_ch }
 
     single_job(
         file_manifest_ch,

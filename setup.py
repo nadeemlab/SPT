@@ -55,6 +55,7 @@ setuptools.setup(
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-configure',
         'spatialprofilingtoolbox/scripts/spt-generate-job-specifications',
+        'spatialprofilingtoolbox/scripts/spt-query-for-compartments-file',
         'spatialprofilingtoolbox/scripts/spt-extract-compartments',
         'spatialprofilingtoolbox/scripts/spt-pipeline',
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',

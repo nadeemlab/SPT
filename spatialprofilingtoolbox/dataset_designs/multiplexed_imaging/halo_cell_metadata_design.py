@@ -121,7 +121,14 @@ class HALOCellMetadataDesign:
             HALOCellMetadataDesign.get_cell_manifest_descriptor(),
             'simulated HALO-exported cell manifest',
         ]
-        return 'HALO software cell manifest'
+
+    @staticmethod
+    def get_compartment_column_name():
+        return 'Classifier Label'
+
+    @staticmethod
+    def get_compartment_file_identifier():
+        return 'Compartments list'
 
     def get_compartments(self):
         """
@@ -342,7 +349,7 @@ class HALOCellMetadataDesign:
         elif compartment == 'Tumor':
             signature = self.tumor_scope_signature(table)
         elif compartment in self.get_compartments():
-            signature = self.get_pandas_signature(table, {'Classifier Label' : compartment})
+            signature = self.get_pandas_signature(table, {HALOCellMetadataDesign.get_compartment_column_name() : compartment})
 
         if signature is None:
             logger.error('Could not define compartment %s, from among %s', compartment, self.get_compartments())
@@ -352,14 +359,14 @@ class HALOCellMetadataDesign:
 
     def non_tumor_stromal_scope_signature(self, table, include=None):
         signature = {
-            'Classifier Label' : 'Stroma',
+            HALOCellMetadataDesign.get_compartment_column_name() : 'Stroma',
         }
         if include:
             signature[include] = '+'
         s1 = self.get_pandas_signature(table, signature)
 
         signature = {
-            'Classifier Label' : 'Non-Tumor',
+            HALOCellMetadataDesign.get_compartment_column_name() : 'Non-Tumor',
         }
         if include:
             signature[include] = '+'
@@ -369,7 +376,7 @@ class HALOCellMetadataDesign:
 
     def tumor_scope_signature(self, table, include=None):
         signature = {
-            'Classifier Label' : 'Tumor',
+            HALOCellMetadataDesign.get_compartment_column_name() : 'Tumor',
         }
         if include:
             signature[include] = '+'

@@ -17,10 +17,9 @@ if __name__=='__main__':
         ])
     )
     generate_jobs = 'generate-jobs'
-    semantic_parse = 'semantic-parse'
     single_job = 'single-job'
     aggregate_results = 'aggregate-results'
-    commands = [generate_jobs, semantic_parse, single_job, aggregate_results]
+    commands = [generate_jobs, single_job, aggregate_results]
     parser.add_argument(
         'command_token',
         nargs='?',
@@ -65,14 +64,6 @@ if __name__=='__main__':
 
     if not command in commands:
         exit()
-
-    if command == list_all_jobs_inputs:
-        job_generator = spt.get_job_generator(**parameters)
-        job_generator.list_all_jobs_inputs()
-
-    if command == semantic_parse:
-        with spt.get_semantic_source_parser(**parameters) as parser:
-            parser.parse()
 
     if command == single_job:
         analyzer = spt.get_analyzer(**parameters)

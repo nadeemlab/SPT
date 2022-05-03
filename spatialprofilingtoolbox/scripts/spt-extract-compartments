@@ -2,16 +2,20 @@
 import argparse
 import csv
 
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
+
 def extract_compartments_single_file(filename):
     with open(filename, 'r') as file:
         reader = csv.reader(file)
         header_row = next(reader)
         key = {header_row[i] : i for i in range(len(header_row))}
         entry = lambda row, name: row[key[name]]
-        if not 'Classifier Label' in header_row:
-            logger.error('"Classifier Label" is missing from file "%s".', filename)
+        if not compartment_column_name in header_row:
+            raise ValueError('"%s" is missing from file "%s".', compartment_column_name, filename)
         compartments = [
-            entry(row, 'Classifier Label')
+            entry(row, compartment_column_name)
             for row in reader
         ]
         return sorted(list(set(compartments)))
@@ -22,27 +26,26 @@ if __name__=='__main__':
     )
     parser.add_argument(
         'cell_manifest',
-        dest='cell_manifests',
         nargs='+',
         type=str,
-        required=True,
     )
     parser.add_argument(
-    	'--compartments-list',
+        '--compartments-list-file',
         dest='compartments_list_file',
         type=str,
         required=True,
-        help=''.join([
-            'Filename for output list of compartment names.',
-        ])
+        help='Filename for output list of compartment names.',
     )
     args = parser.parse_args()
 
+    cell_manifests = args.cell_manifest
+    compartments_list_file = args.compartments_list_file
+
     compartments = set([])
-    for cell_manifest in args.cell_manifest:
-    	compartments = compartments.union(set(
-    		extract_compartments_single_file(cell_manifest)
-    	))
+    for cell_manifest in cell_manifests:
+        compartments = compartments.union(set(
+            extract_compartments_single_file(cell_manifest)
+        ))
     compartments = sorted(list(compartments))
-    with open(args.compartments_list_file, 'wt') as file:
-    	file.write('\n'.join(compartments))
+    with open(compartments_list_file, 'wt') as file:
+        file.write('\n'.join(compartments))

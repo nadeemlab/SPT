@@ -5,7 +5,7 @@ import hashlib
 
 import pandas as pd
 
-from .configuration_settings import file_manifest_filename
+from .configuration_settings import default_file_manifest_filename
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 

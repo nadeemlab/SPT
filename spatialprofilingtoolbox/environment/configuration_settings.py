@@ -1,6 +1,6 @@
 import importlib.resources
 
-file_manifest_filename = 'file_manifest.tsv'
+default_file_manifest_filename = 'file_manifest.tsv'
 
 def get_version():
     with importlib.resources.path('spatialprofilingtoolbox', 'version.txt') as path:

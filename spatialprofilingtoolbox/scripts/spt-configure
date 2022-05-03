@@ -17,7 +17,7 @@ jinja_environment = Environment(loader=BaseLoader)
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.workflows import workflow_names
-from spatialprofilingtoolbox.environment.configuration_settings import file_manifest_filename
+from spatialprofilingtoolbox.environment.configuration_settings import default_file_manifest_filename
 
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'
@@ -85,7 +85,6 @@ if __name__=='__main__':
     parser.add_argument(
         '--workflow',
         choices=workflow_names,
-        help='',
         required=True,
     )
     parser.add_argument(
@@ -141,7 +140,7 @@ if __name__=='__main__':
     variables['workflow'] = args.workflow
 
     if isdir(args.input_path):
-        file_manifest_path = join(args.input_path, file_manifest_filename)
+        file_manifest_path = join(args.input_path, default_file_manifest_filename)
         if exists(file_manifest_path):
             variables['input_path'] = args.input_path
             variables['file_manifest_filename'] = file_manifest_path

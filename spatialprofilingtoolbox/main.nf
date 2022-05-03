@@ -1,16 +1,52 @@
 
 nextflow.enable.dsl = 2
 
-skip_semantic_parse_='true'
-
-process retrieve_file_manifest_filename {
+process echo_environment_variables {
     output:
-    stdout
+    path 'workflow', emit: workflow
+    path 'file_manifest_filename', emit: file_manifest_filename
+    path 'input_path', emit: input_path
 
     script:
     """
     #!/bin/bash
-    echo -n "$file_manifest_filename_"
+    echo -n "$workflow_" > workflow
+    echo -n "$file_manifest_filename_" > file_manifest_filename
+    echo -n "$input_path_" > input_path
+    """
+}
+
+process generate_job_specifications {
+    input:
+    val workflow
+    path file_manifest_file
+    val input_path
+
+    output:
+    path 'job_specification_table.csv', emit: job_specification_table
+    path 'dataset_metadata_files_list.txt', emit: dataset_metadata_files_list
+
+    script:
+    """
+    spt-generate-job-specifications \
+     --workflow='$workflow' \
+     --file-manifest-file='$file_manifest_file' \
+     --input-path='$input_path' \
+     --job-specification-table=job_specification_table.csv \
+     --dataset-metadata-files-list-file=dataset_metadata_files_list.txt
+    """
+}
+
+process extract_compartments {
+    input:
+    path cell_manifest_files
+
+    output:
+    path 'compartments.txt'
+
+    script:
+    """
+    spt-extract-compartments $cell_manifest_files --compartments-list-file=compartments.txt
     """
 }
 
@@ -23,59 +59,6 @@ process report_version {
     #!/bin/bash
     echo -n "SPT v"
     spt-print version
-    """
-}
-
-process list_auxiliary_job_inputs {
-    input:
-    path file_manifest_file
-
-    output:
-    path 'job_input_files.txt'
-
-    script:
-    """
-    spt-pipeline list-auxiliary-job-inputs --job-inputs=job_input_files.txt
-    """
-}
-
-process generate_job_specifications {
-    input:
-    path file_manifest_file
-
-    output:
-    stdout
-
-    script:
-    """
-    spt-generate-job-specifications --workflow='$workflow_' --input-path='$input_path_'
-    """
-}
-
-process list_all_jobs_inputs {
-    input:
-    path file_manifest_file
-
-    output:
-    path 'all_jobs_input_files.txt'
-
-    script:
-    """
-    spt-pipeline list-all-jobs-inputs --all-jobs-inputs=all_jobs_input_files.txt
-    """
-}
-
-process list_all_compartments {
-    input:
-    path file_manifest_file
-    path extra_dependencies
-
-    output:
-    path 'compartments.txt'
-
-    script:
-    """
-    spt-pipeline list-all-compartments --compartments-file=compartments.txt
     """
 }
 
@@ -173,59 +156,59 @@ process aggregate_results {
 }
 
 workflow {
-    retrieve_file_manifest_filename()
-        .map{ file(it) }
+    echo_environment_variables()
+        .set{ environment_ch }
+
+    environment_ch.file_manifest_filename.map{ file(it.text) }
         .set{ file_manifest_ch }
 
-    report_version().set{ version_print }
+    environment_ch.workflow.map{ it.text }
+        .set{ workflow_ch }
+
+    environment_ch.input_path.map{ it.text }
+        .set{ input_path_ch }
 
     generate_job_specifications(
+        workflow_ch,
         file_manifest_ch,
-    )
+        input_path_ch,
+    ).set { specifications_ch }
+
+    specifications_ch
+        .job_specification_table
         .splitCsv(header: true)
         .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index) }
-        .set{ jobs_ch }
+        .set{ job_specifications_ch }
 
-    jobs_ch
+    job_specifications_ch
+        .map{ row -> row[1] }
+        .set{ cell_manifest_files_ch }
+
+    specifications_ch
+        .dataset_metadata_files_list
+        .map{ file(it) }
+        .splitText(by: 1)
+        .map{ file(it.trim()) }
+        .collect()
+        .set{ dataset_metadata_files_ch }
+
+    job_specifications_ch
         .map{ row -> "intermediate" + row[2] + ".db" }
         .collect()
         .map{ names -> names.join(" ") }
         .set{ all_intermediate_database_filenames }
 
-    list_auxiliary_job_inputs(
-        file_manifest_ch,
-    )
-        .map{ file(it) }
-        .splitText(by: 1)
-        .map{ file(it.trim()) }
-        .collect()
-        .set{ auxiliary_job_input_files_ch }
+    report_version().set{ version_print }
 
-    list_all_jobs_inputs(
-        file_manifest_ch,
-    )
-        .map{ file(it) }
-        .splitText(by: 1)
-        .map{ file(it.trim()) }
-        .collect()
-        .set{ all_job_input_files_ch }
-
-    list_all_compartments(
-        file_manifest_ch,
-        all_job_input_files_ch,
+    extract_compartments(
+        cell_manifest_files_ch,
     )
         .set{ compartments_ch }
 
-    semantic_parsing(
-        file_manifest_ch,
-        all_job_input_files_ch,
-        compartments_ch,
-    )
-
     single_job(
         file_manifest_ch,
-        jobs_ch,
-        auxiliary_job_input_files_ch,
+        job_specifications_ch,
+        dataset_metadata_files_ch,
         compartments_ch,
     )
         .set { single_job_results_ch }
@@ -260,7 +243,7 @@ workflow {
         file_manifest_ch,
         merged_database_ch,
         performance_report_ch,
-        auxiliary_job_input_files_ch,
+        dataset_metadata_files_ch,
         compartments_ch,
     )
 }

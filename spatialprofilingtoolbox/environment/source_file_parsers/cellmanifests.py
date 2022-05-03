@@ -6,7 +6,7 @@ import mmap
 import shapefile
 import pandas as pd
 
-from ..configuration_settings import file_manifest_filename
+from ..configuration_settings import default_file_manifest_filename
 from ..file_io import compute_sha256
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceFileSemanticParser
@@ -35,7 +35,7 @@ class CellManifestsParser(SourceFileSemanticParser):
         if record_performance:
             t = PerformanceTimer()
             t.record_timepoint('Initial')
-        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
+        file_metadata = pd.read_csv(default_file_manifest_filename, sep='\t')
         halo_data_type = 'HALO software cell manifest'
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type

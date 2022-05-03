@@ -7,7 +7,7 @@ from os.path import getsize
 
 import pandas as pd
 
-from .configuration_settings import file_manifest_filename
+from .configuration_settings import default_file_manifest_filename # to be dep
 from .database_context_utility import WaitingDatabaseContextManager
 from .file_io import get_input_filename_by_identifier
 from .log_formats import colorized_logger

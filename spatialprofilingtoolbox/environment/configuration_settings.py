@@ -1,8 +1,8 @@
 import importlib.resources
 
-default_file_manifest_filename = 'file_manifest.tsv'
 elementary_phenotypes_file_identifier = 'Elementary phenotypes file'
 composite_phenotypes_file_identifier = 'Complex phenotypes file'
+default_file_manifest_filename = 'file_manifest.tsv'
 
 def get_version():
     with importlib.resources.path('spatialprofilingtoolbox', 'version.txt') as path:

@@ -9,12 +9,9 @@ import sqlite3
 
 import pandas as pd
 import numpy as np
-from scipy.spatial.distance import cdist
-from scipy.sparse import coo_matrix
 import sklearn
 from sklearn.neighbors import BallTree
 
-from ...environment.file_io import get_outcomes_files
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.calculator import Calculator
 from ...environment.log_formats import colorized_logger
@@ -27,13 +24,12 @@ class PhenotypeProximityCalculator(Calculator):
     """
     The main class of the calculator.
     """
-    radius_pixels_lower_limit = 10
-    radius_pixels_upper_limit = 100
-    radius_number_increments = 4
+    radii = [20, 60, 100]
 
     def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
+        outcome: str=None,
         **kwargs,
     ):
         """
@@ -50,10 +46,7 @@ class PhenotypeProximityCalculator(Calculator):
         super(PhenotypeProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        outcomes_file = get_outcomes_files()[0]
-        self.outcome = self.pull_in_outcome_data(outcomes_file)[
-            sample_identifier
-        ]
+        self.outcome = outcome
         self.fov_lookup = {}
 
     def calculate_proximity(self):
@@ -490,21 +483,12 @@ class PhenotypeProximityCalculator(Calculator):
                     manager.execute(cmd)
                 except sqlite3.OperationalError as exception:
                     logger.error('SQL query failed: %s', cmd)
-                    print(exception)
+                    raise exception
         self.timer.record_timepoint('Done writing cell pair counts to file')
 
     @staticmethod
     def get_radii_of_interest():
-        """
-        Creates a scale-adjusted range of values between the stipulated lower and upper
-        limits, with the stipulated number of increments.
-        """
-        limit_lower = PhenotypeProximityCalculator.radius_pixels_lower_limit
-        limit_upper = PhenotypeProximityCalculator.radius_pixels_upper_limit
-        increments = PhenotypeProximityCalculator.radius_number_increments
-
-        base = exp((log(limit_upper / limit_lower) / increments))
-        return [int(limit_lower * math_pow(base, i)) for i in range(increments + 1)]
+        return PhenotypeProximityCalculator.radii
 
     @staticmethod
     def flatten_lists(the_lists):

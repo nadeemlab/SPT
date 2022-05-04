@@ -19,6 +19,7 @@ class SingleJobAnalyzer:
         input_file_identifier: str=None,
         input_filename: str=None,
         sample_identifier: str=None,
+        outcome: str=None,
         dataset_design=None,
         computational_design=None,
         **kwargs,
@@ -26,6 +27,7 @@ class SingleJobAnalyzer:
         self.input_file_identifier = input_file_identifier
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
+        self.outcome = outcome
         self.dataset_design = dataset_design
         self.computational_design = computational_design
 
@@ -65,3 +67,7 @@ class SingleJobAnalyzer:
 
     def get_sample_identifier(self):
         return self.sample_identifier
+
+    def get_outcome(self):
+        return self.outcome
+

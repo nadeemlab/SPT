@@ -8,9 +8,9 @@ import re
 
 import pandas as pd
 import numpy as np
-from scipy.stats import ttest_ind, kruskal
+from scipy.stats import ttest_ind
+from scipy.stats import kruskal
 
-from ...environment.file_io import get_outcomes_files
 from ...environment.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 
@@ -28,11 +28,10 @@ class PhenotypeProximityAnalysisIntegrator:
         """
         :param computational_design: The design object for the proximity workflow.
         """
-        self.outcomes_file = get_outcomes_files()[0]
         self.computational_design = computational_design
         self.cell_proximity_tests = None
 
-    def calculate(self):
+    def calculate(self, filename):
         """
         Performs statistical comparison tests and writes results to file.
         """
@@ -42,7 +41,7 @@ class PhenotypeProximityAnalysisIntegrator:
         )
         cell_proximity_tests = self.do_outcome_tests()
         if cell_proximity_tests is not None:
-            self.export_results(cell_proximity_tests)
+            self.export_results(cell_proximity_tests, filename)
         else:
             logger.warning('No stats to export for phenotype proximity workflow.')
 
@@ -147,7 +146,7 @@ class PhenotypeProximityAnalysisIntegrator:
         cell_proximity_tests.sort_values(by=sort_order, ascending=ascending, inplace=True)
         return cell_proximity_tests
 
-    def export_results(self, cell_proximity_tests):
+    def export_results(self, cell_proximity_tests, filename):
         """
         Writes the result of the statistical tests to file, in order of statistical
         significance.
@@ -155,8 +154,7 @@ class PhenotypeProximityAnalysisIntegrator:
         :param cell_proximity_tests: Tabular form of test results.
         :type cell_proximity_tests: pandas.DataFrame
         """
-        tests_str = cell_proximity_tests.to_csv(index=False)
-        print(tests_str)
+        cell_proximity_tests.to_csv(filename, index=False)
 
     def retrieve_radius_limited_counts(self):
         """

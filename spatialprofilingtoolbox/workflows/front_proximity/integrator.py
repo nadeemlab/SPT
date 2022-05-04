@@ -1,5 +1,4 @@
 
-from ...environment.file_io import get_outcomes_files
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -15,7 +14,6 @@ class FrontProximityAnalysisIntegrator:
             computational_design:
                 Design object providing metadata specific to the front proximity pipeline.
         """
-        self.outcomes_file = get_outcomes_files()[0]
         self.computational_design = computational_design
         self.cell_proximity_tests = None
 

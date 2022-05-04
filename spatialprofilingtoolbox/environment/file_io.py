@@ -5,7 +5,6 @@ import hashlib
 
 import pandas as pd
 
-from .configuration_settings import default_file_manifest_filename
 from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
@@ -71,6 +70,3 @@ def get_input_filename_by_identifier(
         logger.error('File identifier "%s" not found.', input_file_identifier)
         return None
     return filenames[0]
-
-def get_outcomes_files():
-    return get_input_filenames_by_data_type(data_type='Outcome')

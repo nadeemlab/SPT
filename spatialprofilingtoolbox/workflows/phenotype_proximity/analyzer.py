@@ -8,7 +8,6 @@ import sqlite3
 import pandas as pd
 
 from ...environment.single_job_analyzer import SingleJobAnalyzer
-from ...environment.file_io import get_input_filename_by_identifier
 from ...environment.log_formats import colorized_logger
 from .core import PhenotypeProximityCalculator
 from .computational_design import PhenotypeProximityDesign
@@ -20,15 +19,15 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     """
     The main class of the single job.
     """
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        **kwargs
+    ):
         super(PhenotypeProximityAnalyzer, self).__init__(**kwargs)
-
-        self.retrieve_input_filename()
-        self.retrieve_sample_identifier()
-
         self.calculator = PhenotypeProximityCalculator(
             input_filename = self.get_input_filename(),
             sample_identifier = self.get_sample_identifier(),
+            outcome = self.get_outcome(),
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
         )
@@ -40,7 +39,7 @@ class PhenotypeProximityAnalyzer(SingleJobAnalyzer):
     def _calculate(self):
         self.calculator.calculate_proximity()
 
-    def initialize_intermediate_database(self):
+    def initialize_metrics_database(self):
         cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
 
         connection = sqlite3.connect(self.computational_design.get_database_uri())

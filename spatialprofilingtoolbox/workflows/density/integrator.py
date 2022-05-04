@@ -9,7 +9,8 @@ import itertools
 
 import pandas as pd
 import numpy as np
-from scipy.stats import ttest_ind, kruskal
+from scipy.stats import ttest_ind
+from scipy.stats import kruskal
 
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger

@@ -9,7 +9,6 @@ import sqlite3
 import pandas as pd
 
 from ...environment.single_job_analyzer import SingleJobAnalyzer
-from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 from .core import DensityCalculator
 from .computational_design import DensityDesign
@@ -21,19 +20,18 @@ class DensityAnalyzer(SingleJobAnalyzer):
     """
     The main class of the job.
     """
-    def __init__(self,
-        outcome: str=None,
+    def __init__(
+        self,
         **kwargs,
     ):
         super(DensityAnalyzer, self).__init__(**kwargs)
         self.calculator = DensityCalculator(
             input_filename = self.get_input_filename(),
             sample_identifier = self.get_sample_identifier(),
-            outcome = outcome,
+            outcome = self.get_outcome(),
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
         )
-        logger.info('Density job started.')
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -63,6 +61,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
         connection.commit()
         connection.close()
 
+        # Check if fov_lookup is still used
         fov_lookup_header = self.computational_design.get_fov_lookup_header()
         connection = sqlite3.connect(self.computational_design.get_database_uri())
         cursor = connection.cursor()

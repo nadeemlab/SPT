@@ -10,7 +10,7 @@ from .environment.configuration_settings import get_version
 
 # from .environment.skimmer import DataSkimmer
 from .environment.log_formats import colorized_logger
-__logger = colorized_logger(__name__)
+logger = colorized_logger(__name__)
 
 __version__ = get_version()
 
@@ -32,7 +32,7 @@ def get_dataset_design(workflow=None, **kwargs):
     if workflow in workflows:
         return workflows[workflow].dataset_design(**kwargs)
     else:
-        __logger.error('Workflow "%s" not supported.', str(workflow))
+        logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
 def get_computational_design(workflow=None, **kwargs):
@@ -42,7 +42,7 @@ def get_computational_design(workflow=None, **kwargs):
     if workflow in workflows:
         ComputationalDesign = workflows[workflow].computational_design
     else:
-        __logger.error('Workflow "%s" not supported.', str(workflow))
+        logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
     dataset_design = get_dataset_design(workflow = workflow, **kwargs)
@@ -63,7 +63,7 @@ def get_analyzer(workflow=None, **kwargs):
             **kwargs,
         )
     else:
-        __logger.error('Workflow "%s" not supported.', str(workflow))
+        logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError
 
 def get_integrator(workflow=None, **kwargs):
@@ -79,5 +79,5 @@ def get_integrator(workflow=None, **kwargs):
             **kwargs,
         )
     else:
-        __logger.error('Workflow "%s" not supported.', str(workflow))
+        logger.error('Workflow "%s" not supported.', str(workflow))
         raise TypeError

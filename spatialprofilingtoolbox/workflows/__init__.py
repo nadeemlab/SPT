@@ -7,15 +7,21 @@ Each of these subpackages contains the implementation details for one full pipel
 4. An **integrator**. This is the part of the pipeline that will run after any large-scale parallel jobs have completed. It is also potentially run *before* all such jobs have completed, to provide early final results on partial data.
 5. The **computational design**. This is where idiosyncratic configuration parameters specific to this pipeline are stored and managed.
 """
+import importlib
+from setuptools import find_packages
+import os
+from os.path import dirname
 
-from .density import components as density_workflow
-from .phenotype_proximity import components as phenotype_proximity_workflow
-from .front_proximity import components as front_proximity_workflow
-
-workflows = {
-    **density_workflow,
-    **phenotype_proximity_workflow,
-    **front_proximity_workflow,
+subpackages = {
+    name : importlib.import_module('.%s' % name, __name__)
+    for name in find_packages(where=dirname(__file__))
 }
-
-workflow_names = list(workflows.keys())
+workflow_components = [
+    getattr(subpackage, 'components')
+    for name, subpackage in subpackages.items()
+]
+workflow_names = [list(d.keys())[0] for d in workflow_components]
+workflows = {
+    key : [d[key] for d in workflow_components if key in d][0]
+    for key in workflow_names
+}

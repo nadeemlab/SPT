@@ -5,7 +5,6 @@ import pandas as pd
 import scipy
 from scipy.spatial import KDTree
 
-from ...environment.file_io import get_outcomes_files
 from ...environment.calculator import Calculator
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
@@ -17,20 +16,19 @@ class FrontProximityCalculator(Calculator):
     def __init__(self,
         input_filename: str=None,
         sample_identifier: str=None,
+        outcome: str=None,
         **kwargs,
     ):
         super(FrontProximityCalculator, self).__init__(**kwargs)
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
-        self.outcomes_file = get_outcomes_files()[0]
+        self.outcome = outcome
 
     def calculate_front_proximity(self):
         self.timer.record_timepoint('Started front proximity one job')
-        outcomes_dict = self.pull_in_outcome_data(self.outcomes_file)
-        outcome = outcomes_dict[self.sample_identifier]
         cells = self.create_cell_tables()
         self.timer.record_timepoint('Finished cell table creation')
-        distance_records = self.calculate_front_distance_records(cells, outcome)
+        distance_records = self.calculate_front_distance_records(cells, self.outcome)
         self.timer.record_timepoint('Finished calculating front distance')
         self.write_cell_front_distance_records(distance_records)
         self.timer.record_timepoint('Finished writing front distance')

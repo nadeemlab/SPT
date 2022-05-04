@@ -170,18 +170,6 @@ process report_run_configuration {
     """
 }
 
-process report_version {
-    output:
-    stdout
-
-    script:
-    """
-    #!/bin/bash
-    echo -n "SPT v"
-    spt-print version
-    """
-}
-
 process merge_databases {
     memory { 2.GB * task.attempt }
 

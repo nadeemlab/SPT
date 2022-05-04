@@ -122,7 +122,7 @@ process core_job {
     input:
     val workflow
     path file_manifest_file
-    tuple val(input_file_identifier), file(input_filename), val(job_index), val(sample_identifier), val(outcome)
+    tuple val(input_file_identifier), file(input_filename), val(job_index), val(outcome), val(sample_identifier)
     path elementary_phenotypes
     path composite_phenotypes
     path compartments
@@ -190,6 +190,7 @@ process aggregate_results {
     input:
     path 'intermediate.0.db'
     path 'performance_report.0.md'
+    val workflow
     path elementary_phenotypes
     path composite_phenotypes
     path compartments
@@ -205,6 +206,7 @@ process aggregate_results {
     cp intermediate.0.db intermediate.db
     cp performance_report.0.md performance_report.md
     spt-aggregate-core-results \
+     --workflow='$workflow' \
      --intermediate-database-filename=intermediate.db \
      --elementary-phenotypes-file='$elementary_phenotypes' \
      --composite-phenotypes-file='$composite_phenotypes' \
@@ -245,7 +247,7 @@ workflow {
     run_information_ch
         .job_specification_table
         .splitCsv(header: true)
-        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index, row.sample_identifier, row.outcome) }
+        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index, row.outcome, row.sample_identifier) }
         .set{ job_specifications_ch }
 
     run_information_ch
@@ -333,6 +335,7 @@ workflow {
     aggregate_results(
         merged_database_ch,
         performance_report_ch,
+        workflow_ch,
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
         compartments_ch,

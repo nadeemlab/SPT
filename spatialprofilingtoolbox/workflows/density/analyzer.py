@@ -22,12 +22,14 @@ class DensityAnalyzer(SingleJobAnalyzer):
     The main class of the job.
     """
     def __init__(self,
+        outcome: str=None,
         **kwargs,
     ):
         super(DensityAnalyzer, self).__init__(**kwargs)
         self.calculator = DensityCalculator(
             input_filename = self.get_input_filename(),
             sample_identifier = self.get_sample_identifier(),
+            outcome = outcome,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
         )

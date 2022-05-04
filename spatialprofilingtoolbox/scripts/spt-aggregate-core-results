@@ -3,6 +3,7 @@ import argparse
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import workflows
+from spatialprofilingtoolbox import get_integrator
 from spatialprofilingtoolbox.environment.computational_design import ComputationalDesign
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
@@ -17,6 +18,12 @@ if __name__=='__main__':
         indicated files. That is, it cannot "bootstrap" and open files whose names
         are discovered by reading other files' contents.
         ''',
+    )
+    parser.add_argument(
+        '--workflow',
+        dest='workflow',
+        type=str,
+        required=True,
     )
     parser.add_argument(
         '--outcomes-file',
@@ -39,5 +46,5 @@ if __name__=='__main__':
         module.solicit_cli_arguments(parser)
 
     args = vars(parser.parse_args())
-    integrator = spt.get_integrator(**args)
+    integrator = get_integrator(**args)
     integrator.calculate(args['stats_tests_file'])

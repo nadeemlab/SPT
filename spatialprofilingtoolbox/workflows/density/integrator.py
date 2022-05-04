@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind, kruskal
 
-from ...environment.file_io import get_outcomes_files
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 from .data_logging import DensityDataLogger
@@ -31,7 +30,6 @@ class DensityAnalysisIntegrator:
         :param computational_design: Design object providing metadata specific to the
             density workflow.
         """
-        self.outcomes_file = get_outcomes_files()[0]
         self.computational_design = computational_design
         self.density_tests = None
         self._fov_lookup_dict = None

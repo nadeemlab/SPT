@@ -55,8 +55,8 @@ class JobGenerator:
                 'input_file_identifier' : record['File ID'],
                 'input_filename' : join(self.input_path, record['File name']),
                 'job_index' : i,
-                'sample_identifier' : record['Sample ID'],
                 'outcome' : outcomes_dict[record['Sample ID']],
+                'sample_identifier' : record['Sample ID'],
             }
             for i, record in enumerate(records)
         ]

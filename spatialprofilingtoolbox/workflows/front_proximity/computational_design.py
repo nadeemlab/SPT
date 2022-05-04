@@ -13,6 +13,10 @@ class FrontProximityDesign(ComputationalDesign):
         """
         super(FrontProximityDesign, self).__init__(**kwargs)
 
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        pass
+
     def get_cell_front_distances_header(self):
         """
         Returns:

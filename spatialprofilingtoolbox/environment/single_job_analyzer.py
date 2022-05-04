@@ -1,13 +1,10 @@
-import hashlib
-from itertools import (takewhile,repeat)
+from itertools import takewhile
+from itertools import repeat
 import os
 from os.path import getsize
 
 import pandas as pd
 
-from .configuration_settings import default_file_manifest_filename # to be dep
-from .database_context_utility import WaitingDatabaseContextManager
-from .file_io import get_input_filename_by_identifier
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -26,21 +23,6 @@ class SingleJobAnalyzer:
         computational_design=None,
         **kwargs,
     ):
-        """
-        Args:
-            input_path (str):
-                The directory in which files listed in the file manifest should be
-                located.
-            file_manifest_file (str):
-                The file manifest file, in the format of the specification distributed
-                with the source code of this package.
-            outcomes_file (str):
-                A tabular text file assigning outcome values (in second column) to
-                sample identifiers (first column).
-            input_file_identifier (str):
-                The identifier, as it appears in the file manifest, for the file
-                associated with this job.
-        """
         self.input_file_identifier = input_file_identifier
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
@@ -70,7 +52,7 @@ class SingleJobAnalyzer:
     def log_file_info(self):
         filename = self.get_input_filename()
         number_cells = self.raw_count(filename) - 1
-        logger.info('%s cells to be parsed from source file.', number_cells)
+        logger.info('%s cells to be parsed from source file "%s".', number_cells, filename)
         logger.info('Cells source file has size %s bytes.', getsize(filename))
 
     def raw_count(self, filename):

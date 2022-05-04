@@ -3,9 +3,9 @@ nextflow.enable.dsl = 2
 
 process echo_environment_variables {
     output:
-    path 'workflow', emit: workflow
+    path 'workflow',               emit: workflow
     path 'file_manifest_filename', emit: file_manifest_filename
-    path 'input_path', emit: input_path
+    path 'input_path',             emit: input_path
 
     script:
     """
@@ -23,7 +23,7 @@ process query_for_outcomes_file {
 
     output:
     path 'outcomes_filename', emit: outcomes_file
-    path 'found', emit: found
+    path 'found',             emit: found
 
     script:
     """
@@ -48,10 +48,10 @@ process generate_run_information {
     path outcomes_file
 
     output:
-    path 'job_specification_table.csv', emit: job_specification_table
+    path 'job_specification_table.csv',     emit: job_specification_table
     path 'dataset_metadata_files_list.txt', emit: dataset_metadata_files_list
-    path 'elementary_phenotypes_filename', emit: elementary_phenotypes_filename
-    path 'composite_phenotypes_filename', emit: composite_phenotypes_filename
+    path 'elementary_phenotypes_filename',  emit: elementary_phenotypes_filename
+    path 'composite_phenotypes_filename',   emit: composite_phenotypes_filename
 
     script:
     """
@@ -74,7 +74,7 @@ process query_for_compartments_file {
 
     output:
     path 'compartments_filename', emit: compartments_file
-    path 'found', emit: found
+    path 'found',                 emit: found
 
     script:
     """
@@ -128,7 +128,7 @@ process core_job {
     path compartments
 
     output:
-    path "intermediate${job_index}.db", emit: sqldb
+    path "intermediate${job_index}.db",  emit: sqldb
     path "intermediate${job_index}.csv", emit: performancereport
 
     script:
@@ -170,7 +170,7 @@ process merge_databases {
     path all_performance_reports
 
     output:
-    path 'merged.db', emit: sqldb
+    path 'merged.db',             emit: sqldb
     path 'performance_report.md', emit: performancereport
 
     script:

@@ -36,7 +36,7 @@ process query_for_outcomes_file {
     then
         echo -n "${input_path}/${file_manifest_file}" > outcomes_filename
     fi
-    """    
+    """
 }
 
 process query_for_compartments_file {
@@ -125,8 +125,8 @@ process core_job {
     path compartments
 
     output:
-    path "metrics${job_index}.db",          emit: sqldb
-    path "metrics${job_index}.csv",         emit: performancereport
+    path "metrics${job_index}.db",          emit: metrics_database
+    path "metrics${job_index}.csv",         emit: performance_report
 
     script:
     """
@@ -140,6 +140,33 @@ process core_job {
      --composite-phenotypes-file='${composite_phenotypes}' \
      --compartments-file='${compartments}' \
      --metrics-database-filename=metrics${job_index}.db
+    """
+}
+
+process report_run_configuration {
+    publishDir 'results'
+
+    input:
+    path all_cell_manifests
+    val workflow
+    path file_manifest_file
+    path outcomes_file
+    path elementary_phenotypes
+    path composite_phenotypes
+    path compartments
+
+    output:
+    path "run_configuration.log"
+
+    script:
+    """
+    spt-report-run-configuration \
+     --workflow='${workflow}' \
+     --file-manifest-file='${file_manifest_file}' \
+     --outcomes-file='${outcomes_file}' \
+     --elementary-phenotypes-file='${elementary_phenotypes}' \
+     --composite-phenotypes-file='${composite_phenotypes}' \
+     --compartments-file='${compartments}' >& run_configuration.log
     """
 }
 
@@ -167,7 +194,7 @@ process merge_databases {
     path all_metrics_databases
 
     output:
-    path 'metrics_database.db'
+    path 'metrics_database.db',             emit: metrics_database
 
     script:
     """
@@ -186,7 +213,7 @@ process merge_performance_reports {
 
     script:
     """
-    spt-merge-performance-reports ${all_performance_reports}
+    spt-merge-performance-reports ${all_performance_reports} --output=performance_report.md
     """
 }
 
@@ -199,6 +226,7 @@ process aggregate_results {
     publishDir 'results'
 
     input:
+    path metrics_database
     val workflow
     path elementary_phenotypes
     path composite_phenotypes
@@ -212,7 +240,7 @@ process aggregate_results {
     """
     spt-aggregate-core-results \
      --workflow='${workflow}' \
-     --metrics-database-filename=metrics.db \
+     --metrics-database-filename=${metrics_database} \
      --elementary-phenotypes-file='${elementary_phenotypes}' \
      --composite-phenotypes-file='${composite_phenotypes}' \
      --compartments-file='${compartments}' \
@@ -291,6 +319,16 @@ workflow {
         .compartments_file
         .set{ compartments_ch }
 
+    report_run_configuration(
+        cell_manifest_files_ch,
+        workflow_ch,
+        file_manifest_ch,
+        outcomes_file_ch,
+        elementary_phenotypes_ch,
+        composite_phenotypes_ch,
+        compartments_ch,
+    )
+
     core_job(
         workflow_ch,
         job_specifications_ch,
@@ -300,17 +338,18 @@ workflow {
     )
         .set { core_job_results_ch }
 
-    report_version().set{ version_print }
-
     merge_databases(
         core_job_results_ch.metrics_database.collect(),
     )
+        .metrics_database
+        .set{ merged_metrics_database_ch }
 
     merge_performance_reports(
         core_job_results_ch.performance_report.collect()
     )
 
     aggregate_results(
+        merged_metrics_database_ch,
         workflow_ch,
         elementary_phenotypes_ch,
         composite_phenotypes_ch,

@@ -57,6 +57,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-generate-run-information',
         'spatialprofilingtoolbox/scripts/spt-query-for-file',
         'spatialprofilingtoolbox/scripts/spt-extract-compartments',
+        'spatialprofilingtoolbox/scripts/spt-report-run-configuration',        
         'spatialprofilingtoolbox/scripts/spt-core-job',
         'spatialprofilingtoolbox/scripts/spt-aggregate-core-results',
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',

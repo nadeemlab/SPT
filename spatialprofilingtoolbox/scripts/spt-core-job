@@ -67,8 +67,8 @@ if __name__=='__main__':
         help='File containing compartment names.'
     )
     parser.add_argument(
-        '--intermediate-database-filename',
-        dest='intermediate_database_filename',
+        '--metrics-database-filename',
+        dest='metrics_database_filename',
         type=str,
         required=True,
         help=''.join([

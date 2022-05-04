@@ -14,7 +14,7 @@ class ComputationalDesign:
     """
     def __init__(self,
         dataset_design=None,
-        intermediate_database_filename: str=None,
+        metrics_database_filename: str=None,
         dichotomize: bool=False,
         composite_phenotypes_file:str = None,
         **kwargs,
@@ -22,15 +22,15 @@ class ComputationalDesign:
         """
         :param dataset_design: The design object describing the input data set.
 
-        :param intermediate_database_filename: Name for sqlite database.
-        :type intermediate_database_filename: str
+        :param metrics_database_filename: Name for sqlite database.
+        :type metrics_database_filename: str
 
         :param dichotomize: Default False. Whether to do auto-thresholding to
             dichotomize the continuous input variables.
         :type dichotomize: bool
         """
         self.dataset_design = dataset_design
-        self.intermediate_database_filename = intermediate_database_filename
+        self.metrics_database_filename = metrics_database_filename
         self.complex_phenotypes = pd.read_csv(
             composite_phenotypes_file,
             keep_default_na=False,
@@ -40,8 +40,8 @@ class ComputationalDesign:
     @staticmethod
     def solicit_cli_arguments(parser):
         parser.add_argument(
-            '--intermediate-database-filename',
-            dest='intermediate_database_filename',
+            '--metrics-database-filename',
+            dest='metrics_database_filename',
             type=str,
             required=True,
         )
@@ -58,7 +58,7 @@ class ComputationalDesign:
         )
 
     def get_database_uri(self):
-        return self.intermediate_database_filename
+        return self.metrics_database_filename
 
     def get_performance_report_filename(self):
-        return self.intermediate_database_filename.rstrip('.db') + '.csv'
+        return self.metrics_database_filename.rstrip('.db') + '.csv'

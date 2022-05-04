@@ -42,7 +42,7 @@ class DensityAnalyzer(SingleJobAnalyzer):
     def _calculate(self):
         self.calculator.calculate_density()
 
-    def initialize_intermediate_database(self):
+    def initialize_metrics_database(self):
         """
         The density workflow uses a pipeline-specific database to store its
         intermediate outputs. This method initializes this database's tables.

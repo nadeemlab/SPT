@@ -54,14 +54,14 @@ class SingleJobAnalyzer:
         """
         pass
 
-    def initialize_intermediate_database(self):
+    def initialize_metrics_database(self):
         pass
 
     def calculate(self):
         """
         The main calculation of this job, to be called by pipeline orchestration.
         """
-        self.initialize_intermediate_database()
+        self.initialize_metrics_database()
         logger.info('Started core calculator job.')
         self.log_file_info()
         self._calculate()

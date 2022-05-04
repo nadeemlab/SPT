@@ -17,14 +17,15 @@ if __name__=='__main__':
         --data-type or --file-identifier must be supplied.
         '''
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         '--data-type',
         dest='data_type',
         type=str,
         required=False,
         help='The data type descriptor to search by.',
     )
-    parser.add_argument(
+    group.add_argument(
         '--file-identifier',
         dest='file_identifier',
         type=str,
@@ -51,11 +52,6 @@ if __name__=='__main__':
         help='Filename for output, filename retrieved.',
     )
     args = parser.parse_args()
-
-    if not args.data_type and not args.file_identifier:
-        raise ValueError('Must supply one of "--data-type" or "--file-identifier".')
-    if not args.data_type is None and not args.file_identifier is None:
-        raise ValueError('Only one of "--data-type" or "--file-identifier" may be supplied.')
 
     if args.data_type:
         retrieved_filename = get_input_filenames_by_data_type(

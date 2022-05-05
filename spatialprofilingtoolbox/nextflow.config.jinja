@@ -6,6 +6,7 @@ process.clusterOptions = '-R select[hname!={{ excluded_host }}]'
 {% if sif_file is defined and sif_file|length -%}
 singularity.enabled = true
 singularity.runOptions = '-B {{ input_path }}'
+singularity.autoMounts = true
 
 process.container = '{{ sif_file }}'
 {%- endif %}

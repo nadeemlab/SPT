@@ -30,7 +30,7 @@ process query_for_outcomes_file {
     spt-query-for-file \
      --data-type='Outcome' \
      --input-path='${input_path}' \
-     --file-manifest-file='${file_manifest_file}' \
+     --file-manifest-file=${file_manifest_file} \
      --retrieved-filename-file=outcomes_filename > found
     if [[ "\$(cat found)" == "0" ]];
     then
@@ -53,7 +53,7 @@ process query_for_compartments_file {
     spt-query-for-file \
      --file-identifier='Compartments file' \
      --input-path='${input_path}' \
-     --file-manifest-file='${file_manifest_file}' \
+     --file-manifest-file=${file_manifest_file} \
      --retrieved-filename-file=compartments_filename > found
     if [[ "\$(cat found)" == "0" ]];
     then
@@ -78,9 +78,9 @@ process generate_run_information {
     """
     spt-generate-run-information \
      --workflow='${workflow}' \
-     --file-manifest-file='${file_manifest_file}' \
+     --file-manifest-file=${file_manifest_file} \
      --input-path='${input_path}' \
-     --outcomes-file='${outcomes_file}' \
+     --outcomes-file=${outcomes_file} \
      --job-specification-table=job_specification_table.csv \
      --elementary-phenotypes-filename=elementary_phenotypes_filename \
      --composite-phenotypes-filename=composite_phenotypes_filename
@@ -131,12 +131,12 @@ process core_job {
     spt-core-job \
      --workflow='${workflow}' \
      --input-file-identifier='${input_file_identifier}' \
-     --input-filename='${input_filename}' \
+     --input-filename=${input_filename} \
      --sample-identifier='${sample_identifier}' \
      --outcome='${outcome}' \
-     --elementary-phenotypes-file='${elementary_phenotypes}' \
-     --composite-phenotypes-file='${composite_phenotypes}' \
-     --compartments-file='${compartments}' \
+     --elementary-phenotypes-file=${elementary_phenotypes} \
+     --composite-phenotypes-file=${composite_phenotypes} \
+     --compartments-file=${compartments} \
      --metrics-database-filename=metrics${job_index}.db
     """
 }
@@ -160,11 +160,11 @@ process report_run_configuration {
     """
     spt-report-run-configuration \
      --workflow='${workflow}' \
-     --file-manifest-file='${file_manifest_file}' \
-     --outcomes-file='${outcomes_file}' \
-     --elementary-phenotypes-file='${elementary_phenotypes}' \
-     --composite-phenotypes-file='${composite_phenotypes}' \
-     --compartments-file='${compartments}' >& run_configuration.log
+     --file-manifest-file=${file_manifest_file} \
+     --outcomes-file=${outcomes_file} \
+     --elementary-phenotypes-file=${elementary_phenotypes} \
+     --composite-phenotypes-file=${composite_phenotypes} \
+     --compartments-file=${compartments} >& run_configuration.log
     """
 }
 
@@ -227,10 +227,10 @@ process aggregate_results {
     spt-aggregate-core-results \
      --workflow='${workflow}' \
      --metrics-database-filename=${metrics_database} \
-     --elementary-phenotypes-file='${elementary_phenotypes}' \
-     --composite-phenotypes-file='${composite_phenotypes}' \
-     --compartments-file='${compartments}' \
-     --outcomes-file='${outcomes_file}' \
+     --elementary-phenotypes-file=${elementary_phenotypes} \
+     --composite-phenotypes-file=${composite_phenotypes} \
+     --compartments-file=${compartments} \
+     --outcomes-file=${outcomes_file} \
      --stats-tests-file=stats_tests.csv
     """
 }

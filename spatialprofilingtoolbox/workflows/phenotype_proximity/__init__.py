@@ -18,7 +18,7 @@ from .analyzer import PhenotypeProximityAnalyzer
 from .computational_design import PhenotypeProximityDesign
 from .integrator import PhenotypeProximityAnalysisIntegrator
 
-name = 'Multiplexed IF phenotype proximity'
+name = 'phenotype proximity'
 components = {
     name : WorkflowModules(
         generator = PhenotypeProximityJobGenerator,

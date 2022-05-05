@@ -13,7 +13,7 @@ from .analyzer import FrontProximityAnalyzer
 from .computational_design import FrontProximityDesign
 from .integrator import FrontProximityAnalysisIntegrator
 
-name = 'Multiplexed IF front proximity'
+name = 'front proximity'
 components = {
     name : WorkflowModules(
         generator = FrontProximityJobGenerator,

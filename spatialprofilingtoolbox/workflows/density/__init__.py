@@ -11,7 +11,7 @@ from .analyzer import DensityAnalyzer
 from .computational_design import DensityDesign
 from .integrator import DensityAnalysisIntegrator
 
-name = 'Multiplexed IF density'
+name = 'phenotype density'
 components =  {
     name : WorkflowModules(
         generator = DensityJobGenerator,

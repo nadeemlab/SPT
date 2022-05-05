@@ -13,12 +13,11 @@ logger = colorized_logger(__name__)
 class FrontProximityAnalyzer(SingleJobAnalyzer):
     def __init__(self, **kwargs):
         super(FrontProximityAnalyzer, self).__init__(**kwargs)
-        self.retrieve_input_filename()
-        self.retrieve_sample_identifier()
 
         self.calculator = FrontProximityCalculator(
             input_filename = self.get_input_filename(),
             sample_identifier = self.get_sample_identifier(),
+            outcome = self.outcome,
             dataset_design = self.dataset_design,
             computational_design = self.computational_design,
         )
@@ -30,7 +29,7 @@ class FrontProximityAnalyzer(SingleJobAnalyzer):
     def _calculate(self):
         self.calculator.calculate_front_proximity()
 
-    def initialize_intermediate_database(self):
+    def initialize_metrics_database(self):
         """
         The front proximity workflow uses a pipeline-specific database to store its
         intermediate outputs. This method initializes this database's tables.

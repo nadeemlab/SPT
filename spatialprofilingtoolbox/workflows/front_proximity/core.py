@@ -192,4 +192,4 @@ class FrontProximityCalculator(Calculator):
                     m.execute(cmd)
                 except Exception as e:
                     logger.error('SQL query failed: %s', cmd)
-                    print(e)
+                    raise e

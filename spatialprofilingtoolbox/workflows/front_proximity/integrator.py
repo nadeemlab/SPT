@@ -17,8 +17,11 @@ class FrontProximityAnalysisIntegrator:
         self.computational_design = computational_design
         self.cell_proximity_tests = None
 
-    def calculate(self):
+    def calculate(self, filename):
         """
         Performs statistical comparison tests and writes results.
         """
         logger.info('<Stats calculation not implemented>')
+        with open(filename, 'wt') as file:
+            file.write('')
+        

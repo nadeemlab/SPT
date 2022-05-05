@@ -1,0 +1,3 @@
+Center point
+Inner disc
+Outer annulus

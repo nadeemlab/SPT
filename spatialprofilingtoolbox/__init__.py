@@ -22,6 +22,8 @@ __version__ = get_version()
 #         skip_semantic_parse = None
 #     return DataSkimmer(
 #         dataset_design = get_dataset_design(workflow=workflow, **kwargs),
+#         input_path = kwargs['input_path'],
+#         file_manifest_file = kwargs['file_manifest_file'],
 #         skip_semantic_parse = skip_semantic_parse,
 #     )
 

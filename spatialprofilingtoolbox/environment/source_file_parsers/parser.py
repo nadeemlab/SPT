@@ -14,8 +14,15 @@ class DBBackend(Enum):
 
 
 class SourceFileSemanticParser:
-    def __init__(self, db_backend):
+    def __init__(
+        self,
+        db_backend,
+        input_path: str=None,
+        file_manifest_file: str=None,
+    ):
         self.db_backend = db_backend
+        self.input_path = input_path
+        self.file_manifest_file = file_manifest_file
 
     def parse(self, connection, fields, dataset_design):
         pass

@@ -1,6 +1,9 @@
+import os
+from os.path import join
+
 import pandas as pd
 
-from ..file_io import get_outcomes_files
+from ..file_io import get_input_filenames_by_data_type
 from .parser import SourceFileSemanticParser
 from ..log_formats import colorized_logger
 logger = colorized_logger(__name__)
@@ -25,9 +28,13 @@ class OutcomesParser(SourceFileSemanticParser):
         def create_diagnosis_record(sample_id, result, column_name):
             return (sample_id, column_name, result, '', '')
 
-        for outcomes_file in get_outcomes_files():
+        outcomes_files = get_input_filenames_by_data_type(
+            data_type='Outcome',
+            file_manifest_filename=self.file_manifest_file,
+        )
+        for outcomes_file in outcomes_files:
             logger.debug('Considering %s', outcomes_file)
-            outcomes = pd.read_csv(outcomes_file, sep='\t', na_filter=False)
+            outcomes = pd.read_csv(join(self.input_path, outcomes_file), sep='\t', na_filter=False)
             sample_ids = sorted(list(set(outcomes['Sample ID'])))
             logger.info('Saving %s subject records.', len(sample_ids))
             for sample_id in sample_ids:

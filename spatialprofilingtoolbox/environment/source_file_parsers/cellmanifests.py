@@ -2,11 +2,12 @@ import io
 from io import BytesIO as StringIO
 import base64
 import mmap
+import os
+from os.path import join
 
 import shapefile
 import pandas as pd
 
-from ..configuration_settings import default_file_manifest_filename
 from ..file_io import compute_sha256
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceFileSemanticParser
@@ -35,7 +36,7 @@ class CellManifestsParser(SourceFileSemanticParser):
         if record_performance:
             t = PerformanceTimer()
             t.record_timepoint('Initial')
-        file_metadata = pd.read_csv(default_file_manifest_filename, sep='\t')
+        file_metadata = pd.read_csv(self.file_manifest_file, sep='\t')
         halo_data_type = 'HALO software cell manifest'
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
@@ -70,9 +71,10 @@ class CellManifestsParser(SourceFileSemanticParser):
             )
             filename = get_input_filename_by_identifier(
                 input_file_identifier = cell_manifest['File ID'],
+                file_manifest_filename = self.file_manifest_file,
             )
-            sha256_hash = compute_sha256(filename)
-            cells = pd.read_csv(filename, sep=',', na_filter=False).drop_duplicates()
+            sha256_hash = compute_sha256(join(self.input_path, filename))
+            cells = pd.read_csv(join(self.input_path, filename), sep=',', na_filter=False).drop_duplicates()
             count = self.get_number_known_cells(sha256_hash, cursor)
             if count > 0 and count != cells.shape[0]:
                 logger.warning(

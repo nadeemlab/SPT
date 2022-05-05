@@ -1,6 +1,8 @@
+import os
+from os.path import join
+
 import pandas as pd
 
-from ..configuration_settings import file_manifest_filename
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceFileSemanticParser
 from ..log_formats import colorized_logger
@@ -20,16 +22,24 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
         - cell phenotype
         - cell phenotype criterion
         """
-        elementary_phenotypes_file = get_input_filename_by_identifier(
-            input_file_identifier = 'Elementary phenotypes file',
+        elementary_phenotypes_file = join(
+            self.input_path,
+            get_input_filename_by_identifier(
+                input_file_identifier = 'Elementary phenotypes file',
+                file_manifest_filename = self.file_manifest_file,
+            ),
         )
-        composite_phenotypes_file = get_input_filename_by_identifier(
-            input_file_identifier = 'Complex phenotypes file',
+        composite_phenotypes_file = join(
+            self.input_path,
+            get_input_filename_by_identifier(
+                input_file_identifier = 'Complex phenotypes file',
+                file_manifest_filename = self.file_manifest_file,
+            ),
         )
         elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',', na_filter=False)
         composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',', na_filter=False)
 
-        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
+        file_metadata = pd.read_csv(self.file_manifest_file, sep='\t')
         project_handle = sorted(list(set(file_metadata['Project ID']).difference([''])))[0]
         data_analysis_study = project_handle + ' - data analysis'
         measurement_study = project_handle + ' - measurement'

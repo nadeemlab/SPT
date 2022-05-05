@@ -16,9 +16,11 @@ from .source_file_parsers import *
 
 
 class DataSkimmer:
-    def __init__(self, dataset_design, skip_semantic_parse=None):
+    def __init__(self, dataset_design, input_path, file_manifest_file, skip_semantic_parse=None):
         connectivity = False
         self.db_backend = None
+        self.input_path = input_path
+        self.file_manifest_file = file_manifest_file
 
         skip = False
         if not skip_semantic_parse is None:
@@ -110,10 +112,10 @@ class DataSkimmer:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
         args = [self.connection, fields, self.dataset_design]
-        OutcomesParser(db_backend=self.db_backend).parse(*args)
-        CellManifestSetParser(db_backend=self.db_backend).parse(*args)
-        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(db_backend=self.db_backend).parse(*args)
-        CellManifestsParser(chemical_species_identifiers_by_symbol, db_backend=self.db_backend).parse(*args)
+        OutcomesParser(db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
+        CellManifestSetParser(db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
+        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
+        CellManifestsParser(chemical_species_identifiers_by_symbol, db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
 
     def skim_final_data(self):
         pass

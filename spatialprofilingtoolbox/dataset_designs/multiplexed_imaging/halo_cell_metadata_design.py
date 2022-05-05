@@ -6,7 +6,6 @@ from os.path import exists
 import pandas as pd
 
 from ...environment.log_formats import colorized_logger
-from ...environment.extract_compartments import extract_compartments
 
 logger = colorized_logger(__name__)
 

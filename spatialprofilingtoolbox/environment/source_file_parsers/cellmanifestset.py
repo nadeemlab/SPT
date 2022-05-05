@@ -1,10 +1,10 @@
 import os
 from os.path import getsize
+from os.path import join
 import re
 
 import pandas as pd
 
-from ..configuration_settings import file_manifest_filename
 from ..file_io import get_input_filename_by_identifier
 from ..file_io import compute_sha256
 from .parser import SourceFileSemanticParser
@@ -26,7 +26,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
         - specimen data measurement process
         - data file
         """
-        file_metadata = pd.read_csv(file_manifest_filename, sep='\t')
+        file_metadata = pd.read_csv(self.file_manifest_file, sep='\t')
         halo_data_type = 'HALO software cell manifest'
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
@@ -95,8 +95,9 @@ class CellManifestSetParser(SourceFileSemanticParser):
             )
             filename = get_input_filename_by_identifier(
                 input_file_identifier = cell_manifest['File ID'],
+                file_manifest_filename = self.file_manifest_file,
             )
-            sha256_hash = compute_sha256(filename)
+            sha256_hash = compute_sha256(join(self.input_path, filename))
 
             if 'SHA256' in cell_manifests.columns:
                 if sha256_hash != cell_manifest['SHA256']:
@@ -121,7 +122,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
                 file_format = match.groups(1)[0].upper()
             else:
                 file_format = ''
-            size = getsize(filename)
+            size = getsize(join(self.input_path, filename))
             cursor.execute(
                 self.generate_basic_insert_query('data_file', fields),
                 create_data_file_record(

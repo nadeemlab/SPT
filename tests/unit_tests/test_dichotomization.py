@@ -9,19 +9,32 @@ import pandas as pd
 import pytest
 
 import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.configuration_settings import elementary_phenotypes_file_identifier
+from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
 from spatialprofilingtoolbox.environment.dichotomization import Dichotomizer
-from spatialprofilingtoolbox.environment.configuration_settings import file_manifest_filename
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_thresholding():
-    input_files_path = join(dirname(__file__), '..', 'data')
-    file_manifest_file = 'file_manifest.tsv'
+    input_files_path = join(dirname(__file__), '..', 'data_compartments_explicit')
+    file_manifest_file = join(input_files_path, 'file_manifest.tsv')
     dataset_design = HALOCellMetadataDesign(
-        input_path = input_files_path,
-        file_manifest_file = file_manifest_file,
+        elementary_phenotypes_file = join(
+            input_files_path,
+            get_input_filename_by_identifier(
+                elementary_phenotypes_file_identifier,
+                file_manifest_filename = file_manifest_file,
+            ),
+        ),
+        compartments_file = join(
+            input_files_path,
+            get_input_filename_by_identifier(
+                'Compartments file',
+                file_manifest_filename = file_manifest_file,
+            ),
+        )
     )
-    file_manifest = pd.read_csv(file_manifest_filename, sep='\t')
+    file_manifest = pd.read_csv(file_manifest_file, sep='\t')
     cell_manifest = HALOCellMetadataDesign.get_cell_manifest_descriptor()
     input_files = file_manifest[file_manifest['Data type'] == cell_manifest]['File name']
     for filename in input_files:

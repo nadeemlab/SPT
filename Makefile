@@ -227,8 +227,9 @@ test: .test
 .unit-tests: clean-tests .installed-in-venv ${UNIT_TEST_SOURCES}
 	@printf $(call color_in_progress,'Doing unit tests')
 	@date +%s > current_time.txt
-	@outcome=$$(cd tests/; source ../venv/bin/activate; python -m pytest -q . | tail -n1 | grep "[0-9]\+ \${LEFT_PAREN}failed\|errors\${RIGHT_PAREN}" ); \
-    if [[ "$$outcome" != "" ]]; \
+	@cd tests/; source ../venv/bin/activate; python -m pytest -Wignore -q . >&/dev/null ; \
+    exitcode="$$?"; \
+    if [[ "$$exitcode" != '0' ]]; \
     then \
         source venv/bin/activate; \
         cd tests/; \
@@ -360,10 +361,10 @@ clean-tests:
 	@rm -rf tests/.nextflow
 	@rm -rf tests/work
 	@rm -rf tests/results
-	@rm -f tests/.spt_pipeline.json
-	@rm -f tests/spt_pipeline.nf
-	@rm -f tests/nextflow.config.lsf
-	@rm -f tests/nextflow.config.local
+	@rm -f tests/nextflow.config
+	@rm -f tests/main.nf
+	@rm -f tests/run.sh
+	@rm -f tests/configure.sh
 	@rm -rf tests/unit_tests/__pycache__/
 	@rm -rf tests/normalized_source_data.db
 	@rm -rf tests/example_merged.db

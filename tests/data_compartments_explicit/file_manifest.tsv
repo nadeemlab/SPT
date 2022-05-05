@@ -11,4 +11,4 @@ b8b37bb2accda97250ecf104259c6b5b	Test project MSI	b8b37bb2accda97250ecf104259c6b
 Elementary phenotypes file	Test project MSI	elementary_phenotypes.csv	None	Selected investigators		medical physics cluster	Manifest of basic channels/phenotypes	c0e30613e173e28abac120812def1f484db6ac0dfea9d0303d8e61f25a753b5c	SHA256	368
 Complex phenotypes file	Test project MSI	complex_phenotypes.csv	None	Selected investigators		medical physics cluster	Manifest of channel/phenotype combinations	137a610a3d9cf20fcdade79a964b3d2781174be5a20603533fec1c82e261d647	SHA256	249
 Outcomes file	Test project MSI	diagnosis.tsv	None	Selected investigators		medical physics cluster	Outcome	cebbdb4160289ab5dc6c3a3e2da220b9c7f2a557a731239a2432e177def39128	SHA256	554
-Compartments list	Test projecet MSI	compartments.txt	None	Selected investigators	medical physics cluster	Compartments	hashvalue	SHA256	unknown
+Compartments file	Test project MSI	compartments.txt	None	Selected investigators	medical physics cluster	Compartments	hashvalue	SHA256	unknown

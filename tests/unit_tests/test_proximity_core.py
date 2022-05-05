@@ -5,65 +5,76 @@ from os.path import join, dirname, abspath
 import pandas as pd
 
 import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.configuration_settings import elementary_phenotypes_file_identifier
+from spatialprofilingtoolbox.environment.configuration_settings import composite_phenotypes_file_identifier
+from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
 from spatialprofilingtoolbox.workflows.phenotype_proximity.core import PhenotypeProximityCalculator
 from spatialprofilingtoolbox.workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 correct_answers = {
     'group 1' : [
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 10, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 17, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 31, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 56, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 100, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 10, 4.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 17, 5.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 31, 5.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 56, 5.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 100, 5.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 20, 0.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 60, 0.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'Center point', 100, 0.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 20, 5.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 60, 5.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'CD3+', 'all', 100, 5.0, 1),
     ],
     'group 2' : [
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 10, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 17, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 31, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 56, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 100, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 10, 0.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 17, 3.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 31, 5.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 56, 5.0, 1),
-        ('sample 1', './data/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 100, 5.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 20, 0.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 60, 0.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'Center point', 100, 0.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 20, 5.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 60, 5.0, 1),
+        ('sample 1', './data_proximity/cell_manifest_1.csv', 'unknown', 'FOXP3+', 'PDL1+', 'all', 100, 5.0, 1),
     ]
 }
 
-def normalize_path(p):
-    return abspath(p)
-
 def normalize_path_in_record(r):
     r2 = list(r)
-    r2[1] = normalize_path(r[1])
+    r2[1] = '.'
     return tuple(r2)
 
 def normalize_path_in_all_records(records):
     return [normalize_path_in_record(r) for r in records]
 
 def test_proximity_counting():
-    input_files_path = join(dirname(__file__), '..', 'data')
-    file_manifest_file = 'micro_file_manifest.tsv'
+    input_files_path = join(dirname(__file__), '..', 'data_proximity')
+    file_manifest_file = join(input_files_path, 'file_manifest.tsv')
     dataset_design = HALOCellMetadataDesign(
-        input_path = input_files_path,
-        file_manifest_file = file_manifest_file,
-        compartments = ['Center point', 'Inner disc', 'Outer annulus'],
+        elementary_phenotypes_file = join(
+            input_files_path,
+            get_input_filename_by_identifier(
+                elementary_phenotypes_file_identifier,
+                file_manifest_filename = file_manifest_file,
+            ),
+        ),
+        compartments_file = join(
+            input_files_path,
+            get_input_filename_by_identifier(
+                'Compartments file',
+                file_manifest_filename = file_manifest_file,
+            ),
+        )
     )
-    file_manifest = pd.read_csv(join(input_files_path, file_manifest_file), sep='\t')
+    file_manifest = pd.read_csv(file_manifest_file, sep='\t')
 
     calc = PhenotypeProximityCalculator(
         input_filename = join(input_files_path, 'cell_manifest_1.csv'),
         sample_identifier = 'sample 1',
+        outcome = 'unknown',
         dataset_design = dataset_design,
         computational_design= PhenotypeProximityDesign(
             dataset_design = dataset_design,
-            intermediate_database_filename = 'intermediate.db',
+            metrics_database_filename = 'metrics.db',
+            composite_phenotypes_file = join(
+                input_files_path,
+                get_input_filename_by_identifier(
+                    composite_phenotypes_file_identifier,
+                    file_manifest_filename = file_manifest_file,
+                ),
+            ),
         ),
     )
 
@@ -105,12 +116,13 @@ def test_proximity_counting():
         )
         if set(normalize_path_in_all_records(correct_answers['group 1'])) != set(normalize_path_in_all_records([tuple(l) for l in a])):
             print('Incorrect proximity counts in group 1.')
-            for i in range(len(a)):
-                got = tuple(a[i])
-                expected = correct_answers['group 1'][i]
-                if got != expected:
-                    print('Got/expected:\n %s \n %s' % (got, expected))
-                    print('')
+            print('Got:')
+            for l in sorted(normalize_path_in_all_records(a)):
+                print(tuple(l))
+            print('')
+            print('Expected:')
+            for l in sorted(normalize_path_in_all_records(correct_answers['group 1'])):
+                print(tuple(l))
             raise ValueError
 
         a = calc.do_aggregation_one_phenotype_pair(

@@ -58,7 +58,7 @@ def record_configuration_command(variables):
         sif_file = abspath(variables['sif_file'])
         if ' ' in sif_file:
             sif_file = "'%s'" % sif_file
-        tokens.append('--sif-file=%s')
+        tokens.append('--sif-file=%s' % sif_file)
     if 'excluded_host' in variables:
         tokens.append('--excluded-host=%s' % variables['excluded_host'])
 

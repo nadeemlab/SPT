@@ -4,9 +4,10 @@ process.executor = '{{ executor }}'
 process.clusterOptions = '-R select[hname!={{ excluded_host }}]'
 {%- endif %}
 {% if sif_file is defined and sif_file|length -%}
-process.container = '{{ sif_file }}'
 singularity.enabled = true
 singularity.runOptions = '-B {{ input_path }}'
+
+process.container = '{{ sif_file }}'
 {%- endif %}
 
 env.workflow_ = '{{ workflow }}'

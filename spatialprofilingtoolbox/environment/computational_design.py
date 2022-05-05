@@ -1,7 +1,6 @@
 
 import pandas as pd
 
-from .file_io import get_input_filename_by_identifier
 from .log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

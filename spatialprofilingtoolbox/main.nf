@@ -71,7 +71,6 @@ process generate_run_information {
 
     output:
     path 'job_specification_table.csv',     emit: job_specification_table
-    path 'dataset_metadata_files_list.txt', emit: dataset_metadata_files_list
     path 'elementary_phenotypes_filename',  emit: elementary_phenotypes_filename
     path 'composite_phenotypes_filename',   emit: composite_phenotypes_filename
 
@@ -83,7 +82,6 @@ process generate_run_information {
      --input-path='${input_path}' \
      --outcomes-file='${outcomes_file}' \
      --job-specification-table=job_specification_table.csv \
-     --dataset-metadata-files-list-file=dataset_metadata_files_list.txt \
      --elementary-phenotypes-filename=elementary_phenotypes_filename \
      --composite-phenotypes-filename=composite_phenotypes_filename
     """
@@ -270,14 +268,6 @@ workflow {
         .splitCsv(header: true)
         .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index, row.outcome, row.sample_identifier) }
         .set{ job_specifications_ch }
-
-    run_information_ch
-        .dataset_metadata_files_list
-        .map{ file(it) }
-        .splitText(by: 1)
-        .map{ file(it.trim()) }
-        .collect()
-        .set{ dataset_metadata_files_ch }
 
     run_information_ch
         .elementary_phenotypes_filename

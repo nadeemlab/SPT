@@ -63,13 +63,6 @@ if __name__=='__main__':
         help='Filename for output, job specification table CSV.',
     )
     parser.add_argument(
-        '--dataset-metadata-files-list-file',
-        dest='dataset_metadata_files_list_file',
-        type=str,
-        required=True,
-        help='Filename for output, list of dataset metadata filenames.',
-    )
-    parser.add_argument(
         '--elementary-phenotypes-filename',
         dest='elementary_phenotypes_filename',
         type=str,
@@ -97,6 +90,5 @@ if __name__=='__main__':
         dataset_design_class=DatasetDesign,
     )
     job_generator.write_job_specification_table(args.job_specification_table, args.outcomes_file)
-    job_generator.write_dataset_metadata_files_list(args.dataset_metadata_files_list_file)
     job_generator.write_elementary_phenotypes_filename(args.elementary_phenotypes_filename)
     job_generator.write_composite_phenotypes_filename(args.composite_phenotypes_filename)

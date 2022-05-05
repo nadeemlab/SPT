@@ -1,7 +1,6 @@
 import os
 from os.path import join
 from os.path import exists
-import datetime
 
 import pandas as pd
 
@@ -65,17 +64,6 @@ class JobGenerator:
         df = df[sorted(columns)]
         df.to_csv(job_specification_table_filename, index=False, header=True)
 
-    def write_dataset_metadata_files_list(self, dataset_metadata_files_list_file):
-        """
-        Prepares the list of additional job input files. Just includes every file in
-        the file manifest which is not determined to be a cell manifest.
-        """
-        validate = self.dataset_design_class.validate_cell_manifest_descriptor
-        records = self.retrieve_file_records(condition = lambda record: not validate(record['Data type']))
-        filenames = [join(self.input_path, record['File name']) for record in records]
-        with open(dataset_metadata_files_list_file, 'wt') as file:
-            file.write('\n'.join(filenames))
-
     def write_filename(self, filename_file, identifier):
         validate = lambda record: record['File ID'] == identifier
         records = self.retrieve_file_records(condition = validate)
@@ -97,10 +85,3 @@ class JobGenerator:
             raise ValueError('Found %s files "%s"; *currently* need exactly 1.' % (str(len(records)), identifier))
         with open(filename_file, 'wt') as file:
             file.write(join(self.input_path, records[0]['File name']))
-
-    # project_handle = sorted(list(set(self.file_metadata['Project ID']).difference([''])))[0]
-    # if project_handle != '':
-    #     logger.info('Dataset/project: %s', project_handle)
-    #     current = datetime.datetime.now()
-    #     year = current.date().strftime("%Y")
-    #     logger.info('Run date year: %s', year)

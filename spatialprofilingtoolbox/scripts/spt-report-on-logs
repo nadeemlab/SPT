@@ -74,6 +74,7 @@ class LSFPreambleSkipper:
     def __exit__ (self, exc_type, exc_value, traceback):
         self.f.close()
 
+
 class LogParser:
     def __init__(self, path):
         self.path = path
@@ -87,17 +88,18 @@ class LogParser:
     def get_inputs(self):
         path = self.get_path()
         filenames = {
-            'config' : join(path, '.spt_pipeline.json'),
+            'config' : join(path, 'nextflow.config'),
             'nextflow log' : join(path, '.nextflow.log'),
-            'performance report' : join(path, 'results', 'performance_report.md')
+            'performance report' : join(path, 'results', 'performance_report.md'),
+            'run configuration log' : join(path, 'results', 'run_configuration.log'),
         }
-        config_file = self.check_file(filenames['config'])
-        nextflow_log = self.check_file(filenames['nextflow log'])
-        performance_report = self.check_file(filenames['performance report'])
-        log_files = glob.glob(join(path, 'work/*/*/.command.log'))
-        if len(log_files) == 0:
+        self.config_file = self.check_file(filenames['config'])
+        self.nextflow_log = self.check_file(filenames['nextflow log'])
+        self.performance_report = self.check_file(filenames['performance report'])
+        self.run_configuration_log = self.check_file(filenames['run configuration log'])
+        self.log_files = glob.glob(join(path, 'work/*/*/.command.log'))
+        if len(self.log_files) == 0:
             raise LogParsingError('No log files found.')
-        return [log_files, config_file, nextflow_log, performance_report]
 
     def check_file(self, target):
         if exists(target):
@@ -111,47 +113,15 @@ class LogParser:
         return text
 
     def parse(self):
-        self.log_files, self.config_file, self.nextflow_log, self.performance_report = self.get_inputs()
-
-        self.extractions['Dataset'] = self.extract_exact(
-            'Dataset/project: ([\w \d\,\./\?\(\)\-]+)$'
-        )[0]
-
-        for log in self.log_files:
-            count = None
-            with LSFPreambleSkipper(log) as f:
-                line = f.readline().rstrip('\n')
-                if line == 'input_file_identifier,input_filename,job_index':
-                    count = len(f.readlines()) - 1
-            if count:
-                self.extractions['# cell files'] = str(count)
-                break
-
-        for log in self.log_files:
-            with LSFPreambleSkipper(log) as f:
-                line = f.readline()
-                match = re.match('^SPT v(\d+\.\d+\.\d+)$', line)
-                if match:
-                    self.extractions['SPT'] = 'v' + match.groups(1)[0]
-                    break
-            if 'SPT' in self.extractions:
-                break
-
-        config = json.loads(open(self.config_file, 'rt').read())
-        self.extractions['Workflow'] = self.remove_prefix('Multiplexed IF ', config['workflow'])
-
-        year = self.extract_exact('Run date year: (\d+)$', lines_limit = 2)
-        if not year:
-            year = 'YYYY'
-        else:
-            year = year[0]
+        self.get_inputs()
+        self.extract_from_run_configuration_log()
 
         nf_header = open(self.nextflow_log, 'rt').readline().rstrip('\n')
         search = re.search('^(\w+)\-(\d+) \d+:\d+:\d+\.\d+', nf_header)
         if search:
             month = search.groups(1)[0]
             day = search.groups(1)[1]
-            self.extractions['Run date'] = ' '.join([month, day, year])
+            self.extractions['Run date'] = ' '.join([month, day, self.year])
 
         job_reports = self.extract_job_reports()
         self.extractions['Largest file size'] = str(int(sorted(
@@ -181,6 +151,59 @@ class LogParser:
         self.performance_report_base64 = base64_bytes.decode('ascii')
 
         self.validate_all_extractions_found()
+
+    def extract_from_run_configuration_log(self):
+        self.year = None
+        with open(self.run_configuration_log, 'rt') as f:
+            for line in f:
+                parts = self.parse_log_line(line.rstrip('\n'))
+                if len(parts) != 0:
+                    match = re.match('^Machine host: ([\w\d\-\.\(\)\[\]\&\,]+)$', parts['Message'])
+                    if match:
+                        self.extractions['Hostname'] = match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Version: SPT v([\d\.]+)$', parts['Message'])
+                    if match:
+                        self.extractions['SPT'] = 'v' + match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Dataset/project: "([\w \d\,\./\?\(\)\-]+)"$', parts['Message'])
+                    if match:
+                        self.extractions['Dataset'] = match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Number of cell manifest files: (\d+)$', parts['Message'])
+                    if match:
+                        self.extractions['# cell files'] = match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Workflow: "([\w\d\- \.\(\)\[\]\&\,]+)"$', parts['Message'])
+                    if match:
+                        self.extractions['Workflow'] = match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Number of channels: (\d+)$', parts['Message'])
+                    if match:
+                        self.extractions['Channels'] = match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Number of phenotypes considered: (\d+)$', parts['Message'])
+                    if match:
+                        self.extractions['Phenotypes'] = match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Number of compartments: (\d+)$', parts['Message'])
+                    if match:
+                        self.extractions['Compartments'] = match.groups(1)[0]
+                        continue
+
+                    match = re.match('^Run date year: (\d+)$', parts['Message'])
+                    if match:
+                        self.year = match.groups(1)[0]
+                        continue
+        if not self.year:
+            self.year = 'YYYY'
 
     def validate_all_extractions_found(self):
         failed = [
@@ -253,7 +276,7 @@ class LogParser:
                             start_time = (parts['Month numeric'], parts['Day numeric'], parts['Hour'], parts['Minute'], parts['Second'])
                         if parts['Message'] == 'Completed core calculator job.':
                             stop_time = (parts['Month numeric'], parts['Day numeric'], parts['Hour'], parts['Minute'], parts['Second'])
-                        match = re.match('^(\d+) cells to be parsed from source file.$', parts['Message'])
+                        match = re.match('^(\d+) cells to be parsed from source file "[\w\d\.\- \(\)\_\=]+".$', parts['Message'])
                         if match:
                             job_report['number of cells'] = int(match.groups(1)[0])
 
@@ -318,7 +341,11 @@ class LogParser:
     def get_order():
         order = [
             'Run date',
+            'Hostname',
             'Dataset',
+            'Channels',
+            'Phenotypes',
+            'Compartments',
             '# cell files',
             '# cells',
             'Largest file size',
@@ -341,7 +368,7 @@ class LogReportAggregator:
     def __init__(self, format_handle=None):
         working_directories = []
         for root, dirs, files in os.walk('.'):
-            if ('work' in dirs) and ('.nextflow.log' in files) and ('.spt_pipeline.json' in files):
+            if ('work' in dirs) and ('.nextflow.log' in files) and ('nextflow.config' in files):
                 working_directories.append(root)
         self.parsers = [LogParser(path) for path in working_directories]
         self.format_handle = format_handle

@@ -1,5 +1,7 @@
 import os
 from os.path import getsize
+import datetime
+import socket
 
 import pandas as pd
 
@@ -19,8 +21,18 @@ class RunConfigurationReporter:
         composite_phenotypes_file: str=None,
         compartments_file: str=None,
     ):
+        logger.info('Machine host: %s', socket.gethostname())
         logger.info('Version: SPT v%s', get_version())
         logger.info('Workflow: "%s"', workflow)
+
+        file_metadata = pd.read_csv(file_manifest_file, sep='\t', keep_default_na=False)
+        project_handle = sorted(list(set(file_metadata['Project ID']).difference([''])))[0]
+        if project_handle != '':
+            logger.info('Dataset/project: "%s"', project_handle)
+            current = datetime.datetime.now()
+            year = current.date().strftime("%Y")
+            logger.info('Run date year: %s', year)
+
         sizes = self.retrieve_cell_manifest_sizes(file_manifest_file)
         logger.info('Number of cell manifest files: %s', len(sizes))
         logger.info('Total cell manifest file size: %s MB', self.format_mb(sum(sizes)))

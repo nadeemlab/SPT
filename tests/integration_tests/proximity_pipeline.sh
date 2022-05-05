@@ -1,4 +1,4 @@
 #!/bin/bash
 
-spt-configure --local --input-path=./data --workflow='Multiplexed IF phenotype proximity'
+spt-configure --local --input-path=./data --workflow='phenotype proximity'
 nextflow run .

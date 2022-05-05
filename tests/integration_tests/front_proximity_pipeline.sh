@@ -1,4 +1,4 @@
 #!/bin/bash
 
-spt-configure --local --input-path=./data --workflow='Multiplexed IF front proximity'
+spt-configure --local --input-path=./data --workflow='front proximity'
 nextflow run .

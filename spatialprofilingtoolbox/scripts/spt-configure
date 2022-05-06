@@ -2,6 +2,7 @@
 import argparse
 from shutil import which
 import os
+from os import getcwd
 import stat
 from os.path import isdir
 from os.path import exists
@@ -157,6 +158,8 @@ if __name__=='__main__':
 
     if not args.excluded_host is None:
         variables['excluded_host'] = args.excluded_host
+
+    variables['current_working_directory'] = getcwd()
 
     write_config_file(variables)
     write_pipeline_script()

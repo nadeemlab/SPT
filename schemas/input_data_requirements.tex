@@ -39,7 +39,6 @@
   \item{\label{pheno}Phenotype definition table file}
   \item{\label{outcomes}Outcomes file}
   \item{\label{files}Files manifest file}
-  \item{\label{run}Analysis configuration file}
 \end{enumerate}
 \end{varwidth}
 \end{center}
@@ -115,25 +114,6 @@ The \colorbox{yellow!25}{\texttt{Sample ID}} values should correspond to one of 
   \item[]{\colorbox{yellow!25}{\texttt{Sample ID}} \hspace{0.5pc} The identifier for the sample associated with this data file, in case the data file is so associated (e.g. one of the HALO-exported cell CSVs).}
   \item[]{\colorbox{yellow!25}{\texttt{Data type}} \hspace{0.5pc} A tag for this file data type. The only required values are \colorbox{gray!20}{\texttt{HALO software cell manifest}} and \colorbox{gray!20}{\texttt{Outcome}}, for (\ref{cells}) and (\ref{outcomes}) respectively.}
 \end{itemize}
-
-\subsection*{\ref{run} Analysis configuration file}
-A JSON file (\href{https://github.com/nadeemlab/SPT/blob/main/tests/integration_tests/example_config_files/density.json}{example}) called \colorbox{gray!20}{\texttt{.spt{\textunderscore}pipeline.json}}, located in a run directory of your choice, with at least the following keys:
-
-\begin{itemize}
-  \itemsep0em
-  \item[]{ \colorbox{yellow!25}{\texttt{workflow}} One of the following: \begin{itemize}\itemsep0em\item[]{\colorbox{gray!20}{\texttt{Multiplexed IF density}}} \item[]{\colorbox{gray!20}{\texttt{Multiplexed IF phenotype proximity}}} \item[]{\colorbox{gray!20}{\texttt{Multiplexed IF front proximity}}} \item[]{\colorbox{gray!20}{\texttt{Multiplexed IF diffusion}}} \end{itemize}}
-  \item[]{ \colorbox{yellow!25}{\texttt{input{\textunderscore}path}} The filesystem path to the directory containing all input files.}
-\end{itemize}
-
-The key \colorbox{yellow!25}{\texttt{file{\textunderscore}manifest{\textunderscore}file}} is optional, with default value \colorbox{gray!20}{\texttt{file{\textunderscore}manifest.tsv}}.
-
-The key \colorbox{yellow!25}{\texttt{compartments}} for a list of compartment names (appearing in the \colorbox{yellow!25}{\texttt{Classifier Label}} field) is also optional, in cases where a subset of the compartments that appear should be specified.
-
-The key \colorbox{yellow!25}{\texttt{skip{\textunderscore}semantic{\textunderscore}parse}} is optional, with default value \colorbox{gray!20}{\texttt{false}}. If \colorbox{gray!20}{\texttt{true}}, aggregation of input data into a normalized database is skipped.
-
-The key \colorbox{yellow!25}{\texttt{sif{\textunderscore}file}} should be provided if deploying on an LSF cluster, with value the full path to the Singularity container image of SPT.
-
-The key \colorbox{yellow!25}{\texttt{excluded{\textunderscore}host{\textunderscore}name}} should be provided if deploying on a LSF cluster which is misconfigured to allow jobs to be scheduled on the control/head node.
 
 
 \end{document}

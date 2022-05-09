@@ -7,5 +7,5 @@ left join specimen_data_measurement_process sp on sp.identifier = df.source_gene
 left join specimen_collection_process sc on sc.specimen = sp.specimen
 left join subject su on su.identifier = sc.source
 left join diagnosis di on di.subject = su.identifier
-where symbol='PDL1' 
-limit 300;
+left join specimen_collection_study st on st.name = sc.study
+where s.symbol='{{ marker_symbol }}' and st.name = '{{ specimen_collection_study_name }}' ;

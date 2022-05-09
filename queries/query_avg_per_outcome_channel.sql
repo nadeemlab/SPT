@@ -1,4 +1,4 @@
-select  di.result as diagnosis, s.symbol as channel, avg(q.quantity) as mean_expression from expression_quantification q
+select di.result as diagnosis, s.symbol as channel, avg(q.quantity) as mean_expression from expression_quantification q
 left join chemical_species s on q.target = s.identifier
 left join histological_structure hs on hs.identifier = q.histological_structure
 left join histological_structure_identification i on i.histological_structure = hs.identifier

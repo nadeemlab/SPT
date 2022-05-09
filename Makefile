@@ -355,6 +355,9 @@ clean: clean-tests
 	@rm -rf docs/_build/
 	@rm -rf venv/
 	@rm -rf current_time.txt
+	@rm -f schemas/input_data_requirements.aux
+	@rm -f schemas/input_data_requirements.log
+	@rm -f schemas/input_data_requirements.out
 
 clean-tests:
 	@rm -f tests/.nextflow.log*

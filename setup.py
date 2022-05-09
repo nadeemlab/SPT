@@ -50,6 +50,7 @@ setuptools.setup(
             'pathology_schema.sql',
             'log_table.tex.jinja',
             'log_table.html.jinja',
+            '.spt_db.config.template',
         ]},
     python_requires='>=3.7',
     scripts=[

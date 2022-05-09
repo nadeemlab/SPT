@@ -52,7 +52,7 @@ To get the SPT tools, do one of the following:
 Navigate to a working directory for your run, and configure it with `spt-configure`. The options are shown below:
 
 ```
-$ spt-pipeline configure
+$ spt-pipeline configure -h
 
 usage: spt-configure [-h]
  --workflow {phenotype density,front proximity,phenotype proximity}
@@ -76,7 +76,7 @@ optional arguments:
                         If a machine must not have LSF jobs scheduled on it, supply its hostname here.
 ```
 
-*Note*: *If you didn't `pip install`, you can run the configuration script out of the container:*
+**Note**: *If you didn't `pip install`, you can run the configuration script out of the container:*
 
 ```sh
 $ singularity exec /path/to/my/containers/spt_latest.sif spt-configure
@@ -98,7 +98,7 @@ Finally:
 nextflow run .
 ```
 
-**Note**: Want to customize your run? Feel free to add or alter settings in the [`nextflow.config`](https://www.nextflow.io/docs/latest/config.html) file created in your working directory. You can also fine-tune the workflow definition itself by editing `main.nf`.
+**Note**: *Want to customize your run? Feel free to add or alter settings in the* [`nextflow.config`](https://www.nextflow.io/docs/latest/config.html) *file created in your working directory. You can also fine-tune the workflow definition itself by editing* `main.nf`.
 
 ### LSF
 The pipeline seamlessly supports High-Performance Clusters (HPCs) running [Platform LSF](https://www.ibm.com/products/hpc-workload-management). Just add the `--lsf` option to `spt-configure`.

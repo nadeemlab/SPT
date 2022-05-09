@@ -157,7 +157,7 @@ The results of this pipeline are saved to `results/stats_tests.csv`. If no cell 
 
 Each row records the result of a test for statistically-significant difference between the values of the density metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
 
-**Intensity information**. To weight cells by the intensity value of a given channel in the density calculation, set `"use_intensities" : true` in the configuration file (or answer "yes" to the configuration dialog prompt regarding intensity usage.)
+**Intensity information**. Cells may be weighted by the intensity value of a given channel in the density calculation.
 
 ### Front proximity workflow
 

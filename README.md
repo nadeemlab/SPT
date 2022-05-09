@@ -84,7 +84,7 @@ $ singularity exec /path/to/my/containers/spt_latest.sif spt-configure
 
 For example:
 ```sh
-spt-configure \
+$ spt-configure \
  --workflow='phenotype density' \
  --input-path=/path/to/my/data \
  --local
@@ -95,7 +95,7 @@ If the `--sif-file` option is provided, Nextflow will be instructed to run all o
 Finally:
 
 ```sh
-nextflow run .
+$ nextflow run .
 ```
 
 **Note**: *Want to customize your run? Feel free to add or alter settings in the* [`nextflow.config`](https://www.nextflow.io/docs/latest/config.html) *file created in your working directory. You can also fine-tune the workflow definition itself by editing* `main.nf`.
@@ -108,14 +108,14 @@ SPT generates verbose logs, which Nextflow sends to files `work/*/*/.command.log
 
 A convenient way to monitor these is:
 ```sh
-tail -f $(find work/*/*/\.command.log)
+$ tail -f $(find work/*/*/\.command.log)
 ```
 
 Since new log files are created as the workflow progresses, you may need to run this command multiple times.
 
 Once the run is complete, you can generate a summary of the jobs with:
 ```sh
-spt-report-on-logs
+$ spt-report-on-logs
 ```
 
 *Note*: `spt-report-on-logs` *will search for run directories recursively starting at the current directory, and report on all the runs.*

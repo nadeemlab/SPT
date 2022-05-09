@@ -162,7 +162,7 @@ CREATE TABLE two_cohort_feature_association_test (
     selection_criterion_1 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier),
     selection_criterion_2 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier),
     test VARCHAR(512),
-    p_value VARCHAR(512),
+    p_value NUMERIC,
     feature_tested VARCHAR(512) REFERENCES feature_specification(identifier)
 );
 

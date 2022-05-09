@@ -48,53 +48,7 @@ def test_data_skimmer():
     ) as skimmer:
         skimmer.parse()
 
-def test_data_skimmer_incomplete_credentials():
-    input_files_path = join(dirname(__file__), '..', 'data_compartments_explicit')
-    file_manifest_file = join(input_files_path, 'file_manifest.tsv')
-    dataset_design = HALOCellMetadataDesign(
-        elementary_phenotypes_file = join(
-            input_files_path,
-            get_input_filename_by_identifier(
-                elementary_phenotypes_file_identifier,
-                file_manifest_filename = file_manifest_file,
-            ),
-        ),
-        compartments_file = join(
-            input_files_path,
-            get_input_filename_by_identifier(
-                'Compartments file',
-                file_manifest_filename = file_manifest_file,
-            ),
-        )
-    )
-    credential_parameters = [
-        'PATHSTUDIES_DB_ENDPOINT',
-        'PATHSTUDIES_DB_USER',
-        'PATHSTUDIES_DB_PASSWORD',
-    ]
-    cached = {}
-    for c in credential_parameters:
-        if c in os.environ:
-            cached[c] = os.environ[c]
-            del os.environ[c]
-    os.environ['PATHSTUDIES_DB_ENDPOINT'] = ''
-    try:
-        with DataSkimmer(
-            dataset_design=dataset_design,
-            input_path = input_files_path,
-            file_manifest_file = file_manifest_file,
-        ) as skimmer:
-            skimmer.parse()
-        raise Exception('Incomplete credentials not caught.')
-    except EnvironmentError:
-        for c in os.environ:
-            if c in cached:
-                os.environ[c] = cached[c]
-            else:
-                del os.environ[c]
-
 
 if __name__=='__main__':
-    test_data_skimmer_incomplete_credentials()
     test_data_skimmer()
 

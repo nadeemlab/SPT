@@ -3,8 +3,11 @@ import urllib.request
 from urllib.request import urlopen
 import os
 from os.path import exists
+from os.path import join
+from os.path import expanduser
 from os import remove
 import sqlite3
+import configparser
 
 import psycopg2
 import pandas as pd
@@ -16,67 +19,66 @@ from .source_file_parsers import *
 
 
 class DataSkimmer:
-    def __init__(self, dataset_design, input_path, file_manifest_file, skip_semantic_parse=None):
+    pathstudies_db_filename = 'normalized_source_data.db'
+
+    def __init__(self, dataset_design, input_path, file_manifest_file, skip_semantic_parse=None, db_backend=DBBackend.POSTGRES):
         connectivity = False
         self.db_backend = None
         self.input_path = input_path
         self.file_manifest_file = file_manifest_file
 
-        skip = False
-        if not skip_semantic_parse is None:
-            if skip_semantic_parse in [True, 'true', 'True', '1', 1]:
-                skip = True
-                logger.info('Skipping semantic parse unless database credentials are provided.')
+        if skip_semantic_parse:
+            logger.info('Skipping semantic parse.')
+            return
 
-        connectivity = self.check_internet_connectivity()
-        if not connectivity:
-            logger.info('No internet connection.')
-            if not skip:
-                logger.info('Using sqlite backend.')
-                self.db_backend = DBBackend.SQLITE
+        if db_backend == DBBackend.SQLITE:
+            self.db_backend = DBBackend.SQLITE
 
-        if connectivity:
-            credential_parameters = [
-                'PATHSTUDIES_DB_ENDPOINT',
-                'PATHSTUDIES_DB_USER',
-                'PATHSTUDIES_DB_PASSWORD',
-            ]
-            found = [key in os.environ for key in credential_parameters]
+        if db_backend != DBBackend.SQLITE:
+            connectivity = self.check_internet_connectivity()
+            if not connectivity:
+                logger.info('No internet connection.')
+
+            configured_credentials = self.retrieve_credentials()
+            found = [key in configured_credentials for key in self.get_credential_keys()]
             if all(found):
-                credentials = {c : os.environ[c] for c in credential_parameters}
-                logger.info('Found database credentials %s', credential_parameters)
+                credentials = {c : configured_credentials[c] for c in self.get_credential_keys()}
+                logger.info('Found database credentials %s', self.get_credential_keys())
+                if (not connectivity) and (credentials['endpoint'] != 'localhost'):
+                    message = 'Without network connection, you can only use endpoint=localhost for backend database.'
+                    logger.error(message)
+                    raise ConnectionError(message)
                 self.db_backend = DBBackend.POSTGRES
-            if not any(found):
+            elif not any(found):
                 logger.info('No database credentials found.')
-                if not skip:
-                    logger.info('Using sqlite backend.')
-                    self.db_backend = DBBackend.SQLITE
+                self.db_backend = DBBackend.SQLITE
             else:
-                if not all(found):
-                    logger.error(
-                        'Some database credentials missing: %s',
-                        [c for c in credential_parameters if not c in os.environ]
-                    )
-                    raise EnvironmentError
+                logger.error(
+                    'Some database credentials missing: %s',
+                    [c for c in self.get_credential_keys() if not c in configured_credentials]
+                )
+                raise EnvironmentError
 
         self.connection = None
         if self.db_backend == DBBackend.POSTGRES:
             try:
                 self.connection = psycopg2.connect(
                     dbname='pathstudies',
-                    host=credentials['PATHSTUDIES_DB_ENDPOINT'],
-                    user=credentials['PATHSTUDIES_DB_USER'],
-                    password=credentials['PATHSTUDIES_DB_PASSWORD'],
+                    host=credentials['endpoint'],
+                    user=credentials['user'],
+                    password=credentials['password'],
                 )
             except psycopg2.Error as e:
+                print(e)
                 logger.error('Failed to connect to database: %s', e.pgerror)
                 logger.debug('Trying sqlite locally instead.')
                 self.db_backend = DBBackend.SQLITE
 
         if self.db_backend == DBBackend.SQLITE:
+            logger.info('Using sqlite backend.')
             with importlib.resources.path('spatialprofilingtoolbox', 'pathology_schema.sql') as path:
                 create_db_script = open(path).read()
-            pathstudies = 'normalized_source_data.db'
+            pathstudies = DataSkimmer.pathstudies_db_filename
             if exists(pathstudies):
                 remove(pathstudies)
             self.connection = sqlite3.connect(pathstudies)
@@ -84,6 +86,11 @@ class DataSkimmer:
             cursor = self.connection.cursor()
             cursor.executescript(create_db_script)
             cursor.close()
+
+        if not self.db_backend in [DBBackend.POSTGRES, DBBackend.SQLITE]:
+            message = 'Still no database connection established. Maybe you want to use skip_semantic_parse=True .'
+            logger.error(message)
+            raise ConnectionError(message)
 
         self.dataset_design = dataset_design
 
@@ -93,6 +100,23 @@ class DataSkimmer:
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection:
             self.connection.close()
+
+    def get_credential_keys(self):
+        return ['endpoint', 'user', 'password']
+
+    def retrieve_credentials(self):
+        config_file = join(expanduser('~'), '.spt_db.config')
+        parser = configparser.ConfigParser()
+        credentials = {}
+        if exists(config_file):
+            parser.read(config_file)
+            if 'database-credentials' in parser.sections():
+                for key in self.get_credential_keys():
+                    if key in parser['database-credentials']:
+                        credentials[key] = parser['database-credentials'][key]
+        else:
+            logger.info('Config file %s not found.', config_file)
+        return credentials
 
     def check_internet_connectivity(self):
         try:
@@ -105,17 +129,22 @@ class DataSkimmer:
     def parse(self):
         if not self.connection:
             logger.debug('No database connection was initialized. Skipping semantic parse.')
-            with open('normalized_source_data.db', 'w') as f:
+            with open(DataSkimmer.pathstudies_db_filename, 'w') as f:
                 f.write('')
             return
         with importlib.resources.path('spatialprofilingtoolbox', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
         args = [self.connection, fields, self.dataset_design]
-        OutcomesParser(db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
-        CellManifestSetParser(db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
-        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
-        CellManifestsParser(chemical_species_identifiers_by_symbol, db_backend=self.db_backend, input_path=self.input_path, file_manifest_file=self.file_manifest_file).parse(*args)
+        kwargs = {
+            'db_backend' : self.db_backend,
+            'input_path' : self.input_path,
+            'file_manifest_file' : self.file_manifest_file,
+        }
+        OutcomesParser(**kwargs).parse(*args)
+        CellManifestSetParser(**kwargs).parse(*args)
+        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(**kwargs).parse(*args)
+        CellManifestsParser(chemical_species_identifiers_by_symbol, **kwargs).parse(*args)
 
     def skim_final_data(self):
         pass

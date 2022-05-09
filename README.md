@@ -12,18 +12,20 @@
  | <a href="https://nadeemlab.github.io/SPT/maintenance.html">Maintenance</a>
 </p>
 
-The SPT modules do image analysis computation in the context of histopathology. For the convenience of automatic usage in different runtime contexts, the pipelines are orchestrated with [Nextflow](https://www.nextflow.io/).
+The Spatial Profiling Toolbox (SPT) is a lightweight deployment framework for image analysis computation in the context of histopathology. The pipelines are orchestrated with [Nextflow](https://www.nextflow.io/) and support [Singularity](https://sylabs.io/guides/latest/user-guide/)/[Docker](https://hub.docker.com/r/nadeemlab/spt) containerization.
 
-Supported workflows
--------------------
-- **Phenotype proximity workflow**. The core module takes as input two collections of points, and calculates the average density with which a point of one set appears within a specified distance from a given point of the other set. In a balanced/symmetric mode, it calculates instead the density of occurence of a pair of points from the respective sets within the specified distance range.
-- **Density workflow**. The core module calculates phenotype density metrics, without regard to spatial information. This means cell counts per unit cell area in a given compartment or region belonging to a given phenotype.
-- **Front proximity workflow**. The core module calculates the distribution of the distances between the points of a given subset and the front or boundary between two given regions.
-- **Diffusion workflow**. The core module takes as input a collection of points, and generates the associated diffusion map and diffusion Markov chain, with the aim of producing features that are characteristic of the input geometry.
+Workflows
+---------
+The basic workflows compute:
+- **Phenotype proximity metrics**. The average density with which a cell of one set appears within a specified distance from a given cell of another set.
+- **Density metrics**. Without regard to spatial information, cell counts per unit cell area in a given compartment or region belonging to a given phenotype.
+- **Front proximity workflow**. The distribution of the distances between the cells of a given subset and the front or boundary between two given regions.
+
+Additional workflows using third-party libraries can be added with minimal overhead.
 
 Preparing your data
 -------------------
-The current workflows all operate on spreadsheet files mimicing that of object/cell manifests exported from the [HALO](https://indicalab.com/halo/) software. The metadata format is exemplified by the [test data](https://github.com/nadeemlab/SPT/tree/main/tests/data). See also the [specification](https://github.com/nadeemlab/SPT/tree/main/schemas/file_manifest_specification_v0.5.md) for a file manifest file, used to keep all metadata for a dataset organized.
+The current workflows all operate on spreadsheet files mimicing that of object/cell manifests exported from the [HALO](https://indicalab.com/halo/) software. Required metadata is described [here](https://github.com/nadeemlab/SPT/blob/main/schemas/input_data_requirements.pdf).
 
 Prerequisites
 -------------

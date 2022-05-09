@@ -52,7 +52,7 @@ To get the SPT tools, do one of the following:
 Navigate to a working directory for your run, and configure it with `spt-configure`. The options are shown below:
 
 ```
-$ spt-pipeline configure -h
+$ spt-configure -h
 
 usage: spt-configure [-h]
  --workflow {phenotype density,front proximity,phenotype proximity}

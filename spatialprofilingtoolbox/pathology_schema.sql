@@ -1,4 +1,5 @@
 
+-- Pathology ADI v0.5.0
 CREATE TABLE subject (
     identifier VARCHAR(512) PRIMARY KEY,
     species VARCHAR(512),
@@ -156,6 +157,13 @@ CREATE TABLE feature_specifier (
     feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
     specifier VARCHAR(512),
     ordinality VARCHAR(512)
+);
+
+CREATE TABLE quantitative_feature_value (
+    identifier VARCHAR(512) PRIMARY KEY,
+    feature VARCHAR(512) REFERENCES feature_specification(identifier),
+    subject VARCHAR,
+    value NUMERIC
 );
 
 CREATE TABLE two_cohort_feature_association_test (

@@ -1,3 +1,4 @@
+DROP TABLE quantitative_feature_value;
 DROP TABLE two_cohort_feature_association_test ;
 DROP TABLE feature_specifier ;
 DROP TABLE feature_specification ;

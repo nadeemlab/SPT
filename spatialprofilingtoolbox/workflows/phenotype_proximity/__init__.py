@@ -9,7 +9,7 @@ Taken as a whole the phenotype proximity analysis pipeline provides statistical
 test results and figures that assess the efficacy of proximity-related metrics
 as discriminators of selected correlates.
 """
-from ...environment.workflow_modules import WorkflowModules
+from ..defaults.workflow_module_exporting import WorkflowModules
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 

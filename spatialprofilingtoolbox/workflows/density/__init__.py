@@ -2,7 +2,7 @@
 This module computes basic density statistics for each phenotype, without
 regard to spatial information.
 """
-from ...environment.workflow_modules import WorkflowModules
+from ..defaults.workflow_module_exporting import WorkflowModules
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 

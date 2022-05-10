@@ -1,5 +1,5 @@
 
-from ...environment.log_formats import colorized_logger
+from ...environment.logging.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

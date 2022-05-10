@@ -13,7 +13,7 @@ from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ...environment.log_formats import colorized_logger
+from ...environment.logging.log_formats import colorized_logger
 from .data_logging import DensityDataLogger
 
 logger = colorized_logger(__name__)

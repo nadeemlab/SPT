@@ -14,7 +14,7 @@ import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
 
 from ...workflows.front_proximity.computational_design import FrontProximityDesign
-from ...environment.log_formats import colorized_logger
+from ...environment.logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 

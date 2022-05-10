@@ -11,7 +11,7 @@ import numpy as np
 from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
-from ...environment.log_formats import colorized_logger
+from ...environment.logging.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)

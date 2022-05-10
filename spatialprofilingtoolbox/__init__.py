@@ -9,7 +9,7 @@ from .workflows import workflow_names
 from .environment.configuration_settings import get_version
 
 # from .environment.skimmer import DataSkimmer
-from .environment.log_formats import colorized_logger
+from .environment.logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 __version__ = get_version()

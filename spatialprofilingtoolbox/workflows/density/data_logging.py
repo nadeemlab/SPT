@@ -4,7 +4,7 @@ density workflow. The log messages are intended to aid in tracking data value
 provenance in particular runs.
 """
 
-from ...environment.log_formats import colorized_logger
+from ...environment.logging.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

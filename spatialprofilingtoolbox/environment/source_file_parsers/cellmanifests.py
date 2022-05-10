@@ -12,10 +12,10 @@ from ..file_io import compute_sha256
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceFileSemanticParser
 from .parser import DBBackend
-from ..log_formats import colorized_logger
+from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-from ..performance_timer import PerformanceTimer
+from ..logging.performance_timer import PerformanceTimer
 
 record_performance = True
 

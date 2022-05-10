@@ -2,7 +2,7 @@ import sqlite3
 
 from ..defaults.single_job_analyzer import SingleJobAnalyzer
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ...environment.log_formats import colorized_logger
+from ...environment.logging.log_formats import colorized_logger
 from .core import FrontProximityCalculator
 from .integrator import FrontProximityAnalysisIntegrator
 from .computational_design import FrontProximityDesign

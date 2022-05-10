@@ -8,7 +8,7 @@ import pandas as pd
 from ..file_io import get_input_filename_by_identifier
 from ..file_io import compute_sha256
 from .parser import SourceFileSemanticParser
-from ..log_formats import colorized_logger
+from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 

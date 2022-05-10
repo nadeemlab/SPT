@@ -32,7 +32,6 @@ setuptools.setup(
         'spatialprofilingtoolbox.environment',
         'spatialprofilingtoolbox.environment.source_file_parsers',
         'spatialprofilingtoolbox.applications',
-        'spatialprofilingtoolbox.applications.cell_cartoons',
         'spatialprofilingtoolbox.applications.front_proximity_viz',
         'spatialprofilingtoolbox.templates',
         'spatialprofilingtoolbox.data_model',

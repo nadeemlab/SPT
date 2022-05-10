@@ -76,7 +76,7 @@ class DataSkimmer:
 
         if self.db_backend == DBBackend.SQLITE:
             logger.info('Using sqlite backend.')
-            with importlib.resources.path('spatialprofilingtoolbox', 'data_model', 'pathology_schema.sql') as path:
+            with importlib.resources.path('spatialprofilingtoolbox.data_model', 'pathology_schema.sql') as path:
                 create_db_script = open(path).read()
             pathstudies = DataSkimmer.pathstudies_db_filename
             if exists(pathstudies):
@@ -132,7 +132,7 @@ class DataSkimmer:
             with open(DataSkimmer.pathstudies_db_filename, 'w') as f:
                 f.write('')
             return
-        with importlib.resources.path('spatialprofilingtoolbox', 'data_model', 'fields.tsv') as path:
+        with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
         args = [self.connection, fields, self.dataset_design]

@@ -25,7 +25,7 @@ nf_pipeline_file = 'main.nf'
 
 def retrieve_from_library(subpackage, filename):
     contents = None
-    with importlib.resources.path('spatialprofilingtoolbox', subpackage, filename) as path:
+    with importlib.resources.path('.'.join(['spatialprofilingtoolbox', subpackage]), filename) as path:
         with open(path, 'rt') as file:
             contents = file.read()
     if contents is None:

@@ -11,7 +11,7 @@ from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_id
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflows.phenotype_proximity.core import PhenotypeProximityCalculator
 from spatialprofilingtoolbox.workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
-from spatialprofilingtoolbox.environment.skimmer import DataSkimmer
+from spatialprofilingtoolbox.environment.source_file_parsers.skimmer import DataSkimmer
 import spatialprofilingtoolbox as spt
 
 

@@ -15,7 +15,11 @@ import pandas as pd
 from .logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-from .source_file_parsers import *
+from .outcomes import OutcomesParser
+from .cellmanifestset import CellManifestSetParser
+from .channels import ChannelsPhenotypesParser
+from .cellmanifests import CellManifestsParser
+from .parser import DBBackend
 
 
 class DataSkimmer:

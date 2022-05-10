@@ -4,7 +4,7 @@ any workflow-specific metadata.
 """
 import pandas as pd
 
-from ...environment.computational_design import ComputationalDesign
+from ..defaults.computational_design import ComputationalDesign
 
 
 class PhenotypeProximityDesign(ComputationalDesign):

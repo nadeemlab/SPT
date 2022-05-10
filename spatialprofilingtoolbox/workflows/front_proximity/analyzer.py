@@ -1,6 +1,6 @@
 import sqlite3
 
-from ...environment.single_job_analyzer import SingleJobAnalyzer
+from ..defaults.single_job_analyzer import SingleJobAnalyzer
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.log_formats import colorized_logger
 from .core import FrontProximityCalculator

@@ -10,7 +10,7 @@ import scipy
 from scipy.spatial import KDTree
 
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ...environment.calculator import Calculator
+from ..defaults.calculator import Calculator
 from ...environment.log_formats import colorized_logger
 from .data_logging import DensityDataLogger
 

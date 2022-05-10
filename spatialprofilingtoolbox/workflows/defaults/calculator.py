@@ -1,9 +1,9 @@
 
 import pandas as pd
 
-from .dichotomization import Dichotomizer
-from .performance_timer import PerformanceTimer
-from .log_formats import colorized_logger
+from ...environment.dichotomization import Dichotomizer
+from ...environment.performance_timer import PerformanceTimer
+from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

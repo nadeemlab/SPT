@@ -6,7 +6,7 @@ import re
 
 import pandas as pd
 
-from ...environment.computational_design import ComputationalDesign
+from ..defaults.computational_design import ComputationalDesign
 
 
 class DensityDesign(ComputationalDesign):

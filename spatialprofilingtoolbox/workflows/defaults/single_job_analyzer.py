@@ -5,7 +5,7 @@ from os.path import getsize
 
 import pandas as pd
 
-from .log_formats import colorized_logger
+from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

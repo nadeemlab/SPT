@@ -8,7 +8,7 @@ import sqlite3
 
 import pandas as pd
 
-from ...environment.single_job_analyzer import SingleJobAnalyzer
+from ..defaults.single_job_analyzer import SingleJobAnalyzer
 from ...environment.log_formats import colorized_logger
 from .core import DensityCalculator
 from .computational_design import DensityDesign

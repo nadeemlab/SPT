@@ -26,6 +26,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.dataset_designs',
         'spatialprofilingtoolbox.dataset_designs.multiplexed_imaging',
         'spatialprofilingtoolbox.workflows',
+        'spatialprofilingtoolbox.workflows.defaults',
         'spatialprofilingtoolbox.workflows.phenotype_proximity',
         'spatialprofilingtoolbox.workflows.front_proximity',
         'spatialprofilingtoolbox.workflows.density',

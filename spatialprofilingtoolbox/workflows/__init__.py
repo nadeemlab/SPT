@@ -15,6 +15,7 @@ from os.path import dirname
 subpackages = {
     name : importlib.import_module('.%s' % name, __name__)
     for name in find_packages(where=dirname(__file__))
+    if name != 'defaults'
 }
 workflow_components = [
     getattr(subpackage, 'components')

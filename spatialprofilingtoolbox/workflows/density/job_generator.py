@@ -3,7 +3,7 @@ Generation of the job scripts and job scheduling scripts for the cell
 phenotype density analysis workflow.
 """
 
-from ...environment.job_generator import JobGenerator
+from ..defaults.job_generator import JobGenerator
 from ...environment.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

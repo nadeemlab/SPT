@@ -79,7 +79,7 @@ optional arguments:
 **Note**: *If you didn't `pip install`, you can run the configuration script out of the container:*
 
 ```sh
-$ singularity exec /path/to/my/containers/spt_latest.sif spt-configure
+$ singularity exec -B /path/to/my/data -B /path/to/my/containers /path/to/my/containers/spt_latest.sif spt-configure ...
 ```
 
 For example:

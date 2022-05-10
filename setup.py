@@ -34,6 +34,8 @@ setuptools.setup(
         'spatialprofilingtoolbox.applications',
         'spatialprofilingtoolbox.applications.cell_cartoons',
         'spatialprofilingtoolbox.applications.front_proximity_viz',
+        'spatialprofilingtoolbox.templates',
+        'spatialprofilingtoolbox.data_model',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
@@ -41,17 +43,25 @@ setuptools.setup(
         'Topic :: Scientific/Engineering',
         'Intended Audience :: Science/Research',
     ],
-    package_data={'spatialprofilingtoolbox': [
+    package_data={
+        'spatialprofilingtoolbox': [
             'version.txt',
             'requirements.txt',
+        ],
+        'spatialprofilingtoolbox.workflows': [
             'main.nf',
+        ],
+        'spatialprofilingtoolbox.templates': [
             'nextflow.config.jinja',
-            'fields.tsv',
-            'pathology_schema.sql',
             'log_table.tex.jinja',
             'log_table.html.jinja',
             '.spt_db.config.template',
-        ]},
+        ],
+        'spatialprofilingtoolbox.data_model': [
+            'fields.tsv',
+            'pathology_schema.sql',
+        ]
+    },
     python_requires='>=3.7',
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-configure',

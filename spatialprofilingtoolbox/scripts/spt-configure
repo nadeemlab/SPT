@@ -23,9 +23,9 @@ from spatialprofilingtoolbox.environment.configuration_settings import default_f
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'
 
-def retrieve_from_library(filename):
+def retrieve_from_library(subpackage, filename):
     contents = None
-    with importlib.resources.path('spatialprofilingtoolbox', filename) as path:
+    with importlib.resources.path('spatialprofilingtoolbox', subpackage, filename) as path:
         with open(path, 'rt') as file:
             contents = file.read()
     if contents is None:
@@ -33,14 +33,14 @@ def retrieve_from_library(filename):
     return contents
 
 def write_config_file(variables):
-    contents = retrieve_from_library(nf_config_file + '.jinja')
+    contents = retrieve_from_library('templates', nf_config_file + '.jinja')
     template = jinja_environment.from_string(contents)
     config_file = template.render(**variables)
     with open(join(getcwd(), nf_config_file), 'wt') as file:
         file.write(config_file)
 
 def write_pipeline_script():
-    contents = retrieve_from_library(nf_pipeline_file)
+    contents = retrieve_from_library('workflows', nf_pipeline_file)
     with open(join(os.getcwd(), nf_pipeline_file), 'wt') as file:
         file.write(contents)
 

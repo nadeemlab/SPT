@@ -4,7 +4,7 @@ import argparse
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import workflows
 from spatialprofilingtoolbox import get_integrator
-from spatialprofilingtoolbox.environment.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflows.defaults.computational_design import ComputationalDesign
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 if __name__=='__main__':

@@ -1,7 +1,3 @@
-"""
-The core calculator deals with pulling in cell data from all input data files,
-and pushing it into a pipeline-specific database.
-"""
 from os.path import join
 import sqlite3
 
@@ -10,41 +6,29 @@ import scipy
 from scipy.spatial import KDTree
 
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ..defaults.calculator import Calculator
+from ..defaults.core import CoreJob
 from ...environment.logging.log_formats import colorized_logger
 from .data_logging import DensityDataLogger
 
 logger = colorized_logger(__name__)
 
 
-class DensityCalculator(Calculator):
-    """
-    The main class of the core calculator.
-    """
-    def __init__(
-        self,
-        input_filename: str=None,
-        sample_identifier: str=None,
-        outcome: str=None,
-        **kwargs,
-    ):
-        """
-        :param input_filename: The filename for the source file with cell data.
-        :type input_filename: str
+class DensityCoreJob(CoreJob):
+    def __init__(**kwargs):
+        super(DensityCoreJob, self).__init__(**kwargs)
 
-        :param sample_identifier: The sample associated with this source file.
-        :type sample_identifier: str
-        """
-        super(DensityCalculator, self).__init__(**kwargs)
-        self.input_filename = input_filename
-        self.sample_identifier = sample_identifier
-        self.outcome = outcome
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        pass
+
+    def _calculate(self):
+        self.calculate_density()
 
     def calculate_density(self):
         """
         Writes cell data to the database.
 
-        Note that in the density analysis workflow, most calculation takes place in
+        Note that in the density analysis workflow, much calculation takes place in
         the "integration" phase.
         """
         self.timer.record_timepoint('Starting calculation of density')
@@ -54,7 +38,6 @@ class DensityCalculator(Calculator):
         self.write_cell_table(cells)
         self.write_fov_lookup_table(fov_lookup)
         logger.info('Finished writing cells and fov lookup helper.')
-        self.wrap_up_timer()
 
     def get_phenotype_signatures_by_name(self):
         """

@@ -35,7 +35,6 @@ class CoreJob:
         self.input_filename = input_filename
         self.sample_identifier = sample_identifier
         self.outcome = outcome
-        self.timer = PerformanceTimer()
 
     def initialize_metrics_database(self):
         """
@@ -55,11 +54,13 @@ class CoreJob:
         """
         The main calculation of this job, to be called by pipeline orchestration.
         """
+        self.timer = PerformanceTimer()
         self.initialize_metrics_database()
         logger.info('Started core calculator job.')
         self.log_file_info()
         self._calculate()
         logger.info('Completed core calculator job.')
+        self.wrap_up_timer()
 
     def wrap_up_timer(self):
         """

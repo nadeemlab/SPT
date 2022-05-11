@@ -4,15 +4,15 @@ import argparse
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import workflows
 from spatialprofilingtoolbox import workflow_names
-from spatialprofilingtoolbox import get_analyzer
+from spatialprofilingtoolbox import get_core_job
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         description = 'One parallelizable "core" computation job.',
     )
 
-    for analyzer in [w.analyzer for w in workflows.values()]:
-        analyzer.solicit_cli_arguments(parser)
+    for CoreJob in [w.core_job for w in workflows.values()]:
+        CoreJob.solicit_cli_arguments(parser)
 
     parser.add_argument(
         '--workflow',
@@ -77,5 +77,5 @@ if __name__=='__main__':
     )
 
     parameters = vars(parser.parse_args())
-    analyzer = get_analyzer(**parameters)
-    analyzer.calculate()
+    core_job = get_core_job(**parameters)
+    core_job.calculate()

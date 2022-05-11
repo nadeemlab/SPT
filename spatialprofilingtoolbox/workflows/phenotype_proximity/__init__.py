@@ -14,7 +14,7 @@ from ..defaults.workflow_module_exporting import WorkflowModules
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 from .job_generator import PhenotypeProximityJobGenerator
-from .analyzer import PhenotypeProximityAnalyzer
+from .core_job import PhenotypeProximityCoreJob
 from .computational_design import PhenotypeProximityDesign
 from .integrator import PhenotypeProximityAnalysisIntegrator
 
@@ -24,7 +24,7 @@ components = {
         generator = PhenotypeProximityJobGenerator,
         dataset_design = HALOCellMetadataDesign,
         computational_design = PhenotypeProximityDesign,
-        analyzer = PhenotypeProximityAnalyzer,
+        core_job = PhenotypeProximityCoreJob,
         integrator = PhenotypeProximityAnalysisIntegrator,
     ),
 }

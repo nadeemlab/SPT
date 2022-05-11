@@ -7,7 +7,7 @@ from ..defaults.workflow_module_exporting import WorkflowModules
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 from .job_generator import DensityJobGenerator
-from .analyzer import DensityAnalyzer
+from .core import DensityCoreJob
 from .computational_design import DensityDesign
 from .integrator import DensityAnalysisIntegrator
 
@@ -17,7 +17,7 @@ components =  {
         generator = DensityJobGenerator,
         dataset_design = HALOCellMetadataDesign,
         computational_design = DensityDesign,
-        analyzer = DensityAnalyzer,
+        core_job = DensityCoreJob,
         integrator = DensityAnalysisIntegrator,
     ),
 }

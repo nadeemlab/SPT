@@ -1,12 +1,25 @@
 import os
 from os import mkdir
-from os.path import exists, abspath, join
+from os.path import exists
+from os.path import abspath
+from os.path import join
 import hashlib
+from itertools import takewhile
+from itertools import repeat
 
 import pandas as pd
 
 from .logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
+
+
+def raw_line_count(self, filename):
+    file = open(filename, 'rb')
+    buffer_generator = takewhile(
+        lambda x: x,
+        (file.raw.read(1024*1024) for _ in repeat(None)),
+    )
+    return sum( buffer.count(b'\n') for buffer in buffer_generator )
 
 
 def compute_sha256(input_file):

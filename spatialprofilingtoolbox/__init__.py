@@ -51,15 +51,15 @@ def get_computational_design(workflow=None, **kwargs):
     computational_design = ComputationalDesign(dataset_design = dataset_design, **kwargs)
     return computational_design
 
-def get_analyzer(workflow=None, **kwargs):
+def get_core_job(workflow=None, **kwargs):
     """
-    Exposes pipeline analyzers to scripts.
+    Exposes pipeline core jobs to scripts.
     """
     if workflow in workflows:
         dataset_design = get_dataset_design(workflow = workflow, **kwargs)
         computational_design = get_computational_design(workflow = workflow, **kwargs)
-        Analyzer = workflows[workflow].analyzer
-        return Analyzer(
+        CoreJob = workflows[workflow].core_job
+        return CoreJob(
             dataset_design = dataset_design,
             computational_design = computational_design,
             **kwargs,

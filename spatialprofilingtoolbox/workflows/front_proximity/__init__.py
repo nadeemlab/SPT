@@ -9,7 +9,7 @@ from ..defaults.workflow_module_exporting import WorkflowModules
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 from .job_generator import FrontProximityJobGenerator
-from .analyzer import FrontProximityAnalyzer
+from .core_job import FrontProximityCoreJob
 from .computational_design import FrontProximityDesign
 from .integrator import FrontProximityAnalysisIntegrator
 
@@ -19,7 +19,7 @@ components = {
         generator = FrontProximityJobGenerator,
         dataset_design = HALOCellMetadataDesign,
         computational_design = FrontProximityDesign,
-        analyzer = FrontProximityAnalyzer,
+        core_job = FrontProximityCoreJob,
         integrator = FrontProximityAnalysisIntegrator,
     ),
 }

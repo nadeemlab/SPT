@@ -2,8 +2,6 @@ from os.path import join
 import sqlite3
 
 import pandas as pd
-import scipy
-from scipy.spatial import KDTree
 
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ..defaults.core import CoreJob
@@ -96,41 +94,6 @@ class DensityCoreJob(CoreJob):
         pheno_names = sorted(signatures_by_name.keys())
         return pheno_names
 
-    def add_nearest_cell_data(self, table, compartment):
-        compartments = self.dataset_design.get_compartments()
-        cell_indices = list(table.index)
-        xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
-        table['x value'] = 0.5 * (table[xmax] + table[xmin])
-        table['y value'] = 0.5 * (table[ymax] + table[ymin])
-        signature = self.dataset_design.get_compartmental_signature(table, compartment)
-        if sum(signature) == 0:
-            for i in range(len(cell_indices)):
-                I = cell_indices[i]
-                distance = -1
-                table.loc[I, 'distance to nearest cell ' + compartment] = distance
-        else:
-            compartment_cells = table[signature]
-            compartment_points = [
-                (row['x value'], row['y value'])
-                for i, row in compartment_cells.iterrows()
-            ]
-            all_points = [
-                (row['x value'], row['y value'])
-                for i, row in table.iterrows()
-            ]
-            tree = KDTree(compartment_points)
-            distances, indices = tree.query(all_points)
-            for i in range(len(cell_indices)):
-                I = cell_indices[i]
-                compartment_i = table.loc[I, 'compartment']
-                if compartment_i == compartment:
-                    distance = 0
-                if compartment_i not in compartments:
-                    distance = -1
-                else:
-                    distance = distances[i]
-                table.loc[I, 'distance to nearest cell ' + compartment] = distance
-
     def create_cell_table(self):
         """
         :return:
@@ -186,11 +149,6 @@ class DensityCoreJob(CoreJob):
             phenotype_membership_columns = [name + ' membership' for name in pheno_names]
             self.timer.record_timepoint('Finished creating membership columns')
 
-            self.timer.record_timepoint('Adding distance-to-nearest data')
-            for compartment in all_compartments:
-                self.add_nearest_cell_data(table, compartment)
-            nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in all_compartments]
-            self.timer.record_timepoint('Finished adding distance-to-nearest data')
             table['sample_identifier'] = sample_identifier
             table['outcome_assignment'] = self.outcome
 
@@ -207,7 +165,7 @@ class DensityCoreJob(CoreJob):
                 'outcome_assignment',
                 'compartment',
                 self.dataset_design.get_cell_area_column(),
-            ] + phenotype_membership_columns + intensity_columns + nearest_cell_columns
+            ] + phenotype_membership_columns + intensity_columns
 
             table = table[pertinent_columns]
             self.timer.record_timepoint('Restricted copy to subset of columns')

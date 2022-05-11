@@ -30,6 +30,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.workflows.phenotype_proximity',
         'spatialprofilingtoolbox.workflows.front_proximity',
         'spatialprofilingtoolbox.workflows.density',
+        'spatialprofilingtoolbox.workflows.nearest_distance',
         'spatialprofilingtoolbox.environment',
         'spatialprofilingtoolbox.environment.logging',
         'spatialprofilingtoolbox.environment.source_file_parsers',

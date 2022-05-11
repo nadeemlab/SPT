@@ -84,18 +84,10 @@ class DensityDesign(ComputationalDesign):
 
         intensity_columns = self.get_intensity_columns(style=style, values_only=True)
 
-        compartments = self.dataset_design.get_compartments()
-        nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in compartments]
-        if style == 'sql':
-            nearest_cell_columns = [
-                re.sub(r'[\- ]', '_', c) for c in nearest_cell_columns
-            ]
         return [
             (column_name, 'INTEGER') for column_name in phenotype_membership_columns
         ] + [
             (column_name, 'NUMERIC') for column_name in intensity_columns
-        ] + [
-            (column_name, 'NUMERIC') for column_name in nearest_cell_columns
         ]
 
     def get_intensity_columns(self, style='readable', values_only=False):

@@ -2,7 +2,8 @@
 The core calculator for the proximity calculation on a single source file.
 """
 from os.path import join
-from math import exp, log
+from math import exp
+from math import log
 from math import pow as math_pow
 from itertools import combinations
 import sqlite3
@@ -13,41 +14,47 @@ import sklearn
 from sklearn.neighbors import BallTree
 
 from ...environment.database_context_utility import WaitingDatabaseContextManager
-from ..defaults.calculator import Calculator
+from ..defaults.core import CoreJob
 from ...environment.logging.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
 
-class PhenotypeProximityCalculator(Calculator):
-    """
-    The main class of the calculator.
-    """
+class PhenotypeProximityCoreJob(CoreJob):
     radii = [20, 60, 100]
 
-    def __init__(self,
-        input_filename: str=None,
-        sample_identifier: str=None,
-        outcome: str=None,
-        **kwargs,
-    ):
-        """
-        :param input_filename: The filename for the source file with cell data.
-        :type input_filename: str
-
-        :param sample_identifier: The sample associated with this source file.
-        :type sample_identifier: str
-
-        :param dataset_design: The design object for the input dataset.
-
-        :param computational_design: The design object for the proximity workflow.
-        """
-        super(PhenotypeProximityCalculator, self).__init__(**kwargs)
-        self.input_filename = input_filename
-        self.sample_identifier = sample_identifier
-        self.outcome = outcome
+    def __init__(self, **kwargs):
+        super(PhenotypeProximityCoreJob, self).__init__(**kwargs)
         self.fov_lookup = {}
+
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        pass
+
+    def _calculate(self):
+        self.calculate_proximity()
+
+    def initialize_metrics_database(self):
+        cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
+
+        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        cursor = connection.cursor()
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            self.computational_design.get_cell_pair_counts_table_name(),
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            ' , '.join([
+                column_name + ' ' + data_type_descriptor
+                for column_name, data_type_descriptor in cell_pair_counts_header
+            ]),
+            ');',
+        ])
+        cursor.execute(cmd)
+        cursor.close()
+        connection.commit()
+        connection.close()
 
     def calculate_proximity(self):
         """

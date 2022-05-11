@@ -82,6 +82,8 @@ optional arguments:
 $ singularity exec -B /path/to/my/data -B /path/to/my/containers /path/to/my/containers/spt_latest.sif spt-configure ...
 ```
 
+**Note**: *In a limited-permissions environment, [miniconda](https://docs.conda.io/en/latest/miniconda.html) can be used to install git, Python, and gxx (for sklearn), and then install `spatialprofilingtoolbox` from the source in this git repository, all into a conda-managed virtual environment.*
+
 For example:
 ```sh
 $ spt-configure \

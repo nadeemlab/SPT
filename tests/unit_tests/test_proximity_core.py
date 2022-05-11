@@ -8,7 +8,7 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.environment.configuration_settings import elementary_phenotypes_file_identifier
 from spatialprofilingtoolbox.environment.configuration_settings import composite_phenotypes_file_identifier
 from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
-from spatialprofilingtoolbox.workflows.phenotype_proximity.core import PhenotypeProximityCalculator
+from spatialprofilingtoolbox.workflows.phenotype_proximity.core import PhenotypeProximityCoreJob
 from spatialprofilingtoolbox.workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
 from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
@@ -60,7 +60,7 @@ def test_proximity_counting():
     )
     file_manifest = pd.read_csv(file_manifest_file, sep='\t')
 
-    calc = PhenotypeProximityCalculator(
+    calc = PhenotypeProximityCoreJob(
         input_filename = join(input_files_path, 'cell_manifest_1.csv'),
         sample_identifier = 'sample 1',
         outcome = 'unknown',

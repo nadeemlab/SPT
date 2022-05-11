@@ -343,7 +343,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             'source phenotype count',
         ] # Get this from computational design??
         radius_limited_counts = pd.DataFrame(
-            PhenotypeProximityCalculator.flatten_lists(results),
+            PhenotypeProximityCoreJob.flatten_lists(results),
             columns=columns,
         )
         self.timer.record_timepoint('Done flattening into radius-limit counts')
@@ -386,7 +386,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             source, target = [pair[0], pair[1]]
         records = []
         for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
-            for radius in PhenotypeProximityCalculator.get_radii_of_interest():
+            for radius in PhenotypeProximityCoreJob.get_radii_of_interest():
                 count = 0
                 source_count = 0
                 self.timer.record_timepoint('Started one compartment/radius/phenotype pair')
@@ -494,7 +494,7 @@ class PhenotypeProximityCoreJob(CoreJob):
 
     @staticmethod
     def get_radii_of_interest():
-        return PhenotypeProximityCalculator.radii
+        return PhenotypeProximityCoreJob.radii
 
     @staticmethod
     def flatten_lists(the_lists):

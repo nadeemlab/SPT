@@ -79,7 +79,6 @@ class PhenotypeProximityCoreJob(CoreJob):
         )
         self.write_cell_pair_counts(radius_limited_counts)
         self.timer.record_timepoint('Finished writing pair counts')
-        self.wrap_up_timer()
 
     def cache_fov_strings(self, table_file):
         """

@@ -57,7 +57,6 @@ class FrontProximityCoreJob(CoreJob):
         self.timer.record_timepoint('Finished writing front distance')
         logger.debug('Finished writing cell front distances in sample %s.', self.sample_identifier)
         self.timer.record_timepoint('Completed front proximity one job')
-        self.wrap_up_timer()
 
     def get_phenotype_signatures_by_name(self):
         signatures = self.computational_design.get_all_phenotype_signatures()

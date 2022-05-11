@@ -24,6 +24,44 @@ class DensityCoreJob(CoreJob):
     def _calculate(self):
         self.calculate_density()
 
+    def initialize_metrics_database(self):
+        """
+        The density workflow uses a pipeline-specific database to store its
+        intermediate outputs. This method initializes this database's tables.
+        """
+        cells_header = self.computational_design.get_cells_header(style='sql')
+        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        cursor = connection.cursor()
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            'cells',
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            ', '.join([' '.join(entry) for entry in cells_header]),
+            ');',
+        ])
+        cursor.execute(cmd)
+        cursor.close()
+        connection.commit()
+        connection.close()
+
+        # Check if fov_lookup is still used
+        fov_lookup_header = self.computational_design.get_fov_lookup_header()
+        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        cursor = connection.cursor()
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            'fov_lookup',
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            ', '.join([' '.join(entry) for entry in fov_lookup_header]),
+            ');',
+        ])
+        cursor.execute(cmd)
+        cursor.close()
+        connection.commit()
+        connection.close()
+
     def calculate_density(self):
         """
         Writes cell data to the database.

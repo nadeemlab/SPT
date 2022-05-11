@@ -5,24 +5,47 @@ import pandas as pd
 import scipy
 from scipy.spatial import KDTree
 
-from ..defaults.calculator import Calculator
+from ..defaults.core import CoreJob
 from ...environment.database_context_utility import WaitingDatabaseContextManager
 from ...environment.logging.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class FrontProximityCalculator(Calculator):
-    def __init__(self,
-        input_filename: str=None,
-        sample_identifier: str=None,
-        outcome: str=None,
-        **kwargs,
-    ):
-        super(FrontProximityCalculator, self).__init__(**kwargs)
-        self.input_filename = input_filename
-        self.sample_identifier = sample_identifier
-        self.outcome = outcome
+class FrontProximityCore(CoreJob):
+    def __init__(self, **kwargs):
+        super(FrontCoreJob, self).__init__(**kwargs)
+
+    @staticmethod
+    def solicit_cli_arguments(parser):
+        pass
+
+    def _calculate(self):
+        self.calculate_front_proximity()
+
+    def initialize_metrics_database(self):
+        """
+        The front proximity workflow uses a pipeline-specific database to store its
+        intermediate outputs. This method initializes this database's tables.
+        """
+        cell_front_distances_header = self.computational_design.get_cell_front_distances_header()
+
+        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        cursor = connection.cursor()
+        cmd = ' '.join([
+            'CREATE TABLE IF NOT EXISTS',
+            'cell_front_distances',
+            '(',
+            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+            ' , '.join([
+                column_name + ' ' + data_type_descriptor for column_name, data_type_descriptor in cell_front_distances_header
+            ]),
+            ');',
+        ])
+        cursor.execute(cmd)
+        cursor.close()
+        connection.commit()
+        connection.close()
 
     def calculate_front_proximity(self):
         self.timer.record_timepoint('Started front proximity one job')

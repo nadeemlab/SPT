@@ -14,7 +14,7 @@ logger = colorized_logger(__name__)
 
 
 class DensityCoreJob(CoreJob):
-    def __init__(**kwargs):
+    def __init__(self, **kwargs):
         super(DensityCoreJob, self).__init__(**kwargs)
 
     @staticmethod

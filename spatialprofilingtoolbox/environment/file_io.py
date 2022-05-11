@@ -13,7 +13,7 @@ from .logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-def raw_line_count(self, filename):
+def raw_line_count(filename):
     file = open(filename, 'rb')
     buffer_generator = takewhile(
         lambda x: x,

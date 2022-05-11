@@ -1,6 +1,9 @@
+import os
+from os.path import getsize
 
 import pandas as pd
 
+from ...environment.file_io import raw_line_count
 from ...environment.dichotomization import Dichotomizer
 from ...environment.logging.performance_timer import PerformanceTimer
 from ...environment.logging.log_formats import colorized_logger
@@ -8,11 +11,15 @@ from ...environment.logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class Calculator:
+class CoreJob:
     def __init__(
         self,
         dataset_design=None,
         computational_design=None,
+        input_file_identifier: str=None,
+        input_filename: str=None,
+        sample_identifier: str=None,
+        outcome: str=None,
         **kwargs,
     ):
         """
@@ -24,33 +31,52 @@ class Calculator:
         """
         self.dataset_design = dataset_design
         self.computational_design = computational_design
+        self.input_file_identifier = input_file_identifier
+        self.input_filename = input_filename
+        self.sample_identifier = sample_identifier
+        self.outcome = outcome
         self.timer = PerformanceTimer()
 
+    def initialize_metrics_database(self):
+        """
+        Initialize the local sqlite database for intermediate metrics. The URI is
+        provided by computational_design.get_database_uri() .
+        """
+        pass
+
+    def _calculate(self):
+        """
+        Abstract method, the implementation of which is the core/primary computation to
+        be performed by this job.
+        """
+        pass
+
+    def calculate(self):
+        """
+        The main calculation of this job, to be called by pipeline orchestration.
+        """
+        self.initialize_metrics_database()
+        logger.info('Started core calculator job.')
+        self.log_file_info()
+        self._calculate()
+        logger.info('Completed core calculator job.')
+
     def wrap_up_timer(self):
+        """
+        Concludes low-level performance metric collection for this job.
+        """
         df = self.timer.report(by='fraction')
         df.to_csv(self.computational_design.get_performance_report_filename(), index=False)
+
+    def log_file_info(self):
+        number_cells = raw_line_count(self.input_filename) - 1
+        logger.info('%s cells to be parsed from source file "%s".', number_cells, self.input_filename)
+        logger.info('Cells source file has size %s bytes.', getsize(self.input_filename))
 
     def get_table(self, filename):
         table_from_file = pd.read_csv(filename)
         self.preprocess(table_from_file)
         return table_from_file
-
-    @staticmethod
-    def pull_in_outcome_data(outcomes_file):
-        """
-        :param outcomes_file: Name of file with outcomes data.
-        :type outcomes_file: str
-
-        :return outcomes: Dictionary whose keys are sample identifiers, and values are
-            outcome labels.
-        :rtype outcomes: dict
-        """
-        outcomes_table = pd.read_csv(outcomes_file, sep='\t')
-        columns = outcomes_table.columns
-        outcomes_dict = {
-            row[columns[0]]: str(row[columns[1]]) for i, row in outcomes_table.iterrows()
-        }
-        return outcomes_dict
 
     def preprocess(self, table):
         if self.computational_design.dichotomize:

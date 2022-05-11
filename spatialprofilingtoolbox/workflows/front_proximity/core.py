@@ -14,7 +14,7 @@ logger = colorized_logger(__name__)
 
 class FrontProximityCoreJob(CoreJob):
     def __init__(self, **kwargs):
-        super(FrontCoreJob, self).__init__(**kwargs)
+        super(FrontProximityCoreJob, self).__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

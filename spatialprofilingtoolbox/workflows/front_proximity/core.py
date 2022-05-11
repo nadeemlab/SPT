@@ -12,7 +12,7 @@ from ...environment.logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class FrontProximityCore(CoreJob):
+class FrontProximityCoreJob(CoreJob):
     def __init__(self, **kwargs):
         super(FrontCoreJob, self).__init__(**kwargs)
 

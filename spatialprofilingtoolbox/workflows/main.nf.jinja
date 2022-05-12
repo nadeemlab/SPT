@@ -176,8 +176,6 @@ process aggregate_results {
     path elementary_phenotypes
     path composite_phenotypes
     path compartments
-{%- if outcomes %}
-    path outcomes_file{% endif %}
 
     output:
     file 'stats_tests.csv'
@@ -190,8 +188,6 @@ process aggregate_results {
      --elementary-phenotypes-file=${elementary_phenotypes} \
      --composite-phenotypes-file=${composite_phenotypes} \
      --compartments-file=${compartments} \
-{%- if outcomes %}
-     --outcomes-file=${outcomes_file} \{% endif %}
      --stats-tests-file=stats_tests.csv
     """
 }
@@ -283,7 +279,5 @@ workflow {
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
         compartments_file_ch,
-{%- if outcomes %}
-        outcomes_file_ch,{% endif %}
     )
 }

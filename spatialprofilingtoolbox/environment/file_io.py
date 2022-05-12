@@ -21,7 +21,6 @@ def raw_line_count(filename):
     )
     return sum( buffer.count(b'\n') for buffer in buffer_generator )
 
-
 def compute_sha256(input_file):
     buffer_size = 65536
     sha = hashlib.sha256()
@@ -77,9 +76,9 @@ def get_input_filename_by_identifier(
     records = file_metadata[file_metadata['File ID'] == input_file_identifier]
     filenames = list(records['File name'])
     if len(filenames) > 1:
-        logger.error('File identifier "%s" duplicated.', input_file_identifier)
+        logger.warning('File identifier "%s" duplicated.', input_file_identifier)
         return None
     if len(filenames) == 0:
-        logger.error('File identifier "%s" not found.', input_file_identifier)
+        logger.warning('File identifier "%s" not found.', input_file_identifier)
         return None
     return filenames[0]

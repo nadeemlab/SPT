@@ -7,9 +7,9 @@ process echo_environment_variables {
     path 'file_manifest_filename',          emit: file_manifest_filename
     path 'input_path',                      emit: input_path
 {%- if compartments %}
-    path 'compartments_file'                emit: compartments_file{% endif %}
+    path 'compartments_file',               emit: compartments_file{% endif %}
 {%- if outcomes %}
-    path 'outcomes_file'                    emit: outcomes_file{% endif %}
+    path 'outcomes_file',                   emit: outcomes_file{% endif %}
 
     script:
     """

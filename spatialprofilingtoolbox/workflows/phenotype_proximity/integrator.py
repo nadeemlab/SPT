@@ -43,6 +43,8 @@ class PhenotypeProximityAnalysisIntegrator:
         if cell_proximity_tests is not None:
             self.export_results(cell_proximity_tests, filename)
         else:
+            with open(filename, 'wt') as file:
+                file.write('')
             logger.warning('No stats to export for phenotype proximity workflow.')
 
     def do_outcome_tests(self):

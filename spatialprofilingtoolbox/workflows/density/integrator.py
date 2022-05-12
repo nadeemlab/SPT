@@ -45,6 +45,8 @@ class DensityAnalysisIntegrator:
             self.export_results(density_tests, filename)
             logger.info('Done exporting stats.')
         else:
+            with open(filename, 'wt') as file:
+                file.write('')
             logger.warning('Test results not generated.')
 
     def create_area_sums(self):

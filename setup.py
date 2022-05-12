@@ -51,7 +51,7 @@ setuptools.setup(
             'requirements.txt',
         ],
         'spatialprofilingtoolbox.workflows': [
-            'main.nf',
+            'main.nf.jinja',
         ],
         'spatialprofilingtoolbox.templates': [
             'nextflow.config.jinja',

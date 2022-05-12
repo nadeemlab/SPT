@@ -19,9 +19,12 @@ jinja_environment = Environment(loader=BaseLoader)
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.workflows import workflow_names
 from spatialprofilingtoolbox.environment.configuration_settings import default_file_manifest_filename
+from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
+from spatialprofilingtoolbox.environment.file_io import get_input_filenames_by_data_type
 
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'
+
 
 def retrieve_from_library(subpackage, filename):
     contents = None
@@ -39,10 +42,12 @@ def write_config_file(variables):
     with open(join(getcwd(), nf_config_file), 'wt') as file:
         file.write(config_file)
 
-def write_pipeline_script():
-    contents = retrieve_from_library('workflows', nf_pipeline_file)
+def write_pipeline_script(variables):
+    contents = retrieve_from_library('workflows', nf_pipeline_file + '.jinja')
+    template = jinja_environment.from_string(contents)
+    pipeline_file = template.render(**variables)
     with open(join(os.getcwd(), nf_pipeline_file), 'wt') as file:
-        file.write(contents)
+        file.write(pipeline_file)
 
 def record_configuration_command(variables):
     tokens = ['spt-configure']
@@ -102,13 +107,14 @@ if __name__=='__main__':
         required=False,
         help='Path to SPT Singularity container. Can be obtained with singularity pull docker://nadeemlab/spt:latest',
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         '--local',
         action='store_true',
         default=False,
         help='Use this flag to get Nextflow to deploy processes locally on a given machine.'
     )
-    parser.add_argument(
+    group.add_argument(
         '--lsf',
         action='store_true',
         default=False,
@@ -125,18 +131,13 @@ if __name__=='__main__':
 
     variables = {}
 
-    if args.local and args.lsf:
-        raise ValueError('Specify either --local or --lsf as the deployment environment but not both.')
-    if (not args.local) and (not args.lsf):
-        if not which('bsub') is None:
-            variables['executor'] = 'lsf'
-        else:
-            variables['executor'] = 'local'
-    else:
-        if args.local:
-            variables['executor'] = 'local'
-        if args.lsf:
-            variables['executor'] = 'lsf'
+    if args.local:
+        variables['executor'] = 'local'
+    if args.lsf:
+        variables['executor'] = 'lsf'
+
+    if which('bsub') is None:
+        variables['executor'] = 'local'
 
     variables['workflow'] = args.workflow
 
@@ -161,6 +162,28 @@ if __name__=='__main__':
 
     variables['current_working_directory'] = getcwd()
 
+    compartments_file = get_input_filename_by_identifier(
+        input_file_identifier = 'Compartments file',
+        file_manifest_filename = file_manifest_path,
+    )
+    variables['compartments'] = False
+    if not compartments_file is None:
+        compartments_file_abs = join(args.input_path, compartments_file)
+        if exists(compartments_file_abs):
+            variables['compartments_file'] = compartments_file_abs
+            variables['compartments'] = True
+
+    outcomes_files = get_input_filenames_by_data_type(
+        data_type = 'Outcome',
+        file_manifest_filename = file_manifest_path,
+    )
+    variables['outcomes'] = False
+    if len(outcomes_files) > 0:
+        outcomes_file_abs = join(args.input_path, outcomes_files[0])
+        if exists(outcomes_file_abs):
+            variables['outcomes_file'] = outcomes_file_abs
+            variables['outcomes'] = True
+
     write_config_file(variables)
-    write_pipeline_script()
+    write_pipeline_script(variables)
     record_configuration_command(variables)

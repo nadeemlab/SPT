@@ -39,8 +39,16 @@ class RunConfigurationReporter:
         logger.info('Smallest cell manifest: %s MB', self.format_mb(min(sizes)))
         logger.info('Largest cell manifest: %s MB', self.format_mb(max(sizes)))
 
-        outcomes = pd.read_csv(outcomes_file, sep='\t', keep_default_na=False)
+        if outcomes_file:
+            outcomes = pd.read_csv(outcomes_file, sep='\t', keep_default_na=False)
+        else:
+            sample_ids = self.retrieve_cell_manifest_sample_identifiers(file_manifest_file)
+            outcomes = pd.DataFrame({
+                'Sample ID' : sample_ids,
+                'Outcome' : ['Unknown outcome assignment' for i in sample_ids],
+            })[['Sample ID', 'Outcome']]
         labels = sorted(list(set(outcomes[outcomes.columns[1]])))
+
         elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, keep_default_na=False)
         composite_phenotypes = pd.read_csv(composite_phenotypes_file, keep_default_na=False)
         channels = sorted(list(set(elementary_phenotypes['Name'])))
@@ -67,6 +75,14 @@ class RunConfigurationReporter:
         validate = HALOCellMetadataDesign.validate_cell_manifest_descriptor
         return [
             getsize(row['File name'])
+            for i, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()
+            if validate(row['Data type'])
+        ]
+
+    def retrieve_cell_manifest_sample_identifiers(self, file_manifest_file):
+        validate = HALOCellMetadataDesign.validate_cell_manifest_descriptor
+        return [
+            row['Sample ID']
             for i, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()
             if validate(row['Data type'])
         ]

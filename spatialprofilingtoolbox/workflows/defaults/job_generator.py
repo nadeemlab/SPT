@@ -37,18 +37,25 @@ class JobGenerator:
             if condition(record)
         ]
 
-    def write_job_specification_table(self, job_specification_table_filename, outcomes_file):
+    def write_job_specification_table(self, job_specification_table_filename, outcomes_file=None):
         """
         Prepares the job specification table for the orchestrator.
         """
-        outcomes = pd.read_csv(outcomes_file, sep='\t')
-        outcomes_dict = {
-            row['Sample ID'] : row[outcomes.columns[1]]
-            for i, row in outcomes.iterrows()
-        }
-
         validate = self.dataset_design_class.validate_cell_manifest_descriptor
         records = self.retrieve_file_records(condition = lambda record: validate(record['Data type']))
+
+        if outcomes_file:
+            outcomes = pd.read_csv(outcomes_file, sep='\t')
+            outcomes_dict = {
+                row['Sample ID'] : row[outcomes.columns[1]]
+                for i, row in outcomes.iterrows()
+            }
+        else:
+            outcomes_dict = {
+                record['Sample ID'] : 'Unknown outcome assignment'
+                for i, record in enumerate(records)
+            }
+
         rows = [
             {
                 'input_file_identifier' : record['File ID'],
@@ -77,11 +84,3 @@ class JobGenerator:
 
     def write_composite_phenotypes_filename(self, filename_file):
         self.write_filename(filename_file, composite_phenotypes_file_identifier)
-
-    def write_outcomes_filename(self, filename_file):
-        validate = lambda record: record['Data type'] == 'Outcome'
-        records = self.retrieve_file_records(condition = validate)
-        if len(records) != 1:
-            raise ValueError('Found %s files "%s"; *currently* need exactly 1.' % (str(len(records)), identifier))
-        with open(filename_file, 'wt') as file:
-            file.write(join(self.input_path, records[0]['File name']))

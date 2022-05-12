@@ -52,7 +52,7 @@ if __name__=='__main__':
         '--outcomes-file',
         dest='outcomes_file',
         type=str,
-        required=True,
+        required=False,
         help='File containing outcome assignments to Sample ID values.',
     )
     parser.add_argument(
@@ -89,6 +89,6 @@ if __name__=='__main__':
         input_path=args.input_path,
         dataset_design_class=DatasetDesign,
     )
-    job_generator.write_job_specification_table(args.job_specification_table, args.outcomes_file)
+    job_generator.write_job_specification_table(args.job_specification_table, outcomes_file=args.outcomes_file)
     job_generator.write_elementary_phenotypes_filename(args.elementary_phenotypes_filename)
     job_generator.write_composite_phenotypes_filename(args.composite_phenotypes_filename)

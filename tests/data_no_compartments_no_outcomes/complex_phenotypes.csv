@@ -1,0 +1,10 @@
+Name,Phenotype handle string,Positive markers,Negative markers
+helper T cell,TH,CD3,CD8;FOXP3
+CD8+ICOS+,,CD8;ICOS,
+CD3+ICOS+,,CD3;ICOS,
+FOXP3+ICOS+,,FOXP3;ICOS,
+CD8+PDL1+,,CD8;PDL1,
+CD3+PDL1+,,CD3;PDL1,
+FOXP3+PDL1+,,FOXP3;PDL1,
+PDL1+ helper T cell,,CD3;PDL1,CD8;FOXP3
+ICOS+ helper T cell,,CD3;ICOS,CD8;FOXP3

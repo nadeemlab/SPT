@@ -6,6 +6,10 @@ process echo_environment_variables {
     path 'workflow',                        emit: workflow
     path 'file_manifest_filename',          emit: file_manifest_filename
     path 'input_path',                      emit: input_path
+{%- if compartments %}
+    path 'compartments_file'                emit: compartments_file{% endif %}
+{%- if outcomes %}
+    path 'outcomes_file'                    emit: outcomes_file{% endif %}
 
     script:
     """
@@ -13,52 +17,10 @@ process echo_environment_variables {
     echo -n "${workflow_}" > workflow
     echo -n "${file_manifest_filename_}" > file_manifest_filename
     echo -n "${input_path_}" > input_path
-    """
-}
-
-process query_for_outcomes_file {
-    input:
-    path file_manifest_file
-    val input_path
-
-    output:
-    path 'outcomes_filename',               emit: outcomes_file
-    path 'found',                           emit: found
-
-    script:
-    """
-    spt-query-for-file \
-     --data-type='Outcome' \
-     --input-path='${input_path}' \
-     --file-manifest-file=${file_manifest_file} \
-     --retrieved-filename-file=outcomes_filename > found
-    if [[ "\$(cat found)" == "0" ]];
-    then
-        echo -n "${input_path}/${file_manifest_file}" > outcomes_filename
-    fi
-    """
-}
-
-process query_for_compartments_file {
-    input:
-    path file_manifest_file
-    val input_path
-
-    output:
-    path 'compartments_filename',           emit: compartments_file
-    path 'found',                           emit: found
-
-    script:
-    """
-    spt-query-for-file \
-     --file-identifier='Compartments file' \
-     --input-path='${input_path}' \
-     --file-manifest-file=${file_manifest_file} \
-     --retrieved-filename-file=compartments_filename > found
-    if [[ "\$(cat found)" == "0" ]];
-    then
-        echo -n "${input_path}/${file_manifest_file}" > compartments_filename
-    fi
+{%- if compartments %}
+    echo -n "${compartments_file_}" > compartments_file{% endif %}
+{%- if outcomes %}
+    echo -n "${outcomes_file_}" > outcomes_file{% endif %}
     """
 }
 
@@ -67,7 +29,8 @@ process generate_run_information {
     val workflow
     path file_manifest_file
     val input_path
-    path outcomes_file
+{%- if outcomes %}
+    path outcomes_file{% endif %}
 
     output:
     path 'job_specification_table.csv',     emit: job_specification_table
@@ -80,35 +43,29 @@ process generate_run_information {
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --input-path='${input_path}' \
-     --outcomes-file=${outcomes_file} \
+{%- if outcomes %}
+     --outcomes-file=${outcomes_file} \{% endif %}
      --job-specification-table=job_specification_table.csv \
      --elementary-phenotypes-filename=elementary_phenotypes_filename \
      --composite-phenotypes-filename=composite_phenotypes_filename
     """
 }
-
+{% if not compartments %}
 process extract_compartments {
     input:
-    path compartments_file_if_known
-    path found
     path cell_manifest_files
 
     output:
-    path '.compartments.txt',               emit: compartments_file
+    path '._compartments.txt',              emit: compartments_file
 
     script:
     """
-    if [[ "\$(cat ${found})" == "1" ]];
-    then
-        cp ${compartments_file_if_known} .compartments.txt
-    else
-        spt-extract-compartments \
-         ${cell_manifest_files} \
-         --compartments-list-file=.compartments.txt
-    fi
+    spt-extract-compartments \
+     ${cell_manifest_files} \
+     --compartments-list-file=._compartments.txt
     """
 }
-
+{% endif %}
 process core_job {
     memory { 2.GB * task.attempt }
 
@@ -148,7 +105,8 @@ process report_run_configuration {
     path all_cell_manifests
     val workflow
     path file_manifest_file
-    path outcomes_file
+{%- if outcomes %}
+    path outcomes_file{% endif %}
     path elementary_phenotypes
     path composite_phenotypes
     path compartments
@@ -161,7 +119,8 @@ process report_run_configuration {
     spt-report-run-configuration \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
-     --outcomes-file=${outcomes_file} \
+{%- if outcomes %}
+     --outcomes-file=${outcomes_file} \{% endif %}
      --elementary-phenotypes-file=${elementary_phenotypes} \
      --composite-phenotypes-file=${composite_phenotypes} \
      --compartments-file=${compartments} >& run_configuration.log
@@ -217,7 +176,8 @@ process aggregate_results {
     path elementary_phenotypes
     path composite_phenotypes
     path compartments
-    path outcomes_file
+{%- if outcomes %}
+    path outcomes_file{% endif %}
 
     output:
     file 'stats_tests.csv'
@@ -230,7 +190,8 @@ process aggregate_results {
      --elementary-phenotypes-file=${elementary_phenotypes} \
      --composite-phenotypes-file=${composite_phenotypes} \
      --compartments-file=${compartments} \
-     --outcomes-file=${outcomes_file} \
+{%- if outcomes %}
+     --outcomes-file=${outcomes_file} \{% endif %}
      --stats-tests-file=stats_tests.csv
     """
 }
@@ -247,20 +208,16 @@ workflow {
 
     environment_ch.input_path.map{ it.text }
         .set{ input_path_ch }
-
-    query_for_outcomes_file(
-        file_manifest_ch,
-        input_path_ch,
-    )
-        .outcomes_file
-        .map{ file(it.text) }
+{% if outcomes %}
+    environment_ch.outcomes_file.map{ file(it.text) }
         .set{ outcomes_file_ch }
-
+{% endif %}
     generate_run_information(
         workflow_ch,
         file_manifest_ch,
         input_path_ch,
-        outcomes_file_ch,
+{%- if outcomes %}
+        outcomes_file_ch,{% endif %}
     ).set { run_information_ch }
 
     run_information_ch
@@ -283,28 +240,22 @@ workflow {
         .map{ row -> row[1] }
         .collect()
         .set{ cell_manifest_files_ch }
-
-    query_for_compartments_file(
-        file_manifest_ch,
-        input_path_ch,
-    ).set{ compartments_query_ch }
-
-    extract_compartments(
-        compartments_query_ch.compartments_file.map{ file(it.text) },
-        compartments_query_ch.found,
-        cell_manifest_files_ch,
-    )
+{% if compartments %}
+    environment_ch.compartments_file.map{ file(it.text) }
+        .set{ compartments_file_ch }{% else %}
+    extract_compartments(cell_manifest_files_ch)
         .compartments_file
-        .set{ compartments_ch }
+        .set{ compartments_file_ch }{% endif %}
 
     report_run_configuration(
         cell_manifest_files_ch,
         workflow_ch,
         file_manifest_ch,
-        outcomes_file_ch,
+{%- if outcomes %}
+        outcomes_file_ch,{% endif %}
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
-        compartments_ch,
+        compartments_file_ch,
     )
 
     core_job(
@@ -312,7 +263,7 @@ workflow {
         job_specifications_ch,
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
-        compartments_ch,
+        compartments_file_ch,
     )
         .set { core_job_results_ch }
 
@@ -331,7 +282,8 @@ workflow {
         workflow_ch,
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
-        compartments_ch,
-        outcomes_file_ch,
+        compartments_file_ch,
+{%- if outcomes %}
+        outcomes_file_ch,{% endif %}
     )
 }

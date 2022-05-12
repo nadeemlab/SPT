@@ -26,12 +26,6 @@ if __name__=='__main__':
         required=True,
     )
     parser.add_argument(
-        '--outcomes-file',
-        dest='outcomes_file',
-        type=str,
-        required=True,
-    )
-    parser.add_argument(
         '--stats-tests-file',
         dest='stats_tests_file',
         type=str,

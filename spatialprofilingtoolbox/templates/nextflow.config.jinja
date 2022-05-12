@@ -1,15 +1,20 @@
 
 process.executor = '{{ executor }}'
-{% if executor == 'lsf' and excluded_host is defined -%}
-process.clusterOptions = '-R select[hname!={{ excluded_host }}]'
-{%- endif %}
-{% if sif_file is defined and sif_file|length -%}
+
+{%- if executor == 'lsf' and excluded_host is defined -%}
+process.clusterOptions = '-R select[hname!={{ excluded_host }}]'{% endif %}
+
+{%- if sif_file is defined and sif_file|length -%}
 singularity.enabled = true
 singularity.runOptions = '-B {{ input_path }} -B {{ current_working_directory }}'
-
-process.container = '{{ sif_file }}'
-{%- endif %}
+process.container = '{{ sif_file }}'{% endif %}
 
 env.workflow_ = '{{ workflow }}'
 env.input_path_ = '{{ input_path }}'
 env.file_manifest_filename_ = '{{ file_manifest_filename }}'
+
+{%- if compartments_file is defined and compartments_file|length %}
+env.compartments_file_ = '{{ compartments_file }}'{% endif %}
+
+{%- if outcomes_file is defined and outcomes_file|length %}
+env.outcomes_file_ = '{{ outcomes_file }}'{% endif %}

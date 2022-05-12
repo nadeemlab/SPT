@@ -127,7 +127,7 @@ docker-test-repo-push: .docker-credentials-available
 	@date +%s > current_time.txt
 	@if [[ "${PYPI_CREDENTIALS}" == "'found'" ]]; \
     then \
-        initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+        initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
         ((transpired=now_secs - initial)); \
         printf $(call color_final,'Found.',$$transpired"s") ; \
         touch .pypi-credentials-available; \
@@ -141,7 +141,7 @@ docker-test-repo-push: .docker-credentials-available
 	@date +%s > current_time.txt
 	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
     then  \
-        initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+        initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
         ((transpired=now_secs - initial)); \
         printf $(call color_final,'Found.',$$transpired"s") ; \
         touch .docker-credentials-available; \
@@ -158,7 +158,7 @@ docker-test-repo-push: .docker-credentials-available
         printf $(call color_error,'Not running.') ; \
         exit 1; \
     fi ;
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     touch .docker-daemon-running; \
     printf $(call color_final,'Running.',$$transpired"s")
@@ -173,7 +173,7 @@ docker-build: Dockerfile .docker-daemon-running .controlled-source-files-unchang
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
 	docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest . >/dev/null 2>&1
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
@@ -187,7 +187,7 @@ docker-test-build: Dockerfile .docker-daemon-running .controlled-source-files-un
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}); \
     docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest .
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
@@ -201,7 +201,7 @@ Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
 	@version=$$(cat ${VERSION_FILE}) ;\
 	source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{version}}/$$version/g" Dockerfile
 	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{install requirements.txt}}//g" Dockerfile
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Generated.',$$transpired"s")
 
@@ -240,7 +240,7 @@ test: .test
         exit 1; \
     fi; \
     cd ../
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .unit-tests
@@ -252,7 +252,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
     source venv/bin/activate; \
     cd tests/; \
     ./integration_tests/$$script >/dev/null 2>&1
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Passed.',$$transpired"s")
 
@@ -271,7 +271,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@printf $(call color_in_progress,'Creating venv')
 	@date +%s > current_time.txt
 	@${PYTHON} -m venv venv
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Created.',$$transpired"s")
 	@printf $(call color_in_progress,'Installing spatialprofilingtoolbox into venv')
@@ -282,7 +282,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
     python setup.py install >/dev/null 2>&1; \
     pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Installed.',$$transpired"s")
 
@@ -295,7 +295,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@version=$$(cat ${VERSION_FILE}) ;\
     git tag v$$version >/dev/null 2>&1
 	@touch .commit-new-version
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     version=$$(cat ${VERSION_FILE}) ;\
     printf $(call color_final,'Committed.',$$transpired"s");
@@ -316,7 +316,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
     microversion=$$(( microversion + 1 )); \
     echo -n "$$prefix$$microversion" > ${VERSION_FILE};
 	@touch .update-version;
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Updated.',$$transpired"s");
 
@@ -342,7 +342,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@date +%s > current_time.txt
 	@${PYTHON} -m build 1>/dev/null
 	@touch .package-build
-	@initial=$$(cat current_time.txt); rm current_time.txt; now_secs=$$(date +%s); \
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 

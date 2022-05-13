@@ -67,7 +67,7 @@ class DataSkimmer:
         if self.db_backend == DBBackend.POSTGRES:
             try:
                 self.connection = psycopg2.connect(
-                    dbname='pathstudies',
+                    dbname=credentials['database'],
                     host=credentials['endpoint'],
                     user=credentials['user'],
                     password=credentials['password'],
@@ -106,7 +106,7 @@ class DataSkimmer:
             self.connection.close()
 
     def get_credential_keys(self):
-        return ['endpoint', 'user', 'password']
+        return ['endpoint', 'database', 'user', 'password']
 
     def retrieve_credentials(self):
         config_file = join(expanduser('~'), '.spt_db.config')

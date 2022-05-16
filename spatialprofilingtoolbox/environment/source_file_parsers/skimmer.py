@@ -19,7 +19,7 @@ from .parser import DBBackend
 
 class DataSkimmer:
     def __init__(self, database_config_file: str=None, db_backend=DBBackend.POSTGRES):
-        self.config_file = config_file
+        self.database_config_file = database_config_file
         if db_backend == DBBackend.POSTGRES:
             self.check_credentials_availability()
             self.db_backend = db_backend
@@ -80,7 +80,7 @@ class DataSkimmer:
     def retrieve_credentials(self):
         parser = configparser.ConfigParser()
         credentials = {}
-        parser.read(self.config_file)
+        parser.read(self.database_config_file)
         if 'database-credentials' in parser.sections():
             for key in self.get_credential_keys():
                 if key in parser['database-credentials']:

@@ -49,6 +49,63 @@ ORDER BY
     all_cells.marker_symbol
 ;
 
+
+
+need to count,
+for each cell_phenotype.identifier = cell_phenotype_criterion.cell_phenotype,
+the number of cells that have
+cell_phenotype_criterion.polarity = expression_quantification.discrete_value
+whenever
+cell_phenotype_criterion.marker = expression_quantification.target
+
+SELECT
+    cell_phenotype.symbol as phenotype,
+    CAST(100 * phenotype_frequency.frequency / CAST( (SELECT COUNT(*) FROM histological_structure) AS FLOAT) AS NUMERIC(6, 4)) as percent_positive
+FROM
+    (
+    SELECT
+        satisfied.cell_phenotype_identifier as cell_phenotype_identifier,
+        COUNT(*) as frequency
+    FROM
+        (
+        SELECT
+            eq.histological_structure,
+            cpc.cell_phenotype as cell_phenotype_identifier,
+            COUNT(*) as number_criteria_satisfied
+        FROM
+            expression_quantification eq
+        LEFT JOIN
+            cell_phenotype_criterion cpc
+        ON
+            eq.target = cpc.marker
+        WHERE
+            cpc.polarity = eq.discrete_value
+        GROUP BY
+            eq.histological_structure,
+            cpc.cell_phenotype
+        ) AS satisfied
+    LEFT JOIN
+        (
+        SELECT
+            cpc.cell_phenotype as cell_phenotype_identifier,
+            COUNT(*) as number_all_criteria
+        FROM
+            cell_phenotype_criterion cpc
+        GROUP BY
+            cpc.cell_phenotype
+        ) AS all_criteria
+    ON
+        satisfied.cell_phenotype_identifier = all_criteria.cell_phenotype_identifier
+    WHERE
+        satisfied.number_criteria_satisfied = all_criteria.number_all_criteria
+    GROUP BY
+        satisfied.cell_phenotype_identifier
+    ) AS phenotype_frequency
+LEFT JOIN cell_phenotype
+ON
+    phenotype_frequency.cell_phenotype_identifier = cell_phenotype.identifier 
+;
+
 ## average fraction, over slides
 
 ## standard deviation of fraction, over slides

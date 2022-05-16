@@ -127,8 +127,9 @@ class DataSkimmer:
         CellManifestsParser().parse(
             self.connection,
             fields,
+            dataset_design,
             file_manifest_file,
-            chemical_species_identifiers_by_symbol
+            chemical_species_identifiers_by_symbol,
         )
 
     def create_tables(self, connection):

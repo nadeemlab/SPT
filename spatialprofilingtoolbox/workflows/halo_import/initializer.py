@@ -22,7 +22,7 @@ class HALOImportInitializer(Initializer):
         self.outcomes_file = outcomes_file
         self.compartments_file = compartments_file
 
-    def solicit_cli_parameters(self, parser):
+    def solicit_cli_arguments(self, parser):
         parser.add_argument(
             '--file-manifest-file',
             dest='file_manifest_file',

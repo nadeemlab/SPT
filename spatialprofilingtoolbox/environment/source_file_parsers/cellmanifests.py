@@ -223,6 +223,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                 logger.debug('Performance report %s:\n' % file_count + t.report(as_string=True, by='total time spent'))
                 file_count += 1
 
+        self.wrap_up_timer(t)
         connection.commit()
         cursor.close()
 
@@ -262,3 +263,7 @@ class CellManifestsParser(SourceFileSemanticParser):
         encoded = base64.b64encode(shp.getvalue())
         ascii_representation = encoded.decode('utf-8')
         return ascii_representation
+
+    def wrap_up_timer(self, timer):
+        df = timer.report(by='fraction')
+        df.to_csv(self.computational_design.get_performance_report_filename(), index=False)

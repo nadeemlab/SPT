@@ -223,9 +223,9 @@ class CellManifestsParser(SourceFileSemanticParser):
                 logger.debug('Performance report %s:\n' % file_count + t.report(as_string=True, by='total time spent'))
                 file_count += 1
 
-        self.wrap_up_timer(t)
         connection.commit()
         cursor.close()
+        self.wrap_up_timer(t)
 
     def get_number_known_cells(self, sha256_hash, cursor):
         query = (

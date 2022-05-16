@@ -8,24 +8,10 @@ from .workflows import workflows
 from .workflows import workflow_names
 from .environment.configuration_settings import get_version
 
-# from .environment.skimmer import DataSkimmer
 from .environment.logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 __version__ = get_version()
-
-# def get_semantic_source_parser(workflow=None, **kwargs):
-#     s = 'skip_semantic_parse'
-#     if s in kwargs:
-#         skip_semantic_parse = kwargs[s]
-#     else:
-#         skip_semantic_parse = None
-#     return DataSkimmer(
-#         dataset_design = get_dataset_design(workflow=workflow, **kwargs),
-#         input_path = kwargs['input_path'],
-#         file_manifest_file = kwargs['file_manifest_file'],
-#         skip_semantic_parse = skip_semantic_parse,
-#     )
 
 def get_dataset_design(workflow=None, **kwargs):
     """

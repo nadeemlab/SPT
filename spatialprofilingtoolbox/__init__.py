@@ -48,7 +48,7 @@ def get_initializer(workflow=None, **kwargs):
     """
     dataset_design = get_dataset_design(workflow = workflow, **kwargs)
     computational_design = get_computational_design(workflow = workflow, **kwargs)
-    Initializer = workflows[workflow].Initializer
+    Initializer = workflows[workflow].initializer
     return Initializer(
         dataset_design = dataset_design,
         computational_design = computational_design,

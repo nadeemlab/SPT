@@ -8,6 +8,7 @@ from os.path import isdir
 from os.path import exists
 from os.path import join
 from os.path import abspath
+from os.path import expanduser
 from os import getcwd
 import importlib.resources
 
@@ -183,6 +184,15 @@ if __name__=='__main__':
         if exists(outcomes_file_abs):
             variables['outcomes_file'] = outcomes_file_abs
             variables['outcomes'] = True
+
+    config_file = join(expanduser('~'), '.spt_db.config')
+    if exists(config_file):
+        halo_import_workflow = 'HALO import'
+        if not halo_import_workflow in workflow_names:
+            raise ValueError('HALO import workflow name is wrong: %s', halo_import_workflow)
+        if variables['workflow'] == halo_import_workflow:
+            variables['db_config_file'] = config_file
+            variables['db_config'] = True
 
     write_config_file(variables)
     write_pipeline_script(variables)

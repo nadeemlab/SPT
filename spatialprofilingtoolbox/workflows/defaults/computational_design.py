@@ -61,3 +61,7 @@ class ComputationalDesign:
 
     def get_performance_report_filename(self):
         return self.metrics_database_filename.rstrip('.db') + '.csv'
+
+    @staticmethod
+    def uses_database():
+        return False

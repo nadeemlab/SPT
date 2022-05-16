@@ -1,12 +1,7 @@
 import importlib.resources
 import urllib.request
 from urllib.request import urlopen
-import os
-from os.path import exists
-from os.path import join
-from os.path import expanduser
-from os import remove
-import sqlite3
+import re
 import configparser
 
 import psycopg2
@@ -23,9 +18,8 @@ from .parser import DBBackend
 
 
 class DataSkimmer:
-    def __init__(self, db_backend=DBBackend.POSTGRES):
-        connectivity = False
-
+    def __init__(self, database_config_file: str=None, db_backend=DBBackend.POSTGRES):
+        self.config_file = config_file
         if db_backend == DBBackend.POSTGRES:
             self.check_credentials_availability()
             self.db_backend = db_backend
@@ -84,17 +78,13 @@ class DataSkimmer:
         return ['endpoint', 'database', 'user', 'password']
 
     def retrieve_credentials(self):
-        config_file = join(expanduser('~'), '.spt_db.config')
         parser = configparser.ConfigParser()
         credentials = {}
-        if exists(config_file):
-            parser.read(config_file)
-            if 'database-credentials' in parser.sections():
-                for key in self.get_credential_keys():
-                    if key in parser['database-credentials']:
-                        credentials[key] = parser['database-credentials'][key]
-        else:
-            logger.info('Config file %s not found.', config_file)
+        parser.read(self.config_file)
+        if 'database-credentials' in parser.sections():
+            for key in self.get_credential_keys():
+                if key in parser['database-credentials']:
+                    credentials[key] = parser['database-credentials'][key]
         if not re.match('^[a-z][a-z0-9_]+[a-z0-9]$', credentials['database']):
             logger.warning('The database name "%s" is too complex. Reverting to "postgres".', credentials['database'])
             credentials['database'] = 'postgres'

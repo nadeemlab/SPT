@@ -18,3 +18,6 @@ env.compartments_file_ = '{{ compartments_file }}'{% endif %}
 
 {%- if outcomes_file is defined and outcomes_file|length %}
 env.outcomes_file_ = '{{ outcomes_file }}'{% endif %}
+
+{%- if db_config_file is defined and db_config_file|length %}
+env.db_config_file_ = '{{ db_config_file }}'{% endif %}

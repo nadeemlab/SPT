@@ -9,3 +9,7 @@ class HALOImportDesign(ComputationalDesign):
     @staticmethod
     def solicit_cli_arguments(parser):
         pass
+
+    @staticmethod
+    def uses_database():
+        return True

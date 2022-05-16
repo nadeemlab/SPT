@@ -31,6 +31,12 @@ class HALOImportInitializer(Initializer):
             required=False,
         )
         parser.add_argument(
+            '--database-config-file',
+            dest='database_config_file',
+            type=str,
+            required=False,
+        )
+        parser.add_argument(
             '--elementary-phenotypes-file',
             dest='elementary_phenotypes_file',
             type=str,
@@ -57,8 +63,12 @@ class HALOImportInitializer(Initializer):
             help='File containing compartment names.'
         )
 
-    def initialize(self, **kwargs):
-        with DataSkimmer() as skimmer:
+    def initialize(
+        self,
+        database_config_file: str=None,
+        **kwargs,
+    ):
+        with DataSkimmer(database_config_file=database_config_file) as skimmer:
             skimmer.parse(
                 dataset_design=self.dataset_design,
                 **kwargs,

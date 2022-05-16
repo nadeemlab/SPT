@@ -18,8 +18,10 @@ from jinja2 import BaseLoader
 jinja_environment = Environment(loader=BaseLoader)
 
 import spatialprofilingtoolbox
+from spatialprofilingtoolbox.workflows import workflows
 from spatialprofilingtoolbox.workflows import workflow_names
 from spatialprofilingtoolbox.environment.configuration_settings import default_file_manifest_filename
+from spatialprofilingtoolbox.environment.configuration_settings import default_db_config_filename
 from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
 from spatialprofilingtoolbox.environment.file_io import get_input_filenames_by_data_type
 
@@ -185,12 +187,12 @@ if __name__=='__main__':
             variables['outcomes_file'] = outcomes_file_abs
             variables['outcomes'] = True
 
-    config_file = join(expanduser('~'), '.spt_db.config')
+    config_file = join(expanduser('~'), default_db_config_filename)
     if exists(config_file):
         halo_import_workflow = 'HALO import'
         if not halo_import_workflow in workflow_names:
             raise ValueError('HALO import workflow name is wrong: %s', halo_import_workflow)
-        if variables['workflow'] == halo_import_workflow:
+        if workflows[variables['workflow']].computational_design.uses_database()
             variables['db_config_file'] = config_file
             variables['db_config'] = True
 

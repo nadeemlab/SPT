@@ -1,5 +1,6 @@
 
 from ..defaults.initializer import Initializer
+from ...environment.configuration_settings import default_db_config_filename
 from ...environment.source_file_parsers.skimmer import DataSkimmer
 from ...environment.logging.log_formats import colorized_logger
 
@@ -68,6 +69,8 @@ class HALOImportInitializer(Initializer):
         database_config_file: str=None,
         **kwargs,
     ):
+        if database_config_file is None:
+            raise ValueError('Need to supply database configuration file: ~/%s', default_db_config_filename)
         with DataSkimmer(database_config_file=database_config_file) as skimmer:
             skimmer.parse(
                 dataset_design=self.dataset_design,

@@ -66,6 +66,34 @@ process extract_compartments {
     """
 }
 {% endif %}
+process workflow_initialize {
+    input:
+    val workflow
+    path file_manifest_file
+    path elementary_phenotypes_file
+    path composite_phenotypes_file
+{%- if outcomes %}
+    path outcomes_file{% endif %}
+    path compartments_file
+    path cell_manifest_files
+
+    output:
+    stdout,                                 emit: initialization_flag
+
+    script:
+    """
+    spt-initialize \
+     --workflow='${workflow}' \
+     --file-manifest-file=${file_manifest_file} \
+{%- if outcomes %}
+     --outcomes-file=${outcomes_file} \{% endif %}
+     --compartments-file=${compartments_file}
+     --elementary-phenotypes-file=${elementary_phenotypes_file} \
+     --composite-phenotypes-file=${composite_phenotypes_file}
+    echo "Success"
+    """
+}
+
 process core_job {
     memory { 2.GB * task.attempt }
 
@@ -73,6 +101,7 @@ process core_job {
     maxRetries 4
 
     input:
+    val initialization_flag
     val workflow
     tuple val(input_file_identifier), file(input_filename), val(job_index), val(outcome), val(sample_identifier)
     path elementary_phenotypes
@@ -85,6 +114,7 @@ process core_job {
 
     script:
     """
+    echo "Initialization status: ${initialization_flag}"
     spt-core-job \
      --workflow='${workflow}' \
      --input-file-identifier='${input_file_identifier}' \
@@ -254,7 +284,21 @@ workflow {
         compartments_file_ch,
     )
 
+    workflow_initialize(
+        workflow_ch,
+        file_manifest_ch,
+        elementary_phenotypes_ch,
+        composite_phenotypes_ch,
+{%- if outcomes %}
+        outcomes_file_ch,{% endif %}
+        compartments_file_ch,
+        cell_manifest_files_ch,
+    )
+        .initialization_flag
+        .set{ initialization_flag_ch }
+
     core_job(
+        initialization_flag_ch,
         workflow_ch,
         job_specifications_ch,
         elementary_phenotypes_ch,

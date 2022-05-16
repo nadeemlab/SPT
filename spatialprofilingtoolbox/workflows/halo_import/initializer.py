@@ -22,7 +22,8 @@ class HALOImportInitializer(Initializer):
         self.outcomes_file = outcomes_file
         self.compartments_file = compartments_file
 
-    def solicit_cli_arguments(self, parser):
+    @staticmethod
+    def solicit_cli_arguments(parser):
         parser.add_argument(
             '--file-manifest-file',
             dest='file_manifest_file',

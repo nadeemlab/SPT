@@ -11,7 +11,8 @@ class Initializer:
         self.computational_design = computational_design
         pass
 
-    def solicit_cli_arguments(self, parser):
+    @staticmethod
+    def solicit_cli_arguments(parser):
         pass
 
     def initialize(self, **kwargs):

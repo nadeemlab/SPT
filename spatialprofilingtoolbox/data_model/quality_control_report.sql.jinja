@@ -1,3 +1,58 @@
 
 CREATE VIEW quality_control_report AS
-SELECT 
+SELECT ...
+
+## number of slides
+## number of cells
+## average number of cells per slide
+
+
+## for each phenotype (elementary and composite):
+
+## fraction of cells positive
+SELECT
+    all_cells.marker_symbol,
+    CAST(100 * number_positive / CAST(number_all_cells AS FLOAT) AS NUMERIC(6, 4)) as percent_positive
+FROM
+    (
+    SELECT
+        cs.symbol as marker_symbol,
+        COUNT(*) as number_all_cells
+    FROM
+        expression_quantification eq
+        LEFT JOIN
+            chemical_species cs
+        ON
+            cs.identifier = eq.target
+    GROUP BY
+        cs.symbol
+    ) AS all_cells
+LEFT JOIN
+    (
+    SELECT
+        cs.symbol as marker_symbol,
+        COUNT(*) as number_positive
+    FROM
+        expression_quantification eq
+        LEFT JOIN
+            chemical_species cs
+        ON
+            cs.identifier = eq.target
+        WHERE
+            eq.discrete_value = 'positive'
+    GROUP BY
+        cs.symbol
+    ) AS positives_only
+ON
+    positives_only.marker_symbol = all_cells.marker_symbol
+ORDER BY
+    all_cells.marker_symbol
+;
+
+## average fraction, over slides
+
+## standard deviation of fraction, over slides
+
+## all of the above under compartmental or outcome assignment specialization
+
+## extrema, high and low, sample identifier and value, for all of the above

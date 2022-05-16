@@ -6,7 +6,8 @@ from ..defaults.workflow_module_exporting import WorkflowModules
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
-from .job_generator import NearestDistanceJobGenerator
+from ..defaults.job_generator import JobGenerator
+from .initializer import NearestDistanceInitializer
 from .core import NearestDistanceCoreJob
 from .computational_design import NearestDistanceDesign
 from .integrator import NearestDistanceAnalysisIntegrator
@@ -14,7 +15,8 @@ from .integrator import NearestDistanceAnalysisIntegrator
 name = 'nearest distance to compartment'
 components =  {
     name : WorkflowModules(
-        generator = NearestDistanceJobGenerator,
+        generator = JobGenerator,
+        initializer = NearestDistanceInitializer,
         dataset_design = HALOCellMetadataDesign,
         computational_design = NearestDistanceDesign,
         core_job = NearestDistanceCoreJob,

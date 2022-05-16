@@ -2,8 +2,6 @@ import io
 from io import BytesIO as StringIO
 import base64
 import mmap
-import os
-from os.path import join
 
 import shapefile
 import pandas as pd
@@ -21,11 +19,10 @@ record_performance = True
 
 
 class CellManifestsParser(SourceFileSemanticParser):
-    def __init__(self, chemical_species_identifiers_by_symbol, **kwargs):
+    def __init__(self, **kwargs):
         super(CellManifestsParser, self).__init__(**kwargs)
-        self.chemical_species_identifiers_by_symbol = chemical_species_identifiers_by_symbol
 
-    def parse(self, connection, fields, dataset_design):
+    def parse(self, connection, fields, dataset_design, file_manifest_file, chemical_species_identifiers_by_symbol):
         """
         Retrieve each cell manifest, and parse records for:
         - histological structure identification
@@ -36,14 +33,14 @@ class CellManifestsParser(SourceFileSemanticParser):
         if record_performance:
             t = PerformanceTimer()
             t.record_timepoint('Initial')
-        file_metadata = pd.read_csv(self.file_manifest_file, sep='\t')
-        halo_data_type = 'HALO software cell manifest'
+        file_metadata = pd.read_csv(file_manifest_file, sep='\t')
+        halo_data_type = dataset_design.get_cell_manifest_descriptor()
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
         ]
         recognized_channel_symbols = dataset_design.get_elementary_phenotype_names()
         missing_channel_symbols = set(
-            self.chemical_species_identifiers_by_symbol.keys()
+            chemical_species_identifiers_by_symbol.keys()
         ).difference(recognized_channel_symbols)
         if len(missing_channel_symbols) > 0:
             logger.warning(
@@ -51,7 +48,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                 str(missing_channel_symbols),
             )
         channel_symbols = set(
-            self.chemical_species_identifiers_by_symbol.keys()
+            chemical_species_identifiers_by_symbol.keys()
         ).difference(missing_channel_symbols)
 
 
@@ -71,10 +68,10 @@ class CellManifestsParser(SourceFileSemanticParser):
             )
             filename = get_input_filename_by_identifier(
                 input_file_identifier = cell_manifest['File ID'],
-                file_manifest_filename = self.file_manifest_file,
+                file_manifest_filename = file_manifest_file,
             )
-            sha256_hash = compute_sha256(join(self.input_path, filename))
-            cells = pd.read_csv(join(self.input_path, filename), sep=',', na_filter=False).drop_duplicates()
+            sha256_hash = compute_sha256(filename)
+            cells = pd.read_csv(filename, sep=',', na_filter=False).drop_duplicates()
             count = self.get_number_known_cells(sha256_hash, cursor)
             if count > 0 and count != cells.shape[0]:
                 logger.warning(
@@ -179,7 +176,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                                 continue
                             if record_performance:
                                 t.record_timepoint('Starting channel consideration for one cell')
-                            target = self.chemical_species_identifiers_by_symbol[symbol]
+                            target = chemical_species_identifiers_by_symbol[symbol]
                             quantity = intensities[symbol][j]
                             if record_performance:
                                 t.record_timepoint('Retrieved quantification')
@@ -209,22 +206,15 @@ class CellManifestsParser(SourceFileSemanticParser):
                     for tablename in tablenames:
                         if record_performance:
                             t.record_timepoint('Started inserting one chunk')
-                        if self.db_backend == DBBackend.POSTGRES:
-                            values_file_contents = '\n'.join([
-                                '\t'.join(r) for r in records[tablename]
-                            ]).encode('utf-8')
-                            with mmap.mmap(-1, len(values_file_contents)) as mm:
-                                mm.write(values_file_contents)
-                                mm.seek(0)
-                                cursor.copy_from(mm, tablename)
-                        if self.db_backend == DBBackend.SQLITE:
-                            f = [field[0] for field in self.get_field_names(tablename, fields)]
-                            width = len(f)
-                            query = ''.join([
-                                'INSERT INTO %s(%s) ' % (tablename, ','.join(f)),
-                                'VALUES (%s)' % ','.join([self.get_placeholder()] * width),
-                            ])
-                            cursor.executemany(query, records[tablename])
+
+                        values_file_contents = '\n'.join([
+                            '\t'.join(r) for r in records[tablename]
+                        ]).encode('utf-8')
+                        with mmap.mmap(-1, len(values_file_contents)) as mm:
+                            mm.write(values_file_contents)
+                            mm.seek(0)
+                            cursor.copy_from(mm, tablename)
+
                         if record_performance:
                             t.record_timepoint('Finished inserting one chunk')
             logger.info('Parsed records for %s cells from "%s".', cells.shape[0], sha256_hash)

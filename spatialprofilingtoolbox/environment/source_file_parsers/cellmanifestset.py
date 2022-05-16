@@ -5,7 +5,7 @@ import re
 
 import pandas as pd
 
-from ..file_io import get_input_filename_by_identifier
+from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from ..file_io import compute_sha256
 from .parser import SourceFileSemanticParser
 from ..logging.log_formats import colorized_logger
@@ -16,7 +16,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(CellManifestSetParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, dataset_design):
+    def parse(self, connection, fields, file_manifest_file):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source
         file), and parse records for:
@@ -26,8 +26,8 @@ class CellManifestSetParser(SourceFileSemanticParser):
         - specimen data measurement process
         - data file
         """
-        file_metadata = pd.read_csv(self.file_manifest_file, sep='\t')
-        halo_data_type = 'HALO software cell manifest'
+        file_metadata = pd.read_csv(file_manifest_file, sep='\t')
+        halo_data_type = HALOCellMetadataDesign.get_cell_manifest_descriptor()
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
         ]
@@ -93,20 +93,8 @@ class CellManifestSetParser(SourceFileSemanticParser):
                     collection_study,
                 ),
             )
-            filename = get_input_filename_by_identifier(
-                input_file_identifier = cell_manifest['File ID'],
-                file_manifest_filename = self.file_manifest_file,
-            )
-            sha256_hash = compute_sha256(join(self.input_path, filename))
-
-            if 'SHA256' in cell_manifests.columns:
-                if sha256_hash != cell_manifest['SHA256']:
-                    logger.warning(
-                        'Computed hash "%s" does not match hash supplied in file manifest, "%s", for file "%s".',
-                        sha256_hash,
-                        cell_manifest['SHA256'],
-                        cell_manifest['File ID'],
-                    )
+            filename = cell_manifest['File name']
+            sha256_hash = compute_sha256(filename)
 
             measurement_process_identifier = sha256_hash + ' measurement'
             cursor.execute(
@@ -122,7 +110,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
                 file_format = match.groups(1)[0].upper()
             else:
                 file_format = ''
-            size = getsize(join(self.input_path, filename))
+            size = getsize(filename)
             cursor.execute(
                 self.generate_basic_insert_query('data_file', fields),
                 create_data_file_record(

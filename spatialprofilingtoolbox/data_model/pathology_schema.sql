@@ -1,6 +1,5 @@
 
--- Pathology ADI v0.5.0
-CREATE TABLE subject (
+CREATE TABLE IF NOT EXISTS subject (
     identifier VARCHAR(512) PRIMARY KEY,
     species VARCHAR(512),
     sex VARCHAR(512),
@@ -9,7 +8,7 @@ CREATE TABLE subject (
     cause_of_death VARCHAR
 );
 
-CREATE TABLE diagnosis (
+CREATE TABLE IF NOT EXISTS diagnosis (
     subject VARCHAR(512) REFERENCES subject(identifier),
     disease VARCHAR,
     result VARCHAR(512),
@@ -17,13 +16,13 @@ CREATE TABLE diagnosis (
     date VARCHAR
 );
 
-CREATE TABLE diagnostic_selection_criterion (
+CREATE TABLE IF NOT EXISTS diagnostic_selection_criterion (
     identifier VARCHAR(512) PRIMARY KEY,
     disease VARCHAR(512),
     result VARCHAR(512)
 );
 
-CREATE TABLE specimen_collection_study (
+CREATE TABLE IF NOT EXISTS specimen_collection_study (
     name VARCHAR(512) PRIMARY KEY,
     extraction_method VARCHAR(512),
     preservation_method VARCHAR(512),
@@ -32,7 +31,7 @@ CREATE TABLE specimen_collection_study (
     conclusion_date VARCHAR
 );
 
-CREATE TABLE specimen_collection_process (
+CREATE TABLE IF NOT EXISTS specimen_collection_process (
     specimen VARCHAR PRIMARY KEY,
     source VARCHAR,
     source_site VARCHAR,
@@ -41,7 +40,7 @@ CREATE TABLE specimen_collection_process (
     study VARCHAR(512) REFERENCES specimen_collection_study(name)
 );
 
-CREATE TABLE histology_assessment_process (
+CREATE TABLE IF NOT EXISTS histology_assessment_process (
     slide VARCHAR(512) REFERENCES specimen_collection_process(specimen),
     assay VARCHAR(512),
     result VARCHAR(512),
@@ -49,7 +48,7 @@ CREATE TABLE histology_assessment_process (
     assessment_date VARCHAR(512)
 );
 
-CREATE TABLE specimen_measurement_study (
+CREATE TABLE IF NOT EXISTS specimen_measurement_study (
     name VARCHAR(512) PRIMARY KEY,
     assay VARCHAR(512),
     machine VARCHAR(512),
@@ -58,7 +57,7 @@ CREATE TABLE specimen_measurement_study (
     conclusion_date VARCHAR
 );
 
-CREATE TABLE specimen_data_measurement_process (
+CREATE TABLE IF NOT EXISTS specimen_data_measurement_process (
     identifier VARCHAR(512) PRIMARY KEY,
     specimen VARCHAR(512) REFERENCES specimen_collection_process(specimen),
     specimen_age VARCHAR,
@@ -66,7 +65,7 @@ CREATE TABLE specimen_data_measurement_process (
     study VARCHAR(512) REFERENCES specimen_measurement_study(name)
 );
 
-CREATE TABLE data_file (
+CREATE TABLE IF NOT EXISTS data_file (
     sha256_hash VARCHAR(512) PRIMARY KEY,
     file_name VARCHAR(512),
     file_format VARCHAR(512),
@@ -75,18 +74,18 @@ CREATE TABLE data_file (
     source_generation_process VARCHAR(512) REFERENCES specimen_data_measurement_process(identifier)
 );
 
-CREATE TABLE histological_structure (
+CREATE TABLE IF NOT EXISTS histological_structure (
     identifier VARCHAR(512) PRIMARY KEY,
     anatomical_entity VARCHAR(512)
 );
 
-CREATE TABLE shape_file (
+CREATE TABLE IF NOT EXISTS shape_file (
     identifier VARCHAR(512) PRIMARY KEY,
     geometry_specification_file_format VARCHAR(512),
     base64_contents VARCHAR
 );
 
-CREATE TABLE plane_coordinates_reference_system (
+CREATE TABLE IF NOT EXISTS plane_coordinates_reference_system (
     name VARCHAR(512) PRIMARY KEY,
     reference_point VARCHAR,
     reference_point_coordinate_1 NUMERIC,
@@ -95,7 +94,7 @@ CREATE TABLE plane_coordinates_reference_system (
     length_unit VARCHAR
 );
 
-CREATE TABLE histological_structure_identification (
+CREATE TABLE IF NOT EXISTS histological_structure_identification (
     histological_structure VARCHAR(512) REFERENCES histological_structure(identifier),
     data_source VARCHAR(512) REFERENCES data_file(sha256_hash),
     shape_file VARCHAR(512) REFERENCES shape_file(identifier),
@@ -105,14 +104,14 @@ CREATE TABLE histological_structure_identification (
     annotator VARCHAR
 );
 
-CREATE TABLE chemical_species (
+CREATE TABLE IF NOT EXISTS chemical_species (
     identifier VARCHAR(512) PRIMARY KEY,
     symbol VARCHAR,
     name VARCHAR(512),
     chemical_structure_class VARCHAR(512)
 );
 
-CREATE TABLE expression_quantification (
+CREATE TABLE IF NOT EXISTS expression_quantification (
     histological_structure VARCHAR(512) REFERENCES histological_structure(identifier),
     target VARCHAR(512) REFERENCES chemical_species(identifier),
     quantity NUMERIC,
@@ -122,7 +121,7 @@ CREATE TABLE expression_quantification (
     discretization_method VARCHAR(512)
 );
 
-CREATE TABLE biological_marking_system (
+CREATE TABLE IF NOT EXISTS biological_marking_system (
     identifier VARCHAR(512) PRIMARY KEY,
     target VARCHAR(512) REFERENCES chemical_species(identifier),
     antibody VARCHAR,
@@ -130,43 +129,43 @@ CREATE TABLE biological_marking_system (
     study VARCHAR(512) REFERENCES specimen_measurement_study(name)
 );
 
-CREATE TABLE data_analysis_study (
+CREATE TABLE IF NOT EXISTS data_analysis_study (
     name VARCHAR(512) PRIMARY KEY
 );
 
-CREATE TABLE cell_phenotype (
+CREATE TABLE IF NOT EXISTS cell_phenotype (
     identifier VARCHAR(512) PRIMARY KEY,
     symbol VARCHAR,
     name VARCHAR(512)
 );
 
-CREATE TABLE cell_phenotype_criterion (
+CREATE TABLE IF NOT EXISTS cell_phenotype_criterion (
     cell_phenotype VARCHAR(512) REFERENCES cell_phenotype(identifier),
     marker VARCHAR(512) REFERENCES chemical_species(identifier),
     polarity VARCHAR(512),
     study VARCHAR(512) REFERENCES data_analysis_study(name)
 );
 
-CREATE TABLE feature_specification (
+CREATE TABLE IF NOT EXISTS feature_specification (
     identifier VARCHAR(512) PRIMARY KEY,
     derivation_method VARCHAR(512),
     study VARCHAR(512) REFERENCES data_analysis_study(name)
 );
 
-CREATE TABLE feature_specifier (
+CREATE TABLE IF NOT EXISTS feature_specifier (
     feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
     specifier VARCHAR(512),
     ordinality VARCHAR(512)
 );
 
-CREATE TABLE quantitative_feature_value (
+CREATE TABLE IF NOT EXISTS quantitative_feature_value (
     identifier VARCHAR(512) PRIMARY KEY,
     feature VARCHAR(512) REFERENCES feature_specification(identifier),
     subject VARCHAR,
     value NUMERIC
 );
 
-CREATE TABLE two_cohort_feature_association_test (
+CREATE TABLE IF NOT EXISTS two_cohort_feature_association_test (
     selection_criterion_1 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier),
     selection_criterion_2 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier),
     test VARCHAR(512),

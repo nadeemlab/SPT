@@ -9,30 +9,18 @@ logger = colorized_logger(__name__)
 
 
 class DBBackend(Enum):
-    SQLITE = auto()
     POSTGRES = auto()
 
 
 class SourceFileSemanticParser:
-    def __init__(
-        self,
-        db_backend,
-        input_path: str=None,
-        file_manifest_file: str=None,
-    ):
-        self.db_backend = db_backend
-        self.input_path = input_path
-        self.file_manifest_file = file_manifest_file
+    def __init__(self, **kwargs):
+        pass
 
-    def parse(self, connection, fields, dataset_design):
+    def parse(self):
         pass
 
     def get_placeholder(self):
-        placeholder = None
-        if self.db_backend == DBBackend.SQLITE:
-            placeholder = '?'
-        if self.db_backend == DBBackend.POSTGRES:
-            placeholder = '%s'
+        placeholder = '%s'
         return placeholder
 
     def normalize(self, string):

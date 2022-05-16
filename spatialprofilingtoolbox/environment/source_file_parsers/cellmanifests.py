@@ -176,7 +176,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                                 continue
                             # if record_performance:
                             #     t.record_timepoint('Starting channel consideration for one cell')
-                            # target = chemical_species_identifiers_by_symbol[symbol]
+                            target = chemical_species_identifiers_by_symbol[symbol]
                             quantity = intensities[symbol][j]
                             # if record_performance:
                             #     t.record_timepoint('Retrieved quantification')

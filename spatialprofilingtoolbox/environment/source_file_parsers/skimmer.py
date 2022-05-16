@@ -98,6 +98,7 @@ class DataSkimmer:
             composite_phenotypes_file = None,
             outcomes_file = None,
             compartments_file = None,
+            **kwargs,
         ):
         if not self.connection:
             logger.debug('No database connection was initialized. Skipping semantic parse.')
@@ -134,5 +135,5 @@ class DataSkimmer:
         with importlib.resources.path('spatialprofilingtoolbox.data_model', 'pathology_schema.sql') as path:
             create_db_script = open(path).read()
         cursor = connection.cursor()
-        cursor.executescript(create_db_script)
+        cursor.execute(create_db_script)
         cursor.close()

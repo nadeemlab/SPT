@@ -189,10 +189,7 @@ if __name__=='__main__':
 
     config_file = join(expanduser('~'), default_db_config_filename)
     if exists(config_file):
-        halo_import_workflow = 'HALO import'
-        if not halo_import_workflow in workflow_names:
-            raise ValueError('HALO import workflow name is wrong: %s', halo_import_workflow)
-        if workflows[variables['workflow']].computational_design.uses_database()
+        if workflows[variables['workflow']].computational_design.uses_database():
             variables['db_config_file'] = config_file
             variables['db_config'] = True
 

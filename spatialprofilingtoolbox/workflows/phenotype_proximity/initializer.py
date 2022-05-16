@@ -7,3 +7,6 @@ class PhenotypeProximityInitializer(Initializer):
         **kwargs,
     ):
         super(PhenotypeProximityInitializer, self).__init__(**kwargs)
+
+    def solicit_cli_parameters(self, parser):
+        pass

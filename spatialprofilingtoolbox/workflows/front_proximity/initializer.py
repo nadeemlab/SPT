@@ -7,3 +7,6 @@ class FrontProximityInitializer(Initializer):
         **kwargs,
     ):
         super(FrontProximityInitializer, self).__init__(**kwargs)
+
+    def solicit_cli_parameters(self, parser):
+        pass

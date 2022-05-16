@@ -7,3 +7,6 @@ class NearestDistanceInitializer(Initializer):
         **kwargs,
     ):
         super(NearestDistanceInitializer, self).__init__(**kwargs)
+
+    def solicit_cli_parameters(self, parser):
+        pass

@@ -22,7 +22,7 @@ class CellManifestsParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(CellManifestsParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, dataset_design, file_manifest_file, chemical_species_identifiers_by_symbol):
+    def parse(self, connection, fields, dataset_design, computational_design, file_manifest_file, chemical_species_identifiers_by_symbol):
         """
         Retrieve each cell manifest, and parse records for:
         - histological structure identification
@@ -225,7 +225,7 @@ class CellManifestsParser(SourceFileSemanticParser):
 
         connection.commit()
         cursor.close()
-        self.wrap_up_timer(t)
+        self.wrap_up_timer(t, computational_design)
 
     def get_number_known_cells(self, sha256_hash, cursor):
         query = (
@@ -264,6 +264,6 @@ class CellManifestsParser(SourceFileSemanticParser):
         ascii_representation = encoded.decode('utf-8')
         return ascii_representation
 
-    def wrap_up_timer(self, timer):
+    def wrap_up_timer(self, timer, computational_design):
         df = timer.report(by='fraction')
-        df.to_csv(self.computational_design.get_performance_report_filename(), index=False)
+        df.to_csv(computational_design.get_performance_report_filename(), index=False)

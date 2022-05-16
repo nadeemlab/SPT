@@ -93,6 +93,7 @@ class DataSkimmer:
     def parse(
             self,
             dataset_design = None,
+            computational_design = None,
             file_manifest_file = None,
             elementary_phenotypes_file = None,
             composite_phenotypes_file = None,
@@ -128,6 +129,7 @@ class DataSkimmer:
             self.connection,
             fields,
             dataset_design,
+            computational_design,
             file_manifest_file,
             chemical_species_identifiers_by_symbol,
         )

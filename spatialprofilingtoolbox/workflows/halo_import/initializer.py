@@ -76,5 +76,6 @@ class HALOImportInitializer(Initializer):
         with DataSkimmer(database_config_file=database_config_file) as skimmer:
             skimmer.parse(
                 dataset_design=self.dataset_design,
+                computational_design=self.computational_design,
                 **kwargs,
             )

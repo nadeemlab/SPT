@@ -13,7 +13,7 @@ class ComputationalDesign:
     """
     def __init__(self,
         dataset_design=None,
-        metrics_database_filename: str=None,
+        metrics_database_filename: str='metrics_default.db',
         dichotomize: bool=False,
         composite_phenotypes_file:str = None,
         **kwargs,

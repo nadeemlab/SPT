@@ -158,8 +158,8 @@ class CellManifestsParser(SourceFileSemanticParser):
                             '',
                             '',
                         ))
-                        if record_performance:
-                            t.record_timepoint('Added one new record by appending fields to all lists')
+                        # if record_performance:
+                        #     t.record_timepoint('Added one new record by appending fields to all lists')
                         for symbol in channel_symbols:
                             if len(intensities[symbol]) <= j:
                                 if cell_index_error_count < 5:
@@ -174,17 +174,17 @@ class CellManifestsParser(SourceFileSemanticParser):
                                     logger.debug('Suppressing further cell index error messages.')
                                     cell_index_error_count += 1
                                 continue
-                            if record_performance:
-                                t.record_timepoint('Starting channel consideration for one cell')
-                            target = chemical_species_identifiers_by_symbol[symbol]
+                            # if record_performance:
+                            #     t.record_timepoint('Starting channel consideration for one cell')
+                            # target = chemical_species_identifiers_by_symbol[symbol]
                             quantity = intensities[symbol][j]
-                            if record_performance:
-                                t.record_timepoint('Retrieved quantification')
+                            # if record_performance:
+                            #     t.record_timepoint('Retrieved quantification')
                             if quantity in [None, '']:
                                 continue
                             discrete_value = discretizations[symbol][j]
-                            if record_performance:
-                                t.record_timepoint('Retrieved discretization')
+                            # if record_performance:
+                            #     t.record_timepoint('Retrieved discretization')
                             records['expression_quantification'].append((
                                 histological_structure_identifier,
                                 target,
@@ -194,8 +194,8 @@ class CellManifestsParser(SourceFileSemanticParser):
                                 'positive' if discrete_value == 1 else 'negative',
                                 '',
                             ))
-                            if record_performance:
-                                t.record_timepoint('Finished one cell iteration')
+                            # if record_performance:
+                            #     t.record_timepoint('Finished one cell iteration')
 
                     tablenames = [
                         'histological_structure',

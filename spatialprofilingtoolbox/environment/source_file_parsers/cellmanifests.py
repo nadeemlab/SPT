@@ -222,8 +222,8 @@ class CellManifestsParser(SourceFileSemanticParser):
                 t.record_timepoint('Completed cell manifest parsing')
                 logger.debug('Performance report %s:\n' % file_count + t.report(as_string=True, by='total time spent'))
                 file_count += 1
+            connection.commit()
 
-        connection.commit()
         cursor.close()
         self.wrap_up_timer(t, computational_design)
 

@@ -123,7 +123,27 @@ $ spt-report-on-logs
 *Note*: `spt-report-on-logs` *will search for run directories recursively starting at the current directory, and report on all the runs.*
 
 ### Import HALO data into normal form
-The input, intermediate, and output data involved in runs is described by a fully-documented data model, the Pathology ADI ("Application Data Interface"). The model documents 105 fields in 23 tables. 62 entity types with 37 property types are provided with full definitions
+The input, intermediate, and output data involved is described by a fully-documented data model, the Pathology ADI ("Application Data Interface"). The model documents 105 fields in 23 tables. 62 entity types with 37 property types are annotated with definitions, with 73% coverage by references to independently-maintained ontologies.
+
+To import HALO-exported cell object files into a normalized database conforming to the Pathology ADI:
+1. Set up a PostgreSQL database (e.g. on your local machine).
+2. Save [`~/.spt_db_config`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/templates/.spt_db.config.template):
+   ```
+   [database-credentials]
+   database = <database name>
+   endpoint =  <host name or endpoint>
+   user = <user you use for database access>
+   password = <password>
+   ```
+3. Run the 'HALO import' workflow, for example:
+   ```sh
+   spt-configure --local --input-path=/path/to/data --workflow='HALO import'
+   ./run.sh
+   ```
+
+*Notes*:
+-The credentials file is not copied by the workflow, and the password is stored in memory only long enough to establish a connection to the database.
+-The [SQL schema](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/data_model/pathology_schema.sql) is generated from the ADI and used to create the tables if they are not already present.
 
 Examples
 --------

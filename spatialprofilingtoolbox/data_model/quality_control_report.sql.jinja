@@ -92,6 +92,46 @@ FROM
     UNION
 
     SELECT
+        all_cells.marker_symbol as phenotype,
+        CAST(100 * number_positive / CAST(number_all_cells AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
+        '<any>' as diagnosis_specialization,
+        'A - elementary' as kind
+    FROM
+        (
+        SELECT
+            cs.symbol as marker_symbol,
+            COUNT(*) as number_all_cells
+        FROM
+            expression_quantification eq
+            LEFT JOIN
+                chemical_species cs
+            ON
+                cs.identifier = eq.target
+        GROUP BY
+            cs.symbol
+        ) AS all_cells
+    LEFT JOIN
+        (
+        SELECT
+            cs.symbol as marker_symbol,
+            COUNT(*) as number_positive
+        FROM
+            expression_quantification eq
+            LEFT JOIN
+                chemical_species cs
+            ON
+                cs.identifier = eq.target
+        WHERE
+            eq.discrete_value = 'positive'
+        GROUP BY
+            cs.symbol
+        ) AS positives_only
+    ON
+        positives_only.marker_symbol = all_cells.marker_symbol
+
+    UNION
+
+    SELECT
         cell_phenotype.symbol as phenotype,
         CAST(100 * phenotype_frequency.frequency / CAST( (SELECT COUNT(*) FROM histological_structure) AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
         phenotype_frequency.diagnosis_result as diagnosis_specialization,
@@ -159,65 +199,12 @@ FROM
     ON
         phenotype_frequency.cell_phenotype_identifier = cell_phenotype.identifier 
 
-    ORDER BY
-        kind,
-        phenotype,
-        diagnosis_specialization
-    ) as agg
-ORDER BY
-    phenotype,
-    diagnosis_specialization
-;
-
-
-
-
-## Starting specialization by outcome
-    (
-    SELECT
-        all_cells.marker_symbol as phenotype,
-        CAST(100 * number_positive / CAST(number_all_cells AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
-        '(all)' as outcome,
-        'A - elementary' as kind
-    FROM
-        (
-        SELECT
-            cs.symbol as marker_symbol,
-            COUNT(*) as number_all_cells
-        FROM
-            expression_quantification eq
-            LEFT JOIN
-                chemical_species cs
-            ON
-                cs.identifier = eq.target
-        GROUP BY
-            cs.symbol
-        ) AS all_cells
-    LEFT JOIN
-        (
-        SELECT
-            cs.symbol as marker_symbol,
-            COUNT(*) as number_positive
-        FROM
-            expression_quantification eq
-            LEFT JOIN
-                chemical_species cs
-            ON
-                cs.identifier = eq.target
-            WHERE
-                eq.discrete_value = 'positive'
-        GROUP BY
-            cs.symbol
-        ) AS positives_only
-    ON
-        positives_only.marker_symbol = all_cells.marker_symbol
-
     UNION
 
     SELECT
         cell_phenotype.symbol as phenotype,
         CAST(100 * phenotype_frequency.frequency / CAST( (SELECT COUNT(*) FROM histological_structure) AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
-        '(all)' as outcome,
+        '<any>' as diagnosis_specialization,
         'B - composite' as kind
     FROM
         (
@@ -227,7 +214,7 @@ ORDER BY
         FROM
             (
             SELECT
-                eq.histological_structure,
+                eq.histological_structure as histological_structure,
                 cpc.cell_phenotype as cell_phenotype_identifier,
                 COUNT(*) as number_criteria_satisfied
             FROM
@@ -262,7 +249,16 @@ ORDER BY
     LEFT JOIN cell_phenotype
     ON
         phenotype_frequency.cell_phenotype_identifier = cell_phenotype.identifier 
-    )
+
+    ORDER BY
+        kind,
+        phenotype,
+        diagnosis_specialization
+    ) as agg
+;
+
+
+
 
 
 ## average fraction, over slides

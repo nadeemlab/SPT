@@ -139,9 +139,6 @@ if __name__=='__main__':
     if args.lsf:
         variables['executor'] = 'lsf'
 
-    if which('bsub') is None:
-        variables['executor'] = 'local'
-
     variables['workflow'] = args.workflow
 
     if isdir(args.input_path):

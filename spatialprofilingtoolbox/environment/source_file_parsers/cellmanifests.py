@@ -96,7 +96,7 @@ class CellManifestsParser(SourceFileSemanticParser):
             elif count == 0:
                 if record_performance:
                     t.record_timepoint('Retrieved and hashed a cell manifest')
-                chunk_size = 10000
+                chunk_size = 100000
                 for start in range(0, cells.shape[0], chunk_size):
                     if record_performance:
                         t.record_timepoint('Starting a chunk')

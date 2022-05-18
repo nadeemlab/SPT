@@ -1,16 +1,17 @@
 
-CREATE VIEW quality_control_report AS
-SELECT ...
-
 ## number of slides
 ## number of cells
 ## average number of cells per slide
 
+## average fraction, over slides
+## standard deviation of fraction, over slides
+## all of the above under outcomeal or outcome assignment specialization
+## extrema, high and low, sample identifier and value, for all of the above
 
-## for each phenotype (elementary and composite):
+## REFRESH MATERIALIZED VIEW mymatview;
 
-
-## fraction of cells positive
+CREATE MATERIALIZED VIEW phenotyping_breakdown_report
+AS
 SELECT
     agg.phenotype,
     agg.percent_positive,
@@ -256,15 +257,3 @@ FROM
         diagnosis_specialization
     ) as agg
 ;
-
-
-
-
-
-## average fraction, over slides
-
-## standard deviation of fraction, over slides
-
-## all of the above under outcomeal or outcome assignment specialization
-
-## extrema, high and low, sample identifier and value, for all of the above

@@ -13,11 +13,11 @@ class MockIntegrator(Integrator):
 
         feature_specifier = pd.DataFrame([
             {'feature_specification': 0, 'specifier': 'Epithelium', 'ordinality': 1},
-            {'feature_specification': 0, 'specifier': 'CD3',        'ordinality': 1},
+            {'feature_specification': 0, 'specifier': 'CD3',        'ordinality': 2},
             {'feature_specification': 1, 'specifier': 'Epithelium', 'ordinality': 1},
-            {'feature_specification': 1, 'specifier': 'CD4',        'ordinality': 1},
+            {'feature_specification': 1, 'specifier': 'CD4',        'ordinality': 2},
             {'feature_specification': 2, 'specifier': 'Epithelium', 'ordinality': 1},
-            {'feature_specification': 2, 'specifier': 'CD8',        'ordinality': 1},
+            {'feature_specification': 2, 'specifier': 'CD8',        'ordinality': 2},
         ])
 
         feature_specification = pd.DataFrame([

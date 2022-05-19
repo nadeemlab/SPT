@@ -1,17 +1,14 @@
 
+from ..defaults.integrator import Integrator
 from ...environment.logging.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class HALOImportIntegrator:
-    def __init__(
-        self,
-        computational_design=None,
-        **kwargs,
-    ):
-        self.computational_design = computational_design
+class HALOImportIntegrator(Integrator):
+    def __init__(self, **kwargs):
+        super(HALOImportIntegrator, self).__init__(**kwargs)
 
-    def calculate(self, filename):
-        logger.info('Doing integration.')
-        open(filename, 'wt').write('')
+    def calculate(self):
+        logger.info('<Stats calculation not implemented>')
+        open(self.stats_tests_filename, 'wt').write('')

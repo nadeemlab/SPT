@@ -1,26 +1,21 @@
+
+from ..defaults.integrator import Integrator
 from ...environment.logging.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class NearestDistanceAnalysisIntegrator:
+class NearestDistanceAnalysisIntegrator(Integrator):
     """
     Main class of the integration phase.
     """
-    def __init__(self,
-        computational_design=None,
-        **kwargs,
-    ):
-        """
-        :param computational_design: Design object providing metadata specific to the
-            density workflow.
-        """
-        self.computational_design = computational_design
+    def __init__(self, **kwargs):
+        super(NearestDistanceAnalysisIntegrator, self).__init__(**kwargs)
 
-    def calculate(self, filename):
+    def calculate(self):
         """
         Performs statistical comparison tests and writes results.
         """
-        logger.warning('Stats not implemented.')
-        with open(filename, 'wt') as file:
+        logger.info('<Stats calculation not implemented>')
+        with open(self.stats_tests_filename, 'wt') as file:
             file.write('')

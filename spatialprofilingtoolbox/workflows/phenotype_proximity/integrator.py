@@ -11,27 +11,22 @@ import numpy as np
 from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
+from ..defaults.integrator import Integrator
 from ...environment.logging.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
 
-class PhenotypeProximityAnalysisIntegrator:
+class PhenotypeProximityAnalysisIntegrator(Integrator):
     """
     The main class of the integration phase.
     """
-    def __init__(self,
-        computational_design: PhenotypeProximityDesign=None,
-        **kwargs,
-    ):
-        """
-        :param computational_design: The design object for the proximity workflow.
-        """
-        self.computational_design = computational_design
+    def __init__(self, **kwargs):
+        super(PhenotypeProximityAnalysisIntegrator, self).__init__(**kwargs)
         self.cell_proximity_tests = None
 
-    def calculate(self, filename):
+    def calculate(self):
         """
         Performs statistical comparison tests and writes results to file.
         """
@@ -41,9 +36,9 @@ class PhenotypeProximityAnalysisIntegrator:
         )
         cell_proximity_tests = self.do_outcome_tests()
         if cell_proximity_tests is not None:
-            self.export_results(cell_proximity_tests, filename)
+            self.export_results(cell_proximity_tests, self.stats_tests_filename)
         else:
-            with open(filename, 'wt') as file:
+            with open(self.stats_tests_filename, 'wt') as file:
                 file.write('')
             logger.warning('No stats to export for phenotype proximity workflow.')
 

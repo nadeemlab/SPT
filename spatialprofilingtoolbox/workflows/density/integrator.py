@@ -36,10 +36,10 @@ class DensityAnalysisIntegrator(Integrator):
         logger.info('Starting stats.')
         density_tests = self.do_outcome_tests()
         if density_tests is not None:
-            self.export_results(density_tests, self.stats_tests_filename)
+            self.export_results(density_tests, self.stats_tests_file)
             logger.info('Done exporting stats.')
         else:
-            with open(self.stats_tests_filename, 'wt') as file:
+            with open(self.stats_tests_file, 'wt') as file:
                 file.write('')
             logger.warning('Test results not generated.')
 

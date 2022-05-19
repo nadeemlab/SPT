@@ -11,4 +11,4 @@ class HALOImportIntegrator(Integrator):
 
     def calculate(self):
         logger.info('<Stats calculation not implemented>')
-        open(self.stats_tests_filename, 'wt').write('')
+        open(self.stats_tests_file, 'wt').write('')

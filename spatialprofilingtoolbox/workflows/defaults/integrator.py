@@ -10,12 +10,12 @@ class Integrator:
     def __init__(
         self,
         computational_design=None,
-        stats_tests_filename:str = None,
+        stats_tests_file:str = None,
         feature_matrix_filename: str=None,
         **kwargs,
     ):
         self.computational_design = computational_design
-        self.stats_tests_filename = stats_tests_filename
+        self.stats_tests_file = stats_tests_file
         self.feature_matrix_filename = feature_matrix_filename
 
     def calculate(self):
@@ -33,7 +33,7 @@ class Integrator:
 
     def write_placeholder_stats(self):
         logger.info('Stats calculation not implemented')
-        with open(self.stats_tests_filename, 'wt') as file:
+        with open(self.stats_tests_file, 'wt') as file:
             file.write('')
 
     def get_tall_feature_tables(self):

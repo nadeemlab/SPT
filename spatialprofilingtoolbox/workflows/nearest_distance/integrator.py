@@ -17,5 +17,5 @@ class NearestDistanceAnalysisIntegrator(Integrator):
         Performs statistical comparison tests and writes results.
         """
         logger.info('<Stats calculation not implemented>')
-        with open(self.stats_tests_filename, 'wt') as file:
+        with open(self.stats_tests_file, 'wt') as file:
             file.write('')

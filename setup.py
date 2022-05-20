@@ -80,6 +80,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',
         'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
+        'spatialprofilingtoolbox/scripts/spt-guess-channels',
     ],
     install_requires=requirements,
     project_urls = {

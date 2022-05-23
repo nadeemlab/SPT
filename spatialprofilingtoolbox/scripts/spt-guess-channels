@@ -8,8 +8,8 @@ import pandas as pd
 
 def parse_channels(columns):
     patterns = {
-        'membership' : '^(\w[\w \d]+) Positive( Classification)?$',
-        'intensity' : '^(\w[\w \d]+)(?<! Nucleus)(?<! Cytoplasm)(?<! Membrane) (Cell )?Intensity$',
+        'membership': '^(\w[\w _\d]+)[ _]Positive([ _]Classification)?$',
+        'intensity': '^(\w[\w _\d]+)(?<![ _]Nucleus)(?<![ _]Cytoplasm)(?<![ _]Membrane)[ _](Cell[ _])?Intensity$',
     }
     available = {kind : [] for kind in patterns}
     for column in columns:

@@ -1,5 +1,6 @@
 import os
 from os.path import getsize
+import re
 
 import pandas as pd
 
@@ -91,6 +92,12 @@ class CoreJob:
                     dataset_design=self.dataset_design,
                 )
                 feature = self.dataset_design.get_feature_name(phenotype)
+                if not feature in table.columns:
+                    feature = re.sub(' ', '_', feature)
+                    if not feature in table.columns:
+                        message = 'Feature %s not in columns.', feature
+                        logger.error(message)
+                        raise ValueError(message)
                 number_positives = sum(table[feature])
                 logger.info(
                     'Dichotomization column "%s" written. %s positives.',

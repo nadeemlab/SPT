@@ -2,6 +2,7 @@ import pathlib
 import os
 from os.path import join
 from os.path import exists
+import re
 
 import pandas as pd
 
@@ -244,7 +245,10 @@ class HALOCellMetadataDesign:
         for key in signature.keys():
             feature_name = fn(key)
             if not feature_name in table.columns:
-                logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(table.columns))
+                logger.warning('Key "%s" was not among feature/column names: %s', feature_name, str(table.columns))
+                feature_name = re.sub(' ', '_', feature_name)
+                if not feature_name in table.columns:
+                    logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(table.columns))
         pandas_signature = self.non_infix_bitwise_AND([table[fn(key)] == v(value) for key, value in signature.items()])
         return pandas_signature
 

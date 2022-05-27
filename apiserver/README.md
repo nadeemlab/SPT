@@ -33,4 +33,6 @@ spt-generate-aws-task-definition \
 
 Use the generated `task_definition_pathstats_api_app.json`.
 
-Use the AWS Console to add a new Fargate task for the API server.
+Note the reference to the `pathstudies-db-access` role. You'll need to create a `pathstudies-db-access` role that basically looks like the `ecsTaskExecution` role but with additional permissions, access to the one system parameter store value needed in this configuration.
+
+Then use the AWS Console to add a new Fargate task for the API server.

@@ -204,7 +204,7 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}); \
     cd apiserver/ ; \
-    docker build -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:latest . \
+    docker build -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:latest . ; \
     cd ..
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \

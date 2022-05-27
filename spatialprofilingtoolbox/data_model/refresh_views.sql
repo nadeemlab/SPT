@@ -1,0 +1,6 @@
+
+REFRESH MATERIALIZED VIEW single_channel_diagnosis_breakdown_report;
+REFRESH MATERIALIZED VIEW single_channel_all_diagnosis_breakdown_report;
+REFRESH MATERIALIZED VIEW composite_diagnosis_breakdown_report;
+REFRESH MATERIALIZED VIEW composite_all_diagnosis_breakdown_report;
+REFRESH MATERIALIZED VIEW phenotyping_breakdown_report;

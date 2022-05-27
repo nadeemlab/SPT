@@ -64,6 +64,10 @@ setuptools.setup(
             'fields.tsv',
             'pathology_schema.sql',
             'drop_tables.sql',
+            'drop_views.sql',
+            'create_views.sql',
+            'grant_on_tables.sql',
+            'refresh_views.sql',
         ]
     },
     python_requires='>=3.7',

@@ -1,0 +1,6 @@
+
+DROP MATERIALIZED VIEW phenotyping_breakdown_report;
+DROP MATERIALIZED VIEW single_channel_diagnosis_breakdown_report;
+DROP MATERIALIZED VIEW single_channel_all_diagnosis_breakdown_report;
+DROP MATERIALIZED VIEW composite_diagnosis_breakdown_report;
+DROP MATERIALIZED VIEW composite_all_diagnosis_breakdown_report;

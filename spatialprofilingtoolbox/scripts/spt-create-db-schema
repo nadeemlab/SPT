@@ -3,6 +3,7 @@ import argparse
 import os
 from os.path import join
 from os.path import exists
+from os.path import abspath
 from os.path import expanduser
 
 import spatialprofilingtoolbox
@@ -19,23 +20,22 @@ if __name__=='__main__':
         dest='database_config_file',
         type=str,
         required=False,
-        help='Provide the file basename for database configuration (assumed in ~/). Default is %s .' % default_db_config_filename,
+        help='Provide the file for database configuration. Default is ~/%s .' % default_db_config_filename,
     )
     parser.add_argument(
         '--force',
         dest='force',
         action='store_true',
-        help='By default, tables are created only if they don\'t already exist. If "force" is set, all tables from the schema are dropped first.',
+        help='By default, tables are created only if they don\'t already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use with care; all data in existing tables will be deleted.',
     )
     args = parser.parse_args()
 
     if args.database_config_file:
-        db_config_filename = args.database_config_file
+        config_file = abspath(expanduser(args.database_config_file))
     else:
-        db_config_filename = default_db_config_filename
-    config_file = join(expanduser('~'), db_config_filename)
+        config_file = join(expanduser('~'), default_db_config_filename)
     if not exists(config_file):
-    	raise FileNotFoundError('Need to supply valid database config filename.')
+    	raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
     with DataSkimmer(database_config_file=config_file) as skimmer:
     	skimmer.create_tables(skimmer.get_connection(), force=args.force)

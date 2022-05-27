@@ -55,6 +55,9 @@ class DataSkimmer:
         if all(found):
             credentials = {c : configured_credentials[c] for c in self.get_credential_keys()}
             logger.info('Found database credentials %s', self.get_credential_keys())
+            logger.info('endpoint: %s', credentials['endpoint'])
+            logger.info('database: %s', credentials['database'])
+            logger.info('user:     %s', credentials['user'])
             if (not connectivity) and (credentials['endpoint'] != 'localhost'):
                 message = 'Without network connection, you can only use endpoint=localhost for backend database.'
                 logger.error(message)
@@ -136,16 +139,26 @@ class DataSkimmer:
             chemical_species_identifiers_by_symbol,
         )
 
-    def create_tables(self, connection, force=False):
-        if force is True:
-            with importlib.resources.path('spatialprofilingtoolbox.data_model', 'drop_tables.sql') as path:
-                drop_tables_script = open(path).read()
-            cursor = connection.cursor()
-            cursor.execute(create_db_script)
-            cursor.close()
-
-        with importlib.resources.path('spatialprofilingtoolbox.data_model', 'pathology_schema.sql') as path:
-            create_db_script = open(path).read()
+    def execute_script(self, filename, connection, description: str=None):
+        if description is None:
+            description = filename
+        logger.info('Executing %s.', description)
+        with importlib.resources.path('spatialprofilingtoolbox.data_model', filename) as path:
+            script = open(path).read()
         cursor = connection.cursor()
-        cursor.execute(create_db_script)
+        logger.debug(script)
+        cursor.execute(script)
         cursor.close()
+        connection.commit()
+        logger.info('Done with %s.', description)
+
+    def create_tables(self, connection, force=False):
+        logger.info('This creation tool assumes that the database itself and users are already set up.')
+        if force is True:
+            self.execute_script('drop_views.sql', connection, description='drop views of main schema.')
+            self.execute_script('drop_tables.sql', connection, description='drop tables from main schema.')
+
+        self.execute_script('pathology_schema.sql', connection, description='create tables from main schema.')
+        self.execute_script('create_views.sql', connection, description='create tables from main schema.')
+
+        self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users.')

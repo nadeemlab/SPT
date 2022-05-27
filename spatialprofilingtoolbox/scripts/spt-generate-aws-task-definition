@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+from os.path import basename
 import argparse
 import configparser
 import re
@@ -39,6 +41,6 @@ if __name__=='__main__':
         raise ValueError('Section %s not present in %s.', section, args.configuration_file)
     configuration_variables = {key : config[section][key] for key in config[section]}
     task_definition = template.render(**configuration_variables)
-    output_file = re.sub('\.jinja$', '', args.task_definition_template_file)
+    output_file = re.sub('\.jinja$', '', basename(args.task_definition_template_file))
     with open(output_file, 'wt') as file:
         file.write(task_definition)

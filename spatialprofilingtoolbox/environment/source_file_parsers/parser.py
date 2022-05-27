@@ -37,12 +37,24 @@ class SourceFileSemanticParser:
         fields_sorted = sorted(fields, key=lambda field: int(field['Ordinality']))
         return fields_sorted
 
-    def generate_basic_insert_query(self, tablename, fields):
+    def generate_basic_insert_query(self, tablename, fields, not_equal_to_record=None):
         fields_sorted = self.get_field_names(tablename, fields)
+        if not not_equal_to_record is None:
+            handle_duplicates = (
+                'WHERE NOT EXISTS ('
+                'SELECT * FROM %s ' % table_name
+                'WHERE ' + ', '.join([
+                    fields_sorted[i] + '=' + not_equal_to_record[i]
+                    for i in range(len(fields_sorted))
+                ])
+                ' ) '
+            )
+        else:
+            handle_duplicates = ''
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join([field['Name'] for field in fields_sorted]) + ') '
             'VALUES (' + ', '.join([self.get_placeholder()]*len(fields_sorted)) + ') '
-            'ON CONFLICT DO NOTHING;'
+            'ON CONFLICT DO NOTHING ' + handle_duplicates + ' ;' 
         )
         return query
 

@@ -155,10 +155,10 @@ class DataSkimmer:
     def create_tables(self, connection, force=False):
         logger.info('This creation tool assumes that the database itself and users are already set up.')
         if force is True:
-            self.execute_script('drop_views.sql', connection, description='drop views of main schema.')
-            self.execute_script('drop_tables.sql', connection, description='drop tables from main schema.')
+            self.execute_script('drop_views.sql', connection, description='drop views of main schema')
+            self.execute_script('drop_tables.sql', connection, description='drop tables from main schema')
 
-        self.execute_script('pathology_schema.sql', connection, description='create tables from main schema.')
-        self.execute_script('create_views.sql', connection, description='create tables from main schema.')
+        self.execute_script('pathology_schema.sql', connection, description='create tables from main schema')
+        self.execute_script('create_views.sql', connection, description='create views of main schema')
 
-        self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users.')
+        self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users')

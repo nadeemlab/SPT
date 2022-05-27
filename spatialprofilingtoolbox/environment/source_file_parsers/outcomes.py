@@ -36,13 +36,14 @@ class OutcomesParser(SourceFileSemanticParser):
             )
         logger.info('Saving %s diagnosis records.', outcomes.shape[0])
         for i, row in outcomes.iterrows():
+            diagnosis_record = create_diagnosis_record(
+                row['Sample ID'],
+                row[outcomes.columns[1]],
+                outcomes.columns[1],
+            ),
             cursor.execute(
-                self.generate_basic_insert_query('diagnosis', fields),
-                create_diagnosis_record(
-                    row['Sample ID'],
-                    row[outcomes.columns[1]],
-                    outcomes.columns[1]
-                ),
+                self.generate_basic_insert_query('diagnosis', fields, not_equal_to_record=diagnosis_record),
+                diagnosis_record,
             )
         connection.commit()
         cursor.close()

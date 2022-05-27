@@ -135,7 +135,7 @@ if __name__=='__main__':
         dest='database_config_file',
         type=str,
         required=False,
-        help='If workflow involves database, provide the config file basename here (assumed in ~/). Default is %s .' % default_db_config_filename,
+        help='If workflow involves database, provide the config file here. Default is ~/%s .' % default_db_config_filename,
     )
     args = parser.parse_args()
 
@@ -192,10 +192,9 @@ if __name__=='__main__':
             variables['outcomes'] = True
 
     if args.database_config_file:
-        db_config_filename = args.database_config_file
+        config_file = expanduser(args.database_config_file)
     else:
-        db_config_filename = default_db_config_filename
-    config_file = join(expanduser('~'), db_config_filename)
+        config_file = join(expanduser('~'), default_db_config_filename)
     if exists(config_file):
         if workflows[variables['workflow']].computational_design.uses_database():
             variables['db_config_file'] = config_file

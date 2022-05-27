@@ -81,6 +81,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
         'spatialprofilingtoolbox/scripts/spt-guess-channels',
+        'spatialprofilingtoolbox/scripts/spt-generate-aws-task-definition',
     ],
     install_requires=requirements,
     project_urls = {

@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+import argparse
+import configparser
+import re
+
+import jinja2
+from jinja2 import Environment
+from jinja2 import BaseLoader
+jinja_environment = Environment(loader=BaseLoader)
+
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'Configure an SPT (spatialprofilingtoolbox) run in the current directory.'
+    )
+    parser.add_argument(
+        '--task-definition-template',
+        dest='task_definition_template_file',
+        type=str,
+        required=True,
+        help='Path to .jinja file for AWS task definition.',
+    )
+    parser.add_argument(
+        '--configuration',
+        dest='configuration_file',
+        type=str,
+        required=True,
+        help='Path to configparser config file for AWS task definition elements.',
+    )
+    args = parser.parse_args()
+    with open(args.task_definition_template_file) as file:
+        task_definition_template = file.read()
+    template = jinja_environment.from_string(task_definition_template)
+
+    config = configparser.ConfigParser()
+    config.read(args.configuration_file)
+    section = 'aws-database-info'
+    if not section in config.sections():
+        raise ValueError('Section %s not present in %s.', section, args.configuration_file)
+    configuration_variables = {key : config[section][key] for key in config[section]}
+    task_definition = template.render(**configuration_variables)
+    output_file = re.sub('\.jinja$', '', args.task_definition_template_file)
+    with open(output_file, 'wt') as file:
+        file.write(task_definition)

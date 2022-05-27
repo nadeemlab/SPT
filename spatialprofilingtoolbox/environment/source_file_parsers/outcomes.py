@@ -40,7 +40,7 @@ class OutcomesParser(SourceFileSemanticParser):
                 row['Sample ID'],
                 row[outcomes.columns[1]],
                 outcomes.columns[1],
-            ),
+            )
             cursor.execute(
                 self.generate_basic_insert_query('diagnosis', fields, not_equal_to_record=diagnosis_record),
                 diagnosis_record,

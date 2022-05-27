@@ -35,26 +35,45 @@ class SourceFileSemanticParser:
             if self.normalize(field['Table']) == self.normalize(tablename)
         ]
         fields_sorted = sorted(fields, key=lambda field: int(field['Ordinality']))
+        fields_sorted = [f['Name'] for f in fields_sorted]
         return fields_sorted
+
+    def format_value(self, v):
+        if type(v) is tuple:
+            raise ValueError('Not formatting tuple value, only atomic: %s' % str(v))
+        if type(v) is list:
+            raise ValueError('Not formatting list value, only atomic: %s' % str(v))
+        if type(v) is int:
+            return str(v)
+        if type(v) is float:
+            return str(v)
+        if type(v) is str:
+            if '"' in v:
+                raise ValueError('Need more sophisticated quoting; encountered " character in string value: %s' % v)
+            return '"' + v + '"'
+        if '"' in str(v):
+            raise ValueError('Need more sophisticated quoting; encountered " character in string value: %s' % v)
+        return '"' + str(v) + '"'
 
     def generate_basic_insert_query(self, tablename, fields, not_equal_to_record=None):
         fields_sorted = self.get_field_names(tablename, fields)
         if not not_equal_to_record is None:
+            str_formatted = [self.format_value(v) for v in not_equal_to_record]
             handle_duplicates = (
                 'WHERE NOT EXISTS ('
                 'SELECT * FROM ' + tablename + ' '
                 'WHERE ' + ', '.join([
-                    fields_sorted[i] + '=' + not_equal_to_record[i]
+                    fields_sorted[i] + '=' + str_formatted[i]
                     for i in range(len(fields_sorted))
                 ]) + ''
                 ' ) '
             )
         else:
-            handle_duplicates = ''
+            handle_duplicates = 'ON CONFLICT DO NOTHING '
         query = (
-            'INSERT INTO ' + tablename + ' (' + ', '.join([field['Name'] for field in fields_sorted]) + ') '
+            'INSERT INTO ' + tablename + ' (' + ', '.join(fields_sorted) + ') '
             'VALUES (' + ', '.join([self.get_placeholder()]*len(fields_sorted)) + ') '
-            'ON CONFLICT DO NOTHING ' + handle_duplicates + ' ;' 
+            + handle_duplicates + ' ;' 
         )
         return query
 

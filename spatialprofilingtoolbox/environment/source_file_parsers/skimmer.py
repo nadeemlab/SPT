@@ -90,6 +90,9 @@ class DataSkimmer:
             credentials['database'] = 'postgres'
         return credentials
 
+    def get_connection(self):
+        return self.connection
+
     def parse(
             self,
             dataset_design = None,
@@ -107,7 +110,6 @@ class DataSkimmer:
         with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
-        self.create_tables(self.connection)
         OutcomesParser().parse(
             self.connection,
             fields,
@@ -134,7 +136,14 @@ class DataSkimmer:
             chemical_species_identifiers_by_symbol,
         )
 
-    def create_tables(self, connection):
+    def create_tables(self, connection, force=False):
+        if force is True:
+            with importlib.resources.path('spatialprofilingtoolbox.data_model', 'drop_tables.sql') as path:
+                drop_tables_script = open(path).read()
+            cursor = connection.cursor()
+            cursor.execute(create_db_script)
+            cursor.close()
+
         with importlib.resources.path('spatialprofilingtoolbox.data_model', 'pathology_schema.sql') as path:
             create_db_script = open(path).read()
         cursor = connection.cursor()

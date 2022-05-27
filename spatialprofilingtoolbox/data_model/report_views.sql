@@ -26,7 +26,7 @@ SELECT
     all_cells.study as study,
     'single channel' as multiplicity,
     all_cells.marker_symbol as phenotype,
-    CAST(100 * number_positive / CAST(number_all_cells AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
+    CAST(100 * number_positive / CAST(number_all_cells AS FLOAT) AS NUMERIC(7, 4)) as percent_positive,
     all_cells.diagnosis as diagnosis_specialization
 FROM
     (
@@ -110,7 +110,7 @@ SELECT
     all_cells.study as study,
     'single channel' as multiplicity,
     all_cells.marker_symbol as phenotype,
-    CAST(100 * number_positive / CAST(number_all_cells AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
+    CAST(100 * number_positive / CAST(number_all_cells AS FLOAT) AS NUMERIC(7, 4)) as percent_positive,
     '<any>' as diagnosis_specialization
 FROM
     (
@@ -176,7 +176,7 @@ SELECT
     phenotype_frequency.study as study,
     'composite' as multiplicity,
     cell_phenotype.symbol as phenotype,
-    CAST(100 * phenotype_frequency.frequency / CAST( (SELECT COUNT(*) FROM histological_structure) AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
+    CAST(100 * phenotype_frequency.frequency / CAST( (SELECT COUNT(*) FROM histological_structure) AS FLOAT) AS NUMERIC(7, 4)) as percent_positive,
     phenotype_frequency.diagnosis_result as diagnosis_specialization
 FROM
     (
@@ -250,7 +250,7 @@ SELECT
     phenotype_frequency.study as study,
     'composite' as multiplicity,
     cell_phenotype.symbol as phenotype,
-    CAST(100 * phenotype_frequency.frequency / CAST( (SELECT COUNT(*) FROM histological_structure) AS FLOAT) AS NUMERIC(6, 4)) as percent_positive,
+    CAST(100 * phenotype_frequency.frequency / CAST( (SELECT COUNT(*) FROM histological_structure) AS FLOAT) AS NUMERIC(7, 4)) as percent_positive,
     '<any>' as diagnosis_specialization
 FROM
     (

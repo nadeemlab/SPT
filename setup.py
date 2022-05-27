@@ -63,6 +63,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.data_model': [
             'fields.tsv',
             'pathology_schema.sql',
+            'drop_tables.sql',
         ]
     },
     python_requires='>=3.7',
@@ -82,6 +83,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
         'spatialprofilingtoolbox/scripts/spt-guess-channels',
         'spatialprofilingtoolbox/scripts/spt-generate-aws-task-definition',
+        'spatialprofilingtoolbox/scripts/spt-create-db',
     ],
     install_requires=requirements,
     project_urls = {

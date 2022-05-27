@@ -1,11 +1,11 @@
 
 ```
-docker build -t fastapiimage .
+docker build -t pathstatsapiappimage .
+docker container stop pathstatsapiapp
+docker container rm pathstatsapiapp
+docker run -d --name pathstatsapiapp --env-file .spt_db.config.env -p 80:80 pathstatsapiappimage
 
-docker run -d --name myfastapi -p 80:80 fastapiimage
+docker container stop pathstatsapiapp
+docker container start pathstatsapiapp
 
-docker container stop myfastapi
-...
-docker container start myfastapi
-...
 ```

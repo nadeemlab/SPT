@@ -1,0 +1,36 @@
+{
+    "family" : "pathstats-api-app",
+    "requiresCompatibilities" : "FARGATE",
+    "networkMode" : "awsvpc",
+    "operatingSystemFamily" : "LINUX",
+    "cpuArchitecture" : "X86_64",
+    "cpu" : "256",
+    "memory" : "512",
+    "containerDefinitions" : [
+        {
+            "name" : "pathstats-api-app-container",
+            "image" : "nadeemlab/pathstats-api-app:latest",
+            "environment" : [
+                {
+                    "name" : "DB_ENDPOINT",
+                    "value" : "{{ db_endpoint }}"
+                },
+                {
+                    "name" : "DB_USER",
+                    "value" : "apireader"
+                }
+            ],
+            "secrets" : [
+                {
+                    "name" : "DB_PASSWORD",
+                    "valueFrom" : "{{ db_password_arn }}"
+                }
+            ]
+        }
+    ],
+    "portMappings" : [
+    	{
+			"containerPort" : 80
+		}
+    ]
+}

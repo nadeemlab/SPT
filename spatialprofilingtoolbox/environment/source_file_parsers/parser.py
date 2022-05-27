@@ -42,11 +42,11 @@ class SourceFileSemanticParser:
         if not not_equal_to_record is None:
             handle_duplicates = (
                 'WHERE NOT EXISTS ('
-                'SELECT * FROM %s ' % table_name
+                'SELECT * FROM ' + tablename + ' '
                 'WHERE ' + ', '.join([
                     fields_sorted[i] + '=' + not_equal_to_record[i]
                     for i in range(len(fields_sorted))
-                ])
+                ]) + ''
                 ' ) '
             )
         else:

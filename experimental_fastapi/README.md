@@ -32,3 +32,5 @@ spt-generate-aws-task-definition \
 ```
 
 Use the generated `task_definition_pathstats_api_app.json`.
+
+Use the AWS Console to add a new Fargate task for the API server.

@@ -7,6 +7,7 @@ from os.path import expanduser
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.environment.configuration_settings import default_db_config_filename
+from spatialprofilingtoolbox.environment.source_file_parsers.skimmer import DataSkimmer
 
 
 if __name__=='__main__':

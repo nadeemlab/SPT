@@ -83,7 +83,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
         'spatialprofilingtoolbox/scripts/spt-guess-channels',
         'spatialprofilingtoolbox/scripts/spt-generate-aws-task-definition',
-        'spatialprofilingtoolbox/scripts/spt-create-db',
+        'spatialprofilingtoolbox/scripts/spt-create-db-schema',
     ],
     install_requires=requirements,
     project_urls = {

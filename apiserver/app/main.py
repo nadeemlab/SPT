@@ -49,7 +49,7 @@ def read_specimen_collection_studies():
         cursor.execute('SELECT * FROM specimen_collection_study;')
         rows = cursor.fetchall()
         representation = {
-            'data analyis study names' : [str(row[0]) for row in rows]
+            'specimen collection study names' : [str(row[0]) for row in rows]
         }
         return Response(
             content = json.dumps(representation),
@@ -69,7 +69,7 @@ def read_root(specimen_collection_study):
         if not study_name in [row[0] for row in rows]:
             return {'error' : '%s not a valid study name' % study_name}
 
-        cursor.execute('SELECT * FROM specimen_collection_process where study=%s;', study_name)
+        cursor.execute('SELECT * FROM specimen_collection_process where study=%s;', (study_name,))
         rows = cursor.fetchall()
         representation = {
             'specimen collection process' : [str(row) for row in rows]

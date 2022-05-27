@@ -1,6 +1,7 @@
 import os
 import json
 from typing import Optional
+import urllib
 
 import psycopg2
 from fastapi import FastAPI
@@ -40,15 +41,38 @@ class DBAccessor:
             self.connection.close()
 
 
-@app.get("/")
-def read_root():
+@app.get("/specimen-collection-study-names")
+def read_specimen_collection_studies():
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
-        cursor.execute('SELECT * FROM data_analysis_study;')
+        cursor.execute('SELECT * FROM specimen_collection_study;')
         rows = cursor.fetchall()
         representation = {
             'data analyis study names' : [str(row[0]) for row in rows]
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
+@app.get("/phenotype-summary/{specimen_collection_study}")
+def read_root(specimen_collection_study):
+    study_name = urllib.parse.unquote(specimen_collection_study)
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute('SELECT name FROM specimen_collection_study ;')
+        rows = cursor.fetchall()
+        if not study_name in [row[0] for row in rows]:
+            return {'error' : '%s not a valid study name' % study_name}
+
+        cursor.execute('SELECT * FROM specimen_collection_process where study=%s;', study_name)
+        rows = cursor.fetchall()
+        representation = {
+            'specimen collection process' : [str(row) for row in rows]
         }
         return Response(
             content = json.dumps(representation),

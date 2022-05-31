@@ -80,7 +80,7 @@ class SourceFileSemanticParser:
         value of None is returned.
         """
         fields = self.get_field_names(tablename, fields)
-        primary = fields[0]['Name']
+        primary = fields[0]
         if no_primary:
             primary = 'COUNT(*)'
             identifying_record = record
@@ -90,7 +90,7 @@ class SourceFileSemanticParser:
             identifying_fields = fields[1:]
         query = 'SELECT ' + primary + ' FROM ' + tablename + ' WHERE ' + ' AND '.join(
                 [
-                    field['Name'] + ' = %s ' % self.get_placeholder()
+                    field + ' = %s ' % self.get_placeholder()
                     for field in identifying_fields
                 ]
             ) + ' ;'

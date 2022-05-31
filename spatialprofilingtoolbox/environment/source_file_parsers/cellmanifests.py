@@ -128,7 +128,7 @@ class CellManifestsParser(SourceFileSemanticParser):
                     else:
                         logger.warning('Exact feature names not found in tables. Trying with underscores...')
                         if all([re.sub(' ', '_', dataset_design.get_feature_name(symbol)) in batch_cells.columns for symbol in channel_symbols]):
-                            feature_names = { symbol : dataset_design.get_feature_name(symbol) for symbol in channel_symbols}
+                            feature_names = { symbol : re.sub(' ', '_', dataset_design.get_feature_name(symbol)) for symbol in channel_symbols }
                         else:
                             logger.warning('Not even with underscores.')
                             raise ValueError('Could not find feature names in cell manifest.')

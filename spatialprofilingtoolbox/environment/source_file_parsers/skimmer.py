@@ -159,6 +159,7 @@ class DataSkimmer:
             self.execute_script('drop_tables.sql', connection, description='drop tables from main schema')
 
         self.execute_script('pathology_schema.sql', connection, description='create tables from main schema')
+        self.execute_script('performance_tweaks.sql', connection, description='tweak main schema')
         self.execute_script('create_views.sql', connection, description='create views of main schema')
 
         self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users')

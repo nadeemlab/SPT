@@ -1,5 +1,5 @@
 
--- Pathology ADI v0.5.0
+-- Pathology ADI v0.6.0
 CREATE TABLE IF NOT EXISTS subject (
     identifier VARCHAR(512) PRIMARY KEY,
     species VARCHAR(512),

@@ -21,6 +21,7 @@ record_performance = True
 class CellManifestsParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(CellManifestsParser, self).__init__(**kwargs)
+        self.using_intensities = False
 
     def parse(self, connection, fields, dataset_design, computational_design, file_manifest_file, chemical_species_identifiers_by_symbol):
         """
@@ -111,12 +112,15 @@ class CellManifestsParser(SourceFileSemanticParser):
                     if record_performance:
                         t.record_timepoint('Subsetted cells dataframe on chunk')
 
-                    intensities = {
-                        symbol : dataset_design.get_combined_intensity(batch_cells, symbol)
-                        for symbol in channel_symbols
-                    }
-                    if record_performance:
-                        t.record_timepoint('Retrieved intensities on chunk')
+                    if self.using_intensities:
+                        intensities = {
+                            symbol : dataset_design.get_combined_intensity(batch_cells, symbol)
+                            for symbol in channel_symbols
+                        }
+                        if record_performance:
+                            t.record_timepoint('Retrieved intensities on chunk')
+                    else:
+                        intensities = None
 
                     discretizations = {
                         symbol : batch_cells[dataset_design.get_feature_name(symbol)]
@@ -161,34 +165,39 @@ class CellManifestsParser(SourceFileSemanticParser):
                         # if record_performance:
                         #     t.record_timepoint('Added one new record by appending fields to all lists')
                         for symbol in channel_symbols:
-                            if len(intensities[symbol]) <= j:
-                                if cell_index_error_count < 5:
-                                    logger.warning(
-                                        'Intensity channel %s has %s elements, but looking for value for cell with index %s.',
-                                        symbol,
-                                        len(intensities[symbol]),
-                                        j,
-                                    )
-                                    cell_index_error_count += 1
-                                if cell_index_error_count == 5:
-                                    logger.debug('Suppressing further cell index error messages.')
-                                    cell_index_error_count += 1
-                                continue
+                            if not intensities is None:
+                                if len(intensities[symbol]) <= j:
+                                    if cell_index_error_count < 5:
+                                        logger.warning(
+                                            'Intensity channel %s has %s elements, but looking for value for cell with index %s.',
+                                            symbol,
+                                            len(intensities[symbol]),
+                                            j,
+                                        )
+                                        cell_index_error_count += 1
+                                    if cell_index_error_count == 5:
+                                        logger.debug('Suppressing further cell index error messages.')
+                                        cell_index_error_count += 1
+                                    continue
                             # if record_performance:
                             #     t.record_timepoint('Starting channel consideration for one cell')
                             target = chemical_species_identifiers_by_symbol[symbol]
-                            quantity = intensities[symbol][j]
-                            # if record_performance:
-                            #     t.record_timepoint('Retrieved quantification')
-                            if quantity in [None, '']:
-                                continue
+                            if not intensities is None:
+                                quantity = intensities[symbol][j]
+                                # if record_performance:
+                                #     t.record_timepoint('Retrieved quantification')
+                                if quantity in [None, '']:
+                                    continue
+                                quantity = str(quantity)
+                            else:
+                                quantity = '-1'
                             discrete_value = discretizations[symbol][j]
                             # if record_performance:
                             #     t.record_timepoint('Retrieved discretization')
                             records['expression_quantification'].append((
                                 histological_structure_identifier,
                                 target,
-                                str(quantity),
+                                quantity,
                                 '',
                                 '',
                                 'positive' if discrete_value == 1 else 'negative',

@@ -1,4 +1,5 @@
 
+-- Pathology ADI v0.5.0
 CREATE TABLE IF NOT EXISTS subject (
     identifier VARCHAR(512) PRIMARY KEY,
     species VARCHAR(512),
@@ -10,7 +11,7 @@ CREATE TABLE IF NOT EXISTS subject (
 
 CREATE TABLE IF NOT EXISTS diagnosis (
     subject VARCHAR(512) REFERENCES subject(identifier),
-    disease VARCHAR,
+    condition VARCHAR,
     result VARCHAR(512),
     assessor VARCHAR(512),
     date VARCHAR
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS diagnosis (
 
 CREATE TABLE IF NOT EXISTS diagnostic_selection_criterion (
     identifier VARCHAR(512) PRIMARY KEY,
-    disease VARCHAR(512),
+    condition VARCHAR(512),
     result VARCHAR(512)
 );
 
@@ -172,4 +173,3 @@ CREATE TABLE IF NOT EXISTS two_cohort_feature_association_test (
     p_value NUMERIC,
     feature_tested VARCHAR(512) REFERENCES feature_specification(identifier)
 );
-

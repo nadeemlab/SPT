@@ -63,6 +63,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.data_model': [
             'fields.tsv',
             'pathology_schema.sql',
+            'performance_tweaks.sql',
             'drop_tables.sql',
             'drop_views.sql',
             'create_views.sql',

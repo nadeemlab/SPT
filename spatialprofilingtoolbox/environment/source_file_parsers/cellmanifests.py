@@ -2,6 +2,7 @@ import io
 from io import BytesIO as StringIO
 import base64
 import mmap
+import re
 
 import shapefile
 import pandas as pd

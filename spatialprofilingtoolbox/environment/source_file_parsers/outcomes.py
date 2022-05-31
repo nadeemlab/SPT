@@ -42,7 +42,7 @@ class OutcomesParser(SourceFileSemanticParser):
                 outcomes.columns[1],
             )
             cursor.execute(
-                self.generate_basic_insert_query('diagnosis', fields, not_equal_to_record=diagnosis_record),
+                self.generate_basic_insert_query('diagnosis', fields),
                 diagnosis_record,
             )
         connection.commit()

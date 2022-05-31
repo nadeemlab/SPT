@@ -38,38 +38,9 @@ class SourceFileSemanticParser:
         fields_sorted = [f['Name'] for f in fields_sorted]
         return fields_sorted
 
-    def format_value(self, v):
-        if type(v) is tuple:
-            raise ValueError('Not formatting tuple value, only atomic: %s' % str(v))
-        if type(v) is list:
-            raise ValueError('Not formatting list value, only atomic: %s' % str(v))
-        if type(v) is int:
-            return str(v)
-        if type(v) is float:
-            return str(v)
-        if type(v) is str:
-            if '"' in v:
-                raise ValueError('Need more sophisticated quoting; encountered " character in string value: %s' % v)
-            return '"' + v + '"'
-        if '"' in str(v):
-            raise ValueError('Need more sophisticated quoting; encountered " character in string value: %s' % v)
-        return '"' + str(v) + '"'
-
-    def generate_basic_insert_query(self, tablename, fields, not_equal_to_record=None):
+    def generate_basic_insert_query(self, tablename, fields):
         fields_sorted = self.get_field_names(tablename, fields)
-        if not not_equal_to_record is None:
-            str_formatted = [self.format_value(v) for v in not_equal_to_record]
-            handle_duplicates = (
-                'WHERE NOT EXISTS ('
-                'SELECT * FROM ' + tablename + ' '
-                'WHERE ' + ', '.join([
-                    fields_sorted[i] + '=' + str_formatted[i]
-                    for i in range(len(fields_sorted))
-                ]) + ''
-                ' ) '
-            )
-        else:
-            handle_duplicates = 'ON CONFLICT DO NOTHING '
+        handle_duplicates = 'ON CONFLICT DO NOTHING '
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join(fields_sorted) + ') '
             'VALUES (' + ', '.join([self.get_placeholder()]*len(fields_sorted)) + ') '

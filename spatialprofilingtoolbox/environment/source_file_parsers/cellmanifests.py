@@ -225,14 +225,17 @@ class CellManifestsParser(SourceFileSemanticParser):
                     ]
                     for tablename in tablenames:
                         if record_performance:
-                            t.record_timepoint('Started inserting one chunk')
-
+                            t.record_timepoint('Started encoding one chunk')
                         values_file_contents = '\n'.join([
                             '\t'.join(r) for r in records[tablename]
                         ]).encode('utf-8')
+                        if record_performance:
+                            t.record_timepoint('Started inserting chunk into local memory')
                         with mmap.mmap(-1, len(values_file_contents)) as mm:
                             mm.write(values_file_contents)
                             mm.seek(0)
+                            if record_performance:
+                                t.record_timepoint('Started copy from command for bulk insertion')
                             cursor.copy_from(mm, tablename)
 
                         if record_performance:

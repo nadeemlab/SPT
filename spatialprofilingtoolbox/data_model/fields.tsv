@@ -6,12 +6,12 @@ birth_date	Birth date	Subject	Date of birth				4
 death_date	Death date	Subject	Date of death				5
 cause_of_death	Cause of death	Subject	Cause of death				6
 subject	Subject	Diagnosis	Study subject		Subject	Identifier	1
-disease	Disease	Diagnosis	Disease considered				2
+condition	Condition	Diagnosis	Condition considered				2
 result	Result	Diagnosis	Diagnosis result				3
 assessor	Assessor	Diagnosis	Diagnosis assessor				4
 date	Date	Diagnosis	Date of diagnosis				5
 identifier	Identifier	Diagnostic selection criterion	Identifier	1			1
-disease	Disease	Diagnostic selection criterion	Disease				2
+condition	Condition	Diagnostic selection criterion	Condition				2
 result	Result	Diagnostic selection criterion	Diagnosis result				3
 specimen	Specimen	Specimen collection process	Extracted subspecimen	1			1
 source	Source	Specimen collection process	Source biospecimen				2
@@ -95,6 +95,10 @@ study	Study	Feature specification	Data analysis study		Data analysis study	Name	
 feature_specification	Feature specification	Feature specifier	Feature specification	1	Feature specification	Identifier	1
 specifier	Specifier	Feature specifier	Specifier				2
 ordinality	Ordinality	Feature specifier	Ordinality				3
+identifier	Identifier	Quantitative feature value	Identifier	1			1
+feature	Feature	Quantitative feature value	Specification of quantified feature		Feature specification	Identifier	2
+subject	Subject	Quantitative feature value	Feature subject				3
+value	Value	Quantitative feature value	Feature value				4
 selection_criterion_1	Selection criterion 1	Two-cohort feature association test	Diagnostic selection criterion		Diagnostic selection criterion	Identifier	1
 selection_criterion_2	Selection criterion 2	Two-cohort feature association test	Diagnostic selection criterion		Diagnostic selection criterion	Identifier	2
 test	Test	Two-cohort feature association test	Statistical test				3

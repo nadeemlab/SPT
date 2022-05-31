@@ -138,7 +138,7 @@ class DataSkimmer:
             file_manifest_file,
             chemical_species_identifiers_by_symbol,
         )
-        self.execute_script('refresh_views.sql', connection, description='create views of main schema', silent=True)
+        self.execute_script('refresh_views.sql', self.connection, description='create views of main schema', silent=True)
 
     def execute_script(self, filename, connection, description: str=None, silent=False):
         if description is None:

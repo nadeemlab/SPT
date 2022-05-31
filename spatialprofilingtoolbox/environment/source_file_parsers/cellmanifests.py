@@ -122,8 +122,18 @@ class CellManifestsParser(SourceFileSemanticParser):
                     else:
                         intensities = None
 
+                    if all([dataset_design.get_feature_name(symbol) in batch_cells.columns for symbol in channel_symbols]):
+                        feature_names = { symbol : dataset_design.get_feature_name(symbol) for symbol in channel_symbols}
+                    else:
+                        logger.warning('Exact feature names not found in tables. Trying with underscores...')
+                        if all([re.sub(' ', '_', dataset_design.get_feature_name(symbol)) in batch_cells.columns for symbol in channel_symbols]):
+                            feature_names = { symbol : dataset_design.get_feature_name(symbol) for symbol in channel_symbols}
+                        else:
+                            logger.warning('Not even with underscores.')
+                            raise ValueError('Could not find feature names in cell manifest.')
+
                     discretizations = {
-                        symbol : batch_cells[dataset_design.get_feature_name(symbol)]
+                        symbol : batch_cells[feature_names[symbol]]
                         for symbol in channel_symbols
                     }
                     if record_performance:

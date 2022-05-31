@@ -138,15 +138,17 @@ class DataSkimmer:
             file_manifest_file,
             chemical_species_identifiers_by_symbol,
         )
+        self.execute_script('refresh_views.sql', connection, description='create views of main schema', silent=True)
 
-    def execute_script(self, filename, connection, description: str=None):
+    def execute_script(self, filename, connection, description: str=None, silent=False):
         if description is None:
             description = filename
         logger.info('Executing %s.', description)
         with importlib.resources.path('spatialprofilingtoolbox.data_model', filename) as path:
             script = open(path).read()
         cursor = connection.cursor()
-        logger.debug(script)
+        if not silent:
+            logger.debug(script)
         cursor.execute(script)
         cursor.close()
         connection.commit()

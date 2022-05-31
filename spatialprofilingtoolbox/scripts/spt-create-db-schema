@@ -28,6 +28,12 @@ if __name__=='__main__':
         action='store_true',
         help='By default, tables are created only if they don\'t already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use with care; all data in existing tables will be deleted.',
     )
+    parser.add_argument(
+        '--refresh-views-only',
+        dest='refresh_views_only',
+        action='store_true',
+        help='Only refresh materialized views, do not touch table schema.',
+    )
     args = parser.parse_args()
 
     if args.database_config_file:
@@ -38,4 +44,7 @@ if __name__=='__main__':
     	raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
     with DataSkimmer(database_config_file=config_file) as skimmer:
-    	skimmer.create_tables(skimmer.get_connection(), force=args.force)
+        if not args.refresh_views_only:
+        	skimmer.create_tables(skimmer.get_connection(), force=args.force)
+        else:
+            skimmer.refresh_views(skimmer.get_connection())

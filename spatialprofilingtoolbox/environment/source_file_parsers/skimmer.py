@@ -138,7 +138,6 @@ class DataSkimmer:
             file_manifest_file,
             chemical_species_identifiers_by_symbol,
         )
-        self.execute_script('refresh_views.sql', self.connection, description='create views of main schema', silent=True)
 
     def execute_script(self, filename, connection, description: str=None, silent=False):
         if description is None:
@@ -163,5 +162,7 @@ class DataSkimmer:
         self.execute_script('pathology_schema.sql', connection, description='create tables from main schema')
         self.execute_script('performance_tweaks.sql', connection, description='tweak main schema')
         self.execute_script('create_views.sql', connection, description='create views of main schema')
-
         self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users')
+
+    def refresh_views(self, connection):
+        self.execute_script('refresh_views.sql', self.connection, description='create views of main schema', silent=True)

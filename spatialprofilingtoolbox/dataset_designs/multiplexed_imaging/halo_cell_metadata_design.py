@@ -329,43 +329,18 @@ class HALOCellMetadataDesign:
         """
         signature = None
 
-        if compartment == 'Non-Tumor':
-            signature = self.non_tumor_stromal_scope_signature(table)
-        elif compartment == 'Tumor':
-            signature = self.tumor_scope_signature(table)
-        elif compartment in self.get_compartments():
-            signature = self.get_pandas_signature(table, {HALOCellMetadataDesign.get_compartment_column_name() : compartment})
+        if compartment in self.get_compartments():
+            column = HALOCellMetadataDesign.get_compartment_column_name()
+            if (not column in table.columns) and (self.get_compartments() == ['<any>']) and (compartment == '<any>'):
+                signature = [True for i in range(table.shape[0])]
+            else:
+                signature = self.get_pandas_signature(table, {column : compartment})
 
         if signature is None:
             logger.error('Could not define compartment %s, from among %s', compartment, self.get_compartments())
             return [False for i in range(table.shape[0])]
         else:
             return signature
-
-    def non_tumor_stromal_scope_signature(self, table, include=None):
-        signature = {
-            HALOCellMetadataDesign.get_compartment_column_name() : 'Stroma',
-        }
-        if include:
-            signature[include] = '+'
-        s1 = self.get_pandas_signature(table, signature)
-
-        signature = {
-            HALOCellMetadataDesign.get_compartment_column_name() : 'Non-Tumor',
-        }
-        if include:
-            signature[include] = '+'
-        s2 = self.get_pandas_signature(table, signature)
-
-        return (s1 | s2)
-
-    def tumor_scope_signature(self, table, include=None):
-        signature = {
-            HALOCellMetadataDesign.get_compartment_column_name() : 'Tumor',
-        }
-        if include:
-            signature[include] = '+'
-        return self.get_pandas_signature(table, signature)
 
     def get_combined_intensity(self, table, elementary_phenotype):
         """

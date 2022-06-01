@@ -186,7 +186,7 @@ class DataSkimmer:
             chemical_species_identifiers_by_symbol,
         )
 
-        self.report_record_count_changes(connection, fields)
+        self.report_record_count_changes(self.connection, fields)
 
     def execute_script(self, filename, connection, description: str=None, silent=False):
         if description is None:

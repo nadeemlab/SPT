@@ -21,8 +21,8 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
         - cell phenotype
         - cell phenotype criterion
         """
-        elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',', na_filter=False)
-        composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',', na_filter=False)
+        elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',', na_filter=False, dtype=str)
+        composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',', na_filter=False, dtype=str)
 
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         project_ids = list(set(file_metadata['Project ID']).difference(['']))
@@ -43,7 +43,7 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
         chemical_species_identifiers_by_symbol = {}
         for i, phenotype in elementary_phenotypes.iterrows():
             symbol = phenotype['Name']
-            chemical_structure_class = phenotype['Indication type']
+            chemical_structure_class = phenotype['Target structure class']
             record = (str(identifier), symbol, '', chemical_structure_class)
             was_found, key = self.check_exists('chemical_species', record, cursor, fields)
             if not was_found:

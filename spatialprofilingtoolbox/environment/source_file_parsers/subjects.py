@@ -6,18 +6,19 @@ from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class OutcomesParser(SourceFileSemanticParser):
+class SubjectsParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
-        super(OutcomesParser, self).__init__(**kwargs)
+        super(SubjectsParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, outcomes_file):
+    def parse(self, connection, fields, subjects_file, outcomes_file):
         """
-        Retrieve outcome data in the same way that the main workflows do, and parse
+        Retrieve SUBJECT data in the same way that the main workflows do, and parse
         records for:
         - subject
         - diagnosis
         """
         cursor = connection.cursor()
+
 
         def create_subject_record(sample_id):
             return (sample_id, '', '', '', '', '')
@@ -26,7 +27,7 @@ class OutcomesParser(SourceFileSemanticParser):
             return (sample_id, column_name, result, '', '')
 
         logger.debug('Considering %s', outcomes_file)
-        outcomes = pd.read_csv(outcomes_file, sep='\t', na_filter=False)
+        outcomes = pd.read_csv(outcomes_file, sep='\t', na_filter=False, dtype=str)
         sample_ids = sorted(list(set(outcomes['Sample ID'])))
         logger.info('Saving %s subject records.', len(sample_ids))
         for sample_id in sample_ids:

@@ -10,7 +10,7 @@ import pandas as pd
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-from .outcomes import OutcomesParser
+from .subjects import SubjectsParser
 from .cellmanifestset import CellManifestSetParser
 from .channels import ChannelsPhenotypesParser
 from .cellmanifests import CellManifestsParser
@@ -105,6 +105,7 @@ class DataSkimmer:
             composite_phenotypes_file = None,
             outcomes_file = None,
             compartments_file = None,
+            subjects_file = None,
             **kwargs,
         ):
         if not self.connection:
@@ -113,9 +114,10 @@ class DataSkimmer:
         with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
-        OutcomesParser().parse(
+        SubjectsParser().parse(
             self.connection,
             fields,
+            subjects_file,
             outcomes_file,
         )
         CellManifestSetParser().parse(

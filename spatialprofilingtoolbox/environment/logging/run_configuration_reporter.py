@@ -40,7 +40,7 @@ class RunConfigurationReporter:
         logger.info('Largest cell manifest: %s MB', self.format_mb(max(sizes)))
 
         if outcomes_file:
-            outcomes = pd.read_csv(outcomes_file, sep='\t', keep_default_na=False)
+            outcomes = pd.read_csv(outcomes_file, sep='\t', keep_default_na=False, dtype=str)
         else:
             sample_ids = self.retrieve_cell_manifest_sample_identifiers(file_manifest_file)
             outcomes = pd.DataFrame({

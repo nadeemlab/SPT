@@ -12,6 +12,8 @@ process echo_environment_variables {
     path 'outcomes_file',                   emit: outcomes_file{% endif %}
 {%- if db_config %}
     path 'db_config_file',                  emit: db_config_file{% endif %}
+{%- if subjects %}
+    path 'subjects_file',                   emit: subjects_file{% endif %}
 
     script:
     """
@@ -25,6 +27,8 @@ process echo_environment_variables {
     echo -n "${outcomes_file_}" > outcomes_file{% endif %}
 {%- if db_config %}
     echo -n "${db_config_file_}" > db_config_file{% endif %}
+{%- if subjects %}
+    echo -n "${subjects_file_}" > subjects_file{% endif %}
     """
 }
 
@@ -81,6 +85,8 @@ process workflow_initialize {
     path compartments_file
 {%- if db_config %}
     path db_config_file{% endif %}
+{%- if subjects %}
+    path subjects_file{% endif %}
     path cell_manifest_files
 
     output:
@@ -95,6 +101,8 @@ process workflow_initialize {
      --outcomes-file=${outcomes_file} \{% endif %}
 {%- if db_config %}
      --database-config-file=${db_config_file} \{% endif %}
+{%- if subjects %}
+     --subjects-file=${subjects_file} \{% endif %}
      --compartments-file=${compartments_file} \
      --elementary-phenotypes-file=${elementary_phenotypes_file} \
      --composite-phenotypes-file=${composite_phenotypes_file}
@@ -250,6 +258,10 @@ workflow {
     environment_ch.db_config_file.map{ file(it.text) }
         .set{ db_config_file_ch }
 {% endif %}
+{% if subjects %}
+    environment_ch.subjects_file.map{ file(it.text) }
+        .set{ subjects_file_ch }
+{% endif %}
     generate_run_information(
         workflow_ch,
         file_manifest_ch,
@@ -306,6 +318,8 @@ workflow {
         compartments_file_ch,
 {%- if db_config %}
         db_config_file_ch,{% endif %}
+{%- if subjects %}
+        subjects_file_ch,{% endif %}
         cell_manifest_files_ch,
     )
         .initialization_flag

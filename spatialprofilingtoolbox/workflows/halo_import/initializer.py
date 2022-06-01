@@ -14,6 +14,7 @@ class HALOImportInitializer(Initializer):
             composite_phenotypes_file = None,
             outcomes_file = None,
             compartments_file = None,
+            subjects_file = None,
             **kwargs,
         ):
         super(HALOImportInitializer, self).__init__(**kwargs)
@@ -22,6 +23,7 @@ class HALOImportInitializer(Initializer):
         self.composite_phenotypes_file = composite_phenotypes_file
         self.outcomes_file = outcomes_file
         self.compartments_file = compartments_file
+        self.subjects_file = subjects_file
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -62,6 +64,13 @@ class HALOImportInitializer(Initializer):
             type=str,
             required=False,
             help='File containing compartment names.'
+        )
+        parser.add_argument(
+            '--subjects-file',
+            dest='subjects_file',
+            type=str,
+            required=False,
+            help='File containing subject information: age at specimen collection, sex, diagnosis.'
         )
 
     def initialize(

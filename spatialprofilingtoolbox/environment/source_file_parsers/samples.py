@@ -33,9 +33,9 @@ class SamplesParser(SourceFileSemanticParser):
 
         project_handle = self.get_unique_value(file_metadata, 'Project ID')
         collection_study = project_handle + ' - specimen collection'
-        extraction_method = self.get_uniqe_value(samples, 'Extraction method')
-        preservation_method = self.get_uniqe_value(samples, 'Preservation method')
-        storage_location = self.get_uniqe_value(samples, 'Storage location')
+        extraction_method = self.get_unique_value(samples, 'Extraction method')
+        preservation_method = self.get_unique_value(samples, 'Preservation method')
+        storage_location = self.get_unique_value(samples, 'Storage location')
 
         cursor = connection.cursor()
         cursor.execute(

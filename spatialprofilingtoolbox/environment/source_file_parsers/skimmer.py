@@ -130,7 +130,8 @@ class DataSkimmer:
             difference = changes[table]
             sign = '+' if difference >= 0 else '-'
             absolute_difference = difference if difference > 0 else -1*difference
-            logger.debug('%s%s %s', sign, absolute_difference, table)
+            difference_str = "{:<13}".format('%s%s' % (sign, absolute_difference))
+            logger.debug('%s %s', difference_str, table)
 
     def parse(
             self,

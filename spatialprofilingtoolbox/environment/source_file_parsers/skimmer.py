@@ -97,6 +97,37 @@ class DataSkimmer:
     def get_connection(self):
         return self.connection
 
+    def retrieve_record_counts(self, cursor, fields):
+        record_counts = {}
+        tablenames = sorted(list(set(fields['Table'])))
+        tablenames = [self.normalize(t) for t in tablenames]
+        for table in tablenames:
+            query = sql.SQL('SELECT COUNT(*) FROM {} ;').format(sql.Identifier(table))
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            record_counts[table] = rows[0][0]
+        return record_counts
+
+    def cache_all_record_counts(self, connection, fields):
+        cursor = connection.cursor()
+        self.record_counts = self.retrieve_record_counts(cursor, fields)
+        cursor.close()
+
+    def report_record_count_changes(self, connection, fields):
+        cursor = connection.cursor()
+        current_counts = self.retrieve_record_counts(cursor, fields)
+        changes = {
+            table: current_counts[table] - self.record_counts[table]
+            for table in sorted(current_counts.keys())
+        }
+        cursor.close()
+        logger.debug('Record count changes:')
+        for table in sorted(changes.keys()):
+            difference = changes[table]
+            sign = '+' if difference >= 0 else '-'
+            absolute_difference = difference if difference > 0 else -1*difference
+            logger.debug('%s%s %s', sign, difference, table)
+
     def parse(
             self,
             dataset_design = None,
@@ -114,6 +145,8 @@ class DataSkimmer:
             return
         with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
+
+        self.cache_all_record_counts(self.connection, fields)
 
         age_at_specimen_collection = SubjectsParser().parse(
             self.connection,
@@ -148,6 +181,8 @@ class DataSkimmer:
             file_manifest_file,
             chemical_species_identifiers_by_symbol,
         )
+
+        self.report_record_count_changes(connection, fields)
 
     def execute_script(self, filename, connection, description: str=None, silent=False):
         if description is None:

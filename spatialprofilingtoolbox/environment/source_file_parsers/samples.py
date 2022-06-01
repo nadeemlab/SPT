@@ -1,5 +1,8 @@
+import re
 
 import pandas as pd
+import psycopg2
+from psycopg2 import sql
 
 from .parser import SourceFileSemanticParser
 from ..logging.log_formats import colorized_logger
@@ -21,6 +24,37 @@ class SamplesParser(SourceFileSemanticParser):
             logger.warning(message)
         return handles[0]
 
+    def normalize(self, name):
+        return re.sub('[ \-]', '_', name).lower()
+
+    def retrieve_record_counts(self, cursor, fields):
+        record_counts = {}
+        tablenames = sorted(list(set(fields['Table'])))
+        for table in tablenames:
+            query = sql.SQL('SELECT COUNT(*) FROM {} ;').format(sql.Identifier(self.normalize(table)))
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            record_counts[table] = rows[0][0]
+        return record_counts
+
+    def cache_all_record_counts(self, connection, fields):
+        cursor = connection.cursor()
+        self.record_counts = self.retrieve_record_counts(cursor, fields)
+        cursor.close()
+
+    def report_record_count_changes(self, connection, fields):
+        cursor = connection.cursor()
+        current_counts = self.retrieve_record_counts(cursor, fields)
+        changes = {
+            table: current_counts[table] - self.record_counts[table]
+        }
+        cursor.close()
+        logger.debug('Record count changes:')
+        for table, difference in changes.items():
+            sign = '+' if difference >= 0 else '-'
+            absolute_difference = difference if difference > 0 else -1*difference
+            logger.debug('%s%s %s', sign, difference, table)
+
     def parse(self, connection, fields, samples_file, age_at_specimen_collection, file_manifest_file):
         """
         Retrieve the samples information and parse records for:
@@ -28,6 +62,7 @@ class SamplesParser(SourceFileSemanticParser):
         - specimen collection process
         - histology assessment process
         """
+        self.cache_all_record_counts(connection, fields)
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         samples = pd.read_csv(samples_file, sep='\t', dtype=str)
 
@@ -64,13 +99,14 @@ class SamplesParser(SourceFileSemanticParser):
         logger.info('Parsed records for %s specimens.', samples.shape[0])
         connection.commit()
         cursor.close()
+        self.report_record_count_changes(connection, fields)
 
     def create_specimen_collection_process_record(self, sample, age_at_specimen_collection, collection_study):
         return (
             sample['Sample ID'],
             sample['Source subject'],
             sample['Source site'],
-            age_at_specimen_collection[sample['Sample ID']],
+            age_at_specimen_collection[sample['Source subject']],
             sample['Extraction date'],
             collection_study,
         )

@@ -1,12 +1,17 @@
 
+A. Update the HALO import workflow with a --subspecimens option. Also add an spt-tracked input file default_patient_samples_file = 'patient_samples.csv', "Sample to patient associations" file identifier. If the option/switch is on, it will look for this file and assume that cell files are associated with specimens only, and outcomes are associated with either samples/specimens or patients depending on the identifier! Then the importer will be able to create the subject table properly, and the histology assessment table properly, and the specimen collection process table properly. This can even include the patient-level diagnosis, if provided in the patients.csv. OH yeah also solicit patients.csv .
+  1. Add "Patients file" patients.csv, an entry for it as input to initializer job in .nf , an argument for the initializer job. Also a new source file parser for it, and call upon it in skimmer.
+  2. Add "Sample patient association file" sample_to_patient.csv, ... all the stuff above.
+  3. Re-interpret Outcomes parser as referring to samples, not patients.
+  4. Skimmer should then populate: subject, histology assessment process, specimen collection process (with proper source entry).
 
-- Update the HALO import workflow with a --subspecimens option. Also add an spt-tracked input file default_patient_samples_file = 'patient_samples.csv', "Sample to patient associations" file identifier. If the option/switch is on, it will look for this file and assume that cell files are associated with specimens only, and outcomes are associated with either samples/specimens or patients depending on the identifier! Then the importer will be able to create the subject table properly, and the histology assessment table properly, and the specimen collection process table properly. This can even include the patient-level diagnosis, if provided in the patients.csv. OH yeah also solicit patients.csv .
 
-- Create a view that properly shows the summary stats over matched untreated / treated cases. I think this is quite possible with the SQL calculus:
-  - Join histology assessment processes with itself, on same *subjects* but on the (assay, result)s being different.
-  - The result is a list of, for each subject, a list of pairs of its samples (and the assessments for each of the entries of each pair).
-  - Join this with the marker stats on *specimens*.
-  - This extends the table of (subject, assessment 1, assessment 2, specimen 2) with (marker, fraction in specimen 2).
-  - Drop subject.
-  - Aggregate (mean, stddev) the over *specimens*.
-  - The result is (assessment 1, assessment 2, marker, mean/stddev frac), where each record is reporting the mean/stddev of the fraction positive for the given marker within those specimens assessed according to assessment 2 and for which the subject also had at least 1 specimen assessed as 1 ... weighted by the number of assessed 1 that actually occurred. In practice one will only look at the case where assessment 1 is the response of interest, and assessment 2 is "untreated" or similar.
+B. Create a view that properly shows the summary stats over matched untreated / treated cases. I think this is quite possible with the SQL calculus:
+  1. Join histology assessment processes with itself, on same *subjects* but on the (assay, result)s being different.
+  2. The result is a list of, for each subject, a list of pairs of its samples (and the assessments for each of the entries of each pair).
+  3. Join this with the marker stats on *specimens*.
+  4. This extends the table of (subject, assessment 1, assessment 2, specimen 2) with (marker, fraction in specimen 2).
+  5. Drop subject.
+  6. Aggregate (mean, stddev) the over *specimens*.
+  7. The result is (assessment 1, assessment 2, marker, mean/stddev frac), where each record is reporting the mean/stddev of the fraction positive for the given marker within those specimens assessed according to assessment 2 and for which the subject also had at least 1 specimen assessed as 1 ... weighted by the number of assessed 1 that actually occurred. In practice one will only look at the case where assessment 1 is the response of interest, and assessment 2 is "untreated" or similar.
+

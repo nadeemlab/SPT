@@ -10,7 +10,7 @@ class SubjectsParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(SubjectsParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, subjects_file, outcomes_file):
+    def parse(self, connection, fields, subjects_file):
         """
         Retrieve SUBJECT data in the same way that the main workflows do, and parse
         records for:
@@ -19,28 +19,26 @@ class SubjectsParser(SourceFileSemanticParser):
         """
         cursor = connection.cursor()
 
+        def create_subject_record(subject_id, sex):
+            return (subject_id, '', sex, '', '', '')
 
-        def create_subject_record(sample_id):
-            return (sample_id, '', '', '', '', '')
+        def create_diagnosis_record(subject_id, assay, result):
+            return (subject_id, assay, result, '', '')
 
-        def create_diagnosis_record(sample_id, result, column_name):
-            return (sample_id, column_name, result, '', '')
-
-        logger.debug('Considering %s', outcomes_file)
-        outcomes = pd.read_csv(outcomes_file, sep='\t', na_filter=False, dtype=str)
-        sample_ids = sorted(list(set(outcomes['Sample ID'])))
-        logger.info('Saving %s subject records.', len(sample_ids))
-        for sample_id in sample_ids:
+        logger.debug('Considering %s', subjects_file)
+        subjects = pd.read_csv(subjects_file, sep='\t', na_filter=False, dtype=str)
+        logger.info('Saving %s subject records.', subjects.shape[0])
+        for i, row in subjects.iterrows():
             cursor.execute(
                 self.generate_basic_insert_query('subject', fields),
-                create_subject_record(sample_id),
+                create_subject_record(row['Subject ID'], row['Sex']),
             )
-        logger.info('Saving %s diagnosis records.', outcomes.shape[0])
-        for i, row in outcomes.iterrows():
+        logger.info('Saving %s diagnosis records.', subjects.shape[0])
+        for i, row in subjects.iterrows():
             diagnosis_record = create_diagnosis_record(
-                row['Sample ID'],
-                row[outcomes.columns[1]],
-                outcomes.columns[1],
+                row['Subject ID'],
+                row['Diagnosed condition'],
+                row['Diagnosis'],
             )
             cursor.execute(
                 self.generate_basic_insert_query('diagnosis', fields),
@@ -48,3 +46,9 @@ class SubjectsParser(SourceFileSemanticParser):
             )
         connection.commit()
         cursor.close()
+
+        age_at_specimen_collection = {
+            row['Subject ID'] : row['Age at specimen collection']
+            for i, row in subjects.iterrows()
+        }
+        return age_at_specimen_collection

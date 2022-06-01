@@ -11,6 +11,7 @@ from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 from .subjects import SubjectsParser
+from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser
 from .channels import ChannelsPhenotypesParser
 from .cellmanifests import CellManifestsParser
@@ -114,11 +115,17 @@ class DataSkimmer:
         with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
-        SubjectsParser().parse(
+        age_at_specimen_collection = SubjectsParser().parse(
             self.connection,
             fields,
             subjects_file,
-            outcomes_file,
+        )
+        samples_file = outcomes_file
+        SamplesParser().parse(
+            self.connection,
+            fields,
+            samples_file,
+            age_at_specimen_collection,
         )
         CellManifestSetParser().parse(
             self.connection,

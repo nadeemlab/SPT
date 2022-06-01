@@ -1,8 +1,8 @@
-Sample ID	Source subject	Source site	Extraction date	Preservation method	Storage location	Assay	Assessment
-lesion 0_1	0	Left groin		Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Untreated
-lesion 0_2	0	Left foot	21 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Non-complete response
-lesion 0_3	0	Left groin	28 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Complete response
-lesion 6_1	6	Right leg		Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Untreated
-lesion 6_2	6	Right leg	29 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Complete response
-lesion 6_3	6	Right leg	29 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Complete response
-lesion 6_4	6	Right leg		Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Untreated
+Sample ID	Source subject	Source site	Extraction method	Extraction date	Preservation method	Storage location	Assay	Assessment
+lesion 0_1	0	Left groin	Surgical excision		Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Untreated
+lesion 0_2	0	Left foot	Surgical excision	21 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Non-complete response
+lesion 0_3	0	Left groin	Surgical excision	28 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Complete response
+lesion 6_1	6	Right leg	Surgical excision		Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Untreated
+lesion 6_2	6	Right leg	Surgical excision	29 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Complete response
+lesion 6_3	6	Right leg	Surgical excision	29 days post-injection	Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Complete response
+lesion 6_4	6	Right leg	Surgical excision		Formalin-fixed and paraffin-embedded	MSKCC Department of Pathology temperature controlled storage units	Intralesional IL-2 response	Untreated

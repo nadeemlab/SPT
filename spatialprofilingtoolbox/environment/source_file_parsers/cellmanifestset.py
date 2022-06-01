@@ -20,8 +20,6 @@ class CellManifestSetParser(SourceFileSemanticParser):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source
         file), and parse records for:
-        - specimen collection study
-        - specimen collection process
         - specimen measurement study
         - specimen data measurement process
         - data file
@@ -31,9 +29,6 @@ class CellManifestSetParser(SourceFileSemanticParser):
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
         ]
-
-        def create_specimen_collection_process_record(specimen, source, study):
-            return (specimen, source, '', '', '', study)
 
         def create_specimen_data_measurement_process_record(
             identifier,
@@ -68,14 +63,9 @@ class CellManifestSetParser(SourceFileSemanticParser):
             message = 'Multiple "Project ID" values were supplied with the file manifest for this run. Using "%s".' % project_handles[0]
             logger.warning(message)
         project_handle = project_handles[0]
-        collection_study = project_handle + ' - specimen collection'
         measurement_study = project_handle + ' - measurement'
 
         cursor = connection.cursor()
-        cursor.execute(
-            self.generate_basic_insert_query('specimen_collection_study', fields),
-            (collection_study, '', '', '', '', ''),
-        )
         cursor.execute(
             self.generate_basic_insert_query('specimen_measurement_study', fields),
             (measurement_study, 'Multiplexed imaging', '', 'HALO', '', ''),
@@ -83,16 +73,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
 
         for i, cell_manifest in cell_manifests.iterrows():
             logger.debug('Considering "%s" file "%s" .', halo_data_type, cell_manifest['File ID'])
-            subject_id = cell_manifest['Sample ID']
-            subspecimen_identifier = subject_id + ' subspecimen'
-            cursor.execute(
-                self.generate_basic_insert_query('specimen_collection_process', fields),
-                create_specimen_collection_process_record(
-                    subspecimen_identifier,
-                    subject_id,
-                    collection_study,
-                ),
-            )
+            sample_id = cell_manifest['Sample ID']
             filename = cell_manifest['File name']
             sha256_hash = compute_sha256(filename)
 
@@ -101,7 +82,7 @@ class CellManifestSetParser(SourceFileSemanticParser):
                 self.generate_basic_insert_query('specimen_data_measurement_process', fields),
                 create_specimen_data_measurement_process_record(
                     measurement_process_identifier,
-                    subspecimen_identifier,
+                    sample_id,
                     measurement_study,
                 ),
             )

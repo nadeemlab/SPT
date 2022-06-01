@@ -10,7 +10,7 @@ class SamplesParser(SourceFileSemanticParser):
     def __init__(self, **kwargs):
         super(SamplesParser, self).__init__(**kwargs)
 
-    def get_unique_value(dataframe, column):
+    def get_unique_value(self, dataframe, column):
         handles = sorted(list(set(dataframe[column]).difference([''])))
         if len(handles) == 0:
             message = 'No "%s" values are supplied with the file manifest for this run.' % column

@@ -5,6 +5,7 @@ import re
 import configparser
 
 import psycopg2
+from psycopg2 import sql
 import pandas as pd
 
 from ..logging.log_formats import colorized_logger
@@ -96,6 +97,9 @@ class DataSkimmer:
 
     def get_connection(self):
         return self.connection
+
+    def normalize(self, name):
+        return re.sub('[ \-]', '_', name).lower()
 
     def retrieve_record_counts(self, cursor, fields):
         record_counts = {}

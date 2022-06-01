@@ -1,8 +1,5 @@
-import re
 
 import pandas as pd
-import psycopg2
-from psycopg2 import sql
 
 from .parser import SourceFileSemanticParser
 from ..logging.log_formats import colorized_logger
@@ -23,9 +20,6 @@ class SamplesParser(SourceFileSemanticParser):
             message = 'Multiple "%s" values were supplied with the file manifest for this run. Using "%s".' % (column, project_handles[0])
             logger.warning(message)
         return handles[0]
-
-    def normalize(self, name):
-        return re.sub('[ \-]', '_', name).lower()
 
     def parse(self, connection, fields, samples_file, age_at_specimen_collection, file_manifest_file):
         """

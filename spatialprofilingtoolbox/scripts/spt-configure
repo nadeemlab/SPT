@@ -207,7 +207,7 @@ if __name__=='__main__':
     variables['subjects'] = False
     if not subjects_file is None:
         subjects_file_abs = join(args.input_path, subjects_file)
-        if exists(subjects):
+        if exists(subjects_file_abs):
             variables['subjects_file'] = compartments_file_abs
             variables['subjects'] = True
 

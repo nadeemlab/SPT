@@ -1,4 +1,10 @@
 
+REFRESH MATERIALIZED VIEW cell_count_by_study_specimen ;
+REFRESH MATERIALIZED VIEW marker_positive_cell_count_by_study_specimen ;
+
+
+
+--Below are to be deprecated
 REFRESH MATERIALIZED VIEW single_channel_diagnosis_breakdown_report;
 REFRESH MATERIALIZED VIEW single_channel_all_diagnosis_breakdown_report;
 REFRESH MATERIALIZED VIEW composite_diagnosis_breakdown_report;

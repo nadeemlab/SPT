@@ -208,7 +208,7 @@ if __name__=='__main__':
     if not subjects_file is None:
         subjects_file_abs = join(args.input_path, subjects_file)
         if exists(subjects_file_abs):
-            variables['subjects_file'] = compartments_file_abs
+            variables['subjects_file'] = subjects_file_abs
             variables['subjects'] = True
 
     write_config_file(variables)

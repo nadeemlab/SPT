@@ -126,6 +126,7 @@ class DataSkimmer:
             fields,
             samples_file,
             age_at_specimen_collection,
+            file_manifest_file,
         )
         CellManifestSetParser().parse(
             self.connection,

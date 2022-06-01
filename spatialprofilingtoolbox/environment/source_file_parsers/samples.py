@@ -1,12 +1,6 @@
-import os
-from os.path import getsize
-from os.path import join
-import re
 
 import pandas as pd
 
-from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from ..file_io import compute_sha256
 from .parser import SourceFileSemanticParser
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
@@ -27,7 +21,7 @@ class SamplesParser(SourceFileSemanticParser):
             logger.warning(message)
         return handles[0]
 
-    def parse(self, connection, fields, samples_file, age_at_specimen_collection):
+    def parse(self, connection, fields, samples_file, age_at_specimen_collection, file_manifest_file):
         """
         Retrieve the samples information and parse records for:
         - specimen collection study

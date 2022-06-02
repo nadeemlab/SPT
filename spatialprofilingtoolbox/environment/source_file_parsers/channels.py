@@ -44,7 +44,12 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
         for i, phenotype in elementary_phenotypes.iterrows():
             symbol = phenotype['Name']
             chemical_structure_class = phenotype['Target structure class']
-            record = (str(identifier), symbol, '', chemical_structure_class)
+            record = (
+                str(identifier),
+                symbol,
+                phenotype['Target full name'],
+                chemical_structure_class,
+            )
             was_found, key = self.check_exists('chemical_species', record, cursor, fields)
             if not was_found:
                 cursor.execute(
@@ -68,8 +73,8 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
             record = (
                 str(identifier),
                 str(chemical_species_identifiers_by_symbol[symbol]),
-                '',
-                '',
+                phenotype['Antibody'],
+                phenotype['Marking mechanism'],
                 measurement_study,
             )
             was_found, key = self.check_exists('biological_marking_system', record, cursor, fields)
@@ -97,7 +102,7 @@ class ChannelsPhenotypesParser(SourceFileSemanticParser):
         number_criterion_records = 0
         for i, phenotype in composite_phenotypes.iterrows():
             symbol = phenotype['Name']
-            record = (str(identifier), symbol, '')
+            record = (str(identifier), symbol, symbol)
             was_found, key = self.check_exists('cell_phenotype', record, cursor, fields)
             if not was_found:
                 cursor.execute(

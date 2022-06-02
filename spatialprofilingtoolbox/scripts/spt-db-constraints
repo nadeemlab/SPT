@@ -10,6 +10,8 @@ from enum import auto
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.environment.logging.log_formats import colorized_logger
+logger = colorized_logger('spt-db-constraints')
 
 
 class DBConstraintsToggling(Enum):
@@ -42,9 +44,7 @@ def print_constraint_status(cursor):
     ''' % str(tuple(big_tables()))
     cursor.execute(query)
 
-    column_names = [desc[0].rstrip() for desc in cursor.description]
-    for i in column_names:
-        print(i)
+    column_names = [desc[0] for desc in cursor.description]
     rows = cursor.fetchall()
 
     print_formatted = lambda row: print ("{:<17} {:<18} {:<65} {:<40}".format(*row))
@@ -68,6 +68,7 @@ def toggle_constraints(
     try:
         for tablename in big_tables():
             statement = 'ALTER TABLE %s %s TRIGGER ALL' % (tablename, state_keyword)
+            logger.debug('Executing: %s' % statement)
             cursor.execute(statement)
     except Exception as e:
         cursor.close()

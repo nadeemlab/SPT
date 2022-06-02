@@ -70,8 +70,8 @@ def record_configuration_command(variables):
         tokens.append('--sif-file=%s' % sif_file)
     if 'excluded_host' in variables:
         tokens.append('--excluded-host=%s' % variables['excluded_host'])
-    if 'database_config_file' in variables:
-        tokens.append('--database-config-file=%s' % variables['database_config_file'])
+    if 'db_config_file' in variables:
+        tokens.append('--database-config-file=%s' % variables['db_config_file'])
 
     command = ' \\\n '.join(tokens)
 

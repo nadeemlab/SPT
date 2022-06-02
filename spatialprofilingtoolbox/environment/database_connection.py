@@ -62,7 +62,7 @@ def check_credentials_availability(configured_credentials):
 
 class DatabaseConnectionMaker:
     def __init__(self, database_config_file: str=None):
-    	credentials = retrieve_credentials(database_config_file)
+        credentials = retrieve_credentials(database_config_file)
         check_credentials_availability(credentials)
         self.connection = None
         try:
@@ -77,5 +77,5 @@ class DatabaseConnectionMaker:
             raise e
 
     def get_connection(self):
-    	return self.connection
+        return self.connection
 

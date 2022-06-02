@@ -49,7 +49,7 @@ def print_constraint_status(cursor):
 
     print_formatted = lambda row: print ("{:<8} {:<11} {:<65} {:<40}".format(*row))
     logger.info('Showing trigger info:')
-    logger.debug('(for "enabled" code refer to "tgenable" in https://www.postgresql.org/docs/current/catalog-pg-trigger.html)')
+    logger.debug('(for "enabled" code refer to "tgenabled" in https://www.postgresql.org/docs/current/catalog-pg-trigger.html)')
     print_formatted(column_names)
     for row in rows:
         bool_formatted_row = [entry for entry in row]

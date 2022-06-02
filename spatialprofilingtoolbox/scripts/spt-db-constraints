@@ -51,7 +51,7 @@ def toggle_constraints(
     database_config_file_elevated,
     state: DBConstraintsToggling=DBConstraintsToggling.ENABLE,
 ):
-    dcm = DatabaseConnectionMaker(database_config_file)
+    dcm = DatabaseConnectionMaker(database_config_file_elevated)
     connection = dcm.get_connection()
     cursor = connection.cursor()
     state_keywords = {

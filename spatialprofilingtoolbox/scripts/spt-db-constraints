@@ -41,10 +41,16 @@ def print_constraint_status(cursor):
     ORDER BY relname;
     ''' % str(tuple(big_tables()))
     cursor.execute(query)
+
+    column_names = [desc[0] for desc in cursor.description]
+    for i in column_names:
+        print(i)
     rows = cursor.fetchall()
 
+    print_formatted = lambda row: print ("{:<12} {:<8} {:<65} {:<40}".format(*row))
+    print_formatted(column_names)
     for row in rows:
-        print ("{:<17} {:<8} {:<65} {:<40}".format(*row))
+        print_formatted(row)
 
 
 def toggle_constraints(

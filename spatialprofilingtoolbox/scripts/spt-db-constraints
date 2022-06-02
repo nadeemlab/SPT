@@ -53,9 +53,9 @@ def print_constraint_status(cursor):
     print_formatted(column_names)
     for row in rows:
         bool_formatted_row = [entry for entry in row]
-        value = entry[1]
-        entry[1] = 'true' if value in ['1', 1] else 'false' 
-        print_formatted(row)
+        value = bool_formatted_row[1]
+        bool_formatted_row[1] = 'true' if value in ['1', 1] else 'false' 
+        print_formatted(bool_formatted_row)
 
 
 def toggle_constraints(

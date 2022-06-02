@@ -47,7 +47,7 @@ def print_constraint_status(cursor):
         print(i)
     rows = cursor.fetchall()
 
-    print_formatted = lambda row: print ("{:<12} {:<8} {:<65} {:<40}".format(*row))
+    print_formatted = lambda row: print ("{:<17} {:<18} {:<65} {:<40}".format(*row))
     print_formatted(column_names)
     for row in rows:
         print_formatted(row)

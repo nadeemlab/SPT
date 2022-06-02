@@ -20,7 +20,6 @@ from .parser import DBBackend
 class DataSkimmer:
     def __init__(self, database_config_file: str=None, db_backend=DBBackend.POSTGRES):
         if db_backend != DBBackend.POSTGRES:
-        else:
             raise ValueError('Only DBBackend.POSTGRES is supported.')
         self.db_backend = db_backend
         dcm = DatabaseConnectionMaker(database_config_file)

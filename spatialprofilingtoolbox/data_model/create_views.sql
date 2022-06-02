@@ -52,7 +52,7 @@ SELECT
     cc.study as study,
     cc.specimen as specimen,
     mpcc.marker_symbol as marker_symbol,
-    100 * mpcc.cell_count / cc.cell_count as percent_positive
+    100 * mpcc.cell_count / CAST(cc.cell_count AS FLOAT) as percent_positive
 FROM
     cell_count_by_study_specimen cc
     JOIN marker_positive_cell_count_by_study_specimen mpcc ON

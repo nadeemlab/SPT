@@ -67,9 +67,9 @@ def toggle_constraints(
         cursor.close()
         connection.close()
         raise e
-    cursor.commit()
     print_constraint_status(cursor)
     cursor.close()
+    connection.commit()
     connection.close()
 
 

@@ -42,7 +42,7 @@ def print_constraint_status(cursor):
     ''' % str(tuple(big_tables()))
     cursor.execute(query)
 
-    column_names = [desc[0] for desc in cursor.description]
+    column_names = [desc[0].rstrip() for desc in cursor.description]
     for i in column_names:
         print(i)
     rows = cursor.fetchall()

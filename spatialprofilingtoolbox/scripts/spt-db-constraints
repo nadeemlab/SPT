@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+import argparse
+import os
+from os.path import exists
+from os.path import abspath
+from os.path import expanduser
+import enum
+from enum import Enum
+from enum import auto
+
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
+
+
+class DBConstraintsToggling(Enum):
+    ENABLE = auto()
+    DISABLE = auto()
+
+
+def big_tables():
+    return [
+        'histological_structure',
+        'histological_structure_identification',
+        'expression_quantification',
+        'shape_file',
+    ]
+
+
+def print_constraint_status(cursor):
+    query = '''
+    SELECT
+        pg_trigger.tgenabled as trigger_enabled,
+        pg_trigger.tgdeferrable as trigger_deferrable,
+        pg_constraint.conname as constraint_name,
+        pg_class.relname as relation_name
+    FROM pg_trigger
+    JOIN pg_class ON pg_trigger.tgrelid = pg_class.oid
+    JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace 
+    JOIN pg_constraint ON pg_constraint.oid = pg_trigger.tgconstraint
+    WHERE relname IN %s
+    ORDER BY relname;
+    ''' % str(tuple(big_tables()))
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print ("{:<17} {:<8} {:<65} {:<40}".format(*row))
+
+
+def toggle_constraints(
+    database_config_file_elevated,
+    state: DBConstraintsToggling=DBConstraintsToggling.ENABLE,
+):
+    dcm = DatabaseConnectionMaker(database_config_file)
+    connection = dcm.get_connection()
+    cursor = connection.cursor()
+    state_keywords = {
+        DBConstraintsToggling.ENABLE : 'ENABLE',
+        DBConstraintsToggling.DISABLE : 'DISABLE',
+    }
+    state_keyword = state_keywords[state]
+    try:
+        for tablename in big_tables():
+            statement = 'ALTER TABLE %s %s TRIGGER ALL' % (tablename, state_keyword)
+            cursor.execute(statement)
+    except Exception as e:
+        cursor.close()
+        connection.close()
+        raise e
+    cursor.commit()
+    print_constraint_status(cursor)
+    cursor.close()
+    connection.close()
+
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = '''Enable/disable triggers on certain tables (the largest ones).
+        Can be used to wrap bulk import operations.
+        The status of the triggers is written to stdout. The meaning of the "enabled"
+        entry is documented here under "tgenabled":
+
+            https://www.postgresql.org/docs/current/catalog-pg-trigger.html
+        '''
+    )
+    parser.add_argument(
+        '--database-config-file-elevated',
+        dest='database_config_file_elevated',
+        type=str,
+        required=True,
+        help='The file for database configuration. The user specified must have elevated privileges.',
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        '--enable',
+        action='store_true',
+        default=False,
+    )
+    group.add_argument(
+        '--disable',
+        action='store_true',
+        default=False,
+    )
+    args = parser.parse_args()
+
+    database_config_file_elevated = abspath(expanduser(args.database_config_file_elevated))
+    if not exists(database_config_file_elevated):
+        raise FileNotFoundError('Need to supply valid database config filename, not: %s', database_config_file_elevated)
+
+    if args.enable:
+        state = DBConstraintsToggling.ENABLE
+    if args.disable:
+        state = DBConstraintsToggling.DISABLE
+
+    toggle_constraints(database_config_file_elevated, state=state)

@@ -89,6 +89,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-guess-channels',
         'spatialprofilingtoolbox/scripts/spt-generate-aws-task-definition',
         'spatialprofilingtoolbox/scripts/spt-create-db-schema',
+        'spatialprofilingtoolbox/scripts/spt-db-constraints',        
     ],
     install_requires=requirements,
     project_urls = {

@@ -1,8 +1,5 @@
 import importlib.resources
-import urllib.request
-from urllib.request import urlopen
 import re
-import configparser
 
 import psycopg2
 from psycopg2 import sql
@@ -11,6 +8,7 @@ import pandas as pd
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
+from ..database_connection import DatabaseConnectionMaker
 from .subjects import SubjectsParser
 from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser
@@ -21,24 +19,12 @@ from .parser import DBBackend
 
 class DataSkimmer:
     def __init__(self, database_config_file: str=None, db_backend=DBBackend.POSTGRES):
-        self.database_config_file = database_config_file
-        if db_backend == DBBackend.POSTGRES:
-            self.check_credentials_availability()
-            self.db_backend = db_backend
+        if db_backend != DBBackend.POSTGRES:
         else:
             raise ValueError('Only DBBackend.POSTGRES is supported.')
-        self.connection = None
-        try:
-            credentials = self.retrieve_credentials()
-            self.connection = psycopg2.connect(
-                dbname=credentials['database'],
-                host=credentials['endpoint'],
-                user=credentials['user'],
-                password=credentials['password'],
-            )
-        except psycopg2.Error as e:
-            logger.error('Failed to connect to database: %s %s', credentials['endpoint'], credentials['database'])
-            raise e
+        self.db_backend = db_backend
+        dcm = DatabaseConnectionMaker(database_config_file)
+        self.connection = dcm.get_connection()
 
     def __enter__(self):
         return self
@@ -46,54 +32,6 @@ class DataSkimmer:
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection:
             self.connection.close()
-
-    def check_credentials_availability(self):
-        connectivity = self.check_internet_connectivity()
-        if not connectivity:
-            logger.info('No internet connection.')
-
-        configured_credentials = self.retrieve_credentials()
-        found = [key in configured_credentials for key in self.get_credential_keys()]
-        if all(found):
-            credentials = {c : configured_credentials[c] for c in self.get_credential_keys()}
-            logger.info('Found database credentials %s', self.get_credential_keys())
-            logger.info('endpoint: %s', credentials['endpoint'])
-            logger.info('database: %s', credentials['database'])
-            logger.info('user:     %s', credentials['user'])
-            if (not connectivity) and (credentials['endpoint'] != 'localhost'):
-                message = 'Without network connection, you can only use endpoint=localhost for backend database.'
-                logger.error(message)
-                raise ConnectionError(message)
-        else:
-            logger.error(
-                'Some database credentials missing: %s',
-                [c for c in self.get_credential_keys() if not c in configured_credentials]
-            )
-            raise EnvironmentError
-
-    def check_internet_connectivity(self):
-        try:
-            test_host = 'https://duckduckgo.com'
-            urlopen(test_host)
-            return True
-        except:
-            return False
-
-    def get_credential_keys(self):
-        return ['endpoint', 'database', 'user', 'password']
-
-    def retrieve_credentials(self):
-        parser = configparser.ConfigParser()
-        credentials = {}
-        parser.read(self.database_config_file)
-        if 'database-credentials' in parser.sections():
-            for key in self.get_credential_keys():
-                if key in parser['database-credentials']:
-                    credentials[key] = parser['database-credentials'][key]
-        if not re.match('^[a-z][a-z0-9_]+[a-z0-9]$', credentials['database']):
-            logger.warning('The database name "%s" is too complex. Reverting to "postgres".', credentials['database'])
-            credentials['database'] = 'postgres'
-        return credentials
 
     def get_connection(self):
         return self.connection

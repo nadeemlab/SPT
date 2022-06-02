@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS subject (
 );
 
 CREATE TABLE IF NOT EXISTS diagnosis (
-    subject VARCHAR(512) REFERENCES subject(identifier),
+    subject VARCHAR(512) REFERENCES subject(identifier) DEFERRABLE,
     condition VARCHAR,
     result VARCHAR(512),
     assessor VARCHAR(512),
@@ -38,11 +38,11 @@ CREATE TABLE IF NOT EXISTS specimen_collection_process (
     source_site VARCHAR,
     source_age VARCHAR,
     extraction_date VARCHAR(512),
-    study VARCHAR(512) REFERENCES specimen_collection_study(name)
+    study VARCHAR(512) REFERENCES specimen_collection_study(name) DEFERRABLE
 );
 
 CREATE TABLE IF NOT EXISTS histology_assessment_process (
-    slide VARCHAR(512) REFERENCES specimen_collection_process(specimen),
+    slide VARCHAR(512) REFERENCES specimen_collection_process(specimen) DEFERRABLE,
     assay VARCHAR(512),
     result VARCHAR(512),
     assessor VARCHAR,
@@ -60,10 +60,10 @@ CREATE TABLE IF NOT EXISTS specimen_measurement_study (
 
 CREATE TABLE IF NOT EXISTS specimen_data_measurement_process (
     identifier VARCHAR(512) PRIMARY KEY,
-    specimen VARCHAR(512) REFERENCES specimen_collection_process(specimen),
+    specimen VARCHAR(512) REFERENCES specimen_collection_process(specimen) DEFERRABLE,
     specimen_age VARCHAR,
     date_of_measurement VARCHAR(512),
-    study VARCHAR(512) REFERENCES specimen_measurement_study(name)
+    study VARCHAR(512) REFERENCES specimen_measurement_study(name) DEFERRABLE
 );
 
 CREATE TABLE IF NOT EXISTS data_file (
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS data_file (
     file_format VARCHAR(512),
     contents_format VARCHAR(512),
     size VARCHAR(512),
-    source_generation_process VARCHAR(512) REFERENCES specimen_data_measurement_process(identifier)
+    source_generation_process VARCHAR(512) REFERENCES specimen_data_measurement_process(identifier) DEFERRABLE
 );
 
 CREATE TABLE IF NOT EXISTS histological_structure (
@@ -96,10 +96,10 @@ CREATE TABLE IF NOT EXISTS plane_coordinates_reference_system (
 );
 
 CREATE TABLE IF NOT EXISTS histological_structure_identification (
-    histological_structure VARCHAR(512) REFERENCES histological_structure(identifier),
-    data_source VARCHAR(512) REFERENCES data_file(sha256_hash),
-    shape_file VARCHAR(512) REFERENCES shape_file(identifier),
-    plane_coordinates_reference VARCHAR(512) REFERENCES plane_coordinates_reference_system(name),
+    histological_structure VARCHAR(512) REFERENCES histological_structure(identifier) DEFERRABLE,
+    data_source VARCHAR(512) REFERENCES data_file(sha256_hash) DEFERRABLE,
+    shape_file VARCHAR(512) REFERENCES shape_file(identifier) DEFERRABLE,
+    plane_coordinates_reference VARCHAR(512) REFERENCES plane_coordinates_reference_system(name) DEFERRABLE,
     identification_method VARCHAR(512),
     identification_date VARCHAR(512),
     annotator VARCHAR
@@ -113,8 +113,8 @@ CREATE TABLE IF NOT EXISTS chemical_species (
 );
 
 CREATE TABLE IF NOT EXISTS expression_quantification (
-    histological_structure VARCHAR(512) REFERENCES histological_structure(identifier),
-    target VARCHAR(512) REFERENCES chemical_species(identifier),
+    histological_structure VARCHAR(512) REFERENCES histological_structure(identifier) DEFERRABLE,
+    target VARCHAR(512) REFERENCES chemical_species(identifier) DEFERRABLE,
     quantity NUMERIC,
     unit VARCHAR(512),
     quantification_method VARCHAR(512),
@@ -124,10 +124,10 @@ CREATE TABLE IF NOT EXISTS expression_quantification (
 
 CREATE TABLE IF NOT EXISTS biological_marking_system (
     identifier VARCHAR(512) PRIMARY KEY,
-    target VARCHAR(512) REFERENCES chemical_species(identifier),
+    target VARCHAR(512) REFERENCES chemical_species(identifier) DEFERRABLE,
     antibody VARCHAR,
     marking_mechanism VARCHAR(512),
-    study VARCHAR(512) REFERENCES specimen_measurement_study(name)
+    study VARCHAR(512) REFERENCES specimen_measurement_study(name) DEFERRABLE
 );
 
 CREATE TABLE IF NOT EXISTS data_analysis_study (
@@ -141,35 +141,35 @@ CREATE TABLE IF NOT EXISTS cell_phenotype (
 );
 
 CREATE TABLE IF NOT EXISTS cell_phenotype_criterion (
-    cell_phenotype VARCHAR(512) REFERENCES cell_phenotype(identifier),
-    marker VARCHAR(512) REFERENCES chemical_species(identifier),
+    cell_phenotype VARCHAR(512) REFERENCES cell_phenotype(identifier) DEFERRABLE,
+    marker VARCHAR(512) REFERENCES chemical_species(identifier) DEFERRABLE,
     polarity VARCHAR(512),
-    study VARCHAR(512) REFERENCES data_analysis_study(name)
+    study VARCHAR(512) REFERENCES data_analysis_study(name) DEFERRABLE
 );
 
 CREATE TABLE IF NOT EXISTS feature_specification (
     identifier VARCHAR(512) PRIMARY KEY,
     derivation_method VARCHAR(512),
-    study VARCHAR(512) REFERENCES data_analysis_study(name)
+    study VARCHAR(512) REFERENCES data_analysis_study(name) DEFERRABLE
 );
 
 CREATE TABLE IF NOT EXISTS feature_specifier (
-    feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
+    feature_specification VARCHAR(512) REFERENCES feature_specification(identifier) DEFERRABLE,
     specifier VARCHAR(512),
     ordinality VARCHAR(512)
 );
 
 CREATE TABLE IF NOT EXISTS quantitative_feature_value (
     identifier VARCHAR(512) PRIMARY KEY,
-    feature VARCHAR(512) REFERENCES feature_specification(identifier),
+    feature VARCHAR(512) REFERENCES feature_specification(identifier) DEFERRABLE,
     subject VARCHAR,
     value NUMERIC
 );
 
 CREATE TABLE IF NOT EXISTS two_cohort_feature_association_test (
-    selection_criterion_1 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier),
-    selection_criterion_2 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier),
+    selection_criterion_1 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier) DEFERRABLE,
+    selection_criterion_2 VARCHAR(512) REFERENCES diagnostic_selection_criterion(identifier) DEFERRABLE,
     test VARCHAR(512),
     p_value NUMERIC,
-    feature_tested VARCHAR(512) REFERENCES feature_specification(identifier)
+    feature_tested VARCHAR(512) REFERENCES feature_specification(identifier) DEFERRABLE
 );

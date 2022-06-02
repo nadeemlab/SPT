@@ -1,11 +1,4 @@
 
-A. Update the HALO import workflow with a --subspecimens option. Also add an spt-tracked input file default_patient_samples_file = 'patient_samples.csv', "Sample to patient associations" file identifier. If the option/switch is on, it will look for this file and assume that cell files are associated with specimens only, and outcomes are associated with either samples/specimens or patients depending on the identifier! Then the importer will be able to create the subject table properly, and the histology assessment table properly, and the specimen collection process table properly. This can even include the patient-level diagnosis, if provided in the patients.csv. OH yeah also solicit patients.csv .
-  1. Add "Patients file" patients.csv, an entry for it as input to initializer job in .nf , an argument for the initializer job. Also a new source file parser for it, and call upon it in skimmer.
-  2. Add "Sample patient association file" sample_to_patient.csv, ... all the stuff above.
-  3. Re-interpret Outcomes parser as referring to samples, not patients.
-  4. Skimmer should then populate: subject, histology assessment process, specimen collection process (with proper source entry).
-
-
 B. Create a view that properly shows the summary stats over matched untreated / treated cases. I think this is quite possible with the SQL calculus:
   1. Join histology assessment processes with itself, on same *subjects* but on the (assay, result)s being different.
   2. The result is a list of, for each subject, a list of pairs of its samples (and the assessments for each of the entries of each pair).

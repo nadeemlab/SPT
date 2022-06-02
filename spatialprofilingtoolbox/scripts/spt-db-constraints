@@ -31,8 +31,8 @@ def big_tables():
 def print_constraint_status(cursor):
     query = '''
     SELECT
-        pg_trigger.tgenabled as trigger_enabled,
-        pg_trigger.tgdeferrable as trigger_deferrable,
+        pg_trigger.tgenabled as enabled,
+        pg_trigger.tgdeferrable as deferrable,
         pg_constraint.conname as constraint_name,
         pg_class.relname as relation_name
     FROM pg_trigger
@@ -47,7 +47,8 @@ def print_constraint_status(cursor):
     column_names = [desc[0] for desc in cursor.description]
     rows = cursor.fetchall()
 
-    print_formatted = lambda row: print ("{:<17} {:<18} {:<65} {:<40}".format(*row))
+    print_formatted = lambda row: print ("{:<8} {:<11} {:<65} {:<40}".format(*row))
+    logger.debug('Showing trigger info:')
     print_formatted(column_names)
     for row in rows:
         print_formatted(row)

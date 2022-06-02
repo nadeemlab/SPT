@@ -13,7 +13,7 @@ CD68,CD68,protein,Thermo MS-397-PABX,Immunofluorescence,
 CD8,CD8,protein,Dako M7103,Immunofluorescence,
 DAPI,DAPI,nucleobases,,Immunofluorescence,
 FOXP3,FOXP3,protein,BioLegend 320014,Immunofluorescence,Forkhead box P3
-IDO1,IDO1,protein,Spring Bioscience M5604,Immunofluorescence,Indoleamine 2,3-Dioxygenase 1
+IDO1,IDO1,protein,Spring Bioscience M5604,Immunofluorescence,"Indoleamine 2,3-Dioxygenase 1"
 KI67,KI67,protein,Thermo RB-1510-PABX ,Immunofluorescence,
 LAG3,LAG3,protein,LSBio LS-C18692,Immunofluorescence,CD223/Lymphocyte Activating 3
 MHCI,MHCI,protein complex,Abcam ab70328,Immunofluorescence,Major histocompatibility complex class I

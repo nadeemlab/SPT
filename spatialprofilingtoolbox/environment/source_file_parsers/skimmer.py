@@ -126,12 +126,24 @@ class DataSkimmer:
 
         self.report_record_count_changes(self.connection, fields)
 
-    def execute_script(self, filename, connection, description: str=None, silent=False):
+    def create_drop_tables(self):
+        with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
+            fields = pd.read_csv(path, sep='\t', keep_default_na=False)
+        tablenames = sorted(list(set([self.normalize(t) for t in fields['Table']])))
+        return '\n'.join([
+            'DROP TABLE IF EXISTS %s CASCADE ; ' % t
+            for t in tablenames
+        ])
+
+    def execute_script(self, filename, connection, description: str=None, silent=False, contents=None):
         if description is None:
             description = filename
-        logger.info('Executing %s.', description)
-        with importlib.resources.path('spatialprofilingtoolbox.data_model', filename) as path:
-            script = open(path).read()
+        if not contents:
+            logger.info('Executing %s.', description)
+            with importlib.resources.path('spatialprofilingtoolbox.data_model', filename) as path:
+                script = open(path).read()
+        else:
+            script = contents
         cursor = connection.cursor()
         if not silent:
             logger.debug(script)
@@ -144,7 +156,7 @@ class DataSkimmer:
         logger.info('This creation tool assumes that the database itself and users are already set up.')
         if force is True:
             self.execute_script('drop_views.sql', connection, description='drop views of main schema')
-            self.execute_script('drop_tables.sql', connection, description='drop tables from main schema')
+            self.execute_script(None, connection, description='drop tables from main schema', contents=self.create_drop_tables())
 
         self.execute_script('pathology_schema.sql', connection, description='create tables from main schema')
         self.execute_script('performance_tweaks.sql', connection, description='tweak main schema')

@@ -191,7 +191,7 @@ function pulldata(){
     if (cache.getAttribute("hascache") == "true") {
         var response = cache.innerHTML
     } else {
-        URL="http://18.223.97.69/phenotype-summary"
+        URL="http://3.141.200.6/phenotype-summary"
         response = get_from_url(URL)
         cache.innerHTML = response
         cache.setAttribute("hascache", "true")
@@ -204,7 +204,7 @@ function setup_table_header() {
     var table = document.getElementById("testtable")
     table.innerHTML = ''
 
-    header = ["Marker", "% cells positive", "standard deviation of % values"]
+    header = ["Marker", "Mean % cells positive", "Standard deviation of % values"]
     header_row = document.createElement("tr")
     for (var i = 0, len = header.length; i < len; ++i) {
         cell = document.createElement("th")
@@ -299,10 +299,9 @@ function add_data_from_study(study) {
 <br/>
 <table class="statstable" id="testtable">
     <tr>
-        <th>Study</th>
         <th>Marker</th>
-        <th>% cells positive</th>
-        <th>standard deviation of % values</th>
+        <th>Mean % cells positive</th>
+        <th>Standard deviation of % values</th>
     </tr>
 </table>
 </div>

@@ -57,6 +57,23 @@ def read_specimen_collection_studies():
         )
 
 
+@app.get("/phenotype-summary")
+def read_root():
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute('SELECT * FROM fraction_stats_by_marker_study;')
+        rows = cursor.fetchall()
+        representation = {
+            'fractions by marker and study' : [str(row) for row in rows]
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
 @app.get("/phenotype-summary/{specimen_collection_study}")
 def read_root(specimen_collection_study):
     study_name = urllib.parse.unquote(specimen_collection_study)
@@ -64,7 +81,7 @@ def read_root(specimen_collection_study):
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
 
-        cursor.execute('SELECT name FROM specimen_collection_study ;')
+        cursor.execute('SELECT * FROM fraction_stats_by_marker_study;')
         rows = cursor.fetchall()
         if not study_name in [row[0] for row in rows]:
             return {'error' : '%s not a valid study name' % study_name}

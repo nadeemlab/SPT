@@ -66,7 +66,7 @@ def read_phenotype_summary():
         cursor.execute('SELECT * FROM fraction_stats_by_marker_study;')
         rows = cursor.fetchall()
         representation = {
-            'fractions by marker and study' : [str(row) for row in rows]
+            'fractions by marker and study' : [str(row[0]) for row in rows]
         }
         return Response(
             content = json.dumps(representation),

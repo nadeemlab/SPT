@@ -58,7 +58,7 @@ def read_specimen_collection_studies():
 
 
 @app.get("/phenotype-summary")
-def read_root():
+def read_phenotype_summary():
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -75,7 +75,7 @@ def read_root():
 
 
 @app.get("/phenotype-summary/{specimen_collection_study}")
-def read_root(specimen_collection_study):
+def read_specific_study(specimen_collection_study):
     study_name = urllib.parse.unquote(specimen_collection_study)
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()

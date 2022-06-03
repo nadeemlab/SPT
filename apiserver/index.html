@@ -1,0 +1,311 @@
+<html>
+<head>
+<style>
+/* The container must be positioned relative: */
+.custom-select {
+  position: relative;
+  max-width: 650px;
+}
+
+.custom-select select {
+  display: none; /*hide original SELECT element: */
+}
+
+.select-selected , .regbtn{
+  background-color: lightblue;
+}
+
+.regbtn {
+    text-align: center;
+    display: inline;
+    position: relative;
+}
+.regbtn:hover {
+    background: lightgray;
+}
+
+/* Style the arrow inside the select element: */
+.select-selected:after {
+  position: absolute;
+  content: "";
+  top: 14px;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-color: #000 transparent transparent transparent;
+}
+
+/* Point the arrow upwards when the select box is open (active): */
+.select-selected.select-arrow-active:after {
+  border-color: transparent transparent #fff transparent;
+  top: 7px;
+}
+
+/* style the items (options), including the selected item: */
+.select-items div,.select-selected, .regbtn {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
+  cursor: pointer;
+}
+
+/* Style items (options): */
+.select-items {
+  position: absolute;
+  background-color: lightblue;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+}
+
+/* Hide the items when the select box is closed: */
+.select-hide {
+  display: none;
+}
+
+.select-items div:hover, .same-as-selected {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+body {
+    font-family: sans-serif;
+}
+div.pagecontainer {
+    margin: auto;
+    text-align:  center;
+}
+div.pagecontainer table, div.custom-select{
+    margin: 0 auto; 
+    text-align: left;    
+}
+table.statstable td, th {
+    padding: 10px;
+}
+table.statstable th {
+    font-weight:  bold;
+    background: lightblue;
+}
+table.statstable td {
+    background: #fbfbfb;
+}
+table.statstable tr:hover td {
+    background: #f0f0f0;
+}
+</style>
+<script>
+function closeAllSelect(elmnt) {
+  /* A function that will close all select boxes in the document,
+  except the current select box: */
+  var x, y, i, xl, yl, arrNo = [];
+  x = document.getElementsByClassName("select-items");
+  y = document.getElementsByClassName("select-selected");
+  xl = x.length;
+  yl = y.length;
+  for (i = 0; i < yl; i++) {
+    if (elmnt == y[i]) {
+      arrNo.push(i)
+    } else {
+      y[i].classList.remove("select-arrow-active");
+    }
+  }
+  for (i = 0; i < xl; i++) {
+    if (arrNo.indexOf(i)) {
+      x[i].classList.add("select-hide");
+    }
+  }
+}
+
+function setup(){
+    var x, i, j, l, ll, selElmnt, a, b, c;
+    /* Look for any elements with the class "custom-select": */
+    x = document.getElementsByClassName("custom-select");
+    l = x.length;
+    for (i = 0; i < l; i++) {
+      selElmnt = x[i].getElementsByTagName("select")[0];
+      ll = selElmnt.length;
+      /* For each element, create a new DIV that will act as the selected item: */
+      a = document.createElement("DIV");
+      a.setAttribute("class", "select-selected");
+      a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+      x[i].appendChild(a);
+      /* For each element, create a new DIV that will contain the option list: */
+      b = document.createElement("DIV");
+      b.setAttribute("class", "select-items select-hide");
+      b.setAttribute("id", "studyinnerlist")
+      for (j = 1; j < ll; j++) {
+        /* For each option in the original select element,
+        create a new DIV that will act as an option item: */
+        c = document.createElement("DIV");
+        c.innerHTML = selElmnt.options[j].innerHTML;
+        c.addEventListener("click", function(e) {
+            /* When an item is clicked, update the original select box,
+            and the selected item: */
+            var y, i, k, s, h, sl, yl;
+            s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+            sl = s.length;
+            h = this.parentNode.previousSibling;
+            for (i = 0; i < sl; i++) {
+              if (s.options[i].innerHTML == this.innerHTML) {
+                s.selectedIndex = i;
+                h.innerHTML = this.innerHTML;
+                y = this.parentNode.getElementsByClassName("same-as-selected");
+                yl = y.length;
+                for (k = 0; k < yl; k++) {
+                  y[k].removeAttribute("class");
+                }
+                this.setAttribute("class", "same-as-selected");
+                break;
+              }
+            }
+            h.click();
+        });
+        b.appendChild(c);
+      }
+      x[i].appendChild(b);
+      a.addEventListener("click", function(e) {
+        /* When the select box is clicked, close any other select boxes,
+        and open/close the current select box: */
+        e.stopPropagation();
+        closeAllSelect(this);
+        this.nextSibling.classList.toggle("select-hide");
+        this.classList.toggle("select-arrow-active");
+      });
+    }
+
+    /* If the user clicks anywhere outside the select box,
+    then close all select boxes: */
+    document.addEventListener("click", closeAllSelect);
+    initialize_data()
+}
+
+function get_from_url(url){
+    var Httpreq = new XMLHttpRequest();
+    Httpreq.open("GET",url,false);
+    Httpreq.send(null);
+    return Httpreq.responseText;          
+}
+
+function pulldata(){
+    cache = document.getElementById("cached-json-response")
+    if (cache.getAttribute("hascache") == "true") {
+        var response = cache.innerHTML
+    } else {
+        URL="http://18.223.97.69/phenotype-summary"
+        response = get_from_url(URL)
+        cache.innerHTML = response
+        cache.setAttribute("hascache", "true")
+    }
+    var stats = JSON.parse(response)
+    return stats
+}
+
+function setup_table_header() {
+    var table = document.getElementById("testtable")
+    table.innerHTML = ''
+
+    header = ["Marker", "% cells positive", "standard deviation of % values"]
+    header_row = document.createElement("tr")
+    for (var i = 0, len = header.length; i < len; ++i) {
+        cell = document.createElement("th")
+        cell.innerHTML = header[i]
+        header_row.appendChild(cell)
+    }
+    table.appendChild(header_row)
+}
+
+function create_study_list(stats) {
+    obj = stats["fractions by marker and study"];
+    let studies = Array.from(new Set(obj.map(function (row) { return row[0]; })))
+
+    study_selector = document.getElementById("study-selector")
+    select = study_selector.querySelectorAll(":scope > select")[0]
+    deletable = select.querySelectorAll("option.studyoption")
+    for (var j = 0; j < deletable.length; ++j) {
+        deletable[j].remove()
+    }
+    study_list = document.getElementById("studyinnerlist")
+    study_list.innerHTML = ''
+    for (var i = 0; i < studies.length; ++i) {
+        study = studies[i]
+        option = document.createElement("option")
+        option.setAttribute("class", "studyoption")
+        option.setAttribute("value", i+1)
+        option.innerHTML = study
+        select.appendChild(option)
+
+        item = document.createElement("div")
+        item.innerHTML = study
+        item.addEventListener("click", function(e) {
+            /* When an item is clicked, update the original select box,
+            and the selected item: */
+            var y, i, k, s, h, sl, yl;
+            s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+            sl = s.length;
+            h = this.parentNode.previousSibling;
+            for (i = 0; i < sl; i++) {
+              if (s.options[i].innerHTML == this.innerHTML) {
+                s.selectedIndex = i;
+                h.innerHTML = this.innerHTML;
+                y = this.parentNode.getElementsByClassName("same-as-selected");
+                yl = y.length;
+                for (k = 0; k < yl; k++) {
+                  y[k].removeAttribute("class");
+                }
+                this.setAttribute("class", "same-as-selected");
+                break;
+              }
+            }
+            add_data_from_study(this.innerHTML)
+            h.click();
+        });
+        study_list.appendChild(item)
+    }
+}
+
+function initialize_data() {
+    var stats = pulldata()
+    create_study_list(stats)
+    setup_table_header()
+}
+
+function add_data_from_study(study) {
+    var stats = pulldata()
+    var table = document.getElementById("testtable")
+    var obj = stats["fractions by marker and study"];
+    for (var i = 0, len = obj.length; i < len; ++i) {
+        data_row = obj[i]
+        if (study == data_row[0]) {
+            table_row = document.createElement("tr")
+            for (var j = 1; j < 4; ++j) {
+                cell = document.createElement("td")
+                cell.innerHTML = data_row[j]
+                table_row.appendChild(cell)
+            }
+            table.appendChild(table_row)
+        }
+    }
+}
+</script>
+</head>
+<body onload="setup()">
+<div class="pagecontainer">
+<h3>Fraction of cells positive for given markers</h3>
+<div id="study-selector" class="custom-select">
+  <select>
+    <option value="0">Select study: </option>
+  </select>
+</div>
+<br/>
+<table class="statstable" id="testtable">
+    <tr>
+        <th>Study</th>
+        <th>Marker</th>
+        <th>% cells positive</th>
+        <th>standard deviation of % values</th>
+    </tr>
+</table>
+</div>
+<div id="cached-json-response" style="display:none" hascache="false">cached JSON response</div>
+</body>
+</html>

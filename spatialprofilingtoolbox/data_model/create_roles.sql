@@ -9,3 +9,6 @@ CREATE ROLE nadeemlab WITH LOGIN;
 
 GRANT CONNECT ON DATABASE pathstudies TO apireader;
 GRANT USAGE ON SCHEMA public TO apireader;
+
+GRANT CONNECT ON DATABASE pathstudies TO nadeemlab;
+GRANT USAGE ON SCHEMA public TO nadeemlab;

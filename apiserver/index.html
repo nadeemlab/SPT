@@ -191,7 +191,7 @@ function pulldata(){
     if (cache.getAttribute("hascache") == "true") {
         var response = cache.innerHTML
     } else {
-        URL="http://data.nadeemlabapi.link/phenotype-summary"
+        URL="https://data.nadeemlabapi.link/phenotype-summary"
         response = get_from_url(URL)
         cache.innerHTML = response
         cache.setAttribute("hascache", "true")

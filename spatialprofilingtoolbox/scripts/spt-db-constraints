@@ -7,6 +7,9 @@ from os.path import expanduser
 import enum
 from enum import Enum
 from enum import auto
+import importlib.resources
+import re
+import pandas as pd
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
@@ -15,8 +18,8 @@ logger = colorized_logger('spt-db-constraints')
 
 
 class DBConstraintsToggling(Enum):
-    ENABLE = auto()
-    DISABLE = auto()
+    RECREATE = auto()
+    DROP = auto()
 
 
 def big_tables():
@@ -28,11 +31,14 @@ def big_tables():
     ]
 
 
-def print_constraint_status(cursor):
+def normalize(name):
+    return re.sub('[ \-]', '_', name).lower()
+
+
+def get_constraint_status(cursor):
     query = '''
-    SELECT
-        pg_trigger.tgenabled as enabled,
-        pg_trigger.tgdeferrable as deferrable,
+    SELECT DISTINCT
+        pg_constraint.contype as connection_type,
         pg_constraint.conname as constraint_name,
         pg_class.relname as relation_name
     FROM pg_trigger
@@ -40,46 +46,81 @@ def print_constraint_status(cursor):
     JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace 
     JOIN pg_constraint ON pg_constraint.oid = pg_trigger.tgconstraint
     WHERE relname IN %s
-    ORDER BY relname;
+    ORDER BY relname, constraint_name;
     ''' % str(tuple(big_tables()))
     cursor.execute(query)
 
     column_names = [desc[0] for desc in cursor.description]
     rows = cursor.fetchall()
 
-    print_formatted = lambda row: print ("{:<8} {:<11} {:<65} {:<40}".format(*row))
-    logger.info('Showing trigger info:')
-    logger.debug('(for "enabled" code refer to "tgenabled" in https://www.postgresql.org/docs/current/catalog-pg-trigger.html)')
+    info_rows = [[entry for entry in row] for row in rows]
+    return [column_names, info_rows]
+
+
+def get_constraint_design():
+    with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
+        fields = pd.read_csv(path, sep='\t', na_filter=False)
+    foreign_key_constraints = [
+        [normalize(str(s)) for s in [row['Table'], row['Name'], row['Foreign table'], row['Foreign key'], row['Ordinality']]]
+        for i, row in fields.iterrows()
+        if row['Foreign table'] != '' and row['Foreign key'] != '' and (normalize(row['Table']) in big_tables())
+    ]
+    return foreign_key_constraints
+
+
+def print_constraint_status(column_names, info_rows):
+    print_formatted = lambda row: print ("{:<16} {:<65} {:<40}".format(*row))
+    logger.info('Printing constraint info.')
     print_formatted(column_names)
-    for row in rows:
-        bool_formatted_row = [entry for entry in row]
-        value = bool_formatted_row[1]
-        bool_formatted_row[1] = 'true' if value in ['1', 1] else 'false' 
-        print_formatted(bool_formatted_row)
+    for row in info_rows:
+        print_formatted(row)
 
 
 def toggle_constraints(
     database_config_file_elevated,
-    state: DBConstraintsToggling=DBConstraintsToggling.ENABLE,
+    state: DBConstraintsToggling=DBConstraintsToggling.RECREATE,
 ):
     dcm = DatabaseConnectionMaker(database_config_file_elevated)
     connection = dcm.get_connection()
     cursor = connection.cursor()
-    state_keywords = {
-        DBConstraintsToggling.ENABLE : 'ENABLE',
-        DBConstraintsToggling.DISABLE : 'DISABLE',
-    }
-    state_keyword = state_keywords[state]
+
     try:
-        for tablename in big_tables():
-            statement = 'ALTER TABLE %s %s TRIGGER ALL' % (tablename, state_keyword)
-            logger.debug('Executing: %s' % statement)
-            cursor.execute(statement)
+        if state == DBConstraintsToggling.RECREATE:
+            pattern = '''
+            ALTER TABLE %s 
+            ADD CONSTRAINT %s 
+            FOREIGN KEY (%s) 
+            REFERENCES %s (%s);'''
+            foreign_key_constraints = get_constraint_design()
+            for tablename, field_name, foreign_tablename, foreign_field_name, ordinality in foreign_key_constraints:
+                statement = pattern % (
+                    tablename,
+                    '%s%s' %(tablename, ordinality),
+                    field_name,
+                    foreign_tablename,
+                    foreign_field_name,
+                )
+                logger.debug('Executing: %s' % statement)
+                cursor.execute(statement)
+            column_names, info_rows = get_constraint_status(cursor)
+            print_constraint_status(column_names, info_rows)
+
+        if state == DBConstraintsToggling.DROP:
+            pattern = '''
+            ALTER TABLE %s
+            DROP CONSTRAINT IF EXISTS %s;'''
+            column_names, info_rows = get_constraint_status(cursor)
+            print_constraint_status(column_names, info_rows)
+            for connection_type, constraint_name, tablename in info_rows:
+                statement = pattern % (tablename, constraint_name)
+                logger.debug('Executing: %s' % statement)
+                cursor.execute(statement)
+
     except Exception as e:
         cursor.close()
         connection.close()
         raise e
-    print_constraint_status(cursor)
+
     cursor.close()
     connection.commit()
     connection.close()
@@ -87,12 +128,12 @@ def toggle_constraints(
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
-        description = '''Enable/disable triggers on certain tables (the largest ones).
+        description = '''Drop/recreate constraints on certain tables (the largest ones).
         Can be used to wrap bulk import operations.
-        The status of the triggers is written to stdout. The meaning of the "enabled"
-        entry is documented here under "tgenabled":
+        The status of constraints is written to stdout just before dropping or just after
+        creation. The meaning of the "connection_type" entry is documented here under "contype":
 
-            https://www.postgresql.org/docs/current/catalog-pg-trigger.html
+            https://www.postgresql.org/docs/current/catalog-pg-constraint.html
         '''
     )
     parser.add_argument(
@@ -104,12 +145,12 @@ if __name__=='__main__':
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        '--enable',
+        '--drop',
         action='store_true',
         default=False,
     )
     group.add_argument(
-        '--disable',
+        '--recreate',
         action='store_true',
         default=False,
     )
@@ -119,9 +160,9 @@ if __name__=='__main__':
     if not exists(database_config_file_elevated):
         raise FileNotFoundError('Need to supply valid database config filename, not: %s', database_config_file_elevated)
 
-    if args.enable:
-        state = DBConstraintsToggling.ENABLE
-    if args.disable:
-        state = DBConstraintsToggling.DISABLE
+    if args.recreate:
+        state = DBConstraintsToggling.RECREATE
+    if args.drop:
+        state = DBConstraintsToggling.DROP
 
     toggle_constraints(database_config_file_elevated, state=state)

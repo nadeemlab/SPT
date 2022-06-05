@@ -39,6 +39,12 @@ class DBAccessor:
     def __exit__(self, exception_type, exception_value, traceback):
         if not self.connection is None:
             self.connection.close()
+@app.get("/")
+def read_root():
+    return Response(
+        content = json.dumps({ 'server description' : 'Pathology database views API'}),
+        media_type = 'application/json',
+    )
 
 
 @app.get("/specimen-collection-study-names")

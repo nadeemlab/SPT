@@ -210,6 +210,15 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
+push-view-site: view_site/index.html view_site/username
+	@printf $(call color_in_progress,'Sending site artifacts to server')
+	@date +%s > current_time.txt
+	username=$(cat view_site/username); \
+	scp view_site/index.html $$username@nadeemlabapi.link:/home/$$username/www/
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Sent.',$$transpired"s")
+
 Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
 	@printf $(call color_in_progress,'Generating Dockerfile')
 	@date +%s > current_time.txt

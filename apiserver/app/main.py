@@ -94,7 +94,7 @@ def read_phenotype_summary_of(specimen_measurement_study):
         )
         rows = cursor.fetchall()
         representation = {
-            'fractions by marker' : [str(row) for row in rows]
+            'fractions by marker' : [[str(entry) for entry in row] for row in rows]
         }
         return Response(
             content = json.dumps(representation),

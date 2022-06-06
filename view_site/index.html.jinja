@@ -216,7 +216,7 @@ function setup_table_header() {
     header_row = document.createElement("tr")
     for (var i = 0, len = header.length; i < len; ++i) {
         cell = document.createElement("th")
-        cell.innerHTML = header[i] + '&npsp;'
+        cell.innerHTML = header[i] + '&nbsp;'
         sort_button = document.createElement("span");
         sort_button.innerHTML = "+"
         sort_button.setAttribute("onclick", "sort_data_rows(" + i + "," + "1)")

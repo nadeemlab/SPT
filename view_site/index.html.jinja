@@ -284,7 +284,7 @@ function add_data_from_study(study) {
     for (var i = 0, len = obj.length; i < len; ++i) {
         data_row = obj[i]
         table_row = document.createElement("tr")
-        for (var j = 0; j < 3; ++j) {
+        for (var j = 0; j < 5; ++j) {
             cell = document.createElement("td")
             cell.innerHTML = data_row[j]
             table_row.appendChild(cell)
@@ -306,6 +306,8 @@ function add_data_from_study(study) {
 <table class="statstable" id="testtable">
     <tr>
         <th>Marker</th>
+        <th>Assay</th>
+        <th>Result</th>
         <th>Mean % cells positive</th>
         <th>Standard deviation of % values</th>
     </tr>

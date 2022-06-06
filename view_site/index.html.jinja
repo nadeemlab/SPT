@@ -94,6 +94,8 @@ table.statstable tr:hover td {
 }
 span.sortbutton {
     color: blue;
+    font-size: x-small;
+    cursor: pointer;
 }
 span.sortbutton:hover {
     text-decoration:  underline;
@@ -214,12 +216,17 @@ function setup_table_header() {
     header_row = document.createElement("tr")
     for (var i = 0, len = header.length; i < len; ++i) {
         cell = document.createElement("th")
-        cell.innerHTML = header[i]
+        cell.innerHTML = header[i] + '&npsp;'
         sort_button = document.createElement("span");
-        sort_button.innerHTML = "[+]"
+        sort_button.innerHTML = "+"
         sort_button.setAttribute("onclick", "sort_data_rows(" + i + "," + "1)")
         sort_button.setAttribute("class", "sortbutton")
+        sort_button2 = document.createElement("span");
+        sort_button2.innerHTML = "+"
+        sort_button2.setAttribute("onclick", "sort_data_rows(" + i + "," + "-1)")
+        sort_button2.setAttribute("class", "sortbutton")
         cell.appendChild(sort_button)
+        cell.appendChild(sort_button2)
         header_row.appendChild(cell)
     }
     table.appendChild(header_row)

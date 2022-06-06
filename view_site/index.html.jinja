@@ -309,7 +309,7 @@ function add_data_from_study(study) {
 }
 
 function get_ordered_data_rows(column_index, sign) {
-    table = getElementById("statstable")
+    table = document.getElementById("statstable")
     all_rows = Array.from(table.children)
     var values_indices = [];
     for (var i = 1; i < all_rows.length; ++i) {
@@ -343,7 +343,7 @@ function get_ordered_data_rows(column_index, sign) {
 }
 
 function sort_data_rows(column_index, sign) {
-    table = getElementById("statstable")
+    table = document.getElementById("statstable")
     tr_elements = get_ordered_data_rows(column_index, sign)
     for (var i = 0; i < tr_elements.length; ++i) {
         table.appendChild(tr_elements[i])

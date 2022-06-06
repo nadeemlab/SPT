@@ -89,7 +89,7 @@ def read_phenotype_summary_of(specimen_measurement_study):
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT symbol, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study WHERE study="%s";',
+            'SELECT symbol, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study WHERE study=%s;',
             (study_name,),
         )
         rows = cursor.fetchall()

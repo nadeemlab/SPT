@@ -54,6 +54,7 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	docker-test-push \
 	source-code-release-push \
 	source-code-main-push \
+	push-view-site \
 	clean \
 	clean-tests \
 )
@@ -210,7 +211,7 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
-push-view-site: view_site/index.html view_site/index_no_domain.html view_site/username view_site/render.py
+push-view-site: view_site/username view_site/render.py
 	@printf $(call color_in_progress,'Sending site artifacts to server')
 	@date +%s > current_time.txt
 	@username=$$(cat view_site/username); \
@@ -389,6 +390,8 @@ clean: clean-tests
 	@rm -f schemas/input_data_requirements.aux
 	@rm -f schemas/input_data_requirements.log
 	@rm -f schemas/input_data_requirements.out
+	@rm -rf view_site/index.html
+	@rm -rf view_site/index_no_domain.html
 
 clean-tests:
 	@rm -f tests/.nextflow.log*

@@ -218,11 +218,11 @@ function setup_table_header() {
         cell = document.createElement("th")
         cell.innerHTML = header[i] + '&nbsp;'
         sort_button = document.createElement("span");
-        sort_button.innerHTML = "+"
+        sort_button.innerHTML = " [+] "
         sort_button.setAttribute("onclick", "sort_data_rows(" + i + "," + "1)")
         sort_button.setAttribute("class", "sortbutton")
         sort_button2 = document.createElement("span");
-        sort_button2.innerHTML = "+"
+        sort_button2.innerHTML = " [-] "
         sort_button2.setAttribute("onclick", "sort_data_rows(" + i + "," + "-1)")
         sort_button2.setAttribute("class", "sortbutton")
         cell.appendChild(sort_button)

@@ -213,7 +213,7 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
 push-view-site: view_site/index.html view_site/index_no_domain.html view_site/username view_site/render.py
 	@printf $(call color_in_progress,'Sending site artifacts to server')
 	@date +%s > current_time.txt
-	username=$$(cat view_site/username); \
+	@username=$$(cat view_site/username); \
     cd view_site; \
     ./render.py; \
     scp index.html $$username@nadeemlabapi.link:/home/$$username/www/; \

@@ -39,6 +39,8 @@ class DBAccessor:
     def __exit__(self, exception_type, exception_value, traceback):
         if not self.connection is None:
             self.connection.close()
+
+
 @app.get("/")
 def read_root():
     return Response(
@@ -47,15 +49,15 @@ def read_root():
     )
 
 
-@app.get("/specimen-collection-study-names")
-def read_specimen_collection_studies():
+@app.get("/specimen-measurement-study-names")
+def read_specimen_measurement_study_names():
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
-        cursor.execute('SELECT * FROM specimen_collection_study;')
+        cursor.execute('SELECT * FROM specimen_measurement_study;')
         rows = cursor.fetchall()
         representation = {
-            'specimen collection study names' : [str(row[0]) for row in rows]
+            'specimen measurement study names' : [str(row[0]) for row in rows]
         }
         return Response(
             content = json.dumps(representation),
@@ -80,22 +82,19 @@ def read_phenotype_summary():
         )
 
 
-@app.get("/phenotype-summary/{specimen_collection_study}")
-def read_specific_study(specimen_collection_study):
-    study_name = urllib.parse.unquote(specimen_collection_study)
+@app.get("/phenotype-summary/{specimen_measurement_study}")
+def read_phenotype_summary_of(specimen_measurement_study):
+    study_name = urllib.parse.unquote(specimen_measurement_study)
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
-
-        cursor.execute('SELECT * FROM fraction_stats_by_marker_study;')
-        rows = cursor.fetchall()
-        if not study_name in [row[0] for row in rows]:
-            return {'error' : '%s not a valid study name' % study_name}
-
-        cursor.execute('SELECT * FROM specimen_collection_process where study=%s;', (study_name,))
+        cursor.execute(
+            'SELECT symbol, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study WHERE study="%s";',
+            (study_name,),
+        )
         rows = cursor.fetchall()
         representation = {
-            'specimen collection process' : [str(row) for row in rows]
+            'fractions by marker' : [str(row) for row in rows]
         }
         return Response(
             content = json.dumps(representation),

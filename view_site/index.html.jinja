@@ -191,13 +191,13 @@ function pulldata(){
     if (cache.getAttribute("hascache") == "true") {
         var response = cache.innerHTML
     } else {
-        URL="{{ protocol }}://{{ api_url }}/phenotype-summary"
+        URL="{{ protocol }}://{{ api_url }}/specimen-measurement-study-names"
         response = get_from_url(URL)
         cache.innerHTML = response
         cache.setAttribute("hascache", "true")
     }
-    var stats = JSON.parse(response)
-    return stats
+    var names = JSON.parse(response)
+    return names
 }
 
 function setup_table_header() {
@@ -214,9 +214,9 @@ function setup_table_header() {
     table.appendChild(header_row)
 }
 
-function create_study_list(stats) {
-    obj = stats["fractions by marker and study"];
-    let studies = Array.from(new Set(obj.map(function (row) { return row[0]; })))
+function create_study_list(names) {
+    obj = names["specimen measurement study names"];
+    let studies = Array.from(new Set(obj.map(function (row) { return row; })))
 
     study_selector = document.getElementById("study-selector")
     select = study_selector.querySelectorAll(":scope > select")[0]
@@ -264,26 +264,32 @@ function create_study_list(stats) {
 }
 
 function initialize_data() {
-    var stats = pulldata()
-    create_study_list(stats)
+    var names = pulldata()
+    create_study_list(names)
     setup_table_header()
 }
 
+function pull_data_from_study(study) {
+    var encoded_study = encodeURIComponent(study)
+    URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/${encoded_study}`
+    response = get_from_url(URL)
+    var stats = JSON.parse(response)
+    return stats
+}
+
 function add_data_from_study(study) {
-    var stats = pulldata()
+    var stats = pull_data_from_study(study)
     var table = document.getElementById("testtable")
     var obj = stats["fractions by marker and study"];
     for (var i = 0, len = obj.length; i < len; ++i) {
         data_row = obj[i]
-        if (study == data_row[0]) {
-            table_row = document.createElement("tr")
-            for (var j = 1; j < 4; ++j) {
-                cell = document.createElement("td")
-                cell.innerHTML = data_row[j]
-                table_row.appendChild(cell)
-            }
-            table.appendChild(table_row)
+        table_row = document.createElement("tr")
+        for (var j = 0; j < 3; ++j) {
+            cell = document.createElement("td")
+            cell.innerHTML = data_row[j]
+            table_row.appendChild(cell)
         }
+        table.appendChild(table_row)
     }
 }
 </script>

@@ -346,6 +346,7 @@ function sort_data_rows(column_index, sign) {
     table = document.getElementById("testtable")
     tr_elements = get_ordered_data_rows(column_index, sign)
     for (var i = 0; i < tr_elements.length; ++i) {
+        console.log(tr_elements[i])
         table.appendChild(tr_elements[i])
     }
     for (var i = 0; i < tr_elements.length; ++i) {

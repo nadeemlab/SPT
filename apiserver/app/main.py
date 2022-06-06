@@ -54,27 +54,10 @@ def read_specimen_measurement_study_names():
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
-        cursor.execute('SELECT * FROM specimen_measurement_study;')
+        cursor.execute('SELECT name FROM specimen_measurement_study;')
         rows = cursor.fetchall()
         representation = {
             'specimen measurement study names' : [str(row[0]) for row in rows]
-        }
-        return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
-        )
-
-
-@app.get("/phenotype-summary")
-def read_phenotype_summary():
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
-
-        cursor.execute('SELECT * FROM fraction_stats_by_marker_study;')
-        rows = cursor.fetchall()
-        representation = {
-            'fractions by marker and study' : [[str(entry) for entry in row] for row in rows]
         }
         return Response(
             content = json.dumps(representation),
@@ -101,7 +84,3 @@ def read_phenotype_summary_of(specimen_measurement_study):
             media_type = 'application/json',
         )
 
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Optional[str] = None):
-    return {"item_id": item_id, "q": q}

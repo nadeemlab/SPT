@@ -315,7 +315,7 @@ function get_ordered_data_rows(column_index, sign) {
     for (var i = 1; i < all_rows.length; ++i) {
         row = all_rows[i]
         td = Array.from(row.children)[column_index]
-        values_indices.push([i, td.innerHTML]);
+        values_indices.push([i-1, td.innerHTML]);
     }
 
     compare = function(a, b) {
@@ -346,7 +346,6 @@ function sort_data_rows(column_index, sign) {
     table = document.getElementById("testtable")
     tr_elements = get_ordered_data_rows(column_index, sign)
     for (var i = 0; i < tr_elements.length; ++i) {
-        console.log(tr_elements[i])
         table.appendChild(tr_elements[i])
     }
     for (var i = 0; i < tr_elements.length; ++i) {

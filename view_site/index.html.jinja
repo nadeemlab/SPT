@@ -186,7 +186,7 @@ function get_from_url(url){
     return Httpreq.responseText;          
 }
 
-function pulldata(){
+function pull_study_names(){
     cache = document.getElementById("cached-json-response")
     if (cache.getAttribute("hascache") == "true") {
         var response = cache.innerHTML
@@ -264,7 +264,7 @@ function create_study_list(names) {
 }
 
 function initialize_data() {
-    var names = pulldata()
+    var names = pull_study_names()
     create_study_list(names)
     setup_table_header()
 }
@@ -286,7 +286,11 @@ function add_data_from_study(study) {
         table_row = document.createElement("tr")
         for (var j = 0; j < 5; ++j) {
             cell = document.createElement("td")
-            cell.innerHTML = data_row[j]
+            entry = data_row[j]
+            if (j==1 || j==2) {
+                entry.replace(/<any>/, '(any)')
+            }
+            cell.innerHTML = entry
             table_row.appendChild(cell)
         }
         table.appendChild(table_row)

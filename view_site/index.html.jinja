@@ -314,7 +314,7 @@ function get_ordered_data_rows(column_index, sign) {
     var values_indices = [];
     for (var i = 1; i < all_rows.length; ++i) {
         row = all_rows[i]
-        td = Array.from(row.children)[j]
+        td = Array.from(row.children)[column_index]
         values_indices.push([i, td.innerHTML]);
     }
 

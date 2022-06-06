@@ -76,8 +76,17 @@ def read_phenotype_summary_of(specimen_measurement_study):
             (study_name,),
         )
         rows = cursor.fetchall()
+        formatted_rows_any_assessment = [[str(row[0]), '<any>', '<any>', str(row[1]), str(row[2])] for row in rows]
+
+        cursor.execute(
+            'SELECT symbol, assay, assessment, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study_assessment WHERE study=%s;',
+            (study_name,),
+        )
+        rows = cursor.fetchall()
+        formatted_rows_specific_assessment = [[str(entry) for entry in row] for row in rows]
+
         representation = {
-            'fractions by marker' : [[str(entry) for entry in row] for row in rows]
+            'fractions by marker' : formatted_rows_any_assessment + formatted_rows_specific_assessment
         }
         return Response(
             content = json.dumps(representation),

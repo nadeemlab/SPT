@@ -288,7 +288,7 @@ function add_data_from_study(study) {
             cell = document.createElement("td")
             entry = data_row[j]
             if (j==1 || j==2) {
-                entry = entry.replace(/<any>/, '(any)')
+                entry = entry.replace(/<any>/, '<em>any</em>')
             }
             cell.innerHTML = entry
             table_row.appendChild(cell)

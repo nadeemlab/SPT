@@ -72,14 +72,14 @@ def read_phenotype_summary_of(specimen_measurement_study):
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT symbol, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study WHERE study=%s;',
+            'SELECT symbol, multiplicity, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study WHERE study=%s;',
             (study_name,),
         )
         rows = cursor.fetchall()
-        formatted_rows_any_assessment = [[str(row[0]), '<any>', '<any>', str(row[1]), str(row[2])] for row in rows]
+        formatted_rows_any_assessment = [[str(row[0]), str(row[1]), '<any>', '<any>', str(row[2]), str(row[3])] for row in rows]
 
         cursor.execute(
-            'SELECT symbol, assay, assessment, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study_assessment WHERE study=%s;',
+            'SELECT symbol, multiplicity, assay, assessment, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study_assessment WHERE study=%s;',
             (study_name,),
         )
         rows = cursor.fetchall()

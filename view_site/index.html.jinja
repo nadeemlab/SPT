@@ -280,10 +280,18 @@ function create_study_list(names) {
               }
             }
             add_data_from_study(this.getAttribute("studyname"))
+            update_row_counter()
             h.click();
         });
         study_list.appendChild(item)
     }
+}
+
+function update_row_counter() {
+    number_rows = document.getElementById("testtable").children.length - 1
+    rowcountbox = document.getElementById("rowcountbox")
+    rowcountbox.style.display = "inline-block";
+    document.getElementById("rowcounter").innerHTML = number_rows
 }
 
 function initialize_data() {
@@ -319,9 +327,6 @@ function add_data_from_study(study) {
         }
         table.appendChild(table_row)
     }
-    rowcountbox = document.getElementById("rowcountbox")
-    rowcountbox.style.display = "inline-block";
-    document.getElementById("rowcounter").innerHTML = obj.length
 }
 
 function get_ordered_data_rows(column_index, sign) {
@@ -367,6 +372,7 @@ function sort_data_rows(column_index, sign) {
     for (var i = 0; i < tr_elements.length; ++i) {
         table.removeChild[1]
     }
+    update_row_counter()
 }
 </script>
 </head>

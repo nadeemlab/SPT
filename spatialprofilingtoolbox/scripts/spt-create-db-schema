@@ -32,7 +32,13 @@ if __name__=='__main__':
         '--refresh-views-only',
         dest='refresh_views_only',
         action='store_true',
-        help='Only refresh materialized views, do not touch table schema.',
+        help='Only refresh materialized views, do not touch main table schema.',
+    )
+    parser.add_argument(
+        '--drop-views-only',
+        dest='drop_views_only',
+        action='store_true',
+        help='Only drop views, do not touch main table schema.',
     )
     args = parser.parse_args()
 
@@ -44,7 +50,13 @@ if __name__=='__main__':
     	raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
     with DataSkimmer(database_config_file=config_file) as skimmer:
-        if not args.refresh_views_only:
+        if not args.refresh_views_only and not args.drop_views_only:
         	skimmer.create_tables(skimmer.get_connection(), force=args.force)
         else:
-            skimmer.refresh_views(skimmer.get_connection())
+            if args.refresh_views_only and args.drop_views_only:
+                print('Warning: Supply only one of --refresh-views-only or --drop-views-only')
+                exit()
+            if args.refresh_views_only:
+                skimmer.refresh_views(skimmer.get_connection())
+            if args.drop_views_only:
+                skimmer.drop_views(skimmer.get_connection())

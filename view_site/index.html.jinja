@@ -297,8 +297,8 @@ function pull_data_from_study(study) {
 }
 
 function add_data_from_study(study) {
-    var stats = pull_data_from_study(study)
     setup_table_header()
+    var stats = pull_data_from_study(study)
     var table = document.getElementById("testtable")
     var obj = stats[Object.keys(stats)[0]];
     for (var i = 0, len = obj.length; i < len; ++i) {

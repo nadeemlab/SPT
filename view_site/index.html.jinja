@@ -88,6 +88,7 @@ table.statstable th {
 }
 table.statstable td {
     background: #fbfbfb;
+    z-index: -1;
 }
 table.statstable tr:hover td {
     background: #f0f0f0;
@@ -102,6 +103,18 @@ span.sortbutton:hover {
 }
 div.simpleemph {
     font-style: italic;
+}
+div.overlayeffectcontainer {
+    position: relative;
+}
+div.underlay {
+    position: absolute;
+    height: 100%;
+    background: rgba(144,238,144,0.35);
+    z-index: 9;
+}
+div.overlay {
+    background: lightgray;
 }
 </style>
 <script>
@@ -319,10 +332,25 @@ function add_data_from_study(study) {
         for (var j = 0; j < 5; ++j) {
             cell = document.createElement("td")
             entry = data_row[j]
-            if (j==1 || j==2) {
-                entry = entry.replace(/<any>/, '<em>any</em>')
+            if (j==3) {
+                integer_percent = Math.round(parseFloat(entry))
+                container = document.createElement("div")
+                container.setAttribute("class", "overlayeffectcontainer")
+                underlay = document.createElement("div")
+                underlay.setAttribute("class", "underlay")
+                overlay = document.createElement("div")
+                overlay.setAttribute("class", "overlay")
+                overlay.innerHTML = entry
+                underlay.style.width = integer_percent + "%"
+                container.appendChild(underlay)
+                container.appendChild(overlay)
+                cell.appendChild(container)
+            } else {
+                if (j==1 || j==2) {
+                    entry = entry.replace(/<any>/, '<em>any</em>')
+                }
+                cell.innerHTML = entry
             }
-            cell.innerHTML = entry
             table_row.appendChild(cell)
         }
         table.appendChild(table_row)
@@ -336,7 +364,7 @@ function get_ordered_data_rows(column_index, sign) {
     for (var i = 1; i < all_rows.length; ++i) {
         row = all_rows[i]
         td = Array.from(row.children)[column_index]
-        values_indices.push([i-1, td.innerHTML]);
+        values_indices.push([i-1, td.innerText]);
     }
 
     compare = function(a, b) {

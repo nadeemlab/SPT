@@ -100,6 +100,9 @@ span.sortbutton {
 span.sortbutton:hover {
     text-decoration:  underline;
 }
+div.simpleemph {
+    font-style: italic;
+}
 </style>
 <script>
 function closeAllSelect(elmnt) {
@@ -316,6 +319,9 @@ function add_data_from_study(study) {
         }
         table.appendChild(table_row)
     }
+    rowcountbox = document.getElementById("rowcountbox")
+    rowcountbox.style.display = "inline-block";
+    document.getElementById("rowcounter").innerHTML = obj.length
 }
 
 function get_ordered_data_rows(column_index, sign) {
@@ -372,6 +378,8 @@ function sort_data_rows(column_index, sign) {
     <option value="0">Select study: </option>
   </select>
 </div>
+<br/>
+<div class="simpleemph" id="rowcountbox" style="display:none"><span id="rowcounter"></span> rows.</div>
 <br/>
 <table class="statstable" id="testtable">
     <tr>

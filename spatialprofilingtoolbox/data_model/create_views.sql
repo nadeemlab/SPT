@@ -142,19 +142,22 @@ CREATE VIEW fraction_stats_by_marker_study AS
 SELECT
     f.study as study,
     f.marker_symbol as symbol,
+    f.multiplicity as multiplicity,
     CAST(AVG(f.percent_positive) AS NUMERIC(7, 4)) as average_percent,
     CAST(STDDEV(f.percent_positive) AS NUMERIC(7, 4)) as standard_deviation_of_percents
 FROM
     fraction_by_marker_study_specimen f
 GROUP BY
     f.study,
-    f.marker_symbol
+    f.marker_symbol,
+    f.multiplicity
 ;
 
 CREATE VIEW fraction_stats_by_marker_study_assessment AS
 SELECT
     f.study as study,
     f.marker_symbol as symbol,
+    f.multiplicity as multiplicity,
     hap.assay as assay,
     hap.result as assessment,
     CAST(AVG(f.percent_positive) AS NUMERIC(7, 4)) as average_percent,
@@ -166,6 +169,7 @@ FROM
 GROUP BY
     f.study,
     f.marker_symbol,
+    f.multiplicity,
     hap.assay,
     hap.result
 ;

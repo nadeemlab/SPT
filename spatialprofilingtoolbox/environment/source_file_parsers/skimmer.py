@@ -166,5 +166,6 @@ class DataSkimmer:
     def refresh_views(self, connection):
         self.execute_script('refresh_views.sql', self.connection, description='create views of main schema', silent=True)
 
-    def drop_views(self, connection):
+    def recreate_views(self, connection):
         self.execute_script('drop_views.sql', connection, description='drop views of main schema')
+        self.execute_script('create_views.sql', connection, description='create views of main schema')

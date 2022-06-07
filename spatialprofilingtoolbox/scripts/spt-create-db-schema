@@ -35,8 +35,8 @@ if __name__=='__main__':
         help='Only refresh materialized views, do not touch main table schema.',
     )
     parser.add_argument(
-        '--drop-views-only',
-        dest='drop_views_only',
+        '--recreate-views-only',
+        dest='recreate_views_only',
         action='store_true',
         help='Only drop views, do not touch main table schema.',
     )
@@ -53,10 +53,10 @@ if __name__=='__main__':
         if not args.refresh_views_only and not args.drop_views_only:
         	skimmer.create_tables(skimmer.get_connection(), force=args.force)
         else:
-            if args.refresh_views_only and args.drop_views_only:
-                print('Warning: Supply only one of --refresh-views-only or --drop-views-only')
+            if args.refresh_views_only and args.recreate_views_only:
+                print('Warning: Supply only one of --refresh-views-only or --recreate-views-only')
                 exit()
             if args.refresh_views_only:
                 skimmer.refresh_views(skimmer.get_connection())
-            if args.drop_views_only:
-                skimmer.drop_views(skimmer.get_connection())
+            if args.recreate_views_only:
+                skimmer.recreate_views(skimmer.get_connection())

@@ -1,3 +1,4 @@
+<!DOCTYPE HTML>
 <html>
 <head>
 <style>
@@ -70,6 +71,7 @@
 }
 body {
     font-family: sans-serif;
+    font-size: small;
 }
 div.pagecontainer {
     margin: auto;
@@ -80,7 +82,7 @@ div.pagecontainer table, div.custom-select{
     text-align: left;    
 }
 table.statstable td, th {
-    padding: 10px;
+    padding: 4px;
 }
 table.statstable th {
     font-weight:  bold;
@@ -205,25 +207,37 @@ function setup(){
     initialize_data()
 }
 
-function get_from_url(url){
-    var Httpreq = new XMLHttpRequest();
-    Httpreq.open("GET",url,false);
-    Httpreq.send(null);
-    return Httpreq.responseText;          
+function get_from_url(url, callback){
+    var httpreq = new XMLHttpRequest();
+    httpreq.open("GET",url,true);
+    httpreq.onload = function(e) {callback(this, e)}
+    httpreq.send(null);
 }
 
 function pull_study_names(){
     cache = document.getElementById("cached-json-response")
     if (cache.getAttribute("hascache") == "true") {
         var response = cache.innerHTML
+        var names = JSON.parse(response)
+        return names
     } else {
         URL="{{ protocol }}://{{ api_url }}/specimen-measurement-study-names"
-        response = get_from_url(URL)
-        cache.innerHTML = response
-        cache.setAttribute("hascache", "true")
+        get_from_url(URL, handle_names)
     }
-    var names = JSON.parse(response)
-    return names
+}
+
+function handle_names(request, e) {
+    cache = document.getElementById("cached-json-response")
+    cache.innerHTML = request.responseText
+    cache.setAttribute("hascache", "true")
+
+    names = JSON.parse(request.responseText)
+    create_study_list(names)
+    setup_table_header()
+}
+
+function initialize_data() {
+    pull_study_names()
 }
 
 function setup_table_header() {
@@ -294,8 +308,7 @@ function create_study_list(names) {
                 break;
               }
             }
-            add_data_from_study(this.getAttribute("studyname"))
-            update_row_counter()
+            pull_data_from_study(this.getAttribute("studyname"))
             h.click();
         });
         study_list.appendChild(item)
@@ -309,23 +322,16 @@ function update_row_counter() {
     document.getElementById("rowcounter").innerHTML = number_rows
 }
 
-function initialize_data() {
-    var names = pull_study_names()
-    create_study_list(names)
-    setup_table_header()
-}
-
 function pull_data_from_study(study) {
     var encoded_study = encodeURIComponent(study)
     URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/${encoded_study}`
-    response = get_from_url(URL)
-    var stats = JSON.parse(response)
-    return stats
+    response = get_from_url(URL, load_study)
 }
 
-function add_data_from_study(study) {
+function load_study(request, e) {
+    var stats = JSON.parse(request.responseText)
     setup_table_header()
-    var stats = pull_data_from_study(study)
+
     var table = document.getElementById("testtable")
     var obj = stats[Object.keys(stats)[0]];
     for (var i = 0, len = obj.length; i < len; ++i) {
@@ -357,6 +363,7 @@ function add_data_from_study(study) {
         }
         table.appendChild(table_row)
     }
+    update_row_counter()
 }
 
 function get_ordered_data_rows(column_index, sign) {

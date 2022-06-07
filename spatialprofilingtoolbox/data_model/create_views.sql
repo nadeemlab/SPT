@@ -138,38 +138,152 @@ FROM
         cc.specimen = pcc.specimen
 ;
 
-CREATE VIEW fraction_stats_by_marker_study AS
-SELECT
-    f.study as study,
-    f.marker_symbol as symbol,
-    f.multiplicity as multiplicity,
-    CAST(AVG(f.percent_positive) AS NUMERIC(7, 4)) as average_percent,
-    CAST(STDDEV(f.percent_positive) AS NUMERIC(7, 4)) as standard_deviation_of_percents
+CREATE VIEW fraction_generalized_cases AS
+SELECT *
 FROM
-    fraction_by_marker_study_specimen f
-GROUP BY
-    f.study,
-    f.marker_symbol,
-    f.multiplicity
+    (
+    SELECT
+        f.study as study,
+        f.marker_symbol as marker_symbol,
+        f.multiplicity as multiplicity,
+        '<any>' as assay,
+        '<any>' as assessment,
+        f.specimen as specimen,
+        f.percent_positive as percent_positive
+    FROM
+        fraction_by_marker_study_specimen f
+    ) no_specific_assessment
+    UNION
+    (
+    SELECT
+        g.study as study,
+        g.marker_symbol as marker_symbol,
+        g.multiplicity as multiplicity,
+        hap.assay as assay,
+        hap.result as assessment,
+        g.specimen as specimen,
+        g.percent_positive as percent_positive
+    FROM
+        fraction_by_marker_study_specimen g
+        JOIN histology_assessment_process hap ON
+            g.specimen = hap.slide
+    )
+ORDER BY
+    study,
+    multiplicity,
+    marker_symbol,
+    assay,
+    assessment,
+    specimen
 ;
 
-CREATE VIEW fraction_stats_by_marker_study_assessment AS
+-- Summary stats
+-- (mean, standard deviation)
+CREATE VIEW fraction_moments_generalized_cases AS
 SELECT
-    f.study as study,
-    f.marker_symbol as symbol,
-    f.multiplicity as multiplicity,
-    hap.assay as assay,
-    hap.result as assessment,
+    study, marker_symbol, multiplicity, assay, assessment,
     CAST(AVG(f.percent_positive) AS NUMERIC(7, 4)) as average_percent,
     CAST(STDDEV(f.percent_positive) AS NUMERIC(7, 4)) as standard_deviation_of_percents
 FROM
-    fraction_by_marker_study_specimen f
-    JOIN histology_assessment_process hap ON
-        f.specimen = hap.slide
+    fraction_generalized_cases f
 GROUP BY
-    f.study,
-    f.marker_symbol,
-    f.multiplicity,
-    hap.assay,
-    hap.result
+    study, marker_symbol, multiplicity, assay, assessment
+ORDER BY
+    study, multiplicity, marker_symbol, assay, assessment
 ;
+
+-- (extrema)
+CREATE VIEW fraction_extrema AS
+SELECT
+    study, marker_symbol, multiplicity, assay, assessment,
+    MAX(f.percent_positive) as maximum_percent,
+    MIN(f.percent_positive) as minimum_percent
+FROM fraction_generalized_cases f
+GROUP BY
+    study, marker_symbol, multiplicity, assay, assessment
+;
+
+CREATE VIEW fraction_arg_maxima AS
+SELECT
+    study, marker_symbol, multiplicity, assay, assessment,
+    MIN(possibly_with_multiples.specimen) as specimen,
+    MIN(possibly_with_multiples.maximum_percent) as maximum_percent
+FROM
+    (
+    SELECT
+        f.study as study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
+        f.specimen as specimen,
+        e.maximum_percent as maximum_percent
+    FROM
+        fraction_generalized_cases f
+        JOIN fraction_extrema e ON
+            f.percent_positive = e.maximum_percent
+        AND
+            f.marker_symbol = e.marker_symbol
+    ) as possibly_with_multiples
+GROUP BY
+    study, multiplicity, marker_symbol, assay, assessment
+ORDER BY
+    study, multiplicity, marker_symbol, assay, assessment
+;
+
+CREATE VIEW fraction_arg_minima AS
+SELECT
+    study, marker_symbol, multiplicity, assay, assessment,
+    MIN(possibly_with_multiples.specimen) as specimen,
+    MIN(possibly_with_multiples.minimum_percent) as minimum_percent
+FROM
+    (
+    SELECT
+        f.study as study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
+        f.specimen as specimen,
+        e.minimum_percent as minimum_percent
+    FROM
+        fraction_generalized_cases f
+        JOIN fraction_extrema e ON
+            f.percent_positive = e.minimum_percent
+        AND
+            f.marker_symbol = e.marker_symbol
+    ) as possibly_with_multiples
+GROUP BY
+    study, multiplicity, marker_symbol, assay, assessment
+ORDER BY
+    study, multiplicity, marker_symbol, assay, assessment
+;
+
+-- (stats)
+CREATE MATERIALIZED VIEW fraction_stats AS
+SELECT
+    f1.study, f1.marker_symbol, f1.multiplicity, f1.assay, f1.assessment,
+    f3.average_percent,
+    f3.standard_deviation_of_percents,
+    f1.specimen as maximum,
+    CAST(f1.maximum_percent AS NUMERIC(7, 4)) as maximum_value,
+    f2.specimen as minimum,
+    CAST(f2.minimum_percent AS NUMERIC(7, 4)) as minimum_value
+FROM
+    fraction_arg_maxima f1
+    JOIN fraction_arg_minima f2 ON
+        f1.study = f2.study
+    AND
+        f1.multiplicity = f2.multiplicity
+    AND
+        f1.marker_symbol = f2.marker_symbol
+    AND
+        f1.assay = f2.assay
+    AND
+        f1.assessment = f2.assessment
+    JOIN fraction_moments_generalized_cases f3 ON
+        f1.study = f3.study
+    AND
+        f1.multiplicity = f3.multiplicity
+    AND
+        f1.marker_symbol = f3.marker_symbol
+    AND
+        f1.assay = f3.assay
+    AND
+        f1.assessment = f3.assessment
+ORDER BY
+    study, multiplicity DESC, marker_symbol, assay, assessment
+;
+

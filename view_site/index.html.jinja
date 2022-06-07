@@ -249,7 +249,8 @@ function create_study_list(names) {
         option = document.createElement("option")
         option.setAttribute("class", "studyoption")
         option.setAttribute("value", i+1)
-        option.innerHTML = study
+        option.setAttribute("studyname", study)
+        option.innerHTML = study.replace(/ - measurement/, "");
         select.appendChild(option)
 
         item = document.createElement("div")
@@ -274,7 +275,7 @@ function create_study_list(names) {
                 break;
               }
             }
-            add_data_from_study(this.innerHTML)
+            add_data_from_study(this.getAttribute("studyname"))
             h.click();
         });
         study_list.appendChild(item)

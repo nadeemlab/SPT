@@ -169,3 +169,4 @@ class DataSkimmer:
     def recreate_views(self, connection):
         self.execute_script('drop_views.sql', connection, description='drop views of main schema')
         self.execute_script('create_views.sql', connection, description='create views of main schema')
+        self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users')

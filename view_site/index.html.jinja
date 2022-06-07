@@ -244,7 +244,7 @@ function setup_table_header() {
     var table = document.getElementById("testtable")
     table.innerHTML = ''
 
-    header = ["Marker", "Assay", "Result", "Mean % cells positive", "Standard deviation of % values"]
+    header = ["Marker", "Multiplicity", "Assay", "Result", "Mean % <br/>cells positive", "Standard deviation <br/>of % values"]
     header_row = document.createElement("tr")
     for (var i = 0, len = header.length; i < len; ++i) {
         cell = document.createElement("th")
@@ -337,10 +337,10 @@ function load_study(request, e) {
     for (var i = 0, len = obj.length; i < len; ++i) {
         data_row = obj[i]
         table_row = document.createElement("tr")
-        for (var j = 0; j < 5; ++j) {
+        for (var j = 0; j < 6; ++j) {
             cell = document.createElement("td")
             entry = data_row[j]
-            if (j==3) {
+            if (j==4) {
                 integer_percent = Math.round(parseFloat(entry))
                 container = document.createElement("div")
                 container.setAttribute("class", "overlayeffectcontainer")
@@ -354,7 +354,7 @@ function load_study(request, e) {
                 container.appendChild(overlay)
                 cell.appendChild(container)
             } else {
-                if (j==1 || j==2) {
+                if (j==2 || j==3) {
                     entry = entry.replace(/<any>/, '<em>any</em>')
                 }
                 cell.innerHTML = entry
@@ -377,7 +377,7 @@ function get_ordered_data_rows(column_index, sign) {
     }
 
     compare = function(a, b) {
-        if (column_index==3 || column_index==4) {
+        if (column_index==4 || column_index==5) {
             return (parseFloat(a[1]) - parseFloat(b[1])) * sign;
         } else {
             if (a[1] > b[1]) {
@@ -427,10 +427,11 @@ function sort_data_rows(column_index, sign) {
 <table class="statstable" id="testtable">
     <tr>
         <th>Marker</th>
+        <th>Multiplicity</th>
         <th>Assay</th>
         <th>Result</th>
-        <th>Mean % cells positive</th>
-        <th>Standard deviation of % values</th>
+        <th>Mean % <br/>cells positive</th>
+        <th>Standard deviation <br/>of % values</th>
     </tr>
 </table>
 </div>

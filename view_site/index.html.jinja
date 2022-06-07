@@ -244,7 +244,7 @@ function setup_table_header() {
     var table = document.getElementById("testtable")
     table.innerHTML = ''
 
-    header = ["Marker", "Multiplicity", "Assay", "Result", "Mean % <br/>cells positive", "Standard deviation <br/>of % values"]
+    header = ["Marker", "Multiplicity", "Assay", "Result", "Mean % <br/>cells positive", "Standard deviation <br/>of % values", "Max", "V", "Min", "V"]
     header_row = document.createElement("tr")
     for (var i = 0, len = header.length; i < len; ++i) {
         cell = document.createElement("th")
@@ -337,7 +337,7 @@ function load_study(request, e) {
     for (var i = 0, len = obj.length; i < len; ++i) {
         data_row = obj[i]
         table_row = document.createElement("tr")
-        for (var j = 0; j < 6; ++j) {
+        for (var j = 0; j < 10; ++j) {
             cell = document.createElement("td")
             entry = data_row[j]
             if (j==4) {
@@ -377,7 +377,7 @@ function get_ordered_data_rows(column_index, sign) {
     }
 
     compare = function(a, b) {
-        if (column_index==4 || column_index==5) {
+        if (column_index==4 || column_index==5 || column_index==7 || column_index==9) {
             return (parseFloat(a[1]) - parseFloat(b[1])) * sign;
         } else {
             if (a[1] > b[1]) {
@@ -432,6 +432,10 @@ function sort_data_rows(column_index, sign) {
         <th>Result</th>
         <th>Mean % <br/>cells positive</th>
         <th>Standard deviation <br/>of % values</th>
+        <th>Maximum</th>
+        <th>V</th>
+        <th>Minimum</th>
+        <th>V</th>
     </tr>
 </table>
 </div>

@@ -254,7 +254,8 @@ function create_study_list(names) {
         select.appendChild(option)
 
         item = document.createElement("div")
-        item.innerHTML = study
+        item.innerHTML = study.replace(/ - measurement/, "");
+        item.setAttribute("studyname", study)
         item.addEventListener("click", function(e) {
             /* When an item is clicked, update the original select box,
             and the selected item: */

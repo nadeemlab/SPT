@@ -244,7 +244,7 @@ function setup_table_header() {
     var table = document.getElementById("testtable")
     table.innerHTML = ''
 
-    header = ["Marker", "Multiplicity", "Assay", "Result", "Mean % <br/>cells positive", "Standard deviation <br/>of % values", "Max", "V", "Min", "V"]
+    header = ["Marker", "Multiplicity", "Assay", "Result", "Mean % <br/>cells positive", "Standard deviation <br/>of % values", "Maximum", "Value", "Minimum", "Value"]
     header_row = document.createElement("tr")
     for (var i = 0, len = header.length; i < len; ++i) {
         cell = document.createElement("th")

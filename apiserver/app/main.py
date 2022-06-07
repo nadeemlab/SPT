@@ -68,25 +68,28 @@ def read_specimen_measurement_study_names():
 @app.get("/phenotype-summary/{specimen_measurement_study}")
 def read_phenotype_summary_of(specimen_measurement_study):
     study_name = urllib.parse.unquote(specimen_measurement_study)
+    columns = [
+        'marker_symbol',
+        'multiplicity',
+        'assay',
+        'assessment',
+        'average_percent',
+        'standard_deviation_of_percents',
+        'maximum',
+        'maximum_value',
+        'minimum',
+        'minimum_value',
+    ]
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT symbol, multiplicity, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study WHERE study=%s;',
+            'SELECT %s FROM fraction_stats WHERE study=%s;' % (', '.join(columns),'%s'),
             (study_name,),
         )
         rows = cursor.fetchall()
-        formatted_rows_any_assessment = [[str(row[0]), str(row[1]), '<any>', '<any>', str(row[2]), str(row[3])] for row in rows]
-
-        cursor.execute(
-            'SELECT symbol, multiplicity, assay, assessment, average_percent, standard_deviation_of_percents FROM fraction_stats_by_marker_study_assessment WHERE study=%s;',
-            (study_name,),
-        )
-        rows = cursor.fetchall()
-        formatted_rows_specific_assessment = [[str(entry) for entry in row] for row in rows]
-
         representation = {
-            'fractions by marker' : formatted_rows_any_assessment + formatted_rows_specific_assessment
+            'fractions' : [[str(entry) for entry in row] for row in rows]
         }
         return Response(
             content = json.dumps(representation),

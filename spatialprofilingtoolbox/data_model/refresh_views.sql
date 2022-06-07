@@ -1,3 +1,4 @@
 
 REFRESH MATERIALIZED VIEW cell_count_by_study_specimen ;
 REFRESH MATERIALIZED VIEW marker_positive_cell_count_by_study_specimen ;
+REFRESH MATERIALIZED VIEW composite_marker_positive_cell_count_by_study_specimen ;

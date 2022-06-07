@@ -68,6 +68,8 @@ FROM
     cells_count_criteria_satisfied cs
     JOIN criterion_count cc ON
         cs.number_criteria_satisfied = cc.number_all_criteria
+    AND
+        cs.cell_phenotype_identifier = cc.cell_phenotype_identifier
 ;
 
 CREATE MATERIALIZED VIEW composite_marker_positive_cell_count_by_study_specimen AS

@@ -38,7 +38,7 @@ if __name__=='__main__':
         '--recreate-views-only',
         dest='recreate_views_only',
         action='store_true',
-        help='Only drop views, do not touch main table schema.',
+        help='Only recreate views, do not touch main table schema.',
     )
     args = parser.parse_args()
 

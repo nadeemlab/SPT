@@ -1,7 +1,6 @@
 import os
 import json
 from typing import Optional
-from typing import Union
 import urllib
 
 import psycopg2
@@ -85,8 +84,8 @@ def get_data_analysis_study_names():
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
-    specimen_measurement_study : Union[list[str], None] = Query(default = None),
-    data_analysis_study : Union[list[str], None] = Query(default = None),
+    specimen_measurement_study : str | None = Query(default=..., min_length=3),
+    data_analysis_study : str | None = Query(default=..., min_length=3),
 ):
     # specimen_measurement_study_name = urllib.parse.unquote(specimen_measurement_study)
     # data_analysis_study_name = urllib.parse.unquote(data_analysis_study)

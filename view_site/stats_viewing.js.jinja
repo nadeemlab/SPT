@@ -145,13 +145,24 @@ function pull_data_from_study(study) {
     response = get_from_url(URL, load_study)
 }
 
+function clear_table() {
+    var table = document.getElementById("fractionstable")
+    NodeList nodes = table.childNodes
+    Set<Element> targetElements = new HashSet<Element>();
+    for (int i = 0; i < nodes.getLength(); i++) {
+        Element e = (Element)nodes.item(i);
+        targetElements.add(e);
+    }
+    for (Element e: targetElements) {
+        e.getParentNode().removeChild(e);
+    }
+    setup_table_header()
+}
+
 function load_study(response, event) {
     var stats = JSON.parse(response.responseText)
+    clear_table()
     var table = document.getElementById("fractionstable")
-    console.log(table.children.length)
-    for (var i = 0; i < table.children.length -1; ++i) {
-        table.removeChild(table.children[1])
-    }
     var obj = stats[Object.keys(stats)[0]];
     for (var i = 0, len = obj.length; i < len; ++i) {
         data_row = obj[i]

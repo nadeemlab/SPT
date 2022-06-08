@@ -147,15 +147,7 @@ function pull_data_from_study(study) {
 
 function clear_table() {
     var table = document.getElementById("fractionstable")
-    var nodes = table.childNodes
-    HashSet<Element> targetElements = new HashSet<Element>();
-    for (int i = 0; i < nodes.getLength(); i++) {
-        Element e = (Element)nodes.item(i);
-        targetElements.add(e);
-    }
-    for (Element e: targetElements) {
-        e.getParentNode().removeChild(e);
-    }
+    table.innerHTML = ''
     setup_table_header()
 }
 

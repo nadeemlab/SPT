@@ -148,7 +148,7 @@ function pull_data_from_study(study) {
 function clear_table() {
     var table = document.getElementById("fractionstable")
     var nodes = table.childNodes
-    Set<Element> targetElements = new HashSet<Element>();
+    HashSet<Element> targetElements = new HashSet<Element>();
     for (int i = 0; i < nodes.getLength(); i++) {
         Element e = (Element)nodes.item(i);
         targetElements.add(e);

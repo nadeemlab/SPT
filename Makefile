@@ -211,7 +211,7 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
-push-view-site: view_site/index.html.jinja view_site/style.css view_site/stats_viewing.js.jinja view_site/username view_site/render.py
+push-view-site: view_site/host view_site/index.html.jinja view_site/style.css view_site/stats_viewing.js.jinja view_site/username view_site/render.py
 	@printf $(call color_in_progress,'Sending site artifacts to server')
 	@date +%s > current_time.txt
 	@username=$$(cat view_site/username); \

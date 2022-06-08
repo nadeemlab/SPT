@@ -7,6 +7,15 @@
 <body onload="setup()">
 <div class="displayablecontentcontainer">
 <h3>Phenotype fractions in pathology data measurement studies</h3>
+[<div id="phenotype-summary-about-button" class="more-info-button">+ info</div>]
+<div id="phenotype-summary-about-text" class="about-text" style="display:none;">
+<p>
+This page displays some summary information about cell-level pathology data stored in a PostgresQL database hosted at {{ host }}. The database schema is highly normalized, with only functional relations. The entities and relations are defined <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views of the database are served by a FastAPI server, with a read-only API documented <a href="https://{{ api_url }}/docs">here</a>.
+</p>
+<p>
+The table below shows information about the fraction of cells displaying a given signature (whether defined by a single marker or by a composite of multiple markers defining a phenotype), with or without specialization to slides with specific assessment/diagnoses. The information shown is: the mean over the specimen set (slides), the standard deviation, and the maximum and minimum value achieved, with the specimens (slides) achieving the extrema.
+</p>
+</div>
 <div id="study-selector" class="custom-select">
   <select>
     <option value="0">Select study: </option>

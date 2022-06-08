@@ -1,9 +1,24 @@
 function setup(){
     setup_table_header()
+    setup_info_area()
     pull_study_names()
 }
 
-function pull_study_names(){
+function setup_info_area() {
+    infobutton = document.getElementById("phenotype-summary-about-button")
+    infobutton.addEventListener("click", function(e) {
+        abouttext = document.getElementById("phenotype-summary-about-text")
+        if (abouttext.style.display == 'none') {
+            this.innerHTML = '- info'
+            abouttext.style.display == 'block'
+        } else {
+            this.innerHTML = '+ info'
+            abouttext.style.display == 'none'            
+        }
+    }
+}
+
+function pull_study_names() {
     if (names_are_cached()) {
         handle_names(get_cached_response_text(), null)
     } else {

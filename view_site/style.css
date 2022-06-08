@@ -83,6 +83,8 @@ table.statstable td, th {
 table.statstable th {
     font-weight:  bold;
     background: lightblue;
+    border: 1px solid transparent;
+    border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
 }
 table.statstable td {
     background: #fbfbfb;
@@ -115,4 +117,19 @@ div.overlay {
     background: lightgray;
     text-align: right;
     padding: 5px;
+}
+div.more-info-button {
+    font-style: italic;
+    cursor: pointer;
+    color: blue;
+}
+div.more-info-button:hover {
+    text-decoration: underline;
+}
+div.about-text, div.more-info-button {
+    margin: 0 auto; 
+    text-align: left;
+}
+div.about-text p {
+    width: 50%;
 }

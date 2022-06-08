@@ -188,8 +188,8 @@ ORDER BY
 CREATE VIEW fraction_moments_generalized_cases AS
 SELECT
     measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
-    CAST(AVG(f.percent_positive) AS NUMERIC(7, 4)) as average_percent,
-    CAST(STDDEV(f.percent_positive) AS NUMERIC(7, 4)) as standard_deviation_of_percents
+    CAST(AVG(f.percent_positive) AS NUMERIC(5, 2)) as average_percent,
+    CAST(STDDEV(f.percent_positive) AS NUMERIC(5, 2)) as standard_deviation_of_percents
 FROM
     fraction_generalized_cases f
 GROUP BY
@@ -264,9 +264,9 @@ SELECT
     f3.average_percent,
     f3.standard_deviation_of_percents,
     f1.specimen as maximum,
-    CAST(f1.maximum_percent AS NUMERIC(7, 4)) as maximum_value,
+    CAST(f1.maximum_percent AS NUMERIC(5, 2)) as maximum_value,
     f2.specimen as minimum,
-    CAST(f2.minimum_percent AS NUMERIC(7, 4)) as minimum_value
+    CAST(f2.minimum_percent AS NUMERIC(5, 2)) as minimum_value
 FROM
     fraction_arg_maxima f1
     JOIN fraction_arg_minima f2 ON

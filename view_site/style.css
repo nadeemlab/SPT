@@ -120,6 +120,7 @@ div.overlay {
 }
 div.about-text {
     margin: 0 auto; 
+    text-align: center;
 }
 div.more-info-button {
     margin: 0 auto;
@@ -134,4 +135,5 @@ div.more-info-button:hover {
 }
 div.about-text p{
     width: 50%;
+    text-align: left;
 }

@@ -88,8 +88,8 @@ async def get_phenotype_summary(
     specimen_measurement_study : Union[list[str], None] = Query(default = None),
     data_analysis_study : Union[list[str], None] = Query(default = None),
 ):
-    specimen_measurement_study_name = urllib.parse.unquote(specimen_measurement_study)
-    data_analysis_study_name = urllib.parse.unquote(data_analysis_study)
+    # specimen_measurement_study_name = urllib.parse.unquote(specimen_measurement_study)
+    # data_analysis_study_name = urllib.parse.unquote(data_analysis_study)
     columns = [
         'marker_symbol',
         'multiplicity',
@@ -107,7 +107,7 @@ async def get_phenotype_summary(
         cursor = connection.cursor()
         cursor.execute(
             'SELECT %s FROM fraction_stats WHERE study=%s;' % (', '.join(columns),'%s'),
-            (specimen_measurement_study_name,),
+            (specimen_measurement_study,),
         )
         rows = cursor.fetchall()
         representation = {

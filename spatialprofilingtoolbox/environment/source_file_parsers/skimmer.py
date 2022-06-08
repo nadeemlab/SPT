@@ -154,6 +154,8 @@ class DataSkimmer:
                 logger.debug(statement)
                 cursor.execute(statement)
                 connection.commit()
+        else:
+            cursor.execute(script)
         cursor.close()
         connection.commit()
         logger.info('Done with %s.', description)

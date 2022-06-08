@@ -141,7 +141,7 @@ function create_study_list(study_names) {
 
 function pull_data_from_study(study) {
     var encoded_study = encodeURIComponent(study)
-    URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/?specimen-measurement-study=${encoded_study}?data-analysis-study=unknowndatanalysisstudy`
+    URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/?specimen_measurement_study=${encoded_study}&data_analysis_study=unknowndatanalysisstudy`
     response = get_from_url(URL, load_study)
 }
 

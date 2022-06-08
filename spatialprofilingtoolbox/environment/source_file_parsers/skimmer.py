@@ -135,7 +135,7 @@ class DataSkimmer:
             for t in tablenames
         ])
 
-    def execute_script(self, filename, connection, description: str=None, silent=False, contents=None):
+    def execute_script(self, filename, connection, description: str=None, silent=False, contents=None, itemize=False):
         if description is None:
             description = filename
         if not contents:
@@ -145,9 +145,15 @@ class DataSkimmer:
         else:
             script = contents
         cursor = connection.cursor()
-        if not silent:
+        if not silent and not itemize:
             logger.debug(script)
-        cursor.execute(script)
+
+        if itemize:
+            script_statements = [s + ';' for s in script.split(';')]
+            for statement in script_statements:
+                logger.debug(statement)
+                cursor.execute(statement)
+                connection.commit()
         cursor.close()
         connection.commit()
         logger.info('Done with %s.', description)
@@ -168,5 +174,5 @@ class DataSkimmer:
 
     def recreate_views(self, connection):
         self.execute_script('drop_views.sql', connection, description='drop views of main schema')
-        self.execute_script('create_views.sql', connection, description='create views of main schema')
+        self.execute_script('create_views.sql', connection, description='create views of main schema', itemize=True)
         self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users')

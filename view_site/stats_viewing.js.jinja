@@ -148,6 +148,9 @@ function pull_data_from_study(study) {
 function load_study(response, event) {
     var stats = JSON.parse(response.responseText)
     var table = document.getElementById("fractionstable")
+    for (var i = 0; i < table.children.length -1; ++i) {
+        table.removeChild[1]
+    }
     var obj = stats[Object.keys(stats)[0]];
     for (var i = 0, len = obj.length; i < len; ++i) {
         data_row = obj[i]

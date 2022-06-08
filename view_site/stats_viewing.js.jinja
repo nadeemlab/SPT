@@ -1,119 +1,55 @@
-function closeAllSelect(elmnt) {
-  /* A function that will close all select boxes in the document,
-  except the current select box: */
-  var x, y, i, xl, yl, arrNo = [];
-  x = document.getElementsByClassName("select-items");
-  y = document.getElementsByClassName("select-selected");
-  xl = x.length;
-  yl = y.length;
-  for (i = 0; i < yl; i++) {
-    if (elmnt == y[i]) {
-      arrNo.push(i)
-    } else {
-      y[i].classList.remove("select-arrow-active");
-    }
-  }
-  for (i = 0; i < xl; i++) {
-    if (arrNo.indexOf(i)) {
-      x[i].classList.add("select-hide");
-    }
-  }
-}
-
 function setup(){
-    var x, i, j, l, ll, selElmnt, a, b, c;
-    /* Look for any elements with the class "custom-select": */
-    x = document.getElementsByClassName("custom-select");
-    l = x.length;
-    for (i = 0; i < l; i++) {
-      selElmnt = x[i].getElementsByTagName("select")[0];
-      ll = selElmnt.length;
-      /* For each element, create a new DIV that will act as the selected item: */
-      a = document.createElement("DIV");
-      a.setAttribute("class", "select-selected");
-      a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
-      x[i].appendChild(a);
-      /* For each element, create a new DIV that will contain the option list: */
-      b = document.createElement("DIV");
-      b.setAttribute("class", "select-items select-hide");
-      b.setAttribute("id", "studyinnerlist")
-      for (j = 1; j < ll; j++) {
-        /* For each option in the original select element,
-        create a new DIV that will act as an option item: */
-        c = document.createElement("DIV");
-        c.innerHTML = selElmnt.options[j].innerHTML;
-        c.addEventListener("click", function(e) {
-            /* When an item is clicked, update the original select box,
-            and the selected item: */
-            var y, i, k, s, h, sl, yl;
-            s = this.parentNode.parentNode.getElementsByTagName("select")[0];
-            sl = s.length;
-            h = this.parentNode.previousSibling;
-            for (i = 0; i < sl; i++) {
-              if (s.options[i].innerHTML == this.innerHTML) {
-                s.selectedIndex = i;
-                h.innerHTML = this.innerHTML;
-                y = this.parentNode.getElementsByClassName("same-as-selected");
-                yl = y.length;
-                for (k = 0; k < yl; k++) {
-                  y[k].removeAttribute("class");
-                }
-                this.setAttribute("class", "same-as-selected");
-                break;
-              }
-            }
-            h.click();
-        });
-        b.appendChild(c);
-      }
-      x[i].appendChild(b);
-      a.addEventListener("click", function(e) {
-        /* When the select box is clicked, close any other select boxes,
-        and open/close the current select box: */
-        e.stopPropagation();
-        closeAllSelect(this);
-        this.nextSibling.classList.toggle("select-hide");
-        this.classList.toggle("select-arrow-active");
-      });
-    }
-
-    /* If the user clicks anywhere outside the select box,
-    then close all select boxes: */
-    document.addEventListener("click", closeAllSelect);
-    initialize_data()
-}
-
-function get_from_url(url, callback){
-    var httpreq = new XMLHttpRequest();
-    httpreq.open("GET",url,true);
-    httpreq.onload = function(e) {callback(this, e)}
-    httpreq.send(null);
+    setup_table_header()
+    pull_study_names()
 }
 
 function pull_study_names(){
-    cache = document.getElementById("cached-names")
-    if (cache.getAttribute("hascache") == "true") {
-        var response = cache.innerHTML
-        var names = JSON.parse(response)
-        return names
+    if (names_are_cached()) {
+        handle_names(get_cached_response_text(), null)
     } else {
         URL="{{ protocol }}://{{ api_url }}/specimen-measurement-study-names"
-        get_from_url(URL, handle_names)
+        get_from_url(URL, function(response, event){
+            handle_names(response.responseText, event)
+        })
     }
 }
 
-function handle_names(request, e) {
+function names_are_cached() {
     cache = document.getElementById("cached-names")
-    cache.innerHTML = request.responseText
-    cache.setAttribute("hascache", "true")
-
-    names = JSON.parse(request.responseText)
-    create_study_list(names)
-    setup_table_header()
+    if (cache.getAttribute("hascache") == "true") {
+        return true
+    }
+    return false
 }
 
-function initialize_data() {
-    pull_study_names()
+function get_cached_names_response() {
+    cache = document.getElementById("cached-names")
+    return cache.innerHTML
+}
+
+function cache_names_response(responseText) {
+    cache = document.getElementById("cached-names")
+    cache.innerHTML = responseText
+    cache.setAttribute("hascache", "true")
+}
+
+function get_from_url(url, callback=function(response, event){}){
+    var httpreq = new XMLHttpRequest();
+    httpreq.open("GET", url, async=true);
+    httpreq.onload = function(event) {callback(this, event)}
+    httpreq.send(null);
+}
+
+function handle_names(responseText, event) {
+    cache_names_response(responseText)
+    obj = JSON.parse(responseText)
+    let study_names = Array.from(
+        new Set(
+            obj[Object.keys(obj)[0]]
+        )
+    )
+    setup_study_selector()
+    create_study_list(study_names)
 }
 
 function setup_table_header() {
@@ -140,10 +76,7 @@ function setup_table_header() {
     table.appendChild(header_row)
 }
 
-function create_study_list(names) {
-    obj = names["specimen measurement study names"];
-    let studies = Array.from(new Set(obj.map(function (row) { return row; })))
-
+function create_study_list(study_names) {
     study_selector = document.getElementById("study-selector")
     select = study_selector.querySelectorAll(":scope > select")[0]
     deletable = select.querySelectorAll("option.studyoption")
@@ -152,8 +85,8 @@ function create_study_list(names) {
     }
     study_list = document.getElementById("studyinnerlist")
     study_list.innerHTML = ''
-    for (var i = 0; i < studies.length; ++i) {
-        study = studies[i]
+    for (var i = 0; i < study_names.length; ++i) {
+        study = study_names[i]
         option = document.createElement("option")
         option.setAttribute("class", "studyoption")
         option.setAttribute("value", i+1)
@@ -191,23 +124,14 @@ function create_study_list(names) {
     }
 }
 
-function update_row_counter() {
-    number_rows = document.getElementById("fractionstable").children.length - 1
-    rowcountbox = document.getElementById("rowcountbox")
-    rowcountbox.style.display = "inline-block";
-    document.getElementById("rowcounter").innerHTML = number_rows
-}
-
 function pull_data_from_study(study) {
     var encoded_study = encodeURIComponent(study)
     URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/${encoded_study}`
     response = get_from_url(URL, load_study)
 }
 
-function load_study(request, e) {
-    var stats = JSON.parse(request.responseText)
-    setup_table_header()
-
+function load_study(response, event) {
+    var stats = JSON.parse(response.responseText)
     var table = document.getElementById("fractionstable")
     var obj = stats[Object.keys(stats)[0]];
     for (var i = 0, len = obj.length; i < len; ++i) {
@@ -238,6 +162,18 @@ function load_study(request, e) {
             table_row.appendChild(cell)
         }
         table.appendChild(table_row)
+    }
+    update_row_counter()
+}
+
+function sort_data_rows(column_index, sign) {
+    table = document.getElementById("fractionstable")
+    tr_elements = get_ordered_data_rows(column_index, sign)
+    for (var i = 0; i < tr_elements.length; ++i) {
+        table.appendChild(tr_elements[i])
+    }
+    for (var i = 0; i < tr_elements.length; ++i) {
+        table.removeChild[1]
     }
     update_row_counter()
 }
@@ -276,14 +212,93 @@ function get_ordered_data_rows(column_index, sign) {
     return new_rows
 }
 
-function sort_data_rows(column_index, sign) {
-    table = document.getElementById("fractionstable")
-    tr_elements = get_ordered_data_rows(column_index, sign)
-    for (var i = 0; i < tr_elements.length; ++i) {
-        table.appendChild(tr_elements[i])
+function setup_study_selector() {
+    var x, i, j, l, ll, selectElement, a, b, c;
+    /* Look for any elements with the class "custom-select": */
+    x = document.getElementsByClassName("custom-select");
+    l = x.length;
+    for (i = 0; i < l; i++) {
+      selectElement = x[i].getElementsByTagName("select")[0];
+      ll = selectElement.length;
+      /* For each element, create a new DIV that will act as the selected item: */
+      a = document.createElement("DIV");
+      a.setAttribute("class", "select-selected");
+      a.innerHTML = selectElement.options[selectElement.selectedIndex].innerHTML;
+      x[i].appendChild(a);
+      /* For each element, create a new DIV that will contain the option list: */
+      b = document.createElement("DIV");
+      b.setAttribute("class", "select-items select-hide");
+      b.setAttribute("id", "studyinnerlist")
+      for (j = 1; j < ll; j++) {
+        /* For each option in the original select element,
+        create a new DIV that will act as an option item: */
+        c = document.createElement("DIV");
+        c.innerHTML = selectElement.options[j].innerHTML;
+        c.addEventListener("click", function(e) {
+            /* When an item is clicked, update the original select box,
+            and the selected item: */
+            var y, i, k, s, h, sl, yl;
+            s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+            sl = s.length;
+            h = this.parentNode.previousSibling;
+            for (i = 0; i < sl; i++) {
+              if (s.options[i].innerHTML == this.innerHTML) {
+                s.selectedIndex = i;
+                h.innerHTML = this.innerHTML;
+                y = this.parentNode.getElementsByClassName("same-as-selected");
+                yl = y.length;
+                for (k = 0; k < yl; k++) {
+                  y[k].removeAttribute("class");
+                }
+                this.setAttribute("class", "same-as-selected");
+                break;
+              }
+            }
+            h.click();
+        });
+        b.appendChild(c);
+      }
+      x[i].appendChild(b);
+      a.addEventListener("click", function(e) {
+        /* When the select box is clicked, close any other select boxes,
+        and open/close the current select box: */
+        e.stopPropagation();
+        closeAllSelect(this);
+        this.nextSibling.classList.toggle("select-hide");
+        this.classList.toggle("select-arrow-active");
+      });
     }
-    for (var i = 0; i < tr_elements.length; ++i) {
-        table.removeChild[1]
+
+    /* If the user clicks anywhere outside the select box,
+    then close all select boxes: */
+    document.addEventListener("click", closeAllSelect);
+}
+
+function closeAllSelect(element) {
+  /* A function that will close all select boxes in the document,
+  except the current select box: */
+  var x, y, i, xl, yl, arrNo = [];
+  x = document.getElementsByClassName("select-items");
+  y = document.getElementsByClassName("select-selected");
+  xl = x.length;
+  yl = y.length;
+  for (i = 0; i < yl; i++) {
+    if (element == y[i]) {
+      arrNo.push(i)
+    } else {
+      y[i].classList.remove("select-arrow-active");
     }
-    update_row_counter()
+  }
+  for (i = 0; i < xl; i++) {
+    if (arrNo.indexOf(i)) {
+      x[i].classList.add("select-hide");
+    }
+  }
+}
+
+function update_row_counter() {
+    number_rows = document.getElementById("fractionstable").children.length - 1
+    rowcountbox = document.getElementById("rowcountbox")
+    rowcountbox.style.display = "inline-block";
+    document.getElementById("rowcounter").innerHTML = number_rows
 }

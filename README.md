@@ -135,16 +135,18 @@ To import HALO-exported cell object files into a normalized database conforming 
    user = <user you use for database access>
    password = <password>
    ```
-3. Run the 'HALO import' workflow, for example:
+3. Set up the database schema:
+   ```
+   spt-create-db-schema --database-config-file=~/.spt_db_config
+   ```
+4. Prepare your data in the format exemplified in [tests/data_subspecimens/](https://github.com/nadeemlab/SPT/tree/main/tests/data_subspecimens).
+5. Run the `'HALO import'` workflow, for example:
    ```sh
-   spt-configure --local --input-path=/path/to/data --workflow='HALO import'
+   spt-configure --local --input-path=/path/to/data --workflow='HALO import' --database-config-file=~/.spt_db_config
    ./run.sh
    ```
 
-*Notes*:
-
-- The credentials file is not copied by the workflow, and the password is stored in memory only long enough to establish a connection to the database.
-- The [SQL schema](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/data_model/pathology_schema.sql) is generated from the ADI and used to create the tables if they are not already present.
+*Note*: The credentials file is not copied by the workflow, and the password is stored in memory only long enough to establish a connection to the database.
 
 Examples
 --------

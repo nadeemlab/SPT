@@ -2,7 +2,8 @@
 -- Single phenotype counts
 CREATE MATERIALIZED VIEW marker_positive_cell_count_by_study_specimen AS
 SELECT
-    sdmp.study as study,
+    sdmp.study as measurement_study,
+    'none' as data_analysis_study,
     sdmp.specimen as specimen,
     'single' as multiplicity,
     cs.symbol as marker_symbol,
@@ -32,6 +33,7 @@ GROUP BY
 -- Composite phenotype counts
 CREATE VIEW cells_count_criteria_satisfied AS
 SELECT
+    cpc.study as data_analysis_study,
     eq.histological_structure as histological_structure,
     cpc.cell_phenotype as cell_phenotype_identifier,
     COUNT(*) as number_criteria_satisfied
@@ -46,22 +48,26 @@ WHERE
 AND
     hs.anatomical_entity = 'cell'
 GROUP BY
+    cpc.study,
     eq.histological_structure,
     cpc.cell_phenotype
 ;
 
 CREATE VIEW criterion_count AS
 SELECT
+    cpc.study as data_analysis_study,
     cpc.cell_phenotype as cell_phenotype_identifier,
     COUNT(*) as number_all_criteria
 FROM
     cell_phenotype_criterion cpc
 GROUP BY
+    cpc.study,
     cpc.cell_phenotype
 ;
 
 CREATE VIEW all_criteria_satisfied AS
 SELECT
+    cs.data_analysis_study as data_analysis_study,
     cs.histological_structure as histological_structure,
     cc.cell_phenotype_identifier as cell_phenotype_identifier
 FROM
@@ -74,7 +80,8 @@ FROM
 
 CREATE MATERIALIZED VIEW composite_marker_positive_cell_count_by_study_specimen AS
 SELECT
-    sdmp.study as study,
+    sdmp.study as measurement_study,
+    s.data_analysis_study as data_analysis_study,
     sdmp.specimen as specimen,
     'composite' as multiplicity,
     cp.symbol as marker_symbol,
@@ -91,6 +98,7 @@ FROM
         s.cell_phenotype_identifier = cp.identifier
 GROUP BY
     sdmp.study,
+    s.data_analysis_study,
     sdmp.specimen,
     cp.symbol
 ;
@@ -104,7 +112,7 @@ SELECT * FROM composite_marker_positive_cell_count_by_study_specimen
 
 CREATE MATERIALIZED VIEW cell_count_by_study_specimen AS
 SELECT
-    sdmp.study as study,
+    sdmp.study as measurement_study,
     sdmp.specimen as specimen,
     COUNT(*) as cell_count
 FROM
@@ -124,7 +132,8 @@ GROUP BY
 
 CREATE VIEW fraction_by_marker_study_specimen AS
 SELECT
-    cc.study as study,
+    cc.study as measurement_study,
+    pcc.data_analysis_study as data_analysis_study,
     cc.specimen as specimen,
     pcc.multiplicity as multiplicity,
     pcc.marker_symbol as marker_symbol,
@@ -133,7 +142,7 @@ FROM
     cell_count_by_study_specimen cc
     JOIN generalized_marker_positive_cell_count_by_study_specimen pcc
     ON
-        cc.study = pcc.study
+        cc.measurement_study = pcc.measurement_study
         AND
         cc.specimen = pcc.specimen
 ;
@@ -143,7 +152,8 @@ SELECT *
 FROM
     (
     SELECT
-        f.study as study,
+        f.measurement_study as measurement_study,
+        f.data_analysis_study as data_analysis_study,
         f.marker_symbol as marker_symbol,
         f.multiplicity as multiplicity,
         '<any>' as assay,
@@ -156,7 +166,8 @@ FROM
     UNION
     (
     SELECT
-        g.study as study,
+        g.measurement_study as measurement_study,
+        g.data_analysis_study as data_analysis_study,
         g.marker_symbol as marker_symbol,
         g.multiplicity as multiplicity,
         hap.assay as assay,
@@ -169,49 +180,44 @@ FROM
             g.specimen = hap.slide
     )
 ORDER BY
-    study,
-    multiplicity,
-    marker_symbol,
-    assay,
-    assessment,
-    specimen
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment, specimen
 ;
 
 -- Summary stats
 -- (mean, standard deviation)
 CREATE VIEW fraction_moments_generalized_cases AS
 SELECT
-    study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
     CAST(AVG(f.percent_positive) AS NUMERIC(7, 4)) as average_percent,
     CAST(STDDEV(f.percent_positive) AS NUMERIC(7, 4)) as standard_deviation_of_percents
 FROM
     fraction_generalized_cases f
 GROUP BY
-    study, marker_symbol, multiplicity, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
 ORDER BY
-    study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
 ;
 
 -- (extrema)
 CREATE VIEW fraction_extrema AS
 SELECT
-    study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
     MAX(f.percent_positive) as maximum_percent,
     MIN(f.percent_positive) as minimum_percent
 FROM fraction_generalized_cases f
 GROUP BY
-    study, marker_symbol, multiplicity, assay, assessment
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment
 ;
 
 CREATE VIEW fraction_arg_maxima AS
 SELECT
-    study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
     MIN(possibly_with_multiples.specimen) as specimen,
     MIN(possibly_with_multiples.maximum_percent) as maximum_percent
 FROM
     (
     SELECT
-        f.study as study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
+        f.measurement_study as measurement_study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
         f.specimen as specimen,
         e.maximum_percent as maximum_percent
     FROM
@@ -222,20 +228,20 @@ FROM
             f.marker_symbol = e.marker_symbol
     ) as possibly_with_multiples
 GROUP BY
-    study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
 ORDER BY
-    study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
 ;
 
 CREATE VIEW fraction_arg_minima AS
 SELECT
-    study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
     MIN(possibly_with_multiples.specimen) as specimen,
     MIN(possibly_with_multiples.minimum_percent) as minimum_percent
 FROM
     (
     SELECT
-        f.study as study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
+        f.measurement_study as study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
         f.specimen as specimen,
         e.minimum_percent as minimum_percent
     FROM
@@ -246,15 +252,15 @@ FROM
             f.marker_symbol = e.marker_symbol
     ) as possibly_with_multiples
 GROUP BY
-    study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
 ORDER BY
-    study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
 ;
 
 -- (stats)
 CREATE MATERIALIZED VIEW fraction_stats AS
 SELECT
-    f1.study, f1.marker_symbol, f1.multiplicity, f1.assay, f1.assessment,
+    f1.measurement_study, f1.data_analysis_study, f1.marker_symbol, f1.multiplicity, f1.assay, f1.assessment,
     f3.average_percent,
     f3.standard_deviation_of_percents,
     f1.specimen as maximum,
@@ -264,7 +270,9 @@ SELECT
 FROM
     fraction_arg_maxima f1
     JOIN fraction_arg_minima f2 ON
-        f1.study = f2.study
+        f1.measurement_study = f2.measurement_study
+    AND
+        f1.data_analysis_study = f2.data_analysis_study
     AND
         f1.multiplicity = f2.multiplicity
     AND
@@ -274,7 +282,9 @@ FROM
     AND
         f1.assessment = f2.assessment
     JOIN fraction_moments_generalized_cases f3 ON
-        f1.study = f3.study
+        f1.measurement_study = f3.measurement_study
+    AND
+        f1.data_analysis_study = f3.data_analysis_study
     AND
         f1.multiplicity = f3.multiplicity
     AND
@@ -284,6 +294,6 @@ FROM
     AND
         f1.assessment = f3.assessment
 ORDER BY
-    study, multiplicity DESC, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity DESC, marker_symbol, assay, assessment
 ;
 

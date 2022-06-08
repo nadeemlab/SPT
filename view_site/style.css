@@ -139,8 +139,13 @@ div.about-text p{
     margin-left: auto;
     margin-right: auto;
 }
-div.about-text div ul{
+div.about-text div{
     width: 50%;
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+}
+div.about-text div ul{
     text-align: left;
     margin-left: 20px;
 }

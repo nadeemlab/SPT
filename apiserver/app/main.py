@@ -1,10 +1,12 @@
 import os
 import json
 from typing import Optional
+from typing import Union
 import urllib
 
 import psycopg2
 from fastapi import FastAPI
+from fastapi import Query
 from fastapi import Response
 
 app = FastAPI()
@@ -42,7 +44,7 @@ class DBAccessor:
 
 
 @app.get("/")
-def read_root():
+def get_root():
     return Response(
         content = json.dumps({ 'server description' : 'Pathology database views API'}),
         media_type = 'application/json',
@@ -50,7 +52,7 @@ def read_root():
 
 
 @app.get("/specimen-measurement-study-names")
-def read_specimen_measurement_study_names():
+def get_specimen_measurement_study_names():
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -65,9 +67,29 @@ def read_specimen_measurement_study_names():
         )
 
 
-@app.get("/phenotype-summary/{specimen_measurement_study}")
-def read_phenotype_summary_of(specimen_measurement_study):
-    study_name = urllib.parse.unquote(specimen_measurement_study)
+@app.get("/data-analysis-study-names")
+def get_data_analysis_study_names():
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute('SELECT name FROM data_analysis_study;')
+        rows = cursor.fetchall()
+        representation = {
+            'data analysis study names' : [str(row[0]) for row in rows]
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
+@app.get("/phenotype-summary/")
+async def get_phenotype_summary(
+    specimen_measurement_study : Union[list[str], None] = Query(default = None),
+    data_analysis_study : Union[list[str], None] = Query(default = None),
+):
+    specimen_measurement_study_name = urllib.parse.unquote(specimen_measurement_study)
+    data_analysis_study_name = urllib.parse.unquote(data_analysis_study)
     columns = [
         'marker_symbol',
         'multiplicity',
@@ -85,7 +107,7 @@ def read_phenotype_summary_of(specimen_measurement_study):
         cursor = connection.cursor()
         cursor.execute(
             'SELECT %s FROM fraction_stats WHERE study=%s;' % (', '.join(columns),'%s'),
-            (study_name,),
+            (specimen_measurement_study_name,),
         )
         rows = cursor.fetchall()
         representation = {

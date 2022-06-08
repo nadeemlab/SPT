@@ -140,10 +140,10 @@ div.about-text p{
     margin-right: auto;
 }
 div.about-text div p ul{
-    display: inline-block; 
+    width: 50%;
+    text-align: left;
     margin-left: 20px;
 }
 div.about-text div p ul li{
-    display: inline-block; 
-    margin-left: 20px;
+    text-align: left;
 }

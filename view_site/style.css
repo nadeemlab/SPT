@@ -136,4 +136,6 @@ div.more-info-button:hover {
 div.about-text p{
     width: 50%;
     text-align: left;
+    margin-left: auto;
+    margin-right: auto;
 }

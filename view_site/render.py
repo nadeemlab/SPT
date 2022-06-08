@@ -22,9 +22,9 @@ if __name__ == '__main__':
 
     contents = open('index.html.jinja').read()
     index_template = jinja_environment.from_string(contents)
-    index = index_template.render({'script_file': 'stats_viewing.js', 'host' : ip, 'api_url': 'data.nadeemlabapi.link'})
+    index = index_template.render({'script_file': 'stats_viewing.js', 'host' : ip, 'api_url': 'data.nadeemlabapi.link', 'protocol' : 'https'})
     with open('index.html', 'wt') as file:
         file.write(index)
-    index_no_domain = index_template.render({'script_file': 'stats_viewing_no_domain.js', 'host' : ip, 'api_url': 'data.nadeemlabapi.link'})
+    index_no_domain = index_template.render({'script_file': 'stats_viewing_no_domain.js', 'host' : ip, 'api_url': ip, 'protocol' : 'http'})
     with open('index_no_domain.html', 'wt') as file:
         file.write(index_no_domain)

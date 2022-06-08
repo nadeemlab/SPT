@@ -7,7 +7,7 @@
 <body onload="setup()">
 <div class="displayablecontentcontainer">
 <h3>Phenotype fractions in pathology data measurement studies</h3>
-[<div id="phenotype-summary-about-button" class="more-info-button">+ info</div>]
+[<div class="more-info-button"><span id="phenotype-summary-about-button">+ info</span></div>]
 <div id="phenotype-summary-about-text" class="about-text" style="display:none;">
 <p>
 This page displays some summary information about cell-level pathology data stored in a PostgresQL database hosted at {{ host }}. The database schema is highly normalized, with only functional relations. The entities and relations are defined <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views of the database are served by a FastAPI server, with a read-only API documented <a href="https://{{ api_url }}/docs">here</a>.

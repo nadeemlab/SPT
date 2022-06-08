@@ -118,7 +118,13 @@ div.overlay {
     text-align: right;
     padding: 5px;
 }
+div.about-text {
+    margin: 0 auto; 
+}
 div.more-info-button {
+    margin: 0 auto;
+}
+div.more-info-button span{
     font-style: italic;
     cursor: pointer;
     color: blue;
@@ -126,10 +132,6 @@ div.more-info-button {
 div.more-info-button:hover {
     text-decoration: underline;
 }
-div.about-text, div.more-info-button {
-    margin: 0 auto; 
-    text-align: left;
-}
-div.about-text p {
+div.about-text p{
     width: 50%;
 }

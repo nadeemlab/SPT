@@ -84,8 +84,8 @@ def get_data_analysis_study_names():
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
-    specimen_measurement_study : str = Query(min_length=3),
-    data_analysis_study : str = Query(min_length=3),
+    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+    data_analysis_study : str = Query(default='unknown', min_length=3),
 ):
     # specimen_measurement_study_name = urllib.parse.unquote(specimen_measurement_study)
     # data_analysis_study_name = urllib.parse.unquote(data_analysis_study)

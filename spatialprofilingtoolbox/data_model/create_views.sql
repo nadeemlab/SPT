@@ -132,7 +132,7 @@ GROUP BY
 
 CREATE VIEW fraction_by_marker_study_specimen AS
 SELECT
-    cc.study as measurement_study,
+    cc.measurement_study as measurement_study,
     pcc.data_analysis_study as data_analysis_study,
     cc.specimen as specimen,
     pcc.multiplicity as multiplicity,

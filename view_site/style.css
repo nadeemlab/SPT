@@ -143,3 +143,7 @@ div.about-text p ul{
     display: inline-block; 
     margin-left: 20px;
 }
+div.about-text p ul li{
+    display: inline-block; 
+    margin-left: 20px;
+}

@@ -194,9 +194,6 @@ function sort_data_rows(column_index, sign) {
     for (var i = 0; i < tr_elements.length; ++i) {
         table.appendChild(tr_elements[i])
     }
-    for (var i = 0; i < tr_elements.length; ++i) {
-        table.removeChild(table.children[1])
-    }
     update_row_counter()
 }
 

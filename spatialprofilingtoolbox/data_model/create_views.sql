@@ -241,7 +241,7 @@ SELECT
 FROM
     (
     SELECT
-        f.measurement_study as study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
+        f.measurement_study as measurement_study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
         f.specimen as specimen,
         e.minimum_percent as minimum_percent
     FROM

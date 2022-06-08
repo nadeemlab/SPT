@@ -10,12 +10,10 @@ function setup_info_area() {
         abouttext = document.getElementById("phenotype-summary-about-text")
         if (this.innerHTML == '+ info') {
             this.innerHTML = '- info'
-            abouttext.style.display == 'block'
-            console.log(abouttext.style.display)
+            abouttext.style.display = 'block'
         } else {
             this.innerHTML = '+ info'
-            abouttext.style.display == 'none'
-            console.log(abouttext.style.display)
+            abouttext.style.display = 'none'
         }
     })
 }

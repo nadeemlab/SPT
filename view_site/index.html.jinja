@@ -10,7 +10,6 @@
 <div class="more-info-button">[<span id="phenotype-summary-about-button">+ info</span>]</div>
 <div id="phenotype-summary-about-text" class="about-text" style="display:none;">
 <p>
-<p>
 <b>Statistics</b>. This page displays some summary statistics of the fraction of cells, in given specimens, displaying a given signature, whether defined by a single marker or by a composite of multiple markers defining a phenotype, with or without specialization to slides with specific assessment/diagnoses. The statistics shown are:
 </p>
 <div>
@@ -24,6 +23,7 @@
 <p>
 <b>Data modality</b>. This system is appropriate for cell data obtained with multiplexed imaging, flow cytometry, single-cell RNA sequencing, or similar.
 </p>
+<p>
 <b>System</b>. This page displays some summary information about cell-level pathology data stored in a PostgresQL database hosted at {{ host }}. The database schema is highly normalized, with only functional relations, and precise definitions of the entities and relations documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views of the database are served by a FastAPI server, with a read-only API documented <a href="https://{{ api_url }}/docs">here</a>.
 </p>
 <p>

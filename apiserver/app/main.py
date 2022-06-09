@@ -82,13 +82,139 @@ def get_data_analysis_study_names():
         )
 
 
+@app.get("/specimen-measurement-study-summary/")
+async def get_specimen_measurement_study_summary(
+    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            'SELECT assay FROM specimen_measurement_study WHERE name=%s;',
+            (specimen_measurement_study,),
+        )
+        rows = cursor.fetchall()
+        assay = rows[0][0]
+
+        cursor.execute(
+            'SELECT count(DISTINCT specimen) FROM specimen_data_measurement_process WHERE study=%s;',
+            (specimen_measurement_study,),
+        )
+        rows = cursor.fetchall()
+        number_specimens = rows[0][0]
+
+        cursor.execute(
+            '''
+            SELECT count(*)
+            FROM histological_structure_identification hsi
+            JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
+            JOIN data_file df ON hsi.data_source = df.sha256_hash
+            JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+            WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+            ;
+            ''',
+            (specimen_measurement_study,),
+        )
+        rows = cursor.fetchall()
+        number_cells = rows[0][0]
+
+        cursor.execute(
+            '''
+            SELECT count(*)
+            FROM biological_marking_system bms
+            WHERE bms.study=%s;',
+            '''
+            (specimen_measurement_study,),
+        )
+        rows = cursor.fetchall()
+        number_channels = rows[0][0]
+
+        representation = {
+           'Assay' : assay,
+           'Number of specimens surveyed' : number_specimens,
+           'Total number of cells measured' : number_cells,
+           'Number of channels measured' : number_channels,
+        }
+        cursor.close()
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
+@app.get("/data-analysis-study-summary/")
+async def get_data_analysis_study_summary(
+    data_analysis_study : str = Query(default='unknown', min_length=3),
+):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            'SELECT count(DISTINCT cell_phenotype) FROM cell_phenotype_criterion WHERE study=%s;',
+            (data_analysis_study,),
+        )
+        rows = cursor.fetchall()
+        number_phenotypes = rows[0][0]
+
+        cursor.execute(
+            'SELECT count(DISTINCT marker) FROM cell_phenotype_criterion WHERE study=%s;',
+            (data_analysis_study,),
+        )
+        rows = cursor.fetchall()
+        number_markers = rows[0][0]
+
+        cursor.execute(
+            '''
+            SELECT MAX(number_positives) FROM
+                (
+                SELECT cell_phenotype, count(marker) as number_positives
+                FROM cell_phenotype_criterion
+                WHERE study=%s AND polarity='positive'
+                GROUP BY cell_phenotype
+                ) count_positives
+            ;
+            ''',
+            (data_analysis_study,),
+        )
+        rows = cursor.fetchall()
+        max_positives = rows[0][0]
+
+        cursor.execute(
+            '''
+            SELECT MAX(number_negatives) FROM
+                (
+                SELECT cell_phenotype, count(marker) as number_negatives
+                FROM cell_phenotype_criterion
+                WHERE study=%s AND polarity='negative'
+                GROUP BY cell_phenotype
+                ) count_negatives
+            ;
+            ''',
+            (data_analysis_study,),
+        )
+        rows = cursor.fetchall()
+        max_negatives = rows[0][0]
+
+        representation = {
+            'Number of composite phenotypes specified' : number_phenotypes,
+            'Total number of markers referenced in phenotype definitions' : number_markers,
+            'Largest number of positive markers in a phenotype' : max_positives,
+            'Largest number of negative markers in a phenotype' : max_negatives,
+        }
+        cursor.close()
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
     specimen_measurement_study : str = Query(default='unknown', min_length=3),
     data_analysis_study : str = Query(default='unknown', min_length=3),
 ):
-    # specimen_measurement_study_name = urllib.parse.unquote(specimen_measurement_study)
-    # data_analysis_study_name = urllib.parse.unquote(data_analysis_study)
     columns = [
         'marker_symbol',
         'multiplicity',
@@ -105,8 +231,8 @@ async def get_phenotype_summary(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT %s FROM fraction_stats WHERE study=%s;' % (', '.join(columns),'%s'),
-            (specimen_measurement_study,),
+            'SELECT %s FROM fraction_stats WHERE measurement_study=%s AND data_analysis_study in (%s, \'none\');' % (', '.join(columns),'%s', '%s'),
+            (specimen_measurement_study, data_analysis_study),
         )
         rows = cursor.fetchall()
         representation = {

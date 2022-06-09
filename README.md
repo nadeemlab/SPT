@@ -154,7 +154,7 @@ To import HALO-exported cell object files into a normalized database conforming 
    spt-create-db-schema --database-config-file=~/.spt_db.config --refresh-views-only
    ```
 
-*Note*: The import workflow can be sped up substantially by wrapping the run in commands that teardown/recreate certain constraints, as follows:
+*Note*: The import workflow can be sped up substantially by wrapping the run command in commands that teardown/recreate certain constraints, as follows:
 
 ```sh
 spt-db-constraints --database-config-file-elevated=~/.spt_db.config.elevated --drop

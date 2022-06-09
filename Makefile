@@ -211,7 +211,7 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
-push-view-site: view_site/host view_site/index.html.jinja view_site/style.css view_site/stats_viewing.js.jinja view_site/username view_site/render.py
+push-view-site: view_site/host view_site/index.html.jinja view_site/style.css view_site/stats_viewing.js.jinja view_site/username view_site/render.py view_site/loading_cube.gif
 	@printf $(call color_in_progress,'Sending site artifacts to server')
 	@date +%s > current_time.txt
 	@username=$$(cat view_site/username); \
@@ -221,7 +221,8 @@ push-view-site: view_site/host view_site/index.html.jinja view_site/style.css vi
     scp index_no_domain.html $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp style.css $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp stats_viewing.js $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp stats_viewing_no_domain.js $$username@nadeemlabapi.link:/home/$$username/www/;
+    scp stats_viewing_no_domain.js $$username@nadeemlabapi.link:/home/$$username/www/; \
+    scp loading_cube.gif $$username@nadeemlabapi.link:/home/$$username/www/;
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Sent.',$$transpired"s")

@@ -173,12 +173,14 @@ function pull_study_summary(cache_element_id, study_name) {
 
     var encoded_study_name = encodeURIComponent(study_name)
     var URL=`{{ protocol }}://{{ api_url }}/${study_phase_indicator}/${encoded_study_name}`
+    toggle_loading_gif(cache_element_id, state="show")
     get_from_url(URL, function(response, event){load_study_summary(cache_element_id, response.responseText, event)})
 }
 
 function load_study_summary(cache_element_id, responseText, event) {
     var table = get_summary_table(cache_element_id)
     var properties = JSON.parse(responseText)
+    table.style.display = 'inline'
     for (var key of Object.keys(properties)) {
         var tr = document.createElement("tr")
         var key_td = document.createElement("td")
@@ -190,7 +192,24 @@ function load_study_summary(cache_element_id, responseText, event) {
         tr.appendChild(value_td)
         table.appendChild(tr)
     }
-    table.style.display = 'block'
+    toggle_loading_gif(cache_element_id, "off")
+}
+
+function toggle_loading_gif(cache_element_id, state) {
+    var loadinggif_id
+    if (cache_element_id == 'cached-measurement-names') {
+        loadinggif_id = 'measurement-study-attributes-loading'
+    }
+    if (cache_element_id == 'cached-analysis-names') {
+        loadinggif_id = 'analysis-study-attributes-loading'
+    }
+    var loadinggif = document.getElementById("loadinggif_id")
+    if (state == "off") {
+        loadinggif.style.display = "none"
+    }
+    if (state == "on") {
+        loadinggif.style.display = "inline"
+    }
 }
 
 function get_summary_table(cache_element_id) {

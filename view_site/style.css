@@ -171,3 +171,7 @@ div.attributes-table-container table tr:hover{
 div.attributes-table-container table tr td.key{
     font-weight: bold;
 }
+img.loadinggif{
+    margin-left: auto;
+    margin-right: auto;
+}

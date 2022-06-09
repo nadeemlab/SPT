@@ -149,7 +149,7 @@ class DataSkimmer:
             logger.debug(script)
 
         if itemize:
-            script_statements = [s + ';' for s in script.split(';')]
+            script_statements = [s + ';' for s in script.rstrip(' \n').split(';')]
             for statement in script_statements:
                 logger.debug(statement)
                 cursor.execute(statement)

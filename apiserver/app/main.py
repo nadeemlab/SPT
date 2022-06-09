@@ -109,29 +109,26 @@ async def get_specimen_measurement_study_summary(
         rows = cursor.fetchall()
         number_specimens = rows[0][0]
 
-        cursor.execute(
-            '''
-            SELECT count(*)
-            FROM histological_structure_identification hsi
-            JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-            JOIN data_file df ON hsi.data_source = df.sha256_hash
-            JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-            WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-            ;
-            ''',
-            (specimen_measurement_study,),
-        )
+        query = '''
+        SELECT count(*)
+        FROM histological_structure_identification hsi
+        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
+        JOIN data_file df ON hsi.data_source = df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+        ;
+        '''
+        cursor.execute(query, (specimen_measurement_study,))
         rows = cursor.fetchall()
         number_cells = rows[0][0]
 
-        cursor.execute(
-            '''
-            SELECT count(*)
-            FROM biological_marking_system bms
-            WHERE bms.study=%s;',
-            '''
-            (specimen_measurement_study,),
-        )
+        query = '''
+        SELECT count(*)
+        FROM biological_marking_system bms
+        WHERE bms.study=%s
+        ;
+        '''
+        cursor.execute(query, (specimen_measurement_study,))
         rows = cursor.fetchall()
         number_channels = rows[0][0]
 
@@ -181,35 +178,31 @@ async def get_data_analysis_study_summary(
         rows = cursor.fetchall()
         number_markers = rows[0][0]
 
-        cursor.execute(
-            '''
-            SELECT MAX(number_positives) FROM
-                (
-                SELECT cell_phenotype, count(marker) as number_positives
-                FROM cell_phenotype_criterion
-                WHERE study=%s AND polarity='positive'
-                GROUP BY cell_phenotype
-                ) count_positives
-            ;
-            ''',
-            (data_analysis_study,),
-        )
+        query = '''
+        SELECT MAX(number_positives) FROM
+            (
+            SELECT cell_phenotype, count(marker) as number_positives
+            FROM cell_phenotype_criterion
+            WHERE study=%s AND polarity='positive'
+            GROUP BY cell_phenotype
+            ) count_positives
+        ;
+        '''
+        cursor.execute(query, (data_analysis_study,))
         rows = cursor.fetchall()
         max_positives = rows[0][0]
 
-        cursor.execute(
-            '''
-            SELECT MAX(number_negatives) FROM
-                (
-                SELECT cell_phenotype, count(marker) as number_negatives
-                FROM cell_phenotype_criterion
-                WHERE study=%s AND polarity='negative'
-                GROUP BY cell_phenotype
-                ) count_negatives
-            ;
-            ''',
-            (data_analysis_study,),
-        )
+        query = '''
+        SELECT MAX(number_negatives) FROM
+            (
+            SELECT cell_phenotype, count(marker) as number_negatives
+            FROM cell_phenotype_criterion
+            WHERE study=%s AND polarity='negative'
+            GROUP BY cell_phenotype
+            ) count_negatives
+        ;
+        '''
+        cursor.execute(query,(data_analysis_study,))
         rows = cursor.fetchall()
         max_negatives = rows[0][0]
 

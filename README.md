@@ -157,12 +157,10 @@ To import HALO-exported cell object files into a normalized database conforming 
 *Note*: The import workflow can be sped up substantially by wrapping the run command in commands that teardown/recreate certain constraints, as follows:
 
 ```sh
-spt-db-constraints --database-config-file-elevated=~/.spt_db.config.elevated --drop
+spt-db-constraints --database-config-file-elevated=~/.spt_db.config --drop
 ./run.sh
-spt-db-constraints --database-config-file-elevated=~/.spt_db.config.elevated --recreate
+spt-db-constraints --database-config-file-elevated=~/.spt_db.config --recreate
 ```
-
-Here `.spt_db.config.elevated` is a version of the database configuration file providing credentials for a user with elevated privileges on the database.
 
 *Note*: The credentials file is not copied by the workflow, and the password is stored in memory only long enough to establish a connection to the database.
 

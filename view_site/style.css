@@ -155,6 +155,11 @@ div.about-text div ul li{
 }
 div.attributes-table-container {
     margin: 0 auto;
+    text-align: center;
+}
+div.attributes-table-container table{
+    margin-left: auto;
+    margin-right: auto;
 }
 div.attributes-table-container table tr td{
     background: #fbfbfb;

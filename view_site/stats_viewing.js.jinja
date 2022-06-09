@@ -180,7 +180,6 @@ function load_study_summary(cache_element_id, responseText, event) {
     var table = get_summary_table(cache_element_id)
     var properties = JSON.parse(responseText)
     for (var key of Object.keys(properties)) {
-        console.log(key + " -> " + properties[key])
         var tr = document.createElement("tr")
         var key_td = document.createElement("td")
         var value_td = document.createElement("td")
@@ -204,7 +203,6 @@ function get_summary_table(cache_element_id) {
     }
     return document.getElementById(summary_table_id)    
 }
-
 
 function pull_data_from_studies() {
     measurement_name = document.getElementById('cached-measurement-names' + '-selection').innerHTML

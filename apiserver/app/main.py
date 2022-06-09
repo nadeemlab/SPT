@@ -95,6 +95,11 @@ async def get_specimen_measurement_study_summary(
             (specimen_measurement_study,),
         )
         rows = cursor.fetchall()
+        if len(rows) == 0:
+            return Response(media_type = 'application/json', content = json.dumps({
+                'specimen_measurement_study' : specimen_measurement_study,
+                'status' : 'not found'
+            }))
         assay = rows[0][0]
 
         cursor.execute(
@@ -150,6 +155,17 @@ async def get_data_analysis_study_summary(
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
+
+        cursor.execute(
+            'SELECT count(*) FROM data_analysis_study WHERE name=%s;',
+            (data_analysis_study,),
+        )
+        rows = cursor.fetchall()
+        if len(rows) == 0:
+            return Response(media_type = 'application/json', content = json.dumps({
+                'data_analysis_study' : data_analysis_study,
+                'status' : 'not found'
+            }))
 
         cursor.execute(
             'SELECT count(DISTINCT cell_phenotype) FROM cell_phenotype_criterion WHERE study=%s;',

@@ -1,7 +1,8 @@
 function setup(){
     setup_table_header()
     setup_info_area()
-    pull_study_names()
+    pull_study_names('cached-measurement-names')
+    pull_study_names('cached-analysis-names')
 }
 
 function setup_info_area() {
@@ -18,32 +19,40 @@ function setup_info_area() {
     })
 }
 
-function pull_study_names() {
-    if (names_are_cached()) {
-        handle_names(get_cached_response_text(), null)
+function pull_study_names(cache_element_id) {
+    id = cache_element_id
+    if (names_are_cached(id)) {
+        handle_names(id, get_cached_response_text(id), null)
     } else {
-        URL="{{ protocol }}://{{ api_url }}/specimen-measurement-study-names"
+        var query_specifier;
+        if (id == 'cached-measurement-names') {
+            query_specifier = 'specimen-measurement-study-names'
+        }
+        if (id == 'cached-analysis-names') {
+            query_specifier = 'data-analysis-study-names'
+        }
+        URL=`{{ protocol }}://{{ api_url }}/${query_specifier}`
         get_from_url(URL, function(response, event){
-            handle_names(response.responseText, event)
+            handle_names(id, response.responseText, event)
         })
     }
 }
 
-function names_are_cached() {
-    cache = document.getElementById("cached-names")
+function names_are_cached(cache_element_id) {
+    cache = document.getElementById(cache_element_id)
     if (cache.getAttribute("hascache") == "true") {
         return true
     }
     return false
 }
 
-function get_cached_names_response() {
-    cache = document.getElementById("cached-names")
+function get_cached_response_text(cache_element_id) {
+    cache = document.getElementById(cache_element_id)
     return cache.innerHTML
 }
 
-function cache_names_response(responseText) {
-    cache = document.getElementById("cached-names")
+function cache_names_response(cache_element_id, responseText) {
+    cache = document.getElementById(cache_element_id)
     cache.innerHTML = responseText
     cache.setAttribute("hascache", "true")
 }
@@ -55,16 +64,16 @@ function get_from_url(url, callback=function(response, event){}){
     httpreq.send(null);
 }
 
-function handle_names(responseText, event) {
-    cache_names_response(responseText)
+function handle_names(cache_element_id, responseText, event) {
+    cache_names_response(cache_element_id, responseText)
     obj = JSON.parse(responseText)
     let study_names = Array.from(
         new Set(
             obj[Object.keys(obj)[0]]
         )
     )
-    setup_study_selector()
-    create_study_list(study_names)
+    setup_study_selector(cache_element_id)
+    create_study_list(cache_element_id, study_names)
 }
 
 function setup_table_header() {
@@ -91,8 +100,14 @@ function setup_table_header() {
     table.appendChild(header_row)
 }
 
-function create_study_list(study_names) {
-    study_selector = document.getElementById("study-selector")
+function create_study_list(cache_element_id, study_names) {
+    if (cache_element_id == 'cached-measurement-names') {
+        selector = 'measurement-study-selector'
+    }
+    if (cache_element_id == 'cached-analysis-names') {
+        selector = 'analysis-study-selector'
+    }
+    study_selector = document.getElementById("measurement-study-selector")
     select = study_selector.querySelectorAll(":scope > select")[0]
     deletable = select.querySelectorAll("option.studyoption")
     for (var j = 0; j < deletable.length; ++j) {
@@ -106,11 +121,11 @@ function create_study_list(study_names) {
         option.setAttribute("class", "studyoption")
         option.setAttribute("value", i+1)
         option.setAttribute("studyname", study)
-        option.innerHTML = study.replace(/ - measurement/, "");
+        option.innerHTML = study;
         select.appendChild(option)
 
         item = document.createElement("div")
-        item.innerHTML = study.replace(/ - measurement/, "");
+        item.innerHTML = study;
         item.setAttribute("studyname", study)
         item.addEventListener("click", function(e) {
             /* When an item is clicked, update the original select box,
@@ -132,16 +147,26 @@ function create_study_list(study_names) {
                 break;
               }
             }
-            pull_data_from_study(this.getAttribute("studyname"))
+            document.getElementById(cache_element_id + '-selection').innerHTML = this.getAttribute("studyname")
+            pull_data_from_studies()
             h.click();
         });
         study_list.appendChild(item)
     }
 }
 
-function pull_data_from_study(study) {
-    var encoded_study = encodeURIComponent(study)
-    URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/?specimen_measurement_study=${encoded_study}&data_analysis_study=unknowndatanalysisstudy`
+function pull_data_from_studies() {
+    measurement_name = document.getElementById('cached-measurement-names' + '-selection').innerHTML
+    if (measurement_name == '') {
+        return
+    }
+    analysis_name = document.getElementById('cached-measurement-names' + '-selection').innerHTML 
+    if (analysis_name == '') {
+        return
+    }
+    var encoded_measurement_study = encodeURIComponent(measurement_study)
+    var encoded_data_analysis_study = encodeURIComponent(measurement_study)
+    URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/?specimen_measurement_study=${encoded_measurement_study}&data_analysis_study=${encoded_data_analysis_study}`
     response = get_from_url(URL, load_study)
 }
 
@@ -231,7 +256,7 @@ function get_ordered_data_rows(column_index, sign) {
     return new_rows
 }
 
-function setup_study_selector() {
+function setup_study_selector(cache_element_id) {
     var x, i, j, l, ll, selectElement, a, b, c;
     /* Look for any elements with the class "custom-select": */
     x = document.getElementsByClassName("custom-select");

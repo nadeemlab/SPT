@@ -130,6 +130,7 @@ div.more-info-button span{
     font-style: italic;
     cursor: pointer;
     color: blue;
+    max-height: 9999px;
 }
 div.more-info-button:hover {
     text-decoration: underline;

@@ -21,11 +21,13 @@ The basic workflows compute:
 - **Density metrics**. Without regard to spatial information, cell counts per unit cell area in a given compartment or region belonging to a given phenotype.
 - **Front proximity workflow**. The distribution of the distances between the cells of a given subset and the front or boundary between two given regions.
 
-Additional workflows using third-party libraries can be added with minimal overhead.
+A further workflow provides support for [importing multiplexed imaging cell data](https://github.com/nadeemlab/SPT#import-halo-data-into-normal-form) into a normalized database. Additional workflows using third-party libraries can be added with minimal overhead.
 
 Preparing your data
 -------------------
-The current workflows all operate on spreadsheet files mimicing that of object/cell manifests exported from the [HALO](https://indicalab.com/halo/) software. Required metadata is described [here](https://github.com/nadeemlab/SPT/blob/main/schemas/input_data_requirements.pdf).
+The current workflows all operate on spreadsheet files mimicing that of object/cell manifests exported from the [HALO](https://indicalab.com/halo/) software.
+
+In the future all workflows will operate on [Pathology ADI-compliant](https://adiframework.com/docs_site/pathology_quick_reference.html) datasets.
 
 Prerequisites
 -------------
@@ -55,12 +57,12 @@ Navigate to a working directory for your run, and configure it with `spt-configu
 $ spt-configure -h
 
 usage: spt-configure [-h]
- --workflow {phenotype density,front proximity,phenotype proximity}
+ --workflow {HALO import,phenotype density,front proximity,phenotype proximity}
  --input-path INPUT_PATH
  [--sif-file SIF_FILE]
- [--local]
- [--lsf]
+ (--local | --lsf)
  [--excluded-host EXCLUDED_HOST]
+ [--database-config-file DATABASE_CONFIG_FILE]
 
 Configure an SPT (spatialprofilingtoolbox) run in the current directory.
 
@@ -74,6 +76,8 @@ optional arguments:
   --lsf                 Use this flag to get Nextflow to attempt to deploy processes as Platform LSF jobs on an HPC cluster.
   --excluded-host EXCLUDED_HOST
                         If a machine must not have LSF jobs scheduled on it, supply its hostname here.
+  --database-config-file DATABASE_CONFIG_FILE
+                        If workflow involves database, provide the config file here.
 ```
 
 **Note**: *If you didn't `pip install`, you can run the configuration script out of the container:*
@@ -84,7 +88,7 @@ $ singularity exec -B /path/to/my/data -B /path/to/my/containers /path/to/my/con
 
 **Note**: *In a limited-permissions environment, [miniconda](https://docs.conda.io/en/latest/miniconda.html) can be used to install git, Python, and gxx (for sklearn), and then install `spatialprofilingtoolbox` from the source in this git repository, all into a conda-managed virtual environment.*
 
-For example:
+Example configuration run:
 ```sh
 $ spt-configure \
  --workflow='phenotype density' \
@@ -123,11 +127,11 @@ $ spt-report-on-logs
 *Note*: `spt-report-on-logs` *will search for run directories recursively starting at the current directory, and report on all the runs.*
 
 ### Import HALO data into normal form
-The input, intermediate, and output data involved is described by a fully-documented data model, the Pathology ADI ("Application Data Interface"). The model documents 105 fields in 23 tables. 62 entity types with 37 property types are annotated with definitions, with 73% coverage by references to independently-maintained ontologies.
+The input, intermediate, and output data pertaining to the pipelines is described by a fully-documented data model, the [Pathology ADI](https://adiframework.com/docs_site/pathology_quick_reference.html) ("Application Data Interface"). The model documents 104 fields in 22 tables. 61 entity types with 36 property types are annotated with definitions, with 73% coverage by references to independently-maintained ontologies.
 
 To import HALO-exported cell object files into a normalized database conforming to the Pathology ADI:
 1. Set up a PostgreSQL database (e.g. on your local machine).
-2. Save [`~/.spt_db_config`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/templates/.spt_db.config.template):
+2. Save [`~/.spt_db.config`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/templates/.spt_db.config.template):
    ```
    [database-credentials]
    database = <database name>
@@ -142,9 +146,23 @@ To import HALO-exported cell object files into a normalized database conforming 
 4. Prepare your data in the format exemplified in [tests/data_subspecimens/](https://github.com/nadeemlab/SPT/tree/main/tests/data_subspecimens).
 5. Run the `'HALO import'` workflow, for example:
    ```sh
-   spt-configure --local --input-path=/path/to/data --workflow='HALO import' --database-config-file=~/.spt_db_config
+   spt-configure --local --input-path=/path/to/data --workflow='HALO import' --database-config-file=~/.spt_db.config
    ./run.sh
    ```
+6. (Optional) Compute summary views:
+   ```sh
+   spt-create-db-schema --database-config-file=~/.spt_db.config --refresh-views-only
+   ```
+
+*Note*: The import workflow can be sped up substantially by wrapping the run in commands that teardown/recreate certain constraints, as follows:
+
+```sh
+spt-db-constraints --database-config-file-elevated=~/.spt_db.config.elevated --drop
+./run.sh
+spt-db-constraints --database-config-file-elevated=~/.spt_db.config.elevated --recreate
+```
+
+Here `.spt_db.config.elevated` is a version of the database configuration file providing credentials for a user with elevated privileges on the database.
 
 *Note*: The credentials file is not copied by the workflow, and the password is stored in memory only long enough to establish a connection to the database.
 
@@ -222,6 +240,6 @@ Plot rendering for about 500 MB (8 million cells) took 5 minutes on a workstatio
 </p>
 
 Papers Using SPT
---------
+----------------
 
 Vanguri et al. **Tumor immune microenvironment and response to neoadjuvant chemotherapy in hormone receptor/HER2+ early stage breast cancer**. *Clinical Breast Cancer*, 2022. [[Read Link]](https://authors.elsevier.com/c/1f6o35RAAoiGLA)

@@ -153,3 +153,16 @@ div.about-text div ul{
 div.about-text div ul li{
     text-align: left;
 }
+div.attributes-table-container {
+    margin: 0 auto;
+}
+div.attributes-table-container table tr td{
+    background: #fbfbfb;
+    padding: 4px;
+}
+div.attributes-table-container table tr:hover{
+    background: #f0f0f0;
+}
+div.attributes-table-container table tr td.key{
+    font-weight: bold;
+}

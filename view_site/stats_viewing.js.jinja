@@ -101,6 +101,7 @@ function setup_table_header() {
 }
 
 function create_study_list(cache_element_id, study_names) {
+    var selector_id
     if (cache_element_id == 'cached-measurement-names') {
         selector_id = 'measurement-study-selector'
     }
@@ -148,12 +149,61 @@ function create_study_list(cache_element_id, study_names) {
               }
             }
             document.getElementById(cache_element_id + '-selection').innerHTML = this.getAttribute("studyname")
+            pull_study_summary(cache_element_id)
             pull_data_from_studies()
             h.click();
         });
         study_list.appendChild(item)
     }
 }
+
+function pull_study_summary(cache_element_id) {
+    var table = get_summary_table(cache_element_id)
+    if (table.children.length > 0) {
+        return
+    }
+
+    var study_summary
+    if (cache_element_id == 'cached-measurement-names') {
+        study_summary = 'specimen-measurement-study-summary'
+    }
+    if (cache_element_id == 'cached-analysis-names') {
+        study_summary = 'data-analysis-study-summary'
+    }
+
+    var URL=`{{ protocol }}://{{ api_url }}/${study_summary}/`
+    get_from_url(URL, function(response, event){load_study_summary(cache_element_id, response.responseText, event)})
+}
+
+function load_study_summary(cache_element_id, responseText, event) {
+    var table = get_summary_table(cache_element_id)
+    var properties = JSON.parse(responseText)
+    for (var key of Object.keys(properties)) {
+        console.log(key + " -> " + properties[key])
+        var tr = document.createElement("tr")
+        var key_td = document.createElement("td")
+        var value_td = document.createElement("td")
+        key_td.setAttribute("class", "key")
+        key_td.innerHTML = key
+        value_td.innerHTML = "" + properties[key]
+        tr.appendChild(key_td)
+        tr.appendChild(value_td)
+        table.appendChild(tr)
+    }
+    table.style.display = 'block'
+}
+
+function get_summary_table(cache_element_id) {
+    var summary_table_id
+    if (cache_element_id == 'cached-measurement-names') {
+        summary_table_id = 'measurement-study-attributes'
+    }
+    if (cache_element_id == 'cached-analysis-names') {
+        summary_table_id = 'analysis-study-attributes'
+    }
+    return document.getElementById(summary_table_id)    
+}
+
 
 function pull_data_from_studies() {
     measurement_name = document.getElementById('cached-measurement-names' + '-selection').innerHTML

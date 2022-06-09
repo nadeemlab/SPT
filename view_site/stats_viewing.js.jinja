@@ -102,12 +102,12 @@ function setup_table_header() {
 
 function create_study_list(cache_element_id, study_names) {
     if (cache_element_id == 'cached-measurement-names') {
-        selector = 'measurement-study-selector'
+        selector_id = 'measurement-study-selector'
     }
     if (cache_element_id == 'cached-analysis-names') {
-        selector = 'analysis-study-selector'
+        selector_id = 'analysis-study-selector'
     }
-    study_selector = document.getElementById("measurement-study-selector")
+    study_selector = document.getElementById(selector_id)
     select = study_selector.querySelectorAll(":scope > select")[0]
     deletable = select.querySelectorAll("option.studyoption")
     for (var j = 0; j < deletable.length; ++j) {

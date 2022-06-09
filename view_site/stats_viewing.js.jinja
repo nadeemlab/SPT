@@ -113,7 +113,7 @@ function create_study_list(cache_element_id, study_names) {
     for (var j = 0; j < deletable.length; ++j) {
         deletable[j].remove()
     }
-    study_list = document.getElementById("studyinnerlist")
+    study_list = document.getElementById(cache_element_id + "-studyinnerlist")
     study_list.innerHTML = ''
     for (var i = 0; i < study_names.length; ++i) {
         study = study_names[i]
@@ -272,7 +272,7 @@ function setup_study_selector(cache_element_id) {
       /* For each element, create a new DIV that will contain the option list: */
       b = document.createElement("DIV");
       b.setAttribute("class", "select-items select-hide");
-      b.setAttribute("id", "studyinnerlist")
+      b.setAttribute("id", cache_element_id + "-studyinnerlist")
       for (j = 1; j < ll; j++) {
         /* For each option in the original select element,
         create a new DIV that will act as an option item: */

@@ -134,8 +134,8 @@ async def get_specimen_measurement_study_summary(
 
         representation = {
            'Assay' : assay,
-           'Number of specimens surveyed' : number_specimens,
-           'Total number of cells measured' : number_cells,
+           'Number of specimens measured' : number_specimens,
+           'Number of cells detected' : number_cells,
            'Number of channels measured' : number_channels,
         }
         cursor.close()
@@ -208,7 +208,7 @@ async def get_data_analysis_study_summary(
 
         representation = {
             'Number of composite phenotypes specified' : number_phenotypes,
-            'Total number of markers referenced in phenotype definitions' : number_markers,
+            'Number of markers referenced' : number_markers,
             'Largest number of positive markers in a phenotype' : max_positives,
             'Largest number of negative markers in a phenotype' : max_negatives,
         }

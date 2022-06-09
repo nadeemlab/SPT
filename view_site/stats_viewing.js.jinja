@@ -173,7 +173,7 @@ function pull_study_summary(cache_element_id, study_name) {
 
     var encoded_study_name = encodeURIComponent(study_name)
     var URL=`{{ protocol }}://{{ api_url }}/${study_phase_indicator}/${encoded_study_name}`
-    toggle_loading_gif(cache_element_id, state="show")
+    toggle_loading_gif(cache_element_id, state="on")
     get_from_url(URL, function(response, event){load_study_summary(cache_element_id, response.responseText, event)})
 }
 

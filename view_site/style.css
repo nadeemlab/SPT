@@ -170,6 +170,7 @@ div.attributes-table-container table tr:hover td{
 }
 div.attributes-table-container table tr td.key{
     font-weight: bold;
+    text-align: right;
 }
 img.loadinggif{
     margin-left: auto;

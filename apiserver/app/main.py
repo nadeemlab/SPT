@@ -82,7 +82,7 @@ def get_data_analysis_study_names():
         )
 
 
-@app.get("/specimen-measurement-study-summary/")
+@app.get("/specimen-measurement-study-summary/{specimen_measurement_study}")
 async def get_specimen_measurement_study_summary(
     specimen_measurement_study : str = Query(default='unknown', min_length=3),
 ):
@@ -148,7 +148,7 @@ async def get_specimen_measurement_study_summary(
         )
 
 
-@app.get("/data-analysis-study-summary/")
+@app.get("/data-analysis-study-summary/{data_analysis_study}")
 async def get_data_analysis_study_summary(
     data_analysis_study : str = Query(default='unknown', min_length=3),
 ):

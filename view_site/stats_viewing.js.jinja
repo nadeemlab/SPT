@@ -257,9 +257,16 @@ function get_ordered_data_rows(column_index, sign) {
 }
 
 function setup_study_selector(cache_element_id) {
-    var x, i, j, l, ll, selectElement, a, b, c;
+    var i, j, l, ll, selectElement, a, b, c;
     /* Look for any elements with the class "custom-select": */
-    x = [document.getElementById(cache_element_id)]
+    var x = new Array();
+    if (cache_element_id == 'cached-measurement-names') {
+        selector_id = 'measurement-study-selector'
+    }
+    if (cache_element_id == 'cached-analysis-names') {
+        selector_id = 'analysis-study-selector'
+    }
+    x.push(document.getElementById(selector_id))
     l = x.length;
     for (i = 0; i < l; i++) {
       selectElement = x[i].getElementsByTagName("select")[0];

@@ -1,7 +1,8 @@
 /* The container must be positioned relative: */
 .custom-select {
   position: relative;
-  max-width: 650px;
+  max-width: 500px;
+  margin: 15px;
 }
 
 .custom-select select {

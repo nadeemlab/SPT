@@ -20,7 +20,7 @@ function setup_info_area() {
 }
 
 function pull_study_names(cache_element_id) {
-    id = cache_element_id
+    var id = cache_element_id
     if (names_are_cached(id)) {
         handle_names(id, get_cached_response_text(id), null)
     } else {
@@ -39,7 +39,7 @@ function pull_study_names(cache_element_id) {
 }
 
 function names_are_cached(cache_element_id) {
-    cache = document.getElementById(cache_element_id)
+    var cache = document.getElementById(cache_element_id)
     if (cache.getAttribute("hascache") == "true") {
         return true
     }
@@ -47,12 +47,12 @@ function names_are_cached(cache_element_id) {
 }
 
 function get_cached_response_text(cache_element_id) {
-    cache = document.getElementById(cache_element_id)
+    var cache = document.getElementById(cache_element_id)
     return cache.innerHTML
 }
 
 function cache_names_response(cache_element_id, responseText) {
-    cache = document.getElementById(cache_element_id)
+    var cache = document.getElementById(cache_element_id)
     cache.innerHTML = responseText
     cache.setAttribute("hascache", "true")
 }
@@ -66,7 +66,7 @@ function get_from_url(url, callback=function(response, event){}){
 
 function handle_names(cache_element_id, responseText, event) {
     cache_names_response(cache_element_id, responseText)
-    obj = JSON.parse(responseText)
+    var obj = JSON.parse(responseText)
     let study_names = Array.from(
         new Set(
             obj[Object.keys(obj)[0]]
@@ -107,24 +107,24 @@ function create_study_list(cache_element_id, study_names) {
     if (cache_element_id == 'cached-analysis-names') {
         selector_id = 'analysis-study-selector'
     }
-    study_selector = document.getElementById(selector_id)
-    select = study_selector.querySelectorAll(":scope > select")[0]
-    deletable = select.querySelectorAll("option.studyoption")
+    var study_selector = document.getElementById(selector_id)
+    var select = study_selector.querySelectorAll(":scope > select")[0]
+    var deletable = select.querySelectorAll("option.studyoption")
     for (var j = 0; j < deletable.length; ++j) {
         deletable[j].remove()
     }
-    study_list = document.getElementById(cache_element_id + "-studyinnerlist")
+    var study_list = document.getElementById(cache_element_id + "-studyinnerlist")
     study_list.innerHTML = ''
     for (var i = 0; i < study_names.length; ++i) {
-        study = study_names[i]
-        option = document.createElement("option")
+        var study = study_names[i]
+        var option = document.createElement("option")
         option.setAttribute("class", "studyoption")
         option.setAttribute("value", i+1)
         option.setAttribute("studyname", study)
         option.innerHTML = study;
         select.appendChild(option)
 
-        item = document.createElement("div")
+        var item = document.createElement("div")
         item.innerHTML = study;
         item.setAttribute("studyname", study)
         item.addEventListener("click", function(e) {
@@ -160,14 +160,14 @@ function pull_data_from_studies() {
     if (measurement_name == '') {
         return
     }
-    analysis_name = document.getElementById('cached-measurement-names' + '-selection').innerHTML 
+    analysis_name = document.getElementById('cached-analysis-names' + '-selection').innerHTML 
     if (analysis_name == '') {
         return
     }
-    var encoded_measurement_study = encodeURIComponent(measurement_study)
-    var encoded_data_analysis_study = encodeURIComponent(measurement_study)
-    URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/?specimen_measurement_study=${encoded_measurement_study}&data_analysis_study=${encoded_data_analysis_study}`
-    response = get_from_url(URL, load_study)
+    var encoded_measurement_study = encodeURIComponent(measurement_name)
+    var encoded_data_analysis_study = encodeURIComponent(analysis_name)
+    var URL=`{{ protocol }}://{{ api_url }}/phenotype-summary/?specimen_measurement_study=${encoded_measurement_study}&data_analysis_study=${encoded_data_analysis_study}`
+    get_from_url(URL, load_study)
 }
 
 function clear_table() {
@@ -214,8 +214,8 @@ function load_study(response, event) {
 }
 
 function sort_data_rows(column_index, sign) {
-    table = document.getElementById("fractionstable")
-    tr_elements = get_ordered_data_rows(column_index, sign)
+    var table = document.getElementById("fractionstable")
+    var tr_elements = get_ordered_data_rows(column_index, sign)
     for (var i = 0; i < tr_elements.length; ++i) {
         table.appendChild(tr_elements[i])
     }
@@ -223,8 +223,8 @@ function sort_data_rows(column_index, sign) {
 }
 
 function get_ordered_data_rows(column_index, sign) {
-    table = document.getElementById("fractionstable")
-    all_rows = Array.from(table.children)
+    var table = document.getElementById("fractionstable")
+    var all_rows = Array.from(table.children)
     var values_indices = [];
     for (var i = 1; i < all_rows.length; ++i) {
         row = all_rows[i]
@@ -259,13 +259,14 @@ function get_ordered_data_rows(column_index, sign) {
 function setup_study_selector(cache_element_id) {
     var i, j, l, ll, selectElement, a, b, c;
     /* Look for any elements with the class "custom-select": */
-    var x = new Array();
+    var selector_id;
     if (cache_element_id == 'cached-measurement-names') {
         selector_id = 'measurement-study-selector'
     }
     if (cache_element_id == 'cached-analysis-names') {
         selector_id = 'analysis-study-selector'
     }
+    var x = new Array();
     x.push(document.getElementById(selector_id))
     l = x.length;
     for (i = 0; i < l; i++) {

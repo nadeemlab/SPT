@@ -165,7 +165,7 @@ div.attributes-table-container table tr td{
     background: #fbfbfb;
     padding: 4px;
 }
-div.attributes-table-container table tr:hover{
+div.attributes-table-container table tr:hover td{
     background: #f0f0f0;
 }
 div.attributes-table-container table tr td.key{

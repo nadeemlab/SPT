@@ -27,7 +27,7 @@
 <b>System</b>. The data is stored in a PostgresQL database hosted at {{ host }}. The schema is highly normalized, with only functional relations. Precise definitions of the entities and relations documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views are served by a FastAPI server, with a read-only API documented <a href="{{ protocol }}://{{ api_url }}/docs">here</a>. Source code for these tools is located <a href="https://github.com/nadeemlab/SPT">here</a>.
 </p>
 <p>
-<b>Performance</b>. It takes about 4 minutes per million cells to load datasets into the database, and about 4 minutes per 100 cases (i.e. rows as shown below) to refresh the summary statistics.
+<b>Performance</b>. It takes about 4 minutes per million cells to load datasets into the database, and about 3 minutes per million cells and per 100 cases (i.e. rows as shown below) to refresh the summary statistics.
 </p>
 </div>
 <br/>

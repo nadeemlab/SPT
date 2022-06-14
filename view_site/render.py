@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-import os
-from os.path import exists
-
 import jinja2
 from jinja2 import Environment
 from jinja2 import BaseLoader

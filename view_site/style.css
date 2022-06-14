@@ -70,11 +70,11 @@ body {
     font-family: sans-serif;
     font-size: small;
 }
-div.displayable-content-container {
+div.centerable-content-container {
     margin: auto;
     text-align:  center;
 }
-div.displayable-content-container table, div.custom-select{
+div.centerable-content-container table, div.custom-select{
     margin: 0 auto; 
     text-align: left;    
 }
@@ -123,16 +123,16 @@ div.about-text {
     margin: 0 auto; 
     text-align: center;
 }
-div.more-info-button {
+div.show-more-button {
     margin: 0 auto;
 }
-div.more-info-button span{
+div.show-more-button span{
     font-style: italic;
     cursor: pointer;
     color: blue;
     max-height: 9999px;
 }
-div.more-info-button:hover {
+div.show-more-button:hover {
     text-decoration: underline;
 }
 div.about-text p{

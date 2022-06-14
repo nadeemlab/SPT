@@ -1,21 +1,26 @@
-function setup(){
+function setup_interactive_elements(){
     setup_table_header()
-    setup_info_area()
+    setup_openable_section(title = 'info', section_name = 'phenotype summary about section')
     pull_study_names('cached-measurement-names')
     pull_study_names('cached-analysis-names')
 }
 
-function setup_info_area() {
-    infobutton = document.getElementById("phenotype-summary-about-button")
-    infobutton.addEventListener("click", function(e) {
-        abouttext = document.getElementById("phenotype-summary-about-text")
-        if (this.innerHTML == '+ info') {
-            this.innerHTML = '- info'
-            abouttext.style.display = 'block'
-        } else {
-            this.innerHTML = '+ info'
-            abouttext.style.display = 'none'
-        }
+function toggle_open(title, button, about_text, event) {
+    if (button.innerHTML == '+ ' + title) {
+        button.innerHTML = '- ' + title
+        about_text.style.display = 'block'
+    } else {
+        button.innerHTML = '+ ' + title
+        about_text.style.display = 'none'
+    }
+}
+
+function setup_openable_section(title = '', section_name = '') {
+    let section = document.getElementById(section_name)
+    let button = section.getElementsByClassName('show-more-button')[0].getElementsByClassName('clickable-text')[0]
+    let about_text = section.getElementsByClassName('about-text')[0]
+    button.addEventListener('click', function(event) {
+        return toggle_open(title, button, about_text, event)
     })
 }
 

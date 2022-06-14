@@ -1,15 +1,24 @@
 function setup_interactive_elements(){
-    setup_table_header()
     setup_openable_sections()
+    setup_table_header()
+
+    setup_retrievable_selectors()
+
     pull_study_names('cached-measurement-names')
     pull_study_names('cached-analysis-names')
+}
+
+function setup_openable_sections() {
+    for (let section_in_document of document.getElementsByClassName('openable-section')) {
+        let section = new OpenableSection(section_in_document)        
+    }
 }
 
 class OpenableSection {
     constructor(section_in_document) {
         this.clickable_text = section_in_document.getElementsByClassName('show-more-button')[0].getElementsByClassName('clickable-text')[0]
         this.title = this.clickable_text.innerHTML.replace(/\+ /, '')
-        this.showable_text = section_in_document.getElementsByClassName('showable-text')[0]
+        this.showable_text = section_in_document.getElementsByClassName('toggleable-text')[0]
         let reference = this
         this.clickable_text.addEventListener('click', function(event) { reference.toggle_open(event) })
     }
@@ -24,14 +33,95 @@ class OpenableSection {
     }
 }
 
-function setup_openable_sections() {
-    for (let section_in_document of document.getElementsByClassName('openable-section')) {
-        let section = new OpenableSection(section_in_document)        
+function setup_retrievable_selectors() {
+    var retrievable_selectors = [
+        new RetrievableSelector('measurement study selector'),
+        new RetrievableSelector('analysis study selector'),
+    ]
+}
+
+function get_from_url(url, callback=function(response, event){}){
+    let httpreq = new XMLHttpRequest();
+    httpreq.open("GET", url, async=true);
+    httpreq.onload = function(event) {callback(this, event)}
+    httpreq.send(null);
+}
+
+class RetrievableSelector {
+    constructor(selector_id) {
+        this.selector = document.getElementById(selector_id)
+        let options_query_fragment = this.selector.getAttribute('query_fragment')
+        this.pull_names(options_query_fragment)
+    }
+    pull_names(options_query_fragment) {
+        let url_base = get_api_url_base()
+        let url=`${url_base}/${options_query_fragment}`
+        let reference = this
+        get_from_url(url, callback = reference.handle_query_response )
+    }
+    handle_query_response(response, event) {
+        let obj = JSON.parse(response.responseText)
+        let option_names = Array.from(
+            new Set(
+                obj[Object.keys(obj)[0]]
+            )
+        )
+        this.setup_document_elements(option_names)
+    }
+    get_solicitation_text() {
+        return 'Select ' + this.selector.getAttribute('display_soliciation_name')
+    }
+    get_selected_element() {
+        return this.selector.getElementsByClassName('retrievable-selected')[0]
+    }
+    get_options_element() {
+        return this.selector.getElementsByClassName('retrievable-select-items')[0]
+    }
+    setup_selected_element() {
+        let selected_item_ = document.createElement('div')
+        selected_item_.setAttribute('class', 'retrievable-selected')
+        selected_item_.innerHTML = this.get_solicitation_text()
+        let reference = this
+        selected_item_.addEventListener('click', function(event) {
+            event.stopPropagation();
+            close_all_select(reference.selector)
+            this.nextSibling.classList.toggle('select-hide')
+            this.classList.toggle('select-arrow-active')
+        })
+        this.selector.appendChild(selected_item_)
+    }
+    setup_retrieved_options(option_names) {
+        let retrieved_options_ = document.createElement('div');
+        retrieved_options_.setAttribute('class', 'retrievable-select-items retrievable-select-hide')
+        for (let option_name of option_names) {
+            let option = document.createElement('div')
+            option.innerHTML = option_name;
+            let reference = this
+            option.addEventListener('click', function(event) {reference.select_option(this)})
+            retrieved_options_.appendChild(option)
+        }
+        this.selector.appendChild(retrieved_options_)
+    }
+    setup_document_elements(option_names) {
+        setup_selected_element()
+        setup_retrieved_options(option_names)
+        document.addEventListener('click', close_all_select);
+        // create_study_list(cache_element_id, study_names)
+    }
+
+    select_option(option, event) {
+        this.selected_item.innerHTML = option.innerHTML
+        for (let other_option of this.get_options_element().getElementsByClassName('same-as-selected')) {
+            other_option.removeAttribute('class')
+        }
+        option.setAttribute('class', 'same-as-selected');
     }
 }
 
+
 function pull_study_names(cache_element_id) {
     var id = cache_element_id
+    let 
     if (names_are_cached(id)) {
         handle_names(id, get_cached_response_text(id), null)
     } else {
@@ -67,13 +157,6 @@ function cache_names_response(cache_element_id, responseText) {
     var cache = document.getElementById(cache_element_id)
     cache.innerHTML = responseText
     cache.setAttribute("hascache", "true")
-}
-
-function get_from_url(url, callback=function(response, event){}){
-    var httpreq = new XMLHttpRequest();
-    httpreq.open("GET", url, async=true);
-    httpreq.onload = function(event) {callback(this, event)}
-    httpreq.send(null);
 }
 
 function handle_names(cache_element_id, responseText, event) {
@@ -393,11 +476,12 @@ function setup_study_selector(cache_element_id) {
         b.appendChild(c);
       }
       x[i].appendChild(b);
+      reference = this
       a.addEventListener("click", function(e) {
         /* When the select box is clicked, close any other select boxes,
         and open/close the current select box: */
         e.stopPropagation();
-        closeAllSelect(this);
+        closeAllSelect(reference.selector);
         this.nextSibling.classList.toggle("select-hide");
         this.classList.toggle("select-arrow-active");
       });
@@ -408,26 +492,14 @@ function setup_study_selector(cache_element_id) {
     document.addEventListener("click", closeAllSelect);
 }
 
-function closeAllSelect(element) {
-  /* A function that will close all select boxes in the document,
-  except the current select box: */
-  var x, y, i, xl, yl, arrNo = [];
-  x = document.getElementsByClassName("select-items");
-  y = document.getElementsByClassName("select-selected");
-  xl = x.length;
-  yl = y.length;
-  for (i = 0; i < yl; i++) {
-    if (element == y[i]) {
-      arrNo.push(i)
-    } else {
-      y[i].classList.remove("select-arrow-active");
+function close_all_selects(selector_element) {
+    for (let r of retrievable_selectors) {
+        if (r.selector.getAttribute('id') == selector_element.getAttribute('id')) {
+            r.retrieved_options.classList.add('retrievable-select-hide')
+        } else {
+            r.selected_item.classList.remove('select-arrow-active')
+        }
     }
-  }
-  for (i = 0; i < xl; i++) {
-    if (arrNo.indexOf(i)) {
-      x[i].classList.add("select-hide");
-    }
-  }
 }
 
 function update_row_counter() {

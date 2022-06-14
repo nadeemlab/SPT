@@ -1,15 +1,17 @@
-/* The container must be positioned relative: */
 .custom-select {
-  position: relative;
-  max-width: 500px;
-  margin: 15px;
+    position: relative;
+    max-width: 500px;
 }
 
 .custom-select select {
   display: none; /*hide original SELECT element: */
 }
 
-.select-selected , .regbtn{
+.hidden-items div {
+    display: none;
+}
+
+.retrievable-selected , .regbtn{
   background-color: lightblue;
 }
 
@@ -23,7 +25,7 @@
 }
 
 /* Style the arrow inside the select element: */
-.select-selected:after {
+.retrievable-selected:after {
   position: absolute;
   content: "";
   top: 14px;
@@ -35,13 +37,13 @@
 }
 
 /* Point the arrow upwards when the select box is open (active): */
-.select-selected.select-arrow-active:after {
+.retrievable-selected.select-arrow-active:after {
   border-color: transparent transparent #000 transparent;
   top: 7px;
 }
 
 /* style the items (options), including the selected item: */
-.select-items div,.select-selected, .regbtn {
+.retrievable-select-items div,.retrievable-selected, .regbtn {
   padding: 8px 16px;
   border: 1px solid transparent;
   border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
@@ -49,7 +51,7 @@
 }
 
 /* Style items (options): */
-.select-items {
+.retrievable-select-items {
   position: absolute;
   background-color: lightblue;
   top: 100%;
@@ -58,12 +60,11 @@
   z-index: 99;
 }
 
-/* Hide the items when the select box is closed: */
-.select-hide {
+.retrievable-select-hide {
   display: none;
 }
 
-.select-items div:hover, .same-as-selected {
+.retrievable-select-items div:hover, .same-as-selected {
   background-color: rgba(0, 0, 0, 0.1);
 }
 body {
@@ -74,9 +75,8 @@ div.centerable-content-container {
     margin: auto;
     text-align:  center;
 }
-div.centerable-content-container table, div.custom-select{
+div.centerable-content-container table, div.centerable-content-container div{
     margin: 0 auto; 
-    text-align: left;    
 }
 table.statstable td, th {
     padding: 4px;
@@ -119,7 +119,7 @@ div.overlay {
     text-align: right;
     padding: 5px;
 }
-div.showable-text {
+div.toggleable-text {
     margin: 0 auto; 
     text-align: center;
 }
@@ -135,23 +135,23 @@ div.show-more-button {
 .clickable-text:hover {
     text-decoration: underline;
 }
-div.showable-text p{
+div.toggleable-text p{
     width: 50%;
     text-align: left;
     margin-left: auto;
     margin-right: auto;
 }
-div.showable-text div{
+div.toggleable-text div{
     width: 50%;
     text-align: center;
     margin-left: auto;
     margin-right: auto;
 }
-div.showable-text div ul{
+div.toggleable-text div ul{
     text-align: left;
     margin-left: 20px;
 }
-div.showable-text div ul li{
+div.toggleable-text div ul li{
     text-align: left;
 }
 div.attributes-table-container {

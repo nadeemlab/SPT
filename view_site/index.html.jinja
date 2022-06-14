@@ -23,7 +23,7 @@ function on_load_body() {
     <h3>Phenotype fractions in pathology data measurement studies</h3>
     <div class="openable-section">
         <div class="show-more-button">[<span class="clickable-text">+ info</span>]</div>
-        <div class="showable-text" style="display:none;">
+        <div class="toggleable-text" style="display:none;">
         <p>
             <b>Statistics</b>. This page displays summary information of cell-level pathology data. The table shows statistics, computed over given specimens, of the fraction of cells displaying a given signature, whether defined by a single marker or by a composite of multiple markers comprising a phenotype, with or without specialization to specimens with specific assessment/diagnoses. The statistics shown are:
         </p>
@@ -47,11 +47,7 @@ function on_load_body() {
         </div>
     </div>
     <br/>
-    <div id="measurement-study-selector" class="custom-select">
-      <select>
-        <option value="0">Select measurement: </option>
-      </select>
-    </div>
+    <div class="custom-select" id="measurement study selector" display_solicitation_name="measurement study" query_fragment="specimen-measurement-study-names"></div>
     <div class="attributes-table-container">
         <img id="measurement-study-attributes-loading" src="loading_cube.gif" style="display:none;" class="loadinggif">
         <table id="measurement-study-attributes" style="display:none;">
@@ -74,9 +70,5 @@ function on_load_body() {
     <table class="statstable" id="fractionstable">
     </table>
 </div>
-<div id="cached-measurement-names" style="display:none" hascache="false">cached JSON response</div>
-<div id="cached-analysis-names" style="display:none" hascache="false">cached JSON response</div>
-<div id="cached-measurement-names-selection" style="display:none" hascache="false"></div>
-<div id="cached-analysis-names-selection" style="display:none" hascache="false"></div>
 </body>
 </html>

@@ -10,65 +10,69 @@ var fill_texts_by_class = {
     'host_ip' : '{{ host_ip }}',
     'prepend_api_url_base' : get_api_url_base(),
 }
+function on_load_body() {
+    fill_in_template()
+    setup_interactive_elements()
+}
 </script>
 <script src="parameter_filling.js"></script>
 <script src="stats_viewing.js"></script>
 </head>
-<body onload="fill_in_template(); setup()">
+<body onload="on_load_body()">
 <div class="centerable-content-container">
-<h3>Phenotype fractions in pathology data measurement studies</h3>
-<div class="show-more-button">[<span id="phenotype-summary-about-button">+ info</span>]</div>
-<div id="phenotype-summary-about-text" class="about-text" style="display:none;">
-<p>
-<b>Statistics</b>. This page displays summary information of cell-level pathology data. The table shows statistics, computed over given specimens, of the fraction of cells displaying a given signature, whether defined by a single marker or by a composite of multiple markers comprising a phenotype, with or without specialization to specimens with specific assessment/diagnoses. The statistics shown are:
-</p>
-<div>
-<ul>
-<li>the mean over the specimen set</li>
-<li>the standard deviation over the specimen set</li>
-<li>the maximum and minimum value achieved</li>
-<li>the specimens achieving the extrema</li>
-</ul>
-</div>
-<p>
-<b>Data modality</b>. This system is appropriate for cell data obtained with multiplexed imaging, flow cytometry, single-cell RNA sequencing, or similar. For cells analyzed from multiplexed imaging using the HALO software, you can use the data import pipeline provided by the <a href="https://github.com/nadeemlab/SPT#import-halo-data-into-normal-form">SPT software</a> ("HALO import"), after preparing your data in the format exemplified <a href="https://github.com/nadeemlab/SPT/tree/main/tests/data_subspecimens">here</a>.
-</p>
-<p>
-<b>System</b>. The data is stored in a PostgresQL database hosted at <span class="host_ip"></span>. The schema is highly normalized, with only functional relations. Precise definitions of the entities and relations are documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views are served by a FastAPI server, with a read-only API documented <a href="/docs" class="prepend_api_url_base">here</a>. Source code for these tools is located <a href="https://github.com/nadeemlab/SPT">here</a>.
-</p>
-<p>
-<b>Performance</b>. It takes about 4 minutes per million cells to load datasets into the database, and about 3 minutes per million cells and per 100 cases (i.e. rows as shown below) to refresh the summary statistics.
-</p>
-</div>
-<br/>
-<div id="measurement-study-selector" class="custom-select">
-  <select>
-    <option value="0">Select measurement: </option>
-  </select>
-</div>
-<div class="attributes-table-container">
-<img id="measurement-study-attributes-loading" src="loading_cube.gif" style="display:none;" class="loadinggif">
-<table id="measurement-study-attributes" style="display:none;">
-</table>
-</div>
-<br/>
-<div id="analysis-study-selector" class="custom-select">
-  <select>
-    <option value="0">Select data analysis study: </option>
-  </select>
-</div>
-<div class="attributes-table-container">
-<img id="analysis-study-attributes-loading" src="loading_cube.gif" style="display:none;" class="loadinggif">
-<table id="analysis-study-attributes" style="display:none;">
-</table>
-</div>
-<br/>
-<div class="simpleemphasis" id="rowcountbox" style="display:none">
-<span id="rowcounter"></span> rows
-</div>
-<br/>
-<table class="statstable" id="fractionstable">
-</table>
+    <h3>Phenotype fractions in pathology data measurement studies</h3>
+    <div class="show-more-button">[<span id="phenotype-summary-about-button">+ info</span>]</div>
+    <div id="phenotype-summary-about-text" class="about-text" style="display:none;">
+    <p>
+        <b>Statistics</b>. This page displays summary information of cell-level pathology data. The table shows statistics, computed over given specimens, of the fraction of cells displaying a given signature, whether defined by a single marker or by a composite of multiple markers comprising a phenotype, with or without specialization to specimens with specific assessment/diagnoses. The statistics shown are:
+    </p>
+    <div>
+        <ul>
+            <li>the mean over the specimen set</li>
+            <li>the standard deviation over the specimen set</li>
+            <li>the maximum and minimum value achieved</li>
+            <li>the specimens achieving the extrema</li>
+        </ul>
+    </div>
+    <p>
+        <b>Data modality</b>. This system is appropriate for cell data obtained with multiplexed imaging, flow cytometry, single-cell RNA sequencing, or similar. For cells analyzed from multiplexed imaging using the HALO software, you can use the data import pipeline provided by the <a href="https://github.com/nadeemlab/SPT#import-halo-data-into-normal-form">SPT software</a> ("HALO import"), after preparing your data in the format exemplified <a href="https://github.com/nadeemlab/SPT/tree/main/tests/data_subspecimens">here</a>.
+    </p>
+    <p>
+        <b>System</b>. The data is stored in a PostgresQL database hosted at <span class="host_ip"></span>. The schema is highly normalized, with only functional relations. Precise definitions of the entities and relations are documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views are served by a FastAPI server, with a read-only API documented <a href="/docs" class="prepend_api_url_base">here</a>. Source code for these tools is located <a href="https://github.com/nadeemlab/SPT">here</a>.
+    </p>
+    <p>
+        <b>Performance</b>. It takes about 4 minutes per million cells to load datasets into the database, and about 3 minutes per million cells and per 100 cases (i.e. rows as shown below) to refresh the summary statistics.
+    </p>
+    </div>
+    <br/>
+    <div id="measurement-study-selector" class="custom-select">
+      <select>
+        <option value="0">Select measurement: </option>
+      </select>
+    </div>
+    <div class="attributes-table-container">
+        <img id="measurement-study-attributes-loading" src="loading_cube.gif" style="display:none;" class="loadinggif">
+        <table id="measurement-study-attributes" style="display:none;">
+        </table>
+    </div>
+    <br/>
+    <div id="analysis-study-selector" class="custom-select">
+      <select>
+        <option value="0">Select data analysis study: </option>
+      </select>
+    </div>
+    <div class="attributes-table-container">
+        <img id="analysis-study-attributes-loading" src="loading_cube.gif" style="display:none;" class="loadinggif">
+        <table id="analysis-study-attributes" style="display:none;">
+        </table>
+    </div>
+    <br/>
+    <div class="simpleemphasis" id="rowcountbox" style="display:none">
+        <span id="rowcounter"></span> rows
+    </div>
+    <br/>
+    <table class="statstable" id="fractionstable">
+    </table>
 </div>
 <div id="cached-measurement-names" style="display:none" hascache="false">cached JSON response</div>
 <div id="cached-analysis-names" style="display:none" hascache="false">cached JSON response</div>

@@ -27,7 +27,7 @@ class NetworkEnvironmentProvider:
         pass
 
 
-class LocalNetworkEnvironmentProvider(NetworkEnvironmentProvider):
+class AnonymousNetworkEnvironmentProvider(NetworkEnvironmentProvider):
     @classmethod
     def get_api_url(cls):
         return cls.get_host_ip()
@@ -37,7 +37,7 @@ class LocalNetworkEnvironmentProvider(NetworkEnvironmentProvider):
         return 'http'
 
 
-class RemoteNetworkEnvironmentProvider(NetworkEnvironmentProvider):
+class DomainNamedNetworkEnvironmentProvider(NetworkEnvironmentProvider):
     @classmethod
     def get_api_url(cls):
         return 'data.nadeemlabapi.link'
@@ -51,8 +51,8 @@ if __name__ == '__main__':
     template_input = open('index.html.jinja').read()
     template = jinja_environment.from_string(template_input)
     target_file_providers = {
-        'index.html' : RemoteNetworkEnvironmentProvider,
-        'index_no_domain.html' : LocalNetworkEnvironmentProvider,
+        'index.html' : DomainNamedNetworkEnvironmentProvider,
+        'index_no_domain.html' : AnonymousNetworkEnvironmentProvider,
     }
     for index_file, EnvironmentProvider in target_file_providers.items():
         contents = template.render(EnvironmentProvider.get_template_dict())

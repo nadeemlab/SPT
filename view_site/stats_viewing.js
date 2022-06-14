@@ -1,27 +1,33 @@
 function setup_interactive_elements(){
     setup_table_header()
-    setup_openable_section(title = 'info', section_name = 'phenotype summary about section')
+    setup_openable_sections()
     pull_study_names('cached-measurement-names')
     pull_study_names('cached-analysis-names')
 }
 
-function toggle_open(title, button, about_text, event) {
-    if (button.innerHTML == '+ ' + title) {
-        button.innerHTML = '- ' + title
-        about_text.style.display = 'block'
-    } else {
-        button.innerHTML = '+ ' + title
-        about_text.style.display = 'none'
+class OpenableSection {
+    constructor(section_in_document) {
+        this.clickable_text = section_in_document.getElementsByClassName('show-more-button')[0].getElementsByClassName('clickable-text')[0]
+        this.title = this.clickable_text.innerHTML.replace(/\+ /, '')
+        this.showable_text = section_in_document.getElementsByClassName('showable-text')[0]
+        let reference = this
+        this.clickable_text.addEventListener('click', function(event) { reference.toggle_open(event) })
+    }
+    toggle_open(event) {
+        if (this.clickable_text.innerHTML == '+ ' + this.title) {
+            this.clickable_text.innerHTML = '- ' + this.title
+            this.showable_text.style.display = 'block'
+        } else {
+            this.clickable_text.innerHTML = '+ ' + this.title
+            this.showable_text.style.display = 'none'
+        }
     }
 }
 
-function setup_openable_section(title = '', section_name = '') {
-    let section = document.getElementById(section_name)
-    let button = section.getElementsByClassName('show-more-button')[0].getElementsByClassName('clickable-text')[0]
-    let about_text = section.getElementsByClassName('about-text')[0]
-    button.addEventListener('click', function(event) {
-        return toggle_open(title, button, about_text, event)
-    })
+function setup_openable_sections() {
+    for (let section_in_document of document.getElementsByClassName('openable-section')) {
+        let section = new OpenableSection(section_in_document)        
+    }
 }
 
 function pull_study_names(cache_element_id) {

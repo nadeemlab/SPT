@@ -2,10 +2,12 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="style.css">
-<script src="{{ script_file }}"></script>
+<script src="network_environment_parameters.js"></script>
+<script src="parameter_filling.js"></script>
+<script src="stats_viewing.js"></script>
 </head>
-<body onload="setup()">
-<div class="displayablecontentcontainer">
+<body onload="fill_in_template(); setup()">
+<div class="displayable-content-container">
 <h3>Phenotype fractions in pathology data measurement studies</h3>
 <div class="more-info-button">[<span id="phenotype-summary-about-button">+ info</span>]</div>
 <div id="phenotype-summary-about-text" class="about-text" style="display:none;">
@@ -24,7 +26,7 @@
 <b>Data modality</b>. This system is appropriate for cell data obtained with multiplexed imaging, flow cytometry, single-cell RNA sequencing, or similar. For cells analyzed from multiplexed imaging using the HALO software, you can use the data import pipeline provided by the <a href="https://github.com/nadeemlab/SPT#import-halo-data-into-normal-form">SPT software</a> ("HALO import"), after preparing your data in the format exemplified <a href="https://github.com/nadeemlab/SPT/tree/main/tests/data_subspecimens">here</a>.
 </p>
 <p>
-<b>System</b>. The data is stored in a PostgresQL database hosted at {{ host }}. The schema is highly normalized, with only functional relations. Precise definitions of the entities and relations are documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views are served by a FastAPI server, with a read-only API documented <a href="{{ protocol }}://{{ api_url }}/docs">here</a>. Source code for these tools is located <a href="https://github.com/nadeemlab/SPT">here</a>.
+<b>System</b>. The data is stored in a PostgresQL database hosted at <span class="host_ip"></span>. The schema is highly normalized, with only functional relations. Precise definitions of the entities and relations are documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views are served by a FastAPI server, with a read-only API documented <a href="/docs" class="prepend_api_url_base">here</a>. Source code for these tools is located <a href="https://github.com/nadeemlab/SPT">here</a>.
 </p>
 <p>
 <b>Performance</b>. It takes about 4 minutes per million cells to load datasets into the database, and about 3 minutes per million cells and per 100 cases (i.e. rows as shown below) to refresh the summary statistics.

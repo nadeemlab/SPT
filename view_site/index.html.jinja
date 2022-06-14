@@ -2,7 +2,15 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="style.css">
-<script src="network_environment_parameters.js"></script>
+<script>
+function get_api_url_base() {
+    return '{{ protocol }}://{{ api_url }}'
+}
+var fill_texts_by_class = {
+    'host_ip' : '{{ host_ip }}',
+    'prepend_api_url_base' : get_api_url_base(),
+}
+</script>
 <script src="parameter_filling.js"></script>
 <script src="stats_viewing.js"></script>
 </head>

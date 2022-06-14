@@ -31,7 +31,7 @@ function pull_study_names(cache_element_id) {
         if (id == 'cached-analysis-names') {
             query_specifier = 'data-analysis-study-names'
         }
-        var url_base = get_url_base()
+        var url_base = get_api_url_base()
         var URL=`${url_base}/${query_specifier}`
         get_from_url(URL, function(response, event){
             handle_names(id, response.responseText, event)
@@ -173,7 +173,7 @@ function pull_study_summary(cache_element_id, study_name) {
     }
 
     var encoded_study_name = encodeURIComponent(study_name)
-    var url_base = get_url_base()
+    var url_base = get_api_url_base()
     var URL=`${url_base}/${study_phase_indicator}/${encoded_study_name}`
     toggle_loading_gif(cache_element_id, state="on")
     get_from_url(URL, function(response, event){load_study_summary(cache_element_id, response.responseText, event)})
@@ -236,7 +236,7 @@ function pull_data_from_studies() {
     }
     var encoded_measurement_study = encodeURIComponent(measurement_name)
     var encoded_data_analysis_study = encodeURIComponent(analysis_name)
-    var url_base = get_url_base()
+    var url_base = get_api_url_base()
     var URL=`${url_base}/phenotype-summary/?specimen_measurement_study=${encoded_measurement_study}&data_analysis_study=${encoded_data_analysis_study}`
     get_from_url(URL, load_study)
 }

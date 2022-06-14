@@ -8,23 +8,57 @@ from jinja2 import BaseLoader
 jinja_environment = Environment(loader=BaseLoader)
 
 
+class NetworkEnvironmentProvider:
+    @classmethod
+    def get_template_dict(cls):
+        return {
+            'host_ip' : cls.get_host_ip(),
+            'api_url' : cls.get_api_url(),
+            'protocol' : cls.get_protocol(),
+        }
+
+    @classmethod
+    def get_host_ip(cls):
+        return open('host_ip').read().rstrip()
+
+    @classmethod
+    def get_api_url(cls):
+        pass
+
+    @classmethod
+    def get_protocol(cls):
+        pass
+
+
+class LocalNetworkEnvironmentProvider(NetworkEnvironmentProvider):
+    @classmethod
+    def get_api_url(cls):
+        return cls.get_host_ip()
+
+    @classmethod
+    def get_protocol(cls):
+        return 'http'
+
+
+class RemoteNetworkEnvironmentProvider(NetworkEnvironmentProvider):
+    @classmethod
+    def get_api_url(cls):
+        return 'data.nadeemlabapi.link'
+
+    @classmethod
+    def get_protocol(cls):
+        return 'https'
+
+
 if __name__ == '__main__':
-    ip = open('host').read().rstrip()
+    template_input = open('index.html.jinja').read()
+    template = jinja_environment.from_string(template_input)
+    target_file_providers = {
+        'index.html' : RemoteNetworkEnvironmentProvider,
+        'index_no_domain.html' : LocalNetworkEnvironmentProvider,
+    }
+    for index_file, EnvironmentProvider in target_file_providers.items():
+        contents = template.render(EnvironmentProvider.get_template_dict())
+        with open(index_file, 'wt') as file:
+            file.write(contents)
 
-    contents = open('stats_viewing.js.jinja').read()
-    stats_viewing_template = jinja_environment.from_string(contents)
-    stats_viewing = stats_viewing_template.render({'api_url': 'data.nadeemlabapi.link', 'protocol' : 'https'})
-    with open('stats_viewing.js', 'wt') as file:
-        file.write(stats_viewing)
-    stats_viewing_no_domain = stats_viewing_template.render({'api_url': ip, 'protocol' : 'http'})
-    with open('stats_viewing_no_domain.js', 'wt') as file:
-        file.write(stats_viewing_no_domain)
-
-    contents = open('index.html.jinja').read()
-    index_template = jinja_environment.from_string(contents)
-    index = index_template.render({'script_file': 'stats_viewing.js', 'host' : ip, 'api_url': 'data.nadeemlabapi.link', 'protocol' : 'https'})
-    with open('index.html', 'wt') as file:
-        file.write(index)
-    index_no_domain = index_template.render({'script_file': 'stats_viewing_no_domain.js', 'host' : ip, 'api_url': ip, 'protocol' : 'http'})
-    with open('index_no_domain.html', 'wt') as file:
-        file.write(index_no_domain)

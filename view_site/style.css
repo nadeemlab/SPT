@@ -11,7 +11,7 @@
     display: none;
 }
 
-.retrievable-selected , .regbtn{
+.retrieving-selected , .regbtn{
   background-color: lightblue;
 }
 
@@ -25,7 +25,7 @@
 }
 
 /* Style the arrow inside the select element: */
-.retrievable-selected:after {
+.retrieving-selected:after {
   position: absolute;
   content: "";
   top: 14px;
@@ -37,13 +37,13 @@
 }
 
 /* Point the arrow upwards when the select box is open (active): */
-.retrievable-selected.select-arrow-active:after {
+.retrieving-selected.select-arrow-active:after {
   border-color: transparent transparent #000 transparent;
   top: 7px;
 }
 
 /* style the items (options), including the selected item: */
-.retrievable-select-items div,.retrievable-selected, .regbtn {
+.retrieving-select-items div,.retrieving-selected, .regbtn {
   padding: 8px 16px;
   border: 1px solid transparent;
   border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
@@ -51,7 +51,7 @@
 }
 
 /* Style items (options): */
-.retrievable-select-items {
+.retrieving-select-items {
   position: absolute;
   background-color: lightblue;
   top: 100%;
@@ -60,11 +60,11 @@
   z-index: 99;
 }
 
-.retrievable-select-hide {
+.retrieving-select-hide {
   display: none;
 }
 
-.retrievable-select-items div:hover, .same-as-selected {
+.retrieving-select-items div:hover, .same-as-selected {
   background-color: rgba(0, 0, 0, 0.1);
 }
 body {
@@ -78,20 +78,20 @@ div.centerable-content-container {
 div.centerable-content-container table, div.centerable-content-container div{
     margin: 0 auto; 
 }
-table.statstable td, th {
+table.stats-table td, th {
     padding: 4px;
 }
-table.statstable th {
+table.stats-table th {
     font-weight:  bold;
     background: lightblue;
     border: 1px solid transparent;
     border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
 }
-table.statstable td {
+table.stats-table td {
     background: #fbfbfb;
     z-index: -1;
 }
-table.statstable tr:hover td {
+table.stats-table tr:hover td {
     background: #f0f0f0;
 }
 span.sortbutton {

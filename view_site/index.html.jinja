@@ -16,6 +16,8 @@ function on_load_body() {
 }
 </script>
 <script src="parameter_filling.js"></script>
+<script src="retrievable_stats_components.js"></script>
+<script src="simple_ui_components.js"></script>
 <script src="stats_viewing.js"></script>
 </head>
 <body onload="on_load_body()">
@@ -47,8 +49,9 @@ function on_load_body() {
         </div>
     </div>
     <br/>
+    <div class="retrievable-stats-page">
     <div>
-    <div class="custom-select" id="measurement study selector" display_solicitation_name="measurement study" retrieve_names_query_fragment="specimen-measurement-study-names" retrieve_summary_query_fragment="specimen-measurement-study-summary"></div>
+    <div class="retrieving-selector" id="measurement study selector" display_solicitation_name="measurement study" retrieve_names_query_fragment="specimen-measurement-study-names" retrieve_summary_query_fragment="specimen-measurement-study-summary"></div>
     <div class="attributes-table-container">
         <img src="loading_cube.gif" style="display:none;" class="loadinggif">
         <table style="display:none;">
@@ -57,7 +60,7 @@ function on_load_body() {
     </div>
     <br/>
     <div>
-    <div class="custom-select" id="data analysis study selector" display_solicitation_name="data analysis study" retrieve_names_query_fragment="data-analysis-study-names" retrieve_summary_query_fragment="data-analysis-study-summary">
+    <div class="retrieving-selector" id="data analysis study selector" display_solicitation_name="data analysis study" retrieve_names_query_fragment="data-analysis-study-names" retrieve_summary_query_fragment="data-analysis-study-summary">
       <select>
         <option value="0">Select data analysis study: </option>
       </select>
@@ -74,6 +77,7 @@ function on_load_body() {
     <br/>
     <table class="stats-table" id="fractions table">
     </table>
+    </div>
     </div>
 </div>
 </body>

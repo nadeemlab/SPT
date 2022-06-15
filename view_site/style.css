@@ -1,9 +1,9 @@
-.custom-select {
+.retrieving-selector {
     position: relative;
     max-width: 500px;
 }
 
-.custom-select select {
+.retrieving-selector select {
   display: none; /*hide original SELECT element: */
 }
 

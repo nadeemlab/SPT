@@ -211,7 +211,7 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
-push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css view_site/stats_viewing.js view_site/parameter_filling.js view_site/username view_site/render.py view_site/loading_cube.gif
+push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css view_site/stats_viewing.js view_site/simple_ui_components.js view_site/retrievable_stats_components.js view_site/parameter_filling.js view_site/username view_site/render.py view_site/loading_cube.gif
 	@printf $(call color_in_progress,'Sending site artifacts to server')
 	@date +%s > current_time.txt
 	@username=$$(cat view_site/username); \
@@ -222,6 +222,8 @@ push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css
     scp style.css $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp stats_viewing.js $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp parameter_filling.js $$username@nadeemlabapi.link:/home/$$username/www/; \
+    scp simple_ui_components.js $$username@nadeemlabapi.link:/home/$$username/www/; \
+    scp retrievable_ui_components.js $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp loading_cube.gif $$username@nadeemlabapi.link:/home/$$username/www/;
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
@@ -396,8 +398,6 @@ clean: clean-tests
 	@rm -f schemas/input_data_requirements.out
 	@rm -rf view_site/index.html
 	@rm -rf view_site/index_no_domain.html
-	@rm -rf view_site/stats_viewing.js
-	@rm -rf view_site/stats_viewing_no_domain.js
 
 clean-tests:
 	@rm -f tests/.nextflow.log*

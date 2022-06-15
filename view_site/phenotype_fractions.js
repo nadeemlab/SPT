@@ -10,7 +10,7 @@ function setup_retrievable_stats_page() {
 
 class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
     discover_stats_table(section) {
-        let id = section.getElementsByClassName('stats-table')[0]
+        let id = section.getElementsByClassName('stats-table')[0].getAttribute('id')
         return new PhenotypeFractionsStatsTable(id)
     }    
 }

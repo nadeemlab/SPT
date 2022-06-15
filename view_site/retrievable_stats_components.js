@@ -120,17 +120,17 @@ class RetrievingSelector {
         let url=`${url_base}/${retrieve_names_query_fragment}`
         let reference = this
         get_from_url({url, callback: function(response, event) {
-            reference.handle_query_response(reference, response, event)
+            reference.handle_query_response(response, event)
         }})
     }
-    handle_query_response(reference, response, event) {
+    handle_query_response(response, event) {
         let obj = JSON.parse(response.responseText)
         let option_names = Array.from(
             new Set(
                 obj[Object.keys(obj)[0]]
             )
         )
-        reference.setup_document_elements(option_names)
+        this.setup_document_elements(option_names)
     }
     setup_document_elements(option_names) {
         this.selection = new RetrievedSelection(this)
@@ -175,17 +175,17 @@ class AttributesTable {
         this.toggle_loading_gif('on')
         let reference = this
         get_from_url({url, callback: function(response, event){
-            reference.load_item_summary(reference, response.responseText, event)
+            reference.load_item_summary(response.responseText, event)
         }})
     }
-    load_item_summary(reference, response_text, event) {
+    load_item_summary(response_text, event) {
         let properties = JSON.parse(response_text)
-        reference.table.style.display = 'inline'
+        this.table.style.display = 'inline'
         for (let key of Object.keys(properties)) {
-            let tr = reference.create_attribute_row(key, properties[key])
-            reference.table.appendChild(tr)
+            let tr = this.create_attribute_row(key, properties[key])
+            this.table.appendChild(tr)
         }
-        reference.toggle_loading_gif('off')
+        this.toggle_loading_gif('off')
         this.completed_table_callback()
     }
     create_attribute_row(key, property) {

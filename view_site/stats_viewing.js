@@ -251,6 +251,9 @@ class StatsTable {
     setup_table_header() {
         throw new Error('Abstract method unimplemented.')
     }
+    get_numeric_flags() {
+        throw new Error('Abstract method unimplemented.')
+    }
     clear_table() {
         this.setup_table_header()
     }
@@ -275,6 +278,45 @@ class StatsTable {
     pull_data_from_selections(selections) {
         throw new Error('Abstract method unimplemented.')
     }
+    sort_data_rows(column_index, sign) {
+        let tr_elements = this.get_ordered_data_rows(column_index, sign)
+        for (let i = 0; i < tr_elements.length; i++) {
+            this.table.appendChild(tr_elements[i])
+        }
+        update_row_counter()
+    }
+    get_ordered_data_rows(column_index, sign) {
+        let all_rows = Array.from(this.table.children)
+        let values_indices = [];
+        for (let i = 1; i < all_rows.length; i++) {
+            let row = all_rows[i]
+            let td = Array.from(row.children)[column_index]
+            values_indices.push([i-1, td.innerText]);
+        }
+        let reference = this
+        let compare = function(a, b) {
+            if (reference.get_numeric_flags()[column_index]) {
+                return (parseFloat(a[1]) - parseFloat(b[1])) * sign;
+            } else {
+                if (a[1] > b[1]) {
+                    return 1 * sign
+                }
+                if (a[1] < b[1]) {
+                    return -1 * sign
+                }
+                if (a[1] == b[1]) {
+                    return 0
+                }
+            }
+        }
+        values_indices.sort(compare)
+        let new_rows = [];
+        for (let i = 0; i < values_indices.length; i++) {
+            let index = values_indices[i][0]
+            new_rows.push(all_rows[index + 1])
+        }
+        return new_rows
+    }
 }
 
 class PhenotypeFractionsStatsTable extends StatsTable {
@@ -287,17 +329,20 @@ class PhenotypeFractionsStatsTable extends StatsTable {
             cell.innerHTML = header[i] + '&nbsp;'
             let sort_button = document.createElement("span");
             sort_button.innerHTML = " [+] "
-            sort_button.setAttribute("onclick", "sort_data_rows(" + i + "," + "1)")
+            sort_button.setAttribute("onclick", "stats_table.sort_data_rows(" + i + "," + "1)")
             sort_button.setAttribute("class", "sortbutton")
             let sort_button2 = document.createElement("span");
             sort_button2.innerHTML = " [-] "
-            sort_button2.setAttribute("onclick", "sort_data_rows(" + i + "," + "-1)")
+            sort_button2.setAttribute("onclick", "stats_table.sort_data_rows(" + i + "," + "-1)")
             sort_button2.setAttribute("class", "sortbutton")
             cell.appendChild(sort_button)
             cell.appendChild(sort_button2)
             header_row.appendChild(cell)
         }
         this.table.appendChild(header_row)
+    }
+    get_numeric_flags() {
+        return [false, false, false, false, true, true, false, true, false, true]        
     }
     pull_data_from_selections(selections) {
         let encoded_measurement_study = encodeURIComponent(selections['measurement study'])
@@ -345,182 +390,6 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         }
         update_row_counter()
     }
-}
-
-
-
-
-function pull_data_from_studies2() {
-    measurement_name = document.getElementById('cached-measurement-names' + '-selection').innerHTML
-    if (measurement_name == '') {
-        return
-    }
-    analysis_name = document.getElementById('cached-analysis-names' + '-selection').innerHTML
-    if (analysis_name == '') {
-        return
-    }
-    var encoded_measurement_study = encodeURIComponent(measurement_name)
-    var encoded_data_analysis_study = encodeURIComponent(analysis_name)
-    var url_base = get_api_url_base()
-    var URL=`${url_base}/phenotype-summary/?specimen_measurement_study=${encoded_measurement_study}&data_analysis_study=${encoded_data_analysis_study}`
-    get_from_url(URL, load_study)
-}
-
-function clear_table() {
-    var table = document.getElementById("fractionstable")
-    table.innerHTML = ''
-    setup_table_header()
-}
-
-function load_study(response, event) {
-    var stats = JSON.parse(response.responseText)
-    clear_table()
-    var table = document.getElementById("fractionstable")
-    var obj = stats[Object.keys(stats)[0]];
-    for (var i = 0, len = obj.length; i < len; ++i) {
-        data_row = obj[i]
-        table_row = document.createElement("tr")
-        for (var j = 0; j < 10; ++j) {
-            cell = document.createElement("td")
-            entry = data_row[j]
-            if (j==4) {
-                integer_percent = Math.round(parseFloat(entry))
-                container = document.createElement("div")
-                container.setAttribute("class", "overlayeffectcontainer")
-                underlay = document.createElement("div")
-                underlay.setAttribute("class", "underlay")
-                overlay = document.createElement("div")
-                overlay.setAttribute("class", "overlay")
-                overlay.innerHTML = entry
-                underlay.style.width = integer_percent + "%"
-                container.appendChild(underlay)
-                container.appendChild(overlay)
-                cell.appendChild(container)
-            } else {
-                if (j==2 || j==3) {
-                    entry = entry.replace(/<any>/, '<em>any</em>')
-                }
-                cell.innerHTML = entry
-            }
-            table_row.appendChild(cell)
-        }
-        table.appendChild(table_row)
-    }
-    update_row_counter()
-}
-
-function sort_data_rows(column_index, sign) {
-    var table = document.getElementById("fractions-table")
-    var tr_elements = get_ordered_data_rows(column_index, sign)
-    for (var i = 0; i < tr_elements.length; ++i) {
-        table.appendChild(tr_elements[i])
-    }
-    update_row_counter()
-}
-
-function get_ordered_data_rows(column_index, sign) {
-    var table = document.getElementById("fractions-table")
-    var all_rows = Array.from(table.children)
-    var values_indices = [];
-    for (var i = 1; i < all_rows.length; ++i) {
-        row = all_rows[i]
-        td = Array.from(row.children)[column_index]
-        values_indices.push([i-1, td.innerText]);
-    }
-
-    compare = function(a, b) {
-        if (column_index==4 || column_index==5 || column_index==7 || column_index==9) {
-            return (parseFloat(a[1]) - parseFloat(b[1])) * sign;
-        } else {
-            if (a[1] > b[1]) {
-                return 1 * sign
-            }
-            if (a[1] < b[1]) {
-                return -1 * sign
-            }
-            if (a[1] == b[1]) {
-                return 0
-            }
-        }
-    }
-    values_indices.sort(compare)
-    var new_rows = [];
-    for (var i = 0; i < values_indices.length; ++i) {
-        index = values_indices[i][0]
-        new_rows.push(all_rows[index + 1])
-    }
-    return new_rows
-}
-
-function setup_study_selector(cache_element_id) {
-    var i, j, l, ll, selectElement, a, b, c;
-    /* Look for any elements with the class "custom-select": */
-    var selector_id;
-    if (cache_element_id == 'cached-measurement-names') {
-        selector_id = 'measurement-study-selector'
-    }
-    if (cache_element_id == 'cached-analysis-names') {
-        selector_id = 'analysis-study-selector'
-    }
-    var x = new Array();
-    x.push(document.getElementById(selector_id))
-    l = x.length;
-    for (i = 0; i < l; i++) {
-      selectElement = x[i].getElementsByTagName("select")[0];
-      ll = selectElement.length;
-      /* For each element, create a new DIV that will act as the selected item: */
-      a = document.createElement("DIV");
-      a.setAttribute("class", "select-selected");
-      a.innerHTML = selectElement.options[selectElement.selectedIndex].innerHTML;
-      x[i].appendChild(a);
-      /* For each element, create a new DIV that will contain the option list: */
-      b = document.createElement("DIV");
-      b.setAttribute("class", "select-items select-hide");
-      b.setAttribute("id", cache_element_id + "-studyinnerlist")
-      for (j = 1; j < ll; j++) {
-        /* For each option in the original select element,
-        create a new DIV that will act as an option item: */
-        c = document.createElement("DIV");
-        c.innerHTML = selectElement.options[j].innerHTML;
-        c.addEventListener("click", function(e) {
-            /* When an item is clicked, update the original select box,
-            and the selected item: */
-            var y, i, k, s, h, sl, yl;
-            s = this.parentNode.parentNode.getElementsByTagName("select")[0];
-            sl = s.length;
-            h = this.parentNode.previousSibling;
-            for (i = 0; i < sl; i++) {
-              if (s.options[i].innerHTML == this.innerHTML) {
-                s.selectedIndex = i;
-                h.innerHTML = this.innerHTML;
-                y = this.parentNode.getElementsByClassName("same-as-selected");
-                yl = y.length;
-                for (k = 0; k < yl; k++) {
-                  y[k].removeAttribute("class");
-                }
-                this.setAttribute("class", "same-as-selected");
-                break;
-              }
-            }
-            h.click();
-        });
-        b.appendChild(c);
-      }
-      x[i].appendChild(b);
-      reference = this
-      a.addEventListener("click", function(e) {
-        /* When the select box is clicked, close any other select boxes,
-        and open/close the current select box: */
-        e.stopPropagation();
-        closeAllSelect(reference.selector);
-        this.nextSibling.classList.toggle("select-hide");
-        this.classList.toggle("select-arrow-active");
-      });
-    }
-
-    /* If the user clicks anywhere outside the select box,
-    then close all select boxes: */
-    document.addEventListener("click", closeAllSelect);
 }
 
 function update_row_counter() {

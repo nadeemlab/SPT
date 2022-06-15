@@ -3,28 +3,10 @@
     max-width: 500px;
 }
 
-.retrieving-selector select {
-  display: none; /*hide original SELECT element: */
-}
-
-.hidden-items div {
-    display: none;
-}
-
-.retrieving-selected , .regbtn{
+.retrieving-selected {
   background-color: lightblue;
 }
 
-.regbtn {
-    text-align: center;
-    display: inline;
-    position: relative;
-}
-.regbtn:hover {
-    background: lightgray;
-}
-
-/* Style the arrow inside the select element: */
 .retrieving-selected:after {
   position: absolute;
   content: "";
@@ -36,21 +18,18 @@
   border-color: #000 transparent transparent transparent;
 }
 
-/* Point the arrow upwards when the select box is open (active): */
 .retrieving-selected.select-arrow-active:after {
   border-color: transparent transparent #000 transparent;
   top: 7px;
 }
 
-/* style the items (options), including the selected item: */
-.retrieving-select-items div,.retrieving-selected, .regbtn {
+.retrieving-select-items div,.retrieving-selected {
   padding: 8px 16px;
   border: 1px solid transparent;
   border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
   cursor: pointer;
 }
 
-/* Style items (options): */
 .retrieving-select-items {
   position: absolute;
   background-color: lightblue;

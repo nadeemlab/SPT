@@ -283,7 +283,7 @@ class StatsTable {
         for (let i = 0; i < tr_elements.length; i++) {
             this.table.appendChild(tr_elements[i])
         }
-        update_row_counter()
+        this.update_row_counter()
     }
     get_ordered_data_rows(column_index, sign) {
         let all_rows = Array.from(this.table.children)
@@ -388,13 +388,12 @@ class PhenotypeFractionsStatsTable extends StatsTable {
             }
             this.table.appendChild(table_row)
         }
-        update_row_counter()
+        this.update_row_counter()
     }
-}
-
-function update_row_counter() {
-    number_rows = document.getElementById("fractions table").children.length - 1
-    rowcountbox = document.getElementById("rowcountbox")
-    rowcountbox.style.display = "inline-block";
-    document.getElementById("rowcounter").innerHTML = number_rows
+    update_row_counter() {
+        let number_rows = this.table.children.length - 1
+        let rowcountbox = this.table.parentElement.getElementsByClassName('row-counter')[0]
+        rowcountbox.style.display = "inline-block"
+        rowcountbox.getElementsByTagName('span')[0].innerHTML = number_rows
+    }
 }

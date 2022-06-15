@@ -3,10 +3,9 @@ function setup_interactive_elements(){
     setup_retrievable_stats_page()
 }
 
-let stats_page;
 function setup_retrievable_stats_page() {
     let section = document.getElementsByClassName('retrievable-stats-page')[0]
-    stats_page = new RetrievableStatsPage(section)
+    new PhenotypeFractionsStatsPage(section)
 }
 
 class PhenotypeFractionsStatsPage extends RetrievableStatsPage {

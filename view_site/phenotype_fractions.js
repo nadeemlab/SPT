@@ -1,8 +1,3 @@
-function setup_interactive_elements(){
-    setup_openable_sections()
-    setup_retrievable_stats_page()
-}
-
 function setup_retrievable_stats_page() {
     let section = document.getElementsByClassName('retrievable-stats-page')[0]
     new PhenotypeFractionsStatsPage(section)

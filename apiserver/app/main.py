@@ -259,21 +259,25 @@ async def get_phenotype_criteria_name(
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
-        cursor.execute(
-            '''
-            SELECT marker, polarity
-            FROM cell_phenotype_criterion cpc
-            JOIN cell_phenotype cp ON cpc.cell_phenotype = cp.identifier
-            WHERE cp.symbol = %s
-            ;
-            '''
-            (phenotype_symbol,),
+        query = '''
+        SELECT cs.symbol, cpc.polarity
+        FROM cell_phenotype_criterion cpc
+        JOIN cell_phenotype cp ON cpc.cell_phenotype = cp.identifier
+        JOIN chemical_species cs ON cs.identifier = cpc.marker
+        WHERE cp.symbol = %s
+        ;
+        '''
+        cursor.execute(query, (phenotype_symbol,),
         )
         rows = cursor.fetchall()
-        signature = { row[0] : row[1] for row in rows}
-        positive_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'positive'])
-        negative_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'negative'])
-        munged = [marker + '+' for marker in positives] + [marker + '-' for marker in negatives]
+        if len(rows) == 0:
+            munged = phenotype_symbol + '+'
+        else:
+            signature = { row[0] : row[1] for row in rows}
+            positive_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'positive'])
+            negative_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'negative'])
+            parts = [marker + '+' for marker in positive_markers] + [marker + '-' for marker in negative_markers]
+            munged = ''.join(parts)
         representation = {
             'phenotype criteria name' : munged,
         }

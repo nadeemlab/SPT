@@ -80,6 +80,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         }
         this.patch_header(outcome_column)
         this.update_row_counter()
+        this.get_and_handle_phenotype_criteria_names(obj)
     }
     create_table_row(data_row) {
         let table_row = document.createElement('tr')
@@ -103,12 +104,59 @@ class PhenotypeFractionsStatsTable extends StatsTable {
                 container.appendChild(underlay)
                 container.appendChild(overlay)
                 cell.appendChild(container)
+            } else if (this.get_header_values()[j] == 'Phenotype') {
+                cell.setAttribute('class', 'hoverdiv')
+                let hoverdiv_content = document.createElement('span')
+                hoverdiv_content.setAttribute('class', 'hoverdiv-content')
+                hoverdiv_content.innerHTML = entry
+                let tooltip = document.createElement('span')
+                tooltip.setAttribute('class', 'tooltip')
+                tooltip.innerHTML = entry
+                cell.appendChild(hoverdiv_content)
+                cell.appendChild(tooltip)
             } else {
                 cell.innerHTML = entry
             }
             table_row.appendChild(cell)
         }
         return table_row
+    }
+    get_phenotype_names(obj) {
+        let index = this.get_header_values().indexOf('Phenotype')
+        return new Set(Array.from(obj).map(function(data_row) {return data_row[index]}))        
+    }
+    get_and_handle_phenotype_criteria_names(obj) {
+        let phenotype_names = this.get_phenotype_names(obj)
+        for (let phenotype_name of phenotype_names) {
+            this.get_and_handle_phenotype_criteria_name(phenotype_name)
+        }
+    }
+    get_and_handle_phenotype_criteria_name(phenotype_name) {
+        let encoded_phenotype_name = encodeURIComponent(phenotype_name)
+        let url_base = get_api_url_base()
+        let url=`${url_base}/phenotype-criteria-name/?phenotype_symbol=${encoded_phenotype_name}`
+        let reference = this
+        get_from_url({url, callback: function(response, event) {
+            reference.update_phenotype_criteria_name(phenotype_name, response, event)
+        }})
+    }
+    update_phenotype_criteria_name(phenotype_name, response, event) {
+        let obj = JSON.parse(response.responseText)
+        let phenotype_criteria_name = obj[Object.keys(obj)[0]]
+        let phenotype_index = this.get_header_values().indexOf('Phenotype')
+        for (let i = 1; i < this.table.children.length; i++) {
+            let phenotype_name_cell = this.table.children[i].children[phenotype_index]
+            let row_phenotype_name = phenotype_name_cell.getElementsByClassName('hoverdiv-content')[0].innerHTML
+            if (row_phenotype_name == phenotype_name) {
+                let tooltip = phenotype_name_cell.getElementsByClassName('tooltip')[0]
+                tooltip.innerHTML = this.markup_criteria_name(phenotype_criteria_name)
+            }
+        }
+    }
+    markup_criteria_name(phenotype_criteria_name) {
+        let positives_marked = phenotype_criteria_name.replace(/([a-zA-Z0-9\_\.]+\+)/g, '<span class="positives">$1</span> ')
+        let and_negatives_marked = positives_marked.replace(/([a-zA-Z0-9\_\.]+\-)/g, '<span class="negatives">$1</span> ')
+        return and_negatives_marked
     }
     update_row_counter() {
         let number_rows = this.table.children.length - 1

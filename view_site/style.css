@@ -67,6 +67,7 @@ table.stats-table th {
     border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
 }
 table.stats-table td {
+    position:  relative;
     background: #fbfbfb;
     z-index: -1;
 }
@@ -156,3 +157,30 @@ img.loadinggif{
     margin-left: auto;
     margin-right: auto;
 }
+.hoverdiv {
+    cursor: pointer;
+}
+.hoverdiv .tooltip {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    display: none;
+    width: auto;
+}
+.hoverdiv:hover .hoverdiv-content {
+  display: none;
+}
+.hoverdiv:hover .tooltip {
+    display: inline;
+    background: white;
+    border: 1px dotted gray;
+}
+.positives {
+    font-weight: bold;
+    color: green;
+}
+.negatives {
+    font-style: italic;
+    color: gray;
+}
+

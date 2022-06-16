@@ -17,7 +17,9 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         let header_row = document.createElement('tr')
         for (let i = 0; i < header.length; i++) {
             let cell = document.createElement('th')
-            cell.innerHTML = header[i] + '&nbsp;'
+            let text = document.createElement('span')
+            text.innerHTML = header[i] + ' &nbsp;'
+            cell.appendChild(text)
             let sort_button = document.createElement('span');
             sort_button.innerHTML = ' [+] '
             let reference = this
@@ -37,11 +39,25 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         }
         this.table.appendChild(header_row)
     }
+    patch_header(outcome_column) {
+        let index_of_assay = this.get_header_values().indexOf('Result')
+        let span = this.table.children[0].children[index_of_assay].children[0]
+        span.innerHTML = outcome_column
+    }
+    get_assay_index() {
+        return 1
+    }
+    get_outcome_column(obj) {
+        let assay_index = this.get_assay_index()
+        let assay_values = new Set(obj.map(function(data_row) {return data_row[assay_index]}))
+        assay_values.delete('<any>')
+        return Array.from(assay_values)[0]
+    }
     get_header_values() {
-        return ['Marker', 'Assay', 'Result', 'Mean % <br/>cells positive', 'Standard deviation <br/>of % values', 'Maximum', 'Value', 'Minimum', 'Value']        
+        return ['Phenotype', 'Result', 'Mean % <br/>cells positive', 'Standard deviation <br/>of % values', 'Maximum', 'Value', 'Minimum', 'Value']        
     }
     get_numeric_flags() {
-        return [false, false, false, true, true, false, true, false, true]        
+        return [false, false, true, true, false, true, false, true]        
     }
     pull_data_from_selections(selections) {
         let encoded_measurement_study = encodeURIComponent(selections['measurement study'])
@@ -57,37 +73,42 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     load_fractions_from_response(response_text) {
         this.clear_table()
         let stats = JSON.parse(response_text)
-        let obj = stats[Object.keys(stats)[0]];
+        let obj = stats[Object.keys(stats)[0]]
+        let outcome_column = this.get_outcome_column(obj)
         for (let i = 0; i < obj.length; i++) {
-            let data_row = obj[i]
-            let table_row = document.createElement('tr')
-            for (let j = 0; j < 9; j++) {
-                let cell = document.createElement('td')
-                let entry = data_row[j]
-                if (j==4) {
-                    let integer_percent = Math.round(parseFloat(entry))
-                    let container = document.createElement('div')
-                    container.setAttribute('class', 'overlayeffectcontainer')
-                    let underlay = document.createElement('div')
-                    underlay.setAttribute('class', 'underlay')
-                    let overlay = document.createElement('div')
-                    overlay.setAttribute('class', 'overlay')
-                    overlay.innerHTML = entry
-                    underlay.style.width = integer_percent + '%'
-                    container.appendChild(underlay)
-                    container.appendChild(overlay)
-                    cell.appendChild(container)
-                } else {
-                    if (j==2 || j==3) {
-                        entry = entry.replace(/<any>/, '<em>any</em>')
-                    }
-                    cell.innerHTML = entry
-                }
-                table_row.appendChild(cell)
-            }
-            this.table.appendChild(table_row)
+            this.table.appendChild(this.create_table_row(obj[i]))
         }
+        this.patch_header(outcome_column)
         this.update_row_counter()
+    }
+    create_table_row(data_row) {
+        let table_row = document.createElement('tr')
+        data_row.splice(this.get_assay_index(), 1)
+        for (let j = 0; j < data_row.length; j++) {
+            let cell = document.createElement('td')
+            let entry = data_row[j]
+            if (this.get_header_values()[j] == 'Result') {
+                entry = entry.replace(/<any>/, '<em>any</em>')
+            }
+            if (this.get_header_values()[j] == 'Mean % <br/>cells positive') {
+                let integer_percent = Math.round(parseFloat(entry))
+                let container = document.createElement('div')
+                container.setAttribute('class', 'overlayeffectcontainer')
+                let underlay = document.createElement('div')
+                underlay.setAttribute('class', 'underlay')
+                let overlay = document.createElement('div')
+                overlay.setAttribute('class', 'overlay')
+                overlay.innerHTML = entry
+                underlay.style.width = integer_percent + '%'
+                container.appendChild(underlay)
+                container.appendChild(overlay)
+                cell.appendChild(container)
+            } else {
+                cell.innerHTML = entry
+            }
+            table_row.appendChild(cell)
+        }
+        return table_row
     }
     update_row_counter() {
         let number_rows = this.table.children.length - 1

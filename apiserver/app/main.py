@@ -251,3 +251,34 @@ async def get_phenotype_summary(
             media_type = 'application/json',
         )
 
+
+@app.get("/phenotype-criteria-name/")
+async def get_phenotype_criteria_name(
+    phenotype_symbol : str = Query(default='unknown', min_length=3),
+):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            '''
+            SELECT marker, polarity
+            FROM cell_phenotype_criterion cpc
+            JOIN cell_phenotype cp ON cpc.cell_phenotype = cp.identifier
+            WHERE cp.symbol = %s
+            ;
+            '''
+            (phenotype_symbol,),
+        )
+        rows = cursor.fetchall()
+        signature = { row[0] : row[1] for row in rows}
+        positive_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'positive'])
+        negative_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'negative'])
+        munged = [marker + '+' for marker in positives] + [marker + '-' for marker in negatives]
+        representation = {
+            'phenotype criteria name' : munged,
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+

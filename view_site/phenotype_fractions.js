@@ -13,32 +13,35 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
 class PhenotypeFractionsStatsTable extends StatsTable {
     setup_table_header() {
         this.table.innerHTML = ''
-        let header = ["Marker", "Multiplicity", "Assay", "Result", "Mean % <br/>cells positive", "Standard deviation <br/>of % values", "Maximum", "Value", "Minimum", "Value"]
-        let header_row = document.createElement("tr")
+        let header = this.get_header_values()
+        let header_row = document.createElement('tr')
         for (let i = 0; i < header.length; i++) {
-            let cell = document.createElement("th")
+            let cell = document.createElement('th')
             cell.innerHTML = header[i] + '&nbsp;'
-            let sort_button = document.createElement("span");
-            sort_button.innerHTML = " [+] "
+            let sort_button = document.createElement('span');
+            sort_button.innerHTML = ' [+] '
             let reference = this
             sort_button.addEventListener('click', function(event) {
                 reference.sort_data_rows(i, 1)
             })
-            sort_button.setAttribute("class", "sortbutton")
-            let sort_button2 = document.createElement("span");
-            sort_button2.innerHTML = " [-] "
+            sort_button.setAttribute('class', 'sortbutton')
+            let sort_button2 = document.createElement('span');
+            sort_button2.innerHTML = ' [-] '
             sort_button2.addEventListener('click', function(event) {
                 reference.sort_data_rows(i, -1)
             })
-            sort_button2.setAttribute("class", "sortbutton")
+            sort_button2.setAttribute('class', 'sortbutton')
             cell.appendChild(sort_button)
             cell.appendChild(sort_button2)
             header_row.appendChild(cell)
         }
         this.table.appendChild(header_row)
     }
+    get_header_values() {
+        return ['Marker', 'Assay', 'Result', 'Mean % <br/>cells positive', 'Standard deviation <br/>of % values', 'Maximum', 'Value', 'Minimum', 'Value']        
+    }
     get_numeric_flags() {
-        return [false, false, false, false, true, true, false, true, false, true]        
+        return [false, false, false, true, true, false, true, false, true]        
     }
     pull_data_from_selections(selections) {
         let encoded_measurement_study = encodeURIComponent(selections['measurement study'])
@@ -57,20 +60,20 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         let obj = stats[Object.keys(stats)[0]];
         for (let i = 0; i < obj.length; i++) {
             let data_row = obj[i]
-            let table_row = document.createElement("tr")
-            for (let j = 0; j < 10; j++) {
-                let cell = document.createElement("td")
+            let table_row = document.createElement('tr')
+            for (let j = 0; j < 9; j++) {
+                let cell = document.createElement('td')
                 let entry = data_row[j]
                 if (j==4) {
                     let integer_percent = Math.round(parseFloat(entry))
-                    let container = document.createElement("div")
-                    container.setAttribute("class", "overlayeffectcontainer")
-                    let underlay = document.createElement("div")
-                    underlay.setAttribute("class", "underlay")
-                    let overlay = document.createElement("div")
-                    overlay.setAttribute("class", "overlay")
+                    let container = document.createElement('div')
+                    container.setAttribute('class', 'overlayeffectcontainer')
+                    let underlay = document.createElement('div')
+                    underlay.setAttribute('class', 'underlay')
+                    let overlay = document.createElement('div')
+                    overlay.setAttribute('class', 'overlay')
                     overlay.innerHTML = entry
-                    underlay.style.width = integer_percent + "%"
+                    underlay.style.width = integer_percent + '%'
                     container.appendChild(underlay)
                     container.appendChild(overlay)
                     cell.appendChild(container)
@@ -89,7 +92,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     update_row_counter() {
         let number_rows = this.table.children.length - 1
         let rowcountbox = this.table.parentElement.getElementsByClassName('row-counter')[0]
-        rowcountbox.style.display = "inline-block"
+        rowcountbox.style.display = 'inline-block'
         rowcountbox.getElementsByTagName('span')[0].innerHTML = number_rows
     }
 }

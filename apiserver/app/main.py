@@ -226,7 +226,6 @@ async def get_phenotype_summary(
 ):
     columns = [
         'marker_symbol',
-        'multiplicity',
         'assay',
         'assessment',
         'average_percent',

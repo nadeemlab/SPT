@@ -57,6 +57,9 @@ div.centerable-content-container {
 div.centerable-content-container table, div.centerable-content-container div{
     margin: 0 auto; 
 }
+table.stats-table {
+    border-collapse: collapse;    
+}
 table.stats-table td, th {
     padding: 4px;
 }

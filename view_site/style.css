@@ -62,7 +62,7 @@ table.stats-table {
     border-collapse: separate;
     border-spacing: 0px;
 }
-table.stats-table td, th {
+table.stats-table td, table.stats-table th {
     padding: 4px;
 }
 table.stats-table th {
@@ -90,11 +90,11 @@ table.selection-table {
     border-collapse: separate;
     border-spacing: 0px;
 }
-table.selection-table > tr > td, th {
+table.selection-table tr > td, table.selection-table tr > th {
     padding: 0px;
     font-size: 75%;
 }
-table.selection-table > th {
+table.selection-table tr > th {
     font-weight:  bold;
     background: lightblue;
     border: 1px solid transparent;
@@ -109,7 +109,6 @@ table.selection-table > tr > td {
     cursor: pointer;
     text-align: left;
     user-select: none;
-    font-size: 75%;
 }
 table.selection-table > tr:hover > td {
     background: #f0f0f0;

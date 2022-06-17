@@ -27,7 +27,7 @@ class SelectionTable {
         let th = document.createElement('th')
         th.innerHTML = 'Phenotype'
         table_header.appendChild(th)
-        table.appendChild(th)
+        table.appendChild(table_header)
         for (let i = 0; i < phenotype_names.length; i++) {
             let table_row = this.create_table_row(phenotype_names[i])
             table.appendChild(table_row)

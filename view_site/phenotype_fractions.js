@@ -17,32 +17,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
     }
     initialize_phenotype_selection_table() {
         let table = this.get_section().getElementsByClassName('selection-table')[0]
-        this.phenotype_selection_table = new SelectionTable(table, this.stats_table.get_phenotype_names())
-    }
-}
-
-class SelectionTable {
-    constructor(table, phenotype_names) {
-        let table_header = document.createElement('tr')
-        let th = document.createElement('th')
-        th.innerHTML = 'Phenotype'
-        table_header.appendChild(th)
-        table.appendChild(table_header)
-        for (let i = 0; i < phenotype_names.length; i++) {
-            let table_row = this.create_table_row(phenotype_names[i])
-            table.appendChild(table_row)
-        }
-    }
-    create_table_row(phenotype_name) {
-        let tr = document.createElement('tr')
-        let td = document.createElement('td')
-        td.innerHTML = phenotype_name
-        td.setAttribute('class', 'first last')
-        td.addEventListener('click', function(event) {
-            this.parentElement.classList.toggle('selected-row')
-        })
-        tr.appendChild(td)
-        return tr
+        this.phenotype_selection_table = new SelectionTable(table, this.stats_table.get_phenotype_names(), 'Phenotype')
     }
 }
 
@@ -214,3 +189,87 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         rowcountbox.getElementsByTagName('span')[0].innerHTML = number_rows
     }
 }
+
+class PairwiseComparisonsGrid {
+    constructor(section) {
+        this.labels = []
+        this.table = this.setup_table(section)
+    }
+    setup_table() {
+        let table = section.getElementsByClassName('pairwise-comparison')[0]
+        table.innerHTML = ''
+        return table
+    }
+    add_label(label) {
+        if (this.labels.includes(label)) {
+            return
+        }
+        this.add_new_row(label)
+        this.add_new_column(label)
+        this.labels.push(label)
+        this.fire_off_queries_for_new_cell_values(label)
+    }
+    add_new_row(row_label) {
+        let tr = document.createElement('tr')
+        tr.setAttribute('row_label', row_label)
+        tr.appendChild(this.create_row_label_cell(row_label))
+        for (column_label in this.labels) {
+            let td = this.create_new_cell(row_label, column_label)
+            tr.appendChild(td)
+        }
+        this.table.appendChild(tr)
+    }
+    create_row_label_cell(row_label) {
+        let th = document.createElement('th')
+        th.setAttribute('class', 'pairwise-comparison-row-label')
+        return th
+    }
+    create_new_cell(row_label, column_label) {
+        let td = document.createElement('td')
+        td.setAttribute('class', 'pairwise-comparison-cell')
+        return td
+    }
+    add_new_column(label) {
+        for (let i = 1; i < this.table.children.length; i++) {
+            let tr = this.table.children[i]
+            this.add_new_column_to_row(tr, label)
+        }
+    }
+    add_new_column_to_row(tr, column_label) {
+        let td = this.create_new_cell(tr.getAttribute('pairwise-comparison-row-label', label))   
+    }
+    remove_label(label) {
+
+    }
+    fire_off_queries_for_new_cell_values(label) {
+        for (let existing_label of this.labels) {
+            if (label == existing_label) {
+                continue
+            }
+            this.fire_off_query_for_cell_value(existing_label, label)
+        }
+    }
+    async fire_off_query_for_cell_value(row_label, column_label) {
+        let value = await this.get_pair_comparison(row_label, column_label)
+        this.set_cell_contents_by_location(row_label, column_label, value)
+    }
+    set_cell_contents_by_location(row_label, column_label, value) {
+        row_index = this.labels.indexOf(row_label)
+        column_index = this.labels.indexOf(column_label)
+        let cell = this.table.children[1 + row_index].children[1 + column_index]
+        this.set_cell_contents(cell, value)
+        if (row_label != column_label) {
+            let other_cell = this.table.children[1 + column_index].children[1 + row_index]
+            this.set_cell_contents(other_cell, value)
+        }
+    }
+    set_cell_contents(cell, value) {
+        cell.innerHTML = value
+        cell.setAttribute('class', 'pairwise-comparison-cell-loaded')
+    }
+    async get_pair_comparison(row_label, column_label) {
+        throw new Error('Abstract method unimplemented.')
+    }
+}
+
+

@@ -30,61 +30,6 @@ class RetrievableStatsPage {
     }
 }
 
-class RetrievedSelection {
-    constructor(retrieving_selector) {
-        this.selection_element = document.createElement('div')
-        this.selection_element.setAttribute('class', 'retrieving-selected')
-        this.selection_element.innerHTML = retrieving_selector.get_solicitation_text()
-        this.selection_element.addEventListener('click', function(event) {
-            event.stopPropagation();
-            retrieving_selector.parent.close_all_selectors_except(retrieving_selector)
-            retrieving_selector.toggle_options_visibility()
-        })
-        retrieving_selector.selector.appendChild(this.selection_element)
-    }
-    get_element() {
-        return this.selection_element
-    }
-    set_selection(option) {
-        this.selection_element.innerHTML = option.innerHTML
-    }
-    inactivate_arrow() {
-        this.selection_element.classList.remove('select-arrow-active')
-    }
-    toggle_arrow() {
-        this.selection_element.classList.toggle('select-arrow-active')
-    }
-}
-
-class RetrievedOptions {
-    constructor(retrieving_selector, option_names) {
-        this.retrieved_options_element = document.createElement('div');
-        this.retrieved_options_element.setAttribute('class', 'retrieving-select-items retrieving-select-hide')
-        for (let option_name of option_names) {
-            let option = document.createElement('div')
-            option.innerHTML = option_name;
-            option.addEventListener('click', function(event) {retrieving_selector.select_option(this, event)})
-            this.retrieved_options_element.appendChild(option)
-        }
-        retrieving_selector.selector.appendChild(this.retrieved_options_element)
-    }
-    get_element() {
-        return this.retrieved_options_element
-    }
-    hide() {
-        this.retrieved_options_element.classList.add('retrieving-select-hide')
-    }
-    toggle_hide() {
-        this.retrieved_options_element.classList.toggle('retrieving-select-hide')
-    }
-    set_selection(option) {
-        for (let other_option of this.retrieved_options_element.getElementsByClassName('same-as-selected')) {
-            other_option.removeAttribute('class')
-        }
-        option.setAttribute('class', 'same-as-selected');
-    }
-}
-
 class RetrievingSelector {
     constructor(selector_id, stats_table, parent) {
         this.parent = parent
@@ -156,6 +101,61 @@ class RetrievingSelector {
     hide_options() {
         this.retrieved_options.hide()
         this.selection.inactivate_arrow()
+    }
+}
+
+class RetrievedSelection {
+    constructor(retrieving_selector) {
+        this.selection_element = document.createElement('div')
+        this.selection_element.setAttribute('class', 'retrieving-selected')
+        this.selection_element.innerHTML = retrieving_selector.get_solicitation_text()
+        this.selection_element.addEventListener('click', function(event) {
+            event.stopPropagation();
+            retrieving_selector.parent.close_all_selectors_except(retrieving_selector)
+            retrieving_selector.toggle_options_visibility()
+        })
+        retrieving_selector.selector.appendChild(this.selection_element)
+    }
+    get_element() {
+        return this.selection_element
+    }
+    set_selection(option) {
+        this.selection_element.innerHTML = option.innerHTML
+    }
+    inactivate_arrow() {
+        this.selection_element.classList.remove('select-arrow-active')
+    }
+    toggle_arrow() {
+        this.selection_element.classList.toggle('select-arrow-active')
+    }
+}
+
+class RetrievedOptions {
+    constructor(retrieving_selector, option_names) {
+        this.retrieved_options_element = document.createElement('div');
+        this.retrieved_options_element.setAttribute('class', 'retrieving-select-items retrieving-select-hide')
+        for (let option_name of option_names) {
+            let option = document.createElement('div')
+            option.innerHTML = option_name;
+            option.addEventListener('click', function(event) {retrieving_selector.select_option(this, event)})
+            this.retrieved_options_element.appendChild(option)
+        }
+        retrieving_selector.selector.appendChild(this.retrieved_options_element)
+    }
+    get_element() {
+        return this.retrieved_options_element
+    }
+    hide() {
+        this.retrieved_options_element.classList.add('retrieving-select-hide')
+    }
+    toggle_hide() {
+        this.retrieved_options_element.classList.toggle('retrieving-select-hide')
+    }
+    set_selection(option) {
+        for (let other_option of this.retrieved_options_element.getElementsByClassName('same-as-selected')) {
+            other_option.removeAttribute('class')
+        }
+        option.setAttribute('class', 'same-as-selected');
     }
 }
 
@@ -296,5 +296,30 @@ class StatsTable {
             new_rows.push(all_rows[index + 1])
         }
         return new_rows
+    }
+}
+
+class SelectionTable {
+    constructor(table, names, header) {
+        let table_header = document.createElement('tr')
+        let th = document.createElement('th')
+        th.innerHTML = header
+        table_header.appendChild(th)
+        table.appendChild(table_header)
+        for (let i = 0; i < names.length; i++) {
+            let table_row = this.create_table_row(names[i])
+            table.appendChild(table_row)
+        }
+    }
+    create_table_row(name) {
+        let tr = document.createElement('tr')
+        let td = document.createElement('td')
+        td.innerHTML = name
+        td.setAttribute('class', 'first last')
+        td.addEventListener('click', function(event) {
+            this.parentElement.classList.toggle('selected-row')
+        })
+        tr.appendChild(td)
+        return tr
     }
 }

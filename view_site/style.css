@@ -89,6 +89,10 @@ table.stats-table tr {
 table.selection-table {
     border-collapse: separate;
     border-spacing: 0px;
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    cursor: pointer;
 }
 table.selection-table tr > td, table.selection-table tr > th {
     padding: 0px;
@@ -106,9 +110,7 @@ table.selection-table > tr > td {
     z-index: 8;
     border-top: 1px solid transparent;
     border-bottom: 1px solid transparent;
-    cursor: pointer;
     text-align: left;
-    user-select: none;
 }
 table.selection-table > tr:hover > td {
     background: #f0f0f0;
@@ -175,6 +177,8 @@ div.toggleable-text {
 div.show-more-button {
     margin: 0 auto;
     user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 .clickable-text {
     font-style: italic;

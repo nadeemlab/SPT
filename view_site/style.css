@@ -57,8 +57,10 @@ div.centerable-content-container {
 div.centerable-content-container table, div.centerable-content-container div{
     margin: 0 auto; 
 }
+
 table.stats-table {
-    border-collapse: collapse;    
+    border-collapse: separate;
+    border-spacing: 0px;
 }
 table.stats-table td, th {
     padding: 4px;
@@ -69,14 +71,79 @@ table.stats-table th {
     border: 1px solid transparent;
     border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
 }
-table.stats-table td {
+table.stats-table tr td {
     position:  relative;
     background: #fbfbfb;
-    z-index: -1;
+    z-index: 8;
+    border-top: 2px solid transparent;
+    border-bottom: 2px solid transparent;
 }
 table.stats-table tr:hover td {
     background: #f0f0f0;
 }
+table.stats-table tr {
+    position: relative;
+    z-index: 9;
+}
+
+table.selection-table {
+    border-collapse: separate;
+    border-spacing: 0px;
+}
+table.selection-table > tr > td, th {
+    padding: 0px;
+    font-size: 75%;
+}
+table.selection-table > th {
+    font-weight:  bold;
+    background: lightblue;
+    border: 1px solid transparent;
+    border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
+}
+table.selection-table > tr > td {
+    position:  relative;
+    background: #fbfbfb;
+    z-index: 8;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    cursor: pointer;
+    text-align: left;
+    user-select: none;
+    font-size: 75%;
+}
+table.selection-table > tr:hover > td {
+    background: #f0f0f0;
+}
+table.selection-table > tr {
+    position: relative;
+    z-index: 9;
+}
+
+table.selection-table > tr.selected-row > td{
+    background: #e5e5e5;
+    border-top: 1px solid #4242b0;
+    border-bottom: 1px solid #4242b0;
+}
+table.selection-table > tr.selected-row > td.last{
+    border-right: 1px solid #4242b0;
+}
+table.selection-table > tr.selected-row > td.first{
+    border-left: 1px solid #4242b0;
+}
+table.selection-table > tr > td.last{
+    border-right: 1px solid transparent;
+}
+table.selection-table > tr > td.first{
+    border-left: 1px solid transparent;
+}
+
+table.left-right-pages > tbody > tr > td:first-child {
+    border-right: 10px solid transparent;
+}
+table.left-right-pages > tbody > tr > td:last-child {
+    border-left: 10px solid transparent;
+}
+
 span.sortbutton {
     color: blue;
     font-size: x-small;
@@ -108,6 +175,7 @@ div.toggleable-text {
 }
 div.show-more-button {
     margin: 0 auto;
+    user-select: none;
 }
 .clickable-text {
     font-style: italic;

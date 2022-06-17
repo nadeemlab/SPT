@@ -4,10 +4,46 @@ function setup_retrievable_stats_page() {
 }
 
 class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
+    constructor(section) {
+        super(section)
+        this.section = section
+    }
     discover_stats_table(section) {
         let id = section.getElementsByClassName('stats-table')[0].getAttribute('id')
-        return new PhenotypeFractionsStatsTable(id)
-    }    
+        return new PhenotypeFractionsStatsTable(id, this)
+    }
+    get_section() {
+        return this.section
+    }
+    initialize_phenotype_selection_table() {
+        let table = this.get_section().getElementsByClassName('selection-table')[0]
+        this.phenotype_selection_table = new SelectionTable(table, this.stats_table.get_phenotype_names())
+    }
+}
+
+class SelectionTable {
+    constructor(table, phenotype_names) {
+        let table_header = document.createElement('tr')
+        let th = document.createElement('th')
+        th.innerHTML = 'Phenotype'
+        table_header.appendChild(th)
+        table.appendChild(th)
+        for (let i = 0; i < phenotype_names.length; i++) {
+            let table_row = this.create_table_row(phenotype_names[i])
+            table.appendChild(table_row)
+        }
+    }
+    create_table_row(phenotype_name) {
+        let tr = document.createElement('tr')
+        let td = document.createElement('td')
+        td.innerHTML = phenotype_name
+        td.setAttribute('class', 'first last')
+        td.addEventListener('click', function(event) {
+            this.parentElement.classList.toggle('selected-row')
+        })
+        tr.appendChild(td)
+        return tr
+    }
 }
 
 class PhenotypeFractionsStatsTable extends StatsTable {
@@ -80,7 +116,9 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         }
         this.patch_header(outcome_column)
         this.update_row_counter()
-        this.get_and_handle_phenotype_criteria_names(obj)
+        this.record_phenotype_names_from_response(obj)
+        this.get_parent_page().initialize_phenotype_selection_table()
+        this.get_and_handle_phenotype_criteria_names()
     }
     create_table_row(data_row) {
         let table_row = document.createElement('tr')
@@ -117,17 +155,28 @@ class PhenotypeFractionsStatsTable extends StatsTable {
             } else {
                 cell.innerHTML = entry
             }
+            cell.addEventListener('click', function(event) {
+                this.parentElement.classList.toggle('selected-row')
+            })
+            if (j == 0) {
+                cell.classList.toggle('first')
+            }
+            if (j == data_row.length - 1) {
+                cell.classList.toggle('last')
+            }
             table_row.appendChild(cell)
         }
         return table_row
     }
-    get_phenotype_names(obj) {
+    record_phenotype_names_from_response(obj) {
         let index = this.get_header_values().indexOf('Phenotype')
-        return new Set(Array.from(obj).map(function(data_row) {return data_row[index]}))        
+        this.phenotype_names = Array.from(new Set(Array.from(obj).map(function(data_row) {return data_row[index]}))).sort()
     }
-    get_and_handle_phenotype_criteria_names(obj) {
-        let phenotype_names = this.get_phenotype_names(obj)
-        for (let phenotype_name of phenotype_names) {
+    get_phenotype_names() {
+        return this.phenotype_names
+    }
+    get_and_handle_phenotype_criteria_names() {
+        for (let phenotype_name of this.get_phenotype_names()) {
             this.get_and_handle_phenotype_criteria_name(phenotype_name)
         }
     }

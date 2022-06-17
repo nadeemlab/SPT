@@ -216,10 +216,14 @@ class AttributesTable {
 }
 
 class StatsTable {
-    constructor(table_id) {
+    constructor(table_id, parent_page) {
         this.table = document.getElementById(table_id)
+        this.parent_page = parent_page
         this.setup_table_header()
         this.dependencies = []
+    }
+    get_parent_page() {
+        return this.parent_page
     }
     add_loaded_item_dependency(display_name, attributes_table) {
         this.dependencies.push({ 'display_name' : display_name, 'attributes_table' : attributes_table})

@@ -100,7 +100,7 @@ div.underlay {
 div.overlay {
     background: lightgray;
     text-align: right;
-    padding: 5px;
+    padding: 4px;
 }
 div.toggleable-text {
     margin: 0 auto; 
@@ -171,12 +171,12 @@ img.loadinggif{
     width: auto;
 }
 .hoverdiv:hover .hoverdiv-content {
-  display: none;
+    display: none;
 }
 .hoverdiv:hover .tooltip {
     display: inline;
     background: white;
-    border: 1px dotted gray;
+    background-size: cover;
 }
 .positives {
     font-weight: bold;

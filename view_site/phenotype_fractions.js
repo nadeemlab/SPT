@@ -7,6 +7,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
     constructor(section) {
         super(section)
         this.section = section
+        this.phenotype_comparisons_grid = new PhenotypeComparisonsGrid(section)
     }
     discover_stats_table(section) {
         let id = section.getElementsByClassName('stats-table')[0].getAttribute('id')
@@ -17,7 +18,12 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
     }
     initialize_phenotype_selection_table() {
         let table = this.get_section().getElementsByClassName('selection-table')[0]
-        this.phenotype_selection_table = new SelectionTable(table, this.stats_table.get_phenotype_names(), 'Phenotype')
+        this.phenotype_selection_table = new SelectionTable(
+            table,
+            this.stats_table.get_phenotype_names(),
+            'Phenotype',
+            this.phenotype_comparisons_grid,
+        )
     }
 }
 
@@ -190,15 +196,26 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     }
 }
 
-class PairwiseComparisonsGrid {
+class PairwiseComparisonsGrid extends MultiSelectionHandler{
     constructor(section) {
+        super()
         this.labels = []
         this.table = this.setup_table(section)
     }
-    setup_table() {
+    setup_table(section) {
         let table = section.getElementsByClassName('pairwise-comparison')[0]
         table.innerHTML = ''
+        let tr = document.createElement('tr')
+        tr.setAttribute('class', 'pairwise-comparison-header-row')
+        tr.appendChild(document.createElement('th'))
+        table.appendChild(tr)
         return table
+    }
+    add_item(item_name) {
+        this.add_label(item_name)
+    }
+    remove_item(item_name) {
+        this.remove_label(item_name)
     }
     add_label(label) {
         if (this.labels.includes(label)) {
@@ -213,7 +230,7 @@ class PairwiseComparisonsGrid {
         let tr = document.createElement('tr')
         tr.setAttribute('row_label', row_label)
         tr.appendChild(this.create_row_label_cell(row_label))
-        for (column_label in this.labels) {
+        for (let column_label of this.labels) {
             let td = this.create_new_cell(row_label, column_label)
             tr.appendChild(td)
         }
@@ -221,6 +238,7 @@ class PairwiseComparisonsGrid {
     }
     create_row_label_cell(row_label) {
         let th = document.createElement('th')
+        th.innerHTML = row_label
         th.setAttribute('class', 'pairwise-comparison-row-label')
         return th
     }
@@ -230,16 +248,45 @@ class PairwiseComparisonsGrid {
         return td
     }
     add_new_column(label) {
+        this.table.children[0].appendChild(this.create_column_label_cell(label))
         for (let i = 1; i < this.table.children.length; i++) {
             let tr = this.table.children[i]
             this.add_new_column_to_row(tr, label)
         }
     }
+    create_column_label_cell(column_label) {
+        let th = document.createElement('th')
+        let span = document.createElement('span')
+        span.innerHTML = column_label
+        th.appendChild(span)
+        th.setAttribute('class', 'pairwise-comparison-column-label')
+        return th
+    }
     add_new_column_to_row(tr, column_label) {
-        let td = this.create_new_cell(tr.getAttribute('pairwise-comparison-row-label', label))   
+        let td = this.create_new_cell(tr.getAttribute('pairwise-comparison-row-label'), column_label)
+        tr.appendChild(td)
     }
     remove_label(label) {
-
+        if (! this.labels.includes(label)) {
+            return
+        }
+        let index = this.labels.indexOf(label)
+        this.labels.splice(index, 1)
+        this.remove_column(label, index)
+        this.remove_row(label, index)
+    }
+    remove_column(label, index) {
+        let column_label_element = this.table.children[0].children[index + 1]
+        this.table.children[0].removeChild(column_label_element)
+        for (let i = 1; i < this.table.children.length; i++) {
+            let tr = this.table.children[i]
+            let cell = tr.children[index + 1]
+            tr.removeChild(cell)
+        }
+    }
+    remove_row(label, index) {
+        let labelled_row = this.table.children[index + 1]
+        this.table.removeChild(labelled_row)
     }
     fire_off_queries_for_new_cell_values(label) {
         for (let existing_label of this.labels) {
@@ -254,8 +301,8 @@ class PairwiseComparisonsGrid {
         this.set_cell_contents_by_location(row_label, column_label, value)
     }
     set_cell_contents_by_location(row_label, column_label, value) {
-        row_index = this.labels.indexOf(row_label)
-        column_index = this.labels.indexOf(column_label)
+        let row_index = this.labels.indexOf(row_label)
+        let column_index = this.labels.indexOf(column_label)
         let cell = this.table.children[1 + row_index].children[1 + column_index]
         this.set_cell_contents(cell, value)
         if (row_label != column_label) {
@@ -265,11 +312,18 @@ class PairwiseComparisonsGrid {
     }
     set_cell_contents(cell, value) {
         cell.innerHTML = value
-        cell.setAttribute('class', 'pairwise-comparison-cell-loaded')
+        cell.classList.add('pairwise-comparison-cell-loaded')
     }
     async get_pair_comparison(row_label, column_label) {
         throw new Error('Abstract method unimplemented.')
     }
 }
 
-
+class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
+    constructor(section) {
+        super(section)
+    }
+    get_pair_comparison(row_label, column_label) {
+        return row_label.charAt(0) + column_label.charAt(0)
+    }
+}

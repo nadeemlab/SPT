@@ -299,24 +299,38 @@ class StatsTable {
     }
 }
 
+class MultiSelectionHandler {
+    add_item(item_name) {
+        throw new Error('Abstract method unimplemented.')
+    }
+    remove_item(item_name) {
+        throw new Error('Abstract method unimplemented.')
+    }
+}
+
 class SelectionTable {
-    constructor(table, names, header) {
+    constructor(table, names, header, multi_selection_handler) {
         let table_header = document.createElement('tr')
         let th = document.createElement('th')
         th.innerHTML = header
         table_header.appendChild(th)
         table.appendChild(table_header)
         for (let i = 0; i < names.length; i++) {
-            let table_row = this.create_table_row(names[i])
+            let table_row = this.create_table_row(names[i], multi_selection_handler)
             table.appendChild(table_row)
         }
     }
-    create_table_row(name) {
+    create_table_row(name, multi_selection_handler) {
         let tr = document.createElement('tr')
         let td = document.createElement('td')
         td.innerHTML = name
         td.setAttribute('class', 'first last')
         td.addEventListener('click', function(event) {
+            if (this.parentElement.classList.contains('selected-row')) {
+                multi_selection_handler.remove_label(name)
+            } else {
+                multi_selection_handler.add_label(name)
+            }
             this.parentElement.classList.toggle('selected-row')
         })
         tr.appendChild(td)

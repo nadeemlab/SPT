@@ -201,6 +201,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         super()
         this.labels = []
         this.table = this.setup_table(section)
+        this.lock_state = false
     }
     setup_table(section) {
         let table = section.getElementsByClassName('pairwise-comparison')[0]
@@ -211,20 +212,32 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         table.appendChild(tr)
         return table
     }
-    add_item(item_name) {
-        this.add_label(item_name)
+    lock_interaction() {
+        this.lock_state = true
+    }
+    unlock_interaction() {
+        this.lock_state = false
+        console.log('Unlocked.')
+    }
+    locked() {
+        return this.lock_state
+    }
+    async add_item(item_name) {
+        this.lock_interaction()
+        await this.add_label(item_name)
+        this.unlock_interaction()
     }
     remove_item(item_name) {
         this.remove_label(item_name)
     }
-    add_label(label) {
+    async add_label(label) {
         if (this.labels.includes(label)) {
             return
         }
         this.add_new_row(label)
         this.add_new_column(label)
         this.labels.push(label)
-        this.fire_off_queries_for_new_cell_values(label)
+        await this.fire_off_queries_for_new_cell_values(label)
     }
     add_new_row(row_label) {
         let tr = document.createElement('tr')
@@ -288,13 +301,23 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         let labelled_row = this.table.children[index + 1]
         this.table.removeChild(labelled_row)
     }
-    fire_off_queries_for_new_cell_values(label) {
+    async fire_off_queries_for_new_cell_values(label) {
+        let promises = []
         for (let existing_label of this.labels) {
             if (label == existing_label) {
                 continue
             }
-            this.fire_off_query_for_cell_value(existing_label, label)
+            let reference = this
+            promises.push(
+                new Promise(async function(resolve, reject) {
+                    await reference.fire_off_query_for_cell_value(existing_label, label)
+                    resolve()
+                })
+            )
         }
+        console.log(promises)
+        await Promise.all(promises)
+        console.log('finished')
     }
     async fire_off_query_for_cell_value(row_label, column_label) {
         let value = await this.get_pair_comparison(row_label, column_label)
@@ -323,7 +346,11 @@ class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
     constructor(section) {
         super(section)
     }
-    get_pair_comparison(row_label, column_label) {
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    async get_pair_comparison(row_label, column_label) {
+        await this.sleep(4000 + Math.random()*1000)
         return row_label.charAt(0) + column_label.charAt(0)
     }
 }

@@ -326,12 +326,13 @@ class SelectionTable {
         td.innerHTML = name
         td.setAttribute('class', 'first last')
         td.addEventListener('click', function(event) {
-            if (! multi_selection_handler.locked()) {
-                if (this.parentElement.classList.contains('selected-row')) {
+            if (this.parentElement.classList.contains('selected-row')) {
+                if (! multi_selection_handler.locked()) {
                     multi_selection_handler.remove_item(name)
-                } else {
-                    multi_selection_handler.add_item(name)
+                    this.parentElement.classList.toggle('selected-row')
                 }
+            } else {
+                multi_selection_handler.add_item(name)
                 this.parentElement.classList.toggle('selected-row')
             }
         })

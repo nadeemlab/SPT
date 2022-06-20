@@ -201,7 +201,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         super()
         this.labels = []
         this.table = this.setup_table(section)
-        this.lock_state = false
+        this.lock_count = 0
     }
     setup_table(section) {
         let table = section.getElementsByClassName('pairwise-comparison')[0]
@@ -213,19 +213,19 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         return table
     }
     lock_interaction() {
-        this.lock_state = true
+        this.lock_count = this.lock_count + 1
     }
     unlock_interaction() {
-        this.lock_state = false
-        console.log('Unlocked.')
+        this.lock_count = this.lock_count - 1
     }
     locked() {
-        return this.lock_state
+        return (this.lock_count > 0)
     }
     async add_item(item_name) {
         this.lock_interaction()
         await this.add_label(item_name)
         this.unlock_interaction()
+        console.log('Unlocked one lock; count is: ' + this.lock_count + ', so overall: ' + this.locked())
     }
     remove_item(item_name) {
         this.remove_label(item_name)
@@ -315,9 +315,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
                 })
             )
         }
-        console.log(promises)
         await Promise.all(promises)
-        console.log('finished')
     }
     async fire_off_query_for_cell_value(row_label, column_label) {
         let value = await this.get_pair_comparison(row_label, column_label)

@@ -339,10 +339,12 @@ async def get_phenotype_criteria(
         positive_markers = positive_markers_tab_delimited.split('\t')
     else:
         positive_markers = []
+    positive_markers = list(set(positive_markers).difference(['']))
     if not negative_markers_tab_delimited is None:
         negative_markers = negative_markers_tab_delimited.split('\t')
     else:
         negative_markers = []
+    negative_markers = list(set(negative_markers).difference(['']))
 
     positive_criteria = [
         (marker, 'positive') for marker in positive_markers
@@ -359,7 +361,6 @@ async def get_phenotype_criteria(
         marker_symbol VARCHAR(512),
         polarity VARCHAR(512)
     )
-    ON COMMIT DELETE ROWS
     ;
     '''
 
@@ -448,7 +449,7 @@ async def get_phenotype_criteria(
         query = '\n'.join([
             create_temporary_criterion_table,
             '\n'.join([
-                insert_criteria % criterion for criterion in criteria
+                insert_criteria % ("'"+criterion[0]+"'", "'"+criterion[1]+"'") for criterion in criteria
             ]),
             counts_query
         ])
@@ -471,7 +472,7 @@ async def get_phenotype_criteria(
                     {
                         'specimen' : row[0],
                         'phenotype count' : row[1],
-                        # 'all cells count' : row[2]
+                        'all cells count' : row[2],
                     }
                     for row in rows
                 ]

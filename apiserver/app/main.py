@@ -354,7 +354,6 @@ async def get_phenotype_criteria(
     number_criteria = len(criteria)
 
     create_temporary_criterion_table = '''
-    DROP TABLE IF EXISTS temporary_cell_phenotype_criterion_by_symbol CASCADE;
     CREATE TEMPORARY TABLE temporary_cell_phenotype_criterion_by_symbol
     (
         marker_symbol VARCHAR(512),
@@ -439,7 +438,8 @@ async def get_phenotype_criteria(
         cc.measurement_study = %s
     ;
 
-    SELECT * FROM temporary_marked_and_all_cells_count;
+    SELECT * FROM temporary_marked_and_all_cells_count
+    ;
     ''' % (str(number_criteria), '%s', '%s')
 
     with DBAccessor() as db_accessor:
@@ -452,7 +452,7 @@ async def get_phenotype_criteria(
             ]),
             counts_query
         ])
-        cursor.execute(query, (specimen_measurement_study, specimen_measurement_study,))
+        cursor.execute(query, (specimen_measurement_study, specimen_measurement_study))
         rows = cursor.fetchall()
 
         if len(rows) == 0:
@@ -467,11 +467,14 @@ async def get_phenotype_criteria(
 
         representation = {
             'phenotype counts' : {
-                'per specimen counts' : {
-                    'specimen' : row[0],
-                    'phenotype count' : row[1],
-                    'all cells count' : row[2],
-                }
+                'per specimen counts' : [
+                    {
+                        'specimen' : row[0],
+                        'phenotype count' : row[1],
+                        # 'all cells count' : row[2]
+                    }
+                    for row in rows
+                ]
             }
         }
         return Response(

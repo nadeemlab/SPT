@@ -225,7 +225,6 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         this.lock_interaction()
         await this.add_label(item_name)
         this.unlock_interaction()
-        console.log('Unlocked one lock; count is: ' + this.lock_count + ', so overall: ' + this.locked())
     }
     remove_item(item_name) {
         this.remove_label(item_name)
@@ -332,7 +331,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         }
     }
     set_cell_contents(cell, value) {
-        cell.innerHTML = value
+        cell.style.background = 'lightgreen'
         cell.classList.add('pairwise-comparison-cell-loaded')
     }
     async get_pair_comparison(row_label, column_label) {

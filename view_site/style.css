@@ -258,6 +258,10 @@ img.loadinggif{
     color: gray;
 }
 
+table.pairwise-comparison {
+    border-collapse: separate;
+    border-spacing: 2px;
+}
 th.pairwise-comparison-column-label span {
     -ms-writing-mode: tb-rl;
     -webkit-writing-mode: vertical-rl;
@@ -271,4 +275,16 @@ th.pairwise-comparison-column-label {
 }
 th.pairwise-comparison-row-label {
     text-align: right;
+}
+td.pairwise-comparison-cell {
+    width: 1em;
+    height: 1em;
+    background: lightgray;
+    border: solid 2px transparent;
+}
+td.pairwise-comparison-cell:hover {
+    border: solid 2px #4242b0;
+}
+tr.pairwise-comparison-header-row {
+
 }

@@ -446,6 +446,19 @@ async def get_phenotype_criteria(
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
+
+        total_query = '''
+        SELECT count(*)
+        FROM histological_structure_identification hsi
+        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
+        JOIN data_file df ON hsi.data_source = df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+        ;
+        '''
+        cursor.execute(total_query, (specimen_measurement_study,))
+        number_cells = cursor.fetchall()[0][0]
+
         query = '\n'.join([
             create_temporary_criterion_table,
             '\n'.join([
@@ -466,16 +479,18 @@ async def get_phenotype_criteria(
                 media_type = 'application/json',
             )
 
+        fancy_round = lambda ratio: 100 * round(ratio * 10000)/10000
         representation = {
             'phenotype counts' : {
                 'per specimen counts' : [
                     {
                         'specimen' : row[0],
                         'phenotype count' : row[1],
-                        'all cells count' : row[2],
+                        'percent of all cells in specimen' : fancy_round(row[1] / row[2]),
                     }
                     for row in rows
-                ]
+                ],
+                'total number of cells in all specimens of study' : number_cells,
             }
         }
         return Response(

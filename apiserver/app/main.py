@@ -302,8 +302,7 @@ async def get_phenotype_criteria(
         WHERE cp.symbol = %s
         ;
         '''
-        cursor.execute(query, (phenotype_symbol,),
-        )
+        cursor.execute(query, (phenotype_symbol,),)
         rows = cursor.fetchall()
         if len(rows) == 0:
             return Response(
@@ -355,20 +354,34 @@ async def get_phenotype_criteria(
     number_criteria = len(criteria)
 
     create_temporary_criterion_table = '''
-    CREATE TEMPORARY TABLE temporary_cell_phenotype_criterion
+    DROP TABLE IF EXISTS temporary_cell_phenotype_criterion_by_symbol CASCADE;
+    CREATE TEMPORARY TABLE temporary_cell_phenotype_criterion_by_symbol
     (
-        marker VARCHAR(512),
+        marker_symbol VARCHAR(512),
         polarity VARCHAR(512)
     )
-    ON COMMIT DELETE ROWS;
+    ON COMMIT DELETE ROWS
+    ;
     '''
 
     insert_criteria = '''
-    INSERT INTO temporary_criterion_table VALUES (%s, %s)
+    INSERT INTO temporary_cell_phenotype_criterion_by_symbol VALUES (%s, %s)
+    ;
     '''
 
     counts_query = '''
-    CREATE TEMPORARY VIEW temporary_cells_count_criteria_satisfied AS
+    CREATE OR REPLACE TEMPORARY VIEW temporary_cell_phenotype_criterion AS
+    SELECT
+        cs.identifier as marker,
+        tccs.polarity as polarity
+    FROM
+        temporary_cell_phenotype_criterion_by_symbol tccs
+    JOIN
+        chemical_species cs ON
+            cs.symbol = tccs.marker_symbol
+    ;
+
+    CREATE OR REPLACE TEMPORARY VIEW temporary_cells_count_criteria_satisfied AS
     SELECT
         eq.histological_structure as histological_structure,
         COUNT(*) as number_criteria_satisfied
@@ -383,23 +396,22 @@ async def get_phenotype_criteria(
     AND
         hs.anatomical_entity = 'cell'
     GROUP BY
-        eq.histological_structure,
+        eq.histological_structure
     ;
 
-    CREATE TEMPORARY VIEW temporary_all_criteria_satisfied AS
+    CREATE OR REPLACE TEMPORARY VIEW temporary_all_criteria_satisfied AS
     SELECT
-        cs.histological_structure as histological_structure,
+        tcs.histological_structure as histological_structure
     FROM
         temporary_cells_count_criteria_satisfied tcs
     WHERE
         tcs.number_criteria_satisfied = %s
     ;
 
-    CREATE TEMPORARY VIEW temporary_composite_marker_positive_cell_count_by_specimen AS
+    CREATE OR REPLACE TEMPORARY VIEW temporary_composite_marker_positive_cell_count_by_specimen AS
     SELECT
         sdmp.specimen as specimen,
-        COUNT(*) as marked_cell_count,
-        cc.cell_count as total_cell_count
+        COUNT(*) as marked_cell_count
     FROM
         temporary_all_criteria_satisfied ts
         JOIN histological_structure_identification hsi ON
@@ -408,27 +420,39 @@ async def get_phenotype_criteria(
             hsi.data_source = df.sha256_hash
         JOIN specimen_data_measurement_process sdmp ON
             df.source_generation_process = sdmp.identifier
-        JOIN cell_count_by_study_specimen cc ON
-            sdmp.specimen = cc.specimen
-        AND
-            sdmp.study = cc.study
     WHERE
         sdmp.study = %s
     GROUP BY
         sdmp.specimen
     ;
 
-    SELECT * FROM temporary_composite_marker_positive_cell_count_by_specimen
+    CREATE OR REPLACE TEMPORARY VIEW temporary_marked_and_all_cells_count AS
+    SELECT
+        cc.specimen as specimen,
+        CASE WHEN tccs.marked_cell_count is NULL THEN 0 ELSE tccs.marked_cell_count END AS marked_cell_count,
+        cc.cell_count as all_cells_count
+    FROM
+        cell_count_by_study_specimen cc
+        LEFT OUTER JOIN temporary_composite_marker_positive_cell_count_by_specimen tccs ON
+            tccs.specimen = cc.specimen
+    WHERE
+        cc.measurement_study = %s
     ;
-    ''' % (str(number_criteria), '%s')
+
+    SELECT * FROM temporary_marked_and_all_cells_count;
+    ''' % (str(number_criteria), '%s', '%s')
 
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
-
-        cursor.execute(create_temporary_criterion_table)
-        cursor.executemany(insert_criteria, criteria)
-        cursor.execute(counts_query, (specimen_measurement_study,))
+        query = '\n'.join([
+            create_temporary_criterion_table,
+            '\n'.join([
+                insert_criteria % criterion for criterion in criteria
+            ]),
+            counts_query
+        ])
+        cursor.execute(query, (specimen_measurement_study, specimen_measurement_study,))
         rows = cursor.fetchall()
 
         if len(rows) == 0:

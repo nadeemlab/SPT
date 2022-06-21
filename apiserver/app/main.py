@@ -286,3 +286,171 @@ async def get_phenotype_criteria_name(
             media_type = 'application/json',
         )
 
+
+@app.get("/phenotype-criteria/")
+async def get_phenotype_criteria(
+    phenotype_symbol : str = Query(default='unknown', min_length=3),
+):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        query = '''
+        SELECT cs.symbol, cpc.polarity
+        FROM cell_phenotype_criterion cpc
+        JOIN cell_phenotype cp ON cpc.cell_phenotype = cp.identifier
+        JOIN chemical_species cs ON cs.identifier = cpc.marker
+        WHERE cp.symbol = %s
+        ;
+        '''
+        cursor.execute(query, (phenotype_symbol,),
+        )
+        rows = cursor.fetchall()
+        if len(rows) == 0:
+            return Response(
+                content = json.dumps({
+                    'error' : {
+                        'message' : 'unknown phenotype',
+                        'phenotype_symbol value provided' : phenotype_symbol,
+                    }
+                }),
+                media_type = 'application/json',
+            )
+        signature = { row[0] : row[1] for row in rows}
+        positive_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'positive'])
+        negative_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'negative'])
+        representation = {
+            'phenotype criteria' : {
+                'positive markers' : positive_markers,
+                'negative markers' : negative_markers,            
+            }
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
+@app.get("/anonymous-phenotype-counts/")
+async def get_phenotype_criteria(
+    positive_markers_tab_delimited : str = Query(default=None),
+    negative_markers_tab_delimited : str = Query(default=None),
+    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+):
+    if not positive_markers_tab_delimited is None:
+        positive_markers = positive_markers_tab_delimited.split('\t')
+    else:
+        positive_markers = []
+    if not negative_markers_tab_delimited is None:
+        negative_markers = negative_markers_tab_delimited.split('\t')
+    else:
+        negative_markers = []
+
+    positive_criteria = [
+        (marker, 'positive') for marker in positive_markers
+    ]
+    negative_criteria = [
+        (marker, 'negative') for marker in negative_markers
+    ]
+    criteria = positive_criteria + negative_criteria
+    number_criteria = len(criteria)
+
+    create_temporary_criterion_table = '''
+    CREATE TEMPORARY TABLE temporary_cell_phenotype_criterion
+    (
+        marker VARCHAR(512),
+        polarity VARCHAR(512)
+    )
+    ON COMMIT DELETE ROWS;
+    '''
+
+    insert_criteria = '''
+    INSERT INTO temporary_criterion_table VALUES (%s, %s)
+    '''
+
+    counts_query = '''
+    CREATE TEMPORARY VIEW temporary_cells_count_criteria_satisfied AS
+    SELECT
+        eq.histological_structure as histological_structure,
+        COUNT(*) as number_criteria_satisfied
+    FROM
+        expression_quantification eq
+        JOIN histological_structure hs ON
+            eq.histological_structure = hs.identifier
+        JOIN temporary_cell_phenotype_criterion tcpc ON
+            eq.target = tcpc.marker
+    WHERE
+        tcpc.polarity = eq.discrete_value
+    AND
+        hs.anatomical_entity = 'cell'
+    GROUP BY
+        eq.histological_structure,
+    ;
+
+    CREATE TEMPORARY VIEW temporary_all_criteria_satisfied AS
+    SELECT
+        cs.histological_structure as histological_structure,
+    FROM
+        temporary_cells_count_criteria_satisfied tcs
+    WHERE
+        tcs.number_criteria_satisfied = %s
+    ;
+
+    CREATE TEMPORARY VIEW temporary_composite_marker_positive_cell_count_by_specimen AS
+    SELECT
+        sdmp.specimen as specimen,
+        COUNT(*) as marked_cell_count,
+        cc.cell_count as total_cell_count
+    FROM
+        temporary_all_criteria_satisfied ts
+        JOIN histological_structure_identification hsi ON
+            ts.histological_structure = hsi.histological_structure
+        JOIN data_file df ON 
+            hsi.data_source = df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON
+            df.source_generation_process = sdmp.identifier
+        JOIN cell_count_by_study_specimen cc ON
+            sdmp.specimen = cc.specimen
+        AND
+            sdmp.study = cc.study
+    WHERE
+        sdmp.study = %s
+    GROUP BY
+        sdmp.specimen
+    ;
+
+    SELECT * FROM temporary_composite_marker_positive_cell_count_by_specimen
+    ;
+    ''' % (str(number_criteria), '%s')
+
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(create_temporary_criterion_table)
+        cursor.executemany(insert_criteria, criteria)
+        cursor.execute(counts_query, (specimen_measurement_study,))
+        rows = cursor.fetchall()
+
+        if len(rows) == 0:
+            return Response(
+                content = json.dumps({
+                    'error' : {
+                        'message' : 'counts could not be made',
+                    }
+                }),
+                media_type = 'application/json',
+            )
+
+        representation = {
+            'phenotype counts' : {
+                'per specimen counts' : {
+                    'specimen' : row[0],
+                    'phenotype count' : row[1],
+                    'all cells count' : row[2],
+                }
+            }
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )

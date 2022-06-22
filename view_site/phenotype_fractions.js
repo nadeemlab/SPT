@@ -367,7 +367,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         return this.interpolate(value, [242, 242, 242], [252, 0, 0])
     }
     interpolate(value, initial, final) {
-        let skewness = 1/3
+        let skewness = 1/4
         let rescaled = Math.pow(value, skewness)
         return {
             'red' : (1 - value) * initial[0] + value * final[0],

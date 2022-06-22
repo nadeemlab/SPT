@@ -305,15 +305,22 @@ async def get_phenotype_criteria(
         cursor.execute(query, (phenotype_symbol,),)
         rows = cursor.fetchall()
         if len(rows) == 0:
-            return Response(
-                content = json.dumps({
-                    'error' : {
-                        'message' : 'unknown phenotype',
-                        'phenotype_symbol value provided' : phenotype_symbol,
-                    }
-                }),
-                media_type = 'application/json',
-            )
+            singles_query = '''
+            SELECT symbol, 'positive' as polarity FROM chemical_species;
+            '''
+            cursor.execute(singles_query)
+            rows = cursor.fetchall()
+            rows = [row for row in rows if row[0] == phenotype_symbol]
+            if len(rows) == 0:
+                return Response(
+                    content = json.dumps({
+                        'error' : {
+                            'message' : 'unknown phenotype',
+                            'phenotype_symbol value provided' : phenotype_symbol,
+                        }
+                    }),
+                    media_type = 'application/json',
+                )
         signature = { row[0] : row[1] for row in rows}
         positive_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'positive'])
         negative_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'negative'])

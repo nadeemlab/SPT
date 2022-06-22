@@ -7,7 +7,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
     constructor(section) {
         super(section)
         this.section = section
-        this.phenotype_comparisons_grid = new PhenotypeComparisonsGrid(section)
+        this.phenotype_comparisons_grid = new PhenotypeComparisonsGrid(section, this)
     }
     discover_stats_table(section) {
         let id = section.getElementsByClassName('stats-table')[0].getAttribute('id')
@@ -201,6 +201,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         super()
         this.labels = []
         this.table = this.setup_table(section)
+        this.detail_bar = this.setup_detail_bar()
         this.lock_count = 0
     }
     setup_table(section) {
@@ -211,6 +212,12 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         tr.appendChild(document.createElement('th'))
         table.appendChild(tr)
         return table
+    }
+    setup_detail_bar() {
+        let detail_bar = this.table.parentElement.getElementsByTagName('span')[0]
+        console.log(detail_bar)
+        detail_bar.innerHTML = '%'
+        return detail_bar
     }
     lock_interaction() {
         this.lock_count = this.lock_count + 1
@@ -257,7 +264,25 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     create_new_cell(row_label, column_label) {
         let td = document.createElement('td')
         td.setAttribute('class', 'pairwise-comparison-cell')
+        let span = document.createElement('span')
+        td.appendChild(span)
+        let reference = this
+        td.addEventListener('mousemove', function(event) {
+            let value = this.getElementsByTagName('span')[0].innerHTML
+            reference.set_detail_bar(value)
+        })
+        td.addEventListener('mouseleave', function(event) {
+            reference.set_detail_bar('')
+        })
         return td
+    }
+    set_detail_bar(value) {
+        if (value != '') {
+            let percentage = Math.round(100 * 100 * value)/100
+            this.detail_bar.innerHTML = percentage + ' %'
+        } else {
+            this.detail_bar.innerHTML = '%'            
+        }
     }
     add_new_column(label) {
         this.table.children[0].appendChild(this.create_column_label_cell(label))
@@ -303,9 +328,6 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     async fire_off_queries_for_new_cell_values(label) {
         let promises = []
         for (let existing_label of this.labels) {
-            if (label == existing_label) {
-                continue
-            }
             let reference = this
             promises.push(
                 new Promise(async function(resolve, reject) {
@@ -317,22 +339,41 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         await Promise.all(promises)
     }
     async fire_off_query_for_cell_value(row_label, column_label) {
-        let value = await this.get_pair_comparison(row_label, column_label)
-        this.set_cell_contents_by_location(row_label, column_label, value)
+        let percentage = await this.get_pair_comparison(row_label, column_label)
+        this.set_cell_contents_by_location(row_label, column_label, percentage)
     }
-    set_cell_contents_by_location(row_label, column_label, value) {
+    set_cell_contents_by_location(row_label, column_label, percentage) {
         let row_index = this.labels.indexOf(row_label)
         let column_index = this.labels.indexOf(column_label)
         let cell = this.table.children[1 + row_index].children[1 + column_index]
-        this.set_cell_contents(cell, value)
+        this.set_cell_contents(cell, percentage)
         if (row_label != column_label) {
             let other_cell = this.table.children[1 + column_index].children[1 + row_index]
-            this.set_cell_contents(other_cell, value)
+            this.set_cell_contents(other_cell, percentage)
         }
     }
-    set_cell_contents(cell, value) {
-        cell.style.background = 'lightgreen'
+    set_cell_contents(cell, percentage) {
+        let value = percentage / 100
+        let color = this.get_cool_warm(value)
+        let red = color['red']
+        let green = color['green']
+        let blue = color['blue']
+        cell.style.background = `rgb(${red}, ${green}, ${blue})`
         cell.classList.add('pairwise-comparison-cell-loaded')
+        let span = cell.getElementsByTagName('span')[0]
+        span.innerHTML = value
+    }
+    get_cool_warm(value) {
+        return this.interpolate(value, [242, 242, 242], [252, 0, 0])
+    }
+    interpolate(value, initial, final) {
+        let skewness = 1/3
+        let rescaled = Math.pow(value, skewness)
+        return {
+            'red' : (1 - value) * initial[0] + value * final[0],
+            'green' : (1 - value) * initial[1] + value * final[1],
+            'blue' : (1 - value) * initial[2] + value * final[2],
+        }
     }
     async get_pair_comparison(row_label, column_label) {
         throw new Error('Abstract method unimplemented.')
@@ -340,14 +381,64 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
 }
 
 class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
-    constructor(section) {
+    constructor(section, parent) {
         super(section)
+        this.parent = parent
     }
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
     async get_pair_comparison(row_label, column_label) {
-        await this.sleep(4000 + Math.random()*1000)
-        return row_label.charAt(0) + column_label.charAt(0)
+        let signatures = []
+        for (let label of [row_label, column_label]) {
+            let signature = await this.get_signature(label)
+            signatures.push(signature)
+        }
+        let merged_signature = this.merge_criteria(signatures)
+
+        let parameter_names = ['positive_markers_tab_delimited', 'negative_markers_tab_delimited', 'specimen_measurement_study']
+        let parameter_values = []
+        for (let key of ['positive markers', 'negative markers']) {
+            parameter_values.push(encodeURIComponent(merged_signature[key].join('\t')))
+        }
+        parameter_values.push(encodeURIComponent(this.parent.get_stats_page().get_selections()['measurement study']))
+
+        let fragments = []
+        for (let i = 0; i < 3; i++) {
+            fragments.push([parameter_names[i], parameter_values[i]].join('='))
+        }
+        let url_base = get_api_url_base()
+        let counts_url = `${url_base}/anonymous-phenotype-counts/?` + fragments.join('&')
+        let counts_response = await promise_http_request('GET', counts_url)
+
+        let root = JSON.parse(counts_response)
+        let cell_count = 0
+        for (let entry of root['phenotype counts']['per specimen counts']) {
+            cell_count = cell_count + entry['phenotype count']
+        }
+
+        let percentage = 100 * cell_count / root['phenotype counts']['total number of cells in all specimens of study']
+        percentage = Math.round(10000 * percentage) / 10000
+        return percentage
+    }
+    async get_signature(phenotype_label) {
+        let url_base = get_api_url_base()
+        let url = `${url_base}/phenotype-criteria/?phenotype_symbol=` + encodeURIComponent(phenotype_label)
+        let response = await promise_http_request('GET', url)
+        let wrapped_object = JSON.parse(response)
+        let signature = wrapped_object[Object.keys(wrapped_object)[0]]
+        return signature
+    }
+    merge_criteria(signatures) {
+        let positive_markers = []
+        let negative_markers = []
+        for (let signature of signatures) {
+            positive_markers = positive_markers.concat(signature['positive markers'])
+            negative_markers = negative_markers.concat(signature['negative markers'])
+        }
+        return {
+            'positive markers' : Array.from(new Set(positive_markers)),
+            'negative markers' : Array.from(new Set(negative_markers)),
+        }
     }
 }

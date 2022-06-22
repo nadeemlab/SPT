@@ -5,6 +5,30 @@ function get_from_url({url, callback=function(response, event){}}){
     httpreq.send(null);
 }
 
+async function promise_http_request(method, url) {
+    return new Promise(function (resolve, reject) {
+        let xhr = new XMLHttpRequest()
+        xhr.open(method, url)
+        xhr.onload = function () {
+            if (this.status >= 200 && this.status < 300) {
+                resolve(xhr.response)
+            } else {
+                reject({
+                    status: this.status,
+                    statusText: xhr.statusText
+                })
+            }
+        }
+        xhr.onerror = function () {
+            reject({
+                status: this.status,
+                statusText: xhr.statusText
+            })
+        }
+        xhr.send()
+    })
+}
+
 class RetrievableStatsPage {
     constructor(section) {
         this.stats_table = this.discover_stats_table(section)
@@ -17,6 +41,9 @@ class RetrievableStatsPage {
     }
     discover_stats_table(section) {
         throw new Error('Abstract method unimplemented.')
+    }
+    get_stats_page() {
+        return this.stats_table
     }
     close_all_selectors_except(retrieving_selector) {
         for (let other of this.retrieving_selectors) {

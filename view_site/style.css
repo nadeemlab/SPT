@@ -279,7 +279,7 @@ th.pairwise-comparison-row-label {
 td.pairwise-comparison-cell {
     width: 1em;
     height: 1em;
-    background: lightgray;
+    background: transparent;
     border: solid 2px transparent;
 }
 td.pairwise-comparison-cell:hover {
@@ -287,4 +287,7 @@ td.pairwise-comparison-cell:hover {
 }
 tr.pairwise-comparison-header-row {
 
+}
+td.pairwise-comparison-cell-loaded span{
+    display: none;
 }

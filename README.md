@@ -237,6 +237,10 @@ Plot rendering for about 500 MB (8 million cells) took 5 minutes on a workstatio
 <img src="docs/_static/front_proximity_example.png">
 </p>
 
+## License
+© [Nadeem Lab](https://nadeemlab.org/) - SPT code is distributed under **Apache 2.0 with Commons Clause** license, and is available for non-commercial academic purposes. 
+
+
 Papers Using SPT
 ----------------
 

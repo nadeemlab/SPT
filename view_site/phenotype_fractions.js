@@ -10,7 +10,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         this.phenotype_comparisons_grid = new PhenotypeComparisonsGrid(section, this)
     }
     discover_stats_table(section) {
-        let id = section.getElementsByClassName('stats-table')[0].getAttribute('id')
+        let id = section.getElementsByClassName('phenotype-stats-table')[0].getAttribute('id')
         return new PhenotypeFractionsStatsTable(id, this)
     }
     get_section() {
@@ -76,18 +76,15 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     get_numeric_flags() {
         return [false, false, true, true, false, true, false, true]        
     }
-    pull_data_from_selections(selections) {
+    async pull_data_from_selections(selections) {
         let encoded_measurement_study = encodeURIComponent(selections['measurement study'])
         let encoded_data_analysis_study = encodeURIComponent(selections['data analysis study'])
         let url_base = get_api_url_base()
         let url=`${url_base}/phenotype-summary/?specimen_measurement_study=${encoded_measurement_study}&data_analysis_study=${encoded_data_analysis_study}`
-        let reference = this
-        get_from_url({url, callback: function(response, event) { reference.load_fractions(reference, response, event) }})
+        let response_text = await promise_http_request('GET', url)
+        this.load_fractions_from_response(response_text)
     }
-    load_fractions(reference, response, event) {
-        reference.load_fractions_from_response(response.responseText)
-    }
-    load_fractions_from_response(response_text) {
+    async load_fractions_from_response(response_text) {
         this.clear_table()
         let stats = JSON.parse(response_text)
         let obj = stats[Object.keys(stats)[0]]
@@ -99,7 +96,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         this.update_row_counter()
         this.record_phenotype_names_from_response(obj)
         this.get_parent_page().initialize_phenotype_selection_table()
-        this.get_and_handle_phenotype_criteria_names()
+        await this.get_and_handle_phenotype_criteria_names()
     }
     create_table_row(data_row) {
         let table_row = document.createElement('tr')
@@ -156,22 +153,20 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     get_phenotype_names() {
         return this.phenotype_names
     }
-    get_and_handle_phenotype_criteria_names() {
+    async get_and_handle_phenotype_criteria_names() {
         for (let phenotype_name of this.get_phenotype_names()) {
-            this.get_and_handle_phenotype_criteria_name(phenotype_name)
+            await this.get_and_handle_phenotype_criteria_name(phenotype_name)
         }
     }
-    get_and_handle_phenotype_criteria_name(phenotype_name) {
+    async get_and_handle_phenotype_criteria_name(phenotype_name) {
         let encoded_phenotype_name = encodeURIComponent(phenotype_name)
         let url_base = get_api_url_base()
         let url=`${url_base}/phenotype-criteria-name/?phenotype_symbol=${encoded_phenotype_name}`
-        let reference = this
-        get_from_url({url, callback: function(response, event) {
-            reference.update_phenotype_criteria_name(phenotype_name, response, event)
-        }})
+        let response_text = await promise_http_request('GET', url)
+        this.update_phenotype_criteria_name(phenotype_name, response_text)
     }
-    update_phenotype_criteria_name(phenotype_name, response, event) {
-        let obj = JSON.parse(response.responseText)
+    update_phenotype_criteria_name(phenotype_name, response_text) {
+        let obj = JSON.parse(response_text)
         let phenotype_criteria_name = obj[Object.keys(obj)[0]]
         let phenotype_index = this.get_header_values().indexOf('Phenotype')
         for (let i = 1; i < this.table.children.length; i++) {
@@ -202,6 +197,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         this.labels = []
         this.table = this.setup_table(section)
         this.detail_bar = this.setup_detail_bar()
+        this.feature_matrix = this.setup_feature_matrix()
         this.lock_count = 0
     }
     setup_table(section) {
@@ -215,9 +211,11 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     }
     setup_detail_bar() {
         let detail_bar = this.table.parentElement.getElementsByTagName('span')[0]
-        console.log(detail_bar)
         detail_bar.innerHTML = '%'
         return detail_bar
+    }
+    setup_feature_matrix() {
+        return new FeatureMatrix(this.table.parentElement.parentElement.getElementsByClassName('feature-matrix')[0])
     }
     lock_interaction() {
         this.lock_count = this.lock_count + 1
@@ -262,19 +260,49 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         return th
     }
     create_new_cell(row_label, column_label) {
+        console.log(JSON.stringify([row_label, column_label]))
         let td = document.createElement('td')
         td.setAttribute('class', 'pairwise-comparison-cell')
         let span = document.createElement('span')
         td.appendChild(span)
+        let mini_loading_gif = document.createElement('img')
+        mini_loading_gif.setAttribute('src', 'mini_loading_gif.gif')
+        mini_loading_gif.setAttribute('class', 'mini-loading-gif')
+        td.appendChild(mini_loading_gif)
         let reference = this
         td.addEventListener('mousemove', function(event) {
-            let value = this.getElementsByTagName('span')[0].innerHTML
+            let value = this.getElementsByTagName('span')[0].innerText
             reference.set_detail_bar(value)
+            reference.highlight_cell_pair(row_label, column_label)
         })
         td.addEventListener('mouseleave', function(event) {
             reference.set_detail_bar('')
+            reference.unhighlight_cell_pair(row_label, column_label)
+        })
+        td.addEventListener('click', function(event) {
+            reference.toggle_cell_selection(this, row_label, column_label)
+            reference.toggle_phenotype_pair_details(row_label, column_label)
         })
         return td
+    }
+    get_cells(row_label, column_label) {
+        let cells = []
+        cells.push(this.get_cell(row_label, column_label))
+        if (row_label != column_label) {
+            cells.push(this.get_cell(column_label, row_label))            
+        }
+        return cells
+    }
+    highlight_cell_pair(row_label, column_label) {
+        for (let cell of this.get_cells(row_label, column_label)) {
+            cell.classList.remove('highlighted-cell')
+            cell.classList.add('highlighted-cell')
+        }
+    }
+    unhighlight_cell_pair(row_label, column_label) {
+        for (let cell of this.get_cells(row_label, column_label)) {
+            cell.classList.remove('highlighted-cell')
+        }
     }
     set_detail_bar(value) {
         if (value != '') {
@@ -284,6 +312,25 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
             this.detail_bar.innerHTML = '%'            
         }
     }
+    toggle_cell_selection(cell, row_label, column_label) {
+        cell.classList.toggle('detail-selected')
+        if (row_label != column_label) {
+            let other_cell = this.get_cell(column_label, row_label)
+            other_cell.classList.toggle('detail-selected')
+        }
+    }
+    toggle_phenotype_pair_details(row_label, column_label) {
+        if (this.feature_matrix.is_showing(row_label, column_label)) {
+            this.feature_matrix.remove_feature(row_label, column_label)
+        } else {
+            let feature_values = this.retrieve_feature_values(row_label, column_label)
+            this.feature_matrix.add_feature(row_label, column_label, feature_values)
+        }
+    }
+    retrieve_feature_values(row_label, column_label) {
+        // egg
+        return 'dummy feature values'
+    } 
     add_new_column(label) {
         this.table.children[0].appendChild(this.create_column_label_cell(label))
         for (let i = 1; i < this.table.children.length; i++) {
@@ -300,7 +347,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         return th
     }
     add_new_column_to_row(tr, column_label) {
-        let td = this.create_new_cell(tr.getAttribute('pairwise-comparison-row-label'), column_label)
+        let td = this.create_new_cell(tr.getAttribute('row_label'), column_label)
         tr.appendChild(td)
     }
     remove_label(label) {
@@ -342,13 +389,17 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         let percentage = await this.get_pair_comparison(row_label, column_label)
         this.set_cell_contents_by_location(row_label, column_label, percentage)
     }
-    set_cell_contents_by_location(row_label, column_label, percentage) {
+    get_cell(row_label, column_label) {
         let row_index = this.labels.indexOf(row_label)
         let column_index = this.labels.indexOf(column_label)
         let cell = this.table.children[1 + row_index].children[1 + column_index]
+        return cell        
+    }
+    set_cell_contents_by_location(row_label, column_label, percentage) {
+        let cell = this.get_cell(row_label, column_label)
         this.set_cell_contents(cell, percentage)
         if (row_label != column_label) {
-            let other_cell = this.table.children[1 + column_index].children[1 + row_index]
+            let other_cell = this.get_cell(column_label, row_label)
             this.set_cell_contents(other_cell, percentage)
         }
     }
@@ -359,9 +410,10 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         let green = color['green']
         let blue = color['blue']
         cell.style.background = `rgb(${red}, ${green}, ${blue})`
-        cell.classList.add('pairwise-comparison-cell-loaded')
         let span = cell.getElementsByTagName('span')[0]
         span.innerHTML = value
+        let img = span.parentElement.getElementsByTagName('img')[0]
+        img.remove()
     }
     get_cool_warm(value) {
         return this.interpolate(value, [242, 242, 242], [252, 0, 0])
@@ -440,5 +492,61 @@ class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
             'positive markers' : Array.from(new Set(positive_markers)),
             'negative markers' : Array.from(new Set(negative_markers)),
         }
+    }
+}
+
+class FeatureMatrix {
+    constructor(table) {
+        this.table = table
+        this.showing_features = []
+        this.update_table()
+    }
+    update_table() {
+        this.clear_table()
+        this.create_header()
+        this.create_rows()
+    }
+    clear_table() {
+        this.table.innerHTML = ''
+    }
+    create_header() {
+        let tr = document.createElement('tr')
+        let th = document.createElement('th')
+        th.innerHTML = 'Sample'
+        tr.appendChild(th)
+        this.table.appendChild(tr)
+    }
+    create_rows() {
+        for (let key of this.showing_features) {
+            let tr = document.createElement('tr')
+            let td = document.createElement('td')
+            td.innerText = key
+            tr.appendChild(td)
+            this.table.appendChild(tr)
+        }
+    }
+    is_showing(row_label, column_label) {
+        let key = this.get_key(row_label, column_label)
+        if (this.showing_features.includes(key)) {
+            return true
+        } else {
+            return false
+        }
+    }
+    get_key(row_label, column_label) {
+        let pair = [row_label, column_label]
+        pair.sort()
+        return JSON.stringify(pair)
+    }
+    remove_feature(row_label, column_label) {
+        let key = this.get_key(row_label, column_label)
+        let index = this.showing_features.indexOf(key)
+        this.showing_features.splice(index, 1)
+        this.update_table()
+    }
+    add_feature(row_label, column_label, feature_values) {
+        let key = this.get_key(row_label, column_label)
+        this.showing_features.push(key)
+        this.update_table()
     }
 }

@@ -282,12 +282,24 @@ td.pairwise-comparison-cell {
     background: transparent;
     border: solid 2px transparent;
 }
+td.pairwise-comparison-cell.detail-selected {
+    border: solid 2px #2222b0;
+}
+td.pairwise-comparison-cell img.mini-loading-gif {
+    width: 1em;
+    height: 1em;
+    display: block;
+}
 td.pairwise-comparison-cell:hover {
-    border: solid 2px #4242b0;
+    border: solid 2px #5252b0;
+}
+td.pairwise-comparison-cell.highlighted-cell {
+    border: solid 2px #5252b0;
 }
 tr.pairwise-comparison-header-row {
-
 }
-td.pairwise-comparison-cell-loaded span{
+td.pairwise-comparison-cell span {
     display: none;
+}
+table.feature-matrix {
 }

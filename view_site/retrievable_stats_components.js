@@ -1,10 +1,3 @@
-function get_from_url({url, callback=function(response, event){}}){
-    let httpreq = new XMLHttpRequest();
-    httpreq.open("GET", url, async=true);
-    httpreq.onload = function(event) {callback(this, event)}
-    httpreq.send(null);
-}
-
 async function promise_http_request(method, url) {
     return new Promise(function (resolve, reject) {
         let xhr = new XMLHttpRequest()
@@ -62,7 +55,7 @@ class RetrievingSelector {
         this.parent = parent
         this.selector = document.getElementById(selector_id)
         let attributes_table_section = this.selector.parentElement.getElementsByClassName('attributes-table-container')[0]
-        let completed_table_callback = function() {stats_table.pull_data_given_selections()}
+        let completed_table_callback = async function() {stats_table.pull_data_given_selections()}
         this.attributes_table = new AttributesTable(this.get_retrieve_summary_query_fragment(), attributes_table_section, completed_table_callback)
         stats_table.add_loaded_item_dependency(this.get_display_name(), this.attributes_table)
         let retrieve_names_query_fragment = this.selector.getAttribute('retrieve_names_query_fragment')
@@ -87,16 +80,15 @@ class RetrievingSelector {
     get_attributes_table() {
         return this.attributes_table
     }
-    pull_names(retrieve_names_query_fragment) {
+    async pull_names(retrieve_names_query_fragment) {
         let url_base = get_api_url_base()
         let url=`${url_base}/${retrieve_names_query_fragment}`
         let reference = this
-        get_from_url({url, callback: function(response, event) {
-            reference.handle_query_response(response, event)
-        }})
+        let response_text = await promise_http_request('GET', url)
+        this.handle_query_response(response_text)
     }
-    handle_query_response(response, event) {
-        let obj = JSON.parse(response.responseText)
+    handle_query_response(response_text) {
+        let obj = JSON.parse(response_text)
         let option_names = Array.from(
             new Set(
                 obj[Object.keys(obj)[0]]
@@ -115,11 +107,11 @@ class RetrievingSelector {
     get_option_name(option) {
         return option.innerHTML
     }
-    set_selection(option) {
+    async set_selection(option) {
         this.selection.set_selection(option)
         this.retrieved_options.set_selection(option)
         this.hide_options()
-        this.attributes_table.pull_summary(this.get_option_name(option))
+        await this.attributes_table.pull_summary(this.get_option_name(option))
     }
     toggle_options_visibility() {
         this.retrieved_options.toggle_hide()
@@ -193,17 +185,15 @@ class AttributesTable {
         this.loading_gif = attributes_table_section.getElementsByTagName('img')[0]
         this.completed_table_callback = completed_table_callback
     }
-    pull_summary(item_name) {
+    async pull_summary(item_name) {
         this.selected_item_name = item_name
         let encoded_item_name = encodeURIComponent(item_name)
         let url_base = get_api_url_base()
         let query_fragment = this.retrieve_summary_query_fragment
         let url=`${url_base}/${query_fragment}/${encoded_item_name}`
         this.toggle_loading_gif('on')
-        let reference = this
-        get_from_url({url, callback: function(response, event){
-            reference.load_item_summary(response.responseText, event)
-        }})
+        let response_text = await promise_http_request('GET', url)
+        this.load_item_summary(response_text)
     }
     load_item_summary(response_text, event) {
         let properties = JSON.parse(response_text)
@@ -276,11 +266,11 @@ class StatsTable {
         })
         return selections
     }
-    pull_data_given_selections() {
+    async pull_data_given_selections() {
         if (! this.all_dependencies_loaded()) {
             return
         }
-        this.pull_data_from_selections(this.get_selections())
+        await this.pull_data_from_selections(this.get_selections())
     }
     pull_data_from_selections(selections) {
         throw new Error('Abstract method unimplemented.')

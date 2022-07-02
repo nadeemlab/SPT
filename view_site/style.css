@@ -325,7 +325,7 @@ table.feature-matrix tr th span {
     -ms-writing-mode: tb-rl;
     -webkit-writing-mode: vertical-rl;
     writing-mode: vertical-rl;
-    transform: rotate(205deg);
+    transform: rotate(190deg);
     white-space: nowrap;
 }
 table.feature-matrix tr th {

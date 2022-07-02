@@ -7,7 +7,8 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
     constructor(section) {
         super(section)
         this.section = section
-        this.phenotype_comparisons_grid = new PhenotypeComparisonsGrid(section, this)
+        this.specimen_level_counts = new SpecimenLevelCounts()
+        this.phenotype_comparisons_grid = new PhenotypeComparisonsGrid(section, this, this.specimen_level_counts)
     }
     discover_stats_table(section) {
         let id = section.getElementsByClassName('phenotype-stats-table')[0].getAttribute('id')
@@ -17,13 +18,95 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         return this.section
     }
     initialize_phenotype_selection_table() {
-        let table = this.get_section().getElementsByClassName('selection-table')[0]
+        let table = this.get_section().getElementsByClassName('selection-table')[1]
         this.phenotype_selection_table = new SelectionTable(
             table,
             this.stats_table.get_phenotype_names(),
             'Phenotype',
             this.phenotype_comparisons_grid,
         )
+    }
+    initialize_channel_selection_table() {
+        let table = this.get_section().getElementsByClassName('selection-table')[0]
+        let phenotype_adder = new PhenotypeAdder(this.phenotype_selection_table)
+        this.channel_selection_table = new SelectionTable(
+            table,
+            this.stats_table.get_channel_names(),
+            'Define a custom phenotype',
+            phenotype_adder,
+        )
+        phenotype_adder.register_selections_clearer(this.channel_selection_table)
+        this.phenotype_comparisons_grid.register_alternative_signatures_provider(phenotype_adder.get_signatures_provider())
+    }
+}
+
+class PhenotypeAdder extends MultiSelectionHandler{
+    constructor(phenotype_selection_table) {
+        super()
+        this.phenotype_selection_table = phenotype_selection_table
+        this.positive_markers = []
+        this.signatures_provider = new SignaturesProvider()
+        this.setup_add_button()
+    }
+    setup_add_button() {
+        this.add_button = this.phenotype_selection_table.get_dom_element().parentElement.parentElement.getElementsByClassName('add-button')[0]
+        let reference = this
+        this.add_button.addEventListener('click', function(event) {
+            reference.finalize_new_phenotype_definition()
+        })
+    }
+    add_item(item_name) {
+        if (! this.positive_markers.includes(item_name)) {
+            this.positive_markers.push(item_name)
+        }
+    }
+    remove_item(item_name) {
+        if (this.positive_markers.includes(item_name)) {
+            let index = this.positive_markers.indexOf(item_name)
+            this.positive_markers.splice(index, 1)
+        }
+    }
+    is_removal_locked() {
+        return false
+    }
+    finalize_new_phenotype_definition() {
+        this.positive_markers.sort()
+        let phenotype_munged_name = this.positive_markers.join('+ ') + '+'
+        let new_phenotype = {'name' : phenotype_munged_name, 'positive markers' : [...this.positive_markers]}
+        this.positive_markers = []
+        this.signatures_provider.push_phenotype(new_phenotype)
+        this.phenotype_selection_table.add_entry(phenotype_munged_name)
+        this.clearer.clear_selections()
+    }
+    register_selections_clearer(clearer) {
+        this.clearer = clearer
+    }
+    get_signatures_provider() {
+        return this.signatures_provider
+    }
+}
+
+class SignaturesProvider {
+    constructor() {
+        this.signatures = []
+    }
+    has_label(phenotype_label) {
+        for (let signature of this.signatures) {
+            if (signature['name'] == phenotype_label) {
+                return true
+            }
+        }
+        return false
+    }
+    get_signature(phenotype_label) {
+        for (let signature of this.signatures) {
+            if (signature['name'] == phenotype_label) {
+                return {'positive markers' : signature['positive markers'], 'negative markers' : []}
+            }
+        }
+    }
+    push_phenotype(new_phenotype) {
+        this.signatures.push(new_phenotype)        
     }
 }
 
@@ -88,14 +171,16 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         this.clear_table()
         let stats = JSON.parse(response_text)
         let obj = stats[Object.keys(stats)[0]]
-        let outcome_column = this.get_outcome_column(obj)
-        for (let i = 0; i < obj.length; i++) {
-            this.table.appendChild(this.create_table_row(obj[i]))
+        let obj_without_multiplicity = this.drop_multiplicity(obj)
+        let outcome_column = this.get_outcome_column(obj_without_multiplicity)
+        for (let i = 0; i < obj_without_multiplicity.length; i++) {
+            this.table.appendChild(this.create_table_row(obj_without_multiplicity[i]))
         }
         this.patch_header(outcome_column)
         this.update_row_counter()
         this.record_phenotype_names_from_response(obj)
         this.get_parent_page().initialize_phenotype_selection_table()
+        this.get_parent_page().initialize_channel_selection_table()
         await this.get_and_handle_phenotype_criteria_names()
     }
     create_table_row(data_row) {
@@ -146,12 +231,44 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         }
         return table_row
     }
+    drop_multiplicity(obj) {
+        let index_of_multiplicity_field = 1
+        return Array.from(obj).map( function(data_row) {
+            let data_row_copy = [...data_row]
+            data_row_copy.splice(index_of_multiplicity_field, 1)
+            return data_row_copy
+        })        
+    }
     record_phenotype_names_from_response(obj) {
+        this.phenotype_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'composite')
+        this.channel_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'single')
+    }
+    retrieve_phenotype_names_by_multiplicity(obj, multiplicity) {
+        let rows_with_given_multiplicity = this.get_rows_with_multiplicity(obj, multiplicity)
         let index = this.get_header_values().indexOf('Phenotype')
-        this.phenotype_names = Array.from(new Set(Array.from(obj).map(function(data_row) {return data_row[index]}))).sort()
+        let names = Array.from(new Set(
+            rows_with_given_multiplicity.map(function(data_row) {
+                return data_row[index]
+            })
+        ))
+        names.sort()
+        return names
+    }
+    get_rows_with_multiplicity(obj, multiplicity) {
+        let index_of_multiplicity_field = 1
+        return Array.from(obj).filter( function(data_row) {
+            return (data_row[index_of_multiplicity_field] == multiplicity)
+        }).map( function(data_row) {
+            let data_row_copy = [...data_row]
+            data_row_copy.splice(index_of_multiplicity_field, 1)
+            return data_row_copy            
+        })
     }
     get_phenotype_names() {
         return this.phenotype_names
+    }
+    get_channel_names() {
+        return this.channel_names
     }
     async get_and_handle_phenotype_criteria_names() {
         for (let phenotype_name of this.get_phenotype_names()) {
@@ -223,7 +340,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     unlock_interaction() {
         this.lock_count = this.lock_count - 1
     }
-    locked() {
+    is_removal_locked() {
         return (this.lock_count > 0)
     }
     async add_item(item_name) {
@@ -260,7 +377,6 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         return th
     }
     create_new_cell(row_label, column_label) {
-        console.log(JSON.stringify([row_label, column_label]))
         let td = document.createElement('td')
         td.setAttribute('class', 'pairwise-comparison-cell')
         let span = document.createElement('span')
@@ -280,8 +396,10 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
             reference.unhighlight_cell_pair(row_label, column_label)
         })
         td.addEventListener('click', function(event) {
-            reference.toggle_cell_selection(this, row_label, column_label)
-            reference.toggle_phenotype_pair_details(row_label, column_label)
+            if (Array.from(this.getElementsByTagName('img')).length == 0) {
+                reference.toggle_cell_selection(this, row_label, column_label)
+                reference.toggle_phenotype_pair_details(row_label, column_label)
+            }
         })
         return td
     }
@@ -328,8 +446,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         }
     }
     retrieve_feature_values(row_label, column_label) {
-        // egg
-        return 'dummy feature values'
+        throw new Error('Abstract method unimplemented.')
     } 
     add_new_column(label) {
         this.table.children[0].appendChild(this.create_column_label_cell(label))
@@ -405,11 +522,8 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     }
     set_cell_contents(cell, percentage) {
         let value = percentage / 100
-        let color = this.get_cool_warm(value)
-        let red = color['red']
-        let green = color['green']
-        let blue = color['blue']
-        cell.style.background = `rgb(${red}, ${green}, ${blue})`
+        let rgb_color = CoolWarmColorMap.get_rgb_color(value)
+        cell.style.background = rgb_color
         let span = cell.getElementsByTagName('span')[0]
         span.innerHTML = value
         let img = span.parentElement.getElementsByTagName('img')[0]
@@ -432,10 +546,37 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     }
 }
 
+class CoolWarmColorMap {
+    static get_rgb_color(value) {
+        let color = this.get_cool_warm(value)
+        let red = color['red']
+        let green = color['green']
+        let blue = color['blue']
+        return `rgb(${red}, ${green}, ${blue})`
+    }
+    static get_cool_warm(value) {
+        return this.interpolate(value, [242, 242, 242], [252, 0, 0])
+    }
+    static interpolate(value, initial, final) {
+        let skewness = 1/4
+        let rescaled = Math.pow(value, skewness)
+        return {
+            'red' : (1 - value) * initial[0] + value * final[0],
+            'green' : (1 - value) * initial[1] + value * final[1],
+            'blue' : (1 - value) * initial[2] + value * final[2],
+        }
+    }
+}
+
 class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
-    constructor(section, parent) {
+    constructor(section, parent, specimen_level_counts) {
         super(section)
         this.parent = parent
+        this.signatures_provider = null
+        this.specimen_level_counts = specimen_level_counts
+    }
+    register_alternative_signatures_provider(signatures_provider) {
+        this.signatures_provider = signatures_provider
     }
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -468,12 +609,20 @@ class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
         for (let entry of root['phenotype counts']['per specimen counts']) {
             cell_count = cell_count + entry['phenotype count']
         }
+        let counts = JSON.parse(JSON.stringify(root['phenotype counts']['per specimen counts']))
+        let phenotype_symbol = this.specimen_level_counts.get_key(row_label, column_label)
+        this.specimen_level_counts.cache_counts(phenotype_symbol, counts)
 
         let percentage = 100 * cell_count / root['phenotype counts']['total number of cells in all specimens of study']
         percentage = Math.round(10000 * percentage) / 10000
         return percentage
     }
     async get_signature(phenotype_label) {
+        if (! (this.signatures_provider == null) ) {
+            if (this.signatures_provider.has_label(phenotype_label)) {
+                return this.signatures_provider.get_signature(phenotype_label)
+            }
+        }
         let url_base = get_api_url_base()
         let url = `${url_base}/phenotype-criteria/?phenotype_symbol=` + encodeURIComponent(phenotype_label)
         let response = await promise_http_request('GET', url)
@@ -493,12 +642,48 @@ class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
             'negative markers' : Array.from(new Set(negative_markers)),
         }
     }
+    retrieve_feature_values(row_label, column_label) {
+        if (this.specimen_level_counts.has_cached(row_label, column_label)) {
+            return this.specimen_level_counts.get_counts(row_label, column_label)
+        }
+    } 
+}
+
+class SpecimenLevelCounts {
+    constructor() {
+        this.specimen_counts_by_phenotype_name = {}
+    }
+    cache_counts(phenotype_symbol, counts) {
+        counts.sort(function(a,b) {
+            if(a['specimen'] < b['specimen']){
+                return -1;
+            }else if(a['specimen'] > b['specimen']){
+                return 1;
+            }
+            return 0;
+        })
+        this.specimen_counts_by_phenotype_name[phenotype_symbol] = counts
+    }
+    has_cached(row_label, column_label) {
+        let key = this.get_key(row_label, column_label)
+        return (key in this.specimen_counts_by_phenotype_name)
+    }
+    get_key(row_label, column_label) {
+        let pair = [row_label, column_label]
+        pair.sort()
+        return JSON.stringify(pair)
+    }
+    get_counts(row_label, column_label) {
+        return this.specimen_counts_by_phenotype_name[this.get_key(row_label, column_label)]
+    }
 }
 
 class FeatureMatrix {
     constructor(table) {
         this.table = table
         this.showing_features = []
+        this.feature_labels = {}
+        this.feature_values_by_name = {}
         this.update_table()
     }
     update_table() {
@@ -510,20 +695,65 @@ class FeatureMatrix {
         this.table.innerHTML = ''
     }
     create_header() {
+        if (this.showing_features.length == 0) {
+            return
+        }
         let tr = document.createElement('tr')
         let th = document.createElement('th')
-        th.innerHTML = 'Sample'
+        let th_span = document.createElement('span')
+        th.appendChild(th_span)
+        th_span.innerText = 'Sample'
         tr.appendChild(th)
+        for (let feature_name in this.feature_labels) {
+            let feature_label = this.feature_labels[feature_name]
+            let th_feature = document.createElement('th')
+            let span = document.createElement('span')
+            span.innerText = feature_label
+            th_feature.appendChild(span)
+            th_feature.setAttribute('colspan', 2)
+            tr.appendChild(th_feature)
+        }
         this.table.appendChild(tr)
     }
     create_rows() {
-        for (let key of this.showing_features) {
+        let specimens = this.get_specimens_list()
+        for (let specimen of specimens) {
             let tr = document.createElement('tr')
             let td = document.createElement('td')
-            td.innerText = key
+            td.innerText = specimen
             tr.appendChild(td)
             this.table.appendChild(tr)
         }
+        for (let feature_name in this.feature_values_by_name) {
+            let feature_values = this.feature_values_by_name[feature_name]
+            for (let i = 1; i < this.table.children.length; i++) {
+                let tr = this.table.children[i]
+                let td = document.createElement('td')
+                td.innerText = feature_values[i-1]['phenotype count']
+                tr.appendChild(td)
+                let td_percent = document.createElement('td')
+                let percentage = feature_values[i-1]['percent of all cells in specimen']
+                td_percent.innerText = feature_values[i-1]['percent of all cells in specimen'] + '%'
+                td_percent.setAttribute('class', 'de-emphasized secondary-cell')
+                tr.appendChild(td_percent)
+
+                let value = percentage / 100
+                let rgb_color = CoolWarmColorMap.get_rgb_color(value)
+                td_percent.style.background = rgb_color
+                td.style.background = rgb_color
+
+                td_percent.style.color = Math.round(255 * (0.25 + value/2.0))
+            }
+        }
+    }
+    get_specimens_list() {
+        let keys = Array.from(Object.keys(this.feature_values_by_name))
+        if (keys.length == 0) {
+            return []
+        }
+        return this.feature_values_by_name[keys[0]].map( function(data_row){
+            return data_row['specimen']
+        })
     }
     is_showing(row_label, column_label) {
         let key = this.get_key(row_label, column_label)
@@ -542,11 +772,15 @@ class FeatureMatrix {
         let key = this.get_key(row_label, column_label)
         let index = this.showing_features.indexOf(key)
         this.showing_features.splice(index, 1)
+        delete this.feature_labels[key]
+        delete this.feature_values_by_name[key]
         this.update_table()
     }
     add_feature(row_label, column_label, feature_values) {
         let key = this.get_key(row_label, column_label)
         this.showing_features.push(key)
+        this.feature_labels[key] = Array.from(new Set([row_label, column_label])).join(' and ' )
+        this.feature_values_by_name[key] = feature_values
         this.update_table()
     }
 }

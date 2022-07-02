@@ -323,19 +323,30 @@ class MultiSelectionHandler {
     remove_item(item_name) {
         throw new Error('Abstract method unimplemented.')
     }
+    is_removal_locked() {
+        throw new Error('Abstract method unimplemented.')
+    }
 }
 
 class SelectionTable {
     constructor(table, names, header, multi_selection_handler) {
+        this.table = table
+        this.setup_header(header)
+        this.multi_selection_handler = multi_selection_handler
+        for (let i = 0; i < names.length; i++) {
+            this.add_entry(names[i])
+        }
+    }
+    setup_header(header_text) {
         let table_header = document.createElement('tr')
         let th = document.createElement('th')
-        th.innerHTML = header
+        th.innerHTML = header_text
         table_header.appendChild(th)
-        table.appendChild(table_header)
-        for (let i = 0; i < names.length; i++) {
-            let table_row = this.create_table_row(names[i], multi_selection_handler)
-            table.appendChild(table_row)
-        }
+        this.table.appendChild(table_header)
+    }
+    add_entry(name) {
+        let table_row = this.create_table_row(name, this.multi_selection_handler)
+        this.table.appendChild(table_row)
     }
     create_table_row(name, multi_selection_handler) {
         let tr = document.createElement('tr')
@@ -344,7 +355,7 @@ class SelectionTable {
         td.setAttribute('class', 'first last')
         td.addEventListener('click', function(event) {
             if (this.parentElement.classList.contains('selected-row')) {
-                if (! multi_selection_handler.locked()) {
+                if (! multi_selection_handler.is_removal_locked()) {
                     multi_selection_handler.remove_item(name)
                     this.parentElement.classList.toggle('selected-row')
                 }
@@ -355,5 +366,13 @@ class SelectionTable {
         })
         tr.appendChild(td)
         return tr
+    }
+    clear_selections() {
+        for (let tr of this.table.children) {
+            tr.classList.remove('selected-row')
+        }
+    }
+    get_dom_element() {
+        return this.table
     }
 }

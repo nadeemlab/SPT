@@ -57,10 +57,12 @@ div.centerable-content-container {
 div.centerable-content-container table, div.centerable-content-container div{
     margin: 0 auto; 
 }
+
 table.stats-table {
-    border-collapse: collapse;    
+    border-collapse: separate;
+    border-spacing: 0px;
 }
-table.stats-table td, th {
+table.stats-table td, table.stats-table th {
     padding: 4px;
 }
 table.stats-table th {
@@ -69,14 +71,87 @@ table.stats-table th {
     border: 1px solid transparent;
     border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
 }
-table.stats-table td {
+table.stats-table tr td {
     position:  relative;
     background: #fbfbfb;
-    z-index: -1;
+    z-index: 8;
+    border-top: 2px solid transparent;
+    border-bottom: 2px solid transparent;
 }
 table.stats-table tr:hover td {
     background: #f0f0f0;
 }
+table.stats-table tr {
+    position: relative;
+    z-index: 9;
+}
+
+table.selection-table {
+    border-collapse: separate;
+    border-spacing: 0px;
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    cursor: pointer;
+}
+table.selection-table tr > td, table.selection-table tr > th {
+    padding: 0px;
+    font-size: 75%;
+}
+table.selection-table tr > th {
+    font-weight:  bold;
+    background: lightblue;
+    border: 1px solid transparent;
+    border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
+}
+table.selection-table > tr > td {
+    position:  relative;
+    background: #fbfbfb;
+    z-index: 8;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    text-align: left;
+}
+table.selection-table > tr:hover > td {
+    background: #f0f0f0;
+}
+table.selection-table > tr {
+    position: relative;
+    z-index: 9;
+}
+
+table.selection-table > tr.selected-row > td{
+    background: #e5e5e5;
+    border-top: 1px solid #4242b0;
+    border-bottom: 1px solid #4242b0;
+}
+table.selection-table > tr.selected-row > td.last{
+    border-right: 1px solid #4242b0;
+}
+table.selection-table > tr.selected-row > td.first{
+    border-left: 1px solid #4242b0;
+}
+table.selection-table > tr > td.last{
+    border-right: 1px solid transparent;
+}
+table.selection-table > tr > td.first{
+    border-left: 1px solid transparent;
+}
+
+table.left-right-pages > tbody > tr > td:first-child {
+    border-right: 10px solid transparent;
+}
+table.left-right-pages > tbody > tr > td:last-child {
+    border-left: 10px solid transparent;
+}
+table.left-right-pages > tbody > tr > td {
+    vertical-align: top;
+}
+table.left-right-pages > tbody > tr > td {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 span.sortbutton {
     color: blue;
     font-size: x-small;
@@ -100,7 +175,7 @@ div.underlay {
 div.overlay {
     background: lightgray;
     text-align: right;
-    padding: 5px;
+    padding: 4px;
 }
 div.toggleable-text {
     margin: 0 auto; 
@@ -108,6 +183,9 @@ div.toggleable-text {
 }
 div.show-more-button {
     margin: 0 auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 .clickable-text {
     font-style: italic;
@@ -171,12 +249,12 @@ img.loadinggif{
     width: auto;
 }
 .hoverdiv:hover .hoverdiv-content {
-  display: none;
+    display: none;
 }
 .hoverdiv:hover .tooltip {
     display: inline;
     background: white;
-    border: 1px dotted gray;
+    background-size: cover;
 }
 .positives {
     font-weight: bold;
@@ -187,3 +265,92 @@ img.loadinggif{
     color: gray;
 }
 
+table.pairwise-comparison {
+    border-collapse: separate;
+    border-spacing: 2px;
+}
+th.pairwise-comparison-column-label span {
+    -ms-writing-mode: tb-rl;
+    -webkit-writing-mode: vertical-rl;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+}
+th.pairwise-comparison-column-label {
+    vertical-align: bottom;
+    text-align: center;
+    font-size: 1.2em;
+}
+th.pairwise-comparison-row-label {
+    text-align: right;
+    font-size: 1.2em;
+}
+td.pairwise-comparison-cell {
+    width: 1.2em;
+    height: 1.2em;
+    background: transparent;
+    border: solid 2px transparent;
+}
+td.pairwise-comparison-cell.detail-selected {
+    border: solid 2px #2222b0;
+}
+td.pairwise-comparison-cell img.mini-loading-gif {
+    width: 1.2em;
+    height: 1.2em;
+    display: block;
+}
+td.pairwise-comparison-cell:hover {
+    border: dashed 2px #5252b0;
+}
+td.pairwise-comparison-cell.highlighted-cell {
+    border: dashed 2px #5252b0;
+}
+tr.pairwise-comparison-header-row {
+}
+td.pairwise-comparison-cell span {
+    display: none;
+}
+
+table.feature-matrix td, table.feature-matrix th {
+    padding-top: 1px;
+    padding-right: 6px;
+    padding-bottom: 1px;
+    padding-left: 6px;
+}
+table.feature-matrix td {
+    text-align: right;
+}
+
+table.feature-matrix tr th span {
+    -ms-writing-mode: tb-rl;
+    -webkit-writing-mode: vertical-rl;
+    writing-mode: vertical-rl;
+    transform: rotate(190deg);
+    white-space: nowrap;
+}
+table.feature-matrix tr th {
+    vertical-align: bottom;
+    text-align: center;
+    font-size: 1em;
+}
+
+span.add-button {
+    background-color: lightblue;
+    text-align: center;
+    width: 100%;
+    font-weight: bold;
+    cursor: pointer;
+    display:  inline-block;
+    border: solid 2px lightgray;
+}
+span.add-button:hover {
+    border: solid 2px black;
+}
+
+td.de-emphasized {
+    font-style: italic;
+    color: gray;
+}
+td.secondary-cell {
+    border-left: 1px gray;
+}

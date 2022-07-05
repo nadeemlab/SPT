@@ -1,8 +1,25 @@
-function get_from_url({url, callback=function(response, event){}}){
-    let httpreq = new XMLHttpRequest();
-    httpreq.open("GET", url, async=true);
-    httpreq.onload = function(event) {callback(this, event)}
-    httpreq.send(null);
+async function promise_http_request(method, url) {
+    return new Promise(function (resolve, reject) {
+        let xhr = new XMLHttpRequest()
+        xhr.open(method, url)
+        xhr.onload = function () {
+            if (this.status >= 200 && this.status < 300) {
+                resolve(xhr.response)
+            } else {
+                reject({
+                    status: this.status,
+                    statusText: xhr.statusText
+                })
+            }
+        }
+        xhr.onerror = function () {
+            reject({
+                status: this.status,
+                statusText: xhr.statusText
+            })
+        }
+        xhr.send()
+    })
 }
 
 class RetrievableStatsPage {
@@ -18,6 +35,9 @@ class RetrievableStatsPage {
     discover_stats_table(section) {
         throw new Error('Abstract method unimplemented.')
     }
+    get_stats_page() {
+        return this.stats_table
+    }
     close_all_selectors_except(retrieving_selector) {
         for (let other of this.retrieving_selectors) {
             if (! other.is_equal_to(retrieving_selector)) {
@@ -27,6 +47,79 @@ class RetrievableStatsPage {
     }
     close_all_selectors() {
         this.close_all_selectors_except({})
+    }
+}
+
+class RetrievingSelector {
+    constructor(selector_id, stats_table, parent) {
+        this.parent = parent
+        this.selector = document.getElementById(selector_id)
+        let attributes_table_section = this.selector.parentElement.getElementsByClassName('attributes-table-container')[0]
+        let completed_table_callback = async function() {stats_table.pull_data_given_selections()}
+        this.attributes_table = new AttributesTable(this.get_retrieve_summary_query_fragment(), attributes_table_section, completed_table_callback)
+        stats_table.add_loaded_item_dependency(this.get_display_name(), this.attributes_table)
+        let retrieve_names_query_fragment = this.selector.getAttribute('retrieve_names_query_fragment')
+        this.pull_names(retrieve_names_query_fragment)
+    }
+    is_equal_to(retrieving_selector) {
+        if (retrieving_selector.hasOwnProperty('selector')) {
+            return (this.selector.getAttribute('id') == retrieving_selector.selector.getAttribute('id'))
+        } else {
+            return false
+        }
+    }
+    get_solicitation_text() {
+        return 'Select ' + this.selector.getAttribute('display_solicitation_name')
+    }
+    get_display_name() {
+        return this.selector.getAttribute('display_solicitation_name')
+    }
+    get_retrieve_summary_query_fragment() {
+        return this.selector.getAttribute('retrieve_summary_query_fragment')
+    }
+    get_attributes_table() {
+        return this.attributes_table
+    }
+    async pull_names(retrieve_names_query_fragment) {
+        let url_base = get_api_url_base()
+        let url=`${url_base}/${retrieve_names_query_fragment}`
+        let reference = this
+        let response_text = await promise_http_request('GET', url)
+        this.handle_query_response(response_text)
+    }
+    handle_query_response(response_text) {
+        let obj = JSON.parse(response_text)
+        let option_names = Array.from(
+            new Set(
+                obj[Object.keys(obj)[0]]
+            )
+        )
+        this.setup_document_elements(option_names)
+    }
+    setup_document_elements(option_names) {
+        this.selection = new RetrievedSelection(this)
+        this.retrieved_options = new RetrievedOptions(this, option_names)
+        document.addEventListener('click', this.close_all_selectors)
+    }
+    select_option(option, event) {
+        this.set_selection(option)
+    }
+    get_option_name(option) {
+        return option.innerHTML
+    }
+    async set_selection(option) {
+        this.selection.set_selection(option)
+        this.retrieved_options.set_selection(option)
+        this.hide_options()
+        await this.attributes_table.pull_summary(this.get_option_name(option))
+    }
+    toggle_options_visibility() {
+        this.retrieved_options.toggle_hide()
+        this.selection.toggle_arrow()
+    }
+    hide_options() {
+        this.retrieved_options.hide()
+        this.selection.inactivate_arrow()
     }
 }
 
@@ -85,80 +178,6 @@ class RetrievedOptions {
     }
 }
 
-class RetrievingSelector {
-    constructor(selector_id, stats_table, parent) {
-        this.parent = parent
-        this.selector = document.getElementById(selector_id)
-        let attributes_table_section = this.selector.parentElement.getElementsByClassName('attributes-table-container')[0]
-        let completed_table_callback = function() {stats_table.pull_data_given_selections()}
-        this.attributes_table = new AttributesTable(this.get_retrieve_summary_query_fragment(), attributes_table_section, completed_table_callback)
-        stats_table.add_loaded_item_dependency(this.get_display_name(), this.attributes_table)
-        let retrieve_names_query_fragment = this.selector.getAttribute('retrieve_names_query_fragment')
-        this.pull_names(retrieve_names_query_fragment)
-    }
-    is_equal_to(retrieving_selector) {
-        if (retrieving_selector.hasOwnProperty('selector')) {
-            return (this.selector.getAttribute('id') == retrieving_selector.selector.getAttribute('id'))
-        } else {
-            return false
-        }
-    }
-    get_solicitation_text() {
-        return 'Select ' + this.selector.getAttribute('display_solicitation_name')
-    }
-    get_display_name() {
-        return this.selector.getAttribute('display_solicitation_name')
-    }
-    get_retrieve_summary_query_fragment() {
-        return this.selector.getAttribute('retrieve_summary_query_fragment')
-    }
-    get_attributes_table() {
-        return this.attributes_table
-    }
-    pull_names(retrieve_names_query_fragment) {
-        let url_base = get_api_url_base()
-        let url=`${url_base}/${retrieve_names_query_fragment}`
-        let reference = this
-        get_from_url({url, callback: function(response, event) {
-            reference.handle_query_response(response, event)
-        }})
-    }
-    handle_query_response(response, event) {
-        let obj = JSON.parse(response.responseText)
-        let option_names = Array.from(
-            new Set(
-                obj[Object.keys(obj)[0]]
-            )
-        )
-        this.setup_document_elements(option_names)
-    }
-    setup_document_elements(option_names) {
-        this.selection = new RetrievedSelection(this)
-        this.retrieved_options = new RetrievedOptions(this, option_names)
-        document.addEventListener('click', this.close_all_selectors)
-    }
-    select_option(option, event) {
-        this.set_selection(option)
-    }
-    get_option_name(option) {
-        return option.innerHTML
-    }
-    set_selection(option) {
-        this.selection.set_selection(option)
-        this.retrieved_options.set_selection(option)
-        this.hide_options()
-        this.attributes_table.pull_summary(this.get_option_name(option))
-    }
-    toggle_options_visibility() {
-        this.retrieved_options.toggle_hide()
-        this.selection.toggle_arrow()
-    }
-    hide_options() {
-        this.retrieved_options.hide()
-        this.selection.inactivate_arrow()
-    }
-}
-
 class AttributesTable {
     constructor(retrieve_summary_query_fragment, attributes_table_section, completed_table_callback) {
         this.retrieve_summary_query_fragment = retrieve_summary_query_fragment
@@ -166,17 +185,15 @@ class AttributesTable {
         this.loading_gif = attributes_table_section.getElementsByTagName('img')[0]
         this.completed_table_callback = completed_table_callback
     }
-    pull_summary(item_name) {
+    async pull_summary(item_name) {
         this.selected_item_name = item_name
         let encoded_item_name = encodeURIComponent(item_name)
         let url_base = get_api_url_base()
         let query_fragment = this.retrieve_summary_query_fragment
         let url=`${url_base}/${query_fragment}/${encoded_item_name}`
         this.toggle_loading_gif('on')
-        let reference = this
-        get_from_url({url, callback: function(response, event){
-            reference.load_item_summary(response.responseText, event)
-        }})
+        let response_text = await promise_http_request('GET', url)
+        this.load_item_summary(response_text)
     }
     load_item_summary(response_text, event) {
         let properties = JSON.parse(response_text)
@@ -216,10 +233,14 @@ class AttributesTable {
 }
 
 class StatsTable {
-    constructor(table_id) {
+    constructor(table_id, parent_page) {
         this.table = document.getElementById(table_id)
+        this.parent_page = parent_page
         this.setup_table_header()
         this.dependencies = []
+    }
+    get_parent_page() {
+        return this.parent_page
     }
     add_loaded_item_dependency(display_name, attributes_table) {
         this.dependencies.push({ 'display_name' : display_name, 'attributes_table' : attributes_table})
@@ -245,11 +266,11 @@ class StatsTable {
         })
         return selections
     }
-    pull_data_given_selections() {
+    async pull_data_given_selections() {
         if (! this.all_dependencies_loaded()) {
             return
         }
-        this.pull_data_from_selections(this.get_selections())
+        await this.pull_data_from_selections(this.get_selections())
     }
     pull_data_from_selections(selections) {
         throw new Error('Abstract method unimplemented.')
@@ -292,5 +313,66 @@ class StatsTable {
             new_rows.push(all_rows[index + 1])
         }
         return new_rows
+    }
+}
+
+class MultiSelectionHandler {
+    add_item(item_name) {
+        throw new Error('Abstract method unimplemented.')
+    }
+    remove_item(item_name) {
+        throw new Error('Abstract method unimplemented.')
+    }
+    is_removal_locked() {
+        throw new Error('Abstract method unimplemented.')
+    }
+}
+
+class SelectionTable {
+    constructor(table, names, header, multi_selection_handler) {
+        this.table = table
+        this.setup_header(header)
+        this.multi_selection_handler = multi_selection_handler
+        for (let i = 0; i < names.length; i++) {
+            this.add_entry(names[i])
+        }
+    }
+    setup_header(header_text) {
+        let table_header = document.createElement('tr')
+        let th = document.createElement('th')
+        th.innerHTML = header_text
+        table_header.appendChild(th)
+        this.table.appendChild(table_header)
+    }
+    add_entry(name) {
+        let table_row = this.create_table_row(name, this.multi_selection_handler)
+        this.table.appendChild(table_row)
+    }
+    create_table_row(name, multi_selection_handler) {
+        let tr = document.createElement('tr')
+        let td = document.createElement('td')
+        td.innerHTML = name
+        td.setAttribute('class', 'first last')
+        td.addEventListener('click', function(event) {
+            if (this.parentElement.classList.contains('selected-row')) {
+                if (! multi_selection_handler.is_removal_locked()) {
+                    multi_selection_handler.remove_item(name)
+                    this.parentElement.classList.toggle('selected-row')
+                }
+            } else {
+                multi_selection_handler.add_item(name)
+                this.parentElement.classList.toggle('selected-row')
+            }
+        })
+        tr.appendChild(td)
+        return tr
+    }
+    clear_selections() {
+        for (let tr of this.table.children) {
+            tr.classList.remove('selected-row')
+        }
+    }
+    get_dom_element() {
+        return this.table
     }
 }

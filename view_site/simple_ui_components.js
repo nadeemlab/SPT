@@ -116,7 +116,9 @@ class ExportableElementWidget {
         let text_elements = []
         let cells = Array.from(tr.getElementsByTagName('th')).concat(Array.from(tr.getElementsByTagName('td')))
         for (let cell of cells) {
-            let text = cell.innerText.replace('\n', '')
+            let text = cell.innerText
+            text = text.normalize()
+            text = text.replace('\n', '')
             text = text.replace(/[^\x00-\x7F]/g, '')
             if (text.indexOf('"') == -1) {
                 text_elements.push('"' + text + '"')

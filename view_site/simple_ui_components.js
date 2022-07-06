@@ -24,9 +24,10 @@ class OpenableSection {
 }
 
 class ExportableElementWidget {
-    constructor(exportable_element, hovering_trigger_element) {
+    constructor(exportable_element, hovering_trigger_element, style_sheet) {
         this.exportable_element = exportable_element
         this.hovering_trigger_element = hovering_trigger_element
+        this.style_sheet = style_sheet
         this.ensure_relative_positioning()
         this.create_and_add_export_buttons_panel()
         this.setup_mouseover_events()
@@ -129,6 +130,46 @@ class ExportableElementWidget {
         return text_elements.join(',')
     }
     save_html_to_file() {
+        let element = this.get_exportable_element().cloneNode(true)
+        for (let export_buttons_panel of element.getElementsByClassName('export-buttons-panel')) {
+            export_buttons_panel.remove()
+        }
 
+        let node = this.get_exportable_element()
+        let parents = []
+        do {
+            node = node.parentElement
+            let clone = node.cloneNode(true)
+            clone.innerHTML = ''
+            parents.push(clone)
+        } while (node.tagName != 'BODY')
+        for (let i = 0; i < parents.length - 1; i++) {
+            parents[i+1].appendChild(parents[i])
+        }
+        parents[0].appendChild(element)
+        let root = parents[parents.length - 1]
+
+        let parts = [
+            '<html>',
+            '<head>',
+            '<style>',
+            this.style_sheet,
+            '</style>',
+            '</head>',
+            '<body>',
+            root.innerHTML,
+            '</body>',
+            '</html>',
+        ]
+        let html_contents = parts.join('\n')
+        this.save_dialog('page.html', html_contents)
+    }
+    save_dialog(filename, html_contents) {
+        let anchor = document.createElement('a')
+        anchor.setAttribute('download', filename)
+        anchor.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(html_contents))
+        document.body.appendChild(anchor)
+        anchor.click()
+        document.body.removeChild(anchor)
     }
 }

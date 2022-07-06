@@ -138,7 +138,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
             header_row.appendChild(cell)
         }
         this.table.appendChild(header_row)
-        let export_widget = new ExportableElementWidget(this.table, this.table)
+        let export_widget = new ExportableElementWidget(this.table, this.table, raw_style_sheet)
     }
     patch_header(outcome_column) {
         let index_of_assay = this.get_header_values().indexOf('Result')
@@ -789,6 +789,6 @@ class FeatureMatrix {
         if (this.table.children.length == 0) {
             return
         }
-        let export_widget = new ExportableElementWidget(this.table, this.table)
+        let export_widget = new ExportableElementWidget(this.table, this.table, raw_style_sheet)
     }
 }

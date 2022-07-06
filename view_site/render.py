@@ -58,4 +58,7 @@ if __name__ == '__main__':
         contents = template.render(EnvironmentProvider.get_template_dict())
         with open(index_file, 'wt') as file:
             file.write(contents)
-
+    with open('style.css', 'rt') as style_file:
+        css = style_file.read()
+    with open('style.js', 'wt') as style_provider_file:
+        style_provider_file.write('let raw_style_sheet = `\n%s`' % css)

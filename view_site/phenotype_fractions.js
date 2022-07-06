@@ -138,10 +138,11 @@ class PhenotypeFractionsStatsTable extends StatsTable {
             header_row.appendChild(cell)
         }
         this.table.appendChild(header_row)
+        let export_widget = new ExportableElementWidget(this.table, this.table)
     }
     patch_header(outcome_column) {
         let index_of_assay = this.get_header_values().indexOf('Result')
-        let span = this.table.children[0].children[index_of_assay].children[0]
+        let span = this.table.children[1].children[index_of_assay].children[0]
         span.innerHTML = outcome_column
     }
     get_assay_index() {
@@ -286,7 +287,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         let obj = JSON.parse(response_text)
         let phenotype_criteria_name = obj[Object.keys(obj)[0]]
         let phenotype_index = this.get_header_values().indexOf('Phenotype')
-        for (let i = 1; i < this.table.children.length; i++) {
+        for (let i = 2; i < this.table.children.length; i++) {
             let phenotype_name_cell = this.table.children[i].children[phenotype_index]
             let row_phenotype_name = phenotype_name_cell.getElementsByClassName('hoverdiv-content')[0].innerHTML
             if (row_phenotype_name == phenotype_name) {
@@ -301,7 +302,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         return and_negatives_marked
     }
     update_row_counter() {
-        let number_rows = this.table.children.length - 1
+        let number_rows = this.table.children.length - 2
         let rowcountbox = this.table.parentElement.getElementsByClassName('row-counter')[0]
         rowcountbox.style.display = 'inline-block'
         rowcountbox.getElementsByTagName('span')[0].innerHTML = number_rows
@@ -690,6 +691,7 @@ class FeatureMatrix {
         this.clear_table()
         this.create_header()
         this.create_rows()
+        this.add_exportability()
     }
     clear_table() {
         this.table.innerHTML = ''
@@ -782,5 +784,11 @@ class FeatureMatrix {
         this.feature_labels[key] = Array.from(new Set([row_label, column_label])).join(' and ' )
         this.feature_values_by_name[key] = feature_values
         this.update_table()
+    }
+    add_exportability() {
+        if (this.table.children.length == 0) {
+            return
+        }
+        let export_widget = new ExportableElementWidget(this.table, this.table)
     }
 }

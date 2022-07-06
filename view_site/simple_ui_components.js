@@ -103,7 +103,6 @@ class ExportableElementWidget {
             let rows = this.get_string_rows()
             let csv_contents = rows.join('\n')
             navigator.clipboard.writeText(csv_contents)
-            console.log(csv_contents)
         }
     }
     get_string_rows() {

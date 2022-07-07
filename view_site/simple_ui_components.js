@@ -36,7 +36,7 @@ class OpenableSection {
     fade_in(element) {
         let duration_in_seconds = 0.5
         let duration_in_milliseconds = duration_in_seconds * 1000
-        let number_increments = 100
+        let number_increments = 20
         let reference = this
         setTimeout(
             function() {

@@ -414,4 +414,5 @@ clean-tests:
 	@rm -rf tests/unit_tests/__pycache__/
 	@rm -rf tests/normalized_source_data.db
 	@rm -rf tests/example_merged.db
+	@rm -rf tests/elementary_phenotypes.csv
 	@rm -rf .pytest_cache/

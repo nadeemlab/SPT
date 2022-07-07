@@ -54,7 +54,7 @@ class RetrievingSelector {
     constructor(selector_id, stats_table, parent) {
         this.parent = parent
         this.selector = document.getElementById(selector_id)
-        let attributes_table_section = this.selector.parentElement.getElementsByClassName('attributes-table-container')[0]
+        let attributes_table_section = this.selector.parentElement.querySelectorAll(':scope > .attributes-table-container')[0]
         let completed_table_callback = async function() {stats_table.pull_data_given_selections()}
         this.attributes_table = new AttributesTable(this.get_retrieve_summary_query_fragment(), attributes_table_section, completed_table_callback)
         stats_table.add_loaded_item_dependency(this.get_display_name(), this.attributes_table)
@@ -198,6 +198,7 @@ class AttributesTable {
     load_item_summary(response_text, event) {
         let properties = JSON.parse(response_text)
         this.table.style.display = 'inline'
+        this.table.innerHTML = ''
         for (let key of Object.keys(properties)) {
             let tr = this.create_attribute_row(key, properties[key])
             this.table.appendChild(tr)
@@ -331,6 +332,7 @@ class MultiSelectionHandler {
 class SelectionTable {
     constructor(table, names, header, multi_selection_handler) {
         this.table = table
+        table.innerHTML = ''
         this.setup_header(header)
         this.multi_selection_handler = multi_selection_handler
         for (let i = 0; i < names.length; i++) {

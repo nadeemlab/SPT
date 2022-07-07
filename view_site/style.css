@@ -1,6 +1,6 @@
 .retrieving-selector {
     position: relative;
-    max-width: 500px;
+    /*max-width: 500px;*/
 }
 
 .retrieving-selected {
@@ -10,11 +10,10 @@
 .retrieving-selected:after {
   position: absolute;
   content: "";
-  top: 14px;
-  right: 10px;
   width: 0;
   height: 0;
-  border: 6px solid transparent;
+  margin-left: 15px;
+  border: 8px solid transparent;
   border-color: #000 transparent transparent transparent;
 }
 
@@ -24,7 +23,7 @@
 }
 
 .retrieving-select-items div,.retrieving-selected {
-  padding: 8px 16px;
+  padding: 8px 45px;
   border: 1px solid transparent;
   border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
   cursor: pointer;
@@ -46,16 +45,40 @@
 .retrieving-select-items div:hover, .same-as-selected {
   background-color: rgba(0, 0, 0, 0.1);
 }
+body, html {
+    scroll-behavior: smooth;
+}
 body {
     font-family: sans-serif;
-    font-size: small;
+    margin: 0;
 }
 div.centerable-content-container {
     margin: auto;
     text-align:  center;
+    overflow-y: scroll;
+}
+h1 {
+    background: #FCF0FA;
+    color: #383530;
+    border-bottom: 2px solid #F0DFE7;
+    padding: 1em;
+    margin: 0;
+}
+h2 {
+    background: #FFF7FB;
+    padding: 1em;
+    margin-left: 1.5em;
+    margin-right: 1.5em;
+    margin-top: 1.0em;
+    border-bottom: 2px solid #F7EDF2;
+    border-radius: 2em;
+}
+h3 {
+    background: #6e45c7;
+    padding: 1em;
 }
 div.centerable-content-container table, div.centerable-content-container div{
-    margin: 0 auto; 
+    margin: 0 auto;
 }
 
 table.stats-table {
@@ -94,9 +117,8 @@ table.selection-table {
     -ms-user-select: none;
     cursor: pointer;
 }
-table.selection-table tr > td, table.selection-table tr > th {
-    padding: 0px;
-    font-size: 75%;
+table.selection-table tr > th {
+    padding: 8px;
 }
 table.selection-table tr > th {
     font-weight:  bold;
@@ -178,7 +200,7 @@ div.overlay {
     padding: 4px;
 }
 div.toggleable-text {
-    margin: 0 auto; 
+    margin: 0 auto;
     text-align: center;
 }
 div.show-more-button {
@@ -188,21 +210,31 @@ div.show-more-button {
     -ms-user-select: none;
 }
 .clickable-text {
-    font-style: italic;
     cursor: pointer;
-    color: blue;
     max-height: 9999px;
 }
 .clickable-text:hover {
-    text-decoration: underline;
+    border-bottom: 2px solid #DDCBD4;
 }
+.clickable-text:active {
+    background: #FCF3F7;
+}
+.clickable-text.unavailable {
+    font-style: italic;
+    color: gray;
+}
+.unavailable {
+    font-style: italic;
+    color: gray;
+}
+
 div.toggleable-text p{
     width: 50%;
     text-align: left;
     margin-left: auto;
     margin-right: auto;
 }
-div.toggleable-text div{
+div.toggleable-text div.centerable{
     width: 50%;
     text-align: center;
     margin-left: auto;
@@ -335,16 +367,24 @@ table.feature-matrix tr th {
 }
 
 span.add-button {
-    background-color: lightblue;
+    background-color: #d9ebf1;
     text-align: center;
-    width: 100%;
+    width: 80%;
+    margin: 5%;
+    padding: 0.6em;
+    border-radius: 1.5em;
     font-weight: bold;
     cursor: pointer;
     display:  inline-block;
-    border: solid 2px lightgray;
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 span.add-button:hover {
-    border: solid 2px black;
+    background-color: lightblue;
+}
+span.add-button:active {
+    background-color: #9ac1ce;
 }
 
 td.de-emphasized {
@@ -361,12 +401,11 @@ div.export-buttons-panel {
     top : 0.5em;
     left : 0.5em;
     padding: 0px;
-    width: min-content;
 }
 span.copy-text {
     width: 24px;
     height: 24px;
-    border: 2px solid lightgray;
+    border: 2px solid transparent;
     border-radius: 0.3em;
     background: #fff8dd;
     background-repeat: no-repeat;
@@ -378,11 +417,12 @@ span.copy-text {
     position: absolute;
     top: 0;
     left: 0;
+    opacity: 0.3;
 }
 span.save-html {
     width: 24px;
     height: 24px;
-    border: 2px solid lightgray;
+    border: 2px solid transparent;
     border-radius: 0.3em;
     background: #fff8dd;
     background-repeat: no-repeat;
@@ -393,13 +433,14 @@ span.save-html {
     cursor: pointer;
     position: absolute;
     top: 0;
-    left: 29px;
+    left: 31px;
+    opacity: 0.3;
 }
 span.copy-text:hover {
-    border: 2px solid black;
+    opacity: 1.0;
 }
 span.save-html:hover {
-    border: 2px solid black;
+    opacity: 1.0;
 }
 span.copy-text:active {
     background: #e0d29d;
@@ -413,3 +454,18 @@ span.save-html:active {
     background-image: url(data:image/png;base64,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);
     cursor: pointer;
 }
+
+.spt-logo {
+    height: 1.5em;
+    width: 1.5em;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    border-radius: 0.3em;
+    padding: 0.2em;
+}
+.spt-logo:hover {
+    background: lightgray;
+}
+
+

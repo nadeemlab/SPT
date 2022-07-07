@@ -1,6 +1,46 @@
 function setup_retrievable_stats_page() {
     let section = document.getElementsByClassName('retrievable-stats-page')[0]
     new PhenotypeFractionsStatsPage(section)
+    make_page_exportable()
+    make_sections_exportable()
+    add_scroll_padding()
+}
+
+function make_page_exportable() {
+    let main_section = document.getElementsByClassName('all-content-section')[0]
+    let all_headers = main_section.querySelectorAll('h1,h2,h3,h4')
+    if (all_headers.length == 0) {
+        return
+    }
+    let first_header_encountered = all_headers[0]
+    let export_widget = new ExportableElementWidget(main_section, first_header_encountered, raw_style_sheet)
+}
+
+function make_sections_exportable() {
+    let openable_sections = document.getElementsByClassName('openable-section')
+    for (let section of openable_sections) {
+        let header = section.getElementsByClassName('show-more-button')[0]
+        let export_widget = new ExportableElementWidget(section, header, raw_style_sheet)    
+    }
+}
+
+function add_scroll_padding() {
+    let whitespace_element = document.createElement('div')
+    resize_whitespace_padding(whitespace_element)
+    let body = document.getElementsByTagName('body')[0]
+    body.appendChild(whitespace_element)
+    body.addEventListener('resize', function(event) {
+        resize_whitespace_padding(whitespace_element)
+    })
+    window.scrollTo({top: 0})
+}
+
+function resize_whitespace_padding(whitespace_element) {
+    let viewport_height = window.innerHeight
+    let viewport_width = window.innerWidth
+    whitespace_element.style.position = 'absolute'
+    whitespace_element.style.height = viewport_height + 'px'
+    whitespace_element.style.width = viewport_width + 'px'
 }
 
 class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
@@ -17,6 +57,11 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
     get_section() {
         return this.section
     }
+    make_study_dependent_sections_available() {
+        for (let element of this.section.getElementsByClassName('clickable-text')) {
+            element.classList.remove('unavailable')
+        }
+    }
     initialize_phenotype_selection_table() {
         let table = this.get_section().getElementsByClassName('selection-table')[1]
         this.phenotype_selection_table = new SelectionTable(
@@ -32,7 +77,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         this.channel_selection_table = new SelectionTable(
             table,
             this.stats_table.get_channel_names(),
-            'Define a custom phenotype',
+            'Select markers',
             phenotype_adder,
         )
         phenotype_adder.register_selections_clearer(this.channel_selection_table)
@@ -50,6 +95,7 @@ class PhenotypeAdder extends MultiSelectionHandler{
     }
     setup_add_button() {
         this.add_button = this.phenotype_selection_table.get_dom_element().parentElement.parentElement.getElementsByClassName('add-button')[0]
+        this.add_button.classList.add('unavailable')
         let reference = this
         this.add_button.addEventListener('click', function(event) {
             reference.finalize_new_phenotype_definition()
@@ -58,6 +104,7 @@ class PhenotypeAdder extends MultiSelectionHandler{
     add_item(item_name) {
         if (! this.positive_markers.includes(item_name)) {
             this.positive_markers.push(item_name)
+            this.add_button.classList.remove('unavailable')
         }
     }
     remove_item(item_name) {
@@ -65,11 +112,17 @@ class PhenotypeAdder extends MultiSelectionHandler{
             let index = this.positive_markers.indexOf(item_name)
             this.positive_markers.splice(index, 1)
         }
+        if (this.positive_markers.length == 0) {
+            this.add_button.classList.add('unavailable')
+        }
     }
     is_removal_locked() {
         return false
     }
     finalize_new_phenotype_definition() {
+        if (this.positive_markers.length == 0) {
+            return
+        }
         this.positive_markers.sort()
         let phenotype_munged_name = this.positive_markers.join('+ ') + '+'
         let new_phenotype = {'name' : phenotype_munged_name, 'positive markers' : [...this.positive_markers]}
@@ -77,6 +130,7 @@ class PhenotypeAdder extends MultiSelectionHandler{
         this.signatures_provider.push_phenotype(new_phenotype)
         this.phenotype_selection_table.add_entry(phenotype_munged_name)
         this.clearer.clear_selections()
+        this.add_button.classList.add('unavailable')
     }
     register_selections_clearer(clearer) {
         this.clearer = clearer
@@ -182,6 +236,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         this.record_phenotype_names_from_response(obj)
         this.get_parent_page().initialize_phenotype_selection_table()
         this.get_parent_page().initialize_channel_selection_table()
+        this.get_parent_page().make_study_dependent_sections_available()
         await this.get_and_handle_phenotype_criteria_names()
     }
     create_table_row(data_row) {

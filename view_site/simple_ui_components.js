@@ -6,20 +6,63 @@ function setup_openable_sections() {
 
 class OpenableSection {
     constructor(section_in_document) {
-        this.clickable_text = section_in_document.getElementsByClassName('show-more-button')[0].getElementsByClassName('clickable-text')[0]
+        this.clickable_text = section_in_document.querySelectorAll(':scope > .show-more-button')[0].querySelectorAll(':scope > .clickable-text')[0]
         this.title = this.clickable_text.innerHTML.replace(/\+ /, '')
-        this.showable_text = section_in_document.getElementsByClassName('toggleable-text')[0]
+        this.showable_text = section_in_document.querySelectorAll(':scope > .toggleable-text')[0]
         let reference = this
         this.clickable_text.addEventListener('click', function(event) { reference.toggle_open(event) })
     }
     toggle_open(event) {
+        if (this.clickable_text.classList.contains('unavailable')) {
+            return
+        }
         if (this.clickable_text.innerHTML == '+ ' + this.title) {
             this.clickable_text.innerHTML = '- ' + this.title
+            this.scroll_to(this.clickable_text)
+            this.showable_text.style.opacity = 0
             this.showable_text.style.display = 'block'
+            this.fade_in(this.showable_text)
         } else {
             this.clickable_text.innerHTML = '+ ' + this.title
             this.showable_text.style.display = 'none'
         }
+    }
+    scroll_to(element) {
+        let bounding_rectangle = element.getBoundingClientRect();
+        let new_height = bounding_rectangle.top + window.scrollY - 45
+        new_height = Math.max(new_height, 0)
+        window.scrollTo({top: new_height, behavior: 'smooth'})
+    }
+    fade_in(element) {
+        let duration_in_seconds = 0.5
+        let duration_in_milliseconds = duration_in_seconds * 1000
+        let number_increments = 100
+        let reference = this
+        setTimeout(
+            function() {
+                reference.increment_fade_in(element, 0, number_increments, duration_in_milliseconds)
+            },
+            duration_in_milliseconds / number_increments,
+        )
+    }
+    increment_fade_in(element, current_increment, number_increments, duration_in_milliseconds) {
+        let timepoint = current_increment / number_increments
+        element.style.opacity = this.get_opacity(timepoint)
+        if (current_increment == number_increments - 1) {
+            return
+        }
+        let reference = this
+        setTimeout(
+            function() {
+                reference.increment_fade_in(element, current_increment + 1, number_increments, duration_in_milliseconds)
+            },
+            duration_in_milliseconds / number_increments,
+        )
+    }
+    get_opacity(timepoint) {
+        let shift_amount = 0.4
+        let shifted = (shift_amount + timepoint) / (shift_amount + 1)
+        return shifted * shifted * shifted //linear; let's alter this
     }
 }
 
@@ -41,7 +84,6 @@ class ExportableElementWidget {
     ensure_relative_positioning() {
         if (! (this.get_hovering_trigger_element().style.position == 'relative')) {
             this.get_hovering_trigger_element().style.position = 'relative'
-            console.warn('Exportable elements should have the "relative" position style property.')
         }
     }
     create_and_add_export_buttons_panel() {

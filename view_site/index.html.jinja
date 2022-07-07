@@ -23,15 +23,15 @@ function on_load_body() {
 <script src="phenotype_fractions.js"></script>
 </head>
 <body onload="on_load_body()">
-<div class="centerable-content-container">
-    <h3>Phenotype fractions in pathology data measurement studies</h3>
+<div class="centerable-content-container all-content-section">
+    <h1>Cell profiling dashboard <span><a href="https://github.com/nadeemlab/SPT" target="_blank"><img src="spt_logo_only.png" class="spt-logo"></a></span></h1>
     <div class="openable-section">
-        <div class="show-more-button">[<span class="clickable-text">+ info</span>]</div>
+        <div class="show-more-button"><h2 class="clickable-text">+ info</h2></div>
         <div class="toggleable-text" style="display:none;">
         <p>
             <b>Statistics</b>. This page displays summary information of cell-level pathology data. The table shows statistics, computed over given specimens, of the fraction of cells displaying a given signature, whether defined by a single marker or by a composite of multiple markers comprising a phenotype, with or without specialization to specimens with specific assessment/diagnoses. The statistics shown are:
         </p>
-        <div>
+        <div class="centerable">
             <ul>
                 <li>the mean over the specimen set</li>
                 <li>the standard deviation over the specimen set</li>
@@ -50,38 +50,46 @@ function on_load_body() {
         </p>
         </div>
     </div>
-    <br/>
     <div class="retrievable-stats-page">
-    <div>
-    <div class="retrieving-selector" id="measurement study selector" display_solicitation_name="measurement study" retrieve_names_query_fragment="specimen-measurement-study-names" retrieve_summary_query_fragment="specimen-measurement-study-summary"></div>
-    <div class="attributes-table-container">
-        <img src="loading_cube.gif" style="display:none;" class="loadinggif">
-        <table style="display:none;">
-        </table>
-    </div>
-    </div>
-    <br/>
-    <div>
-    <div class="retrieving-selector" id="data analysis study selector" display_solicitation_name="data analysis study" retrieve_names_query_fragment="data-analysis-study-names" retrieve_summary_query_fragment="data-analysis-study-summary">
-    </div>
-    <div class="attributes-table-container">
-        <img id="analysis-study-attributes-loading" src="loading_cube.gif" style="display:none;" class="loadinggif">
-        <table id="analysis-study-attributes" style="display:none;">
-        </table>
-    </div>
-    </div>
-    <br/>
+        <div class="openable-section">
+            <div class="show-more-button"><h2 class="clickable-text">+ select studies</h2></div>
+            <div class="toggleable-text" style="display:none;">
+                <table class="left-right-pages">
+                <tbody>
+                <tr>
+                    <td>
+                        <div class="retrieving-selector" id="measurement study selector" display_solicitation_name="measurement study" retrieve_names_query_fragment="specimen-measurement-study-names" retrieve_summary_query_fragment="specimen-measurement-study-summary"></div>
+                        <div class="attributes-table-container">
+                            <img src="loading_cube.gif" style="display:none;" class="loadinggif">
+                            <table style="display:none;">
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="retrieving-selector" id="data analysis study selector" display_solicitation_name="data analysis study" retrieve_names_query_fragment="data-analysis-study-names" retrieve_summary_query_fragment="data-analysis-study-summary">
+                        </div>
+                        <div class="attributes-table-container">
+                            <img id="analysis-study-attributes-loading" src="loading_cube.gif" style="display:none;" class="loadinggif">
+                            <table id="analysis-study-attributes" style="display:none;">
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+                </table>
+            </div>
+        </div>
     <div class="openable-section">
-        <div class="show-more-button">[<span class="clickable-text">+ population overlaps</span>]</div>
+        <div class="show-more-button"><h2 class="clickable-text unavailable">+ population overlaps</h2></div>
         <div class="toggleable-text" style="display:none;">
-        <br/>
+        <p>Choose phenotypes to compare cell populations. Optionally, define custom phenotypes with multiple markers.</p>
         <table class="left-right-pages">
         <tbody>
         <tr>
             <td>
                 <table class="selection-table">
                 </table>
-                <span class="add-button"> &gt; </span>
+                <span class="add-button">Add</span>
             </td>
             <td>
                 <table class="selection-table">
@@ -98,20 +106,24 @@ function on_load_body() {
                 <table class="feature-matrix stats-table">
                 </table>
                 <br/>
-                <span><b>Number of cells</b></span>
+                <span><b>(number of cells)</b></span>
             </td>
         </tr>
         </tbody>
         </table>
         </div>
     </div>
-    <br/>
-    <div>
-    <div class="simple-emphasis row-counter" style="display:none"><span></span> rows</div>
-    <br/>
-    <table class="phenotype-stats-table stats-table" id="fractions table">
-    </table>
+
+    <div class="openable-section">
+        <div class="show-more-button"><h2 class="clickable-text unavailable">+ phenotype fractions</h2></div>
+        <div class="toggleable-text" style="display:none;">
+            <div class="simple-emphasis row-counter" style="display:none"><span></span> rows</div>
+            <br/>
+            <table class="phenotype-stats-table stats-table" id="fractions table">
+            </table>
+        </div>
     </div>
+
     </div>
 </div>
 </body>

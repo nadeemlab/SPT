@@ -30,7 +30,7 @@
 }
 
 .retrieving-select-items {
-  position: absolute;
+  position: relative;
   background-color: lightblue;
   top: 100%;
   left: 0;

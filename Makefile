@@ -226,7 +226,7 @@ push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css
     scp simple_ui_components.js $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp retrievable_stats_components.js $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp loading_cube.gif $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp view_site/spt_logo_only.png $$username@nadeemlabapi.link:/home/$$username/www/; \
+    scp spt_logo_only.png $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp mini_loading_gif.gif $$username@nadeemlabapi.link:/home/$$username/www/;
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \

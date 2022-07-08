@@ -60,9 +60,10 @@ div.centerable-content-container {
 h1 {
     background: #FCF0FA;
     color: #383530;
-    border-bottom: 2px solid #F0DFE7;
+    border-bottom: 1px solid #F0DFE7;
     padding: 1em;
     margin: 0;
+    text-align: left;
 }
 h2 {
     background: #FFF7FB;
@@ -70,7 +71,8 @@ h2 {
     margin-left: 1.5em;
     margin-right: 1.5em;
     margin-top: 1.0em;
-    border-bottom: 2px solid #F7EDF2;
+    border-bottom: 3px solid #f7edf2;
+    border-right: 3px solid #f7edf2;
     border-radius: 2em;
 }
 h3 {
@@ -214,7 +216,8 @@ div.show-more-button {
     max-height: 9999px;
 }
 .clickable-text:hover {
-    border-bottom: 2px solid #DDCBD4;
+    border-bottom: 3px solid #ddcbd4;
+    border-right: 3px solid #ddcbd4;
 }
 .clickable-text:active {
     background: #FCF3F7;
@@ -455,17 +458,36 @@ span.save-html:active {
     cursor: pointer;
 }
 
-.spt-logo {
-    height: 1.5em;
-    width: 1.5em;
-    position: absolute;
-    right: 10px;
-    top: 10px;
+.spt-logo > img {
+    height: 48px;
     border-radius: 0.3em;
-    padding: 0.2em;
+    vertical-align: middle;
+}
+.spt-logo {
+    height: 100%;
+    margin-left: 100px;
+    text-align: left;
 }
 .spt-logo:hover {
-    background: lightgray;
+    cursor: pointer;
+}
+.spt-title {
+    display: inline-block;
+    padding-top: 6px;
+    vertical-align: middle;
 }
 
-
+.github-button {
+    width: 90px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: rgb(27,32,45);
+    vertical-align: middle;
+    float: right;
+    display: inline-block;
+    margin-right: 10px;
+}
+.github-button:hover {
+    background: gray;
+    cursor: pointer;
+}

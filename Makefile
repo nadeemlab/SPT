@@ -211,7 +211,7 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Built.',$$transpired"s")
 
-push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css view_site/style.js view_site/phenotype_fractions.js view_site/simple_ui_components.js view_site/retrievable_stats_components.js view_site/parameter_filling.js view_site/username view_site/render.py view_site/loading_cube.gif view_site/mini_loading_gif.gif view_site/spt_logo_only.png
+push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css view_site/style.js view_site/phenotype_fractions.js view_site/simple_ui_components.js view_site/retrievable_stats_components.js view_site/parameter_filling.js view_site/username view_site/render.py view_site/loading_cube.gif view_site/mini_loading_gif.gif view_site/spt_logo_only.png view_site/gitlogo.svg
 	@printf $(call color_in_progress,'Sending site artifacts to server')
 	@date +%s > current_time.txt
 	@username=$$(cat view_site/username); \
@@ -227,6 +227,7 @@ push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css
     scp retrievable_stats_components.js $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp loading_cube.gif $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp spt_logo_only.png $$username@nadeemlabapi.link:/home/$$username/www/; \
+    scp gitlogo.svg $$username@nadeemlabapi.link:/home/$$username/www/; \
     scp mini_loading_gif.gif $$username@nadeemlabapi.link:/home/$$username/www/;
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \

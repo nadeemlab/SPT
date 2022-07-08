@@ -2,7 +2,6 @@ function setup_retrievable_stats_page() {
     let section = document.getElementsByClassName('retrievable-stats-page')[0]
     new PhenotypeFractionsStatsPage(section)
     make_page_exportable()
-    make_sections_exportable()
     add_scroll_padding()
 }
 
@@ -14,14 +13,6 @@ function make_page_exportable() {
     }
     let first_header_encountered = all_headers[0]
     let export_widget = new ExportableElementWidget(main_section, first_header_encountered, raw_style_sheet)
-}
-
-function make_sections_exportable() {
-    let openable_sections = document.getElementsByClassName('openable-section')
-    for (let section of openable_sections) {
-        let header = section.getElementsByClassName('show-more-button')[0]
-        let export_widget = new ExportableElementWidget(section, header, raw_style_sheet)    
-    }
 }
 
 function add_scroll_padding() {

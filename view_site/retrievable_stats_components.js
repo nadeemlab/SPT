@@ -286,34 +286,43 @@ class StatsTable {
     get_ordered_data_rows(column_index, sign) {
         let all_rows = Array.from(this.table.children)
         let values_indices = [];
-        for (let i = 1; i < all_rows.length; i++) {
+        for (let i = 2; i < all_rows.length; i++) {
             let row = all_rows[i]
             let td = Array.from(row.children)[column_index]
             values_indices.push([i-1, td.innerText]);
         }
-        let reference = this
-        let compare = function(a, b) {
-            if (reference.get_numeric_flags()[column_index]) {
-                return (parseFloat(a[1]) - parseFloat(b[1])) * sign;
-            } else {
-                if (a[1] > b[1]) {
-                    return 1 * sign
-                }
-                if (a[1] < b[1]) {
-                    return -1 * sign
-                }
-                if (a[1] == b[1]) {
-                    return 0
+        let custom_comparator = this.get_custom_comparator(column_index, sign)
+        let comparator = null
+        if (custom_comparator == null) {
+            let reference = this
+            comparator = function(a, b) {
+                if (reference.get_numeric_flags()[column_index]) {
+                    return (parseFloat(a[1]) - parseFloat(b[1])) * sign;
+                } else {
+                    if (a[1] > b[1]) {
+                        return 1 * sign
+                    }
+                    if (a[1] < b[1]) {
+                        return -1 * sign
+                    }
+                    if (a[1] == b[1]) {
+                        return 0
+                    }
                 }
             }
+        } else {
+            comparator = custom_comparator
         }
-        values_indices.sort(compare)
+        values_indices.sort(comparator)
         let new_rows = [];
         for (let i = 0; i < values_indices.length; i++) {
             let index = values_indices[i][0]
             new_rows.push(all_rows[index + 1])
         }
         return new_rows
+    }
+    get_custom_comparator(column_index, sign) {
+        throw new Error('Abstract method unimplemented.')        
     }
 }
 

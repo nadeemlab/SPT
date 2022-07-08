@@ -214,6 +214,35 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     get_numeric_flags() {
         return [false, false, true, true, false, true, false, true]        
     }
+    get_custom_comparator(column_index, sign) {
+        if (column_index == this.get_header_values().indexOf('Phenotype')) {
+            let reference = this
+            return function(a, b) {
+                let multiplicity_a = reference.get_multiplicity(a[1])
+                let multiplicity_b = reference.get_multiplicity(b[1])
+                if (multiplicity_a == multiplicity_b) {
+                    if (a[1] > b[1]) {
+                        return 1 * sign
+                    }
+                    if (a[1] < b[1]) {
+                        return -1 * sign
+                    }
+                    if (a[1] == b[1]) {
+                        return 0
+                    }
+                } else {
+                    let internal_sign = 0
+                    if (multiplicity_a > multiplicity_b) {
+                        internal_sign = 1
+                    } else {
+                        internal_sign = -1
+                    }
+                    return internal_sign * sign
+                }
+            }
+        }
+        return null
+    }
     async pull_data_from_selections(selections) {
         let encoded_measurement_study = encodeURIComponent(selections['measurement study'])
         let encoded_data_analysis_study = encodeURIComponent(selections['data analysis study'])
@@ -298,6 +327,16 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     record_phenotype_names_from_response(obj) {
         this.phenotype_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'composite')
         this.channel_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'single')
+    }
+    get_multiplicity(phenotype_or_channel_name) {
+        let name = phenotype_or_channel_name
+        if (this.phenotype_names.includes(name)) {
+            return 'composite'
+        }
+        if (this.channel_names.includes(name)) {
+            return 'single'
+        }
+        console.warn('Phenotype or channel name "' + name + '" not known.')
     }
     retrieve_phenotype_names_by_multiplicity(obj, multiplicity) {
         let rows_with_given_multiplicity = this.get_rows_with_multiplicity(obj, multiplicity)

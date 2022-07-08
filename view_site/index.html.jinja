@@ -25,32 +25,8 @@ function on_load_body() {
 <body onload="on_load_body()">
 <div class="centerable-content-container all-content-section">
     <h1>Cell profiling dashboard <span><a href="https://github.com/nadeemlab/SPT" target="_blank"><img src="spt_logo_only.png" class="spt-logo"></a></span></h1>
-    <div class="openable-section">
-        <div class="show-more-button"><h2 class="clickable-text">+ info</h2></div>
-        <div class="toggleable-text" style="display:none;">
-        <p>
-            <b>Statistics</b>. This page displays summary information of cell-level pathology data. The table shows statistics, computed over given specimens, of the fraction of cells displaying a given signature, whether defined by a single marker or by a composite of multiple markers comprising a phenotype, with or without specialization to specimens with specific assessment/diagnoses. The statistics shown are:
-        </p>
-        <div class="centerable">
-            <ul>
-                <li>the mean over the specimen set</li>
-                <li>the standard deviation over the specimen set</li>
-                <li>the maximum and minimum value achieved</li>
-                <li>the specimens achieving the extrema</li>
-            </ul>
-        </div>
-        <p>
-            <b>Data modality</b>. This system is appropriate for cell data obtained with multiplexed imaging, flow cytometry, single-cell RNA sequencing, or similar. For cells analyzed from multiplexed imaging using the HALO software, you can use the data import pipeline provided by the <a href="https://github.com/nadeemlab/SPT#import-halo-data-into-normal-form">SPT software</a> ("HALO import"), after preparing your data in the format exemplified <a href="https://github.com/nadeemlab/SPT/tree/main/tests/data_subspecimens">here</a>.
-        </p>
-        <p>
-            <b>System</b>. The data is stored in a PostgresQL database hosted at <span class="host_ip"></span>. The schema is highly normalized, with only functional relations. Precise definitions of the entities and relations are documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views are served by a FastAPI server, with a read-only API documented <a href="/docs" class="prepend_api_url_base">here</a>. Source code for these tools is located <a href="https://github.com/nadeemlab/SPT">here</a>.
-        </p>
-        <p>
-            <b>Performance</b>. It takes about 4 minutes per million cells to load datasets into the database, and about 3 minutes per million cells and per 100 cases (i.e. rows as shown below) to refresh the summary statistics.
-        </p>
-        </div>
-    </div>
     <div class="retrievable-stats-page">
+
         <div class="openable-section">
             <div class="show-more-button"><h2 class="clickable-text">+ select studies</h2></div>
             <div class="toggleable-text" style="display:none;">
@@ -79,52 +55,80 @@ function on_load_body() {
                 </table>
             </div>
         </div>
-    <div class="openable-section">
-        <div class="show-more-button"><h2 class="clickable-text unavailable">+ population overlaps</h2></div>
-        <div class="toggleable-text" style="display:none;">
-        <p>Choose phenotypes to compare cell populations. Optionally, define custom phenotypes with multiple markers.</p>
-        <table class="left-right-pages">
-        <tbody>
-        <tr>
-            <td>
-                <table class="selection-table">
-                </table>
-                <span class="add-button">Add</span>
-            </td>
-            <td>
-                <table class="selection-table">
-                </table>
-            </td>
-            <td>
-                <table class="pairwise-comparison">
-                <tr><td></td></tr>
-                </table>
-                <br/>
-                <span></span>
-            </td>
-            <td>
-                <table class="feature-matrix stats-table">
-                </table>
-                <br/>
-                <span><b>(number of cells)</b></span>
-            </td>
-        </tr>
-        </tbody>
-        </table>
-        </div>
-    </div>
 
-    <div class="openable-section">
-        <div class="show-more-button"><h2 class="clickable-text unavailable">+ phenotype fractions</h2></div>
-        <div class="toggleable-text" style="display:none;">
-            <div class="simple-emphasis row-counter" style="display:none"><span></span> rows</div>
-            <br/>
-            <table class="phenotype-stats-table stats-table" id="fractions table">
+        <div class="openable-section">
+            <div class="show-more-button"><h2 class="clickable-text unavailable">+ population overlaps</h2></div>
+            <div class="toggleable-text" style="display:none;">
+            <p>Choose phenotypes to compare cell populations. Optionally, define custom phenotypes with multiple markers.</p>
+            <table class="left-right-pages">
+            <tbody>
+            <tr>
+                <td>
+                    <table class="selection-table">
+                    </table>
+                    <span class="add-button">Add</span>
+                </td>
+                <td>
+                    <table class="selection-table">
+                    </table>
+                </td>
+                <td>
+                    <table class="pairwise-comparison">
+                    <tr><td></td></tr>
+                    </table>
+                    <br/>
+                    <span></span>
+                </td>
+                <td>
+                    <table class="feature-matrix stats-table">
+                    </table>
+                    <br/>
+                    <span><b>(number of cells)</b></span>
+                </td>
+            </tr>
+            </tbody>
             </table>
+            </div>
+        </div>
+
+        <div class="openable-section">
+            <div class="show-more-button"><h2 class="clickable-text unavailable">+ phenotype fractions</h2></div>
+            <div class="toggleable-text" style="display:none;">
+                <div class="simple-emphasis row-counter" style="display:none"><span></span> rows</div>
+                <br/>
+                <table class="phenotype-stats-table stats-table" id="fractions table">
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="openable-section">
+        <div class="show-more-button"><h2 class="clickable-text">+ info</h2></div>
+        <div class="toggleable-text" style="display:none;">
+        <p>
+            <b>Statistics</b>. This page displays summary information of cell-level pathology data. The table shows statistics, computed over given specimens, of the fraction of cells displaying a given signature, whether defined by a single marker or by a composite of multiple markers comprising a phenotype, with or without specialization to specimens with specific assessment/diagnoses. The statistics shown are:
+        </p>
+        <div class="centerable">
+            <ul>
+                <li>the mean over the specimen set</li>
+                <li>the standard deviation over the specimen set</li>
+                <li>the maximum and minimum value achieved</li>
+                <li>the specimens achieving the extrema</li>
+            </ul>
+        </div>
+        <p>
+            <b>Data modality</b>. This system is appropriate for cell data obtained with multiplexed imaging, flow cytometry, single-cell RNA sequencing, or similar. For cells analyzed from multiplexed imaging using the HALO software, you can use the data import pipeline provided by the <a href="https://github.com/nadeemlab/SPT#import-halo-data-into-normal-form">SPT software</a> ("HALO import"), after preparing your data in the format exemplified <a href="https://github.com/nadeemlab/SPT/tree/main/tests/data_subspecimens">here</a>.
+        </p>
+        <p>
+            <b>System</b>. The data is stored in a PostgresQL database hosted at <span class="host_ip"></span>. The schema is highly normalized, with only functional relations. Precise definitions of the entities and relations are documented <a href="https://adiframework.com/docs_site/pathology_quick_reference.html">here</a>. Views are served by a FastAPI server, with a read-only API documented <a href="/docs" class="prepend_api_url_base">here</a>. Source code for these tools is located <a href="https://github.com/nadeemlab/SPT">here</a>.
+        </p>
+        <p>
+            <b>Performance</b>. It takes about 4 minutes per million cells to load datasets into the database, and about 3 minutes per million cells and per 100 cases (i.e. rows as shown below) to refresh the summary statistics.
+        </p>
         </div>
     </div>
 
-    </div>
 </div>
 </body>
 </html>

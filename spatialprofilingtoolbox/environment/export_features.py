@@ -14,7 +14,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         self.record_feature_specification_template(data_analysis_study, derivation_method, specifier_number)
         self.initialize_database_connection(database_config_file)
 
-    def record_feature_specification_template(data_analysis_study, derivation_method, specifier_number):
+    def record_feature_specification_template(self, data_analysis_study, derivation_method, specifier_number):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
         self.specifier_number = specifier_number
@@ -51,7 +51,8 @@ class ADIFeaturesUploader(SourceToADIParser):
     def upload(self):
         if self.check_nothing_to_upload():
             return
-        self.ensure_feature_values_not_already_present()
+        if self.check_exact_feature_values_already_present():
+            return
         self.test_subject_existence()
         self.test_study_existence()
 
@@ -88,17 +89,23 @@ class ADIFeaturesUploader(SourceToADIParser):
             return True
         return False
 
-    def ensure_feature_values_not_already_present(self):
+    def check_exact_feature_values_already_present(self):
         count = self.count_known_feature_values_this_study()
+        if count == len(self.feature_values):
+            tokens = (self.data_analysis_study, self.derivation_method)
+            message = 'Exactly %s feature values already associated with study "%s" of description "%s". This is the correct number; skipping upload without error.' % tokens
+            logger.info(message)
+            return True
         if count > 0:
             tokens = (str(count), self.data_analysis_study, self.derivation_method)
-            message = 'Already have %s features associated with study "%s" of description "%s". Skipping upload.' % tokens
+            message = 'Already have %s features associated with study "%s" of description "%s". Skipping upload with error.' % tokens
             logger.error(message)
             raise ValueError(message)
         if count == 0:
             tokens = (self.data_analysis_study, self.derivation_method)
             message = 'No feature values yet associated with study "%s" of description "%s". Proceeding with upload.' % tokens
             logger.info(message)
+            return False
 
     def count_known_feature_values_this_study(self):
         cursor = self.connection.cursor()

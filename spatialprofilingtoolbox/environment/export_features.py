@@ -9,7 +9,7 @@ logger = colorized_logger(__name__)
 
 
 class ADIFeaturesUploader(SourceToADIParser):
-	def __init__(self, database_config_file, data_analysis_study, derivation_method, specifier_number):
+    def __init__(self, database_config_file, data_analysis_study, derivation_method, specifier_number):
         super(ADIFeaturesUploader, self).__init__(**kwargs)
         self.record_feature_specification_template(data_analysis_study, derivation_method, specifier_number)
         self.initialize_database_connection(database_config_file)

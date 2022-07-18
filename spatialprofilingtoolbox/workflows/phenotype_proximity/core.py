@@ -156,9 +156,6 @@ class PhenotypeProximityCoreJob(CoreJob):
             inplace=True,
         )
         table.rename(columns = inverse, inplace=True)
-        table.rename(columns = {
-            self.dataset_design.get_FOV_column(table=table) : 'field of view index'
-        }, inplace=True)
 
     def create_cell_tables(self):
         """

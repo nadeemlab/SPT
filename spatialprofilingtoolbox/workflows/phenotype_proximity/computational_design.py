@@ -127,3 +127,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
         else:
             return 'number of neighbor cells of target type, averaged over cells of source type'
 
+    @staticmethod
+    def uses_database():
+        return True
+

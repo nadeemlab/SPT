@@ -113,7 +113,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         SELECT COUNT(*)
         FROM quantitative_feature_value qfv
         JOIN feature_specification fs
-        ON fs.identifier = qfs.feature
+        ON fs.identifier = qfv.feature
         WHERE fs.study = %s AND fs.derivation_method = %s
         ;
         '''

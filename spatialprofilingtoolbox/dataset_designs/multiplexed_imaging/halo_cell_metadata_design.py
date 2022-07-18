@@ -55,7 +55,7 @@ class HALOCellMetadataDesign:
             if not column in table.columns:
                 column = re.sub(' ', '_', column)
                 if not column in table.columns:
-                    raise ValueError('Could not find "%s" even with underscore replacement.' % column)
+                    raise ValueError('Could not find "%s" even with underscore replacement, among: %s' % (column, str(list(table.columns))))
         return column
 
     @staticmethod
@@ -250,12 +250,12 @@ class HALOCellMetadataDesign:
         fn = self.get_feature_name
         v = self.interpret_value_specification
         for key in signature.keys():
-            feature_name = fn(key)
+            feature_name = fn(key, table=table)
             if not feature_name in table.columns:
-                logger.warning('Key "%s" was not among feature/column names: %s', feature_name, str(table.columns))
+                logger.warning('Key "%s" was not among feature/column names: %s', feature_name, str(list(table.columns)))
                 feature_name = re.sub(' ', '_', feature_name)
                 if not feature_name in table.columns:
-                    logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(table.columns))
+                    logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(list(table.columns)))
         pandas_signature = self.non_infix_bitwise_AND([table[fn(key, table=table)] == v(value) for key, value in signature.items()])
         return pandas_signature
 

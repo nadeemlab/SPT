@@ -3,12 +3,12 @@ from os.path import join
 
 import pandas as pd
 
-from .parser import SourceFileSemanticParser
+from .parser import SourceToADIParser
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class ChannelsPhenotypesParser(SourceFileSemanticParser):
+class ChannelsPhenotypesParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(ChannelsPhenotypesParser, self).__init__(**kwargs)
 

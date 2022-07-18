@@ -7,12 +7,12 @@ import pandas as pd
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from ..file_io import compute_sha256
-from .parser import SourceFileSemanticParser
+from .parser import SourceToADIParser
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class CellManifestSetParser(SourceFileSemanticParser):
+class CellManifestSetParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(CellManifestSetParser, self).__init__(**kwargs)
 

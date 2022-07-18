@@ -9,7 +9,7 @@ import pandas as pd
 
 from ..file_io import compute_sha256
 from ..file_io import get_input_filename_by_identifier
-from .parser import SourceFileSemanticParser
+from .parser import SourceToADIParser
 from .parser import DBBackend
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
@@ -19,7 +19,7 @@ from ..logging.performance_timer import PerformanceTimer
 record_performance = True
 
 
-class CellManifestsParser(SourceFileSemanticParser):
+class CellManifestsParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(CellManifestsParser, self).__init__(**kwargs)
         self.using_intensities = False

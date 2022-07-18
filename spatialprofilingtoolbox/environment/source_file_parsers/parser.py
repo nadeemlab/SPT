@@ -12,7 +12,7 @@ class DBBackend(Enum):
     POSTGRES = auto()
 
 
-class SourceFileSemanticParser:
+class SourceToADIParser:
     def __init__(self, **kwargs):
         pass
 

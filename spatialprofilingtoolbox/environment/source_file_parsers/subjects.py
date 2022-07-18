@@ -1,12 +1,12 @@
 
 import pandas as pd
 
-from .parser import SourceFileSemanticParser
+from .parser import SourceToADIParser
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class SubjectsParser(SourceFileSemanticParser):
+class SubjectsParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(SubjectsParser, self).__init__(**kwargs)
 

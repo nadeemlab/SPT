@@ -57,6 +57,7 @@ $(shell chmod +x ${BIN}/check_commit_state.sh)
 	push-view-site \
 	clean \
 	clean-tests \
+	clean-local-postgres \
 )
 RESET:="\033[0m"
 NOTE_COLOR:="\033[0m"
@@ -287,7 +288,7 @@ test: .test
     printf $(call color_final,'Passed.',$$transpired"s")
 	@touch .unit-tests
 
-${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTEGRATION_TEST_SOURCES}
+${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv clean-local-postgres ${INTEGRATION_TEST_SOURCES}
 	@script=$$(echo $@ | sed 's/^\.//g'); printf $(call color_in_progress,'Integration test '$@)
 	@date +%s > current_time.txt
 	@script=$$(echo $@ | sed 's/^\.//g'); \
@@ -327,6 +328,14 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv ${INTE
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Installed.',$$transpired"s")
+
+clean-local-postgres:
+	@printf $(call color_in_progress,'Resetting local postgres database.')
+	@date +%s > current_time.txt
+	@spt-create-db-schema --database-config-file=~/.spt_db.config.local --force >/dev/null 2>&1
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Reset.',$$transpired"s")
 
 .commit-new-version: .update-version .package-build
 	@printf $(call color_in_progress,'Committing source')

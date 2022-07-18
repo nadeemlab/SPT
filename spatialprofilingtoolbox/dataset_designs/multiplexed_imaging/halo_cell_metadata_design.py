@@ -42,7 +42,7 @@ class HALOCellMetadataDesign:
             required=True,
         )
 
-    def get_FOV_column(self):
+    def get_FOV_column(self, table=None):
         """
         Returns:
             str:
@@ -50,7 +50,13 @@ class HALOCellMetadataDesign:
                 the field of view in which the cell corresponding to a table record
                 appears.
         """
-        return 'Image Location'
+        column = 'Image Location'
+        if not table is None:
+            if not column in table.columns:
+                column = re.sub(' ', '_', column)
+                if not column in table.columns:
+                    raise ValueError('Could not find "%s" even with underscore replacement.' % column)
+        return column
 
     @staticmethod
     def get_cell_area_column():
@@ -74,7 +80,8 @@ class HALOCellMetadataDesign:
         :param table: Dataframe containing a field of view descriptor column.
         :type table: pandas.DataFrame
         """
-        table[self.get_FOV_column()] = table[self.get_FOV_column()].apply(self.normalize_fov_descriptor)
+        column = self.get_FOV_column(table=table)
+        table[column] = table[column].apply(self.normalize_fov_descriptor)
 
     def normalize_fov_descriptor(self, fov):
         """

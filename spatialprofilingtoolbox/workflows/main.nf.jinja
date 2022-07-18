@@ -218,6 +218,8 @@ process aggregate_results {
 
     input:
     path metrics_database
+{%- if db_config %}
+    path db_config_file{% endif %}
     path file_manifest_file
     val workflow
     path elementary_phenotypes
@@ -351,6 +353,8 @@ workflow {
 
     aggregate_results(
         merged_metrics_database_ch,
+{%- if db_config %}
+        db_config_file_ch,{% endif %}
         file_manifest_ch,
         workflow_ch,
         elementary_phenotypes_ch,

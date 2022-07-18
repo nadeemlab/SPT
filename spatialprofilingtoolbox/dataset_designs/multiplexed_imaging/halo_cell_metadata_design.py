@@ -256,7 +256,7 @@ class HALOCellMetadataDesign:
                 feature_name = re.sub(' ', '_', feature_name)
                 if not feature_name in table.columns:
                     logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(table.columns))
-        pandas_signature = self.non_infix_bitwise_AND([table[fn(key)] == v(value) for key, value in signature.items()])
+        pandas_signature = self.non_infix_bitwise_AND([table[fn(key, table=table)] == v(value) for key, value in signature.items()])
         return pandas_signature
 
     def non_infix_bitwise_AND(self, args):
@@ -275,7 +275,7 @@ class HALOCellMetadataDesign:
                 accumulator = accumulator & arg
         return accumulator
 
-    def get_feature_name(self, key):
+    def get_feature_name(self, key, table=None):
         """
         Args:
             key (str):
@@ -287,8 +287,12 @@ class HALOCellMetadataDesign:
                 indicates (boolean) thresholded positivity for the given phenotype.
                 If the key is not a phenotype name, then the key is returned unchanged.
         """
+        separator = ' '
+        if not table is None:
+            if '_'.join([self.get_indicator_prefix(key), 'Positive']) in table.column:
+                separator = '_'
         if key in self.get_elementary_phenotype_names():
-            return self.get_indicator_prefix(key) + ' Positive'
+            return separator.join([self.get_indicator_prefix(key), 'Positive'])
         else:
             return key
 

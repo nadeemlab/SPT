@@ -74,7 +74,7 @@ class PhenotypeProximityAnalysisIntegrator:
                 value = row[self.computational_design.get_aggregated_metric_name()]
                 feature_uploader.stage_feature_value(specifiers, subject, value)
 
-    def suppress_compartments(feature_table):
+    def suppress_compartments(self, feature_table):
         compartments = list(set(feature_table['compartment']))
         if len(compartments) > 1:
             if 'all' in compartments:

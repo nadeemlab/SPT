@@ -9,6 +9,7 @@ from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 from ..database_connection import DatabaseConnectionMaker
+from ..verbose_sql_execution import verbose_sql_execute
 from .subjects import SubjectsParser
 from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser
@@ -135,46 +136,21 @@ class DataSkimmer:
             for t in tablenames
         ])
 
-    def execute_script(self, filename, connection, description: str=None, silent=False, contents=None, itemize=False):
-        if description is None:
-            description = filename
-        if not contents:
-            logger.info('Executing %s.', description)
-            with importlib.resources.path('spatialprofilingtoolbox.data_model', filename) as path:
-                script = open(path).read()
-        else:
-            script = contents
-        cursor = connection.cursor()
-        if not silent and not itemize:
-            logger.debug(script)
-
-        if itemize:
-            script_statements = [s + ';' for s in script.rstrip(' \n').split(';')]
-            for statement in script_statements:
-                logger.debug(statement)
-                cursor.execute(statement)
-                connection.commit()
-        else:
-            cursor.execute(script)
-        cursor.close()
-        connection.commit()
-        logger.info('Done with %s.', description)
-
     def create_tables(self, connection, force=False):
         logger.info('This creation tool assumes that the database itself and users are already set up.')
         if force is True:
-            self.execute_script('drop_views.sql', connection, description='drop views of main schema')
-            self.execute_script(None, connection, description='drop tables from main schema', contents=self.create_drop_tables())
+            verbose_sql_execute('drop_views.sql', connection, description='drop views of main schema')
+            verbose_sql_execute(None, connection, description='drop tables from main schema', contents=self.create_drop_tables())
 
-        self.execute_script('pathology_schema.sql', connection, description='create tables from main schema')
-        self.execute_script('performance_tweaks.sql', connection, description='tweak main schema')
-        self.execute_script('create_views.sql', connection, description='create views of main schema')
-        self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users')
+        verbose_sql_execute('pathology_schema.sql', connection, description='create tables from main schema')
+        verbose_sql_execute('performance_tweaks.sql', connection, description='tweak main schema')
+        verbose_sql_execute('create_views.sql', connection, description='create views of main schema')
+        verbose_sql_execute('grant_on_tables.sql', connection, description='grant appropriate access to users')
 
     def refresh_views(self, connection):
-        self.execute_script('refresh_views.sql', self.connection, description='create views of main schema', silent=True)
+        verbose_sql_execute('refresh_views.sql', self.connection, description='create views of main schema', silent=True)
 
     def recreate_views(self, connection):
-        self.execute_script('drop_views.sql', connection, description='drop views of main schema')
-        self.execute_script('create_views.sql', connection, description='create views of main schema', itemize=True)
-        self.execute_script('grant_on_tables.sql', connection, description='grant appropriate access to users')
+        verbose_sql_execute('drop_views.sql', connection, description='drop views of main schema')
+        verbose_sql_execute('create_views.sql', connection, description='create views of main schema', itemize=True)
+        verbose_sql_execute('grant_on_tables.sql', connection, description='grant appropriate access to users')

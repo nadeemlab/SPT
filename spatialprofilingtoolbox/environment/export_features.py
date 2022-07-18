@@ -22,7 +22,7 @@ class ADIFeaturesUploader(SourceToADIParser):
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         self.insert_queries = {
             tablename : self.generate_basic_insert_query(tablename, fields)
-            for tablename in ['feature_specification', 'feature_specifier', 'quantiative_feature_value']
+            for tablename in ['feature_specification', 'feature_specifier', 'quantitative_feature_value']
         }
         self.feature_values = []
 
@@ -68,7 +68,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         logger.info('Inserting feature "%s" for study "%s".', self.derivation_method, self.data_analysis_study)
         for feature_identifier, specifiers in specifiers_by_id.items():
             cursor.execute(
-                self.insert_queries['feature_specification']
+                self.insert_queries['feature_specification'],
                 (feature_identifier, self.derivation_method, self.data_analysis_study),
             )
             self.insert_specifiers(cursor, specifiers, feature_identifier)

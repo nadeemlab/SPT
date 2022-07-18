@@ -10,17 +10,6 @@ class SamplesParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(SamplesParser, self).__init__(**kwargs)
 
-    def get_unique_value(self, dataframe, column):
-        handles = sorted(list(set(dataframe[column]).difference([''])))
-        if len(handles) == 0:
-            message = 'No "%s" values are supplied with the file manifest for this run.' % column
-            logger.error(message)
-            raise ValueError(message)
-        if len(handles) > 1:
-            message = 'Multiple "%s" values were supplied with the file manifest for this run. Using "%s".' % (column, project_handles[0])
-            logger.warning(message)
-        return handles[0]
-
     def parse(self, connection, fields, samples_file, age_at_specimen_collection, file_manifest_file):
         """
         Retrieve the samples information and parse records for:

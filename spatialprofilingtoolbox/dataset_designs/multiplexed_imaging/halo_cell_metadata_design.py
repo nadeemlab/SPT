@@ -289,7 +289,7 @@ class HALOCellMetadataDesign:
         """
         separator = ' '
         if not table is None:
-            if '_'.join([self.get_indicator_prefix(key), 'Positive']) in table.column:
+            if '_'.join([self.get_indicator_prefix(key), 'Positive']) in table.columns:
                 separator = '_'
         if key in self.get_elementary_phenotype_names():
             return separator.join([self.get_indicator_prefix(key), 'Positive'])

@@ -67,7 +67,7 @@ class PhenotypeProximityAnalysisIntegrator:
             data_analysis_study = self.retrieve_data_analysis_study_name(),
             derivation_method = self.describe_feature_derivation_method(),
             specifier_number = 3,
-        ) as features_uploader:
+        ) as feature_uploader:
             for i, row in feature_table.iterrows():
                 specifiers = (row['source phenotype'], row['target phenotype'], row['distance limit in pixels'])
                 subject = row['sample identifier']

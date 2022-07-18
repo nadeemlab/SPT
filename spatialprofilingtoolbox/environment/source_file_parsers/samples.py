@@ -2,6 +2,7 @@
 import pandas as pd
 
 from .parser import SourceToADIParser
+from .parser import get_unique_value
 from ..logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
@@ -20,11 +21,11 @@ class SamplesParser(SourceToADIParser):
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         samples = pd.read_csv(samples_file, sep='\t', dtype=str)
 
-        project_handle = self.get_unique_value(file_metadata, 'Project ID')
+        project_handle = get_unique_value(file_metadata, 'Project ID')
         collection_study = project_handle + ' - specimen collection'
-        extraction_method = self.get_unique_value(samples, 'Extraction method')
-        preservation_method = self.get_unique_value(samples, 'Preservation method')
-        storage_location = self.get_unique_value(samples, 'Storage location')
+        extraction_method = get_unique_value(samples, 'Extraction method')
+        preservation_method = get_unique_value(samples, 'Preservation method')
+        storage_location = get_unique_value(samples, 'Storage location')
 
         cursor = connection.cursor()
         cursor.execute(

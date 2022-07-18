@@ -218,6 +218,7 @@ process aggregate_results {
 
     input:
     path metrics_database
+    path file_manifest_file
     val workflow
     path elementary_phenotypes
     path composite_phenotypes
@@ -230,7 +231,10 @@ process aggregate_results {
     """
     spt-aggregate-core-results \
      --workflow='${workflow}' \
+     --file-manifest-file=${file_manifest_file} \
      --metrics-database-filename=${metrics_database} \
+{%- if db_config %}
+     --database-config-file=${db_config_file} \{% endif %}
      --elementary-phenotypes-file=${elementary_phenotypes} \
      --composite-phenotypes-file=${composite_phenotypes} \
      --compartments-file=${compartments} \
@@ -347,6 +351,7 @@ workflow {
 
     aggregate_results(
         merged_metrics_database_ch,
+        file_manifest_ch,
         workflow_ch,
         elementary_phenotypes_ch,
         composite_phenotypes_ch,

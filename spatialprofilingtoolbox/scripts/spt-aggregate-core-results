@@ -31,6 +31,18 @@ if __name__=='__main__':
         type=str,
         required=True,
     )
+    parser.add_argument(
+        '--database-config-file',
+        dest='database_config_file',
+        type=str,
+        required=False,
+    )
+    parser.add_argument(
+        '--file-manifest-file',
+        dest='file_manifest_file',
+        type=str,
+        required=False,
+    )
 
     computational_designs = [
         w.computational_design

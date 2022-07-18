@@ -12,6 +12,8 @@ from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
 from ...environment.logging.log_formats import colorized_logger
+from ...environment.export_features import ADIFeaturesUploader
+from ...environment.source_file_parsers.parser import get_unique_value
 from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
@@ -23,13 +25,18 @@ class PhenotypeProximityAnalysisIntegrator:
     """
     def __init__(self,
         computational_design: PhenotypeProximityDesign=None,
+        database_config_file: str=None,
+        file_manifest_file: str=None,
         **kwargs,
     ):
         """
         :param computational_design: The design object for the proximity workflow.
         """
         self.computational_design = computational_design
+        self.database_config_file = database_config_file
+        self.file_metadata = pd.read_csv(file_manifest_file, sep='\t', keep_default_na=False)
         self.cell_proximity_tests = None
+        self.cached_table = None
 
     def calculate(self, filename):
         """
@@ -39,6 +46,7 @@ class PhenotypeProximityAnalysisIntegrator:
             'Doing %s phenotype proximity workflow integration phase.',
             'balanced' if self.computational_design.balanced else 'unbalanced',
         )
+        self.export_feature_values()
         cell_proximity_tests = self.do_outcome_tests()
         if cell_proximity_tests is not None:
             self.export_results(cell_proximity_tests, filename)
@@ -46,6 +54,47 @@ class PhenotypeProximityAnalysisIntegrator:
             with open(filename, 'wt') as file:
                 file.write('')
             logger.warning('No stats to export for phenotype proximity workflow.')
+
+    def export_feature_values(self):
+        if self.database_config_file is None:
+            logger.warning('Can not export feature values because no database config file was given.')
+            return
+        feature_table = self.retrieve_radius_limited_counts()
+        feature_table = self.suppress_compartments(feature_table)
+
+        with ADIFeaturesUploader(
+            database_config_file = self.database_config_file,
+            data_analysis_study = self.retrieve_data_analysis_study_name(),
+            derivation_method = self.describe_feature_derivation_method(),
+            specifier_number = 3,
+        ) as features_uploader:
+            for i, row in feature_table.iterrows():
+                specifiers = (row['source phenotype'], row['target phenotype'], row['distance limit in pixels'])
+                subject = row['sample identifier']
+                value = row[self.computational_design.get_aggregated_metric_name()]
+                feature_uploader.stage_feature_value(specifiers, subject, value)
+
+    def suppress_compartments(feature_table):
+        compartments = list(set(feature_table['compartment']))
+        if len(compartments) > 1:
+            if 'all' in compartments:
+                return feature_table[feature_table['compartment'] == 'all']
+            elif 'any' in compartments:
+                return feature_table[feature_table['compartment'] == 'any']
+            else:
+                logger.warning('Can not suppress compartment column in feature table; no "all" value among: %s', compartments)
+        else:
+            return feature_table
+
+    def retrieve_data_analysis_study_name(self):
+        project_handle = get_unique_value(self.file_metadata, 'Project ID')
+        data_analysis_study = project_handle + ' - data analysis'
+        return data_analysis_study
+
+    def describe_feature_derivation_method(self):
+        return '''
+        For a given cell phenotype (first specifier), the average number of cells of a second phenotype (second specifier) within a specified radius (third specifier).
+        '''.lstrip().rstrip()
 
     def do_outcome_tests(self):
         """
@@ -163,6 +212,8 @@ class PhenotypeProximityAnalysisIntegrator:
         :return table: Data frame version of all cell pair counts data.
         :type table: pandas.DataFrame
         """
+        if not self.cached_table is None:
+            return self.cached_table
         uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         table_unaggregated = pd.read_sql_query('SELECT * FROM %s' % self.computational_design.get_cell_pair_counts_table_name(), connection)
@@ -171,6 +222,7 @@ class PhenotypeProximityAnalysisIntegrator:
         self.add_balance_metadata(table)
         self.save_aggregated_radius_limited_counts(table)
         table = table.rename(columns={key:re.sub('_', ' ', key) for key in table.columns})
+        self.cached_table = table
         return table
 
     def do_aggregation_over_different_files(self, table):

@@ -38,7 +38,7 @@ class ADIFeaturesUploader(SourceToADIParser):
             self.upload()
             self.connection.close()
 
-    def stage_feature_value(self, specifiers, subject, value)
+    def stage_feature_value(self, specifiers, subject, value):
         self.validate_specifiers(specifiers)
         self.feature_values.append([specifiers, subject, value])
 

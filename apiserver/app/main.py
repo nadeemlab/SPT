@@ -505,3 +505,39 @@ async def get_phenotype_criteria(
             content = json.dumps(representation),
             media_type = 'application/json',
         )
+
+
+@app.get("/computed-feature-summary/")
+async def get_phenotype_summary(
+    derivation_method : str = Query(default='unknown', min_length=3),
+    data_analysis_study : str = Query(default='unknown', min_length=3),
+):
+    columns = [
+        'specifier1',
+        'specifier2',
+        'specifier3',
+        'assay',
+        'assessment',
+        'mean',
+        'standard_deviation',
+        'maximum',
+        'maximum_value',
+        'minimum',
+        'minimum_value',
+    ]
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            'SELECT %s FROM features_3_specifiers_stats WHERE derivation_method=%s AND study in (%s, \'none\');' % (', '.join(columns),'%s', '%s'),
+            (derivation_method, data_analysis_study),
+        )
+        rows = cursor.fetchall()
+        representation = {
+            'fractions' : [[str(entry) for entry in row] for row in rows]
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+

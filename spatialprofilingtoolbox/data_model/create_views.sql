@@ -370,6 +370,7 @@ GROUP BY
     f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
 ;
 
+-- Needs assay, assessment, and standard deviation
 CREATE VIEW features_3_specifiers_stats AS
 SELECT
     f_mean.mean as mean,

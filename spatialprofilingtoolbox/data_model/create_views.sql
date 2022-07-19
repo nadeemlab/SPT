@@ -297,3 +297,97 @@ ORDER BY
     measurement_study, data_analysis_study, multiplicity DESC, marker_symbol, assay, assessment
 ;
 
+-- computed features
+CREATE VIEW features_3_specifiers AS
+SELECT
+    qfv.subject as subject,
+    qfv.value as value,
+    "1" as specifier1,
+    "2" as specifier2,
+    "3" as specifier3,
+    fsn.derivation_method as derivation_method,
+    fsn.study as study
+FROM
+    crosstab('select feature_specification, ordinality, specifier from feature_specifier order by 1,2')
+    AS
+    ct(feature_specification varchar(512), "1" varchar(512), "2" varchar(512), "3" varchar(512))
+    JOIN feature_specification fsn ON
+        fsn.identifier = ct.feature_specification
+    JOIN quantitative_feature_value qfv ON
+        qfv.feature = ct.feature_specification    
+;
+
+
+CREATE VIEW features_3_specifiers_maxima AS
+SELECT
+    DISTINCT ON(sq.maximum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study)
+    f3s.subject as maximum, sq.maximum_value as maximum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+FROM
+    features_3_specifiers f3s
+JOIN
+    (
+    SELECT
+        MAX(f3s.value) as maximum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+    FROM
+        features_3_specifiers f3s
+    GROUP BY
+        specifier1, specifier2, specifier3, derivation_method, study
+    ) as sq
+    ON
+        sq.specifier1 = f3s.specifier1 AND sq.specifier2 = f3s.specifier2 AND sq.specifier3 = f3s.specifier3 AND sq.derivation_method = f3s.derivation_method AND sq.study = f3s.study
+    AND
+        sq.maximum_value = f3s.value
+;
+
+CREATE VIEW features_3_specifiers_minima AS
+SELECT
+    DISTINCT ON(sq.minimum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study)
+    f3s.subject as minimum, sq.minimum_value as minimum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+FROM
+    features_3_specifiers f3s
+JOIN
+    (
+    SELECT
+        MIN(f3s.value) as minimum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+    FROM
+        features_3_specifiers f3s
+    GROUP BY
+        specifier1, specifier2, specifier3, derivation_method, study
+    ) as sq
+    ON
+        sq.specifier1 = f3s.specifier1 AND sq.specifier2 = f3s.specifier2 AND sq.specifier3 = f3s.specifier3 AND sq.derivation_method = f3s.derivation_method AND sq.study = f3s.study
+    AND
+        sq.minimum_value = f3s.value
+;
+
+CREATE VIEW features_3_specifiers_mean AS
+SELECT
+    AVG(f3s.value) as mean,
+    f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+FROM
+    features_3_specifiers f3s
+GROUP BY
+    f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+;
+
+CREATE VIEW features_3_specifiers_stats AS
+SELECT
+    f_mean.mean as mean,
+    f_min.minimum_value as minimum_value,
+    f_min.minimum as minimum,
+    f_max.maximum_value as maximum_value,
+    f_max.maximum as maximum,
+    f_mean.specifier1, f_mean.specifier2, f_mean.specifier3, f_mean.derivation_method, f_mean.study
+FROM
+    features_3_specifiers_mean f_mean
+JOIN
+    features_3_specifiers_minima f_min
+ON
+    f_min.specifier1 = f_mean.specifier1 AND f_min.specifier2 = f_mean.specifier2 AND f_min.specifier3 = f_mean.specifier3 AND f_min.derivation_method = f_mean.derivation_method AND f_min.study = f_mean.study
+JOIN
+    features_3_specifiers_maxima f_max
+ON
+    f_max.specifier1 = f_mean.specifier1 AND f_max.specifier2 = f_mean.specifier2 AND f_max.specifier3 = f_mean.specifier3 AND f_max.derivation_method = f_mean.derivation_method AND f_max.study = f_mean.study
+ORDER BY
+    mean DESC, f_mean.specifier1, f_mean.specifier2, f_mean.specifier3, f_mean.derivation_method, f_mean.study
+;

@@ -130,6 +130,7 @@ GROUP BY
     sdmp.specimen
 ;
 
+-- (build cases sets)
 CREATE VIEW fraction_by_marker_study_specimen AS
 SELECT
     cc.measurement_study as measurement_study,
@@ -270,43 +271,24 @@ SELECT
 FROM
     fraction_arg_maxima f1
     JOIN fraction_arg_minima f2 ON
-        f1.measurement_study = f2.measurement_study
-    AND
-        f1.data_analysis_study = f2.data_analysis_study
-    AND
-        f1.multiplicity = f2.multiplicity
-    AND
-        f1.marker_symbol = f2.marker_symbol
-    AND
-        f1.assay = f2.assay
-    AND
-        f1.assessment = f2.assessment
+        f1.measurement_study = f2.measurement_study AND f1.data_analysis_study = f2.data_analysis_study AND f1.multiplicity = f2.multiplicity AND f1.marker_symbol = f2.marker_symbol AND f1.assay = f2.assay AND f1.assessment = f2.assessment
     JOIN fraction_moments_generalized_cases f3 ON
-        f1.measurement_study = f3.measurement_study
-    AND
-        f1.data_analysis_study = f3.data_analysis_study
-    AND
-        f1.multiplicity = f3.multiplicity
-    AND
-        f1.marker_symbol = f3.marker_symbol
-    AND
-        f1.assay = f3.assay
-    AND
-        f1.assessment = f3.assessment
+        f1.measurement_study = f3.measurement_study AND f1.data_analysis_study = f3.data_analysis_study AND f1.multiplicity = f3.multiplicity AND f1.marker_symbol = f3.marker_symbol AND f1.assay = f3.assay AND f1.assessment = f3.assessment
 ORDER BY
     measurement_study, data_analysis_study, multiplicity DESC, marker_symbol, assay, assessment
 ;
 
--- computed features
-CREATE VIEW features_3_specifiers AS
+-- Computed features
+-- (build cases sets)
+CREATE MATERIALIZED VIEW computed_feature_3_specifiers_study_specimen AS
 SELECT
-    qfv.subject as subject,
-    qfv.value as value,
+    fsn.study as data_analysis_study,
+    fsn.derivation_method as derivation_method,
     "1" as specifier1,
     "2" as specifier2,
     "3" as specifier3,
-    fsn.derivation_method as derivation_method,
-    fsn.study as study
+    qfv.subject as specimen,
+    qfv.value as computed_value
 FROM
     crosstab('select feature_specification, ordinality, specifier from feature_specifier order by 1,2')
     AS
@@ -317,78 +299,117 @@ FROM
         qfv.feature = ct.feature_specification    
 ;
 
-
-CREATE VIEW features_3_specifiers_maxima AS
-SELECT
-    DISTINCT ON(sq.maximum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study)
-    f3s.subject as maximum, sq.maximum_value as maximum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+CREATE MATERIALIZED VIEW computed_feature_3_specifiers_generalized_cases AS
+SELECT *
 FROM
-    features_3_specifiers f3s
-JOIN
     (
     SELECT
-        MAX(f3s.value) as maximum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+        f.data_analysis_study as data_analysis_study,
+        f.derivation_method as derivation_method,
+        f.specifier1 as specifier1,
+        f.specifier2 as specifier2,
+        f.specifier3 as specifier3,
+        '<any>' as assay,
+        '<any>' as assessment,
+        f.specimen as specimen,
+        f.computed_value as computed_value
     FROM
-        features_3_specifiers f3s
-    GROUP BY
-        specifier1, specifier2, specifier3, derivation_method, study
-    ) as sq
-    ON
-        sq.specifier1 = f3s.specifier1 AND sq.specifier2 = f3s.specifier2 AND sq.specifier3 = f3s.specifier3 AND sq.derivation_method = f3s.derivation_method AND sq.study = f3s.study
-    AND
-        sq.maximum_value = f3s.value
-;
-
-CREATE VIEW features_3_specifiers_minima AS
-SELECT
-    DISTINCT ON(sq.minimum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study)
-    f3s.subject as minimum, sq.minimum_value as minimum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
-FROM
-    features_3_specifiers f3s
-JOIN
+        computed_feature_3_specifiers_study_specimen f
+    ) no_specific_assessment
+    UNION
     (
     SELECT
-        MIN(f3s.value) as minimum_value, f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
+        g.data_analysis_study as data_analysis_study,
+        g.derivation_method as derivation_method,
+        g.specifier1 as specifier1,
+        g.specifier2 as specifier2,
+        g.specifier3 as specifier3,
+        hap.assay as assay,
+        hap.result as assessment,
+        g.specimen as specimen,
+        g.computed_value as computed_value
     FROM
-        features_3_specifiers f3s
-    GROUP BY
-        specifier1, specifier2, specifier3, derivation_method, study
-    ) as sq
-    ON
-        sq.specifier1 = f3s.specifier1 AND sq.specifier2 = f3s.specifier2 AND sq.specifier3 = f3s.specifier3 AND sq.derivation_method = f3s.derivation_method AND sq.study = f3s.study
-    AND
-        sq.minimum_value = f3s.value
-;
-
-CREATE VIEW features_3_specifiers_mean AS
-SELECT
-    AVG(f3s.value) as mean,
-    f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
-FROM
-    features_3_specifiers f3s
-GROUP BY
-    f3s.specifier1, f3s.specifier2, f3s.specifier3, f3s.derivation_method, f3s.study
-;
-
--- Needs assay, assessment, and standard deviation
-CREATE VIEW features_3_specifiers_stats AS
-SELECT
-    f_mean.mean as mean,
-    f_min.minimum_value as minimum_value,
-    f_min.minimum as minimum,
-    f_max.maximum_value as maximum_value,
-    f_max.maximum as maximum,
-    f_mean.specifier1, f_mean.specifier2, f_mean.specifier3, f_mean.derivation_method, f_mean.study
-FROM
-    features_3_specifiers_mean f_mean
-JOIN
-    features_3_specifiers_minima f_min
-ON
-    f_min.specifier1 = f_mean.specifier1 AND f_min.specifier2 = f_mean.specifier2 AND f_min.specifier3 = f_mean.specifier3 AND f_min.derivation_method = f_mean.derivation_method AND f_min.study = f_mean.study
-JOIN
-    features_3_specifiers_maxima f_max
-ON
-    f_max.specifier1 = f_mean.specifier1 AND f_max.specifier2 = f_mean.specifier2 AND f_max.specifier3 = f_mean.specifier3 AND f_max.derivation_method = f_mean.derivation_method AND f_max.study = f_mean.study
+        computed_feature_3_specifiers_study_specimen g
+        JOIN histology_assessment_process hap ON
+            g.specimen = hap.slide
+    )
 ORDER BY
-    mean DESC, f_mean.specifier1, f_mean.specifier2, f_mean.specifier3, f_mean.derivation_method, f_mean.study
+    data_analysis_study, specifier1, specifier2, specifier3, assay, assessment
+;
+
+-- (mean, standard deviation)
+CREATE MATERIALIZED VIEW computed_feature_3_specifiers_moments_generalized_cases AS
+SELECT
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment,
+    CAST(AVG(cf.computed_value) AS NUMERIC(5, 2)) as average_value,
+    CAST(STDDEV(cf.computed_value) AS NUMERIC(5, 2)) as standard_deviation
+FROM
+    computed_feature_3_specifiers_generalized_cases cf
+GROUP BY
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment
+ORDER BY
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment
+;
+
+-- (extrema)
+CREATE MATERIALIZED VIEW computed_feature_3_specifiers_maxima AS
+SELECT
+    DISTINCT ON(sq.maximum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment)
+    cf.specimen as maximum, sq.maximum_value as maximum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment
+FROM
+    computed_feature_3_specifiers_generalized_cases cf
+JOIN
+    (
+    SELECT
+        MAX(cfs.computed_value) as maximum_value, cfs.specifier1, cfs.specifier2, cfs.specifier3, cfs.derivation_method, cfs.data_analysis_study, cfs.assay, cfs.assessment
+    FROM
+        computed_feature_3_specifiers_generalized_cases cfs
+    GROUP BY
+        specifier1, specifier2, specifier3, derivation_method, data_analysis_study, assay, assessment
+    ) as sq
+    ON
+        sq.specifier1 = cf.specifier1 AND sq.specifier2 = cf.specifier2 AND sq.specifier3 = cf.specifier3 AND sq.derivation_method = cf.derivation_method AND sq.data_analysis_study = cf.data_analysis_study AND sq.assay = cf.assay AND sq.assessment = cf.assessment
+    AND
+        sq.maximum_value = cf.computed_value
+;
+
+CREATE MATERIALIZED VIEW computed_feature_3_specifiers_minima AS
+SELECT
+    DISTINCT ON(sq.minimum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment)
+    cf.specimen as minimum, sq.minimum_value as minimum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment
+FROM
+    computed_feature_3_specifiers_generalized_cases cf
+JOIN
+    (
+    SELECT
+        MIN(cfs.computed_value) as minimum_value, cfs.specifier1, cfs.specifier2, cfs.specifier3, cfs.derivation_method, cfs.data_analysis_study, cfs.assay, cfs.assessment
+    FROM
+        computed_feature_3_specifiers_generalized_cases cfs
+    GROUP BY
+        specifier1, specifier2, specifier3, derivation_method, data_analysis_study, assay, assessment
+    ) as sq
+    ON
+        sq.specifier1 = cf.specifier1 AND sq.specifier2 = cf.specifier2 AND sq.specifier3 = cf.specifier3 AND sq.derivation_method = cf.derivation_method AND sq.data_analysis_study = cf.data_analysis_study AND sq.assay = cf.assay AND sq.assessment = cf.assessment
+    AND
+        sq.minimum_value = cf.computed_value
+;
+
+-- (stats)
+CREATE MATERIALIZED MATERIALIZED VIEW computed_feature_3_specifiers_stats AS
+SELECT
+    f1.data_analysis_study, f1.derivation_method, f1.specifier1, f1.specifier2, f1.specifier3, f1.assay, f1.assessment,
+    f3.average_value,
+    f3.standard_deviation,
+    f1.maximum as maximum,
+    CAST(f1.maximum_value AS NUMERIC(5, 2)) as maximum_value,
+    f2.minimum as minimum,
+    CAST(f2.minimum_value AS NUMERIC(5, 2)) as minimum_value
+FROM
+    computed_feature_3_specifiers_maxima f1
+    JOIN computed_feature_3_specifiers_minima f2 ON
+        f1.data_analysis_study = f2.data_analysis_study AND f1.derivation_method = f2.derivation_method AND f1.specifier1 = f2.specifier1 AND f1.specifier2 = f2.specifier2 AND f1.specifier3 = f2.specifier3 AND f1.assay = f2.assay AND f1.assessment = f2.assessment
+    JOIN computed_feature_3_specifiers_moments_generalized_cases f3 ON
+        f1.data_analysis_study = f3.data_analysis_study AND f1.derivation_method = f3.derivation_method AND f1.specifier1 = f3.specifier1 AND f1.specifier2 = f3.specifier2 AND f1.specifier3 = f3.specifier3 AND f1.assay = f3.assay AND f1.assessment = f3.assessment
+ORDER BY
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment
 ;

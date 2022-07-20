@@ -395,7 +395,7 @@ JOIN
 ;
 
 -- (stats)
-CREATE MATERIALIZED MATERIALIZED VIEW computed_feature_3_specifiers_stats AS
+CREATE MATERIALIZED VIEW computed_feature_3_specifiers_stats AS
 SELECT
     f1.data_analysis_study, f1.derivation_method, f1.specifier1, f1.specifier2, f1.specifier3, f1.assay, f1.assessment,
     f3.average_value,

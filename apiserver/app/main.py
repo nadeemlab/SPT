@@ -507,9 +507,8 @@ async def get_phenotype_criteria(
         )
 
 
-@app.get("/computed-feature-summary/")
-async def get_phenotype_summary(
-    derivation_method : str = Query(default='unknown', min_length=3),
+@app.get("/phenotype-proximity-summary/")
+async def get_phenotype_proximity_summary(
     data_analysis_study : str = Query(default='unknown', min_length=3),
 ):
     columns = [
@@ -518,23 +517,25 @@ async def get_phenotype_summary(
         'specifier3',
         'assay',
         'assessment',
-        'mean',
+        'average_value',
         'standard_deviation',
         'maximum',
         'maximum_value',
         'minimum',
         'minimum_value',
     ]
+    tablename = 'computed_feature_3_specifiers_stats'
+    derivation_method = 'For a given cell phenotype (first specifier), the average number of cells of a second phenotype (second specifier) within a specified radius (third specifier).'
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT %s FROM features_3_specifiers_stats WHERE derivation_method=%s AND study in (%s, \'none\');' % (', '.join(columns),'%s', '%s'),
-            (derivation_method, data_analysis_study),
+            'SELECT %s FROM %s WHERE derivation_method=%s AND data_analysis_study in (%s, \'none\');' % (', '.join(columns),'%s', '%s', '%s'),
+            (tablename, derivation_method, data_analysis_study),
         )
         rows = cursor.fetchall()
         representation = {
-            'fractions' : [[str(entry) for entry in row] for row in rows]
+            'proximities' : [[str(entry) for entry in row] for row in rows]
         }
         return Response(
             content = json.dumps(representation),

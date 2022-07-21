@@ -530,8 +530,8 @@ async def get_phenotype_proximity_summary(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT %s FROM %s WHERE derivation_method=%s AND data_analysis_study in (%s, \'none\');' % (', '.join(columns),'%s', '%s', '%s'),
-            (tablename, derivation_method, data_analysis_study),
+            'SELECT %s FROM %s WHERE derivation_method=%s AND data_analysis_study in (%s, \'none\');' % (', '.join(columns), tablename, '%s', '%s'),
+            (derivation_method, data_analysis_study),
         )
         rows = cursor.fetchall()
         representation = {

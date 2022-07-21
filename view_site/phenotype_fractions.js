@@ -45,6 +45,10 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         let id = section.getElementsByClassName('phenotype-stats-table')[0].getAttribute('id')
         return new PhenotypeFractionsStatsTable(id, this)
     }
+    discover_proximity_stats_table(section) {
+        let id = section.getElementsByClassName('proximity-stats-table')[0].getAttribute('id')
+        return new ProximityStatsTable(id, this)
+    }
     get_section() {
         return this.section
     }
@@ -151,7 +155,7 @@ class SignaturesProvider {
         }
     }
     push_phenotype(new_phenotype) {
-        this.signatures.push(new_phenotype)        
+        this.signatures.push(new_phenotype)
     }
 }
 
@@ -200,10 +204,10 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         return Array.from(assay_values)[0]
     }
     get_header_values() {
-        return ['Phenotype', 'Result', 'Mean % <br/>cells positive', 'Standard deviation <br/>of % values', 'Maximum', 'Value', 'Minimum', 'Value']        
+        return ['Phenotype', 'Result', 'Mean % <br/>cells positive', 'Standard deviation <br/>of % values', 'Maximum', 'Value', 'Minimum', 'Value']
     }
     get_numeric_flags() {
-        return [false, false, true, true, false, true, false, true]        
+        return [false, false, true, true, false, true, false, true]
     }
     get_custom_comparator(column_index, sign) {
         if (column_index == this.get_header_values().indexOf('Phenotype')) {
@@ -313,7 +317,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
             let data_row_copy = [...data_row]
             data_row_copy.splice(index_of_multiplicity_field, 1)
             return data_row_copy
-        })        
+        })
     }
     record_phenotype_names_from_response(obj) {
         this.phenotype_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'composite')
@@ -347,7 +351,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         }).map( function(data_row) {
             let data_row_copy = [...data_row]
             data_row_copy.splice(index_of_multiplicity_field, 1)
-            return data_row_copy            
+            return data_row_copy
         })
     }
     get_phenotype_names() {
@@ -385,6 +389,124 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         let positives_marked = phenotype_criteria_name.replace(/([a-zA-Z0-9\_\.]+\+)/g, '<span class="positives">$1</span> ')
         let and_negatives_marked = positives_marked.replace(/([a-zA-Z0-9\_\.]+\-)/g, '<span class="negatives">$1</span> ')
         return and_negatives_marked
+    }
+    update_row_counter() {
+        let number_rows = this.table.children.length - 2
+        let rowcountbox = this.table.parentElement.getElementsByClassName('row-counter')[0]
+        rowcountbox.style.display = 'inline-block'
+        rowcountbox.getElementsByTagName('span')[0].innerHTML = number_rows
+    }
+}
+
+class ProximityStatsTable extends StatsTable {
+    setup_table_header() {
+        this.table.innerHTML = ''
+        let header = this.get_header_values()
+        let header_row = document.createElement('tr')
+        for (let i = 0; i < header.length; i++) {
+            let cell = document.createElement('th')
+            let text = document.createElement('span')
+            text.innerHTML = header[i] + ' &nbsp;'
+            cell.appendChild(text)
+            let sort_button = document.createElement('span');
+            sort_button.innerHTML = ' [+] '
+            let reference = this
+            sort_button.addEventListener('click', function(event) {
+                reference.sort_data_rows(i, 1)
+            })
+            sort_button.setAttribute('class', 'sortbutton')
+            let sort_button2 = document.createElement('span');
+            sort_button2.innerHTML = ' [-] '
+            sort_button2.addEventListener('click', function(event) {
+                reference.sort_data_rows(i, -1)
+            })
+            sort_button2.setAttribute('class', 'sortbutton')
+            cell.appendChild(sort_button)
+            cell.appendChild(sort_button2)
+            header_row.appendChild(cell)
+        }
+        this.table.appendChild(header_row)
+        let export_widget = new ExportableElementWidget(this.table, this.table, raw_style_sheet)
+    }
+    patch_header(outcome_column) {
+        let index_of_assay = this.get_header_values().indexOf('Result')
+        let span = this.table.children[1].children[index_of_assay].children[0]
+        span.innerHTML = outcome_column
+    }
+    get_assay_index() {
+        return 1
+    }
+    get_outcome_column(obj) {
+        let assay_index = this.get_assay_index()
+        let assay_values = new Set(obj.map(function(data_row) {return data_row[assay_index]}))
+        assay_values.delete('<any>')
+        return Array.from(assay_values)[0]
+    }
+    get_header_values() {
+        return ['Phenotype', 'Neighbor phenotype', 'Within distance (px)', 'Result', 'Mean number neighbors', 'Standard deviation', 'Maximum', 'Maximum value', 'Minimum', 'Minimum value']
+    }
+    get_numeric_flags() {
+        return [false, false, true, false, true, true, false, true, false, true]
+    }
+    get_custom_comparator(column_index, sign) {
+        return null
+    }
+    async pull_data_from_selections(selections) {
+        let encoded_data_analysis_study = encodeURIComponent(selections['data analysis study'])
+        let url_base = get_api_url_base()
+        let url=`${url_base}/phenotype-proximity-summary/?data_analysis_study=${encoded_data_analysis_study}`
+        let response_text = await promise_http_request('GET', url)
+        this.load_proximities_from_response(response_text)
+    }
+    async load_proximities_from_response(response_text) {
+        this.clear_table()
+        let stats = JSON.parse(response_text)
+        let obj = stats[Object.keys(stats)[0]]
+        let outcome_column = this.get_outcome_column(obj)
+        for (let i = 0; i < obj.length; i++) {
+            let tr = this.create_table_row(obj[i])
+            this.table.appendChild(tr)
+        }
+        this.patch_header(outcome_column)
+        this.update_row_counter()
+    }
+    create_table_row(data_row) {
+        let table_row = document.createElement('tr')
+        data_row.splice(this.get_assay_index(), 1)
+        for (let j = 0; j < data_row.length; j++) {
+            let cell = document.createElement('td')
+            let entry = data_row[j]
+            if (this.get_header_values()[j] == 'Result') {
+                entry = entry.replace(/<any>/, '<em>any</em>')
+            }
+            if (this.get_header_values()[j] == 'Mean number neighbors') {
+                let integer_percent = Math.round(parseFloat(entry))
+                let container = document.createElement('div')
+                container.setAttribute('class', 'overlayeffectcontainer')
+                let underlay = document.createElement('div')
+                underlay.setAttribute('class', 'underlay')
+                let overlay = document.createElement('div')
+                overlay.setAttribute('class', 'overlay')
+                overlay.innerHTML = entry
+                underlay.style.width = integer_percent + '%'
+                container.appendChild(underlay)
+                container.appendChild(overlay)
+                cell.appendChild(container)
+            } else {
+                cell.innerHTML = entry
+            }
+            cell.addEventListener('click', function(event) {
+                this.parentElement.classList.toggle('selected-row')
+            })
+            if (j == 0) {
+                cell.classList.toggle('first')
+            }
+            if (j == data_row.length - 1) {
+                cell.classList.toggle('last')
+            }
+            table_row.appendChild(cell)
+        }
+        return table_row
     }
     update_row_counter() {
         let number_rows = this.table.children.length - 2
@@ -493,7 +615,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         let cells = []
         cells.push(this.get_cell(row_label, column_label))
         if (row_label != column_label) {
-            cells.push(this.get_cell(column_label, row_label))            
+            cells.push(this.get_cell(column_label, row_label))
         }
         return cells
     }
@@ -513,7 +635,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
             let percentage = Math.round(100 * 100 * value)/100
             this.detail_bar.innerHTML = percentage + ' %'
         } else {
-            this.detail_bar.innerHTML = '%'            
+            this.detail_bar.innerHTML = '%'
         }
     }
     toggle_cell_selection(cell, row_label, column_label) {
@@ -533,7 +655,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     }
     retrieve_feature_values(row_label, column_label) {
         throw new Error('Abstract method unimplemented.')
-    } 
+    }
     add_new_column(label) {
         this.table.children[0].appendChild(this.create_column_label_cell(label))
         for (let i = 1; i < this.table.children.length; i++) {
@@ -596,7 +718,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         let row_index = this.labels.indexOf(row_label)
         let column_index = this.labels.indexOf(column_label)
         let cell = this.table.children[1 + row_index].children[1 + column_index]
-        return cell        
+        return cell
     }
     set_cell_contents_by_location(row_label, column_label, percentage) {
         let cell = this.get_cell(row_label, column_label)
@@ -732,7 +854,7 @@ class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
         if (this.specimen_level_counts.has_cached(row_label, column_label)) {
             return this.specimen_level_counts.get_counts(row_label, column_label)
         }
-    } 
+    }
 }
 
 class SpecimenLevelCounts {

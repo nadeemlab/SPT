@@ -11,6 +11,11 @@ class OpenableSection {
         this.showable_text = section_in_document.querySelectorAll(':scope > .toggleable-text')[0]
         let reference = this
         this.clickable_text.addEventListener('click', function(event) { reference.toggle_open(event) })
+        if (section_in_document.classList.contains('do-not-fade')) {
+            this.fadeable = false
+        } else {
+            this.fadeable = true
+        }
     }
     toggle_open(event) {
         if (this.clickable_text.classList.contains('unavailable')) {
@@ -33,17 +38,25 @@ class OpenableSection {
         new_height = Math.max(new_height, 0)
         window.scrollTo({top: new_height, behavior: 'smooth'})
     }
+    is_fadeable() {
+        return this.fadeable
+    }
     fade_in(element) {
-        let duration_in_seconds = 0.5
-        let duration_in_milliseconds = duration_in_seconds * 1000
-        let number_increments = 20
-        let reference = this
-        setTimeout(
-            function() {
-                reference.increment_fade_in(element, 0, number_increments, duration_in_milliseconds)
-            },
-            duration_in_milliseconds / number_increments,
-        )
+        if (this.is_fadeable()) {
+            let duration_in_seconds, duration_in_milliseconds, number_increments;
+            duration_in_seconds = 0.5
+            duration_in_milliseconds = duration_in_seconds * 1000
+            number_increments = 20
+            let reference = this
+            setTimeout(
+                function() {
+                    reference.increment_fade_in(element, 0, number_increments, duration_in_milliseconds)
+                },
+                duration_in_milliseconds / number_increments,
+            )
+        } else {
+            element.style.opacity = 1.0
+        }
     }
     increment_fade_in(element, current_increment, number_increments, duration_in_milliseconds) {
         let timepoint = current_increment / number_increments

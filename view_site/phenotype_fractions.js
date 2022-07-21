@@ -434,7 +434,7 @@ class ProximityStatsTable extends StatsTable {
         span.innerHTML = outcome_column
     }
     get_assay_index() {
-        return 1
+        return 3
     }
     get_outcome_column(obj) {
         let assay_index = this.get_assay_index()

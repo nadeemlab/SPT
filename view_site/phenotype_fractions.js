@@ -58,7 +58,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         }
     }
     initialize_phenotype_selection_table() {
-        let table = this.get_section().getElementsByClassName('selection-table')[1]
+        let table = this.get_section().getElementsByClassName('population-overlaps')[0].getElementsByClassName('composite-selection-table')[0]
         this.phenotype_selection_table = new SelectionTable(
             table,
             this.stats_table.get_phenotype_names(),
@@ -67,7 +67,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         )
     }
     initialize_channel_selection_table() {
-        let table = this.get_section().getElementsByClassName('selection-table')[0]
+        let table = this.get_section().getElementsByClassName('population-overlaps')[0].getElementsByClassName('channel-selection-table')[0]
         let phenotype_adder = new PhenotypeAdder(this.phenotype_selection_table)
         this.channel_selection_table = new SelectionTable(
             table,
@@ -77,6 +77,51 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         )
         phenotype_adder.register_selections_clearer(this.channel_selection_table)
         this.phenotype_comparisons_grid.register_alternative_signatures_provider(phenotype_adder.get_signatures_provider())
+    }
+    initialize_facets() {
+        let proximity_section = this.get_section().getElementsByClassName('proximity-section')[0]
+        let channels_selector = proximity_section.getElementsByClassName('channel-selection-table')[0]
+        let composites_selector = proximity_section.getElementsByClassName('composite-selection-table')[0]
+        let outcomes_selector = proximity_section.getElementsByClassName('outcomes-selection-table')[0]
+        let facets = {
+            'channel' : this.stats_table.get_channel_names(),
+            'composites' : this.stats_table.get_phenotype_names(),
+            'outcomes' : this.stats_table.get_outcome_labels(),
+        }
+        let facet_handler = new FacetHandler(proximity_section, facets)
+        this.channel_facets = new SelectionTable(channels_selector, facets['channel'], 'Phenotype (single channel)', facet_handler)
+        this.composites_facets = new SelectionTable(composites_selector, facets['composites'], 'Phenotype (named)', facet_handler)
+        this.outcomes_facets = new SelectionTable(outcomes_selector, facets['outcomes'], this.stats_table.get_outcomes_assay_descriptor(), facet_handler)
+    }
+}
+
+class FacetHandler extends MultiSelectionHandler{
+    constructor(section, facets) {
+        super()
+        this.section = section
+        this.coordinate_names_by_facet = {}
+        let keys = Array.from(Object.keys(facets))
+        for (let key of keys) {
+            let facets_one_coordinate = facets[key]
+            for (let facet of facets_one_coordinate) {
+                this.coordinate_names_by_facet[facet] = key
+            }
+        }
+        this.controlled_table = this.section.getElementsByClassName('facet-controlled-table')[0]
+    }
+    add_item(item_name) {
+        let coordinate = this.get_coordinate_name(item_name)
+        console.log('Adding ' + item_name + '; ' + coordinate)
+    }
+    remove_item(item_name) {
+        let coordinate = this.get_coordinate_name(item_name)
+        console.log('Removing ' + item_name + '; ' + coordinate)
+    }
+    is_removal_locked() {
+        return false
+    }
+    get_coordinate_name(item_name) {
+        return this.coordinate_names_by_facet[item_name]
     }
 }
 
@@ -197,6 +242,12 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     get_assay_index() {
         return 1
     }
+    get_outcomes_assay_descriptor() {
+        return this.outcome_column_name
+    }
+    get_outcome_labels() {
+        return this.outcome_labels
+    }
     get_outcome_column(obj) {
         let assay_index = this.get_assay_index()
         let assay_values = new Set(obj.map(function(data_row) {return data_row[assay_index]}))
@@ -252,14 +303,17 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         let obj = stats[Object.keys(stats)[0]]
         let obj_without_multiplicity = this.drop_multiplicity(obj)
         let outcome_column = this.get_outcome_column(obj_without_multiplicity)
+        this.outcome_column_name = outcome_column
         for (let i = 0; i < obj_without_multiplicity.length; i++) {
             this.table.appendChild(this.create_table_row(obj_without_multiplicity[i]))
         }
         this.patch_header(outcome_column)
         this.update_row_counter()
         this.record_phenotype_names_from_response(obj)
+        this.record_outcomes_from_response(obj)
         this.get_parent_page().initialize_phenotype_selection_table()
         this.get_parent_page().initialize_channel_selection_table()
+        this.get_parent_page().initialize_facets()
         this.get_parent_page().make_study_dependent_sections_available()
         await this.get_and_handle_phenotype_criteria_names()
     }
@@ -322,6 +376,22 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     record_phenotype_names_from_response(obj) {
         this.phenotype_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'composite')
         this.channel_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'single')
+    }
+    record_outcomes_from_response(obj) {
+        let index_of_multiplicity_field = 1
+        let rows = Array.from(obj).map( function(data_row) {
+            let data_row_copy = [...data_row]
+            data_row_copy.splice(index_of_multiplicity_field, 1)
+            return data_row_copy
+        })
+        let index = this.get_header_values().indexOf('Result') + 1
+        let labels = Array.from(new Set(
+            rows.map(function(data_row) {
+                return data_row[index]
+            })
+        ))
+        labels.sort()
+        this.outcome_labels = labels
     }
     get_multiplicity(phenotype_or_channel_name) {
         let name = phenotype_or_channel_name

@@ -56,7 +56,7 @@ function on_load_body() {
             </div>
         </div>
 
-        <div class="openable-section">
+        <div class="openable-section population-overlaps">
             <div class="show-more-button"><h2 class="clickable-text unavailable">+ population overlaps</h2></div>
             <div class="toggleable-text" style="display:none;">
             <p>Choose phenotypes to compare cell populations. Optionally, define custom phenotypes with multiple markers.</p>
@@ -64,12 +64,12 @@ function on_load_body() {
             <tbody>
             <tr>
                 <td>
-                    <table class="selection-table">
+                    <table class="channel-selection-table selection-table">
                     </table>
                     <span class="add-button">Add</span>
                 </td>
                 <td>
-                    <table class="selection-table">
+                    <table class="composite-selection-table selection-table">
                     </table>
                 </td>
                 <td>
@@ -101,12 +101,30 @@ function on_load_body() {
             </div>
         </div>
 
-        <div class="openable-section do-not-fade">
-            <div class="show-more-button"><h2 class="clickable-text unavailable">+ phenotype-phenotype proximity</h2></div>
+        <div class="openable-section do-not-fade proximity-section">
+            <div class="show-more-button"><h2 class="clickable-text unavailable">+ phenotype to phenotype proximity</h2></div>
             <div class="toggleable-text" style="display:none;">
+                <table class="left-right-pages">
+                <tbody>
+                <tr>
+                    <td>
+                        <table class="channel-selection-table selection-table">
+                        </table>
+                    </td>
+                    <td>
+                        <table class="composite-selection-table selection-table">
+                        </table>
+                    </td>
+                    <td>
+                        <table class="outcomes-selection-table selection-table">
+                        </table>
+                    </td>
+                </tr>
+                </tbody>
+                </table>
                 <div class="simple-emphasis row-counter" style="display:none"><span></span> rows</div>
                 <br/>
-                <table class="proximity-stats-table stats-table" id="proximities table">
+                <table class="proximity-stats-table stats-table facet-controlled-table" id="proximities table">
                 </table>
             </div>
         </div>

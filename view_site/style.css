@@ -461,8 +461,8 @@ span.save-html:active {
 table.proximity-stats-table tr {
     display: none;
 }
-table.proximity-stats-table tr.phenotype-1-showing.phenotype-2-showing.outcome-showing {
-    display: inline;
+table.proximity-stats-table tr.phenotype-1-showing.phenotype-2-showing.distance-showing.outcome-showing {
+    display: table-row;
 }
 
 .spt-logo > img {

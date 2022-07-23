@@ -82,23 +82,50 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         let proximity_section = this.get_section().getElementsByClassName('proximity-section')[0]
         let channels_selector = proximity_section.getElementsByClassName('channel-selection-table')[0]
         let composites_selector = proximity_section.getElementsByClassName('composite-selection-table')[0]
+        let distances_selector = proximity_section.getElementsByClassName('distance-selection-table')[0]
         let outcomes_selector = proximity_section.getElementsByClassName('outcomes-selection-table')[0]
-        let facets = {
-            'channel' : this.proximity_stats_table.get_channel_names(),
-            'composites' : this.proximity_stats_table.get_composite_names(),
-            'outcomes' : this.proximity_stats_table.get_outcome_labels(),
-        }
-        let facet_handler = new FacetHandler(proximity_section, facets)
-        this.channel_facets = new SelectionTable(channels_selector, facets['channel'], 'Phenotype (single channel)', facet_handler)
-        this.composites_facets = new SelectionTable(composites_selector, facets['composites'], 'Phenotype (named)', facet_handler)
-        this.outcomes_facets = new SelectionTable(outcomes_selector, facets['outcomes'], this.stats_table.get_outcomes_assay_descriptor(), facet_handler)
+        let facets = this.proximity_stats_table.get_facets()
+        this.facet_handler = new FacetHandler(proximity_section, facets, this.proximity_stats_table.get_header_values())
+        this.channel_facets = new SelectionTable(channels_selector, facets['channel'], 'Phenotype (single channel)', this.facet_handler)
+        this.composites_facets = new SelectionTable(composites_selector, facets['composites'], 'Phenotype (named)', this.facet_handler)
+        this.distances_facets = new SelectionTable(distances_selector, facets['distances'], 'Within distance (px)', this.facet_handler)
+        this.outcomes_facets = new SelectionTable(outcomes_selector, facets['outcomes'], this.stats_table.get_outcomes_assay_descriptor(), this.facet_handler)
+    }
+    get_composites_facets() {
+        return this.composites_facets
+    }
+    get_facet_handler() {
+        return this.facet_handler
+    }
+    update_facets() {
+        let facets = this.proximity_stats_table.get_facets()
+        this.facet_handler.set_facets(facets)
+        this.get_composites_facets().set_names(facets['composites'])
+        this.get_composites_facets().rebuild_table()
     }
 }
 
 class FacetHandler extends MultiSelectionHandler{
-    constructor(section, facets) {
+    constructor(section, facets, header) {
         super()
         this.section = section
+        this.header = header
+        this.column_names_by_coordinate = {
+            'channel' : ['Phenotype', 'Neighbor phenotype'],
+            'composites' : ['Phenotype', 'Neighbor phenotype'],
+            'distances' : ['Within distance (px)'],
+            'outcomes' : ['Result'],
+        }
+        this.showing_class_by_column_name = {
+            'Phenotype' : 'phenotype-1-showing',
+            'Neighbor phenotype' : 'phenotype-2-showing',
+            'Within distance (px)' : 'distance-showing',
+            'Result' : 'outcome-showing',
+        }
+        this.controlled_table = this.section.getElementsByClassName('facet-controlled-table')[0]
+        this.set_facets(facets)
+    }
+    set_facets(facets) {
         this.coordinate_names_by_facet = {}
         let keys = Array.from(Object.keys(facets))
         for (let key of keys) {
@@ -107,15 +134,45 @@ class FacetHandler extends MultiSelectionHandler{
                 this.coordinate_names_by_facet[facet] = key
             }
         }
-        this.controlled_table = this.section.getElementsByClassName('facet-controlled-table')[0]
+    }
+    get_controlled_table() {
+        return this.controlled_table
+    }
+    get_column_names_for_facet_group(coordinate) {
+        return this.column_names_by_coordinate[coordinate]
+    }
+    get_showing_class(column_name) {
+        return this.showing_class_by_column_name[column_name]
     }
     add_item(item_name) {
-        let coordinate = this.get_coordinate_name(item_name)
-        console.log('Adding ' + item_name + '; ' + coordinate)
+        this.toggle_showing(item_name, true)
     }
     remove_item(item_name) {
-        let coordinate = this.get_coordinate_name(item_name)
-        console.log('Removing ' + item_name + '; ' + coordinate)
+        this.toggle_showing(item_name, false)
+    }
+    toggle_showing(facet_value, showing_state) {
+        let coordinate = this.get_coordinate_name(facet_value)
+        let columns = this.get_column_names_for_facet_group(coordinate)
+        let reference = this
+        let indices = columns.map(function(column) {return reference.header.indexOf(column)})
+        let showing_classes = columns.map(function(column) {return reference.get_showing_class(column)})
+        let table = this.get_controlled_table()
+        for (let c = 0; c < columns.length; c++) {
+            let column = columns[c]
+            let index = indices[c]
+            let showing_class = showing_classes[c]
+            for (let i = 2; i < table.children.length; i++) {
+                let tr = table.children[i]
+                let td = tr.children[index]
+                if (td.innerText == facet_value) {
+                    if (showing_state == true) {
+                        tr.classList.add(showing_class)
+                    } else {
+                        tr.classList.remove(showing_class)
+                    }
+                }
+            }
+        }
     }
     is_removal_locked() {
         return false
@@ -468,6 +525,21 @@ class PhenotypeFractionsStatsTable extends StatsTable {
 }
 
 class ProximityStatsTable extends StatsTable {
+    constructor(table_id, parent_page) {
+        super(table_id, parent_page)
+        this.composites_lookup = {}
+    }
+    get_facets() {
+        return {
+            'channel' : this.get_channel_names(),
+            'composites' : this.get_composite_names(),
+            'distances' : this.get_distance_values(),
+            'outcomes' : this.get_outcome_labels(),
+        }
+    }
+    get_composites_lookup() {
+        return this.composites_lookup
+    }
     setup_table_header() {
         this.table.innerHTML = ''
         let header = this.get_header_values()
@@ -495,7 +567,14 @@ class ProximityStatsTable extends StatsTable {
             header_row.appendChild(cell)
         }
         this.table.appendChild(header_row)
+        this.make_exception_for_default_hidden(header_row)
         let export_widget = new ExportableElementWidget(this.table, this.table, raw_style_sheet)
+    }
+    make_exception_for_default_hidden(row) {
+        row.classList.add('phenotype-1-showing')
+        row.classList.add('phenotype-2-showing')
+        row.classList.add('distance-showing')
+        row.classList.add('outcome-showing')
     }
     patch_header(outcome_column) {
         let index_of_assay = this.get_header_values().indexOf('Result')
@@ -526,6 +605,9 @@ class ProximityStatsTable extends StatsTable {
     get_composite_names() {
         return this.composite_names
     }
+    get_distance_values() {
+        return this.distance_values
+    }
     get_outcome_labels() {
         return this.outcome_labels
     }
@@ -546,10 +628,63 @@ class ProximityStatsTable extends StatsTable {
             this.table.appendChild(tr)
         }
         this.record_phenotype_names_from_response(obj)
+        this.record_distance_values_from_response(obj)
         this.record_outcomes_from_response(obj)
         this.get_parent_page().initialize_facets()
         this.patch_header(outcome_column)
-        this.update_row_counter()
+        await this.get_and_handle_phenotype_criteria_names()
+        this.attempt_parse_composite_phenotype_names()
+    }
+    async get_and_handle_phenotype_criteria_names() {
+        let phenotype_names = await this.get_phenotype_names()
+        for (let phenotype_name of phenotype_names) {
+            await this.get_and_handle_phenotype_criteria_name(phenotype_name)
+        }
+    }
+    async get_phenotype_names() {
+        let url_base = get_api_url_base()
+        let url=`${url_base}/phenotype-symbols/`
+        let response_text = await promise_http_request('GET', url)
+        let obj = JSON.parse(response_text)
+        return obj[Object.keys(obj)[0]]
+    }
+    async get_and_handle_phenotype_criteria_name(phenotype_name) {
+        let encoded_phenotype_name = encodeURIComponent(phenotype_name)
+        let url_base = get_api_url_base()
+        let url=`${url_base}/phenotype-criteria-name/?phenotype_symbol=${encoded_phenotype_name}`
+        let response_text = await promise_http_request('GET', url)
+        this.update_phenotype_criteria_name(phenotype_name, response_text)
+    }
+    update_phenotype_criteria_name(phenotype_name, response_text) {
+        let obj = JSON.parse(response_text)
+        let phenotype_criteria_name = obj[Object.keys(obj)[0]]
+        this.save_phenotype_criteria_name(phenotype_name, phenotype_criteria_name)
+    }
+    save_phenotype_criteria_name(phenotype_name, phenotype_criteria_name) {
+        if (! (Array.from(Object.keys(this.composites_lookup)).includes(phenotype_criteria_name) )) {
+            this.composites_lookup[phenotype_criteria_name] = phenotype_name
+        }
+    }
+    attempt_parse_composite_phenotype_names() {
+        let lookup = this.get_composites_lookup()
+        let reference = this
+        let indices = Array.from(['Phenotype', 'Neighbor phenotype']).map( function(column) {return reference.get_header_values().indexOf(column)})
+        let referenced_names = new Set([])
+        for (let index of indices) {
+            let all_rows = Array.from(this.table.children)
+            for (let i = 2; i < all_rows.length; i++) {
+                let row = all_rows[i]
+                let td = Array.from(row.children)[index]
+                let value = lookup[td.innerText]
+                if (! (value == null)) {
+                    td.innerText = value
+                    referenced_names.add(value)
+                }
+            }
+        }
+        this.composite_names = Array.from(referenced_names)
+        this.composite_names.sort()
+        this.get_parent_page().update_facets()
     }
     record_phenotype_names_from_response(obj) {
         let phenotype_names = this.retrieve_all_values(obj, 'Phenotype').concat(this.retrieve_all_values(obj, 'Neighbor phenotype'))
@@ -562,6 +697,9 @@ class ProximityStatsTable extends StatsTable {
                 this.composite_names.push(name)
             }
         }
+    }
+    record_distance_values_from_response(obj) {
+        this.distance_values = this.retrieve_all_values(obj, 'Within distance (px)')
     }
     retrieve_all_values(obj, column) {
         let index = this.get_header_values().indexOf(column)

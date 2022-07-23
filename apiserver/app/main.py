@@ -253,6 +253,27 @@ async def get_phenotype_summary(
         )
 
 
+@app.get("/phenotype-symbols/")
+async def get_phenotype_symbols():
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        query = '''
+        SELECT symbol
+        FROM cell_phenotype
+        ;
+        '''
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        representation = {
+            'phenotype symbols' : rows,
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
 @app.get("/phenotype-criteria-name/")
 async def get_phenotype_criteria_name(
     phenotype_symbol : str = Query(default='unknown', min_length=3),

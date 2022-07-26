@@ -727,9 +727,8 @@ class ProximityStatsTable extends StatsTable {
             let entry = data_row[j]
             if (this.get_header_values()[j] == 'Result') {
                 entry = entry.replace(/<any>/, '<em>any</em>')
-            } else {
-                cell.innerHTML = entry
             }
+            cell.innerHTML = entry
             cell.addEventListener('click', function(event) {
                 this.parentElement.classList.toggle('selected-row')
             })

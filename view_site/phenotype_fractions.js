@@ -727,20 +727,6 @@ class ProximityStatsTable extends StatsTable {
             let entry = data_row[j]
             if (this.get_header_values()[j] == 'Result') {
                 entry = entry.replace(/<any>/, '<em>any</em>')
-            }
-            if (this.get_header_values()[j] == 'Mean number neighbors') {
-                let integer_percent = Math.round(parseFloat(entry))
-                let container = document.createElement('div')
-                container.setAttribute('class', 'overlayeffectcontainer')
-                let underlay = document.createElement('div')
-                underlay.setAttribute('class', 'underlay')
-                let overlay = document.createElement('div')
-                overlay.setAttribute('class', 'overlay')
-                overlay.innerHTML = entry
-                underlay.style.width = integer_percent + '%'
-                container.appendChild(underlay)
-                container.appendChild(overlay)
-                cell.appendChild(container)
             } else {
                 cell.innerHTML = entry
             }

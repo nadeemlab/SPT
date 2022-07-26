@@ -45,6 +45,10 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         let id = section.getElementsByClassName('phenotype-stats-table')[0].getAttribute('id')
         return new PhenotypeFractionsStatsTable(id, this)
     }
+    discover_proximity_stats_table(section) {
+        let id = section.getElementsByClassName('proximity-stats-table')[0].getAttribute('id')
+        return new ProximityStatsTable(id, this)
+    }
     get_section() {
         return this.section
     }
@@ -54,7 +58,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         }
     }
     initialize_phenotype_selection_table() {
-        let table = this.get_section().getElementsByClassName('selection-table')[1]
+        let table = this.get_section().getElementsByClassName('population-overlaps')[0].getElementsByClassName('composite-selection-table')[0]
         this.phenotype_selection_table = new SelectionTable(
             table,
             this.stats_table.get_phenotype_names(),
@@ -63,7 +67,7 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         )
     }
     initialize_channel_selection_table() {
-        let table = this.get_section().getElementsByClassName('selection-table')[0]
+        let table = this.get_section().getElementsByClassName('population-overlaps')[0].getElementsByClassName('channel-selection-table')[0]
         let phenotype_adder = new PhenotypeAdder(this.phenotype_selection_table)
         this.channel_selection_table = new SelectionTable(
             table,
@@ -73,6 +77,108 @@ class PhenotypeFractionsStatsPage extends RetrievableStatsPage {
         )
         phenotype_adder.register_selections_clearer(this.channel_selection_table)
         this.phenotype_comparisons_grid.register_alternative_signatures_provider(phenotype_adder.get_signatures_provider())
+    }
+    initialize_facets() {
+        let proximity_section = this.get_section().getElementsByClassName('proximity-section')[0]
+        let channels_selector = proximity_section.getElementsByClassName('channel-selection-table')[0]
+        let composites_selector = proximity_section.getElementsByClassName('composite-selection-table')[0]
+        let distances_selector = proximity_section.getElementsByClassName('distance-selection-table')[0]
+        let outcomes_selector = proximity_section.getElementsByClassName('outcomes-selection-table')[0]
+        let facets = this.proximity_stats_table.get_facets()
+        this.facet_handler = new FacetHandler(proximity_section, facets, this.proximity_stats_table.get_header_values())
+        this.channel_facets = new SelectionTable(channels_selector, facets['channel'], 'Phenotype (single channel)', this.facet_handler)
+        this.composites_facets = new SelectionTable(composites_selector, facets['composites'], 'Phenotype (named)', this.facet_handler)
+        this.distances_facets = new SelectionTable(distances_selector, facets['distances'], 'Within distance (px)', this.facet_handler)
+        this.outcomes_facets = new SelectionTable(outcomes_selector, facets['outcomes'], this.stats_table.get_outcomes_assay_descriptor(), this.facet_handler)
+    }
+    get_composites_facets() {
+        return this.composites_facets
+    }
+    get_facet_handler() {
+        return this.facet_handler
+    }
+    update_facets() {
+        let facets = this.proximity_stats_table.get_facets()
+        this.facet_handler.set_facets(facets)
+        this.get_composites_facets().set_names(facets['composites'])
+        this.get_composites_facets().rebuild_table()
+    }
+}
+
+class FacetHandler extends MultiSelectionHandler{
+    constructor(section, facets, header) {
+        super()
+        this.section = section
+        this.header = header
+        this.column_names_by_coordinate = {
+            'channel' : ['Phenotype', 'Neighbor phenotype'],
+            'composites' : ['Phenotype', 'Neighbor phenotype'],
+            'distances' : ['Within distance (px)'],
+            'outcomes' : ['Result'],
+        }
+        this.showing_class_by_column_name = {
+            'Phenotype' : 'phenotype-1-showing',
+            'Neighbor phenotype' : 'phenotype-2-showing',
+            'Within distance (px)' : 'distance-showing',
+            'Result' : 'outcome-showing',
+        }
+        this.controlled_table = this.section.getElementsByClassName('facet-controlled-table')[0]
+        this.set_facets(facets)
+    }
+    set_facets(facets) {
+        this.coordinate_names_by_facet = {}
+        let keys = Array.from(Object.keys(facets))
+        for (let key of keys) {
+            let facets_one_coordinate = facets[key]
+            for (let facet of facets_one_coordinate) {
+                this.coordinate_names_by_facet[facet] = key
+            }
+        }
+    }
+    get_controlled_table() {
+        return this.controlled_table
+    }
+    get_column_names_for_facet_group(coordinate) {
+        return this.column_names_by_coordinate[coordinate]
+    }
+    get_showing_class(column_name) {
+        return this.showing_class_by_column_name[column_name]
+    }
+    add_item(item_name) {
+        this.toggle_showing(item_name, true)
+    }
+    remove_item(item_name) {
+        this.toggle_showing(item_name, false)
+    }
+    toggle_showing(facet_value, showing_state) {
+        let coordinate = this.get_coordinate_name(facet_value)
+        let columns = this.get_column_names_for_facet_group(coordinate)
+        let reference = this
+        let indices = columns.map(function(column) {return reference.header.indexOf(column)})
+        let showing_classes = columns.map(function(column) {return reference.get_showing_class(column)})
+        let table = this.get_controlled_table()
+        for (let c = 0; c < columns.length; c++) {
+            let column = columns[c]
+            let index = indices[c]
+            let showing_class = showing_classes[c]
+            for (let i = 2; i < table.children.length; i++) {
+                let tr = table.children[i]
+                let td = tr.children[index]
+                if (td.innerText == facet_value) {
+                    if (showing_state == true) {
+                        tr.classList.add(showing_class)
+                    } else {
+                        tr.classList.remove(showing_class)
+                    }
+                }
+            }
+        }
+    }
+    is_removal_locked() {
+        return false
+    }
+    get_coordinate_name(item_name) {
+        return this.coordinate_names_by_facet[item_name]
     }
 }
 
@@ -151,7 +257,7 @@ class SignaturesProvider {
         }
     }
     push_phenotype(new_phenotype) {
-        this.signatures.push(new_phenotype)        
+        this.signatures.push(new_phenotype)
     }
 }
 
@@ -193,6 +299,12 @@ class PhenotypeFractionsStatsTable extends StatsTable {
     get_assay_index() {
         return 1
     }
+    get_outcomes_assay_descriptor() {
+        return this.outcome_column_name
+    }
+    get_outcome_labels() {
+        return this.outcome_labels
+    }
     get_outcome_column(obj) {
         let assay_index = this.get_assay_index()
         let assay_values = new Set(obj.map(function(data_row) {return data_row[assay_index]}))
@@ -200,10 +312,10 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         return Array.from(assay_values)[0]
     }
     get_header_values() {
-        return ['Phenotype', 'Result', 'Mean % <br/>cells positive', 'Standard deviation <br/>of % values', 'Maximum', 'Value', 'Minimum', 'Value']        
+        return ['Phenotype', 'Result', 'Mean % <br/>cells positive', 'Standard deviation <br/>of % values', 'Maximum', 'Value', 'Minimum', 'Value']
     }
     get_numeric_flags() {
-        return [false, false, true, true, false, true, false, true]        
+        return [false, false, true, true, false, true, false, true]
     }
     get_custom_comparator(column_index, sign) {
         if (column_index == this.get_header_values().indexOf('Phenotype')) {
@@ -248,12 +360,14 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         let obj = stats[Object.keys(stats)[0]]
         let obj_without_multiplicity = this.drop_multiplicity(obj)
         let outcome_column = this.get_outcome_column(obj_without_multiplicity)
+        this.outcome_column_name = outcome_column
         for (let i = 0; i < obj_without_multiplicity.length; i++) {
             this.table.appendChild(this.create_table_row(obj_without_multiplicity[i]))
         }
         this.patch_header(outcome_column)
         this.update_row_counter()
         this.record_phenotype_names_from_response(obj)
+        this.record_outcomes_from_response(obj)
         this.get_parent_page().initialize_phenotype_selection_table()
         this.get_parent_page().initialize_channel_selection_table()
         this.get_parent_page().make_study_dependent_sections_available()
@@ -313,11 +427,27 @@ class PhenotypeFractionsStatsTable extends StatsTable {
             let data_row_copy = [...data_row]
             data_row_copy.splice(index_of_multiplicity_field, 1)
             return data_row_copy
-        })        
+        })
     }
     record_phenotype_names_from_response(obj) {
         this.phenotype_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'composite')
         this.channel_names = this.retrieve_phenotype_names_by_multiplicity(obj, 'single')
+    }
+    record_outcomes_from_response(obj) {
+        let index_of_multiplicity_field = 1
+        let rows = Array.from(obj).map( function(data_row) {
+            let data_row_copy = [...data_row]
+            data_row_copy.splice(index_of_multiplicity_field, 1)
+            return data_row_copy
+        })
+        let index = this.get_header_values().indexOf('Result') + 1
+        let labels = Array.from(new Set(
+            rows.map(function(data_row) {
+                return data_row[index]
+            })
+        ))
+        labels.sort()
+        this.outcome_labels = labels
     }
     get_multiplicity(phenotype_or_channel_name) {
         let name = phenotype_or_channel_name
@@ -347,7 +477,7 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         }).map( function(data_row) {
             let data_row_copy = [...data_row]
             data_row_copy.splice(index_of_multiplicity_field, 1)
-            return data_row_copy            
+            return data_row_copy
         })
     }
     get_phenotype_names() {
@@ -385,6 +515,232 @@ class PhenotypeFractionsStatsTable extends StatsTable {
         let positives_marked = phenotype_criteria_name.replace(/([a-zA-Z0-9\_\.]+\+)/g, '<span class="positives">$1</span> ')
         let and_negatives_marked = positives_marked.replace(/([a-zA-Z0-9\_\.]+\-)/g, '<span class="negatives">$1</span> ')
         return and_negatives_marked
+    }
+    update_row_counter() {
+        let number_rows = this.table.children.length - 2
+        let rowcountbox = this.table.parentElement.getElementsByClassName('row-counter')[0]
+        rowcountbox.style.display = 'inline-block'
+        rowcountbox.getElementsByTagName('span')[0].innerHTML = number_rows
+    }
+}
+
+class ProximityStatsTable extends StatsTable {
+    constructor(table_id, parent_page) {
+        super(table_id, parent_page)
+        this.composites_lookup = {}
+    }
+    get_facets() {
+        return {
+            'channel' : this.get_channel_names(),
+            'composites' : this.get_composite_names(),
+            'distances' : this.get_distance_values(),
+            'outcomes' : this.get_outcome_labels(),
+        }
+    }
+    get_composites_lookup() {
+        return this.composites_lookup
+    }
+    setup_table_header() {
+        this.table.innerHTML = ''
+        let header = this.get_header_values()
+        let header_row = document.createElement('tr')
+        for (let i = 0; i < header.length; i++) {
+            let cell = document.createElement('th')
+            let text = document.createElement('span')
+            text.innerHTML = header[i] + ' &nbsp;'
+            cell.appendChild(text)
+            let sort_button = document.createElement('span');
+            sort_button.innerHTML = ' [+] '
+            let reference = this
+            sort_button.addEventListener('click', function(event) {
+                reference.sort_data_rows(i, 1)
+            })
+            sort_button.setAttribute('class', 'sortbutton')
+            let sort_button2 = document.createElement('span');
+            sort_button2.innerHTML = ' [-] '
+            sort_button2.addEventListener('click', function(event) {
+                reference.sort_data_rows(i, -1)
+            })
+            sort_button2.setAttribute('class', 'sortbutton')
+            cell.appendChild(sort_button)
+            cell.appendChild(sort_button2)
+            header_row.appendChild(cell)
+        }
+        this.table.appendChild(header_row)
+        this.make_exception_for_default_hidden(header_row)
+        let export_widget = new ExportableElementWidget(this.table, this.table, raw_style_sheet)
+    }
+    make_exception_for_default_hidden(row) {
+        row.classList.add('phenotype-1-showing')
+        row.classList.add('phenotype-2-showing')
+        row.classList.add('distance-showing')
+        row.classList.add('outcome-showing')
+    }
+    patch_header(outcome_column) {
+        let index_of_assay = this.get_header_values().indexOf('Result')
+        let span = this.table.children[1].children[index_of_assay].children[0]
+        span.innerHTML = outcome_column
+    }
+    get_assay_index() {
+        return 3
+    }
+    get_outcome_column(obj) {
+        let assay_index = this.get_assay_index()
+        let assay_values = new Set(obj.map(function(data_row) {return data_row[assay_index]}))
+        assay_values.delete('<any>')
+        return Array.from(assay_values)[0]
+    }
+    get_header_values() {
+        return ['Phenotype', 'Neighbor phenotype', 'Within distance (px)', 'Result', 'Mean number neighbors', 'Standard deviation', 'Maximum', 'Maximum value', 'Minimum', 'Minimum value']
+    }
+    get_numeric_flags() {
+        return [false, false, true, false, true, true, false, true, false, true]
+    }
+    get_custom_comparator(column_index, sign) {
+        return null
+    }
+    get_channel_names() {
+        return this.channel_names
+    }
+    get_composite_names() {
+        return this.composite_names
+    }
+    get_distance_values() {
+        return this.distance_values
+    }
+    get_outcome_labels() {
+        return this.outcome_labels
+    }
+    async pull_data_from_selections(selections) {
+        let encoded_data_analysis_study = encodeURIComponent(selections['data analysis study'])
+        let url_base = get_api_url_base()
+        let url=`${url_base}/phenotype-proximity-summary/?data_analysis_study=${encoded_data_analysis_study}`
+        let response_text = await promise_http_request('GET', url)
+        this.load_proximities_from_response(response_text)
+    }
+    async load_proximities_from_response(response_text) {
+        this.clear_table()
+        let stats = JSON.parse(response_text)
+        let obj = stats[Object.keys(stats)[0]]
+        let outcome_column = this.get_outcome_column(obj)
+        for (let i = 0; i < obj.length; i++) {
+            let tr = this.create_table_row(obj[i])
+            this.table.appendChild(tr)
+        }
+        this.record_phenotype_names_from_response(obj)
+        this.record_distance_values_from_response(obj)
+        this.record_outcomes_from_response(obj)
+        this.get_parent_page().initialize_facets()
+        this.patch_header(outcome_column)
+        await this.get_and_handle_phenotype_criteria_names()
+        this.attempt_parse_composite_phenotype_names()
+    }
+    async get_and_handle_phenotype_criteria_names() {
+        let phenotype_names = await this.get_phenotype_names()
+        for (let phenotype_name of phenotype_names) {
+            await this.get_and_handle_phenotype_criteria_name(phenotype_name)
+        }
+    }
+    async get_phenotype_names() {
+        let url_base = get_api_url_base()
+        let url=`${url_base}/phenotype-symbols/`
+        let response_text = await promise_http_request('GET', url)
+        let obj = JSON.parse(response_text)
+        return obj[Object.keys(obj)[0]]
+    }
+    async get_and_handle_phenotype_criteria_name(phenotype_name) {
+        let encoded_phenotype_name = encodeURIComponent(phenotype_name)
+        let url_base = get_api_url_base()
+        let url=`${url_base}/phenotype-criteria-name/?phenotype_symbol=${encoded_phenotype_name}`
+        let response_text = await promise_http_request('GET', url)
+        this.update_phenotype_criteria_name(phenotype_name, response_text)
+    }
+    update_phenotype_criteria_name(phenotype_name, response_text) {
+        let obj = JSON.parse(response_text)
+        let phenotype_criteria_name = obj[Object.keys(obj)[0]]
+        this.save_phenotype_criteria_name(phenotype_name, phenotype_criteria_name)
+    }
+    save_phenotype_criteria_name(phenotype_name, phenotype_criteria_name) {
+        if (! (Array.from(Object.keys(this.composites_lookup)).includes(phenotype_criteria_name) )) {
+            this.composites_lookup[phenotype_criteria_name] = phenotype_name
+        }
+    }
+    attempt_parse_composite_phenotype_names() {
+        let lookup = this.get_composites_lookup()
+        let reference = this
+        let indices = Array.from(['Phenotype', 'Neighbor phenotype']).map( function(column) {return reference.get_header_values().indexOf(column)})
+        let referenced_names = new Set([])
+        for (let index of indices) {
+            let all_rows = Array.from(this.table.children)
+            for (let i = 2; i < all_rows.length; i++) {
+                let row = all_rows[i]
+                let td = Array.from(row.children)[index]
+                let value = lookup[td.innerText]
+                if (! (value == null)) {
+                    td.innerText = value
+                    referenced_names.add(value)
+                }
+            }
+        }
+        this.composite_names = Array.from(referenced_names)
+        this.composite_names.sort()
+        this.get_parent_page().update_facets()
+    }
+    record_phenotype_names_from_response(obj) {
+        let phenotype_names = this.retrieve_all_values(obj, 'Phenotype').concat(this.retrieve_all_values(obj, 'Neighbor phenotype'))
+        this.channel_names = []
+        this.composite_names = []
+        for (let name of phenotype_names) {
+            if (name.match(/^[a-zA-Z0-9]+\+$/)) {
+                this.channel_names.push(name)
+            } else {
+                this.composite_names.push(name)
+            }
+        }
+    }
+    record_distance_values_from_response(obj) {
+        this.distance_values = this.retrieve_all_values(obj, 'Within distance (px)')
+    }
+    retrieve_all_values(obj, column) {
+        let index = this.get_header_values().indexOf(column)
+        let values = Array.from(obj).map( function(data_row) {
+            return data_row[index]
+        })
+        return Array.from(new Set(values))
+    }
+    record_outcomes_from_response(obj) {
+        let rows = Array.from(obj)
+        let index = this.get_header_values().indexOf('Result')
+        let labels = Array.from(new Set(
+            rows.map(function(data_row) {
+                return data_row[index]
+            })
+        ))
+        labels.sort()
+        this.outcome_labels = labels
+    }
+    create_table_row(data_row) {
+        let table_row = document.createElement('tr')
+        data_row.splice(this.get_assay_index(), 1)
+        for (let j = 0; j < data_row.length; j++) {
+            let cell = document.createElement('td')
+            let entry = data_row[j]
+            if (this.get_header_values()[j] == 'Result') {
+                entry = entry.replace(/<any>/, '<em>any</em>')
+            }
+            cell.innerHTML = entry
+            cell.addEventListener('click', function(event) {
+                this.parentElement.classList.toggle('selected-row')
+            })
+            if (j == 0) {
+                cell.classList.toggle('first')
+            }
+            if (j == data_row.length - 1) {
+                cell.classList.toggle('last')
+            }
+            table_row.appendChild(cell)
+        }
+        return table_row
     }
     update_row_counter() {
         let number_rows = this.table.children.length - 2
@@ -493,7 +849,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         let cells = []
         cells.push(this.get_cell(row_label, column_label))
         if (row_label != column_label) {
-            cells.push(this.get_cell(column_label, row_label))            
+            cells.push(this.get_cell(column_label, row_label))
         }
         return cells
     }
@@ -513,7 +869,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
             let percentage = Math.round(100 * 100 * value)/100
             this.detail_bar.innerHTML = percentage + ' %'
         } else {
-            this.detail_bar.innerHTML = '%'            
+            this.detail_bar.innerHTML = '%'
         }
     }
     toggle_cell_selection(cell, row_label, column_label) {
@@ -533,7 +889,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
     }
     retrieve_feature_values(row_label, column_label) {
         throw new Error('Abstract method unimplemented.')
-    } 
+    }
     add_new_column(label) {
         this.table.children[0].appendChild(this.create_column_label_cell(label))
         for (let i = 1; i < this.table.children.length; i++) {
@@ -596,7 +952,7 @@ class PairwiseComparisonsGrid extends MultiSelectionHandler{
         let row_index = this.labels.indexOf(row_label)
         let column_index = this.labels.indexOf(column_label)
         let cell = this.table.children[1 + row_index].children[1 + column_index]
-        return cell        
+        return cell
     }
     set_cell_contents_by_location(row_label, column_label, percentage) {
         let cell = this.get_cell(row_label, column_label)
@@ -732,7 +1088,7 @@ class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
         if (this.specimen_level_counts.has_cached(row_label, column_label)) {
             return this.specimen_level_counts.get_counts(row_label, column_label)
         }
-    } 
+    }
 }
 
 class SpecimenLevelCounts {

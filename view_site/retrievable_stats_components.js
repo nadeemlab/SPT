@@ -25,14 +25,19 @@ async function promise_http_request(method, url) {
 class RetrievableStatsPage {
     constructor(section) {
         this.stats_table = this.discover_stats_table(section)
+        this.proximity_stats_table = this.discover_proximity_stats_table(section)
         let selectors = section.getElementsByClassName('retrieving-selector')
         let stats_table = this.stats_table
+        let proximity_stats_table = this.proximity_stats_table
         let reference = this
         this.retrieving_selectors = Array.from(selectors).map(function(selector) {
-            return new RetrievingSelector(selector.getAttribute('id'), stats_table, reference)
+            return new RetrievingSelector(selector.getAttribute('id'), stats_table, proximity_stats_table, reference)
         })
     }
     discover_stats_table(section) {
+        throw new Error('Abstract method unimplemented.')
+    }
+    discover_proximity_stats_table(section) {
         throw new Error('Abstract method unimplemented.')
     }
     get_stats_page() {
@@ -51,13 +56,14 @@ class RetrievableStatsPage {
 }
 
 class RetrievingSelector {
-    constructor(selector_id, stats_table, parent) {
+    constructor(selector_id, stats_table, proximity_stats_table, parent) {
         this.parent = parent
         this.selector = document.getElementById(selector_id)
         let attributes_table_section = this.selector.parentElement.querySelectorAll(':scope > .attributes-table-container')[0]
-        let completed_table_callback = async function() {stats_table.pull_data_given_selections()}
+        let completed_table_callback = async function() {stats_table.pull_data_given_selections(); proximity_stats_table.pull_data_given_selections()}
         this.attributes_table = new AttributesTable(this.get_retrieve_summary_query_fragment(), attributes_table_section, completed_table_callback)
         stats_table.add_loaded_item_dependency(this.get_display_name(), this.attributes_table)
+        proximity_stats_table.add_loaded_item_dependency(this.get_display_name(), this.attributes_table)
         let retrieve_names_query_fragment = this.selector.getAttribute('retrieve_names_query_fragment')
         this.pull_names(retrieve_names_query_fragment)
     }
@@ -340,13 +346,22 @@ class MultiSelectionHandler {
 
 class SelectionTable {
     constructor(table, names, header, multi_selection_handler) {
-        this.table = table
-        table.innerHTML = ''
-        this.setup_header(header)
         this.multi_selection_handler = multi_selection_handler
-        for (let i = 0; i < names.length; i++) {
-            this.add_entry(names[i])
+        this.table = table
+        this.header = header
+        this.set_names(names)
+        this.rebuild_table()
+    }
+    rebuild_table() {
+        this.table.innerHTML = ''
+        this.setup_header(this.header)
+        for (let i = 0; i < this.names.length; i++) {
+            this.add_entry(this.names[i])
         }
+    }
+    set_names(names) {
+        this.names = names
+        this.rebuild_table()
     }
     setup_header(header_text) {
         let table_header = document.createElement('tr')

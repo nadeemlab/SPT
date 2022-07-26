@@ -3,3 +3,10 @@ REFRESH MATERIALIZED VIEW cell_count_by_study_specimen ;
 REFRESH MATERIALIZED VIEW marker_positive_cell_count_by_study_specimen ;
 REFRESH MATERIALIZED VIEW composite_marker_positive_cell_count_by_study_specimen ;
 REFRESH MATERIALIZED VIEW fraction_stats;
+
+REFRESH MATERIALIZED VIEW computed_feature_3_specifiers_study_specimen;
+REFRESH MATERIALIZED VIEW computed_feature_3_specifiers_generalized_cases;
+REFRESH MATERIALIZED VIEW computed_feature_3_specifiers_moments_generalized_cases;
+REFRESH MATERIALIZED VIEW computed_feature_3_specifiers_maxima;
+REFRESH MATERIALIZED VIEW computed_feature_3_specifiers_minima;
+REFRESH MATERIALIZED VIEW computed_feature_3_specifiers_stats;

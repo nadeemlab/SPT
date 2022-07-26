@@ -458,6 +458,13 @@ span.save-html:active {
     cursor: pointer;
 }
 
+table.proximity-stats-table tr {
+    display: none;
+}
+table.proximity-stats-table tr.phenotype-1-showing.phenotype-2-showing.distance-showing.outcome-showing {
+    display: table-row;
+}
+
 .spt-logo > img {
     height: 48px;
     border-radius: 0.3em;

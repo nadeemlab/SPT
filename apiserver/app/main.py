@@ -253,6 +253,27 @@ async def get_phenotype_summary(
         )
 
 
+@app.get("/phenotype-symbols/")
+async def get_phenotype_symbols():
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        query = '''
+        SELECT symbol
+        FROM cell_phenotype
+        ;
+        '''
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        representation = {
+            'phenotype symbols' : rows,
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+
+
 @app.get("/phenotype-criteria-name/")
 async def get_phenotype_criteria_name(
     phenotype_symbol : str = Query(default='unknown', min_length=3),
@@ -505,3 +526,40 @@ async def get_phenotype_criteria(
             content = json.dumps(representation),
             media_type = 'application/json',
         )
+
+
+@app.get("/phenotype-proximity-summary/")
+async def get_phenotype_proximity_summary(
+    data_analysis_study : str = Query(default='unknown', min_length=3),
+):
+    columns = [
+        'specifier1',
+        'specifier2',
+        'specifier3',
+        'assay',
+        'assessment',
+        'average_value',
+        'standard_deviation',
+        'maximum',
+        'maximum_value',
+        'minimum',
+        'minimum_value',
+    ]
+    tablename = 'computed_feature_3_specifiers_stats'
+    derivation_method = 'For a given cell phenotype (first specifier), the average number of cells of a second phenotype (second specifier) within a specified radius (third specifier).'
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            'SELECT %s FROM %s WHERE derivation_method=%s AND data_analysis_study in (%s, \'none\');' % (', '.join(columns), tablename, '%s', '%s'),
+            (derivation_method, data_analysis_study),
+        )
+        rows = cursor.fetchall()
+        representation = {
+            'proximities' : [[str(entry) for entry in row] for row in rows]
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
+

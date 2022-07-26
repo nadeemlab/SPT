@@ -18,7 +18,7 @@ def verbose_sql_execute(filename, connection, description: str=None, silent=Fals
         logger.debug(script)
 
     if itemize:
-        script_statements = [s + ';' for s in script.rstrip(' \n').split(';')]
+        script_statements = [s + ';' for s in script.rstrip(' \n').split(';') if s != '']
         for statement in script_statements:
             logger.debug(statement)
             cursor.execute(statement)

@@ -632,8 +632,15 @@ class ProximityStatsTable extends StatsTable {
         this.record_outcomes_from_response(obj)
         this.get_parent_page().initialize_facets()
         this.patch_header(outcome_column)
-        await this.get_and_handle_phenotype_criteria_names()
-        this.attempt_parse_composite_phenotype_names()
+
+        let temporary_performance_flag = true
+        if (temporary_performance_flag) {
+            console.log("Phenotype criteria strings not being replaced with names, to reduce API calls.")
+        } else {
+            await this.get_and_handle_phenotype_criteria_names()
+            this.attempt_parse_composite_phenotype_names()
+
+        }
     }
     async get_and_handle_phenotype_criteria_names() {
         let phenotype_names = await this.get_phenotype_names()

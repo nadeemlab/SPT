@@ -268,7 +268,7 @@ class CellManifestsParser(SourceToADIParser):
             [xmin, ymin],
             [xmin, ymax],
             [xmax, ymax],
-            [xmin, ymax],
+            [xmax, ymin],
         ]
 
     def create_shape_file(self, cell, dataset_design):
@@ -276,7 +276,7 @@ class CellManifestsParser(SourceToADIParser):
         shx = StringIO()
         dbf = StringIO()
         points = self.get_polygon_coordinates(cell, dataset_design)
-        points = points + [points[-1]]
+        points = points + [points[0]]
         w = shapefile.Writer(shp=shp, shx=shx, dbf=dbf, shapeType=shapefile.POLYGON)
         w.field('name', 'C')
         w.poly([points])

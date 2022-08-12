@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+import argparse
+import os
+from os.path import join
+from os.path import exists
+from os.path import abspath
+from os.path import expanduser
+import time
+from time import sleep
+
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
+
+
+class CountsServer:
+    def __init__(self, database_config_file):
+        dcm = DatabaseConnectionMaker(database_config_file)
+        connection = dcm.get_connection()
+        self.channel_lookup = self.retrieve_channel_lookup(connection)
+        self.binary_data_matrix = self.retrieve_data_matrix(connection)
+        connection.close()
+
+    def retrieve_data_matrix(self, connection):
+        with connection.cursor() as cursor:
+            cursor.execute(self.get_matrix_query())
+            rows = cursor.fetchall()
+        return rows
+
+    def get_data_matrix(self):
+        return self.binary_data_matrix
+
+    def get_matrix_query(self):
+        return '''
+        SELECT *
+        FROM
+        expression_quantification
+        LIMIT 3
+        ;
+        '''
+
+    def retrieve_channel_lookup(self, connection):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT identifier, symbol FROM chemical_species')
+            rows = cursor.fetchall()
+        return {
+            row[0] : row[1]
+            for row in rows
+        }
+
+    def get_channel_lookup(self):
+        return self.channel_lookup
+
+    def loop(self):
+        while(True):
+            sleep(2)
+            print(self.get_channel_lookup())
+            print(self.get_data_matrix())
+
+    def __enter__ (self):
+        return self
+
+    def __exit__ (self, exc_type, exc_value, traceback):
+        pass
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'Server providing counts of samples satisfying given partial signatures.'
+    )
+    parser.add_argument(
+        '--database-config-file',
+        dest='database_config_file',
+        type=str,
+        required=True,
+        help='Provide the file for database configuration.',
+    )
+    args = parser.parse_args()
+    database_config_file = abspath(expanduser(args.database_config_file))
+    with CountsServer(database_config_file) as server:
+        server.loop()

@@ -1,4 +1,7 @@
 help:
+	# To show this text:
+	#
+	#     make help
 	#
 	# This is mainly a lightweight release-management script for coordinated
 	# PyPI, DockerHub, and GitHub releases of SPT (spatialprofilingtoolbox).
@@ -23,6 +26,21 @@ help:
 	#     make .unit-tests
 	#     make .integration-tests
 	#
+	# The following pushes static site artifacts to the server for the frontend,
+	# assuming that the server is at nadeemlabapi.link and the username defined
+	# in file view_site/username has passwordless SSH access on this server:
+	#
+	#     make push-view-site
+	#
+	# The following pushes a new build of the Docker image for the FastAPI API
+	# server, to the DockerHub repository:
+	#
+	#     make push-api-server
+	#
+	# After the above you would still need to run the stop_drop_pull_prune_restart.sh
+	# script on the remote server to re-deploy the API server.
+	#
+	#
 	# The following conventions are used:
 	#
 	# - Targets starting with '.' like '.all-credentials-available' create empty
@@ -33,10 +51,6 @@ help:
 	#   again whenever these targets are checked for completion. This is because
 	#   this Makefile is used for coordinating release actions rather than builds
 	#   per se.
-	#
-	# To show this text:
-	#
-	#     make help
 	#
 
 # Environment setup

@@ -90,6 +90,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-create-db-schema',
         'spatialprofilingtoolbox/scripts/spt-db-constraints',
         'spatialprofilingtoolbox/scripts/spt-counts-server',
+        'spatialprofilingtoolbox/scripts/spt-read-expression-dump',
     ],
     install_requires=requirements,
     project_urls = {

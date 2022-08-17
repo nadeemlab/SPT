@@ -68,7 +68,6 @@ class CompressedMatrix:
         SELECT histological_structure, target, CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value
         FROM
         expression_quantification
-        LIMIT 10000000
         ;
         '''
 

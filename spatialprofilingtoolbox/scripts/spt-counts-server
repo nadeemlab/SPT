@@ -7,60 +7,186 @@ from os.path import abspath
 from os.path import expanduser
 import time
 from time import sleep
+import re
+import random
+import json
+import socketserver
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.environment.logging.log_formats import colorized_logger
+logger = colorized_logger('spt-counts-server')
+
+data_array_filename = 'expression_data_array.bin'
+channel_lookup_filename = 'channel_lookup.json'
 
 
-class CountsServer:
+class CompressedMatrixPuller:
     def __init__(self, database_config_file):
         dcm = DatabaseConnectionMaker(database_config_file)
         connection = dcm.get_connection()
-        self.channel_lookup = self.retrieve_channel_lookup(connection)
-        self.binary_data_matrix = self.retrieve_data_matrix(connection)
+        self.retrieve_data_array(connection)
         connection.close()
 
-    def retrieve_data_matrix(self, connection):
+    def get_batch_size(self):
+        return 10000000
+
+    def retrieve_data_array(self, connection):
+        sparse_entries = []
         with connection.cursor() as cursor:
-            cursor.execute(self.get_matrix_query())
-            rows = cursor.fetchall()
-        return rows
+            cursor.execute(self.get_sparse_matrix_query())
+            total = cursor.rowcount
+            while cursor.rownumber < total - 1:
+                current_number_stored = len(sparse_entries)
+                sparse_entries.extend(cursor.fetchmany(size=self.get_batch_size()))
+                logger.debug('Received %s more entries from DB.', len(sparse_entries) - current_number_stored)
 
-    def get_data_matrix(self):
-        return self.binary_data_matrix
+        logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
+        sparse_entries.sort(key = lambda x: x[0])
+        logger.debug('Sorted entries by structure identifier.')
+        number_cells = self.get_number_cells(sparse_entries)
+        logger.debug('Unique structures: %s', number_cells)
+        target_index_lookup = self.get_target_index_lookup(sparse_entries)
+        logger.debug('Unique channels: %s', len(target_index_lookup))
+        logger.debug('Channel index assignments: %s', target_index_lookup)
 
-    def get_matrix_query(self):
+        data_array = [0] * number_cells
+        logger.debug('Allocated data array.')
+        self.fill_data_array(data_array, sparse_entries, target_index_lookup)
+        subsample = 30
+        logger.debug('%s randomly sampled vectors:', subsample)
+        for i in range(subsample):
+            value = data_array[random.choice(range(len(data_array)))]
+            print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))
+        logger.debug('Sorting for consistency.')
+        data_array.sort(reverse=True)
+        logger.debug('Done')
+        self.write_data_array_to_file(data_array)
+        number_mb = int(len(data_array) * 8 / 1000000)
+        logger.debug('Wrote %s MB to %s .', number_mb, data_array_filename)
+
+        target_by_symbol = self.get_target_by_symbol(connection)
+        self.write_channel_lookup(target_index_lookup, target_by_symbol)
+        logger.debug('Wrote %s .', channel_lookup_filename)
+
+    def get_sparse_matrix_query(self):
         return '''
-        SELECT *
+        SELECT histological_structure, target, CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value
         FROM
         expression_quantification
-        LIMIT 3
         ;
         '''
 
-    def retrieve_channel_lookup(self, connection):
+    def get_number_cells(self, sparse_entries_sorted):
+        count = 1
+        for i in range(len(sparse_entries_sorted) -1):
+            if sparse_entries_sorted[i][0] != sparse_entries_sorted[i+1][0]:
+                count = count + 1
+        return count
+
+    def get_target_index_lookup(self, sparse_entries_sorted):
+        targets = set([])
+        for i in range(len(sparse_entries_sorted)):
+            targets.add(sparse_entries_sorted[i][1])
+        targets = sorted(list(targets))
+        lookup = {
+            target : i
+            for i, target in enumerate(targets)
+        }
+        return lookup
+
+    def get_target_by_symbol(self, connection):
+        query = '''
+        SELECT identifier, symbol FROM chemical_species;
+        '''
         with connection.cursor() as cursor:
-            cursor.execute('SELECT identifier, symbol FROM chemical_species')
+            cursor.execute(query)
             rows = cursor.fetchall()
         return {
-            row[0] : row[1]
+            row[1] : row[0]
             for row in rows
         }
 
-    def get_channel_lookup(self):
-        return self.channel_lookup
+    def fill_data_array(self, data_array, entries, target_index_lookup):
+        structure_index = 0
+        for i in range(len(entries)):
+            if i > 0:
+                if entries[i][0] != entries[i-1][0]:
+                    structure_index = structure_index + 1
+            if entries[i][2] == 1:
+                data_array[structure_index] = data_array[structure_index] + (1 << target_index_lookup[entries[i][1]])
 
-    def loop(self):
-        while(True):
-            sleep(2)
-            print(self.get_channel_lookup())
-            print(self.get_data_matrix())
+    def write_data_array_to_file(self, data_array):
+        with open(data_array_filename, 'wb') as file:
+            for entry in data_array:
+                file.write(entry.to_bytes(8, 'little'))
 
-    def __enter__ (self):
-        return self
+    def write_channel_lookup(self, target_index_lookup, target_by_symbol):
+        with open(channel_lookup_filename, 'wt') as file:
+            file.write(json.dumps({
+                'target index lookup' : target_index_lookup,
+                'target by symbol' : target_by_symbol,
+            }))
 
-    def __exit__ (self, exc_type, exc_value, traceback):
-        pass
+
+class CountsProvider:
+    def __init__(self):
+        self.data_array = self.load_data_matrix()
+        self.target_index_lookup, self.target_by_symbol  = self.load_channel_lookup()
+
+    def load_data_matrix(self):
+        data_array = []
+        with open(data_array_filename, 'rb') as file:
+            buffer = None
+            while buffer != b'':
+                buffer = file.read(8)
+                data_array.append(int.from_bytes(buffer, 'little'))
+        return data_array
+
+    def get_data_array(self):
+        return self.data_array
+
+    def load_channel_lookup(self):
+        with open(channel_lookup_filename, 'rt') as file:
+            root = json.loads(file.read())
+        return root['target index lookup'], root['target by symbol']
+
+    def compute_signature(self, channel_names):
+        identifiers = [self.target_by_symbol[name] for name in channel_names]
+        indices = [self.target_index_lookup[identifier] for identifier in identifiers]
+        signature = 0
+        for index in indices:
+            signature = signature + (1 << index)
+        return signature
+
+    def count_structures_of_exact_signature(self, signature):
+        count = 0
+        for entry in self.get_data_array():
+            if entry == signature:
+                count = count + 1
+        return count
+
+    def count_structures_of_partial_signature(self, signature):
+        count = 0
+        for entry in self.get_data_array():
+            if entry | signature == entry:
+                count = count + 1
+        return count
+
+
+class CountsRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(512).strip()
+        print(data)
+        record_separator = chr(30)
+        channel_names = data.decode('utf-8').split(record_separator)
+        print(channel_names)
+        signature = self.server.counts_provider.compute_signature(channel_names)
+        print(signature)
+        print(f'{signature:064b}')
+        count = self.server.counts_provider.count_structures_of_partial_signature(signature)
+        self.request.sendall(count.to_bytes(8, 'little'))
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -70,10 +196,32 @@ if __name__=='__main__':
         '--database-config-file',
         dest='database_config_file',
         type=str,
-        required=True,
         help='Provide the file for database configuration.',
     )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        '--save-expressions-to-compressed-binary',
+        dest='save_expressions_to_compressed_binary',
+        action='store_true',
+        help='Just pull expression data and save to binary file in special-purpose compressed format.',
+    )
+    group.add_argument(
+        '--start-tcp-server',
+        dest='start_tcp_server',
+        action='store_true',
+        help='Start TCP server that answers queries about structure counts.',
+    )
     args = parser.parse_args()
-    database_config_file = abspath(expanduser(args.database_config_file))
-    with CountsServer(database_config_file) as server:
-        server.loop()
+
+    if args.save_expressions_to_compressed_binary:
+        database_config_file = abspath(expanduser(args.database_config_file))
+        puller = CompressedMatrixPuller(database_config_file)
+
+    if args.start_tcp_server:
+        counts_provider = CountsProvider()
+        host = 'localhost'
+        port = 8016
+        tcp_server = socketserver.TCPServer((host, port), CountsRequestHandler)
+        tcp_server.counts_provider = counts_provider
+        tcp_server.serve_forever()
+

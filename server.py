@@ -16,19 +16,27 @@ logger = colorized_logger('spt-counts-server')
 
 data_array_filename = 'expression_data_array.b'
 
-class CompressedMatrix:
+class CompessedMatrixPuller:
     def __init__(self, database_config_file):
         dcm = DatabaseConnectionMaker(database_config_file)
         connection = dcm.get_connection()
         self.binary_values_array = self.retrieve_data_array(connection)
         connection.close()
 
+    def get_batch_size(self):
+        return 1000000
+
     def retrieve_data_array(self, connection):
+        sparse_entries = []
         with connection.cursor() as cursor:
             cursor.execute(self.get_sparse_matrix_query())
-            sparse_entries = cursor.fetchall()
+            total = cursor.rowcount
+            while cursor.rownumber < total - 1:
+                current_number_stored = len(sparse_entries)
+                sparse_entries.extend(cursor.fetchmany(size=self.get_batch_size()))
+                logger.debug('Received %s more entries from DB.', len(sparse_entries) - current_number_stored)
 
-        logger.debug('Received %s sparse entries from db.', len(sparse_entries))
+        logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
         sparse_entries.sort(key = lambda x: x[0])
         logger.debug('Sorted entries by structure identifier.')
         number_cells = self.get_number_cells(sparse_entries)
@@ -53,15 +61,10 @@ class CompressedMatrix:
         logger.debug('Wrote %s MB to %s .', number_mb, data_array_filename)
 
         logger.debug('Count in test case.')
-        signature = 27
-        count = self.count_structures_of_signatures(signature, data_array)
-        logger.debug('Finished counting test case, got: %s', count)
-        signature2 = random.choice(data_array)
-        count = self.count_structures_of_signatures(signature2, data_array)
-        logger.debug('Case %s, got: %s', signature2, count)
-        signature3 = random.choice(data_array)
-        count = self.count_structures_of_signatures(signature3, data_array)
-        logger.debug('Case %s, got: %s', signature3, count)
+        signature = random.choice(data_array)
+        count = self.count_structures_of_signature(signature, data_array)
+        logger.debug('Case %s, got: %s', signature, count)
+        return data_array
 
     def get_sparse_matrix_query(self):
         return '''
@@ -103,7 +106,7 @@ class CompressedMatrix:
             for entry in data_array:
                 file.write(entry.to_bytes(8, 'little'))
 
-    def count_structures_of_signatures(self, signature, data_array):
+    def count_structures_of_signature(self, signature, data_array):
         count = 0
         for entry in data_array:
             if entry == signature:
@@ -154,4 +157,4 @@ if __name__ == "__main__":
     # with CountsServer(database_config_file) as server:
     #     server.loop()
 
-    cm = CompressedMatrix(database_config_file)
+    cm = CompessedMatrixPuller(database_config_file)

@@ -1,6 +1,7 @@
 import socket
 
 class CountRequester:
+    @staticmethod
     def get_count(partial_signature_channels):
         host_ip = '127.0.0.1'
         server_port = 8016

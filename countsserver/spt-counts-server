@@ -2,27 +2,34 @@
 import argparse
 import json
 import socketserver
+import os
+import re
 
 from log_formats import colorized_logger
 logger = colorized_logger('spt-counts-server')
 
 data_array_filename = 'expression_data_array.bin'
-expressions_index_filename = 'expressions_index.json'
 
 class CountsProvider:
     def __init__(self):
         self.load_expressions_indices()
         self.load_data_matrices()
 
-    def load_expressions_index(self):
-        with open(expressions_index_filename, 'rt') as file:
+    def load_expressions_indices(self):
+        json_files = [f for f in os.listdir('.') if os.path.isfile(f) and re.search(r'\.json$', f)]
+        if len(json_files) != 1:
+            logger.error('Did not find index JSON file.')
+            exit()
+        with open(json_files[0], 'rt') as file:
             root = json.loads(file.read())
             entries = root[list(root.keys())[0]]
-            self.indices = entries
+            self.studies = {}
+            for entry in entries:
+                self.studies[entry['data analysis study name']] = entry
 
     def load_data_matrices(self):
         self.data_arrays = {}
-        for study_name in self.get_study_names()
+        for study_name in self.get_study_names():
             self.data_arrays[study_name] = []
             with open(self.get_data_array_filename(study_name), 'rb') as file:
                 buffer = None
@@ -31,17 +38,19 @@ class CountsProvider:
                     self.data_arrays[study_name].append(int.from_bytes(buffer, 'little'))
 
     def get_study_names(self):
-        return [entry['data analysis study name'] for entry in self.indices]
+        return self.studies.keys()
 
     def get_data_array_filename(self, study_name):
-        return self.indices[study_name]['expressions file']
+        return self.studies[study_name]['expressions file']
 
     def get_data_array(self, study_name):
         return self.data_arrays[study_name]
 
-    def compute_signature(self, channel_names):
-        identifiers = [self.target_by_symbol[name] for name in channel_names]
-        indices = [self.target_index_lookup[identifier] for identifier in identifiers]
+    def compute_signature(self, channel_names, study_name):
+        target_by_symbol = self.studies[study_name]['target by symbol']
+        target_index_lookup = self.studies[study_name]['target index lookup']
+        identifiers = [target_by_symbol[name] for name in channel_names]
+        indices = [target_index_lookup[identifier] for identifier in identifiers]
         signature = 0
         for index in indices:
             signature = signature + (1 << index)
@@ -67,12 +76,15 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         data = self.request.recv(512).strip()
         print(data)
         record_separator = chr(30)
-        channel_names = data.decode('utf-8').split(record_separator)
+        records = data.decode('utf-8').split(record_separator)
+        study_name = records[0]
+        channel_names = records[1:]
+        print(study_name)
         print(channel_names)
-        signature = self.server.counts_provider.compute_signature(channel_names)
+        signature = self.server.counts_provider.compute_signature(channel_names, study_name)
         print(signature)
         print(f'{signature:064b}')
-        count = self.server.counts_provider.count_structures_of_partial_signature(signature)
+        count = self.server.counts_provider.count_structures_of_partial_signature(signature, study_name)
         self.request.sendall(count.to_bytes(8, 'little'))
 
 

@@ -89,7 +89,6 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-generate-aws-task-definition',
         'spatialprofilingtoolbox/scripts/spt-create-db-schema',
         'spatialprofilingtoolbox/scripts/spt-db-constraints',
-        'spatialprofilingtoolbox/scripts/spt-counts-server',
         'spatialprofilingtoolbox/scripts/spt-read-expression-dump',
         'spatialprofilingtoolbox/scripts/spt-cache-expressions-data-array',
     ],

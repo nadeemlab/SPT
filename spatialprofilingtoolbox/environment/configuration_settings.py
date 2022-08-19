@@ -6,7 +6,7 @@ compartments_file_identifier = 'Compartments file'
 default_file_manifest_filename = 'file_manifest.tsv'
 default_db_config_filename = '.spt_db.config'
 data_array_filename = 'expression_data_array.bin'
-channel_lookup_filename = 'channel_lookup.json'
+expressions_index_filename = 'expressions_index.json'
 
 def get_version():
     with importlib.resources.path('spatialprofilingtoolbox', 'version.txt') as path:

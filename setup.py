@@ -91,6 +91,7 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-db-constraints',
         'spatialprofilingtoolbox/scripts/spt-counts-server',
         'spatialprofilingtoolbox/scripts/spt-read-expression-dump',
+        'spatialprofilingtoolbox/scripts/spt-cache-expressions-data-array',
     ],
     install_requires=requirements,
     project_urls = {

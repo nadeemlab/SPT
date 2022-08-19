@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import socketserver
+
+from log_formats import colorized_logger
+logger = colorized_logger('spt-counts-server')
+
+data_array_filename = 'expression_data_array.bin'
+expressions_index_filename = 'expressions_index.json'
+
+class CountsProvider:
+    def __init__(self):
+        self.load_expressions_indices()
+        self.load_data_matrices()
+
+    def load_expressions_index(self):
+        with open(expressions_index_filename, 'rt') as file:
+            root = json.loads(file.read())
+            entries = root[list(root.keys())[0]]
+            self.indices = entries
+
+    def load_data_matrices(self):
+        self.data_arrays = {}
+        for study_name in self.get_study_names()
+            self.data_arrays[study_name] = []
+            with open(self.get_data_array_filename(study_name), 'rb') as file:
+                buffer = None
+                while buffer != b'':
+                    buffer = file.read(8)
+                    self.data_arrays[study_name].append(int.from_bytes(buffer, 'little'))
+
+    def get_study_names(self):
+        return [entry['data analysis study name'] for entry in self.indices]
+
+    def get_data_array_filename(self, study_name):
+        return self.indices[study_name]['expressions file']
+
+    def get_data_array(self, study_name):
+        return self.data_arrays[study_name]
+
+    def compute_signature(self, channel_names):
+        identifiers = [self.target_by_symbol[name] for name in channel_names]
+        indices = [self.target_index_lookup[identifier] for identifier in identifiers]
+        signature = 0
+        for index in indices:
+            signature = signature + (1 << index)
+        return signature
+
+    def count_structures_of_exact_signature(self, signature, study_name):
+        count = 0
+        for entry in self.get_data_array(study_name):
+            if entry == signature:
+                count = count + 1
+        return count
+
+    def count_structures_of_partial_signature(self, signature, study_name):
+        count = 0
+        for entry in self.get_data_array(study_name):
+            if entry | signature == entry:
+                count = count + 1
+        return count
+
+
+class CountsRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(512).strip()
+        print(data)
+        record_separator = chr(30)
+        channel_names = data.decode('utf-8').split(record_separator)
+        print(channel_names)
+        signature = self.server.counts_provider.compute_signature(channel_names)
+        print(signature)
+        print(f'{signature:064b}')
+        count = self.server.counts_provider.count_structures_of_partial_signature(signature)
+        self.request.sendall(count.to_bytes(8, 'little'))
+
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'Server providing counts of samples satisfying given partial signatures.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        '--host',
+        dest='host',
+        type=str,
+        default='localhost',
+        help='The hostname or IP address on which to open the TCP socket.',
+    )
+    parser.add_argument(
+        '--port',
+        dest='port',
+        type=str,
+        default=8016,
+        help='The port on which to open the TCP socket.',
+    )
+    args = parser.parse_args()
+
+    counts_provider = CountsProvider()
+    tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
+    tcp_server.counts_provider = counts_provider
+    tcp_server.serve_forever()
+

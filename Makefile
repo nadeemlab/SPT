@@ -98,6 +98,7 @@ DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO := spt
 DOCKER_TEST_REPO := spt-test
 DOCKER_APISERVER_REPO := pathstats-api-app
+DOCKER_COUNTSSERVER_REPO := spt-counts-server
 PYTHON := python3
 RELEASE_TO_BRANCH := prerelease
 INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '.*\.sh$$' | sed 's:^\./:\.:g')
@@ -117,6 +118,8 @@ release: all-external-pushes
 test-release: docker-test-repo-push
 
 push-api-server: docker-push-api-server
+
+push-counts-server: docker-push-counts-server
 
 all-external-pushes: twine-upload docker-push source-code-release-push
 
@@ -207,6 +210,22 @@ docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daem
 	@version=$$(cat ${VERSION_FILE}); \
     cd apiserver/ ; \
     docker build -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:latest . ; \
+    cd ..
+	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
+    ((transpired=now_secs - initial)); \
+    printf $(call color_final,'Built.',$$transpired"s")
+
+docker-push-counts-server: docker-counts-server-build
+	@version=$$(cat ${VERSION_FILE}) ;\
+	docker push ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:$$version
+	@docker push ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:latest
+
+docker-counts-server-build: countsserver/Dockerfile countsserver/spt-counts-server .docker-daemon-running 
+	@printf $(call color_in_progress,'Building Docker container (for upload to counts server repository)')
+	@date +%s > current_time.txt
+	@version=$$(cat ${VERSION_FILE}); \
+    cd countsserver/ ; \
+    docker build -t ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:latest . ; \
     cd ..
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \

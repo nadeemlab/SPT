@@ -5,20 +5,16 @@ from os.path import join
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
-import time
-from time import sleep
 import re
 import random
 import json
-import socketserver
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.environment.logging.log_formats import colorized_logger
-logger = colorized_logger('spt-counts-server')
+from .database_connection import DatabaseConnectionMaker
+from .log_formats import colorized_logger
+logger = colorized_logger('spt-cache-expressions-data-array')
 
-data_array_filename = 'expression_data_array.bin'
-channel_lookup_filename = 'channel_lookup.json'
+from .configuration_settings import data_array_filename
+from .configuration_settings import channel_lookup_filename
 
 
 class CompressedMatrixPuller:
@@ -63,7 +59,9 @@ class CompressedMatrixPuller:
         logger.debug('Done')
         self.write_data_array_to_file(data_array)
         number_mb = int(len(data_array) * 8 / 1000000)
-        logger.debug('Wrote %s MB to %s .', number_mb, data_array_filename)
+        parts = tuple(data_array_filename.split('.'))
+        filename = '%s.0.%s' % parts
+        logger.debug('Wrote %s MB to %s .', number_mb, filename)
 
         target_by_symbol = self.get_target_by_symbol(connection)
         self.write_channel_lookup(target_index_lookup, target_by_symbol)
@@ -129,65 +127,6 @@ class CompressedMatrixPuller:
             }))
 
 
-class CountsProvider:
-    def __init__(self):
-        self.data_array = self.load_data_matrix()
-        self.target_index_lookup, self.target_by_symbol  = self.load_channel_lookup()
-
-    def load_data_matrix(self):
-        data_array = []
-        with open(data_array_filename, 'rb') as file:
-            buffer = None
-            while buffer != b'':
-                buffer = file.read(8)
-                data_array.append(int.from_bytes(buffer, 'little'))
-        return data_array
-
-    def get_data_array(self):
-        return self.data_array
-
-    def load_channel_lookup(self):
-        with open(channel_lookup_filename, 'rt') as file:
-            root = json.loads(file.read())
-        return root['target index lookup'], root['target by symbol']
-
-    def compute_signature(self, channel_names):
-        identifiers = [self.target_by_symbol[name] for name in channel_names]
-        indices = [self.target_index_lookup[identifier] for identifier in identifiers]
-        signature = 0
-        for index in indices:
-            signature = signature + (1 << index)
-        return signature
-
-    def count_structures_of_exact_signature(self, signature):
-        count = 0
-        for entry in self.get_data_array():
-            if entry == signature:
-                count = count + 1
-        return count
-
-    def count_structures_of_partial_signature(self, signature):
-        count = 0
-        for entry in self.get_data_array():
-            if entry | signature == entry:
-                count = count + 1
-        return count
-
-
-class CountsRequestHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        data = self.request.recv(512).strip()
-        print(data)
-        record_separator = chr(30)
-        channel_names = data.decode('utf-8').split(record_separator)
-        print(channel_names)
-        signature = self.server.counts_provider.compute_signature(channel_names)
-        print(signature)
-        print(f'{signature:064b}')
-        count = self.server.counts_provider.count_structures_of_partial_signature(signature)
-        self.request.sendall(count.to_bytes(8, 'little'))
-
-
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         description = 'Server providing counts of samples satisfying given partial signatures.'
@@ -198,30 +137,7 @@ if __name__=='__main__':
         type=str,
         help='Provide the file for database configuration.',
     )
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        '--save-expressions-to-compressed-binary',
-        dest='save_expressions_to_compressed_binary',
-        action='store_true',
-        help='Just pull expression data and save to binary file in special-purpose compressed format.',
-    )
-    group.add_argument(
-        '--start-tcp-server',
-        dest='start_tcp_server',
-        action='store_true',
-        help='Start TCP server that answers queries about structure counts.',
-    )
     args = parser.parse_args()
-
-    if args.save_expressions_to_compressed_binary:
-        database_config_file = abspath(expanduser(args.database_config_file))
-        puller = CompressedMatrixPuller(database_config_file)
-
-    if args.start_tcp_server:
-        counts_provider = CountsProvider()
-        host = 'localhost'
-        port = 8016
-        tcp_server = socketserver.TCPServer((host, port), CountsRequestHandler)
-        tcp_server.counts_provider = counts_provider
-        tcp_server.serve_forever()
+    database_config_file = abspath(expanduser(args.database_config_file))
+    puller = CompressedMatrixPuller(database_config_file)
 

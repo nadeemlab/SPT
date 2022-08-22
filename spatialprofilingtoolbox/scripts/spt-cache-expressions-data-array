@@ -13,84 +13,104 @@ from .database_connection import DatabaseConnectionMaker
 from .log_formats import colorized_logger
 logger = colorized_logger('spt-cache-expressions-data-array')
 
-from .configuration_settings import data_array_filename
-from .configuration_settings import channel_lookup_filename
+from .configuration_settings import expressions_index_filename
 
 
 class CompressedMatrixPuller:
     def __init__(self, database_config_file):
         dcm = DatabaseConnectionMaker(database_config_file)
         connection = dcm.get_connection()
-        self.retrieve_data_array(connection)
+        self.retrieve_data_arrays(connection)
         connection.close()
+        self.write_data_arrays()
+        self.write_index()
+        self.report_subsample_for_inspection()
 
-    def get_batch_size(self):
-        return 10000000
+    def retrieve_data_arrays(self, connection):
+        study_names = self.get_study_names(connection)
+        self.studies = {}
+        for study_name in study_names:
+            sparse_entries = self.get_sparse_entries(connection, study_name)
+            data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(sparse_entries)
+            self.studies[study_name] = {
+                'data arrays by specimen' : data_arrays_by_specimen,
+                'target index lookup' : target_index_lookup,
+                'target by symbol' : self.get_target_by_symbol(connection),
+            }
 
-    def retrieve_data_array(self, connection):
+    def get_study_names(connection):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT name FROM specimen_collection_study ;')
+            rows = cursor.fetchall()
+        return [row[0] for row in rows]
+
+    def get_sparse_entries(self, connection, study_name):
         sparse_entries = []
         with connection.cursor() as cursor:
-            cursor.execute(self.get_sparse_matrix_query())
+            cursor.execute(self.get_sparse_matrix_query(study_name))
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
                 sparse_entries.extend(cursor.fetchmany(size=self.get_batch_size()))
-                logger.debug('Received %s more entries from DB.', len(sparse_entries) - current_number_stored)
-
+                logger.debug('Received %s entries from DB.', len(sparse_entries) - current_number_stored)
         logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
-        sparse_entries.sort(key = lambda x: x[0])
-        logger.debug('Sorted entries by structure identifier.')
-        number_cells = self.get_number_cells(sparse_entries)
-        logger.debug('Unique structures: %s', number_cells)
-        target_index_lookup = self.get_target_index_lookup(sparse_entries)
-        logger.debug('Unique channels: %s', len(target_index_lookup))
-        logger.debug('Channel index assignments: %s', target_index_lookup)
+        return sparse_entries
 
-        data_array = [0] * number_cells
-        logger.debug('Allocated data array.')
-        self.fill_data_array(data_array, sparse_entries, target_index_lookup)
-        subsample = 30
-        logger.debug('%s randomly sampled vectors:', subsample)
-        for i in range(subsample):
-            value = data_array[random.choice(range(len(data_array)))]
-            print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))
-        logger.debug('Sorting for consistency.')
-        data_array.sort(reverse=True)
-        logger.debug('Done')
-        self.write_data_array_to_file(data_array)
-        number_mb = int(len(data_array) * 8 / 1000000)
-        parts = tuple(data_array_filename.split('.'))
-        filename = '%s.0.%s' % parts
-        logger.debug('Wrote %s MB to %s .', number_mb, filename)
-
-        target_by_symbol = self.get_target_by_symbol(connection)
-        self.write_channel_lookup(target_index_lookup, target_by_symbol)
-        logger.debug('Wrote %s .', channel_lookup_filename)
-
-    def get_sparse_matrix_query(self):
+    def get_sparse_matrix_query(self, specimen_collection_study_name):
         return '''
-        SELECT histological_structure, target, CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value
-        FROM
-        expression_quantification
+        SELECT
+        histological_structure,
+        target,
+        CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
+        scp.specimen as specimen
+        FROM expression_quantification eq
+        JOIN histological_structure hs ON eq.histological_structure=hs.identifier
+        JOIN histological_structure_identificatino hsi ON hs.identifier=hsi.histological_structure
+        JOIN data_file df ON hsi.data_source=df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
+        JOIN specimen_collection_process scp ON sdmp.specimen=scp.specimen
+        WHERE scp.study=%s
+        GROUP BY scp.specimen
         ;
-        '''
+        ''' % specimen_collection_study_name
 
-    def get_number_cells(self, sparse_entries_sorted):
-        count = 1
-        for i in range(len(sparse_entries_sorted) -1):
-            if sparse_entries_sorted[i][0] != sparse_entries_sorted[i+1][0]:
-                count = count + 1
-        return count
+    def get_batch_size(self):
+        return 10000000
 
-    def get_target_index_lookup(self, sparse_entries_sorted):
+    def parse_data_arrays_by_specimen(self, sparse_entries):
+        target_index_lookup = self.get_target_index_lookup(sparse_entries)
+        sparse_entries.sort(key = lambda x: (x[3], x[0]))
+        data_arrays_by_specimen = {}
+        last_index = len(sparse_entries) - 1
+        specimen = sparse_entries[0][3]
+        buffer = []
+        cell_count = 1
+        for i in range(len(sparse_entries)):
+            buffer.append(sparse_entries[i])
+            if (i != last_index) and (specimen == sparse_entries[i + 1][3]):
+                if sparse_entries[i][0] != sparse_entries[i + 1][0]:
+                    cell_count = cell_count + 1
+            else:
+                data_arrays_by_specimen[specimen] = [0] * cell_count
+                self.fill_data_array(data_arrays_by_specimen[specimen], buffer, target_index_lookup)
+                buffer = []
+                cell_count = 1
+                data_arrays_by_specimen[specimen].sort(reverse=True)
+                number_mb = int(len(data_arrays_by_specimen[specimen]) * 8 / 1000000)
+                logger.debug('Data array is %s MB for %s cells in specimen %s .', number_mb, cell_count, specimen)
+        return data_arrays_by_specimen, target_index_lookup
+
+    def get_target_index_lookup(self, sparse_entries):
         targets = set([])
-        for i in range(len(sparse_entries_sorted)):
-            targets.add(sparse_entries_sorted[i][1])
+        for i in range(len(sparse_entries)):
+            targets.add(sparse_entries[i][1])
         targets = sorted(list(targets))
         lookup = {
             target : i
             for i, target in enumerate(targets)
         }
+        logger.debug('Unique channels: %s', len(lookup))
+        logger.debug('Channel index assignments: %s', lookup)
         return lookup
 
     def get_target_by_symbol(self, connection):
@@ -100,10 +120,12 @@ class CompressedMatrixPuller:
         with connection.cursor() as cursor:
             cursor.execute(query)
             rows = cursor.fetchall()
-        return {
+        target_by_symbol = {
             row[1] : row[0]
             for row in rows
         }
+        logger.debug('Target by symbol: %s', target_by_symbol)
+        return target_by_symbol
 
     def fill_data_array(self, data_array, entries, target_index_lookup):
         structure_index = 0
@@ -114,17 +136,75 @@ class CompressedMatrixPuller:
             if entries[i][2] == 1:
                 data_array[structure_index] = data_array[structure_index] + (1 << target_index_lookup[entries[i][1]])
 
-    def write_data_array_to_file(self, data_array):
-        with open(data_array_filename, 'wb') as file:
-            for entry in data_array:
+    def write_data_arrays(self):
+        study_names, study_indices = self.get_study_names_and_indices()
+        for study_name, study in self.studies.items():
+            study_index = study_indices[study_name]
+            specimen, specimen_indices = self.get_specimens_and_indices()
+            for specimen, data_array in study['data arrays by specimen'].items():
+                specimen_index = specimen_indices[specimen]
+                filename = '.'.join([
+                    self.get_data_array_filename_base(),
+                    str(study_index),
+                    str(specimen_index),
+                    'bin',
+                ])
+                self.write_data_array_to_file(data_array, filename)
+
+    def write_index(self):
+        index = []
+        study_names, study_indices = self.get_study_names_and_indices()
+        for study_name, study in self.studies.items():
+            index_item = {}
+            index_item['specimen collection study name'] = study_name
+            index_item['expressions files'] = []
+            study_index = study_indices[study_name]
+            specimen, specimen_indices = self.get_specimens_and_indices()
+            for specimen, data_array in study['data arrays by specimen'].items():
+                specimen_index = specimen_indices[specimen]
+                filename = '.'.join([
+                    self.get_data_array_filename_base(),
+                    str(study_index),
+                    str(specimen_index),
+                    'bin',
+                ])
+                index_item['expressions files'].append({
+                    'specimen' : specimen,
+                    'filename' : filename,
+                })
+            index_item['target index lookup'] = study['target index lookup']
+            index_item['target by symbol'] = study['target by symbol']
+        with open(expressions_index_filename, 'wt') as index_file:
+            index_file.write(json.dumps({'' : index}), indent=4)
+        logger.debug('Wrote expression index file %s .', expressions_index_filename)
+
+    def get_study_names_and_indices(self):
+        return sorted(list(self.studies.keys())), { s : i for i, s in enumerate(study_names)}
+
+    def get_specimens_and_indices(self, study_name):
+        study = self.studies[study_name]
+        return [
+            sorted(list(study['data arrays by specimen'].keys())),
+            specimen_indices = { s : i for i, s in enumerate(specimens)}
+        ]
+
+    def get_data_array_filename_base(self):
+        return 'expression_data_array'
+
+    def write_data_array_to_file(self, filename):
+        with open(filename, 'wb') as file:
+            for entry in self.data_array:
                 file.write(entry.to_bytes(8, 'little'))
 
-    def write_channel_lookup(self, target_index_lookup, target_by_symbol):
-        with open(channel_lookup_filename, 'wt') as file:
-            file.write(json.dumps({
-                'target index lookup' : target_index_lookup,
-                'target by symbol' : target_by_symbol,
-            }))
+    def report_subsample_for_inspection(self):
+        size = 20
+        logger.debug('%s randomly sampled vectors:', size)
+        study_name = list(self.studies.keys())[0]
+        data_arrays = self.studies[study_name]['data arrays by specimen']
+        data_array = list(data_array.values())[0]
+        for i in range(size):
+            value = data_array[random.choice(range(len(data_array)))]
+            print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))
 
 
 if __name__=='__main__':

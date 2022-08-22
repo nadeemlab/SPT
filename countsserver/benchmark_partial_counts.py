@@ -61,7 +61,8 @@ if __name__=='__main__':
         tic = time.perf_counter()
         for i in range(trials):
             case = list(random.sample(all_channel_names, size))
-            count = CountRequester.get_count(case, study_name, host=host, port=port)
+            with CountRequester(host, port) as requester:
+                count = requester.get_count(case, study_name)
             print('%s %s' % ('{:14}'.format(str(count)), ' '.join(case)))
         toc = time.perf_counter()
         per_second = trials / (toc - tic)

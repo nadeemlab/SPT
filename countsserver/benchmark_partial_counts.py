@@ -42,12 +42,13 @@ if __name__=='__main__':
         ['B2M', 'MHC1', 'PD1', 'PDL1', 'CD25'],
     ]
     all_channel_names = ['B2M', 'B7H3', 'CD14', 'CD163', 'CD20', 'CD25', 'CD27', 'CD3', 'CD4', 'CD56', 'CD68', 'CD8', 'DAPI', 'FOXP3', 'IDO1', 'KI67', 'LAG3', 'MHCI', 'MHCII', 'MRC1', 'PD1', 'PDL1', 'S100B', 'SOX10', 'TGM2', 'TIM3']
-    study_name = 'Melanoma intralesional IL2 (Hollmann lab) - data analysis'
+    study_name = 'Melanoma intralesional IL2 (Hollmann lab) - specimen collection'
     host, port = infer_default_address()
 
     tic = time.perf_counter()
     for case in fixed_cases:
-        count = CountRequester.get_count(case, study_name, host=host, port=port)
+        with CountRequester(host, port) as requester:
+            count = requester.get_count(case, study_name)
         print('%s %s' % ('{:14}'.format(str(count)), ' '.join(case)))
     toc = time.perf_counter()
     print('Completed %s count actions in %s' % (len(fixed_cases), f'{toc - tic:0.4f} seconds'))

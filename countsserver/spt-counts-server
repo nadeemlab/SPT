@@ -8,7 +8,6 @@ import re
 from log_formats import colorized_logger
 logger = colorized_logger('spt-counts-server')
 
-data_array_filename = 'expression_data_array.bin'
 
 class CountsProvider:
     def __init__(self):
@@ -25,26 +24,27 @@ class CountsProvider:
             entries = root[list(root.keys())[0]]
             self.studies = {}
             for entry in entries:
-                self.studies[entry['data analysis study name']] = entry
+                self.studies[entry['specimen collection study name']] = entry
 
     def load_data_matrices(self):
         self.data_arrays = {}
         for study_name in self.get_study_names():
-            self.data_arrays[study_name] = []
-            with open(self.get_data_array_filename(study_name), 'rb') as file:
-                buffer = None
-                while buffer != b'':
-                    buffer = file.read(8)
-                    self.data_arrays[study_name].append(int.from_bytes(buffer, 'little'))
+            self.data_arrays[study_name] = {
+                specimen : self.get_data_array_from_file(filename)
+                for specimen, filename in self.studies[study_name]['expressions files'].items()
+            }
 
     def get_study_names(self):
         return self.studies.keys()
 
-    def get_data_array_filename(self, study_name):
-        return self.studies[study_name]['expressions file']
-
-    def get_data_array(self, study_name):
-        return self.data_arrays[study_name]
+    def get_data_array_from_file(self, filename):
+        data_array = []
+        with open(filename, 'rb') as file:
+            buffer = None
+            while buffer != b'':
+                buffer = file.read(8)
+                data_array.append(int.from_bytes(buffer, 'little'))
+        return data_array
 
     def compute_signature(self, channel_names, study_name):
         target_by_symbol = self.studies[study_name]['target by symbol']
@@ -57,18 +57,24 @@ class CountsProvider:
         return signature
 
     def count_structures_of_exact_signature(self, signature, study_name):
-        count = 0
-        for entry in self.get_data_array(study_name):
-            if entry == signature:
-                count = count + 1
-        return count
+        counts = {}
+        for specimen, data_array in self.data_arrays[study_name].items():
+            count = 0
+            for entry in self.get_data_array(study_name):
+                if entry == signature:
+                    count = count + 1
+            counts[specimen] = count
+        return counts
 
     def count_structures_of_partial_signature(self, signature, study_name):
-        count = 0
-        for entry in self.get_data_array(study_name):
-            if entry | signature == entry:
-                count = count + 1
-        return count
+        counts = {}
+        for specimen, data_array in self.data_arrays[study_name].items():
+            count = 0
+            for entry in self.get_data_array(study_name):
+                if entry | signature == entry:
+                    count = count + 1
+            counts[specimen] = count
+        return counts
 
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):

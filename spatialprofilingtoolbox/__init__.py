@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 This is the Spatial Profiling Toolbox package. The source code is available
 `here <https://github.com/nadeemlab/SPT>`_.

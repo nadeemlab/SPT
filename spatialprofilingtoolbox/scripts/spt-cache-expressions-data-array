@@ -9,11 +9,12 @@ import re
 import random
 import json
 
-from .database_connection import DatabaseConnectionMaker
-from .log_formats import colorized_logger
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.environment.logging.log_formats import colorized_logger
 logger = colorized_logger('spt-cache-expressions-data-array')
 
-from .configuration_settings import expressions_index_filename
+from spatialprofilingtoolbox.environment.configuration_settings import expressions_index_filename
 
 
 class CompressedMatrixPuller:
@@ -38,7 +39,7 @@ class CompressedMatrixPuller:
                 'target by symbol' : self.get_target_by_symbol(connection),
             }
 
-    def get_study_names(connection):
+    def get_study_names(self, connection):
         with connection.cursor() as cursor:
             cursor.execute('SELECT name FROM specimen_collection_study ;')
             rows = cursor.fetchall()
@@ -47,7 +48,7 @@ class CompressedMatrixPuller:
     def get_sparse_entries(self, connection, study_name):
         sparse_entries = []
         with connection.cursor() as cursor:
-            cursor.execute(self.get_sparse_matrix_query(study_name))
+            cursor.execute(self.get_sparse_matrix_query(), (study_name,))
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
@@ -56,23 +57,23 @@ class CompressedMatrixPuller:
         logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
         return sparse_entries
 
-    def get_sparse_matrix_query(self, specimen_collection_study_name):
+    def get_sparse_matrix_query(self):
         return '''
         SELECT
-        histological_structure,
-        target,
+        eq.histological_structure,
+        eq.target,
         CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
         scp.specimen as specimen
         FROM expression_quantification eq
         JOIN histological_structure hs ON eq.histological_structure=hs.identifier
-        JOIN histological_structure_identificatino hsi ON hs.identifier=hsi.histological_structure
+        JOIN histological_structure_identification hsi ON hs.identifier=hsi.histological_structure
         JOIN data_file df ON hsi.data_source=df.sha256_hash
         JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
         JOIN specimen_collection_process scp ON sdmp.specimen=scp.specimen
         WHERE scp.study=%s
-        GROUP BY scp.specimen
+        ORDER BY scp.specimen, eq.histological_structure, eq.target
         ;
-        ''' % specimen_collection_study_name
+        '''
 
     def get_batch_size(self):
         return 10000000
@@ -93,11 +94,13 @@ class CompressedMatrixPuller:
             else:
                 data_arrays_by_specimen[specimen] = [0] * cell_count
                 self.fill_data_array(data_arrays_by_specimen[specimen], buffer, target_index_lookup)
-                buffer = []
-                cell_count = 1
                 data_arrays_by_specimen[specimen].sort(reverse=True)
                 number_mb = int(len(data_arrays_by_specimen[specimen]) * 8 / 1000000)
                 logger.debug('Data array is %s MB for %s cells in specimen %s .', number_mb, cell_count, specimen)
+                if i != last_index:
+                    specimen = sparse_entries[i + 1][3]
+                    buffer = []
+                    cell_count = 1
         return data_arrays_by_specimen, target_index_lookup
 
     def get_target_index_lookup(self, sparse_entries):
@@ -179,13 +182,15 @@ class CompressedMatrixPuller:
         logger.debug('Wrote expression index file %s .', expressions_index_filename)
 
     def get_study_names_and_indices(self):
-        return sorted(list(self.studies.keys())), { s : i for i, s in enumerate(study_names)}
+        study_names = sorted(list(self.studies.keys()))
+        return study_names, { s : i for i, s in enumerate(study_names)}
 
     def get_specimens_and_indices(self, study_name):
         study = self.studies[study_name]
+        specimens = sorted(list(study['data arrays by specimen'].keys()))
         return [
-            sorted(list(study['data arrays by specimen'].keys())),
-            specimen_indices = { s : i for i, s in enumerate(specimens)}
+            specimens,
+            { s : i for i, s in enumerate(specimens)},
         ]
 
     def get_data_array_filename_base(self):

@@ -95,7 +95,7 @@ class CompressedMatrixPuller:
                 data_arrays_by_specimen[specimen] = [0] * cell_count
                 self.fill_data_array(data_arrays_by_specimen[specimen], buffer, target_index_lookup)
                 data_arrays_by_specimen[specimen].sort(reverse=True)
-                number_mb = int(len(data_arrays_by_specimen[specimen]) * 8 / 1000000)
+                number_mb = int(100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
                 logger.debug('Data array is %s MB for %s cells in specimen %s .', number_mb, cell_count, specimen)
                 if i != last_index:
                     specimen = sparse_entries[i + 1][3]
@@ -143,7 +143,7 @@ class CompressedMatrixPuller:
         study_names, study_indices = self.get_study_names_and_indices()
         for study_name, study in self.studies.items():
             study_index = study_indices[study_name]
-            specimen, specimen_indices = self.get_specimens_and_indices()
+            specimen, specimen_indices = self.get_specimens_and_indices(study_name)
             for specimen, data_array in study['data arrays by specimen'].items():
                 specimen_index = specimen_indices[specimen]
                 filename = '.'.join([
@@ -162,7 +162,7 @@ class CompressedMatrixPuller:
             index_item['specimen collection study name'] = study_name
             index_item['expressions files'] = []
             study_index = study_indices[study_name]
-            specimen, specimen_indices = self.get_specimens_and_indices()
+            specimen, specimen_indices = self.get_specimens_and_indices(study_name)
             for specimen, data_array in study['data arrays by specimen'].items():
                 specimen_index = specimen_indices[specimen]
                 filename = '.'.join([
@@ -178,7 +178,7 @@ class CompressedMatrixPuller:
             index_item['target index lookup'] = study['target index lookup']
             index_item['target by symbol'] = study['target by symbol']
         with open(expressions_index_filename, 'wt') as index_file:
-            index_file.write(json.dumps({'' : index}), indent=4)
+            index_file.write(json.dumps({'' : index}, indent=4))
         logger.debug('Wrote expression index file %s .', expressions_index_filename)
 
     def get_study_names_and_indices(self):
@@ -196,9 +196,9 @@ class CompressedMatrixPuller:
     def get_data_array_filename_base(self):
         return 'expression_data_array'
 
-    def write_data_array_to_file(self, filename):
+    def write_data_array_to_file(self, data_array, filename):
         with open(filename, 'wb') as file:
-            for entry in self.data_array:
+            for entry in data_array:
                 file.write(entry.to_bytes(8, 'little'))
 
     def report_subsample_for_inspection(self):

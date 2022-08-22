@@ -177,6 +177,7 @@ class CompressedMatrixPuller:
                 })
             index_item['target index lookup'] = study['target index lookup']
             index_item['target by symbol'] = study['target by symbol']
+            index.append(index_item)
         with open(expressions_index_filename, 'wt') as index_file:
             index_file.write(json.dumps({'' : index}, indent=4))
         logger.debug('Wrote expression index file %s .', expressions_index_filename)
@@ -206,7 +207,7 @@ class CompressedMatrixPuller:
         logger.debug('%s randomly sampled vectors:', size)
         study_name = list(self.studies.keys())[0]
         data_arrays = self.studies[study_name]['data arrays by specimen']
-        data_array = list(data_array.values())[0]
+        data_array = list(data_arrays.values())[0]
         for i in range(size):
             value = data_array[random.choice(range(len(data_array)))]
             print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))

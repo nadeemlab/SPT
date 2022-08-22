@@ -30,8 +30,8 @@ class CountsProvider:
         self.data_arrays = {}
         for study_name in self.get_study_names():
             self.data_arrays[study_name] = {
-                specimen : self.get_data_array_from_file(filename)
-                for specimen, filename in self.studies[study_name]['expressions files'].items()
+                item['specimen'] : self.get_data_array_from_file(item['filename'])
+                for item in self.studies[study_name]['expressions files']
             }
 
     def get_study_names(self):
@@ -60,7 +60,7 @@ class CountsProvider:
         counts = {}
         for specimen, data_array in self.data_arrays[study_name].items():
             count = 0
-            for entry in self.get_data_array(study_name):
+            for entry in data_array:
                 if entry == signature:
                     count = count + 1
             counts[specimen] = count
@@ -70,7 +70,7 @@ class CountsProvider:
         counts = {}
         for specimen, data_array in self.data_arrays[study_name].items():
             count = 0
-            for entry in self.get_data_array(study_name):
+            for entry in data_array:
                 if entry | signature == entry:
                     count = count + 1
             counts[specimen] = count
@@ -90,9 +90,11 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         signature = self.server.counts_provider.compute_signature(channel_names, study_name)
         print(signature)
         print(f'{signature:064b}')
-        count = self.server.counts_provider.count_structures_of_partial_signature(signature, study_name)
-        self.request.sendall(count.to_bytes(8, 'little'))
+        counts = self.server.counts_provider.count_structures_of_partial_signature(signature, study_name)
+        self.request.sendall((json.dumps(counts) + self.get_end_of_transmission()).encode('utf-8'))
 
+    def get_end_of_transmission(self):
+        return chr(4)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

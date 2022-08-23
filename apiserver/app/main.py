@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
-from counts_service import CountRequester
+from .counts_service import CountRequester
 
 app = FastAPI()
 

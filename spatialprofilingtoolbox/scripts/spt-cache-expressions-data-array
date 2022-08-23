@@ -41,7 +41,7 @@ class CompressedMatrixPuller:
 
     def get_study_names(self, connection):
         with connection.cursor() as cursor:
-            cursor.execute('SELECT name FROM specimen_collection_study ;')
+            cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = cursor.fetchall()
         return [row[0] for row in rows]
 
@@ -63,15 +63,14 @@ class CompressedMatrixPuller:
         eq.histological_structure,
         eq.target,
         CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-        scp.specimen as specimen
+        sdmp.specimen as specimen
         FROM expression_quantification eq
         JOIN histological_structure hs ON eq.histological_structure=hs.identifier
         JOIN histological_structure_identification hsi ON hs.identifier=hsi.histological_structure
         JOIN data_file df ON hsi.data_source=df.sha256_hash
         JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
-        JOIN specimen_collection_process scp ON sdmp.specimen=scp.specimen
-        WHERE scp.study=%s
-        ORDER BY scp.specimen, eq.histological_structure, eq.target
+        WHERE sdmp.study=%s
+        ORDER BY sdmp.specimen, eq.histological_structure, eq.target
         ;
         '''
 
@@ -159,7 +158,7 @@ class CompressedMatrixPuller:
         study_names, study_indices = self.get_study_names_and_indices()
         for study_name, study in self.studies.items():
             index_item = {}
-            index_item['specimen collection study name'] = study_name
+            index_item['specimen measurement study name'] = study_name
             index_item['expressions files'] = []
             study_index = study_indices[study_name]
             specimen, specimen_indices = self.get_specimens_and_indices(study_name)

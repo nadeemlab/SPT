@@ -563,6 +563,8 @@ async def get_phenotype_criteria(
         cursor.execute(total_query, (specimen_measurement_study,))
         number_cells = cursor.fetchall()[0][0]
 
+    host = '127.0.0.1'
+    port = 8016
     with CountRequester(host, port) as requester:
         counts = requester.get_counts(positive_markers, negative_markers, specimen_measurement_study)
     fancy_round = lambda ratio: 100 * round(ratio * 10000)/10000

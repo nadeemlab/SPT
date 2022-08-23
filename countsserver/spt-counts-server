@@ -92,12 +92,19 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         data = self.request.recv(512).strip()
         print(data)
         record_separator = chr(30)
-        records = data.decode('utf-8').split(record_separator)
-        study_name = records[0]
-        channel_names = records[1:]
+        group_separator = chr(29)
+        groups = data.decode('utf-8').split(group_separator)
+        study_name = groups[0]
+        positive_channel_names = groups[1].split(record_separator)
+        if len(groups) > 2:
+            negative_channel_names = groups[2].split(record_separator)
+        else:
+            negative_channel_names = []
         print(study_name)
-        print(channel_names)
-        signature = self.server.counts_provider.compute_signature(channel_names, study_name)
+        print(positive_channel_names)
+        print(negative_channel_names)
+        positives_signature = self.server.counts_provider.compute_signature(positive_channel_names, study_name)
+        negatives_signature = self.server.counts_provider.compute_signature(negative_channel_names, study_name)
         print(signature)
         print(f'{signature:064b}')
         counts = self.server.counts_provider.count_structures_of_partial_signature(signature, study_name)

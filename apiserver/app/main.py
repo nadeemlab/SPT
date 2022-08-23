@@ -9,6 +9,7 @@ from fastapi import Query
 from fastapi import Response
 
 from .counts_service import CountRequester
+counts_service_host = os.environ['DB_ENDPOINT']
 
 app = FastAPI()
 
@@ -563,7 +564,7 @@ async def get_phenotype_criteria(
         cursor.execute(total_query, (specimen_measurement_study,))
         number_cells = cursor.fetchall()[0][0]
 
-    host = '127.0.0.1'
+    host = counts_service_host
     port = 8016
     with CountRequester(host, port) as requester:
         counts = requester.get_counts(positive_markers, negative_markers, specimen_measurement_study)

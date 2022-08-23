@@ -1050,7 +1050,7 @@ class PhenotypeComparisonsGrid extends PairwiseComparisonsGrid {
             fragments.push([parameter_names[i], parameter_values[i]].join('='))
         }
         let url_base = get_api_url_base()
-        let counts_url = `${url_base}/anonymous-phenotype-counts/?` + fragments.join('&')
+        let counts_url = `${url_base}/anonymous-phenotype-counts-fast/?` + fragments.join('&')
         let counts_response = await promise_http_request('GET', counts_url)
 
         let root = JSON.parse(counts_response)

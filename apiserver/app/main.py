@@ -8,6 +8,8 @@ from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
+from .counts_service import CountRequester
+
 app = FastAPI()
 
 
@@ -527,6 +529,17 @@ async def get_phenotype_criteria(
             media_type = 'application/json',
         )
 
+
+# @app.get("/anonymous-phenotype-counts-fast/")
+# async def get_phenotype_criteria(
+#     positive_markers_tab_delimited : str = Query(default=None),
+#     negative_markers_tab_delimited : str = Query(default=None),
+#     specimen_measurement_study : str = Query(default='unknown', min_length=3),
+# ):
+#     with CountRequester(host, port) as requester:
+#         counts = requester.get_counts(case, specimen_measurement_study)
+#     count = sum(counts.values())
+    
 
 @app.get("/phenotype-proximity-summary/")
 async def get_phenotype_proximity_summary(

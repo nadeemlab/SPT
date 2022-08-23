@@ -35,14 +35,14 @@ if __name__=='__main__':
 
     with CountRequester(host, port) as requester:
         counts = requester.get_counts(['CD3'], ['CD8', 'CD20'], study_name)
-    count = sum([c[1] for c in counts.values()])
+    count = sum([c[0] for c in counts.values()])
     print('%s' % ('{:14}'.format(str(count))))
 
     tic = time.perf_counter()
     for case in fixed_cases:
         with CountRequester(host, port) as requester:
             counts = requester.get_counts(case, [], study_name)
-        count = sum([c[1] for c in counts.values()])
+        count = sum([c[0] for c in counts.values()])
         print('%s %s' % ('{:14}'.format(str(count)), ' '.join(case)))
     toc = time.perf_counter()
     print('Completed %s count actions in %s' % (len(fixed_cases), f'{toc - tic:0.4f} seconds'))
@@ -58,7 +58,7 @@ if __name__=='__main__':
             case = list(random.sample(all_channel_names, size))
             with CountRequester(host, port) as requester:
                 counts = requester.get_counts(case, [], study_name)
-            count = sum([c[1] for c in counts.values()])
+            count = sum([c[0] for c in counts.values()])
             print('%s %s' % ('{:14}'.format(str(count)), ' '.join(case)))
         toc = time.perf_counter()
         per_second = trials / (toc - tic)

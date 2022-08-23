@@ -24,7 +24,7 @@ class CountsProvider:
             entries = root[list(root.keys())[0]]
             self.studies = {}
             for entry in entries:
-                self.studies[entry['specimen collection study name']] = entry
+                self.studies[entry['specimen measurement study name']] = entry
 
     def load_data_matrices(self):
         self.data_arrays = {}

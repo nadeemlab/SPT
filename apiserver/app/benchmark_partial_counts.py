@@ -4,22 +4,11 @@ import random
 import re
 import subprocess
 
-from .counts_service import CountRequester
+from counts_service import CountRequester
 
 
 def infer_default_address():
-    help_text = subprocess.check_output('./spt-counts-server --help', shell=True, universal_newlines=True)
-    lines = help_text.split('\n')
-    address = {}
-    for line in lines[1:]:
-        if re.search('--host HOST', line):
-            key = 'host'
-        if re.search('--port PORT', line):
-            key = 'port'
-        match = re.search(r'\(default: ([\w\d\-\.]+)\)', line)
-        if match:
-            address[key] = match.group(1)
-    return (address['host'], int(address['port']))
+    return ['127.0.0.1', 8016]
 
 
 if __name__=='__main__':
@@ -44,10 +33,15 @@ if __name__=='__main__':
     study_name = 'Melanoma intralesional IL2 (Hollmann lab) - specimen collection'
     host, port = infer_default_address()
 
+    with CountRequester(host, port) as requester:
+        counts = requester.get_counts(['CD3'], ['CD8', 'CD20'], study_name)
+    count = sum(counts.values())
+    print('%s' % ('{:14}'.format(str(count))))
+
     tic = time.perf_counter()
     for case in fixed_cases:
         with CountRequester(host, port) as requester:
-            counts = requester.get_counts(case, study_name)
+            counts = requester.get_counts(case, [], study_name)
         count = sum(counts.values())
         print('%s %s' % ('{:14}'.format(str(count)), ' '.join(case)))
     toc = time.perf_counter()
@@ -63,7 +57,7 @@ if __name__=='__main__':
         for i in range(trials):
             case = list(random.sample(all_channel_names, size))
             with CountRequester(host, port) as requester:
-                counts = requester.get_counts(case, study_name)
+                counts = requester.get_counts(case, [], study_name)
             count = sum(counts.values())
             print('%s %s' % ('{:14}'.format(str(count)), ' '.join(case)))
         toc = time.perf_counter()

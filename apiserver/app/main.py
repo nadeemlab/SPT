@@ -8,6 +8,9 @@ from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
+from .counts_service import CountRequester
+counts_service_host = os.environ['DB_ENDPOINT']
+
 app = FastAPI()
 
 
@@ -527,6 +530,63 @@ async def get_phenotype_criteria(
             media_type = 'application/json',
         )
 
+
+@app.get("/anonymous-phenotype-counts-fast/")
+async def get_phenotype_criteria(
+    positive_markers_tab_delimited : str = Query(default=None),
+    negative_markers_tab_delimited : str = Query(default=None),
+    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+):
+    if not positive_markers_tab_delimited is None:
+        positive_markers = positive_markers_tab_delimited.split('\t')
+    else:
+        positive_markers = []
+    positive_markers = list(set(positive_markers).difference(['']))
+    if not negative_markers_tab_delimited is None:
+        negative_markers = negative_markers_tab_delimited.split('\t')
+    else:
+        negative_markers = []
+    negative_markers = list(set(negative_markers).difference(['']))
+
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+
+        total_query = '''
+        SELECT count(*)
+        FROM histological_structure_identification hsi
+        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
+        JOIN data_file df ON hsi.data_source = df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+        ;
+        '''
+        cursor.execute(total_query, (specimen_measurement_study,))
+        number_cells = cursor.fetchall()[0][0]
+
+    host = counts_service_host
+    port = 8016
+    with CountRequester(host, port) as requester:
+        counts = requester.get_counts(positive_markers, negative_markers, specimen_measurement_study)
+    fancy_round = lambda ratio: 100 * round(ratio * 10000)/10000
+    representation = {
+        'phenotype counts' : {
+            'per specimen counts' : [
+                {
+                    'specimen' : specimen,
+                    'phenotype count' : count,
+                    'percent of all cells in specimen' : fancy_round(count / count_all_in_specimen),
+                }
+                for specimen, (count, count_all_in_specimen) in counts.items()
+            ],
+            'total number of cells in all specimens of study' : number_cells,
+        }
+    }
+    return Response(
+        content = json.dumps(representation),
+        media_type = 'application/json',
+    )
+    
 
 @app.get("/phenotype-proximity-summary/")
 async def get_phenotype_proximity_summary(

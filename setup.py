@@ -86,9 +86,10 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
         'spatialprofilingtoolbox/scripts/spt-guess-channels',
-        'spatialprofilingtoolbox/scripts/spt-generate-aws-task-definition',
         'spatialprofilingtoolbox/scripts/spt-create-db-schema',
-        'spatialprofilingtoolbox/scripts/spt-db-constraints',        
+        'spatialprofilingtoolbox/scripts/spt-db-constraints',
+        'spatialprofilingtoolbox/scripts/spt-read-expression-dump',
+        'spatialprofilingtoolbox/scripts/spt-cache-expressions-data-array',
     ],
     install_requires=requirements,
     project_urls = {

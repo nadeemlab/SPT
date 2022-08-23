@@ -14,4 +14,4 @@ ADD UNIQUE (feature_specification, specifier, ordinality) ;
 ALTER TABLE two_cohort_feature_association_test
 ADD UNIQUE (selection_criterion_1, selection_criterion_2, test, p_value, feature_tested) ;
 
-CREATE EXTENSION tablefunc;
+CREATE EXTENSION IF NOT EXISTS tablefunc;

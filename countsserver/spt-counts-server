@@ -76,6 +76,16 @@ class CountsProvider:
             counts[specimen] = count
         return counts
 
+    def count_structures_of_partial_signed_signature(self, positives_signature, negatives_signature, study_name):
+        counts = {}
+        for specimen, data_array in self.data_arrays[study_name].items():
+            count = 0
+            for entry in data_array:
+                if (entry | positives_signature == entry) and (~entry | negatives_signature == ~entry):
+                    count = count + 1
+            counts[specimen] = count
+        return counts
+
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):

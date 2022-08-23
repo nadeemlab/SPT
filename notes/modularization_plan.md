@@ -7,9 +7,9 @@ Then carefully arrange the imports and init files so that scripts from a given p
 - control. Configuring runs, installing/setting up/status querying docker containers, reporting on log files.
 - workflows. The components that are scheduled by the workflow manager/engine. Initializer, core, integrator, etc.
 - db. DB administration tasks. Creating schema, constraints, views, granting roles, etc.
-- countsserver. 
-- apiserver
-- dashboard
+- countsserver. Cache builder, tcp server, client examples and benchmarking.
+- apiserver. Containerized API server.
+- dashboard. HTML/CSS/JS for frontend.
 
 Each subpackage will have its own scripts and tests.
 

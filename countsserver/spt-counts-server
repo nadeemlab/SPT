@@ -63,7 +63,7 @@ class CountsProvider:
             for entry in data_array:
                 if entry == signature:
                     count = count + 1
-            counts[specimen] = count
+            counts[specimen] = [count, len(data_array)]
         return counts
 
     def count_structures_of_partial_signature(self, signature, study_name):
@@ -73,7 +73,7 @@ class CountsProvider:
             for entry in data_array:
                 if entry | signature == entry:
                     count = count + 1
-            counts[specimen] = count
+            counts[specimen] = [count, len(data_array)]
         return counts
 
     def count_structures_of_partial_signed_signature(self, positives_signature, negatives_signature, study_name):
@@ -83,7 +83,7 @@ class CountsProvider:
             for entry in data_array:
                 if (entry | positives_signature == entry) and (~entry | negatives_signature == ~entry):
                     count = count + 1
-            counts[specimen] = count
+            counts[specimen] = [count, len(data_array)]
         return counts
 
 

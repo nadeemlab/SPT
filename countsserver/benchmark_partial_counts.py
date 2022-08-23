@@ -4,8 +4,7 @@ import random
 import re
 import subprocess
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.counts_service import CountRequester
+from .counts_service import CountRequester
 
 
 def infer_default_address():

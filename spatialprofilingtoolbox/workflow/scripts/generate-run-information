@@ -6,8 +6,8 @@ from os.path import join
 from os.path import basename
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflows import workflows
-from spatialprofilingtoolbox.workflows import workflow_names
+from spatialprofilingtoolbox import workflows
+from spatialprofilingtoolbox import workflow_names
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

@@ -2,8 +2,8 @@
 import argparse
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.extract_compartments import extract_compartments
-from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.environment.extract_compartments import extract_compartments
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
 
 

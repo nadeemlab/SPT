@@ -3,11 +3,11 @@ This is the Spatial Profiling Toolbox package. The source code is available
 `here <https://github.com/nadeemlab/SPT>`_.
 """
 
-from .workflows import workflows
-from .workflows import workflow_names
-from .environment.configuration_settings import get_version
+from .workflow.workflows import workflows
+from .workflow.workflows import workflow_names
+from .workflow.environment.configuration_settings import get_version
 
-from .environment.logging.log_formats import colorized_logger
+from .workflow.environment.logging.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 __version__ = get_version()

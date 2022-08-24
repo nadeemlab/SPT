@@ -4,8 +4,8 @@ import argparse
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import workflows
 from spatialprofilingtoolbox import get_integrator
-from spatialprofilingtoolbox.workflows.defaults.computational_design import ComputationalDesign
-from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

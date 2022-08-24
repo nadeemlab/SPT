@@ -2,7 +2,7 @@
 import argparse
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.logging.run_configuration_reporter import RunConfigurationReporter
+from spatialprofilingtoolbox.workflow.environment.logging.run_configuration_reporter import RunConfigurationReporter
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

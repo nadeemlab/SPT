@@ -80,7 +80,6 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-aggregate-core-results',
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',
         'spatialprofilingtoolbox/scripts/spt-merge-performance-reports',
-        'spatialprofilingtoolbox/scripts/spt-front-proximity-viz',
         'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
         'spatialprofilingtoolbox/scripts/spt-guess-channels',

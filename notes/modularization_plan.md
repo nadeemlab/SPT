@@ -26,6 +26,10 @@ The subpackages workflows, countserver, and apiserver should support a uniform m
 ## Scripts
 It would be nice for the extras feature of setuptools to also make installation of the scripts conditional on the extras. I don't think this is quite possible.
 
+Instead perhaps a single "spt" CLI entrypoint can be defined, which looks up the correct script to run based on subsequent specifier keywords (as in e.g. "git mv").
+
+Ideally this will come with a bash completion installation which allows tab completion to reveal installed commands, as in "spt conf[tab]" -> "spt configure" (or else list completions if more than one).
+
 ## Package metadata
 It has been suggested in many places that setuptools and perhaps pip and other de facto standard Python tools are recommending deprecation of a setup.py in favor of a pyproject.toml.
 The setuptools documentation has uniform switches to explain how to translate between setup.py, setup.cfg, and pyproject.toml.

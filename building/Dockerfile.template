@@ -11,7 +11,6 @@ RUN apt-get update && apt-get -y install python3-pip
 
 {{install requirements.txt}}
 
-COPY LICENSE.md ./
 COPY setup.py ./
 COPY pyproject.toml ./
 ADD spatialprofilingtoolbox/ ./spatialprofilingtoolbox

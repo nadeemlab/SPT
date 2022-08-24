@@ -49,5 +49,5 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 5. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 6. Learn how to do recursive make.
 7. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
-
+8. Change tests to call correct scripts.
 

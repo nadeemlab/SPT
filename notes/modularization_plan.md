@@ -39,15 +39,17 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 
 ## Steps to accomplish the above
 
-1. Git move most existing files into the new directory structure, changing scripts to reflect new call syntax.
-2. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
-3. Change all import statements to reflect new structure.
-4. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
+1. [DONE] Git move most existing files into the new directory structure, changing scripts to reflect new call syntax.
+2. Change all import statements to reflect new structure.
+3. Write new entrypoint script "spt".
+4. Change invocations of the script files to reflect new entry point.
+5. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
+6. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
     data_files=[
         ('/etc/bash_completion.d', ['extras/exampleprogram.completion']),
     ],
-5. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
-6. Learn how to do recursive make.
-7. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
-8. Change tests to call correct scripts.
+7. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+8. Learn how to do recursive make.
+9. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
+10. Change tests to call correct scripts.
 

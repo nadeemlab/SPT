@@ -5,7 +5,7 @@ Then carefully arrange the imports and init files so that scripts from a given p
 
 ## Subpackages
 - control. Configuring runs, installing/setting up/status querying docker containers, reporting on log files.
-- workflows. The components that are scheduled by the workflow manager/engine. Initializer, core, integrator, etc.
+- workflow. The components that are scheduled by the workflow manager/engine. Initializer, core, integrator, etc.
 - db. DB administration tasks. Creating schema, constraints, views, granting roles, etc.
 - countsserver. Cache builder, tcp server, client examples and benchmarking.
 - apiserver. Containerized API server.
@@ -35,5 +35,19 @@ https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/
 
 https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 
+
+
+## Steps to accomplish the above
+
+1. Git move most existing files into the new directory structure, changing scripts to reflect new call syntax.
+2. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
+3. Change all import statements to reflect new structure.
+4. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
+    data_files=[
+        ('/etc/bash_completion.d', ['extras/exampleprogram.completion']),
+    ],
+5. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+6. Learn how to do recursive make.
+7. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 
 

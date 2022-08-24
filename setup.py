@@ -72,7 +72,6 @@ setuptools.setup(
     scripts=[
         'spatialprofilingtoolbox/scripts/spt-configure',
         'spatialprofilingtoolbox/scripts/spt-generate-run-information',
-        'spatialprofilingtoolbox/scripts/spt-query-for-file',
         'spatialprofilingtoolbox/scripts/spt-extract-compartments',
         'spatialprofilingtoolbox/scripts/spt-report-run-configuration',        
         'spatialprofilingtoolbox/scripts/spt-initialize',
@@ -80,7 +79,6 @@ setuptools.setup(
         'spatialprofilingtoolbox/scripts/spt-aggregate-core-results',
         'spatialprofilingtoolbox/scripts/spt-merge-sqlite-dbs',
         'spatialprofilingtoolbox/scripts/spt-merge-performance-reports',
-        'spatialprofilingtoolbox/scripts/spt-print',
         'spatialprofilingtoolbox/scripts/spt-report-on-logs',
         'spatialprofilingtoolbox/scripts/spt-guess-channels',
         'spatialprofilingtoolbox/scripts/spt-create-db-schema',

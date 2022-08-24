@@ -9,10 +9,10 @@ import pandas as pd
 import pytest
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.configuration_settings import elementary_phenotypes_file_identifier
-from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
-from spatialprofilingtoolbox.environment.dichotomization import Dichotomizer
-from spatialprofilingtoolbox.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.environment.configuration_settings import elementary_phenotypes_file_identifier
+from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
+from spatialprofilingtoolbox.workflow.environment.dichotomization import Dichotomizer
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_thresholding():

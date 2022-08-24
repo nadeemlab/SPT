@@ -18,12 +18,12 @@ from jinja2 import BaseLoader
 jinja_environment = Environment(loader=BaseLoader)
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflows import workflows
-from spatialprofilingtoolbox.workflows import workflow_names
-from spatialprofilingtoolbox.environment.configuration_settings import default_file_manifest_filename
-from spatialprofilingtoolbox.environment.configuration_settings import default_db_config_filename
-from spatialprofilingtoolbox.environment.file_io import get_input_filename_by_identifier
-from spatialprofilingtoolbox.environment.file_io import get_input_filenames_by_data_type
+from spatialprofilingtoolbox import workflows
+from spatialprofilingtoolbox import workflow_names
+from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
+from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
+from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
+from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
 
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'

@@ -10,11 +10,11 @@ import random
 import json
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.environment.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.environment.logging.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.environment.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.workflow.environment.logging.log_formats import colorized_logger
 logger = colorized_logger('spt-cache-expressions-data-array')
 
-from spatialprofilingtoolbox.environment.configuration_settings import expressions_index_filename
+from spatialprofilingtoolbox.workflow.environment.configuration_settings import expressions_index_filename
 
 
 class CompressedMatrixPuller:

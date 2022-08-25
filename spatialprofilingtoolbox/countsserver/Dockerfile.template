@@ -1,0 +1,9 @@
+FROM python:3.9-slim
+LABEL version="{{countsserver-version}}"
+LABEL service_name="countsserver"
+WORKDIR /usr/src/app
+COPY ../../setup.py ./
+COPY ../../pyproject.toml ./
+ADD ../../spatialprofilingtoolbox/ ./spatialprofilingtoolbox
+RUN pip3 install .[countsserver]
+CMD ["spt", "countsserver", "start", "--host", "0.0.0.0", "--port", "8016"]

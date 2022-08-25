@@ -2,8 +2,9 @@ FROM python:3.9-slim
 LABEL version="{{apiserver-version}}"
 LABEL service_name="apiserver"
 WORKDIR /usr/src/app
-{{install requirements}}
-# RUN pip3 install --no-cache-dir --upgrade -r ./requirements.txt
-# Glean above from new declarative style requirements ...
+COPY ../../setup.py ./
+COPY ../../pyproject.toml ./
+ADD ../../spatialprofilingtoolbox/ ./spatialprofilingtoolbox
+RUN pip3 install .[apiserver]
 COPY ./app ./
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug", "--workers", "9"]

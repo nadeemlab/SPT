@@ -46,7 +46,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 1. [DONE] Git move most existing files into the new directory structure, changing scripts to reflect new call syntax.
 2. [DONE] Change all import statements to reflect new structure.
 3. [DONE] Deprecate RTD docs.
-4. Do a first pass at resolving references to old file locations; tests, makefile, dockerfiles, setup.
+4. [] Do a first pass at resolving references to old file locations; tests, makefile, dockerfiles, setup.
 5. Write new entrypoint script "spt".
 6. Change invocations of the script files to reflect new entry point.
 7. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.

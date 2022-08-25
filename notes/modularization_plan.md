@@ -45,16 +45,17 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 
 1. [DONE] Git move most existing files into the new directory structure, changing scripts to reflect new call syntax.
 2. [DONE] Change all import statements to reflect new structure.
-3. Do a first pass at resolving references to old file locations; tests, makefile, dockerfiles, setup.
-4. Write new entrypoint script "spt".
-5. Change invocations of the script files to reflect new entry point.
-6. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
-7. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
+3. [DONE] Deprecate RTD docs.
+4. Do a first pass at resolving references to old file locations; tests, makefile, dockerfiles, setup.
+5. Write new entrypoint script "spt".
+6. Change invocations of the script files to reflect new entry point.
+7. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
+8. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
     data_files=[
         ('/etc/bash_completion.d', ['extras/exampleprogram.completion']),
     ],
-8. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
-9. Learn how to do recursive make.
-10. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
-11. Change tests to call correct scripts.
+9. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+10. Learn how to do recursive make.
+11. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
+12. Change tests to call correct scripts.
 

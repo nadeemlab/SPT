@@ -80,8 +80,8 @@ setuptools.setup(
     ],
     install_requires=requirements,
     project_urls = {
-        'Documentation': 'https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html',
+        'Documentation': 'https://github.com/nadeemlab/SPT',
         'Source code': 'https://github.com/nadeemlab/SPT'
     },
-    url = 'https://spatialprofilingtoolbox.readthedocs.io/en/prerelease/readme.html',
+    url = 'https://github.com/nadeemlab/SPT',
 )

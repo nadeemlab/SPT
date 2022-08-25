@@ -54,6 +54,15 @@ setuptools.setup(
             'version.txt',
             'requirements.txt',
         ],
+        'spatialprofilingtoolbox.apiserver': [
+            'version.txt',
+        ],
+        'spatialprofilingtoolbox.countsserver': [
+            'version.txt',
+        ],
+        'spatialprofilingtoolbox.workflow': [
+            'version.txt',
+        ],
         'spatialprofilingtoolbox.workflow.workflows': [
             'main.nf.jinja',
         ],

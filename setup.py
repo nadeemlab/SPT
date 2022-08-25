@@ -18,7 +18,7 @@ setuptools.setup(
     version=version,
     author='James Mathews',
     author_email='mathewj2@mskcc.org',
-    description='Toolbox for spatial analysis of pathology images.',
+    description='Toolbox for spatial analysis of single-cell images.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=[

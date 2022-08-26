@@ -60,6 +60,9 @@ setuptools.setup(
         'spatialprofilingtoolbox': [
             'version.txt',
         ],
+        'spatialprofilingtoolbox.entry_point': [
+            'spt-completion.sh',
+        ],
         'spatialprofilingtoolbox.apiserver': [
             'version.txt',
         ],
@@ -114,9 +117,15 @@ setuptools.setup(
             'refresh_views.sql',
         ],
     },
+    data_files=[
+        ('/etc/bash_completion.d', ['spatialprofilingtoolbox/entry_point/spt-completion.sh']),
+    ],
     python_requires='>=3.9',
     entry_points={
-        'console_scripts' : [ 'spt = spatialprofilingtoolbox.scripts.spt:main_program']
+        'console_scripts' : [
+            'spt = spatialprofilingtoolbox.entry_point.spt:main_program',
+            'spt-enable-completion = spatialprofilingtoolbox.entry_point.spt-enable-completion:main_program',
+        ]
     },
     install_requires=[
         'psycopg2-binary==2.9.3',

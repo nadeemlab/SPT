@@ -3,6 +3,7 @@ import sys
 import subprocess
 import importlib
 import re
+import os
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import submodule_names
@@ -10,6 +11,8 @@ from spatialprofilingtoolbox import submodule_names
 
 def get_commands(submodule_name):
     files = importlib.resources.files('spatialprofilingtoolbox.%s' % submodule_name)
+    if submodule_name == 'entry_point':
+        return []
     scripts = [
         re.search('/scripts/(.*)$', str(entry))
         for entry in (files / 'scripts').iterdir()

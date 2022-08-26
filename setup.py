@@ -130,6 +130,7 @@ setuptools.setup(
         'dashboard': ['Jinja2==3.0.1'],
         'db': ['pandas>=1.1.5'],
         'workflow': ['numpy==1.22.3', 'scipy==1.8.0', 'scikit-learn==0.24.1', 'pyshp==2.2.0', 'pandas>=1.1.5'],
+        'all' : ['fastapi>=0.68.0,<0.69.0', 'uvicorn>=0.15.0,<0.16.0', 'Jinja2==3.0.1', 'pandas>=1.1.5', 'numpy==1.22.3', 'scipy==1.8.0', 'scikit-learn==0.24.1', 'pyshp==2.2.0'],
     },
     project_urls = {
         'Documentation': 'https://github.com/nadeemlab/SPT',

@@ -33,7 +33,7 @@ if __name__=='__main__':
     )
     parser.add_argument(
         'command',
-        required=False,
+        nargs='?',
         help='The command name.',
     )
     parser.add_argument(

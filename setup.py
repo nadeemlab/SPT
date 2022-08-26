@@ -62,6 +62,14 @@ setuptools.setup(
         ],
         'spatialprofilingtoolbox.workflow': [
             'version.txt',
+            'scripts/aggregate-core-results',
+            'scripts/core-job',
+            'scripts/extract-compartments',
+            'scripts/generate-run-information',
+            'scripts/initialize',
+            'scripts/merge-performance-reports',
+            'scripts/merge-sqlite-dbs',
+            'scripts/report-run-configuration',
         ],
         'spatialprofilingtoolbox.workflow.workflows': [
             'main.nf.jinja',
@@ -72,6 +80,20 @@ setuptools.setup(
             'log_table.html.jinja',
             '.spt_db.config.template',
         ],
+        'spatialprofilingtoolbox.control' : [
+            'scripts/configure',
+            'scripts/guess-channels',
+            'scripts/report-on-logs',
+        ]
+        'spatialprofilingtoolbox.countsserver' : [
+            'scripts/read-expression-dump-file',
+            'scripts/cache-expressions-data-array',
+            'scripts/start',
+        ]
+        'spatialprofilingtoolbox.db' : [
+            'scripts/create-schema',
+            'scripts/modify-constraints',
+        ],
         'spatialprofilingtoolbox.db.data_model': [
             'create_roles.sql',
             'create_views.sql',
@@ -81,7 +103,7 @@ setuptools.setup(
             'pathology_schema.sql',
             'performance_tweaks.sql',
             'refresh_views.sql',
-        ]
+        ],
     },
     python_requires='>=3.7',
     scripts=[

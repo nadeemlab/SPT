@@ -118,6 +118,7 @@ RELEASE_TO_BRANCH := prerelease
 INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '.*\.sh$$' | sed 's:^\./:\.:g')
 LIBRARY_SOURCES := $(shell find spatialprofilingtoolbox/)
 LIBRARY_METADATA := setup.py spatialprofilingtoolbox/requirements.txt
+# deprecate requirements.txt and setup.py
 UNIT_TEST_SOURCES := $(shell find tests/unit_tests/*.py)
 INTEGRATION_TEST_SOURCES := $(shell find tests/integration_tests/*.sh)
 
@@ -270,13 +271,13 @@ push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css
 Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
 	@printf $(call color_in_progress,'Generating Dockerfile')
 	@date +%s > current_time.txt
-	@sed "s/^/RUN pip install --no-cache-dir /g" spatialprofilingtoolbox/requirements.txt > requirements_docker.txt
-	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
+	@sed "s/^/RUN pip install --no-cache-dir /g" spatialprofilingtoolbox/requirements.txt > requirements_docker.txt # glean this from newer declarative-style setup, not a requirements.txt
+	@line_number=$$(grep -n '{{install requirements}}' building/Dockerfile.template | cut -d ":" -f 1); \
     { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
 	@rm requirements_docker.txt
 	@version=$$(cat ${VERSION_FILE}) ;\
-	source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{version}}/$$version/g" Dockerfile
-	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{install requirements.txt}}//g" Dockerfile
+	source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{workflow-version}}/$$version/g" Dockerfile
+	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{install requirements}}//g" Dockerfile
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Generated.',$$transpired"s")

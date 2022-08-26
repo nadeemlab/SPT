@@ -2,6 +2,17 @@
 This is the Spatial Profiling Toolbox package. The source code is available
 `here <https://github.com/nadeemlab/SPT>`_.
 """
+import re
+import pkgutil
+
+def get_subpackage_name(module_info):
+    return re.sub(r'^spatialprofilingtoolbox\.?', '', module_info.name)
+
+submodule_names = [
+    get_subpackage_name(module_info)
+    for module_info in pkgutil.walk_packages(['.'])
+    if module_info.ispkg and get_subpackage_name(module_info) != ''
+]
 
 from .workflow.workflows import workflows
 from .workflow.workflows import workflow_names

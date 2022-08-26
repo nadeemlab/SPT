@@ -58,7 +58,11 @@ if __name__=='__main__':
         nargs='*',
         help='Arguments passed to the command.',
     )
-    args = parser.parse_args()
+    if len(sys.argv) >= 4 and sys.argv[3] in ['-h', '--help']:
+        sys_args = [arg for arg in sys.argv if not arg in ['-h', '--help']][1:]
+        args = parser.parse_args(sys_args)
+    else:
+        args = parser.parse_args()
 
     if args.command is None:
         commands = get_commands(args.module)

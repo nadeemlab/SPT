@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
-from .counts_service import CountRequester
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.apiserver.counts_service_query import CountRequester
 counts_service_host = os.environ['DB_ENDPOINT']
 
 app = FastAPI()

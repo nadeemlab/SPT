@@ -59,4 +59,5 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 11. Learn how to do recursive make.
 12. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 13. Change tests to call correct scripts.
+14. Assess library dependency versions for a sharper version indicator, with less than / greater than.
 

@@ -5,5 +5,5 @@ WORKDIR /usr/src/app
 COPY ../../setup.py ./
 COPY ../../pyproject.toml ./
 ADD ../../spatialprofilingtoolbox/ ./spatialprofilingtoolbox
-RUN pip3 install .[countsserver]
+RUN pip3 install ".[countsserver]"
 CMD ["spt", "countsserver", "start", "--host", "0.0.0.0", "--port", "8016"]

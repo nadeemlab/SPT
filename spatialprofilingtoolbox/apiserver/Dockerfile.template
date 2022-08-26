@@ -5,6 +5,6 @@ WORKDIR /usr/src/app
 COPY ../../setup.py ./
 COPY ../../pyproject.toml ./
 ADD ../../spatialprofilingtoolbox/ ./spatialprofilingtoolbox
-RUN pip3 install .[apiserver]
+RUN pip3 install ".[apiserver]"
 COPY ./app ./
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug", "--workers", "9"]

@@ -47,7 +47,7 @@ process generate_run_information {
 
     script:
     """
-    spt-generate-run-information \
+    spt workflow generate-run-information \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --input-path='${input_path}' \
@@ -68,7 +68,7 @@ process extract_compartments {
 
     script:
     """
-    spt-extract-compartments \
+    spt workflow extract-compartments \
      ${cell_manifest_files} \
      --compartments-list-file=._compartments.txt
     """
@@ -94,7 +94,7 @@ process workflow_initialize {
 
     script:
     """
-    spt-initialize \
+    spt workflow initialize \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
 {%- if outcomes %}
@@ -131,7 +131,7 @@ process core_job {
     script:
     """
     echo "Initialization status: ${initialization_flag}"
-    spt-core-job \
+    spt workflow core-job \
      --workflow='${workflow}' \
      --input-file-identifier='${input_file_identifier}' \
      --input-filename=${input_filename} \
@@ -162,7 +162,7 @@ process report_run_configuration {
 
     script:
     """
-    spt-report-run-configuration \
+    spt workflow report-run-configuration \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
 {%- if outcomes %}
@@ -189,7 +189,7 @@ process merge_databases {
 
     script:
     """
-    spt-merge-sqlite-dbs ${all_metrics_databases} --output=metrics_database.db
+    spt workflow merge-sqlite-dbs ${all_metrics_databases} --output=metrics_database.db
     """
 }
 
@@ -204,7 +204,7 @@ process merge_performance_reports {
 
     script:
     """
-    spt-merge-performance-reports ${all_performance_reports} --output=performance_report.md
+    spt workflow merge-performance-reports ${all_performance_reports} --output=performance_report.md
     """
 }
 
@@ -231,7 +231,7 @@ process aggregate_results {
 
     script:
     """
-    spt-aggregate-core-results \
+    spt workflow aggregate-core-results \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --metrics-database-filename=${metrics_database} \

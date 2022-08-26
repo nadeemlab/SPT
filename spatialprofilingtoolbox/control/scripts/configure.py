@@ -58,7 +58,7 @@ def write_pipeline_script(variables):
         file.write(pipeline_file)
 
 def record_configuration_command(variables):
-    tokens = ['spt-configure']
+    tokens = ['spt workflow configure']
     tokens.append('--workflow="%s"' % variables['workflow'])
     if variables['executor'] == 'local':
         tokens.append('--local')

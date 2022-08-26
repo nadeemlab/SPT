@@ -1,4 +1,4 @@
 #!/bin/bash
 
-spt-configure --local --input-path=./data --workflow='phenotype density'
+spt workflow configure --local --input-path=./data --workflow='phenotype density'
 nextflow run .

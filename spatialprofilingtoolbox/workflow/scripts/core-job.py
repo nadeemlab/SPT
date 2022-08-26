@@ -3,7 +3,7 @@ import argparse
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import workflows
-from spatialprofilingtoolbox import workflow_names
+from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_core_job
 
 if __name__=='__main__':
@@ -17,7 +17,7 @@ if __name__=='__main__':
     parser.add_argument(
         '--workflow',
         dest='workflow',
-        choices=workflow_names,
+        choices=get_workflow_names(),
         required=True,
     )
     parser.add_argument(

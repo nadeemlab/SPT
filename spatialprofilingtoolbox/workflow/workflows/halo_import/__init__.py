@@ -9,14 +9,11 @@ from .computational_design import HALOImportDesign
 from .core import HALOImportCoreJob
 from .integrator import HALOImportIntegrator
 
-name = 'HALO import'
-components =  {
-    name : WorkflowModules(
-        generator = JobGenerator,
-        initializer = HALOImportInitializer,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = HALOImportDesign,
-        core_job = HALOImportCoreJob,
-        integrator = HALOImportIntegrator,
-    ),
-}
+components = WorkflowModules(
+    generator = JobGenerator,
+    initializer = HALOImportInitializer,
+    dataset_design = HALOCellMetadataDesign,
+    computational_design = HALOImportDesign,
+    core_job = HALOImportCoreJob,
+    integrator = HALOImportIntegrator,
+)

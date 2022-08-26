@@ -7,21 +7,19 @@ Each of these subpackages contains the implementation details for one full pipel
 4. The **computational design**. This is where idiosyncratic configuration parameters specific to this pipeline are stored and managed.
 """
 import importlib
-from setuptools import find_packages
-import os
-from os.path import dirname
 
-subpackages = {
-    name : importlib.import_module('.%s' % name, __name__)
-    for name in find_packages(where=dirname(__file__))
-    if name != 'defaults'
+workflow_names_and_subpackages = {
+    'phenotype density' : 'density',
+    'front proximity' : 'front_proximity',
+    'HALO import' : 'halo_import',
+    'nearest distance to compartment' : 'nearest_distance',
+    'phenotype proximity' : 'phenotype_proximity',
 }
-workflow_components = [
-    getattr(subpackage, 'components')
-    for name, subpackage in subpackages.items()
-]
-workflow_names = [list(d.keys())[0] for d in workflow_components]
-workflows = {
-    key : [d[key] for d in workflow_components if key in d][0]
-    for key in workflow_names
-}
+
+def get_workflow_names():
+    return list(workflow_names_and_subpackages.keys())
+
+def get_workflow(workflow_name):
+    subpackage_name = workflow_names_and_subpackages[workflow_name]
+    subpackage = importlib.import_module('.%s' % subpackage_name, __name__)
+    return subpackage.components

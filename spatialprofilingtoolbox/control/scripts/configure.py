@@ -19,7 +19,7 @@ jinja_environment = Environment(loader=BaseLoader)
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import workflows
-from spatialprofilingtoolbox import workflow_names
+from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
 from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
 from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
@@ -95,7 +95,7 @@ if __name__=='__main__':
     )
     parser.add_argument(
         '--workflow',
-        choices=workflow_names,
+        choices=get_workflow_names(),
         required=True,
     )
     parser.add_argument(

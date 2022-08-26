@@ -7,7 +7,7 @@ from os.path import basename
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import workflows
-from spatialprofilingtoolbox import workflow_names
+from spatialprofilingtoolbox import get_workflow_names
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -25,7 +25,7 @@ if __name__=='__main__':
         '--workflow',
         dest='workflow',
         type=str,
-        choices=workflow_names,
+        choices=get_workflow_names(),
         required=True,
     )
     parser.add_argument(

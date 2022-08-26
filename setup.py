@@ -11,7 +11,8 @@ def get_file_contents(filename):
 long_description = """See the [user documentation](https://github.com/nadeemlab/SPT).
 """
 version = get_file_contents(join('spatialprofilingtoolbox', 'version.txt'))
-requirements = get_file_contents(join('spatialprofilingtoolbox', 'requirements.txt')).rstrip('\n').split('\n')
+# requirements = get_file_contents(join('spatialprofilingtoolbox', 'requirements.txt')).rstrip('\n').split('\n')
+requirements = []
 
 setuptools.setup(
     name='spatialprofilingtoolbox',
@@ -24,11 +25,18 @@ setuptools.setup(
     packages=[
         'spatialprofilingtoolbox',
         'spatialprofilingtoolbox.apiserver',
+        'spatialprofilingtoolbox.apiserver.scripts',
         'spatialprofilingtoolbox.control',
+        'spatialprofilingtoolbox.control.scripts',
         'spatialprofilingtoolbox.countsserver',
+        'spatialprofilingtoolbox.countsserver.scripts',
         'spatialprofilingtoolbox.dashboard',
+        'spatialprofilingtoolbox.dashboard.scripts',
         'spatialprofilingtoolbox.db',
+        'spatialprofilingtoolbox.db.scripts',
         'spatialprofilingtoolbox.db.data_model',
+        'spatialprofilingtoolbox.workflow',
+        'spatialprofilingtoolbox.workflow.scripts',
         'spatialprofilingtoolbox.workflow.dataset_designs',
         'spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging',
         'spatialprofilingtoolbox.workflow.workflows',
@@ -62,14 +70,17 @@ setuptools.setup(
         ],
         'spatialprofilingtoolbox.workflow': [
             'version.txt',
-            'scripts/aggregate-core-results',
-            'scripts/core-job',
-            'scripts/extract-compartments',
-            'scripts/generate-run-information',
-            'scripts/initialize',
-            'scripts/merge-performance-reports',
-            'scripts/merge-sqlite-dbs',
-            'scripts/report-run-configuration',
+        ],
+        'spatialprofilingtoolbox.workflow.scripts': [
+            'version.txt.py',
+            'aggregate-core-results.py',
+            'core-job.py',
+            'extract-compartments.py',
+            'generate-run-information.py',
+            'initialize.py',
+            'merge-performance-reports.py',
+            'merge-sqlite-dbs.py',
+            'report-run-configuration.py',
         ],
         'spatialprofilingtoolbox.workflow.workflows': [
             'main.nf.jinja',
@@ -80,19 +91,19 @@ setuptools.setup(
             'log_table.html.jinja',
             '.spt_db.config.template',
         ],
-        'spatialprofilingtoolbox.control' : [
-            'scripts/configure',
-            'scripts/guess-channels',
-            'scripts/report-on-logs',
+        'spatialprofilingtoolbox.control.scripts' : [
+            'configure.py',
+            'guess-channels.py',
+            'report-on-logs.py',
         ],
-        'spatialprofilingtoolbox.countsserver' : [
-            'scripts/read-expression-dump-file',
-            'scripts/cache-expressions-data-array',
-            'scripts/start',
+        'spatialprofilingtoolbox.countsserver.scripts' : [
+            'read-expression-dump-file.py',
+            'cache-expressions-data-array.py',
+            'start.py',
         ],
-        'spatialprofilingtoolbox.db' : [
-            'scripts/create-schema',
-            'scripts/modify-constraints',
+        'spatialprofilingtoolbox.db.scripts' : [
+            'create-schema.py',
+            'modify-constraints.py',
         ],
         'spatialprofilingtoolbox.db.data_model': [
             'create_roles.sql',
@@ -105,7 +116,7 @@ setuptools.setup(
             'refresh_views.sql',
         ],
     },
-    python_requires='>=3.7',
+    python_requires='>=3.9',
     scripts=[
         'spatialprofilingtoolbox/scripts/spt',
     ],

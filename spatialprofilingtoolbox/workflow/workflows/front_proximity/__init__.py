@@ -14,14 +14,11 @@ from .core import FrontProximityCoreJob
 from .computational_design import FrontProximityDesign
 from .integrator import FrontProximityAnalysisIntegrator
 
-name = 'front proximity'
-components = {
-    name : WorkflowModules(
-        generator = JobGenerator,
-        initializer = FrontProximityInitializer,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = FrontProximityDesign,
-        core_job = FrontProximityCoreJob,
-        integrator = FrontProximityAnalysisIntegrator,
-    ),
-}
+components = WorkflowModules(
+    generator = JobGenerator,
+    initializer = FrontProximityInitializer,
+    dataset_design = HALOCellMetadataDesign,
+    computational_design = FrontProximityDesign,
+    core_job = FrontProximityCoreJob,
+    integrator = FrontProximityAnalysisIntegrator,
+)

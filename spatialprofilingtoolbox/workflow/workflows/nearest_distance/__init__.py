@@ -13,13 +13,11 @@ from .computational_design import NearestDistanceDesign
 from .integrator import NearestDistanceAnalysisIntegrator
 
 name = 'nearest distance to compartment'
-components =  {
-    name : WorkflowModules(
-        generator = JobGenerator,
-        initializer = NearestDistanceInitializer,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = NearestDistanceDesign,
-        core_job = NearestDistanceCoreJob,
-        integrator = NearestDistanceAnalysisIntegrator,
-    ),
-}
+components = WorkflowModules(
+    generator = JobGenerator,
+    initializer = NearestDistanceInitializer,
+    dataset_design = HALOCellMetadataDesign,
+    computational_design = NearestDistanceDesign,
+    core_job = NearestDistanceCoreJob,
+    integrator = NearestDistanceAnalysisIntegrator,
+)

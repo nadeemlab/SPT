@@ -19,14 +19,11 @@ from .core import PhenotypeProximityCoreJob
 from .computational_design import PhenotypeProximityDesign
 from .integrator import PhenotypeProximityAnalysisIntegrator
 
-name = 'phenotype proximity'
-components = {
-    name : WorkflowModules(
-        generator = JobGenerator,
-        initializer = PhenotypeProximityInitializer,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = PhenotypeProximityDesign,
-        core_job = PhenotypeProximityCoreJob,
-        integrator = PhenotypeProximityAnalysisIntegrator,
-    ),
-}
+components = WorkflowModules(
+    generator = JobGenerator,
+    initializer = PhenotypeProximityInitializer,
+    dataset_design = HALOCellMetadataDesign,
+    computational_design = PhenotypeProximityDesign,
+    core_job = PhenotypeProximityCoreJob,
+    integrator = PhenotypeProximityAnalysisIntegrator,
+)

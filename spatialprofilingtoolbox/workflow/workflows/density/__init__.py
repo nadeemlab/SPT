@@ -12,14 +12,11 @@ from .core import DensityCoreJob
 from .computational_design import DensityDesign
 from .integrator import DensityAnalysisIntegrator
 
-name = 'phenotype density'
-components =  {
-    name : WorkflowModules(
-        generator = JobGenerator,
-        initializer = DensityInitializer,
-        dataset_design = HALOCellMetadataDesign,
-        computational_design = DensityDesign,
-        core_job = DensityCoreJob,
-        integrator = DensityAnalysisIntegrator,
-    ),
-}
+components = WorkflowModules(
+    generator = JobGenerator,
+    initializer = DensityInitializer,
+    dataset_design = HALOCellMetadataDesign,
+    computational_design = DensityDesign,
+    core_job = DensityCoreJob,
+    integrator = DensityAnalysisIntegrator,
+)

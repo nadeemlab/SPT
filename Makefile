@@ -117,7 +117,7 @@ PYTHON := python3
 RELEASE_TO_BRANCH := prerelease
 INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '.*\.sh$$' | sed 's:^\./:\.:g')
 LIBRARY_SOURCES := $(shell find spatialprofilingtoolbox/)
-LIBRARY_METADATA := setup.py spatialprofilingtoolbox/requirements.txt
+LIBRARY_METADATA := setup.py
 # deprecate requirements.txt and setup.py
 UNIT_TEST_SOURCES := $(shell find tests/unit_tests/*.py)
 INTEGRATION_TEST_SOURCES := $(shell find tests/integration_tests/*.sh)
@@ -271,13 +271,9 @@ push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css
 Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
 	@printf $(call color_in_progress,'Generating Dockerfile')
 	@date +%s > current_time.txt
-	@sed "s/^/RUN pip install --no-cache-dir /g" spatialprofilingtoolbox/requirements.txt > requirements_docker.txt # glean this from newer declarative-style setup, not a requirements.txt
-	@line_number=$$(grep -n '{{install requirements}}' building/Dockerfile.template | cut -d ":" -f 1); \
-    { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
-	@rm requirements_docker.txt
+	@cp Dockerfile.template Dockerfile
 	@version=$$(cat ${VERSION_FILE}) ;\
-	source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{workflow-version}}/$$version/g" Dockerfile
-	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{install requirements}}//g" Dockerfile
+	source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{workflow-version}}/$$workflow_version/g" Dockerfile
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Generated.',$$transpired"s")
@@ -355,8 +351,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv clean-
 	@date +%s > current_time.txt
 	@source venv/bin/activate ; \
     found=$$(pip freeze | grep -o spatialprofilingtoolbox | head -n1);\
-    pip install -q -r spatialprofilingtoolbox/requirements.txt; \
-    pip install . >/dev/null 2>&1; \
+    pip install ".[all]" >/dev/null 2>&1; \
     pip install pytest >/dev/null 2>&1;
 	@touch .installed-in-venv
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \

@@ -235,7 +235,7 @@ docker-push-counts-server: docker-counts-server-build
 	docker push ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:$$version
 	@docker push ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:latest
 
-docker-counts-server-build: countsserver/Dockerfile countsserver/spt-counts-server .docker-daemon-running 
+docker-counts-server-build: spatialprofilingtoolbox/countsserver/Dockerfile spatialprofilingtoolbox/countsserver/scripts/start .docker-daemon-running 
 	@printf $(call color_in_progress,'Building Docker container (for upload to counts server repository)')
 	@date +%s > current_time.txt
 	@version=$$(cat ${VERSION_FILE}); \
@@ -366,7 +366,7 @@ ${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv clean-
 clean-local-postgres:
 	@printf $(call color_in_progress,'Resetting local postgres database.')
 	@date +%s > current_time.txt
-	@spt-create-db-schema --database-config-file=~/.spt_db.config.local --force >/dev/null 2>&1
+	@spt db create-schema --database-config-file=~/.spt_db.config.local --force >/dev/null 2>&1
 	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
     ((transpired=now_secs - initial)); \
     printf $(call color_final,'Reset.',$$transpired"s")

@@ -5,4 +5,4 @@ if [[ -f $merged ]];
 then
     rm $merged
 fi
-spt-merge-sqlite-dbs data/example_db1.db data/example_db2.db --output=$merged
+spt workflow merge-sqlite-dbs data/example_db1.db data/example_db2.db --output=$merged

@@ -48,7 +48,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 3. [DONE] Deprecate RTD docs.
 4. [DONE] Do a first pass at resolving references to old file locations; tests, makefile, dockerfiles, setup.
 5. [DONE] Write new entrypoint script "spt".
-6. Change invocations of the script files to reflect new entry point.
+6. [DONE] Change invocations of the script files to reflect new entry point.
 7. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
 8. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
     data_files=[

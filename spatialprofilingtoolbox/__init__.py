@@ -18,9 +18,10 @@ submodule_names = [
 ]
 
 from .workflow.workflows import get_workflow
+from .workflow.workflows import get_workflow_names
 from .workflow.environment.configuration_settings import get_version
 
-from .workflow.environment.logging.log_formats import colorized_logger
+from .log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 __version__ = get_version()

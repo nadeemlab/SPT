@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
 import argparse
 
 import spatialprofilingtoolbox
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_initializer

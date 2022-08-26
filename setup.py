@@ -124,7 +124,7 @@ setuptools.setup(
     entry_points={
         'console_scripts' : [
             'spt = spatialprofilingtoolbox.entry_point.spt:main_program',
-            'spt-enable-completion = spatialprofilingtoolbox.entry_point.spt-enable-completion:main_program',
+            'spt-enable-completion = spatialprofilingtoolbox.entry_point.spt_enable_completion:main_program',
         ]
     },
     install_requires=[

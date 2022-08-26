@@ -84,12 +84,12 @@ setuptools.setup(
             'scripts/configure',
             'scripts/guess-channels',
             'scripts/report-on-logs',
-        ]
+        ],
         'spatialprofilingtoolbox.countsserver' : [
             'scripts/read-expression-dump-file',
             'scripts/cache-expressions-data-array',
             'scripts/start',
-        ]
+        ],
         'spatialprofilingtoolbox.db' : [
             'scripts/create-schema',
             'scripts/modify-constraints',

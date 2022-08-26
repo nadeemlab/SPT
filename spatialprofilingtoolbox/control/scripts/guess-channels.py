@@ -1,9 +1,13 @@
-#!/usr/bin/env python3
 import argparse
 import csv
 import re
 
-import pandas as pd
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    import pandas as pd
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'control')
 
 
 def parse_channels(columns):

@@ -1,11 +1,15 @@
-#!/usr/bin/env python3
 import argparse
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox import workflows
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+from spatialprofilingtoolbox import workflow_names
+from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_integrator
-from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+try:
+    from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
+    from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'workflow')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -44,6 +48,7 @@ if __name__=='__main__':
         required=False,
     )
 
+    workflows = {name : get_workflow(name) for name in workflow_names}
     computational_designs = [
         w.computational_design
         for w in workflows.values()

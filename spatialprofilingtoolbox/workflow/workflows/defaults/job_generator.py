@@ -6,7 +6,7 @@ import pandas as pd
 
 from ...environment.configuration_settings import elementary_phenotypes_file_identifier
 from ...environment.configuration_settings import composite_phenotypes_file_identifier
-from ...environment.logging.log_formats import colorized_logger
+from ....log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

@@ -5,7 +5,13 @@ import sqlite3
 import re
 import argparse
 
-import pandas as pd
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    import pandas as pd
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'workflow')
+
 
 def get_table_names(uri):
     connection = sqlite3.connect(uri)

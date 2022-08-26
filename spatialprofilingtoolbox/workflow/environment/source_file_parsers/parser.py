@@ -4,7 +4,7 @@ import enum
 from enum import Enum
 from enum import auto
 
-from ..logging.log_formats import colorized_logger
+from ....log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 

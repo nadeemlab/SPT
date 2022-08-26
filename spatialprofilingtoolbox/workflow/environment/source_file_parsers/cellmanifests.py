@@ -11,7 +11,7 @@ from ..file_io import compute_sha256
 from ..file_io import get_input_filename_by_identifier
 from .parser import SourceToADIParser
 from .parser import DBBackend
-from ..logging.log_formats import colorized_logger
+from ....log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 from ..logging.performance_timer import PerformanceTimer

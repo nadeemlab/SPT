@@ -3,7 +3,7 @@ import pandas as pd
 
 from .parser import SourceToADIParser
 from .parser import get_unique_value
-from ..logging.log_formats import colorized_logger
+from ....log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 

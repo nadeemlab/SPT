@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import os
 from os.path import basename
@@ -13,10 +12,16 @@ from collections import OrderedDict
 import importlib.resources
 import base64
 
-import pandas as pd
-import jinja2
-from jinja2 import Environment
-from jinja2 import BaseLoader
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    import pandas as pd
+    import jinja2
+    from jinja2 import Environment
+    from jinja2 import BaseLoader
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'control')
+
 jinja_environment = Environment(loader=BaseLoader)
 
 def quote_hash(input):

@@ -2,7 +2,11 @@
 import argparse
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflow.environment.logging.run_configuration_reporter import RunConfigurationReporter
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    from spatialprofilingtoolbox.workflow.environment.logging.run_configuration_reporter import RunConfigurationReporter
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'workflow')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

@@ -1,7 +1,11 @@
-#!/usr/bin/env python3
 import argparse
 
-import pandas as pd
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    import pandas as pd
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'workflow')
 
 def aggregate_performance_reports(reports):
     df = pd.concat(reports).groupby(['from', 'to']).sum().reset_index()

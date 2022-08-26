@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 from shutil import which
 import os
@@ -12,18 +11,24 @@ from os.path import expanduser
 from os import getcwd
 import importlib.resources
 
-import jinja2
-from jinja2 import Environment
-from jinja2 import BaseLoader
-jinja_environment = Environment(loader=BaseLoader)
-
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox import workflows
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
-from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
-from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
-from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
-from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
+
+try:
+    import jinja2
+    from jinja2 import Environment
+    from jinja2 import BaseLoader
+    from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
+    from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
+    from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
+    from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
+    workflows = {name : get_workflow(name) for name in get_workflow_names()}
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'control')
+
+jinja_environment = Environment(loader=BaseLoader)
 
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'

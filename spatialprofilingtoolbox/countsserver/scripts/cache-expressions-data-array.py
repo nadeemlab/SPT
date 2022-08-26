@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import os
 from os.path import join
@@ -10,11 +9,15 @@ import random
 import json
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflow.environment.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.workflow.environment.logging.log_formats import colorized_logger
-logger = colorized_logger('spt-cache-expressions-data-array')
+from spatialprofilingtoolbox.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.log_formats import colorized_logger
+logger = colorized_logger('cache-expressions-data-array')
 
-from spatialprofilingtoolbox.workflow.environment.configuration_settings import expressions_index_filename
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    from spatialprofilingtoolbox.workflow.environment.configuration_settings import expressions_index_filename
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'workflow')
 
 
 class CompressedMatrixPuller:

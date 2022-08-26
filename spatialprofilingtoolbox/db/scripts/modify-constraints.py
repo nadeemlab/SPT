@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import os
 from os.path import exists
@@ -9,12 +8,17 @@ from enum import Enum
 from enum import auto
 import importlib.resources
 import re
-import pandas as pd
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflow.environment.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.workflow.environment.logging.log_formats import colorized_logger
-logger = colorized_logger('spt-db-constraints')
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    import pandas as pd
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'db')
+
+from spatialprofilingtoolbox.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.log_formats import colorized_logger
+logger = colorized_logger('modify-constraints')
 
 
 class DBConstraintsToggling(Enum):

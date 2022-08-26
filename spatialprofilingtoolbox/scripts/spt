@@ -1,6 +1,7 @@
 #!usr/bin/env python3
 import argparse
 import sys
+import subprocess
 import importlib
 import re
 
@@ -14,23 +15,24 @@ def get_commands(submodule_name):
         re.search('/scripts/(.*)$', str(entry))
         for entry in (files / 'scripts').iterdir()
     ]
-    return [
+    return sorted([
         re.sub(r'\.(py|sh)$', '', script.group(1))
         for script in scripts
         if script and (not re.search(r'^__.*__(\.py)?$', script.group(1)))
-    ]
+    ])
+
 
 def get_executable_and_script(submodule_name, script_name):
     full_script_name = None
-    if importlib.resources.is_resource('spatialprofilingtoolbox.%s' % submodule_name, '%s.py' % script_name):
+    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name, '%s.py' % script_name):
         executable = sys.executable
         full_script_name = '%s.py' % script_name
-    if importlib.resources.is_resource('spatialprofilingtoolbox.%s' % submodule_name, '%s.sh' % script_name):
+    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name, '%s.sh' % script_name):
         executable = '/bin/bash'
         full_script_name = '%s.sh' % script_name
     if full_script_name is None:
         raise ValueError('Did not locate %s from submodule "%s".' % (script_name, submodule_name))
-    with importlib.resources.path('spatialprofilingtoolbox.%s' % submodule_name, full_script_name) as path:
+    with importlib.resources.path('spatialprofilingtoolbox.%s.scripts' % submodule_name, full_script_name) as path:
         script_path = path
     return executable, script_path
 
@@ -70,7 +72,7 @@ if __name__=='__main__':
 
     if len(sys.argv) == 3 and sys.argv[1] == args.module and sys.argv[2] == args.command:
         subprocess.run([
-            '/bin/bash',
+            executable,
             script_path,
             '--help',
         ])

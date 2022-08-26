@@ -6,8 +6,9 @@ from os.path import join
 from os.path import basename
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox import workflows
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
 from spatialprofilingtoolbox import get_workflow_names
+from spatialprofilingtoolbox import get_workflow
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -81,6 +82,11 @@ if __name__=='__main__':
 
     if not exists(args.file_manifest_file):
         raise FileNotFoundError(args.file_manifest_file)
+
+    try:
+        workflows = {name : get_workflow(name) for name in get_workflow_names()}
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
     Generator = workflows[args.workflow].generator
     DatasetDesign = workflows[args.workflow].dataset_design

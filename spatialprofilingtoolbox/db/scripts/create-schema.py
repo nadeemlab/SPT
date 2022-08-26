@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import os
 from os.path import join
@@ -7,8 +6,12 @@ from os.path import abspath
 from os.path import expanduser
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
-from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
+from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+try:
+    from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
+    from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'db')
 
 
 if __name__=='__main__':

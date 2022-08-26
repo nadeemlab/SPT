@@ -1,7 +1,7 @@
 import sqlite3
 
 from ..defaults.core import CoreJob
-from ...environment.logging.log_formats import colorized_logger
+from ....log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

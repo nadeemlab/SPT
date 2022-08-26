@@ -2,10 +2,14 @@
 import argparse
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox import workflows
+from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_initializer
-
+try:
+    workflows = {name : get_workflow(name) for name in get_workflow_names()}
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'workflow')
+    
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         description = 'One parallelizable "core" computation job.',

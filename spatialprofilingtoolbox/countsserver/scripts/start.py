@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import json
 import socketserver
@@ -6,7 +5,7 @@ import os
 import re
 
 from log_formats import colorized_logger
-logger = colorized_logger('spt-counts-server')
+logger = colorized_logger('start')
 
 
 class CountsProvider:

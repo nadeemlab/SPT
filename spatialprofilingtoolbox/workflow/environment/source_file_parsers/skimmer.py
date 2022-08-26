@@ -5,10 +5,10 @@ import psycopg2
 from psycopg2 import sql
 import pandas as pd
 
-from ..logging.log_formats import colorized_logger
+from ....log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-from ..database_connection import DatabaseConnectionMaker
+from ....database_connection import DatabaseConnectionMaker
 from ..verbose_sql_execution import verbose_sql_execute
 from .subjects import SubjectsParser
 from .samples import SamplesParser

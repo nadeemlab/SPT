@@ -28,7 +28,6 @@ if __name__=='__main__':
     parser.add_argument(
         'module',
         choices=submodule_names,
-        required=True,
         help='The specific submodule the command is from.',
     )
     parser.add_argument(

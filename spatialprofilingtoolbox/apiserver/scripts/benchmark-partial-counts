@@ -4,7 +4,7 @@ import re
 import subprocess
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.apiserver.counts_service_query import CountRequester
+from spatialprofilingtoolbox.apiserver.counts_service_client import CountRequester
 
 
 def guess_default_address():

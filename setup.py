@@ -114,9 +114,6 @@ setuptools.setup(
         ],
     },
     python_requires='>=3.9',
-    scripts=[
-        'spatialprofilingtoolbox/scripts/spt',
-    ],
     entry_points={
         'console_scripts' : [ 'spt = spatialprofilingtoolbox.scripts.spt:main_program']
     },

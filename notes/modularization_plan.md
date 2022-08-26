@@ -50,14 +50,15 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 5. [DONE] Write new entrypoint script "spt".
 6. [DONE] Change invocations of the script files to reflect new entry point.
 7. [DONE] Implement extras feature for submodules.
-8. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
+8. [DONE] Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
     data_files=[
         ('/etc/bash_completion.d', ['extras/exampleprogram.completion']),
     ],
-9. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
-10. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
-11. Learn how to do recursive make.
-12. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
-13. Change tests to call correct scripts.
-14. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+9. [DONE] Create manual completions install mechanism in case /etc/bash_completion.d does not exist.
+10. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
+11. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+12. Learn how to do recursive make.
+13. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
+14. Change tests to call correct scripts.
+15. Assess library dependency versions for a sharper version indicator, with less than / greater than.
 

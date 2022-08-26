@@ -117,6 +117,9 @@ setuptools.setup(
     scripts=[
         'spatialprofilingtoolbox/scripts/spt',
     ],
+    entry_points={
+        'console_scripts' : [ 'spt = spatialprofilingtoolbox.scripts.spt:main_program']
+    },
     install_requires=[
         'psycopg2-binary==2.9.3',
     ],

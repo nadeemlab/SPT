@@ -7,7 +7,7 @@ import pandas as pd
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from ..configuration_settings import get_version
-from .log_formats import colorized_logger
+from ....log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 

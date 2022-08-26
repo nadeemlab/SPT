@@ -1,4 +1,3 @@
-#!usr/bin/env python3
 import argparse
 import sys
 import subprocess
@@ -37,7 +36,7 @@ def get_executable_and_script(submodule_name, script_name):
     return executable, script_path
 
 
-if __name__=='__main__':
+def main_program():
     parser = argparse.ArgumentParser(
         prog='spt',
         description = 'spatialprofilingtoolbox commands',

@@ -84,6 +84,5 @@ if __name__=='__main__':
         subprocess.run([
             executable,
             script_path,
-            unparsed_arguments,
-        ])
+        ] + unparsed_arguments)
         exit()

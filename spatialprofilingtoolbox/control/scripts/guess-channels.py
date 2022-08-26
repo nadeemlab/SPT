@@ -42,6 +42,7 @@ def create_elementary_phenotypes_table(available_channels):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt control guess-channels',
         description = 'Attempt to extract channel information from a list of HALO cell manifest files.',
     )
 

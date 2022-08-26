@@ -48,6 +48,7 @@ def compute_performance_filename(db_filename):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt workflow merge-sqlite-dbs',
         description = ''.join([
             'Merges multiple input sqlite databases with identical table schemas.',
             'If an "id" column is present, it is removed. No "id" column will ',

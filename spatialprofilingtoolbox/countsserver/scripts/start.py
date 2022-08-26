@@ -117,6 +117,7 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt countsserver start',
         description = 'Server providing counts of samples satisfying given partial signatures.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )

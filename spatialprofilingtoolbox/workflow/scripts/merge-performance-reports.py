@@ -16,6 +16,7 @@ def aggregate_performance_reports(reports):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt workflow merge-performance-reports',
         description = '''
         Merges multiple computational performance reports (from each job) into one.
         '''

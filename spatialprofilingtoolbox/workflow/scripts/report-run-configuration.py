@@ -10,6 +10,7 @@ except ModuleNotFoundError as e:
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt workflow report-run-configuration',
         description = '''
         Log information about an SPT run configuration.
         '''

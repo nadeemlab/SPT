@@ -217,6 +217,7 @@ class CompressedMatrixPuller:
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt countsserver cache-expressions-data-array',
         description = 'Server providing counts of samples satisfying given partial signatures.'
     )
     parser.add_argument(

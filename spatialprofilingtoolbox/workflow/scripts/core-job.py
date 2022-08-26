@@ -14,6 +14,7 @@ except ModuleNotFoundError as e:
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt workflow core-job',
         description = 'One parallelizable "core" computation job.',
     )
 

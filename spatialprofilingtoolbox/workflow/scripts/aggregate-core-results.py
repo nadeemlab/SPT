@@ -14,6 +14,7 @@ except ModuleNotFoundError as e:
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt workflow aggregate-core-results',
         description='''
         Create a list of core, parallelizable job specifications for a given SPT
         workflow, as well as lists of file dependencies.

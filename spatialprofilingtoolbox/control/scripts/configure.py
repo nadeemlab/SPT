@@ -96,6 +96,7 @@ def record_configuration_command(variables):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt control configure',
         description = 'Configure an SPT (spatialprofilingtoolbox) run in the current directory.'
     )
     parser.add_argument(

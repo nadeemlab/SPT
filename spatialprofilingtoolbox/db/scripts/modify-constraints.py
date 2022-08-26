@@ -132,6 +132,7 @@ def toggle_constraints(
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt db modify-constraints',
         description = '''Drop/recreate constraints on certain tables (the largest ones).
         Can be used to wrap bulk import operations.
         The status of constraints is written to stdout just before dropping or just after

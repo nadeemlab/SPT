@@ -12,6 +12,7 @@ from spatialprofilingtoolbox import get_workflow
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt workflow generate-run-information',
         description='''
         Create a list of core, parallelizable job specifications for a given SPT
         workflow, as well as lists of file dependencies.

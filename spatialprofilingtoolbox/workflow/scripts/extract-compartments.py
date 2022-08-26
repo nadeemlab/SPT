@@ -12,6 +12,7 @@ except ModuleNotFoundError as e:
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
+        prog = 'spt workflow extract-compartments',
         description = 'Scan HALO cell manifest files for compartment names.',
     )
     parser.add_argument(

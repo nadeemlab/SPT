@@ -22,7 +22,7 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     packages=[
         'spatialprofilingtoolbox',
-        'spatialprofilingtoolbox.scripts',
+        'spatialprofilingtoolbox.entry_point',
         'spatialprofilingtoolbox.apiserver',
         'spatialprofilingtoolbox.apiserver.scripts',
         'spatialprofilingtoolbox.control',

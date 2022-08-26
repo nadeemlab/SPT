@@ -50,7 +50,6 @@ if __name__=='__main__':
         required=False,
     )
 
-    workflows = {name : get_workflow(name) for name in workflow_names}
     computational_designs = [
         w.computational_design
         for w in workflows.values()

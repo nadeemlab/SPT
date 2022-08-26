@@ -49,11 +49,11 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 4. [DONE] Do a first pass at resolving references to old file locations; tests, makefile, dockerfiles, setup.
 5. [DONE] Write new entrypoint script "spt".
 6. [DONE] Change invocations of the script files to reflect new entry point.
-7. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
-8. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
+7. Create bash completion spec and method of installation of it triggered by normal pip installation. Should be a single entry point with subsequent subpackage specifiers. At least one source just suggests adding to setup.py:setup():
     data_files=[
         ('/etc/bash_completion.d', ['extras/exampleprogram.completion']),
     ],
+8. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
 9. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 10. Learn how to do recursive make.
 11. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.

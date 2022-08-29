@@ -56,7 +56,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
     ],
 9. [DONE] Create manual completions install mechanism in case /etc/bash_completion.d does not exist.
 10. [DONE] Remove explicit inclusion of schema artifacts, retreive from external package instead.
-11. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
+11. [DONE] Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
 12. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 13. Learn how to do recursive make.
 14. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.

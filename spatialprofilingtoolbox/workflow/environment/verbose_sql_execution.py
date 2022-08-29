@@ -4,12 +4,12 @@ from ...log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-def verbose_sql_execute(filename, connection, description: str=None, silent=False, contents=None, itemize=False):
+def verbose_sql_execute(filename, connection, description: str=None, silent=False, contents=None, itemize=False, source_package='spatialprofilingtoolbox.data_model'):
     if description is None:
         description = filename
     if not contents:
         logger.info('Executing %s.', description)
-        with importlib.resources.path('spatialprofilingtoolbox.data_model', filename) as path:
+        with importlib.resources.path(source_package, filename) as path:
             script = open(path).read()
     else:
         script = contents

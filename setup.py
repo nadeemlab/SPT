@@ -129,6 +129,7 @@ setuptools.setup(
     },
     install_requires=[
         'psycopg2-binary==2.9.3',
+        'adisinglecell==0.10.2',
     ],
     extras_require={
         'apiserver': ['fastapi>=0.68.0,<0.69.0', 'uvicorn>=0.15.0,<0.16.0'],

@@ -86,7 +86,7 @@ class DataSkimmer:
         if not self.connection:
             logger.debug('No database connection was initialized. Skipping semantic parse.')
             return
-        with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
+        with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
         self.cache_all_record_counts(self.connection, fields)
@@ -128,7 +128,7 @@ class DataSkimmer:
         self.report_record_count_changes(self.connection, fields)
 
     def create_drop_tables(self):
-        with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
+        with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)
         tablenames = sorted(list(set([self.normalize(t) for t in fields['Table']])))
         return '\n'.join([
@@ -142,7 +142,7 @@ class DataSkimmer:
             verbose_sql_execute('drop_views.sql', connection, description='drop views of main schema')
             verbose_sql_execute(None, connection, description='drop tables from main schema', contents=self.create_drop_tables())
 
-        verbose_sql_execute('pathology_schema.sql', connection, description='create tables from main schema')
+        verbose_sql_execute('schema.sql', connection, description='create tables from main schema', source_package='adisinglecell')
         verbose_sql_execute('performance_tweaks.sql', connection, description='tweak main schema')
         verbose_sql_execute('create_views.sql', connection, description='create views of main schema')
         verbose_sql_execute('grant_on_tables.sql', connection, description='grant appropriate access to users')

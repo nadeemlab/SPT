@@ -18,7 +18,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
         self.specifier_number = specifier_number
-        with importlib.resources.path('spatialprofilingtoolbox.data_model', 'fields.tsv') as path:
+        with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         self.insert_queries = {
             tablename : self.generate_basic_insert_query(tablename, fields)

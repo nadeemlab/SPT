@@ -1,7 +1,7 @@
 import argparse
 import sys
 import subprocess
-import importlib
+import importlib.resources
 import re
 import os
 

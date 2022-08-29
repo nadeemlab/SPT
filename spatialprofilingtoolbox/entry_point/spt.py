@@ -60,7 +60,7 @@ def main_program():
         nargs='*',
         help='Arguments passed to the command.',
     )
-    if len(sys.argv) >= 4 and sys.argv[3] in ['-h', '--help']:
+    if len(sys.argv) >= 3 and (('--help' in sys.argv[2:]) or ('-h' in sys.argv[2:])):
         sys_args = [arg for arg in sys.argv if not arg in ['-h', '--help']][1:]
         args = parser.parse_args(sys_args)
     else:

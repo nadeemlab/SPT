@@ -38,7 +38,36 @@ spt = "spatialprofilingtoolbox.entry_point.spt:main_program"
 spt-enable-completion = "spatialprofilingtoolbox.entry_point.spt_enable_completion:main_program"
 
 [tool.setuptools]
-packages = [ "spatialprofilingtoolbox" ]
+packages = [
+    "spatialprofilingtoolbox",
+    "spatialprofilingtoolbox.entry_point",
+    "spatialprofilingtoolbox.apiserver",
+    "spatialprofilingtoolbox.apiserver.scripts",
+    "spatialprofilingtoolbox.control",
+    "spatialprofilingtoolbox.control.scripts",
+    "spatialprofilingtoolbox.countsserver",
+    "spatialprofilingtoolbox.countsserver.scripts",
+    "spatialprofilingtoolbox.dashboard",
+    "spatialprofilingtoolbox.dashboard.scripts",
+    "spatialprofilingtoolbox.db",
+    "spatialprofilingtoolbox.db.scripts",
+    "spatialprofilingtoolbox.db.data_model",
+    "spatialprofilingtoolbox.workflow",
+    "spatialprofilingtoolbox.workflow.scripts",
+    "spatialprofilingtoolbox.workflow.dataset_designs",
+    "spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging",
+    "spatialprofilingtoolbox.workflow.workflows",
+    "spatialprofilingtoolbox.workflow.workflows.defaults",
+    "spatialprofilingtoolbox.workflow.workflows.phenotype_proximity",
+    "spatialprofilingtoolbox.workflow.workflows.front_proximity",
+    "spatialprofilingtoolbox.workflow.workflows.density",
+    "spatialprofilingtoolbox.workflow.workflows.nearest_distance",
+    "spatialprofilingtoolbox.workflow.workflows.halo_import",
+    "spatialprofilingtoolbox.workflow.environment",
+    "spatialprofilingtoolbox.workflow.environment.logging",
+    "spatialprofilingtoolbox.workflow.environment.source_file_parsers",
+    "spatialprofilingtoolbox.workflow.templates",
+]
 
 [tool.setuptools.package-data]
 "spatialprofilingtoolbox.entry_point" = ["spt-completion.sh"]

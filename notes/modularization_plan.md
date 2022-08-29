@@ -55,10 +55,36 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
         ('/etc/bash_completion.d', ['extras/exampleprogram.completion']),
     ],
 9. [DONE] Create manual completions install mechanism in case /etc/bash_completion.d does not exist.
-10. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
-11. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
-12. Learn how to do recursive make.
-13. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
-14. Change tests to call correct scripts.
-15. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+10. [DONE] Remove explicit inclusion of schema artifacts, retreive from external package instead.
+11. Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
+12. In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+13. Learn how to do recursive make.
+14. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
+15. Change tests to call correct scripts.
+16. Assess library dependency versions for a sharper version indicator, with less than / greater than.
 
+
+## Field migration from setup.py to pyproject.toml
+
+Migrateable:
+
+- name
+- version
+- author
+- author email
+- description
+- long description (=> readme)
+- packages (=> auto discovered?)
+- classifiers
+- package data (=> section [tool.setuptools.package-data]   pkgname = ["file1", ...] )
+- python requires
+- entry points
+- install requires (=> dependencies)
+- extras require (=> optional dependencies)
+- project urls (=> urls)
+
+Not migrateable:
+
+- data_files. The mechanism of installation into locations specified by directory/file pairs seems to be deprecated in pyproject.toml (setuptools) compared with setup.py (setuptools).
+
+This means that the convenience script for adding support for completions really needs to be part of the standard install workflow, mentioned in the docs.

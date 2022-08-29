@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=63",
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
@@ -33,13 +33,16 @@ db = ["pandas>=1.1.5"]
 workflow = ["numpy==1.22.3", "scipy==1.8.0", "scikit-learn==0.24.1", "pyshp==2.2.0", "pandas>=1.1.5"]
 all = ["fastapi>=0.68.0,<0.69.0", "uvicorn>=0.15.0,<0.16.0", "Jinja2==3.0.1", "pandas>=1.1.5", "numpy==1.22.3", "scipy==1.8.0", "scikit-learn==0.24.1", "pyshp==2.2.0"]
 
-[project.entry-points]
+[project.scripts]
 spt = "spatialprofilingtoolbox.entry_point.spt:main_program"
 spt-enable-completion = "spatialprofilingtoolbox.entry_point.spt_enable_completion:main_program"
 
+[tool.setuptools]
+packages = [ "spatialprofilingtoolbox" ]
+
 [tool.setuptools.package-data]
-spatialprofilingtoolbox.entry_point = ["spt-completion.sh"]
-spatialprofilingtoolbox.workflow.scripts = [
+"spatialprofilingtoolbox.entry_point" = ["spt-completion.sh"]
+"spatialprofilingtoolbox.workflow.scripts" = [
     "aggregate-core-results.py",
     "core-job.py",
     "extract-compartments.py",
@@ -49,30 +52,30 @@ spatialprofilingtoolbox.workflow.scripts = [
     "merge-sqlite-dbs.py",
     "report-run-configuration.py",
 ]
-spatialprofilingtoolbox.workflow.workflows = [
+"spatialprofilingtoolbox.workflow.workflows" = [
     "main.nf.jinja",
 ]
-spatialprofilingtoolbox.workflow.templates = [
+"spatialprofilingtoolbox.workflow.templates" = [
     "nextflow.config.jinja",
     "log_table.tex.jinja",
     "log_table.html.jinja",
     ".spt_db.config.template",
 ]
-spatialprofilingtoolbox.control.scripts = [
+"spatialprofilingtoolbox.control.scripts" = [
     "configure.py",
     "guess-channels.py",
     "report-on-logs.py",
 ]
-spatialprofilingtoolbox.countsserver.scripts = [
+"spatialprofilingtoolbox.countsserver.scripts" = [
     "read-expression-dump-file.py",
     "cache-expressions-data-array.py",
     "start.py",
 ]
-spatialprofilingtoolbox.db.scripts = [
+"spatialprofilingtoolbox.db.scripts" = [
     "create-schema.py",
     "modify-constraints.py",
 ]
-spatialprofilingtoolbox.db.data_model = [
+"spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",
     "create_views.sql",
     "drop_views.sql",
@@ -81,7 +84,3 @@ spatialprofilingtoolbox.db.data_model = [
     "performance_tweaks.sql",
     "refresh_views.sql",
 ]
-
-
-
-

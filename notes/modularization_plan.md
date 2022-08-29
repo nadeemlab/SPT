@@ -63,28 +63,3 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 15. Change tests to call correct scripts.
 16. Assess library dependency versions for a sharper version indicator, with less than / greater than.
 
-
-## Field migration from setup.py to pyproject.toml
-
-Migrateable:
-
-- name
-- version
-- author
-- author email
-- description
-- long description (=> readme)
-- packages (=> auto discovered?)
-- classifiers
-- package data (=> section [tool.setuptools.package-data]   pkgname = ["file1", ...] )
-- python requires
-- entry points
-- install requires (=> dependencies)
-- extras require (=> optional dependencies)
-- project urls (=> urls)
-
-Not migrateable:
-
-- data_files. The mechanism of installation into locations specified by directory/file pairs seems to be deprecated in pyproject.toml (setuptools) compared with setup.py (setuptools).
-
-This means that the convenience script for adding support for completions really needs to be part of the standard install workflow, mentioned in the docs.

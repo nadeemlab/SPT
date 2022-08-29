@@ -63,17 +63,7 @@ setuptools.setup(
         'spatialprofilingtoolbox.entry_point': [
             'spt-completion.sh',
         ],
-        'spatialprofilingtoolbox.apiserver': [
-            'version.txt',
-        ],
-        'spatialprofilingtoolbox.countsserver': [
-            'version.txt',
-        ],
-        'spatialprofilingtoolbox.workflow': [
-            'version.txt',
-        ],
         'spatialprofilingtoolbox.workflow.scripts': [
-            'version.txt.py',
             'aggregate-core-results.py',
             'core-job.py',
             'extract-compartments.py',

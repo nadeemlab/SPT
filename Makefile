@@ -1,0 +1,39 @@
+
+SHELL := /bin/bash
+PYTHON := python
+BUILD_SCRIPTS_LOCATION :=${PWD}/build_scripts
+MESSAGE :="bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh"
+unexport PYTHONDONTWRITEBYTECODE
+
+PACKAGE_NAME := spatialprofilingtoolbox
+VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
+
+release-package: build-wheel-for-distribution
+	@"${MESSAGE}" start "Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox"
+	@result=$$(${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi); \
+	if [[ "$$result" -eq "found" ]]; then result_code=0; else result_code=1; fi ;\
+    "${MESSAGE}" end "$$result_code" "Found." "Not found."
+# 	@${PYTHON} -m twine upload --repository ${PACKAGE_NAME} dist/*.whl
+
+build-and-push-docker-containers:
+	echo x;
+
+test:
+	echo x;
+
+clean:
+	@rm -rf ${PACKAGE_NAME}.egg-info/
+	@rm -rf dist/
+	@rm -f .initiation_message_size
+	@rm -f .current_time.txt
+
+build-wheel-for-distribution: dist/${WHEEL_FILENAME}
+
+dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f)
+	@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
+    "${MESSAGE}" start "Building wheel using $${build_package}"
+	@${PYTHON} -m build 1>/dev/null 2> >(grep -v '_BetaConfiguration' >&2); \
+    "${MESSAGE}" end "$$?" "Built." "Build failed."
+	@if [ -d ${PACKAGE_NAME}.egg-info ]; then rm -rf ${PACKAGE_NAME}.egg-info/; fi
+	@rm -rf dist/*.tar.gz

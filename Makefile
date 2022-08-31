@@ -9,12 +9,15 @@ PACKAGE_NAME := spatialprofilingtoolbox
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 
-release-package: build-wheel-for-distribution
+release-package: build-wheel-for-distribution check-for-pypi-credentials
+	echo x
+# 	@${PYTHON} -m twine upload --repository ${PACKAGE_NAME} dist/*.whl
+
+check-for-pypi-credentials:
 	@"${MESSAGE}" start "Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox"
 	@result=$$(${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi); \
 	if [[ "$$result" -eq "found" ]]; then result_code=0; else result_code=1; fi ;\
     "${MESSAGE}" end "$$result_code" "Found." "Not found."
-# 	@${PYTHON} -m twine upload --repository ${PACKAGE_NAME} dist/*.whl
 
 build-and-push-docker-containers:
 	@"${MESSAGE}" start "Checking for Docker credentials in ~/.pypirc for spatialprofilingtoolbox"

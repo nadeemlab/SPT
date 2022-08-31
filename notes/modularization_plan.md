@@ -58,9 +58,25 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 10. [DONE] Remove explicit inclusion of schema artifacts, retreive from external package instead.
 11. [DONE] Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
 12. [DONE] Learn how to do recursive make.
-13. Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
+13. [STARTED] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 14. Change tests to call correct scripts.
-15. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+15. Add utility commands e.g. for status, depending on the submodule.
+16. Add actual unit tests and deprecate outdated tests.
+17. Assess library dependency versions for a sharper version indicator, with less than / greater than.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+
+
+## Makefile updating task
+
+Desired user-level make targets:
+- make release-package
+- make build-and-push-docker-containers, possibly with an argument that specifies a tier, dev/test/prod etc.
+- make test
+- make clean
+
+Notes
+- Deprecate all the autoversioning stuff. Let this be manually bumped. If it helps, add commit hash to some package metadata for the purpose of tracking exact versions when necessary. Why not.
+- Deprecate any git interaction. Let this be manual.
+- Split off "view site" i.e. dashboard into new repository.
 

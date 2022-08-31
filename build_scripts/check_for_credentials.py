@@ -4,6 +4,7 @@ import os
 from os.path import exists
 from os.path import join
 import sys
+import subprocess
 
 
 class CredentialChecker:
@@ -48,7 +49,12 @@ class CredentialChecker:
         if not exists(configfile):
             return False
         config = json.loads(open(configfile, 'rt').read())
-        if not 'auths' in config:
+        if 'credsStore' in config:
+            if config['credsStore'] in ['desktop', 'osxkeychain']:
+                result = subprocess.run(['docker-credential-%s' % config['credsStore'],'list'], encoding='utf-8', capture_output=True)
+                if len(json.loads(result.stdout)) == 0:
+                    return False
+        if (not 'auths' in config) or (not 'credsStore' in config):
             return False
         if len(config['auths'].keys()) == 0:
             return False

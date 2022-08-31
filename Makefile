@@ -19,14 +19,17 @@ check-for-pypi-credentials:
 	if [[ "$$result" -eq "found" ]]; then result_code=0; else result_code=1; fi ;\
     "${MESSAGE}" end "$$result_code" "Found." "Not found."
 
-build-and-push-docker-containers:
+build-and-push-docker-containers: check-for-docker-credentials
+	@echo "This target will be recursive, trying to do make build-and-push-docker-container in all submodules. Use docker build --build-arg submodule_version=y.y.y in place of the current template system."
+
+check-for-docker-credentials:
 	@"${MESSAGE}" start "Checking for Docker credentials in ~/.pypirc for spatialprofilingtoolbox"
 	@result=$$(${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi); \
 	if [[ "$$result" -eq "found" ]]; then result_code=0; else result_code=1; fi ;\
     "${MESSAGE}" end "$$result_code" "Found." "Not found."
 
 test:
-	echo x;
+	@echo "This target will be recursive, trying to do make test in all submodules."
 
 clean:
 	@rm -rf ${PACKAGE_NAME}.egg-info/

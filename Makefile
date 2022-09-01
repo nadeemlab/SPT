@@ -42,7 +42,7 @@ clean:
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f)
+dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f) ${PACKAGE_NAME}/entry_point/spt-completion.sh
 	@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
     "${MESSAGE}" start "Building wheel using $${build_package}"
 	@${PYTHON} -m build 1>/dev/null 2> >(grep -v '_BetaConfiguration' >&2); \

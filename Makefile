@@ -25,6 +25,7 @@ unexport PYTHONDONTWRITEBYTECODE
 PACKAGE_NAME := spatialprofilingtoolbox
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
+DOCKER_CONTAINING_SUBMODULES := $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-/g' )
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -51,14 +52,20 @@ dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f) ${PACKAGE_NAME}/en
 ${PACKAGE_NAME}/entry_point/spt-completion.sh: $(shell find spatialprofilingtoolbox/ -type f | grep -v "entry_point/spt-completion.sh$$")
 	@${MAKE} -C ${PACKAGE_NAME}/entry_point/ build-completions-script
 
-build-and-push-docker-containers: check-for-docker-credentials
-	@echo "This target will be recursive, trying to do make build-and-push-docker-container in all submodules. Use docker build --build-arg submodule_version=y.y.y in place of the current template system."
+build-and-push-docker-containers: ${DOCKER_CONTAINING_SUBMODULES} check-for-docker-credentials
 
 check-for-docker-credentials:
 	@"${MESSAGE}" start "Checking for Docker credentials in ~/.docker/config.json"
 	@result=$$(${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi); \
 	if [[ "$$result" -eq "found" ]]; then result_code=0; else result_code=1; fi ;\
     "${MESSAGE}" end "$$result_code" "Found." "Not found."
+
+${DOCKER_CONTAINING_SUBMODULES}:
+	@submodule_directory=$$(echo $@ | sed 's/^docker-//g') ; \
+	dockerfile=$${submodule_directory}/Dockerfile ; \
+	submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+	echo $$submodule_version ; \
+	echo $$dockerfile
 
 test:
 	@echo "This target will be recursive, trying to do make test in all submodules."

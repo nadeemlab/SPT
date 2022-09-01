@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import jinja2
 from jinja2 import Environment
 from jinja2 import BaseLoader

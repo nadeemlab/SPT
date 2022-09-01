@@ -38,6 +38,7 @@ clean:
 	@rm -rf build/
 	@rm -f .initiation_message_size
 	@rm -f .current_time.txt
+	@${MAKE} -C ${PACKAGE_NAME}/entry_point/ clean
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 

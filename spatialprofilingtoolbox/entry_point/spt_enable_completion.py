@@ -36,6 +36,8 @@ def attempt_append_to(filename, contents):
         with open(full_path, 'a') as file:
             file.write(contents)
         print('Wrote completions script fragment to:\n %s' % full_path)
+        print('Either open a new shell or do:')
+        print('    source %s' % full_path)
         exit()
 
 def main_program():

@@ -64,9 +64,9 @@ ${DOCKER_PUSH_TARGETS}: build-docker-containers
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     "${MESSAGE}" start "Pushing Docker container $$repository_name" ; \
-    docker push $$repository_name:$$submodule_version ; \
+    docker push $$repository_name:$$submodule_version >/dev/null 2>&1 ; \
     exit_code1=$$?; \
-    docker push $$repository_name:latest ; \
+    docker push $$repository_name:latest >/dev/null 2>&1 ; \
     exit_code2=$$?; \
     exit_code=$$(( exit_code1 + exit_code2 )); \
     "${MESSAGE}" end "$$exit_code" "Pushed." "Not pushed."

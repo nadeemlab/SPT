@@ -12,7 +12,8 @@ def get_modules_and_commands():
     return [
         {
             'name' : module_name,
-            'command_names' : ' '.join(get_commands(module_name)),
+            'command_names_joined_space' : ' '.join(get_commands(module_name)),
+            'command_names_joined_bar' : '|'.join(["'%s'" % c for c in get_commands(module_name)]),
         }
         for module_name in nontrivial_module_names
     ]

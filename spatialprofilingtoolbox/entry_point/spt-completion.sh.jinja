@@ -4,16 +4,27 @@ _spt_completions()
 {
     if [[ "${#COMP_WORDS[@]}" -eq "2" ]]; then
         COMPREPLY=($(compgen -W "{{ module_names }}" "${COMP_WORDS[1]}"));
-    else
-        if [[ "${#COMP_WORDS[@]}" -eq "3" ]]; then
-            case ${COMP_WORDS[1]} in
+    fi
+    if [[ "${#COMP_WORDS[@]}" -eq "3" ]]; then
+        case ${COMP_WORDS[1]} in
 {%- for module in modules %}
-                {{ module.name }})
-                    COMPREPLY=($(compgen -W "{{ module.command_names }}" "${COMP_WORDS[2]}"));
-                ;;
+            {{ module.name }})
+                COMPREPLY=($(compgen -W "{{ module.command_names_joined_space }}" "${COMP_WORDS[2]}"));
+            ;;
 {%- endfor %}
-            esac
-        fi
+        esac
+    if [[ "${#COMP_WORDS[@]}" -eq "4" ]]; then
+        case ${COMP_WORDS[1]} in
+{%- for module in modules %}
+            {{ module.name }})
+                case ${COMP_WORDS[2]} in
+                    {{ module.command_names_joined_bar }})
+                        COMPREPLY=$( spt {{ module.name }} ${COMP_WORDS[2]} --help );
+                    ;;
+                esac
+            ;;
+{%- endfor %}
+        esac
     fi
 }
 

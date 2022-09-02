@@ -27,8 +27,8 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-build-/g' )
-DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-push-/g' )
+DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-build-/g' )
+DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-push-/g' )
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -87,7 +87,10 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     "${MESSAGE}" start "Building Docker container $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
-    docker build -t $$repository_name:$$submodule_version \
+    cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base $$submodule_directory/Dockerfile.append > Dockerfile ; \
+    docker build \
+     -f ./Dockerfile \
+     -t $$repository_name:$$submodule_version \
      -t $$repository_name:latest \
      --build-arg version=$$submodule_version \
      --build-arg service_name=$$submodule_name \
@@ -119,6 +122,7 @@ clean:
         done ; \
         rm -f $$submodule_directory/${WHEEL_FILENAME}; \
     done
+	@rm -f Dockerfile
 
 
 

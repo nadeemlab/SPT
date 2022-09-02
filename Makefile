@@ -25,6 +25,8 @@ unexport PYTHONDONTWRITEBYTECODE
 PACKAGE_NAME := spatialprofilingtoolbox
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
+DOCKER_ORG_NAME := nadeemlab
+DOCKER_REPO_PREFIX := spt
 DOCKER_CONTAINING_SUBMODULES := $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-/g' )
 export
 
@@ -60,12 +62,28 @@ check-for-docker-credentials:
 	if [[ "$$result" -eq "found" ]]; then result_code=0; else result_code=1; fi ;\
     "${MESSAGE}" end "$$result_code" "Found." "Not found."
 
-${DOCKER_CONTAINING_SUBMODULES}:
+${DOCKER_CONTAINING_SUBMODULES}: dist/${WHEEL_FILENAME} check-docker-daemon-running
 	@submodule_directory=$$(echo $@ | sed 's/^docker-//g') ; \
-	dockerfile=$${submodule_directory}/Dockerfile ; \
-	submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
-	echo $$submodule_version ; \
-	echo $$dockerfile
+    dockerfile=$${submodule_directory}/Dockerfile ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    "${MESSAGE}" start "Start building Docker container $$repository_name" ; \
+    cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
+    docker build -t $$repository_name:$$submodule_version \
+     -t $$repository_name:latest \
+     --build-arg version=$$submodule_version \
+     --build-arg service_name=$$submodule_name \
+     --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
+     $$submodule_directory \
+     >/dev/null 2>&1 ; \
+    "${MESSAGE}" end "$$?" "Built." "Build failed." ; \
+    rm $$submodule_directory/${WHEEL_FILENAME} ; \
+
+check-docker-daemon-running:
+	@"${MESSAGE}" start "Checking that Docker daemon is running"
+	@docker stats --no-stream >/dev/null 2>&1; \
+    "${MESSAGE}" end "$$?" "Running." "Not running."
 
 test:
 	@echo "This target will be recursive, trying to do make test in all submodules."
@@ -77,3 +95,15 @@ clean:
 	@rm -f .initiation_message_size
 	@rm -f .current_time.txt
 	@${MAKE} -C ${PACKAGE_NAME}/entry_point/ clean
+	@for submodule_directory_target in ${DOCKER_CONTAINING_SUBMODULES} ; do \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-//g') ; \
+        for whl in $$submodule_directory/*.whl ; do \
+            rm -f $$whl; \
+        done ; \
+        rm -f $$submodule_directory/${WHEEL_FILENAME}; \
+    done
+
+
+
+
+

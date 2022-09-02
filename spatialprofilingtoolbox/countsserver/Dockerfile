@@ -1,9 +1,10 @@
 FROM python:3.9-slim
-LABEL version="{{countsserver-version}}"
-LABEL service_name="countsserver"
+ARG version
+ARG service_name
+ARG WHEEL_FILENAME
+LABEL version=$version
+LABEL service_name=$service_name
 WORKDIR /usr/src/app
-COPY ../../setup.py ./
-COPY ../../pyproject.toml ./
-ADD ../../spatialprofilingtoolbox/ ./spatialprofilingtoolbox
-RUN pip3 install ".[countsserver]"
+COPY $WHEEL_FILENAME ./
+RUN pip3 install "$WHEEL_FILENAME[$service_name]"
 CMD ["spt", "countsserver", "start", "--host", "0.0.0.0", "--port", "8016"]

@@ -1,10 +1,12 @@
 FROM python:3.9-slim
-LABEL version="{{apiserver-version}}"
-LABEL service_name="apiserver"
+ARG version
+ARG service_name
+ARG WHEEL_FILENAME
+LABEL version=$version
+LABEL service_name=$service_name
 WORKDIR /usr/src/app
-COPY ../../setup.py ./
-COPY ../../pyproject.toml ./
-ADD ../../spatialprofilingtoolbox/ ./spatialprofilingtoolbox
-RUN pip3 install ".[apiserver]"
+COPY $WHEEL_FILENAME ./
+RUN pip3 install "$WHEEL_FILENAME[$service_name]"
 COPY ./app ./
+COPY ./counts_service_client.py ./
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug", "--workers", "9"]

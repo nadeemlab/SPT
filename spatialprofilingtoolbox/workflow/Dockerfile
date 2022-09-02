@@ -1,11 +1,9 @@
-FROM ubuntu:20.04
-LABEL version="{{workflow-version}}"
-LABEL service_name="workflow"
+FROM python:3.9-slim
+ARG version
+ARG service_name
+ARG WHEEL_FILENAME
+LABEL version=$version
+LABEL service_name=$service_name
 WORKDIR /usr/src/app
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get -y install python3-dev
-RUN apt-get update && apt-get -y install python3-pip
-COPY ../../setup.py ./
-COPY ../../pyproject.toml ./
-ADD ../../spatialprofilingtoolbox/ ./spatialprofilingtoolbox
-RUN pip install ".[workflow]"
+COPY $WHEEL_FILENAME ./
+RUN pip3 install "$WHEEL_FILENAME[$service_name]"

@@ -99,6 +99,7 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
      >/dev/null 2>&1 ; \
     "${MESSAGE}" end "$$?" "Built." "Build failed." ; \
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
+    rm ./Dockerfile ; \
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"

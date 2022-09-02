@@ -2,13 +2,13 @@ help:
 	# The main targets are:
 	# 
 	#     make release-package
-	#         Builds Python package and pushes to PyPI.
+	#         Builds Python package wheel and pushes it to PyPI.
 	#
 	#     make build-and-push-docker-containers
 	#         Builds Docker images and pushes them to DockerHub repositories.
 	#
 	#     make test
-	#         Does unit and integration tests in each submodule.
+	#         Does unit and integration tests.
 	#
 	#     make clean
 	#         Attempts to remove all build or partial-build artifacts.

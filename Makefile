@@ -64,9 +64,9 @@ ${DOCKER_PUSH_TARGETS}: build-docker-containers
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     "${MESSAGE}" start "Pushing Docker container $$repository_name" ; \
-    @docker push $$repository_name:$$submodule_version ; \
+    docker push $$repository_name:$$submodule_version ; \
     exit_code1=$$?; \
-    @docker push $$repository_name/${DOCKER_REPO}:latest ; \
+    docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     exit_code=$$(( exit_code1 + exit_code2 )); \
     "${MESSAGE}" end "$$exit_code" "Pushed." "Not pushed."
@@ -85,7 +85,7 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
-    "${MESSAGE}" start "Start building Docker container $$repository_name" ; \
+    "${MESSAGE}" start "Building Docker container $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     docker build -t $$repository_name:$$submodule_version \
      -t $$repository_name:latest \

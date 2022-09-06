@@ -63,6 +63,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 15. Add utility commands e.g. for status, depending on the submodule.
 16. Add actual unit tests and deprecate outdated tests.
 17. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+18. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 

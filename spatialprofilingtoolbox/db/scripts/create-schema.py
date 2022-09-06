@@ -5,13 +5,13 @@ from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
-try:
-    from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
-    from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
-except ModuleNotFoundError as e:
-    SuggestExtrasException(e, 'db')
+def do_library_imports():
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    try:
+        from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'db')
 
 
 if __name__=='__main__':
@@ -24,7 +24,7 @@ if __name__=='__main__':
         dest='database_config_file',
         type=str,
         required=False,
-        help='Provide the file for database configuration. Default is ~/%s .' % default_db_config_filename,
+        help='Provide the file for database configuration.',
     )
     parser.add_argument(
         '--force',
@@ -45,11 +45,10 @@ if __name__=='__main__':
         help='Only recreate views, do not touch main table schema.',
     )
     args = parser.parse_args()
+    do_library_imports()
 
     if args.database_config_file:
         config_file = abspath(expanduser(args.database_config_file))
-    else:
-        config_file = join(expanduser('~'), default_db_config_filename)
     if not exists(config_file):
     	raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 

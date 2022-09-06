@@ -5,10 +5,11 @@ from os.path import exists
 from os.path import join
 from os.path import basename
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
-from spatialprofilingtoolbox import get_workflow_names
-from spatialprofilingtoolbox import get_workflow
+def do_library_imports():
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox import get_workflow_names
+    from spatialprofilingtoolbox import get_workflow
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -80,6 +81,7 @@ if __name__=='__main__':
     )
 
     args = parser.parse_args()
+    do_library_imports()
 
     if not exists(args.file_manifest_file):
         raise FileNotFoundError(args.file_manifest_file)

@@ -11,24 +11,24 @@ from os.path import expanduser
 from os import getcwd
 import importlib.resources
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
-from spatialprofilingtoolbox import get_workflow
-from spatialprofilingtoolbox import get_workflow_names
+def do_library_imports():
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox import get_workflow
+    from spatialprofilingtoolbox import get_workflow_names
 
-try:
-    import jinja2
-    from jinja2 import Environment
-    from jinja2 import BaseLoader
-    from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
-    from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_db_config_filename
-    from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
-    from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
-    workflows = {name : get_workflow(name) for name in get_workflow_names()}
-except ModuleNotFoundError as e:
-    SuggestExtrasException(e, 'control')
+    try:
+        import jinja2
+        from jinja2 import Environment
+        from jinja2 import BaseLoader
+        from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
+        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
+        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
+        workflows = {name : get_workflow(name) for name in get_workflow_names()}
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'control')
 
-jinja_environment = Environment(loader=BaseLoader)
+    jinja_environment = Environment(loader=BaseLoader)
 
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'
@@ -143,9 +143,11 @@ if __name__=='__main__':
         dest='database_config_file',
         type=str,
         required=False,
-        help='If workflow involves database, provide the config file here. Default is ~/%s .' % default_db_config_filename,
+        help='If workflow involves database, provide the config file here.',
     )
     args = parser.parse_args()
+
+    do_library_imports()
 
     variables = {}
 
@@ -201,8 +203,6 @@ if __name__=='__main__':
 
     if args.database_config_file:
         config_file = expanduser(args.database_config_file)
-    else:
-        config_file = join(expanduser('~'), default_db_config_filename)
     if exists(config_file):
         if workflows[variables['workflow']].computational_design.uses_database():
             variables['db_config_file'] = config_file

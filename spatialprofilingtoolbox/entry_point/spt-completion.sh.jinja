@@ -20,7 +20,8 @@ _spt_completions()
             {{ module.name }})
                 case ${COMP_WORDS[2]} in
                     {{ module.command_names_joined_bar }})
-                        COMPREPLY=$( spt {{ module.name }} ${COMP_WORDS[2]} --help );
+                        spt {{ module.name }} ${COMP_WORDS[2]} --help
+                        COMPREPLY="";
                     ;;
                 esac
             ;;

@@ -1,15 +1,16 @@
 import argparse
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
-from spatialprofilingtoolbox import get_workflow_names
-from spatialprofilingtoolbox import get_workflow
-from spatialprofilingtoolbox import get_core_job
+def do_library_imports():
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox import get_workflow_names
+    from spatialprofilingtoolbox import get_workflow
+    from spatialprofilingtoolbox import get_core_job
 
-try:
-    workflows = {name : get_workflow(name) for name in get_workflow_names()}
-except ModuleNotFoundError as e:
-    SuggestExtrasException(e, 'workflow')
+    try:
+        workflows = {name : get_workflow(name) for name in get_workflow_names()}
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
 
 if __name__=='__main__':
@@ -18,6 +19,7 @@ if __name__=='__main__':
         description = 'One parallelizable "core" computation job.',
     )
 
+    do_library_imports()
     for CoreJob in [w.core_job for w in workflows.values()]:
         CoreJob.solicit_cli_arguments(parser)
 

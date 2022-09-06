@@ -1,16 +1,17 @@
 import argparse
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
-from spatialprofilingtoolbox import get_workflow_names
-from spatialprofilingtoolbox import get_workflow
-from spatialprofilingtoolbox import get_integrator
-try:
-    from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
-    from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-    workflows = {name : get_workflow(name) for name in get_workflow_names()}
-except ModuleNotFoundError as e:
-    SuggestExtrasException(e, 'workflow')
+def do_library_imports():
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox import get_workflow_names
+    from spatialprofilingtoolbox import get_workflow
+    from spatialprofilingtoolbox import get_integrator
+    try:
+        from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+        workflows = {name : get_workflow(name) for name in get_workflow_names()}
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -50,6 +51,8 @@ if __name__=='__main__':
         required=False,
     )
 
+    do_library_imports()
+
     computational_designs = [
         w.computational_design
         for w in workflows.values()
@@ -58,5 +61,6 @@ if __name__=='__main__':
         module.solicit_cli_arguments(parser)
 
     args = vars(parser.parse_args())
+
     integrator = get_integrator(**args)
     integrator.calculate(args['stats_tests_file'])

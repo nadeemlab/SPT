@@ -12,21 +12,22 @@ from collections import OrderedDict
 import importlib.resources
 import base64
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
-try:
-    import pandas as pd
-    import jinja2
-    from jinja2 import Environment
-    from jinja2 import BaseLoader
-except ModuleNotFoundError as e:
-    SuggestExtrasException(e, 'control')
+def do_library_imports():
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    try:
+        import pandas as pd
+        import jinja2
+        from jinja2 import Environment
+        from jinja2 import BaseLoader
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'control')
 
-jinja_environment = Environment(loader=BaseLoader)
+    jinja_environment = Environment(loader=BaseLoader)
 
-def quote_hash(input):
-    return re.sub('\#', '\\#', input)
-jinja_environment.filters['quote_hash'] = quote_hash
+    def quote_hash(input):
+        return re.sub('\#', '\\#', input)
+    jinja_environment.filters['quote_hash'] = quote_hash
 
 ansi_escape = re.compile(r'''
     \x1B  # ESC
@@ -437,19 +438,28 @@ class LogReportAggregator:
                 print('[ ' + format_description + ' ]')
                 print(self.textual_render(format_description))
 
+def show_help():
+    print('Optional argument one of:\n%s' % '\n'.join(
+        ['  ' + f for f in LogReportAggregator.get_formats()]
+    ))
+    exit()
+
 if __name__=='__main__':
     args = sys.argv
+    if len(args) > 1:
+        if args[1] == '--help':
+            show_help()
+            exit()
     format_handle = None
     if len(args) > 1:
         if args[1] in LogReportAggregator.get_formats():
             format_handle = args[1]
             args = args[1:]
     if len(args) > 1:
-        print('Optional argument one of:\n%s' % '\n'.join(
-            ['  ' + f for f in LogReportAggregator.get_formats()]
-        ))
+        show_help()
         exit()
     else:
+        do_library_imports()
         aggregator = LogReportAggregator(format_handle=format_handle)
         aggregator.retrieve_reports()
         aggregator.report_on_all()

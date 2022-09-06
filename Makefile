@@ -88,6 +88,7 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     "${MESSAGE}" start "Building Docker container $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base $$submodule_directory/Dockerfile.append > Dockerfile ; \
+    cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
     docker build \
      -f ./Dockerfile \
      -t $$repository_name:$$submodule_version \
@@ -100,6 +101,7 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     "${MESSAGE}" end "$$?" "Built." "Build failed." ; \
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \
+    rm ./.dockerignore
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"
@@ -124,8 +126,7 @@ clean:
         rm -f $$submodule_directory/${WHEEL_FILENAME}; \
     done
 	@rm -f Dockerfile
-
-
+	@rm -f .dockerignore
 
 
 

@@ -18,7 +18,7 @@ help:
 
 export SHELL := /bin/bash
 PYTHON := python
-BUILD_SCRIPTS_LOCATION :=${PWD}/build_scripts
+BUILD_SCRIPTS_LOCATION :=${PWD}/building
 MESSAGE :="bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh"
 unexport PYTHONDONTWRITEBYTECODE
 

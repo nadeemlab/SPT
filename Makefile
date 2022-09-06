@@ -1,20 +1,20 @@
 help:
-	# The main targets are:
-	# 
-	#     make release-package
-	#         Builds Python package wheel and pushes it to PyPI.
-	#
-	#     make build-and-push-docker-containers
-	#         Builds Docker images and pushes them to DockerHub repositories.
-	#
-	#     make test
-	#         Does unit and integration tests.
-	#
-	#     make clean
-	#         Attempts to remove all build or partial-build artifacts.
-	#
-	#     make help
-	#         Show this text
+	@echo ' The main targets are:'
+	@echo '  '
+	@echo '      make release-package'
+	@echo '          Build the Python package wheel and push it to PyPI.'
+	@echo ' '
+	@echo '      make build-and-push-docker-containers'
+	@echo '          Build the Docker images and push them to DockerHub repositories.'
+	@echo ' '
+	@echo '      make test'
+	@echo '          Do unit, module, and integration tests.'
+	@echo ' '
+	@echo '      make clean'
+	@echo '          Attempt to remove all build or partial-build artifacts.'
+	@echo ' '
+	@echo '      make help'
+	@echo '          Show this text.'
 
 export SHELL := /bin/bash
 PYTHON := python

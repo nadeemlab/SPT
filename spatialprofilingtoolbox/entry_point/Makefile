@@ -1,7 +1,7 @@
 
 build-completions-script: spt-completion.sh
 
-spt-completion.sh:
+spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_completions_script.py
 	@"${MESSAGE}" start "Creating CLI completions script"
 	@${PYTHON} -m venv venv
 	@source venv/bin/activate ; \

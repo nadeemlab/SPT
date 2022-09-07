@@ -58,7 +58,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 10. [DONE] Remove explicit inclusion of schema artifacts, retreive from external package instead.
 11. [DONE] Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
 12. [DONE] Learn how to do recursive make.
-13. [STARTED] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
+13. [DONE] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 14. Change tests to call correct scripts.
 15. Add utility commands e.g. for status, depending on the submodule.
 16. Add actual unit tests and deprecate outdated tests.

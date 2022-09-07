@@ -3,8 +3,6 @@ import os
 from os.path import join, dirname
 import warnings
 
-os.environ['FIND_FILES_USING_PATH'] = '1'
-
 import pandas as pd
 import pytest
 

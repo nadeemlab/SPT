@@ -10,7 +10,7 @@ from fastapi import Response
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-counts_service_host = os.environ['DB_ENDPOINT']
+counts_service_host = os.environ['COUNTS_SERVER_HOST']
 
 app = FastAPI()
 
@@ -24,9 +24,9 @@ class DBAccessor:
 
     def __enter__(self):
         variables = [
-            'DB_ENDPOINT',
-            'DB_USER',
-            'DB_PASSWORD',
+            'SINGLE_CELL_DATABASE_HOST',
+            'SINGLE_CELL_DATABASE_USER',
+            'SINGLE_CELL_DATABASE_PASSWORD',
         ]
         unfound = [v for v in variables if not v in os.environ]
         if len(unfound) > 0:
@@ -565,8 +565,8 @@ async def get_phenotype_criteria(
         cursor.execute(total_query, (specimen_measurement_study,))
         number_cells = cursor.fetchall()[0][0]
 
-    host = counts_service_host
-    port = 8016
+    host = os.environ['COUNTS_SERVER_HOST']
+    port = os.environ['COUNTS_SERVER_PORT']
     with CountRequester(host, port) as requester:
         counts = requester.get_counts(positive_markers, negative_markers, specimen_measurement_study)
     fancy_round = lambda ratio: 100 * round(ratio * 10000)/10000

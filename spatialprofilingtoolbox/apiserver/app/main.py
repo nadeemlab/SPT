@@ -35,9 +35,9 @@ class DBAccessor:
 
         self.connection = psycopg2.connect(
             dbname='pathstudies',
-            host=os.environ['DB_ENDPOINT'],
-            user=os.environ['DB_USER'],
-            password=os.environ['DB_PASSWORD'],
+            host=os.environ['SINGLE_CELL_DATABASE_HOST'],
+            user=os.environ['SINGLE_CELL_DATABASE_USER'],
+            password=os.environ['SINGLE_CELL_DATABASE_PASSWORD'],
         )
         return self
 

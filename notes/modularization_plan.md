@@ -59,25 +59,55 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 11. [DONE] Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
 12. [DONE] Learn how to do recursive make.
 13. [DONE] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
-14. Change tests to call correct scripts.
-15. Add utility commands e.g. for status, depending on the submodule.
-16. Add actual unit tests and deprecate outdated tests.
-17. Assess library dependency versions for a sharper version indicator, with less than / greater than.
-18. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
+14. Finish moving static file artifacts and modules into correct locations in new module structure.
+15. Change tests to call correct scripts.
+16. Add utility commands e.g. for status, depending on the submodule.
+17. Add actual unit tests and deprecate outdated tests.
+18. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+19. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 
 
-## Makefile updating task
+## Moving altering directory
+- Consider each module not in one of the submodules, try to push down.
+- (apiserver) Review contents, especially counts_service_client.
+- (apiserver) Review Dockerfile for needed partner service discovery environment variables.
+- (apiserver) Add healthcheck.
+- (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
+- (apiserver) Create tests notes doc, proposing a few new tests.
+- (apiserver) Consider deprecation of deployment management subdirectory contents.
+- (control) Review.
+- (control) Move configure to workflow.
+- (control) Create utilities notes doc, proposing a few utilities.
+- (control) Consider factoring the control module out into other modules (if new utilities can also do this).
+- (control) Create tests notes doc, proposing a few new tests.
+- (countsserver) Review.
+- (countsserver) Dockerfile service discovery.
+- (countsserver) Health check.
+- (countsserver) Tests.
+- (countsserver) Tests ideas.
+- (countsserver) Deal with log_formats duplication.
+- (countsserver) Add more control scripts (like stop).
+- (dashboard) Skip for now, will be moved.
+- (db) Review contents.
+- (db) Create utilities notes doc, propose a few new utilities.
+- (db) Write a note explaining decision regarding dockerization of this module.
+- (db) Tests.
+- (db) Test ideas.
+- (entry_point) Add disable command.
+- (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
+- (workflow) Review, especially environment for moving to a more general purpose module.
+- (workflow) Bring templates together.
+- (workflow) Dockerfile service discovery.
+- (workflow) Possibly put nextflow into the container? To support a single-core use case.
+- (workflow) Health check.
+- (workflow) Tests.
+- (workflow) Tests ideas.
+- (workflow) More status utilities, possibly to replace or augment the detailed workflow logging.
+- (workflow) Review init.
 
-Desired user-level make targets:
-- make release-package
-- make build-and-push-docker-containers, possibly with an argument that specifies a tier, dev/test/prod etc.
-- make test
-- make clean
 
-Notes
-- Deprecate all the autoversioning stuff. Let this be manually bumped. If it helps, add commit hash to some package metadata for the purpose of tracking exact versions when necessary. Why not.
-- Deprecate any git interaction. Let this be manual.
+More notes
 - Split off "view site" i.e. dashboard into new repository.
 

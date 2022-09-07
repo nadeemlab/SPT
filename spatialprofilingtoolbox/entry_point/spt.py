@@ -77,11 +77,6 @@ def main_program():
         executable, script_path = get_executable_and_script(args.module, args.command)
 
     if len(sys.argv) == 3 and sys.argv[1] == args.module and sys.argv[2] == args.command:
-        subprocess.run([
-            executable,
-            script_path,
-            '--help',
-        ])
         exit()
 
     if len(sys.argv) > 3 and sys.argv[1] == args.module and sys.argv[2] == args.command:

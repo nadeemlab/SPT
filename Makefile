@@ -106,7 +106,20 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"
 	@docker stats --no-stream >/dev/null 2>&1; \
-    "${MESSAGE}" end "$$?" "Running." "Not running."
+    result_code="$$?" ; \
+    "${MESSAGE}" end "$$result_code" "Running." "Not running." ; \
+    if [ $$result_code -gt 0 ] ; \
+    then ; \
+        "${MESSAGE}" start "Attempting to start Docker daemon" ; \
+        bash ${BUILD_SCRIPTS_LOCATION}/start_docker_daemon.sh ; \
+        result_code="$$?" ; \
+        if [ $$result_code -eq 1 ] ; \
+        then ; \
+            "${MESSAGE}" end "$$result_code" "Started." "Timed out." ; \
+        else ; \
+            "${MESSAGE}" end "$$result_code" "Started." "Failed to start." ; \
+        fi ; \
+    fi
 
 test:
 	@echo "This target will be recursive, trying to do make test in all submodules."

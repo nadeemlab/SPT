@@ -10,7 +10,7 @@ import json
 
 def do_library_imports():
     import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.database_connection import DatabaseConnectionMaker
+    from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
     from spatialprofilingtoolbox.log_formats import colorized_logger
     logger = colorized_logger('cache-expressions-data-array')
 

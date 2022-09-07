@@ -17,7 +17,7 @@ def do_library_imports():
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'db')
 
-    from spatialprofilingtoolbox.database_connection import DatabaseConnectionMaker
+    from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
     from spatialprofilingtoolbox.log_formats import colorized_logger
     logger = colorized_logger('modify-constraints')
 

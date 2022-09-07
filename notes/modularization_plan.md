@@ -70,7 +70,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 
 
 ## Moving altering directory
-- Consider each module not in one of the submodules, try to push down.
+- Consider each python module not in one of the submodules, try to push down.
 - (apiserver) Review contents, especially counts_service_client.
 - (apiserver) Review Dockerfile for needed partner service discovery environment variables.
 - (apiserver) Add healthcheck.

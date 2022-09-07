@@ -7,7 +7,7 @@ from os.path import basename
 
 def do_library_imports():
     import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     from spatialprofilingtoolbox import get_workflow_names
     from spatialprofilingtoolbox import get_workflow
 

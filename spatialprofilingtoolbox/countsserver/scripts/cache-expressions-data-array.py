@@ -14,7 +14,7 @@ def do_library_imports():
     from spatialprofilingtoolbox.log_formats import colorized_logger
     logger = colorized_logger('cache-expressions-data-array')
 
-    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
         from spatialprofilingtoolbox.workflow.environment.configuration_settings import expressions_index_filename
     except ModuleNotFoundError as e:

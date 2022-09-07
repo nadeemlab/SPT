@@ -3,7 +3,7 @@ import argparse
 
 def do_library_imports():
     import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
         from spatialprofilingtoolbox.workflow.environment.logging.run_configuration_reporter import RunConfigurationReporter
     except ModuleNotFoundError as e:

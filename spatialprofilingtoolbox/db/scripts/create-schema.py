@@ -7,7 +7,7 @@ from os.path import expanduser
 
 def do_library_imports():
     import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
         from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
     except ModuleNotFoundError as e:

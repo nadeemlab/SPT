@@ -40,6 +40,7 @@ spt-enable-completion = "spatialprofilingtoolbox.entry_point.spt_enable_completi
 [tool.setuptools]
 packages = [
     "spatialprofilingtoolbox",
+    "spatialprofilingtoolbox.standalone_utilities",
     "spatialprofilingtoolbox.entry_point",
     "spatialprofilingtoolbox.apiserver",
     "spatialprofilingtoolbox.apiserver.scripts",

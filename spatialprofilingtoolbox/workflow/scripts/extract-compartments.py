@@ -2,7 +2,7 @@ import argparse
 
 def do_library_imports():
     import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
         from spatialprofilingtoolbox.workflow.environment.extract_compartments import extract_compartments
         from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign

@@ -109,14 +109,14 @@ check-docker-daemon-running:
     result_code="$$?" ; \
     "${MESSAGE}" end "$$result_code" "Running." "Not running." ; \
     if [ $$result_code -gt 0 ] ; \
-    then ; \
+    then \
         "${MESSAGE}" start "Attempting to start Docker daemon" ; \
         bash ${BUILD_SCRIPTS_LOCATION}/start_docker_daemon.sh ; \
         result_code="$$?" ; \
         if [ $$result_code -eq 1 ] ; \
-        then ; \
+        then \
             "${MESSAGE}" end "$$result_code" "Started." "Timed out." ; \
-        else ; \
+        else \
             "${MESSAGE}" end "$$result_code" "Started." "Failed to start." ; \
         fi ; \
     fi

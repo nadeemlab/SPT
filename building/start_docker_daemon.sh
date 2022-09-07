@@ -1,5 +1,5 @@
 
-TIMEOUT_SECONDS=10
+TIMEOUT_SECONDS=20
 
 kernel_name=$(uname -s)
 docker_daemon_start_command=""

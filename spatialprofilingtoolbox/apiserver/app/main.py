@@ -49,7 +49,7 @@ class DBAccessor:
 @app.get("/")
 def get_root():
     return Response(
-        content = json.dumps({ 'server description' : 'Pathology database views API'}),
+        content = json.dumps({ 'server description' : 'Single cell studies database views API'}),
         media_type = 'application/json',
     )
 

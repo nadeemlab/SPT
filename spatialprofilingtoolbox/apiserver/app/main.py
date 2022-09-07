@@ -9,7 +9,7 @@ from fastapi import Query
 from fastapi import Response
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.apiserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
 counts_service_host = os.environ['DB_ENDPOINT']
 
 app = FastAPI()

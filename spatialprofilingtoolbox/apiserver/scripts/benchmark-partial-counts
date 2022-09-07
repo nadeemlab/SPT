@@ -2,22 +2,18 @@ import time
 import random
 import re
 import subprocess
+import configparser
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.apiserver.counts_service_client import CountRequester
 
 
 def get_default_address_counts_server():
-    with importlib.resources.path('spatialprofilingtoolbox.standalone_utilities', 'container_environment.env') as path:
-        with open(path, 'rt') as file:
-            defaults = file.read()
-    host = None
-    port = None
-    for line in defaults.split('\n'):
-        if re.search('^COUNTS_SERVER_HOST=', line):
-            host = line.split('=')[1]
-        if re.search('^COUNTS_SERVER_PORT=', line):
-            port = line.split('=')[2]
+    with importlib.resources.path('spatialprofilingtoolbox.standalone_utilities', 'container_environment_defaults.config') as path:
+        parser = configparser.ConfigParser()
+        parser.read(path)
+        host = parser['defaults']['COUNTS_SERVER_HOST']
+        port = int(parser['defaults']['COUNTS_SERVER_PORT'])
     return [host, port]
 
 

@@ -11,8 +11,27 @@ from fastapi import Response
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
 counts_service_host = os.environ['COUNTS_SERVER_HOST']
+from .. import __version__ as version
 
-app = FastAPI()
+description = """
+Get information about single cell phenotyping studies, including:
+
+* aggregated counts by outcome/case
+* phenotype definitions
+* spatial statistics
+* study metadata
+"""
+
+app = FastAPI(
+    title="Single cell studies stats",
+    description=description,
+    version=version,
+    contact={
+        "name": "James Mathews",
+        "url": "https://nadeemlab.org",
+        "email": "mathewj2@mskcc.org",
+    },
+)
 
 
 class DBAccessor:
@@ -33,8 +52,12 @@ class DBAccessor:
             message = 'Did not find: %s' % str(unfound)
             raise EnvironmentError(message)
 
+        dbname = 'pathstudies'
+        if 'USE_ALTERNATIVE_TESTING_DATABASE' in os.environ:
+            dbname = 'singlecellstudies_test'
+
         self.connection = psycopg2.connect(
-            dbname='pathstudies',
+            dbname=dbname,
             host=os.environ['SINGLE_CELL_DATABASE_HOST'],
             user=os.environ['SINGLE_CELL_DATABASE_USER'],
             password=os.environ['SINGLE_CELL_DATABASE_PASSWORD'],
@@ -56,6 +79,12 @@ def get_root():
 
 @app.get("/specimen-measurement-study-names")
 def get_specimen_measurement_study_names():
+    """
+    Get the names of specimen measurement studies. That is, the part of a
+    potentially larger study which is specifically about subjecting collected
+    specimens to measurement by a machine or assay to create measurements, often
+    data files.
+    """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -72,6 +101,11 @@ def get_specimen_measurement_study_names():
 
 @app.get("/data-analysis-study-names")
 def get_data_analysis_study_names():
+    """
+    Get the names of data analysis studies. That is, the part of a potentially
+    larger study which is specifically about analyzing measured data. Here this
+    means the cell phenotype definitions used in analysis.
+    """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -90,6 +124,14 @@ def get_data_analysis_study_names():
 async def get_specimen_measurement_study_summary(
     specimen_measurement_study : str = Query(default='unknown', min_length=3),
 ):
+    """
+    Get basic summary information about a specimen measurement study by name:
+
+    * **Assay**
+    * **Number of specimens measured**
+    * **Number of cells detected**
+    * **Number of channels meaured**
+    """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -153,6 +195,14 @@ async def get_specimen_measurement_study_summary(
 async def get_data_analysis_study_summary(
     data_analysis_study : str = Query(default='unknown', min_length=3),
 ):
+    """
+    Get basic summary information about a data analysis study by name:
+
+    * **Number of composite phenotypes specified**
+    * **Number of markers referenced**
+    * **Largest number of positive markers in a phenotype**
+    * **Largest number of negative markers in a phenotype**
+    """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -228,6 +278,20 @@ async def get_phenotype_summary(
     specimen_measurement_study : str = Query(default='unknown', min_length=3),
     data_analysis_study : str = Query(default='unknown', min_length=3),
 ):
+    """
+    Get a table of all cell fractions in the given study. A single key value pair,
+    key **fractions** and values dictionaries with entries:
+    * **marker symbol**. The marker symbol for a single marker, or phenotype name in the case of a (composite) phenotype.
+    * **multiplicity**. Whether the marker symbol is 'single' or else 'composite' (i.e. a phenotype name).
+    * **assay**. The assay/condition assessed in order to define a subcohort.
+    * **assessment**. The assessment value defining a subcohort.
+    * **average percent**. The average, over the subcohort, of the percent representation of the fraction of cells in the slide or specimen having the given phenotype.
+    * **standard deviation of percents**. The standard deviation of the above.
+    * **maximum**. The slide or specimen achieving the highest fraction.
+    * **maximum value**. The highest fraction value.
+    * **minimum**. The slide or specimen achieving the lowest fraction.
+    * **minimum value**. The lowest fraction value.
+    """
     columns = [
         'marker_symbol',
         'multiplicity',
@@ -259,6 +323,10 @@ async def get_phenotype_summary(
 
 @app.get("/phenotype-symbols/")
 async def get_phenotype_symbols():
+    """
+    Get a dictionary, key **phenotype symbols** with value a list of all the
+    composite phenotype symbols across all studies.
+    """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -282,6 +350,10 @@ async def get_phenotype_symbols():
 async def get_phenotype_criteria_name(
     phenotype_symbol : str = Query(default='unknown', min_length=3),
 ):
+    """
+    Get a string representation of the markers (positive and negative) defining
+    a given named phenotype, by name (i.e. phenotype symbol). Key **phenotype criteria name**.
+    """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -317,6 +389,13 @@ async def get_phenotype_criteria_name(
 async def get_phenotype_criteria(
     phenotype_symbol : str = Query(default='unknown', min_length=3),
 ):
+    """
+    Get a list of the positive markers and negative markers defining a given named
+    phenotype. Key **phenotype criteria**, with value dictionary with keys:
+
+    * **positive markers**
+    * **negative markers**
+    """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -368,6 +447,15 @@ async def get_phenotype_criteria(
     negative_markers_tab_delimited : str = Query(default=None),
     specimen_measurement_study : str = Query(default='unknown', min_length=3),
 ):
+    """
+    Get the total count of all cells belonging to the given study that satisfy
+    prescribed positive and negative criteria.
+
+    This method is relatively slow, not relying on any pre-built data structure.
+
+    Returns per-specimen counts, the number of all cells in each specimen for
+    the purpose of reference, and the totals of both.
+    """
     if not positive_markers_tab_delimited is None:
         positive_markers = positive_markers_tab_delimited.split('\t')
     else:
@@ -538,6 +626,10 @@ async def get_phenotype_criteria(
     negative_markers_tab_delimited : str = Query(default=None),
     specimen_measurement_study : str = Query(default='unknown', min_length=3),
 ):
+    """
+    The same as endpoint `anonymous-phenotype-counts/`, except this method uses a
+    pre-build custom index for performance. It is about 500 times faster.
+    """
     if not positive_markers_tab_delimited is None:
         positive_markers = positive_markers_tab_delimited.split('\t')
     else:
@@ -593,6 +685,12 @@ async def get_phenotype_criteria(
 async def get_phenotype_proximity_summary(
     data_analysis_study : str = Query(default='unknown', min_length=3),
 ):
+    """
+    Spatial proximity statistics between pairs of cell populations defined by the
+    phenotype criteria (whether single or composite). Statistics of the metric
+    which is the average number of cells of a second phenotype within a fixed
+    distance to a given cell of a primary phenotype.
+    """
     columns = [
         'specifier1',
         'specifier2',

@@ -71,12 +71,13 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 
 ## Moving altering directory
 - [DONE] Consider each python module not in one of the submodules, try to push down.
-- (apiserver) Review contents, especially counts_service_client.
-- (apiserver) Review Dockerfile for needed partner service discovery environment variables.
-- (apiserver) Add healthcheck.
+- [DONE] (apiserver) Review contents, especially counts_service_client.
+- [DONE] (apiserver) Review Dockerfile for needed partner service discovery environment variables.
+- [DONE] (apiserver) Add healthcheck.
+- [DONE] (apiserver) Document the API routes.
 - (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
 - (apiserver) Create tests notes doc, proposing a few new tests.
-- (apiserver) Consider deprecation of deployment management subdirectory contents.
+- [DONE] (apiserver) Consider deprecation of deployment management subdirectory contents.
 - (control) Review.
 - (control) Move configure to workflow.
 - (control) Create utilities notes doc, proposing a few utilities.

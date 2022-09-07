@@ -11,7 +11,7 @@ from spatialprofilingtoolbox import submodule_names
 
 def get_commands(submodule_name):
     files = importlib.resources.files('spatialprofilingtoolbox.%s' % submodule_name)
-    if submodule_name == 'entry_point':
+    if submodule_name in ['entry_point', 'standalone_utilities']:
         return []
     scripts = [
         re.search('/scripts/(.*)$', str(entry))

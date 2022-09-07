@@ -13,7 +13,7 @@ from sklearn.mixture import GaussianMixture
 from sklearn.exceptions import ConvergenceWarning
 warnings.simplefilter('error', ConvergenceWarning)
 
-from ...log_formats import colorized_logger
+from ...standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

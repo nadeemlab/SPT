@@ -1,6 +1,6 @@
 import csv
 
-from ...log_formats import colorized_logger
+from ...standalone_utilities.log_formats import colorized_logger
 from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()

@@ -18,7 +18,7 @@ def do_library_imports():
         SuggestExtrasException(e, 'db')
 
     from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-    from spatialprofilingtoolbox.log_formats import colorized_logger
+    from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
     logger = colorized_logger('modify-constraints')
 
 

@@ -57,7 +57,7 @@ ${PACKAGE_NAME}/entry_point/spt-completion.sh: $(shell find spatialprofilingtool
 
 build-and-push-docker-containers: ${DOCKER_PUSH_TARGETS}
 
-${DOCKER_PUSH_TARGETS}: build-docker-containers
+${DOCKER_PUSH_TARGETS}: build-docker-containers check-for-docker-credentials
 	@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
@@ -71,13 +71,13 @@ ${DOCKER_PUSH_TARGETS}: build-docker-containers
     exit_code=$$(( exit_code1 + exit_code2 )); \
     "${MESSAGE}" end "$$exit_code" "Pushed." "Not pushed."
 
-build-docker-containers: ${DOCKER_BUILD_TARGETS} check-for-docker-credentials
-
 check-for-docker-credentials:
 	@"${MESSAGE}" start "Checking for Docker credentials in ~/.docker/config.json"
 	@result=$$(${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi); \
 	if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
     "${MESSAGE}" end "$$exit_code" "Found." "Not found."
+
+build-docker-containers: ${DOCKER_BUILD_TARGETS}
 
 ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
 	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \

@@ -11,7 +11,7 @@ from fastapi import Response
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
 counts_service_host = os.environ['COUNTS_SERVER_HOST']
-from .. import __version__ as version
+from . import __version__ as version
 
 description = """
 Get information about single cell phenotyping studies, including:
@@ -280,7 +280,7 @@ async def get_phenotype_summary(
 ):
     """
     Get a table of all cell fractions in the given study. A single key value pair,
-    key **fractions** and values dictionaries with entries:
+    key **fractions** and value a list of lists with entries:
     * **marker symbol**. The marker symbol for a single marker, or phenotype name in the case of a (composite) phenotype.
     * **multiplicity**. Whether the marker symbol is 'single' or else 'composite' (i.e. a phenotype name).
     * **assay**. The assay/condition assessed in order to define a subcohort.
@@ -689,7 +689,19 @@ async def get_phenotype_proximity_summary(
     Spatial proximity statistics between pairs of cell populations defined by the
     phenotype criteria (whether single or composite). Statistics of the metric
     which is the average number of cells of a second phenotype within a fixed
-    distance to a given cell of a primary phenotype.
+    distance to a given cell of a primary phenotype. Each row is:
+
+    * **Phenotype 1**
+    * **Phenotype 2**
+    * **Distance limit**. In pixels.
+    * **Assay**. Used to define a subcohort for aggegation.
+    * **Assessment**. The assessment result.
+    * **Average value**. Of the metric value in the subcohort.
+    * **Standard deviation**. Of the metric value in the subcohort.
+    * **Maximum**. Of the metric value in the subcohort.
+    * **Maximum value**. Of the metric value in the subcohort.
+    * **Minimum**. Of the metric value in the subcohort.
+    * **Minimum value**. Of the metric value in the subcohort.
     """
     columns = [
         'specifier1',

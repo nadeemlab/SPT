@@ -7,8 +7,18 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.apiserver.counts_service_client import CountRequester
 
 
-def guess_default_address():
-    return ['0.0.0.0', 8016]
+def get_default_address_counts_server():
+    with importlib.resources.path('spatialprofilingtoolbox.standalone_utilities', 'container_environment.env') as path:
+        with open(path, 'rt') as file:
+            defaults = file.read()
+    host = None
+    port = None
+    for line in defaults.split('\n'):
+        if re.search('^COUNTS_SERVER_HOST=', line):
+            host = line.split('=')[1]
+        if re.search('^COUNTS_SERVER_PORT=', line):
+            port = line.split('=')[2]
+    return [host, port]
 
 
 if __name__=='__main__':
@@ -31,7 +41,7 @@ if __name__=='__main__':
     ]
     all_channel_names = ['B2M', 'B7H3', 'CD14', 'CD163', 'CD20', 'CD25', 'CD27', 'CD3', 'CD4', 'CD56', 'CD68', 'CD8', 'DAPI', 'FOXP3', 'IDO1', 'KI67', 'LAG3', 'MHCI', 'MHCII', 'MRC1', 'PD1', 'PDL1', 'S100B', 'SOX10', 'TGM2', 'TIM3']
     study_name = 'Melanoma intralesional IL2 (Hollmann lab) - specimen collection'
-    host, port = guess_default_address()
+    host, port = get_default_address_counts_server()
 
     with CountRequester(host, port) as requester:
         counts = requester.get_counts(['CD3'], ['CD8', 'CD20'], study_name)

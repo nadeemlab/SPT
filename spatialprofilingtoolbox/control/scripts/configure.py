@@ -11,11 +11,13 @@ from os.path import expanduser
 from os import getcwd
 import importlib.resources
 
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox import get_workflow
+from spatialprofilingtoolbox import get_workflow_names
+workflows = {name : get_workflow(name) for name in get_workflow_names()}
+
 def do_library_imports():
-    import spatialprofilingtoolbox
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    from spatialprofilingtoolbox import get_workflow
-    from spatialprofilingtoolbox import get_workflow_names
 
     try:
         import jinja2
@@ -24,7 +26,6 @@ def do_library_imports():
         from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
         from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
         from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
-        workflows = {name : get_workflow(name) for name in get_workflow_names()}
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'control')
 

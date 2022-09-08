@@ -43,6 +43,7 @@ packages = [
     "spatialprofilingtoolbox.standalone_utilities",
     "spatialprofilingtoolbox.entry_point",
     "spatialprofilingtoolbox.apiserver",
+    "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
     "spatialprofilingtoolbox.control",
     "spatialprofilingtoolbox.control.scripts",

@@ -75,9 +75,9 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [DONE] (apiserver) Review Dockerfile for needed partner service discovery environment variables.
 - [DONE] (apiserver) Add healthcheck.
 - [DONE] (apiserver) Document the API routes.
-- (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
-- (apiserver) Create tests notes doc, proposing a few new tests.
+- [DONE] (apiserver) Create tests notes doc, proposing a few new tests.
 - [DONE] (apiserver) Consider deprecation of deployment management subdirectory contents.
+- (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
 - (control) Review.
 - (control) Move configure to workflow.
 - (control) Create utilities notes doc, proposing a few utilities.

@@ -130,7 +130,7 @@ clean:
 	@rm -rf build/
 	@rm -f .initiation_message_size
 	@rm -f .current_time.txt
-	@${MAKE} -C ${PACKAGE_NAME}/entry_point/ clean
+	@${MAKE} --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
 	@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-//g') ; \
         for whl in $$submodule_directory/*.whl ; do \

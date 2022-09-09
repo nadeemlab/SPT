@@ -13,7 +13,7 @@ except ModuleNotFoundError as e:
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog = 'spt workflow initialize',
-        description = 'One parallelizable "core" computation job.',
+        description = 'A job that runs before all the main (parallelizable) jobs.',
     )
 
     for Initializer in [w.initializer for w in workflows.values()]:

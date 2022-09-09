@@ -18,7 +18,6 @@ workflows = {name : get_workflow(name) for name in get_workflow_names()}
 
 def do_library_imports():
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-
     try:
         import jinja2
         from jinja2 import Environment
@@ -28,8 +27,6 @@ def do_library_imports():
         from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'control')
-
-    jinja_environment = Environment(loader=BaseLoader)
 
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'
@@ -149,6 +146,7 @@ if __name__=='__main__':
     args = parser.parse_args()
 
     do_library_imports()
+    jinja_environment = Environment(loader=BaseLoader)
 
     variables = {}
 

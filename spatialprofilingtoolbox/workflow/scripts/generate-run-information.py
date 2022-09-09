@@ -24,6 +24,9 @@ if __name__=='__main__':
         are discovered by reading other files' contents.
         ''',
     )
+
+    do_library_imports()
+
     parser.add_argument(
         '--workflow',
         dest='workflow',
@@ -81,7 +84,6 @@ if __name__=='__main__':
     )
 
     args = parser.parse_args()
-    do_library_imports()
 
     if not exists(args.file_manifest_file):
         raise FileNotFoundError(args.file_manifest_file)

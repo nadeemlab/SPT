@@ -17,13 +17,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog = 'spt workflow aggregate-core-results',
         description='''
-        Create a list of core, parallelizable job specifications for a given SPT
-        workflow, as well as lists of file dependencies.
-        
-        Note: Due to orchestration design constraints, if this script must
-        depend on file contents, it can *only* depend on the contents of explicitly
-        indicated files. That is, it cannot "bootstrap" and open files whose names
-        are discovered by reading other files' contents.
+        Merge the results provided by all core jobs.
         ''',
     )
     parser.add_argument(

@@ -8,7 +8,7 @@ import pandas as pd
 from ....standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-from ....database_connection import DatabaseConnectionMaker
+from ....db.database_connection import DatabaseConnectionMaker
 from ..verbose_sql_execution import verbose_sql_execute
 from .subjects import SubjectsParser
 from .samples import SamplesParser

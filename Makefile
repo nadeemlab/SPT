@@ -27,8 +27,9 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-build-/g' )
-DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-push-/g' )
+PY3_DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-build-/g' )
+OTHER_DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-build-/g' )
+DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-push-/g' ) $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-push-/g' )
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -59,7 +60,6 @@ build-and-push-docker-containers: ${DOCKER_PUSH_TARGETS}
 
 ${DOCKER_PUSH_TARGETS}: build-docker-containers check-for-docker-credentials
 	@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
-    dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
@@ -77,9 +77,9 @@ check-for-docker-credentials:
 	if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
     "${MESSAGE}" end "$$exit_code" "Found." "Not found."
 
-build-docker-containers: ${DOCKER_BUILD_TARGETS}
+build-docker-containers: ${PY3_DOCKER_BUILD_TARGETS} ${OTHER_DOCKER_BUILD_TARGETS}
 
-${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
+${PY3_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
 	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
@@ -88,6 +88,30 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     "${MESSAGE}" start "Building Docker container $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base $$submodule_directory/Dockerfile.append > Dockerfile ; \
+    cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
+    docker build \
+     -f ./Dockerfile \
+     -t $$repository_name:$$submodule_version \
+     -t $$repository_name:latest \
+     --build-arg version=$$submodule_version \
+     --build-arg service_name=$$submodule_name \
+     --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
+     $$submodule_directory \
+     >/dev/null 2>&1 ; \
+    "${MESSAGE}" end "$$?" "Built." "Build failed." ; \
+    rm $$submodule_directory/${WHEEL_FILENAME} ; \
+    rm ./Dockerfile ; \
+    rm ./.dockerignore
+
+${OTHER_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
+    @submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+    dockerfile=$${submodule_directory}/Dockerfile ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    "${MESSAGE}" start "Building Docker container $$repository_name" ; \
+    cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
+    cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile > Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
     docker build \
      -f ./Dockerfile \
@@ -131,7 +155,7 @@ clean:
 	@rm -f .initiation_message_size
 	@rm -f .current_time.txt
 	@${MAKE} -C ${PACKAGE_NAME}/entry_point/ clean
-	@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
+	@for submodule_directory_target in ${PY3_DOCKER_BUILD_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-//g') ; \
         for whl in $$submodule_directory/*.whl ; do \
             rm -f $$whl; \

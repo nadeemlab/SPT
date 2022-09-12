@@ -7,5 +7,6 @@ Unit tests
 2. Test create schema. Check tables and one or two relations.
 3. Test create schema views. And drop.
 4. In container, test create roles (with interactive aspect).
-6. In container, test 
+5. In container, test granting roles.
+6. In container, test populating with some test data. Expose result for other tests.
 

@@ -74,7 +74,7 @@ ${DOCKER_PUSH_TARGETS}: build-docker-containers check-for-docker-credentials
 check-for-docker-credentials:
 	@"${MESSAGE}" start "Checking for Docker credentials in ~/.docker/config.json"
 	@result=$$(${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi); \
-	if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
+    if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
     "${MESSAGE}" end "$$exit_code" "Found." "Not found."
 
 build-docker-containers: ${PY3_DOCKER_BUILD_TARGETS} ${OTHER_DOCKER_BUILD_TARGETS}
@@ -106,7 +106,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILES}
 ${DOCKERFILES}:
 	@submodule_directory=$$(echo $@ | sed 's/Dockerfile//g') ; \
     echo "$$submodule_directory" ; \
-	${MAKE} -C $$submodule_directory Dockerfile
+    ${MAKE} -C $$submodule_directory Dockerfile
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"

@@ -80,17 +80,14 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [DONE] (apiserver) Document the API routes.
 - [DONE] (apiserver) Create tests notes doc, proposing a few new tests.
 - [DONE] (apiserver) Consider deprecation of deployment management subdirectory contents.
-- (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
-- (control) Review.
-- (control) Move configure to workflow.
-- (control) Create utilities notes doc, proposing a few utilities.
-- (control) Consider factoring the control module out into other modules (if new utilities can also do this).
-- (control) Create tests notes doc, proposing a few new tests.
-- (countsserver) Review.
-- (countsserver) Dockerfile service discovery.
-- (countsserver) Health check.
-- (countsserver) Tests.
-- (countsserver) Tests ideas.
+- [DONE] (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
+- [DONE] (control) Review.
+- [DONE] (control) Move configure to workflow.
+- [DONE] (control) Consider factoring the control module out into other modules (if new utilities can also do this).
+- [DONE] (countsserver) Review.
+- [DONE] (countsserver) Health check.
+- [DONE] (countsserver) Tests.
+- [DONE] (countsserver) Tests ideas.
 - (countsserver) Deal with log_formats duplication.
 - (countsserver) Add more control scripts (like stop).
 - (dashboard) Skip for now, will be moved.

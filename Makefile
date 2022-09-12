@@ -27,9 +27,14 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-DOCKERFILES := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*/Dockerfile/g' | sed 's/^/dockerfile-/g' )
-DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-build-/g' )
-DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-push-/g' )
+DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
+DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${PACKAGE_NAME}/$(submodule))
+DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
+DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
+
+# DOCKERFILE_TARGETS = $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/dockerfile-/g' )
+# DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-build-/g' )
+# DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-push-/g' )
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -77,9 +82,9 @@ check-for-docker-credentials:
     if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
     "${MESSAGE}" end "$$exit_code" "Found." "Not found."
 
-build-docker-containers: ${PY3_DOCKER_BUILD_TARGETS} ${OTHER_DOCKER_BUILD_TARGETS}
+build-docker-containers: ${DOCKER_BUILD_TARGETS}
 
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILES}
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS}
 	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
@@ -103,10 +108,9 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILES}
     rm ./Dockerfile ; \
     rm ./.dockerignore
 
-${DOCKERFILES}:
-	@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' | sed 's/Dockerfile//g') ; \
-    echo "$$submodule_directory" ; \
-    ${MAKE} -C $$submodule_directory Dockerfile
+${DOCKERFILE_TARGETS}:
+	@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
+    ${MAKE} -C $$submodule_directory build-dockerfile
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"

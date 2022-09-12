@@ -31,10 +31,6 @@ DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${PACKAGE_NAME}/$(submodule))
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
-
-# DOCKERFILE_TARGETS = $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/dockerfile-/g' )
-# DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-build-/g' )
-# DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-push-/g' )
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials

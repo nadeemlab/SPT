@@ -10,3 +10,8 @@ Unit tests
 5. In container, test granting roles.
 6. In container, test populating with some test data. Expose result for other tests.
 
+
+Note on containerization:
+The database container is just for development and testing. This is still an important role, as it will be used to support numerous tests.
+In the production deployments there is no feasible way to compromise between the statelessness and non-endurance of Docker containers and the need for tightly coupled RAM and persistent disk state for the database.
+

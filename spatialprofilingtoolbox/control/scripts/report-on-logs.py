@@ -373,7 +373,7 @@ class LogReportAggregator:
         self.parsers = [LogParser(path) for path in working_directories]
         self.format_handle = format_handle
 
-        jinja_environment = Environment(loader=BaseLoader)
+        jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader)
         def quote_hash(input):
             return re.sub('\#', '\\#', input)
         jinja_environment.filters['quote_hash'] = quote_hash

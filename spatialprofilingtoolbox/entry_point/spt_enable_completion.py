@@ -44,7 +44,7 @@ def attempt_append_to(filename, contents):
 def main_program():
     parser = argparse.ArgumentParser(
         prog='spt-enable-completion',
-        description = 'Enable/disable tab completion for spatialprofilingtoolbox commands.',
+        description='Enable/disable tab completion for spatialprofilingtoolbox commands.',
     )
     parser.add_argument(
         '--disable',

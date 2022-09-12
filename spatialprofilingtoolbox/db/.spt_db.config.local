@@ -1,0 +1,5 @@
+[database-credentials]
+endpoint =  localhost
+database = pathstudies
+user = postgres
+password = postgres

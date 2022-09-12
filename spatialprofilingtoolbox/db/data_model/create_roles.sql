@@ -3,6 +3,8 @@ CREATE ROLE apireader WITH LOGIN;
 \password apireader
 # input
 
+# Refactor this into a template, so usable programmatically
+
 CREATE ROLE nadeemlab WITH LOGIN;
 \password nadeemlab
 # input

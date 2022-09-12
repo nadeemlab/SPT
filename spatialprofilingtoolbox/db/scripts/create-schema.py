@@ -10,6 +10,7 @@ def do_library_imports():
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
         from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
+        # Deprecate above. Move the db schema management stuff into this module.
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'db')
 

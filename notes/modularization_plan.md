@@ -61,12 +61,15 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 13. [DONE] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 14. Finish moving static file artifacts and modules into correct locations in new module structure.
 15. Change tests to call correct scripts.
-16. Add utility commands e.g. for status, depending on the submodule.
-17. Add actual unit tests and deprecate outdated tests.
-18. Assess library dependency versions for a sharper version indicator, with less than / greater than.
-19. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
+16. Create a Docker container around the DB.
+17. Add mDNS for each service, simulating the service domain name resolution that will be performed in the actual orchestration case. For testing. Governed by an easy switch, to turn off in case of possible conflicts with real DNS.
+18. Add utility commands e.g. for status, depending on the submodule.
+19. Add actual unit tests (and module tests) and deprecate outdated tests.
+20. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+21. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+* [POSTPONE] Create minimal K8S configuration for local development/testing.
 
 
 ## Moving altering directory

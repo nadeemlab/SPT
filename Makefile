@@ -121,7 +121,7 @@ ${OTHER_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-runnin
      --build-arg service_name=$$submodule_name \
      --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
      $$submodule_directory \
-     ; \
+     >/dev/null 2>&1 ; \
     "${MESSAGE}" end "$$?" "Built." "Build failed." ; \
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \

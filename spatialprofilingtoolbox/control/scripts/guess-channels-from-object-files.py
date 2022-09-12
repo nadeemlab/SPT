@@ -10,7 +10,6 @@ def do_library_imports():
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'control')
 
-
 def parse_channels(columns):
     patterns = {
         'membership': '^(\w[\w _\d]+)[ _]Positive([ _]Classification)?$',
@@ -43,7 +42,7 @@ def create_elementary_phenotypes_table(available_channels):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt control guess-channels',
+        prog = 'spt control guess-channels-from-object-files',
         description = 'Attempt to extract channel information from a list of HALO cell manifest files.',
     )
 

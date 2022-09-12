@@ -95,7 +95,7 @@ packages = [
 ]
 "spatialprofilingtoolbox.control.scripts" = [
     "configure.py",
-    "guess-channels.py",
+    "guess-channels-from-object-files.py",
     "report-on-logs.py",
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [

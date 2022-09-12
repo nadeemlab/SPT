@@ -1,5 +1,6 @@
 
 build-completions-script: spt-completion.sh
+	@echo > /dev/null
 
 spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_completions_script.py
 	@"${MESSAGE}" start "Creating CLI completions script"

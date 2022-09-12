@@ -80,7 +80,7 @@ check-for-docker-credentials:
 
 build-docker-containers: ${DOCKER_BUILD_TARGETS}
 
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS}
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-docker-daemon-running
 	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\

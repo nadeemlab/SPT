@@ -23,12 +23,6 @@ def do_library_imports():
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'control')
 
-    jinja_environment = Environment(loader=BaseLoader)
-
-    def quote_hash(input):
-        return re.sub('\#', '\\#', input)
-    jinja_environment.filters['quote_hash'] = quote_hash
-
 ansi_escape = re.compile(r'''
     \x1B  # ESC
     (?:   # 7-bit C1 Fe (except CSI)
@@ -379,6 +373,11 @@ class LogReportAggregator:
         self.parsers = [LogParser(path) for path in working_directories]
         self.format_handle = format_handle
 
+        jinja_environment = Environment(loader=BaseLoader)
+        def quote_hash(input):
+            return re.sub('\#', '\\#', input)
+        jinja_environment.filters['quote_hash'] = quote_hash
+
     @staticmethod
     def get_formats():
         return [
@@ -408,13 +407,13 @@ class LogReportAggregator:
         if format_description == 'tex':
             with importlib.resources.path('spatialprofilingtoolbox.templates', 'log_table.tex.jinja') as path:
                 log_report_template = open(path, 'rt').read()
-                template = jinja_environment.from_string(log_report_template)
+                template = self.jinja_environment.from_string(log_report_template)
                 rows = [LogParser.get_order()] + [parser.get_extractions_ordered() for parser in self.parsers]
                 rendered = template.render(rows=rows)
         if format_description == 'HTML':
             with importlib.resources.path('spatialprofilingtoolbox.templates', 'log_table.html.jinja') as path:
                 log_report_template = open(path, 'rt').read()
-                template = jinja_environment.from_string(log_report_template)
+                template = self.jinja_environment.from_string(log_report_template)
                 ordered_parsers = sorted(self.parsers, key=lambda p: p.get_sort_key())
                 rendered = template.render(
                     header=LogParser.get_order() + ['CPU usage'],

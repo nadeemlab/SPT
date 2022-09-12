@@ -61,13 +61,12 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 13. [DONE] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 14. Finish moving static file artifacts and modules into correct locations in new module structure.
 15. Create a Docker container around the DB. Easy to compose for testing.
-16. Change tests to call correct scripts.
-17. Move all the workflow skimmer stuff which is really DB management into DB.
-18. Add mDNS for each service, simulating the service domain name resolution that will be performed in the actual orchestration case. For testing. Governed by an easy switch, to turn off in case of possible conflicts with real DNS.
-19. Add utility commands e.g. for status, depending on the submodule.
-20. Add actual unit tests (and module tests) and deprecate outdated tests.
-21. Assess library dependency versions for a sharper version indicator, with less than / greater than.
-22. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
+16. Move all the workflow skimmer stuff which is really DB management into DB.
+17. Change tests to call correct scripts.
+18. Add utility commands e.g. for status, depending on the submodule.
+19. Add actual unit tests (and module tests) and deprecate outdated tests.
+20. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+21. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 * [POSTPONE] Create minimal K8S configuration for local development/testing.
@@ -102,7 +101,6 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - (workflow) Bring templates together.
 - [SKIP] (workflow) Possibly put nextflow into the container? To support a single-core use case.
 - (workflow) Health check.
-- (workflow) Tests.
 - (workflow) Tests ideas.
 - (workflow) More status utilities, possibly to replace or augment the detailed workflow logging.
 - (workflow) Review init.

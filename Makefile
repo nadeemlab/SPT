@@ -104,14 +104,14 @@ ${PY3_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     rm ./.dockerignore
 
 ${OTHER_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
-    @submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     "${MESSAGE}" start "Building Docker container $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
-    cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile > Dockerfile ; \
+    cat $$submodule_directory/Dockerfile > Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
     docker build \
      -f ./Dockerfile \

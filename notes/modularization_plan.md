@@ -88,8 +88,8 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [DONE] (countsserver) Health check.
 - [DONE] (countsserver) Tests.
 - [DONE] (countsserver) Tests ideas.
-- (countsserver) Deal with log_formats duplication.
-- (countsserver) Add more control scripts (like stop).
+- [DONE] (countsserver) Deal with log_formats duplication.
+- [SKIP] (countsserver) Add more control scripts (like stop). [Server pattern in container is to stop on container stop only]
 - (dashboard) Skip for now, will be moved.
 - (db) Review contents.
 - (db) Create utilities notes doc, propose a few new utilities.

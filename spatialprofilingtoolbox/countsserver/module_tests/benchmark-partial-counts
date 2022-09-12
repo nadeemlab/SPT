@@ -3,21 +3,40 @@ import random
 import re
 import subprocess
 import configparser
+import argparse
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.apiserver.counts_service_client import CountRequester
 
 
-def get_default_address_counts_server():
-    with importlib.resources.path('spatialprofilingtoolbox.standalone_utilities', 'container_environment_defaults.config') as path:
+def get_default_counts_server_port():
+    with importlib.resources.path('spatialprofilingtoolbox.standalone_utilities', 'port_assignments.config') as path:
         parser = configparser.ConfigParser()
         parser.read(path)
-        host = parser['defaults']['COUNTS_SERVER_HOST']
-        port = int(parser['defaults']['COUNTS_SERVER_PORT'])
-    return [host, port]
+        port = int(parser['defaults']['COUNTSSERVER'])
+    return port
 
 
 if __name__=='__main__':
+    parser = argparse.ArgumentParser(
+        description = 'Benchmark the counts server performance.',
+    )
+    parser.add_argument(
+        '--countsserver-host',
+        dest='countsserver_host',
+        type=str,
+        default='spt-service-countsserver.local',
+    )
+    parser.add_argument(
+        '--countsserver-port',
+        dest='countsserver_port',
+        type=int,
+        default=get_default_counts_server_port(),
+    )
+    args = parser.parse_args()
+    host = args.host
+    port = args.port
+
     fixed_cases = [
         ['CD3'],
         ['CD3', 'CD4'],
@@ -37,7 +56,6 @@ if __name__=='__main__':
     ]
     all_channel_names = ['B2M', 'B7H3', 'CD14', 'CD163', 'CD20', 'CD25', 'CD27', 'CD3', 'CD4', 'CD56', 'CD68', 'CD8', 'DAPI', 'FOXP3', 'IDO1', 'KI67', 'LAG3', 'MHCI', 'MHCII', 'MRC1', 'PD1', 'PDL1', 'S100B', 'SOX10', 'TGM2', 'TIM3']
     study_name = 'Melanoma intralesional IL2 (Hollmann lab) - specimen collection'
-    host, port = get_default_address_counts_server()
 
     with CountRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(['CD3'], ['CD8', 'CD20'], study_name)

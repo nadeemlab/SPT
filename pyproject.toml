@@ -70,7 +70,7 @@ packages = [
 
 [tool.setuptools.package-data]
 "spatialprofilingtoolbox.entry_point" = ["spt-completion.sh"]
-"spatialprofilingtoolbox.standalone_utilities" = ["container_environment_defaults.config"]
+"spatialprofilingtoolbox.standalone_utilities" = ["port_assignments.config"]
 "spatialprofilingtoolbox.workflow.scripts" = [
     "aggregate-core-results.py",
     "core-job.py",

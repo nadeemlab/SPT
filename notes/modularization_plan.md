@@ -93,15 +93,14 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [SKIP] (countsserver) Add more control scripts (like stop). [Server pattern in container is to stop on container stop only]
 - [SKIPPED] (dashboard) Skip for now, will be moved.
 - [DONE] (db) Review contents.
-- (db) Create utilities notes doc, propose a few new utilities.
-- (db) Write a note explaining decision regarding dockerization of this module.
+- [DONE] (db) Create utilities notes doc, propose a few new utilities.
+- [DONE] (db) Write a note explaining decision regarding dockerization of this module.
 - [DONE] (db) Test ideas.
-- (entry_point) Add disable command.
-- (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
+- [DONE] (entry_point) Add disable command.
+-  (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
 - (workflow) Review, especially environment for moving to a more general purpose module.
 - (workflow) Bring templates together.
-- (workflow) Dockerfile service discovery.
-- (workflow) Possibly put nextflow into the container? To support a single-core use case.
+- [SKIP] (workflow) Possibly put nextflow into the container? To support a single-core use case.
 - (workflow) Health check.
 - (workflow) Tests.
 - (workflow) Tests ideas.

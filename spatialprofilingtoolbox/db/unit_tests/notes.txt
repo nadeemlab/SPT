@@ -1,6 +1,11 @@
 
 Note that there will eventually be a few new utilities:
 1. spt db status
+2. spt db create-default-roles
+3. Consider splitting spt db create-schema into:
+  - spt db create-schema
+  - spt db create-views (--recreate)
+  - spt db refresh-views (--recreate)
 
 Unit tests
 1. Fix up the constraint tester to work from container.

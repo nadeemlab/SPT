@@ -60,13 +60,14 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 12. [DONE] Learn how to do recursive make.
 13. [DONE] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 14. Finish moving static file artifacts and modules into correct locations in new module structure.
-15. Change tests to call correct scripts.
-16. Create a Docker container around the DB.
-17. Add mDNS for each service, simulating the service domain name resolution that will be performed in the actual orchestration case. For testing. Governed by an easy switch, to turn off in case of possible conflicts with real DNS.
-18. Add utility commands e.g. for status, depending on the submodule.
-19. Add actual unit tests (and module tests) and deprecate outdated tests.
-20. Assess library dependency versions for a sharper version indicator, with less than / greater than.
-21. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
+15. Create a Docker container around the DB. Easy to compose for testing.
+16. Change tests to call correct scripts.
+17. Move all the workflow skimmer stuff which is really DB management into DB.
+18. Add mDNS for each service, simulating the service domain name resolution that will be performed in the actual orchestration case. For testing. Governed by an easy switch, to turn off in case of possible conflicts with real DNS.
+19. Add utility commands e.g. for status, depending on the submodule.
+20. Add actual unit tests (and module tests) and deprecate outdated tests.
+21. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+22. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 * [POSTPONE] Create minimal K8S configuration for local development/testing.
@@ -91,11 +92,10 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [DONE] (countsserver) Deal with log_formats duplication.
 - [SKIP] (countsserver) Add more control scripts (like stop). [Server pattern in container is to stop on container stop only]
 - [SKIPPED] (dashboard) Skip for now, will be moved.
-- (db) Review contents.
+- [DONE] (db) Review contents.
 - (db) Create utilities notes doc, propose a few new utilities.
 - (db) Write a note explaining decision regarding dockerization of this module.
-- (db) Tests.
-- (db) Test ideas.
+- [DONE] (db) Test ideas.
 - (entry_point) Add disable command.
 - (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
 - (workflow) Review, especially environment for moving to a more general purpose module.

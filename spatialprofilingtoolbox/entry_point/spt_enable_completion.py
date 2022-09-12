@@ -4,6 +4,7 @@ from os.path import expanduser
 from os.path import join
 from os.path import exists
 import re
+import argparse
 
 header = '### Start added by spatialprofilingtoolbox'
 footer = '### End added by spatialprofilingtoolbox'
@@ -41,6 +42,25 @@ def attempt_append_to(filename, contents):
         exit()
 
 def main_program():
+    parser = argparse.ArgumentParser(
+        prog='spt-enable-completion',
+        description = 'Enable/disable tab completion for spatialprofilingtoolbox commands.',
+    )
+    parser.add_argument(
+        '--disable',
+        dest='disable',
+        action='store_true',
+        help='Disable completions, i.e. uninstall the bash complete snippet from profile configuration files.',
+    )
+    args = parser.parse_args()
+
+    profile_files = ['.bash_profile', '.profile', '.bashrc']
+    if args.disable:
+        for file in profile_files:
+            if exists(file):
+                remove_previous_installation(file)
+        exit()
+
     with importlib.resources.path('spatialprofilingtoolbox.entry_point', 'spt-completion.sh') as path:
         with open(path, 'r') as file:
             completion_script = file.read().rstrip('\n')
@@ -48,6 +68,5 @@ def main_program():
     completion_script = '\n'.join(lines[1:])
     wrapped = '\n%s\n%s\n%s\n' % (header, completion_script, footer)
 
-    attempt_append_to(join(expanduser('~'), '.bash_profile'), wrapped)
-    attempt_append_to(join(expanduser('~'), '.profile'), wrapped)
-    attempt_append_to(join(expanduser('~'), '.bashrc'), wrapped)
+    for file in profile_files:
+        attempt_append_to(join(expanduser('~'), file), wrapped)

@@ -27,7 +27,7 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-DOCKERFILES := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*/Dockerfile/g' )
+DOCKERFILES := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*/Dockerfile/g' | sed 's/^/dockerfile-/g' )
 DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-build-/g' )
 DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-push-/g' )
 export
@@ -104,7 +104,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILES}
     rm ./.dockerignore
 
 ${DOCKERFILES}:
-	@submodule_directory=$$(echo $@ | sed 's/Dockerfile//g') ; \
+	@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' | sed 's/Dockerfile//g') ; \
     echo "$$submodule_directory" ; \
     ${MAKE} -C $$submodule_directory Dockerfile
 

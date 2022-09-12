@@ -20,13 +20,11 @@ def do_library_imports():
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
         import jinja2
-        from jinja2 import Environment
-        from jinja2 import BaseLoader
         from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
         from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
         from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
     except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'control')
+        SuggestExtrasException(e, 'workflow')
 
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'
@@ -94,7 +92,7 @@ def record_configuration_command(variables):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt control configure',
+        prog = 'spt workflow configure',
         description = 'Configure an SPT (spatialprofilingtoolbox) run in the current directory.'
     )
     parser.add_argument(
@@ -146,7 +144,7 @@ if __name__=='__main__':
     args = parser.parse_args()
 
     do_library_imports()
-    jinja_environment = Environment(loader=BaseLoader)
+    jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader)
 
     variables = {}
 

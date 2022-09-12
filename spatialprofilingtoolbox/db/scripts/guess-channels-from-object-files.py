@@ -8,7 +8,7 @@ def do_library_imports():
     try:
         import pandas as pd
     except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'control')
+        SuggestExtrasException(e, 'db')
 
 def parse_channels(columns):
     patterns = {
@@ -42,7 +42,7 @@ def create_elementary_phenotypes_table(available_channels):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt control guess-channels-from-object-files',
+        prog = 'spt db guess-channels-from-object-files',
         description = 'Attempt to extract channel information from a list of HALO cell manifest files.',
     )
 

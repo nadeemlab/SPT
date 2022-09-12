@@ -27,7 +27,6 @@ urls = { "Documentation" = "https://github.com/nadeemlab/SPT", "Source code" = "
 
 [project.optional-dependencies]
 apiserver = ["fastapi>=0.68.0,<0.69.0", "uvicorn>=0.15.0,<0.16.0"]
-control = ["Jinja2==3.0.1", "pandas>=1.1.5"]
 dashboard = ["Jinja2==3.0.1"]
 db = ["pandas>=1.1.5"]
 workflow = ["numpy==1.22.3", "scipy==1.8.0", "scikit-learn==0.24.1", "pyshp==2.2.0", "pandas>=1.1.5"]
@@ -45,8 +44,6 @@ packages = [
     "spatialprofilingtoolbox.apiserver",
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
-    "spatialprofilingtoolbox.control",
-    "spatialprofilingtoolbox.control.scripts",
     "spatialprofilingtoolbox.countsserver",
     "spatialprofilingtoolbox.countsserver.scripts",
     "spatialprofilingtoolbox.dashboard",
@@ -83,6 +80,8 @@ packages = [
     "merge-performance-reports.py",
     "merge-sqlite-dbs.py",
     "report-run-configuration.py",
+    "configure.py",
+    "report-on-logs.py",
 ]
 "spatialprofilingtoolbox.workflow.workflows" = [
     "main.nf.jinja",
@@ -93,11 +92,6 @@ packages = [
     "log_table.html.jinja",
     ".spt_db.config.template",
 ]
-"spatialprofilingtoolbox.control.scripts" = [
-    "configure.py",
-    "guess-channels-from-object-files.py",
-    "report-on-logs.py",
-]
 "spatialprofilingtoolbox.countsserver.scripts" = [
     "read-expression-dump-file.py",
     "cache-expressions-data-array.py",
@@ -106,6 +100,7 @@ packages = [
 "spatialprofilingtoolbox.db.scripts" = [
     "create-schema.py",
     "modify-constraints.py",
+    "guess-channels-from-object-files.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",

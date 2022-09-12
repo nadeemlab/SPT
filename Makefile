@@ -27,9 +27,9 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-PY3_DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-build-/g' )
-OTHER_DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-build-/g' )
-DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-push-/g' ) $(shell find ${PACKAGE_NAME}/*/Dockerfile | sed 's/Dockerfile//g' | sed 's/^/docker-push-/g' )
+DOCKERFILES := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*/Dockerfile/g' | sed 's/^/dockerfile-/g' )
+DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-build-/g' )
+DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile* | sed 's/Dockerfile.*//g' | sed 's/^/docker-push-/g' )
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -79,7 +79,7 @@ check-for-docker-credentials:
 
 build-docker-containers: ${PY3_DOCKER_BUILD_TARGETS} ${OTHER_DOCKER_BUILD_TARGETS}
 
-${PY3_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILES}
 	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
@@ -87,7 +87,7 @@ ${PY3_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     "${MESSAGE}" start "Building Docker image $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
-    cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base $$submodule_directory/Dockerfile.append > Dockerfile ; \
+    cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
     docker build \
      -f ./Dockerfile \
@@ -103,29 +103,9 @@ ${PY3_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     rm ./Dockerfile ; \
     rm ./.dockerignore
 
-${OTHER_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
-	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
-    dockerfile=$${submodule_directory}/Dockerfile ; \
-    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
-    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
-    "${MESSAGE}" start "Building Docker image $$repository_name" ; \
-    cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
-    cat $$submodule_directory/Dockerfile > Dockerfile ; \
-    cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
-    docker build \
-     -f ./Dockerfile \
-     -t $$repository_name:$$submodule_version \
-     -t $$repository_name:latest \
-     --build-arg version=$$submodule_version \
-     --build-arg service_name=$$submodule_name \
-     --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
-     $$submodule_directory \
-     >/dev/null 2>&1 ; \
-    "${MESSAGE}" end "$$?" "Built." "Build failed." ; \
-    rm $$submodule_directory/${WHEEL_FILENAME} ; \
-    rm ./Dockerfile ; \
-    rm ./.dockerignore
+${DOCKERFILES}:
+	@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g') ; \
+	${MAKE} -C $$submodule_directory Dockerfile
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"
@@ -155,12 +135,9 @@ clean:
 	@rm -f .initiation_message_size
 	@rm -f .current_time.txt
 	@${MAKE} -C ${PACKAGE_NAME}/entry_point/ clean
-	@for submodule_directory_target in ${PY3_DOCKER_BUILD_TARGETS} ; do \
-        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-//g') ; \
-        for whl in $$submodule_directory/*.whl ; do \
-            rm -f $$whl; \
-        done ; \
-        rm -f $$submodule_directory/${WHEEL_FILENAME}; \
+	@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-build-//g') ; \
+        ${MAKE} -C $$submodule_directory clean ; \
     done
 	@rm -f Dockerfile
 	@rm -f .dockerignore

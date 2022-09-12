@@ -85,7 +85,7 @@ ${PY3_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
-    "${MESSAGE}" start "Building Docker container $$repository_name" ; \
+    "${MESSAGE}" start "Building Docker image $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base $$submodule_directory/Dockerfile.append > Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
@@ -109,7 +109,7 @@ ${OTHER_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-runnin
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
-    "${MESSAGE}" start "Building Docker container $$repository_name" ; \
+    "${MESSAGE}" start "Building Docker image $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cat $$submodule_directory/Dockerfile > Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
@@ -121,7 +121,7 @@ ${OTHER_DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-runnin
      --build-arg service_name=$$submodule_name \
      --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
      $$submodule_directory \
-     >/dev/null 2>&1 ; \
+     ; \
     "${MESSAGE}" end "$$?" "Built." "Build failed." ; \
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \

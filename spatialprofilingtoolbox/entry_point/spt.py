@@ -39,6 +39,18 @@ def get_executable_and_script(submodule_name, script_name):
     return executable, script_path
 
 
+def print_all_commands():
+    submodules_with_commands = [name for name in submodule_names if len(get_commands(name)) > 0]
+    commands = [
+        [submodule, get_commands(submodule)]
+        for submodule in submodules_with_commands
+    ]
+    for submodule, commands in commands:
+        print('')
+        for command in commands:
+            print('spt %s %s' % (submodule, command))
+
+
 def main_program():
     submodules_with_commands = [name for name in submodule_names if len(get_commands(name)) > 0]
     parser = argparse.ArgumentParser(
@@ -68,7 +80,7 @@ def main_program():
             module = sys.argv[1]
 
     if (module is None):
-        print('    '.join(submodules_with_commands))
+        print_all_commands()
         exit()
 
     command = None

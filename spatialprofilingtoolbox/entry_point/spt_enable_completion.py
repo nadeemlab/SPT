@@ -57,8 +57,9 @@ def main_program():
     profile_files = ['.bash_profile', '.profile', '.bashrc']
     if args.disable:
         for file in profile_files:
-            if exists(file):
-                remove_previous_installation(file)
+            path = join(expanduser('~'), file)
+            if exists(path):
+                remove_previous_installation(path)
         exit()
 
     with importlib.resources.path('spatialprofilingtoolbox.entry_point', 'spt-completion.sh') as path:

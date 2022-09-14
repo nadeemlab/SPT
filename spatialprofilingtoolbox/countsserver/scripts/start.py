@@ -96,7 +96,7 @@ class CountsProvider:
                         'count' : self.count_structures_of_partial_signed_signature([symbol], [], study_name),
                     }
                     for symbol in sorted(list(targets['target by symbol'].keys()))
-                ]
+                ],
                 'total number of cells' : len(self.data_arrays[study_name]),
             }
             for study_name, targets in self.studies.items()

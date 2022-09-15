@@ -13,7 +13,7 @@ import numpy as np
 import sklearn
 from sklearn.neighbors import BallTree
 
-from ...environment.database_context_utility import WaitingDatabaseContextManager
+from ...environment.sqlite_context_utility import WaitingDatabaseContextManager
 from ..defaults.core import CoreJob
 from ....standalone_utilities.log_formats import colorized_logger
 from .computational_design import PhenotypeProximityDesign

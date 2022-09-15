@@ -7,7 +7,7 @@ import scipy
 from scipy.spatial import KDTree
 
 from ..defaults.core import CoreJob
-from ...environment.database_context_utility import WaitingDatabaseContextManager
+from ...environment.sqlite_context_utility import WaitingDatabaseContextManager
 from ....standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

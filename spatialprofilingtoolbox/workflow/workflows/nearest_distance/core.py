@@ -5,7 +5,7 @@ import pandas as pd
 import scipy
 from scipy.spatial import KDTree
 
-from ...environment.database_context_utility import WaitingDatabaseContextManager
+from ...environment.sqlite_context_utility import WaitingDatabaseContextManager
 from ..defaults.core import CoreJob
 from ....standalone_utilities.log_formats import colorized_logger
 

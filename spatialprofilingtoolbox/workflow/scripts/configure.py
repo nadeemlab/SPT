@@ -137,8 +137,8 @@ if __name__=='__main__':
     try:
         import jinja2
         from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import default_file_manifest_filename
-        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
-        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import get_input_filename_by_identifier
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import get_input_filenames_by_data_type
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

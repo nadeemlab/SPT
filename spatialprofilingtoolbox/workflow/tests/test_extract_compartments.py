@@ -4,7 +4,7 @@ from os.path import join
 from os.path import dirname
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import get_input_filenames_by_data_type
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.environment.extract_compartments import extract_compartments
 

@@ -5,12 +5,12 @@ from os.path import join, dirname, abspath
 import pandas as pd
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
 from spatialprofilingtoolbox.workflow.workflows.phenotype_proximity.core import PhenotypeProximityCoreJob
 from spatialprofilingtoolbox.workflow.workflows.phenotype_proximity.computational_design import PhenotypeProximityDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import elementary_phenotypes_file_identifier
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import composite_phenotypes_file_identifier
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import get_input_filename_by_identifier
 
 correct_answers = {
     'group 1' : [

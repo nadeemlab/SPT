@@ -6,7 +6,7 @@ import re
 import pandas as pd
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from ..file_io import compute_sha256
+from ...environment.file_io import compute_sha256
 from ....db.source_file_parser_interface import SourceToADIParser
 from ....standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)

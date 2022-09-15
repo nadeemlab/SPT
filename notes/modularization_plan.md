@@ -98,7 +98,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [DONE] (entry_point) Add disable command.
 - [DONE] (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
 - (workflow) Review, especially environment for moving to a more general purpose module.
-- (workflow) Move part of current "source file parsing" into db module as an interface.
+- [DONE] (workflow) Move part of current "source file parsing" into db module as an interface.
 - (workflow) Move part of current "source file parsing" into own submodule out of workflows/environment.
 - (workflow) Move part of current "source file parsing" into scheme management stuff in db submodule.
 - [POSTPONE] (workflow) Use more modular dichotomization from gist. Also fully implement it in workflows, i.e. checking if positivity column missing, add if intensity can be found.

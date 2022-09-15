@@ -8,17 +8,9 @@ import re
 import random
 import json
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-    from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-    logger = colorized_logger('cache-expressions-data-array')
-
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        from spatialprofilingtoolbox.workflow.environment.configuration_settings import expressions_index_filename
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+logger = colorized_logger('cache-expressions-data-array')
 
 
 class CompressedMatrixPuller:
@@ -229,7 +221,12 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    do_library_imports()
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+        from spatialprofilingtoolbox.countsserver.defaults import expressions_index_filename
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
     database_config_file = abspath(expanduser(args.database_config_file))
     puller = CompressedMatrixPuller(database_config_file)

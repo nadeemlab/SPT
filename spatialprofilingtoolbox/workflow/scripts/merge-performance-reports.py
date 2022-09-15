@@ -1,13 +1,5 @@
 import argparse
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        import pandas as pd
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
-
 def aggregate_performance_reports(reports):
     df = pd.concat(reports).groupby(['from', 'to']).sum().reset_index()
     df['average time spent'] = df['total time spent'] / df['frequency']
@@ -35,7 +27,12 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    do_library_imports()
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        import pandas as pd
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
     reports = [
     	pd.read_csv(file).drop(columns=['average time spent', 'fraction'])

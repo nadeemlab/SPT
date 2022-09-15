@@ -6,7 +6,7 @@ import socket
 import pandas as pd
 
 from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-from ..configuration_settings import get_version
+from ....standalone_utilities.configuration_settings import get_version
 from ....standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 

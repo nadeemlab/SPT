@@ -9,17 +9,9 @@ from enum import auto
 import importlib.resources
 import re
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        import pandas as pd
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'db')
-
-    from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-    from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-    logger = colorized_logger('modify-constraints')
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+logger = colorized_logger('modify-constraints')
 
 
 class DBConstraintsToggling(Enum):
@@ -161,7 +153,13 @@ if __name__=='__main__':
         default=False,
     )
     args = parser.parse_args()
-    do_library_imports()
+
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        import pandas as pd
+        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'db')
 
     database_config_file_elevated = abspath(expanduser(args.database_config_file_elevated))
     if not exists(database_config_file_elevated):

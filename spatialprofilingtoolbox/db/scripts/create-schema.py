@@ -5,14 +5,14 @@ from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
-        # Deprecate above. Move the db schema management stuff into this module.
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'db')
+
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+try:
+    from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
+    # Deprecate above. Move the db schema management stuff into this module.
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'db')
 
 
 if __name__=='__main__':
@@ -46,7 +46,6 @@ if __name__=='__main__':
         help='Only recreate views, do not touch main table schema.',
     )
     args = parser.parse_args()
-    do_library_imports()
 
     if args.database_config_file:
         config_file = abspath(expanduser(args.database_config_file))

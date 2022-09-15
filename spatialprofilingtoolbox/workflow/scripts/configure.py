@@ -16,16 +16,6 @@ from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
 workflows = {name : get_workflow(name) for name in get_workflow_names()}
 
-def do_library_imports():
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        import jinja2
-        from spatialprofilingtoolbox.workflow.environment.configuration_settings import default_file_manifest_filename
-        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
-        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
-
 nf_config_file = 'nextflow.config'
 nf_pipeline_file = 'main.nf'
 
@@ -143,7 +133,15 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    do_library_imports()
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        import jinja2
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import default_file_manifest_filename
+        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filename_by_identifier
+        from spatialprofilingtoolbox.workflow.environment.file_io import get_input_filenames_by_data_type
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
+
     jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader)
 
     variables = {}

@@ -12,17 +12,6 @@ from collections import OrderedDict
 import importlib.resources
 import base64
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        import pandas as pd
-        import jinja2
-        from jinja2 import Environment
-        from jinja2 import BaseLoader
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'control')
-
 ansi_escape = re.compile(r'''
     \x1B  # ESC
     (?:   # 7-bit C1 Fe (except CSI)
@@ -458,7 +447,15 @@ if __name__=='__main__':
         show_help()
         exit()
     else:
-        do_library_imports()
+        import spatialprofilingtoolbox
+        from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+
+        try:
+            import pandas as pd
+            import jinja2
+        except ModuleNotFoundError as e:
+            SuggestExtrasException(e, 'workflow')
+
         aggregator = LogReportAggregator(format_handle=format_handle)
         aggregator.retrieve_reports()
         aggregator.report_on_all()

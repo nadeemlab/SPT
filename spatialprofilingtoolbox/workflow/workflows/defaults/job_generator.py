@@ -4,8 +4,8 @@ from os.path import exists
 
 import pandas as pd
 
-from ...environment.configuration_settings import elementary_phenotypes_file_identifier
-from ...environment.configuration_settings import composite_phenotypes_file_identifier
+from ...dataset_designs.multiplexed_imaging.file_identifier_schema import elementary_phenotypes_file_identifier
+from ...dataset_designs.multiplexed_imaging.file_identifier_schema import composite_phenotypes_file_identifier
 from ....standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

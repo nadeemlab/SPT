@@ -9,8 +9,7 @@ from os.path import expanduser
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
-    from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
-    # Deprecate above. Move the db schema management stuff into this module.
+    from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
 
@@ -52,14 +51,14 @@ if __name__=='__main__':
     if not exists(config_file):
     	raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
-    with DataSkimmer(database_config_file=config_file) as skimmer:
+    with SchemaInfuser(database_config_file=config_file) as infuser:
         if not args.refresh_views_only and not args.recreate_views_only:
-        	skimmer.create_tables(skimmer.get_connection(), force=args.force)
+        	infuser.create_tables(force=args.force)
         else:
             if args.refresh_views_only and args.recreate_views_only:
                 print('Warning: Supply only one of --refresh-views-only or --recreate-views-only')
                 exit()
             if args.refresh_views_only:
-                skimmer.refresh_views(skimmer.get_connection())
+                infuser.refresh_views()
             if args.recreate_views_only:
-                skimmer.recreate_views(skimmer.get_connection())
+                infuser.recreate_views()

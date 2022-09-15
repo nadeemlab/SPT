@@ -96,7 +96,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [DONE] (db) Write a note explaining decision regarding dockerization of this module.
 - [DONE] (db) Test ideas.
 - [DONE] (entry_point) Add disable command.
--  (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
+- [DONE] (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
 - (workflow) Review, especially environment for moving to a more general purpose module.
 - (workflow) Bring templates together.
 - [SKIP] (workflow) Possibly put nextflow into the container? To support a single-core use case.

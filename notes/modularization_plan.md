@@ -98,9 +98,13 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 - [DONE] (entry_point) Add disable command.
 - [DONE] (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
 - (workflow) Review, especially environment for moving to a more general purpose module.
+- (workflow) Move part of current "source file parsing" into db module as an interface.
+- (workflow) Move part of current "source file parsing" into own submodule out of workflows/environment.
+- (workflow) Move part of current "source file parsing" into scheme management stuff in db submodule.
+- [POSTPONE] (workflow) Use more modular dichotomization from gist. Also fully implement it in workflows, i.e. checking if positivity column missing, add if intensity can be found.
 - (workflow) Bring templates together.
 - [SKIP] (workflow) Possibly put nextflow into the container? To support a single-core use case.
-- (workflow) Health check.
+- [SKIP] (workflow) Health check. *This is appropriate for server-like containers but not so much for single-purpose timebound process containers like this.
 - (workflow) Tests ideas.
 - (workflow) More status utilities, possibly to replace or augment the detailed workflow logging.
 - (workflow) Review init.

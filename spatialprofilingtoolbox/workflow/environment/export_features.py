@@ -2,7 +2,7 @@ import importlib.resources
 
 import pandas as pd
 
-from .source_file_parsers.parser import SourceToADIParser
+from ...db.source_file_parser_interface import SourceToADIParser
 from ...db.database_connection import DatabaseConnectionMaker
 from ...standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)

@@ -65,7 +65,7 @@ packages = [
     "spatialprofilingtoolbox.workflow.workflows.halo_import",
     "spatialprofilingtoolbox.workflow.environment",
     "spatialprofilingtoolbox.workflow.environment.logging",
-    "spatialprofilingtoolbox.workflow.environment.source_file_parsers",
+    "spatialprofilingtoolbox.workflow.source_file_adi_parsing",
     "spatialprofilingtoolbox.workflow.templates",
 ]
 

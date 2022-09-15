@@ -37,7 +37,7 @@ def write_config_file(variables):
         file.write(config_file)
 
 def write_pipeline_script(variables):
-    contents = retrieve_from_library('workflows', nf_pipeline_file + '.jinja')
+    contents = retrieve_from_library('templates', nf_pipeline_file + '.jinja')
     template = jinja_environment.from_string(contents)
     pipeline_file = template.render(**variables)
     with open(join(os.getcwd(), nf_pipeline_file), 'wt') as file:

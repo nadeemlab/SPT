@@ -9,8 +9,8 @@ CREATE ROLE nadeemlab WITH LOGIN;
 \password nadeemlab
 # input
 
-GRANT CONNECT ON DATABASE pathstudies TO apireader;
+GRANT CONNECT ON DATABASE scstudies TO apireader;
 GRANT USAGE ON SCHEMA public TO apireader;
 
-GRANT CONNECT ON DATABASE pathstudies TO nadeemlab;
+GRANT CONNECT ON DATABASE scstudies TO nadeemlab;
 GRANT USAGE ON SCHEMA public TO nadeemlab;

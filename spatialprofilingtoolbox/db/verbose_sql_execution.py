@@ -4,7 +4,15 @@ from ...standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-def verbose_sql_execute(filename, connection, description: str=None, silent=False, contents=None, itemize=False, source_package='spatialprofilingtoolbox.data_model'):
+def verbose_sql_execute(
+    filename,
+    connection,
+    description: str=None,
+    silent=False,
+    contents=None,
+    itemize=False,
+    source_package: str=None,
+):
     if description is None:
         description = filename
     if not contents:

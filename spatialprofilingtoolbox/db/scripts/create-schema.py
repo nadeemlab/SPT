@@ -17,7 +17,7 @@ except ModuleNotFoundError as e:
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog = 'spt db create-schema',
-        description = 'Create pathstudies database with defined schema.'
+        description = 'Create scstudies database with defined schema.'
     )
     parser.add_argument(
         '--database-config-file',
@@ -32,13 +32,14 @@ if __name__=='__main__':
         action='store_true',
         help='By default, tables are created only if they don\'t already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use with care; all data in existing tables will be deleted.',
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         '--refresh-views-only',
         dest='refresh_views_only',
         action='store_true',
         help='Only refresh materialized views, do not touch main table schema.',
     )
-    parser.add_argument(
+    group.add_argument(
         '--recreate-views-only',
         dest='recreate_views_only',
         action='store_true',
@@ -49,15 +50,12 @@ if __name__=='__main__':
     if args.database_config_file:
         config_file = abspath(expanduser(args.database_config_file))
     if not exists(config_file):
-    	raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
+        raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
     with SchemaInfuser(database_config_file=config_file) as infuser:
         if not args.refresh_views_only and not args.recreate_views_only:
-        	infuser.create_tables(force=args.force)
+            infuser.setup_schema(force=args.force)
         else:
-            if args.refresh_views_only and args.recreate_views_only:
-                print('Warning: Supply only one of --refresh-views-only or --recreate-views-only')
-                exit()
             if args.refresh_views_only:
                 infuser.refresh_views()
             if args.recreate_views_only:

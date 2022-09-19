@@ -52,7 +52,7 @@ class DBAccessor:
             message = 'Did not find: %s' % str(unfound)
             raise EnvironmentError(message)
 
-        dbname = 'pathstudies'
+        dbname = 'scstudies'
         if 'USE_ALTERNATIVE_TESTING_DATABASE' in os.environ:
             dbname = 'singlecellstudies_test'
 

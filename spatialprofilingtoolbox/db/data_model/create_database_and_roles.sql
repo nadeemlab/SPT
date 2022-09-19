@@ -1,3 +1,4 @@
+CREATE DATABASE scstudies ;
 
 CREATE ROLE apireader LOGIN PASSWORD 'apireader' ;
 CREATE ROLE nadeemlab LOGIN PASSWORD 'nadeemlab' ;

@@ -9,28 +9,30 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
-    from spatialprofilingtoolbox.db.database_connection import retrieve_credentials
-    import psycopg2
+    # from spatialprofilingtoolbox.db.database_connection import retrieve_credentials
+    # import psycopg2
+    # from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('spt db create-schema')
 
-def create_database(database_config_file):
-    credentials = retrieve_credentials(database_config_file)
-    if credentials['database'] != 'scstudies':
-        logger.error('Default database is "scstudies", but the config file you specified supplies "%s".' % credentials['database'])
-        return
-    connection = psycopg2.connect(
-        host=credentials['endpoint'],
-        user=credentials['user'],
-        password=credentials['password'],
-    )
-    cursor = connection.cursor()
-    cursor.execute('CREATE DATABASE scstudies ;')
-    cursor.close()
-    connection.close()
+# def create_database(database_config_file):
+#     credentials = retrieve_credentials(database_config_file)
+#     if credentials['database'] != 'scstudies':
+#         logger.error('Default database is "scstudies", but the config file you specified supplies "%s".' % credentials['database'])
+#         return
+#     connection = psycopg2.connect(
+#         host=credentials['endpoint'],
+#         user=credentials['user'],
+#         password=credentials['password'],
+#     )
+#     connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT);
+#     cursor = connection.cursor()
+#     cursor.execute('CREATE DATABASE scstudies ;')
+#     cursor.close()
+#     connection.close()
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -51,10 +53,10 @@ if __name__=='__main__':
         help='By default, tables are created only if they don\'t already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use with care; all data in existing tables will be deleted.',
     )
     parser.add_argument(
-        '--setup-database-and-users',
-        dest='setup_database_and_users',
+        '--setup-users',
+        dest='setup_users',
         action='store_true',
-        help='By default, this program assumes that the database and users are already set up. If this flag is set, this assumption is dropped, and the program attempts to create the database and users first before creating the schema.',
+        help='By default, this program assumes that the users are already set up. If this flag is set, this assumption is dropped, and the program attempts to create users first before creating the schema.',
     )
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
@@ -76,11 +78,11 @@ if __name__=='__main__':
     if not exists(config_file):
         raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
-    if args.setup_database_and_users:
-        create_database(args.database_config_file)
+    # if args.setup_database_and_users:
+    #     create_database(args.database_config_file)
 
     with SchemaInfuser(database_config_file=config_file) as infuser:
-        if args.setup_database_and_users:
+        if args.setup_users:
             infuser.users_setup()
         if not args.refresh_views_only and not args.recreate_views_only:
             infuser.setup_schema(force=args.force)

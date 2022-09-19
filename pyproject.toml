@@ -105,7 +105,7 @@ packages = [
     "status.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
-    "create_roles.sql",
+    "create_database_and_roles.sql",
     "create_views.sql",
     "drop_views.sql",
     "fields.tsv",

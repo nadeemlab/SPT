@@ -9,6 +9,8 @@ COPY $WHEEL_FILENAME ./
 RUN apt update
 RUN apt install python3 python3-pip -y
 RUN pip3 install "$WHEEL_FILENAME[$service_name]"
+COPY data_model/create_database_and_roles.sql /docker-entrypoint-initdb.d/
 COPY .spt_db.config.local ./
-RUN POSTGRES_PASSWORD=postgres spt db create-schema --database-config-file .spt_db.config.local --setup-database-and-users
 HEALTHCHECK CMD spt db status --database-config-file .spt_db.config.local || exit 1
+RUN postgres ; spt db create-schema --database-config-file .spt_db.config.local --setup-users
+CMD ["postgres"]

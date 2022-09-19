@@ -43,7 +43,7 @@ def check_tables(cursor):
         tables_present = False
     counts = []
     for tablename in tablenames:
-        cursor.execute('SELECT COUNT(*) FROM %s' % tablename)
+        cursor.execute('SELECT COUNT(*) FROM public.%s' % tablename)
         rows = cursor.fetchall()
         count = rows[0][0]
         counts.append([tablename, count])

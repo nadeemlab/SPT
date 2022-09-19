@@ -7,7 +7,6 @@ initialize_schema.sql: data_model/schema.sql
     data_model/schema.sql \
     data_model/performance_tweaks.sql \
     data_model/create_views.sql \
-    data_model/grant_on_tables.sql \
     > initialize_schema.sql
 
 data_model/schema.sql:

@@ -24,9 +24,6 @@ class SchemaInfuser:
     def get_connection(self):
         return self.connection
 
-    def users_setup(self):
-        self.verbose_sql_execute('create_roles.sql', description='create roles')
-
     def setup_schema(self, force=False):
         logger.info('This creation tool assumes that the database itself and users are already set up.')
         if force is True:

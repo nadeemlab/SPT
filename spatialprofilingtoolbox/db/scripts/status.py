@@ -77,10 +77,12 @@ if __name__=='__main__':
 
     dcm = DatabaseConnectionMaker(database_config_file=config_file)
     connection = dcm.get_connection()
-    with connection.cursor() as cursor:
-        users_valid = check_users(cursor)
-        tables_present, counts = check_tables(cursor)
-        if (not users_valid) or (not tables_present):
-            exit(1)
-        report_counts(counts)
+    cursor = connection.cursor()
+    users_valid = check_users(cursor)
+    tables_present, counts = check_tables(cursor)
+    if (not users_valid) or (not tables_present):
+        exit(1)
+    cursor.close()
     connection.close()
+    report_counts(counts)
+

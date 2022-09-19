@@ -24,8 +24,7 @@ class SchemaInfuser:
     def get_connection(self):
         return self.connection
 
-    def initial_database_setup(self):
-        self.verbose_sql_execute('create_database.sql', description='create database')
+    def users_setup(self):
         self.verbose_sql_execute('create_roles.sql', description='create roles')
 
     def setup_schema(self, force=False):
@@ -56,5 +55,5 @@ class SchemaInfuser:
         self.verbose_sql_execute('create_views.sql', description='create views of main schema', itemize=True)
         self.verbose_sql_execute('grant_on_tables.sql', description='grant appropriate access to users')
 
-    def verbose_sql_execute(self, filename, source_package='spatialprofilingtoolbox.data_model', **kwargs):
-        self.verbose_sql_execute(filename, self.get_connection, source_package=source_package, **kwargs)
+    def verbose_sql_execute(self, filename, source_package='spatialprofilingtoolbox.db.data_model', **kwargs):
+        verbose_sql_execute(filename, self.get_connection(), source_package=source_package, **kwargs)

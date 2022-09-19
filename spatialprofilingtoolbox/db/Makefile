@@ -4,7 +4,6 @@ build-dockerfile: initialize_schema.sql
 
 initialize_schema.sql: data_model/schema.sql
 	@cat\
-    data_model/create_roles.sql \
     data_model/schema.sql \
     data_model/performance_tweaks.sql \
     data_model/create_views.sql \

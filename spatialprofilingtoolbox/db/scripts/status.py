@@ -3,6 +3,7 @@ import os
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
+import importlib.resources
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
@@ -42,7 +43,7 @@ def check_tables(cursor):
         tables_present = False
     counts = []
     for tablename in tablenames:
-        cursor.execute('SELECT COUNT(*) FROM %s', tablename)
+        cursor.execute('SELECT COUNT(*) FROM %s' % tablename)
         rows = cursor.fetchall()
         count = rows[0][0]
         counts.append([tablename, count])
@@ -74,11 +75,12 @@ if __name__=='__main__':
     if not exists(config_file):
         raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
-    with DatabaseConnectionMaker(database_config_file=config_file) as dcm:
-        connection = dcm.get_connection()
-        with connection.cursor() as cursor:
-            users_valid = check_users(cursor)
-            tables_present, counts = check_tables(cursor)
-            if (not user_valid) or (not tables_present):
-                exit(1)
-            report_counts(counts)
+    dcm = DatabaseConnectionMaker(database_config_file=config_file)
+    connection = dcm.get_connection()
+    with connection.cursor() as cursor:
+        users_valid = check_users(cursor)
+        tables_present, counts = check_tables(cursor)
+        if (not users_valid) or (not tables_present):
+            exit(1)
+        report_counts(counts)
+    connection.close()

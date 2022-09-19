@@ -14,7 +14,7 @@ initialize_schema.sql: data_model/schema.sql
 data_model/schema.sql:
 	@python -m venv venv ; \
     source venv/bin/activate ; \
-    python -m pip install adisinglecell ; \
+    python -m pip install adisinglecell >/dev/null 2>&1 ; \
     adisinglecell dump-schema > data_model/schema.sql ; \
     deactivate ; \
     rm -rf venv/

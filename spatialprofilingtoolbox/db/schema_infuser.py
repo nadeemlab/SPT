@@ -24,14 +24,9 @@ class SchemaInfuser:
     def get_connection(self):
         return self.connection
 
-    def create_drop_tables(self):
-        with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
-            fields = pd.read_csv(path, sep='\t', keep_default_na=False)
-        tablenames = sorted(list(set([self.normalize(t) for t in fields['Table']])))
-        return '\n'.join([
-            'DROP TABLE IF EXISTS %s CASCADE ; ' % t
-            for t in tablenames
-        ])
+    def initial_database_setup(self):
+        self.verbose_sql_execute('create_database.sql', description='create database')
+        self.verbose_sql_execute('create_roles.sql', description='create roles')
 
     def setup_schema(self, force=False):
         logger.info('This creation tool assumes that the database itself and users are already set up.')
@@ -43,6 +38,15 @@ class SchemaInfuser:
         self.verbose_sql_execute('performance_tweaks.sql', description='tweak main schema')
         self.verbose_sql_execute('create_views.sql', description='create views of main schema')
         self.verbose_sql_execute('grant_on_tables.sql', description='grant appropriate access to users')
+
+    def create_drop_tables(self):
+        with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
+            fields = pd.read_csv(path, sep='\t', keep_default_na=False)
+        tablenames = sorted(list(set([self.normalize(t) for t in fields['Table']])))
+        return '\n'.join([
+            'DROP TABLE IF EXISTS %s CASCADE ; ' % t
+            for t in tablenames
+        ])
 
     def refresh_views(self):
         self.verbose_sql_execute('refresh_views.sql', description='refresh views of main schema', silent=True)

@@ -1,6 +1,5 @@
 import argparse
 import os
-from os.path import join
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
@@ -32,7 +31,13 @@ if __name__=='__main__':
         action='store_true',
         help='By default, tables are created only if they don\'t already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use with care; all data in existing tables will be deleted.',
     )
-    group = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument(
+        '--setup-database-and-users',
+        dest='setup_database_and_users',
+        action='store_true',
+        help='By default, this program assumes that the database and users are already set up. If this flag is set, this assumption is dropped, and the program attempts to create the database and users first before creating the schema.',
+    )
+    group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
         '--refresh-views-only',
         dest='refresh_views_only',
@@ -53,6 +58,8 @@ if __name__=='__main__':
         raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
     with SchemaInfuser(database_config_file=config_file) as infuser:
+        if args.setup_database_and_users:
+            infuser.initial_database_setup()
         if not args.refresh_views_only and not args.recreate_views_only:
             infuser.setup_schema(force=args.force)
         else:

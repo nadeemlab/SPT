@@ -54,7 +54,7 @@ def report_counts(counts):
         'Table' : [row[0] for row in counts],
         'Records' : [row[1] for row in counts],
     })
-    print(df.to_string())
+    print(df.to_string(index=False))
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(

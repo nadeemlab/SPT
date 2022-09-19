@@ -23,7 +23,7 @@ if __name__=='__main__':
     import spatialprofilingtoolbox
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
-        from spatialprofilingtoolbox.workflow.environment.extract_compartments import extract_compartments
+        from spatialprofilingtoolbox.workflow.common.extract_compartments import extract_compartments
         from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
         compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
     except ModuleNotFoundError as e:

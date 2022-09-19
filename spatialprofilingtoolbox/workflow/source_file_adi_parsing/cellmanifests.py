@@ -7,7 +7,7 @@ import re
 import shapefile
 import pandas as pd
 
-from ...environment.file_io import compute_sha256
+from ...common.file_io import compute_sha256
 from ...dataset_designs.multiplexed_imaging.file_identifier_schema import get_input_filename_by_identifier
 from ....db.source_file_parser_interface import SourceToADIParser
 from ....db.source_file_parser_interface import DBBackend

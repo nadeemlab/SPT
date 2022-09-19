@@ -42,7 +42,7 @@ if __name__=='__main__':
     import spatialprofilingtoolbox
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
-        from spatialprofilingtoolbox.workflow.environment.logging.run_configuration_reporter import RunConfigurationReporter
+        from spatialprofilingtoolbox.workflow.common.logging.run_configuration_reporter import RunConfigurationReporter
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

@@ -4,9 +4,9 @@ import re
 
 import pandas as pd
 
-from ...environment.file_io import raw_line_count
-from ...environment.dichotomization import Dichotomizer
-from ...environment.logging.performance_timer import PerformanceTimer
+from ...common.file_io import raw_line_count
+from ...common.dichotomization import Dichotomizer
+from ...common.logging.performance_timer import PerformanceTimer
 from ....standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

@@ -144,7 +144,7 @@ module-tests: development-virtual-environments
     done
 
 integration-tests: development-virtual-environments
-	@echo "Integration tests."
+	@echo "<integration tests>"
 
 development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}
 

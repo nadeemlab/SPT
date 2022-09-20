@@ -1,8 +1,20 @@
 #!/bin/bash
-
 spt db guess-channels-from-object-files \
- ../test_data/./data/2779f21192cb0ce1479b2bf7fb20ebba.csv \
- ../test_data/./data/2cc18c6561b05abb1a1a95d15130a1d3.csv \
- ../test_data/./data/33c794a479e571ae50518546555b9480.csv \
- ../test_data/./data/3d25f72e8ca948280b7bfeb9de03944f.csv \
+../test_data/adi_preprocessed_tables/lesion_0_1.csv \
+../test_data/adi_preprocessed_tables/lesion_0_2.csv \
+../test_data/adi_preprocessed_tables/lesion_0_3.csv \
+../test_data/adi_preprocessed_tables/lesion_6_1.csv \
+../test_data/adi_preprocessed_tables/lesion_6_2.csv \
+../test_data/adi_preprocessed_tables/lesion_6_3.csv \
+../test_data/adi_preprocessed_tables/lesion_6_4.csv \
  --output=elementary_phenotypes.csv
+
+channel_names=$(tail -n+2 elementary_phenotypes.csv | cut -f1 -d, | sort | tr '\n' ' ')
+expected_channel_names="B2M B7H3 CD14 CD163 CD20 CD25 CD27 CD3 CD4 CD56 CD68 CD8 DAPI FOXP3 IDO1 KI67 LAG3 MHCI MHCII MRC1 PD1 PDL1 S100B SOX10 TGM2 TIM3 "
+rm -f elementary_phenotypes.csv
+if [[ "$channel_names" != "$expected_channel_names" ]];
+then
+    exit 1
+else
+    exit 0
+fi

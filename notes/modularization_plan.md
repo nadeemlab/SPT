@@ -59,56 +59,54 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 11. [DONE] Convert setup.py to pyproject.toml directives/items, reflecting the new structure.
 12. [DONE] Learn how to do recursive make.
 13. [DONE] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
-14. Finish moving static file artifacts and modules into correct locations in new module structure.
-15. Change tests to call correct scripts.
-16. Add utility commands e.g. for status, depending on the submodule.
-17. Add actual unit tests and deprecate outdated tests.
-18. Assess library dependency versions for a sharper version indicator, with less than / greater than.
-19. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
+14. [DONE] Finish moving static file artifacts and modules into correct locations in new module structure.
+15. Create a Docker container around the DB. Easy to compose for testing.
+16. [DONE] Move all the workflow skimmer stuff which is really DB management into DB.
+17. Change tests to call correct scripts.
+18. Create at least 1 test of each type for each module, as a placeholder for the test runner setup. This will also give the minimal assurance that the repository code is workable, i.e. importable subpackages, locateable supporting files, etc.
+19. [POSTPONE] Add utility commands e.g. for status, depending on the submodule.
+20. [POSTPONE] Add actual unit tests (and module tests) and deprecate outdated tests.
+21. Assess library dependency versions for a sharper version indicator, with less than / greater than.
+22. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
+23. Split off "view site" i.e. dashboard into new repository.
+24. Do big integration assessment involving all the above major changes. I.e. go through the motions of code testing and packaging, component release and deployment on the test server, major exemplar data import, to include the new dashboard repository.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
+* [POSTPONE] Create minimal K8S configuration for local development/testing.
 
 
-## Moving altering directory
+## Moving/altering directory for modularization
 - [DONE] Consider each python module not in one of the submodules, try to push down.
 - [DONE] (apiserver) Review contents, especially counts_service_client.
 - [DONE] (apiserver) Review Dockerfile for needed partner service discovery environment variables.
 - [DONE] (apiserver) Add healthcheck.
 - [DONE] (apiserver) Document the API routes.
-- (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
-- (apiserver) Create tests notes doc, proposing a few new tests.
+- [DONE] (apiserver) Create tests notes doc, proposing a few new tests.
 - [DONE] (apiserver) Consider deprecation of deployment management subdirectory contents.
-- (control) Review.
-- (control) Move configure to workflow.
-- (control) Create utilities notes doc, proposing a few utilities.
-- (control) Consider factoring the control module out into other modules (if new utilities can also do this).
-- (control) Create tests notes doc, proposing a few new tests.
-- (countsserver) Review.
-- (countsserver) Dockerfile service discovery.
-- (countsserver) Health check.
-- (countsserver) Tests.
-- (countsserver) Tests ideas.
-- (countsserver) Deal with log_formats duplication.
-- (countsserver) Add more control scripts (like stop).
-- (dashboard) Skip for now, will be moved.
-- (db) Review contents.
-- (db) Create utilities notes doc, propose a few new utilities.
-- (db) Write a note explaining decision regarding dockerization of this module.
-- (db) Tests.
-- (db) Test ideas.
-- (entry_point) Add disable command.
-- (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
-- (workflow) Review, especially environment for moving to a more general purpose module.
-- (workflow) Bring templates together.
-- (workflow) Dockerfile service discovery.
-- (workflow) Possibly put nextflow into the container? To support a single-core use case.
-- (workflow) Health check.
-- (workflow) Tests.
-- (workflow) Tests ideas.
-- (workflow) More status utilities, possibly to replace or augment the detailed workflow logging.
-- (workflow) Review init.
-
-
-More notes
-- Split off "view site" i.e. dashboard into new repository.
-
+- [DONE] (apiserver) Create tests area. Structure: unit_tests, module_tests. (The term integration test will be reserved for higher-level involving multiple modules.)
+- [DONE] (control) Review.
+- [DONE] (control) Move configure to workflow.
+- [DONE] (control) Consider factoring the control module out into other modules (if new utilities can also do this).
+- [DONE] (countsserver) Review.
+- [DONE] (countsserver) Health check.
+- [DONE] (countsserver) Tests.
+- [DONE] (countsserver) Tests ideas.
+- [DONE] (countsserver) Deal with log_formats duplication.
+- [SKIP] (countsserver) Add more control scripts (like stop). [Server pattern in container is to stop on container stop only]
+- [SKIPPED] (dashboard) Skip for now, will be moved.
+- [DONE] (db) Review contents.
+- [DONE] (db) Create utilities notes doc, propose a few new utilities.
+- [DONE] (db) Write a note explaining decision regarding dockerization of this module.
+- [DONE] (db) Test ideas.
+- [DONE] (entry_point) Add disable command.
+- [DONE] (test_data) Slim this down to only a modest sized dataset with the most updated formatting.
+- [DONE] (workflow) Review, especially environment for moving to a more general purpose module.
+- [DONE] (workflow) Move part of current "source file parsing" into db module as an interface.
+- [DONE] (workflow) Move part of current "source file parsing" into own submodule out of workflows/environment.
+- [DONE] (workflow) Move part of current "source file parsing" into schema management stuff in db submodule.
+- [POSTPONE] (workflow) Use more modular dichotomization from gist. Also fully implement it in workflows, i.e. checking if positivity column missing, add if intensity can be found.
+- [DONE] (workflow) Bring templates together.
+- [SKIP] (workflow) Possibly put nextflow into the container? To support a single-core use case.
+- [SKIP] (workflow) Health check. *This is appropriate for server-like containers but not so much for single-purpose timebound process containers like this.
+- [DONE] (workflow) Tests ideas.
+- [POSTPONE] (workflow) More status utilities, possibly to replace or augment the detailed workflow logging.

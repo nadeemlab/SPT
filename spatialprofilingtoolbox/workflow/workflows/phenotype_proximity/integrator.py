@@ -12,8 +12,8 @@ from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
 from ....standalone_utilities.log_formats import colorized_logger
-from ...environment.export_features import ADIFeaturesUploader
-from ...environment.source_file_parsers.parser import get_unique_value
+from ...common.export_features import ADIFeaturesUploader
+from ...source_file_adi_parsing.value_extraction import get_unique_value
 from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)

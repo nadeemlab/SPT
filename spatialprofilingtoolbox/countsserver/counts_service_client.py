@@ -8,14 +8,14 @@ class CountRequester:
         self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_client.connect((host, port))
 
-    def get_counts(self, positive_signature_channels, negative_signature_channels, study_name):
+    def get_counts_by_specimen(self, positive_signature_channels, negative_signature_channels, study_name):
         query = self.form_query(
             [self.sanitize_token(c) for c in positive_signature_channels],
             [self.sanitize_token(c) for c in negative_signature_channels],
             self.sanitize_token(study_name),
         )
         self.tcp_client.sendall(query)
-        return self.get_counts_by_specimen()
+        return self.parse_response()
 
     def form_query(self, positive_signature_channels, negative_signature_channels, study_name):
         group1 = study_name
@@ -23,7 +23,7 @@ class CountRequester:
         group3 = self.get_record_separator().join(negative_signature_channels)
         return self.get_group_separator().join([group1, group2, group3]).encode('utf-8')
 
-    def get_counts_by_specimen(self):
+    def parse_response(self):
         received = None
         buffer = bytearray()
         bytelimit = 100000

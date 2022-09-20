@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Modify this to work from a test db container
+
 spt db create-schema --database-config-file=~/.spt_db.config.local --force
 spt db modify-constraints --database-config-file=~/.spt_db.config.local --drop
 spt db modify-constraints --database-config-file=~/.spt_db.config.local --recreate > constraint_info.txt.comp

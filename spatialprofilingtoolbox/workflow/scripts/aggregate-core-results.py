@@ -1,29 +1,16 @@
 import argparse
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    from spatialprofilingtoolbox import get_workflow_names
-    from spatialprofilingtoolbox import get_workflow
-    from spatialprofilingtoolbox import get_integrator
-    try:
-        from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-        workflows = {name : get_workflow(name) for name in get_workflow_names()}
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox import get_workflow_names
+from spatialprofilingtoolbox import get_workflow
+from spatialprofilingtoolbox import get_integrator
+workflows = {name : get_workflow(name) for name in get_workflow_names()}
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog = 'spt workflow aggregate-core-results',
         description='''
-        Create a list of core, parallelizable job specifications for a given SPT
-        workflow, as well as lists of file dependencies.
-        
-        Note: Due to orchestration design constraints, if this script must
-        depend on file contents, it can *only* depend on the contents of explicitly
-        indicated files. That is, it cannot "bootstrap" and open files whose names
-        are discovered by reading other files' contents.
+        Merge the results provided by all core jobs.
         ''',
     )
     parser.add_argument(
@@ -51,7 +38,12 @@ if __name__=='__main__':
         required=False,
     )
 
-    do_library_imports()
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
     computational_designs = [
         w.computational_design

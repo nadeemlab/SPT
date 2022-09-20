@@ -1,15 +1,5 @@
 import argparse
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        from spatialprofilingtoolbox.workflow.environment.extract_compartments import extract_compartments
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
-        compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
-
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -29,7 +19,15 @@ if __name__=='__main__':
         help='Filename for output list of compartment names.',
     )
     args = parser.parse_args()
-    do_library_imports()
+
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        from spatialprofilingtoolbox.workflow.common.extract_compartments import extract_compartments
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+        compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
     cell_manifests = args.cell_manifest
     compartments_list_file = args.compartments_list_file

@@ -1,0 +1,14 @@
+Test ideas
+
+Note that there will probably be a few new scripts here, including:
+- spt countsserver status
+
+Unit
+1. Mock tcpserver using standard library, to test client.
+2. Same, but with some need for sanitization of input tokens.
+3. Check read-expression parser against expected response.
+4. Start server from test dataset, check 5-10 example queries for response.
+5. Using test db provider, test cacher/puller against stored binary representation.
+
+Module level
+1. Same example queries, but use Docker container as server instead of local. This involves sorting out mount points.

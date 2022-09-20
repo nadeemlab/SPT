@@ -1,1 +1,1 @@
-from .app import __version__ as __version__
+__version__ = '0.1.1'

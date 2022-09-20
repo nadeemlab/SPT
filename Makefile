@@ -27,8 +27,10 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-DOCKER_BUILD_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-build-/g' )
-DOCKER_PUSH_TARGETS := $(shell find ${PACKAGE_NAME}/*/Dockerfile.append | sed 's/Dockerfile.append//g' | sed 's/^/docker-push-/g' )
+DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
+DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${PACKAGE_NAME}/$(submodule))
+DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
+DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -44,7 +46,7 @@ check-for-pypi-credentials:
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f) ${PACKAGE_NAME}/entry_point/spt-completion.sh
+dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh
 	@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
     "${MESSAGE}" start "Building wheel using $${build_package}"
 	@${PYTHON} -m build 1>/dev/null 2> >(grep -v '_BetaConfiguration' >&2); \
@@ -59,7 +61,6 @@ build-and-push-docker-containers: ${DOCKER_PUSH_TARGETS}
 
 ${DOCKER_PUSH_TARGETS}: build-docker-containers check-for-docker-credentials
 	@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
-    dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
@@ -74,20 +75,20 @@ ${DOCKER_PUSH_TARGETS}: build-docker-containers check-for-docker-credentials
 check-for-docker-credentials:
 	@"${MESSAGE}" start "Checking for Docker credentials in ~/.docker/config.json"
 	@result=$$(${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi); \
-	if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
+    if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
     "${MESSAGE}" end "$$exit_code" "Found." "Not found."
 
 build-docker-containers: ${DOCKER_BUILD_TARGETS}
 
-${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-docker-daemon-running
 	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
-    "${MESSAGE}" start "Building Docker container $$repository_name" ; \
+    "${MESSAGE}" start "Building Docker image $$repository_name" ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
-    cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base $$submodule_directory/Dockerfile.append > Dockerfile ; \
+    cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
     docker build \
      -f ./Dockerfile \
@@ -102,6 +103,10 @@ ${DOCKER_BUILD_TARGETS}: dist/${WHEEL_FILENAME} check-docker-daemon-running
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \
     rm ./.dockerignore
+
+${DOCKERFILE_TARGETS}:
+	@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
+    ${MAKE} -C $$submodule_directory build-dockerfile
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"
@@ -132,11 +137,8 @@ clean:
 	@rm -f .current_time.txt
 	@${MAKE} --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
 	@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
-        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-//g') ; \
-        for whl in $$submodule_directory/*.whl ; do \
-            rm -f $$whl; \
-        done ; \
-        rm -f $$submodule_directory/${WHEEL_FILENAME}; \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-build-//g') ; \
+        ${MAKE} -C $$submodule_directory clean ; \
     done
 	@rm -f Dockerfile
 	@rm -f .dockerignore

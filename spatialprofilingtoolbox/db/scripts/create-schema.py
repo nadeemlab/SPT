@@ -1,23 +1,24 @@
 import argparse
 import os
-from os.path import join
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        from spatialprofilingtoolbox.workflow.environment.source_file_parsers.skimmer import DataSkimmer
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'db')
 
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+try:
+    from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'db')
+
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+logger = colorized_logger('spt db create-schema')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog = 'spt db create-schema',
-        description = 'Create pathstudies database with defined schema.'
+        description = 'Create scstudies database with defined schema.'
     )
     parser.add_argument(
         '--database-config-file',
@@ -32,34 +33,31 @@ if __name__=='__main__':
         action='store_true',
         help='By default, tables are created only if they don\'t already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use with care; all data in existing tables will be deleted.',
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument(
         '--refresh-views-only',
         dest='refresh_views_only',
         action='store_true',
         help='Only refresh materialized views, do not touch main table schema.',
     )
-    parser.add_argument(
+    group.add_argument(
         '--recreate-views-only',
         dest='recreate_views_only',
         action='store_true',
         help='Only recreate views, do not touch main table schema.',
     )
     args = parser.parse_args()
-    do_library_imports()
 
     if args.database_config_file:
         config_file = abspath(expanduser(args.database_config_file))
     if not exists(config_file):
-    	raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
+        raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
-    with DataSkimmer(database_config_file=config_file) as skimmer:
+    with SchemaInfuser(database_config_file=config_file) as infuser:
         if not args.refresh_views_only and not args.recreate_views_only:
-        	skimmer.create_tables(skimmer.get_connection(), force=args.force)
+            infuser.setup_schema(force=args.force)
         else:
-            if args.refresh_views_only and args.recreate_views_only:
-                print('Warning: Supply only one of --refresh-views-only or --recreate-views-only')
-                exit()
             if args.refresh_views_only:
-                skimmer.refresh_views(skimmer.get_connection())
+                infuser.refresh_views()
             if args.recreate_views_only:
-                skimmer.recreate_views(skimmer.get_connection())
+                infuser.recreate_views()

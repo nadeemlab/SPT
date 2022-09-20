@@ -1,11 +1,12 @@
 
 build-completions-script: spt-completion.sh
+	@echo > /dev/null
 
 spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_completions_script.py
 	@"${MESSAGE}" start "Creating CLI completions script"
 	@${PYTHON} -m venv venv
 	@source venv/bin/activate ; \
-    python -m pip install "../../[control]" 1>/dev/null ; \
+    python -m pip install "../../[building]" 1>/dev/null ; \
     python build_completions_script.py ; \
     result_code=$$? ; \
     deactivate ; \

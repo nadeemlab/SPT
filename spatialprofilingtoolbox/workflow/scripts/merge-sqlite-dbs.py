@@ -5,14 +5,6 @@ import sqlite3
 import re
 import argparse
 
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        import pandas as pd
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
-
 def get_table_names(uri):
     connection = sqlite3.connect(uri)
     result = connection.execute("SELECT name FROM sqlite_master WHERE type='table';")
@@ -68,7 +60,12 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    do_library_imports()
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        import pandas as pd
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
     input_dbs = args.input_dbs
     output_db = args.output

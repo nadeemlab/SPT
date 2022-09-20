@@ -1,13 +1,4 @@
-#!/usr/bin/env python3
 import argparse
-
-def do_library_imports():
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-    try:
-        from spatialprofilingtoolbox.workflow.environment.logging.run_configuration_reporter import RunConfigurationReporter
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -48,6 +39,11 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    do_library_imports()
+    import spatialprofilingtoolbox
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    try:
+        from spatialprofilingtoolbox.workflow.common.logging.run_configuration_reporter import RunConfigurationReporter
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
 
     r = RunConfigurationReporter(**vars(args))

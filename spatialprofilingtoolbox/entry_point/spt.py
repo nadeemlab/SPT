@@ -39,14 +39,27 @@ def get_executable_and_script(submodule_name, script_name):
     return executable, script_path
 
 
+def print_all_commands():
+    submodules_with_commands = [name for name in submodule_names if len(get_commands(name)) > 0]
+    commands = [
+        [submodule, get_commands(submodule)]
+        for submodule in submodules_with_commands
+    ]
+    for submodule, commands in commands:
+        print('')
+        for command in commands:
+            print('spt %s %s' % (submodule, command))
+
+
 def main_program():
+    submodules_with_commands = [name for name in submodule_names if len(get_commands(name)) > 0]
     parser = argparse.ArgumentParser(
         prog='spt',
         description = 'spatialprofilingtoolbox commands',
     )
     parser.add_argument(
         'module',
-        choices=[name for name in submodule_names if len(get_commands(name)) > 0],
+        choices=submodules_with_commands,
         help='The specific submodule the command is from.',
     )
     parser.add_argument(
@@ -60,27 +73,31 @@ def main_program():
         nargs='*',
         help='Arguments passed to the command.',
     )
-    if len(sys.argv) >= 3 and (('--help' in sys.argv[2:]) or ('-h' in sys.argv[2:])):
-        sys_args = [arg for arg in sys.argv if not arg in ['-h', '--help']][1:]
-        args = parser.parse_args(sys_args)
-    else:
-        args = parser.parse_args()
 
-    if args.command is None:
-        commands = get_commands(args.module)
+    module = None
+    if len(sys.argv) >= 2:
+        if sys.argv[1] in submodules_with_commands:
+            module = sys.argv[1]
+
+    if (module is None):
+        print_all_commands()
+        exit()
+
+    command = None
+    if len(sys.argv) >= 3:
+        if sys.argv[2] in get_commands(module):
+            command = sys.argv[2]
+
+    if command is None:
+        commands = get_commands(module)
         print('    '.join(commands))
         exit()
 
-    executable, script_path = get_executable_and_script(args.module, args.command)
-
-    if len(sys.argv) >= 3:
-        executable, script_path = get_executable_and_script(args.module, args.command)
-
-    if len(sys.argv) == 3 and sys.argv[1] == args.module and sys.argv[2] == args.command:
+    if len(sys.argv) == 3:
         exit()
 
-    if len(sys.argv) > 3 and sys.argv[1] == args.module and sys.argv[2] == args.command:
-        executable, script_path = get_executable_and_script(args.module, args.command)
+    if len(sys.argv) > 3:
+        executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
         subprocess.run([
             executable,

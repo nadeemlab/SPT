@@ -4,7 +4,8 @@ import socketserver
 import os
 import re
 
-from.standalone_utilities.log_formats import colorized_logger
+import spatialprofilingtoolbox
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('start')
 
 
@@ -85,12 +86,32 @@ class CountsProvider:
             counts[specimen] = [count, len(data_array)]
         return counts
 
+    def get_status(self):
+        return [
+            {
+                'study' : study_name,
+                'counts by channel' : [
+                    {
+                        'channel symbol' : symbol,
+                        'count' : self.count_structures_of_partial_signed_signature([symbol], [], study_name),
+                    }
+                    for symbol in sorted(list(targets['target by symbol'].keys()))
+                ],
+                'total number of cells' : len(self.data_arrays[study_name]),
+            }
+            for study_name, targets in self.studies.items()
+        ]
+
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(512).strip()
         print('Request:')
-        print(data)
+        logger.info(data)
+        if data == '':
+            logger.info('Empty body. Serving status.')
+            self.request.sendall((json.dumps(self.server.counts_provider.get_status(), indent=4) + self.get_end_of_transmission()).encode('utf-8'))
+            return
         record_separator = chr(30)
         group_separator = chr(29)
         groups = data.decode('utf-8').split(group_separator)
@@ -99,16 +120,16 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         negative_channel_names = groups[2].split(record_separator)
         if negative_channel_names == ['']:
             negative_channel_names = []
-        print('Study: %s' % study_name)
-        print('Positives: %s' % positive_channel_names)
-        print('Negatives: %s' % negative_channel_names)
+        logger.info('Study: %s' % study_name)
+        logger.info('Positives: %s' % positive_channel_names)
+        logger.info('Negatives: %s' % negative_channel_names)
         positives_signature = self.server.counts_provider.compute_signature(positive_channel_names, study_name)
         negatives_signature = self.server.counts_provider.compute_signature(negative_channel_names, study_name)
-        print('Signature:')
-        print(positives_signature)
-        print(negatives_signature)
-        print(f'{positives_signature:064b}')
-        print(f'{negatives_signature:064b}')
+        logger.info('Signature:')
+        logger.info(positives_signature)
+        logger.info(negatives_signature)
+        logger.info(f'{positives_signature:064b}')
+        logger.info(f'{negatives_signature:064b}')
         counts = self.server.counts_provider.count_structures_of_partial_signed_signature(positives_signature, negatives_signature, study_name)
         self.request.sendall((json.dumps(counts) + self.get_end_of_transmission()).encode('utf-8'))
 

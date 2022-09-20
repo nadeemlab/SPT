@@ -131,19 +131,19 @@ check-docker-daemon-running:
 
 test: unit-tests module-tests integration-tests
 
-unit-tests: dist/${WHEEL_FILENAME}
+unit-tests: development-virtual-environments
 	@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
     done
 
-module-tests: dist/${WHEEL_FILENAME}
+module-tests: development-virtual-environments
 	@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
     done
 
-integration-tests: dist/${WHEEL_FILENAME}
+integration-tests: development-virtual-environments
 	@echo "Integration tests."
 
 development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}

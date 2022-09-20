@@ -32,6 +32,8 @@ DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
+DEVELOPMENT_EXTRAS_NAMES :=  apiserver db workflow building all
+DEVELOPMENT_VENV_TARGETS := $(foreach extra,$(DEVELOPMENT_EXTRAS_NAMES),venvs/$(extra)/touch.txt)
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -49,7 +51,7 @@ build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
 dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Makefile$$' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh
 	@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
-    "${MESSAGE}" start "Building wheel using $${build_package}"
+    "${MESSAGE}" start "Building ${PACKAGE_NAME} wheel using $${build_package}"
 	@${PYTHON} -m build 1>/dev/null 2> >(grep -v '_BetaConfiguration' >&2); \
     "${MESSAGE}" end "$$?" "Built." "Build failed."
 	@if [ -d ${PACKAGE_NAME}.egg-info ]; then rm -rf ${PACKAGE_NAME}.egg-info/; fi
@@ -111,7 +113,7 @@ ${DOCKERFILE_TARGETS}:
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"
-	@docker stats --no-stream >/dev/null 2>&1; \
+	@docker stats --no-stream >/dev/null 2>&1 ; \
     result_code="$$?" ; \
     "${MESSAGE}" end "$$result_code" "Running." "Not running." ; \
     if [ $$result_code -gt 0 ] ; \
@@ -144,6 +146,25 @@ module-tests: dist/${WHEEL_FILENAME}
 integration-tests: dist/${WHEEL_FILENAME}
 	@echo "Integration tests."
 
+development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}
+
+${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
+	@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
+    "${MESSAGE}" start "Creating virtual environment $$extra" ; \
+	${PYTHON} -m venv venvs/$$extra && \
+    source venvs/$$extra/bin/activate && \
+    ${PYTHON} -m pip install "dist/${WHEEL_FILENAME}[$$extra]" >/dev/null 2>&1 && \
+    deactivate ; \
+    result_code="$$?" ; \
+    "${MESSAGE}" end "$$result_code" "Created." "Not created." ; \
+    if [ $$result_code -eq 0 ] ; then \
+        touch venvs/$$extra/touch.txt ; \
+    fi
+
+venvs/touch.txt:
+	@mkdir venvs/
+	@touch venvs/touch.txt
+
 clean:
 	@rm -rf ${PACKAGE_NAME}.egg-info/
 	@rm -rf dist/
@@ -157,4 +178,5 @@ clean:
     done
 	@rm -f Dockerfile
 	@rm -f .dockerignore
+	@rm -rf venvs/
 

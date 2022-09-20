@@ -3,22 +3,12 @@ build-completions-script: spt-completion.sh
 	@echo > /dev/null
 
 spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_completions_script.py
-	@"${MESSAGE}" start "Creating CLI completions script"
-	@${PYTHON} -m venv venv
-	@source venv/bin/activate ; \
-    ${PYTHON} -m pip install "../../[building]" 1>/dev/null 2>&1 ; \
+	@"${MESSAGE}" start "Creating spt CLI completions script"
+	@source ../../venvs/building/bin/activate ; \
     ${PYTHON} build_completions_script.py ; \
     result_code=$$? ; \
     deactivate ; \
-    rm -rf venv/ ; \
-    rm -rf __pycache__/ ; \
-    rm -rf ../../spatialprofilingtoolbox.egg-info/ ; \
-    rm -rf ../../build/ ; \
     "${MESSAGE}" end "$$result_code" "Created." "Failed."
 
 clean:
 	@rm -f spt-completion.sh
-	@rm -rf venv/
-	@rm -rf __pycache__/
-	@rm -rf ../../spatialprofilingtoolbox.egg-info/
-	@rm -rf ../../build/

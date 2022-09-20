@@ -10,30 +10,24 @@ initialize_schema.sql: data_model/schema.sql
     > initialize_schema.sql
 
 data_model/schema.sql:
-	@${PYTHON} -m venv venv ; \
-    source venv/bin/activate ; \
-    ${PYTHON} -m pip install adisinglecell >/dev/null 2>&1 ; \
+	@source ../../venvs/db/bin/activate ; \
     adisinglecell dump-schema > data_model/schema.sql ; \
     deactivate ; \
-    rm -rf venv/
 
 unit-tests:
-	@docker compose up & >/dev/null 2>&1
-	@${PYTHON} -m venv venv
-	@source venv/bin/activate ; \
-    ${PYTHON} -m pip install "../../dist/${WHEEL_FILENAME}[db]" >/dev/null 2>&1 ; \
+	@docker compose up -d >/dev/null 2>&1
+	@source ../../venvs/db/bin/activate ; \
     for test_script in $$(find unit_tests/test_* | grep \.sh$$ ); \
     do \
         test_name=$${test_script/unit_tests\/test_/}; \
         test_name=$${test_name/.sh/}; \
-        test_name=$${test_name/_/ }; \
+        test_name=$$(echo "$$test_name" | tr '_' ' ' ); \
         "${MESSAGE}" start "Testing $$test_name" ; \
         bash $$test_script >/dev/null 2>&1 ; \
 	    "${MESSAGE}" end "$$?" "Passed." "Failed." ; \
     done ; \
     deactivate
-	@docker compose down 
-	@rm -rf venv/
+	@docker compose down >/dev/null 2>&1
 
 module-tests:
 	@echo 'Module tests.'
@@ -41,5 +35,4 @@ module-tests:
 clean:
 	@rm -f ${WHEEL_FILENAME}
 	@rm -f initialize_schema.sql
-	@rm -rf venv/
 	@rm -f data_model/schema.sql

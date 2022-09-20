@@ -55,7 +55,7 @@ dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.s
 	@rm -rf dist/*.tar.gz
 
 ${PACKAGE_NAME}/entry_point/spt-completion.sh: $(shell find spatialprofilingtoolbox/ -type f | grep -v "entry_point/spt-completion.sh$$")
-	@${MAKE} -C ${PACKAGE_NAME}/entry_point/ build-completions-script
+	@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ build-completions-script
 
 build-and-push-docker-containers: ${DOCKER_PUSH_TARGETS}
 
@@ -106,7 +106,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-dock
 
 ${DOCKERFILE_TARGETS}:
 	@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
-    ${MAKE} -C $$submodule_directory build-dockerfile
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory build-dockerfile
 
 check-docker-daemon-running:
 	@"${MESSAGE}" start "Checking that Docker daemon is running"
@@ -135,10 +135,10 @@ clean:
 	@rm -rf build/
 	@rm -f .initiation_message_size
 	@rm -f .current_time.txt
-	@${MAKE} --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
+	@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
 	@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-build-//g') ; \
-        ${MAKE} -C $$submodule_directory clean ; \
+        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
     done
 	@rm -f Dockerfile
 	@rm -f .dockerignore

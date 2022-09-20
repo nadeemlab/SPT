@@ -9,6 +9,7 @@ spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_comple
     result_code=$$? ; \
     deactivate ; \
     "${MESSAGE}" end "$$result_code" "Created." "Failed."
+	@rm -rf __pycache__
 
 clean:
 	@rm -f spt-completion.sh

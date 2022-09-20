@@ -177,6 +177,7 @@ venvs/building/touch.txt: venvs/touch.txt
     fi
 	@rm -rf spatialprofilingtoolbox.egg-info/
 	@rm -rf __pycache__/
+	@rm -rf build/
 
 venvs/touch.txt:
 	@mkdir venvs/
@@ -198,4 +199,6 @@ clean:
 	@rm -rf venvs/
 	@rm -rf spatialprofilingtoolbox.egg-info/
 	@rm -rf __pycache__/
+	@rm -rf build/
+
 

@@ -16,6 +16,7 @@ data_model/schema.sql:
 
 unit-tests:
 	@docker compose up -d >/dev/null 2>&1
+	@sleep 1s
 	@source ../../venvs/db/bin/activate ; \
     for test_script in $$(find unit_tests/test_* | grep \.sh$$ ); \
     do \
@@ -24,7 +25,7 @@ unit-tests:
         test_name=$$(echo "$$test_name" | tr '_' ' ' ); \
         "${MESSAGE}" start "Testing $$test_name" ; \
         bash $$test_script >/dev/null 2>&1 ; \
-	    "${MESSAGE}" end "$$?" "Passed." "Failed." ; \
+        "${MESSAGE}" end "$$?" "Passed." "Failed." ; \
     done ; \
     deactivate
 	@docker compose down >/dev/null 2>&1

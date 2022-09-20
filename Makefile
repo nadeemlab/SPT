@@ -152,7 +152,7 @@ virtual-environments-from-source-not-wheel: venvs/building/touch.txt
 
 ${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
 	@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
-    "${MESSAGE}" start "Creating virtual environment $$extra" ; \
+    "${MESSAGE}" start "Creating virtual environment [$$extra]" ; \
 	${PYTHON} -m venv venvs/$$extra && \
     source venvs/$$extra/bin/activate && \
     ${PYTHON} -m pip install "dist/${WHEEL_FILENAME}[$$extra]" >/dev/null 2>&1 && \
@@ -165,7 +165,7 @@ ${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
 
 venvs/building/touch.txt: venvs/touch.txt
 	@extra=building ; \
-    "${MESSAGE}" start "Creating virtual environment $$extra" ; \
+    "${MESSAGE}" start "Creating virtual environment [$$extra]" ; \
     ${PYTHON} -m venv venvs/$$extra && \
     source venvs/$$extra/bin/activate && \
     ${PYTHON} -m pip install ".[$$extra]" >/dev/null 2>&1 && \

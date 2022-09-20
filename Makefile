@@ -148,7 +148,7 @@ integration-tests: development-virtual-environments
 
 development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}
 
-virtual-environments-from-source-not-wheel: venvs/buildilng/touch.txt
+virtual-environments-from-source-not-wheel: venvs/building/touch.txt
 
 ${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
 	@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \

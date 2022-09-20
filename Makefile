@@ -31,6 +31,7 @@ DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${PACKAGE_NAME}/$(submodule))
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
+MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
 export
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
@@ -126,8 +127,22 @@ check-docker-daemon-running:
         fi ; \
     fi
 
-test:
-	@echo "This target will be recursive, trying to do make test in all submodules."
+test: unit-tests module-tests integration-tests
+
+unit-tests:
+	@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
+        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
+    done
+
+module-tests:
+	@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
+        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
+    done
+
+integration-tests:
+	@echo "Integration tests."
 
 clean:
 	@rm -rf ${PACKAGE_NAME}.egg-info/
@@ -142,6 +157,4 @@ clean:
     done
 	@rm -f Dockerfile
 	@rm -f .dockerignore
-
-
 

@@ -60,7 +60,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 12. [DONE] Learn how to do recursive make.
 13. [DONE] Split off separate Makefiles in each module from the current Makefile, for things pertaining to that module.
 14. [DONE] Finish moving static file artifacts and modules into correct locations in new module structure.
-15. Create a Docker container around the DB. Easy to compose for testing.
+15. [DONE] Create a Docker container around the DB. Easy to compose for testing.
 16. [DONE] Move all the workflow skimmer stuff which is really DB management into DB.
 17. Change tests to call correct scripts.
 18. Create at least 1 test of each type for each module, as a placeholder for the test runner setup. This will also give the minimal assurance that the repository code is workable, i.e. importable subpackages, locateable supporting files, etc.

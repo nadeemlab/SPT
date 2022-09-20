@@ -17,6 +17,12 @@ data_model/schema.sql:
     deactivate ; \
     rm -rf venv/
 
+unit-tests:
+	@echo 'Unit tests.'
+
+module-tests:
+	@echo 'Module tests.'
+
 clean:
 	@rm -f ${WHEEL_FILENAME}
 	@rm -f initialize_schema.sql

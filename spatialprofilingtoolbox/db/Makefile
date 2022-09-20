@@ -18,6 +18,7 @@ data_model/schema.sql:
     rm -rf venv/
 
 unit-tests:
+	@docker compose up & >/dev/null 2>&1
 	@${PYTHON} -m venv venv
 	@source venv/bin/activate ; \
     ${PYTHON} -m pip install "../../dist/${WHEEL_FILENAME}[db]" >/dev/null 2>&1 ; \
@@ -31,6 +32,7 @@ unit-tests:
 	    "${MESSAGE}" end "$$?" "Passed." "Failed." ; \
     done ; \
     deactivate
+	@docker compose down 
 	@rm -rf venv/
 
 module-tests:

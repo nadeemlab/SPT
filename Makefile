@@ -49,7 +49,7 @@ check-for-pypi-credentials:
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Makefile$$' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh
+dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh
 	@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
     "${MESSAGE}" start "Building ${PACKAGE_NAME} wheel using $${build_package}"
 	@${PYTHON} -m build 1>/dev/null 2> >(grep -v '_BetaConfiguration' >&2); \

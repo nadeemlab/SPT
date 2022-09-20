@@ -99,8 +99,8 @@ def main_program():
     if len(sys.argv) > 3:
         executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
-        subprocess.run([
+        completed_process = subprocess.run([
             executable,
             script_path,
         ] + unparsed_arguments)
-        exit()
+        exit(completed_process.returncode)

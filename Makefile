@@ -47,7 +47,7 @@ check-for-pypi-credentials:
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh
+dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Makefile$$' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh
 	@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
     "${MESSAGE}" start "Building wheel using $${build_package}"
 	@${PYTHON} -m build 1>/dev/null 2> >(grep -v '_BetaConfiguration' >&2); \
@@ -129,19 +129,19 @@ check-docker-daemon-running:
 
 test: unit-tests module-tests integration-tests
 
-unit-tests:
+unit-tests: dist/${WHEEL_FILENAME}
 	@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
     done
 
-module-tests:
+module-tests: dist/${WHEEL_FILENAME}
 	@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
     done
 
-integration-tests:
+integration-tests: dist/${WHEEL_FILENAME}
 	@echo "Integration tests."
 
 clean:

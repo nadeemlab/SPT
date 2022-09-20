@@ -17,17 +17,6 @@ except ModuleNotFoundError as e:
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('spt db status')
 
-def check_users(cursor):
-    cursor.execute('SELECT usename FROM pg_user;')
-    rows = cursor.fetchall()
-    values = [row[0] for row in rows]
-    missing = list(set(['apireader', 'nadeemlab']).difference(values))
-    if len(missing) == 0:
-        return True
-    else:
-        logger.error('Expected user(s) not found: %s' % missing)
-        return False
-
 def check_tables(cursor):
     with importlib.resources.path('adisinglecell', 'tables.tsv') as path:
         tables = pd.read_csv(path, sep='\t', keep_default_na=False)    
@@ -78,9 +67,8 @@ if __name__=='__main__':
     dcm = DatabaseConnectionMaker(database_config_file=config_file)
     connection = dcm.get_connection()
     cursor = connection.cursor()
-    users_valid = check_users(cursor)
     tables_present, counts = check_tables(cursor)
-    if (not users_valid) or (not tables_present):
+    if not tables_present:
         exit(1)
     cursor.close()
     connection.close()

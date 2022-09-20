@@ -18,7 +18,20 @@ data_model/schema.sql:
     rm -rf venv/
 
 unit-tests:
-	@echo 'Unit tests.'
+	@${PYTHON} -m venv venv
+	@source venv/bin/activate ; \
+    ${PYTHON} -m pip install "../../dist/${WHEEL_FILENAME}[db]" >/dev/null 2>&1 ; \
+    for test_script in $$(find unit_tests/test_* | grep \.sh$$ ); \
+    do \
+        test_name=$${test_script/unit_tests\/test_/}; \
+        test_name=$${test_name/.sh/}; \
+        test_name=$${test_name/_/ }; \
+        "${MESSAGE}" start "Testing $$test_name" ; \
+        bash $$test_script >/dev/null 2>&1 ; \
+	    "${MESSAGE}" end "$$?" "Passed." "Failed." ; \
+    done ; \
+    deactivate
+	@rm -rf venv/
 
 module-tests:
 	@echo 'Module tests.'

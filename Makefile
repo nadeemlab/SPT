@@ -32,7 +32,7 @@ DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
-DEVELOPMENT_EXTRAS_NAMES :=  apiserver db workflow building all
+DEVELOPMENT_EXTRAS_NAMES :=  apiserver db workflow all
 DEVELOPMENT_VENV_TARGETS := $(foreach extra,$(DEVELOPMENT_EXTRAS_NAMES),venvs/$(extra)/touch.txt)
 export
 
@@ -57,7 +57,7 @@ dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.s
 	@if [ -d ${PACKAGE_NAME}.egg-info ]; then rm -rf ${PACKAGE_NAME}.egg-info/; fi
 	@rm -rf dist/*.tar.gz
 
-${PACKAGE_NAME}/entry_point/spt-completion.sh: $(shell find spatialprofilingtoolbox/ -type f | grep -v "entry_point/spt-completion.sh$$")
+${PACKAGE_NAME}/entry_point/spt-completion.sh: virtual-environments-from-source-not-wheel $(shell find spatialprofilingtoolbox/ -type f | grep -v "entry_point/spt-completion.sh$$")
 	@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ build-completions-script
 
 build-and-push-docker-containers: ${DOCKER_PUSH_TARGETS}
@@ -148,6 +148,8 @@ integration-tests: development-virtual-environments
 
 development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}
 
+virtual-environments-from-source-not-wheel: venvs/buildilng/touch.txt
+
 ${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
 	@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
     "${MESSAGE}" start "Creating virtual environment $$extra" ; \
@@ -160,6 +162,21 @@ ${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
     if [ $$result_code -eq 0 ] ; then \
         touch venvs/$$extra/touch.txt ; \
     fi
+
+venvs/building/touch.txt: venvs/touch.txt
+	@extra=building ; \
+    "${MESSAGE}" start "Creating virtual environment $$extra" ; \
+    ${PYTHON} -m venv venvs/$$extra && \
+    source venvs/$$extra/bin/activate && \
+    ${PYTHON} -m pip install ".[$$extra]" >/dev/null 2>&1 && \
+    deactivate ; \
+    result_code="$$?" ; \
+    "${MESSAGE}" end "$$result_code" "Created." "Not created." ; \
+    if [ $$result_code -eq 0 ] ; then \
+        touch venvs/$$extra/touch.txt ; \
+    fi
+	@rm -rf spatialprofilingtoolbox.egg-info/
+	@rm -rf __pycache__/
 
 venvs/touch.txt:
 	@mkdir venvs/
@@ -179,4 +196,6 @@ clean:
 	@rm -f Dockerfile
 	@rm -f .dockerignore
 	@rm -rf venvs/
+	@rm -rf spatialprofilingtoolbox.egg-info/
+	@rm -rf __pycache__/
 

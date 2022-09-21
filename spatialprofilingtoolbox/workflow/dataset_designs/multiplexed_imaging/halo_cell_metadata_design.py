@@ -25,7 +25,8 @@ class HALOCellMetadataDesign:
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-        self.compartments = open(compartments_file, 'rt').read().strip('\n').split('\n')
+        if compartments_file is not None:
+            self.compartments = open(compartments_file, 'rt').read().strip('\n').split('\n')
 
     @staticmethod
     def solicit_cli_arguments(parser):

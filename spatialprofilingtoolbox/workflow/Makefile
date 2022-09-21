@@ -47,7 +47,7 @@ clean:
 	@rm -f .nextflow.log*
 	@rm -rf .nextflow/
 	@rm -f configure.sh
-	@rm -r run.sh
+	@rm -f run.sh
 	@rm -f main.nf
 	@rm -f nextflow.config
 	@rm -rf work/

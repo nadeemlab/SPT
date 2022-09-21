@@ -31,9 +31,9 @@ def remove_previous_installation(filename):
             print('Removed previous completion code from %s' % filename)
 
 def attempt_append_to(filename, contents):
-    remove_previous_installation(filename)
     full_path = join(expanduser('~'), filename)
     if exists(full_path):
+        remove_previous_installation(full_path)
         with open(full_path, 'a') as file:
             file.write(contents)
         print('Wrote completions script fragment to:\n %s' % full_path)
@@ -54,7 +54,7 @@ def main_program():
     )
     args = parser.parse_args()
 
-    profile_files = ['.bash_profile', '.profile', '.bashrc']
+    profile_files = ['.bash_profile', '.bashrc', '.profile']
     if args.disable:
         for file in profile_files:
             path = join(expanduser('~'), file)

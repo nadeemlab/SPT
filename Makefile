@@ -4,7 +4,7 @@ help:
 	@echo '      make release-package'
 	@echo '          Build the Python package wheel and push it to PyPI.'
 	@echo ' '
-	@echo '      make build-and-push-docker-containers'
+	@echo '      make build-and-push-docker-images'
 	@echo '          Build the Docker images and push them to DockerHub repositories.'
 	@echo ' '
 	@echo '      make test'
@@ -49,7 +49,7 @@ check-for-pypi-credentials:
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh
+dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' ) ${PACKAGE_NAME}/entry_point/spt-completion.sh pyproject.toml
 	@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
     "${MESSAGE}" start "Building ${PACKAGE_NAME} wheel using $${build_package}"
 	@${PYTHON} -m build 1>/dev/null 2> >(grep -v '_BetaConfiguration' >&2); \
@@ -60,9 +60,9 @@ dist/${WHEEL_FILENAME}: $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.s
 ${PACKAGE_NAME}/entry_point/spt-completion.sh: virtual-environments-from-source-not-wheel $(shell find spatialprofilingtoolbox/ -type f | grep -v "entry_point/spt-completion.sh$$")
 	@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ build-completions-script
 
-build-and-push-docker-containers: ${DOCKER_PUSH_TARGETS}
+build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
 
-${DOCKER_PUSH_TARGETS}: build-docker-containers check-for-docker-credentials
+${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
 	@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
@@ -81,7 +81,7 @@ check-for-docker-credentials:
     if [[ "$$result" -eq "found" ]]; then exit_code=0; else exit_code=1; fi ;\
     "${MESSAGE}" end "$$exit_code" "Found." "Not found."
 
-build-docker-containers: ${DOCKER_BUILD_TARGETS}
+build-docker-images: ${DOCKER_BUILD_TARGETS}
 
 ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-docker-daemon-running
 	@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
@@ -107,7 +107,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-dock
     rm ./Dockerfile ; \
     rm ./.dockerignore
 
-${DOCKERFILE_TARGETS}:
+${DOCKERFILE_TARGETS}: virtual-environments-from-source-not-wheel
 	@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory build-dockerfile
 
@@ -153,6 +153,7 @@ virtual-environments-from-source-not-wheel: venvs/building/touch.txt
 ${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
 	@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
     "${MESSAGE}" start "Creating virtual environment [$$extra]" ; \
+    rm -rf venvs/$$extra ; \
 	${PYTHON} -m venv venvs/$$extra && \
     source venvs/$$extra/bin/activate && \
     ${PYTHON} -m pip install "dist/${WHEEL_FILENAME}[$$extra]" >/dev/null 2>&1 && \
@@ -200,5 +201,4 @@ clean:
 	@rm -rf spatialprofilingtoolbox.egg-info/
 	@rm -rf __pycache__/
 	@rm -rf build/
-
-
+	@docker compose --project-directory=spatialprofilingtoolbox/db/ down >/dev/null 2>&1

@@ -10,7 +10,7 @@ initialize_schema.sql: data_model/schema.sql
     > initialize_schema.sql
 
 data_model/schema.sql:
-	@source ../../venvs/db/bin/activate ; \
+	@source ../../venvs/building/bin/activate ; \
     adisinglecell dump-schema > data_model/schema.sql ; \
     deactivate ; \
 
@@ -33,7 +33,7 @@ unit-tests:
 
 module-tests:
 	@docker compose up -d >/dev/null 2>&1
-	@sleep 1s
+	@sleep 2s
 	@source ../../venvs/db/bin/activate ; \
     for test_script in $$(find module_tests/test_* | grep "\(\.sh\|\.py\)$$" ) ; \
     do \

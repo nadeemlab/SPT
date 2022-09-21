@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-from ...standalone_utilities.log_formats import colorized_logger
+from ....standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 elementary_phenotypes_file_identifier = 'Elementary phenotypes file'

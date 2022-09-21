@@ -5,13 +5,13 @@ import psycopg2
 from psycopg2 import sql
 import pandas as pd
 
-from ....standalone_utilities.log_formats import colorized_logger
+from ...standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-from ....db.database_connection import DatabaseConnectionMaker
-from ....db.source_file_parser_interface import SourceToADIParser
-from ....db.source_file_parser_interface import DBBackend
-from ....db.verbose_sql_execution import verbose_sql_execute
+from ...db.database_connection import DatabaseConnectionMaker
+from ...db.source_file_parser_interface import SourceToADIParser
+from ...db.source_file_parser_interface import DBBackend
+from ...db.verbose_sql_execution import verbose_sql_execute
 from .subjects import SubjectsParser
 from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser

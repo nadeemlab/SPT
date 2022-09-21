@@ -1,9 +1,9 @@
 
 import pandas as pd
 
-from ....db.source_file_parser_interface import SourceToADIParser
+from ...db.source_file_parser_interface import SourceToADIParser
 from .value_extraction import get_unique_value
-from ....standalone_utilities.log_formats import colorized_logger
+from ...standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 

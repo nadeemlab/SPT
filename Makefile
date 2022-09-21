@@ -181,7 +181,9 @@ venvs/touch.txt:
 	@mkdir venvs/
 	@touch venvs/touch.txt
 
-clean:
+clean: clean-files docker-compositions-down
+
+clean-files:
 	@rm -rf ${PACKAGE_NAME}.egg-info/
 	@rm -rf dist/
 	@rm -rf build/
@@ -198,4 +200,10 @@ clean:
 	@rm -rf spatialprofilingtoolbox.egg-info/
 	@rm -rf __pycache__/
 	@rm -rf build/
-	@docker compose --project-directory=spatialprofilingtoolbox/db/ down >/dev/null 2>&1
+
+docker-compositions-down: check-docker-daemon-running
+	@"${MESSAGE}" start "Running docker compose down"
+	@docker compose --project-directory ./spatialprofilingtoolbox/apiserver/ down >/dev/null 2>&1
+	@docker compose --project-directory ./spatialprofilingtoolbox/countsserver/ down >/dev/null 2>&1
+	@docker compose --project-directory ./spatialprofilingtoolbox/db/ down >/dev/null 2>&1
+	@"${MESSAGE}" end "0" "Down." "Error."

@@ -6,7 +6,7 @@ import configparser
 import argparse
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.apiserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
 
 
 def get_default_counts_server_port():

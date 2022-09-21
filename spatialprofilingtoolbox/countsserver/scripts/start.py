@@ -3,34 +3,36 @@ import json
 import socketserver
 import os
 import re
+from os.path import join
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-logger = colorized_logger('start')
+logger = colorized_logger('spt countsserver start')
 
 
 class CountsProvider:
-    def __init__(self):
-        self.load_expressions_indices()
-        self.load_data_matrices()
+    def __init__(self, data_directory):
+        self.load_expressions_indices(data_directory)
+        self.load_data_matrices(data_directory)
 
-    def load_expressions_indices(self):
-        json_files = [f for f in os.listdir('.') if os.path.isfile(f) and re.search(r'\.json$', f)]
+    def load_expressions_indices(self, data_directory):
+        logger.debug('Searching for source data in: %s', data_directory)
+        json_files = [f for f in os.listdir(data_directory) if os.path.isfile(join(data_directory, f)) and re.search(r'\.json$', f)]
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
             exit()
-        with open(json_files[0], 'rt') as file:
+        with open(join(data_directory, json_files[0]), 'rt') as file:
             root = json.loads(file.read())
             entries = root[list(root.keys())[0]]
             self.studies = {}
             for entry in entries:
                 self.studies[entry['specimen measurement study name']] = entry
 
-    def load_data_matrices(self):
+    def load_data_matrices(self, data_directory):
         self.data_arrays = {}
         for study_name in self.get_study_names():
             self.data_arrays[study_name] = {
-                item['specimen'] : self.get_data_array_from_file(item['filename'])
+                item['specimen'] : self.get_data_array_from_file(join(data_directory, item['filename']))
                 for item in self.studies[study_name]['expressions files']
             }
 
@@ -156,9 +158,16 @@ if __name__=='__main__':
         default=8016,
         help='The port on which to open the TCP socket.',
     )
+    parser.add_argument(
+        '--source-data-location',
+        dest='source_data_location',
+        type=str,
+        default='/countsserver/source_data/',
+        help='The directory in which this process will search for expression data binaries and the JSON index file.',
+    )
     args = parser.parse_args()
 
-    counts_provider = CountsProvider()
+    counts_provider = CountsProvider(args.source_data_location)
     tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
     tcp_server.counts_provider = counts_provider
     tcp_server.serve_forever()

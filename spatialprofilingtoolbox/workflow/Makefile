@@ -40,6 +40,14 @@ module-tests:
     done ; \
     deactivate
 	@docker compose --project-directory ../db/ down >/dev/null 2>&1
+	@rm -f .nextflow.log*
+	@rm -rf .nextflow/
+	@rm -f configure.sh
+	@rm -f run.sh
+	@rm -f main.nf
+	@rm -f nextflow.config
+	@rm -rf work/
+	@rm -rf results/
 
 clean:
 	@rm -f Dockerfile

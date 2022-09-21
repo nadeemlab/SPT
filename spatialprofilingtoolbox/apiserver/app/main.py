@@ -3,14 +3,13 @@ import json
 from typing import Optional
 import urllib
 
-import psycopg2
 from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
 import spatialprofilingtoolbox
+from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-counts_service_host = os.environ['COUNTS_SERVER_HOST']
 from . import __version__ as version
 
 description = """
@@ -32,41 +31,6 @@ app = FastAPI(
         "email": "mathewj2@mskcc.org",
     },
 )
-
-
-class DBAccessor:
-    def __init__(self):
-        self.connection = None
-
-    def get_connection(self):
-        return self.connection
-
-    def __enter__(self):
-        variables = [
-            'SINGLE_CELL_DATABASE_HOST',
-            'SINGLE_CELL_DATABASE_USER',
-            'SINGLE_CELL_DATABASE_PASSWORD',
-        ]
-        unfound = [v for v in variables if not v in os.environ]
-        if len(unfound) > 0:
-            message = 'Did not find: %s' % str(unfound)
-            raise EnvironmentError(message)
-
-        dbname = 'scstudies'
-        if 'USE_ALTERNATIVE_TESTING_DATABASE' in os.environ:
-            dbname = 'singlecellstudies_test'
-
-        self.connection = psycopg2.connect(
-            dbname=dbname,
-            host=os.environ['SINGLE_CELL_DATABASE_HOST'],
-            user=os.environ['SINGLE_CELL_DATABASE_USER'],
-            password=os.environ['SINGLE_CELL_DATABASE_PASSWORD'],
-        )
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        if not self.connection is None:
-            self.connection.close()
 
 
 @app.get("/")

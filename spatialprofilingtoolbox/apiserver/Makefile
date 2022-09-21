@@ -26,7 +26,7 @@ module-tests:
 	@docker compose up -d >/dev/null 2>&1
 	@sleep 2s
 	@source ../../venvs/workflow/bin/activate ; \
-    cd ../workflow && bash module_tests/test_HALO_exported_data_import.sh ; cd ../apiserver/ ; \
+    cd ../workflow && bash module_tests/test_HALO_exported_data_import.sh >/dev/null 2>&1 ; cd ../apiserver/ ; \
     deactivate
 	@source ../../venvs/apiserver/bin/activate ; \
     for test_script in $$(find module_tests/test_* | grep "\(\.sh\|\.py\)$$" ) ; \

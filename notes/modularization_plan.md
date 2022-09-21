@@ -63,14 +63,14 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 15. [DONE] Create a Docker container around the DB. Easy to compose for testing.
 16. [DONE] Move all the workflow skimmer stuff which is really DB management into DB.
 17. [DONE] Set up test runner infrastructure in Makefile logic.
-18. Change tests to call correct scripts, i.e. migrate existing tests.
+18. [POSTPONE] Change tests to call correct scripts, i.e. migrate existing tests.
 19. [DONE] Create at least 1 test of each type for each module, as a placeholder for the test runner setup. This will also give the minimal assurance that the repository code is workable, i.e. importable subpackages, locateable supporting files, etc.
-20. [POSTPONE] Add utility commands e.g. for status, depending on the submodule.
+20. [PARTIALLY DONE] Add utility commands e.g. for status, depending on the submodule.
 21. [POSTPONE] Add actual unit tests (and module tests) and deprecate outdated tests.
-22. Assess library dependency versions for a sharper version indicator, with less than / greater than.
-23. Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
-24. Split off "view site" i.e. dashboard into new repository.
-25. Do big integration assessment involving all the above major changes. I.e. go through the motions of code testing and packaging, component release and deployment on the test server, major exemplar data import, to include the new dashboard repository.
+22. [POSTPONE] Assess library dependency versions for a sharper version indicator, with less than / greater than.
+23. [POSTPONE] Do complete revision of documentation to reflect changes. Include screenshots of latest UI, a short summary of functionality, a command reference, and a development/testing explanation section.
+24. [DONE] Split off "view site" i.e. dashboard into new repository.
+25. [POSTPONE] Do big integration assessment involving all the above major changes. I.e. go through the motions of code testing and packaging, component release and deployment on the test server, major exemplar data import, to include the new dashboard repository.
 
 * [POSTPONE] In control module, add script to configure docker container with given repository/tag etc., to replace the bash scripts currently tailored to the api server.
 * [POSTPONE] Create minimal K8S configuration for local development/testing.

@@ -8,7 +8,7 @@ help:
 	@echo '          Build the Docker images and push them to DockerHub repositories.'
 	@echo ' '
 	@echo '      make test'
-	@echo '          Do unit, module, and integration tests.'
+	@echo '          Do unit and module tests.'
 	@echo ' '
 	@echo '      make clean'
 	@echo '          Attempt to remove all build or partial-build artifacts.'
@@ -129,7 +129,7 @@ check-docker-daemon-running:
         fi ; \
     fi
 
-test: unit-tests module-tests integration-tests
+test: unit-tests module-tests
 
 unit-tests: development-virtual-environments
 	@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
@@ -142,9 +142,6 @@ module-tests: development-virtual-environments
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
     done
-
-integration-tests: development-virtual-environments
-	@echo "<integration tests>"
 
 development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}
 

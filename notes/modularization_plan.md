@@ -64,7 +64,7 @@ https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 16. [DONE] Move all the workflow skimmer stuff which is really DB management into DB.
 17. [DONE] Set up test runner infrastructure in Makefile logic.
 18. Change tests to call correct scripts, i.e. migrate existing tests.
-19. Create at least 1 test of each type for each module, as a placeholder for the test runner setup. This will also give the minimal assurance that the repository code is workable, i.e. importable subpackages, locateable supporting files, etc.
+19. [DONE] Create at least 1 test of each type for each module, as a placeholder for the test runner setup. This will also give the minimal assurance that the repository code is workable, i.e. importable subpackages, locateable supporting files, etc.
 20. [POSTPONE] Add utility commands e.g. for status, depending on the submodule.
 21. [POSTPONE] Add actual unit tests (and module tests) and deprecate outdated tests.
 22. Assess library dependency versions for a sharper version indicator, with less than / greater than.

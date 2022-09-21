@@ -10,7 +10,7 @@ from fastapi import Response
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-from . import __version__ as version
+version = '0.1.1'
 
 description = """
 Get information about single cell phenotyping studies, including:

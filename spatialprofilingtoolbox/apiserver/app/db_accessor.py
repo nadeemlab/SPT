@@ -24,6 +24,8 @@ class DBAccessor:
         dbname = 'scstudies'
         if 'USE_ALTERNATIVE_TESTING_DATABASE' in os.environ:
             dbname = 'postgres'
+        if 'USE_LEGACY_DATABASE' in os.environ:
+            dbname = 'pathstudies'
 
         self.connection = psycopg2.connect(
             dbname=dbname,

@@ -63,9 +63,9 @@ fi
 
 if [[ "$1" == "end" ]];
 then
-    status_code="$2"
-    on_completion_message="$3"
-    on_error_message="$4"
+    status_code=$(cat status_code)
+    on_completion_message="$2"
+    on_error_message="$3"
     initial=$(cat .current_time.txt)
     rm .current_time.txt
     now_seconds=$(date +%s)

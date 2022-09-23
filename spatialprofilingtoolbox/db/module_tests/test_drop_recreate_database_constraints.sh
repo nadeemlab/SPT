@@ -9,6 +9,7 @@ rm constraint_info.txt.comp
 
 if [ $status -eq 0 ];
 then
+    rm err_log.1.txt err_log.2.txt err_log.3.txt
     exit 0
 else
     cat err_log.1.txt err_log.2.txt err_log.3.txt

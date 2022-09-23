@@ -1,3 +1,4 @@
+.RECIPEPREFIX = >
 
 UNIT_TEST_FILES := $(wildcard unit_tests/test_*.sh ) $(wildcard unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
@@ -6,21 +7,21 @@ MODULE_TEST_FILES := $(wildcard module_tests/test_*.sh ) $(wildcard module_tests
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 build-dockerfile:
-	@ echo >/dev/null
+>@ echo >/dev/null
 
 unit-tests: ${UNIT_TESTS}
 
 ${UNIT_TESTS}:
-	@docker compose --project-directory ../db/ up -d
-	@sleep 2s
-	@test_target=$@ ; \
+>@docker compose --project-directory ../db/ up -d
+>@sleep 2s
+>@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/unit_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
     ${MESSAGE} start "Testing $$test_name"
-	@test_target=$@ ; \
+>@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/unit_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
@@ -30,26 +31,26 @@ ${UNIT_TESTS}:
     source ../../venvs/apiserver/bin/activate ; \
     $$executor $$test_script ; echo "$$?" > status_code ; \
     deactivate
-	@${MESSAGE} end "Passed." "Failed."
-	@docker compose --project-directory ../db/ rm --force --stop ; sleep 1s
-	@rm -f status_code
+>@${MESSAGE} end "Passed." "Failed."
+>@docker compose --project-directory ../db/ rm --force --stop ; sleep 1s
+>@rm -f status_code
 
 module-tests: ${MODULE_TESTS}
 
 ${MODULE_TESTS}:
-	@docker compose up -d
-	@sleep 1s
-	@test_target=$@ ; \
+>@docker compose up -d
+>@sleep 1s
+>@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
     ${MESSAGE} start "Testing $$test_name"
-	@source ../../venvs/workflow/bin/activate ; \
+>@source ../../venvs/workflow/bin/activate ; \
     cd ../workflow && bash module_tests/test_HALO_exported_data_import.sh ; cd ../apiserver/ ; \
     deactivate
-	@test_target=$@ ; \
+>@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
@@ -59,10 +60,10 @@ ${MODULE_TESTS}:
     source ../../venvs/apiserver/bin/activate ; \
     $$executor $$test_script ; echo "$$?" > status_code ; \
     deactivate
-	@${MESSAGE} end "Passed." "Failed."
-	@docker compose rm --force --stop ; sleep 1s
-	@rm -f status_code
+>@${MESSAGE} end "Passed." "Failed."
+>@docker compose rm --force --stop ; sleep 1s
+>@rm -f status_code
 
 clean:
-	@rm -f ${WHEEL_FILENAME}
-	@rm -f status_code
+>@rm -f ${WHEEL_FILENAME}
+>@rm -f status_code

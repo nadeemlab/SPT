@@ -12,7 +12,7 @@ unit-tests: ${UNIT_TESTS}
 
 ${UNIT_TESTS}:
 	@docker compose --project-directory ../db/ up -d
-	@sleep 2s
+	@sleep 1s
 	@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/unit_tests\/test_/} ; \
@@ -38,7 +38,7 @@ module-tests: ${MODULE_TESTS}
 
 ${MODULE_TESTS}:
 	@docker compose up -d
-	@sleep 2s
+	@sleep 1s
 	@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \

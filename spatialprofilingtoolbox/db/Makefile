@@ -47,7 +47,7 @@ module-tests: ${MODULE_TESTS}
 
 ${MODULE_TESTS}:
 	@docker compose up -d
-	@sleep 2s
+	@sleep 1s
 	@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \

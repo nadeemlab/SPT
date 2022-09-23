@@ -9,7 +9,7 @@ elif [[ "$2" == "-not-super-verbose" ]];
 then
     shift
     shift
-    echo "$@" | tr '\n' ' ' | ggrep -q 'make SHELL=' >/dev/null 2>&1
+    echo "$@" | tr '\n' ' ' | grep -q 'make SHELL=' >/dev/null 2>&1
     found_make_shell="$?"
     if [[ ("$@" == *'verbose_command_wrapper.sh'*) || ("$found_make_shell" == "0") ]];
     then

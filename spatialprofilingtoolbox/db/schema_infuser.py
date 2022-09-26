@@ -35,6 +35,9 @@ class SchemaInfuser:
         self.verbose_sql_execute('create_views.sql', description='create views of main schema')
         self.verbose_sql_execute('grant_on_tables.sql', description='grant appropriate access to users')
 
+    def normalize(self, name):
+        return re.sub('[ \-]', '_', name).lower()
+
     def create_drop_tables(self):
         with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)

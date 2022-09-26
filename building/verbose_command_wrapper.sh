@@ -53,6 +53,11 @@ function print_dots {
     echo -en "$dots_color$dots_bar$reset_code "
 }
 
+if [[ "$1" == "print" ]];
+then
+    echo "$2"
+fi
+
 if [[ "$1" == "start" ]];
 then
     message="$2"

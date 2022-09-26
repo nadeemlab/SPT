@@ -2,28 +2,28 @@
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
-help:
->@echo ' The main targets are:'
->@echo '  '
->@echo '      make release-package'
->@echo '          Build the Python package wheel and push it to PyPI.'
->@echo ' '
->@echo '      make build-and-push-docker-images'
->@echo '          Build the Docker images and push them to DockerHub repositories.'
->@echo ' '
->@echo '      make test'
->@echo '          Do unit and module tests.'
->@echo ' '
->@echo '      make clean'
->@echo '          Attempt to remove all build or partial-build artifacts.'
->@echo ' '
->@echo '      make help'
->@echo '          Show this text.'
-
 PYTHON := python
 BUILD_SCRIPTS_LOCATION :=${PWD}/building
 MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
 unexport PYTHONDONTWRITEBYTECODE
+
+help:
+>@${MESSAGE} print ' The main targets are:'
+>@${MESSAGE} print '  '
+>@${MESSAGE} print '      make release-package'
+>@${MESSAGE} print '          Build the Python package wheel and push it to PyPI.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make build-and-push-docker-images'
+>@${MESSAGE} print '          Build the Docker images and push them to DockerHub repositories.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make test'
+>@${MESSAGE} print '          Do unit and module tests.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make clean'
+>@${MESSAGE} print '          Attempt to remove all build or partial-build artifacts.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make help'
+>@${MESSAGE} print '          Show this text.'
 
 PACKAGE_NAME := spatialprofilingtoolbox
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
@@ -50,9 +50,6 @@ export .SHELLFLAGS := -c -super-verbose
 else
 export .SHELLFLAGS := -c -not-super-verbose
 endif
-
-print-detected-version:
->echo ${VERSION}
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"

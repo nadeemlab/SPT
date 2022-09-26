@@ -131,6 +131,10 @@ class CellManifestsParser(SourceToADIParser):
                             feature_names = { symbol : re.sub(' ', '_', dataset_design.get_feature_name(symbol)) for symbol in channel_symbols }
                         else:
                             logger.warning('Not even with underscores.')
+                            missing = [symbol for symbol in channel_symbols if not dataset_design.get_feature_name(symbol) in batch_cells.columns]
+                            logger.warning('Specifically, the following features not found:')
+                            for symbol in missing:
+                                logger.warning(symbol)
                             raise ValueError('Could not find feature names in cell manifest.')
 
                     discretizations = {

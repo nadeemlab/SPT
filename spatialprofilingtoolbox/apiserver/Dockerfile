@@ -4,6 +4,8 @@ ARG service_name
 ARG WHEEL_FILENAME
 LABEL version=$version
 LABEL service_name=$service_name
+RUN apt-get update
+RUN apt-get install -y libpq-dev
 COPY $WHEEL_FILENAME ./
 RUN pip3 install "$WHEEL_FILENAME[$service_name]"
 COPY ./app /app

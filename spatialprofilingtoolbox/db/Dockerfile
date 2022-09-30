@@ -7,6 +7,7 @@ LABEL service_name=$service_name
 WORKDIR /usr/src/app
 RUN apt update
 RUN apt install python3 python3-pip -y
+RUN apt-get install -y libpq-dev
 COPY $WHEEL_FILENAME ./
 RUN pip3 install "$WHEEL_FILENAME[$service_name]"
 COPY initialize_schema.sql /docker-entrypoint-initdb.d/

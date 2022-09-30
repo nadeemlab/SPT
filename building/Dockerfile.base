@@ -5,6 +5,7 @@ ARG WHEEL_FILENAME
 LABEL version=$version
 LABEL service_name=$service_name
 RUN apt-get update
+RUN apt-get -y install gcc
 RUN apt-get install -y libpq-dev
 WORKDIR /usr/src/app
 COPY $WHEEL_FILENAME ./

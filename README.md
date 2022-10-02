@@ -244,4 +244,4 @@ Plot rendering for about 500 MB (8 million cells) took 5 minutes on a workstatio
 Papers Using SPT
 ----------------
 
-Vanguri et al. **Tumor immune microenvironment and response to neoadjuvant chemotherapy in hormone receptor/HER2+ early stage breast cancer**. *Clinical Breast Cancer*, 2022. [[Read Link]](https://authors.elsevier.com/c/1f6o35RAAoiGLA)
+Vanguri et al. **Tumor immune microenvironment and response to neoadjuvant chemotherapy in hormone receptor/HER2+ early stage breast cancer**. *Clinical Breast Cancer*, 2022. [[Read Link]](https://doi.org/10.1016/j.clbc.2022.04.002)

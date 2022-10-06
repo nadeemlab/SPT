@@ -1,0 +1,22 @@
+
+Note that there will eventually be a few new utilities:
+1. spt db status
+2. spt db create-default-roles
+3. Consider splitting spt db create-schema into:
+  - spt db create-schema
+  - spt db create-views (--recreate)
+  - spt db refresh-views (--recreate)
+
+Unit tests
+1. Fix up the constraint tester to work from container.
+2. Test create schema. Check tables and one or two relations.
+3. Test create schema views. And drop.
+4. In container, test create roles (with interactive aspect).
+5. In container, test granting roles.
+6. In container, test populating with some test data. Expose result for other tests.
+
+
+Note on containerization:
+The database container is just for development and testing. This is still an important role, as it will be used to support numerous tests.
+In the production deployments there is no feasible way to compromise between the statelessness and non-endurance of Docker containers and the need for tightly coupled RAM and persistent disk state for the database.
+

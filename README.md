@@ -1,6 +1,6 @@
 
 <p align="center">
-<img src="docs/_static/SPT_logo_blue_on_transparent.png" width="400">
+<img src="image_assets/SPT_logo_blue_on_transparent.png" width="400">
 </p>
 <p align="center">
 <a href="https://github.com/nadeemlab/SPT#Supported-workflows">Supported workflows</a>
@@ -180,7 +180,7 @@ High values for this metric may be due to overall higher counts for the target p
 The results of this pipeline are saved to `results/stats_tests.csv`. The most significant rows for a given pair of outcome values (in this case diagonosed intrinsic subtypes) are shown below:
 
 <p align="center">
-<img src="docs/_static/pp_bc.png">
+<img src="image_assests/pp_bc.png">
 </p>
 
 Each row records the result of a test for statistically-significant difference between the values of the phenotype proximity metric in 2 different sample groups, when restricted to a given region or compartment of a given image when regional information is available.
@@ -196,7 +196,7 @@ One of the simplest and most readily available metrics for dissociated cell popu
 The results of this pipeline are saved to `results/stats_tests.csv`. If no cell area data is provided, a default constant value is used. Example rows from this table are shown below:
 
 <p align="center">
-<img src="docs/_static/density_example.png">
+<img src="image_assets/density_example.png">
 </p>
 
 Each row records the result of a test for statistically-significant difference between the values of the density metric in 2 different sample groups, when restricted to a given region or compartment of a given image.
@@ -234,7 +234,7 @@ spt-front-proximity-viz results/intermediate.db --drop-compartment="<ignorable c
 Plot rendering for about 500 MB (8 million cells) took 5 minutes on a workstation laptop. To monitor the progress, enable [debug logs](#Logs).
 
 <p align="center">
-<img src="docs/_static/front_proximity_example.png">
+<img src="image_assets/front_proximity_example.png">
 </p>
 
 ## License

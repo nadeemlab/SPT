@@ -1,9 +1,0 @@
-plotly==5.1.0
-numpy==1.22.3
-pandas>=1.1.5
-scipy==1.8.0
-scikit-learn==0.24.1
-psycopg2-binary==2.9.3
-pyshp==2.2.0
-tabulate==0.8.9
-Jinja2==3.0.1

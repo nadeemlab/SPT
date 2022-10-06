@@ -1,0 +1,5 @@
+[database-credentials]
+endpoint =  localhost
+database = postgres
+user = postgres
+password = postgres

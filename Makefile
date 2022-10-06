@@ -1,461 +1,239 @@
+.RECIPEPREFIX = >
+MAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules
+
+PYTHON := python
+BUILD_SCRIPTS_LOCATION :=${PWD}/building
+MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
+unexport PYTHONDONTWRITEBYTECODE
+
 help:
-	# To show this text:
-	#
-	#     make help
-	#
-	# This is mainly a lightweight release-management script for coordinated
-	# PyPI, DockerHub, and GitHub releases of SPT (spatialprofilingtoolbox).
-	#
-	# The primary target is:
-	#
-	#     make release
-	#
-	# The above includes code testing.
-	#
-	# You can also release just the Docker image, to a test DockerHub repository,
-	# with no code testing:
-	#
-	#     make test-release
-	#
-	# You can also do just code testing:
-	#
-	#     make test
-	#
-	# or
-	#
-	#     make .unit-tests
-	#     make .integration-tests
-	#
-	# The following pushes static site artifacts to the server for the frontend,
-	# assuming that the server is at nadeemlabapi.link and the username defined
-	# in file view_site/username has passwordless SSH access on this server:
-	#
-	#     make push-view-site
-	#
-	# The following pushes a new build of the Docker image for the FastAPI API
-	# server, to the DockerHub repository:
-	#
-	#     make push-api-server
-	#
-	# After the above you would still need to run the stop_drop_pull_prune_restart.sh
-	# script on the remote server to re-deploy the API server.
-	#
-	#
-	# The following conventions are used:
-	#
-	# - Targets starting with '.' like '.all-credentials-available' create empty
-	#   files that are placeholders indicating an environment or build state. They
-	#   are all deleted on `make clean`. This usage is called "empty target files
-	#   to record events" in the GNU Make documentation.
-	# - Most other targets are "PHONY", meaning that their recipes are always run
-	#   again whenever these targets are checked for completion. This is because
-	#   this Makefile is used for coordinating release actions rather than builds
-	#   per se.
-	#
+>@${MESSAGE} print ' The main targets are:'
+>@${MESSAGE} print '  '
+>@${MESSAGE} print '      make release-package'
+>@${MESSAGE} print '          Build the Python package wheel and push it to PyPI.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make build-and-push-docker-images'
+>@${MESSAGE} print '          Build the Docker images and push them to DockerHub repositories.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make test'
+>@${MESSAGE} print '          Do unit and module tests.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make clean'
+>@${MESSAGE} print '          Attempt to remove all build or partial-build artifacts.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print '      make help'
+>@${MESSAGE} print '          Show this text.'
 
-# Environment setup
-SHELL := /bin/bash
-.DELETE_ON_ERROR:
-BIN :=${PWD}/building
-$(shell chmod +x ${BIN}/check_for_credentials.py)
-$(shell chmod +x ${BIN}/check_commit_state.sh)
-.PHONY: (\
-	release \
-	test-release \
-	all-external-pushes \
-	twine-upload \
-	docker-push \
-	docker-test-push \
-	source-code-release-push \
-	source-code-main-push \
-	push-view-site \
-	clean \
-	clean-tests \
-	clean-local-postgres \
-)
-RESET:="\033[0m"
-NOTE_COLOR:="\033[0m"
-NOTE_COLOR_FINAL:="\033[32;1m"
-ERROR_COLOR:="\033[31;1m"
-DOTS_COLOR:="\033[33m"
-PADDING:=...............................................................
-SPACE:=" "
-COMMMA:=,
-LEFT_PAREN:=(
-RIGHT_PAREN:=)
-
-# Run-time and configuration variables
-credentials_available = $(shell ${BIN}/check_for_credentials.py $1)
-PYPI_CREDENTIALS := $(call credentials_available,pypi)
-DOCKER_CREDENTIALS := $(call credentials_available,docker)
-ifneq ("$(wildcard nextflow)","")
-    NEXTFLOW := ./nextflow
-else
-	NEXTFLOW := $(if $(shell which nextflow),$(shell which nextflow),)
-endif
-PLACEHOLDERS := \
-	.all-credentials-available \
-	.docker-credentials-available \
-	.pypi-credentials-available \
-	.docker-daemon-running\
-	.test \
-	.unit-tests \
-	.update-version \
-	.commit-new-version \
-	.installed-in-venv \
-	.package-build \
-	.on-main-branch \
-	.nextflow-available \
-	.controlled-source-files-unchanged
-VERSION_FILE := spatialprofilingtoolbox/version.txt
+PACKAGE_NAME := spatialprofilingtoolbox
+VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
-DOCKER_REPO := spt
-DOCKER_TEST_REPO := spt-test
-DOCKER_APISERVER_REPO := pathstats-api-app
-DOCKER_COUNTSSERVER_REPO := spt-counts-server
-PYTHON := python3
-RELEASE_TO_BRANCH := prerelease
-INTEGRATION_TESTS := $(shell cd tests/integration_tests/; find . -maxdepth 1 -regex '.*\.sh$$' | sed 's:^\./:\.:g')
-LIBRARY_SOURCES := $(shell find spatialprofilingtoolbox/)
-LIBRARY_METADATA := setup.py spatialprofilingtoolbox/requirements.txt
-UNIT_TEST_SOURCES := $(shell find tests/unit_tests/*.py)
-INTEGRATION_TEST_SOURCES := $(shell find tests/integration_tests/*.sh)
+DOCKER_REPO_PREFIX := spt
+DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
+DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${PACKAGE_NAME}/$(submodule))
+DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
+DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
+MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
+DEVELOPMENT_EXTRAS_NAMES := apiserver db workflow all
+DEVELOPMENT_VENV_TARGETS := $(foreach extra,$(DEVELOPMENT_EXTRAS_NAMES),venvs/$(extra)/touch.txt)
+export
 
-# Display functions
-color_in_progress = ${NOTE_COLOR}$1${SPACE}${DOTS_COLOR}$(shell padding="${PADDING}"; insertion="$1"; echo \"$${padding:$${\#insertion}}\"; )${RESET}" "
-color_final = ${NOTE_COLOR_FINAL}$1${RESET}" "$(shell padding=..............................; insertion='$1'; echo \"$${padding:$${\#insertion}}\"; )" $2\n"
-color_error = ${ERROR_COLOR}$1${RESET}"\n"
+BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code' | grep -v 'spt-completion.sh$$' )
+PACKAGE_SOURCE_FILES := ${BASIC_PACKAGE_SOURCE_FILES} ${PACKAGE_NAME}/entry_point/spt-completion.sh  pyproject.toml
+COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES}
 
-# Rules
-release: all-external-pushes
+export SHELL := ${BUILD_SCRIPTS_LOCATION}/status_messages_only_shell.sh
 
-test-release: docker-test-repo-push
+ifdef VERBOSE
+export .SHELLFLAGS := -c -super-verbose
+else
+export .SHELLFLAGS := -c -not-super-verbose
+endif
 
-push-api-server: docker-push-api-server
+release-package: build-wheel-for-distribution check-for-pypi-credentials
+>@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
+>@${PYTHON} -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
+>@${MESSAGE} end "Uploaded." "Error."
 
-push-counts-server: docker-push-counts-server
+check-for-pypi-credentials:
+>@${MESSAGE} start "Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox"
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi; echo "$$?" > status_code
+>@${MESSAGE} end "Found." "Not found."
 
-all-external-pushes: twine-upload docker-push source-code-release-push
+build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-docker-push twine-upload source-code-release-push: .all-credentials-available source-code-main-push
+dist/${WHEEL_FILENAME}: ${PACKAGE_SOURCE_FILES}
+>@build_package=$$(${PYTHON} -m pip freeze | grep build==) ; \
+    ${MESSAGE} start "Building ${PACKAGE_NAME} wheel using $${build_package}"
+>@${PYTHON} -m build 2> >(grep -v '_BetaConfiguration' >&2); echo "$$?" > status_code
+>@${MESSAGE} end "Built." "Build failed."
+>@if [ -d ${PACKAGE_NAME}.egg-info ]; then rm -rf ${PACKAGE_NAME}.egg-info/; fi
+>@rm -rf dist/*.tar.gz
 
-docker-test-repo-push: .docker-credentials-available
+print-source-files:
+>@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
 
-.all-credentials-available: .pypi-credentials-available .docker-credentials-available
-	@touch .all-credentials-available
+${PACKAGE_NAME}/entry_point/spt-completion.sh: virtual-environments-from-source-not-wheel ${COMPLETIONS_DEPENDENCIES}
+>@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ build-completions-script
 
-.pypi-credentials-available:
-	@printf $(call color_in_progress,'Searching ~/.pypirc for PyPI credentials')
-	@date +%s > current_time.txt
-	@if [[ "${PYPI_CREDENTIALS}" == "'found'" ]]; \
+build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
+
+${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
+>@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name"
+>@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    docker push $$repository_name:$$submodule_version ; \
+    exit_code1=$$?; \
+    docker push $$repository_name:latest ; \
+    exit_code2=$$?; \
+    exit_code=$$(( exit_code1 + exit_code2 )); cat "$$exit_code" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+check-for-docker-credentials:
+>@${MESSAGE} start "Checking for Docker credentials in ~/.docker/config.json"
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi; echo "$$?" > status_code
+>@${MESSAGE} end "Found." "Not found."
+
+build-docker-images: ${DOCKER_BUILD_TARGETS}
+
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-docker-daemon-running
+>@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+    dockerfile=$${submodule_directory}/Dockerfile ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    ${MESSAGE} start "Building Docker image $$repository_name"
+>@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+    dockerfile=$${submodule_directory}/Dockerfile ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
+    cp $$submodule_directory/Dockerfile ./Dockerfile ; \
+    cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
+    docker build \
+     -f ./Dockerfile \
+     -t $$repository_name:$$submodule_version \
+     -t $$repository_name:latest \
+     --build-arg version=$$submodule_version \
+     --build-arg service_name=$$submodule_name \
+     --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
+     $$submodule_directory ; echo "$$?" > status_code
+>@${MESSAGE} end "Built." "Build failed."
+>@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+    rm $$submodule_directory/${WHEEL_FILENAME} ; \
+    rm ./Dockerfile ; \
+    rm ./.dockerignore
+
+${DOCKERFILE_TARGETS}: virtual-environments-from-source-not-wheel
+>@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory build-dockerfile
+
+check-docker-daemon-running:
+>@${MESSAGE} start "Checking that Docker daemon is running"
+>@docker stats --no-stream ; echo "$$?" > status_code
+>@${MESSAGE} end "Running." "Not running."
+>@status_code=$$(cat status_code); \
+    if [ $$status_code -gt 0 ] ; \
     then \
-        initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-        ((transpired=now_secs - initial)); \
-        printf $(call color_final,'Found.',$$transpired"s") ; \
-        touch .pypi-credentials-available; \
-    else \
-        printf $(call color_error,'Not found.') ; \
-        exit 1; \
-    fi;
-
-.docker-credentials-available:
-	@printf $(call color_in_progress,'Searching ~/.docker/config.json for docker credentials')
-	@date +%s > current_time.txt
-	@if [[ "${DOCKER_CREDENTIALS}" == "'found'" ]]; \
-    then  \
-        initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-        ((transpired=now_secs - initial)); \
-        printf $(call color_final,'Found.',$$transpired"s") ; \
-        touch .docker-credentials-available; \
-    else \
-        printf $(call color_error,'Not found.') ; \
-        exit 1; \
-    fi;
-
-.docker-daemon-running:
-	@printf $(call color_in_progress,'Checking on Docker daemon')
-	@date +%s > current_time.txt
-	@if (! $$(docker stats --no-stream >/dev/null 2>&1;) ); \
-    then \
-        printf $(call color_error,'Not running.') ; \
-        exit 1; \
-    fi ;
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    touch .docker-daemon-running; \
-    printf $(call color_final,'Running.',$$transpired"s")
-
-docker-push: docker-build
-	@version=$$(cat ${VERSION_FILE}) ;\
-	docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest
-
-docker-build: Dockerfile .docker-daemon-running .controlled-source-files-unchanged .commit-new-version
-	@printf $(call color_in_progress,'Building Docker container')
-	@date +%s > current_time.txt
-	@version=$$(cat ${VERSION_FILE}) ;\
-	docker build -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_REPO}:latest . >/dev/null 2>&1
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Built.',$$transpired"s")
-
-docker-test-repo-push: docker-test-build
-	@version=$$(cat ${VERSION_FILE}) ;\
-	docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest
-
-docker-test-build: Dockerfile .docker-daemon-running .controlled-source-files-unchanged
-	@printf $(call color_in_progress,'Building Docker container (for upload to test repository)')
-	@date +%s > current_time.txt
-	@version=$$(cat ${VERSION_FILE}); \
-    docker build -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_TEST_REPO}:latest .
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Built.',$$transpired"s")
-
-docker-push-api-server: docker-api-server-build
-	@version=$$(cat ${VERSION_FILE}) ;\
-	docker push ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:$$version
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:latest
-
-docker-api-server-build: apiserver/Dockerfile apiserver/app/main.py .docker-daemon-running 
-	@printf $(call color_in_progress,'Building Docker container (for upload to api server repository)')
-	@date +%s > current_time.txt
-	@version=$$(cat ${VERSION_FILE}); \
-    cd apiserver/ ; \
-    docker build -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_APISERVER_REPO}:latest . ; \
-    cd ..
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Built.',$$transpired"s")
-
-docker-push-counts-server: docker-counts-server-build
-	@version=$$(cat ${VERSION_FILE}) ;\
-	docker push ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:$$version
-	@docker push ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:latest
-
-docker-counts-server-build: countsserver/Dockerfile countsserver/spt-counts-server .docker-daemon-running 
-	@printf $(call color_in_progress,'Building Docker container (for upload to counts server repository)')
-	@date +%s > current_time.txt
-	@version=$$(cat ${VERSION_FILE}); \
-    cd countsserver/ ; \
-    docker build -t ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:$$version -t ${DOCKER_ORG_NAME}/${DOCKER_COUNTSSERVER_REPO}:latest . ; \
-    cd ..
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Built.',$$transpired"s")
-
-push-view-site: view_site/host_ip view_site/index.html.jinja view_site/style.css view_site/style.js view_site/phenotype_fractions.js view_site/simple_ui_components.js view_site/retrievable_stats_components.js view_site/parameter_filling.js view_site/username view_site/render.py view_site/loading_cube.gif view_site/mini_loading_gif.gif view_site/spt_logo_only.png view_site/gitlogo.svg
-	@printf $(call color_in_progress,'Sending site artifacts to server')
-	@date +%s > current_time.txt
-	@username=$$(cat view_site/username); \
-    cd view_site; \
-    ./render.py; \
-    scp index.html $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp index_no_domain.html $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp style.css $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp style.js $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp phenotype_fractions.js $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp parameter_filling.js $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp simple_ui_components.js $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp retrievable_stats_components.js $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp loading_cube.gif $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp spt_logo_only.png $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp gitlogo.svg $$username@nadeemlabapi.link:/home/$$username/www/; \
-    scp mini_loading_gif.gif $$username@nadeemlabapi.link:/home/$$username/www/;
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Sent.',$$transpired"s")
-
-Dockerfile: ${BIN}/Dockerfile.template ${LIBRARY_METADATA} ${BIN}/sed_wrapper.sh
-	@printf $(call color_in_progress,'Generating Dockerfile')
-	@date +%s > current_time.txt
-	@sed "s/^/RUN pip install --no-cache-dir /g" spatialprofilingtoolbox/requirements.txt > requirements_docker.txt
-	@line_number=$$(grep -n '{{install requirements.txt}}' building/Dockerfile.template | cut -d ":" -f 1); \
-    { head -n $$(($$line_number-1)) building/Dockerfile.template; cat requirements_docker.txt; tail -n +$$line_number building/Dockerfile.template; } > Dockerfile
-	@rm requirements_docker.txt
-	@version=$$(cat ${VERSION_FILE}) ;\
-	source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{version}}/$$version/g" Dockerfile
-	@source ${BIN}/sed_wrapper.sh; sed_i_wrapper -i "s/{{install requirements.txt}}//g" Dockerfile
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Generated.',$$transpired"s")
-
-twine-upload: .commit-new-version .package-build
-	@${PYTHON} -m twine upload --repository spatialprofilingtoolbox dist/*
-
-source-code-release-push: .on-main-branch
-	@git checkout ${RELEASE_TO_BRANCH} >/dev/null 2>&1
-	@git merge main >/dev/null 2>&1
-	@git push
-	@git checkout main >/dev/null 2>&1
-
-source-code-main-push: .test .commit-new-version
-	@git push >/dev/null 2>&1
-	@version=$$(cat ${VERSION_FILE}) ;\
-	git push origin v$$version >/dev/null 2>&1
-
-test: .test
-
-.test: .unit-tests ${INTEGRATION_TESTS}
-	@touch .test
-
-.unit-tests: clean-tests .installed-in-venv ${UNIT_TEST_SOURCES}
-	@printf $(call color_in_progress,'Doing unit tests')
-	@date +%s > current_time.txt
-	@cd tests/; source ../venv/bin/activate; python -m pytest -Wignore -q . >&/dev/null ; \
-    exitcode="$$?"; \
-    if [[ "$$exitcode" != '0' ]]; \
-    then \
-        source venv/bin/activate; \
-        cd tests/; \
-        python -m pytest; \
-        printf $(call color_error,'Something went wrong in unit tests.'); \
-        cd ../; \
-        deactivate; \
-        exit 1; \
-    fi; \
-    cd ../
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Passed.',$$transpired"s")
-	@touch .unit-tests
-
-${INTEGRATION_TESTS} : clean-tests .nextflow-available .installed-in-venv clean-local-postgres ${INTEGRATION_TEST_SOURCES}
-	@script=$$(echo $@ | sed 's/^\.//g'); printf $(call color_in_progress,'Integration test '$@)
-	@date +%s > current_time.txt
-	@script=$$(echo $@ | sed 's/^\.//g'); \
-    source venv/bin/activate; \
-    cd tests/; \
-    ./integration_tests/$$script >/dev/null 2>&1
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Passed.',$$transpired"s")
-
-.nextflow-available:
-	@printf $(call color_in_progress,'Searching for Nextflow installation')
-	@if [[ "${NEXTFLOW}" == "" ]]; \
-    then \
-        printf $(call color_error,'You need to install nextflow.') ; \
-        exit 1; \
-    fi; \
-    touch .nextflow-available;\
-    ((transpired=now_secs - initial)); \
-	printf $(call color_final,${NEXTFLOW},$$transpired"s")
-
-.installed-in-venv: ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
-	@printf $(call color_in_progress,'Creating venv')
-	@date +%s > current_time.txt
-	@${PYTHON} -m venv venv
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Created.',$$transpired"s")
-	@printf $(call color_in_progress,'Installing spatialprofilingtoolbox into venv')
-	@date +%s > current_time.txt
-	@source venv/bin/activate ; \
-    found=$$(pip freeze | grep -o spatialprofilingtoolbox | head -n1);\
-    pip install -q -r spatialprofilingtoolbox/requirements.txt; \
-    pip install . >/dev/null 2>&1; \
-    pip install pytest >/dev/null 2>&1;
-	@touch .installed-in-venv
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Installed.',$$transpired"s")
-
-clean-local-postgres:
-	@printf $(call color_in_progress,'Resetting local postgres database.')
-	@date +%s > current_time.txt
-	@spt-create-db-schema --database-config-file=~/.spt_db.config.local --force >/dev/null 2>&1
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Reset.',$$transpired"s")
-
-.commit-new-version: .update-version .package-build
-	@printf $(call color_in_progress,'Committing source')
-	@date +%s > current_time.txt
-	@git add ${VERSION_FILE} >/dev/null 2>&1
-	@version=$$(cat ${VERSION_FILE}) ;\
-    git commit -m "Autoreleasing v$$version" >/dev/null 2>&1
-	@version=$$(cat ${VERSION_FILE}) ;\
-    git tag v$$version >/dev/null 2>&1
-	@touch .commit-new-version
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    version=$$(cat ${VERSION_FILE}) ;\
-    printf $(call color_final,'Committed.',$$transpired"s");
-
-.update-version: .controlled-source-files-unchanged .on-main-branch
-	@printf $(call color_in_progress,'Updating version')
-	@date +%s > current_time.txt
-	@if [[ "$$OSTYPE" == "darwin"* ]]; \
-    then \
-        version=$$(cat ${VERSION_FILE}) ;\
-        prefix=$$(echo "$$version" | grep -o '^[0-9]\+\.[0-9]\+\.'); \
-        microversion=$$(echo "$$version" | grep -o '[0-9]\+$$'); \
-    else \
-        version=$$(cat ${VERSION_FILE}) ;\
-        prefix=$$(echo "$$version" | grep -oP '^([\d]+\.[\d]+\.)'); \
-        microversion=$$(echo "$$version" | grep -oP '([\d]+)$$'); \
-    fi; \
-    microversion=$$(( microversion + 1 )); \
-    echo -n "$$prefix$$microversion" > ${VERSION_FILE};
-	@touch .update-version;
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Updated.',$$transpired"s");
-
-.controlled-source-files-unchanged:
-	@if [[ "$$(${BIN}/check_commit_state.sh)" == "yes" ]]; \
-    then \
-        printf $(call color_error,'Start with a clean repository.'); \
-        exit 1; \
+        ${MESSAGE} start "Attempting to start Docker daemon" ; \
+        bash ${BUILD_SCRIPTS_LOCATION}/start_docker_daemon.sh ; echo "$$?" > status_code ; \
+        status_code=$$(cat status_code); \
+        if [ $$status_code -eq 1 ] ; \
+        then \
+            ${MESSAGE} end "--" "Timed out." ; \
+        else \
+            ${MESSAGE} end "Started." "Failed to start." ; \
+        fi ; \
     fi
-	@touch .controlled-source-files-unchanged
 
-.on-main-branch:
-	@BRANCH=$$(git status | head -n1 | sed 's/On branch //g'); \
-    if [[ $$BRANCH != "main" ]]; \
-    then \
-        printf $(call color_error,"Do release actions from the main branch (not $$BRANCH)."); \
-        exit 1; \
+test: unit-tests module-tests
+
+unit-tests: development-virtual-environments
+>@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
+        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
+    done
+
+module-tests: development-virtual-environments
+>@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
+        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
+    done
+
+development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}
+
+virtual-environments-from-source-not-wheel: venvs/building/touch.txt
+
+${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
+>@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
+    ${MESSAGE} start "Creating virtual environment [$$extra]"
+>@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
+    rm -rf venvs/$$extra ; \
+    ${PYTHON} -m venv venvs/$$extra && \
+    source venvs/$$extra/bin/activate && \
+    ${PYTHON} -m pip install "dist/${WHEEL_FILENAME}[$$extra]" && \
+    deactivate ; echo "$$?" > status_code
+>@${MESSAGE} end "Created." "Not created."
+>@status_code=$$(cat status_code) ; \
+    if [ $$status_code -eq 0 ] ; then \
+        extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
+        touch venvs/$$extra/touch.txt ; \
     fi
-	@touch .on-main-branch
 
-.package-build: ${LIBRARY_SOURCES} ${LIBRARY_METADATA}
-	@printf $(call color_in_progress,'Building spatialprofilingtoolbox')
-	@date +%s > current_time.txt
-	@${PYTHON} -m build 1>/dev/null
-	@touch .package-build
-	@initial=$$(cat current_time.txt); rm -f current_time.txt; now_secs=$$(date +%s); \
-    ((transpired=now_secs - initial)); \
-    printf $(call color_final,'Built.',$$transpired"s")
+venvs/building/touch.txt: venvs/touch.txt
+>@${MESSAGE} start "Creating virtual environment [building]"
+>@${PYTHON} -m venv venvs/building && \
+    source venvs/building/bin/activate && \
+    ${PYTHON} -m pip install ".[building]" && \
+    deactivate ; echo "$$?" > status_code 
+>@${MESSAGE} end "Created." "Not created."
+>@status_code=$$(cat status_code) ; \
+    if [ $$status_code -eq 0 ] ; then \
+        touch venvs/building/touch.txt ; \
+    fi
+>@rm -rf spatialprofilingtoolbox.egg-info/
+>@rm -rf __pycache__/
+>@rm -rf build/
 
-clean: clean-tests
-	@rm -f ${PLACEHOLDERS}
-	@rm -f Dockerfile
-	@rm -rf dist/
-	@rm -rf build/
-	@rm -rf spatialprofilingtoolbox.egg-info/
-	@rm -rf docs/_build/
-	@rm -rf venv/
-	@rm -rf current_time.txt
-	@rm -f schemas/input_data_requirements.aux
-	@rm -f schemas/input_data_requirements.log
-	@rm -f schemas/input_data_requirements.out
-	@rm -rf view_site/index.html
-	@rm -rf view_site/index_no_domain.html
+venvs/touch.txt:
+>@if ! [[ -d "venvs" ]]; \
+    then mkdir venvs/ ; touch venvs/touch.txt; \
+    fi
 
-clean-tests:
-	@rm -f tests/.nextflow.log*
-	@rm -rf tests/.nextflow
-	@rm -rf tests/work
-	@rm -rf tests/results
-	@rm -f tests/nextflow.config
-	@rm -f tests/main.nf
-	@rm -f tests/run.sh
-	@rm -f tests/configure.sh
-	@rm -rf tests/unit_tests/__pycache__/
-	@rm -rf tests/normalized_source_data.db
-	@rm -rf tests/example_merged.db
-	@rm -rf tests/elementary_phenotypes.csv
-	@rm -rf .pytest_cache/
+clean: clean-files docker-compositions-rm
+
+clean-files:
+>@rm -rf ${PACKAGE_NAME}.egg-info/
+>@rm -rf dist/
+>@rm -rf build/
+>@rm -f .initiation_message_size
+>@rm -f .current_time.txt
+>@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
+>@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
+        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-build-//g') ; \
+        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
+    done
+>@rm -f Dockerfile
+>@rm -f .dockerignore
+>@rm -rf venvs/
+>@rm -rf spatialprofilingtoolbox.egg-info/
+>@rm -rf __pycache__/
+>@rm -rf build/
+>@rm -rf status_code
+
+docker-compositions-rm: check-docker-daemon-running
+>@${MESSAGE} start "Running docker compose rm (remove)"
+>@docker compose --project-directory ./spatialprofilingtoolbox/apiserver/ rm --force --stop ; status_code1="$$?" ; \
+    docker compose --project-directory ./spatialprofilingtoolbox/countsserver/ rm --force --stop ; status_code2="$$?" ; \
+    docker compose --project-directory ./spatialprofilingtoolbox/db/ rm --force --stop ; status_code3="$$?" ; \
+    status_code=$$(( status_code1 + status_code2 + status_code3 )) ; echo $$status_code > status_code
+>@${MESSAGE} end "Down." "Error."
+>@rm -rf status_code

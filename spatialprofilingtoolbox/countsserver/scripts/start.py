@@ -120,6 +120,8 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         study_name = groups[0]
         positive_channel_names = groups[1].split(record_separator)
         negative_channel_names = groups[2].split(record_separator)
+        if positive_channel_names == ['']:
+            positive_channel_names = []
         if negative_channel_names == ['']:
             negative_channel_names = []
         logger.info('Study: %s' % study_name)

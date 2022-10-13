@@ -11,6 +11,20 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
 
+  testing-fast-counts-server:
+    image: nadeemlab/spt-countsserver
+    container_name: spt-countsserver-testing
+    ports:
+      - target: 8016
+        host_ip: 127.0.0.1
+        published: 8016
+        protocol: tcp
+        mode: host
+    volumes:
+      - type: bind
+        source: ../countsserver/test_expression_data/
+        target: /countsserver/source_data/
+
   testing-api-server:
     image: nadeemlab/spt-apiserver
     container_name: spt-apiserver-testing
@@ -25,3 +39,5 @@ services:
       SINGLE_CELL_DATABASE_USER: postgres
       SINGLE_CELL_DATABASE_PASSWORD: postgres
       USE_ALTERNATIVE_TESTING_DATABASE: 1
+      COUNTS_SERVER_HOST: spt-countsserver-testing
+      COUNTS_SERVER_PORT: 8016

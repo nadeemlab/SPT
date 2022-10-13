@@ -319,9 +319,9 @@ async def get_phenotype_symbols(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         query = '''
-        SELECT cp.symbol
+        SELECT DISTINCT cp.symbol
         FROM cell_phenotype_criterion cpc
-        JOIN cell_phenotype cp ON cpc.cell_phenotype=cell_phenotype.identifier
+        JOIN cell_phenotype cp ON cpc.cell_phenotype=cp.identifier
         WHERE cpc.study=%s
         ORDER BY cp.symbol
         ;

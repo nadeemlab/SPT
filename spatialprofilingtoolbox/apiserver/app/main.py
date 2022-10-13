@@ -108,14 +108,20 @@ async def get_specimen_measurement_study_summary(
                 'specimen_measurement_study' : specimen_measurement_study,
                 'status' : 'not found'
             }))
-        assay = rows[0][0]
+        if len(rows) > 0:
+            assay = rows[0][0]
+        else:
+            assay = "unknown"
 
         cursor.execute(
             'SELECT count(DISTINCT specimen) FROM specimen_data_measurement_process WHERE study=%s;',
             (specimen_measurement_study,),
         )
         rows = cursor.fetchall()
-        number_specimens = rows[0][0]
+        if len(rows) > 0:
+            number_specimens = rows[0][0]
+        else:
+            number_specimens = "unknown"
 
         query = '''
         SELECT count(*)
@@ -128,7 +134,10 @@ async def get_specimen_measurement_study_summary(
         '''
         cursor.execute(query, (specimen_measurement_study,))
         rows = cursor.fetchall()
-        number_cells = rows[0][0]
+        if len(rows) > 0:
+            number_cells = rows[0][0]
+        else:
+            number_cells = "unknown"
 
         query = '''
         SELECT count(*)
@@ -138,7 +147,10 @@ async def get_specimen_measurement_study_summary(
         '''
         cursor.execute(query, (specimen_measurement_study,))
         rows = cursor.fetchall()
-        number_channels = rows[0][0]
+        if len(rows) > 0:
+            number_channels = rows[0][0]
+        else:
+            number_channels = "unknown"
 
         representation = {
            'Assay' : assay,
@@ -185,14 +197,20 @@ async def get_data_analysis_study_summary(
             (data_analysis_study,),
         )
         rows = cursor.fetchall()
-        number_phenotypes = rows[0][0]
+        if len(rows) > 0:
+            number_phenotypes = rows[0][0]
+        else:
+            number_phenotypes = "unknown"
 
         cursor.execute(
             'SELECT count(DISTINCT marker) FROM cell_phenotype_criterion WHERE study=%s;',
             (data_analysis_study,),
         )
         rows = cursor.fetchall()
-        number_markers = rows[0][0]
+        if len(rows) > 0:
+            number_markers = rows[0][0]
+        else:
+            number_markers = "unknown"
 
         query = '''
         SELECT MAX(number_positives) FROM
@@ -206,7 +224,10 @@ async def get_data_analysis_study_summary(
         '''
         cursor.execute(query, (data_analysis_study,))
         rows = cursor.fetchall()
-        max_positives = rows[0][0]
+        if len(rows) > 0:
+            max_positives = rows[0][0]
+        else:
+            max_positives = "unknown"
 
         query = '''
         SELECT MAX(number_negatives) FROM
@@ -220,7 +241,10 @@ async def get_data_analysis_study_summary(
         '''
         cursor.execute(query,(data_analysis_study,))
         rows = cursor.fetchall()
-        max_negatives = rows[0][0]
+        if len(rows) > 0:
+            max_negatives = rows[0][0]
+        else:
+            max_negatives = "unknown"
 
         representation = {
             'Number of composite phenotypes specified' : number_phenotypes,

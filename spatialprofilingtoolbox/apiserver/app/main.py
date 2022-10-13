@@ -324,6 +324,7 @@ async def get_phenotype_symbols(
         JOIN cell_phenotype cp ON cpc.cell_phenotype=cell_phenotype.identifier
         WHERE cpc.study=%s
         ORDER BY cp.symbol
+        ;
         '''
         cursor.execute(query, (data_analysis_study,))
         rows = cursor.fetchall()
@@ -401,11 +402,12 @@ async def get_phenotype_criteria(
         rows = cursor.fetchall()
         if len(rows) == 0:
             singles_query = '''
-            SELECT symbol, 'positive' as polarity FROM chemical_species;
+            SELECT symbol, 'positive' as polarity FROM chemical_species
+            WHERE symbol=%s
+            ;
             '''
-            cursor.execute(singles_query)
+            cursor.execute(singles_query, (phenotype_symbol,))
             rows = cursor.fetchall()
-            rows = [row for row in rows if row[0] == phenotype_symbol]
             if len(rows) == 0:
                 return Response(
                     content = json.dumps({

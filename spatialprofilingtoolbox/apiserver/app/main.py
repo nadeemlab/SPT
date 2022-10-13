@@ -647,6 +647,12 @@ async def get_phenotype_criteria(
         ;
         '''
         cursor.execute(total_query, (specimen_measurement_study,))
+        rows = cursor.fetchall()
+        if len(rows) == 0:
+            return Response(media_type = 'application/json', content = json.dumps({
+                'specimen_measurement_study' : specimen_measurement_study,
+                'status' : 'not found'
+            }))
         number_cells = cursor.fetchall()[0][0]
 
     host = os.environ['COUNTS_SERVER_HOST']

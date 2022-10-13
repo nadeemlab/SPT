@@ -87,13 +87,16 @@ ${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
     ${MESSAGE} start "Pushing Docker container $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    echo "$$submodule_version"; \
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    echo "$$submodule_name"; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    echo "$$repository_name"; \
     docker push $$repository_name:$$submodule_version ; \
     exit_code1=$$?; \
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
-    exit_code=$$(( exit_code1 + exit_code2 )); cat "$$exit_code" > status_code
+    exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
 >@${MESSAGE} end "Pushed." "Not pushed."
 
 check-for-docker-credentials:

@@ -653,7 +653,7 @@ async def get_phenotype_criteria(
                 'specimen_measurement_study' : specimen_measurement_study,
                 'status' : 'not found'
             }))
-        number_cells = cursor.fetchall()[0][0]
+        number_cells = rows[0][0]
 
     host = os.environ['COUNTS_SERVER_HOST']
     port = int(os.environ['COUNTS_SERVER_PORT'])

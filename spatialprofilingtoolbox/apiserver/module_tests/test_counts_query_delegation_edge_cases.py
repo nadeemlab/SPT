@@ -21,5 +21,6 @@ for host, port, endpoint, study_name, positive_markers, negative_markers, expect
     counts = json.loads(result)
     phenotype_total = sum([row['phenotype count'] for row in counts['phenotype counts']['per specimen counts']])
     total = counts['phenotype counts']['total number of cells in all specimens of study']
+    print(total)
     if phenotype_total != expected:
         raise Exception('Got wrong number: %s' % phenotype_total)

@@ -660,19 +660,22 @@ async def get_phenotype_criteria(
     with CountRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(positive_markers, negative_markers, specimen_measurement_study)
     fancy_round = lambda ratio: 100 * round(ratio * 10000)/10000
-    representation = {
-        'phenotype counts' : {
-            'per specimen counts' : [
-                {
-                    'specimen' : specimen,
-                    'phenotype count' : count,
-                    'percent of all cells in specimen' : fancy_round(count / count_all_in_specimen),
-                }
-                for specimen, (count, count_all_in_specimen) in counts.items()
-            ],
-            'total number of cells in all specimens of study' : number_cells,
+    if counts is None:
+        representation = { 'error' : 'Counts could not be computed.'}
+    else:
+        representation = {
+            'phenotype counts' : {
+                'per specimen counts' : [
+                    {
+                        'specimen' : specimen,
+                        'phenotype count' : count,
+                        'percent of all cells in specimen' : fancy_round(count / count_all_in_specimen),
+                    }
+                    for specimen, (count, count_all_in_specimen) in counts.items()
+                ],
+                'total number of cells in all specimens of study' : number_cells,
+            }
         }
-    }
     return Response(
         content = json.dumps(representation),
         media_type = 'application/json',

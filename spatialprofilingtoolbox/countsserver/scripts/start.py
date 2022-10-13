@@ -133,17 +133,20 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         logger.info('Negatives: %s' % negative_channel_names)
         if not self.server.counts_provider.has_study(study_name):
             logger.error('Study not known to counts server: %s', study_name)
+            self.request.sendall(''.encode('utf-8'))
             return
         positives_signature = self.server.counts_provider.compute_signature(positive_channel_names, study_name)
         negatives_signature = self.server.counts_provider.compute_signature(negative_channel_names, study_name)
         logger.info('Signature:')
         logger.info(positives_signature)
         logger.info(negatives_signature)
-        if positives_signatures is None:
+        if positives_signature is None:
             logger.error('Could not understand channel names as defining a signature: %s' % positive_channel_names) 
+            self.request.sendall(''.encode('utf-8'))
             return
-        if negatives_signatures is None:
+        if negatives_signature is None:
             logger.error('Could not understand channel names as defining a signature: %s' % negative_channel_names) 
+            self.request.sendall(''.encode('utf-8'))
             return
         logger.info(f'{positives_signature:064b}')
         logger.info(f'{negatives_signature:064b}')

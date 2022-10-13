@@ -51,6 +51,8 @@ class CountsProvider:
     def compute_signature(self, channel_names, study_name):
         target_by_symbol = self.studies[study_name]['target by symbol']
         target_index_lookup = self.studies[study_name]['target index lookup']
+        if not all([name in target_by_symbol.keys() for name in channel_names]):
+            return None
         identifiers = [target_by_symbol[name] for name in channel_names]
         indices = [target_index_lookup[identifier] for identifier in identifiers]
         signature = 0
@@ -104,6 +106,8 @@ class CountsProvider:
             for study_name, targets in self.studies.items()
         ]
 
+    def has_study(self, study_name):
+        return study_name in self.studies.keys()
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
@@ -127,11 +131,20 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         logger.info('Study: %s' % study_name)
         logger.info('Positives: %s' % positive_channel_names)
         logger.info('Negatives: %s' % negative_channel_names)
+        if not self.server.counts_provider.has_study(study_name):
+            logger.error('Study not known to counts server: %s', study_name)
+            return
         positives_signature = self.server.counts_provider.compute_signature(positive_channel_names, study_name)
         negatives_signature = self.server.counts_provider.compute_signature(negative_channel_names, study_name)
         logger.info('Signature:')
         logger.info(positives_signature)
         logger.info(negatives_signature)
+        if positives_signatures is None:
+            logger.error('Could not understand channel names as defining a signature: %s' % positive_channel_names) 
+            return
+        if negatives_signatures is None:
+            logger.error('Could not understand channel names as defining a signature: %s' % negative_channel_names) 
+            return
         logger.info(f'{positives_signature:064b}')
         logger.info(f'{negatives_signature:064b}')
         counts = self.server.counts_provider.count_structures_of_partial_signed_signature(positives_signature, negatives_signature, study_name)

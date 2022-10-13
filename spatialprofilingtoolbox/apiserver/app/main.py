@@ -1,7 +1,5 @@
 import os
 import json
-from typing import Optional
-import urllib
 
 from fastapi import FastAPI
 from fastapi import Query
@@ -10,7 +8,7 @@ from fastapi import Response
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-version = '0.1.1'
+version = '0.2.0'
 
 description = """
 Get information about single cell phenotyping studies, including:
@@ -286,20 +284,24 @@ async def get_phenotype_summary(
 
 
 @app.get("/phenotype-symbols/")
-async def get_phenotype_symbols():
+async def get_phenotype_symbols(
+    data_analysis_study : str = Query(default='unknown', min_length=3),
+):
     """
     Get a dictionary, key **phenotype symbols** with value a list of all the
-    composite phenotype symbols across all studies.
+    composite phenotype symbols in the given study.
     """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         query = '''
-        SELECT symbol
-        FROM cell_phenotype
-        ;
+        SELECT cp.symbol
+        FROM cell_phenotype_criterion cpc
+        JOIN cell_phenotype cp ON cpc.cell_phenotype=cell_phenotype.identifier
+        WHERE cpc.study=%s
+        ORDER BY cp.symbol
         '''
-        cursor.execute(query)
+        cursor.execute(query, (data_analysis_study,))
         rows = cursor.fetchall()
         representation = {
             'phenotype symbols' : rows,

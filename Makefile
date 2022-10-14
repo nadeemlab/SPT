@@ -3,9 +3,9 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 PYTHON := python
-BUILD_SCRIPTS_LOCATION :=${PWD}/building
+BUILD_SCRIPTS_LOCATION := ${PWD}/building
+BUILD_SCRIPTS_LOCATION_RELATIVE := building
 MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
-unexport PYTHONDONTWRITEBYTECODE
 
 help:
 >@${MESSAGE} print ' The main targets are:'
@@ -35,14 +35,12 @@ DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
-# DEVELOPMENT_EXTRAS_NAMES := apiserver db workflow all
-# DEVELOPMENT_VENV_TARGETS := $(foreach extra,$(DEVELOPMENT_EXTRAS_NAMES),venvs/$(extra)/touch.txt)
 COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
 export
 
-BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code' | grep -v 'spt-completion.sh$$' )
-PACKAGE_SOURCE_FILES := ${BASIC_PACKAGE_SOURCE_FILES} ${PACKAGE_NAME}/entry_point/spt-completion.sh pyproject.toml
+BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' )
 COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES}
+PACKAGE_SOURCE_FILES_WITH_COMPLETIONS := ${BASIC_PACKAGE_SOURCE_FILES} ${PACKAGE_NAME}/entry_point/spt-completion.sh pyproject.toml
 
 export SHELL := ${BUILD_SCRIPTS_LOCATION}/status_messages_only_shell.sh
 
@@ -69,7 +67,7 @@ dist/${WHEEL_FILENAME}: development-container
 >@test -f dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
 >@${MESSAGE} end "to dist/" "Retrieval failed."
 
-development-container: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
+development-container: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
 >@${MESSAGE} start "Building development container"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker build \
@@ -101,9 +99,9 @@ package-introspection-container: ${BASIC_PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_L
 >@touch package-introspection-container
 
 print-source-files:
->@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
+>@echo "${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS}" | tr ' ' '\n'
 
-${PACKAGE_NAME}/entry_point/spt-completion.sh: ${COMPLETIONS_DEPENDENCIES} package-introspection-container
+${PACKAGE_NAME}/entry_point/spt-completion.sh: ${COMPLETIONS_DEPENDENCIES}
 >@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ build-completions-script
 
 build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
@@ -248,6 +246,8 @@ clean-files:
 >@rm -rf build/
 >@rm -f .initiation_message_size
 >@rm -f .current_time.txt
+>@rm -f ${PACKAGE_NAME}/*/.initiation_message_size
+>@rm -f ${PACKAGE_NAME}/*/.current_time.txt
 >@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
 >@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-build-//g') ; \

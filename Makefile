@@ -102,7 +102,7 @@ print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS}" | tr ' ' '\n'
 
 ${PACKAGE_NAME}/entry_point/spt-completion.sh: ${COMPLETIONS_DEPENDENCIES}
->@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ build-completions-script
+>@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ spt-completion.sh
 
 build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
 

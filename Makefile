@@ -37,6 +37,8 @@ DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
 COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
 DB_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
+WORKFLOW_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
+PACKAGE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
 export
 
 BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code$$' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$')
@@ -85,6 +87,7 @@ development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCA
     fi 
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
+>@rm -rf build/
 >@touch development-image
 
 print-source-files:

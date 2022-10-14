@@ -38,8 +38,11 @@ ${UNIT_TESTS}:
 module-tests: ${MODULE_TESTS}
 
 ${MODULE_TESTS}:
->@docker compose up -d
->@sleep 1s
+>@docker compose up -d && \
+ bash ../../building/poll_container_readiness.sh \
+ spt-apiserver-testing \
+ spt-db-testing \
+ spt-countsserver-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -47,9 +50,13 @@ ${MODULE_TESTS}:
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
     ${MESSAGE} start "Testing $$test_name"
->@source ../../venvs/workflow/bin/activate ; \
-    cd ../workflow && bash module_tests/test_HALO_exported_data_import.sh ; cd ../apiserver/ ; \
-    deactivate
+>@docker run \
+     --rm \
+     --network host \
+     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+     /bin/bash -c \
+     'cd /mount_sources; cd workflow/; bash module_tests/test_HALO_exported_data_import.sh'
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -57,11 +64,9 @@ ${MODULE_TESTS}:
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    source ../../venvs/apiserver/bin/activate ; \
-    $$executor $$test_script ; echo "$$?" > status_code ; \
-    deactivate
+    $$executor $$test_script ; echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
->@docker compose rm --force --stop ; sleep 1s
+>@docker compose rm --force --stop
 >@rm -f status_code
 
 clean:

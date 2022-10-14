@@ -12,7 +12,7 @@ do
     available="yes"
     for modulename in "$@"
     do
-        docker compose logs | grep "$module_name" | grep "${expectedmessages[$modulename]}"
+        docker compose logs | grep "$module_name" | grep "${expectedmessages[$modulename]}" 2>/dev/null 1>/dev/null
         if [ $? -gt 0 ];
         then
             available="no"
@@ -27,9 +27,10 @@ do
     if [[ $counter -gt 30 ]];
     then
         echo "Container readiness checking timed out after 15 seconds"
-        exit
+        exit 1
     fi
     sleep 0.5
 done
 
 echo "Containers may not be ready"
+exit 1

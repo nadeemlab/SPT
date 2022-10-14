@@ -17,9 +17,14 @@ initialize_schema.sql: data_model/schema.sql
     > initialize_schema.sql
 
 data_model/schema.sql:
->@source ../../venvs/building/bin/activate ; \
-    adisinglecell dump-schema > data_model/schema.sql ; \
-    deactivate ; \
+>@docker run \
+     --rm \
+     --mount type=bind,src=${DB_DIRECTORY},dst=/mount_sources \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+     /bin/bash -c \
+     'cd /mount_sources; adisinglecell dump-schema > schema.sql' && \
+     mv schema.sql data_model/ ; \
+     echo "$$?" > status_code
 
 unit-tests: ${UNIT_TESTS}
 

@@ -14,6 +14,7 @@ class CountsProvider:
     def __init__(self, data_directory):
         self.load_expressions_indices(data_directory)
         self.load_data_matrices(data_directory)
+        logger.info('countsserver is ready to accept connections.')
 
     def load_expressions_indices(self, data_directory):
         logger.debug('Searching for source data in: %s', data_directory)

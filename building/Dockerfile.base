@@ -8,5 +8,8 @@ RUN apt-get update
 RUN apt-get -y install gcc
 RUN apt-get install -y libpq-dev
 WORKDIR /usr/src/app
+RUN python -m pip install toml
+RUN python -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["project"]["dependencies"]))' | python -m pip install -r /dev/stdin
+RUN python -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["project"]["optional-dependencies"][$service_name]))' | python -m pip install -r /dev/stdin
 COPY $WHEEL_FILENAME ./
-RUN pip3 install "$WHEEL_FILENAME[$service_name]"
+RUN pip3 install "$WHEEL_FILENAME"

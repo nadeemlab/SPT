@@ -36,9 +36,10 @@ DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-buil
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
 COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
+DB_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
 export
 
-BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' )
+BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code$$' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' )
 COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES}
 PACKAGE_SOURCE_FILES_WITH_COMPLETIONS := ${BASIC_PACKAGE_SOURCE_FILES} ${PACKAGE_NAME}/entry_point/spt-completion.sh pyproject.toml
 
@@ -50,7 +51,7 @@ else
 export .SHELLFLAGS := -c -not-super-verbose
 endif
 
-release-package: build-wheel-for-distribution check-for-pypi-credentials development-container
+release-package: build-wheel-for-distribution check-for-pypi-credentials development-image
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
 >@docker run --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ; echo "$$?" > status_code
 >@${MESSAGE} end "Uploaded." "Error."
@@ -62,12 +63,12 @@ check-for-pypi-credentials:
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-dist/${WHEEL_FILENAME}: development-container
+dist/${WHEEL_FILENAME}: development-image
 >@${MESSAGE} start "${PACKAGE_NAME} wheel is retrieved"
 >@test -f dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
 >@${MESSAGE} end "to dist/" "Retrieval failed."
 
-development-container: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
+development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
 >@${MESSAGE} start "Building development container"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker build \
@@ -84,19 +85,7 @@ development-container: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_
     fi 
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
->@touch development-container
-
-package-introspection-container: ${BASIC_PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION}/package-introspection.Dockerfile
->@${MESSAGE} start "Building package introspection container"
->@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
->@docker build \
-     --rm \
-     -f ${BUILD_SCRIPTS_LOCATION}/package-introspection.Dockerfile \
-     -t ${DOCKER_ORG_NAME}-package-introspection/${DOCKER_REPO_PREFIX}-package-introspection:latest \
-     . ; echo "$$?" > status_code
->@${MESSAGE} end "Built." "Build failed."
->@rm -f .dockerignore
->@touch package-introspection-container
+>@touch development-image
 
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS}" | tr ' ' '\n'
@@ -162,7 +151,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-dock
     rm ./Dockerfile ; \
     rm ./.dockerignore
 
-${DOCKERFILE_TARGETS}:
+${DOCKERFILE_TARGETS}: development-image
 >@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory build-dockerfile
 
@@ -186,57 +175,17 @@ check-docker-daemon-running:
 
 test: unit-tests module-tests
 
-unit-tests: development-container
+unit-tests: development-image
 >@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
     done
 
-module-tests: development-container
+module-tests: development-image
 >@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
     done
-
-# development-virtual-environments: ${DEVELOPMENT_VENV_TARGETS}
-
-# virtual-environments-from-source-not-wheel: venvs/building/touch.txt
-
-# ${DEVELOPMENT_VENV_TARGETS}: dist/${WHEEL_FILENAME} venvs/touch.txt
-# >@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
-#     ${MESSAGE} start "Creating virtual environment [$$extra]"
-# >@extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
-#     rm -rf venvs/$$extra ; \
-#     ${PYTHON} -m venv venvs/$$extra && \
-#     source venvs/$$extra/bin/activate && \
-#     ${PYTHON} -m pip install "dist/${WHEEL_FILENAME}[$$extra]" && \
-#     deactivate ; echo "$$?" > status_code
-# >@${MESSAGE} end "Created." "Not created."
-# >@status_code=$$(cat status_code) ; \
-#     if [ $$status_code -eq 0 ] ; then \
-#         extra=$$(echo $@ | sed 's/venvs\///g' | sed 's/\/touch.txt//g' ) ; \
-#         touch venvs/$$extra/touch.txt ; \
-#     fi
-
-# venvs/building/touch.txt: venvs/touch.txt
-# >@${MESSAGE} start "Creating virtual environment [building]"
-# >@${PYTHON} -m venv venvs/building && \
-#     source venvs/building/bin/activate && \
-#     ${PYTHON} -m pip install ".[building]" && \
-#     deactivate ; echo "$$?" > status_code 
-# >@${MESSAGE} end "Created." "Not created."
-# >@status_code=$$(cat status_code) ; \
-#     if [ $$status_code -eq 0 ] ; then \
-#         touch venvs/building/touch.txt ; \
-#     fi
-# >@rm -rf spatialprofilingtoolbox.egg-info/
-# >@rm -rf __pycache__/
-# >@rm -rf build/
-
-# venvs/touch.txt:
-# >@if ! [[ -d "venvs" ]]; \
-#     then mkdir venvs/ ; touch venvs/touch.txt; \
-#     fi
 
 clean: clean-files docker-compositions-rm
 
@@ -259,8 +208,7 @@ clean-files:
 >@rm -rf __pycache__/
 >@rm -rf build/
 >@rm -rf status_code
->@rm -rf development-container
->@rm -rf package-introspection-container
+>@rm -rf development-image
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"

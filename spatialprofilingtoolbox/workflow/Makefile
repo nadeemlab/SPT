@@ -80,3 +80,5 @@ clean:
 >@rm -rf work/
 >@rm -rf results/
 >@rm -f status_code
+>@rm -rf requirements.txt
+>@rm -rf specific_requirements.txt

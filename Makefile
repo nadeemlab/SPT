@@ -39,7 +39,7 @@ COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
 DB_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
 export
 
-BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code$$' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' )
+BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code$$' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$')
 COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES}
 PACKAGE_SOURCE_FILES_WITH_COMPLETIONS := ${BASIC_PACKAGE_SOURCE_FILES} ${PACKAGE_NAME}/entry_point/spt-completion.sh pyproject.toml
 
@@ -137,6 +137,8 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-dock
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
+    if [ ! -f $$submodule_directory/requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION}/create_requirements.sh > $$submodule_directory/requirements.txt ; fi; \
+    if [ ! -f $$submodule_directory/specific_requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION}/create_requirements.sh $$submodule_name > $$submodule_directory/specific_requirements.txt ; fi; \
     docker build \
      -f ./Dockerfile \
      -t $$repository_name:$$submodule_version \
@@ -149,9 +151,9 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-dock
 >@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \
-    rm ./.dockerignore
+    rm ./.dockerignore ; \
 
-${DOCKERFILE_TARGETS}: development-image
+${DOCKERFILE_TARGETS}: development-image ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base
 >@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory build-dockerfile
 

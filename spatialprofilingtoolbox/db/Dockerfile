@@ -4,13 +4,15 @@ ARG service_name
 ARG WHEEL_FILENAME
 LABEL version=$version
 LABEL service_name=$service_name
+ENV service_name $service_name
 WORKDIR /usr/src/app
 RUN apt update
 RUN apt install python3 python3-pip -y
 RUN apt-get install -y libpq-dev
-RUN python3 -m pip install toml
-RUN python3 -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["project"]["dependencies"]))' | python3 -m pip install -r /dev/stdin
-RUN python3 -c 'import toml; c = toml.load("pyproject.toml"); print("\n".join(c["project"]["optional-dependencies"][$service_name]))' | python3 -m pip install -r /dev/stdin
+COPY requirements.txt .
+RUN python3 -m pip install -r requirements.txt
+COPY specific_requirements.txt .
+RUN python3 -m pip install -r specific_requirements.txt
 COPY $WHEEL_FILENAME ./
 RUN pip3 install "$WHEEL_FILENAME"
 COPY initialize_schema.sql /docker-entrypoint-initdb.d/

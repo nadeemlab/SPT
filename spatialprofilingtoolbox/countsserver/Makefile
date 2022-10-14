@@ -64,3 +64,5 @@ clean:
 >@rm -f Dockerfile
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
+>@rm -rf requirements.txt
+>@rm -rf specific_requirements.txt

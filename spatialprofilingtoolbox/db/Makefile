@@ -81,3 +81,5 @@ clean:
 >@rm -f data_model/schema.sql
 >@rm -f status_code
 >@rm -f err_log.*.txt
+>@rm -rf requirements.txt
+>@rm -rf specific_requirements.txt

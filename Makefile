@@ -2,7 +2,7 @@
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
-PYTHON := docker run -t python:3.9-slim python
+PYTHON := python
 BUILD_SCRIPTS_LOCATION :=${PWD}/building
 MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
 unexport PYTHONDONTWRITEBYTECODE
@@ -52,14 +52,14 @@ else
 export .SHELLFLAGS := -c -not-super-verbose
 endif
 
-release-package: build-wheel-for-distribution check-for-pypi-credentials
+release-package: build-wheel-for-distribution check-for-pypi-credentials development-container
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
->@${PYTHON} -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
+>@docker run --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ; echo "$$?" > status_code
 >@${MESSAGE} end "Uploaded." "Error."
 
 check-for-pypi-credentials:
 >@${MESSAGE} start "Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi; echo "$$?" > status_code
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
 build-wheel-for-distribution: dist/${WHEEL_FILENAME}
@@ -130,7 +130,7 @@ ${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
 
 check-for-docker-credentials:
 >@${MESSAGE} start "Checking for Docker credentials in ~/.docker/config.json"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi; echo "$$?" > status_code
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py docker ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
 build-docker-images: ${DOCKER_BUILD_TARGETS}

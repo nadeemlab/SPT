@@ -69,7 +69,7 @@ dist/${WHEEL_FILENAME}: development-image
 >@${MESSAGE} end "to dist/" "Retrieval failed."
 
 development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
->@${MESSAGE} start "Building development container"
+>@${MESSAGE} start "Building development image"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker build \
      --rm \

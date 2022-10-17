@@ -34,13 +34,18 @@ ${UNIT_TESTS}:
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 
-module-tests: ${MODULE_TESTS}
 
-${MODULE_TESTS}:
+.PHONY: setup-module-testing teardown-module-testing
+
+module-tests: teardown-module-testing
+
+setup-module-testing:
 >@cd ${PACKAGE_DIRECTORY}/db; docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
      spt-db-testing && \
      cd ${PACKAGE_DIRECTORY}/workflow
+
+${MODULE_TESTS}: setup-module-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -64,6 +69,9 @@ ${MODULE_TESTS}:
      /bin/bash -c "$$test_cmd"; \
       echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
+>@rm -f status_code
+
+teardown-module-testing: ${MODULE_TESTS}
 >@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
 >@rm -f .nextflow.log*
 >@rm -rf .nextflow/
@@ -73,7 +81,6 @@ ${MODULE_TESTS}:
 >@rm -f nextflow.config
 >@rm -rf work/
 >@rm -rf results/
->@rm -f status_code
 
 clean:
 >@rm -f Dockerfile

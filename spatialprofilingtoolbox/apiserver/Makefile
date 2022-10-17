@@ -35,14 +35,28 @@ ${UNIT_TESTS}:
 >@docker compose --project-directory ../db/ rm --force --stop ; sleep 1s
 >@rm -f status_code
 
-module-tests: ${MODULE_TESTS}
+.PHONY: setup-module-testing teardown-module-testing
 
-${MODULE_TESTS}:
+module-tests: teardown-module-testing
+
+setup-module-testing:
 >@docker compose up -d && \
  bash ../../building/poll_container_readiness.sh \
   spt-apiserver-testing \
   spt-db-testing \
   spt-countsserver-testing
+>@${MESSAGE} start "Populating temporary database with test data"
+>@docker run \
+     --rm \
+     --network host \
+     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+     /bin/bash -c \
+     'cd /mount_sources/workflow/; bash module_tests/test_HALO_exported_data_import.sh' ; \
+    echo "$$?" > status_code
+>@${MESSAGE} end "Populated." "Failed to populate."
+
+${MODULE_TESTS}: setup-module-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -50,14 +64,6 @@ ${MODULE_TESTS}:
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
     ${MESSAGE} start "Testing $$test_name"
->@echo "Populating temporary database with test data." ; \
-    docker run \
-     --rm \
-     --network host \
-     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
-     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
-     /bin/bash -c \
-     'cd /mount_sources/workflow/; bash module_tests/test_HALO_exported_data_import.sh' 1>/dev/null 2>/dev/null
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -74,8 +80,10 @@ ${MODULE_TESTS}:
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
->@docker compose rm --force --stop
 >@rm -f status_code
+
+teardown-module-testing: ${MODULE_TESTS}
+>@docker compose rm --force --stop
 
 clean:
 >@rm -f ${WHEEL_FILENAME}

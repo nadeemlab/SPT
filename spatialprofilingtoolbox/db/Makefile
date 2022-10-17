@@ -49,12 +49,16 @@ ${UNIT_TESTS}:
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 
-module-tests: ${MODULE_TESTS}
+.PHONY: setup-module-testing teardown-module-testing
 
-${MODULE_TESTS}:
+module-tests: teardown-module-testing
+
+setup-module-testing:
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
      spt-db-testing
+
+${MODULE_TESTS}: setup-module-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -78,8 +82,10 @@ ${MODULE_TESTS}:
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
->@docker compose rm --force --stop ; sleep 1s
 >@rm -f status_code
+
+teardown-module-testing: ${MODULE_TESTS}
+>@docker compose rm --force --stop
 
 clean:
 >@rm -f ${WHEEL_FILENAME}

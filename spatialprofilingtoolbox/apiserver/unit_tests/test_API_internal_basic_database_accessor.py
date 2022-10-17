@@ -26,6 +26,6 @@ if __name__=='__main__':
     for key in environment.keys():
         os.environ.pop(key)
 
-    if count != 0:
+    if count != 1:
         print('Number of specimen_measurement_study rows was: %s' % count)
         exit(1)

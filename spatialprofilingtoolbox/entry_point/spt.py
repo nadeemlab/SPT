@@ -4,6 +4,7 @@ import subprocess
 import importlib.resources
 import re
 import os
+import signal
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import submodule_names
@@ -99,8 +100,10 @@ def main_program():
     if len(sys.argv) > 3:
         executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
-        completed_process = subprocess.run([
+        running_process = subprocess.Popen([
             executable,
             script_path,
         ] + unparsed_arguments)
-        exit(completed_process.returncode)
+        signal.signal(signal.SIGTERM, lambda signum, frame: running_process.send_signal(signal.SIGTERM))
+        signal.signal(signal.SIGINT, lambda signum, frame: running_process.send_signal(signal.SIGINT))
+        exit(running_process.wait())

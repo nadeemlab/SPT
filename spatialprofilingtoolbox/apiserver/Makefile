@@ -6,40 +6,51 @@ UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 MODULE_TEST_FILES := $(wildcard module_tests/test_*.sh ) $(wildcard module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
+TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
+
 build-dockerfile:
 >@ echo >/dev/null
 
-unit-tests: ${UNIT_TESTS}
+# ${UNIT_TESTS}:
+# >@docker compose --project-directory ../db/ up -d
+# >@sleep 2s
+# >@test_target=$@ ; \
+#     test_script=$${test_target/test-/} ; \
+#     test_name=$${test_script/unit_tests\/test_/} ; \
+#     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
+#     test_name=$${test_name/$$extension/} ; \
+#     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
+#     ${MESSAGE} start "Testing $$test_name"
+# >@test_target=$@ ; \
+#     test_script=$${test_target/test-/} ; \
+#     test_name=$${test_script/unit_tests\/test_/} ; \
+#     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
+#     executor=none-cmd ; \
+#     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
+#     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
+#     source ../../venvs/apiserver/bin/activate ; \
+#     $$executor $$test_script ; echo "$$?" > status_code ; \
+#     deactivate
+# >@${MESSAGE} end "Passed." "Failed."
+# >@docker compose --project-directory ../db/ rm --force --stop ; sleep 1s
+# >@rm -f status_code
 
-${UNIT_TESTS}:
->@docker compose --project-directory ../db/ up -d
->@sleep 2s
->@test_target=$@ ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-    test_name=$${test_name/$$extension/} ; \
-    test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "Testing $$test_name"
->@test_target=$@ ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-    executor=none-cmd ; \
-    if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
-    if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    source ../../venvs/apiserver/bin/activate ; \
-    $$executor $$test_script ; echo "$$?" > status_code ; \
-    deactivate
->@${MESSAGE} end "Passed." "Failed."
->@docker compose --project-directory ../db/ rm --force --stop ; sleep 1s
->@rm -f status_code
+.PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
-.PHONY: setup-module-testing teardown-module-testing
-
+unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
+test: teardown-testing
 
-setup-module-testing:
+teardown-unit-testing: ${UNIT_TESTS}
+>@docker compose rm --force --stop
+
+teardown-module-testing: ${MODULE_TESTS}
+>@docker compose rm --force --stop
+
+teardown-testing: ${TESTS}
+>@docker compose rm --force --stop
+
+setup-testing:
 >@docker compose up -d && \
  bash ../../building/poll_container_readiness.sh \
   spt-apiserver-testing \
@@ -56,10 +67,11 @@ setup-module-testing:
     echo "$$?" > status_code
 >@${MESSAGE} end "Populated." "Failed to populate."
 
-${MODULE_TESTS}: setup-module-testing
+${TESTS}: setup-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
+    test_name=$${test_name/unit_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
@@ -67,6 +79,7 @@ ${MODULE_TESTS}: setup-module-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
+    test_name=$${test_name/unit_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
@@ -81,9 +94,6 @@ ${MODULE_TESTS}: setup-module-testing
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
-
-teardown-module-testing: ${MODULE_TESTS}
->@docker compose rm --force --stop
 
 clean:
 >@rm -f ${WHEEL_FILENAME}

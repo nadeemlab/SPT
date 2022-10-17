@@ -49,25 +49,30 @@ ${MODULE_TESTS}:
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "Testing $$test_name" ; \
+    ${MESSAGE} start "Testing $$test_name"
+>@echo "Populating temporary database with test data." ; \
     docker run \
      --rm \
      --network host \
      --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
-     'cd /mount_sources/workflow/; bash module_tests/test_HALO_exported_data_import.sh' ; \
+     'cd /mount_sources/workflow/; bash module_tests/test_HALO_exported_data_import.sh' 1>/dev/null 2>/dev/null
+>@test_target=$@ ; \
+    test_script=$${test_target/test-/} ; \
+    test_name=$${test_script/module_tests\/test_/} ; \
+    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     executor=none-cmd ; \
-    if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
+    if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
+    test_cmd="cd /mount_sources/apiserver/; $$executor $$test_script" ; \
     docker run \
      --rm \
      --network host \
      --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
-     /bin/bash -c \
-     'cd /mount_sources/apiserver/; $$executor $$test_script' ; \
-      echo "$$?" > status_code
+     /bin/bash -c "$$test_cmd" ; \
+    echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@docker compose rm --force --stop
 >@rm -f status_code

@@ -47,20 +47,24 @@ ${MODULE_TESTS}:
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "Testing $$test_name" ; \
+    ${MESSAGE} start "Testing $$test_name"
+>@test_target=$@ ; \
+    test_script=$${test_target/test-/} ; \
+    test_name=$${test_script/module_tests\/test_/} ; \
+    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     executor=none-cmd ; \
-    if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
+    if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
+    test_cmd="cd /mount_sources/workflow/; $$executor $$test_script" ; \
     docker run \
      --rm \
      --network host \
      --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
-     /bin/bash -c \
-     'cd /mount_sources/workflow/; $$executor $$test_script' ; \
+     /bin/bash -c "$$test_cmd"; \
       echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
->@docker compose --project-directory ../db/ rm --force --stop
+>@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
 >@rm -f .nextflow.log*
 >@rm -rf .nextflow/
 >@rm -f configure.sh

@@ -91,10 +91,14 @@ development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCA
         if [ ! -d dist/ ]; then mkdir dist ; fi; \
         docker run --rm -v $$(pwd)/dist:/buffer ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development /bin/sh -c "cp dist/${WHEEL_FILENAME} /buffer"; \
     fi 
+>@status_code=$$(cat status_code); \
+    if [[ "$$status_code" == "0" ]]; \
+    then \
+        touch development-image ; \
+    fi
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
 >@rm -rf build/
->@touch development-image
 
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS}" | tr ' ' '\n'

@@ -18,5 +18,6 @@ then
         exec /bin/bash -c "$@" >/dev/null 2>&1
     fi
 else
-    exec /bin/bash "$@"
+    echo "Error: use -super-verbose or -not-super-verbose in this wrapper shell."
+    exit 1
 fi

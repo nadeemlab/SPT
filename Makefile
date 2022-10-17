@@ -13,6 +13,9 @@ help:
 >@${MESSAGE} print '      make release-package'
 >@${MESSAGE} print '          Build the Python package wheel and push it to PyPI.'
 >@${MESSAGE} print ' '
+>@${MESSAGE} print '      make build-docker-images'
+>@${MESSAGE} print '          Build the Docker images.'
+>@${MESSAGE} print ' '
 >@${MESSAGE} print '      make build-and-push-docker-images'
 >@${MESSAGE} print '          Build the Docker images and push them to DockerHub repositories.'
 >@${MESSAGE} print ' '
@@ -24,6 +27,9 @@ help:
 >@${MESSAGE} print ' '
 >@${MESSAGE} print '      make help'
 >@${MESSAGE} print '          Show this text.'
+>@${MESSAGE} print ' '
+>@${MESSAGE} print ' Use VERBOSE=1 to show command outputs.'
+>@${MESSAGE} print ' '
 
 PACKAGE_NAME := spatialprofilingtoolbox
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
@@ -41,7 +47,7 @@ WORKFLOW_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
 PACKAGE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
 export
 
-BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code$$' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$')
+BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code$$' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$' | grep -v 'current_time.txt$$' | grep -v 'initiation_message_size.txt$$' | grep -v '.nextflow.log$$' | grep -v '.nextflow/' | grep -v 'main.nf$$' | grep -v 'configure.sh$$' | grep -v 'nextflow.config$$' | grep -v 'run.sh$$' | grep -v 'work/' | grep -v 'results/')
 COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES}
 PACKAGE_SOURCE_FILES_WITH_COMPLETIONS := ${BASIC_PACKAGE_SOURCE_FILES} ${PACKAGE_NAME}/entry_point/spt-completion.sh pyproject.toml
 
@@ -68,7 +74,7 @@ build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 dist/${WHEEL_FILENAME}: development-image
 >@${MESSAGE} start "${PACKAGE_NAME} wheel is retrieved"
 >@test -f dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
->@${MESSAGE} end "to dist/" "Retrieval failed."
+>@${MESSAGE} end "to dist/" "Retrieval to dist/ failed."
 
 development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
 >@${MESSAGE} start "Building development image"

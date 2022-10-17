@@ -37,25 +37,28 @@ ${UNIT_TESTS}:
 module-tests: ${MODULE_TESTS}
 
 ${MODULE_TESTS}:
->@docker compose --project-directory ../db/ up -d
->@sleep 1s
+>@cd ${PACKAGE_DIRECTORY}/db; docker compose up -d && \
+    bash ../../building/poll_container_readiness.sh \
+     spt-db-testing && \
+     cd ${PACKAGE_DIRECTORY}/workflow
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "Testing $$test_name"
->@test_target=$@ ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
+    ${MESSAGE} start "Testing $$test_name" ; \
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    source ../../venvs/workflow/bin/activate ; \
-    $$executor $$test_script ; echo "$$?" > status_code ; \
-    deactivate
+    docker run \
+     --rm \
+     --network host \
+     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+     /bin/bash -c \
+     'cd /mount_sources/workflow/; $$executor $$test_script' ; \
+      echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@docker compose --project-directory ../db/ rm --force --stop
 >@rm -f .nextflow.log*

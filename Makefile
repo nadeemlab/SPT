@@ -202,6 +202,33 @@ module-tests: development-image
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
     done
 
+data-loaded-image: docker-build-spatialprofilingtoolbox/db development-image
+>@${MESSAGE} start "Building test-data-loaded spt-db image"
+>@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
+>@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
+    docker container start temporary-spt-db-preloading && \
+    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
+    docker run \
+     --rm \
+     --network host \
+     --mount type=bind,src=${PWD},dst=/mount_sources \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+     /bin/bash -c \
+     "cd /mount_sources/; bash building/test_HALO_exported_data_import.sh" && \
+     rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/ && \
+     docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded:latest && \
+     docker container rm --force temporary-spt-db-preloading ; \
+    echo "$$?" > status_code
+>@status_code=$$(cat status_code); \
+    if [[ "$$status_code" == "0" ]]; \
+    then \
+        touch data-loaded-image ; \
+    fi
+>@${MESSAGE} end "Built." "Build failed."
+>@rm -f .dockerignore
+
+# RUN postgres; sleep 5; cd spatialprofilingtoolbox/workflow; bash module_tests/test_HALO_exported_data_import.sh
+
 clean: clean-files docker-compositions-rm
 
 clean-files:
@@ -224,6 +251,7 @@ clean-files:
 >@rm -rf build/
 >@rm -rf status_code
 >@rm -rf development-image
+>@rm -rf data-loaded-image
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"
@@ -233,3 +261,4 @@ docker-compositions-rm: check-docker-daemon-running
     status_code=$$(( status_code1 + status_code2 + status_code3 )) ; echo $$status_code > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -rf status_code
+>@docker container rm --force temporary-spt-db-preloading

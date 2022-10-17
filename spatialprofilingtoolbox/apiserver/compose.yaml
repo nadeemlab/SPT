@@ -1,6 +1,6 @@
 services:
   testing-database:
-    image: nadeemlab/spt-db
+    image: nadeemlab/spt-db-preloaded
     container_name: spt-db-testing
     ports:
       - target: 5432

@@ -6,46 +6,37 @@ UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 MODULE_TEST_FILES := $(wildcard module_tests/test_*.sh ) $(wildcard module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
+TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
+
 build-dockerfile: Dockerfile
 
 Dockerfile:
 >@cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ./Dockerfile.append > Dockerfile
 
-unit-tests: ${UNIT_TESTS}
+.PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
-${UNIT_TESTS}:
->@test_target=$@ ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-    test_name=$${test_name/$$extension/} ; \
-    test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "Testing $$test_name"
->@test_target=$@ ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-    executor=none-cmd ; \
-    if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
-    if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    source ../../venvs/workflow/bin/activate ; \
-    $$executor $$test_script ; echo "$$?" > status_code ; \
-    deactivate
->@${MESSAGE} end "Passed." "Failed."
->@rm -f status_code
-
-
-.PHONY: setup-module-testing teardown-module-testing
-
+unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
+test: teardown-testing
 
-setup-module-testing:
->@cd ${PACKAGE_DIRECTORY}/db; docker compose up -d && \
+setup-testing:
+>@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
-     spt-db-testing && \
-     cd ${PACKAGE_DIRECTORY}/workflow
+     spt-db-testing
 
-${MODULE_TESTS}: setup-module-testing
+teardown-unit-testing: ${UNIT_TESTS}
+>@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
+>@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+
+teardown-module-testing: ${MODULE_TESTS}
+>@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
+>@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+
+teardown-testing: ${TESTS}
+>@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
+>@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+
+${TESTS}: setup-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -70,17 +61,6 @@ ${MODULE_TESTS}: setup-module-testing
       echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
-
-teardown-module-testing: ${MODULE_TESTS}
->@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
->@rm -f .nextflow.log*
->@rm -rf .nextflow/
->@rm -f configure.sh
->@rm -f run.sh
->@rm -f main.nf
->@rm -f nextflow.config
->@rm -rf work/
->@rm -rf results/
 
 clean:
 >@rm -f Dockerfile

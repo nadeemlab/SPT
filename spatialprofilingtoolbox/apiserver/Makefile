@@ -11,35 +11,18 @@ TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 build-dockerfile:
 >@ echo >/dev/null
 
-# ${UNIT_TESTS}:
-# >@docker compose --project-directory ../db/ up -d
-# >@sleep 2s
-# >@test_target=$@ ; \
-#     test_script=$${test_target/test-/} ; \
-#     test_name=$${test_script/unit_tests\/test_/} ; \
-#     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-#     test_name=$${test_name/$$extension/} ; \
-#     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-#     ${MESSAGE} start "Testing $$test_name"
-# >@test_target=$@ ; \
-#     test_script=$${test_target/test-/} ; \
-#     test_name=$${test_script/unit_tests\/test_/} ; \
-#     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-#     executor=none-cmd ; \
-#     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
-#     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-#     source ../../venvs/apiserver/bin/activate ; \
-#     $$executor $$test_script ; echo "$$?" > status_code ; \
-#     deactivate
-# >@${MESSAGE} end "Passed." "Failed."
-# >@docker compose --project-directory ../db/ rm --force --stop ; sleep 1s
-# >@rm -f status_code
-
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
 test: teardown-testing
+
+setup-testing:
+>@docker compose up -d && \
+ bash ../../building/poll_container_readiness.sh \
+  spt-apiserver-testing \
+  spt-db-testing \
+  spt-countsserver-testing
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@docker compose rm --force --stop
@@ -49,23 +32,6 @@ teardown-module-testing: ${MODULE_TESTS}
 
 teardown-testing: ${TESTS}
 >@docker compose rm --force --stop
-
-setup-testing:
->@docker compose up -d && \
- bash ../../building/poll_container_readiness.sh \
-  spt-apiserver-testing \
-  spt-db-testing \
-  spt-countsserver-testing
->@${MESSAGE} start "Populating temporary database with test data"
->@docker run \
-     --rm \
-     --network host \
-     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
-     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
-     /bin/bash -c \
-     'cd /mount_sources/workflow/; bash module_tests/test_HALO_exported_data_import.sh' ; \
-    echo "$$?" > status_code
->@${MESSAGE} end "Populated." "Failed to populate."
 
 ${TESTS}: setup-testing
 >@test_target=$@ ; \
@@ -109,6 +75,4 @@ clean:
 >@rm -rf results/
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
-
-
 

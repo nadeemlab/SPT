@@ -7,6 +7,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN apt-get install -y libpq-dev
 RUN apt install curl -y
 RUN apt install openjdk-11-jdk -y
+RUN apt install xxd
 WORKDIR /usr/src/app
 ENV PATH="/usr/src/app:$PATH" 
 RUN curl -s https://get.nextflow.io | bash

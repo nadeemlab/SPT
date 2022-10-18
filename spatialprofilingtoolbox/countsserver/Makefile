@@ -8,8 +8,6 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-build-dockerfile: Dockerfile
-
 Dockerfile: ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base Dockerfile.append
 >@${MESSAGE} start "Building countsserver Dockerfile"
 >@cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code

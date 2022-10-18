@@ -8,10 +8,13 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-build-dockerfile: initialize_schema.sql
->@touch build-dockerfile
+Dockerfile: Dockerfile.template initialize_schema.sql
+>@${MESSAGE} start "Building db Dockerfile"
+>@cp Dockerfile.template Dockerfile ; echo "$$?" > status_code
+>@${MESSAGE} end "Built." "Not built."
+>@rm -f status_code
 
-initialize_schema.sql: data_model/schema.sql
+initialize_schema.sql: data_model/schema.sql data_model/performance_tweaks.sql data_model/create_views.sql
 >@cat \
     data_model/schema.sql \
     data_model/performance_tweaks.sql \
@@ -84,4 +87,4 @@ clean:
 >@rm -f err_log.*.txt
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
->@rm -f build-dockerfile
+>@rm -rf Dockerfile

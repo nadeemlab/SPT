@@ -18,4 +18,4 @@ RUN pip3 install "$WHEEL_FILENAME"
 COPY initialize_schema.sql /docker-entrypoint-initdb.d/
 COPY .spt_db.config.local ./
 HEALTHCHECK CMD spt db status --database-config-file .spt_db.config.local || exit 1
-CMD ["postgres"]
+CMD ["postgres", "-h", "0.0.0.0"]

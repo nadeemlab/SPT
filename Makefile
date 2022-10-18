@@ -38,8 +38,9 @@ WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
 DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
-DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),dockerfile-${PACKAGE_NAME}/$(submodule))
-DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-build-${PACKAGE_NAME}/$(submodule))
+DOCKERFILE_SOURCES := $(wildcard ${PACKAGE_NAME}/*/Dockerfile.*)
+DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/Dockerfile)
+DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
 COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
@@ -137,7 +138,7 @@ check-for-docker-credentials:
 build-docker-images: ${DOCKER_BUILD_TARGETS}
 
 ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-daemon-running
->@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
@@ -160,16 +161,20 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
      --build-arg version=$$submodule_version \
      --build-arg service_name=$$submodule_name \
      --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
-     $$submodule_directory ; echo "$$?" > status_code
+     $$submodule_directory ; echo "$$?" > status_code; \
+    if [[ "$$(cat status_code)" == "0" ]]; \
+    then \
+        touch $@ ;\
+    fi
 >@${MESSAGE} end "Built." "Build failed."
 >@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
 
-${DOCKERFILE_TARGETS}: development-image ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base
->@submodule_directory=$$(echo $@ | sed 's/^dockerfile-//g' ) ; \
-    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory build-dockerfile
+${DOCKERFILE_TARGETS}: development-image ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ${DOCKERFILE_SOURCES}
+>@submodule_directory=$$(echo $@ | sed 's/Dockerfile//g' ) ; \
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory Dockerfile
 
 check-docker-daemon-running:
 >@${MESSAGE} start "Checking that Docker daemon is running"
@@ -213,7 +218,7 @@ data-loaded-image: docker-build-spatialprofilingtoolbox/db development-image
     pipeline_cmd="cd /mount_sources/; bash building/test_HALO_exported_data_import.sh; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; " \
     docker run \
      --rm \
-     --network host \
+     --network container:temporary-spt-db-preloading \
      --mount type=bind,src=${PWD},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
@@ -242,8 +247,8 @@ clean-files:
 >@rm -f ${PACKAGE_NAME}/*/.initiation_message_size
 >@rm -f ${PACKAGE_NAME}/*/.current_time.txt
 >@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
->@for submodule_directory_target in ${DOCKER_BUILD_TARGETS} ; do \
-        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^docker-build-//g') ; \
+>@for submodule in ${DOCKERIZED_SUBMODULES} ; do \
+        submodule_directory=${PACKAGE_DIRECTORY}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
     done
 >@rm -f Dockerfile

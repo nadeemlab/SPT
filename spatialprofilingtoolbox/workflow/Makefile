@@ -25,15 +25,15 @@ setup-testing:
      spt-db-testing
 
 teardown-unit-testing: ${UNIT_TESTS}
->@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
+>@docker compose rm --force --stop
 >@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
 teardown-module-testing: ${MODULE_TESTS}
->@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
+>@docker compose rm --force --stop
 >@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
 teardown-testing: ${TESTS}
->@docker compose --project-directory ${PACKAGE_DIRECTORY}/db/ rm --force --stop
+>@docker compose rm --force --stop
 >@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
 ${TESTS}: setup-testing

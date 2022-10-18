@@ -215,7 +215,7 @@ data-loaded-image: docker-build-spatialprofilingtoolbox/db development-image
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
      "cd /mount_sources/; bash building/test_HALO_exported_data_import.sh" && \
-     rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/ && \
+     rm -f .nextflow.log && rm -f .nextflow.log.* && rm -rf .nextflow/ && rm -f configure.sh && rm -f run.sh && rm -f main.nf && rm -f nextflow.config && rm -rf work/ && rm -rf results/ && \
      docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded:latest && \
      docker container rm --force temporary-spt-db-preloading ; \
     echo "$$?" > status_code
@@ -259,7 +259,8 @@ docker-compositions-rm: check-docker-daemon-running
 >@docker compose --project-directory ./spatialprofilingtoolbox/apiserver/ rm --force --stop ; status_code1="$$?" ; \
     docker compose --project-directory ./spatialprofilingtoolbox/countsserver/ rm --force --stop ; status_code2="$$?" ; \
     docker compose --project-directory ./spatialprofilingtoolbox/db/ rm --force --stop ; status_code3="$$?" ; \
-    status_code=$$(( status_code1 + status_code2 + status_code3 )) ; echo $$status_code > status_code
+    docker compose --project-directory ./spatialprofilingtoolbox/workflow/ rm --force --stop ; status_code4="$$?" ; \
+    status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 )) ; echo $$status_code > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -rf status_code
 >@docker container rm --force temporary-spt-db-preloading

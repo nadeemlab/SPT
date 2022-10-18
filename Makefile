@@ -31,6 +31,7 @@ help:
 >@${MESSAGE} print ' Use VERBOSE=1 to show command outputs.'
 >@${MESSAGE} print ' '
 
+LOCAL_USERNAME = $(shell id -u)
 PACKAGE_NAME := spatialprofilingtoolbox
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
@@ -61,7 +62,7 @@ endif
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials development-image
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
->@docker run --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ; echo "$$?" > status_code
+>@docker run -u ${LOCAL_USERNAME} --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ; echo "$$?" > status_code
 >@${MESSAGE} end "Uploaded." "Error."
 
 check-for-pypi-credentials:
@@ -209,14 +210,14 @@ data-loaded-image: docker-build-spatialprofilingtoolbox/db development-image
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
+    pipeline_cmd="cd /mount_sources/; bash building/test_HALO_exported_data_import.sh; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; " \
     docker run \
      --rm \
      --network host \
      --mount type=bind,src=${PWD},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
-     "cd /mount_sources/; bash building/test_HALO_exported_data_import.sh" && \
-     rm -f .nextflow.log && rm -f .nextflow.log.* && rm -rf .nextflow/ && rm -f configure.sh && rm -f run.sh && rm -f main.nf && rm -f nextflow.config && rm -rf work/ && rm -rf results/ && \
+     "$$pipeline_cmd" && \
      docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded:latest && \
      docker container rm --force temporary-spt-db-preloading ; \
     echo "$$?" > status_code

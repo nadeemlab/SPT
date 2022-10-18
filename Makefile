@@ -71,13 +71,6 @@ check-for-pypi-credentials:
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
-# build-wheel-for-distribution: dist/${WHEEL_FILENAME}
-
-# dist/${WHEEL_FILENAME}: development-image
-# >@${MESSAGE} start "${PACKAGE_NAME} wheel is retrieved"
-# >@test -f dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
-# >@${MESSAGE} end "to dist/" "Retrieval to dist/ failed."
-
 development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
 >@${MESSAGE} start "Building development image"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
@@ -236,8 +229,6 @@ data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
     fi
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
-
-# RUN postgres; sleep 5; cd spatialprofilingtoolbox/workflow; bash module_tests/test_HALO_exported_data_import.sh
 
 clean: clean-files docker-compositions-rm
 

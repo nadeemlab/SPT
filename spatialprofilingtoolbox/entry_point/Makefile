@@ -1,6 +1,6 @@
 .RECIPEPREFIX = >
 
-spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_completions_script.py create-simple-venv
+spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_completions_script.py venv/touch.txt
 >@${MESSAGE} start "Creating spt CLI completions script"
 >@source venv/bin/activate ; \
     python -m pip install --no-deps ../../ ; \
@@ -11,8 +11,6 @@ spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_comple
 >@rm -rf __pycache__
 >@rm -f status_code
 >@rm -rf ../../${PACKAGE_NAME}.egg-info/
-
-create-simple-venv: venv/touch.txt
 
 venv/touch.txt:
 >@${MESSAGE} start "Creating venv for basic package introspection"

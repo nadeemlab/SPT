@@ -49,7 +49,7 @@ WORKFLOW_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
 PACKAGE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
 export
 
-BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v 'Dockerfile$$' | grep -v 'Dockerfile.append$$' | grep -v 'Makefile$$' | grep -v 'unit_tests/' | grep -v 'module_tests/' | grep -v 'status_code$$' | grep -v 'spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$' | grep -v 'current_time.txt$$' | grep -v 'initiation_message_size.txt$$' | grep -v '.nextflow.log$$' | grep -v '.nextflow/' | grep -v 'main.nf$$' | grep -v 'configure.sh$$' | grep -v 'nextflow.config$$' | grep -v 'run.sh$$' | grep -v 'work/' | grep -v 'results/')
+BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v '/spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v '/requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$')
 COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES}
 PACKAGE_SOURCE_FILES_WITH_COMPLETIONS := ${BASIC_PACKAGE_SOURCE_FILES} ${PACKAGE_NAME}/entry_point/spt-completion.sh pyproject.toml
 
@@ -144,7 +144,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
->@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
@@ -167,7 +167,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
         touch $@ ;\
     fi
 >@${MESSAGE} end "Built." "Build failed."
->@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
@@ -209,7 +209,7 @@ module-tests: development-image data-loaded-image
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
     done
 
-data-loaded-image: docker-build-spatialprofilingtoolbox/db development-image
+data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
 >@${MESSAGE} start "Building test-data-loaded spt-db image"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
@@ -250,6 +250,7 @@ clean-files:
 >@for submodule in ${DOCKERIZED_SUBMODULES} ; do \
         submodule_directory=${PACKAGE_DIRECTORY}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
+        rm -rf $$submodule_directory/docker.built ; \
     done
 >@rm -f Dockerfile
 >@rm -f .dockerignore

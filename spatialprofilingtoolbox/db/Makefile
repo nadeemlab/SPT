@@ -9,7 +9,7 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 build-dockerfile: initialize_schema.sql
->@echo > /dev/null
+>@touch build-dockerfile
 
 initialize_schema.sql: data_model/schema.sql
 >@cat \
@@ -84,3 +84,4 @@ clean:
 >@rm -f err_log.*.txt
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
+>@rm -f build-dockerfile

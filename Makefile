@@ -69,12 +69,12 @@ check-for-pypi-credentials:
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
-build-wheel-for-distribution: dist/${WHEEL_FILENAME}
+# build-wheel-for-distribution: dist/${WHEEL_FILENAME}
 
-dist/${WHEEL_FILENAME}: development-image
->@${MESSAGE} start "${PACKAGE_NAME} wheel is retrieved"
->@test -f dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
->@${MESSAGE} end "to dist/" "Retrieval to dist/ failed."
+# dist/${WHEEL_FILENAME}: development-image
+# >@${MESSAGE} start "${PACKAGE_NAME} wheel is retrieved"
+# >@test -f dist/${WHEEL_FILENAME} ; echo "$$?" > status_code
+# >@${MESSAGE} end "to dist/" "Retrieval to dist/ failed."
 
 development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
 >@${MESSAGE} start "Building development image"
@@ -135,7 +135,7 @@ check-for-docker-credentials:
 
 build-docker-images: ${DOCKER_BUILD_TARGETS}
 
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} dist/${WHEEL_FILENAME} check-docker-daemon-running
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-daemon-running
 >@submodule_directory=$$(echo $@ | sed 's/^docker-build-//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
@@ -186,7 +186,8 @@ check-docker-daemon-running:
         else \
             ${MESSAGE} end "Started." "Failed to start." ; \
         fi ; \
-    fi
+    fi ; \
+    touch check-docker-daemon-running
 
 test: unit-tests module-tests
 
@@ -264,3 +265,4 @@ docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} end "Down." "Error."
 >@rm -rf status_code
 >@docker container rm --force temporary-spt-db-preloading
+>@rm -rf check-docker-daemon-running

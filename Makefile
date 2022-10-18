@@ -190,13 +190,13 @@ check-docker-daemon-running:
 
 test: unit-tests module-tests
 
-unit-tests: development-image
+unit-tests: development-image data-loaded-image
 >@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
     done
 
-module-tests: development-image
+module-tests: development-image data-loaded-image
 >@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
         submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
@@ -215,7 +215,7 @@ data-loaded-image: docker-build-spatialprofilingtoolbox/db development-image
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
      "cd /mount_sources/; bash building/test_HALO_exported_data_import.sh" && \
-     rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/ && \
+     rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/ && \
      docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded:latest && \
      docker container rm --force temporary-spt-db-preloading ; \
     echo "$$?" > status_code
@@ -252,6 +252,7 @@ clean-files:
 >@rm -rf status_code
 >@rm -rf development-image
 >@rm -rf data-loaded-image
+>@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"

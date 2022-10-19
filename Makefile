@@ -22,6 +22,9 @@ help:
 >@${MESSAGE} print '      make test'
 >@${MESSAGE} print '          Do unit and module tests.'
 >@${MESSAGE} print ' '
+>@${MESSAGE} print '      make test-[apiserver | countsserver | db | workflow | ]'
+>@${MESSAGE} print '          Do only the unit and module tests for the indicated module.'
+>@${MESSAGE} print ' '
 >@${MESSAGE} print '      make clean'
 >@${MESSAGE} print '          Attempt to remove all build or partial-build artifacts.'
 >@${MESSAGE} print ' '
@@ -42,7 +45,7 @@ DOCKERFILE_SOURCES := $(wildcard ${PACKAGE_NAME}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/Dockerfile)
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
-MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-$(submodule))
+MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-$(submodule))
 COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
 DB_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
 WORKFLOW_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
@@ -191,7 +194,7 @@ check-docker-daemon-running:
 test: ${MODULE_TEST_TARGETS}
 
 ${MODULE_TEST_TARGETS}: development-image data-loaded-image
->@submodule_directory=$$(echo $@ | sed 's/^test-module-/${PACKAGE_NAME}\//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/^test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 

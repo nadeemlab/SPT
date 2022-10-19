@@ -111,3 +111,6 @@ class CoreJob:
         if fov in table.columns:
             str_values = [str(element) for element in table[fov]]
             table[fov] = str_values
+        else:
+            logger.debug('Creating dummy "%s" until its use is fully deprecated.', fov)
+            table[fov] = [str(FOV1) for i, row in table.iterrows()]

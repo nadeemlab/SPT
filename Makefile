@@ -309,4 +309,5 @@ postgres-service-down:
     *) \
         ${MESSAGE} end "Unhandled." "Failure unhandled." ; \
     ;; \
-    esac
+    esac ; \
+    rm status_flag;

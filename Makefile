@@ -193,7 +193,7 @@ check-docker-daemon-running:
 
 test: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image
+${MODULE_TEST_TARGETS}: development-image data-loaded-image clean-network-environment
 >@submodule_directory=$$(echo $@ | sed 's/^test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
@@ -223,7 +223,7 @@ data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
 
-clean: clean-files docker-compositions-rm
+clean: clean-files clean-network-environment
 
 clean-files:
 >@rm -rf ${PACKAGE_NAME}.egg-info/
@@ -248,6 +248,8 @@ clean-files:
 >@rm -rf development-image
 >@rm -rf data-loaded-image
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@rm -rf status_code
+>@rm -rf check-docker-daemon-running
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"
@@ -257,6 +259,54 @@ docker-compositions-rm: check-docker-daemon-running
     docker compose --project-directory ./spatialprofilingtoolbox/workflow/ rm --force --stop ; status_code4="$$?" ; \
     status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 )) ; echo $$status_code > status_code
 >@${MESSAGE} end "Down." "Error."
->@rm -rf status_code
 >@docker container rm --force temporary-spt-db-preloading
->@rm -rf check-docker-daemon-running
+
+clean-network-environment: docker-compositions-rm postgres-service-down
+
+postgres-service-down:
+>@${MESSAGE} start "Checking that Postgres is not running"
+>@data_directory=$$(PGPASSWORD=postgres psql -h localhost -U postgres -t -c "show data_directory;") ; \
+    if [[ "$$data_directory" != "" ]]; \
+    then \
+        if [[ "$$(which pg_ctl)" != "" ]]; \
+        then \
+            pg_ctl stop -D $$data_directory ; \
+            echo $$? > status_code ; \
+            echo "1" > status_flag ; \
+        fi ; \
+    fi ; \
+    if [[ "$$(which systemctl)" != "" ]]; \
+    then \
+        systemctl --type=service --state=running | grep postgresql; \
+        running=$$? ; \
+        if [[ "$$running" == "0" ]]; \
+        then \
+            sudo systemctl stop postgresql; \
+            echo $$? > status_code ; \
+            echo "2" > status_flag ; \
+        else \
+            echo "0" > status_code ; \
+            echo "3" > status_flag ; \
+        fi \
+    else \
+        echo "0" > status_code ; \
+        echo "4" > status_flag ;\
+    fi
+>@status_flag=$$(cat status_flag); \
+    case $$status_flag in \
+    1) \
+        ${MESSAGE} end "Stopped." "pg_ctl stop failed." ; \
+    ;; \
+    2) \
+        ${MESSAGE} end "Stopped." "systemctl stop failed." ; \
+    ;; \
+    3) \
+        ${MESSAGE} end "Not running." "F" ; \
+    ;; \
+    4) \
+        ${MESSAGE} end "Unknown service management." "F" ; \
+    ;; \
+    *) \
+        ${MESSAGE} end "Unhandled." "Failure unhandled." ; \
+    ;; \
+    esac

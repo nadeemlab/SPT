@@ -4,11 +4,10 @@ services:
     container_name: spt-countsserver-testing
     ports:
       - target: 8016
-        host_ip: 127.0.0.1
         published: 8016
         protocol: tcp
-        mode: host
     volumes:
       - type: bind
         source: ./test_expression_data/
         target: /countsserver/source_data/
+    pull_policy: never

@@ -4,10 +4,8 @@ services:
     container_name: spt-db-testing
     ports:
       - target: 5432
-        host_ip: 127.0.0.1
         published: 5432
         protocol: tcp
-        mode: host
     environment:
       POSTGRES_PASSWORD: postgres
-
+    pull_policy: never

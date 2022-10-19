@@ -31,7 +31,7 @@ help:
 >@${MESSAGE} print ' Use VERBOSE=1 to show command outputs.'
 >@${MESSAGE} print ' '
 
-LOCAL_USERNAME = $(shell id -u)
+LOCAL_USERID := $(shell id -u)
 PACKAGE_NAME := spatialprofilingtoolbox
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
@@ -63,7 +63,7 @@ endif
 
 release-package: build-wheel-for-distribution check-for-pypi-credentials development-image
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
->@docker run -u ${LOCAL_USERNAME} --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ; echo "$$?" > status_code
+>@docker run -u ${LOCAL_USERID} --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ; echo "$$?" > status_code
 >@${MESSAGE} end "Uploaded." "Error."
 
 check-for-pypi-credentials:
@@ -84,7 +84,7 @@ development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCA
     if [[ "$$status_code" == "0" ]]; \
     then \
         if [ ! -d dist/ ]; then mkdir dist ; fi; \
-        docker run --rm -v $$(pwd)/dist:/buffer ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development /bin/sh -c "cp dist/${WHEEL_FILENAME} /buffer"; \
+        docker run --rm -v $$(pwd)/dist:/buffer ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development /bin/sh -c "cp dist/${WHEEL_FILENAME} /buffer; chown ${LOCAL_USERID}:${LOCAL_USERID} /buffer/*; "; \
     fi 
 >@status_code=$$(cat status_code); \
     if [[ "$$status_code" == "0" ]]; \
@@ -97,9 +97,6 @@ development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCA
 
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS}" | tr ' ' '\n'
-
-print-Dockerfiles:
->@echo "${DOCKERFILE_TARGETS}" | tr ' ' '\n'
 
 ${PACKAGE_NAME}/entry_point/spt-completion.sh: ${COMPLETIONS_DEPENDENCIES}
 >@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ spt-completion.sh
@@ -191,19 +188,12 @@ check-docker-daemon-running:
     fi ; \
     touch check-docker-daemon-running
 
-test: unit-tests module-tests
+test: ${MODULE_TEST_TARGETS}
 
-unit-tests: development-image data-loaded-image
->@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
-        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
-        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
-    done
-
-module-tests: development-image data-loaded-image
->@for submodule_directory_target in ${MODULE_TEST_TARGETS} ; do \
-        submodule_directory=$$(echo $$submodule_directory_target | sed 's/^test-module-//g') ; \
-        ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ; \
-    done
+${MODULE_TEST_TARGETS}: development-image data-loaded-image
+>@submodule_directory=$$(echo $@ | sed 's/^test-module-//g') ; \
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
 >@${MESSAGE} start "Building test-data-loaded spt-db image"
@@ -211,7 +201,7 @@ data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
-    pipeline_cmd="cd /mount_sources/; bash building/test_HALO_exported_data_import.sh; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; " \
+    pipeline_cmd="cd /mount_sources/; bash building/test_HALO_exported_data_import.sh; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
     docker run \
      --rm \
      --network container:temporary-spt-db-preloading \

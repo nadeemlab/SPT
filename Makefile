@@ -42,7 +42,7 @@ DOCKERFILE_SOURCES := $(wildcard ${PACKAGE_NAME}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/Dockerfile)
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
-MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-${PACKAGE_NAME}/$(submodule))
+MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-module-$(submodule))
 COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
 DB_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
 WORKFLOW_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
@@ -191,7 +191,7 @@ check-docker-daemon-running:
 test: ${MODULE_TEST_TARGETS}
 
 ${MODULE_TEST_TARGETS}: development-image data-loaded-image
->@submodule_directory=$$(echo $@ | sed 's/^test-module-//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/^test-module-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 

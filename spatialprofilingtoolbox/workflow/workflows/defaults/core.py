@@ -113,4 +113,4 @@ class CoreJob:
             table[fov] = str_values
         else:
             logger.debug('Creating dummy "%s" until its use is fully deprecated.', fov)
-            table[fov] = [str(FOV1) for i, row in table.iterrows()]
+            table[fov] = ['FOV1' for i, row in table.iterrows()]

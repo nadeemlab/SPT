@@ -1,5 +1,5 @@
 [database-credentials]
-endpoint = localhost
+endpoint = spt-db-testing
 database = postgres
 user = postgres
 password = postgres

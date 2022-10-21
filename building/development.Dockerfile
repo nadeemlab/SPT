@@ -20,4 +20,4 @@ RUN python -m pip install build
 COPY spatialprofilingtoolbox spatialprofilingtoolbox
 RUN python -m build
 RUN pip install --no-deps "dist/$WHEEL_FILENAME"
-CMD bash 
+CMD bash -c "echo 'available for commands'; while [ 0 -le 1 ]; do sleep 3600; echo 'sleep 3600... keep alive the container for availability for ongoing commands.'; done"

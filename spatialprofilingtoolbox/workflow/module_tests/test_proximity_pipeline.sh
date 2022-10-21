@@ -1,6 +1,6 @@
 #!/bin/bash
 
-spt workflow configure --local --input-path=../test_data/adi_preprocessed_tables/ --workflow='phenotype proximity' --database-config-file=../db/.spt_db.config.local
+spt workflow configure --local --input-path=../test_data/adi_preprocessed_tables/ --workflow='phenotype proximity' --database-config-file=../db/.spt_db.config.container
 nextflow run .
 
 status=$?
@@ -12,7 +12,7 @@ then
     exit 1
 fi
 
-spt db status --database-config-file=../db/.spt_db.config.local > current_status.txt
+spt db status --database-config-file=../db/.spt_db.config.container > current_status.txt
 diff current_status.txt module_tests/expected_proximity_record_counts.txt
 status=$?
 rm current_status.txt

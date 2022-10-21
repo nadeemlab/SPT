@@ -76,6 +76,7 @@ ${TESTS}: setup-testing
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code ;
+>@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 

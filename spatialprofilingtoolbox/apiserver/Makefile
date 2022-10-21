@@ -21,20 +21,33 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
+>@${MESSAGE} start "  testing environment (apiserver) "
 >@docker compose up -d && \
- bash ../../building/poll_container_readiness.sh \
-  spt-apiserver-testing \
-  spt-db-testing \
-  spt-countsserver-testing
+    bash ../../building/poll_container_readiness.sh \
+     spt-apiserver-testing \
+     spt-db-testing \
+     spt-countsserver-testing ; \
+    echo "$$?" > status_code
+>@${MESSAGE} end "Setup." "Not setup."
+>@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@docker compose rm --force --stop
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@docker compose rm --force --stop
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
 
 teardown-testing: ${TESTS}
->@docker compose rm --force --stop
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
 
 ${TESTS}: setup-testing
 >@test_target=$@ ; \

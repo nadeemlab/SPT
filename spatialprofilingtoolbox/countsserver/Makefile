@@ -21,18 +21,31 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
+>@${MESSAGE} start "  testing environment (countsserver) "
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
-     spt-countsserver-testing
+     spt-countsserver-testing ; \
+    echo "$$?" > status_code
+>@${MESSAGE} end "Setup." "Not setup."
+>@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@docker compose rm --force --stop
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@docker compose rm --force --stop
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
 
 teardown-testing: ${TESTS}
->@docker compose rm --force --stop
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
 
 ${TESTS}: setup-testing
 >@test_target=$@ ; \

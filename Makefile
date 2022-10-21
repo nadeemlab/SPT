@@ -45,7 +45,8 @@ DOCKERFILE_SOURCES := $(wildcard ${PACKAGE_NAME}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/Dockerfile)
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
-MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),test-$(submodule))
+MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
+UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
 DB_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
 WORKFLOW_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
@@ -191,12 +192,19 @@ check-docker-daemon-running:
     fi ; \
     touch check-docker-daemon-running
 
-test: ${MODULE_TEST_TARGETS}
+test: unit-tests module-tests
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image clean-network-environment
->@submodule_directory=$$(echo $@ | sed 's/^test-/${PACKAGE_NAME}\//g') ; \
-    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ; \
+module-tests: ${MODULE_TEST_TARGETS}
+
+${MODULE_TEST_TARGETS}: development-image data-loaded-image clean-network-environment ${DOCKER_BUILD_TARGETS}
+>@submodule_directory=$$(echo $@ | sed 's/^module-test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
+
+unit-tests: ${UNIT_TEST_TARGETS}
+
+${UNIT_TEST_TARGETS}: development-image data-loaded-image clean-network-environment ${DOCKER_BUILD_TARGETS}
+>@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${PACKAGE_NAME}\//g') ; \
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
 data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
 >@${MESSAGE} start "Building test-data-loaded spt-db image"
@@ -258,8 +266,8 @@ docker-compositions-rm: check-docker-daemon-running
     docker compose --project-directory ./spatialprofilingtoolbox/db/ rm --force --stop ; status_code3="$$?" ; \
     docker compose --project-directory ./spatialprofilingtoolbox/workflow/ rm --force --stop ; status_code4="$$?" ; \
     status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 )) ; echo $$status_code > status_code
->@${MESSAGE} end "Down." "Error."
 >@docker container rm --force temporary-spt-db-preloading
+>@${MESSAGE} end "Down." "Error."
 
 clean-network-environment: docker-compositions-rm postgres-service-down
 

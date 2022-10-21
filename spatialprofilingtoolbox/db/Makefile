@@ -1,5 +1,7 @@
 .RECIPEPREFIX = >
 
+MODULE_NAME := $(shell pwd | grep -o '[^/]\+$$' )
+
 UNIT_TEST_FILES := $(wildcard unit_tests/test_*.sh ) $(wildcard unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 
@@ -84,7 +86,7 @@ ${TESTS}: setup-testing
     test_cmd="cd /mount_sources/db/; $$executor $$test_script" ; \
     docker run \
      --rm \
-     --network host \
+     --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \

@@ -11,7 +11,7 @@ then
     shift
     echo "$@" | tr '\n' ' ' | grep -q 'make SHELL=' >/dev/null 2>&1
     found_make_shell="$?"
-    if [[ ("$@" == *'verbose_command_wrapper.sh'*) || ("$found_make_shell" == "0") ]];
+    if [[ ("$@" == *'verbose_command_wrapper.sh'*) || ("$@" == *'verbose-shell-override'*) || ("$found_make_shell" == "0") ]];
     then
         exec /bin/bash -c "$@"
     else

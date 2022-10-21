@@ -6,6 +6,8 @@ services:
       - target: 5432
         published: 5432
         protocol: tcp
+    networks:
+      - isolated_temporary_test
     environment:
       POSTGRES_PASSWORD: postgres
     pull_policy: never
@@ -38,3 +40,7 @@ services:
       COUNTS_SERVER_HOST: spt-countsserver-testing
       COUNTS_SERVER_PORT: 8016
     pull_policy: never
+
+networks:
+  isolated_temporary_test:
+    driver: bridge

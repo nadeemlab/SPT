@@ -6,8 +6,14 @@ services:
       - target: 8016
         published: 8016
         protocol: tcp
+    networks:
+      - isolated_temporary_test
     volumes:
       - type: bind
         source: ./test_expression_data/
         target: /countsserver/source_data/
     pull_policy: never
+
+networks:
+  isolated_temporary_test:
+    driver: bridge

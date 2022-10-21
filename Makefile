@@ -269,4 +269,4 @@ docker-compositions-rm: check-docker-daemon-running
 >@docker container rm --force temporary-spt-db-preloading
 >@${MESSAGE} end "Down." "Error."
 
-clean-network-environment: docker-compositions-rm postgres-service-down
+clean-network-environment: docker-compositions-rm

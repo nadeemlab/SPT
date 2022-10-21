@@ -1,6 +1,6 @@
 .RECIPEPREFIX = >
 
-MODULE_NAME := $(shell pwd | grep -o '[^/]\+$$' )
+MODULE_NAME := $(shell echo "verbose-shell-override" >/dev/null ; pwd | grep -o '[^/]\+$$' )
 
 UNIT_TEST_FILES := $(wildcard unit_tests/test_*.sh ) $(wildcard unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))

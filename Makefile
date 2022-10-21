@@ -196,7 +196,7 @@ test: unit-tests module-tests
 
 module-tests: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image ${DOCKER_BUILD_TARGETS}
+${MODULE_TEST_TARGETS}: development-image data-loaded-image ${DOCKER_BUILD_TARGETS} clean-network-environment
 >@submodule_directory=$$(echo $@ | sed 's/^module-test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 

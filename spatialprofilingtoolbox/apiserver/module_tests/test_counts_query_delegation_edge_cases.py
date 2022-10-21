@@ -8,7 +8,7 @@ study_name = quote('Test project - Melanoma intralesional IL2 (Hollmann lab) - m
 positive_markers = quote('\t'.join(['CD3', 'CD4', 'CD8']))
 negative_markers = ''
 endpoint = 'anonymous-phenotype-counts-fast'
-host = '127.0.0.1'
+host = 'spt-apiserver-testing'
 port = 8080
 
 cases = [

@@ -4,6 +4,8 @@ import socketserver
 import os
 import re
 from os.path import join
+# import signal
+# import _thread
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -14,6 +16,7 @@ class CountsProvider:
     def __init__(self, data_directory):
         self.load_expressions_indices(data_directory)
         self.load_data_matrices(data_directory)
+        logger.info('countsserver is ready to accept connections.')
 
     def load_expressions_indices(self, data_directory):
         logger.debug('Searching for source data in: %s', data_directory)
@@ -156,6 +159,13 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
     def get_end_of_transmission(self):
         return chr(4)
 
+# def server_shutdown(server):
+#     server.shutdown()
+
+# def initiate_shutdown(server):
+#     logger.info('Shutting down counts server.')
+#     _thread.start_new_thread(server_shutdown, (server,))
+
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog = 'spt countsserver start',
@@ -188,5 +198,7 @@ if __name__=='__main__':
     counts_provider = CountsProvider(args.source_data_location)
     tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
     tcp_server.counts_provider = counts_provider
-    tcp_server.serve_forever()
+    # signal.signal(signal.SIGTERM, lambda signum, frame: initiate_shutdown(tcp_server))
+    # signal.signal(signal.SIGINT, lambda signum, frame: initiate_shutdown(tcp_server))
+    tcp_server.serve_forever(poll_interval=0.2)
 

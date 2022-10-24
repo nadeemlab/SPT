@@ -1,39 +1,41 @@
 services:
   testing-database:
-    image: nadeemlab/spt-db
+    image: nadeemlab/spt-db-preloaded
     container_name: spt-db-testing
     ports:
       - target: 5432
-        host_ip: 127.0.0.1
         published: 5432
         protocol: tcp
-        mode: host
+    networks:
+      - isolated_temporary_test
     environment:
       POSTGRES_PASSWORD: postgres
+    pull_policy: never
 
   testing-fast-counts-server:
     image: nadeemlab/spt-countsserver
     container_name: spt-countsserver-testing
     ports:
       - target: 8016
-        host_ip: 127.0.0.1
         published: 8016
         protocol: tcp
-        mode: host
+    networks:
+      - isolated_temporary_test
     volumes:
       - type: bind
         source: ../countsserver/test_expression_data/
         target: /countsserver/source_data/
+    pull_policy: never
 
   testing-api-server:
     image: nadeemlab/spt-apiserver
     container_name: spt-apiserver-testing
     ports:
       - target: 8080
-        host_ip: 127.0.0.1
         published: 8080
         protocol: tcp
-        mode: host
+    networks:
+      - isolated_temporary_test
     environment:
       SINGLE_CELL_DATABASE_HOST: spt-db-testing
       SINGLE_CELL_DATABASE_USER: postgres
@@ -41,3 +43,8 @@ services:
       USE_ALTERNATIVE_TESTING_DATABASE: 1
       COUNTS_SERVER_HOST: spt-countsserver-testing
       COUNTS_SERVER_PORT: 8016
+    pull_policy: never
+
+networks:
+  isolated_temporary_test:
+    driver: bridge

@@ -6,7 +6,7 @@ from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 
 if __name__=='__main__':
     environment = {
-        'SINGLE_CELL_DATABASE_HOST' : 'localhost',
+        'SINGLE_CELL_DATABASE_HOST' : 'spt-db-testing',
         'SINGLE_CELL_DATABASE_USER' : 'postgres',
         'SINGLE_CELL_DATABASE_PASSWORD' : 'postgres',
         'USE_ALTERNATIVE_TESTING_DATABASE' : '1',
@@ -26,6 +26,6 @@ if __name__=='__main__':
     for key in environment.keys():
         os.environ.pop(key)
 
-    if count != 0:
+    if count != 1:
         print('Number of specimen_measurement_study rows was: %s' % count)
         exit(1)

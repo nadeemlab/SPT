@@ -1,71 +1,82 @@
 .RECIPEPREFIX = >
 
+MODULE_NAME := $(shell echo "verbose-shell-override" >/dev/null ; pwd | grep -o '[^/]\+$$' )
+
 UNIT_TEST_FILES := $(wildcard unit_tests/test_*.sh ) $(wildcard unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 
 MODULE_TEST_FILES := $(wildcard module_tests/test_*.sh ) $(wildcard module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
-build-dockerfile: Dockerfile
+TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 Dockerfile:
->@cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ./Dockerfile.append > Dockerfile
+>@${MESSAGE} start "Building workflow Dockerfile"
+>@cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
+>@${MESSAGE} end "Built." "Not built."
+>@rm -f status_code
 
-unit-tests: ${UNIT_TESTS}
+.PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
-${UNIT_TESTS}:
+unit-tests: teardown-unit-testing
+module-tests: teardown-module-testing
+test: teardown-testing
+
+setup-testing:
+>@${MESSAGE} start "  testing environment (workflow) "
+>@docker compose up -d && \
+    bash ../../building/poll_container_readiness.sh \
+     spt-db-testing; \
+    echo "$$?" > status_code
+>@${MESSAGE} end "Setup." "Not setup."
+>@rm -f status_code
+
+teardown-unit-testing: ${UNIT_TESTS}
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
+
+teardown-module-testing: ${MODULE_TESTS}
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
+
+teardown-testing: ${TESTS}
+>@${MESSAGE} start "  testing environment teardown"
+>@docker compose rm --force --stop ; echo "$$?" > status_code
+>@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@${MESSAGE} end "Down." "Error."
+>@rm -f status_code
+
+${TESTS}: setup-testing
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
+    test_name=$${test_script/module_tests\/test_/} ; \
+    test_name=$${test_name/unit_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
     ${MESSAGE} start "Testing $$test_name"
->@test_target=$@ ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-    executor=none-cmd ; \
-    if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
-    if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    source ../../venvs/workflow/bin/activate ; \
-    $$executor $$test_script ; echo "$$?" > status_code ; \
-    deactivate
->@${MESSAGE} end "Passed." "Failed."
->@rm -f status_code
-
-module-tests: ${MODULE_TESTS}
-
-${MODULE_TESTS}:
->@docker compose --project-directory ../db/ up -d
->@sleep 1s
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-    test_name=$${test_name/$$extension/} ; \
-    test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "Testing $$test_name"
->@test_target=$@ ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/unit_tests\/test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     executor=none-cmd ; \
-    if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
+    if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    source ../../venvs/workflow/bin/activate ; \
-    $$executor $$test_script ; echo "$$?" > status_code ; \
-    deactivate
+    test_cmd="cd /mount_sources/workflow/; $$executor $$test_script" ; \
+    docker run \
+     --rm \
+     --network ${MODULE_NAME}_isolated_temporary_test \
+     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+     /bin/bash -c "$$test_cmd"; \
+      echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
->@docker compose --project-directory ../db/ rm --force --stop
->@rm -f .nextflow.log*
->@rm -rf .nextflow/
->@rm -f configure.sh
->@rm -f run.sh
->@rm -f main.nf
->@rm -f nextflow.config
->@rm -rf work/
->@rm -rf results/
 >@rm -f status_code
 
 clean:
@@ -80,3 +91,5 @@ clean:
 >@rm -rf work/
 >@rm -rf results/
 >@rm -f status_code
+>@rm -rf requirements.txt
+>@rm -rf specific_requirements.txt

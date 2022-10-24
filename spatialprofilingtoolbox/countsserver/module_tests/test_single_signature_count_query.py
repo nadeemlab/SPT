@@ -6,7 +6,7 @@ from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequ
 if __name__=='__main__':
     study_name = 'Test project - Melanoma intralesional IL2 (Hollmann lab) - measurement'
 
-    host = '127.0.0.1'
+    host = 'spt-countsserver-testing'
     port = 8016
     with CountRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(['CD3'], ['CD8', 'CD20'], study_name)

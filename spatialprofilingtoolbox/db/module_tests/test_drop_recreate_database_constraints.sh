@@ -1,7 +1,7 @@
 
-spt db create-schema --database-config-file .spt_db.config.local --force >/dev/null 2>err_log.1.txt
-spt db modify-constraints --database-config-file .spt_db.config.local --drop >/dev/null 2>err_log.2.txt
-spt db modify-constraints --database-config-file .spt_db.config.local --recreate > constraint_info.txt.comp 2>err_log.3.txt
+spt db create-schema --database-config-file .spt_db.config.container --force >/dev/null 2>err_log.1.txt
+spt db modify-constraints --database-config-file .spt_db.config.container --drop >/dev/null 2>err_log.2.txt
+spt db modify-constraints --database-config-file .spt_db.config.container --recreate > constraint_info.txt.comp 2>err_log.3.txt
 diff module_tests/constraint_info.txt constraint_info.txt.comp >/dev/null
 status=$?
 [ $status -eq 0 ] || echo "Drop/recreate FAILED."

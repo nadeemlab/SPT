@@ -1,5 +1,5 @@
 
-spt db status --database-config-file .spt_db.config.local >/dev/null 2>&1
+spt db status --database-config-file .spt_db.config.container >/dev/null 2>&1
 result_code="$?"
 if [ $result_code -gt 0 ];
 then

@@ -16,57 +16,75 @@ A typical development workflow looks like:
 2. Add new unit and "module" tests.
 3. `$ make clean`
 <pre>
-Checking that Docker daemon is running <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Running.</span>       <span style="color:purple;">(1s)</span>      
-Running docker compose rm (remove) <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
+Checking that Docker daemon is running <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Running.</span>       <span style="color:purple;">(1s)</span>
+Running docker compose rm (remove) <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
 </pre>
 4. `$ make test`
 <pre>
-Creating venv for basic package introspection <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Created.</span>       <span style="color:purple;">(5s)</span>      
-Creating spt CLI completions script <span style="color:olive;">...</span><span style="color:olive;">.........................................</span> <span style="font-weight:bold;color:green;">Created.</span>       <span style="color:purple;">(4s)</span>      
-Building development image <span style="color:olive;">...</span><span style="color:olive;">..................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(14s)</span>     
-Building apiserver Dockerfile <span style="color:olive;">...</span><span style="color:olive;">...............................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>      
-Building countsserver Dockerfile <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>      
-Building db Dockerfile <span style="color:olive;">...</span><span style="color:olive;">......................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>      
-Building workflow Dockerfile <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>      
-Building Docker image nadeemlab/spt-db <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>     
-Building test-data-loaded spt-db image <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(18s)</span>     
-Building Docker image nadeemlab/spt-apiserver <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>     
-Building Docker image nadeemlab/spt-countsserver <span style="color:olive;">...</span><span style="color:olive;">............................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>     
-Building Docker image nadeemlab/spt-workflow <span style="color:olive;">...</span><span style="color:olive;">................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>     
-Running docker compose rm (remove) <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
-  testing environment (apiserver)  <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(3s)</span>      
-    API internal basic database accessor <span style="color:olive;">...</span><span style="color:olive;">....................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>      
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
-  testing environment (countsserver)  <span style="color:olive;">...</span><span style="color:olive;">.......................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(1s)</span>      
-    binary expression viewer <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  testing environment (db)  <span style="color:olive;">...</span><span style="color:olive;">.................................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    guess channels from object files <span style="color:olive;">...</span><span style="color:olive;">........................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  testing environment (workflow)  <span style="color:olive;">...</span><span style="color:olive;">...........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    signature cell set subsetting <span style="color:olive;">...</span><span style="color:olive;">...........................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
-  testing environment (apiserver)  <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    single API route <span style="color:olive;">...</span><span style="color:olive;">........................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>      
-    counts query delegation edge cases <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
-  testing environment (countsserver)  <span style="color:olive;">...</span><span style="color:olive;">.......................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(1s)</span>      
-    edge cases few markers <span style="color:olive;">...</span><span style="color:olive;">..................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-    single signature count query <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>      
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
-  testing environment (db)  <span style="color:olive;">...</span><span style="color:olive;">.................................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(1s)</span>      
-    basic health of database <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-    drop recreate database constraints <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(3s)</span>      
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  testing environment (workflow)  <span style="color:olive;">...</span><span style="color:olive;">...........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    proximity pipeline <span style="color:olive;">...</span><span style="color:olive;">......................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(73s)</span>     
-  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
+Creating venv for basic package introspection <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Created.</span>       <span style="color:purple;">(5s)</span>
+Creating spt CLI completions script <span style="color:olive;">...</span><span style="color:olive;">.........................................</span> <span style="font-weight:bold;color:green;">Created.</span>       <span style="color:purple;">(4s)</span>
+Building development image <span style="color:olive;">...</span><span style="color:olive;">..................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(14s)</span>
+Building apiserver Dockerfile <span style="color:olive;">...</span><span style="color:olive;">...............................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
+Building countsserver Dockerfile <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
+Building db Dockerfile <span style="color:olive;">...</span><span style="color:olive;">......................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
+Building workflow Dockerfile <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
+Building Docker image nadeemlab/spt-db <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
+Building test-data-loaded spt-db image <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(18s)</span>
+Building Docker image nadeemlab/spt-apiserver <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
+Building Docker image nadeemlab/spt-countsserver <span style="color:olive;">...</span><span style="color:olive;">............................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
+Building Docker image nadeemlab/spt-workflow <span style="color:olive;">...</span><span style="color:olive;">................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
+Running docker compose rm (remove) <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
+  testing environment (apiserver)  <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(3s)</span>
+    API internal basic database accessor <span style="color:olive;">...</span><span style="color:olive;">....................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
+  testing environment (countsserver)  <span style="color:olive;">...</span><span style="color:olive;">.......................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(1s)</span>
+    binary expression viewer <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>
+  testing environment (db)  <span style="color:olive;">...</span><span style="color:olive;">.................................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>
+    guess channels from object files <span style="color:olive;">...</span><span style="color:olive;">........................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>
+  testing environment (workflow)  <span style="color:olive;">...</span><span style="color:olive;">...........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>
+    signature cell set subsetting <span style="color:olive;">...</span><span style="color:olive;">...........................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
+  testing environment (apiserver)  <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>
+    single API route <span style="color:olive;">...</span><span style="color:olive;">........................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>
+    counts query delegation edge cases <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
+  testing environment (countsserver)  <span style="color:olive;">...</span><span style="color:olive;">.......................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(1s)</span>
+    edge cases few markers <span style="color:olive;">...</span><span style="color:olive;">..................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>
+    single signature count query <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
+  testing environment (db)  <span style="color:olive;">...</span><span style="color:olive;">.................................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(1s)</span>
+    basic health of database <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>
+    drop recreate database constraints <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(3s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>
+  testing environment (workflow)  <span style="color:olive;">...</span><span style="color:olive;">...........................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>
+    proximity pipeline <span style="color:olive;">...</span><span style="color:olive;">......................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(73s)</span>
+  testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>
 </pre>
 
 Optionally, if the images are ready to be released:
 
 - `$ make build-and-push-docker-images`
 
+<pre>
+Checking for Docker credentials in ~/.docker/config.json <span style="color:olive;">...</span><span style="color:olive;">....................</span> <span style="font-weight:bold;color:green;">Found.</span>         <span style="color:purple;">(0s)</span>
+Pushing Docker container nadeemlab/spt-apiserver <span style="color:olive;">...</span><span style="color:olive;">............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(16s)</span>
+Pushing Docker container nadeemlab/spt-countsserver <span style="color:olive;">...</span><span style="color:olive;">.........................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(15s)</span>
+Pushing Docker container nadeemlab/spt-db <span style="color:olive;">...</span><span style="color:olive;">...................................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(23s)</span>
+Pushing Docker container nadeemlab/spt-workflow <span style="color:olive;">...</span><span style="color:olive;">.............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(27s)</span>
+</pre>
+
+Pushing Docker container nadeemlab/spt-apiserver ............................... Pushed.        (16s)
+Pushing Docker container nadeemlab/spt-countsserver ............................ Pushed.        (15s)
+Pushing Docker container nadeemlab/spt-db ...................................... Pushed.        (23s)
+Pushing Docker container nadeemlab/spt-workflow ................................ Pushed.        (27s)
+
+
+# Python package
+There is one Python package, `spatialprofilingtoolbox`, containing all of the source code.
+
+The package metadata uses the declarative `pyproject.toml` format.
 
 # Modules
 The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
@@ -81,7 +99,9 @@ The main functionality is provided by 4 modules designed to operate as services.
 - The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.
 
 # Test-managed development
-Test scripts serve multiple purposes for us:
+Test scripts are located under `spatialprofilingtoolbox/<module name>/` followed by `unit_tests` or `module_tests`.
+
+These tests serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.
 2. To exemplify typical usage of classes and functions, including how they are wrapped in a container and how that container is setup.
 

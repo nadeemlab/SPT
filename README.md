@@ -9,7 +9,7 @@
  | <a href="https://github.com/nadeemlab/SPT#Getting-started">Getting started</a>
  | <a href="https://github.com/nadeemlab/SPT#Examples">Examples</a>
  | <a href="https://spatialprofilingtoolbox.readthedocs.io">Read the Docs</a>
- | <a href="https://nadeemlab.github.io/SPT/maintenance.html">Maintenance</a>
+ | <a href="https://github.com/nadeemlab/SPT/blob/main/docs/maintenance.md">Maintenance</a>
 </p>
 
 The Spatial Profiling Toolbox (SPT) is a lightweight deployment framework for image analysis computation in the context of histopathology. The pipelines are orchestrated with [Nextflow](https://www.nextflow.io/) and support [Singularity](https://sylabs.io/guides/latest/user-guide/)/[Docker](https://hub.docker.com/r/nadeemlab/spt) containerization.

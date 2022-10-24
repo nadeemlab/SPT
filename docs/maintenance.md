@@ -63,6 +63,11 @@ Running docker compose rm (remove) <span style="color:olive;">...</span><span st
   testing environment teardown <span style="color:olive;">...</span><span style="color:olive;">..............................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
 </pre>
 
+Optionally, if the images are ready to be released:
+
+- `$ make build-and-push-docker-images`
+
+
 # Modules
 The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
 
@@ -76,22 +81,17 @@ The main functionality is provided by 4 modules designed to operate as services.
 - The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.
 
 # Test-managed development
-
 Test scripts serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.
 2. To exemplify typical usage of classes and functions, including how they are wrapped in a container and how that container is setup.
 
 # `spt` tab completion
-
-Bash completion has been implemented that allows the user to readily assess and find functionality provided at the command line. This reduces the need for some kinds of documentation, since it is folded in to the executables in such a way that it can be readily accessed.
+Bash completion has been implemented that allows the user to readily assess and find functionality provided at the command line. This reduces the need for some kinds of documentation, since such documentation is already folded in to the executables in such a way that it can be readily accessed.
 
 After installation of the Python package, an entry point `spt` is created. (Use `spt-enable-completion` to manually install the completion to a shell profile file).
-
-`spt [TAB]` yields the submodules which can be typed next.
-
-`spt <module name> [TAB]` yields the commands provided by the given module.
-
-`spt <module name> <command name> [TAB]` yields the `--help` text for the command.
+- `spt [TAB]` yields the submodules which can be typed next.
+- `spt <module name> [TAB]` yields the commands provided by the given module.
+- `spt <module name> <command name> [TAB]` yields the `--help` text for the command.
 
 For example:
 
@@ -102,7 +102,7 @@ countsserver  db  workflow
 $ spt db [TAB]
 create-schema  guess-channels-from-object-files  modify-constraints  status
 
-$ spt db status [TAB]
+$ spt db create-schema [TAB]
 usage: spt db create-schema [-h] [--database-config-file DATABASE_CONFIG_FILE] [--force] [--refresh-views-only | --recreate-views-only]
 
 Create scstudies database with defined schema.
@@ -111,12 +111,11 @@ optional arguments:
   -h, --help            show this help message and exit
   --database-config-file DATABASE_CONFIG_FILE
                         Provide the file for database configuration.
-  --force               By default, tables are created only if they don't already exist. If "force" is set, all tables from the schema are dropped
-                        first. Obviously, use with care; all data in existing tables will be deleted.
+  --force               By default, tables are created only if they don't already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use
+                        with care; all data in existing tables will be deleted.
   --refresh-views-only  Only refresh materialized views, do not touch main table schema.
   --recreate-views-only
                         Only recreate views, do not touch main table schema.
-<press enter>
 ```
 
 

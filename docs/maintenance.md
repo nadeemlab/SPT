@@ -86,9 +86,7 @@ Uploading spatialprofilingtoolbox==0.11.0 to PyPI <span style="color:olive;">...
 </pre>
 
 ### Python package
-There is one Python package, `spatialprofilingtoolbox`, containing all of the source code.
-
-The package metadata uses the declarative `pyproject.toml` format.
+The source code is contained in one Python package, `spatialprofilingtoolbox`. The package metadata uses the declarative `pyproject.toml` format.
 
 ### Modules
 The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.

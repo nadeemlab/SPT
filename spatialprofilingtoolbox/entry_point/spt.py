@@ -40,16 +40,16 @@ def get_executable_and_script(submodule_name, script_name):
     return executable, script_path
 
 
-def print_all_commands():
+def print_version_and_all_commands():
     submodules_with_commands = [name for name in submodule_names if len(get_commands(name)) > 0]
-    commands = [
-        [submodule, get_commands(submodule)]
+    commands_description = '\n\n'.join([
+        '\n'.join(['spt %s %s' % (submodule, command) for command in get_commands(submodule)])
         for submodule in submodules_with_commands
-    ]
-    for submodule, commands in commands:
-        print('')
-        for command in commands:
-            print('spt %s %s' % (submodule, command))
+    ])
+    print('Version %s' % spatialprofilingtoolbox.__version__)
+    print('https://github.com/nadeemlab/SPT/')
+    print('')
+    print(commands_description)
 
 
 def main_program():
@@ -81,7 +81,7 @@ def main_program():
             module = sys.argv[1]
 
     if (module is None):
-        print_all_commands()
+        print_version_and_all_commands()
         exit()
 
     command = None

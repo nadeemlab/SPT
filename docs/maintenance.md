@@ -109,6 +109,8 @@ These tests serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.
 2. To exemplify typical usage of classes and functions, including how they are wrapped in a container and how that container is setup.
 
+Each test is performed inside an isolated for-development-only `spatialprofilingtoolbox`-loaded Docker container, in the presence of a running module-specific Docker composition that provides the given module's service as well as other modules' services (if needed).
+
 ### `spt` tab completion
 You might want to install `spatialprofilingtoolbox` to your local machine in order to initiate database control actions, ETL, etc.
 

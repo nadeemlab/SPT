@@ -99,10 +99,12 @@ The main functionality is provided by 4 modules designed to operate as services.
 | `db`            | Data model/interface and PostgresQL database management SQL fragments. |
 | `workflow`      | [Nextflow](https://www.nextflow.io)-orchestrated computation workflows. |
 
-- The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.
+- *The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.*
 
 # Test-managed development
-Test scripts are located under `spatialprofilingtoolbox/<module name>/` followed by `unit_tests` or `module_tests`.
+Test scripts are located under
+- `spatialprofilingtoolbox/<module name>/unit_tests`
+- `spatialprofilingtoolbox/<module name>/module_tests`
 
 These tests serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.

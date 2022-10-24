@@ -75,11 +75,14 @@ Pushing Docker container nadeemlab/spt-db <span style="color:olive;">...</span><
 Pushing Docker container nadeemlab/spt-workflow <span style="color:olive;">...</span><span style="color:olive;">.............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(27s)</span>
 </pre>
 
-Pushing Docker container nadeemlab/spt-apiserver ............................... Pushed.        (16s)
-Pushing Docker container nadeemlab/spt-countsserver ............................ Pushed.        (15s)
-Pushing Docker container nadeemlab/spt-db ...................................... Pushed.        (23s)
-Pushing Docker container nadeemlab/spt-workflow ................................ Pushed.        (27s)
+If the package source code is ready to be released to PyPI:
 
+- `$ make release-package`
+
+<pre>
+Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox <span style="color:olive;">...</span><span style="color:olive;">......</span> <span style="font-weight:bold;color:green;">Found.</span>         <span style="color:purple;">(0s)</span>
+Uploading spatialprofilingtoolbox==0.11.0 to PyPI <span style="color:olive;">...</span><span style="color:olive;">...........................</span> <span style="font-weight:bold;color:green;">Found.</span>         <span style="color:purple;">(3s)</span>
+</pre>
 
 # Python package
 There is one Python package, `spatialprofilingtoolbox`, containing all of the source code.

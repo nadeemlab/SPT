@@ -142,8 +142,7 @@ optional arguments:
   --force               By default, tables are created only if they don't already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use
                         with care; all data in existing tables will be deleted.
   --refresh-views-only  Only refresh materialized views, do not touch main table schema.
-  --recreate-views-only
-                        Only recreate views, do not touch main table schema.
+  --recreate-views-only Only recreate views, do not touch main table schema.
 ```
 
 

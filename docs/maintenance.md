@@ -1,14 +1,15 @@
+# Development, maintenance, admin
 
 The modules in this repository are built, tested, and deployed using `make` and Docker.
 
-| Development environment software requirements              | Version required or tested      |
-| ---------------------------------------------------------- | ------------------------------- |
-| Unix-like operating system                                 | Darwin 20.6.0 and Ubuntu 20.04  |
-| [GNU Make](https://www.gnu.org/software/make/)             | 4.2.1                           |
-| [Docker Engine](https://docs.docker.com/engine/install/)   | 20.10.17                        |
-| [Docker Compose](https://docs.docker.com/compose/install/) | 2.10.2                          |
-| [bash](https://www.gnu.org/software/bash/)                 | >= 4                            |
-| [python](https://www.python.org/downloads/)                | >=3.7                           |
+| Development environment software requirements              | Version required or tested under |
+| ---------------------------------------------------------- | -------------------------------  |
+| Unix-like operating system                                 | Darwin 20.6.0 and Ubuntu 20.04   |
+| [GNU Make](https://www.gnu.org/software/make/)             | 4.2.1                            |
+| [Docker Engine](https://docs.docker.com/engine/install/)   | 20.10.17                         |
+| [Docker Compose](https://docs.docker.com/compose/install/) | 2.10.2                           |
+| [bash](https://www.gnu.org/software/bash/)                 | >= 4                             |
+| [python](https://www.python.org/downloads/)                | >=3.7                            |
 
 A typical development workflow looks like:
 
@@ -84,12 +85,12 @@ Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox <span sty
 Uploading spatialprofilingtoolbox==0.11.0 to PyPI <span style="color:olive;">...</span><span style="color:olive;">...........................</span> <span style="font-weight:bold;color:green;">Found.</span>         <span style="color:purple;">(3s)</span>
 </pre>
 
-# Python package
+### Python package
 There is one Python package, `spatialprofilingtoolbox`, containing all of the source code.
 
 The package metadata uses the declarative `pyproject.toml` format.
 
-# Modules
+### Modules
 The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
 
 |                 |             |
@@ -101,7 +102,7 @@ The main functionality is provided by 4 modules designed to operate as services.
 
 - *The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.*
 
-# Test-managed development
+### Test-managed development
 Test scripts are located under
 - `spatialprofilingtoolbox/<module name>/unit_tests`
 - `spatialprofilingtoolbox/<module name>/module_tests`
@@ -110,8 +111,10 @@ These tests serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.
 2. To exemplify typical usage of classes and functions, including how they are wrapped in a container and how that container is setup.
 
-# `spt` tab completion
-Bash completion has been implemented that allows the user to readily assess and find functionality provided at the command line. This reduces the need for some kinds of documentation, since such documentation is already folded in to the executables in such a way that it can be readily accessed.
+### `spt` tab completion
+You might want to install `spatialprofilingtoolbox` to your local machine in order to initiate database control actions, ETL, etc.
+
+In this case bash completion is available that allows you to readily assess and find functionality provided at the command line. This reduces the need for some kinds of documentation, since such documentation is already folded in to the executables in such a way that it can be readily accessed.
 
 After installation of the Python package, an entry point `spt` is created. (Use `spt-enable-completion` to manually install the completion to a shell profile file).
 - `spt [TAB]` yields the submodules which can be typed next.

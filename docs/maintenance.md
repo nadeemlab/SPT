@@ -91,7 +91,7 @@ The source code is contained in one Python package, `spatialprofilingtoolbox`. T
 ### Modules
 The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
 
-|                 |             |
+| Module name     | Description |
 | --------------- | ----------- |
 | `apiserver`     | FastAPI application supporting queries over cell data. |
 | `countsserver`  | An optimized class-counting program served by a custom TCP server. |

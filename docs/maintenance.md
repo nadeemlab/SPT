@@ -1,4 +1,4 @@
-# Development, maintenance, admin
+# Development, maintenance, administration
 
 The modules in this repository are built, tested, and deployed using `make` and Docker.
 

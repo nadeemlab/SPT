@@ -40,7 +40,7 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "  testing environment (db) "
+>@${MESSAGE} start "  db (setup testing environment)"
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
      spt-db-testing ; \
@@ -49,19 +49,19 @@ setup-testing:
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "  testing environment teardown"
+>@${MESSAGE} start "  db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "  testing environment teardown"
+>@${MESSAGE} start "  db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "  testing environment teardown"
+>@${MESSAGE} start "  db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code

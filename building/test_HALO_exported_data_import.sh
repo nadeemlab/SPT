@@ -1,5 +1,5 @@
 
-spt workflow configure --local --input-path spatialprofilingtoolbox/test_data/adi_preprocessed_tables/ --workflow='HALO import' --database-config-file spatialprofilingtoolbox/db/.spt_db.config.local
+spt workflow configure --local --input-path spatialprofilingtoolbox/test_data/adi_preprocssed_tables/dataset1/ --workflow='HALO import' --database-config-file spatialprofilingtoolbox/db/.spt_db.config.local
 nextflow run .
 spt db status --database-config-file spatialprofilingtoolbox/db/.spt_db.config.local > table_counts.txt
 

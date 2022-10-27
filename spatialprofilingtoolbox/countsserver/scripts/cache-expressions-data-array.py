@@ -32,7 +32,7 @@ class CompressedMatrixPuller:
             self.studies[study_name] = {
                 'data arrays by specimen' : data_arrays_by_specimen,
                 'target index lookup' : target_index_lookup,
-                'target by symbol' : self.get_target_by_symbol(connection),
+                'target by symbol' : self.get_target_by_symbol(study_name, connection),
             }
 
     def get_study_names(self, connection):
@@ -111,12 +111,16 @@ class CompressedMatrixPuller:
         logger.debug('Channel index assignments: %s', lookup)
         return lookup
 
-    def get_target_by_symbol(self, connection):
+    def get_target_by_symbol(self, study_name, connection):
         query = '''
-        SELECT identifier, symbol FROM chemical_species;
+        SELECT cs.identifier, cs.symbol
+        FROM chemical_species cs
+        JOIN biological_marking_system bms ON bms.target=cs.identifier
+        WHERE bms.study=%s
+        ;
         '''
         with connection.cursor() as cursor:
-            cursor.execute(query)
+            cursor.execute(query, (study_name,))
             rows = cursor.fetchall()
         target_by_symbol = {
             row[1] : row[0]

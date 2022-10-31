@@ -118,6 +118,8 @@ class CompressedMatrixPuller:
         with connection.cursor() as cursor:
             cursor.execute(query, (study_name,))
             rows = cursor.fetchall()
+        if len(rows) != len(set([row[1] for row in rows])):
+        	logger.error('The symbols are not unique identifiers of the targets. The symbols are: %s' % [row[1] for row in rows])
         target_by_symbol = {
             row[1] : row[0]
             for row in rows

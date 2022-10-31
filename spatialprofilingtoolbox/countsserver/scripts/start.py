@@ -6,6 +6,8 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('spt countsserver start')
 
+from spatialprofilingtoolbox.countsserver.counts_provider import CountsProvider
+
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):

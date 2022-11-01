@@ -8,9 +8,9 @@ from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_c
 
 if __name__=='__main__':
     dataset_design = HALOCellMetadataDesign(
-        elementary_phenotypes_file = join('..', 'test_data', 'adi_preprocssed_tables/dataset1', 'elementary_phenotypes.csv'),
+        elementary_phenotypes_file = join('..', 'test_data', 'adi_preprocessed_tables/dataset1', 'elementary_phenotypes.csv'),
     )
-    cells = pd.read_csv(join('..', 'test_data', 'adi_preprocssed_tables/dataset1', 'lesion_0_1.csv'), sep=',', keep_default_na=False)
+    cells = pd.read_csv(join('..', 'test_data', 'adi_preprocessed_tables/dataset1', 'lesion_0_1.csv'), sep=',', keep_default_na=False)
 
     signature = dataset_design.get_pandas_signature(cells, {'CD3' : '+', 'B2M' : '+'})
     computed_sum = sum([1 for entry in signature if entry])

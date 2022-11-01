@@ -14,6 +14,21 @@ services:
         target: /countsserver/source_data/
     pull_policy: never
 
+  testing-fast-counts-server-cohoused:
+    image: nadeemlab/spt-countsserver
+    container_name: spt-countsserver-testing-cohoused
+    ports:
+      - target: 8016
+        published: 8016
+        protocol: tcp
+    networks:
+      - isolated_temporary_test
+    volumes:
+      - type: bind
+        source: ./module_tests/expected_binary_expression_data_cohoused/
+        target: /countsserver/source_data/
+    pull_policy: never
+
   testing-database:
     image: nadeemlab/spt-db
     container_name: spt-db-testing

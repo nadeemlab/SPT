@@ -208,7 +208,7 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image ${DOCKER_BUILD_TARGETS
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
+data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/test_HALO_exported_data_import.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \

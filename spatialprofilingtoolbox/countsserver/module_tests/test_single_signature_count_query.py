@@ -12,7 +12,7 @@ if __name__=='__main__':
         counts = requester.get_counts_by_specimen(['CD3'], ['CD8', 'CD20'], study_name)
 
     counts_json = json.dumps(counts, indent=4).rstrip()
-    with open('module_tests/expected_counts.json', 'rt') as file:
+    with open('module_tests/expected_counts1.json', 'rt') as file:
         expected_counts_json = file.read().rstrip()
     if counts_json != expected_counts_json:
         print('Got counts: %s' % counts_json)

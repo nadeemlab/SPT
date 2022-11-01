@@ -36,18 +36,39 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log.
+>@rm -f .nextflow.log.*
+>@rm -rf work/
+>@rm -rf results/
+>@rm -f main.nf
+>@rm -f configure.sh
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "  countsserver (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log.
+>@rm -f .nextflow.log.*
+>@rm -rf work/
+>@rm -rf results/
+>@rm -f main.nf
+>@rm -f configure.sh
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "  countsserver (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log.
+>@rm -f .nextflow.log.*
+>@rm -rf work/
+>@rm -rf results/
+>@rm -f main.nf
+>@rm -f configure.sh
 
 ${TESTS}: setup-testing
 >@test_target=$@ ; \
@@ -86,7 +107,7 @@ clean:
 >@rm -rf .nextflow/
 >@rm -f .nextflow.log.
 >@rm -f .nextflow.log.*
->@rm -f work/
->@rm -f results/
+>@rm -rf work/
+>@rm -rf results/
 >@rm -f main.nf
 >@rm -f configure.sh

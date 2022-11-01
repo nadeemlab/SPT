@@ -108,3 +108,5 @@ clean:
 >@rm -f .nextflow.log.*
 >@rm -f work/
 >@rm -f results/
+>@rm -f main.nf
+>@rm -f configure.sh

@@ -83,3 +83,10 @@ clean:
 >@rm -f status_code
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log.
+>@rm -f .nextflow.log.*
+>@rm -f work/
+>@rm -f results/
+>@rm -f main.nf
+>@rm -f configure.sh

@@ -103,3 +103,8 @@ clean:
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
 >@rm -rf Dockerfile
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log.
+>@rm -f .nextflow.log.*
+>@rm -f work/
+>@rm -f results/

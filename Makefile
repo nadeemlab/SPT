@@ -208,13 +208,13 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image ${DOCKER_BUILD_TARGETS
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/test_HALO_exported_data_import.sh
+data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/import_test_dataset1.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
-    pipeline_cmd="cd /mount_sources/; bash building/test_HALO_exported_data_import.sh; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
+    pipeline_cmd="cd /mount_sources/; bash building/import_test_dataset1.sh ; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
     docker run \
      --rm \
      --network container:temporary-spt-db-preloading \

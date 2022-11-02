@@ -21,48 +21,54 @@ Checking that Docker daemon is running <span style="color:olive;">...</span><spa
 Running docker compose rm (remove) <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
 </pre>
 4. `$ make test`
-<pre>
-Creating venv for basic package introspection <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Created.</span>       <span style="color:purple;">(5s)</span>
-Creating spt CLI completions script <span style="color:olive;">...</span><span style="color:olive;">.........................................</span> <span style="font-weight:bold;color:green;">Created.</span>       <span style="color:purple;">(4s)</span>
-Building development image <span style="color:olive;">...</span><span style="color:olive;">..................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(14s)</span>
-Building apiserver Dockerfile <span style="color:olive;">...</span><span style="color:olive;">...............................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
-Building countsserver Dockerfile <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
-Building db Dockerfile <span style="color:olive;">...</span><span style="color:olive;">......................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
-Building workflow Dockerfile <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(0s)</span>
-Building Docker image nadeemlab/spt-db <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
-Building test-data-loaded spt-db image <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(18s)</span>
-Building Docker image nadeemlab/spt-apiserver <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
-Building Docker image nadeemlab/spt-countsserver <span style="color:olive;">...</span><span style="color:olive;">............................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
-Building Docker image nadeemlab/spt-workflow <span style="color:olive;">...</span><span style="color:olive;">................................</span> <span style="font-weight:bold;color:green;">Built.</span>         <span style="color:purple;">(10s)</span>
-Running docker compose rm (remove) <span style="color:olive;">...</span><span style="color:olive;">..........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>
-  apiserver (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">.....................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(3s)</span>      
-    API internal basic database accessor <span style="color:olive;">...</span><span style="color:olive;">....................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  apiserver (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">..................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  countsserver (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">..................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    binary expression viewer <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>      
-  countsserver (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
-  db (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(1s)</span>      
-    guess channels from object files <span style="color:olive;">...</span><span style="color:olive;">........................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  db (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">.........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  workflow (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(3s)</span>      
-    signature cell set subsetting <span style="color:olive;">...</span><span style="color:olive;">...........................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  workflow (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">...................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  apiserver (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">.....................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    single API route <span style="color:olive;">...</span><span style="color:olive;">........................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-    counts query delegation edge cases <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  apiserver (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">..................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  countsserver (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">..................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    edge cases few markers <span style="color:olive;">...</span><span style="color:olive;">..................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(0s)</span>      
-    single signature count query <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-  countsserver (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">...............................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-  db (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">............................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    basic health of database <span style="color:olive;">...</span><span style="color:olive;">................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(1s)</span>      
-    drop recreate database constraints <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(2s)</span>      
-  db (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">.........................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(1s)</span>      
-  workflow (setup testing environment) <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Setup.</span>         <span style="color:purple;">(2s)</span>      
-    proximity pipeline <span style="color:olive;">...</span><span style="color:olive;">......................................................</span> <span style="font-weight:bold;color:green;">Passed.</span>        <span style="color:purple;">(74s)</span>     
-  workflow (teardown testing environment) <span style="color:olive;">...</span><span style="color:olive;">...................................</span> <span style="font-weight:bold;color:green;">Down.</span>          <span style="color:purple;">(0s)</span>      
-</pre>
+
+
+```txt
+Creating venv for basic package introspection .................................. Created.       (4s)      
+Creating spt CLI completions script ............................................ Created.       (5s)      
+Building development image ..................................................... Built.         (14s)     
+Building apiserver Dockerfile .................................................. Built.         (0s)      
+Building countsserver Dockerfile ............................................... Built.         (0s)      
+Building db Dockerfile ......................................................... Built.         (0s)      
+Building workflow Dockerfile ................................................... Built.         (0s)      
+Building Docker image nadeemlab/spt-db ......................................... Built.         (10s)     
+Building test-data-loaded spt-db image (1) ..................................... Built.         (19s)     
+Building test-data-loaded spt-db image (1and2) ................................. Built.         (36s)     
+Building Docker image nadeemlab/spt-apiserver .................................. Built.         (10s)     
+Building Docker image nadeemlab/spt-countsserver ............................... Built.         (10s)     
+Building Docker image nadeemlab/spt-workflow ................................... Built.         (10s)     
+Running docker compose rm (remove) ............................................. Down.          (0s)      
+apiserver (setup testing environment) .......................................... Setup.         (3s)      
+  API internal basic database accessor ......................................... Passed.        (1s)      
+apiserver (teardown testing environment) ....................................... Down.          (1s)      
+countsserver (setup testing environment) ....................................... Setup.         (1s)      
+  binary expression viewer ..................................................... Passed.        (1s)      
+countsserver (teardown testing environment) .................................... Down.          (0s)      
+db (setup testing environment) ................................................. Setup.         (2s)      
+  drop recreate database constraints ........................................... Passed.        (3s)      
+  guess channels from object files ............................................. Passed.        (1s)      
+db (teardown testing environment) .............................................. Down.          (0s)      
+workflow (setup testing environment) ........................................... Setup.         (3s)      
+  signature cell set subsetting ................................................ Passed.        (1s)      
+workflow (teardown testing environment) ........................................ Down.          (0s)      
+apiserver (setup testing environment) .......................................... Setup.         (3s)      
+  single API route ............................................................. Passed.        (0s)      
+  counts query delegation edge cases ........................................... Passed.        (1s)      
+apiserver (teardown testing environment) ....................................... Down.          (1s)      
+countsserver (setup testing environment) ....................................... Setup.         (1s)      
+  class counts cohoused datasets ............................................... Passed.        (1s)      
+  expression data caching ...................................................... Passed.        (2s)      
+  edge cases few markers ....................................................... Passed.        (1s)      
+  single signature count query ................................................. Passed.        (0s)      
+countsserver (teardown testing environment) .................................... Down.          (1s)      
+db (setup testing environment) ................................................. Setup.         (3s)      
+  basic health of database ..................................................... Passed.        (1s)      
+  record counts cohoused datasets .............................................. Passed.        (1s)      
+db (teardown testing environment) .............................................. Down.          (0s)      
+workflow (setup testing environment) ........................................... Setup.         (2s)      
+  proximity pipeline ........................................................... Passed.        (71s)     
+workflow (teardown testing environment) ........................................ Down.          (1s)
+```
 
 Optionally, if the images are ready to be released:
 

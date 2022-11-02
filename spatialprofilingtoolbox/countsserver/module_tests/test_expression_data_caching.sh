@@ -6,10 +6,6 @@ function consider_exit() {
     fi
 }
 
-spt db create-schema --database-config-file ../db/.spt_db.config.container --force
-spt workflow configure --local --input-path ../test_data/adi_preprocessed_tables/dataset1/ --workflow='HALO import' --database-config-file ../db/.spt_db.config.container; nextflow run .
-spt workflow configure --local --input-path ../test_data/adi_preprocessed_tables/dataset2/ --workflow='HALO import' --database-config-file ../db/.spt_db.config.container; nextflow run .
-
 mkdir expression_data
 cd expression_data
 spt countsserver cache-expressions-data-array --database-config-file ../../db/.spt_db.config.container

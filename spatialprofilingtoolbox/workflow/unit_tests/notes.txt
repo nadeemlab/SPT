@@ -1,8 +1,0 @@
-Unit test ideas:
-1. There are ample examples from previous-version tests here to start from. Start by migrating the previous tests (mostly these are "integration" tests in some aspect) into real unit tests.
-2. Emphasize the HALO import workflow and the phenotype proximity metrics workflow. The others need to be reworked for DB interaction.
-3. Make a single file out of each test function. This increases the granularity available to the make-based testing UI.
-
-Module test ideas:
-1. Substantially re-use the huge list of unit tests, with the difference that they really run in the container. Support this in the tests with abstracted call.
-

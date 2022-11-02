@@ -23,7 +23,7 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "  countsserver (setup testing environment)"
+>@${MESSAGE} start "countsserver (setup testing environment)"
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
      spt-countsserver-testing ; \
@@ -32,7 +32,7 @@ setup-testing:
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "  countsserver (teardown testing environment)"
+>@${MESSAGE} start "countsserver (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -46,7 +46,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@rm -f nextflow.config
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "  countsserver (teardown testing environment)"
+>@${MESSAGE} start "countsserver (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -60,7 +60,7 @@ teardown-module-testing: ${MODULE_TESTS}
 >@rm -f nextflow.config
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "  countsserver (teardown testing environment)"
+>@${MESSAGE} start "countsserver (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -81,7 +81,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "    $$test_name"
+    ${MESSAGE} start "  $$test_name"
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \

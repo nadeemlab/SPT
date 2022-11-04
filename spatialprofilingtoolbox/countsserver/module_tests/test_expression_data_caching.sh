@@ -9,6 +9,11 @@ function consider_exit() {
 mkdir expression_data
 cd expression_data
 spt countsserver cache-expressions-data-array --database-config-file ../../db/.spt_db.config.container
+if [[ "$?" != "0" ]];
+then
+    echo "Caching of expressions data array failed."
+    exit 1
+fi
 
 expressions_dir=../module_tests/expected_binary_expression_data_cohoused
 for f in *;
@@ -28,9 +33,16 @@ do
         echo "Test script failed to create expected file: $f"
         exit 1
     else
-        diff "../../expression_data/$f" $f
-        consider_exit $?
-        echo "File $f generated as expected with correct contents."
+        echo "$f" | grep -q '\.bin$'
+        if [[ "$?" == "0" ]];
+        then
+            bash ../check_binary_expressions_equivalent.sh "../../expression_data/$f" $f
+            consider_exit $?
+        else
+            diff "../../expression_data/$f" $f
+            consider_exit $?
+            echo "File $f generated as expected with correct contents."
+        fi
     fi
 done
 

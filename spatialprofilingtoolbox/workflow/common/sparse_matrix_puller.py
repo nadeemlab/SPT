@@ -33,7 +33,7 @@ class CompressedDataArrays:
         self.studies[study_name] = {
             'data arrays by specimen' : data_arrays_by_specimen,
             'target index lookup' : target_index_lookup,
-            'target by symbol' : self.get_target_by_symbol(study_name, self.get_connection()),
+            'target by symbol' : target_by_symbol,
         }
 
 
@@ -93,7 +93,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         JOIN histological_structure_identification hsi ON hs.identifier=hsi.histological_structure
         JOIN data_file df ON hsi.data_source=df.sha256_hash
         JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
-        WHERE sdmp.study=%s AND histological_structure.anatomical_entity='cell'
+        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
         ORDER BY sdmp.specimen, eq.histological_structure, eq.target
         ;
         '''

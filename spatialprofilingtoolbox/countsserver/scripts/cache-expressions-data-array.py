@@ -25,10 +25,17 @@ if __name__=='__main__':
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
-        from spatialprofilingtoolbox.countsserver.compressed_matrix_puller import CompressedMatrixPuller
+        from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+        from spatialprofilingtoolbox.countsserver.compressed_matrix_writer import CompressedMatrixWriter
+        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
     database_config_file = abspath(expanduser(args.database_config_file))
-    puller = CompressedMatrixPuller(database_config_file)
 
+    with SparseMatrixPuller(database_config_file) as puller:
+        puller.pull()
+        data_arrays = puller.get_data_arrays()
+
+    writer = CompressedMatrixWriter()
+    writer.write(data_arrays)

@@ -11,7 +11,7 @@ from .defaults import expressions_index_filename
 
 class CompressedMatrixPuller:
     def __init__(self, database_config_file):
-         with DatabaseConnectionMaker(database_config_file) as dcm:
+        with DatabaseConnectionMaker(database_config_file) as dcm:
             self.retrieve_data_arrays(dcm.get_connection())
         self.write_data_arrays()
         self.write_index()

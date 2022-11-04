@@ -45,6 +45,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@rm -f main.nf
 >@rm -f configure.sh
 >@rm -f nextflow.config
+>@rm -f run.sh
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "countsserver (teardown testing environment)"
@@ -60,6 +61,7 @@ teardown-module-testing: ${MODULE_TESTS}
 >@rm -f main.nf
 >@rm -f configure.sh
 >@rm -f nextflow.config
+>@rm -f run.sh
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "countsserver (teardown testing environment)"
@@ -75,6 +77,7 @@ teardown-testing: ${TESTS}
 >@rm -f main.nf
 >@rm -f configure.sh
 >@rm -f nextflow.config
+>@rm -f run.sh
 
 ${TESTS}: setup-testing
 >@test_target=$@ ; \
@@ -119,3 +122,4 @@ clean:
 >@rm -f main.nf
 >@rm -f configure.sh
 >@rm -f nextflow.config
+>@rm -f run.sh

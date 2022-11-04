@@ -37,6 +37,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 >@rm -rf .nextflow/
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.
 >@rm -f .nextflow.log.*
 >@rm -rf work/
@@ -51,6 +52,7 @@ teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 >@rm -rf .nextflow/
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.
 >@rm -f .nextflow.log.*
 >@rm -rf work/
@@ -65,6 +67,7 @@ teardown-testing: ${TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 >@rm -rf .nextflow/
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.
 >@rm -f .nextflow.log.*
 >@rm -rf work/
@@ -108,6 +111,7 @@ clean:
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
 >@rm -rf .nextflow/
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.
 >@rm -f .nextflow.log.*
 >@rm -rf work/

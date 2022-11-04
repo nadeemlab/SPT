@@ -54,7 +54,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 >@rm -rf .nextflow/
->@rm -f .nextflow.log.
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.*
 >@rm -rf work/
 >@rm -rf results/
@@ -68,7 +68,7 @@ teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 >@rm -rf .nextflow/
->@rm -f .nextflow.log.
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.*
 >@rm -rf work/
 >@rm -rf results/
@@ -82,7 +82,7 @@ teardown-testing: ${TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 >@rm -rf .nextflow/
->@rm -f .nextflow.log.
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.*
 >@rm -rf work/
 >@rm -rf results/
@@ -128,7 +128,7 @@ clean:
 >@rm -rf specific_requirements.txt
 >@rm -rf Dockerfile
 >@rm -rf .nextflow/
->@rm -f .nextflow.log.
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log.*
 >@rm -rf work/
 >@rm -rf results/

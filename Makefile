@@ -224,7 +224,14 @@ data-loaded-image-%: spatialprofilingtoolbox/db/docker.built development-image $
      "$$pipeline_cmd" && \
      docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*:latest && \
      docker container rm --force temporary-spt-db-preloading ; \
-    echo "$$?" > status_code
+    allstatus=("$${PIPESTATUS[@]}") ; \
+    if [[ "$${allstatus[0]}" == "0" ]] ; \
+    then \
+        status_code=0 ; \
+    else \
+        status_code=1 ; \
+    fi ; \
+    echo $$status_code > status_code
 >@status_code=$$(cat status_code); \
     if [[ "$$status_code" == "0" ]]; \
     then \

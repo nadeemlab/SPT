@@ -115,7 +115,7 @@ def toggle_constraints(
             raise e
 
         cursor.close()
-        self.get_connection().commit()
+        dcm.get_connection().commit()
 
 
 if __name__=='__main__':

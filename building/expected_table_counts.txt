@@ -1,7 +1,7 @@
                                 Table  Records
             biological_marking_system       26
-                       cell_phenotype       22
-             cell_phenotype_criterion      174
+                       cell_phenotype        4
+             cell_phenotype_criterion       27
                      chemical_species       26
                   data_analysis_study        1
                             data_file        7

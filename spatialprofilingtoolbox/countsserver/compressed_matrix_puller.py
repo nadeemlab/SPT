@@ -11,10 +11,8 @@ from .defaults import expressions_index_filename
 
 class CompressedMatrixPuller:
     def __init__(self, database_config_file):
-        dcm = DatabaseConnectionMaker(database_config_file)
-        connection = dcm.get_connection()
-        self.retrieve_data_arrays(connection)
-        connection.close()
+         with DatabaseConnectionMaker(database_config_file) as dcm:
+            self.retrieve_data_arrays(dcm.get_connection())
         self.write_data_arrays()
         self.write_index()
         self.report_subsample_for_inspection()
@@ -39,6 +37,7 @@ class CompressedMatrixPuller:
 
     def get_sparse_entries(self, connection, study_name):
         sparse_entries = []
+        logger.debug('Pulling sparse entries for study "%s".', study_name)
         with connection.cursor() as cursor:
             cursor.execute(self.get_sparse_matrix_query(), (study_name,))
             total = cursor.rowcount

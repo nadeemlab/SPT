@@ -8,11 +8,11 @@ from ...standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class ADIFeaturesUploader(SourceToADIParser):
+class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
     def __init__(self, database_config_file, data_analysis_study, derivation_method, specifier_number, **kwargs):
-        super(ADIFeaturesUploader, self).__init__(**kwargs)
+        SourceToADIParser.__init__(self, **kwargs)
         self.record_feature_specification_template(data_analysis_study, derivation_method, specifier_number)
-        self.initialize_database_connection(database_config_file)
+        DatabaseConnectionMaker.__init__(self, database_config_file=database_config_file)
 
     def record_feature_specification_template(self, data_analysis_study, derivation_method, specifier_number):
         self.data_analysis_study = data_analysis_study
@@ -25,13 +25,6 @@ class ADIFeaturesUploader(SourceToADIParser):
             for tablename in ['feature_specification', 'feature_specifier', 'quantitative_feature_value']
         }
         self.feature_values = []
-
-    def initialize_database_connection(self, database_config_file):
-        dcm = DatabaseConnectionMaker(database_config_file)
-        self.connection = dcm.get_connection()
-
-    def __enter__(self):
-        return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection:
@@ -56,7 +49,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         self.test_subject_existence()
         self.test_study_existence()
 
-        cursor = self.connection.cursor()
+        cursor = self.get_connection().cursor()
         next_identifier = self.get_next_integer_identifier('feature_specification', cursor)
         specifiers_list = sorted(list(set([row[0] for row in self.feature_values])))
         specifiers_by_id = {
@@ -80,7 +73,7 @@ class ADIFeaturesUploader(SourceToADIParser):
             self.insert_feature_values(cursor, feature_identifier, feature_values)
             logger.debug('Inserted %s feature values.', len(feature_values))
 
-        self.connection.commit()
+        self.get_connection().commit()
         cursor.close()
 
     def check_nothing_to_upload(self):
@@ -108,7 +101,7 @@ class ADIFeaturesUploader(SourceToADIParser):
             return False
 
     def count_known_feature_values_this_study(self):
-        cursor = self.connection.cursor()
+        cursor = self.get_connection().cursor()
         count_query = '''
         SELECT COUNT(*)
         FROM quantitative_feature_value qfv
@@ -130,7 +123,7 @@ class ADIFeaturesUploader(SourceToADIParser):
             logger.warning('Feature values refer to %s unknown subjects: %s', len(unknown_subjects), str(list(unknown_subjects)))
 
     def get_subject_identifiers(self):
-        cursor = self.connection.cursor()
+        cursor = self.get_connection().cursor()
         cursor.execute('SELECT identifier FROM subject;')
         rows = cursor.fetchall()
         subject_ids = [row[0] for row in rows]
@@ -138,7 +131,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         return subject_ids
 
     def test_study_existence(self):
-        cursor = self.connection.cursor()
+        cursor = self.get_connection().cursor()
         cursor.execute('SELECT name FROM data_analysis_study;')
         rows = cursor.fetchall()
         names = [row[0] for row in rows]

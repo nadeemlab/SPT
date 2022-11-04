@@ -77,50 +77,45 @@ def toggle_constraints(
     database_config_file_elevated,
     state: DBConstraintsToggling=DBConstraintsToggling.RECREATE,
 ):
-    dcm = DatabaseConnectionMaker(database_config_file_elevated)
-    connection = dcm.get_connection()
-    cursor = connection.cursor()
+    with DatabaseConnectionMaker(database_config_file_elevated) as dcm:
+        cursor = dcm.get_connection().cursor()
+        try:
+            if state == DBConstraintsToggling.RECREATE:
+                pattern = '''
+                ALTER TABLE %s 
+                ADD CONSTRAINT %s 
+                FOREIGN KEY (%s) 
+                REFERENCES %s (%s);'''
+                foreign_key_constraints = get_constraint_design()
+                for tablename, field_name, foreign_tablename, foreign_field_name, ordinality in foreign_key_constraints:
+                    statement = pattern % (
+                        tablename,
+                        '%s%s' %(tablename, ordinality),
+                        field_name,
+                        foreign_tablename,
+                        foreign_field_name,
+                    )
+                    logger.debug('Executing: %s' % statement)
+                    cursor.execute(statement)
+                column_names, info_rows = get_constraint_status(cursor)
+                print_constraint_status(column_names, info_rows)
 
-    try:
-        if state == DBConstraintsToggling.RECREATE:
-            pattern = '''
-            ALTER TABLE %s 
-            ADD CONSTRAINT %s 
-            FOREIGN KEY (%s) 
-            REFERENCES %s (%s);'''
-            foreign_key_constraints = get_constraint_design()
-            for tablename, field_name, foreign_tablename, foreign_field_name, ordinality in foreign_key_constraints:
-                statement = pattern % (
-                    tablename,
-                    '%s%s' %(tablename, ordinality),
-                    field_name,
-                    foreign_tablename,
-                    foreign_field_name,
-                )
-                logger.debug('Executing: %s' % statement)
-                cursor.execute(statement)
-            column_names, info_rows = get_constraint_status(cursor)
-            print_constraint_status(column_names, info_rows)
+            if state == DBConstraintsToggling.DROP:
+                pattern = '''
+                ALTER TABLE %s
+                DROP CONSTRAINT IF EXISTS %s;'''
+                column_names, info_rows = get_constraint_status(cursor)
+                print_constraint_status(column_names, info_rows)
+                for connection_type, constraint_name, tablename in info_rows:
+                    statement = pattern % (tablename, constraint_name)
+                    logger.debug('Executing: %s' % statement)
+                    cursor.execute(statement)
+        except Exception as e:
+            cursor.close()
+            raise e
 
-        if state == DBConstraintsToggling.DROP:
-            pattern = '''
-            ALTER TABLE %s
-            DROP CONSTRAINT IF EXISTS %s;'''
-            column_names, info_rows = get_constraint_status(cursor)
-            print_constraint_status(column_names, info_rows)
-            for connection_type, constraint_name, tablename in info_rows:
-                statement = pattern % (tablename, constraint_name)
-                logger.debug('Executing: %s' % statement)
-                cursor.execute(statement)
-
-    except Exception as e:
         cursor.close()
-        connection.close()
-        raise e
-
-    cursor.close()
-    connection.commit()
-    connection.close()
+        self.get_connection().commit()
 
 
 if __name__=='__main__':

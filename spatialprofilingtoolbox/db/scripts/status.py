@@ -64,13 +64,11 @@ if __name__=='__main__':
     if not exists(config_file):
         raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
-    dcm = DatabaseConnectionMaker(database_config_file=config_file)
-    connection = dcm.get_connection()
-    cursor = connection.cursor()
-    tables_present, counts = check_tables(cursor)
-    if not tables_present:
-        exit(1)
-    cursor.close()
-    connection.close()
-    report_counts(counts)
+    with DatabaseConnectionMaker(database_config_file=config_file) as dcm:
+        cursor = dcm.get_connection().cursor()
+        tables_present, counts = check_tables(cursor)
+        if not tables_present:
+            exit(1)
+        cursor.close()
 
+    report_counts(counts)

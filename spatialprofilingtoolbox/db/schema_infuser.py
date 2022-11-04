@@ -10,20 +10,9 @@ from ..standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
 
-class SchemaInfuser:
+class SchemaInfuser(DatabaseConnectionMaker):
     def __init__(self, database_config_file: str=None):
-        dcm = DatabaseConnectionMaker(database_config_file)
-        self.connection = dcm.get_connection()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        if self.connection:
-            self.connection.close()
-
-    def get_connection(self):
-        return self.connection
+        super(SchemaInfuser, self).__init__(database_config_file=database_config_file)
 
     def setup_schema(self, force=False):
         logger.info('This creation tool assumes that the database itself and users are already set up.')

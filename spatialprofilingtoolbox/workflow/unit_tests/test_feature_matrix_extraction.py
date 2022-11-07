@@ -1,5 +1,7 @@
 import json
 
+import pandas as pd
+
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox.db.feature_matrix import FeatureMatrixExtractor
 
@@ -31,6 +33,27 @@ if __name__=='__main__':
     known=['B2M','B7H3','CD14','CD163','CD20','CD25','CD27','CD3','CD4','CD56','CD68','CD8','DAPI','FOXP3','IDO1','KI67','LAG3','MHCI','MHCII','MRC1','PD1','PDL1','S100B','SOX10','TGM2','TIM3']
     if set(channels.values()) != set(known):
         print('Wrong channel set: %s' % str(list(channels.values())))
+        exit(1)
+
+    expression_vectors = sorted([
+        tuple([row['F%s' % i] for i in range(26)])
+        for j, row in df.iterrows()
+    ])
+
+    reference = pd.read_csv('../test_data/adi_preprocessed_tables/dataset1/lesion_6_4.csv', sep=',')
+    create_column_name = lambda x: channels[x] +'_Positive'
+    expected_expression_vectors = sorted([
+        tuple([row[create_column_name('F%s'%i)] for i in range(26)])
+        for j, row in reference.iterrows()
+    ])
+
+    if expected_expression_vectors != expression_vectors:
+        print('Expression vector sets not equal.')
+        for i in range(len(expected_expression_vectors)):
+            if expected_expression_vectors[i] != expression_vectors[i]:
+                print('At sorted value %s:' % str(i))
+                print(expected_expression_vectors[i])
+                print(expression_vectors[i])
         exit(1)
 
     print('Outcomes:')

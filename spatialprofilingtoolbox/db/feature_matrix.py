@@ -1,4 +1,6 @@
 
+import pandas as pd
+
 from ..standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
@@ -14,28 +16,77 @@ class FeatureMatrixExtractor:
         outcomes = E.retrieve_derivative_outcomes_from_database(databases_config_file)
         return E.merge_dictionaries(
             E.create_feature_matrices(data_arrays, centroid_coordinates),
+            E.create_channel_information(data_arrays),
             outcomes,
-            new_keys=['feature matrices', 'outcomes']
+            new_keys=['feature matrices', 'channels', 'outcomes']
         )
 
+    @staticmethod
     def retrieve_expressions_from_database(database_config_file):
         with SparseMatrixPuller(database_config_file) as puller:
             puller.pull()
             data_arrays = puller.get_data_arrays()
         return data_arrays
 
+    @staticmethod
     def retrieve_structure_centroids_from_database(database_config_file):
         with StructureCentroidsPuller(database_config_file) as puller:
             puller.pull()
             structure_centroids = puller.get_structure_centroids()
         return structure_centroids
 
+    @staticmethod
     def retrieve_derivative_outcomes_from_database(database_config_file):
-        pass
+        return ['outcomes...']
 
+    @staticmethod
     def create_feature_matrices(data_arrays, centroid_coordinates):
-        pass
+        matrices = {}
+        for k, study_name in enumerate(sorted(list(data_arrays.keys()))):
+            study = data_arrays[study_name]
+            matrices[study_name] = {}
+            for j, specimen in enumerate(sorted(list(study['data arrays by specimen'].keys()))):
+                expressions = study['data arrays by specimen'][specimen]
+                number_channels = len(study['target index lookup'])
+                rows = [
+                    FeatureMatrixExtractor.create_feature_matrix_row(
+                        centroid_coordinates[i],
+                        expressions[i],
+                        number_channels,
+                    )
+                    for i in range(len(expressions))
+                ]
+                dataframe = pd.DataFrame(rows, columns=['pixel x', 'pixel y'] + ['F%s' % str(i) for i in range(number_channels)])
+                matrices[study_name][specimen] = {
+                    'dataframe' : dataframe,
+                    'filename' : '%s.%s.tsv' % (str(k), str(j)),
+                }
+        return matrices
 
+    @staticmethod
+    def create_feature_matrix_row(centroid, binary, number_channels):
+        return [centroid[0], centroid[1]] + list(('{0:0%sb}' % str(number_channels)).format(binary))
+
+    @staticmethod
+    def create_channel_information(data_arrays):
+        return {
+            study_name : FeatureMatrixExtractor.create_channel_information_for_study(study)
+            for study_name, study in data_arrays.items():        
+        }
+
+    @staticmethod
+    def create_channel_information_for_study(study):
+        targets = { int(index) : target for target, index in study['target index lookup'].items() }
+        symbols = { target : symbol for symbol, target in study['target by symbol'].items() }
+        return [
+            {
+                'column name' : 'F%s' % i,
+                'target symbol' : symbols[targets[i]],
+            }
+            for i in sorted([int(index) for index in targets.keys()])
+        ]
+
+    @staticmethod
     def merge_dictionaries(*args, new_keys=[]):
         if not len(args) == len(new_keys):
             logger.error("Can not match up dictionaries to be merged with the list of key names to be issued for them.")

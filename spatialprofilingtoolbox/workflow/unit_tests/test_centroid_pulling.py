@@ -9,7 +9,7 @@ if __name__=='__main__':
         structure_centroids = puller.get_structure_centroids()
 
     for study_name, study in structure_centroids.studies.items():
-        if study.keys() != set(['lesion 0_1', 'lesion 0_2', 'lesion 0_3', 'lesion 6_1', 'lesion 6_2', 'lesion 6_3']):
+        if study.keys() != set(['lesion 0_1', 'lesion 0_2', 'lesion 0_3', 'lesion 6_1', 'lesion 6_2', 'lesion 6_3', 'lesion 6_4']):
             print('Wrong sample set: %s' % str(study.keys()))
             exit(1)
         for sample, points in study.items():

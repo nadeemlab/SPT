@@ -84,6 +84,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
             specimen_centroids.append(self.compute_centroid(
                 extract_points(row[field['base64_contents']])
             ))
+        study_data[current_specimen] = specimen_centroids
         return study_data
 
     def compute_centroid(self, points):

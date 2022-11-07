@@ -1,3 +1,4 @@
+from difflib import SequenceMatcher
 
 import pandas as pd
 
@@ -19,8 +20,15 @@ class FeatureMatrixExtractor:
             E.create_feature_matrices(data_arrays, centroid_coordinates),
             E.create_channel_information(data_arrays),
             outcomes,
-            new_keys=['feature matrices', 'channels', 'outcomes']
+            new_keys=['feature matrices', 'channel symbols by column name', 'outcomes']
         )
+
+    @staticmethod
+    def redact_dataframes(extraction):
+        for study_name, study in extraction.items():
+            for specimen in study['feature matrices'].keys():
+                extraction[study_name]['feature matrices'][specimen]['dataframe'] = None
+            extraction[study_name]['outcomes'] = None
 
     @staticmethod
     def retrieve_expressions_from_database(database_config_file):
@@ -69,7 +77,7 @@ class FeatureMatrixExtractor:
 
     @staticmethod
     def create_feature_matrix_row(centroid, binary, number_channels):
-        return [centroid[0], centroid[1]] + list(('{0:0%sb}' % str(number_channels)).format(binary))
+        return [centroid[0], centroid[1]] + list(('{0:0%sb}' % str(number_channels)).format(binary)[::-1])
 
     @staticmethod
     def create_channel_information(data_arrays):
@@ -82,27 +90,51 @@ class FeatureMatrixExtractor:
     def create_channel_information_for_study(study):
         targets = { int(index) : target for target, index in study['target index lookup'].items() }
         symbols = { target : symbol for symbol, target in study['target by symbol'].items() }
-        return [
-            {
-                'column name' : 'F%s' % i,
-                'target symbol' : symbols[targets[i]],
-            }
+        return {
+            'F%s' % i : symbols[targets[i]]
             for i in sorted([int(index) for index in targets.keys()])
-        ]
+        }
 
     @staticmethod
     def merge_dictionaries(*args, new_keys=[]):
         if not len(args) == len(new_keys):
             logger.error("Can not match up dictionaries to be merged with the list of key names to be issued for them.")
             exit(1)
+        prefix = None
         for dictionary in args:
             if set(dictionary.keys()) != set(args[0].keys()):
-                logger.error("Key sets for dictionaries to be merged do not match: %s %s", dictionary.keys(), args[0].keys())
-                exit(1)
-        merged = {}
-        for key in args[0].keys():
-            merged[key] = {
-                new_keys[i] : args[i][key]
-                for i in range(len(new_keys))
+                logger.warn("Key sets for dictionaries to be merged do not match: %s %s", dictionary.keys(), args[0].keys())
+                if len(dictionary) == 1 and len(args[0]) == 1:
+                    logger.warn('Attempting to assume that there is just one study.')
+                    prefix = FeatureMatrixExtractor.get_common_prefix(list(dictionary.keys())[0], list(args[0].keys())[0])
+                else:
+                    logger.error('Too many studies to guess an association.')
+                    exit(1)
+        if prefix != None:
+            merged = {
+                prefix : {
+                    new_keys[i] : args[i][list(args[i].keys())[0]]
+                    for i in range(len(new_keys))                
+                }
             }
+        else:
+            merged = {}
+            for key in args[0].keys():
+                merged[key] = {
+                    new_keys[i] : args[i][key]
+                    for i in range(len(new_keys))
+                }            
         return merged
+
+    @staticmethod
+    def get_common_prefix(a, b):
+        list1 = list(a)
+        list2 = list(b)
+        prefix = []
+        for i in range(len(a)):
+            if list1[i] == list2[i]:
+                prefix.append(list1[i])
+            else:
+                break
+        return ''.join(prefix)
+

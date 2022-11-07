@@ -55,6 +55,7 @@ if __name__=='__main__':
                 print(expected_expression_vectors[i])
                 print(expression_vectors[i])
         exit(1)
+    print('Expression vector set is as expected.')
 
     print('Outcomes:')
     print(study['outcomes'].to_string())

@@ -6,14 +6,15 @@ logger = colorized_logger(__name__)
 
 from ..workflow.common.sparse_matrix_puller import SparseMatrixPuller
 from ..workflow.common.structure_centroids_puller import StructureCentroidsPuller
+from ..db.outcomes_puller import OutcomesPuller
 
 class FeatureMatrixExtractor:
     @staticmethod
-    def extract(self, database_config_file):
+    def extract(database_config_file):
         E = FeatureMatrixExtractor
         data_arrays = E.retrieve_expressions_from_database(database_config_file)
-        centroid_coordinates = E.retrieve_structure_centroids_from_database(databases_config_file)
-        outcomes = E.retrieve_derivative_outcomes_from_database(databases_config_file)
+        centroid_coordinates = E.retrieve_structure_centroids_from_database(database_config_file)
+        outcomes = E.retrieve_derivative_outcomes_from_database(database_config_file)
         return E.merge_dictionaries(
             E.create_feature_matrices(data_arrays, centroid_coordinates),
             E.create_channel_information(data_arrays),
@@ -26,18 +27,21 @@ class FeatureMatrixExtractor:
         with SparseMatrixPuller(database_config_file) as puller:
             puller.pull()
             data_arrays = puller.get_data_arrays()
-        return data_arrays
+        return data_arrays.studies
 
     @staticmethod
     def retrieve_structure_centroids_from_database(database_config_file):
         with StructureCentroidsPuller(database_config_file) as puller:
             puller.pull()
             structure_centroids = puller.get_structure_centroids()
-        return structure_centroids
+        return structure_centroids.studies
 
     @staticmethod
     def retrieve_derivative_outcomes_from_database(database_config_file):
-        return ['outcomes...']
+        with OutcomesPuller(database_config_file='../db/.spt_db.config.container') as puller:
+            puller.pull()
+            outcomes = puller.get_outcomes()
+        return outcomes
 
     @staticmethod
     def create_feature_matrices(data_arrays, centroid_coordinates):
@@ -50,7 +54,7 @@ class FeatureMatrixExtractor:
                 number_channels = len(study['target index lookup'])
                 rows = [
                     FeatureMatrixExtractor.create_feature_matrix_row(
-                        centroid_coordinates[i],
+                        centroid_coordinates[study_name][specimen][i],
                         expressions[i],
                         number_channels,
                     )
@@ -71,7 +75,7 @@ class FeatureMatrixExtractor:
     def create_channel_information(data_arrays):
         return {
             study_name : FeatureMatrixExtractor.create_channel_information_for_study(study)
-            for study_name, study in data_arrays.items():        
+            for study_name, study in data_arrays.items()        
         }
 
     @staticmethod

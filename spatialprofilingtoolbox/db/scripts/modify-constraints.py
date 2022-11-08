@@ -55,7 +55,7 @@ def get_constraint_status(cursor):
 
 
 def get_constraint_design():
-    with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
+    with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     foreign_key_constraints = [
         [normalize(str(s)) for s in [row['Table'], row['Name'], row['Foreign table'], row['Foreign key'], row['Ordinality']]]

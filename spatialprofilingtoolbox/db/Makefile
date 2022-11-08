@@ -29,7 +29,7 @@ data_model/schema.sql:
      --mount type=bind,src=${DB_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
-     'cd /mount_sources; adisinglecell dump-schema > schema.sql' && \
+     'cd /mount_sources; adiscstudies dump-schema > schema.sql' && \
      mv schema.sql data_model/ ; \
      echo "$$?" > status_code
 

@@ -76,7 +76,7 @@ class DataSkimmer(DatabaseConnectionMaker):
         if not self.get_connection():
             logger.debug('No database connection was initialized. Skipping semantic parse.')
             return
-        with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
+        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
         self.cache_all_record_counts(self.get_connection(), fields)

@@ -9,7 +9,7 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-    import adisinglecell
+    import adiscstudies
     import pandas as pd
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
@@ -18,7 +18,7 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger('spt db status')
 
 def check_tables(cursor):
-    with importlib.resources.path('adisinglecell', 'tables.tsv') as path:
+    with importlib.resources.path('adiscstudies', 'tables.tsv') as path:
         tables = pd.read_csv(path, sep='\t', keep_default_na=False)    
     tablenames = list(tables['Name'])
     cursor.execute('SELECT tablename FROM pg_tables WHERE schemaname=\'public\';')

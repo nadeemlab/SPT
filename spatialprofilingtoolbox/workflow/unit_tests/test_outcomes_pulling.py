@@ -12,7 +12,8 @@ if __name__=='__main__':
     expected = pd.read_csv('unit_tests/expected_outcomes.tsv', sep='\t')
     rows = set([ tuple(list(row)) for i, row in expected.iterrows() ])
 
-    for study_name, df in outcomes.items():
+    for study_name, outcomes_study in outcomes.items():
+        df = outcomes_study['dataframe']
         rows2 = set([ tuple(list(row)) for i, row in df.iterrows() ])
         if rows != rows2:
             print('Wrong row set: %s', str(rows2))

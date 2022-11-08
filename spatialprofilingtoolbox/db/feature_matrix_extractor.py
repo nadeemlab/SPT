@@ -32,32 +32,40 @@ class FeatureMatrixExtractor:
 
     @staticmethod
     def retrieve_expressions_from_database(database_config_file):
+        logger.info('Retrieving expression data from database.')
         with SparseMatrixPuller(database_config_file) as puller:
             puller.pull()
             data_arrays = puller.get_data_arrays()
+        logger.info('Done retrieving expression data from database.')
         return data_arrays.studies
 
     @staticmethod
     def retrieve_structure_centroids_from_database(database_config_file):
+        logger.info('Retrieving polygon centroids from shapefiles in database.')
         with StructureCentroidsPuller(database_config_file) as puller:
             puller.pull()
             structure_centroids = puller.get_structure_centroids()
+        logger.info('Done retrieving centroids.')
         return structure_centroids.studies
 
     @staticmethod
     def retrieve_derivative_outcomes_from_database(database_config_file):
+        logger.info('Retrieving outcomes from database.')
         with OutcomesPuller(database_config_file='../db/.spt_db.config.container') as puller:
             puller.pull()
             outcomes = puller.get_outcomes()
+        logger.info('Done retrieving outcomes.')
         return outcomes
 
     @staticmethod
     def create_feature_matrices(data_arrays, centroid_coordinates):
+        logger.info('Creating feature matrices from binary data arrays and centroids.')
         matrices = {}
         for k, study_name in enumerate(sorted(list(data_arrays.keys()))):
             study = data_arrays[study_name]
             matrices[study_name] = {}
             for j, specimen in enumerate(sorted(list(study['data arrays by specimen'].keys()))):
+                logger.debug('Specimen %s .', specimen)
                 expressions = study['data arrays by specimen'][specimen]
                 number_channels = len(study['target index lookup'])
                 rows = [
@@ -73,6 +81,7 @@ class FeatureMatrixExtractor:
                     'dataframe' : dataframe,
                     'filename' : '%s.%s.tsv' % (str(k), str(j)),
                 }
+        logger.info('Done creating feature matrices.')
         return matrices
 
     @staticmethod
@@ -88,8 +97,10 @@ class FeatureMatrixExtractor:
 
     @staticmethod
     def create_channel_information_for_study(study):
+        logger.info('Aggregating channel information for one study.')
         targets = { int(index) : target for target, index in study['target index lookup'].items() }
         symbols = { target : symbol for symbol, target in study['target by symbol'].items() }
+        logger.info('Done aggregating channel information.')
         return {
             'F%s' % i : symbols[targets[i]]
             for i in sorted([int(index) for index in targets.keys()])
@@ -124,6 +135,7 @@ class FeatureMatrixExtractor:
                     new_keys[i] : args[i][key]
                     for i in range(len(new_keys))
                 }            
+        logger.info('Done merging into a single dictionary bundle.')
         return merged
 
     @staticmethod

@@ -80,11 +80,13 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
             if current_specimen != row[field['specimen']]:
                 study_data[current_specimen] = specimen_centroids
                 current_specimen = row[field['specimen']]
+                logger.debug('Done parsing shapefiles for specimen "%s".', current_specimen)
                 specimen_centroids = []
             specimen_centroids.append(self.compute_centroid(
                 extract_points(row[field['base64_contents']])
             ))
         study_data[current_specimen] = specimen_centroids
+        logger.debug('Done parsing shapefiles for specimen "%s".', current_specimen)
         return study_data
 
     def compute_centroid(self, points):

@@ -101,6 +101,7 @@ packages = [
     "modify-constraints.py",
     "guess-channels-from-object-files.py",
     "status.py",
+    "retrieve-feature-matrices.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",

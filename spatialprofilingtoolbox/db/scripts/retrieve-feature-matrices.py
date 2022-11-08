@@ -28,9 +28,9 @@ specimen and channel name information in:  features.json
     args = parser.parse_args()
 
     if args.database_config_file:
-        config_file = abspath(expanduser(args.database_config_file))
-    if not exists(config_file):
-        raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
+        database_config_file = abspath(expanduser(args.database_config_file))
+    if not exists(database_config_file):
+        raise FileNotFoundError('Need to supply valid database config filename: %s', database_config_file)
 
     import spatialprofilingtoolbox
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException

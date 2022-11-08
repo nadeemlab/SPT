@@ -41,6 +41,8 @@ do
             consider_exit $?
         else
             diff "../../expression_data/$f" $f
+            cat "../../expression_data/$f"
+            cat $f
             consider_exit $?
             echo "File $f generated as expected with correct contents."
         fi

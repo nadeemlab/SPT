@@ -69,7 +69,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         cursor.execute(query)
         rows = cursor.fetchall()
         cursor.close()
-        return [row[0] for row in rows]
+        return sorted([row[0] for row in rows])
 
     def create_study_data(self, rows):
         study_data = {}

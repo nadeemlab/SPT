@@ -66,7 +66,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         with connection.cursor() as cursor:
             cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = cursor.fetchall()
-        return [row[0] for row in rows]
+        return sorted([row[0] for row in rows])
 
     def get_sparse_entries(self, connection, study_name):
         sparse_entries = []

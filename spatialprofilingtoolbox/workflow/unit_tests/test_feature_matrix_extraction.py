@@ -4,7 +4,7 @@ import re
 import pandas as pd
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.db.feature_matrix import FeatureMatrixExtractor
+from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 
 def get_study(bundle):
     study_name_prefix = 'Test project - Melanoma intralesional IL2 (Hollmann lab) - '
@@ -72,10 +72,10 @@ def test_expression_vectors(study):
 
 def test_outcomes(study):
     print('Outcomes:')
-    print(study['outcomes'].to_string(index=False))
+    print(study['outcomes']['dataframe'].to_string(index=False))
     print('')
-    if study['outcomes'].shape != (7, 2):
-        print('Wrong number of outcomes or outcome assignments. Dataframe shape: %s' % str(study['outcomes'].shape))
+    if study['outcomes']['dataframe'].shape != (7, 2):
+        print('Wrong number of outcomes or outcome assignments. Dataframe shape: %s' % str(study['outcomes']['dataframe'].shape))
         exit(1)
 
 if __name__=='__main__':

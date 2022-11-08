@@ -21,7 +21,7 @@ class OutcomesPuller(DatabaseConnectionMaker):
         study_names = self.get_study_names()
         outcomes = { study_name : {} for study_name in study_names }
         with self.get_connection().cursor() as cursor:
-            for study_name in study_names:
+            for study_index, study_name in enumerate(study_names):
                 cursor.execute('''
                 SELECT scp.specimen, d.condition, d.result
                 FROM diagnosis d
@@ -36,7 +36,8 @@ class OutcomesPuller(DatabaseConnectionMaker):
                     for outcome, df2 in df.groupby('outcome')
                 }
                 merged = pd.concat([dfs[outcome] for outcome in sorted(list(dfs.keys()))])
-                outcomes[study_name] = merged
+                outcomes[study_name]['dataframe'] = merged
+                outcomes[study_name]['filename'] = 'outcomes.%s.tsv' % study_index
         return outcomes
 
     def get_study_names(self):
@@ -44,4 +45,4 @@ class OutcomesPuller(DatabaseConnectionMaker):
             cursor.execute('SELECT name FROM specimen_collection_study ;')
             rows = cursor.fetchall()
         study_names = [row[0] for row in rows]
-        return study_names
+        return sorted(study_names)

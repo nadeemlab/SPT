@@ -28,7 +28,7 @@ class FeatureMatrixExtractor:
         for study_name, study in extraction.items():
             for specimen in study['feature matrices'].keys():
                 extraction[study_name]['feature matrices'][specimen]['dataframe'] = None
-            extraction[study_name]['outcomes'] = None
+            extraction[study_name]['outcomes']['dataframe'] = None
 
     @staticmethod
     def retrieve_expressions_from_database(database_config_file):

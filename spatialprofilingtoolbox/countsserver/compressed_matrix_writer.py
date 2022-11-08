@@ -32,7 +32,7 @@ class CompressedMatrixWriter:
     def write_index(self, data_arrays):
         index = []
         study_names, study_indices = self.get_study_names_and_indices(data_arrays)
-        for study_name in sorted(list(data_array.studies.keys())):
+        for study_name in sorted(list(data_arrays.studies.keys())):
             study = data_arrays.studies[study_name]
             index_item = {}
             index_item['specimen measurement study name'] = study_name

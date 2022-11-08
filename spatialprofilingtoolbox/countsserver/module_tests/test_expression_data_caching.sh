@@ -6,6 +6,7 @@ function consider_exit() {
     fi
 }
 
+rm -rf expression_data/
 mkdir expression_data
 cd expression_data
 spt countsserver cache-expressions-data-array --database-config-file ../../db/.spt_db.config.container

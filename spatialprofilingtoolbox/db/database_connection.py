@@ -79,3 +79,10 @@ class DatabaseConnectionMaker:
     def get_connection(self):
         return self.connection
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        if self.connection:
+            self.connection.close()
+

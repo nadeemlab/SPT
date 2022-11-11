@@ -29,7 +29,7 @@ data_model/schema.sql:
      --mount type=bind,src=${DB_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
-     'cd /mount_sources; adisinglecell dump-schema > schema.sql' && \
+     'cd /mount_sources; adiscstudies dump-schema > schema.sql' && \
      mv schema.sql data_model/ ; \
      echo "$$?" > status_code
 
@@ -40,7 +40,7 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "  db (setup testing environment)"
+>@${MESSAGE} start "db (setup testing environment)"
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
      spt-db-testing ; \
@@ -49,22 +49,49 @@ setup-testing:
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "  db (teardown testing environment)"
+>@${MESSAGE} start "db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log
+>@rm -f .nextflow.log.*
+>@rm -rf work/
+>@rm -rf results/
+>@rm -f main.nf
+>@rm -f configure.sh
+>@rm -f nextflow.config
+>@rm -f run.sh
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "  db (teardown testing environment)"
+>@${MESSAGE} start "db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log
+>@rm -f .nextflow.log.*
+>@rm -rf work/
+>@rm -rf results/
+>@rm -f main.nf
+>@rm -f configure.sh
+>@rm -f nextflow.config
+>@rm -f run.sh
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "  db (teardown testing environment)"
+>@${MESSAGE} start "db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log
+>@rm -f .nextflow.log.*
+>@rm -rf work/
+>@rm -rf results/
+>@rm -f main.nf
+>@rm -f configure.sh
+>@rm -f nextflow.config
+>@rm -f run.sh
 
 ${TESTS}: setup-testing
 >@test_target=$@ ; \
@@ -74,7 +101,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "    $$test_name"
+    ${MESSAGE} start "  $$test_name"
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -103,3 +130,12 @@ clean:
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
 >@rm -rf Dockerfile
+>@rm -rf .nextflow/
+>@rm -f .nextflow.log
+>@rm -f .nextflow.log.*
+>@rm -rf work/
+>@rm -rf results/
+>@rm -f main.nf
+>@rm -f configure.sh
+>@rm -f nextflow.config
+>@rm -f run.sh

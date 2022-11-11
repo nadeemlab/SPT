@@ -23,7 +23,7 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "  workflow (setup testing environment)"
+>@${MESSAGE} start "workflow (setup testing environment)"
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
      spt-db-testing; \
@@ -32,23 +32,23 @@ setup-testing:
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "  workflow (teardown testing environment)"
+>@${MESSAGE} start "workflow (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@rm -f nextflow.log; rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "  workflow (teardown testing environment)"
+>@${MESSAGE} start "workflow (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@rm -f nextflow.log; rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "  workflow (teardown testing environment)"
+>@${MESSAGE} start "workflow (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@rm -f nextflow.log; rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
@@ -60,7 +60,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "    $$test_name"
+    ${MESSAGE} start "  $$test_name"
 >@test_target=$@ ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -82,6 +82,7 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f Dockerfile
 >@rm -f ${WHEEL_FILENAME}
+>@rm -f .nextflow.log
 >@rm -f .nextflow.log*
 >@rm -rf .nextflow/
 >@rm -f configure.sh

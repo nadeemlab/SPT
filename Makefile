@@ -198,23 +198,23 @@ test: unit-tests module-tests
 
 module-tests: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image ${DOCKER_BUILD_TARGETS} clean-network-environment
+${MODULE_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment
 >@submodule_directory=$$(echo $@ | sed 's/^module-test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
-${UNIT_TEST_TARGETS}: development-image data-loaded-image ${DOCKER_BUILD_TARGETS} clean-network-environment
+${UNIT_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${PACKAGE_NAME}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
->@${MESSAGE} start "Building test-data-loaded spt-db image"
+data-loaded-image-%: spatialprofilingtoolbox/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/import_test_dataset%.sh
+>@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
-    pipeline_cmd="cd /mount_sources/; bash building/test_HALO_exported_data_import.sh; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
+    pipeline_cmd="cd /mount_sources/; bash building/import_test_dataset$*.sh ; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
     docker run \
      --rm \
      --network container:temporary-spt-db-preloading \
@@ -222,13 +222,20 @@ data-loaded-image: spatialprofilingtoolbox/db/docker.built development-image
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
      "$$pipeline_cmd" && \
-     docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded:latest && \
+     docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*:latest && \
      docker container rm --force temporary-spt-db-preloading ; \
-    echo "$$?" > status_code
+    allstatus=("$${PIPESTATUS[@]}") ; \
+    if [[ "$${allstatus[0]}" == "0" ]] ; \
+    then \
+        status_code=0 ; \
+    else \
+        status_code=1 ; \
+    fi ; \
+    echo $$status_code > status_code
 >@status_code=$$(cat status_code); \
     if [[ "$$status_code" == "0" ]]; \
     then \
-        touch data-loaded-image ; \
+        touch data-loaded-image-$* ; \
     fi
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
@@ -256,7 +263,9 @@ clean-files:
 >@rm -rf build/
 >@rm -rf status_code
 >@rm -rf development-image
->@rm -rf data-loaded-image
+>@rm -rf data-loaded-image-1
+>@rm -rf data-loaded-image-2
+>@rm -rf data-loaded-image-1and2
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@rm -rf status_code
 >@rm -rf check-docker-daemon-running

@@ -19,23 +19,12 @@ from .channels import ChannelsPhenotypesParser
 from .cellmanifests import CellManifestsParser
 
 
-class DataSkimmer:
+class DataSkimmer(DatabaseConnectionMaker):
     def __init__(self, database_config_file: str=None, db_backend=DBBackend.POSTGRES):
         if db_backend != DBBackend.POSTGRES:
             raise ValueError('Only DBBackend.POSTGRES is supported.')
         self.db_backend = db_backend
-        dcm = DatabaseConnectionMaker(database_config_file)
-        self.connection = dcm.get_connection()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        if self.connection:
-            self.connection.close()
-
-    def get_connection(self):
-        return self.connection
+        super(DataSkimmer, self).__init__(database_config_file=database_config_file)
 
     def normalize(self, name):
         return re.sub('[ \-]', '_', name).lower()
@@ -84,41 +73,41 @@ class DataSkimmer:
             subjects_file = None,
             **kwargs,
         ):
-        if not self.connection:
+        if not self.get_connection():
             logger.debug('No database connection was initialized. Skipping semantic parse.')
             return
-        with importlib.resources.path('adisinglecell', 'fields.tsv') as path:
+        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
-        self.cache_all_record_counts(self.connection, fields)
+        self.cache_all_record_counts(self.get_connection(), fields)
 
         age_at_specimen_collection = SubjectsParser().parse(
-            self.connection,
+            self.get_connection(),
             fields,
             subjects_file,
         )
         samples_file = outcomes_file
         SamplesParser().parse(
-            self.connection,
+            self.get_connection(),
             fields,
             samples_file,
             age_at_specimen_collection,
             file_manifest_file,
         )
         CellManifestSetParser().parse(
-            self.connection,
+            self.get_connection(),
             fields,
             file_manifest_file,
         )
         chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser().parse(
-            self.connection,
+            self.get_connection(),
             fields,
             file_manifest_file,
             elementary_phenotypes_file,
             composite_phenotypes_file,
         )
         CellManifestsParser().parse(
-            self.connection,
+            self.get_connection(),
             fields,
             dataset_design,
             computational_design,
@@ -126,4 +115,4 @@ class DataSkimmer:
             chemical_species_identifiers_by_symbol,
         )
 
-        self.report_record_count_changes(self.connection, fields)
+        self.report_record_count_changes(self.get_connection(), fields)

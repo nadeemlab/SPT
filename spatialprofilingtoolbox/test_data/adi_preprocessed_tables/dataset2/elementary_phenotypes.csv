@@ -1,0 +1,34 @@
+Name,Column header fragment prefix,Target structure class,Antibody,Marking mechanism,Target full name
+Histone H3,1261726In113Di Histone,,Cell Signaling 4499BF,,Histone H3
+H3 (Lys28) trimethylate,473968La139Di Histone,,Cell Signaling 9733BF,,H3 (Lys28) trimethylate
+Cytokeratin 5,651779Pr141Di Cytoker,,Abcam Custom,,Cytokeratin 5
+Fibronectin,3281668Nd142Di Fibrone,,BD Biosciences 610078,,Fibronectin
+Cytokeratin19,3111576Nd143Di Cytoker,,Dev Studies Hybridoma Bank Troma -III,,Cytokeratin19
+Cytokeratin 8/18,971099Nd144Di Cytoker,,Cell Signaling 4546BF,,Cytokeratin 8/18
+Twist,Nd145Di Twist,,Millipore ABD29,,Twist
+CD68,77877Nd146Di CD68,,E-Bioscience 14-0688-82,,CD68
+Keratin 14 (KRT14),346876Sm147Di Keratin,,Thermo Fischer PA5-16722,,Keratin 14 (KRT14)
+SMA,174864Nd148Di SMA,,Abcam ab7817,,SMA
+Vimentin,1921755Sm149Di Vimenti,,Cell Signaling 5741BF,,Vimentin
+c-Myc,322787Nd150Di cMyc,,Biolegend 626802,,c-Myc
+c-erbB-2 - Her2,201487Eu151Di cerbB,,BD Biosciences 554299,,c-erbB-2 - Her2
+CD3 epsilon,8001752Sm152Di CD3epsi,,Cell Signaling 85061,,CD3 epsilon
+Slug,3521227Gd155Di Slug,,R&D Systems Custom,,Slug
+Estrogen Receptor Alpha,112475Gd156Di Estroge,,Epitomics AC-0015EU,,Estrogen Receptor Alpha
+Rabbit IgG (H+L),112475Gd156Di Estroge,,Vector Labs AI-1000,,Rabbit IgG (H+L)
+Progesterone Receptor A/B,312878Gd158Di Progest,,Spring Bioscience M3024 C,,Progesterone Receptor A/B
+p53,207736Tb159Di p53,,Cell Signaling 2527BF,,p53
+CD44,6967Gd160Di CD44,,R&D Systems AF3660,,CD44
+CD45,71790Dy162Di CD45,,E-Bioscience 14-9457-82,,CD45
+GATA3,117792Dy163Di GATA3,,BD Biosceinces 558686,,GATA3
+CD20,361077Dy164Di CD20,,E-Bioscience 14-0202-82,,CD20
+Carbonic Anhydrase IX,92964Er166Di Carboni,,R&D Systems AF2188,,Carbonic Anhydrase IX
+E-Cadherin / P-Cadherin,1031747Er167Di ECadhe,,BD Biosciences 610182,,E-Cadherin / P-Cadherin
+Ki-67,1441101Er168Di Ki67,,Cell Signaling 9449BF,,Ki-67
+EGFR,1021522Tm169Di EGFR,,Cell Signaling 4267BF,,EGFR
+vWF,378871Yb172Di vWF,,Millipore AB7356,,vWF
+CD31,378871Yb172Di vWF,,Novus Biologicals NB600-562,,CD31
+Cytokeratin 7,98922Yb174Di Cytoker,,BD Biosciences 550507,,Cytokeratin 7
+pan Cytokeratin,234832Lu175Di panCyto,,Millipore MAB1611,,pan Cytokeratin
+cleaved PARP,198883Yb176Di cleaved,,BD Biosciences 552596,,cleaved PARP
+Cleaved Caspase3,198883Yb176Di cleaved,,BD Biosciences 559565,,Cleaved Caspase3

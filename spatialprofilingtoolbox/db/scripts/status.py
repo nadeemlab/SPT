@@ -9,7 +9,7 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-    import adisinglecell
+    import adiscstudies
     import pandas as pd
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
@@ -18,7 +18,7 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger('spt db status')
 
 def check_tables(cursor):
-    with importlib.resources.path('adisinglecell', 'tables.tsv') as path:
+    with importlib.resources.path('adiscstudies', 'tables.tsv') as path:
         tables = pd.read_csv(path, sep='\t', keep_default_na=False)    
     tablenames = list(tables['Name'])
     cursor.execute('SELECT tablename FROM pg_tables WHERE schemaname=\'public\';')
@@ -64,13 +64,11 @@ if __name__=='__main__':
     if not exists(config_file):
         raise FileNotFoundError('Need to supply valid database config filename: %s', config_file)
 
-    dcm = DatabaseConnectionMaker(database_config_file=config_file)
-    connection = dcm.get_connection()
-    cursor = connection.cursor()
-    tables_present, counts = check_tables(cursor)
-    if not tables_present:
-        exit(1)
-    cursor.close()
-    connection.close()
-    report_counts(counts)
+    with DatabaseConnectionMaker(database_config_file=config_file) as dcm:
+        cursor = dcm.get_connection().cursor()
+        tables_present, counts = check_tables(cursor)
+        if not tables_present:
+            exit(1)
+        cursor.close()
 
+    report_counts(counts)

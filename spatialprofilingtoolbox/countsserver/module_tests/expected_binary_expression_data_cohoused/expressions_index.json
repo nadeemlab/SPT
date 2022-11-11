@@ -1,0 +1,184 @@
+{
+    "": [
+        {
+            "specimen measurement study name": "Test project - Melanoma intralesional IL2 (Hollmann lab) - measurement",
+            "expressions files": [
+                {
+                    "specimen": "lesion 0_1",
+                    "filename": "expression_data_array.1.0.bin"
+                },
+                {
+                    "specimen": "lesion 0_2",
+                    "filename": "expression_data_array.1.1.bin"
+                },
+                {
+                    "specimen": "lesion 0_3",
+                    "filename": "expression_data_array.1.2.bin"
+                },
+                {
+                    "specimen": "lesion 6_1",
+                    "filename": "expression_data_array.1.3.bin"
+                },
+                {
+                    "specimen": "lesion 6_2",
+                    "filename": "expression_data_array.1.4.bin"
+                },
+                {
+                    "specimen": "lesion 6_3",
+                    "filename": "expression_data_array.1.5.bin"
+                },
+                {
+                    "specimen": "lesion 6_4",
+                    "filename": "expression_data_array.1.6.bin"
+                }
+            ],
+            "target index lookup": {
+                "0": 0,
+                "1": 1,
+                "10": 2,
+                "11": 3,
+                "12": 4,
+                "13": 5,
+                "14": 6,
+                "15": 7,
+                "16": 8,
+                "17": 9,
+                "18": 10,
+                "19": 11,
+                "2": 12,
+                "20": 13,
+                "21": 14,
+                "22": 15,
+                "23": 16,
+                "24": 17,
+                "25": 18,
+                "3": 19,
+                "4": 20,
+                "5": 21,
+                "6": 22,
+                "7": 23,
+                "8": 24,
+                "9": 25
+            },
+            "target by symbol": {
+                "B2M": "0",
+                "B7H3": "1",
+                "CD14": "2",
+                "CD163": "3",
+                "CD20": "4",
+                "CD25": "5",
+                "CD27": "6",
+                "CD3": "7",
+                "CD4": "8",
+                "CD56": "9",
+                "CD68": "10",
+                "CD8": "11",
+                "DAPI": "12",
+                "FOXP3": "13",
+                "IDO1": "14",
+                "KI67": "15",
+                "LAG3": "16",
+                "MHCI": "17",
+                "MHCII": "18",
+                "MRC1": "19",
+                "PD1": "20",
+                "PDL1": "21",
+                "S100B": "22",
+                "SOX10": "23",
+                "TGM2": "24",
+                "TIM3": "25"
+            }
+        },
+        {
+            "specimen measurement study name": "Single-cell pathology of breast cancer - measurement",
+            "expressions files": [
+                {
+                    "specimen": "BaselTMA_SP42_5_X8Y7",
+                    "filename": "expression_data_array.0.0.bin"
+                },
+                {
+                    "specimen": "BaselTMA_SP43_1_X1Y8",
+                    "filename": "expression_data_array.0.1.bin"
+                },
+                {
+                    "specimen": "BaselTMA_SP43_3_X13Y6",
+                    "filename": "expression_data_array.0.2.bin"
+                },
+                {
+                    "specimen": "BaselTMA_SP43_4_X15Y3",
+                    "filename": "expression_data_array.0.3.bin"
+                }
+            ],
+            "target index lookup": {
+                "26": 0,
+                "27": 1,
+                "28": 2,
+                "29": 3,
+                "30": 4,
+                "31": 5,
+                "32": 6,
+                "33": 7,
+                "34": 8,
+                "35": 9,
+                "36": 10,
+                "37": 11,
+                "38": 12,
+                "39": 13,
+                "40": 14,
+                "41": 15,
+                "42": 16,
+                "43": 17,
+                "44": 18,
+                "45": 19,
+                "46": 20,
+                "47": 21,
+                "48": 22,
+                "49": 23,
+                "50": 24,
+                "51": 25,
+                "52": 26,
+                "53": 27,
+                "54": 28,
+                "55": 29,
+                "56": 30,
+                "57": 31,
+                "58": 32
+            },
+            "target by symbol": {
+                "Histone H3": "26",
+                "H3 (Lys28) trimethylate": "27",
+                "Cytokeratin 5": "28",
+                "Fibronectin": "29",
+                "Cytokeratin19": "30",
+                "Cytokeratin 8/18": "31",
+                "Twist": "32",
+                "CD68": "33",
+                "Keratin 14 (KRT14)": "34",
+                "SMA": "35",
+                "Vimentin": "36",
+                "c-Myc": "37",
+                "c-erbB-2 - Her2": "38",
+                "CD3 epsilon": "39",
+                "Slug": "40",
+                "Estrogen Receptor Alpha": "41",
+                "Rabbit IgG (H+L)": "42",
+                "Progesterone Receptor A/B": "43",
+                "p53": "44",
+                "CD44": "45",
+                "CD45": "46",
+                "GATA3": "47",
+                "CD20": "48",
+                "Carbonic Anhydrase IX": "49",
+                "E-Cadherin / P-Cadherin": "50",
+                "Ki-67": "51",
+                "EGFR": "52",
+                "vWF": "53",
+                "CD31": "54",
+                "Cytokeratin 7": "55",
+                "pan Cytokeratin": "56",
+                "cleaved PARP": "57",
+                "Cleaved Caspase3": "58"
+            }
+        }
+    ]
+}

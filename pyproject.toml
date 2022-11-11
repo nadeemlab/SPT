@@ -21,13 +21,14 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "psycopg2==2.9.3",
-    "adisinglecell==0.10.4",
+    "adiscstudies==0.10.5",
 ]
 urls = { "Documentation" = "https://github.com/nadeemlab/SPT", "Source code" = "https://github.com/nadeemlab/SPT" }
 
 [project.optional-dependencies]
 apiserver = ["fastapi>=0.68.0,<0.69.0", "uvicorn>=0.15.0,<0.16.0"]
-db = ["pandas>=1.1.5"]
+db = ["pandas>=1.1.5", "pyshp==2.2.0"]
+countsserver = []
 workflow = ["numpy==1.22.3", "scipy==1.8.0", "scikit-learn==1.1.2", "pyshp==2.2.0", "pandas>=1.1.5", "Jinja2==3.0.1", "tabulate==0.8.10"]
 building = ["Jinja2==3.0.1"]
 all = ["fastapi>=0.68.0,<0.69.0", "uvicorn>=0.15.0,<0.16.0", "Jinja2==3.0.1", "pandas>=1.1.5", "numpy==1.22.3", "scipy==1.8.0", "scikit-learn==1.1.2", "pyshp==2.2.0", "tabulate==0.8.10"]
@@ -100,6 +101,7 @@ packages = [
     "modify-constraints.py",
     "guess-channels-from-object-files.py",
     "status.py",
+    "retrieve-feature-matrices.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",

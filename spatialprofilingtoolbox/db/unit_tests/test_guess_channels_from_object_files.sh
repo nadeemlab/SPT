@@ -1,12 +1,12 @@
 #!/bin/bash
 spt db guess-channels-from-object-files \
-../test_data/adi_preprocessed_tables/lesion_0_1.csv \
-../test_data/adi_preprocessed_tables/lesion_0_2.csv \
-../test_data/adi_preprocessed_tables/lesion_0_3.csv \
-../test_data/adi_preprocessed_tables/lesion_6_1.csv \
-../test_data/adi_preprocessed_tables/lesion_6_2.csv \
-../test_data/adi_preprocessed_tables/lesion_6_3.csv \
-../test_data/adi_preprocessed_tables/lesion_6_4.csv \
+../test_data/adi_preprocessed_tables/dataset1/lesion_0_1.csv \
+../test_data/adi_preprocessed_tables/dataset1/lesion_0_2.csv \
+../test_data/adi_preprocessed_tables/dataset1/lesion_0_3.csv \
+../test_data/adi_preprocessed_tables/dataset1/lesion_6_1.csv \
+../test_data/adi_preprocessed_tables/dataset1/lesion_6_2.csv \
+../test_data/adi_preprocessed_tables/dataset1/lesion_6_3.csv \
+../test_data/adi_preprocessed_tables/dataset1/lesion_6_4.csv \
  --output=elementary_phenotypes.csv >/dev/null 2>&1
 
 channel_names=$(tail -n+2 elementary_phenotypes.csv | cut -f1 -d, | sort | tr '\n' ' ')

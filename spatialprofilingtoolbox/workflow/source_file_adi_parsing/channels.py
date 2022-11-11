@@ -111,6 +111,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 )
                 cell_phenotype_identifiers_by_symbol[symbol] = str(identifier)
                 identifier = identifier + 1
+                logger.debug('Recognized phenotype: %s', symbol)
             else:
                 cell_phenotype_identifiers_by_symbol[symbol] = key
                 logger.debug(

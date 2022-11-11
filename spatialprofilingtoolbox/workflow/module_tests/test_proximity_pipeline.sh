@@ -1,6 +1,6 @@
 #!/bin/bash
 
-spt workflow configure --local --input-path=../test_data/adi_preprocessed_tables/ --workflow='phenotype proximity' --database-config-file=../db/.spt_db.config.container
+spt workflow configure --local --input-path=../test_data/adi_preprocessed_tables/dataset1/ --workflow='phenotype proximity' --database-config-file=../db/.spt_db.config.container
 nextflow run .
 
 status=$?

@@ -1,0 +1,24 @@
+                                Table  Records
+            biological_marking_system       33
+                       cell_phenotype        3
+             cell_phenotype_criterion        8
+                     chemical_species       33
+                  data_analysis_study        1
+                            data_file        4
+                            diagnosis        4
+       diagnostic_selection_criterion        0
+            expression_quantification   327591
+                feature_specification        0
+                    feature_specifier        0
+               histological_structure     9927
+histological_structure_identification     9927
+         histology_assessment_process        4
+   plane_coordinates_reference_system        0
+           quantitative_feature_value        0
+                           shape_file     9927
+          specimen_collection_process        4
+            specimen_collection_study        1
+    specimen_data_measurement_process        4
+           specimen_measurement_study        1
+                              subject        4
+  two_cohort_feature_association_test        0

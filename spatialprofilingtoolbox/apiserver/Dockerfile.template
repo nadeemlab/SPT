@@ -8,6 +8,7 @@ ENV service_name=$service_name
 RUN apt-get update
 RUN apt-get -y install gcc
 RUN apt-get install -y libpq-dev
+RUN apt-get -y install curl
 COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
 COPY specific_requirements.txt .

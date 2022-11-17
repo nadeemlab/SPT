@@ -1,3 +1,4 @@
+# Development, maintenance, administration
 
 1. <a href="#building-and-testing-modules">Building and testing modules</a>
 2. <a href="#python-package">Python package</a>
@@ -5,8 +6,6 @@
 4. <a href="#test-managed-development">Test-managed development</a>
 5. <a href="#spt-tab-completion">`spt` tab-completion</a>
 6. <a href="#throwaway-testing">Throwaway testing</a>
-
-# Development, maintenance, administration
 
 ## <a id="building-and-testing-modules"></a> 1. Building and testing modules
 

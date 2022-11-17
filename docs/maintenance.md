@@ -166,7 +166,7 @@ Development often entails "throwaway" test scripts that you modify and run frequ
 
 For this purpose, a pattern that has worked for me in this repository is:
 
-1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory.
+1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory, for each module that you will use.
 2. Go into a module you want to work on, `cd spatialprofilingtoolbox/<module name>`.
 3. Create `throwaway_script.py`.
 4. Setup the testing environment:

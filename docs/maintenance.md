@@ -1,4 +1,14 @@
+
+1. <a href="#building-and-testing-modules">Building and testing modules</a>
+2. <a href="#python-package">Python package</a>
+3. <a href="#modules">Modules</a>
+4. <a href="#test-managed-development">Test-managed development</a>
+5. <a href="#spt-tab-completion">`spt` tab-completion</a>
+6. <a href="#throwaway-testing">Throwaway testing</a>
+
 # Development, maintenance, administration
+
+## <a id="building-and-testing-modules"></a> 1. Building and testing modules
 
 The modules in this repository are built, tested, and deployed using `make` and Docker.
 
@@ -91,10 +101,10 @@ Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox <span sty
 Uploading spatialprofilingtoolbox==0.11.0 to PyPI <span style="color:olive;">...</span><span style="color:olive;">...........................</span> <span style="font-weight:bold;color:green;">Uploaded.</span>      <span style="color:purple;">(3s)</span>
 </pre>
 
-### Python package
+## <a id="python-package"></a> 2. Python package
 The source code is contained in one Python package, `spatialprofilingtoolbox`. The package metadata uses the declarative `pyproject.toml` format.
 
-### Modules
+## <a id="modules"></a> 3. Modules
 The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
 
 | Module name     | Description |
@@ -106,7 +116,7 @@ The main functionality is provided by 4 modules designed to operate as services.
 
 - *The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.*
 
-### Test-managed development
+## <a id="test-managed-development"></a> 4. Test-managed development
 Test scripts are located under
 - `spatialprofilingtoolbox/<module name>/unit_tests`
 - `spatialprofilingtoolbox/<module name>/module_tests`
@@ -117,7 +127,7 @@ These tests serve multiple purposes for us:
 
 Each test is performed inside an isolated for-development-only `spatialprofilingtoolbox`-loaded Docker container, in the presence of a running module-specific Docker composition that provides the given module's service as well as other modules' services (if needed).
 
-### `spt` tab completion
+## <a id="spt-tab-completion"></a> 5. `spt` tab completion
 You might want to install `spatialprofilingtoolbox` to your local machine in order to initiate database control actions, ETL, etc.
 
 In this case bash completion is available that allows you to readily assess and find functionality provided at the command line. This reduces the need for some kinds of documentation, since such documentation is already folded in to the executables in such a way that it can be readily accessed.
@@ -151,11 +161,11 @@ optional arguments:
   --recreate-views-only Only recreate views, do not touch main table schema.
 ```
 
-### Throwaway testing
+## <a id="throwaway-testing"></a> 6. Throwaway testing
 
 Development often entails "throwaway" test scripts that you modify and run frequently in order to check your understanding of functionality and verify that it works as expected.
 
-For this purpose, a pattern that has worked for in this repository is:
+For this purpose, a pattern that has worked for me in this repository is:
 
 1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory.
 2. Go into a module you want to work on, `cd spatialprofilingtoolbox/<module name>`.

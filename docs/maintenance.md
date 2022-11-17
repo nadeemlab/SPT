@@ -151,5 +151,35 @@ optional arguments:
   --recreate-views-only Only recreate views, do not touch main table schema.
 ```
 
+### Throwaway testing
+
+Development often entails "throwaway" test scripts that you modify and run frequently in order to check your understanding of functionality and verify that it works as expected.
+
+For this purpose, a pattern that has worked for in this repository is:
+
+1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory.
+2. Go into a module you want to work on, `cd spatialprofilingtoolbox/<module name>`.
+3. Create `throwaway_script.py`.
+4. Setup the testing environment:
+```sh
+docker compose up -d
+```
+5. As many times as you need to, run your script with:
+```
+test_cmd="cd /mount_sources/<module name>/; python throwaway_script.py" ;
+docker run \
+  --rm \
+  --network workflow_isolated_temporary_test \
+  --mount type=bind,src=$(realpath ..),dst=/mount_sources \
+  -t nadeemlab-development/spt-development:latest \
+  /bin/bash -c "$test_cmd";
+```
+6. Tear down the testing environment when you're done:
+```sh
+docker compose down;
+docker compose rm --force --stop;
+```
+
+You can of course also modify the testing environment, involving more or fewer modules, even docker containers from external images, by editing `compose.yaml`.
 
 

@@ -167,13 +167,14 @@ Development often entails "throwaway" test scripts that you modify and run frequ
 For this purpose, a pattern that has worked for me in this repository is:
 
 1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory, for each module that you will use.
-2. Go into a module you want to work on, `cd spatialprofilingtoolbox/<module name>`.
-3. Create `throwaway_script.py`.
-4. Setup the testing environment:
+2. Choose a pertinent module for your work (or create a new one, i.e. a subdirectory of `spatialprofilingtoolbox/`, modeled on one of the others).
+3. Go into the module: `cd spatialprofilingtoolbox/<module name>`.
+4. Create `throwaway_script.py`.
+5. Setup the testing environment:
 ```sh
 docker compose up -d
 ```
-5. As many times as you need to, run your script with:
+6. As many times as you need to, run your script with:
 ```
 test_cmd="cd /mount_sources/<module name>/; python throwaway_script.py" ;
 docker run \
@@ -183,7 +184,7 @@ docker run \
   -t nadeemlab-development/spt-development:latest \
   /bin/bash -c "$test_cmd";
 ```
-6. Tear down the testing environment when you're done:
+7. Tear down the testing environment when you're done:
 ```sh
 docker compose down;
 docker compose rm --force --stop;

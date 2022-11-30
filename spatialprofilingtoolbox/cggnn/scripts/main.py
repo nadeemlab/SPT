@@ -7,7 +7,11 @@ from cggnn.run_all import run_pipeline
 
 def parse_arguments():
     "Process command line arguments."
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        prog = 'spt cg-gnn',
+        description = 'Create cell graphs from SPT tables, train a graph neural network on them, '\
+            'and save resultant model, metrics, and visualizations (if requested) to file.'
+    )
     parser.add_argument(
         '--measurement_study',
         type=str,
@@ -136,11 +140,7 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
-    args = parse_arguments(
-        prog = 'spt cg-gnn',
-        description = '''Create cell graphs from SPT tables, train a graph neural network on them,
-        and save resultant model, metrics, and visualizations (if requested) to file.'''
-    )
+    args = parse_arguments()
     run_pipeline(args.measurement_study,
                  args.analysis_study,
                  args.specimen_study,

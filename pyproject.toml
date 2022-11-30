@@ -36,16 +36,7 @@ db = [
 ]
 countsserver = []
 cggnn = [
-    "bokeh",
-    "cg-gnn",
-    "h5py",
-    "matplotlib",
-    "networkx",
-    "pyshp",
-    "pytables",
-    "scikit-learn",
-    "scipy",
-    "tqdm"
+    "cg-gnn"
 ]
 workflow = [
     "numpy==1.22.3",

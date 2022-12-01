@@ -8,7 +8,7 @@ from cggnn.run_all import run_pipeline
 def parse_arguments():
     "Process command line arguments."
     parser = ArgumentParser(
-        prog = 'spt cg-gnn',
+        prog = 'spt cg-gnn run',
         description = 'Create cell graphs from SPT tables, train a graph neural network on them, '\
             'and save resultant model, metrics, and visualizations (if requested) to file.'
     )

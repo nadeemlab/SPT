@@ -141,3 +141,6 @@ packages = [
     "performance_tweaks.sql",
     "refresh_views.sql",
 ]
+"spatialprofilingtoolbox.cggnn.scripts" = [
+    "run.py",
+]

@@ -1,3 +1,0 @@
-RUN sudo apt-get install cuda-11-6
-RUN python -m pip install dgl-cu116 dglgo -f https://data.dgl.ai/wheels/repo.html
-RUN python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116

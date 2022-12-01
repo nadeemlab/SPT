@@ -10,9 +10,9 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-Dockerfile: ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base Dockerfile.append
->@${MESSAGE} start "Building cg-gnn Dockerfile"
->@cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
+Dockerfile: Dockerfile.template
+>@${MESSAGE} start "Building db Dockerfile"
+>@cp Dockerfile.template Dockerfile ; echo "$$?" > status_code
 >@${MESSAGE} end "Built." "Not built."
 >@rm -f status_code
 

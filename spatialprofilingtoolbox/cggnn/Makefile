@@ -71,7 +71,7 @@ ${TESTS}: setup-testing
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
-     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+     -t ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-cggnn:latest \
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."

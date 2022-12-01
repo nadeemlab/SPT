@@ -11,7 +11,7 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 Dockerfile: Dockerfile.template
->@${MESSAGE} start "Building cg-gnn Dockerfile"
+>@${MESSAGE} start "Building cggnn Dockerfile"
 >@cp Dockerfile.template Dockerfile ; echo "$$?" > status_code
 >@${MESSAGE} end "Built." "Not built."
 >@rm -f status_code
@@ -23,28 +23,28 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "  cg-gnn (setup testing environment)"
+>@${MESSAGE} start "  cggnn (setup testing environment)"
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
-     spt-cg-gnn-testing ; \
+     spt-cggnn-testing ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup." "Not setup."
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "  cg-gnn (teardown testing environment)"
+>@${MESSAGE} start "  cggnn (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "  cg-gnn (teardown testing environment)"
+>@${MESSAGE} start "  cggnn (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "  cg-gnn (teardown testing environment)"
+>@${MESSAGE} start "  cggnn (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -66,7 +66,7 @@ ${TESTS}: setup-testing
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    test_cmd="cd /mount_sources/cg-gnn/; $$executor $$test_script" ; \
+    test_cmd="cd /mount_sources/cggnn/; $$executor $$test_script" ; \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \

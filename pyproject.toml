@@ -21,7 +21,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "psycopg2==2.9.3",
-    "adiscstudies==0.10.5",
+    "adiscstudies==0.10.9",
 ]
 urls = { "Documentation" = "https://github.com/nadeemlab/SPT", "Source code" = "https://github.com/nadeemlab/SPT" }
 

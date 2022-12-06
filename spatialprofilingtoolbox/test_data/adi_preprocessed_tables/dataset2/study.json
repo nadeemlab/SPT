@@ -1,0 +1,94 @@
+{
+  "Study name" : "Breast cancer IMC",
+  "Institution" : "University of Zurich",
+  "Study contact person" : {
+    "Name" : "Hartland W. Jackson",
+    "Contact reference" : "hjackson@lunenfeld.ca"
+  },
+  "Publications" : [
+    {
+      "Title" : "The single-cell pathology landscape of breast cancer",
+      "Document type" : "Article",
+      "Publisher" : "Nature",
+      "Date" : "2020-01-20",
+      "URL" : "https://doi.org/10.1038/s41586-019-1876-x",
+      "Authors" : ["Hartland W. Jackson", "Jana R. Fischer", "Vito R. T. Zanotelli", "H. Raza Ali", "Robert Mechera", "Savas D. Soysal", "Holger Moch", "Simone Muenst", "Zsuzsanna Varga", "Walter P. Weber", "Bernd Bodenmiller"]
+    },
+    {
+      "Title" : "The single-cell pathology landscape of breast cancer (images, masks, patient data)",
+      "Document type" : "Dataset",
+      "Publisher" : "Zenodo (CERN)",
+      "Date" : "2019-11-04",
+      "URL" : "https://doi.org/10.5281/zenodo.4607374",
+      "Authors" : ["Hartland W. Jackson", "Jana R. Fischer", "Vito R. T. Zanotelli", "H. Raza Ali", "Robert Mechera", "Savas D. Soysal", "Holger Moch", "Simone Muenst", "Zsuzsanna Varga", "Walter P. Weber", "Bernd Bodenmiller"]
+    }
+  ],
+ "People": [
+    {
+      "Full name": "Hartland W. Jackson",
+      "Surname": "Jackson",
+      "Given name": "Hartland",
+      "ORCID": "0000-0001-6423-2415"
+    },
+    {
+      "Full name": "Jana R. Fischer",
+      "Surname": "Fischer",
+      "Given name": "Jana R. Fischer",
+      "ORCID": "0000-0001-9047-8400"
+    },
+    {
+      "Full name": "Vito R. T. Zanotelli",
+      "Surname": "Zanotelli",
+      "Given name": "Vito",
+      "ORCID": "0000-0001-7268-311X"
+    },
+    {
+      "Full name": "H. Raza Ali",
+      "Surname": "Ali",
+      "Given name": "H.",
+      "ORCID": ""
+    },
+    {
+      "Full name": "Robert Mechera",
+      "Surname": "Mechera",
+      "Given name": "Robert",
+      "ORCID": "0000-0002-4533-9265"
+    },
+    {
+      "Full name": "Savas D. Soysal",
+      "Surname": "Soysal",
+      "Given name": "Savas",
+      "ORCID": "0000-0002-0761-449X"
+    },
+    {
+      "Full name": "Holger Moch",
+      "Surname": "Moch",
+      "Given name": "Holger",
+      "ORCID": "0000-0002-7986-2839"
+    },
+    {
+      "Full name": "Simone Muenst",
+      "Surname": "Muenst",
+      "Given name": "Simone",
+      "ORCID": "0000-0001-7973-1401"
+    },
+    {
+      "Full name": "Zsuzsanna Varga",
+      "Surname": "Varga",
+      "Given name": "Zsuzsanna",
+      "ORCID": ""
+    },
+    {
+      "Full name": "Walter P. Weber",
+      "Surname": "Weber",
+      "Given name": "Walter",
+      "ORCID": ""
+    },
+    {
+      "Full name": "Bernd Bodenmiller",
+      "Surname": "Bodenmiller",
+      "Given name": "Bernd",
+      "ORCID": "0000-0002-6325-7861"
+    }
+  ]
+}

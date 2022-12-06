@@ -16,7 +16,7 @@ class CellManifestSetParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(CellManifestSetParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, file_manifest_file):
+    def parse(self, connection, fields, file_manifest_file, study_name):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source
         file), and parse records for:
@@ -54,16 +54,7 @@ class CellManifestSetParser(SourceToADIParser):
                 source_generation_process,
             )
 
-        project_handles = sorted(list(set(file_metadata['Project ID']).difference([''])))
-        if len(project_handles) == 0:
-            message = 'No "Project ID" values are supplied with the file manifest for this run.'
-            logger.error(message)
-            raise ValueError(message)
-        if len(project_handles) > 1:
-            message = 'Multiple "Project ID" values were supplied with the file manifest for this run. Using "%s".' % project_handles[0]
-            logger.warning(message)
-        project_handle = project_handles[0]
-        measurement_study = project_handle + ' - measurement'
+        measurement_study = SourceToADIParser.get_measurement_study_name(study_name)
 
         cursor = connection.cursor()
         cursor.execute(

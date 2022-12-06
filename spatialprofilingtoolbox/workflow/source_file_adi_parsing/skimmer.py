@@ -71,6 +71,7 @@ class DataSkimmer(DatabaseConnectionMaker):
             outcomes_file = None,
             compartments_file = None,
             subjects_file = None,
+            study_file = None,
             **kwargs,
         ):
         if not self.get_connection():
@@ -80,6 +81,9 @@ class DataSkimmer(DatabaseConnectionMaker):
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
         self.cache_all_record_counts(self.get_connection(), fields)
+
+        with open(study_file, 'rt') as study:
+            study_name = json.loads(study.read())['Study name']
 
         age_at_specimen_collection = SubjectsParser().parse(
             self.get_connection(),
@@ -92,19 +96,20 @@ class DataSkimmer(DatabaseConnectionMaker):
             fields,
             samples_file,
             age_at_specimen_collection,
-            file_manifest_file,
+            study_name,
         )
         CellManifestSetParser().parse(
             self.get_connection(),
             fields,
             file_manifest_file,
+            study_name,
         )
         chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser().parse(
             self.get_connection(),
             fields,
-            file_manifest_file,
             elementary_phenotypes_file,
             composite_phenotypes_file,
+            study_name,
         )
         CellManifestsParser().parse(
             self.get_connection(),

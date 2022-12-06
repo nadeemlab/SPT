@@ -33,6 +33,12 @@ class HALOImportInitializer(Initializer):
             required=False,
         )
         parser.add_argument(
+            '--study-file',
+            dest='study_file',
+            type=str,
+            required=False,
+        )
+        parser.add_argument(
             '--database-config-file',
             dest='database_config_file',
             type=str,

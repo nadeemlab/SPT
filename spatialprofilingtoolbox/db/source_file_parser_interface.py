@@ -17,6 +17,18 @@ class SourceToADIParser:
     def __init__(self, **kwargs):
         pass
 
+    @staticmethod
+    def get_collection_study_name(study_name):
+        return study_name + " - specimen collection"
+
+    @staticmethod
+    def get_measurement_study_name(study_name):
+        return study_name + " - measurement"
+
+    @staticmethod
+    def get_data_analysis_study_name(study_name):
+        return study_name + " - analysis"
+
     def parse(self):
         pass
 

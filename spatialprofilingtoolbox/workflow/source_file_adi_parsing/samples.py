@@ -11,18 +11,16 @@ class SamplesParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(SamplesParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, samples_file, age_at_specimen_collection, file_manifest_file):
+    def parse(self, connection, fields, samples_file, age_at_specimen_collection, study_name):
         """
         Retrieve the samples information and parse records for:
         - specimen collection study
         - specimen collection process
         - histology assessment process
         """
-        file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         samples = pd.read_csv(samples_file, sep='\t', dtype=str)
 
-        project_handle = get_unique_value(file_metadata, 'Project ID')
-        collection_study = project_handle + ' - specimen collection'
+        collection_study = SourceToADIParser.get_collection_study_name(study_name)
         extraction_method = get_unique_value(samples, 'Extraction method')
         preservation_method = get_unique_value(samples, 'Preservation method')
         storage_location = get_unique_value(samples, 'Storage location')

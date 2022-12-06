@@ -12,6 +12,7 @@ from ...db.database_connection import DatabaseConnectionMaker
 from ...db.source_file_parser_interface import SourceToADIParser
 from ...db.source_file_parser_interface import DBBackend
 from ...db.verbose_sql_execution import verbose_sql_execute
+from .study import StudyParser
 from .subjects import SubjectsParser
 from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser
@@ -82,9 +83,11 @@ class DataSkimmer(DatabaseConnectionMaker):
 
         self.cache_all_record_counts(self.get_connection(), fields)
 
-        with open(study_file, 'rt') as study:
-            study_name = json.loads(study.read())['Study name']
-
+        study_name = StudyParser().parse(
+            self.get_connection(),
+            fields,
+            study_file,
+        )
         age_at_specimen_collection = SubjectsParser().parse(
             self.get_connection(),
             fields,

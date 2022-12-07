@@ -1,5 +1,5 @@
                                 Table  Records
-                               author       84
+                               author       86
             biological_marking_system       59
                        cell_phenotype        7
              cell_phenotype_criterion       35
@@ -18,7 +18,7 @@ histological_structure_identification    10627
    plane_coordinates_reference_system        0
                           publication        4
            quantitative_feature_value        0
-                research_professional       42
+                research_professional       43
                            shape_file    10627
           specimen_collection_process       11
             specimen_collection_study        2

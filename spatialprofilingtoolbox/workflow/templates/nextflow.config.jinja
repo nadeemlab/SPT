@@ -24,3 +24,6 @@ env.db_config_file_ = '{{ db_config_file }}'{% endif %}
 
 {%- if subjects_file is defined and subjects_file|length %}
 env.subjects_file_ = '{{ subjects_file }}'{% endif %}
+
+{%- if study_file is defined and study_file|length %}
+env.study_file_ = '{{ study_file }}'{% endif %}

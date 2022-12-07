@@ -9,8 +9,8 @@ class StudyParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(StudyParser, self).__init__(**kwargs)
 
-    def cautious_insert(self, tablename, record, cursor, fields):
-        was_found, key = self.check_exists('study', record, cursor, fields)
+    def cautious_insert(self, tablename, record, cursor, fields, no_primary=True):
+        was_found, key = self.check_exists(tablename, record, cursor, fields, no_primary=no_primary)
         if was_found:
             logger.debug('"%s" %s already exists.', tablename, str(record))
         else:
@@ -45,7 +45,7 @@ class StudyParser(SourceToADIParser):
         data_analysis = SourceToADIParser.get_data_analysis_study_name(study_name)
         for substudy in [collection, measurement, data_analysis]:
             record = [study_name, substudy]
-            self.cautious_insert('', record, cursor, fields)
+            self.cautious_insert('study_component', record, cursor, fields)
 
         for publication in study['Publications']:
             record = (
@@ -56,16 +56,16 @@ class StudyParser(SourceToADIParser):
                 publication['Date'],
                 publication['URL'],
             )
-            self.cautious_insert('', record, cursor, fields)
+            self.cautious_insert('publication', record, cursor, fields)
 
         for publication in study['Publications']:
-            for author, ordinality in enumerate(publication['Authors']):
+            for ordinality, author in enumerate(publication['Authors']):
                 record = (
                     author,
                     publication['Title'],
-                    ordinality,
+                    str(ordinality),
                 )
-                self.cautious_insert('', record, cursor, fields)
+                self.cautious_insert('author', record, cursor, fields)
 
         logger.info('Parsed records for study "%s".', study_name)
         connection.commit()

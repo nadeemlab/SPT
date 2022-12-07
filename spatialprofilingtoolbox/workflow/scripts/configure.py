@@ -214,6 +214,17 @@ if __name__=='__main__':
             variables['subjects_file'] = subjects_file_abs
             variables['subjects'] = True
 
+    study_file = get_input_filename_by_identifier(
+        input_file_identifier = 'Study file',
+        file_manifest_filename = file_manifest_path,
+    )
+    study_file_abs = join(args.input_path, study_file)
+    if not exists(study_file_abs):
+        print('Did not find study file (%s).' % str(study_file))
+        exit(1)
+    variables['study_file'] = study_file_abs
+    variables['study'] = True
+
     write_config_file(variables)
     write_pipeline_script(variables)
     record_configuration_command(variables)

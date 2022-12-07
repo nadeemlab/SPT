@@ -27,7 +27,7 @@ class SourceToADIParser:
 
     @staticmethod
     def get_data_analysis_study_name(study_name):
-        return study_name + " - analysis"
+        return study_name + " - data analysis"
 
     def parse(self):
         pass

@@ -1,95 +1,6 @@
 {
     "": [
         {
-            "specimen measurement study name": "Melanoma intralesional IL2 - measurement",
-            "expressions files": [
-                {
-                    "specimen": "lesion 0_1",
-                    "filename": "expression_data_array.1.0.bin"
-                },
-                {
-                    "specimen": "lesion 0_2",
-                    "filename": "expression_data_array.1.1.bin"
-                },
-                {
-                    "specimen": "lesion 0_3",
-                    "filename": "expression_data_array.1.2.bin"
-                },
-                {
-                    "specimen": "lesion 6_1",
-                    "filename": "expression_data_array.1.3.bin"
-                },
-                {
-                    "specimen": "lesion 6_2",
-                    "filename": "expression_data_array.1.4.bin"
-                },
-                {
-                    "specimen": "lesion 6_3",
-                    "filename": "expression_data_array.1.5.bin"
-                },
-                {
-                    "specimen": "lesion 6_4",
-                    "filename": "expression_data_array.1.6.bin"
-                }
-            ],
-            "target index lookup": {
-                "0": 0,
-                "1": 1,
-                "10": 2,
-                "11": 3,
-                "12": 4,
-                "13": 5,
-                "14": 6,
-                "15": 7,
-                "16": 8,
-                "17": 9,
-                "18": 10,
-                "19": 11,
-                "2": 12,
-                "20": 13,
-                "21": 14,
-                "22": 15,
-                "23": 16,
-                "24": 17,
-                "25": 18,
-                "3": 19,
-                "4": 20,
-                "5": 21,
-                "6": 22,
-                "7": 23,
-                "8": 24,
-                "9": 25
-            },
-            "target by symbol": {
-                "B2M": "0",
-                "B7H3": "1",
-                "CD14": "2",
-                "CD163": "3",
-                "CD20": "4",
-                "CD25": "5",
-                "CD27": "6",
-                "CD3": "7",
-                "CD4": "8",
-                "CD56": "9",
-                "CD68": "10",
-                "CD8": "11",
-                "DAPI": "12",
-                "FOXP3": "13",
-                "IDO1": "14",
-                "KI67": "15",
-                "LAG3": "16",
-                "MHCI": "17",
-                "MHCII": "18",
-                "MRC1": "19",
-                "PD1": "20",
-                "PDL1": "21",
-                "S100B": "22",
-                "SOX10": "23",
-                "TGM2": "24",
-                "TIM3": "25"
-            }
-        },
-        {
             "specimen measurement study name": "Breast cancer IMC - measurement",
             "expressions files": [
                 {
@@ -178,6 +89,95 @@
                 "pan Cytokeratin": "56",
                 "cleaved PARP": "57",
                 "Cleaved Caspase3": "58"
+            }
+        },
+        {
+            "specimen measurement study name": "Melanoma intralesional IL2 - measurement",
+            "expressions files": [
+                {
+                    "specimen": "lesion 0_1",
+                    "filename": "expression_data_array.1.0.bin"
+                },
+                {
+                    "specimen": "lesion 0_2",
+                    "filename": "expression_data_array.1.1.bin"
+                },
+                {
+                    "specimen": "lesion 0_3",
+                    "filename": "expression_data_array.1.2.bin"
+                },
+                {
+                    "specimen": "lesion 6_1",
+                    "filename": "expression_data_array.1.3.bin"
+                },
+                {
+                    "specimen": "lesion 6_2",
+                    "filename": "expression_data_array.1.4.bin"
+                },
+                {
+                    "specimen": "lesion 6_3",
+                    "filename": "expression_data_array.1.5.bin"
+                },
+                {
+                    "specimen": "lesion 6_4",
+                    "filename": "expression_data_array.1.6.bin"
+                }
+            ],
+            "target index lookup": {
+                "0": 0,
+                "1": 1,
+                "10": 2,
+                "11": 3,
+                "12": 4,
+                "13": 5,
+                "14": 6,
+                "15": 7,
+                "16": 8,
+                "17": 9,
+                "18": 10,
+                "19": 11,
+                "2": 12,
+                "20": 13,
+                "21": 14,
+                "22": 15,
+                "23": 16,
+                "24": 17,
+                "25": 18,
+                "3": 19,
+                "4": 20,
+                "5": 21,
+                "6": 22,
+                "7": 23,
+                "8": 24,
+                "9": 25
+            },
+            "target by symbol": {
+                "B2M": "0",
+                "B7H3": "1",
+                "CD14": "2",
+                "CD163": "3",
+                "CD20": "4",
+                "CD25": "5",
+                "CD27": "6",
+                "CD3": "7",
+                "CD4": "8",
+                "CD56": "9",
+                "CD68": "10",
+                "CD8": "11",
+                "DAPI": "12",
+                "FOXP3": "13",
+                "IDO1": "14",
+                "KI67": "15",
+                "LAG3": "16",
+                "MHCI": "17",
+                "MHCII": "18",
+                "MRC1": "19",
+                "PD1": "20",
+                "PDL1": "21",
+                "S100B": "22",
+                "SOX10": "23",
+                "TGM2": "24",
+                "TIM3": "25"
             }
         }
     ]

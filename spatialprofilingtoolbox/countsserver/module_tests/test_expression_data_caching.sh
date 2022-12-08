@@ -42,7 +42,10 @@ do
         else
             diff "../../expression_data/$f" $f
             result=$?
+            echo "File ../../expression_data/$f"
             cat "../../expression_data/$f"
+            echo ''
+            echo "File $f"
             cat $f
             consider_exit $result
             echo "File $f generated as expected with correct contents."

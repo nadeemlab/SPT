@@ -14,6 +14,8 @@ from ...db.source_file_parser_interface import DBBackend
 from ...db.verbose_sql_execution import verbose_sql_execute
 from .study import StudyParser
 from .subjects import SubjectsParser
+from .diagnosis import DiagnosisParser
+from .interventions import InterventionsParser
 from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser
 from .channels import ChannelsPhenotypesParser
@@ -73,6 +75,8 @@ class DataSkimmer(DatabaseConnectionMaker):
             compartments_file = None,
             subjects_file = None,
             study_file = None,
+            diagnosis_file = None,
+            interventions_file = None,
             **kwargs,
         ):
         if not self.get_connection():
@@ -88,17 +92,26 @@ class DataSkimmer(DatabaseConnectionMaker):
             fields,
             study_file,
         )
-        age_at_specimen_collection = SubjectsParser().parse(
+        SubjectsParser().parse(
             self.get_connection(),
             fields,
             subjects_file,
+        )
+        DiagnosisParser().parse(
+            self.get_connection(),
+            fields,
+            diagnosis_file,
+        )
+        InterventionsParser().parse(
+            self.get_connection(),
+            fields,
+            Interventions_file,
         )
         samples_file = outcomes_file
         SamplesParser().parse(
             self.get_connection(),
             fields,
             samples_file,
-            age_at_specimen_collection,
             study_name,
         )
         CellManifestSetParser().parse(

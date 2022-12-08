@@ -11,7 +11,7 @@ class SamplesParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(SamplesParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, samples_file, age_at_specimen_collection, study_name):
+    def parse(self, connection, fields, samples_file, study_name):
         """
         Retrieve the samples information and parse records for:
         - specimen collection study
@@ -34,7 +34,6 @@ class SamplesParser(SourceToADIParser):
         for i, sample in samples.iterrows():
             record = self.create_specimen_collection_process_record(
                 sample,
-                age_at_specimen_collection,
                 collection_study,
             )
             cursor.execute(
@@ -44,6 +43,8 @@ class SamplesParser(SourceToADIParser):
 
         for i, sample in samples.iterrows():
             record = self.create_histology_assessment_process_record(sample)
+            if record['Assay'] == '' or record['Assessment'] == '':
+                continue
             cursor.execute(
                 self.generate_basic_insert_query('histology_assessment_process', fields),
                 record,
@@ -53,12 +54,12 @@ class SamplesParser(SourceToADIParser):
         connection.commit()
         cursor.close()
 
-    def create_specimen_collection_process_record(self, sample, age_at_specimen_collection, collection_study):
+    def create_specimen_collection_process_record(self, sample, collection_study):
         return (
             sample['Sample ID'],
             sample['Source subject'],
             sample['Source site'],
-            age_at_specimen_collection[sample['Source subject']],
+            sample['Source subject age at specimen collection'],
             sample['Extraction date'],
             collection_study,
         )

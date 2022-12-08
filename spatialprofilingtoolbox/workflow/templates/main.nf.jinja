@@ -7,6 +7,8 @@ process echo_environment_variables {
     path 'file_manifest_filename',          emit: file_manifest_filename
     path 'input_path',                      emit: input_path
     path 'study_file',                      emit: study_file
+    path 'diagnosis_file',                  emit: diagnosis_file
+    path 'interventions_file',              emit: interventions_file
 {%- if compartments %}
     path 'compartments_file',               emit: compartments_file{% endif %}
 {%- if outcomes %}
@@ -23,6 +25,8 @@ process echo_environment_variables {
     echo -n "${file_manifest_filename_}" > file_manifest_filename
     echo -n "${input_path_}" > input_path
     echo -n "${study_file_}" > study_file
+    echo -n "${diagnosis_file_}" > diagnosis_file
+    echo -n "${interventions_file_}" > interventions_file
 {%- if compartments %}
     echo -n "${compartments_file_}" > compartments_file{% endif %}
 {%- if outcomes %}
@@ -91,6 +95,8 @@ process workflow_initialize {
     path subjects_file{% endif %}
     path cell_manifest_files
     path study
+    path diagnosis
+    path interventions
 
     output:
     stdout                                  emit: initialization_flag
@@ -107,6 +113,8 @@ process workflow_initialize {
 {%- if subjects %}
      --subjects-file=${subjects_file} \{% endif %}
      --study-file=${study} \
+     --diagnosis-file=${diagnosis} \
+     --interventions-file=${interventions} \
      --compartments-file=${compartments_file} \
      --elementary-phenotypes-file=${elementary_phenotypes_file} \
      --composite-phenotypes-file=${composite_phenotypes_file}
@@ -264,6 +272,12 @@ workflow {
     environment_ch.study_file.map{ file(it.text) }
         .set{ study_ch }
 
+    environment_ch.diagnosis_file.map{ file(it.text) }
+        .set{ diagnosis_ch }
+
+    environment_ch.interventions_file.map{ file(it.text) }
+        .set{ interventions_ch }
+
 {% if outcomes %}
     environment_ch.outcomes_file.map{ file(it.text) }
         .set{ outcomes_file_ch }
@@ -336,6 +350,8 @@ workflow {
         subjects_file_ch,{% endif %}
         cell_manifest_files_ch,
         study_ch,
+        diagnosis_ch,
+        interventions_ch,
     )
         .initialization_flag
         .set{ initialization_flag_ch }

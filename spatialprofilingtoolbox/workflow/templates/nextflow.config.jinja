@@ -27,3 +27,9 @@ env.subjects_file_ = '{{ subjects_file }}'{% endif %}
 
 {%- if study_file is defined and study_file|length %}
 env.study_file_ = '{{ study_file }}'{% endif %}
+
+{%- if diagnosis_file is defined and diagnosis_file|length %}
+env.diagnosis_file_ = '{{ diagnosis_file }}'{% endif %}
+
+{%- if interventions_file is defined and interventions_file|length %}
+env.interventions_file_ = '{{ interventions_file }}'{% endif %}

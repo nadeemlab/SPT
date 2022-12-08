@@ -77,6 +77,18 @@ class HALOImportInitializer(Initializer):
             required=False,
             help='File containing subject information: age at specimen collection, sex, diagnosis.'
         )
+        parser.add_argument(
+            '--diagnosis-file',
+            dest='diagnosis_file',
+            type=str,
+            required=False,
+        )
+        parser.add_argument(
+            '--interventions-file',
+            dest='interventions_file',
+            type=str,
+            required=False,
+        )
 
     def initialize(
         self,

@@ -21,6 +21,7 @@ class DiagnosisParser(SourceToADIParser):
                 row['Subject of diagnosis'],
                 row['Diagnosed condition'],
                 row['Diagnosis'],
+                '',
                 row['Date of diagnosis'],
             )
             cursor.execute(

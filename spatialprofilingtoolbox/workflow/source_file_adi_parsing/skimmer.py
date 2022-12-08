@@ -105,7 +105,7 @@ class DataSkimmer(DatabaseConnectionMaker):
         InterventionsParser().parse(
             self.get_connection(),
             fields,
-            Interventions_file,
+            interventions_file,
         )
         samples_file = outcomes_file
         SamplesParser().parse(

@@ -42,9 +42,9 @@ class SamplesParser(SourceToADIParser):
             )
 
         for i, sample in samples.iterrows():
-            record = self.create_histology_assessment_process_record(sample)
-            if record['Assay'] == '' or record['Assessment'] == '':
+            if sample['Assay'] == '' or sample['Assessment'] == '':
                 continue
+            record = self.create_histology_assessment_process_record(sample)
             cursor.execute(
                 self.generate_basic_insert_query('histology_assessment_process', fields),
                 record,

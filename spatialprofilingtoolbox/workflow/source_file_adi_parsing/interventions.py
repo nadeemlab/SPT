@@ -10,11 +10,11 @@ class InterventionsParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(InterventionsParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, diagnosis_file):
+    def parse(self, connection, fields, interventions_file):
         cursor = connection.cursor()
 
-        logger.debug('Considering %s', intervention_file)
-        interventions = pd.read_csv(intervention_file, sep='\t', na_filter=False, dtype=str)
+        logger.debug('Considering %s', interventions_file)
+        interventions = pd.read_csv(interventions_file, sep='\t', na_filter=False, dtype=str)
         logger.info('Saving %s intervention records.', interventions.shape[0])
         for i, row in interventions.iterrows():
             intervention_record = (

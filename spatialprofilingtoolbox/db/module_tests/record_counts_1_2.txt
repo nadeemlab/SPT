@@ -14,7 +14,7 @@
                histological_structure    10627
 histological_structure_identification    10627
          histology_assessment_process       11
-                         intervention        0
+                         intervention        6
    plane_coordinates_reference_system        0
                           publication        4
            quantitative_feature_value        0

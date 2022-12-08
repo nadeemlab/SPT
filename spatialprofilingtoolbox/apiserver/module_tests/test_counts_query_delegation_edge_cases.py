@@ -4,7 +4,7 @@ import urllib
 from urllib.parse import quote
 import subprocess
 
-study_name = quote('Test project - Melanoma intralesional IL2 (Hollmann lab) - measurement')
+study_name = quote('Melanoma intralesional IL2 - measurement')
 positive_markers = quote('\t'.join(['CD3', 'CD4', 'CD8']))
 negative_markers = ''
 endpoint = 'anonymous-phenotype-counts-fast'

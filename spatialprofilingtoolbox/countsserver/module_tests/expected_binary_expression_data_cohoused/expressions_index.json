@@ -1,7 +1,7 @@
 {
     "": [
         {
-            "specimen measurement study name": "Test project - Melanoma intralesional IL2 (Hollmann lab) - measurement",
+            "specimen measurement study name": "Melanoma intralesional IL2 - measurement",
             "expressions files": [
                 {
                     "specimen": "lesion 0_1",
@@ -90,7 +90,7 @@
             }
         },
         {
-            "specimen measurement study name": "Single-cell pathology of breast cancer - measurement",
+            "specimen measurement study name": "Breast cancer IMC - measurement",
             "expressions files": [
                 {
                     "specimen": "BaselTMA_SP42_5_X8Y7",

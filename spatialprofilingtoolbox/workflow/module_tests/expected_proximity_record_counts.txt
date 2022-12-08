@@ -14,7 +14,7 @@
                histological_structure      700
 histological_structure_identification      700
          histology_assessment_process        7
-                         intervention        0
+                         intervention        2
    plane_coordinates_reference_system        0
                           publication        2
            quantitative_feature_value    15930

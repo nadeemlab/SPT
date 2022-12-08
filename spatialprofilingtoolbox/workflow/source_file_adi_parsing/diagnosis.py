@@ -23,6 +23,7 @@ class DiagnosisParser(SourceToADIParser):
                 row['Diagnosis'],
                 '',
                 row['Date of diagnosis'],
+                row['Last date of considered evidence'],
             )
             cursor.execute(
                 self.generate_basic_insert_query('diagnosis', fields),

@@ -225,6 +225,28 @@ if __name__=='__main__':
     variables['study_file'] = study_file_abs
     variables['study'] = True
 
+    diagnosis_file = get_input_filename_by_identifier(
+        input_file_identifier = 'Diagnosis file',
+        file_manifest_filename = file_manifest_path,
+    )
+    diagnosis_file_abs = join(args.input_path, diagnosis_file)
+    if not exists(diagnosis_file_abs):
+        print('Did not find diagnosis file (%s).' % str(diagnosis_file))
+        exit(1)
+    variables['diagnosis_file'] = diagnosis_file_abs
+    variables['diagnosis'] = True
+
+    interventions_file = get_input_filename_by_identifier(
+        input_file_identifier = 'Interventions file',
+        file_manifest_filename = file_manifest_path,
+    )
+    interventions_file_abs = join(args.input_path, interventions_file)
+    if not exists(interventions_file_abs):
+        print('Did not find interventions file (%s).' % str(interventions_file))
+        exit(1)
+    variables['interventions_file'] = interventions_file_abs
+    variables['interventions'] = True
+
     write_config_file(variables)
     write_pipeline_script(variables)
     record_configuration_command(variables)

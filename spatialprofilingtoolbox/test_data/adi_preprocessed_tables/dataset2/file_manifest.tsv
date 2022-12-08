@@ -8,5 +8,5 @@ Complex phenotypes file	Single-cell pathology of breast cancer	composite_phenoty
 Outcomes file	Single-cell pathology of breast cancer	samples.tsv	None	Outcome
 Subjects file	Single-cell pathology of breast cancer	subjects.tsv	None	Manifest of subjects
 Study file	Single-cell pathology of breast cancer	study.json	None	Project-level data
-Diagnosis file	Melanoma intralesional IL2	diagnosis.tsv	None	List of subject diagnoses
-Interventions file	Melanoma intralesional IL2	interventions.tsv	None	List of subject intervention events
+Diagnosis file	Single-cell pathology of breast cancer	diagnosis.tsv	None	List of subject diagnoses
+Interventions file	Single-cell pathology of breast cancer	interventions.tsv	None	List of subject intervention events

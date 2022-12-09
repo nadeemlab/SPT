@@ -6,7 +6,7 @@ logger = colorized_logger(__name__)
 
 class SampleStratificationCreator:
     insert_assignment = '''
-    INSERT INTO sample_strata (identifier, sample, temporal_position_relative_to_interventions, diagnosis)
+    INSERT INTO sample_strata (stratum_identifier, sample, temporal_position_relative_to_interventions, subject_diagnosis)
     VALUES ( %s, %s, %s, %s )
     ;
     '''
@@ -16,22 +16,25 @@ class SampleStratificationCreator:
         cursor = connection.cursor()
         logger.info('Creating sample (specimen) stratification based on diagnoses and/or interventions.')
 
-        specimens = SampleStratificationCreator.get_specimen_ids(cursor)
+        specimens = SampleStratificationCreator.get_unassigned_specimen_ids(cursor)
         identifiers = {}
         strata_count = 0
+        assignment_count = 0
         for specimen in specimens:
             interventional_position, diagnostic_state = SampleStratificationCreator.get_verbalization_of_interventional_diagnosis(specimen, cursor)
             key = (interventional_position, diagnostic_state)
             if key == ('', ''):
                 continue
             if not key in identifiers:
-                strata_count = strata_count = 1
+                strata_count = strata_count + 1
                 identifiers[key] = strata_count
             record = (identifiers[key], specimen, interventional_position, diagnostic_state)
             cursor.execute(SampleStratificationCreator.insert_assignment, record)
+            assignment_count = assignment_count + 1
 
-        logger.info('Assigned %s samples to an annotated stratum.', len(specimens))
+        connection.commit()
         cursor.close()
+        logger.info('Assigned %s / %s samples to an annotated stratum.', assignment_count, len(specimens))
 
     @staticmethod
     def get_verbalization_of_interventional_diagnosis(specimen, cursor):
@@ -64,6 +67,10 @@ class SampleStratificationCreator:
 
     @staticmethod
     def get_verbalization_of_diagnostic_state(extraction_date, diagnoses):
+        logger.debug('Diagnoses:')
+        for d in diagnoses:
+            logger.debug(str(d))
+        logger.debug('Dates considered: %s', [extraction_date] + [d[1] for d in diagnoses])
         valuation_function = SampleStratificationCreator.get_date_valuation([extraction_date] + [d[1] for d in diagnoses])
         sequence = sorted(diagnoses, key=lambda x: valuation_function(x[1]))
         influenced_diagnoses = []
@@ -117,10 +124,19 @@ class SampleStratificationCreator:
             return False
 
     @staticmethod
+    def get_unassigned_specimen_ids(cursor):
+        all_specimens = SampleStratificationCreator.get_specimen_ids(cursor)
+        cursor.execute('SELECT sample FROM sample_strata;')
+        rows = cursor.fetchall()
+        assigned = set([row[0] for row in rows])
+        logger.debug('Samples already assigned to strata: %s', assigned)
+        return list(set(all_specimens).difference(assigned))
+
+    @staticmethod
     def get_specimen_ids(cursor):
         cursor.execute('SELECT specimen FROM specimen_collection_process;')
         rows = cursor.fetchall()
-        return [specimen for specimen in rows]
+        return [row[0] for row in rows]
 
     @staticmethod
     def get_source_event(specimen, cursor):
@@ -138,5 +154,4 @@ class SampleStratificationCreator:
     def get_diagnoses(subject, cursor):
         cursor.execute('SELECT condition, result, date_of_evidence FROM diagnosis WHERE subject=%s ;', (subject,))
         rows = cursor.fetchall()
-        return rows
         return [(' '.join([row[0], row[1]]), row[2]) for row in rows]

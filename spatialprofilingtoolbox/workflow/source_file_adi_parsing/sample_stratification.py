@@ -91,9 +91,6 @@ class SampleStratificationCreator:
         for valuation in [iso_valuation, numeric_valuation, timepoint_extractor]:
             if all([SampleStratificationCreator.is_convertible(date, valuation) for date in dates]):
                 return valuation
-            else:
-                print(valuation.__name__)
-                print([(date, SampleStratificationCreator.is_convertible(date, valuation)) for date in dates])
         logger.warning('No order could be determined among: %s', dates)
         return None
 

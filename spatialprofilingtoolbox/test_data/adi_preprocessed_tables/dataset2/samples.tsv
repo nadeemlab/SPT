@@ -1,5 +1,5 @@
 Sample ID	Source subject	Source site	Source subject age at specimen collection	Extraction method	Extraction date	Preservation method	Storage location	Assay	Assessment
-BaselTMA_SP43_1_X1Y8	Jackson2020_1	Breast	83 years	Core biopsy	2007	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Refractory
-BaselTMA_SP43_3_X13Y6	Jackson2020_3	Breast	63 years	Core biopsy	1996	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Refractory
-BaselTMA_SP43_4_X15Y3	Jackson2020_4	Breast	49 years	Core biopsy	2008	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Sensitive
-BaselTMA_SP42_5_X8Y7	Jackson2020_5	Breast	49 years	Core biopsy	2007	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Sensitive
+BaselTMA_SP43_1_X1Y8	Jackson2020_1	Breast	83 years	Core biopsy	2007, timepoint 1	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Refractory
+BaselTMA_SP43_3_X13Y6	Jackson2020_3	Breast	63 years	Core biopsy	1996, timepoint 1	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Refractory
+BaselTMA_SP43_4_X15Y3	Jackson2020_4	Breast	49 years	Core biopsy	2008, timepoint 1	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Sensitive
+BaselTMA_SP42_5_X8Y7	Jackson2020_5	Breast	49 years	Core biopsy	2007, timepoint 1	Formalin-fixed and paraffin-embedded	University Hospital Basel	Response to hormone therapy	Sensitive

@@ -5,15 +5,29 @@ logger = colorized_logger(__name__)
 
 
 class SampleStratificationCreator:
+    insert_assignment = '''
+    INSERT INTO sample_strata (identifier, sample, temporal_position_relative_to_interventions, diagnosis)
+    VALUES ( %s, %s, %s, %s )
+    ;
+    '''
+
     @staticmethod
     def create_sample_stratification(connection):
         cursor = connection.cursor()
         logger.info('Creating sample (specimen) stratification based on diagnoses and/or interventions.')
 
         specimens = SampleStratificationCreator.get_specimen_ids(cursor)
+        identifiers = {}
+        strata_count = 0
         for specimen in specimens:
             interventional_position, diagnostic_state = SampleStratificationCreator.get_verbalization_of_interventional_diagnosis(specimen, cursor)
-            record = (specimen, interventional_position, diagnostic_state)
+            key = (interventional_position, diagnostic_state)
+            if key == ('', ''):
+                continue
+            if not key in identifiers:
+                strata_count = strata_count = 1
+                identifiers[key] = strata_count
+            record = (identifiers[key], specimen, interventional_position, diagnostic_state)
             cursor.execute(SampleStratificationCreator.insert_assignment, record)
 
         logger.info('Assigned %s samples to an annotated stratum.', len(specimens))

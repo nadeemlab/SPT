@@ -24,12 +24,6 @@ from .sample_stratification import SampleStratificationCreator
 
 
 class DataSkimmer(DatabaseConnectionMaker):
-    insert_assignment = '''
-    INSERT INTO sample_stratification (sample, temporal_position_relative_to_interventions, diagnosis)
-    VALUES ( %s, %s, %s )
-    ;
-    '''
-
     def __init__(self, database_config_file: str=None, db_backend=DBBackend.POSTGRES):
         if db_backend != DBBackend.POSTGRES:
             raise ValueError('Only DBBackend.POSTGRES is supported.')

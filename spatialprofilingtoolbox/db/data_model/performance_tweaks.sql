@@ -16,7 +16,8 @@ ADD UNIQUE (selection_criterion_1, selection_criterion_2, test, p_value, feature
 
 CREATE EXTENSION IF NOT EXISTS tablefunc;
 
-CREATE TABLE sample_stratification (
+CREATE TABLE sample_strata (
+    identifier INTEGER,
     sample VARCHAR(512),
     temporal_position_relative_to_interventions VARCHAR(512),
     diagnosis VARCHAR(512)

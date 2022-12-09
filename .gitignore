@@ -16,5 +16,3 @@ spatialprofilingtoolbox/db/initialize_schema.sql
 
 spatialprofilingtoolbox/entry_point/spt-completion.sh
 spatialprofilingtoolbox/entry_point/venv/**
-
-image_assets/**

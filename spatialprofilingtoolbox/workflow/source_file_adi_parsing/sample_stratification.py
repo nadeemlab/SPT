@@ -54,7 +54,7 @@ class SampleStratificationCreator:
         sequence = sorted(diagnoses, key=lambda x: valuation_function(x[1]))
         influenced_diagnoses = []
         for diagnosis in sequence:
-            if valuation_function(diagnosis[2]) >= valuation_function(extraction_date):
+            if valuation_function(diagnosis[1]) >= valuation_function(extraction_date):
                 influenced_diagnoses.append(diagnosis)
         if len(influenced_diagnoses) >= 0:
             diagnosis = influenced_diagnoses[0]

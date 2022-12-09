@@ -23,18 +23,10 @@ def test_get_verbalization_of_interventional_position():
         ('Intervention B', '2019-01-01'),
         ('Intervention C', '2019-05-01'),
     ]
-
-    v = SSC.get_verbalization_of_interventional_position(interventions, '2019-03-01')
-    assert v == 'Between Intervention B, Intervention C'
-
-    v = SSC.get_verbalization_of_interventional_position(interventions, '2018-03-02')
-    assert v == 'Between Intervention A, Intervention B'
-
-    v = SSC.get_verbalization_of_interventional_position(interventions, '2017-12-31')
-    assert v == 'Before Intervention A'
-
-    v = SSC.get_verbalization_of_interventional_position(interventions, '2019-06-01')
-    assert v == 'After Intervention C'
+    assert SSC.get_verbalization_of_interventional_position(interventions, '2017-12-31') == 'Before Intervention A'
+    assert SSC.get_verbalization_of_interventional_position(interventions, '2018-03-02') == 'Between Intervention A, Intervention B'
+    assert SSC.get_verbalization_of_interventional_position(interventions, '2019-03-01') == 'Between Intervention B, Intervention C'
+    assert SSC.get_verbalization_of_interventional_position(interventions, '2019-06-01') == 'After Intervention C'
 
 def test_get_verbalization_of_diagnostic_state():
     diagnoses = [

@@ -20,9 +20,16 @@ from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser
 from .channels import ChannelsPhenotypesParser
 from .cellmanifests import CellManifestsParser
+from .sample_stratification import SampleStratificationCreator
 
 
 class DataSkimmer(DatabaseConnectionMaker):
+    insert_assignment = '''
+    INSERT INTO sample_stratification (sample, temporal_position_relative_to_interventions, diagnosis)
+    VALUES ( %s, %s, %s )
+    ;
+    '''
+
     def __init__(self, database_config_file: str=None, db_backend=DBBackend.POSTGRES):
         if db_backend != DBBackend.POSTGRES:
             raise ValueError('Only DBBackend.POSTGRES is supported.')
@@ -135,5 +142,6 @@ class DataSkimmer(DatabaseConnectionMaker):
             file_manifest_file,
             chemical_species_identifiers_by_symbol,
         )
+        SampleStratificationCreator.create_sample_stratification(self.get_connection())
 
         self.report_record_count_changes(self.get_connection(), fields)

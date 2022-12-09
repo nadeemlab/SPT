@@ -50,7 +50,7 @@ class SampleStratificationCreator:
 
     @staticmethod
     def get_verbalization_of_diagnostic_state(extraction_date, diagnoses):
-        valuation_function = SampleStratificationCreator.get_date_valuation([extraction_date] + [d[2] for d in diagnoses])
+        valuation_function = SampleStratificationCreator.get_date_valuation([extraction_date] + [d[1] for d in diagnoses])
         sequence = sorted(diagnoses, key=lambda x: valuation_function(x[1]))
         influenced_diagnoses = []
         for diagnosis in sequence:

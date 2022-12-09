@@ -11,6 +11,7 @@ RUN apt install xxd
 WORKDIR /usr/src/app
 ENV PATH="/usr/src/app:$PATH" 
 RUN curl -s https://get.nextflow.io | bash
+RUN apt install postgresql-client -y
 COPY README.md .
 COPY pyproject.toml .
 RUN python -m pip install toml

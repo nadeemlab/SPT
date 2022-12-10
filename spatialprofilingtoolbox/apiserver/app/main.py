@@ -47,7 +47,7 @@ def get_study_components(study_name):
             'analysis' : 'data_analysis_study',
         }
         for key, tablename in substudy_tables.items():
-            cursor.execute('SELECT name FROM specimen_collection_study;')
+            cursor.execute('SELECT name FROM %s;' % tablename)
             names = [row[0] for row in cursor.fetchall()]
             for substudy in substudies:
                 if substudy in names:

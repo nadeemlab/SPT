@@ -15,3 +15,5 @@ then
 else
     exit 1
 fi
+
+spt db create-schema --refresh-views-only --database-config-file spatialprofilingtoolbox/db/.spt_db.config.local

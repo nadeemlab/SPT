@@ -31,12 +31,55 @@ app = FastAPI(
 )
 
 
+def get_study_components(study_name):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            'SELECT component_study FROM study_component WHERE primary_study=%s;',
+            (study_name,),
+        )
+        substudies = [row[0] for row in cursor.fetchall()]
+        components = {}
+        substudy_tables = {
+            'collection' : 'specimen_collection_study',
+            'measurement' : 'specimen_measurement_study',
+            'analysis' : 'data_analysis_study',
+        }
+        for key, tablename in substudy_tables.items():
+            cursor.execute('SELECT name FROM specimen_collection_study;')
+            names = [row[0] for row in cursor.fetchall()]
+            for substudy in substudies:
+                if substudy in names:
+                    components[key] = substudy
+    return components
+
+
 @app.get("/")
 def get_root():
     return Response(
         content = json.dumps({ 'server description' : 'Single cell studies database views API'}),
         media_type = 'application/json',
     )
+
+
+@app.get("/study-names")
+def get_study_names():
+    """
+    Get the names of studies/datasets.
+    """
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute('SELECT study_specifier FROM study;')
+        rows = cursor.fetchall()
+        representation = {
+            'study names' : [str(row[0]) for row in rows]
+        }
+        return Response(
+            content = json.dumps(representation),
+            media_type = 'application/json',
+        )
 
 
 @app.get("/specimen-measurement-study-names")
@@ -261,16 +304,15 @@ async def get_data_analysis_study_summary(
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
-    specimen_measurement_study : str = Query(default='unknown', min_length=3),
-    data_analysis_study : str = Query(default='unknown', min_length=3),
+    study : str = Query(default='unknown', min_length=3),
 ):
     """
     Get a table of all cell fractions in the given study. A single key value pair,
     key **fractions** and value a list of lists with entries:
     * **marker symbol**. The marker symbol for a single marker, or phenotype name in the case of a (composite) phenotype.
     * **multiplicity**. Whether the marker symbol is 'single' or else 'composite' (i.e. a phenotype name).
-    * **assay**. The assay/condition assessed in order to define a subcohort.
-    * **assessment**. The assessment value defining a subcohort.
+    * **interventional position**. The temporal position of a sample's extraction, for the purpose of defining sample stratification.
+    * **diagnostic state**. The most-consecutive diagnosis of the subject from which a given sample was extracted, for the purpose of defining sample stratification.
     * **average percent**. The average, over the subcohort, of the percent representation of the fraction of cells in the slide or specimen having the given phenotype.
     * **standard deviation of percents**. The standard deviation of the above.
     * **maximum**. The slide or specimen achieving the highest fraction.
@@ -278,11 +320,15 @@ async def get_phenotype_summary(
     * **minimum**. The slide or specimen achieving the lowest fraction.
     * **minimum value**. The lowest fraction value.
     """
+    components = get_study_components(study)
+    specimen_measurement_study = components['measurement']
+    data_analysis_study = components['analysis']
+
     columns = [
         'marker_symbol',
         'multiplicity',
-        'assay',
-        'assessment',
+        'interventional_position',
+        'diagnostic_state',
         'average_percent',
         'standard_deviation_of_percents',
         'maximum',
@@ -309,12 +355,14 @@ async def get_phenotype_summary(
 
 @app.get("/phenotype-symbols/")
 async def get_phenotype_symbols(
-    data_analysis_study : str = Query(default='unknown', min_length=3),
+    study : str = Query(default='unknown', min_length=3),
 ):
     """
     Get a dictionary, key **phenotype symbols** with value a list of all the
     composite phenotype symbols in the given study.
     """
+    components = get_study_components(study)
+    data_analysis_study = components['analysis']
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -424,7 +472,7 @@ async def get_phenotype_criteria(
         representation = {
             'phenotype criteria' : {
                 'positive markers' : positive_markers,
-                'negative markers' : negative_markers,            
+                'negative markers' : negative_markers,
             }
         }
         return Response(
@@ -437,7 +485,7 @@ async def get_phenotype_criteria(
 async def get_phenotype_criteria(
     positive_markers_tab_delimited : str = Query(default=None),
     negative_markers_tab_delimited : str = Query(default=None),
-    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+    study : str = Query(default='unknown', min_length=3),
 ):
     """
     Get the total count of all cells belonging to the given study that satisfy
@@ -448,6 +496,8 @@ async def get_phenotype_criteria(
     Returns per-specimen counts, the number of all cells in each specimen for
     the purpose of reference, and the totals of both.
     """
+    components = get_study_components(study)
+    specimen_measurement_study = components['measurement']
     if not positive_markers_tab_delimited is None:
         positive_markers = positive_markers_tab_delimited.split('\t')
     else:
@@ -529,7 +579,7 @@ async def get_phenotype_criteria(
         temporary_all_criteria_satisfied ts
         JOIN histological_structure_identification hsi ON
             ts.histological_structure = hsi.histological_structure
-        JOIN data_file df ON 
+        JOIN data_file df ON
             hsi.data_source = df.sha256_hash
         JOIN specimen_data_measurement_process sdmp ON
             df.source_generation_process = sdmp.identifier
@@ -616,12 +666,14 @@ async def get_phenotype_criteria(
 async def get_phenotype_criteria(
     positive_markers_tab_delimited : str = Query(default=None),
     negative_markers_tab_delimited : str = Query(default=None),
-    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+    study : str = Query(default='unknown', min_length=3),
 ):
     """
     The same as endpoint `anonymous-phenotype-counts/`, except this method uses a
     pre-build custom index for performance. It is about 500 times faster.
     """
+    components = get_study_components(study)
+    specimen_measurement_study = components['measurement']
     if not positive_markers_tab_delimited is None:
         positive_markers = positive_markers_tab_delimited.split('\t')
     else:
@@ -680,11 +732,11 @@ async def get_phenotype_criteria(
         content = json.dumps(representation),
         media_type = 'application/json',
     )
-    
+
 
 @app.get("/phenotype-proximity-summary/")
 async def get_phenotype_proximity_summary(
-    data_analysis_study : str = Query(default='unknown', min_length=3),
+    study : str = Query(default='unknown', min_length=3),
 ):
     """
     Spatial proximity statistics between pairs of cell populations defined by the
@@ -695,8 +747,8 @@ async def get_phenotype_proximity_summary(
     * **Phenotype 1**
     * **Phenotype 2**
     * **Distance limit**. In pixels.
-    * **Assay**. Used to define a subcohort for aggegation.
-    * **Assessment**. The assessment result.
+    * **Interventional position**. Used to define a subcohort for aggegation.
+    * **Diagnostic state**. Used to define a subcohort for aggegation
     * **Average value**. Of the metric value in the subcohort.
     * **Standard deviation**. Of the metric value in the subcohort.
     * **Maximum**. Of the metric value in the subcohort.
@@ -704,12 +756,14 @@ async def get_phenotype_proximity_summary(
     * **Minimum**. Of the metric value in the subcohort.
     * **Minimum value**. Of the metric value in the subcohort.
     """
+    components = get_study_components(study)
+    data_analysis_study = components['analysis']
     columns = [
         'specifier1',
         'specifier2',
         'specifier3',
-        'assay',
-        'assessment',
+        'interventional_position',
+        'diagnostic_state',
         'average_value',
         'standard_deviation',
         'maximum',

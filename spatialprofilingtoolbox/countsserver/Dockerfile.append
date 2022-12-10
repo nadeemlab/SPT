@@ -1,4 +1,2 @@
 ENV API_SERVER_PORT=8016
-RUN apt-get -y install curl
-HEALTHCHECK CMD curl --fail http://localhost:${API_SERVER_PORT}/ || exit 1
 ENTRYPOINT ["spt", "countsserver", "start", "--host", "0.0.0.0", "--port", "8016"]

@@ -41,7 +41,8 @@ class SampleStratificationCreator:
             if not key in identifiers:
                 strata_count = strata_count + 1
                 identifiers[key] = strata_count
-            record = (identifiers[key],
+            record = (
+                str(identifiers[key]),
                 specimen,
                 local_temporal_position_indicator,
                 reference_intervention,

@@ -253,16 +253,14 @@ def get_study_summary(
         )
 
         query = '''
-        SELECT
+        SELECT DISTINCT
             sst.stratum_identifier,
-            sst.sample,
             sst.local_temporal_position_indicator,
             sst.reference_intervention,
             sst.reference_intevention_date,
             sst.subject_diagnosed_condition,
             sst.subject_diagnosed_result,
-            sst.subject_diagnosed_date,
-            scp.study
+            sst.subject_diagnosed_date
         FROM sample_strata sst
         JOIN specimen_collection_process scp
         ON scp.specimen = sst.sample
@@ -270,7 +268,7 @@ def get_study_summary(
         '''
         cursor.execute(query, (specimen_collection_study,))
         sample_cohorts = cursor.fetchall()
-
+        sample_cohorts = sorted(sample_cohorts, key=lambda x: int(x[0]))
         cursor.close()
 
     representation = {}

@@ -19,5 +19,43 @@
     "Number of specimens measured": 7,
     "Number of cells detected": 700,
     "Number of channels measured": 26,
-    "Number of named composite phenotypes pre-specified": 4
+    "Number of named composite phenotypes pre-specified": 4,
+    "Sample cohorts": [
+        [
+            "1",
+            "Before",
+            "Intralesional IL-2 injection",
+            "timepoint 2",
+            "Response to intralesional IL-2 injection",
+            "Extreme responder",
+            "timepoint 3"
+        ],
+        [
+            "2",
+            "After",
+            "Intralesional IL-2 injection",
+            "timepoint 2",
+            "Response to intralesional IL-2 injection",
+            "Non-responder",
+            "timepoint 3"
+        ],
+        [
+            "3",
+            "After",
+            "Intralesional IL-2 injection",
+            "timepoint 2",
+            "Response to intralesional IL-2 injection",
+            "Extreme responder",
+            "timepoint 3"
+        ],
+        [
+            "4",
+            "Before",
+            "Intralesional IL-2 injection",
+            "timepoint 2",
+            "Response to intralesional IL-2 injection",
+            "Non-responder",
+            "timepoint 3"
+        ]
+    ]
 }

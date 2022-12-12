@@ -104,7 +104,7 @@ class SampleStratificationCreator:
                 influenced_diagnoses.append(diagnosis)
         if len(influenced_diagnoses) > 0:
             diagnosis = influenced_diagnoses[0]
-            return diagnosis
+            return list(diagnosis)
         else:
             return ['','','']
 

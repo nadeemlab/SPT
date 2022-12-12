@@ -19,6 +19,10 @@ CREATE EXTENSION IF NOT EXISTS tablefunc;
 CREATE TABLE sample_strata (
     stratum_identifier INTEGER,
     sample VARCHAR(512),
-    temporal_position_relative_to_interventions VARCHAR(512),
-    subject_diagnosis VARCHAR(512)
+    local_temporal_position_indicator VARCHAR(512),
+    reference_intervention VARCHAR(512),
+    reference_intevention_date VARCHAR(512),
+    subject_diagnosed_condition VARCHAR(512),
+    subject_diagnosed_result VARCHAR(512),
+    subject_diagnosed_date VARCHAR(512)
 );

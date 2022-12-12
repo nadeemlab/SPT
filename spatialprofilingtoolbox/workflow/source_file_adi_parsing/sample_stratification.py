@@ -6,8 +6,16 @@ logger = colorized_logger(__name__)
 
 class SampleStratificationCreator:
     insert_assignment = '''
-    INSERT INTO sample_strata (stratum_identifier, sample, temporal_position_relative_to_interventions, subject_diagnosis)
-    VALUES ( %s, %s, %s, %s )
+    INSERT INTO sample_strata
+    ( stratum_identifier,
+    sample,
+    local_temporal_position_indicator,
+    reference_intervention,
+    reference_intevention_date,
+    subject_diagnosed_condition,
+    subject_diagnosed_result,
+    subject_diagnosed_date )
+    VALUES ( %s, %s, %s, %s, %s, %s, %s, %s )
     ;
     '''
 
@@ -21,14 +29,27 @@ class SampleStratificationCreator:
         strata_count = 0
         assignment_count = 0
         for specimen in specimens:
-            interventional_position, diagnostic_state = SampleStratificationCreator.get_verbalization_of_interventional_diagnosis(specimen, cursor)
-            key = (interventional_position, diagnostic_state)
-            if key == ('', ''):
+            key = tuple(SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
+            ( local_temporal_position_indicator,
+            reference_intervention,
+            reference_intervention_date,
+            subject_diagnosed_condition,
+            subject_diagnosed_result,
+            subject_diagnosed_date ) = key
+            if key == ('', '', '', '', '', ''):
                 continue
             if not key in identifiers:
                 strata_count = strata_count + 1
                 identifiers[key] = strata_count
-            record = (identifiers[key], specimen, interventional_position, diagnostic_state)
+            record = (identifiers[key],
+                specimen,
+                local_temporal_position_indicator,
+                reference_intervention,
+                reference_intervention_date,
+                subject_diagnosed_condition,
+                subject_diagnosed_result,
+                subject_diagnosed_date,
+            )
             cursor.execute(SampleStratificationCreator.insert_assignment, record)
             assignment_count = assignment_count + 1
 
@@ -37,51 +58,54 @@ class SampleStratificationCreator:
         logger.info('Assigned %s / %s samples to an annotated stratum.', assignment_count, len(specimens))
 
     @staticmethod
-    def get_verbalization_of_interventional_diagnosis(specimen, cursor):
+    def get_interventional_diagnosis(specimen, cursor):
         subject, extraction_date = SampleStratificationCreator.get_source_event(specimen, cursor)
         interventions = SampleStratificationCreator.get_interventions(subject, cursor)
         diagnoses = SampleStratificationCreator.get_diagnoses(subject, cursor)
-        return [
-            SampleStratificationCreator.get_verbalization_of_interventional_position(interventions, extraction_date),
-            SampleStratificationCreator.get_verbalization_of_diagnostic_state(extraction_date, diagnoses),
-        ]
+        return (SampleStratificationCreator.get_interventional_position(interventions, extraction_date) +
+            SampleStratificationCreator.get_diagnostic_state(extraction_date, diagnoses))
 
     @staticmethod
-    def get_verbalization_of_interventional_position(interventions, extraction_date):
+    def get_interventional_position(interventions, extraction_date):
         if len(interventions) > 0:
             valuation_function = SampleStratificationCreator.get_date_valuation([i[1] for i in interventions] + [extraction_date])
             sequence = sorted(interventions + [('source extraction', extraction_date)], key=lambda x: valuation_function(x[1]))
             extraction_index = [index for index, event in enumerate(sequence) if event[0] == 'source extraction'][0]
             earlier_events = [event for index, event in enumerate(sequence) if index < extraction_index]
             later_events = [event for index, event in enumerate(sequence) if index > extraction_index]
+
             if len(earlier_events) == 0:
-                verbalization = 'Before %s' % later_events[0][0]
+                local_temporal_position_indicator = 'Before'
+                reference_intervention = later_events[0][0]
+                reference_intervention_date = later_events[0][1]
+
             if len(earlier_events) > 0:
-                if len(later_events) == 0:
-                    verbalization = 'After %s' % earlier_events[-1][0]
-                else:
-                    verbalization = 'Between %s, %s' % (earlier_events[-1][0], later_events[0][0])
-            return verbalization
+                local_temporal_position_indicator = 'After'
+                reference_intervention = earlier_events[-1][0]
+                reference_intervention_date = earlier_events[-1][1]
+
+            return [local_temporal_position_indicator, reference_intervention, reference_intervention_date]
         else:
-            return ''
+            return ['','','']
 
     @staticmethod
-    def get_verbalization_of_diagnostic_state(extraction_date, diagnoses):
+    def get_diagnostic_state(extraction_date, diagnoses):
         logger.debug('Diagnoses:')
         for d in diagnoses:
             logger.debug(str(d))
-        logger.debug('Dates considered: %s', [extraction_date] + [d[1] for d in diagnoses])
-        valuation_function = SampleStratificationCreator.get_date_valuation([extraction_date] + [d[1] for d in diagnoses])
-        sequence = sorted(diagnoses, key=lambda x: valuation_function(x[1]))
+        logger.debug('Dates considered: %s', [extraction_date] + [d[2] for d in diagnoses])
+        valuation_function = SampleStratificationCreator.get_date_valuation([extraction_date] + [d[2] for d in diagnoses])
+        sequence = sorted(diagnoses, key=lambda x: valuation_function(x[2]))
         influenced_diagnoses = []
+
         for diagnosis in sequence:
-            if valuation_function(diagnosis[1]) >= valuation_function(extraction_date):
+            if valuation_function(diagnosis[2]) >= valuation_function(extraction_date):
                 influenced_diagnoses.append(diagnosis)
         if len(influenced_diagnoses) > 0:
             diagnosis = influenced_diagnoses[0]
-            return diagnosis[0]
+            return diagnosis
         else:
-            return ''
+            return ['','','']
 
     @staticmethod
     def get_date_valuation(dates):
@@ -154,4 +178,4 @@ class SampleStratificationCreator:
     def get_diagnoses(subject, cursor):
         cursor.execute('SELECT condition, result, date_of_evidence FROM diagnosis WHERE subject=%s ;', (subject,))
         rows = cursor.fetchall()
-        return [(' '.join([row[0], row[1]]), row[2]) for row in rows]
+        return [list(row) for row in rows]

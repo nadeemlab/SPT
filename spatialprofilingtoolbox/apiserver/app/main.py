@@ -125,8 +125,17 @@ def get_study_summary(
     * **Number of cells detected**
     * **Number of channels measured**
     * **Number of named composite phenotypes pre-specified**
+    * **Sample cohorts**. A list of convenience cohorts/strata, described by attributes:
+      - Sample cohort identifier
+      - Whether defined by extraction "Before" or "After" the given intervention (or neither "").
+      - The referenced intervention.
+      - The referenced intervention date.
+      - For the diagnosis of the subject from which the sample was extracted, which considered evidence nearest to immediately after extraction; the diagnosed condition.
+      - For the diagnosis of the subject from which the sample was extracted, which considered evidence nearest to immediately after extraction; the diagnosis result.
+      - For the diagnosis of the subject from which the sample was extracted, which considered evidence nearest to immediately after extraction; the date of diagnosis.
     """
     components = get_study_components(study)
+    specimen_collection_study = components['collection']
     specimen_measurement_study = components['measurement']
     data_analysis_study = components['analysis']
     with DBAccessor() as db_accessor:
@@ -242,6 +251,26 @@ def get_study_summary(
             query='SELECT count(DISTINCT cell_phenotype) FROM cell_phenotype_criterion WHERE study=%s;',
             parameters=(data_analysis_study,),
         )
+
+        query = '''
+        SELECT
+            sst.stratum_identifier,
+            sst.sample,
+            sst.local_temporal_position_indicator,
+            sst.reference_intervention,
+            sst.reference_intevention_date,
+            sst.subject_diagnosed_condition,
+            sst.subject_diagnosed_result,
+            sst.subject_diagnosed_date,
+            scp.study
+        FROM sample_strata sst
+        JOIN specimen_collection_process scp
+        ON scp.specimen = sst.sample
+        WHERE scp.study=%s
+        '''
+        cursor.execute(query, (specimen_collection_study,))
+        sample_cohorts = cursor.fetchall()
+
         cursor.close()
 
     representation = {}
@@ -261,6 +290,7 @@ def get_study_summary(
     representation['Number of cells detected'] = number_cells
     representation['Number of channels measured'] = number_channels
     representation['Number of named composite phenotypes pre-specified'] = number_phenotypes
+    representation['Sample cohorts'] = sample_cohorts
 
     return Response(
         content = json.dumps(representation),
@@ -497,8 +527,7 @@ async def get_phenotype_summary(
     key **fractions** and value a list of lists with entries:
     * **marker symbol**. The marker symbol for a single marker, or phenotype name in the case of a (composite) phenotype.
     * **multiplicity**. Whether the marker symbol is 'single' or else 'composite' (i.e. a phenotype name).
-    * **interventional position**. The temporal position of a sample's extraction, for the purpose of defining sample stratification.
-    * **diagnostic state**. The most-consecutive diagnosis of the subject from which a given sample was extracted, for the purpose of defining sample stratification.
+    * **sample cohort**. Indicator of which convenience cohort or stratum a given sample was assigned to.
     * **average percent**. The average, over the subcohort, of the percent representation of the fraction of cells in the slide or specimen having the given phenotype.
     * **standard deviation of percents**. The standard deviation of the above.
     * **maximum**. The slide or specimen achieving the highest fraction.
@@ -513,8 +542,7 @@ async def get_phenotype_summary(
     columns = [
         'marker_symbol',
         'multiplicity',
-        'interventional_position',
-        'diagnostic_state',
+        'stratum_identifier',
         'average_percent',
         'standard_deviation_of_percents',
         'maximum',
@@ -933,8 +961,7 @@ async def get_phenotype_proximity_summary(
     * **Phenotype 1**
     * **Phenotype 2**
     * **Distance limit**. In pixels.
-    * **Interventional position**. Used to define a subcohort for aggegation.
-    * **Diagnostic state**. Used to define a subcohort for aggegation
+    * **Sample cohort**. Indicator of which convenience cohort or stratum a given sample was assigned to.    
     * **Average value**. Of the metric value in the subcohort.
     * **Standard deviation**. Of the metric value in the subcohort.
     * **Maximum**. Of the metric value in the subcohort.
@@ -948,8 +975,7 @@ async def get_phenotype_proximity_summary(
         'specifier1',
         'specifier2',
         'specifier3',
-        'interventional_position',
-        'diagnostic_state',
+        'stratum_identifier',
         'average_value',
         'standard_deviation',
         'maximum',

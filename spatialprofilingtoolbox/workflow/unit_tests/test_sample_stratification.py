@@ -41,7 +41,7 @@ def test_get_diagnostic_state():
     assert SSC.get_diagnostic_state('timepoint 5', diagnoses) == ['Diagnosis F', 'Negative', 'timepoint 7']
     assert SSC.get_diagnostic_state('timepoint 6', diagnoses) == ['Diagnosis F', 'Negative', 'timepoint 7']
     assert SSC.get_diagnostic_state('timepoint 7', diagnoses) == ['Diagnosis F', 'Negative', 'timepoint 7']
-    assert SSC.get_diagnostic_state('timepoint 8', diagnoses) == ['']
+    assert SSC.get_diagnostic_state('timepoint 8', diagnoses) == ['', '', '']
 
 if __name__=='__main__':
     test_is_convertible()

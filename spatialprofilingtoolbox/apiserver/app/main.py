@@ -1,5 +1,6 @@
 import os
 import json
+import re
 
 from fastapi import FastAPI
 from fastapi import Query
@@ -55,6 +56,34 @@ def get_study_components(study_name):
     return components
 
 
+def get_single_result_or_else(cursor, query, parameters=None, or_else_value='unknown'):
+    if not parameters is None:
+        cursor.execute(query, parameters)
+    else:
+        cursor.execute(query)
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        return rows[0][0]
+    else:
+        return or_else_value
+
+
+def get_single_result_row(cursor, query, parameters=None):
+    if not parameters is None:
+        cursor.execute(query, parameters)
+    else:
+        cursor.execute(query)
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        return list(rows[0])
+    else:
+        return []
+
+
+def rough_check_is_email(string):
+    return not re.match('^[A-Za-z0-9+_.-]+@([^ ]+)$', string) is None
+
+
 @app.get("/")
 def get_root():
     return Response(
@@ -80,6 +109,163 @@ def get_study_names():
             content = json.dumps(representation),
             media_type = 'application/json',
         )
+
+
+@app.get("/study-summary/{study}")
+def get_study_summary(
+    study : str = Query(default='unknown', min_length=3),
+):
+    """
+    Get a summary of the given named study:
+    * **Publication**. *Title*, *URL*, *First author*, *Date*.
+    * **Contact**. *Name*, *Email*.
+    * **Data release**. *Repository*, *URL*, *Date*.
+    * **Assay**. I.e. "data modality".
+    * **Number of specimens measured**
+    * **Number of cells detected**
+    * **Number of channels measured**
+    * **Number of named composite phenotypes pre-specified**
+    """
+    components = get_study_components(study)
+    specimen_measurement_study = components['measurement']
+    data_analysis_study = components['analysis']
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+
+        institution = get_single_result_or_else(
+            cursor,
+            query='SELECT institution FROM study WHERE study_specifier=%s; ',
+            parameters=(study,),
+        )
+
+        row = get_single_result_row(
+            cursor,
+            query='''
+            SELECT name, contact_reference
+            FROM study_contact_person
+            WHERE study=%s
+            ''',
+            parameters=(study,),
+        )
+        if len(row) == 0:
+            contact = None
+        else:
+            contact_name, contact_email = row
+            contact = { 'Name' : contact_name}
+            if rough_check_is_email(contact_email):
+                contact['Email'] = contact_email
+
+        query = '''
+        SELECT publisher, internet_reference, date_of_publication
+        FROM publication
+        WHERE study=%s AND document_type=\'Dataset\'
+        ;
+        '''
+        row = get_single_result_row(cursor, query=query, parameters=(study,),)
+        if len(row) == 0:
+            data_release = None
+        else:
+            repository, URL, release_date = row
+            data_release = {
+                'Repository' : repository,
+                'URL' : URL,
+                'Date' : release_date,
+            }
+
+        query = '''
+        SELECT title, internet_reference, date_of_publication
+        FROM publication
+        WHERE study=%s AND document_type=\'Article\'
+        ;
+        '''
+        row = get_single_result_row(cursor, query=query, parameters=(study,),)
+        if len(row) == 0:
+            publication_info = None
+        else:
+            publication_title, URL, publication_date = row
+            first_author = get_single_result_or_else(
+                cursor,
+                query='''
+                SELECT person FROM author
+                WHERE publication=%s
+                ORDER BY regexp_replace(ordinality, '[^0-9]+', '', 'g')::int
+                ;
+                ''',
+                parameters=(publication_title,),
+                or_else_value = '',
+            )
+            publication_info = {
+                'Title' : publication_title,
+                'URL' : URL,
+                'First author' : first_author,
+                'Date' : publication_date,
+            }
+
+        assay = get_single_result_or_else(
+            cursor,
+            query='SELECT assay FROM specimen_measurement_study WHERE name=%s;',
+            parameters=(specimen_measurement_study,),
+        )
+        number_specimens = get_single_result_or_else(
+            cursor,
+            query='SELECT count(DISTINCT specimen) FROM specimen_data_measurement_process WHERE study=%s;',
+            parameters=(specimen_measurement_study,),
+        )
+        query = '''
+        SELECT count(*)
+        FROM histological_structure_identification hsi
+        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
+        JOIN data_file df ON hsi.data_source = df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+        ;
+        '''
+        number_cells = get_single_result_or_else(
+            cursor,
+            query=query,
+            parameters=(specimen_measurement_study,),
+        )
+        query = '''
+        SELECT count(*)
+        FROM biological_marking_system bms
+        WHERE bms.study=%s
+        ;
+        '''
+        number_channels = get_single_result_or_else(
+            cursor,
+            query=query,
+            parameters=(specimen_measurement_study,),
+        )
+        number_phenotypes = get_single_result_or_else(
+            cursor,
+            query='SELECT count(DISTINCT cell_phenotype) FROM cell_phenotype_criterion WHERE study=%s;',
+            parameters=(data_analysis_study,),
+        )
+        cursor.close()
+
+    representation = {}
+    representation['Institution'] = institution
+
+    if publication_info:
+        representation['Publication'] = publication_info
+
+    if contact:
+        representation['Contact'] = contact
+
+    if data_release:
+        representation['Data release'] = data_release
+
+    representation['Assay'] = assay
+    representation['Number of specimens measured'] = number_specimens
+    representation['Number of cells detected'] = number_cells
+    representation['Number of channels measured'] = number_channels
+    representation['Number of named composite phenotypes pre-specified'] = number_phenotypes
+
+    return Response(
+        content = json.dumps(representation),
+        media_type = 'application/json',
+    )
 
 
 @app.get("/specimen-measurement-study-names")

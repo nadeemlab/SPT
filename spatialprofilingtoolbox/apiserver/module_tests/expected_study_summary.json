@@ -1,0 +1,23 @@
+{
+    "Institution": "Memorial Sloan-Kettering Cancer Center",
+    "Publication": {
+        "Title": "Tumor MHC Class I Expression Associates with Intralesional IL2 Response in Melanoma",
+        "URL": "https://doi.org/10.1158/2326-6066.CIR-21-1083",
+        "First author": "Maryam Pourmaleki",
+        "Date": "2022-03-01"
+    },
+    "Contact": {
+        "Name": "Maryam Pourmaleki",
+        "Email": "pourmalm@mskcc.org"
+    },
+    "Data release": {
+        "Repository": "Zenodo (CERN)",
+        "URL": "https://doi.org/10.5281/zenodo.4300912",
+        "Date": "2022-01-04"
+    },
+    "Assay": "Multiplexed imaging",
+    "Number of specimens measured": 7,
+    "Number of cells detected": 700,
+    "Number of channels measured": 26,
+    "Number of named composite phenotypes pre-specified": 4
+}

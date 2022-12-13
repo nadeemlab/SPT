@@ -256,11 +256,8 @@ def get_study_summary(
         SELECT DISTINCT
             sst.stratum_identifier,
             sst.local_temporal_position_indicator,
-            sst.reference_intervention,
-            sst.reference_intevention_date,
             sst.subject_diagnosed_condition,
-            sst.subject_diagnosed_result,
-            sst.subject_diagnosed_date
+            sst.subject_diagnosed_result
         FROM sample_strata sst
         JOIN specimen_collection_process scp
         ON scp.specimen = sst.sample

@@ -23,39 +23,26 @@
     "Sample cohorts": [
         [
             "1",
-            "After",
-            "Intralesional IL-2 injection",
-            "timepoint 2",
+            "Before intervention",
             "Response to intralesional IL-2 injection",
-            "Non-responder",
-            "timepoint 3"
+            "Extreme responder"
         ],
         [
             "2",
-            "After",
-            "Intralesional IL-2 injection",
-            "timepoint 2",
+            "Before intervention",
             "Response to intralesional IL-2 injection",
-            "Extreme responder",
-            "timepoint 3"
+            "Non-responder"
         ],
         [
             "3",
-            "Before",
-            "Intralesional IL-2 injection",
-            "timepoint 2",
+            "After intervention",
             "Response to intralesional IL-2 injection",
-            "Non-responder",
-            "timepoint 3"
+            "Non-responder"
         ],
         [
             "4",
-            "Before",
-            "Intralesional IL-2 injection",
-            "timepoint 2",
+            "After intervention",
             "Response to intralesional IL-2 injection",
-            "Extreme responder",
-            "timepoint 3"
+            "Extreme responder"
         ]
-    ]
-}
+    ]}

@@ -10,12 +10,9 @@ class SampleStratificationCreator:
     ( stratum_identifier,
     sample,
     local_temporal_position_indicator,
-    reference_intervention,
-    reference_intevention_date,
     subject_diagnosed_condition,
-    subject_diagnosed_result,
-    subject_diagnosed_date )
-    VALUES ( %s, %s, %s, %s, %s, %s, %s, %s )
+    subject_diagnosed_result )
+    VALUES ( %s, %s, %s, %s, %s )
     ;
     '''
 
@@ -31,12 +28,9 @@ class SampleStratificationCreator:
         for specimen in specimens:
             key = tuple(SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
             ( local_temporal_position_indicator,
-            reference_intervention,
-            reference_intervention_date,
             subject_diagnosed_condition,
-            subject_diagnosed_result,
-            subject_diagnosed_date ) = key
-            if key == ('', '', '', '', '', ''):
+            subject_diagnosed_result ) = key
+            if key == ('', '', ''):
                 continue
             if not key in identifiers:
                 strata_count = strata_count + 1
@@ -45,11 +39,8 @@ class SampleStratificationCreator:
                 str(identifiers[key]),
                 specimen,
                 local_temporal_position_indicator,
-                reference_intervention,
-                reference_intervention_date,
                 subject_diagnosed_condition,
                 subject_diagnosed_result,
-                subject_diagnosed_date,
             )
             cursor.execute(SampleStratificationCreator.insert_assignment, record)
             assignment_count = assignment_count + 1
@@ -76,18 +67,17 @@ class SampleStratificationCreator:
             later_events = [event for index, event in enumerate(sequence) if index > extraction_index]
 
             if len(earlier_events) == 0:
-                local_temporal_position_indicator = 'Before'
-                reference_intervention = later_events[0][0]
-                reference_intervention_date = later_events[0][1]
+                local_temporal_position_indicator = 'Before intervention'
 
-            if len(earlier_events) > 0:
-                local_temporal_position_indicator = 'After'
-                reference_intervention = earlier_events[-1][0]
-                reference_intervention_date = earlier_events[-1][1]
+            if len(later_events) == 0:
+                local_temporal_position_indicator = 'After intervention'
 
-            return [local_temporal_position_indicator, reference_intervention, reference_intervention_date]
+            if len(earlier_events) > 0 and len(later_events) > 0:
+                local_temporal_position_indicator = 'Between interventions'
+
+            return [local_temporal_position_indicator]
         else:
-            return ['','','']
+            return ['']
 
     @staticmethod
     def get_diagnostic_state(extraction_date, diagnoses):
@@ -104,9 +94,9 @@ class SampleStratificationCreator:
                 influenced_diagnoses.append(diagnosis)
         if len(influenced_diagnoses) > 0:
             diagnosis = influenced_diagnoses[0]
-            return list(diagnosis)
+            return [diagnosis[0], diagnosis[1]]
         else:
-            return ['','','']
+            return ['','']
 
     @staticmethod
     def get_date_valuation(dates):

@@ -26,7 +26,7 @@ class SampleStratificationCreator:
 
         specimens = SampleStratificationCreator.get_unassigned_specimen_ids(cursor)
         identifiers = {}
-        strata_count = 0
+        strata_count = SampleStratificationCreator.get_last_assigned_stratum_identifier(cursor)
         assignment_count = 0
         for specimen in specimens:
             key = tuple(SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
@@ -162,6 +162,16 @@ class SampleStratificationCreator:
         cursor.execute('SELECT specimen FROM specimen_collection_process ORDER BY specimen;')
         rows = cursor.fetchall()
         return [row[0] for row in rows]
+
+    @staticmethod
+    def get_last_assigned_stratum_identifier(cursor):
+        cursor.execute('SELECT stratum_identifier FROM sample_strata;')
+        rows = cursor.fetchall()
+        identifiers = [int(row[0]) for row in rows]
+        if len(identifiers) == 0:
+            return 0
+        else:
+            return max(identifiers)
 
     @staticmethod
     def get_source_event(specimen, cursor):

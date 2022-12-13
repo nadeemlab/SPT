@@ -38,7 +38,7 @@ class SchemaInfuser(DatabaseConnectionMaker):
         with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)
         tablenames = sorted(list(set([self.normalize(t) for t in fields['Table']])))
-        tablenames = tablenames + self.get_schema_documentation_tables() + ['sample_stratification']
+        tablenames = tablenames + self.get_schema_documentation_tables() + ['sample_strata']
         return '\n'.join([
             'DROP TABLE IF EXISTS %s CASCADE ; ' % t
             for t in tablenames

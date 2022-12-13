@@ -23,11 +23,11 @@
     "Sample cohorts": [
         [
             "1",
-            "Before",
+            "After",
             "Intralesional IL-2 injection",
             "timepoint 2",
             "Response to intralesional IL-2 injection",
-            "Extreme responder",
+            "Non-responder",
             "timepoint 3"
         ],
         [
@@ -41,7 +41,7 @@
         ],
         [
             "3",
-            "After",
+            "Before",
             "Intralesional IL-2 injection",
             "timepoint 2",
             "Response to intralesional IL-2 injection",
@@ -54,7 +54,7 @@
             "Intralesional IL-2 injection",
             "timepoint 2",
             "Response to intralesional IL-2 injection",
-            "Non-responder",
+            "Extreme responder",
             "timepoint 3"
         ]
     ]

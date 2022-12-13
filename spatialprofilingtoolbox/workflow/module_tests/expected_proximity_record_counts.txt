@@ -1,4 +1,5 @@
                                 Table  Records
+                               author       64
             biological_marking_system       26
                        cell_phenotype        4
              cell_phenotype_criterion       27
@@ -13,12 +14,18 @@
                histological_structure      700
 histological_structure_identification      700
          histology_assessment_process        7
+                         intervention        2
    plane_coordinates_reference_system        0
+                          publication        2
            quantitative_feature_value    15930
+                research_professional       32
                            shape_file      700
           specimen_collection_process        7
             specimen_collection_study        1
     specimen_data_measurement_process        7
            specimen_measurement_study        1
+                                study        1
+                      study_component        3
+                 study_contact_person        1
                               subject        2
   two_cohort_feature_association_test        0

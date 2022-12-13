@@ -12,11 +12,15 @@ from ...db.database_connection import DatabaseConnectionMaker
 from ...db.source_file_parser_interface import SourceToADIParser
 from ...db.source_file_parser_interface import DBBackend
 from ...db.verbose_sql_execution import verbose_sql_execute
+from .study import StudyParser
 from .subjects import SubjectsParser
+from .diagnosis import DiagnosisParser
+from .interventions import InterventionsParser
 from .samples import SamplesParser
 from .cellmanifestset import CellManifestSetParser
 from .channels import ChannelsPhenotypesParser
 from .cellmanifests import CellManifestsParser
+from .sample_stratification import SampleStratificationCreator
 
 
 class DataSkimmer(DatabaseConnectionMaker):
@@ -71,6 +75,9 @@ class DataSkimmer(DatabaseConnectionMaker):
             outcomes_file = None,
             compartments_file = None,
             subjects_file = None,
+            study_file = None,
+            diagnosis_file = None,
+            interventions_file = None,
             **kwargs,
         ):
         if not self.get_connection():
@@ -81,30 +88,45 @@ class DataSkimmer(DatabaseConnectionMaker):
 
         self.cache_all_record_counts(self.get_connection(), fields)
 
-        age_at_specimen_collection = SubjectsParser().parse(
+        study_name = StudyParser().parse(
+            self.get_connection(),
+            fields,
+            study_file,
+        )
+        SubjectsParser().parse(
             self.get_connection(),
             fields,
             subjects_file,
+        )
+        DiagnosisParser().parse(
+            self.get_connection(),
+            fields,
+            diagnosis_file,
+        )
+        InterventionsParser().parse(
+            self.get_connection(),
+            fields,
+            interventions_file,
         )
         samples_file = outcomes_file
         SamplesParser().parse(
             self.get_connection(),
             fields,
             samples_file,
-            age_at_specimen_collection,
-            file_manifest_file,
+            study_name,
         )
         CellManifestSetParser().parse(
             self.get_connection(),
             fields,
             file_manifest_file,
+            study_name,
         )
         chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser().parse(
             self.get_connection(),
             fields,
-            file_manifest_file,
             elementary_phenotypes_file,
             composite_phenotypes_file,
+            study_name,
         )
         CellManifestsParser().parse(
             self.get_connection(),
@@ -114,5 +136,6 @@ class DataSkimmer(DatabaseConnectionMaker):
             file_manifest_file,
             chemical_species_identifiers_by_symbol,
         )
+        SampleStratificationCreator.create_sample_stratification(self.get_connection())
 
         self.report_record_count_changes(self.get_connection(), fields)

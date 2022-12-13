@@ -28,10 +28,17 @@ class SchemaInfuser(DatabaseConnectionMaker):
     def normalize(self, name):
         return re.sub('[ \-]', '_', name).lower()
 
+    def get_schema_documentation_tables(self):
+        return [
+            'reference_%s' % tablename
+            for tablename in ['tables', 'fields', 'entities', 'properties', 'values']
+        ]
+
     def create_drop_tables(self):
         with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)
         tablenames = sorted(list(set([self.normalize(t) for t in fields['Table']])))
+        tablenames = tablenames + self.get_schema_documentation_tables() + ['sample_strata']
         return '\n'.join([
             'DROP TABLE IF EXISTS %s CASCADE ; ' % t
             for t in tablenames

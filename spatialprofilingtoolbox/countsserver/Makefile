@@ -124,3 +124,4 @@ clean:
 >@rm -f configure.sh
 >@rm -f nextflow.config
 >@rm -f run.sh
+>@rm -rf expression_data/

@@ -23,5 +23,6 @@ if __name__=='__main__':
     )
 
     parameters = vars(parser.parse_args())
+
     initializer = get_initializer(**parameters)
     initializer.initialize(**parameters)

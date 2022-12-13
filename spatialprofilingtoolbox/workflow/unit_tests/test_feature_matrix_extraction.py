@@ -7,11 +7,11 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 
 def get_study(bundle):
-    study_name_prefix = 'Test project - Melanoma intralesional IL2 (Hollmann lab) - '
-    if not study_name_prefix in bundle.keys():
-        print('Missing study: %s' % study_name_prefix)
+    study_name = 'Melanoma intralesional IL2'
+    if not study_name in bundle.keys():
+        print('Missing study: %s' % study_name)
         exit(1)
-    return bundle[study_name_prefix]
+    return bundle[study_name]
 
 def test_sample_set(study):
     if study['feature matrices'].keys() != set(['lesion 0_1', 'lesion 0_2', 'lesion 0_3', 'lesion 6_1', 'lesion 6_2', 'lesion 6_3', 'lesion 6_4']):
@@ -51,8 +51,9 @@ def test_expression_vectors(study):
             for j, row in df.iterrows()
         ])
 
-        specimen_machine_readable = re.sub(' ', '_', specimen)
-        reference = pd.read_csv('../test_data/adi_preprocessed_tables/dataset1/%s.csv' % specimen_machine_readable, sep=',')
+        filenames = {'lesion 0_1': '0.csv', 'lesion 0_2' : '1.csv', 'lesion 0_3' : '2.csv', 'lesion 6_1' : '3.csv', 'lesion 6_2' : '4.csv', 'lesion 6_3' : '5.csv', 'lesion 6_4' : '6.csv'}
+        cells_filename = filenames[specimen]
+        reference = pd.read_csv('../test_data/adi_preprocessed_tables/dataset1/%s' % cells_filename, sep=',')
         channels = study['channel symbols by column name']
         create_column_name = lambda x: channels[x] +'_Positive'
         expected_expression_vectors = sorted([

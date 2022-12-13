@@ -11,18 +11,16 @@ class SamplesParser(SourceToADIParser):
     def __init__(self, **kwargs):
         super(SamplesParser, self).__init__(**kwargs)
 
-    def parse(self, connection, fields, samples_file, age_at_specimen_collection, file_manifest_file):
+    def parse(self, connection, fields, samples_file, study_name):
         """
         Retrieve the samples information and parse records for:
         - specimen collection study
         - specimen collection process
         - histology assessment process
         """
-        file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         samples = pd.read_csv(samples_file, sep='\t', dtype=str)
 
-        project_handle = get_unique_value(file_metadata, 'Project ID')
-        collection_study = project_handle + ' - specimen collection'
+        collection_study = SourceToADIParser.get_collection_study_name(study_name)
         extraction_method = get_unique_value(samples, 'Extraction method')
         preservation_method = get_unique_value(samples, 'Preservation method')
         storage_location = get_unique_value(samples, 'Storage location')
@@ -36,7 +34,6 @@ class SamplesParser(SourceToADIParser):
         for i, sample in samples.iterrows():
             record = self.create_specimen_collection_process_record(
                 sample,
-                age_at_specimen_collection,
                 collection_study,
             )
             cursor.execute(
@@ -45,6 +42,8 @@ class SamplesParser(SourceToADIParser):
             )
 
         for i, sample in samples.iterrows():
+            if sample['Assay'] == '' or sample['Assessment'] == '':
+                continue
             record = self.create_histology_assessment_process_record(sample)
             cursor.execute(
                 self.generate_basic_insert_query('histology_assessment_process', fields),
@@ -55,12 +54,12 @@ class SamplesParser(SourceToADIParser):
         connection.commit()
         cursor.close()
 
-    def create_specimen_collection_process_record(self, sample, age_at_specimen_collection, collection_study):
+    def create_specimen_collection_process_record(self, sample, collection_study):
         return (
             sample['Sample ID'],
             sample['Source subject'],
             sample['Source site'],
-            age_at_specimen_collection[sample['Source subject']],
+            sample['Source subject age at specimen collection'],
             sample['Extraction date'],
             collection_study,
         )

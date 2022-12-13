@@ -131,12 +131,12 @@ ${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
 
 check-for-docker-credentials:
 >@${MESSAGE} start "Checking for Docker credentials in ~/.docker/config.json"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py docker ; echo "$$?" > status_code
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py docker ; status="$$?"; echo "$$status" > status_code; if [[ "$$status" == "0" ]]; then touch check-for-docker-credentials; fi;
 >@${MESSAGE} end "Found." "Not found."
 
 build-docker-images: ${DOCKER_BUILD_TARGETS}
 
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-daemon-running
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-daemon-running check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
@@ -261,14 +261,14 @@ clean-files:
 >@rm -rf spatialprofilingtoolbox.egg-info/
 >@rm -rf __pycache__/
 >@rm -rf build/
->@rm -rf status_code
->@rm -rf development-image
->@rm -rf data-loaded-image-1
->@rm -rf data-loaded-image-2
->@rm -rf data-loaded-image-1and2
+>@rm -f development-image
+>@rm -f data-loaded-image-1
+>@rm -f data-loaded-image-2
+>@rm -f data-loaded-image-1and2
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
->@rm -rf status_code
->@rm -rf check-docker-daemon-running
+>@rm -f status_code
+>@rm -f check-docker-daemon-running
+>@rm -f check-for-docker-credentials
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"

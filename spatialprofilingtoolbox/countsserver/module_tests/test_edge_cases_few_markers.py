@@ -5,7 +5,7 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
 
 def retrieve_case(case):
-    study_name = 'Test project - Melanoma intralesional IL2 (Hollmann lab) - measurement'
+    study_name = 'Melanoma intralesional IL2 - measurement'
     host = 'spt-countsserver-testing'
     port = 8016
     with CountRequester(host, port) as requester:

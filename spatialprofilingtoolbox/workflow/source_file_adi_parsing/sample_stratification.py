@@ -145,7 +145,7 @@ class SampleStratificationCreator:
         rows = cursor.fetchall()
         assigned = set([row[0] for row in rows])
         logger.debug('Samples already assigned to strata: %s', assigned)
-        return list(set(all_specimens).difference(assigned))
+        return sorted(list(set(all_specimens).difference(assigned)))
 
     @staticmethod
     def get_specimen_ids(cursor):

@@ -23,10 +23,10 @@ def test_get_interventional_position():
         ('Intervention B', '2019-01-01'),
         ('Intervention C', '2019-05-01'),
     ]
-    assert SSC.get_interventional_position(interventions, '2017-12-31') == ['Before', 'Intervention A', '2018-03-01']
-    assert SSC.get_interventional_position(interventions, '2018-03-02') == ['After', 'Intervention A', '2018-03-01']
-    assert SSC.get_interventional_position(interventions, '2019-03-01') == ['After', 'Intervention B', '2019-01-01']
-    assert SSC.get_interventional_position(interventions, '2019-06-01') == ['After', 'Intervention C', '2019-05-01']
+    assert SSC.get_interventional_position(interventions, '2017-12-31') == ['Before intervention']
+    assert SSC.get_interventional_position(interventions, '2018-03-02') == ['Between interventions']
+    assert SSC.get_interventional_position(interventions, '2019-03-01') == ['Between interventions']
+    assert SSC.get_interventional_position(interventions, '2019-06-01') == ['After intervention']
 
 def test_get_diagnostic_state():
     diagnoses = [
@@ -34,14 +34,14 @@ def test_get_diagnostic_state():
         ('Diagnosis E', 'Positive', 'timepoint 4'),
         ('Diagnosis F', 'Negative', 'timepoint 7'),
     ]
-    assert SSC.get_diagnostic_state('timepoint 1', diagnoses) == ['Diagnosis D', 'Positive', 'timepoint 2']
-    assert SSC.get_diagnostic_state('timepoint 2', diagnoses) == ['Diagnosis D', 'Positive', 'timepoint 2']
-    assert SSC.get_diagnostic_state('timepoint 3', diagnoses) == ['Diagnosis E', 'Positive', 'timepoint 4']
-    assert SSC.get_diagnostic_state('timepoint 4', diagnoses) == ['Diagnosis E', 'Positive', 'timepoint 4']
-    assert SSC.get_diagnostic_state('timepoint 5', diagnoses) == ['Diagnosis F', 'Negative', 'timepoint 7']
-    assert SSC.get_diagnostic_state('timepoint 6', diagnoses) == ['Diagnosis F', 'Negative', 'timepoint 7']
-    assert SSC.get_diagnostic_state('timepoint 7', diagnoses) == ['Diagnosis F', 'Negative', 'timepoint 7']
-    assert SSC.get_diagnostic_state('timepoint 8', diagnoses) == ['', '', '']
+    assert SSC.get_diagnostic_state('timepoint 1', diagnoses) == ['Diagnosis D', 'Positive']
+    assert SSC.get_diagnostic_state('timepoint 2', diagnoses) == ['Diagnosis D', 'Positive']
+    assert SSC.get_diagnostic_state('timepoint 3', diagnoses) == ['Diagnosis E', 'Positive']
+    assert SSC.get_diagnostic_state('timepoint 4', diagnoses) == ['Diagnosis E', 'Positive']
+    assert SSC.get_diagnostic_state('timepoint 5', diagnoses) == ['Diagnosis F', 'Negative']
+    assert SSC.get_diagnostic_state('timepoint 6', diagnoses) == ['Diagnosis F', 'Negative']
+    assert SSC.get_diagnostic_state('timepoint 7', diagnoses) == ['Diagnosis F', 'Negative']
+    assert SSC.get_diagnostic_state('timepoint 8', diagnoses) == ['', '']
 
 if __name__=='__main__':
     test_is_convertible()

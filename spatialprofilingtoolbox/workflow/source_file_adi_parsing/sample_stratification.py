@@ -159,7 +159,7 @@ class SampleStratificationCreator:
 
     @staticmethod
     def get_specimen_ids(cursor):
-        cursor.execute('SELECT specimen FROM specimen_collection_process;')
+        cursor.execute('SELECT specimen FROM specimen_collection_process ORDER BY specimen;')
         rows = cursor.fetchall()
         return [row[0] for row in rows]
 

@@ -1,5 +1,5 @@
 [database-credentials]
 endpoint = localhost
-database = scstudies
+database = postgres
 user = postgres
 password = postgres

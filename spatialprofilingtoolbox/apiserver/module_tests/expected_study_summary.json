@@ -25,19 +25,19 @@
             "1",
             "Before intervention",
             "Response to intralesional IL-2 injection",
-            "Extreme responder"
+            "Non-responder"
         ],
         [
             "2",
-            "Before intervention",
+            "After intervention",
             "Response to intralesional IL-2 injection",
             "Non-responder"
         ],
         [
             "3",
-            "After intervention",
+            "Before intervention",
             "Response to intralesional IL-2 injection",
-            "Non-responder"
+            "Extreme responder"
         ],
         [
             "4",
@@ -45,4 +45,5 @@
             "Response to intralesional IL-2 injection",
             "Extreme responder"
         ]
-    ]}
+    ]
+}

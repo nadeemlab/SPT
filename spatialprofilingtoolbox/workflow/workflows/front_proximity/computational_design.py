@@ -1,13 +1,11 @@
 
-import pandas as pd
-
 from ..defaults.computational_design import ComputationalDesign
 
 
 class FrontProximityDesign(ComputationalDesign):
     def __init__(self,
-        **kwargs,
-    ):
+                 **kwargs,
+                 ):
         """
         :param dataset_design: The design object describing the input data set.
         """
@@ -43,11 +41,14 @@ class FrontProximityDesign(ComputationalDesign):
                 complex_phenotypes_file table. Each signature is a dictionary with
                 keys the elementary phenotypes and values either "+" or "-".
         """
-        elementary_signatures = [{name : '+'} for name in self.dataset_design.get_elementary_phenotype_names()]
+        elementary_signatures = [
+            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()]
         complex_signatures = []
         for i, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted([m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted([m for m in row['Negative markers'].split(';') if m != ''])
+            positive_markers = sorted(
+                [m for m in row['Positive markers'].split(';') if m != ''])
+            negative_markers = sorted(
+                [m for m in row['Negative markers'].split(';') if m != ''])
             signature = {}
             for marker in positive_markers:
                 signature[marker] = '+'

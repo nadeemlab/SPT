@@ -18,6 +18,7 @@ class PerformanceTimer:
     Included in the report are fraction of time spent, total time spent (seconds),
     average time spent per occurrence, frequency of occurrence.
     """
+
     def __init__(self):
         self.times = {}
         self.previous_time = None
@@ -48,12 +49,12 @@ class PerformanceTimer:
             total = np.sum(self.times[t])
             frequency = len(self.times[t])
             records.append({
-                'from' : t[1],
-                'to' : t[0],
-                'average time spent' : total / frequency,
-                'total time spent' : total,
-                'frequency' : frequency,
-                'fraction' : total / all_totals,
+                'from': t[1],
+                'to': t[0],
+                'average time spent': total / frequency,
+                'total time spent': total,
+                'frequency': frequency,
+                'fraction': total / all_totals,
             })
         df = pd.DataFrame(records)
         if by in ['average time spent', 'total time spent', 'frequency']:

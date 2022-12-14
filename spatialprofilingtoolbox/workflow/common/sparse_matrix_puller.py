@@ -1,8 +1,8 @@
 
-from ...standalone_utilities.log_formats import colorized_logger
-logger = colorized_logger(__name__)
-
 from ...db.database_connection import DatabaseConnectionMaker
+from ...standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 
 class CompressedDataArrays:
@@ -26,20 +26,26 @@ class CompressedDataArrays:
       representing the cells. The order is ascending lexicographical order of the
       corresponding "histological structure" identifier strings.
     """
+
     def __init__(self):
         self.studies = {}
 
-    def add_study_data(self, study_name, data_arrays_by_specimen, target_index_lookup, target_by_symbol):
+    def add_study_data(self,
+                       study_name,
+                       data_arrays_by_specimen,
+                       target_index_lookup,
+                       target_by_symbol):
         self.studies[study_name] = {
-            'data arrays by specimen' : data_arrays_by_specimen,
-            'target index lookup' : target_index_lookup,
-            'target by symbol' : target_by_symbol,
+            'data arrays by specimen': data_arrays_by_specimen,
+            'target index lookup': target_index_lookup,
+            'target by symbol': target_by_symbol,
         }
 
 
 class SparseMatrixPuller(DatabaseConnectionMaker):
     def __init__(self, database_config_file):
-        super(SparseMatrixPuller, self).__init__(database_config_file=database_config_file)
+        super(SparseMatrixPuller, self).__init__(
+            database_config_file=database_config_file)
         self.data_arrays = None
 
     def pull(self):
@@ -52,8 +58,10 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         study_names = self.get_study_names(self.get_connection())
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
-            sparse_entries = self.get_sparse_entries(self.get_connection(), study_name)
-            data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(sparse_entries)
+            sparse_entries = self.get_sparse_entries(
+                self.get_connection(), study_name)
+            data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(
+                sparse_entries)
             data_arrays.add_study_data(
                 study_name,
                 data_arrays_by_specimen,
@@ -76,9 +84,12 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
-                sparse_entries.extend(cursor.fetchmany(size=self.get_batch_size()))
-                logger.debug('Received %s entries from DB.', len(sparse_entries) - current_number_stored)
-        logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
+                sparse_entries.extend(
+                    cursor.fetchmany(size=self.get_batch_size()))
+                logger.debug('Received %s entries from DB.', len(
+                    sparse_entries) - current_number_stored)
+        logger.debug('Received %s sparse entries total from DB.',
+                     len(sparse_entries))
         return sparse_entries
 
     def get_sparse_matrix_query(self):
@@ -103,7 +114,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
 
     def parse_data_arrays_by_specimen(self, sparse_entries):
         target_index_lookup = self.get_target_index_lookup(sparse_entries)
-        sparse_entries.sort(key = lambda x: (x[3], x[0]))
+        sparse_entries.sort(key=lambda x: (x[3], x[0]))
         data_arrays_by_specimen = {}
         last_index = len(sparse_entries) - 1
         specimen = sparse_entries[0][3]
@@ -116,9 +127,13 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                     cell_count = cell_count + 1
             else:
                 data_arrays_by_specimen[specimen] = [0] * cell_count
-                self.fill_data_array(data_arrays_by_specimen[specimen], buffer, target_index_lookup)
-                number_mb = int(100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
-                logger.debug('Data array is %s MB for %s cells in specimen %s .', number_mb, cell_count, specimen)
+                self.fill_data_array(
+                    data_arrays_by_specimen[specimen], buffer, target_index_lookup)
+                number_mb = int(
+                    100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
+                logger.debug(
+                    'Data array is %s MB for %s cells in specimen %s .',
+                    number_mb, cell_count, specimen)
                 if i != last_index:
                     specimen = sparse_entries[i + 1][3]
                     buffer = []
@@ -131,7 +146,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             targets.add(sparse_entries[i][1])
         targets = sorted(list(targets))
         lookup = {
-            target : i
+            target: i
             for i, target in enumerate(targets)
         }
         logger.debug('Unique channels: %s', len(lookup))
@@ -150,9 +165,11 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             cursor.execute(query, (study_name,))
             rows = cursor.fetchall()
         if len(rows) != len(set([row[1] for row in rows])):
-            logger.error('The symbols are not unique identifiers of the targets. The symbols are: %s' % [row[1] for row in rows])
+            logger.error(
+                'The symbols are not unique identifiers of the targets. The symbols are: %s' % [
+                    row[1] for row in rows])
         target_by_symbol = {
-            row[1] : row[0]
+            row[1]: row[0]
             for row in rows
         }
         logger.debug('Target by symbol: %s', target_by_symbol)
@@ -165,5 +182,5 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                 if entries[i][0] != entries[i-1][0]:
                     structure_index = structure_index + 1
             if entries[i][2] == 1:
-                data_array[structure_index] = data_array[structure_index] + (1 << target_index_lookup[entries[i][1]])
-
+                data_array[structure_index] = data_array[structure_index] + \
+                    (1 << target_index_lookup[entries[i][1]])

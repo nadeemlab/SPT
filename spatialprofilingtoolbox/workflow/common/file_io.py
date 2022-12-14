@@ -2,13 +2,15 @@ import hashlib
 from itertools import takewhile
 from itertools import repeat
 
+
 def raw_line_count(filename):
     file = open(filename, 'rb')
     buffer_generator = takewhile(
         lambda x: x,
         (file.raw.read(1024*1024) for _ in repeat(None)),
     )
-    return sum( buffer.count(b'\n') for buffer in buffer_generator )
+    return sum(buffer.count(b'\n') for buffer in buffer_generator)
+
 
 def compute_sha256(input_file):
     buffer_size = 65536

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-import os
 from os.path import join
-from os.path import dirname
 
-import spatialprofilingtoolbox
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import get_input_filenames_by_data_type
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+    import get_input_filenames_by_data_type
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+    import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.extract_compartments import extract_compartments
 
+
 def test_extract_compartments():
-    compartments = extract_compartments( #input_path=join(dirname(__file__), '..', 'data'), file_manifest_file='file_manifest.tsv',
+    compartments = extract_compartments(
+        # input_path=join(dirname(__file__), '..', 'data'),
+        # file_manifest_file='file_manifest.tsv',
         [
             join('./data', f)
             for f in get_input_filenames_by_data_type(
@@ -31,5 +33,5 @@ def test_extract_compartments():
                 raise ValueError('Compartments list not exactly as expected.')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     test_extract_compartments()

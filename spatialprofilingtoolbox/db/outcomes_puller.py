@@ -1,14 +1,16 @@
 
 import pandas as pd
 
+from .database_connection import DatabaseConnectionMaker
 from ..standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
-from .database_connection import DatabaseConnectionMaker
 
 class OutcomesPuller(DatabaseConnectionMaker):
     def __init__(self, database_config_file):
-        super(OutcomesPuller, self).__init__(database_config_file=database_config_file)
+        super(OutcomesPuller, self).__init__(
+            database_config_file=database_config_file)
         self.outcomes = None
 
     def pull(self):
@@ -19,7 +21,7 @@ class OutcomesPuller(DatabaseConnectionMaker):
 
     def retrieve_outcomes(self):
         study_names = self.get_study_names()
-        outcomes = { study_name : {} for study_name in study_names }
+        outcomes = {study_name: {} for study_name in study_names}
         with self.get_connection().cursor() as cursor:
             for study_index, study_name in enumerate(study_names):
                 cursor.execute('''
@@ -30,12 +32,15 @@ class OutcomesPuller(DatabaseConnectionMaker):
                 ;
                 ''', (study_name,))
 
-                df = pd.DataFrame(cursor.fetchall(), columns=['specimen', 'outcome', 'label'])
+                df = pd.DataFrame(cursor.fetchall(), columns=[
+                                  'specimen', 'outcome', 'label'])
                 dfs = {
-                    outcome : df2.sort_values(by='specimen').rename(columns={'label' : outcome}).drop(['outcome'], axis=1)
+                    outcome: df2.sort_values(by='specimen').rename(
+                        columns={'label': outcome}).drop(['outcome'], axis=1)
                     for outcome, df2 in df.groupby('outcome')
                 }
-                merged = pd.concat([dfs[outcome] for outcome in sorted(list(dfs.keys()))])
+                merged = pd.concat([dfs[outcome]
+                                   for outcome in sorted(list(dfs.keys()))])
                 outcomes[study_name]['dataframe'] = merged
                 outcomes[study_name]['filename'] = 'outcomes.%s.tsv' % study_index
         return outcomes

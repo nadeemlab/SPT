@@ -1,15 +1,14 @@
 import os
 
-import spatialprofilingtoolbox
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     environment = {
-        'SINGLE_CELL_DATABASE_HOST' : 'spt-db-testing',
-        'SINGLE_CELL_DATABASE_USER' : 'postgres',
-        'SINGLE_CELL_DATABASE_PASSWORD' : 'postgres',
-        'USE_ALTERNATIVE_TESTING_DATABASE' : '1',
+        'SINGLE_CELL_DATABASE_HOST': 'spt-db-testing',
+        'SINGLE_CELL_DATABASE_USER': 'postgres',
+        'SINGLE_CELL_DATABASE_PASSWORD': 'postgres',
+        'USE_ALTERNATIVE_TESTING_DATABASE': '1',
     }
 
     for key, value in environment.items():

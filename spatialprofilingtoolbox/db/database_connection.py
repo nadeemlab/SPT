@@ -1,4 +1,3 @@
-import urllib.request
 from urllib.request import urlopen
 import re
 import configparser
@@ -6,6 +5,7 @@ import configparser
 import psycopg2
 
 from ..standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
@@ -18,7 +18,9 @@ def retrieve_credentials(database_config_file):
             if key in parser['database-credentials']:
                 credentials[key] = parser['database-credentials'][key]
     if not re.match('^[a-z][a-z0-9_]+[a-z0-9]$', credentials['database']):
-        logger.warning('The database name "%s" is too complex. Reverting to "postgres".', credentials['database'])
+        logger.warning(
+            'The database name "%s" is too complex. Reverting to "postgres".',
+            credentials['database'])
         credentials['database'] = 'postgres'
     return credentials
 
@@ -43,13 +45,15 @@ def check_credentials_availability(configured_credentials):
 
     found = [key in configured_credentials for key in get_credential_keys()]
     if all(found):
-        credentials = {c : configured_credentials[c] for c in get_credential_keys()}
+        credentials = {c: configured_credentials[c]
+                       for c in get_credential_keys()}
         logger.info('Found database credentials %s', get_credential_keys())
         logger.info('endpoint: %s', credentials['endpoint'])
         logger.info('database: %s', credentials['database'])
         logger.info('user:     %s', credentials['user'])
         if (not connectivity) and (credentials['endpoint'] in ['localhost', '127.0.0.1']):
-            message = 'Without network connection, you can only use endpoint=localhost for backend database.'
+            message = 'Without network connection, you can only use endpoint=localhost for '
+            'backend database.'
             logger.error(message)
             raise ConnectionError(message)
     else:
@@ -61,7 +65,7 @@ def check_credentials_availability(configured_credentials):
 
 
 class DatabaseConnectionMaker:
-    def __init__(self, database_config_file: str=None):
+    def __init__(self, database_config_file: str = None):
         credentials = retrieve_credentials(database_config_file)
         check_credentials_availability(credentials)
         self.connection = None
@@ -73,7 +77,8 @@ class DatabaseConnectionMaker:
                 password=credentials['password'],
             )
         except psycopg2.Error as e:
-            logger.error('Failed to connect to database: %s %s', credentials['endpoint'], credentials['database'])
+            logger.error('Failed to connect to database: %s %s',
+                         credentials['endpoint'], credentials['database'])
             raise e
 
     def get_connection(self):
@@ -85,4 +90,3 @@ class DatabaseConnectionMaker:
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection:
             self.connection.close()
-

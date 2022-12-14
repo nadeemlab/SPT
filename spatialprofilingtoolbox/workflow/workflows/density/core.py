@@ -1,4 +1,3 @@
-from os.path import join
 import sqlite3
 
 import pandas as pd
@@ -28,7 +27,8 @@ class DensityCoreJob(CoreJob):
         intermediate outputs. This method initializes this database's tables.
         """
         cells_header = self.computational_design.get_cells_header(style='sql')
-        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        connection = sqlite3.connect(
+            self.computational_design.get_database_uri())
         cursor = connection.cursor()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
@@ -45,7 +45,8 @@ class DensityCoreJob(CoreJob):
 
         # Check if fov_lookup is still used
         fov_lookup_header = self.computational_design.get_fov_lookup_header()
-        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        connection = sqlite3.connect(
+            self.computational_design.get_database_uri())
         cursor = connection.cursor()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
@@ -83,7 +84,7 @@ class DensityCoreJob(CoreJob):
         :rtype: dict
         """
         signatures = self.computational_design.get_all_phenotype_signatures()
-        return {self.dataset_design.munge_name(signature) : signature for signature in signatures}
+        return {self.dataset_design.munge_name(signature): signature for signature in signatures}
 
     def get_phenotype_names(self):
         """
@@ -113,7 +114,8 @@ class DensityCoreJob(CoreJob):
         table_file = self.get_table(filename)
         self.timer.record_timepoint('Finished reading table')
         self.dataset_design.normalize_fov_descriptors(table_file)
-        self.timer.record_timepoint('Finished normalizing FOV strings in place')
+        self.timer.record_timepoint(
+            'Finished normalizing FOV strings in place')
 
         col = self.dataset_design.get_FOV_column()
         fovs = sorted(list(set(table_file[col])))
@@ -135,7 +137,8 @@ class DensityCoreJob(CoreJob):
             table['compartment'] = 'Not in ' + ';'.join(all_compartments)
 
             for compartment in self.dataset_design.get_compartments():
-                signature = self.dataset_design.get_compartmental_signature(table, compartment)
+                signature = self.dataset_design.get_compartmental_signature(
+                    table, compartment)
                 table.loc[signature, 'compartment'] = compartment
             self.timer.record_timepoint('Copy compartment column')
 
@@ -143,10 +146,12 @@ class DensityCoreJob(CoreJob):
             self.timer.record_timepoint('Start creating membership column')
             for name in pheno_names:
                 signature = signatures_by_name[name]
-                bools = self.dataset_design.get_pandas_signature(table, signature)
+                bools = self.dataset_design.get_pandas_signature(
+                    table, signature)
                 ints = [1 if value else 0 for value in bools]
                 table[name + ' membership'] = ints
-            phenotype_membership_columns = [name + ' membership' for name in pheno_names]
+            phenotype_membership_columns = [
+                name + ' membership' for name in pheno_names]
             self.timer.record_timepoint('Finished creating membership columns')
 
             table['sample_identifier'] = sample_identifier
@@ -155,7 +160,8 @@ class DensityCoreJob(CoreJob):
             if self.computational_design.use_intensities:
                 self.overlay_intensities(table)
                 self.timer.record_timepoint('Overlaid intensities')
-                intensity_columns = self.computational_design.get_intensity_columns(values_only=True)
+                intensity_columns = self.computational_design.get_intensity_columns(
+                    values_only=True)
             else:
                 intensity_columns = []
 
@@ -169,9 +175,9 @@ class DensityCoreJob(CoreJob):
 
             table = table[pertinent_columns]
             self.timer.record_timepoint('Restricted copy to subset of columns')
-            table.rename(columns = {
-                self.dataset_design.get_FOV_column() : 'fov_index',
-                self.dataset_design.get_cell_area_column() : 'cell_area',
+            table.rename(columns={
+                self.dataset_design.get_FOV_column(): 'fov_index',
+                self.dataset_design.get_cell_area_column(): 'cell_area',
             }, inplace=True)
 
             header1 = self.computational_design.get_cells_header_variable_portion(
@@ -180,20 +186,22 @@ class DensityCoreJob(CoreJob):
             header2 = self.computational_design.get_cells_header_variable_portion(
                 style='sql',
             )
-            table.rename(columns = {
-                header1[i][0] : header2[i][0] for i in range(len(header1))
+            table.rename(columns={
+                header1[i][0]: header2[i][0] for i in range(len(header1))
             }, inplace=True)
 
             cell_groups.append(table)
             self.timer.record_timepoint('Finished parsing one FOV cell table')
-        logger.debug('%s cells parsed from file %s.', table_file.shape[0], filename)
+        logger.debug('%s cells parsed from file %s.',
+                     table_file.shape[0], filename)
         logger.debug('Completed cell table collation.')
         return pd.concat(cell_groups), fov_lookup
 
     def overlay_intensities(self, table):
         intensity_columns = self.computational_design.get_intensity_columns()
         for phenotype_name, column_name in intensity_columns:
-            I = self.dataset_design.get_combined_intensity(table, phenotype_name)
+            I = self.dataset_design.get_combined_intensity(
+                table, phenotype_name)
             table[column_name] = I
 
     def write_cell_table(self, cells):
@@ -208,13 +216,18 @@ class DensityCoreJob(CoreJob):
         connection = sqlite3.connect(uri)
         cells.reset_index(drop=True, inplace=True)
         c = cells.columns
-        schema_columns = self.computational_design.get_cells_header(style='sql')
+        schema_columns = self.computational_design.get_cells_header(
+            style='sql')
         if all([c[i] == schema_columns[i][0] for i in range(len(c))]):
-            logger.debug('Cells table to be written has correct (normalized, ordered) sql-style header values.')
+            logger.debug(
+                'Cells table to be written has correct (normalized, ordered) sql-style header '
+                'values.')
         else:
-            logger.debug('Cells table to be written has INCORRECT sql-style header values.')
+            logger.debug(
+                'Cells table to be written has INCORRECT sql-style header values.')
             if set(c) == set(schema_columns):
-                logger.debug('At least the sets are the same, only the order is wrong.')
+                logger.debug(
+                    'At least the sets are the same, only the order is wrong.')
             logger.error('Cannot write cell table with wrong headers.')
         cells.to_sql('cells', connection, if_exists='append', index_label='id')
         connection.commit()
@@ -242,7 +255,7 @@ class DensityCoreJob(CoreJob):
                 ]
                 keys = '( ' + ' , '.join(keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = 'INSERT INTO fov_lookup ' + keys + ' VALUES ' + values +  ' ;'
+                cmd = 'INSERT INTO fov_lookup ' + keys + ' VALUES ' + values + ' ;'
                 try:
                     manager.execute(cmd)
                 except sqlite3.OperationalError as exception:

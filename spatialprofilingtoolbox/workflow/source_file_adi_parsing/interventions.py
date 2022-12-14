@@ -3,6 +3,7 @@ import pandas as pd
 
 from ...db.source_file_parser_interface import SourceToADIParser
 from ...standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
@@ -14,7 +15,8 @@ class InterventionsParser(SourceToADIParser):
         cursor = connection.cursor()
 
         logger.debug('Considering %s', interventions_file)
-        interventions = pd.read_csv(interventions_file, sep='\t', na_filter=False, dtype=str)
+        interventions = pd.read_csv(
+            interventions_file, sep='\t', na_filter=False, dtype=str)
         logger.info('Saving %s intervention records.', interventions.shape[0])
         for i, row in interventions.iterrows():
             intervention_record = (

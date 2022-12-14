@@ -4,6 +4,7 @@ import pandas as pd
 from ...db.source_file_parser_interface import SourceToADIParser
 from .value_extraction import get_unique_value
 from ...standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
@@ -20,15 +21,18 @@ class SamplesParser(SourceToADIParser):
         """
         samples = pd.read_csv(samples_file, sep='\t', dtype=str)
 
-        collection_study = SourceToADIParser.get_collection_study_name(study_name)
+        collection_study = SourceToADIParser.get_collection_study_name(
+            study_name)
         extraction_method = get_unique_value(samples, 'Extraction method')
         preservation_method = get_unique_value(samples, 'Preservation method')
         storage_location = get_unique_value(samples, 'Storage location')
 
         cursor = connection.cursor()
         cursor.execute(
-            self.generate_basic_insert_query('specimen_collection_study', fields),
-            (collection_study, extraction_method, preservation_method, storage_location, '', ''),
+            self.generate_basic_insert_query(
+                'specimen_collection_study', fields),
+            (collection_study, extraction_method,
+             preservation_method, storage_location, '', ''),
         )
 
         for i, sample in samples.iterrows():
@@ -37,7 +41,8 @@ class SamplesParser(SourceToADIParser):
                 collection_study,
             )
             cursor.execute(
-                self.generate_basic_insert_query('specimen_collection_process', fields),
+                self.generate_basic_insert_query(
+                    'specimen_collection_process', fields),
                 record,
             )
 
@@ -46,7 +51,8 @@ class SamplesParser(SourceToADIParser):
                 continue
             record = self.create_histology_assessment_process_record(sample)
             cursor.execute(
-                self.generate_basic_insert_query('histology_assessment_process', fields),
+                self.generate_basic_insert_query(
+                    'histology_assessment_process', fields),
                 record,
             )
 

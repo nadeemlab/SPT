@@ -3,7 +3,6 @@ The integration phase of the cell phenotype density workflow combines data
 across samples and performs tests for statistically-significant differences
 between outcome groups.
 """
-from os.path import join
 import re
 import itertools
 
@@ -23,10 +22,11 @@ class DensityAnalysisIntegrator:
     """
     Main class of the integration phase.
     """
+
     def __init__(self,
-        computational_design=None,
-        **kwargs,
-    ):
+                 computational_design=None,
+                 **kwargs
+                 ):
         """
         :param computational_design: Design object providing metadata specific to the
             density workflow.
@@ -62,16 +62,20 @@ class DensityAnalysisIntegrator:
         :rtype: pandas.DataFrame, list, list
         """
         cells = self.get_dataframe_from_db('cells')
-        logger.debug('Basic information on the cells table pulled from sqlite:')
-        DensityDataLogger.log_number_by_type(self.computational_design, cells, style='readable')
+        logger.debug(
+            'Basic information on the cells table pulled from sqlite:')
+        DensityDataLogger.log_number_by_type(
+            self.computational_design, cells, style='readable')
 
         phenotype_columns = self.overlay_areas_on_masks(cells)
-        DensityDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
+        DensityDataLogger.log_cell_areas_one_fov(
+            cells, self.get_fov_lookup_dict())
 
         if self.computational_design.use_intensities:
             self.overlay_intensity_on_masks(cells)
             logger.debug('(Now logging intensity-weighted cell areas)')
-            DensityDataLogger.log_cell_areas_one_fov(cells, self.get_fov_lookup_dict())
+            DensityDataLogger.log_cell_areas_one_fov(
+                cells, self.get_fov_lookup_dict())
         else:
             logger.debug('(Not using intensity information.)')
 
@@ -79,7 +83,8 @@ class DensityAnalysisIntegrator:
             cells,
             phenotype_columns,
         )
-        areas_all_phenotypes_dict = self.overlay_area_total_all_phenotypes(cells, area_sums)
+        areas_all_phenotypes_dict = self.overlay_area_total_all_phenotypes(
+            cells, area_sums)
         DensityDataLogger.log_normalization_factors(areas_all_phenotypes_dict)
 
         normalized_sum_columns = self.add_normalized_columns(
@@ -87,11 +92,14 @@ class DensityAnalysisIntegrator:
             phenotype_columns,
             sum_columns,
         )
-        DensityDataLogger.log_normalized_areas(cells, area_sums, normalized_sum_columns)
+        DensityDataLogger.log_normalized_areas(
+            cells, area_sums, normalized_sum_columns)
 
-        phenotype_names = [re.sub(' membership', '', column) for column in phenotype_columns]
+        phenotype_names = [re.sub(' membership', '', column)
+                           for column in phenotype_columns]
         values = list(set(cells['outcome_assignment']))
-        outcomes = sorted([value if not value is None else 'None' for value in values])
+        outcomes = sorted(
+            [value if not value is None else 'None' for value in values])
         return [area_sums, phenotype_names, outcomes]
 
     def do_outcome_tests(self):
@@ -133,7 +141,8 @@ class DensityAnalysisIntegrator:
                         DensityDataLogger.log_test_input(row, df1, df2)
 
         if len(rows) == 0:
-            logger.info('No non-trivial tests to perform. Probably too few values.')
+            logger.info(
+                'No non-trivial tests to perform. Probably too few values.')
             return None
         density_tests = pd.DataFrame(rows)
         density_tests.sort_values(
@@ -166,14 +175,17 @@ class DensityAnalysisIntegrator:
 
     def overlay_intensity_on_masks(self, cells):
         """
-        Multiplies whatever appears in the given phenotype columns by the corresponding channel intensity.
+        Multiplies whatever appears in the given phenotype columns by the corresponding channel
+        intensity.
 
         :param cells: The cells table.
         :type cells: pandas.DataFrame
         """
-        for phenotype_name, intensity_column_name in self.computational_design.get_intensity_columns():
+        for phenotype_name, intensity_column_name in \
+                self.computational_design.get_intensity_columns():
             phenotype_mask_column = phenotype_name + '+' + ' membership'
-            new_values = cells[phenotype_mask_column] * cells[intensity_column_name]
+            new_values = cells[phenotype_mask_column] * \
+                cells[intensity_column_name]
             cells[phenotype_mask_column] = new_values
 
     @staticmethod
@@ -200,16 +212,18 @@ class DensityAnalysisIntegrator:
         :rtype: pandas.Dataframe, dict
         """
         sum_columns = {
-            p : re.sub('membership$', 'cell area sum', p)
+            p: re.sub('membership$', 'cell area sum', p)
             for p in phenotype_columns
         }
         area_aggregation = {
-            sum_column : pd.NamedAgg(column=phenotype_column, aggfunc='sum')
+            sum_column: pd.NamedAgg(column=phenotype_column, aggfunc='sum')
             for phenotype_column, sum_column in sum_columns.items()
         }
-        select_0 = lambda x: list(x)[0]
+
+        def select_0(x):
+            return list(x)[0]
         outcome_passthrough = {
-            'outcome_assignment' : pd.NamedAgg(column='outcome_assignment', aggfunc=select_0),
+            'outcome_assignment': pd.NamedAgg(column='outcome_assignment', aggfunc=select_0),
         }
         individual_compartments = ['sample_identifier', 'compartment']
         area_sums = cells.groupby(individual_compartments, as_index=False).agg(
@@ -238,14 +252,15 @@ class DensityAnalysisIntegrator:
         """
         sample_combined_compartments = ['sample_identifier', 'compartment']
         areas_all_phenotypes = cells.groupby(sample_combined_compartments, as_index=False).agg(
-            **{ 'compartmental total cell area' : pd.NamedAgg(column='cell_area', aggfunc='sum') }
+            **{'compartmental total cell area': pd.NamedAgg(column='cell_area', aggfunc='sum')}
         )
         areas_all_phenotypes_dict = {
-            (r['sample_identifier'], r['compartment']) : r['compartmental total cell area']
+            (r['sample_identifier'], r['compartment']): r['compartmental total cell area']
             for i, r in areas_all_phenotypes.iterrows()
         }
         area_sums['cell area all phenotypes'] = [
-            areas_all_phenotypes_dict[(r['sample_identifier'], r['compartment'])]
+            areas_all_phenotypes_dict[(
+                r['sample_identifier'], r['compartment'])]
             for i, r in area_sums.iterrows()
         ]
         return areas_all_phenotypes_dict
@@ -271,21 +286,22 @@ class DensityAnalysisIntegrator:
         :rtype: dict
         """
         normalized_sum_columns = {
-            p : re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns
+            p: re.sub('membership', 'normalized cell area sum', p) for p in phenotype_columns
         }
         for phenotype in phenotype_columns:
             normalized = normalized_sum_columns[phenotype]
             summed = sum_columns[phenotype]
-            area_sums[normalized] = area_sums[summed] / area_sums['cell area all phenotypes']
+            area_sums[normalized] = area_sums[summed] / \
+                area_sums['cell area all phenotypes']
         return normalized_sum_columns
 
     @staticmethod
     def gather_test_inputs(
-            table,
-            phenotype_name,
-            outcome_pair,
-            test,
-        ):
+        table,
+        phenotype_name,
+        outcome_pair,
+        test,
+    ):
         """
         :param table: Table with aggregated normalized cell area data.
         :type table: pandas.DataFrame
@@ -309,17 +325,19 @@ class DensityAnalysisIntegrator:
         :rtype: dict
         """
         column = phenotype_name + ' normalized cell area sum'
-        df1 = table[table['outcome_assignment'] == outcome_pair[0]][['sample_identifier', column]]
-        df2 = table[table['outcome_assignment'] == outcome_pair[1]][['sample_identifier', column]]
+        df1 = table[table['outcome_assignment'] ==
+                    outcome_pair[0]][['sample_identifier', column]]
+        df2 = table[table['outcome_assignment'] ==
+                    outcome_pair[1]][['sample_identifier', column]]
         values1 = list(df1[column])
         values2 = list(df2[column])
         return {
-            'column' : column,
-            'df1' : df1,
-            'df2' : df2,
-            'values1' : values1,
-            'values2' : values2,
-            'test' : test,
+            'column': column,
+            'df1': df1,
+            'df2': df2,
+            'values1': values1,
+            'values2': values2,
+            'test': test,
         }
 
     @staticmethod
@@ -345,8 +363,8 @@ class DensityAnalysisIntegrator:
         if np.var(i['values1']) == 0 or np.var(i['values2']) == 0:
             return None
         test_tested_functions = {
-            't-test' : (ttest_ind, np.mean),
-            'Kruskal-Wallis' : (kruskal, np.median),
+            't-test': (ttest_ind, np.mean),
+            'Kruskal-Wallis': (kruskal, np.median),
         }
         test = i['test']
         test_function = test_tested_functions[test][0]
@@ -364,17 +382,19 @@ class DensityAnalysisIntegrator:
                 i['values2'],
                 nan_policy='omit',
             )
-        difference = tested_function(i['values2']) - tested_function(i['values1'])
+        difference = tested_function(
+            i['values2']) - tested_function(i['values1'])
         if tested_function(i['values1']) != 0:
-            multiplicative_effect = tested_function(i['values2']) / tested_function(i['values1'])
+            multiplicative_effect = tested_function(
+                i['values2']) / tested_function(i['values1'])
         else:
             multiplicative_effect = 'NaN'
         return {
-            'p' : p_value,
-            'difference' : difference,
-            'multiplicative effect' : multiplicative_effect,
-            'tested value 1' : tested_function(test_inputs['values1']),
-            'tested value 2' : tested_function(test_inputs['values2']),
+            'p': p_value,
+            'difference': difference,
+            'multiplicative effect': multiplicative_effect,
+            'tested value 1': tested_function(test_inputs['values1']),
+            'tested value 2': tested_function(test_inputs['values2']),
         }
 
     @staticmethod
@@ -383,7 +403,7 @@ class DensityAnalysisIntegrator:
         table,
         outcome_pair,
         phenotype_name,
-        test: str=None,
+        test: str = None,
     ):
         """
         :param compartment: The compartment/region name in which to consider cells.
@@ -439,22 +459,22 @@ class DensityAnalysisIntegrator:
         )
 
         row = {
-            'outcome 1' : outcome_pair[0],
-            'outcome 2' : outcome_pair[1],
-            'phenotype' : phenotype_name,
-            'compartment' : compartment,
-            'tested value 1' : test_results['tested value 1'],
-            'tested value 2' : test_results['tested value 2'],
-            'test' : test,
-            'p-value' : test_results['p'],
-            'absolute effect' : abs(test_results['difference']),
-            'multiplicative effect' : str(test_results['multiplicative effect']),
-            'effect sign' : sign,
-            'p-value < 0.01' : test_results['p'] < 0.01,
-            'extreme sample 1' : extreme_sample1,
-            'extreme sample 2' : extreme_sample2,
-            'extreme value 1' : extreme_value1,
-            'extreme value 2' : extreme_value2,
+            'outcome 1': outcome_pair[0],
+            'outcome 2': outcome_pair[1],
+            'phenotype': phenotype_name,
+            'compartment': compartment,
+            'tested value 1': test_results['tested value 1'],
+            'tested value 2': test_results['tested value 2'],
+            'test': test,
+            'p-value': test_results['p'],
+            'absolute effect': abs(test_results['difference']),
+            'multiplicative effect': str(test_results['multiplicative effect']),
+            'effect sign': sign,
+            'p-value < 0.01': test_results['p'] < 0.01,
+            'extreme sample 1': extreme_sample1,
+            'extreme sample 2': extreme_sample2,
+            'extreme value 1': extreme_value1,
+            'extreme value 2': extreme_value2,
         }
         return [row, test_inputs['df1'], test_inputs['df2']]
 
@@ -495,13 +515,17 @@ class DensityAnalysisIntegrator:
         uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as manager:
             columns_str = ', '.join(columns)
-            rows = manager.execute('SELECT %s FROM %s' % (columns_str, table_name))
+            rows = manager.execute('SELECT %s FROM %s' %
+                                   (columns_str, table_name))
 
-        logger.debug('self.computational_design.use_intensities: %s', self.computational_design.use_intensities)
-        logger.debug('Pulling data from "cells" table. Schema has %s columns: %s', len(columns), columns)
+        logger.debug('self.computational_design.use_intensities: %s',
+                     self.computational_design.use_intensities)
+        logger.debug('Pulling data from "cells" table. Schema has %s columns: %s', len(
+            columns), columns)
         table = pd.DataFrame(rows, columns=columns)
         if table_name == 'cells':
-            table.rename(columns=self.get_column_renaming('cells'), inplace=True)
+            table.rename(columns=self.get_column_renaming(
+                'cells'), inplace=True)
         return table
 
     def get_column_renaming(self, table_name):
@@ -516,9 +540,12 @@ class DensityAnalysisIntegrator:
         """
         renaming = {}
         if table_name == 'cells':
-            header1 = self.computational_design.get_cells_header_variable_portion(style='sql')
-            header2 = self.computational_design.get_cells_header_variable_portion(style='readable')
-            renaming = {header1[i][0] : header2[i][0] for i in range(len(header1))}
+            header1 = self.computational_design.get_cells_header_variable_portion(
+                style='sql')
+            header2 = self.computational_design.get_cells_header_variable_portion(
+                style='readable')
+            renaming = {header1[i][0]: header2[i][0]
+                        for i in range(len(header1))}
         return renaming
 
     @staticmethod
@@ -540,7 +567,8 @@ class DensityAnalysisIntegrator:
         :rtype: str, float
         """
         values_column = column
-        table_sorted = table.sort_values(by=values_column, ascending=True if sign==-1 else False)
+        table_sorted = table.sort_values(
+            by=values_column, ascending=True if sign == -1 else False)
         if table_sorted.shape[0] == 0:
             return ['none', -1]
         extreme_sample = list(table_sorted['sample_identifier'])[0]
@@ -556,7 +584,7 @@ class DensityAnalysisIntegrator:
         if self._fov_lookup_dict is None:
             fov_lookup = self.get_dataframe_from_db('fov_lookup')
             self._fov_lookup_dict = {
-                (row['sample_identifier'], row['fov_index']) : row['fov_string']
+                (row['sample_identifier'], row['fov_index']): row['fov_string']
                 for i, row in fov_lookup.iterrows()
             }
         return self._fov_lookup_dict
@@ -570,4 +598,4 @@ class DensityAnalysisIntegrator:
         :return: 1 or -1.
         :rtype: int
         """
-        return 1 if value >=0 else -1
+        return 1 if value >= 0 else -1

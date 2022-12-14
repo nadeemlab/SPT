@@ -3,7 +3,8 @@ import os
 from os.path import join
 import json
 
-from  ..standalone_utilities.log_formats import colorized_logger
+from ..standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
@@ -15,7 +16,8 @@ class CountsProvider:
 
     def load_expressions_indices(self, data_directory):
         logger.debug('Searching for source data in: %s', data_directory)
-        json_files = [f for f in os.listdir(data_directory) if os.path.isfile(join(data_directory, f)) and re.search(r'\.json$', f)]
+        json_files = [f for f in os.listdir(data_directory) if os.path.isfile(
+            join(data_directory, f)) and re.search(r'\.json$', f)]
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
             exit()
@@ -30,7 +32,8 @@ class CountsProvider:
         self.data_arrays = {}
         for study_name in self.get_study_names():
             self.data_arrays[study_name] = {
-                item['specimen'] : self.get_data_array_from_file(join(data_directory, item['filename']))
+                item['specimen']: self.get_data_array_from_file(
+                    join(data_directory, item['filename']))
                 for item in self.studies[study_name]['expressions files']
             }
 
@@ -52,7 +55,8 @@ class CountsProvider:
         if not all([name in target_by_symbol.keys() for name in channel_names]):
             return None
         identifiers = [target_by_symbol[name] for name in channel_names]
-        indices = [target_index_lookup[identifier] for identifier in identifiers]
+        indices = [target_index_lookup[identifier]
+                   for identifier in identifiers]
         signature = 0
         for index in indices:
             signature = signature + (1 << index)
@@ -78,12 +82,14 @@ class CountsProvider:
             counts[specimen] = [count, len(data_array)]
         return counts
 
-    def count_structures_of_partial_signed_signature(self, positives_signature, negatives_signature, study_name):
+    def count_structures_of_partial_signed_signature(
+            self, positives_signature, negatives_signature, study_name):
         counts = {}
         for specimen, data_array in self.data_arrays[study_name].items():
             count = 0
             for entry in data_array:
-                if (entry | positives_signature == entry) and (~entry | negatives_signature == ~entry):
+                if (entry | positives_signature == entry) and \
+                        (~entry | negatives_signature == ~entry):
                     count = count + 1
             counts[specimen] = [count, len(data_array)]
         return counts
@@ -91,15 +97,16 @@ class CountsProvider:
     def get_status(self):
         return [
             {
-                'study' : study_name,
-                'counts by channel' : [
+                'study': study_name,
+                'counts by channel': [
                     {
-                        'channel symbol' : symbol,
-                        'count' : self.count_structures_of_partial_signed_signature([symbol], [], study_name),
+                        'channel symbol': symbol,
+                        'count': self.count_structures_of_partial_signed_signature(
+                            [symbol], [], study_name),
                     }
                     for symbol in sorted(list(targets['target by symbol'].keys()))
                 ],
-                'total number of cells' : len(self.data_arrays[study_name]),
+                'total number of cells': len(self.data_arrays[study_name]),
             }
             for study_name, targets in self.studies.items()
         ]

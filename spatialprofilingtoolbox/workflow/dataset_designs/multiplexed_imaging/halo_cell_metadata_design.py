@@ -1,7 +1,4 @@
 import pathlib
-import os
-from os.path import join
-from os.path import exists
 import re
 
 import pandas as pd
@@ -16,17 +13,19 @@ class HALOCellMetadataDesign:
     This class provides the schema necessary to interpret cell metadata manifests
     exported from the HALO software.
     """
+
     def __init__(self,
-        elementary_phenotypes_file: str=None,
-        compartments_file: str=None,
-        **kwargs,
-    ):
+                 elementary_phenotypes_file: str = None,
+                 compartments_file: str = None,
+                 **kwargs,
+                 ):
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
             keep_default_na=False,
         )
         if compartments_file is not None:
-            self.compartments = open(compartments_file, 'rt').read().strip('\n').split('\n')
+            self.compartments = open(
+                compartments_file, 'rt').read().strip('\n').split('\n')
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -56,7 +55,9 @@ class HALOCellMetadataDesign:
             if not column in table.columns:
                 column = re.sub(' ', '_', column)
                 if not column in table.columns:
-                    raise ValueError('Could not find "%s" even with underscore replacement, among: %s' % (column, str(list(table.columns))))
+                    raise ValueError(
+                        'Could not find "%s" even with underscore replacement, among: %s' % (
+                            column, str(list(table.columns))))
         return column
 
     @staticmethod
@@ -153,7 +154,9 @@ class HALOCellMetadataDesign:
         ymax = 'YMax'
         return [xmin, xmax, ymin, ymax]
 
-    def get_indicator_prefix(self, phenotype_name, metadata_file_column='Column header fragment prefix'):
+    def get_indicator_prefix(self,
+                             phenotype_name,
+                             metadata_file_column='Column header fragment prefix'):
         """
         Args:
             phenotype_name (str):
@@ -194,7 +197,7 @@ class HALOCellMetadataDesign:
             sites = ['']
         for site in sites:
             for e in sorted(list(self.elementary_phenotypes['Name'])):
-                parts = []
+                # parts = []
                 prefix = self.get_indicator_prefix(e)
                 infix = site
                 suffix = 'Intensity'
@@ -221,7 +224,7 @@ class HALOCellMetadataDesign:
                 A de-facto name for the class delineated by this signature, obtained by
                 concatenating key/value pairs in a standardized order.
         """
-        keys = sorted(list(signature.keys()))
+        # keys = sorted(list(signature.keys()))
         feature_list = [key + signature[key] for key in signature]
         name = ''.join(feature_list)
         return name
@@ -243,7 +246,8 @@ class HALOCellMetadataDesign:
                 provided signature.
         """
         if signature is None:
-            logger.error('Can not get subset with no information about signature (None).')
+            logger.error(
+                'Can not get subset with no information about signature (None).')
             return None
         if table is None:
             logger.error('Can not find subset of empty data; table is None.')
@@ -253,11 +257,14 @@ class HALOCellMetadataDesign:
         for key in signature.keys():
             feature_name = fn(key, table=table)
             if not feature_name in table.columns:
-                logger.warning('Key "%s" was not among feature/column names: %s', feature_name, str(list(table.columns)))
+                logger.warning('Key "%s" was not among feature/column names: %s',
+                               feature_name, str(list(table.columns)))
                 feature_name = re.sub(' ', '_', feature_name)
                 if not feature_name in table.columns:
-                    logger.error('Key "%s" was not among feature/column names: %s', feature_name, str(list(table.columns)))
-        pandas_signature = self.non_infix_bitwise_AND([table[fn(key, table=table)] == v(value) for key, value in signature.items()])
+                    logger.error('Key "%s" was not among feature/column names: %s',
+                                 feature_name, str(list(table.columns)))
+        pandas_signature = self.non_infix_bitwise_AND(
+            [table[fn(key, table=table)] == v(value) for key, value in signature.items()])
         return pandas_signature
 
     def non_infix_bitwise_AND(self, args):
@@ -314,8 +321,8 @@ class HALOCellMetadataDesign:
             in the HALO-exported CSV.
         """
         special_cases = {
-            '+' : 1,
-            '-' : 0,
+            '+': 1,
+            '-': 0,
         }
         if value in special_cases.keys():
             return special_cases[value]
@@ -343,13 +350,16 @@ class HALOCellMetadataDesign:
 
         if compartment in self.get_compartments():
             column = HALOCellMetadataDesign.get_compartment_column_name()
-            if (not column in table.columns) and (self.get_compartments() == ['<any>']) and (compartment == '<any>'):
+            if (not column in table.columns) and (self.get_compartments() == ['<any>']) \
+                    and (compartment == '<any>'):
                 signature = [True for i in range(table.shape[0])]
             else:
-                signature = self.get_pandas_signature(table, {column : compartment})
+                signature = self.get_pandas_signature(
+                    table, {column: compartment})
 
         if signature is None:
-            logger.error('Could not define compartment %s, from among %s', compartment, self.get_compartments())
+            logger.error('Could not define compartment %s, from among %s',
+                         compartment, self.get_compartments())
             return [False for i in range(table.shape[0])]
         else:
             return signature
@@ -385,4 +395,3 @@ class HALOCellMetadataDesign:
         Currently only used for manually-created intensity column.
         """
         return self.get_indicator_prefix(elementary_phenotype) + ' Intensity'
-

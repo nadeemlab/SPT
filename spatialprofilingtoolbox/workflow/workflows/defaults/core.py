@@ -1,4 +1,3 @@
-import os
 from os.path import getsize
 import re
 
@@ -17,11 +16,11 @@ class CoreJob:
         self,
         dataset_design=None,
         computational_design=None,
-        input_file_identifier: str=None,
-        input_filename: str=None,
-        sample_identifier: str=None,
-        outcome: str=None,
-        **kwargs,
+        input_file_identifier: str = None,
+        input_filename: str = None,
+        sample_identifier: str = None,
+        outcome: str = None,
+        **kwargs
     ):
         """
         :param dataset_design: Design object providing metadata about the *kind* of
@@ -68,12 +67,15 @@ class CoreJob:
         Concludes low-level performance metric collection for this job.
         """
         df = self.timer.report(by='fraction')
-        df.to_csv(self.computational_design.get_performance_report_filename(), index=False)
+        df.to_csv(
+            self.computational_design.get_performance_report_filename(), index=False)
 
     def log_file_info(self):
         number_cells = raw_line_count(self.input_filename) - 1
-        logger.info('%s cells to be parsed from source file "%s".', number_cells, self.input_filename)
-        logger.info('Cells source file has size %s bytes.', getsize(self.input_filename))
+        logger.info('%s cells to be parsed from source file "%s".',
+                    number_cells, self.input_filename)
+        logger.info('Cells source file has size %s bytes.',
+                    getsize(self.input_filename))
 
     def get_table(self, filename):
         table_from_file = pd.read_csv(filename)
@@ -83,9 +85,11 @@ class CoreJob:
     def preprocess(self, table):
         if self.computational_design.dichotomize:
             for phenotype in self.dataset_design.get_elementary_phenotype_names():
-                intensity = self.dataset_design.get_intensity_column_name(phenotype)
+                intensity = self.dataset_design.get_intensity_column_name(
+                    phenotype)
                 if not intensity in table.columns:
-                    self.dataset_design.add_combined_intensity_column(table, phenotype)
+                    self.dataset_design.add_combined_intensity_column(
+                        table, phenotype)
                 Dichotomizer.dichotomize(
                     phenotype,
                     table,
@@ -112,5 +116,6 @@ class CoreJob:
             str_values = [str(element) for element in table[fov]]
             table[fov] = str_values
         else:
-            logger.debug('Creating dummy "%s" until its use is fully deprecated.', fov)
+            logger.debug(
+                'Creating dummy "%s" until its use is fully deprecated.', fov)
             table[fov] = ['FOV1' for i, row in table.iterrows()]

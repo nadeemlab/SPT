@@ -1,7 +1,6 @@
 """
 The integration phase of the proximity workflow. Performs statistical tests.
 """
-from os.path import join
 import sqlite3
 import itertools
 import re
@@ -23,18 +22,20 @@ class PhenotypeProximityAnalysisIntegrator:
     """
     The main class of the integration phase.
     """
+
     def __init__(self,
-        computational_design: PhenotypeProximityDesign=None,
-        database_config_file: str=None,
-        file_manifest_file: str=None,
-        **kwargs,
-    ):
+                 computational_design: PhenotypeProximityDesign = None,
+                 database_config_file: str = None,
+                 file_manifest_file: str = None,
+                 **kwargs
+                 ):
         """
         :param computational_design: The design object for the proximity workflow.
         """
         self.computational_design = computational_design
         self.database_config_file = database_config_file
-        self.file_metadata = pd.read_csv(file_manifest_file, sep='\t', keep_default_na=False)
+        self.file_metadata = pd.read_csv(
+            file_manifest_file, sep='\t', keep_default_na=False)
         self.cell_proximity_tests = None
         self.cached_table = None
 
@@ -53,26 +54,31 @@ class PhenotypeProximityAnalysisIntegrator:
         else:
             with open(filename, 'wt') as file:
                 file.write('')
-            logger.warning('No stats to export for phenotype proximity workflow.')
+            logger.warning(
+                'No stats to export for phenotype proximity workflow.')
 
     def export_feature_values(self):
         if self.database_config_file is None:
-            logger.warning('Can not export feature values because no database config file was given.')
+            logger.warning(
+                'Can not export feature values because no database config file was given.')
             return
         feature_table = self.retrieve_radius_limited_counts()
         feature_table = self.suppress_compartments(feature_table)
 
         with ADIFeaturesUploader(
-            database_config_file = self.database_config_file,
-            data_analysis_study = self.retrieve_data_analysis_study_name(),
-            derivation_method = self.describe_feature_derivation_method(),
-            specifier_number = 3,
+            database_config_file=self.database_config_file,
+            data_analysis_study=self.retrieve_data_analysis_study_name(),
+            derivation_method=self.describe_feature_derivation_method(),
+            specifier_number=3,
         ) as feature_uploader:
             for i, row in feature_table.iterrows():
-                specifiers = (row['source phenotype'], row['target phenotype'], row['distance limit in pixels'])
+                specifiers = (
+                    row['source phenotype'], row['target phenotype'],
+                    row['distance limit in pixels'])
                 subject = row['sample identifier']
                 value = row[self.computational_design.get_aggregated_metric_name()]
-                feature_uploader.stage_feature_value(specifiers, subject, value)
+                feature_uploader.stage_feature_value(
+                    specifiers, subject, value)
 
     def suppress_compartments(self, feature_table):
         compartments = list(set(feature_table['compartment']))
@@ -82,7 +88,9 @@ class PhenotypeProximityAnalysisIntegrator:
             elif 'any' in compartments:
                 return feature_table[feature_table['compartment'] == 'any']
             else:
-                logger.warning('Can not suppress compartment column in feature table; no "all" value among: %s', compartments)
+                logger.warning(
+                    'Can not suppress compartment column in feature table; no "all" value among: %s',
+                    compartments)
         else:
             return feature_table
 
@@ -117,7 +125,8 @@ class PhenotypeProximityAnalysisIntegrator:
         """
         records = []
         table = self.retrieve_radius_limited_counts()
-        outcomes = sorted(list(set(table['outcome assignment']).difference(set(['unknown']))))
+        outcomes = sorted(
+            list(set(table['outcome assignment']).difference(set(['unknown']))))
         for outcome1, outcome2 in itertools.combinations(outcomes, 2):
             subselection1 = table[table['outcome assignment'] == outcome1]
             subselection2 = table[table['outcome assignment'] == outcome2]
@@ -129,7 +138,8 @@ class PhenotypeProximityAnalysisIntegrator:
             ]
             grouped1 = subselection1.groupby(columns)
             grouped2 = subselection2.groupby(columns)
-            cases = set(grouped1.indices.keys()).intersection(set(grouped2.indices.keys()))
+            cases = set(grouped1.indices.keys()).intersection(
+                set(grouped2.indices.keys()))
             for case in cases:
                 [source_phenotype, target_phenotype, compartment, radius] = case
                 feature = self.computational_design.get_aggregated_metric_name()
@@ -139,43 +149,46 @@ class PhenotypeProximityAnalysisIntegrator:
                     continue
                 if np.var(values1) == 0 or np.var(values2) == 0:
                     continue
-                _, p_ttest = ttest_ind(values1, values2, equal_var=False, nan_policy='omit')
+                _, p_ttest = ttest_ind(
+                    values1, values2, equal_var=False, nan_policy='omit')
                 mean_difference = values2.mean() - values1.mean()
                 _, p_kruskal = kruskal(values1, values2, nan_policy='omit')
                 median_difference = values2.median() - values1.median()
                 records.append({
-                    'outcome 1' : outcome1,
-                    'outcome 2' : outcome2,
-                    'source phenotype' : source_phenotype,
-                    'target phenotype' : target_phenotype,
-                    'compartment' : compartment,
-                    'distance limit in pixels' : radius,
-                    'tested value 1' : values1.mean(),
-                    'tested value 2' : values2.mean(),
-                    'test' : 't-test',
-                    'p-value' : p_ttest,
-                    'absolute effect' : abs(mean_difference),
-                    'effect sign' : int(np.sign(mean_difference)),
-                    'p-value < 0.01' : p_ttest < 0.01,
+                    'outcome 1': outcome1,
+                    'outcome 2': outcome2,
+                    'source phenotype': source_phenotype,
+                    'target phenotype': target_phenotype,
+                    'compartment': compartment,
+                    'distance limit in pixels': radius,
+                    'tested value 1': values1.mean(),
+                    'tested value 2': values2.mean(),
+                    'test': 't-test',
+                    'p-value': p_ttest,
+                    'absolute effect': abs(mean_difference),
+                    'effect sign': int(np.sign(mean_difference)),
+                    'p-value < 0.01': p_ttest < 0.01,
                 })
                 records.append({
-                    'outcome 1' : outcome1,
-                    'outcome 2' : outcome2,
-                    'source phenotype' : source_phenotype,
-                    'target phenotype' : target_phenotype,
-                    'compartment' : compartment,
-                    'distance limit in pixels' : radius,
-                    'tested value 1' : values1.median(),
-                    'tested value 2' : values2.median(),
-                    'test' : 'Kruskal-Wallis',
-                    'p-value' : p_kruskal,
-                    'absolute effect' : abs(median_difference),
-                    'effect sign' : int(np.sign(median_difference)),
-                    'p-value < 0.01' : p_kruskal < 0.01,
+                    'outcome 1': outcome1,
+                    'outcome 2': outcome2,
+                    'source phenotype': source_phenotype,
+                    'target phenotype': target_phenotype,
+                    'compartment': compartment,
+                    'distance limit in pixels': radius,
+                    'tested value 1': values1.median(),
+                    'tested value 2': values2.median(),
+                    'test': 'Kruskal-Wallis',
+                    'p-value': p_kruskal,
+                    'absolute effect': abs(median_difference),
+                    'effect sign': int(np.sign(median_difference)),
+                    'p-value < 0.01': p_kruskal < 0.01,
                 })
 
-                keyed_values1 = ' '.join([str( (row['sample identifier'], row[feature]) ) for i, row in grouped1.get_group(case).iterrows()])
-                keyed_values2 = ' '.join([str( (row['sample identifier'], row[feature]) ) for i, row in grouped2.get_group(case).iterrows()])
+                keyed_values1 = ' '.join([str((row['sample identifier'], row[feature]))
+                                         for i, row in grouped1.get_group(case).iterrows()])
+                keyed_values2 = ' '.join([str((row['sample identifier'], row[feature]))
+                                         for i, row in grouped2.get_group(case).iterrows()])
 
                 logger.debug(
                     'For "%s" vs "%s", phenotype pair (%s, %s), %s, pixels < %s, did t-test and KW on values: (1) %s   (2) %s',
@@ -189,12 +202,15 @@ class PhenotypeProximityAnalysisIntegrator:
                     keyed_values2,
                 )
         if len(records) == 0:
-            logger.info('No non-trivial tests to perform. Probably too few values.')
+            logger.info(
+                'No non-trivial tests to perform. Probably too few values.')
             return None
         cell_proximity_tests = pd.DataFrame(records)
-        sort_order = ['outcome 1', 'outcome 2', 'p-value < 0.01', 'absolute effect', 'p-value']
+        sort_order = ['outcome 1', 'outcome 2',
+                      'p-value < 0.01', 'absolute effect', 'p-value']
         ascending = [True, True, False, False, True]
-        cell_proximity_tests.sort_values(by=sort_order, ascending=ascending, inplace=True)
+        cell_proximity_tests.sort_values(
+            by=sort_order, ascending=ascending, inplace=True)
         return cell_proximity_tests
 
     def export_results(self, cell_proximity_tests, filename):
@@ -216,12 +232,15 @@ class PhenotypeProximityAnalysisIntegrator:
             return self.cached_table
         uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
-        table_unaggregated = pd.read_sql_query('SELECT * FROM %s' % self.computational_design.get_cell_pair_counts_table_name(), connection)
+        table_unaggregated = pd.read_sql_query(
+            'SELECT * FROM %s' % self.computational_design.get_cell_pair_counts_table_name(),
+            connection)
         connection.close()
         table = self.do_aggregation_over_different_files(table_unaggregated)
         self.add_balance_metadata(table)
         self.save_aggregated_radius_limited_counts(table)
-        table = table.rename(columns={key:re.sub('_', ' ', key) for key in table.columns})
+        table = table.rename(columns={key: re.sub(
+            '_', ' ', key) for key in table.columns})
         self.cached_table = table
         return table
 
@@ -245,12 +264,14 @@ class PhenotypeProximityAnalysisIntegrator:
             'target_phenotype',
             'compartment',
             'distance_limit_in_pixels',
-        ] # Get this from computational design!!
+        ]  # Get this from computational design!!
         if self.computational_design.balanced:
             table = table.groupby(case_classifiers, as_index=False).agg('sum')
-            f1 = self.computational_design.get_primary_output_feature_name(style='sql')
-            f2 = self.computational_design.get_aggregated_metric_name(style='sql')
-            table.rename(columns={f1 : f2}, inplace=True)
+            f1 = self.computational_design.get_primary_output_feature_name(
+                style='sql')
+            f2 = self.computational_design.get_aggregated_metric_name(
+                style='sql')
+            table.rename(columns={f1: f2}, inplace=True)
         else:
             agg = self.custom_per_sample_aggregation_function
             logger.debug(
@@ -263,11 +284,12 @@ class PhenotypeProximityAnalysisIntegrator:
             logger.debug('Done grouping.')
 
         table.reset_index(inplace=True)
-        table.rename(columns={'index' : 'id'}, inplace=True)
+        table.rename(columns={'index': 'id'}, inplace=True)
         return table
 
     def custom_per_sample_aggregation_function(self, sub_table):
-        metric = self.computational_design.get_primary_output_feature_name(style='sql')
+        metric = self.computational_design.get_primary_output_feature_name(
+            style='sql')
         multiplied = [
             row[metric] * row['source_phenotype_count']
             for i, row in sub_table.iterrows()
@@ -278,8 +300,8 @@ class PhenotypeProximityAnalysisIntegrator:
         else:
             frac = sum(multiplied) / denominator
         return pd.Series({
-            self.computational_design.get_aggregated_metric_name(style='sql') : frac,
-            'source_phenotype_count' : denominator,
+            self.computational_design.get_aggregated_metric_name(style='sql'): frac,
+            'source_phenotype_count': denominator,
         })
 
     def add_balance_metadata(self, table):

@@ -2,6 +2,7 @@ import json
 
 from ...db.source_file_parser_interface import SourceToADIParser
 from ...standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
@@ -10,7 +11,8 @@ class StudyParser(SourceToADIParser):
         super(StudyParser, self).__init__(**kwargs)
 
     def cautious_insert(self, tablename, record, cursor, fields, no_primary=True):
-        was_found, key = self.check_exists(tablename, record, cursor, fields, no_primary=no_primary)
+        was_found, key = self.check_exists(
+            tablename, record, cursor, fields, no_primary=no_primary)
         if was_found:
             logger.debug('"%s" %s already exists.', tablename, str(record))
         else:
@@ -30,8 +32,10 @@ class StudyParser(SourceToADIParser):
         self.cautious_insert('study', record, cursor, fields)
 
         for p in study['People']:
-            record = (p['Full name'], p['Surname'], p['Given name'], p['ORCID'])
-            self.cautious_insert('research_professional', record, cursor, fields)
+            record = (p['Full name'], p['Surname'],
+                      p['Given name'], p['ORCID'])
+            self.cautious_insert('research_professional',
+                                 record, cursor, fields)
 
         record = (
             study['Study contact person']['Name'],
@@ -42,7 +46,8 @@ class StudyParser(SourceToADIParser):
 
         collection = SourceToADIParser.get_measurement_study_name(study_name)
         measurement = SourceToADIParser.get_collection_study_name(study_name)
-        data_analysis = SourceToADIParser.get_data_analysis_study_name(study_name)
+        data_analysis = SourceToADIParser.get_data_analysis_study_name(
+            study_name)
         for substudy in [collection, measurement, data_analysis]:
             record = [study_name, substudy]
             self.cautious_insert('study_component', record, cursor, fields)

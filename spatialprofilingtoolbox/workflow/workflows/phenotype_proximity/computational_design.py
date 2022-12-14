@@ -2,8 +2,6 @@
 The module describing the design of the phenotype proximity workflow, including
 any workflow-specific metadata.
 """
-import pandas as pd
-
 from ..defaults.computational_design import ComputationalDesign
 
 
@@ -11,11 +9,12 @@ class PhenotypeProximityDesign(ComputationalDesign):
     """
     The design object.
     """
+
     def __init__(self,
-        balanced: bool=False,
-        use_intensities: bool=False,
-        **kwargs,
-    ):
+                 balanced: bool = False,
+                 use_intensities: bool = False,
+                 **kwargs,
+                 ):
         """
         :param balanced: Whether to use balanced or unbalanced treatment of phenotype
             pairs.
@@ -77,12 +76,14 @@ class PhenotypeProximityDesign(ComputationalDesign):
         :rtype: list
         """
         elementary_signatures = [
-            {name : '+'} for name in self.dataset_design.get_elementary_phenotype_names()
+            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()
         ]
         complex_signatures = []
         for _, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted([m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted([m for m in row['Negative markers'].split(';') if m != ''])
+            positive_markers = sorted(
+                [m for m in row['Positive markers'].split(';') if m != ''])
+            negative_markers = sorted(
+                [m for m in row['Negative markers'].split(';') if m != ''])
             signature = {}
             for marker in positive_markers:
                 signature[marker] = '+'
@@ -92,7 +93,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
         signatures = elementary_signatures + complex_signatures
         if by_name:
             return {
-                self.dataset_design.munge_name(signature) : signature for signature in signatures
+                self.dataset_design.munge_name(signature): signature for signature in signatures
             }
         return signatures
 
@@ -130,4 +131,3 @@ class PhenotypeProximityDesign(ComputationalDesign):
     @staticmethod
     def uses_database():
         return True
-

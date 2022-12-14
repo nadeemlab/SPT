@@ -1,17 +1,18 @@
 import importlib.resources
 
 from ..standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
 def verbose_sql_execute(
     filename,
     connection,
-    description: str=None,
+    description: str = None,
     silent=False,
     contents=None,
     itemize=False,
-    source_package: str=None,
+    source_package: str = None,
 ):
     if description is None:
         description = filename
@@ -26,7 +27,8 @@ def verbose_sql_execute(
         logger.debug(script)
 
     if itemize:
-        script_statements = [s + ';' for s in script.rstrip(' \n').split(';') if s != '']
+        script_statements = [
+            s + ';' for s in script.rstrip(' \n').split(';') if s != '']
         for statement in script_statements:
             logger.debug(statement)
             cursor.execute(statement)

@@ -1,16 +1,17 @@
 import argparse
-import os
+import json
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger('spt db create-schema')
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt db retrieve-feature-matrices',
-        description = '''
+        prog='spt db retrieve-feature-matrices',
+        description='''
 Retrieve feature matrices for each sample of each study, an outcomes dataframe
 for each study, and a column/channel names lookup for each study.
 Retrieves from any database that conforms to "single cell ADI" database schema.
@@ -30,9 +31,10 @@ specimen and channel name information in:  features.json
     if args.database_config_file:
         database_config_file = abspath(expanduser(args.database_config_file))
     if not exists(database_config_file):
-        raise FileNotFoundError('Need to supply valid database config filename: %s', database_config_file)
+        raise FileNotFoundError(
+            'Need to supply valid database config filename: %s', database_config_file
+        )
 
-    import spatialprofilingtoolbox
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
     try:
         from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
@@ -52,4 +54,3 @@ specimen and channel name information in:  features.json
     FeatureMatrixExtractor.redact_dataframes(bundle)
     with open('features.json', 'wt') as file:
         file.write(json.dumps(bundle, indent=2))
-

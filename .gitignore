@@ -8,6 +8,8 @@ data-loaded-image-1
 data-loaded-image-1and2
 development-image
 dist/**
+__pycache__/
+*.pyc
 spatialprofilingtoolbox/*/Dockerfile
 spatialprofilingtoolbox/*/docker.built
 spatialprofilingtoolbox/*/requirements.txt

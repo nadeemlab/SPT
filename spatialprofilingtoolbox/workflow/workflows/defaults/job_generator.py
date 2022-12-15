@@ -1,11 +1,12 @@
-import os
 from os.path import join
 from os.path import exists
 
 import pandas as pd
 
-from ...dataset_designs.multiplexed_imaging.file_identifier_schema import elementary_phenotypes_file_identifier
-from ...dataset_designs.multiplexed_imaging.file_identifier_schema import composite_phenotypes_file_identifier
+from ...dataset_designs.multiplexed_imaging.file_identifier_schema import \
+    elementary_phenotypes_file_identifier
+from ...dataset_designs.multiplexed_imaging.file_identifier_schema import \
+    composite_phenotypes_file_identifier
 from ....standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -18,12 +19,13 @@ class JobGenerator:
     controlled by a relatively precise schema (distributed with the source code of
     this package).
     """
+
     def __init__(self,
-        input_path: str=None,
-        file_manifest_file: str=None,
-        dataset_design_class=None,
-        **kwargs,
-    ):
+                 input_path: str = None,
+                 file_manifest_file: str = None,
+                 dataset_design_class=None,
+                 **kwargs
+                 ):
         self.input_path = input_path
         self.dataset_design_class = dataset_design_class
         if not exists(file_manifest_file):
@@ -42,27 +44,28 @@ class JobGenerator:
         Prepares the job specification table for the orchestrator.
         """
         validate = self.dataset_design_class.validate_cell_manifest_descriptor
-        records = self.retrieve_file_records(condition = lambda record: validate(record['Data type']))
+        records = self.retrieve_file_records(
+            condition=lambda record: validate(record['Data type']))
 
         if outcomes_file:
             outcomes = pd.read_csv(outcomes_file, sep='\t')
             outcomes_dict = {
-                row['Sample ID'] : row[outcomes.columns[1]]
+                row['Sample ID']: row[outcomes.columns[1]]
                 for i, row in outcomes.iterrows()
             }
         else:
             outcomes_dict = {
-                record['Sample ID'] : 'Unknown outcome assignment'
+                record['Sample ID']: 'Unknown outcome assignment'
                 for i, record in enumerate(records)
             }
 
         rows = [
             {
-                'input_file_identifier' : record['File ID'],
-                'input_filename' : join(self.input_path, record['File name']),
-                'job_index' : i,
-                'outcome' : outcomes_dict[record['Sample ID']],
-                'sample_identifier' : record['Sample ID'],
+                'input_file_identifier': record['File ID'],
+                'input_filename': join(self.input_path, record['File name']),
+                'job_index': i,
+                'outcome': outcomes_dict[record['Sample ID']],
+                'sample_identifier': record['Sample ID'],
             }
             for i, record in enumerate(records)
         ]
@@ -72,15 +75,18 @@ class JobGenerator:
         df.to_csv(job_specification_table_filename, index=False, header=True)
 
     def write_filename(self, filename_file, identifier):
-        validate = lambda record: record['File ID'] == identifier
-        records = self.retrieve_file_records(condition = validate)
+        def validate(record): return record['File ID'] == identifier
+        records = self.retrieve_file_records(condition=validate)
         if len(records) != 1:
-            raise ValueError('Found %s files "%s"; need exactly 1.' % (str(len(records)), identifier))
+            raise ValueError('Found %s files "%s"; need exactly 1.' % (str(len(records)),
+                                                                       identifier))
         with open(filename_file, 'wt') as file:
             file.write(join(self.input_path, records[0]['File name']))
 
     def write_elementary_phenotypes_filename(self, filename_file):
-        self.write_filename(filename_file, elementary_phenotypes_file_identifier)
+        self.write_filename(
+            filename_file, elementary_phenotypes_file_identifier)
 
     def write_composite_phenotypes_filename(self, filename_file):
-        self.write_filename(filename_file, composite_phenotypes_file_identifier)
+        self.write_filename(
+            filename_file, composite_phenotypes_file_identifier)

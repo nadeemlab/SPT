@@ -1,18 +1,25 @@
+# Always present status files
 check-docker-daemon-running
+status_code
+
+# Generated files
 check-for-docker-credentials
 data-loaded-image-1
 data-loaded-image-1and2
 development-image
 dist/**
-status_code
-
+__pycache__/
+*.pyc
 spatialprofilingtoolbox/*/Dockerfile
 spatialprofilingtoolbox/*/docker.built
 spatialprofilingtoolbox/*/requirements.txt
 spatialprofilingtoolbox/*/specific_requirements.txt
-
+spatialprofilingtoolbox/countsserver/expression_data/*
 spatialprofilingtoolbox/db/data_model/schema.sql
 spatialprofilingtoolbox/db/initialize_schema.sql
-
 spatialprofilingtoolbox/entry_point/spt-completion.sh
 spatialprofilingtoolbox/entry_point/venv/**
+
+# Development files
+.vscode/
+.mypy_cache/

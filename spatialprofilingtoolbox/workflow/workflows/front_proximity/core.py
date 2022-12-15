@@ -1,9 +1,5 @@
-import os
-from os.path import join
 import sqlite3
 
-import pandas as pd
-import scipy
 from scipy.spatial import KDTree
 
 from ..defaults.core import CoreJob
@@ -31,7 +27,8 @@ class FrontProximityCoreJob(CoreJob):
         """
         cell_front_distances_header = self.computational_design.get_cell_front_distances_header()
 
-        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        connection = sqlite3.connect(
+            self.computational_design.get_database_uri())
         cursor = connection.cursor()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
@@ -39,7 +36,8 @@ class FrontProximityCoreJob(CoreJob):
             '(',
             'id INTEGER PRIMARY KEY AUTOINCREMENT,',
             ' , '.join([
-                column_name + ' ' + data_type_descriptor for column_name, data_type_descriptor in cell_front_distances_header
+                column_name + ' ' + data_type_descriptor for column_name, data_type_descriptor
+                in cell_front_distances_header
             ]),
             ');',
         ])
@@ -52,16 +50,18 @@ class FrontProximityCoreJob(CoreJob):
         self.timer.record_timepoint('Started front proximity one job')
         cells = self.create_cell_tables()
         self.timer.record_timepoint('Finished cell table creation')
-        distance_records = self.calculate_front_distance_records(cells, self.outcome)
+        distance_records = self.calculate_front_distance_records(
+            cells, self.outcome)
         self.timer.record_timepoint('Finished calculating front distance')
         self.write_cell_front_distance_records(distance_records)
         self.timer.record_timepoint('Finished writing front distance')
-        logger.debug('Finished writing cell front distances in sample %s.', self.sample_identifier)
+        logger.debug(
+            'Finished writing cell front distances in sample %s.', self.sample_identifier)
         self.timer.record_timepoint('Completed front proximity one job')
 
     def get_phenotype_signatures_by_name(self):
         signatures = self.computational_design.get_all_phenotype_signatures()
-        return {self.dataset_design.munge_name(signature) : signature for signature in signatures}
+        return {self.dataset_design.munge_name(signature): signature for signature in signatures}
 
     def get_phenotype_names(self):
         signatures_by_name = self.get_phenotype_signatures_by_name()
@@ -91,7 +91,7 @@ class FrontProximityCoreJob(CoreJob):
             df_file.loc[df_file[col] == fov, col] = i
         number_fovs += len(fovs)
 
-        number_cells_by_phenotype = {phenotype : 0 for phenotype in pheno_names}
+        number_cells_by_phenotype = {phenotype: 0 for phenotype in pheno_names}
         cells = {}
         for fov_index, df_fov in df_file.groupby(col):
             df = df_fov.copy()
@@ -99,12 +99,15 @@ class FrontProximityCoreJob(CoreJob):
 
             # Create compartment assignment stipulated by design
             if 'regional compartment' in df.columns:
-                logger.error('Woops, name collision in "regional compartment". Trying to create new column.')
+                logger.error(
+                    'Woops, name collision in "regional compartment". Trying to create new column.')
                 break
-            df['regional compartment'] = 'Not in ' + ';'.join(self.dataset_design.get_compartments())
+            df['regional compartment'] = 'Not in ' + \
+                ';'.join(self.dataset_design.get_compartments())
 
             for compartment in self.dataset_design.get_compartments():
-                signature = self.dataset_design.get_compartmental_signature(df, compartment)
+                signature = self.dataset_design.get_compartmental_signature(
+                    df, compartment)
                 df.loc[signature, 'regional compartment'] = compartment
 
             xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
@@ -115,15 +118,19 @@ class FrontProximityCoreJob(CoreJob):
             signatures_by_name = self.get_phenotype_signatures_by_name()
             for name in pheno_names:
                 signature = signatures_by_name[name]
-                df[name + ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
-            phenotype_membership_columns = [name + ' membership' for name in pheno_names]
+                df[name +
+                    ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
+            phenotype_membership_columns = [
+                name + ' membership' for name in pheno_names]
 
             # Select pertinent columns and rename
             intensity_column_names = self.dataset_design.get_intensity_column_names()
             if any([not c in df.columns for c in intensity_column_names.values()]):
-                intensity_column_names = self.dataset_design.get_intensity_column_names(with_sites=False)
+                intensity_column_names = self.dataset_design.get_intensity_column_names(
+                    with_sites=False)
 
-            inverse = {value:key for key, value in intensity_column_names.items()}
+            inverse = {value: key for key,
+                       value in intensity_column_names.items()}
             source_columns = list(intensity_column_names.values())
             pertinent_columns = [
                 'regional compartment',
@@ -135,13 +142,15 @@ class FrontProximityCoreJob(CoreJob):
             df = df[pertinent_columns]
 
             # Convert column names into normal form as stipulated by this module
-            df.rename(columns = inverse, inplace=True)
-            df.rename(columns = {self.dataset_design.get_FOV_column() : 'field of view index'}, inplace=True)
+            df.rename(columns=inverse, inplace=True)
+            df.rename(columns={self.dataset_design.get_FOV_column(
+            ): 'field of view index'}, inplace=True)
             cells[(filename, fov_index)] = df
 
             for phenotype in pheno_names:
                 n = number_cells_by_phenotype[phenotype]
-                number_cells_by_phenotype[phenotype] = n + sum(df[phenotype + ' membership'])
+                number_cells_by_phenotype[phenotype] = n + \
+                    sum(df[phenotype + ' membership'])
         most_frequent = sorted(
             [(k, v) for k, v in number_cells_by_phenotype.items()],
             key=lambda x: x[1],
@@ -163,15 +172,17 @@ class FrontProximityCoreJob(CoreJob):
             x_values = list(df['x value'])
             y_values = list(df['y value'])
             compartment_assignments = list(df['regional compartment'])
-            all_points = [(x_values[i], y_values[i]) for i in range(len(cell_indices))]
+            all_points = [(x_values[i], y_values[i])
+                          for i in range(len(cell_indices))]
             for compartment in self.dataset_design.get_compartments():
-                compartment_points = [(x_values[i], y_values[i]) for i in range(len(cell_indices)) if compartment_assignments[i] == compartment]
+                compartment_points = [(x_values[i], y_values[i]) for i in range(
+                    len(cell_indices)) if compartment_assignments[i] == compartment]
                 if len(compartment_points) < 3:
                     logger.debug('Fewer than 3 points in %s compartment in %s, %s',
-                        compartment,
-                        self.sample_identifier,
-                        fov_index,
-                    )
+                                 compartment,
+                                 self.sample_identifier,
+                                 fov_index,
+                                 )
                     continue
                 tree = KDTree(compartment_points)
                 distances, indices = tree.query(all_points)
@@ -194,7 +205,8 @@ class FrontProximityCoreJob(CoreJob):
         return distance_records
 
     def write_cell_front_distance_records(self, distance_records):
-        keys_list = [column_name for column_name, dtype in self.computational_design.get_cell_front_distances_header()]
+        keys_list = [column_name for column_name,
+                     dtype in self.computational_design.get_cell_front_distances_header()]
 
         uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as m:
@@ -210,7 +222,7 @@ class FrontProximityCoreJob(CoreJob):
                 ]
                 keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = 'INSERT INTO cell_front_distances ' + keys + ' VALUES ' + values +  ' ;'
+                cmd = 'INSERT INTO cell_front_distances ' + keys + ' VALUES ' + values + ' ;'
                 try:
                     m.execute(cmd)
                 except Exception as e:

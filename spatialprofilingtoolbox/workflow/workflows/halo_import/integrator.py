@@ -8,7 +8,7 @@ class HALOImportIntegrator:
     def __init__(
         self,
         computational_design=None,
-        **kwargs,
+        **kwargs
     ):
         self.computational_design = computational_design
 

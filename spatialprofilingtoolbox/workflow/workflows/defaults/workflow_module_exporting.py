@@ -3,6 +3,7 @@ class WorkflowModules:
     A wrapper object in which to list implementation classes comprising a workflow
     definition.
     """
+
     def __init__(
         self,
         generator=None,

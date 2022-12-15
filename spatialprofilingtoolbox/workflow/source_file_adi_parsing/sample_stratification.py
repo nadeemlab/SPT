@@ -1,6 +1,7 @@
 import re
 
 from ...standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
@@ -19,17 +20,21 @@ class SampleStratificationCreator:
     @staticmethod
     def create_sample_stratification(connection):
         cursor = connection.cursor()
-        logger.info('Creating sample (specimen) stratification based on diagnoses and/or interventions.')
+        logger.info(
+            'Creating sample (specimen) stratification based on diagnoses and/or interventions.')
 
-        specimens = SampleStratificationCreator.get_unassigned_specimen_ids(cursor)
+        specimens = SampleStratificationCreator.get_unassigned_specimen_ids(
+            cursor)
         identifiers = {}
-        strata_count = SampleStratificationCreator.get_last_assigned_stratum_identifier(cursor)
+        strata_count = SampleStratificationCreator.get_last_assigned_stratum_identifier(
+            cursor)
         assignment_count = 0
         for specimen in specimens:
-            key = tuple(SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
-            ( local_temporal_position_indicator,
-            subject_diagnosed_condition,
-            subject_diagnosed_result ) = key
+            key = tuple(
+                SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
+            (local_temporal_position_indicator,
+             subject_diagnosed_condition,
+             subject_diagnosed_result) = key
             if key == ('', '', ''):
                 continue
             if not key in identifiers:
@@ -42,29 +47,40 @@ class SampleStratificationCreator:
                 subject_diagnosed_condition,
                 subject_diagnosed_result,
             )
-            cursor.execute(SampleStratificationCreator.insert_assignment, record)
+            cursor.execute(
+                SampleStratificationCreator.insert_assignment, record)
             assignment_count = assignment_count + 1
 
         connection.commit()
         cursor.close()
-        logger.info('Assigned %s / %s samples to an annotated stratum.', assignment_count, len(specimens))
+        logger.info('Assigned %s / %s samples to an annotated stratum.',
+                    assignment_count, len(specimens))
 
     @staticmethod
     def get_interventional_diagnosis(specimen, cursor):
-        subject, extraction_date = SampleStratificationCreator.get_source_event(specimen, cursor)
-        interventions = SampleStratificationCreator.get_interventions(subject, cursor)
+        subject, extraction_date = SampleStratificationCreator.get_source_event(
+            specimen, cursor)
+        interventions = SampleStratificationCreator.get_interventions(
+            subject, cursor)
         diagnoses = SampleStratificationCreator.get_diagnoses(subject, cursor)
-        return (SampleStratificationCreator.get_interventional_position(interventions, extraction_date) +
-            SampleStratificationCreator.get_diagnostic_state(extraction_date, diagnoses))
+        return (SampleStratificationCreator.get_interventional_position(interventions,
+                                                                        extraction_date) +
+                SampleStratificationCreator.get_diagnostic_state(extraction_date, diagnoses))
 
     @staticmethod
     def get_interventional_position(interventions, extraction_date):
         if len(interventions) > 0:
-            valuation_function = SampleStratificationCreator.get_date_valuation([i[1] for i in interventions] + [extraction_date])
-            sequence = sorted(interventions + [('source extraction', extraction_date)], key=lambda x: valuation_function(x[1]))
-            extraction_index = [index for index, event in enumerate(sequence) if event[0] == 'source extraction'][0]
-            earlier_events = [event for index, event in enumerate(sequence) if index < extraction_index]
-            later_events = [event for index, event in enumerate(sequence) if index > extraction_index]
+            valuation_function = SampleStratificationCreator.get_date_valuation(
+                [i[1] for i in interventions] + [extraction_date])
+            sequence = sorted(
+                interventions + [('source extraction', extraction_date)],
+                key=lambda x: valuation_function(x[1]))
+            extraction_index = [index for index, event in enumerate(
+                sequence) if event[0] == 'source extraction'][0]
+            earlier_events = [event for index, event in enumerate(
+                sequence) if index < extraction_index]
+            later_events = [event for index, event in enumerate(
+                sequence) if index > extraction_index]
 
             if len(earlier_events) == 0:
                 local_temporal_position_indicator = 'Before intervention'
@@ -84,8 +100,10 @@ class SampleStratificationCreator:
         logger.debug('Diagnoses:')
         for d in diagnoses:
             logger.debug(str(d))
-        logger.debug('Dates considered: %s', [extraction_date] + [d[2] for d in diagnoses])
-        valuation_function = SampleStratificationCreator.get_date_valuation([extraction_date] + [d[2] for d in diagnoses])
+        logger.debug('Dates considered: %s', [
+                     extraction_date] + [d[2] for d in diagnoses])
+        valuation_function = SampleStratificationCreator.get_date_valuation(
+            [extraction_date] + [d[2] for d in diagnoses])
         sequence = sorted(diagnoses, key=lambda x: valuation_function(x[2]))
         influenced_diagnoses = []
 
@@ -96,7 +114,7 @@ class SampleStratificationCreator:
             diagnosis = influenced_diagnoses[0]
             return [diagnosis[0], diagnosis[1]]
         else:
-            return ['','']
+            return ['', '']
 
     @staticmethod
     def get_date_valuation(dates):
@@ -104,7 +122,8 @@ class SampleStratificationCreator:
         def iso_valuation(date):
             parts = date.split('-')
             if len(parts) < 2:
-                raise Exception('Only one hyphen-delimited part, not an ISO 8601 date.')
+                raise Exception(
+                    'Only one hyphen-delimited part, not an ISO 8601 date.')
             numeric_parts = []
             for i, part in enumerate(parts):
                 stripped = part.lstrip('0')
@@ -149,7 +168,8 @@ class SampleStratificationCreator:
 
     @staticmethod
     def get_specimen_ids(cursor):
-        cursor.execute('SELECT specimen FROM specimen_collection_process ORDER BY specimen;')
+        cursor.execute(
+            'SELECT specimen FROM specimen_collection_process ORDER BY specimen;')
         rows = cursor.fetchall()
         return [row[0] for row in rows]
 
@@ -165,18 +185,23 @@ class SampleStratificationCreator:
 
     @staticmethod
     def get_source_event(specimen, cursor):
-        cursor.execute('SELECT source, extraction_date FROM specimen_collection_process WHERE specimen=%s ;', (specimen,))
+        cursor.execute(
+            'SELECT source, extraction_date FROM specimen_collection_process WHERE specimen=%s ;',
+            (specimen,))
         rows = cursor.fetchall()
         return rows[0]
 
     @staticmethod
     def get_interventions(subject, cursor):
-        cursor.execute('SELECT specifier, date FROM intervention WHERE subject=%s ;', (subject,))
+        cursor.execute(
+            'SELECT specifier, date FROM intervention WHERE subject=%s ;', (subject,))
         rows = cursor.fetchall()
         return rows
 
     @staticmethod
     def get_diagnoses(subject, cursor):
-        cursor.execute('SELECT condition, result, date_of_evidence FROM diagnosis WHERE subject=%s ;', (subject,))
+        cursor.execute(
+            'SELECT condition, result, date_of_evidence FROM diagnosis WHERE subject=%s ;',
+            (subject,))
         rows = cursor.fetchall()
         return [list(row) for row in rows]

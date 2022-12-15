@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 import argparse
-import os
 from os.path import exists
-from os.path import join
-from os.path import basename
 
-import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_workflow
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt workflow generate-run-information',
+        prog='spt workflow generate-run-information',
         description='''
         Create a list of core, parallelizable job specifications for a given SPT
         workflow, as well as lists of file dependencies.
@@ -86,7 +82,7 @@ if __name__=='__main__':
         raise FileNotFoundError(args.file_manifest_file)
 
     try:
-        workflows = {name : get_workflow(name) for name in get_workflow_names()}
+        workflows = {name: get_workflow(name) for name in get_workflow_names()}
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
@@ -97,6 +93,9 @@ if __name__=='__main__':
         input_path=args.input_path,
         dataset_design_class=DatasetDesign,
     )
-    job_generator.write_job_specification_table(args.job_specification_table, outcomes_file=args.outcomes_file)
-    job_generator.write_elementary_phenotypes_filename(args.elementary_phenotypes_filename)
-    job_generator.write_composite_phenotypes_filename(args.composite_phenotypes_filename)
+    job_generator.write_job_specification_table(
+        args.job_specification_table, outcomes_file=args.outcomes_file)
+    job_generator.write_elementary_phenotypes_filename(
+        args.elementary_phenotypes_filename)
+    job_generator.write_composite_phenotypes_filename(
+        args.composite_phenotypes_filename)

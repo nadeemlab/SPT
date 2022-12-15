@@ -3,7 +3,6 @@ import sys
 import subprocess
 import importlib.resources
 import re
-import os
 import signal
 
 import spatialprofilingtoolbox
@@ -11,7 +10,8 @@ from spatialprofilingtoolbox import submodule_names
 
 
 def get_commands(submodule_name):
-    files = importlib.resources.files('spatialprofilingtoolbox.%s' % submodule_name)
+    files = importlib.resources.files(
+        'spatialprofilingtoolbox.%s' % submodule_name)
     if submodule_name in ['entry_point', 'standalone_utilities']:
         return []
     scripts = [
@@ -27,23 +27,29 @@ def get_commands(submodule_name):
 
 def get_executable_and_script(submodule_name, script_name):
     full_script_name = None
-    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name, '%s.py' % script_name):
+    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name,
+                                       '%s.py' % script_name):
         executable = sys.executable
         full_script_name = '%s.py' % script_name
-    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name, '%s.sh' % script_name):
+    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name,
+                                       '%s.sh' % script_name):
         executable = '/bin/bash'
         full_script_name = '%s.sh' % script_name
     if full_script_name is None:
-        raise ValueError('Did not locate %s from submodule "%s".' % (script_name, submodule_name))
-    with importlib.resources.path('spatialprofilingtoolbox.%s.scripts' % submodule_name, full_script_name) as path:
+        raise ValueError('Did not locate %s from submodule "%s".' %
+                         (script_name, submodule_name))
+    with importlib.resources.path('spatialprofilingtoolbox.%s.scripts' % submodule_name,
+                                  full_script_name) as path:
         script_path = path
     return executable, script_path
 
 
 def print_version_and_all_commands():
-    submodules_with_commands = [name for name in submodule_names if len(get_commands(name)) > 0]
+    submodules_with_commands = [
+        name for name in submodule_names if len(get_commands(name)) > 0]
     commands_description = '\n\n'.join([
-        '\n'.join(['spt %s %s' % (submodule, command) for command in get_commands(submodule)])
+        '\n'.join(['spt %s %s' % (submodule, command)
+                  for command in get_commands(submodule)])
         for submodule in submodules_with_commands
     ])
     print('Version %s' % spatialprofilingtoolbox.__version__)
@@ -53,10 +59,11 @@ def print_version_and_all_commands():
 
 
 def main_program():
-    submodules_with_commands = [name for name in submodule_names if len(get_commands(name)) > 0]
+    submodules_with_commands = [
+        name for name in submodule_names if len(get_commands(name)) > 0]
     parser = argparse.ArgumentParser(
         prog='spt',
-        description = 'spatialprofilingtoolbox commands',
+        description='spatialprofilingtoolbox commands',
     )
     parser.add_argument(
         'module',
@@ -80,7 +87,7 @@ def main_program():
         if sys.argv[1] in submodules_with_commands:
             module = sys.argv[1]
 
-    if (module is None):
+    if module is None:
         print_version_and_all_commands()
         exit()
 
@@ -104,6 +111,8 @@ def main_program():
             executable,
             script_path,
         ] + unparsed_arguments)
-        signal.signal(signal.SIGTERM, lambda signum, frame: running_process.send_signal(signal.SIGTERM))
-        signal.signal(signal.SIGINT, lambda signum, frame: running_process.send_signal(signal.SIGINT))
+        signal.signal(signal.SIGTERM, lambda signum,
+                      frame: running_process.send_signal(signal.SIGTERM))
+        signal.signal(signal.SIGINT, lambda signum,
+                      frame: running_process.send_signal(signal.SIGINT))
         exit(running_process.wait())

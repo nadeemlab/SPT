@@ -1,9 +1,9 @@
 import argparse
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt workflow report-run-configuration',
-        description = '''
+        prog='spt workflow report-run-configuration',
+        description='''
         Log information about an SPT run configuration.
         '''
     )
@@ -39,10 +39,11 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
     try:
-        from spatialprofilingtoolbox.workflow.common.logging.run_configuration_reporter import RunConfigurationReporter
+        from spatialprofilingtoolbox.workflow.common.logging.run_configuration_reporter import \
+            RunConfigurationReporter
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

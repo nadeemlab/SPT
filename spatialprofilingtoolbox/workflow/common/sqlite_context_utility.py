@@ -12,6 +12,7 @@ class WaitingDatabaseContextManager:
     available, using a fixed-wait-time loop. It is designed for usage with Python's
     "with ... as" construct.
     """
+
     def __init__(self, uri, seconds=5.0):
         """
         Args:
@@ -60,7 +61,7 @@ class WaitingDatabaseContextManager:
         Returns:
             The result of the `fetchall()` sqlite function.
         """
-        while(True):
+        while True:
             try:
                 result = self.cursor.execute(cmd).fetchall()
                 if commit:
@@ -68,7 +69,9 @@ class WaitingDatabaseContextManager:
                 break
             except sqlite3.OperationalError as exception:
                 if str(exception) == 'database is locked':
-                    logger.debug('Database %s was locked, waiting %s seconds to retry: %s', self.uri, self.seconds, cmd)
+                    logger.debug(
+                        'Database %s was locked, waiting %s seconds to retry: %s',
+                        self.uri, self.seconds, cmd)
                     time.sleep(self.seconds)
                 else:
                     raise exception
@@ -78,13 +81,15 @@ class WaitingDatabaseContextManager:
         """
         Explicitly commits the connection.
         """
-        while(True):
+        while True:
             try:
                 self.connection.commit()
                 break
             except sqlite3.OperationalError as exception:
                 if str(exception) == 'database is locked':
-                    logger.debug('Database %s was locked, waiting %s seconds to retry committing.', self.uri, self.seconds)
+                    logger.debug(
+                        'Database %s was locked, waiting %s seconds to retry committing.',
+                        self.uri, self.seconds)
                     time.sleep(self.seconds)
                 else:
                     raise exception

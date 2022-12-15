@@ -1,15 +1,12 @@
 import argparse
-import os
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
-import enum
 from enum import Enum
 from enum import auto
 import importlib.resources
 import re
 
-import spatialprofilingtoolbox
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('modify-constraints')
 
@@ -58,15 +55,17 @@ def get_constraint_design():
     with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     foreign_key_constraints = [
-        [normalize(str(s)) for s in [row['Table'], row['Name'], row['Foreign table'], row['Foreign key'], row['Ordinality']]]
+        [normalize(str(s)) for s in [row['Table'], row['Name'],
+                                     row['Foreign table'], row['Foreign key'], row['Ordinality']]]
         for i, row in fields.iterrows()
-        if row['Foreign table'] != '' and row['Foreign key'] != '' and (normalize(row['Table']) in big_tables())
+        if row['Foreign table'] != '' and row['Foreign key'] != ''
+        and (normalize(row['Table']) in big_tables())
     ]
     return foreign_key_constraints
 
 
 def print_constraint_status(column_names, info_rows):
-    print_formatted = lambda row: print ("{:<16} {:<65} {:<40}".format(*row))
+    def print_formatted(row): return print("{:<16} {:<65} {:<40}".format(*row))
     logger.info('Printing constraint info.')
     print_formatted(column_names)
     for row in info_rows:
@@ -75,7 +74,7 @@ def print_constraint_status(column_names, info_rows):
 
 def toggle_constraints(
     database_config_file_elevated,
-    state: DBConstraintsToggling=DBConstraintsToggling.RECREATE,
+    state: DBConstraintsToggling = DBConstraintsToggling.RECREATE,
 ):
     with DatabaseConnectionMaker(database_config_file_elevated) as dcm:
         cursor = dcm.get_connection().cursor()
@@ -87,10 +86,11 @@ def toggle_constraints(
                 FOREIGN KEY (%s) 
                 REFERENCES %s (%s);'''
                 foreign_key_constraints = get_constraint_design()
-                for tablename, field_name, foreign_tablename, foreign_field_name, ordinality in foreign_key_constraints:
+                for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
+                        in foreign_key_constraints:
                     statement = pattern % (
                         tablename,
-                        '%s%s' %(tablename, ordinality),
+                        '%s%s' % (tablename, ordinality),
                         field_name,
                         foreign_tablename,
                         foreign_field_name,
@@ -118,10 +118,10 @@ def toggle_constraints(
         dcm.get_connection().commit()
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt db modify-constraints',
-        description = '''Drop/recreate constraints on certain tables (the largest ones).
+        prog='spt db modify-constraints',
+        description='''Drop/recreate constraints on certain tables (the largest ones).
         Can be used to wrap bulk import operations.
         The status of constraints is written to stdout just before dropping or just after
         creation. The meaning of the "connection_type" entry is documented here under "contype":
@@ -134,7 +134,8 @@ if __name__=='__main__':
         dest='database_config_file_elevated',
         type=str,
         required=True,
-        help='The file for database configuration. The user specified must have elevated privileges.',
+        help='The file for database configuration. The user specified must have elevated '
+        'privileges.'
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -149,16 +150,19 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
     try:
         import pandas as pd
         from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'db')
 
-    database_config_file_elevated = abspath(expanduser(args.database_config_file_elevated))
+    database_config_file_elevated = abspath(
+        expanduser(args.database_config_file_elevated))
     if not exists(database_config_file_elevated):
-        raise FileNotFoundError('Need to supply valid database config filename, not: %s', database_config_file_elevated)
+        raise FileNotFoundError(
+            'Need to supply valid database config filename, not: %s', database_config_file_elevated)
 
     if args.recreate:
         state = DBConstraintsToggling.RECREATE

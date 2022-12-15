@@ -2,31 +2,28 @@
 A self-contained module for performing lightweight thresholding of continuous
 variables.
 """
-import math
 from math import log10
-from math import sqrt
 import warnings
 
 import numpy as np
-import pandas as pd
 from sklearn.mixture import GaussianMixture
 from sklearn.exceptions import ConvergenceWarning
-warnings.simplefilter('error', ConvergenceWarning)
 
 from ...standalone_utilities.log_formats import colorized_logger
 
+warnings.simplefilter('error', ConvergenceWarning)
 logger = colorized_logger(__name__)
 
 
 class Dichotomizer:
     @staticmethod
     def dichotomize(
-            phenotype_name,
-            table,
-            dataset_design=None,
-            floor_value: float=-10.0,
-            enable_overwrite_warning: bool=True,
-        ):
+        phenotype_name,
+        table,
+        dataset_design=None,
+        floor_value: float = -10.0,
+        enable_overwrite_warning: bool = True,
+    ):
         """
         In-place adds (or overwrites) the phenotype positivity column in ``table``, by
         dichotomizing the values in the intensity column according to the procedure:
@@ -49,13 +46,14 @@ class Dichotomizer:
             logarithm.
         :type floor_value: float
 
-        :param enable_overwrite_warning: Default True. Whether to warn about ovewriting
+        :param enable_overwrite_warning: Default True. Whether to warn about overwriting
             an already existing binary column.
         :type enable_overwrite_warning: bool
         """
         intensity = dataset_design.get_intensity_column_name(phenotype_name)
         if not intensity in table.columns:
-            logger.error('%s intensity column not present; can not dichotomize.', phenotype_name)
+            logger.error(
+                '%s intensity column not present; can not dichotomize.', phenotype_name)
             return
         X = table[intensity]
         Y0 = [log10(x) if x > 0 else floor_value for x in X]
@@ -68,11 +66,11 @@ class Dichotomizer:
             random_state=0,
         )
         estimator.means_init = np.array([[-1], [1]])
-        convergence_failed = False
+        # convergence_failed = False
         try:
             estimator.fit(Y)
         except ConvergenceWarning:
-            convergence_failed = True
+            # convergence_failed = True
             logger.debug(
                 'Gaussian mixture model estimation failed to converge. Phenotype %s',
                 phenotype_name,
@@ -84,5 +82,6 @@ class Dichotomizer:
 
         feature = dataset_design.get_feature_name(phenotype_name)
         if feature in table.columns and enable_overwrite_warning:
-            logger.warning('Input data table already has "%s"; overwriting it.', feature)
+            logger.warning(
+                'Input data table already has "%s"; overwriting it.', feature)
         table[dataset_design.get_feature_name(phenotype_name)] = thresholded

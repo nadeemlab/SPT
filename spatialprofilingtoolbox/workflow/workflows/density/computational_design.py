@@ -4,8 +4,6 @@ design of the cell phenotype density analysis workflow.
 """
 import re
 
-import pandas as pd
-
 from ..defaults.computational_design import ComputationalDesign
 
 
@@ -13,10 +11,11 @@ class DensityDesign(ComputationalDesign):
     """
     The design object.
     """
+
     def __init__(self,
-        use_intensities: bool=False,
-        **kwargs,
-    ):
+                 use_intensities: bool = False,
+                 **kwargs,
+                 ):
         """
         :param use_intensities: Whether to use continuous channel intensity values.
         :type use_intensities: bool
@@ -72,17 +71,22 @@ class DensityDesign(ComputationalDesign):
         :rtype: list
         """
         signatures = self.get_all_phenotype_signatures()
-        phenotype_names = sorted([self.dataset_design.munge_name(signature) for signature in signatures])
+        phenotype_names = sorted(
+            [self.dataset_design.munge_name(signature) for signature in signatures])
         if style == 'sql':
-            phenotype_names = [re.sub(r'\+', r'$PLUS', name) for name in phenotype_names]
-            phenotype_names = [re.sub('-', r'$MINUS', name) for name in phenotype_names]
-        phenotype_membership_columns = [name + ' membership' for name in phenotype_names]
+            phenotype_names = [re.sub(r'\+', r'$PLUS', name)
+                               for name in phenotype_names]
+            phenotype_names = [re.sub('-', r'$MINUS', name)
+                               for name in phenotype_names]
+        phenotype_membership_columns = [
+            name + ' membership' for name in phenotype_names]
         if style == 'sql':
             phenotype_membership_columns = [
                 re.sub(' ', r'$SPACE', name) for name in phenotype_membership_columns
             ]
 
-        intensity_columns = self.get_intensity_columns(style=style, values_only=True)
+        intensity_columns = self.get_intensity_columns(
+            style=style, values_only=True)
 
         return [
             (column_name, 'INTEGER') for column_name in phenotype_membership_columns
@@ -93,8 +97,10 @@ class DensityDesign(ComputationalDesign):
     def get_intensity_columns(self, style='readable', values_only=False):
         if self.use_intensities:
             intensity_names = self.dataset_design.get_elementary_phenotype_names()
-            intensity_columns = [(name, name + ' intensity') for name in intensity_names]
-            intensity_columns = sorted(intensity_columns, key=lambda pair: pair[0])
+            intensity_columns = [(name, name + ' intensity')
+                                 for name in intensity_names]
+            intensity_columns = sorted(
+                intensity_columns, key=lambda pair: pair[0])
             if style == 'sql':
                 intensity_columns = [
                     (name, re.sub(' ', '_', c)) for name, c in intensity_columns
@@ -126,12 +132,14 @@ class DensityDesign(ComputationalDesign):
         :rtype: list
         """
         elementary_signatures = [
-            {name : '+'} for name in self.dataset_design.get_elementary_phenotype_names()
+            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()
         ]
         complex_signatures = []
         for _, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted([m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted([m for m in row['Negative markers'].split(';') if m != ''])
+            positive_markers = sorted(
+                [m for m in row['Positive markers'].split(';') if m != ''])
+            negative_markers = sorted(
+                [m for m in row['Negative markers'].split(';') if m != ''])
             signature = {}
             for marker in positive_markers:
                 signature[marker] = '+'

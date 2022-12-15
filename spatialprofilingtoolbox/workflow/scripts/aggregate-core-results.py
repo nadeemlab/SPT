@@ -1,14 +1,14 @@
 import argparse
 
-import spatialprofilingtoolbox
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_integrator
-workflows = {name : get_workflow(name) for name in get_workflow_names()}
 
-if __name__=='__main__':
+workflows = {name: get_workflow(name) for name in get_workflow_names()}
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt workflow aggregate-core-results',
+        prog='spt workflow aggregate-core-results',
         description='''
         Merge the results provided by all core jobs.
         ''',
@@ -38,10 +38,13 @@ if __name__=='__main__':
         required=False,
     )
 
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
     try:
-        from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import ComputationalDesign
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+        from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import \
+            ComputationalDesign
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+            import HALOCellMetadataDesign
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

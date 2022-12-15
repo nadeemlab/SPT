@@ -5,24 +5,37 @@ import pandas as pd
 from ...db.source_file_parser_interface import SourceToADIParser
 from ...db.database_connection import DatabaseConnectionMaker
 from ...standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
 class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
-    def __init__(self, database_config_file, data_analysis_study, derivation_method, specifier_number, **kwargs):
+    def __init__(self,
+                 database_config_file,
+                 data_analysis_study,
+                 derivation_method,
+                 specifier_number,
+                 **kwargs):
         SourceToADIParser.__init__(self, **kwargs)
-        self.record_feature_specification_template(data_analysis_study, derivation_method, specifier_number)
-        DatabaseConnectionMaker.__init__(self, database_config_file=database_config_file)
+        self.record_feature_specification_template(
+            data_analysis_study, derivation_method, specifier_number)
+        DatabaseConnectionMaker.__init__(
+            self, database_config_file=database_config_file)
 
-    def record_feature_specification_template(self, data_analysis_study, derivation_method, specifier_number):
+    def record_feature_specification_template(self,
+                                              data_analysis_study,
+                                              derivation_method,
+                                              specifier_number):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
         self.specifier_number = specifier_number
         with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         self.insert_queries = {
-            tablename : self.generate_basic_insert_query(tablename, fields)
-            for tablename in ['feature_specification', 'feature_specifier', 'quantitative_feature_value']
+            tablename: self.generate_basic_insert_query(tablename, fields)
+            for tablename in
+            ['feature_specification', 'feature_specifier',
+                'quantitative_feature_value']
         }
         self.feature_values = []
 
@@ -37,7 +50,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
 
     def validate_specifiers(self, specifiers):
         if len(specifiers) != self.specifier_number:
-            message = 'Feature specified by "%s", but should only have %s specifiers.' % (str(specifiers), str(self.specifier_number))
+            message = 'Feature specified by "%s", but should only have %s specifiers.' % (
+                str(specifiers), str(self.specifier_number))
             logger.error(message)
             raise ValueError(message)
 
@@ -50,15 +64,18 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         self.test_study_existence()
 
         cursor = self.get_connection().cursor()
-        next_identifier = self.get_next_integer_identifier('feature_specification', cursor)
-        specifiers_list = sorted(list(set([row[0] for row in self.feature_values])))
+        next_identifier = self.get_next_integer_identifier(
+            'feature_specification', cursor)
+        specifiers_list = sorted(
+            list(set([row[0] for row in self.feature_values])))
         specifiers_by_id = {
-            next_identifier + i : specifiers
+            next_identifier + i: specifiers
             for i, specifiers in enumerate(specifiers_list)
         }
 
         self.get_feature_value_next_identifier(cursor)
-        logger.info('Inserting feature "%s" for study "%s".', self.derivation_method, self.data_analysis_study)
+        logger.info('Inserting feature "%s" for study "%s".',
+                    self.derivation_method, self.data_analysis_study)
         for feature_identifier, specifiers in specifiers_by_id.items():
             cursor.execute(
                 self.insert_queries['feature_specification'],
@@ -70,7 +87,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
                 [row[1], row[2]] for row in self.feature_values
                 if row[0] == specifiers
             ]
-            self.insert_feature_values(cursor, feature_identifier, feature_values)
+            self.insert_feature_values(
+                cursor, feature_identifier, feature_values)
             logger.debug('Inserted %s feature values.', len(feature_values))
 
         self.get_connection().commit()
@@ -90,7 +108,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
             logger.info(message)
             return True
         if count > 0:
-            tokens = (str(count), self.data_analysis_study, self.derivation_method)
+            tokens = (str(count), self.data_analysis_study,
+                      self.derivation_method)
             message = 'Already have %s features associated with study "%s" of description "%s". Skipping upload with error.' % tokens
             logger.error(message)
             raise ValueError(message)
@@ -110,7 +129,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         WHERE fs.study = %s AND fs.derivation_method = %s
         ;
         '''
-        cursor.execute(count_query, (self.data_analysis_study, self.derivation_method))
+        cursor.execute(
+            count_query, (self.data_analysis_study, self.derivation_method))
         rows = cursor.fetchall()
         count = rows[0][0]
         cursor.close()
@@ -118,9 +138,11 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
 
     def test_subject_existence(self):
         subject_ids = self.get_subject_identifiers()
-        unknown_subjects = set([row[1] for row in self.feature_values]).difference(subject_ids)
+        unknown_subjects = set(
+            [row[1] for row in self.feature_values]).difference(subject_ids)
         if len(unknown_subjects) > 0:
-            logger.warning('Feature values refer to %s unknown subjects: %s', len(unknown_subjects), str(list(unknown_subjects)))
+            logger.warning('Feature values refer to %s unknown subjects: %s', len(
+                unknown_subjects), str(list(unknown_subjects)))
 
     def get_subject_identifiers(self):
         cursor = self.get_connection().cursor()
@@ -142,7 +164,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
             raise ValueError(message)
 
     def get_feature_value_next_identifier(self, cursor):
-        next_identifier = self.get_next_integer_identifier('quantitative_feature_value', cursor)
+        next_identifier = self.get_next_integer_identifier(
+            'quantitative_feature_value', cursor)
         self.feature_value_identifier = next_identifier
 
     def request_new_feature_value_identifier(self):
@@ -165,4 +188,3 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
                 self.insert_queries['quantitative_feature_value'],
                 (identifier, feature_identifier, subject, value),
             )
-

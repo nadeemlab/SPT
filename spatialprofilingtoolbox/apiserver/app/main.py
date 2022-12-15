@@ -499,7 +499,7 @@ async def get_phenotype_criteria(
 
 
 @app.get("/anonymous-phenotype-counts/")
-async def get_phenotype_criteria(
+async def get_anonymous_phenotype_counts(
     positive_markers_tab_delimited: str = Query(default=None),
     negative_markers_tab_delimited: str = Query(default=None),
     study: str = Query(default='unknown', min_length=3),
@@ -683,7 +683,7 @@ async def get_phenotype_criteria(
 
 
 @app.get("/anonymous-phenotype-counts-fast/")
-async def get_phenotype_criteria(
+async def get_anonymous_phenotype_counts_fast(
     positive_markers_tab_delimited: str = Query(default=None),
     negative_markers_tab_delimited: str = Query(default=None),
     study: str = Query(default='unknown', min_length=3),

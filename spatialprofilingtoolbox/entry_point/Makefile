@@ -3,7 +3,7 @@
 spt-completion.sh: spt-completion.sh.jinja spt_enable_completion.py build_completions_script.py venv/touch.txt
 >@${MESSAGE} start "Creating spt CLI completions script"
 >@source venv/bin/activate ; \
-    python -m pip install --no-deps ../../ ; \
+    python -m pip install --no-deps -e ../../ ; \
     python build_completions_script.py ; \
     echo "$$?" > status_code ; \
     deactivate

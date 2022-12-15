@@ -6,9 +6,9 @@ logger = colorized_logger(__name__)
 
 class FrontProximityAnalysisIntegrator:
     def __init__(self,
-        computational_design=None,
-        **kwargs,
-    ):
+                 computational_design=None,
+                 **kwargs
+                 ):
         """
         Args:
             computational_design:
@@ -24,4 +24,3 @@ class FrontProximityAnalysisIntegrator:
         logger.info('<Stats calculation not implemented>')
         with open(filename, 'wt') as file:
             file.write('')
-        

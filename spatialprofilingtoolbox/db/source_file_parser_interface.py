@@ -1,11 +1,11 @@
 import re
-import enum
 from enum import Enum
 from enum import auto
 
 import psycopg2
 
 from ..standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
@@ -16,6 +16,18 @@ class DBBackend(Enum):
 class SourceToADIParser:
     def __init__(self, **kwargs):
         pass
+
+    @staticmethod
+    def get_collection_study_name(study_name):
+        return study_name + " - specimen collection"
+
+    @staticmethod
+    def get_measurement_study_name(study_name):
+        return study_name + " - measurement"
+
+    @staticmethod
+    def get_data_analysis_study_name(study_name):
+        return study_name + " - data analysis"
 
     def parse(self):
         pass
@@ -35,7 +47,8 @@ class SourceToADIParser:
             for i, field in fields.iterrows()
             if self.normalize(field['Table']) == self.normalize(tablename)
         ]
-        fields_sorted = sorted(fields, key=lambda field: int(field['Ordinality']))
+        fields_sorted = sorted(
+            fields, key=lambda field: int(field['Ordinality']))
         fields_sorted = [f['Name'] for f in fields_sorted]
         return fields_sorted
 
@@ -44,8 +57,9 @@ class SourceToADIParser:
         handle_duplicates = 'ON CONFLICT DO NOTHING '
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join(fields_sorted) + ') '
-            'VALUES (' + ', '.join([self.get_placeholder()]*len(fields_sorted)) + ') '
-            + handle_duplicates + ' ;' 
+            'VALUES (' + ', '.join([self.get_placeholder()]
+                                   * len(fields_sorted)) + ') '
+            + handle_duplicates + ' ;'
         )
         return query
 
@@ -56,13 +70,14 @@ class SourceToADIParser:
             return True
         return False
 
-    def get_next_integer_identifier(self, tablename, cursor, key_name = 'identifier'):
+    def get_next_integer_identifier(self, tablename, cursor, key_name='identifier'):
         cursor.execute('SELECT %s FROM %s;' % (key_name, tablename))
         try:
             identifiers = cursor.fetchall()
         except psycopg2.ProgrammingError as e:
             return 0
-        known_integer_identifiers = [int(i[0]) for i in identifiers if self.is_integer(i[0])]
+        known_integer_identifiers = [
+            int(i[0]) for i in identifiers if self.is_integer(i[0])]
         if len(known_integer_identifiers) == 0:
             return 0
         else:
@@ -70,7 +85,7 @@ class SourceToADIParser:
 
     def check_exists(self, tablename, record, cursor, fields, no_primary=False):
         """
-        Assumes that the first entry in records is a fiat identifier, omitted for 
+        Assumes that the first entry in records is a fiat identifier, omitted for
         the purpose of checking pre-existence of the record.
 
         Returns pair:
@@ -94,7 +109,7 @@ class SourceToADIParser:
                     field + ' = %s ' % self.get_placeholder()
                     for field in identifying_fields
                 ]
-            ) + ' ;'
+        ) + ' ;'
         cursor.execute(query, tuple(identifying_record))
         if not no_primary:
             rows = cursor.fetchall()

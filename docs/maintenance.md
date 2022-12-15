@@ -174,12 +174,12 @@ For this purpose, a pattern that has worked for me in this repository is:
 ```sh
 docker compose up -d
 ```
-6. As many times as you need to, run your script with:
+6. As many times as you need to, run your script with the following (replacing `<module name>`):
 ```
 test_cmd="cd /mount_sources/<module name>/; python throwaway_script.py" ;
 docker run \
   --rm \
-  --network workflow_isolated_temporary_test \
+  --network <module name>_isolated_temporary_test \
   --mount type=bind,src=$(realpath ..),dst=/mount_sources \
   -t nadeemlab-development/spt-development:latest \
   /bin/bash -c "$test_cmd";

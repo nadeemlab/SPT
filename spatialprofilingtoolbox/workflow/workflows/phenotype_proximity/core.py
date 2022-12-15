@@ -1,22 +1,16 @@
 """
 The core calculator for the proximity calculation on a single source file.
 """
-from os.path import join
-from math import exp
-from math import log
-from math import pow as math_pow
 from itertools import combinations
 import sqlite3
 
 import pandas as pd
 import numpy as np
-import sklearn
 from sklearn.neighbors import BallTree
 
 from ...common.sqlite_context_utility import WaitingDatabaseContextManager
 from ..defaults.core import CoreJob
 from ....standalone_utilities.log_formats import colorized_logger
-from .computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
@@ -38,7 +32,8 @@ class PhenotypeProximityCoreJob(CoreJob):
     def initialize_metrics_database(self):
         cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
 
-        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        connection = sqlite3.connect(
+            self.computational_design.get_database_uri())
         cursor = connection.cursor()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
@@ -85,7 +80,8 @@ class PhenotypeProximityCoreJob(CoreJob):
         :param table_file: Table with cell data.
         :type table_file: pandas.DataFrame
         """
-        fovs = sorted(list(set(table_file[self.dataset_design.get_FOV_column(table=table_file)])))
+        fovs = sorted(
+            list(set(table_file[self.dataset_design.get_FOV_column(table=table_file)])))
         for i, fov in enumerate(fovs):
             self.fov_lookup[i] = fov
 
@@ -112,7 +108,8 @@ class PhenotypeProximityCoreJob(CoreJob):
         compartments = self.dataset_design.get_compartments()
         table['regional compartment'] = 'Not in ' + ';'.join(compartments)
         for compartment in compartments:
-            signature = self.dataset_design.get_compartmental_signature(table, compartment)
+            signature = self.dataset_design.get_compartmental_signature(
+                table, compartment)
             table.loc[signature, 'regional compartment'] = compartment
 
     def add_box_centers(self, table):
@@ -129,33 +126,37 @@ class PhenotypeProximityCoreJob(CoreJob):
         :param table: Table with cell data.
         :type table: pandas.DataFrame
         """
-        signatures_by_name = self.computational_design.get_all_phenotype_signatures(by_name=True)
+        signatures_by_name = self.computational_design.get_all_phenotype_signatures(
+            by_name=True)
         for name, signature in signatures_by_name.items():
-            table[name + ' membership'] = self.dataset_design.get_pandas_signature(table, signature)
+            table[name +
+                  ' membership'] = self.dataset_design.get_pandas_signature(table, signature)
 
     def restrict_to_pertinent_columns(self, table):
         """
         :param table: Table with cell data.
         :type table: pandas.DataFrame
         """
-        signatures_by_name = self.computational_design.get_all_phenotype_signatures(by_name=True)
+        signatures_by_name = self.computational_design.get_all_phenotype_signatures(
+            by_name=True)
         phenotype_membership_columns = [
             name + ' membership' for name, _ in signatures_by_name.items()
         ]
         intensity_column_names = self.dataset_design.get_intensity_column_names()
-        inverse = {value:key for key, value in intensity_column_names.items()}
+        inverse = {value: key for key, value in intensity_column_names.items()}
         source_columns = list(intensity_column_names.values())
         pertinent_columns = [
             'regional compartment',
             'x value',
             'y value',
-        ] + source_columns + phenotype_membership_columns + [self.dataset_design.get_cell_area_column()]
+        ] + source_columns + phenotype_membership_columns + [
+            self.dataset_design.get_cell_area_column()]
         table.drop(
             [column for column in table.columns if not column in pertinent_columns],
             axis=1,
             inplace=True,
         )
-        table.rename(columns = inverse, inplace=True)
+        table.rename(columns=inverse, inplace=True)
 
     def create_cell_tables(self):
         """
@@ -189,16 +190,18 @@ class PhenotypeProximityCoreJob(CoreJob):
         self.timer.record_timepoint('Done normalizing FOV strings')
         cells = {}
         phenotype_names = self.computational_design.get_all_phenotype_names()
-        number_cells_by_phenotype = {phenotype : 0 for phenotype in phenotype_names}
+        number_cells_by_phenotype = {
+            phenotype: 0 for phenotype in phenotype_names}
         self.timer.record_timepoint('Started grouping by FOV')
-        grouped = table_file.groupby(self.dataset_design.get_FOV_column(table=table_file))
+        grouped = table_file.groupby(
+            self.dataset_design.get_FOV_column(table=table_file))
         self.timer.record_timepoint('Finished grouping by FOV')
         for fov_index, table_fov in grouped:
             self.timer.record_timepoint('Started one FOV cell table iteration')
             table = table_fov.copy()
             self.timer.record_timepoint('Done copying table')
             table = table.reset_index(drop=True)
-            self.timer.record_timepoint('Done reseting index table')
+            self.timer.record_timepoint('Done resetting index table')
             self.add_compartment_information(table)
             self.timer.record_timepoint('Done adding compartments')
             self.add_box_centers(table)
@@ -206,13 +209,16 @@ class PhenotypeProximityCoreJob(CoreJob):
             self.add_membership(table)
             self.timer.record_timepoint('Done adding membership columns')
             self.restrict_to_pertinent_columns(table)
-            self.timer.record_timepoint('Done restricting to pertinent columns')
+            self.timer.record_timepoint(
+                'Done restricting to pertinent columns')
             cells[fov_index] = table
             self.timer.record_timepoint('Done saving one FOV cell table')
 
             for phenotype in phenotype_names:
-                number_cells_by_phenotype[phenotype] += sum(table[phenotype + ' membership'])
-            self.timer.record_timepoint('Done one FOV recording counts by phenotype')
+                number_cells_by_phenotype[phenotype] += sum(
+                    table[phenotype + ' membership'])
+            self.timer.record_timepoint(
+                'Done one FOV recording counts by phenotype')
 
         most_frequent = sorted(
             list(number_cells_by_phenotype.items()),
@@ -248,7 +254,8 @@ class PhenotypeProximityCoreJob(CoreJob):
             self.input_filename,
         )
         for _, (fov_index, table) in enumerate(cells.items()):
-            cell_trees[fov_index] = BallTree(table[['x value', 'y value']].to_numpy())
+            cell_trees[fov_index] = BallTree(
+                table[['x value', 'y value']].to_numpy())
         logger.debug(
             'Completed (field of view limited) cell tree construction from %s.',
             self.input_filename,
@@ -267,16 +274,16 @@ class PhenotypeProximityCoreJob(CoreJob):
         phenotypes = self.computational_design.get_all_phenotype_names()
 
         phenotype_indices = {
-            fov_index : {
-                p : table[p + ' membership'] for p in phenotypes
+            fov_index: {
+                p: table[p + ' membership'] for p in phenotypes
             } for fov_index, table in cells.items()
         }
         self.timer.record_timepoint('Done creating phenotype masks')
 
         compartments = self.dataset_design.get_compartments()
         compartment_indices = {
-            fov_index : {
-                c : (table['regional compartment'] == c) for c in compartments
+            fov_index: {
+                c: (table['regional compartment'] == c) for c in compartments
             } for fov_index, table in cells.items()
         }
         self.timer.record_timepoint('Done creating compartment masks')
@@ -291,11 +298,11 @@ class PhenotypeProximityCoreJob(CoreJob):
             return [(p1, p2) for p1 in phenotypes for p2 in phenotypes]
 
     def do_aggregation_counting(self,
-        cells,
-        cell_trees,
-        phenotype_indices,
-        compartment_indices,
-    ):
+                                cells,
+                                cell_trees,
+                                phenotype_indices,
+                                compartment_indices,
+                                ):
         """
         :param cell_trees: See :py:meth:`create_cell_trees`.
         :type cell_trees: dict
@@ -326,7 +333,8 @@ class PhenotypeProximityCoreJob(CoreJob):
             )
             results.append(results_combo)
             logger.debug('Cell pairs of types %s counted.', combination)
-        self.timer.record_timepoint('Done aggregating over all phenotype pairs')
+        self.timer.record_timepoint(
+            'Done aggregating over all phenotype pairs')
         logger.debug('All %s combinations counted.', len(combinations2))
         columns = [
             'sample identifier',
@@ -338,7 +346,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             'distance limit in pixels',
             self.computational_design.get_primary_output_feature_name(),
             'source phenotype count',
-        ] # Get this from computational design??
+        ]  # Get this from computational design??
         radius_limited_counts = pd.DataFrame(
             PhenotypeProximityCoreJob.flatten_lists(results),
             columns=columns,
@@ -351,12 +359,12 @@ class PhenotypeProximityCoreJob(CoreJob):
         return radius_limited_counts
 
     def do_aggregation_one_phenotype_pair(self,
-        pair,
-        cells,
-        cell_trees,
-        phenotype_indices,
-        compartment_indices,
-    ):
+                                          pair,
+                                          cells,
+                                          cell_trees,
+                                          phenotype_indices,
+                                          compartment_indices,
+                                          ):
         """
         :param pairs: Pair of phenotype names.
         :type pairs: 2-tuple
@@ -386,7 +394,8 @@ class PhenotypeProximityCoreJob(CoreJob):
             for radius in PhenotypeProximityCoreJob.get_radii_of_interest():
                 count = 0
                 source_count = 0
-                self.timer.record_timepoint('Started one compartment/radius/phenotype pair')
+                self.timer.record_timepoint(
+                    'Started one compartment/radius/phenotype pair')
                 for _, (fov_index, table) in enumerate(cells.items()):
                     rows = phenotype_indices[fov_index][source]
                     cols = phenotype_indices[fov_index][target]
@@ -394,10 +403,12 @@ class PhenotypeProximityCoreJob(CoreJob):
                     if compartment != 'all':
                         rows = rows & compartment_indices[fov_index][compartment]
                         cols = cols & compartment_indices[fov_index][compartment]
-                        self.timer.record_timepoint('Overlaid compartment masks')
+                        self.timer.record_timepoint(
+                            'Overlaid compartment masks')
                     tree = cell_trees[fov_index]
                     self.timer.record_timepoint('Retrieved cell tree')
-                    source_cell_locations = table.loc[rows][['x value', 'y value']]
+                    source_cell_locations = table.loc[rows][[
+                        'x value', 'y value']]
                     self.timer.record_timepoint('Retrieved cell locations')
                     if source_cell_locations.shape[0] == 0:
                         continue
@@ -406,10 +417,14 @@ class PhenotypeProximityCoreJob(CoreJob):
                         radius,
                         return_distance=False,
                     )
-                    self.timer.record_timepoint('Completed tree query at radius')
-                    target_indices = set([i for i in range(len(cols)) if cols[i]])
-                    additional = sum([len(target_indices.intersection(i)) for i in indices])
-                    self.timer.record_timepoint('Completed counting result in target phenotype')
+                    self.timer.record_timepoint(
+                        'Completed tree query at radius')
+                    target_indices = set(
+                        [i for i in range(len(cols)) if cols[i]])
+                    additional = sum(
+                        [len(target_indices.intersection(i)) for i in indices])
+                    self.timer.record_timepoint(
+                        'Completed counting result in target phenotype')
 
                     if np.isnan(additional):
                         continue
@@ -417,7 +432,8 @@ class PhenotypeProximityCoreJob(CoreJob):
                     count += additional
                     count -= sum(rows & cols)
                     source_count += sum(rows)
-                    self.timer.record_timepoint('Finished aggregation iteration')
+                    self.timer.record_timepoint(
+                        'Finished aggregation iteration')
 
                 if balanced:
                     area = sum(table.loc[compartment_indices[fov_index][compartment]][
@@ -442,7 +458,7 @@ class PhenotypeProximityCoreJob(CoreJob):
                     if balanced:
                         feature_value = count / area
                     else:
-                        feature_value = count / source_count # See GitHub issue #20
+                        feature_value = count / source_count  # See GitHub issue #20
                     records.append([
                         self.sample_identifier,
                         self.input_filename,
@@ -476,12 +492,15 @@ class PhenotypeProximityCoreJob(CoreJob):
                     '"' + row['target phenotype'] + '"',
                     '"' + row['compartment'] + '"',
                     str(int(row['distance limit in pixels'])),
-                    str(float(row[self.computational_design.get_primary_output_feature_name()])),
+                    str(float(
+                        row[self.computational_design.get_primary_output_feature_name()])),
                     str(int(row['source phenotype count'])),
-                ] # Make this programmatic over the headers provided by computational design???
+                ]  # Make this programmatic over the headers provided by computational design???
                 keys = '( ' + ' , '.join(keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = ('INSERT INTO %s ' % self.computational_design.get_cell_pair_counts_table_name()) + keys + ' VALUES ' + values +  ' ;'
+                cmd = (
+                    'INSERT INTO %s ' % self.computational_design.get_cell_pair_counts_table_name(
+                    )) + keys + ' VALUES ' + values + ' ;'
                 try:
                     manager.execute(cmd)
                 except sqlite3.OperationalError as exception:

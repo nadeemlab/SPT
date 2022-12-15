@@ -157,8 +157,7 @@ FROM
         f.data_analysis_study as data_analysis_study,
         f.marker_symbol as marker_symbol,
         f.multiplicity as multiplicity,
-        '<any>' as assay,
-        '<any>' as assessment,
+        NULL as stratum_identifier,
         f.specimen as specimen,
         f.percent_positive as percent_positive
     FROM
@@ -171,54 +170,53 @@ FROM
         g.data_analysis_study as data_analysis_study,
         g.marker_symbol as marker_symbol,
         g.multiplicity as multiplicity,
-        hap.assay as assay,
-        hap.result as assessment,
+        sst.stratum_identifier as stratum_identifier,
         g.specimen as specimen,
         g.percent_positive as percent_positive
     FROM
         fraction_by_marker_study_specimen g
-        JOIN histology_assessment_process hap ON
-            g.specimen = hap.slide
+        JOIN sample_strata sst ON
+            g.specimen = sst.sample
     )
 ORDER BY
-    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment, specimen
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, stratum_identifier, specimen
 ;
 
 -- Summary stats
 -- (mean, standard deviation)
 CREATE VIEW fraction_moments_generalized_cases AS
 SELECT
-    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, stratum_identifier,
     CAST(AVG(f.percent_positive) AS NUMERIC(5, 2)) as average_percent,
     CAST(STDDEV(f.percent_positive) AS NUMERIC(5, 2)) as standard_deviation_of_percents
 FROM
     fraction_generalized_cases f
 GROUP BY
-    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, stratum_identifier
 ORDER BY
-    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, stratum_identifier
 ;
 
 -- (extrema)
 CREATE VIEW fraction_extrema AS
 SELECT
-    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, stratum_identifier,
     MAX(f.percent_positive) as maximum_percent,
     MIN(f.percent_positive) as minimum_percent
 FROM fraction_generalized_cases f
 GROUP BY
-    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, stratum_identifier
 ;
 
 CREATE VIEW fraction_arg_maxima AS
 SELECT
-    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, stratum_identifier,
     MIN(possibly_with_multiples.specimen) as specimen,
     MIN(possibly_with_multiples.maximum_percent) as maximum_percent
 FROM
     (
     SELECT
-        f.measurement_study as measurement_study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
+        f.measurement_study as measurement_study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.stratum_identifier as stratum_identifier,
         f.specimen as specimen,
         e.maximum_percent as maximum_percent
     FROM
@@ -229,20 +227,20 @@ FROM
             f.marker_symbol = e.marker_symbol
     ) as possibly_with_multiples
 GROUP BY
-    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, stratum_identifier
 ORDER BY
-    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, stratum_identifier
 ;
 
 CREATE VIEW fraction_arg_minima AS
 SELECT
-    measurement_study, data_analysis_study, marker_symbol, multiplicity, assay, assessment,
+    measurement_study, data_analysis_study, marker_symbol, multiplicity, stratum_identifier,
     MIN(possibly_with_multiples.specimen) as specimen,
     MIN(possibly_with_multiples.minimum_percent) as minimum_percent
 FROM
     (
     SELECT
-        f.measurement_study as measurement_study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.assay as assay, f.assessment as assessment,
+        f.measurement_study as measurement_study, f.data_analysis_study as data_analysis_study, f.marker_symbol as marker_symbol, f.multiplicity as multiplicity, f.stratum_identifier as stratum_identifier,
         f.specimen as specimen,
         e.minimum_percent as minimum_percent
     FROM
@@ -253,15 +251,15 @@ FROM
             f.marker_symbol = e.marker_symbol
     ) as possibly_with_multiples
 GROUP BY
-    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, stratum_identifier
 ORDER BY
-    measurement_study, data_analysis_study, multiplicity, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity, marker_symbol, stratum_identifier
 ;
 
 -- (stats)
 CREATE MATERIALIZED VIEW fraction_stats AS
 SELECT
-    f1.measurement_study, f1.data_analysis_study, f1.marker_symbol, f1.multiplicity, f1.assay, f1.assessment,
+    f1.measurement_study, f1.data_analysis_study, f1.marker_symbol, f1.multiplicity, f1.stratum_identifier,
     f3.average_percent,
     f3.standard_deviation_of_percents,
     f1.specimen as maximum,
@@ -271,11 +269,11 @@ SELECT
 FROM
     fraction_arg_maxima f1
     JOIN fraction_arg_minima f2 ON
-        f1.measurement_study = f2.measurement_study AND f1.data_analysis_study = f2.data_analysis_study AND f1.multiplicity = f2.multiplicity AND f1.marker_symbol = f2.marker_symbol AND f1.assay = f2.assay AND f1.assessment = f2.assessment
+        f1.measurement_study = f2.measurement_study AND f1.data_analysis_study = f2.data_analysis_study AND f1.multiplicity = f2.multiplicity AND f1.marker_symbol = f2.marker_symbol AND f1.stratum_identifier = f2.stratum_identifier
     JOIN fraction_moments_generalized_cases f3 ON
-        f1.measurement_study = f3.measurement_study AND f1.data_analysis_study = f3.data_analysis_study AND f1.multiplicity = f3.multiplicity AND f1.marker_symbol = f3.marker_symbol AND f1.assay = f3.assay AND f1.assessment = f3.assessment
+        f1.measurement_study = f3.measurement_study AND f1.data_analysis_study = f3.data_analysis_study AND f1.multiplicity = f3.multiplicity AND f1.marker_symbol = f3.marker_symbol AND f1.stratum_identifier = f3.stratum_identifier
 ORDER BY
-    measurement_study, data_analysis_study, multiplicity DESC, marker_symbol, assay, assessment
+    measurement_study, data_analysis_study, multiplicity DESC, marker_symbol, stratum_identifier
 ;
 
 -- Computed features
@@ -309,8 +307,7 @@ FROM
         f.specifier1 as specifier1,
         f.specifier2 as specifier2,
         f.specifier3 as specifier3,
-        '<any>' as assay,
-        '<any>' as assessment,
+        NULL as stratum_identifier,
         f.specimen as specimen,
         f.computed_value as computed_value
     FROM
@@ -324,72 +321,71 @@ FROM
         g.specifier1 as specifier1,
         g.specifier2 as specifier2,
         g.specifier3 as specifier3,
-        hap.assay as assay,
-        hap.result as assessment,
+        sst.stratum_identifier as stratum_identifier,
         g.specimen as specimen,
         g.computed_value as computed_value
     FROM
         computed_feature_3_specifiers_study_specimen g
-        JOIN histology_assessment_process hap ON
-            g.specimen = hap.slide
+        JOIN sample_strata sst ON
+            g.specimen = sst.sample
     )
 ORDER BY
-    data_analysis_study, specifier1, specifier2, specifier3, assay, assessment
+    data_analysis_study, specifier1, specifier2, specifier3, stratum_identifier
 ;
 
 -- (mean, standard deviation)
 CREATE MATERIALIZED VIEW computed_feature_3_specifiers_moments_generalized_cases AS
 SELECT
-    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment,
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, stratum_identifier,
     CAST(AVG(cf.computed_value) AS NUMERIC(5, 2)) as average_value,
     CAST(STDDEV(cf.computed_value) AS NUMERIC(5, 2)) as standard_deviation
 FROM
     computed_feature_3_specifiers_generalized_cases cf
 GROUP BY
-    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, stratum_identifier
 ORDER BY
-    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, stratum_identifier
 ;
 
 -- (extrema)
 CREATE MATERIALIZED VIEW computed_feature_3_specifiers_maxima AS
 SELECT
-    DISTINCT ON(sq.maximum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment)
-    cf.specimen as maximum, sq.maximum_value as maximum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment
+    DISTINCT ON(sq.maximum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.stratum_identifier)
+    cf.specimen as maximum, sq.maximum_value as maximum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.stratum_identifier
 FROM
     computed_feature_3_specifiers_generalized_cases cf
 JOIN
     (
     SELECT
-        MAX(cfs.computed_value) as maximum_value, cfs.specifier1, cfs.specifier2, cfs.specifier3, cfs.derivation_method, cfs.data_analysis_study, cfs.assay, cfs.assessment
+        MAX(cfs.computed_value) as maximum_value, cfs.specifier1, cfs.specifier2, cfs.specifier3, cfs.derivation_method, cfs.data_analysis_study, cfs.stratum_identifier
     FROM
         computed_feature_3_specifiers_generalized_cases cfs
     GROUP BY
-        specifier1, specifier2, specifier3, derivation_method, data_analysis_study, assay, assessment
+        specifier1, specifier2, specifier3, derivation_method, data_analysis_study, stratum_identifier
     ) as sq
     ON
-        sq.specifier1 = cf.specifier1 AND sq.specifier2 = cf.specifier2 AND sq.specifier3 = cf.specifier3 AND sq.derivation_method = cf.derivation_method AND sq.data_analysis_study = cf.data_analysis_study AND sq.assay = cf.assay AND sq.assessment = cf.assessment
+        sq.specifier1 = cf.specifier1 AND sq.specifier2 = cf.specifier2 AND sq.specifier3 = cf.specifier3 AND sq.derivation_method = cf.derivation_method AND sq.data_analysis_study = cf.data_analysis_study AND sq.stratum_identifier = cf.stratum_identifier
     AND
         sq.maximum_value = cf.computed_value
 ;
 
 CREATE MATERIALIZED VIEW computed_feature_3_specifiers_minima AS
 SELECT
-    DISTINCT ON(sq.minimum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment)
-    cf.specimen as minimum, sq.minimum_value as minimum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.assay, cf.assessment
+    DISTINCT ON(sq.minimum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.stratum_identifier)
+    cf.specimen as minimum, sq.minimum_value as minimum_value, cf.specifier1, cf.specifier2, cf.specifier3, cf.derivation_method, cf.data_analysis_study, cf.stratum_identifier
 FROM
     computed_feature_3_specifiers_generalized_cases cf
 JOIN
     (
     SELECT
-        MIN(cfs.computed_value) as minimum_value, cfs.specifier1, cfs.specifier2, cfs.specifier3, cfs.derivation_method, cfs.data_analysis_study, cfs.assay, cfs.assessment
+        MIN(cfs.computed_value) as minimum_value, cfs.specifier1, cfs.specifier2, cfs.specifier3, cfs.derivation_method, cfs.data_analysis_study, cfs.stratum_identifier
     FROM
         computed_feature_3_specifiers_generalized_cases cfs
     GROUP BY
-        specifier1, specifier2, specifier3, derivation_method, data_analysis_study, assay, assessment
+        specifier1, specifier2, specifier3, derivation_method, data_analysis_study, stratum_identifier
     ) as sq
     ON
-        sq.specifier1 = cf.specifier1 AND sq.specifier2 = cf.specifier2 AND sq.specifier3 = cf.specifier3 AND sq.derivation_method = cf.derivation_method AND sq.data_analysis_study = cf.data_analysis_study AND sq.assay = cf.assay AND sq.assessment = cf.assessment
+        sq.specifier1 = cf.specifier1 AND sq.specifier2 = cf.specifier2 AND sq.specifier3 = cf.specifier3 AND sq.derivation_method = cf.derivation_method AND sq.data_analysis_study = cf.data_analysis_study AND sq.stratum_identifier = cf.stratum_identifier
     AND
         sq.minimum_value = cf.computed_value
 ;
@@ -397,7 +393,7 @@ JOIN
 -- (stats)
 CREATE MATERIALIZED VIEW computed_feature_3_specifiers_stats AS
 SELECT
-    f1.data_analysis_study, f1.derivation_method, f1.specifier1, f1.specifier2, f1.specifier3, f1.assay, f1.assessment,
+    f1.data_analysis_study, f1.derivation_method, f1.specifier1, f1.specifier2, f1.specifier3, f1.stratum_identifier,
     f3.average_value,
     f3.standard_deviation,
     f1.maximum as maximum,
@@ -407,9 +403,9 @@ SELECT
 FROM
     computed_feature_3_specifiers_maxima f1
     JOIN computed_feature_3_specifiers_minima f2 ON
-        f1.data_analysis_study = f2.data_analysis_study AND f1.derivation_method = f2.derivation_method AND f1.specifier1 = f2.specifier1 AND f1.specifier2 = f2.specifier2 AND f1.specifier3 = f2.specifier3 AND f1.assay = f2.assay AND f1.assessment = f2.assessment
+        f1.data_analysis_study = f2.data_analysis_study AND f1.derivation_method = f2.derivation_method AND f1.specifier1 = f2.specifier1 AND f1.specifier2 = f2.specifier2 AND f1.specifier3 = f2.specifier3 AND f1.stratum_identifier = f2.stratum_identifier
     JOIN computed_feature_3_specifiers_moments_generalized_cases f3 ON
-        f1.data_analysis_study = f3.data_analysis_study AND f1.derivation_method = f3.derivation_method AND f1.specifier1 = f3.specifier1 AND f1.specifier2 = f3.specifier2 AND f1.specifier3 = f3.specifier3 AND f1.assay = f3.assay AND f1.assessment = f3.assessment
+        f1.data_analysis_study = f3.data_analysis_study AND f1.derivation_method = f3.derivation_method AND f1.specifier1 = f3.specifier1 AND f1.specifier2 = f3.specifier2 AND f1.specifier3 = f3.specifier3 AND f1.stratum_identifier = f3.stratum_identifier
 ORDER BY
-    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, assay, assessment
+    data_analysis_study, derivation_method, specifier1, specifier2, specifier3, stratum_identifier
 ;

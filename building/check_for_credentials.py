@@ -11,8 +11,8 @@ class CredentialChecker:
     def __init__(self):
         self.accounts = ['pypi', 'docker']
         self.checkers = {
-            'pypi' : self.check_for_pypi_credentials,
-            'docker' : self.check_for_docker_credentials,
+            'pypi': self.check_for_pypi_credentials,
+            'docker': self.check_for_docker_credentials,
         }
         self.result = None
 
@@ -55,7 +55,9 @@ class CredentialChecker:
         config = json.loads(open(configfile, 'rt').read())
         if 'credsStore' in config:
             if config['credsStore'] in ['desktop', 'osxkeychain']:
-                result = subprocess.run(['docker-credential-%s' % config['credsStore'],'list'], encoding='utf-8', capture_output=True)
+                result = subprocess.run(
+                    ['docker-credential-%s' % config['credsStore'], 'list'], encoding='utf-8',
+                    capture_output=True)
                 if len(json.loads(result.stdout)) == 0:
                     return False
         if (not 'auths' in config) and (not 'credsStore' in config):
@@ -65,7 +67,7 @@ class CredentialChecker:
         return True
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     checker = CredentialChecker()
     if len(sys.argv) < 2:
         checker.explain_arguments()

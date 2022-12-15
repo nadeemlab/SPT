@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
-version = "0.11.1"
+version = "0.12.0"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]
@@ -16,14 +16,17 @@ readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering",
-    "Intended Audience :: Science/Research",
+    "Intended Audience :: Science/Research"
 ]
 requires-python = ">=3.9"
 dependencies = [
     "psycopg2==2.9.3",
-    "adiscstudies==0.10.5",
+    "adiscstudies==0.10.10"
 ]
-urls = { "Documentation" = "https://github.com/nadeemlab/SPT", "Source code" = "https://github.com/nadeemlab/SPT" }
+
+[project.urls]
+documentation = "https://github.com/nadeemlab/SPT"
+repository = "https://github.com/nadeemlab/SPT"
 
 [project.optional-dependencies]
 apiserver = [
@@ -61,6 +64,12 @@ all = [
     "pyshp==2.2.0",
     "tabulate==0.8.10"
 ]
+dev = [
+    "autopep8",
+    "mypy",
+    "pylint",
+    "pytest"
+]
 
 [project.scripts]
 spt = "spatialprofilingtoolbox.entry_point.spt:main_program"
@@ -93,7 +102,7 @@ packages = [
     "spatialprofilingtoolbox.workflow.common",
     "spatialprofilingtoolbox.workflow.common.logging",
     "spatialprofilingtoolbox.workflow.source_file_adi_parsing",
-    "spatialprofilingtoolbox.workflow.templates",
+    "spatialprofilingtoolbox.workflow.templates"
 ]
 
 [tool.setuptools.package-data]
@@ -108,29 +117,29 @@ packages = [
     "merge-sqlite-dbs.py",
     "report-run-configuration.py",
     "configure.py",
-    "report-on-logs.py",
+    "report-on-logs.py"
 ]
 "spatialprofilingtoolbox.workflow.workflows" = [
-    "main.nf.jinja",
+    "main.nf.jinja"
 ]
 "spatialprofilingtoolbox.workflow.templates" = [
     "nextflow.config.jinja",
     "log_table.tex.jinja",
     "log_table.html.jinja",
     ".spt_db.config.template",
-    "main.nf.jinja",
+    "main.nf.jinja"
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [
     "read-expression-dump-file.py",
     "cache-expressions-data-array.py",
-    "start.py",
+    "start.py"
 ]
 "spatialprofilingtoolbox.db.scripts" = [
     "create-schema.py",
     "modify-constraints.py",
     "guess-channels-from-object-files.py",
     "status.py",
-    "retrieve-feature-matrices.py",
+    "retrieve-feature-matrices.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",
@@ -139,7 +148,7 @@ packages = [
     "fields.tsv",
     "grant_on_tables.sql",
     "performance_tweaks.sql",
-    "refresh_views.sql",
+    "refresh_views.sql"
 ]
 "spatialprofilingtoolbox.cggnn.scripts" = [
     "run.py",

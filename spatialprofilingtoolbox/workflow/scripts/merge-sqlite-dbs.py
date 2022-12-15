@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
-import os
 from os.path import exists
 import sqlite3
 import re
 import argparse
 
+
 def get_table_names(uri):
     connection = sqlite3.connect(uri)
-    result = connection.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    result = connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table';")
     table_names = sorted([name[0] for name in result.fetchall()])
     table_names = [t for t in table_names if not re.search('^sqlite', t)]
     return table_names
+
 
 def get_column_names(table_name, db):
     connection = sqlite3.connect(db)
     cursor = connection.execute('select * from %s limit 1' % table_name)
     return sorted([row[0] for row in cursor.description])
 
+
 def serialize_list_for_sql(items):
     return '"' + '","'.join(items) + '"'
+
 
 def migrate_table(table_name, input_db, output_db):
     columns = get_column_names(table_name, input_db)
@@ -34,14 +38,15 @@ def migrate_table(table_name, input_db, output_db):
     df.to_sql(table_name, connection, if_exists='append', index=False)
     connection.close()
 
+
 def compute_performance_filename(db_filename):
     return db_filename.rstrip('.db') + '.csv'
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog = 'spt workflow merge-sqlite-dbs',
-        description = ''.join([
+        prog='spt workflow merge-sqlite-dbs',
+        description=''.join([
             'Merges multiple input sqlite databases with identical table schemas.',
             'If an "id" column is present, it is removed. No "id" column will ',
             'appear in the output.',
@@ -60,8 +65,8 @@ if __name__=='__main__':
     )
     args = parser.parse_args()
 
-    import spatialprofilingtoolbox
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
     try:
         import pandas as pd
     except ModuleNotFoundError as e:
@@ -80,7 +85,8 @@ if __name__=='__main__':
     for input_db in input_dbs:
         these_table_names = get_table_names(input_db)
         if table_names != these_table_names:
-            print('Table names %s and %s do not match in input databases. Aborting.' % (table_names, these_table_names))
+            print('Table names %s and %s do not match in input databases. Aborting.' % (
+                table_names, these_table_names))
             exit()
         for name in table_names:
             migrate_table(name, input_db, output_db)

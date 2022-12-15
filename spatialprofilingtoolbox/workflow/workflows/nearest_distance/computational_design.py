@@ -4,8 +4,6 @@ design of the nearest-distance-to-compartment workflow.
 """
 import re
 
-import pandas as pd
-
 from ..defaults.computational_design import ComputationalDesign
 
 
@@ -61,18 +59,23 @@ class NearestDistanceDesign(ComputationalDesign):
         :rtype: list
         """
         signatures = self.get_all_phenotype_signatures()
-        phenotype_names = sorted([self.dataset_design.munge_name(signature) for signature in signatures])
+        phenotype_names = sorted([self.dataset_design.munge_name(signature) for signature
+                                  in signatures])
         if style == 'sql':
-            phenotype_names = [re.sub(r'\+', r'$PLUS', name) for name in phenotype_names]
-            phenotype_names = [re.sub('-', r'$MINUS', name) for name in phenotype_names]
-        phenotype_membership_columns = [name + ' membership' for name in phenotype_names]
+            phenotype_names = [re.sub(r'\+', r'$PLUS', name)
+                               for name in phenotype_names]
+            phenotype_names = [re.sub('-', r'$MINUS', name)
+                               for name in phenotype_names]
+        phenotype_membership_columns = [
+            name + ' membership' for name in phenotype_names]
         if style == 'sql':
             phenotype_membership_columns = [
                 re.sub(' ', r'$SPACE', name) for name in phenotype_membership_columns
             ]
 
         compartments = self.dataset_design.get_compartments()
-        nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment in compartments]
+        nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment
+                                in compartments]
         if style == 'sql':
             nearest_cell_columns = [
                 re.sub(r'[\- ]', '_', c) for c in nearest_cell_columns
@@ -104,12 +107,14 @@ class NearestDistanceDesign(ComputationalDesign):
         :rtype: list
         """
         elementary_signatures = [
-            {name : '+'} for name in self.dataset_design.get_elementary_phenotype_names()
+            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()
         ]
         complex_signatures = []
         for _, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted([m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted([m for m in row['Negative markers'].split(';') if m != ''])
+            positive_markers = sorted(
+                [m for m in row['Positive markers'].split(';') if m != ''])
+            negative_markers = sorted(
+                [m for m in row['Negative markers'].split(';') if m != ''])
             signature = {}
             for marker in positive_markers:
                 signature[marker] = '+'

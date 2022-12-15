@@ -1,10 +1,10 @@
 import statistics
 
-from ...standalone_utilities.log_formats import colorized_logger
-logger = colorized_logger(__name__)
-
-from ...db.database_connection import DatabaseConnectionMaker
 from ...db.shapefile_polygon import extract_points
+from ...db.database_connection import DatabaseConnectionMaker
+from ...standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 
 class StructureCentroids:
@@ -13,12 +13,13 @@ class StructureCentroids:
     each study.
 
     Member `studies` is a dictionary with keys the study names. The values are
-    dictionaries, providing for each specimen name (for specimens collected as 
+    dictionaries, providing for each specimen name (for specimens collected as
     part of the given study) the list of pairs of pixel coordinate values
     representing the centroid of the shape specification for a given cell. The
     order is ascending lexicographical order of the corresponding "histological
     structure" identifier strings.
     """
+
     def __init__(self):
         self.studies = {}
 
@@ -28,11 +29,12 @@ class StructureCentroids:
 
 class StructureCentroidsPuller(DatabaseConnectionMaker):
     def __init__(self, database_config_file):
-        super(StructureCentroidsPuller, self).__init__(database_config_file=database_config_file)
+        super(StructureCentroidsPuller, self).__init__(
+            database_config_file=database_config_file)
         self.structure_centroids = StructureCentroids()
 
     def pull(self):
-        shapefiles_query='''
+        shapefiles_query = '''
         SELECT
         hsi.histological_structure,
         sdmp.specimen,
@@ -59,7 +61,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         cursor.close()
 
     def get_study_names(self):
-        query='''
+        query = '''
         SELECT
         sdmp.study
         FROM specimen_data_measurement_process sdmp
@@ -73,20 +75,22 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
 
     def create_study_data(self, rows):
         study_data = {}
-        field = { 'structure' : 0, 'specimen' : 1, 'base64_contents' : 2 }
+        field = {'structure': 0, 'specimen': 1, 'base64_contents': 2}
         current_specimen = rows[0][field['specimen']]
         specimen_centroids = []
         for row in rows:
             if current_specimen != row[field['specimen']]:
                 study_data[current_specimen] = specimen_centroids
                 current_specimen = row[field['specimen']]
-                logger.debug('Done parsing shapefiles for specimen "%s".', current_specimen)
+                logger.debug(
+                    'Done parsing shapefiles for specimen "%s".', current_specimen)
                 specimen_centroids = []
             specimen_centroids.append(self.compute_centroid(
                 extract_points(row[field['base64_contents']])
             ))
         study_data[current_specimen] = specimen_centroids
-        logger.debug('Done parsing shapefiles for specimen "%s".', current_specimen)
+        logger.debug('Done parsing shapefiles for specimen "%s".',
+                     current_specimen)
         return study_data
 
     def compute_centroid(self, points):
@@ -98,6 +102,3 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
 
     def get_structure_centroids(self):
         return self.structure_centroids
-
-
-

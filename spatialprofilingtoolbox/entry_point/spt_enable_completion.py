@@ -1,13 +1,12 @@
 import importlib.resources
-import os
 from os.path import expanduser
 from os.path import join
 from os.path import exists
-import re
 import argparse
 
 header = '### Start added by spatialprofilingtoolbox'
 footer = '### End added by spatialprofilingtoolbox'
+
 
 def remove_previous_installation(filename):
     with open(filename, 'rt') as file:
@@ -30,6 +29,7 @@ def remove_previous_installation(filename):
             file.write(new_contents)
             print('Removed previous completion code from %s' % filename)
 
+
 def attempt_append_to(filename, contents):
     full_path = join(expanduser('~'), filename)
     if exists(full_path):
@@ -41,6 +41,7 @@ def attempt_append_to(filename, contents):
         print('    source %s' % full_path)
         exit()
 
+
 def main_program():
     parser = argparse.ArgumentParser(
         prog='spt-enable-completion',
@@ -50,7 +51,8 @@ def main_program():
         '--disable',
         dest='disable',
         action='store_true',
-        help='Disable completions, i.e. uninstall the bash complete snippet from profile configuration files.',
+        help='Disable completions, i.e. uninstall the bash complete snippet from profile '
+        'configuration files.'
     )
     args = parser.parse_args()
 
@@ -62,7 +64,8 @@ def main_program():
                 remove_previous_installation(path)
         exit()
 
-    with importlib.resources.path('spatialprofilingtoolbox.entry_point', 'spt-completion.sh') as path:
+    with importlib.resources.path('spatialprofilingtoolbox.entry_point',
+                                  'spt-completion.sh') as path:
         with open(path, 'r') as file:
             completion_script = file.read().rstrip('\n')
     lines = completion_script.split('\n')

@@ -3,6 +3,7 @@ import argparse
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_initializer
+
 workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
 if __name__ == '__main__':

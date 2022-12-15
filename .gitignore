@@ -14,6 +14,7 @@ spatialprofilingtoolbox/*/Dockerfile
 spatialprofilingtoolbox/*/docker.built
 spatialprofilingtoolbox/*/requirements.txt
 spatialprofilingtoolbox/*/specific_requirements.txt
+spatialprofilingtoolbox/countsserver/expression_data/expressions_index.json
 spatialprofilingtoolbox/db/data_model/schema.sql
 spatialprofilingtoolbox/db/initialize_schema.sql
 spatialprofilingtoolbox/entry_point/spt-completion.sh

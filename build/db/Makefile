@@ -10,27 +10,28 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
+DATA_MODEL_SOURCE_DIRECTORY := ${DB_DIRECTORY}/data_model
+
 Dockerfile: Dockerfile.template initialize_schema.sql
 >@${MESSAGE} start "Building db Dockerfile"
 >@cp Dockerfile.template Dockerfile ; echo "$$?" > status_code
 >@${MESSAGE} end "Built." "Not built."
 >@rm -f status_code
 
-initialize_schema.sql: data_model/schema.sql data_model/performance_tweaks.sql data_model/create_views.sql
+initialize_schema.sql: schema.sql ${DATA_MODEL_SOURCE_DIRECTORY}/performance_tweaks.sql ${DATA_MODEL_SOURCE_DIRECTORY}/create_views.sql
 >@cat \
-    data_model/schema.sql \
-    data_model/performance_tweaks.sql \
-    data_model/create_views.sql \
+    schema.sql \
+    ${DATA_MODEL_SOURCE_DIRECTORY}/performance_tweaks.sql \
+    ${DATA_MODEL_SOURCE_DIRECTORY}/create_views.sql \
     > initialize_schema.sql
 
-data_model/schema.sql:
+schema.sql:
 >@docker run \
      --rm \
-     --mount type=bind,src=${DB_DIRECTORY},dst=/mount_sources \
+     --mount type=bind,src=${DB_BUILD_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
-     'cd /mount_sources; adiscstudies dump-schema > schema.sql' && \
-     mv schema.sql data_model/ ; \
+     'cd /mount_sources; adiscstudies dump-schema > schema.sql' ; \
      echo "$$?" > status_code
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
@@ -124,7 +125,7 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f initialize_schema.sql
->@rm -f data_model/schema.sql
+>@rm -rf schema.sql
 >@rm -f status_code
 >@rm -f err_log.*.txt
 >@rm -rf requirements.txt

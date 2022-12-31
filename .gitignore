@@ -9,16 +9,21 @@ data-loaded-image-1and2
 development-image
 dist/**
 __pycache__/
+.current_time.txt
+.dockerignore
+.initiation_message_size
 *.pyc
-spatialprofilingtoolbox/*/Dockerfile
-spatialprofilingtoolbox/*/docker.built
-spatialprofilingtoolbox/*/requirements.txt
-spatialprofilingtoolbox/*/specific_requirements.txt
-spatialprofilingtoolbox/countsserver/expression_data/*
-spatialprofilingtoolbox/db/data_model/schema.sql
-spatialprofilingtoolbox/db/initialize_schema.sql
-spatialprofilingtoolbox/entry_point/spt-completion.sh
-spatialprofilingtoolbox/entry_point/venv/**
+**/Dockerfile
+**.whl
+build/*/docker.built
+build/*/requirements.txt
+build/*/specific_requirements.txt
+build/countsserver/expression_data/*
+build/db/schema.sql
+build/db/initialize_schema.sql
+build/entry_point/spt-completion.sh
+build/entry_point/venv/**
+build/*.whl
 
 # Development files
 .vscode/

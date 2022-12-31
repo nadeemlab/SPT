@@ -24,7 +24,7 @@ if __name__ == '__main__':
     jinja_environment = Environment(
         loader=BaseLoader, comment_start_string='###')
     template = jinja_environment.from_string(
-        open('spt-completion.sh.jinja', 'rt').read())
+        open('../../spatialprofilingtoolbox/entry_point/spt-completion.sh.jinja', 'rt').read())
     modules = get_modules_and_commands()
     completions_script = template.render(
         module_names=' '.join(nontrivial_module_names), modules=modules)

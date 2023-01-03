@@ -3,7 +3,7 @@ spt cggnn run \
     --analysis_study "Melanoma intralesional IL2 (Hollmann lab) - data analysis" \
     --specimen_study "Melanoma intralesional IL2 (Hollmann lab) - specimen collection" \
     --host spt-db-testing \
-    --dbname scstudies \
+    --dbname postgres \
     --user postgres \
     --password postgres \
     --b 8 \

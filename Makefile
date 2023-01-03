@@ -7,6 +7,7 @@ BUILD_SCRIPTS_LOCATION := ${PWD}/build_scripts
 BUILD_SCRIPTS_LOCATION_RELATIVE := build_scripts
 BUILD_LOCATION := ${PWD}/build
 BUILD_LOCATION_RELATIVE := build
+TEST_LOCATION := ${PWD}/test
 MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
 
 help:
@@ -24,8 +25,8 @@ help:
 >@${MESSAGE} print '      make test'
 >@${MESSAGE} print '          Do unit and module tests.'
 >@${MESSAGE} print ' '
->@${MESSAGE} print '      make test-[apiserver | countsserver | db | workflow | ]'
->@${MESSAGE} print '          Do only the unit and module tests for the indicated module.'
+>@${MESSAGE} print '      make [unit | module]-test-[apiserver | countsserver | db | workflow | ]'
+>@${MESSAGE} print '          Do only the unit or module tests for the indicated module.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print '      make clean'
 >@${MESSAGE} print '          Attempt to remove all build or partial-build artifacts.'
@@ -50,15 +51,19 @@ DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOC
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
-COMPLETIONS_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
-DB_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
-WORKFLOW_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
-PACKAGE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
-PACKAGE_DIRECTORY_RELATIVE := ${PACKAGE_NAME}
+COMPLETIONS_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
+DB_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
+WORKFLOW_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
+PACKAGE_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
+PACKAGE_SOURCE_DIRECTORY_RELATIVE := ${PACKAGE_NAME}
 COMPLETIONS_BUILD_DIRECTORY := ${BUILD_LOCATION}/entry_point
 DB_BUILD_DIRECTORY := ${BUILD_LOCATION}/db
 WORKFLOW_BUILD_DIRECTORY := ${BUILD_LOCATION}/workflow
 PACKAGE_BUILD_DIRECTORY := ${BUILD_LOCATION}
+APISERVER_TEST_DIRECTORY := ${TEST_LOCATION}/apiserver
+COUNTSSERVER_TEST_DIRECTORY := ${TEST_LOCATION}/countsserver
+DB_TEST_DIRECTORY := ${TEST_LOCATION}/db
+WORKFLOW_TEST_DIRECTORY := ${TEST_LOCATION}/workflow
 export
 
 BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v '/spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
@@ -149,13 +154,13 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION_RELATIVE}\///g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_DIRECTORY_RELATIVE}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_SOURCE_DIRECTORY_RELATIVE}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION_RELATIVE}\///g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_DIRECTORY_RELATIVE}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_SOURCE_DIRECTORY_RELATIVE}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
@@ -208,16 +213,16 @@ test: unit-tests module-tests
 module-tests: ${MODULE_TEST_TARGETS}
 
 ${MODULE_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment
->@submodule_directory=$$(echo $@ | sed 's/^module-test-/${PACKAGE_NAME}\//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION_RELATIVE}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
 ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment
->@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${PACKAGE_NAME}\//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION_RELATIVE}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-data-loaded-image-%: spatialprofilingtoolbox/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/import_test_dataset%.sh
+data-loaded-image-%: ${BUILD_LOCATION_RELATIVE}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/import_test_dataset%.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \

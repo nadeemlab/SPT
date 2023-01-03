@@ -1,10 +1,10 @@
 .RECIPEPREFIX = >
 
-spt-completion.sh: ${COMPLETIONS_DIRECTORY}/spt-completion.sh.jinja ${COMPLETIONS_DIRECTORY}/spt_enable_completion.py ${COMPLETIONS_DIRECTORY}/build_completions_script.py venv/touch.txt
+spt-completion.sh: ${COMPLETIONS_SOURCE_DIRECTORY}/spt-completion.sh.jinja ${COMPLETIONS_SOURCE_DIRECTORY}/spt_enable_completion.py ${COMPLETIONS_SOURCE_DIRECTORY}/build_completions_script.py venv/touch.txt
 >@${MESSAGE} start "Creating spt CLI completions script"
 >@source venv/bin/activate ; \
     python -m pip install --no-deps -e ../../ ; \
-    python ${COMPLETIONS_DIRECTORY}/build_completions_script.py ; \
+    python ${COMPLETIONS_SOURCE_DIRECTORY}/build_completions_script.py ; \
     echo "$$?" > status_code ; \
     deactivate
 >@${MESSAGE} end "Created." "Failed."

@@ -2,10 +2,10 @@
 
 MODULE_NAME := $(shell echo "verbose-shell-override" >/dev/null ; pwd | grep -o '[^/]\+$$' )
 
-UNIT_TEST_FILES := $(wildcard unit_tests/test_*.sh ) $(wildcard unit_tests/test_*.py )
+UNIT_TEST_FILES := $(wildcard ${WORKFLOW_TEST_DIRECTORY}/unit_tests/test_*.sh ) $(wildcard ${WORKFLOW_TEST_DIRECTORY}/unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 
-MODULE_TEST_FILES := $(wildcard module_tests/test_*.sh ) $(wildcard module_tests/test_*.py )
+MODULE_TEST_FILES := $(wildcard ${WORKFLOW_TEST_DIRECTORY}/module_tests/test_*.sh ) $(wildcard ${WORKFLOW_TEST_DIRECTORY}/module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
@@ -72,7 +72,7 @@ ${TESTS}: setup-testing
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
-     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
+     --mount type=bind,src=${PACKAGE_SOURCE_DIRECTORY},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd"; \
       echo "$$?" > status_code

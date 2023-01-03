@@ -26,7 +26,7 @@ setup-testing:
 >@${MESSAGE} start "cggnn (setup testing environment)"
 >@docker compose up -d && \
     bash ../../building/poll_container_readiness.sh \
-     spt-cggnn-testing ; \
+     spt-db-testing ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup." "Not setup."
 >@rm -f status_code

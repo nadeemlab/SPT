@@ -12,10 +12,6 @@ services:
       POSTGRES_PASSWORD: postgres
     pull_policy: never
 
-  testing-cggnn:
-    image: nadeemlab/spt-cggnn
-    container_name: spt-cggnn
-
 networks:
   isolated_temporary_test:
     driver: bridge

@@ -2,7 +2,11 @@
 
 from argparse import ArgumentParser
 
-from cggnn.run_all import run_pipeline
+from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+try:
+    from cggnn.run_all import run_pipeline
+except ModuleNotFoundError as e:
+    SuggestExtrasException(e, 'cggnn')
 
 
 def parse_arguments():

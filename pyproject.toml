@@ -83,6 +83,8 @@ packages = [
     "spatialprofilingtoolbox.apiserver",
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
+    "spatialprofilingtoolbox.cggnn",
+    "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.countsserver",
     "spatialprofilingtoolbox.countsserver.scripts",
     "spatialprofilingtoolbox.db",

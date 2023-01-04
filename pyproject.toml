@@ -38,6 +38,9 @@ db = [
     "pyshp==2.2.0"
 ]
 countsserver = []
+cggnn = [
+    "cg-gnn"
+]
 workflow = [
     "numpy==1.22.3",
     "scipy==1.8.0",
@@ -47,7 +50,9 @@ workflow = [
     "Jinja2==3.0.1",
     "tabulate==0.8.10"
 ]
-building = ["Jinja2==3.0.1"]
+building = [
+    "Jinja2==3.0.1"
+]
 all = [
     "fastapi>=0.68.0,<0.69.0",
     "uvicorn>=0.15.0,<0.16.0",
@@ -78,6 +83,8 @@ packages = [
     "spatialprofilingtoolbox.apiserver",
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
+    "spatialprofilingtoolbox.cggnn",
+    "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.countsserver",
     "spatialprofilingtoolbox.countsserver.scripts",
     "spatialprofilingtoolbox.db",
@@ -144,4 +151,7 @@ packages = [
     "grant_on_tables.sql",
     "performance_tweaks.sql",
     "refresh_views.sql"
+]
+"spatialprofilingtoolbox.cggnn.scripts" = [
+    "run.py",
 ]

@@ -22,7 +22,7 @@ help:
 >@${MESSAGE} print '      make test'
 >@${MESSAGE} print '          Do unit and module tests.'
 >@${MESSAGE} print ' '
->@${MESSAGE} print '      make test-[apiserver | countsserver | db | workflow | ]'
+>@${MESSAGE} print '      make test-[apiserver | cggnn | countsserver | db | workflow | ]'
 >@${MESSAGE} print '          Do only the unit and module tests for the indicated module.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print '      make clean'
@@ -40,7 +40,7 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
+DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
 DOCKERFILE_SOURCES := $(wildcard ${PACKAGE_NAME}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/Dockerfile)
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${PACKAGE_NAME}/$(submodule)/docker.built)
@@ -273,10 +273,11 @@ clean-files:
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"
 >@docker compose --project-directory ./spatialprofilingtoolbox/apiserver/ rm --force --stop ; status_code1="$$?" ; \
+    docker compose --project-directory ./spatialprofilingtoolbox/cggnn/ rm --force --stop ; status_code5="$$?" ; \
     docker compose --project-directory ./spatialprofilingtoolbox/countsserver/ rm --force --stop ; status_code2="$$?" ; \
     docker compose --project-directory ./spatialprofilingtoolbox/db/ rm --force --stop ; status_code3="$$?" ; \
     docker compose --project-directory ./spatialprofilingtoolbox/workflow/ rm --force --stop ; status_code4="$$?" ; \
-    status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 )) ; echo $$status_code > status_code
+    status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 + status_code5 )) ; echo $$status_code > status_code
 >@docker container rm --force temporary-spt-db-preloading
 >@${MESSAGE} end "Down." "Error."
 

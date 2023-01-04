@@ -4,7 +4,7 @@ nextflow run .
 cat work/*/*/.command.log
 spt db create-schema --refresh-views-only --database-config-file build/db/.spt_db.config.local
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt
-diff building/expected_table_counts.txt table_counts.txt
+diff build_scripts/expected_table_counts.txt table_counts.txt
 status=$?
 [ $status -eq 0 ] && echo "Import created correct number of records." || echo "Import failed."
 rm table_counts.txt

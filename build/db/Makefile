@@ -43,7 +43,7 @@ test: teardown-testing
 setup-testing:
 >@${MESSAGE} start "db (setup testing environment)"
 >@docker compose up -d && \
-    bash ../../building/poll_container_readiness.sh \
+    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness.sh \
      spt-db-testing ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup." "Not setup."
@@ -115,7 +115,7 @@ ${TESTS}: setup-testing
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
-     --mount type=bind,src=${PACKAGE_SOURCE_DIRECTORY},dst=/mount_sources \
+     --mount type=bind,src=${TEST_LOCATION},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code

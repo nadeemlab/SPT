@@ -10,7 +10,7 @@ services:
       - isolated_temporary_test
     volumes:
       - type: bind
-        source: ./module_tests/expected_binary_expression_data_cohoused/
+        source: ../../test/countsserver/module_tests/expected_binary_expression_data_cohoused
         target: /countsserver/source_data/
     pull_policy: never
 

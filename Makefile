@@ -39,7 +39,6 @@ help:
 
 LOCAL_USERID := $(shell id -u)
 PACKAGE_NAME := spatialprofilingtoolbox
-BUILD_RECIPES_DIRECTORY := ${BUILD_SCRIPTS_LOCATION_RELATIVE}/${PACKAGE_NAME}
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab

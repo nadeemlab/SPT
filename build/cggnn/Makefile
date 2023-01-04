@@ -25,7 +25,7 @@ test: teardown-testing
 setup-testing:
 >@${MESSAGE} start "cggnn (setup testing environment)"
 >@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION}/building/poll_container_readiness.sh \
+    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness.sh \
      spt-db-testing ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup." "Not setup."
@@ -70,7 +70,7 @@ ${TESTS}: setup-testing
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
-     --mount type=bind,src=${PACKAGE_DIRECTORY},dst=/mount_sources \
+     --mount type=bind,src=${TEST_LOCATION},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-cggnn:latest \
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code

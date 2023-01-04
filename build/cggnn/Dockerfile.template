@@ -1,0 +1,18 @@
+FROM pytorch/pytorch:1.13.0-cuda11.6-cudnn8-runtime
+ARG version
+ARG service_name
+ARG WHEEL_FILENAME
+LABEL version=$version
+LABEL service_name=$service_name
+ENV service_name $service_name
+RUN apt-get update
+RUN apt-get -y install gcc
+RUN apt-get install -y libpq-dev
+WORKDIR /usr/src/app
+COPY requirements.txt .
+RUN python -m pip install -r requirements.txt
+COPY specific_requirements.txt .
+RUN python -m pip install -r specific_requirements.txt
+COPY $WHEEL_FILENAME ./
+RUN pip3 install "$WHEEL_FILENAME"
+RUN python -m pip install dgl-cu116 dglgo -f https://data.dgl.ai/wheels/repo.html

@@ -25,7 +25,7 @@ help:
 >@${MESSAGE} print '      make test'
 >@${MESSAGE} print '          Do unit and module tests.'
 >@${MESSAGE} print ' '
->@${MESSAGE} print '      make [unit | module]-test-[apiserver | countsserver | db | workflow | ]'
+>@${MESSAGE} print '      make [unit | module]-test-[apiserver | cggnn | countsserver | db | workflow]'
 >@${MESSAGE} print '          Do only the unit or module tests for the indicated module.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print '      make clean'
@@ -43,7 +43,7 @@ VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
-DOCKERIZED_SUBMODULES := apiserver countsserver db workflow
+DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
 DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION_RELATIVE}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_RELATIVE}/$(submodule)/Dockerfile)
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_RELATIVE}/$(submodule)/docker.built)
@@ -60,6 +60,7 @@ DB_BUILD_DIRECTORY := ${BUILD_LOCATION}/db
 WORKFLOW_BUILD_DIRECTORY := ${BUILD_LOCATION}/workflow
 PACKAGE_BUILD_DIRECTORY := ${BUILD_LOCATION}
 APISERVER_TEST_DIRECTORY := ${TEST_LOCATION}/apiserver
+CGGNN_TEST_DIRECTORY := ${TEST_LOCATION}/cggnn
 COUNTSSERVER_TEST_DIRECTORY := ${TEST_LOCATION}/countsserver
 DB_TEST_DIRECTORY := ${TEST_LOCATION}/db
 WORKFLOW_TEST_DIRECTORY := ${TEST_LOCATION}/workflow
@@ -284,10 +285,11 @@ clean-files:
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"
 >@docker compose --project-directory ./build/apiserver/ rm --force --stop ; status_code1="$$?" ; \
+    docker compose --project-directory ./build/cggnn/ rm --force --stop ; status_code5="$$?" ; \
     docker compose --project-directory ./build/countsserver/ rm --force --stop ; status_code2="$$?" ; \
     docker compose --project-directory ./build/db/ rm --force --stop ; status_code3="$$?" ; \
     docker compose --project-directory ./build/workflow/ rm --force --stop ; status_code4="$$?" ; \
-    status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 )) ; echo $$status_code > status_code
+    status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 + status_code5 )) ; echo $$status_code > status_code
 >@docker container rm --force temporary-spt-db-preloading
 >@${MESSAGE} end "Down." "Error."
 

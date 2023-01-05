@@ -7,7 +7,9 @@ BUILD_SCRIPTS_LOCATION := ${PWD}/build_scripts
 BUILD_SCRIPTS_LOCATION_RELATIVE := build_scripts
 BUILD_LOCATION := ${PWD}/build
 BUILD_LOCATION_RELATIVE := build
+# Docker mounting requires absolute location
 TEST_LOCATION := ${PWD}/test
+TEST_LOCATION_RELATIVE := test
 MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
 
 help:
@@ -59,11 +61,6 @@ COMPLETIONS_BUILD_DIRECTORY := ${BUILD_LOCATION}/entry_point
 DB_BUILD_DIRECTORY := ${BUILD_LOCATION}/db
 WORKFLOW_BUILD_DIRECTORY := ${BUILD_LOCATION}/workflow
 PACKAGE_BUILD_DIRECTORY := ${BUILD_LOCATION}
-APISERVER_TEST_DIRECTORY := ${TEST_LOCATION}/apiserver
-CGGNN_TEST_DIRECTORY := ${TEST_LOCATION}/cggnn
-COUNTSSERVER_TEST_DIRECTORY := ${TEST_LOCATION}/countsserver
-DB_TEST_DIRECTORY := ${TEST_LOCATION}/db
-WORKFLOW_TEST_DIRECTORY := ${TEST_LOCATION}/workflow
 export
 
 BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v '/spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')

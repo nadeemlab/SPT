@@ -1,15 +1,20 @@
+# Set up makefile config
 .RECIPEPREFIX = >
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
+export
 
+# Define globally used variables
+PACKAGE_NAME := spatialprofilingtoolbox
 PYTHON := python
 BUILD_SCRIPTS_LOCATION := ${PWD}/build_scripts
-BUILD_SCRIPTS_LOCATION_RELATIVE := build_scripts
-BUILD_LOCATION := ${PWD}/build
 BUILD_LOCATION_RELATIVE := build
-# Docker mounting requires absolute location
-TEST_LOCATION := ${PWD}/test
+BUILD_LOCATION := ${PWD}/${BUILD_LOCATION_RELATIVE}
 TEST_LOCATION_RELATIVE := test
+TEST_LOCATION := ${PWD}/${TEST_LOCATION_RELATIVE}
+LOCAL_USERID := $(shell id -u)
+VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
 
 help:
@@ -39,10 +44,7 @@ help:
 >@${MESSAGE} print ' Use VERBOSE=1 to show command outputs.'
 >@${MESSAGE} print ' '
 
-LOCAL_USERID := $(shell id -u)
-PACKAGE_NAME := spatialprofilingtoolbox
-VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
+# Docker and test variables
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
 DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
@@ -52,24 +54,24 @@ DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOC
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
-COMPLETIONS_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
-DB_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
-WORKFLOW_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/workflow
-PACKAGE_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
-PACKAGE_SOURCE_DIRECTORY_RELATIVE := ${PACKAGE_NAME}
-COMPLETIONS_BUILD_DIRECTORY := ${BUILD_LOCATION}/entry_point
-DB_BUILD_DIRECTORY := ${BUILD_LOCATION}/db
-WORKFLOW_BUILD_DIRECTORY := ${BUILD_LOCATION}/workflow
-PACKAGE_BUILD_DIRECTORY := ${BUILD_LOCATION}
-export
 
+# Submodule-specific variables
+COMPLETIONS_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
+COMPLETIONS_BUILD_DIRECTORY := ${BUILD_LOCATION}/entry_point
+DB_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
+DB_BUILD_DIRECTORY := ${BUILD_LOCATION}/db
+# Locations can't be relative because these are used by the submodules' Makefiles.
+
+# Fetch all runnable files that will be needed for making
 BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v '/spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
 BASIC_PACKAGE_BUILD_FILES := $(shell find ${BUILD_LOCATION} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v '/spt-completion.sh$$' | grep -v '${COMPLETIONS_BUILD_DIRECTORY}/venv/' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
 COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES} ${BASIC_PACKAGE_BUILD_FILES}
 PACKAGE_SOURCE_FILES_WITH_COMPLETIONS := ${BASIC_PACKAGE_SOURCE_FILES} ${BASIC_PACKAGE_BUILD_FILES} ${COMPLETIONS_BUILD_DIRECTORY}/spt-completion.sh pyproject.toml
 
+# Redefine what shell to pass to submodule makefiles
 export SHELL := ${BUILD_SCRIPTS_LOCATION}/status_messages_only_shell.sh
 
+# Adjust verbosity based on how make was called
 ifdef VERBOSE
 export .SHELLFLAGS := -c -super-verbose
 else
@@ -151,13 +153,13 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION_RELATIVE}\///g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_SOURCE_DIRECTORY_RELATIVE}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_NAME}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION_RELATIVE}\///g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_SOURCE_DIRECTORY_RELATIVE}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_NAME}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \

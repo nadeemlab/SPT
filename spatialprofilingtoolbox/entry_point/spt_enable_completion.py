@@ -65,14 +65,13 @@ def create_completions_script():
 
 
 def attempt_append_to(filename, contents):
-    full_path = join(expanduser('~'), filename)
-    if exists(full_path):
-        remove_previous_installation(full_path)
-        with open(full_path, 'a') as file:
+    if exists(filename):
+        remove_previous_installation(filename)
+        with open(filename, 'a') as file:
             file.write(contents)
-        print('Wrote completions script fragment to:\n %s' % full_path)
+        print('Wrote completions script fragment to:\n %s' % filename)
         print('Either open a new shell or do:')
-        print('    source %s' % full_path)
+        print('    source %s' % filename)
         exit()
 
 
@@ -88,12 +87,21 @@ def main_program():
         help='Disable completions, i.e. uninstall the bash complete snippet from profile '
         'configuration files.'
     )
+    parser.add_argument(
+        '--script-file',
+        dest='script_file',
+        help='If provided, this filename will be used in place of a user profile file. '
+        'For testing/inspection.'
+    )
     args = parser.parse_args()
 
-    profile_files = ['.bash_profile', '.bashrc', '.profile']
+    if args.script_file:
+        profile_files = [args.script_file]
+    else:
+        profile_files = [join(expanduser('~'), f)
+                         for f in ['.bash_profile', '.bashrc', '.profile']]
     if args.disable:
-        for file in profile_files:
-            path = join(expanduser('~'), file)
+        for path in profile_files:
             if exists(path):
                 remove_previous_installation(path)
         exit()
@@ -101,5 +109,5 @@ def main_program():
     completion_script = create_completions_script()
     wrapped = '\n%s\n%s\n%s\n' % (header, completion_script, footer)
 
-    for file in profile_files:
-        attempt_append_to(join(expanduser('~'), file), wrapped)
+    for path in profile_files:
+        attempt_append_to(path, wrapped)

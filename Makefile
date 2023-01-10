@@ -244,7 +244,6 @@ clean-files:
 >@rm -f .current_time.txt
 >@rm -f ${PACKAGE_NAME}/*/.initiation_message_size
 >@rm -f ${PACKAGE_NAME}/*/.current_time.txt
->@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${PACKAGE_NAME}/entry_point/ clean
 >@for submodule in ${DOCKERIZED_SUBMODULES} ; do \
         submodule_directory=${PACKAGE_DIRECTORY}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \

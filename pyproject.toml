@@ -108,7 +108,7 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-"spatialprofilingtoolbox.entry_point" = ["spt-completion.sh"]
+"spatialprofilingtoolbox.entry_point" = ["spt-completion.sh.jinja"]
 "spatialprofilingtoolbox.workflow.scripts" = [
     "aggregate-core-results.py",
     "core-job.py",

@@ -14,7 +14,6 @@ def extract_compartments_single_file(filename):
         key = {header_row[i] : i for i in range(len(header_row))}
         entry = lambda row, name: row[key[name]]
         if not compartment_column_name in header_row:
-            logger.warning('"%s" is missing from file "%s".', compartment_column_name, filename)
             compartments = [
                 '<any>'
                 for row in reader

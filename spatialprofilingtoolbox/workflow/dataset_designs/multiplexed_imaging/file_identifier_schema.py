@@ -60,7 +60,8 @@ def get_input_filename_by_identifier(
                        input_file_identifier)
         return None
     if len(filenames) == 0:
-        logger.warning('File identifier "%s" not found.',
-                       input_file_identifier)
+        if not input_file_identifier == 'Compartments file':
+            logger.warning('File identifier "%s" not found.',
+                           input_file_identifier)
         return None
     return filenames[0]

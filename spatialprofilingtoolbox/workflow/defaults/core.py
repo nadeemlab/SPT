@@ -3,10 +3,10 @@ import re
 
 import pandas as pd
 
-from ..common.file_io import raw_line_count
-from ..common.dichotomization import Dichotomizer
-from ..common.logging.performance_timer import PerformanceTimer
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.common.file_io import raw_line_count
+from spatialprofilingtoolbox.workflow.common.dichotomization import Dichotomizer
+from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

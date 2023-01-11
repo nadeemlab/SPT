@@ -1,8 +1,8 @@
 import statistics
 
-from ...db.shapefile_polygon import extract_points
-from ...db.database_connection import DatabaseConnectionMaker
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

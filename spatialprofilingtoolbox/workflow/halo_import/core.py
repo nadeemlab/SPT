@@ -1,7 +1,7 @@
 import sqlite3
 
-from ..defaults.core import CoreJob
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
@@ -20,7 +20,8 @@ class HALOImportCoreJob(CoreJob):
         self.timer.record_timepoint('Done parsing cells.')
 
     def initialize_metrics_database(self):
-        connection = sqlite3.connect(self.computational_design.get_database_uri())
+        connection = sqlite3.connect(
+            self.computational_design.get_database_uri())
         cursor = connection.cursor()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',

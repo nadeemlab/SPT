@@ -1,5 +1,5 @@
 
-from ..defaults.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
 
 
 class HALOImportDesign(ComputationalDesign):

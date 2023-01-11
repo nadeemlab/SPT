@@ -1,11 +1,11 @@
 
 import pandas as pd
 
-from ..db.database_connection import DatabaseConnectionMaker
-from ..db.outcomes_puller import OutcomesPuller
-from ..workflow.common.structure_centroids_puller import StructureCentroidsPuller
-from ..workflow.common.sparse_matrix_puller import SparseMatrixPuller
-from ..standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.outcomes_puller import OutcomesPuller
+from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import StructureCentroidsPuller
+from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

@@ -4,7 +4,7 @@ design of the nearest-distance-to-compartment workflow.
 """
 import re
 
-from ..defaults.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
 
 
 class NearestDistanceDesign(ComputationalDesign):

@@ -1,5 +1,5 @@
 
-from ..defaults.initializer import Initializer
+from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
 
 
 class NearestDistanceInitializer(Initializer):

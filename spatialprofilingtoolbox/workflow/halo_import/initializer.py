@@ -1,21 +1,21 @@
 
-from ..defaults.initializer import Initializer
-from ..source_file_adi_parsing.skimmer import DataSkimmer
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.skimmer import DataSkimmer
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
 class HALOImportInitializer(Initializer):
     def __init__(self,
-            file_manifest_file = None,
-            elementary_phenotypes_file = None,
-            composite_phenotypes_file = None,
-            outcomes_file = None,
-            compartments_file = None,
-            subjects_file = None,
-            **kwargs,
-        ):
+                 file_manifest_file=None,
+                 elementary_phenotypes_file=None,
+                 composite_phenotypes_file=None,
+                 outcomes_file=None,
+                 compartments_file=None,
+                 subjects_file=None,
+                 **kwargs,
+                 ):
         super(HALOImportInitializer, self).__init__(**kwargs)
         self.file_manifest_file = file_manifest_file
         self.elementary_phenotypes_file = elementary_phenotypes_file
@@ -92,7 +92,7 @@ class HALOImportInitializer(Initializer):
 
     def initialize(
         self,
-        database_config_file: str=None,
+        database_config_file: str = None,
         **kwargs,
     ):
         if database_config_file is None:

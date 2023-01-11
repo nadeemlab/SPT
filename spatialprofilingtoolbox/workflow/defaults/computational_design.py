@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
@@ -11,13 +11,14 @@ class ComputationalDesign:
     Subclass this object to collect together any metadata that is specific to a
     particular pipeline/workflow's computation stage.
     """
+
     def __init__(self,
-        dataset_design=None,
-        metrics_database_filename: str='metrics_default.db',
-        dichotomize: bool=False,
-        composite_phenotypes_file:str = None,
-        **kwargs,
-    ):
+                 dataset_design=None,
+                 metrics_database_filename: str = 'metrics_default.db',
+                 dichotomize: bool = False,
+                 composite_phenotypes_file: str = None,
+                 **kwargs,
+                 ):
         """
         :param dataset_design: The design object describing the input data set.
 

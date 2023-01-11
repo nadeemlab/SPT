@@ -9,21 +9,21 @@ Taken as a whole the phenotype proximity analysis pipeline provides statistical
 test results and figures that assess the efficacy of proximity-related metrics
 as discriminators of selected correlates.
 """
-from ..defaults.workflow_module_exporting import WorkflowModules
+from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import WorkflowModules
 
-from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
-from ..defaults.job_generator import JobGenerator
-from .initializer import PhenotypeProximityInitializer
-from .core import PhenotypeProximityCoreJob
-from .computational_design import PhenotypeProximityDesign
-from .integrator import PhenotypeProximityAnalysisIntegrator
+from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
+from spatialprofilingtoolbox.workflow.phenotype_proximity.initializer import PhenotypeProximityInitializer
+from spatialprofilingtoolbox.workflow.phenotype_proximity.core import PhenotypeProximityCoreJob
+from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import PhenotypeProximityDesign
+from spatialprofilingtoolbox.workflow.phenotype_proximity.integrator import PhenotypeProximityAnalysisIntegrator
 
 components = WorkflowModules(
-    generator = JobGenerator,
-    initializer = PhenotypeProximityInitializer,
-    dataset_design = HALOCellMetadataDesign,
-    computational_design = PhenotypeProximityDesign,
-    core_job = PhenotypeProximityCoreJob,
-    integrator = PhenotypeProximityAnalysisIntegrator,
+    generator=JobGenerator,
+    initializer=PhenotypeProximityInitializer,
+    dataset_design=HALOCellMetadataDesign,
+    computational_design=PhenotypeProximityDesign,
+    core_job=PhenotypeProximityCoreJob,
+    integrator=PhenotypeProximityAnalysisIntegrator,
 )

@@ -4,9 +4,9 @@ from os.path import join, dirname
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.workflows.phenotype_proximity.core import \
+from spatialprofilingtoolbox.workflow.phenotype_proximity.core import \
     PhenotypeProximityCoreJob
-from spatialprofilingtoolbox.workflow.workflows.phenotype_proximity.computational_design \
+from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design \
     import PhenotypeProximityDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
     import HALOCellMetadataDesign

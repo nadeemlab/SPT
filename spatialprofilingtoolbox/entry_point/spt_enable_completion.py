@@ -7,7 +7,7 @@ import argparse
 from jinja2 import Environment
 from jinja2 import BaseLoader
 
-from spatialprofilingtoolbox.entry_point.spt import get_commands
+from spatialprofilingtoolbox.entry_point.cli import get_commands
 from spatialprofilingtoolbox import submodule_names
 
 header = '### Start added by spatialprofilingtoolbox'

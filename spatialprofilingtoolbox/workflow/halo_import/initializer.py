@@ -1,7 +1,7 @@
 
 from ..defaults.initializer import Initializer
 from ...source_file_adi_parsing.skimmer import DataSkimmer
-from ....standalone_utilities.log_formats import colorized_logger
+from ...standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

@@ -1,10 +1,10 @@
 import re
 import pkgutil
 
-from .standalone_utilities.log_formats import colorized_logger
-from .standalone_utilities.configuration_settings import get_version
-from .workflow.workflows import get_workflow
-from .workflow.workflows import get_workflow_names as get_workflow_names  # pylint: disable=useless-import-alias
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.standalone_utilities.configuration_settings import get_version
+from spatialprofilingtoolbox.workflow import get_workflow
+from spatialprofilingtoolbox.workflow import get_workflow_names as get_workflow_names  # pylint: disable=useless-import-alias
 
 
 def get_subpackage_name(module_info):

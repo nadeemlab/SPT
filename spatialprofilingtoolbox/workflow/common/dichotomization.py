@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.mixture import GaussianMixture
 from sklearn.exceptions import ConvergenceWarning
 
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 warnings.simplefilter('error', ConvergenceWarning)
 logger = colorized_logger(__name__)

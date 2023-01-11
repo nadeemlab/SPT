@@ -6,12 +6,12 @@ import re
 import shapefile
 import pandas as pd
 
-from ..common.file_io import compute_sha256
-from ..common.logging.performance_timer import PerformanceTimer
-from ..dataset_designs.multiplexed_imaging.file_identifier_schema import \
+from spatialprofilingtoolbox.workflow.common.file_io import compute_sha256
+from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import \
     get_input_filename_by_identifier
-from ...db.source_file_parser_interface import SourceToADIParser
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

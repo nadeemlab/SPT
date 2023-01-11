@@ -1,6 +1,6 @@
 import re
 
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

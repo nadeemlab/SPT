@@ -10,10 +10,10 @@ import numpy as np
 from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
-from ...standalone_utilities.log_formats import colorized_logger
-from ..common.export_features import ADIFeaturesUploader
-from ..source_file_adi_parsing.value_extraction import get_unique_value
-from .computational_design import PhenotypeProximityDesign
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.value_extraction import get_unique_value
+from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 

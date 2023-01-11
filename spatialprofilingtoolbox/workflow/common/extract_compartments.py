@@ -1,7 +1,7 @@
 import csv
 
-from ...standalone_utilities.log_formats import colorized_logger
-from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
 logger = colorized_logger(__name__)

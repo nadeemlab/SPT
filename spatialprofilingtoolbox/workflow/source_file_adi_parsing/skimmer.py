@@ -5,18 +5,18 @@ import re
 from psycopg2 import sql
 import pandas as pd
 
-from .cellmanifests import CellManifestsParser
-from .channels import ChannelsPhenotypesParser
-from .cellmanifestset import CellManifestSetParser
-from .samples import SamplesParser
-from .subjects import SubjectsParser
-from .sample_stratification import SampleStratificationCreator
-from .interventions import InterventionsParser
-from .diagnosis import DiagnosisParser
-from .study import StudyParser
-from ...db.source_file_parser_interface import DBBackend
-from ...db.database_connection import DatabaseConnectionMaker
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cellmanifests import CellManifestsParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.channels import ChannelsPhenotypesParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cellmanifestset import CellManifestSetParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.samples import SamplesParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.subjects import SubjectsParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.sample_stratification import SampleStratificationCreator
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.interventions import InterventionsParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.diagnosis import DiagnosisParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.study import StudyParser
+from spatialprofilingtoolbox.db.source_file_parser_interface import DBBackend
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

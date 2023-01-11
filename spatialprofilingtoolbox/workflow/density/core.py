@@ -2,10 +2,10 @@ import sqlite3
 
 import pandas as pd
 
-from ..common.sqlite_context_utility import WaitingDatabaseContextManager
-from ..defaults.core import CoreJob
-from ...standalone_utilities.log_formats import colorized_logger
-from .data_logging import DensityDataLogger
+from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import WaitingDatabaseContextManager
+from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.density.data_logging import DensityDataLogger
 
 logger = colorized_logger(__name__)
 

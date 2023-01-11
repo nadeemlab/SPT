@@ -4,15 +4,15 @@ regional classes, and calculates the distances to the front or boundary between
 the classes from each cell. The results are stratified by cell phenotype and
 region membership.
 """
-from ..defaults.workflow_module_exporting import WorkflowModules
+from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import WorkflowModules
 
-from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
-from ..defaults.job_generator import JobGenerator
-from .initializer import FrontProximityInitializer
-from .core import FrontProximityCoreJob
-from .computational_design import FrontProximityDesign
-from .integrator import FrontProximityAnalysisIntegrator
+from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
+from spatialprofilingtoolbox.workflow.front_proximity.initializer import FrontProximityInitializer
+from spatialprofilingtoolbox.workflow.front_proximity.core import FrontProximityCoreJob
+from spatialprofilingtoolbox.workflow.front_proximity.computational_design import FrontProximityDesign
+from spatialprofilingtoolbox.workflow.front_proximity.integrator import FrontProximityAnalysisIntegrator
 
 components = WorkflowModules(
     generator = JobGenerator,

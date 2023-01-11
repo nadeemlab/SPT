@@ -2,8 +2,8 @@ import re
 import random
 import json
 
-from .defaults import expressions_index_filename
-from ..standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.countsserver.defaults import expressions_index_filename
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

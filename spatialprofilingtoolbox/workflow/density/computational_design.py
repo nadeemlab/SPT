@@ -4,7 +4,7 @@ design of the cell phenotype density analysis workflow.
 """
 import re
 
-from ..defaults.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
 
 
 class DensityDesign(ComputationalDesign):

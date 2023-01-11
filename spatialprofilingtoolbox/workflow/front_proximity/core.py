@@ -2,9 +2,9 @@ import sqlite3
 
 from scipy.spatial import KDTree
 
-from ..defaults.core import CoreJob
-from ..common.sqlite_context_utility import WaitingDatabaseContextManager
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
+from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import WaitingDatabaseContextManager
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 

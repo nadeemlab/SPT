@@ -2,7 +2,7 @@
 The module describing the design of the phenotype proximity workflow, including
 any workflow-specific metadata.
 """
-from ..defaults.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
 
 
 class PhenotypeProximityDesign(ComputationalDesign):

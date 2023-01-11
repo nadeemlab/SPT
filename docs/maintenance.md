@@ -104,11 +104,12 @@ Uploading spatialprofilingtoolbox==0.11.0 to PyPI <span style="color:olive;">...
 The source code is contained in one Python package, `spatialprofilingtoolbox`. The package metadata uses the declarative `pyproject.toml` format.
 
 ## <a id="modules"></a> 3. Modules
-The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
+The main functionality is provided by 4 modules designed to operate as services, and one command-line tool. Each module's source is wrapped in a Docker image.
 
 | Module name     | Description |
 | --------------- | ----------- |
 | `apiserver`     | FastAPI application supporting queries over cell data. |
+| `cggnn`         | Command line tool to apply cell graph neural network models to data stored in an SPT framework. |
 | `countsserver`  | An optimized class-counting program served by a custom TCP server. |
 | `db`            | Data model/interface and PostgresQL database management SQL fragments. |
 | `workflow`      | [Nextflow](https://www.nextflow.io)-orchestrated computation workflows. |
@@ -117,8 +118,8 @@ The main functionality is provided by 4 modules designed to operate as services.
 
 ## <a id="test-managed-development"></a> 4. Test-managed development
 Test scripts are located under
-- `spatialprofilingtoolbox/<module name>/unit_tests`
-- `spatialprofilingtoolbox/<module name>/module_tests`
+- `test/<module name>/unit_tests`
+- `test/<module name>/module_tests`
 
 These tests serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.
@@ -167,8 +168,8 @@ Development often entails "throwaway" test scripts that you modify and run frequ
 For this purpose, a pattern that has worked for me in this repository is:
 
 1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory, for each module that you will use.
-2. Choose a pertinent module for your work (or create a new one, i.e. a subdirectory of `spatialprofilingtoolbox/`, modeled on one of the others).
-3. Go into the module: `cd spatialprofilingtoolbox/<module name>`.
+2. Choose a pertinent module for your work (or create a new one, i.e. a subdirectory of `build/`, modeled on one of the others).
+3. Go into the module: `cd build/<module name>`.
 4. Create `throwaway_script.py`.
 5. Setup the testing environment:
 ```sh

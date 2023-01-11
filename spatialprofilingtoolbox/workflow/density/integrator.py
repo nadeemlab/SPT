@@ -11,8 +11,8 @@ import numpy as np
 from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
-from ...common.sqlite_context_utility import WaitingDatabaseContextManager
-from ....standalone_utilities.log_formats import colorized_logger
+from ..common.sqlite_context_utility import WaitingDatabaseContextManager
+from ...standalone_utilities.log_formats import colorized_logger
 from .data_logging import DensityDataLogger
 
 logger = colorized_logger(__name__)

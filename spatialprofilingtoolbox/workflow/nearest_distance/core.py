@@ -1,18 +1,18 @@
 import sqlite3
 
 import pandas as pd
+from scipy.spatial import KDTree
 
-from ...common.sqlite_context_utility import WaitingDatabaseContextManager
+from ..common.sqlite_context_utility import WaitingDatabaseContextManager
 from ..defaults.core import CoreJob
-from ....standalone_utilities.log_formats import colorized_logger
-from .data_logging import DensityDataLogger
+from ...standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class DensityCoreJob(CoreJob):
+class NearestDistanceCoreJob(CoreJob):
     def __init__(self, **kwargs):
-        super(DensityCoreJob, self).__init__(**kwargs)
+        super(NearestDistanceCoreJob, self).__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -71,7 +71,6 @@ class DensityCoreJob(CoreJob):
         self.timer.record_timepoint('Starting calculation of density')
         cells, fov_lookup = self.create_cell_table()
         logger.info('Aggregated %s cells into table.', cells.shape[0])
-        DensityDataLogger.log_number_by_type(self.computational_design, cells)
         self.write_cell_table(cells)
         self.write_fov_lookup_table(fov_lookup)
         logger.info('Finished writing cells and fov lookup helper.')
@@ -94,6 +93,44 @@ class DensityCoreJob(CoreJob):
         signatures_by_name = self.get_phenotype_signatures_by_name()
         pheno_names = sorted(signatures_by_name.keys())
         return pheno_names
+
+    def add_nearest_cell_data(self, table, compartment):
+        compartments = self.dataset_design.get_compartments()
+        cell_indices = list(table.index)
+        xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
+        table['x value'] = 0.5 * (table[xmax] + table[xmin])
+        table['y value'] = 0.5 * (table[ymax] + table[ymin])
+        signature = self.dataset_design.get_compartmental_signature(
+            table, compartment)
+        if sum(signature) == 0:
+            for i in range(len(cell_indices)):
+                I = cell_indices[i]
+                distance = -1
+                table.loc[I, 'distance to nearest cell ' +
+                          compartment] = distance
+        else:
+            compartment_cells = table[signature]
+            compartment_points = [
+                (row['x value'], row['y value'])
+                for i, row in compartment_cells.iterrows()
+            ]
+            all_points = [
+                (row['x value'], row['y value'])
+                for i, row in table.iterrows()
+            ]
+            tree = KDTree(compartment_points)
+            distances, indices = tree.query(all_points)
+            for i in range(len(cell_indices)):
+                I = cell_indices[i]
+                compartment_i = table.loc[I, 'compartment']
+                if compartment_i == compartment:
+                    distance = 0
+                elif compartment_i not in compartments:
+                    distance = -1
+                else:
+                    distance = distances[i]
+                table.loc[I, 'distance to nearest cell ' +
+                          compartment] = distance
 
     def create_cell_table(self):
         """
@@ -129,7 +166,7 @@ class DensityCoreJob(CoreJob):
             table = table_fov.copy()
             self.timer.record_timepoint('Finished copying FOV cells table')
             table = table.reset_index(drop=True)
-            self.timer.record_timepoint('Finished reseting cells table index')
+            self.timer.record_timepoint('Finished resetting cells table index')
             if 'compartment' in table.columns:
                 logger.error('Woops, name collision "compartment".')
                 break
@@ -154,16 +191,15 @@ class DensityCoreJob(CoreJob):
                 name + ' membership' for name in pheno_names]
             self.timer.record_timepoint('Finished creating membership columns')
 
+            self.timer.record_timepoint('Adding distance-to-nearest data')
+            for compartment in all_compartments:
+                self.add_nearest_cell_data(table, compartment)
+            nearest_cell_columns = [
+                'distance to nearest cell ' + compartment for compartment in all_compartments]
+            self.timer.record_timepoint(
+                'Finished adding distance-to-nearest data')
             table['sample_identifier'] = sample_identifier
             table['outcome_assignment'] = self.outcome
-
-            if self.computational_design.use_intensities:
-                self.overlay_intensities(table)
-                self.timer.record_timepoint('Overlaid intensities')
-                intensity_columns = self.computational_design.get_intensity_columns(
-                    values_only=True)
-            else:
-                intensity_columns = []
 
             pertinent_columns = [
                 'sample_identifier',
@@ -171,7 +207,7 @@ class DensityCoreJob(CoreJob):
                 'outcome_assignment',
                 'compartment',
                 self.dataset_design.get_cell_area_column(),
-            ] + phenotype_membership_columns + intensity_columns
+            ] + phenotype_membership_columns + nearest_cell_columns
 
             table = table[pertinent_columns]
             self.timer.record_timepoint('Restricted copy to subset of columns')
@@ -196,13 +232,6 @@ class DensityCoreJob(CoreJob):
                      table_file.shape[0], filename)
         logger.debug('Completed cell table collation.')
         return pd.concat(cell_groups), fov_lookup
-
-    def overlay_intensities(self, table):
-        intensity_columns = self.computational_design.get_intensity_columns()
-        for phenotype_name, column_name in intensity_columns:
-            I = self.dataset_design.get_combined_intensity(
-                table, phenotype_name)
-            table[column_name] = I
 
     def write_cell_table(self, cells):
         """

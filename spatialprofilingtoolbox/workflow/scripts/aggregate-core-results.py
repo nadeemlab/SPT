@@ -41,7 +41,7 @@ if __name__ == '__main__':
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
         SuggestExtrasException
     try:
-        from spatialprofilingtoolbox.workflow.workflows.defaults.computational_design import \
+        from spatialprofilingtoolbox.workflow.defaults.computational_design import \
             ComputationalDesign
         from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
             import HALOCellMetadataDesign

@@ -4,7 +4,7 @@ regard to spatial information.
 """
 from ..defaults.workflow_module_exporting import WorkflowModules
 
-from ...dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from ..dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
 
 from ..defaults.job_generator import JobGenerator
 from .initializer import NearestDistanceInitializer

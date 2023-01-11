@@ -6,6 +6,7 @@ export
 
 # Define globally used variables
 PACKAGE_NAME := spatialprofilingtoolbox
+PACKAGE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
 PYTHON := python
 BUILD_SCRIPTS_LOCATION := ${PWD}/build_scripts
 BUILD_LOCATION_RELATIVE := build
@@ -56,17 +57,12 @@ MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 
 # Submodule-specific variables
-COMPLETIONS_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/entry_point
-COMPLETIONS_BUILD_DIRECTORY := ${BUILD_LOCATION}/entry_point
 DB_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
 DB_BUILD_DIRECTORY := ${BUILD_LOCATION}/db
 # Locations can't be relative because these are used by the submodules' Makefiles.
 
 # Fetch all runnable files that will be needed for making
-BASIC_PACKAGE_SOURCE_FILES := $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v '/spt-completion.sh$$' | grep -v '${PACKAGE_NAME}/entry_point/venv/' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
-BASIC_PACKAGE_BUILD_FILES := $(shell find ${BUILD_LOCATION} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v '/spt-completion.sh$$' | grep -v '${COMPLETIONS_BUILD_DIRECTORY}/venv/' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
-COMPLETIONS_DEPENDENCIES := ${BASIC_PACKAGE_SOURCE_FILES} ${BASIC_PACKAGE_BUILD_FILES}
-PACKAGE_SOURCE_FILES_WITH_COMPLETIONS := ${BASIC_PACKAGE_SOURCE_FILES} ${BASIC_PACKAGE_BUILD_FILES} ${COMPLETIONS_BUILD_DIRECTORY}/spt-completion.sh pyproject.toml
+PACKAGE_SOURCE_FILES := pyproject.toml $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
 
 # Redefine what shell to pass to submodule makefiles
 export SHELL := ${BUILD_SCRIPTS_LOCATION}/status_messages_only_shell.sh
@@ -90,7 +86,7 @@ check-for-pypi-credentials:
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
-development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
+development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
 >@${MESSAGE} start "Building development image"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker build \
@@ -114,11 +110,7 @@ development-image: ${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS} ${BUILD_SCRIPTS_LOCA
 >@rm -f .dockerignore
 
 print-source-files:
->@echo "${PACKAGE_SOURCE_FILES_WITH_COMPLETIONS}" | tr ' ' '\n'
-
-# Go into build/entry_point and use the makefile to create the shell completion script
-${COMPLETIONS_BUILD_DIRECTORY}/spt-completion.sh: ${COMPLETIONS_DEPENDENCIES}
->@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${COMPLETIONS_BUILD_DIRECTORY} spt-completion.sh
+>@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
 
 build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
 
@@ -262,7 +254,6 @@ clean-files:
 >@rm -f .current_time.txt
 >@rm -f ${BUILD_LOCATION}/*/.initiation_message_size
 >@rm -f ${BUILD_LOCATION}/*/.current_time.txt
->@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${BUILD_LOCATION}/entry_point/ clean
 >@for submodule in ${DOCKERIZED_SUBMODULES} ; do \
         submodule_directory=${BUILD_LOCATION}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \

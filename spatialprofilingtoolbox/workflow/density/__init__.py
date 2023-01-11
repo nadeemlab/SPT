@@ -13,10 +13,10 @@ from spatialprofilingtoolbox.workflow.density.computational_design import Densit
 from spatialprofilingtoolbox.workflow.density.integrator import DensityAnalysisIntegrator
 
 components = WorkflowModules(
-    generator = JobGenerator,
-    initializer = DensityInitializer,
-    dataset_design = HALOCellMetadataDesign,
-    computational_design = DensityDesign,
-    core_job = DensityCoreJob,
-    integrator = DensityAnalysisIntegrator,
+    generator=JobGenerator,
+    initializer=DensityInitializer,
+    dataset_design=HALOCellMetadataDesign,
+    computational_design=DensityDesign,
+    core_job=DensityCoreJob,
+    integrator=DensityAnalysisIntegrator,
 )

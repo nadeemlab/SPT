@@ -14,10 +14,10 @@ from spatialprofilingtoolbox.workflow.nearest_distance.integrator import Nearest
 
 name = 'nearest distance to compartment'
 components = WorkflowModules(
-    generator = JobGenerator,
-    initializer = NearestDistanceInitializer,
-    dataset_design = HALOCellMetadataDesign,
-    computational_design = NearestDistanceDesign,
-    core_job = NearestDistanceCoreJob,
-    integrator = NearestDistanceAnalysisIntegrator,
+    generator=JobGenerator,
+    initializer=NearestDistanceInitializer,
+    dataset_design=HALOCellMetadataDesign,
+    computational_design=NearestDistanceDesign,
+    core_job=NearestDistanceCoreJob,
+    integrator=NearestDistanceAnalysisIntegrator,
 )

@@ -15,10 +15,10 @@ from spatialprofilingtoolbox.workflow.front_proximity.computational_design impor
 from spatialprofilingtoolbox.workflow.front_proximity.integrator import FrontProximityAnalysisIntegrator
 
 components = WorkflowModules(
-    generator = JobGenerator,
-    initializer = FrontProximityInitializer,
-    dataset_design = HALOCellMetadataDesign,
-    computational_design = FrontProximityDesign,
-    core_job = FrontProximityCoreJob,
-    integrator = FrontProximityAnalysisIntegrator,
+    generator=JobGenerator,
+    initializer=FrontProximityInitializer,
+    dataset_design=HALOCellMetadataDesign,
+    computational_design=FrontProximityDesign,
+    core_job=FrontProximityCoreJob,
+    integrator=FrontProximityAnalysisIntegrator,
 )

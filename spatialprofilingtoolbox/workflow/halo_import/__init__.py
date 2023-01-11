@@ -10,10 +10,10 @@ from spatialprofilingtoolbox.workflow.halo_import.core import HALOImportCoreJob
 from spatialprofilingtoolbox.workflow.halo_import.integrator import HALOImportIntegrator
 
 components = WorkflowModules(
-    generator = JobGenerator,
-    initializer = HALOImportInitializer,
-    dataset_design = HALOCellMetadataDesign,
-    computational_design = HALOImportDesign,
-    core_job = HALOImportCoreJob,
-    integrator = HALOImportIntegrator,
+    generator=JobGenerator,
+    initializer=HALOImportInitializer,
+    dataset_design=HALOCellMetadataDesign,
+    computational_design=HALOImportDesign,
+    core_job=HALOImportCoreJob,
+    integrator=HALOImportIntegrator,
 )

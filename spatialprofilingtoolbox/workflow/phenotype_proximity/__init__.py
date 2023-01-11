@@ -20,10 +20,10 @@ from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design i
 from spatialprofilingtoolbox.workflow.phenotype_proximity.integrator import PhenotypeProximityAnalysisIntegrator
 
 components = WorkflowModules(
-    generator = JobGenerator,
-    initializer = PhenotypeProximityInitializer,
-    dataset_design = HALOCellMetadataDesign,
-    computational_design = PhenotypeProximityDesign,
-    core_job = PhenotypeProximityCoreJob,
-    integrator = PhenotypeProximityAnalysisIntegrator,
+    generator=JobGenerator,
+    initializer=PhenotypeProximityInitializer,
+    dataset_design=HALOCellMetadataDesign,
+    computational_design=PhenotypeProximityDesign,
+    core_job=PhenotypeProximityCoreJob,
+    integrator=PhenotypeProximityAnalysisIntegrator,
 )

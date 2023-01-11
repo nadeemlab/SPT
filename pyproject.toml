@@ -72,7 +72,7 @@ dev = [
 ]
 
 [project.scripts]
-spt = "spatialprofilingtoolbox.entry_point.spt:main_program"
+spt = "spatialprofilingtoolbox.entry_point.cli:main_program"
 spt-enable-completion = "spatialprofilingtoolbox.entry_point.spt_enable_completion:main_program"
 
 [tool.setuptools]

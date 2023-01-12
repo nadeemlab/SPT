@@ -23,7 +23,7 @@ services:
       - isolated_temporary_test
     volumes:
       - type: bind
-        source: ../countsserver/test_expression_data/
+        source: ../../test/countsserver/test_expression_data
         target: /countsserver/source_data/
     pull_policy: never
 

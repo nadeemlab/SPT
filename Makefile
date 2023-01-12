@@ -5,14 +5,14 @@ MAKEFLAGS += --no-builtin-rules
 export
 
 # Define globally used variables
+# Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
-PACKAGE_DIRECTORY := ${PWD}/${PACKAGE_NAME}
 PYTHON := python
 BUILD_SCRIPTS_LOCATION := ${PWD}/build_scripts
-BUILD_LOCATION_RELATIVE := build
-BUILD_LOCATION := ${PWD}/${BUILD_LOCATION_RELATIVE}
-TEST_LOCATION_RELATIVE := test
-TEST_LOCATION := ${PWD}/${TEST_LOCATION_RELATIVE}
+SOURCE_LOCATION := ${PACKAGE_NAME}
+BUILD_LOCATION := build
+TEST_LOCATION := test
+TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
@@ -49,20 +49,20 @@ help:
 DOCKER_ORG_NAME := nadeemlab
 DOCKER_REPO_PREFIX := spt
 DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
-DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION_RELATIVE}/*/Dockerfile.*)
-DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_RELATIVE}/$(submodule)/Dockerfile)
-DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_RELATIVE}/$(submodule)/docker.built)
+DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
+DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
+DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 
 # Submodule-specific variables
-DB_SOURCE_DIRECTORY := ${PWD}/${PACKAGE_NAME}/db
-DB_BUILD_DIRECTORY := ${BUILD_LOCATION}/db
+DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
+DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
 # Locations can't be relative because these are used by the submodules' Makefiles.
 
 # Fetch all runnable files that will be needed for making
-PACKAGE_SOURCE_FILES := pyproject.toml $(shell find ${PACKAGE_NAME} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
+PACKAGE_SOURCE_FILES := pyproject.toml $(shell find ${SOURCE_LOCATION} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
 
 # Redefine what shell to pass to submodule makefiles
 export SHELL := ${BUILD_SCRIPTS_LOCATION}/status_messages_only_shell.sh
@@ -141,17 +141,24 @@ check-for-docker-credentials:
 
 build-docker-images: ${DOCKER_BUILD_TARGETS}
 
+# Build the Docker container for each submodule by doing the following:
+#   0. Make the Dockerfiles for all submodules
+#   1. Identify the submodule being built
+#   2. Emit a message about it
+#   3. Copy relevant files to the build folder
+#   4. docker build the container
+#   5. Remove copied files
 ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-daemon-running check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
-    submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION_RELATIVE}\///g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_NAME}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION}\///g') ; \
+    submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
-    submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION_RELATIVE}\///g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${PACKAGE_NAME}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION}\///g') ; \
+    submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
@@ -176,6 +183,9 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
 
+# Assemble the Dockerfile for the submodule using either
+#   1. Dockerfile.base and [submodule]/Dockerfile.append, or
+#   2. [submodule]/Dockerfile.template 
 ${DOCKERFILE_TARGETS}: development-image ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ${DOCKERFILE_SOURCES}
 >@submodule_directory=$$(echo $@ | sed 's/Dockerfile//g' ) ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory Dockerfile
@@ -204,16 +214,16 @@ test: unit-tests module-tests
 module-tests: ${MODULE_TEST_TARGETS}
 
 ${MODULE_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment
->@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION_RELATIVE}\//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
 ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment
->@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION_RELATIVE}\//g') ; \
+>@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-data-loaded-image-%: ${BUILD_LOCATION_RELATIVE}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/import_test_dataset%.sh
+data-loaded-image-%: ${BUILD_LOCATION}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/import_test_dataset%.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \

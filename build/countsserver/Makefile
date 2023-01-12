@@ -2,10 +2,10 @@
 
 MODULE_NAME := $(shell echo "verbose-shell-override" >/dev/null ; pwd | grep -o '[^/]\+$$' )
 
-UNIT_TEST_FILES := $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/unit_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/unit_tests/test_*.py )
+UNIT_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/unit_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 
-MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/module_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/module_tests/test_*.py )
+MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
@@ -81,7 +81,7 @@ teardown-testing: ${TESTS}
 >@rm -f run.sh
 
 ${TESTS}: setup-testing
->@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION_RELATIVE}\/${MODULE_NAME}\///g') ; \
+>@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     test_name=$${test_name/unit_tests\/test_/} ; \
@@ -89,7 +89,7 @@ ${TESTS}: setup-testing
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
     ${MESSAGE} start "  $$test_name"
->@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION_RELATIVE}\/${MODULE_NAME}\///g') ; \
+>@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     test_name=$${test_name/unit_tests\/test_/} ; \
@@ -101,7 +101,7 @@ ${TESTS}: setup-testing
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
-     --mount type=bind,src=${TEST_LOCATION},dst=/mount_sources \
+     --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code

@@ -2,15 +2,15 @@
 
 MODULE_NAME := $(shell echo "verbose-shell-override" >/dev/null ; pwd | grep -o '[^/]\+$$' )
 
-UNIT_TEST_FILES := $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/unit_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/unit_tests/test_*.py )
+UNIT_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/unit_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 
-MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/module_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION_RELATIVE}/${MODULE_NAME}/module_tests/test_*.py )
+MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-DATA_MODEL_SOURCE_DIRECTORY := ${DB_SOURCE_DIRECTORY}/data_model
+DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
 
 Dockerfile: Dockerfile.template initialize_schema.sql
 >@${MESSAGE} start "Building db Dockerfile"
@@ -18,17 +18,17 @@ Dockerfile: Dockerfile.template initialize_schema.sql
 >@${MESSAGE} end "Built." "Not built."
 >@rm -f status_code
 
-initialize_schema.sql: schema.sql ${DATA_MODEL_SOURCE_DIRECTORY}/performance_tweaks.sql ${DATA_MODEL_SOURCE_DIRECTORY}/create_views.sql
+initialize_schema.sql: schema.sql ${DATA_MODEL_SOURCE_LOCATION}/performance_tweaks.sql ${DATA_MODEL_SOURCE_LOCATION}/create_views.sql
 >@cat \
     schema.sql \
-    ${DATA_MODEL_SOURCE_DIRECTORY}/performance_tweaks.sql \
-    ${DATA_MODEL_SOURCE_DIRECTORY}/create_views.sql \
+    ${DATA_MODEL_SOURCE_LOCATION}/performance_tweaks.sql \
+    ${DATA_MODEL_SOURCE_LOCATION}/create_views.sql \
     > initialize_schema.sql
 
 schema.sql:
 >@docker run \
      --rm \
-     --mount type=bind,src=${DB_BUILD_DIRECTORY},dst=/mount_sources \
+     --mount type=bind,src=${DB_BUILD_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
      'cd /mount_sources; adiscstudies dump-schema > schema.sql' ; \
@@ -95,7 +95,7 @@ teardown-testing: ${TESTS}
 >@rm -f run.sh
 
 ${TESTS}: setup-testing
->@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION_RELATIVE}\/${MODULE_NAME}\///g') ; \
+>@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     test_name=$${test_name/unit_tests\/test_/} ; \
@@ -103,7 +103,7 @@ ${TESTS}: setup-testing
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
     ${MESSAGE} start "  $$test_name"
->@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION_RELATIVE}\/${MODULE_NAME}\///g') ; \
+>@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
     test_name=$${test_name/unit_tests\/test_/} ; \
@@ -115,7 +115,7 @@ ${TESTS}: setup-testing
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
-     --mount type=bind,src=${TEST_LOCATION},dst=/mount_sources \
+     --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code

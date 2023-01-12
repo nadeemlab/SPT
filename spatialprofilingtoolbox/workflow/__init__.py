@@ -13,7 +13,7 @@ Each of the workflow subpackages contains the implementation details for one ful
 this pipeline are stored and managed.
 """
 import importlib
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 workflow_names_and_subpackages = {
     'phenotype density': 'density',

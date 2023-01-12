@@ -21,8 +21,6 @@ build/*/specific_requirements.txt
 build/countsserver/expression_data/*
 build/db/schema.sql
 build/db/initialize_schema.sql
-build/entry_point/spt-completion.sh
-build/entry_point/venv/**
 build/*.whl
 
 # Development files

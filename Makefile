@@ -57,7 +57,7 @@ MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 
 # Define PHONY targets
-.PHONY: help release-package check-for-pypi-credentials development-image print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
+.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
 
 # Submodule-specific variables
 DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
@@ -77,7 +77,7 @@ else
 export .SHELLFLAGS := -c -not-super-verbose
 endif
 
-release-package: development-image check-for-pypi-credentials development-image
+release-package: development-image check-for-pypi-credentials
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
 >@cp ~/.pypirc .
 >@docker run -u ${LOCAL_USERID} --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --config-file .pypirc --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ; echo "$$?" > status_code

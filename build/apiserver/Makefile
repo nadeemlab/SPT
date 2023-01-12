@@ -25,7 +25,7 @@ test: teardown-testing
 setup-testing:
 >@${MESSAGE} start "apiserver (setup testing environment)"
 >@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness.sh \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-apiserver-testing \
      spt-db-testing \
      spt-countsserver-testing ; \

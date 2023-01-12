@@ -10,9 +10,9 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-Dockerfile: ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base Dockerfile.append
+Dockerfile: ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base Dockerfile.append
 >@${MESSAGE} start "Building countsserver Dockerfile"
->@cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
+>@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
 >@${MESSAGE} end "Built." "Not built."
 >@rm -f status_code
 
@@ -25,7 +25,7 @@ test: teardown-testing
 setup-testing:
 >@${MESSAGE} start "countsserver (setup testing environment)"
 >@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness.sh \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-countsserver-testing \
      spt-db-testing ; \
     echo "$$?" > status_code

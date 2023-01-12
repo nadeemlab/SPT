@@ -8,7 +8,7 @@ export
 # Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
 PYTHON := python
-BUILD_SCRIPTS_LOCATION := ${PWD}/build_scripts
+BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
 SOURCE_LOCATION := ${PACKAGE_NAME}
 BUILD_LOCATION := build
 TEST_LOCATION := test
@@ -16,7 +16,7 @@ TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
-MESSAGE := bash ${BUILD_SCRIPTS_LOCATION}/verbose_command_wrapper.sh
+MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
 
 help:
 >@${MESSAGE} print ' The main targets are:'
@@ -56,6 +56,9 @@ DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 
+# Define PHONY targets
+.PHONY: help release-package check-for-pypi-credentials development-image print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} $(foreach image_num, $(shell ls -d ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset* | sed 's/^.*import_test_dataset//g' | sed 's/.sh//g'), data-loaded-image-${image_num}) clean clean-files docker-compositions-rm clean-network-environment
+
 # Submodule-specific variables
 DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
 DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
@@ -65,7 +68,7 @@ DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
 PACKAGE_SOURCE_FILES := pyproject.toml $(shell find ${SOURCE_LOCATION} -type f | grep -v 'schema.sql$$' | grep -v '/Dockerfile$$' | grep -v '/Dockerfile.*$$' | grep -v '/Makefile$$' | grep -v '/unit_tests/' | grep -v '/module_tests/' | grep -v '/status_code$$' | grep -v 'requirements.txt$$' | grep -v '/current_time.txt$$' | grep -v '/initiation_message_size.txt$$' | grep -v '/.nextflow.log$$' | grep -v '/.nextflow/' | grep -v '/main.nf$$' | grep -v '/configure.sh$$' | grep -v '/nextflow.config$$' | grep -v '/run.sh$$' | grep -v '/work/' | grep -v '/results/' | grep -v '/docker.built$$' | grep -v '/compose.yaml$$')
 
 # Redefine what shell to pass to submodule makefiles
-export SHELL := ${BUILD_SCRIPTS_LOCATION}/status_messages_only_shell.sh
+export SHELL := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/status_messages_only_shell.sh
 
 # Adjust verbosity based on how make was called
 ifdef VERBOSE
@@ -83,15 +86,15 @@ release-package: development-image check-for-pypi-credentials development-image
 
 check-for-pypi-credentials:
 >@${MESSAGE} start "Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py pypi ; echo "$$?" > status_code
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py pypi ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
-development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile
+development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile
 >@${MESSAGE} start "Building development image"
->@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
+>@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker build \
      --rm \
-     -f ${BUILD_SCRIPTS_LOCATION}/development.Dockerfile \
+     -f ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
      . ; echo "$$?" > status_code ; \
@@ -136,7 +139,7 @@ ${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
 
 check-for-docker-credentials:
 >@${MESSAGE} start "Checking for Docker credentials in ~/.docker/config.json"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION}/check_for_credentials.py docker ; status="$$?"; echo "$$status" > status_code; if [[ "$$status" == "0" ]]; then touch check-for-docker-credentials; fi;
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py docker ; status="$$?"; echo "$$status" > status_code; if [[ "$$status" == "0" ]]; then touch check-for-docker-credentials; fi;
 >@${MESSAGE} end "Found." "Not found."
 
 build-docker-images: ${DOCKER_BUILD_TARGETS}
@@ -162,9 +165,9 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
-    cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . ; \
-    if [ ! -f $$submodule_directory/requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION}/create_requirements.sh > $$submodule_directory/requirements.txt ; fi; \
-    if [ ! -f $$submodule_directory/specific_requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION}/create_requirements.sh $$submodule_name > $$submodule_directory/specific_requirements.txt ; fi; \
+    cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
+    if [ ! -f $$submodule_directory/requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_requirements.sh > $$submodule_directory/requirements.txt ; fi; \
+    if [ ! -f $$submodule_directory/specific_requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_requirements.sh $$submodule_name > $$submodule_directory/specific_requirements.txt ; fi; \
     docker build \
      -f ./Dockerfile \
      -t $$repository_name:$$submodule_version \
@@ -186,7 +189,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
 # Assemble the Dockerfile for the submodule using either
 #   1. Dockerfile.base and [submodule]/Dockerfile.append, or
 #   2. [submodule]/Dockerfile.template 
-${DOCKERFILE_TARGETS}: development-image ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ${DOCKERFILE_SOURCES}
+${DOCKERFILE_TARGETS}: development-image ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ${DOCKERFILE_SOURCES}
 >@submodule_directory=$$(echo $@ | sed 's/Dockerfile//g' ) ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory Dockerfile
 
@@ -198,7 +201,7 @@ check-docker-daemon-running:
     if [ $$status_code -gt 0 ] ; \
     then \
         ${MESSAGE} start "Attempting to start Docker daemon" ; \
-        bash ${BUILD_SCRIPTS_LOCATION}/start_docker_daemon.sh ; echo "$$?" > status_code ; \
+        bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/start_docker_daemon.sh ; echo "$$?" > status_code ; \
         status_code=$$(cat status_code); \
         if [ $$status_code -eq 1 ] ; \
         then \
@@ -223,12 +226,12 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1a
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-data-loaded-image-%: ${BUILD_LOCATION}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION}/import_test_dataset%.sh
+data-loaded-image-%: ${BUILD_LOCATION}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
->@cp ${BUILD_SCRIPTS_LOCATION}/.dockerignore . 
+>@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
-    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
     pipeline_cmd="cd /mount_sources/; bash build_scripts/import_test_dataset$*.sh ; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
     docker run \
      --rm \

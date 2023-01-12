@@ -11,7 +11,7 @@ TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 Dockerfile:
 >@${MESSAGE} start "Building workflow Dockerfile"
->@cat ${BUILD_SCRIPTS_LOCATION}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
+>@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
 >@${MESSAGE} end "Built." "Not built."
 >@rm -f status_code
 
@@ -24,7 +24,7 @@ test: teardown-testing
 setup-testing:
 >@${MESSAGE} start "workflow (setup testing environment)"
 >@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness.sh \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-db-testing; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup." "Not setup."

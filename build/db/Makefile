@@ -43,7 +43,7 @@ test: teardown-testing
 setup-testing:
 >@${MESSAGE} start "db (setup testing environment)"
 >@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION}/poll_container_readiness.sh \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-db-testing ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup." "Not setup."

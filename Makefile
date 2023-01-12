@@ -57,7 +57,7 @@ MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 
 # Define PHONY targets
-.PHONY: help release-package check-for-pypi-credentials development-image print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} $(foreach image_num, $(shell ls -d ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset* | sed 's/^.*import_test_dataset//g' | sed 's/.sh//g'), data-loaded-image-${image_num}) clean clean-files docker-compositions-rm clean-network-environment
+.PHONY: help release-package check-for-pypi-credentials development-image print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
 
 # Submodule-specific variables
 DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db

@@ -8,9 +8,9 @@ from fastapi import Response
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-version = '0.3.0'
+VERSION = '0.3.0'
 
-description = """
+DESCRIPTION = """
 Get information about single cell phenotyping studies, including:
 
 * aggregated counts by outcome/case
@@ -21,8 +21,8 @@ Get information about single cell phenotyping studies, including:
 
 app = FastAPI(
     title="Single cell studies stats",
-    description=description,
-    version=version,
+    description=DESCRIPTION,
+    version=VERSION,
     contact={
         "name": "James Mathews",
         "url": "https://nadeemlab.org",
@@ -47,7 +47,7 @@ def get_study_components(study_name):
             'analysis': 'data_analysis_study',
         }
         for key, tablename in substudy_tables.items():
-            cursor.execute('SELECT name FROM %s;' % tablename)
+            cursor.execute(f'SELECT name FROM {tablename};')
             names = [row[0] for row in cursor.fetchall()]
             for substudy in substudies:
                 if substudy in names:
@@ -178,10 +178,10 @@ def get_study_summary(
         if len(row) == 0:
             data_release = None
         else:
-            repository, URL, release_date = row
+            repository, url, release_date = row
             data_release = {
                 'Repository': repository,
-                'URL': URL,
+                'URL': url,
                 'Date': release_date,
             }
 
@@ -195,7 +195,7 @@ def get_study_summary(
         if len(row) == 0:
             publication_info = None
         else:
-            publication_title, URL, publication_date = row
+            publication_title, url, publication_date = row
             first_author = get_single_result_or_else(
                 cursor,
                 query='''
@@ -209,7 +209,7 @@ def get_study_summary(
             )
             publication_info = {
                 'Title': publication_title,
-                'URL': URL,
+                'URL': url,
                 'First author': first_author,
                 'Date': publication_date,
             }
@@ -346,13 +346,13 @@ async def get_phenotype_summary(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            '''
-            SELECT %s
+            f'''
+            SELECT {', '.join(columns)}
             FROM fraction_stats
             WHERE measurement_study=%s
                 AND data_analysis_study in (%s, \'none\')
             ;
-            ''' % (', '.join(columns), '%s', '%s'),
+            ''',
             (specimen_measurement_study, data_analysis_study),
         )
         rows = cursor.fetchall()
@@ -549,7 +549,7 @@ async def get_anonymous_phenotype_counts(
     ;
     '''
 
-    counts_query = '''
+    counts_query = f'''
     CREATE OR REPLACE TEMPORARY VIEW temporary_cell_phenotype_criterion AS
     SELECT
         cs.identifier as marker,
@@ -585,7 +585,7 @@ async def get_anonymous_phenotype_counts(
     FROM
         temporary_cells_count_criteria_satisfied tcs
     WHERE
-        tcs.number_criteria_satisfied = %s
+        tcs.number_criteria_satisfied = {str(number_criteria)}
     ;
 
     CREATE OR REPLACE TEMPORARY VIEW temporary_composite_marker_positive_cell_count_by_specimen AS
@@ -621,7 +621,7 @@ async def get_anonymous_phenotype_counts(
 
     SELECT * FROM temporary_marked_and_all_cells_count
     ;
-    ''' % (str(number_criteria), '%s', '%s')
+    '''
 
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
@@ -802,13 +802,13 @@ async def get_phenotype_proximity_summary(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            '''
-            SELECT %s
-            FROM %s
+            f'''
+            SELECT {', '.join(columns)}
+            FROM {tablename}
             WHERE derivation_method=%s
                 AND data_analysis_study in (%s, \'none\')
             ;
-            ''' % (', '.join(columns), tablename, '%s', '%s'),
+            ''',
             (derivation_method, data_analysis_study),
         )
         rows = cursor.fetchall()

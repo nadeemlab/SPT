@@ -3,7 +3,8 @@ import sqlite3
 import pandas as pd
 from scipy.spatial import KDTree
 
-from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import WaitingDatabaseContextManager
+from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
+    WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -91,8 +92,8 @@ class NearestDistanceCoreJob(CoreJob):
         :rtype: list
         """
         signatures_by_name = self.get_phenotype_signatures_by_name()
-        pheno_names = sorted(signatures_by_name.keys())
-        return pheno_names
+        phenotype_names = sorted(signatures_by_name.keys())
+        return phenotype_names
 
     def add_nearest_cell_data(self, table, compartment):
         compartments = self.dataset_design.get_compartments()
@@ -103,11 +104,9 @@ class NearestDistanceCoreJob(CoreJob):
         signature = self.dataset_design.get_compartmental_signature(
             table, compartment)
         if sum(signature) == 0:
-            for i in range(len(cell_indices)):
-                I = cell_indices[i]
-                distance = -1
-                table.loc[I, 'distance to nearest cell ' +
-                          compartment] = distance
+            for i, cell_index in enumerate(cell_indices):
+                table.loc[cell_index, 'distance to nearest cell ' +
+                          compartment] = -1
         else:
             compartment_cells = table[signature]
             compartment_points = [
@@ -119,17 +118,16 @@ class NearestDistanceCoreJob(CoreJob):
                 for i, row in table.iterrows()
             ]
             tree = KDTree(compartment_points)
-            distances, indices = tree.query(all_points)
-            for i in range(len(cell_indices)):
-                I = cell_indices[i]
-                compartment_i = table.loc[I, 'compartment']
+            distances, _ = tree.query(all_points)
+            for i, cell_index in enumerate(cell_indices):
+                compartment_i = table.loc[cell_index, 'compartment']
                 if compartment_i == compartment:
                     distance = 0
                 elif compartment_i not in compartments:
                     distance = -1
                 else:
                     distance = distances[i]
-                table.loc[I, 'distance to nearest cell ' +
+                table.loc[cell_index, 'distance to nearest cell ' +
                           compartment] = distance
 
     def create_cell_table(self):
@@ -140,7 +138,7 @@ class NearestDistanceCoreJob(CoreJob):
               FOV index integer).
         :rtype: pandas.DataFrame, dict
         """
-        pheno_names = self.get_phenotype_names()
+        phenotype_names = self.get_phenotype_names()
 
         cell_groups = []
         fov_lookup = {}
@@ -181,14 +179,14 @@ class NearestDistanceCoreJob(CoreJob):
 
             signatures_by_name = self.get_phenotype_signatures_by_name()
             self.timer.record_timepoint('Start creating membership column')
-            for name in pheno_names:
+            for name in phenotype_names:
                 signature = signatures_by_name[name]
                 bools = self.dataset_design.get_pandas_signature(
                     table, signature)
                 ints = [1 if value else 0 for value in bools]
                 table[name + ' membership'] = ints
             phenotype_membership_columns = [
-                name + ' membership' for name in pheno_names]
+                name + ' membership' for name in phenotype_names]
             self.timer.record_timepoint('Finished creating membership columns')
 
             self.timer.record_timepoint('Adding distance-to-nearest data')

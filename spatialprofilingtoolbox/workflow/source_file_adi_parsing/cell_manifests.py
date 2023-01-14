@@ -8,14 +8,14 @@ import pandas as pd
 
 from spatialprofilingtoolbox.workflow.common.file_io import compute_sha256
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import \
-    get_input_filename_by_identifier
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+    import get_input_filename_by_identifier
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-record_performance = True
+RECORD_PERFORMANCE = True
 
 
 class CellManifestsParser(SourceToADIParser):
@@ -37,7 +37,7 @@ class CellManifestsParser(SourceToADIParser):
         - shape file
         - expression quantification
         """
-        if record_performance:
+        if RECORD_PERFORMANCE:
             t = PerformanceTimer()
             t.record_timepoint('Initial')
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
@@ -59,16 +59,16 @@ class CellManifestsParser(SourceToADIParser):
         ).difference(missing_channel_symbols)
 
         cursor = connection.cursor()
-        if record_performance:
+        if RECORD_PERFORMANCE:
             t.record_timepoint('Cursor opened')
         histological_structure_identifier_index = self.get_next_integer_identifier(
             'histological_structure', cursor)
         shape_file_identifier_index = self.get_next_integer_identifier(
             'shape_file', cursor)
-        if record_performance:
+        if RECORD_PERFORMANCE:
             t.record_timepoint('Retrieved next integer identifiers')
             file_count = 1
-        for i, cell_manifest in cell_manifests.iterrows():
+        for _, cell_manifest in cell_manifests.iterrows():
             logger.debug(
                 'Considering contents of "%s" file "%s".',
                 halo_data_type,
@@ -103,11 +103,11 @@ class CellManifestsParser(SourceToADIParser):
                 )
                 continue
             elif count == 0:
-                if record_performance:
+                if RECORD_PERFORMANCE:
                     t.record_timepoint('Retrieved and hashed a cell manifest')
                 chunk_size = 100000
                 for start in range(0, cells.shape[0], chunk_size):
-                    if record_performance:
+                    if RECORD_PERFORMANCE:
                         t.record_timepoint('Starting a chunk')
                     batch_cells_reference = cells.iloc[start:start + chunk_size]
                     batch_cells = batch_cells_reference.reset_index(drop=True)
@@ -117,9 +117,9 @@ class CellManifestsParser(SourceToADIParser):
                         'histological_structure_identification': [],
                         'expression_quantification': [],
                     }
-                    if record_performance:
+                    if RECORD_PERFORMANCE:
                         t.record_timepoint(
-                            'Subsetted cells dataframe on chunk')
+                            'Subset cells dataframe on chunk')
 
                     if self.using_intensities:
                         intensities = {
@@ -127,7 +127,7 @@ class CellManifestsParser(SourceToADIParser):
                                 batch_cells, symbol)
                             for symbol in channel_symbols
                         }
-                        if record_performance:
+                        if RECORD_PERFORMANCE:
                             t.record_timepoint(
                                 'Retrieved intensities on chunk')
                     else:
@@ -162,14 +162,14 @@ class CellManifestsParser(SourceToADIParser):
                         symbol: batch_cells[feature_names[symbol]]
                         for symbol in channel_symbols
                     }
-                    if record_performance:
+                    if RECORD_PERFORMANCE:
                         t.record_timepoint(
                             'Retrieved discretizations on chunk')
 
                     logger.debug(
                         'Starting batch of cells that begins at index %s.', start)
                     cell_index_error_count = 0
-                    if record_performance:
+                    if RECORD_PERFORMANCE:
                         t.record_timepoint('Started per-cell iteration')
                     for j, cell in batch_cells.iterrows():
                         histological_structure_identifier = str(
@@ -178,12 +178,12 @@ class CellManifestsParser(SourceToADIParser):
                         shape_file_identifier = str(
                             shape_file_identifier_index)
                         shape_file_identifier_index += 1
-                        if record_performance:
+                        if RECORD_PERFORMANCE:
                             t.record_timepoint(
                                 'Beginning of one cell iteration')
                         shape_file_contents = self.create_shape_file(
                             cell, dataset_design)
-                        if record_performance:
+                        if RECORD_PERFORMANCE:
                             t.record_timepoint('Created shapefile contents')
                         records['histological_structure'].append((
                             histological_structure_identifier,
@@ -249,36 +249,36 @@ class CellManifestsParser(SourceToADIParser):
                             # if record_performance:
                             #     t.record_timepoint('Finished one cell iteration')
 
-                    tablenames = [
+                    table_names = [
                         'histological_structure',
                         'shape_file',
                         'histological_structure_identification',
                         'expression_quantification',
                     ]
-                    for tablename in tablenames:
-                        if record_performance:
+                    for tablename in table_names:
+                        if RECORD_PERFORMANCE:
                             t.record_timepoint('Started encoding one chunk')
                         values_file_contents = '\n'.join([
                             '\t'.join(r) for r in records[tablename]
                         ]).encode('utf-8')
-                        if record_performance:
+                        if RECORD_PERFORMANCE:
                             t.record_timepoint(
                                 'Started inserting chunk into local memory')
                         with mmap.mmap(-1, len(values_file_contents)) as mm:
                             mm.write(values_file_contents)
                             mm.seek(0)
-                            if record_performance:
+                            if RECORD_PERFORMANCE:
                                 t.record_timepoint(
                                     'Started copy from command for bulk insertion')
                             cursor.copy_from(mm, tablename)
 
-                        if record_performance:
+                        if RECORD_PERFORMANCE:
                             t.record_timepoint('Finished inserting one chunk')
             logger.info('Parsed records for %s cells from "%s".',
                         cells.shape[0], sha256_hash)
-            if record_performance:
+            if RECORD_PERFORMANCE:
                 t.record_timepoint('Completed cell manifest parsing')
-                logger.debug('Performance report %s:\n' % file_count +
+                logger.debug('Performance report %s:\n%s', file_count,
                              t.report(as_string=True, by='total time spent'))
                 file_count += 1
             connection.commit()
@@ -290,7 +290,7 @@ class CellManifestsParser(SourceToADIParser):
         query = (
             'SELECT COUNT(*) '
             'FROM histological_structure_identification '
-            'WHERE data_source = %s ;' % self.get_placeholder()
+            f'WHERE data_source = {self.get_placeholder()} ;'
         )
         cursor.execute(query, (sha256_hash,))
         count = cursor.fetchall()[0][0]

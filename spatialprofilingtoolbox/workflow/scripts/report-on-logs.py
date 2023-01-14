@@ -23,6 +23,7 @@ ansi_escape = re.compile(r'''
 
 class LogParsingError(Exception):
     def __init__(self, message):
+        super().__init__(message)
         self.message = message
 
     def __str__(self):
@@ -31,13 +32,13 @@ class LogParsingError(Exception):
 
 class LSFPreambleSkipper:
     def __init__(self, filename):
-        with open(filename, 'rt') as f:
+        with open(filename, 'rt', encoding='utf-8') as f:
             header = f.readline().rstrip('\n')
         if re.match('^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
             seek_to_stdout_capture = True
         else:
             seek_to_stdout_capture = False
-        self.f = open(filename, 'rt')
+        self.f = open(filename, 'rt', encoding='utf-8')
         if seek_to_stdout_capture:
             line = None
             # There is a failure mode; need to put a guard based on the line length for the
@@ -96,7 +97,7 @@ class LogParser:
             return target
         else:
             raise LogParsingError(
-                'Essential log or config file not found: %s' % target)
+                f'Essential log or config file not found: {target}')
 
     def remove_prefix(self, prefix, text):
         if text.startswith(prefix):
@@ -256,6 +257,7 @@ class LogParser:
             with LSFPreambleSkipper(log) as f:
                 line_count = 0
                 line = None
+                match = None
                 while line_count < lines_limit and line != '':
                     line = f.readline()
                     line_count = line_count + 1

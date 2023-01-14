@@ -22,14 +22,15 @@ class PerformanceTimer:
     def __init__(self):
         self.times = {}
         self.previous_time = None
+        self.previous_message = None
         self.message_order = {}
 
     def record_timepoint(self, message):
         now = time.perf_counter()
-        if self.previous_time != None:
+        if self.previous_time is not None:
             diff = now - self.previous_time
             transition = (message, self.previous_message)
-            if not transition in self.times:
+            if transition not in self.times:
                 self.times[transition] = []
             self.times[(message, self.previous_message)].append(diff)
         self.previous_time = now

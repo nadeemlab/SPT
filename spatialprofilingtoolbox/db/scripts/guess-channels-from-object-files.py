@@ -12,7 +12,8 @@ logger = colorized_logger('guess-channels-from-object-files')
 def parse_channels(columns):
     patterns = {
         'membership': '^(\w[\w _\d]+)[ _]Positive([ _]Classification)?$',
-        'intensity': '^(\w[\w _\d]+)(?<![ _]Nucleus)(?<![ _]Cytoplasm)(?<![ _]Membrane)[ _](Cell[ _])?Intensity$',
+        'intensity': '^(\w[\w _\d]+)(?<![ _]Nucleus)(?<![ _]Cytoplasm)'
+                     '(?<![ _]Membrane)[ _](Cell[ _])?Intensity$',
     }
     available = {kind: [] for kind in patterns}
     for column in columns:
@@ -34,7 +35,7 @@ def intersect_available(parsed_columns_list):
 
 def create_elementary_phenotypes_table(available_channels):
     records = []
-    for phenotype_string, column in available_channels['membership']:
+    for phenotype_string, _ in available_channels['membership']:
         records.append({
             'Name': phenotype_string,
             'Column header fragment prefix': phenotype_string,
@@ -70,13 +71,13 @@ if __name__ == '__main__':
     cell_files = args.cell_files
     known_channels = []
     for cell_file in cell_files:
-        with open(cell_file, 'rt') as file:
+        with open(cell_file, 'rt', encoding='utf-8') as file:
             reader = csv.reader(file)
             header = next(reader)
         logger.info('Parsing from %s', cell_file)
-        available = parse_channels(header)
-        logger.debug('Got:\n%s', json.dumps(available, indent=4))
-        known_channels.append(available)
+        channels = parse_channels(header)
+        logger.debug('Got:\n%s', json.dumps(channels, indent=4))
+        known_channels.append(channels)
     available_channels = intersect_available(known_channels)
     logger.info('In common in all files:\n%s',
                 json.dumps(available_channels, indent=4))
@@ -84,9 +85,9 @@ if __name__ == '__main__':
         logger.warning(
             'No channel intensity columns in common in the given set of cell/object files.')
     if len(available_channels['membership']) == 0:
-        message = 'No channel positivity columns in common in the given set of cell/object files.'
-        logger.error(message)
-        raise ValueError(message)
+        MESSAGE = 'No channel positivity columns in common in the given set of cell/object files.'
+        logger.error(MESSAGE)
+        raise ValueError(MESSAGE)
     elementary_phenotypes = create_elementary_phenotypes_table(
         available_channels)
     elementary_phenotypes.to_csv(args.output_file, index=False)

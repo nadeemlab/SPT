@@ -1,4 +1,6 @@
 
+from typing import Optional
+
 from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.skimmer import DataSkimmer
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -92,7 +94,7 @@ class HALOImportInitializer(Initializer):
 
     def initialize(
         self,
-        database_config_file: str = None,
+        database_config_file: Optional[str] = None,
         **kwargs,
     ):
         if database_config_file is None:

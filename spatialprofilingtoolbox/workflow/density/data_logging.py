@@ -28,11 +28,11 @@ class DensityDataLogger:
             header2[i][0]: header1[i][0] for i in range(len(header1))
         }
         for item in header2:
-            pheno = item[0]
-            readable = readable_names[pheno]
-            number = cells[cells[pheno] == 1].shape[0]
+            phenotype = item[0]
+            readable = readable_names[phenotype]
+            number = cells[cells[phenotype] == 1].shape[0]
             logger.debug('%s cells (header value: %s). Count is  %s.',
-                         readable, pheno, number)
+                         readable, phenotype, number)
 
     @staticmethod
     def log_cell_areas_one_fov(cells, fov_lookup_dict):

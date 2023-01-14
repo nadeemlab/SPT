@@ -4,7 +4,8 @@ regard to spatial information.
 """
 from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import WorkflowModules
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+    import HALOCellMetadataDesign
 
 from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.density.initializer import DensityInitializer

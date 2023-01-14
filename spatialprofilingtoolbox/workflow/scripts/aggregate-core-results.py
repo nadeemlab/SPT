@@ -43,7 +43,8 @@ if __name__ == '__main__':
     try:
         from spatialprofilingtoolbox.workflow.defaults.computational_design import \
             ComputationalDesign
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+        from \
+            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
             import HALOCellMetadataDesign
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')

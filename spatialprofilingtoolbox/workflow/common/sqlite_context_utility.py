@@ -24,6 +24,8 @@ class WaitingDatabaseContextManager:
         """
         self.uri = uri
         self.seconds = seconds
+        self.connection = None
+        self.cursor = None
 
     def __enter__(self):
         self.connection = sqlite3.connect(self.uri)

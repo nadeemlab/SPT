@@ -1,3 +1,5 @@
+from typing import Optional
+from urllib.error import URLError
 from urllib.request import urlopen
 import re
 import configparser
@@ -34,7 +36,7 @@ def check_internet_connectivity():
         test_host = 'https://duckduckgo.com'
         urlopen(test_host)
         return True
-    except:
+    except URLError:
         return False
 
 
@@ -52,8 +54,8 @@ def check_credentials_availability(configured_credentials):
         logger.info('database: %s', credentials['database'])
         logger.info('user:     %s', credentials['user'])
         if (not connectivity) and (credentials['endpoint'] in ['localhost', '127.0.0.1']):
-            message = 'Without network connection, you can only use endpoint=localhost for '
-            'backend database.'
+            message = 'Without network connection, you can only use endpoint=localhost for ' \
+                'backend database.'
             logger.error(message)
             raise ConnectionError(message)
     else:
@@ -65,7 +67,7 @@ def check_credentials_availability(configured_credentials):
 
 
 class DatabaseConnectionMaker:
-    def __init__(self, database_config_file: str = None):
+    def __init__(self, database_config_file: Optional[str] = None):
         credentials = retrieve_credentials(database_config_file)
         check_credentials_availability(credentials)
         self.connection = None
@@ -76,10 +78,10 @@ class DatabaseConnectionMaker:
                 user=credentials['user'],
                 password=credentials['password'],
             )
-        except psycopg2.Error as e:
+        except psycopg2.Error as excepted:
             logger.error('Failed to connect to database: %s %s',
                          credentials['endpoint'], credentials['database'])
-            raise e
+            raise excepted
 
     def get_connection(self):
         return self.connection

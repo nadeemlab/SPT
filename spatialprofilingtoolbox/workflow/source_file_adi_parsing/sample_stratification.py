@@ -37,7 +37,7 @@ class SampleStratificationCreator:
              subject_diagnosed_result) = key
             if key == ('', '', ''):
                 continue
-            if not key in identifiers:
+            if key not in identifiers:
                 strata_count = strata_count + 1
                 identifiers[key] = strata_count
             record = (
@@ -82,14 +82,15 @@ class SampleStratificationCreator:
             later_events = [event for index, event in enumerate(
                 sequence) if index > extraction_index]
 
-            if len(earlier_events) == 0:
-                local_temporal_position_indicator = 'Before intervention'
-
-            if len(later_events) == 0:
-                local_temporal_position_indicator = 'After intervention'
-
             if len(earlier_events) > 0 and len(later_events) > 0:
                 local_temporal_position_indicator = 'Between interventions'
+            elif len(earlier_events) == 0:
+                local_temporal_position_indicator = 'Before intervention'
+            elif len(later_events) == 0:
+                local_temporal_position_indicator = 'After intervention'
+            else:
+                raise ValueError(
+                    'Not enough events to calculate interventional position.')
 
             return [local_temporal_position_indicator]
         else:
@@ -122,15 +123,15 @@ class SampleStratificationCreator:
         def iso_valuation(date):
             parts = date.split('-')
             if len(parts) < 2:
-                raise Exception(
+                raise ValueError(
                     'Only one hyphen-delimited part, not an ISO 8601 date.')
             numeric_parts = []
-            for i, part in enumerate(parts):
+            for _, part in enumerate(parts):
                 stripped = part.lstrip('0')
                 if stripped.isnumeric():
                     numeric_parts.append(int(stripped))
                 else:
-                    raise Exception('Part %s of date is not numeric.' % part)
+                    raise ValueError(f'Part {part} of date is not numeric.')
             return tuple(numeric_parts)
 
         def numeric_valuation(date):
@@ -141,7 +142,7 @@ class SampleStratificationCreator:
             if match:
                 return match.group()
             else:
-                raise Exception('Not marked with an explicit timepoint.')
+                raise ValueError('Not marked with an explicit timepoint.')
 
         for valuation in [iso_valuation, numeric_valuation, timepoint_extractor]:
             if all([SampleStratificationCreator.is_convertible(date, valuation) for date in dates]):
@@ -152,7 +153,7 @@ class SampleStratificationCreator:
     @staticmethod
     def is_convertible(string, valuation):
         try:
-            conversion = valuation(string)
+            valuation(string)
             return True
         except:
             return False

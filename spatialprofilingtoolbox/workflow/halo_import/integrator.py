@@ -14,4 +14,4 @@ class HALOImportIntegrator:
 
     def calculate(self, filename):
         logger.info('Doing integration.')
-        open(filename, 'wt').write('')
+        open(filename, 'wt', encoding='utf-8').write('')

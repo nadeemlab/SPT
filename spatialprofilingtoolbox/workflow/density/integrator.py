@@ -5,13 +5,15 @@ between outcome groups.
 """
 import re
 import itertools
+from typing import Optional
 
 import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 
-from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import WaitingDatabaseContextManager
+from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
+    WaitingDatabaseContextManager
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.workflow.density.data_logging import DensityDataLogger
 
@@ -24,8 +26,7 @@ class DensityAnalysisIntegrator:
     """
 
     def __init__(self,
-                 computational_design=None,
-                 **kwargs
+                 computational_design=None
                  ):
         """
         :param computational_design: Design object providing metadata specific to the
@@ -45,7 +46,7 @@ class DensityAnalysisIntegrator:
             self.export_results(density_tests, filename)
             logger.info('Done exporting stats.')
         else:
-            with open(filename, 'wt') as file:
+            with open(filename, 'wt', encoding='utf-8') as file:
                 file.write('')
             logger.warning('Test results not generated.')
 
@@ -376,12 +377,14 @@ class DensityAnalysisIntegrator:
                 nan_policy='omit',
                 equal_var=False,
             )
-        if i['test'] == 'Kruskal-Wallis':
+        elif i['test'] == 'Kruskal-Wallis':
             _, p_value = test_function(
                 i['values1'],
                 i['values2'],
                 nan_policy='omit',
             )
+        else:
+            raise RuntimeError(f'{i["test"]} test not recognized.')
         difference = tested_function(
             i['values2']) - tested_function(i['values1'])
         if tested_function(i['values1']) != 0:
@@ -403,7 +406,7 @@ class DensityAnalysisIntegrator:
         table,
         outcome_pair,
         phenotype_name,
-        test: str = None,
+        test: Optional[str] = None,
     ):
         """
         :param compartment: The compartment/region name in which to consider cells.
@@ -487,7 +490,7 @@ class DensityAnalysisIntegrator:
             See :py:meth:`get_test_result_row`.
         :type density_tests: pandas.DataFrame
         """
-        tests_str = density_tests.to_csv(filename, index=False)
+        density_tests.to_csv(filename, index=False)
 
     def get_dataframe_from_db(self, table_name):
         """
@@ -515,8 +518,7 @@ class DensityAnalysisIntegrator:
         uri = self.computational_design.get_database_uri()
         with WaitingDatabaseContextManager(uri) as manager:
             columns_str = ', '.join(columns)
-            rows = manager.execute('SELECT %s FROM %s' %
-                                   (columns_str, table_name))
+            rows = manager.execute(f'SELECT {columns_str} FROM {table_name}')
 
         logger.debug('self.computational_design.use_intensities: %s',
                      self.computational_design.use_intensities)

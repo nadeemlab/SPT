@@ -8,9 +8,6 @@ logger = colorized_logger(__name__)
 
 
 class InterventionsParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(InterventionsParser, self).__init__(**kwargs)
-
     def parse(self, connection, fields, interventions_file):
         cursor = connection.cursor()
 
@@ -18,7 +15,7 @@ class InterventionsParser(SourceToADIParser):
         interventions = pd.read_csv(
             interventions_file, sep='\t', na_filter=False, dtype=str)
         logger.info('Saving %s intervention records.', interventions.shape[0])
-        for i, row in interventions.iterrows():
+        for _, row in interventions.iterrows():
             intervention_record = (
                 row['Subject of intervention'],
                 row['Intervention'],

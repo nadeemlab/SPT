@@ -1,5 +1,6 @@
 import importlib.resources
 import re
+from typing import Optional
 
 import pandas as pd
 
@@ -11,7 +12,7 @@ logger = colorized_logger(__name__)
 
 
 class SchemaInfuser(DatabaseConnectionMaker):
-    def __init__(self, database_config_file: str = None):
+    def __init__(self, database_config_file: Optional[str] = None):
         super(SchemaInfuser, self).__init__(
             database_config_file=database_config_file)
 
@@ -40,20 +41,19 @@ class SchemaInfuser(DatabaseConnectionMaker):
 
     def get_schema_documentation_tables(self):
         return [
-            'reference_%s' % tablename
+            f'reference_{tablename}'
             for tablename in ['tables', 'fields', 'entities', 'properties', 'values']
         ]
 
     def create_drop_tables(self):
         with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)
-        tablenames = sorted(
+        table_names = sorted(
             list(set([self.normalize(t) for t in fields['Table']])))
-        tablenames = tablenames + self.get_schema_documentation_tables() + \
+        table_names = table_names + self.get_schema_documentation_tables() + \
             ['sample_strata']
         return '\n'.join([
-            'DROP TABLE IF EXISTS %s CASCADE ; ' % t
-            for t in tablenames
+            f'DROP TABLE IF EXISTS {t} CASCADE ; ' for t in table_names
         ])
 
     def refresh_views(self):

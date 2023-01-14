@@ -2,16 +2,14 @@
 import pandas as pd
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.value_extraction import get_unique_value
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.value_extraction import \
+    get_unique_value
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
 class SamplesParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(SamplesParser, self).__init__(**kwargs)
-
     def parse(self, connection, fields, samples_file, study_name):
         """
         Retrieve the samples information and parse records for:
@@ -35,7 +33,7 @@ class SamplesParser(SourceToADIParser):
              preservation_method, storage_location, '', ''),
         )
 
-        for i, sample in samples.iterrows():
+        for _, sample in samples.iterrows():
             record = self.create_specimen_collection_process_record(
                 sample,
                 collection_study,
@@ -46,7 +44,7 @@ class SamplesParser(SourceToADIParser):
                 record,
             )
 
-        for i, sample in samples.iterrows():
+        for _, sample in samples.iterrows():
             if sample['Assay'] == '' or sample['Assessment'] == '':
                 continue
             record = self.create_histology_assessment_process_record(sample)

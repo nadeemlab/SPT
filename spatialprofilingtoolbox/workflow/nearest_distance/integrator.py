@@ -9,8 +9,7 @@ class NearestDistanceAnalysisIntegrator:
     """
 
     def __init__(self,
-                 computational_design=None,
-                 **kwargs
+                 computational_design=None
                  ):
         """
         :param computational_design: Design object providing metadata specific to the
@@ -23,5 +22,5 @@ class NearestDistanceAnalysisIntegrator:
         Performs statistical comparison tests and writes results.
         """
         logger.warning('Stats not implemented.')
-        with open(filename, 'wt') as file:
+        with open(filename, 'wt', encoding='utf-8') as file:
             file.write('')

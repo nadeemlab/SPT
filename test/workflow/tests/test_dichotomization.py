@@ -8,7 +8,7 @@ from spatialprofilingtoolbox.workflow.common.dichotomization import Dichotomizer
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
     import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
-    import elementary_phenotypes_file_identifier
+    import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
     import get_input_filename_by_identifier
 
@@ -22,7 +22,7 @@ def test_thresholding():
         elementary_phenotypes_file=join(
             input_files_path,
             get_input_filename_by_identifier(
-                elementary_phenotypes_file_identifier,
+                ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER,
                 file_manifest_filename=file_manifest_file,
             ),
         ),

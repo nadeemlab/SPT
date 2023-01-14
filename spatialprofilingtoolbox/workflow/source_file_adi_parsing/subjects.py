@@ -8,9 +8,6 @@ logger = colorized_logger(__name__)
 
 
 class SubjectsParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(SubjectsParser, self).__init__(**kwargs)
-
     def parse(self, connection, fields, subjects_file):
         """
         Retrieve SUBJECT data in the same way that the main workflows do, and parse
@@ -27,7 +24,7 @@ class SubjectsParser(SourceToADIParser):
         subjects = pd.read_csv(subjects_file, sep='\t',
                                na_filter=False, dtype=str)
         logger.info('Saving %s subject records.', subjects.shape[0])
-        for i, row in subjects.iterrows():
+        for _, row in subjects.iterrows():
             cursor.execute(
                 self.generate_basic_insert_query('subject', fields),
                 create_subject_record(row['Subject ID'], row['Sex']),

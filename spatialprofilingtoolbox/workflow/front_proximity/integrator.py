@@ -6,8 +6,7 @@ logger = colorized_logger(__name__)
 
 class FrontProximityAnalysisIntegrator:
     def __init__(self,
-                 computational_design=None,
-                 **kwargs
+                 computational_design=None
                  ):
         """
         Args:

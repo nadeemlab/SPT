@@ -3,7 +3,8 @@ import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.outcomes_puller import OutcomesPuller
-from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import StructureCentroidsPuller
+from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
+    StructureCentroidsPuller
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -59,7 +60,7 @@ class FeatureMatrixExtractor:
     @staticmethod
     def retrieve_derivative_outcomes_from_database(database_config_file):
         logger.info('Retrieving outcomes from database.')
-        with OutcomesPuller(database_config_file='../db/.spt_db.config.container') as puller:
+        with OutcomesPuller(database_config_file=database_config_file) as puller:
             puller.pull()
             outcomes = puller.get_outcomes()
         logger.info('Done retrieving outcomes.')
@@ -67,8 +68,8 @@ class FeatureMatrixExtractor:
 
     @staticmethod
     def retrieve_study_component_lookup(database_config_file):
-        with DatabaseConnectionMaker(database_config_file=database_config_file) as m:
-            connection = m.get_connection()
+        with DatabaseConnectionMaker(database_config_file=database_config_file) as maker:
+            connection = maker.get_connection()
             cursor = connection.cursor()
             cursor.execute('SELECT * FROM study_component ; ')
             rows = cursor.fetchall()
@@ -101,10 +102,10 @@ class FeatureMatrixExtractor:
                 dataframe = pd.DataFrame(
                     rows,
                     columns=['pixel x', 'pixel y'] +
-                    ['F%s' % str(i) for i in range(number_channels)])
+                    [f'F{i}' for i in range(number_channels)])
                 matrices[study_name][specimen] = {
                     'dataframe': dataframe,
-                    'filename': '%s.%s.tsv' % (str(k), str(j)),
+                    'filename': f'{k}.{j}.tsv',
                 }
         logger.info('Done creating feature matrices.')
         return matrices
@@ -132,7 +133,7 @@ class FeatureMatrixExtractor:
                    target in study['target by symbol'].items()}
         logger.info('Done aggregating channel information.')
         return {
-            'F%s' % i: symbols[targets[i]]
+            f'F{i}': symbols[targets[i]]
             for i in sorted([int(index) for index in targets.keys()])
         }
 
@@ -149,9 +150,9 @@ class FeatureMatrixExtractor:
             for substudy, value in args[i].items():
                 merged[study_component_lookup[substudy]] = {}
 
-        for i in range(len(new_keys)):
+        for i, key in enumerate(new_keys):
             for substudy, value in args[i].items():
-                merged[study_component_lookup[substudy]][new_keys[i]] = value
+                merged[study_component_lookup[substudy]][key] = value
 
         logger.info('Done merging into a single dictionary bundle.')
         return merged

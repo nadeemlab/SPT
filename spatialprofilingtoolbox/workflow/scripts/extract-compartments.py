@@ -25,9 +25,10 @@ if __name__ == '__main__':
     try:
         from spatialprofilingtoolbox.workflow.common.extract_compartments import \
             extract_compartments
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+        from \
+            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
             import HALOCellMetadataDesign
-        compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
+        COMPARTMENT_COLUMN_NAME = HALOCellMetadataDesign.get_compartment_column_name()
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
@@ -35,5 +36,5 @@ if __name__ == '__main__':
     compartments_list_file = args.compartments_list_file
 
     compartments = extract_compartments(cell_manifests)
-    with open(compartments_list_file, 'wt') as file:
+    with open(compartments_list_file, 'wt', encoding='utf-8') as file:
         file.write('\n'.join(compartments))

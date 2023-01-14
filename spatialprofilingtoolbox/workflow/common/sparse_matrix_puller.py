@@ -120,8 +120,8 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         specimen = sparse_entries[0][3]
         buffer = []
         cell_count = 1
-        for i in range(len(sparse_entries)):
-            buffer.append(sparse_entries[i])
+        for i, entry in enumerate(sparse_entries):
+            buffer.append(entry)
             if (i != last_index) and (specimen == sparse_entries[i + 1][3]):
                 if sparse_entries[i][0] != sparse_entries[i + 1][0]:
                     cell_count = cell_count + 1
@@ -142,8 +142,8 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
 
     def get_target_index_lookup(self, sparse_entries):
         targets = set([])
-        for i in range(len(sparse_entries)):
-            targets.add(sparse_entries[i][1])
+        for i, entry in enumerate(sparse_entries):
+            targets.add(entry[1])
         targets = sorted(list(targets))
         lookup = {
             target: i
@@ -166,8 +166,8 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             rows = cursor.fetchall()
         if len(rows) != len(set([row[1] for row in rows])):
             logger.error(
-                'The symbols are not unique identifiers of the targets. The symbols are: %s' % [
-                    row[1] for row in rows])
+                'The symbols are not unique identifiers of the targets. The symbols are: %s',
+                [row[1] for row in rows])
         target_by_symbol = {
             row[1]: row[0]
             for row in rows
@@ -177,10 +177,10 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
 
     def fill_data_array(self, data_array, entries, target_index_lookup):
         structure_index = 0
-        for i in range(len(entries)):
+        for i, entry in enumerate(entries):
             if i > 0:
                 if entries[i][0] != entries[i-1][0]:
                     structure_index = structure_index + 1
-            if entries[i][2] == 1:
+            if entry[2] == 1:
                 data_array[structure_index] = data_array[structure_index] + \
-                    (1 << target_index_lookup[entries[i][1]])
+                    (1 << target_index_lookup[entry[1]])

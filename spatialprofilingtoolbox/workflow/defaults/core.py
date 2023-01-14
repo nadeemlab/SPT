@@ -1,5 +1,7 @@
 from os.path import getsize
 import re
+from abc import ABC, abstractmethod
+from typing import Optional
 
 import pandas as pd
 
@@ -11,15 +13,15 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class CoreJob:
+class CoreJob(ABC):
     def __init__(
         self,
         dataset_design=None,
         computational_design=None,
-        input_file_identifier: str = None,
-        input_filename: str = None,
-        sample_identifier: str = None,
-        outcome: str = None,
+        input_file_identifier: Optional[str] = None,
+        input_filename: Optional[str] = None,
+        sample_identifier: Optional[str] = None,
+        outcome: Optional[str] = None,
         **kwargs
     ):
         """
@@ -37,19 +39,19 @@ class CoreJob:
         self.outcome = outcome
         self.timer = PerformanceTimer()
 
+    @abstractmethod
     def initialize_metrics_database(self):
         """
         Initialize the local sqlite database for intermediate metrics. The URI is
         provided by computational_design.get_database_uri() .
         """
-        pass
 
+    @abstractmethod
     def _calculate(self):
         """
         Abstract method, the implementation of which is the core/primary computation to
         be performed by this job.
         """
-        pass
 
     def calculate(self):
         """

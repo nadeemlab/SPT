@@ -26,7 +26,6 @@ if __name__ == '__main__':
         from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
         from spatialprofilingtoolbox.countsserver.compressed_matrix_writer \
             import CompressedMatrixWriter
-        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

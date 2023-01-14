@@ -30,12 +30,13 @@ specimen and channel name information in:  features.json
 
     if args.database_config_file:
         database_config_file = abspath(expanduser(args.database_config_file))
-    if not exists(database_config_file):
-        raise FileNotFoundError(
-            'Need to supply valid database config filename: %s', database_config_file
-        )
+        if not exists(database_config_file):
+            raise FileNotFoundError(
+                f'Need to supply valid database config filename: {database_config_file}'
+            )
 
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
     try:
         from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
     except ModuleNotFoundError as e:
@@ -52,5 +53,5 @@ specimen and channel name information in:  features.json
         filename = study['outcomes']['filename']
         outcomes.to_csv(filename, sep='\t', index=False)
     FeatureMatrixExtractor.redact_dataframes(bundle)
-    with open('features.json', 'wt') as file:
+    with open('features.json', 'wt', encoding='utf-8') as file:
         file.write(json.dumps(bundle, indent=2))

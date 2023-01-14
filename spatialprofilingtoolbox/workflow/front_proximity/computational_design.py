@@ -44,7 +44,7 @@ class FrontProximityDesign(ComputationalDesign):
         elementary_signatures = [
             {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()]
         complex_signatures = []
-        for i, row in self.complex_phenotypes.iterrows():
+        for _, row in self.complex_phenotypes.iterrows():
             positive_markers = sorted(
                 [m for m in row['Positive markers'].split(';') if m != ''])
             negative_markers = sorted(

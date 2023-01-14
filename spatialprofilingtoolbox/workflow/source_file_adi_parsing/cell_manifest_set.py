@@ -3,7 +3,9 @@ import re
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from \
+    spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+    import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.file_io import compute_sha256
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -12,9 +14,6 @@ logger = colorized_logger(__name__)
 
 
 class CellManifestSetParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(CellManifestSetParser, self).__init__(**kwargs)
-
     def parse(self, connection, fields, file_manifest_file, study_name):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source
@@ -63,7 +62,7 @@ class CellManifestSetParser(SourceToADIParser):
             (measurement_study, 'Multiplexed imaging', '', 'HALO', '', ''),
         )
 
-        for i, cell_manifest in cell_manifests.iterrows():
+        for _, cell_manifest in cell_manifests.iterrows():
             logger.debug('Considering "%s" file "%s" .',
                          halo_data_type, cell_manifest['File ID'])
             sample_id = cell_manifest['Sample ID']

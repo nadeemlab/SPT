@@ -4,6 +4,7 @@ The integration phase of the proximity workflow. Performs statistical tests.
 import sqlite3
 import itertools
 import re
+from typing import Optional
 
 import pandas as pd
 import numpy as np
@@ -12,8 +13,10 @@ from scipy.stats import kruskal
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.value_extraction import get_unique_value
-from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import PhenotypeProximityDesign
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.value_extraction import \
+    get_unique_value
+from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import \
+    PhenotypeProximityDesign
 
 logger = colorized_logger(__name__)
 
@@ -24,9 +27,9 @@ class PhenotypeProximityAnalysisIntegrator:
     """
 
     def __init__(self,
-                 computational_design: PhenotypeProximityDesign = None,
-                 database_config_file: str = None,
-                 file_manifest_file: str = None,
+                 computational_design: Optional[PhenotypeProximityDesign] = None,
+                 database_config_file: Optional[str] = None,
+                 file_manifest_file: Optional[str] = None,
                  **kwargs
                  ):
         """
@@ -52,7 +55,7 @@ class PhenotypeProximityAnalysisIntegrator:
         if cell_proximity_tests is not None:
             self.export_results(cell_proximity_tests, filename)
         else:
-            with open(filename, 'wt') as file:
+            with open(filename, 'wt', encoding='utf-8') as file:
                 file.write('')
             logger.warning(
                 'No stats to export for phenotype proximity workflow.')
@@ -71,7 +74,7 @@ class PhenotypeProximityAnalysisIntegrator:
             derivation_method=self.describe_feature_derivation_method(),
             specifier_number=3,
         ) as feature_uploader:
-            for i, row in feature_table.iterrows():
+            for _, row in feature_table.iterrows():
                 specifiers = (
                     row['source phenotype'], row['target phenotype'],
                     row['distance limit in pixels'])
@@ -89,7 +92,7 @@ class PhenotypeProximityAnalysisIntegrator:
                 return feature_table[feature_table['compartment'] == 'any']
             else:
                 logger.warning(
-                    'Can not suppress compartment column in feature table; no "all" value among: %s',
+                    'Can\'t suppress compartment column in feature table; no "all" value among: %s',
                     compartments)
         else:
             return feature_table
@@ -233,7 +236,7 @@ class PhenotypeProximityAnalysisIntegrator:
         uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         table_unaggregated = pd.read_sql_query(
-            'SELECT * FROM %s' % self.computational_design.get_cell_pair_counts_table_name(),
+            f'SELECT * FROM {self.computational_design.get_cell_pair_counts_table_name()}',
             connection)
         connection.close()
         table = self.do_aggregation_over_different_files(table_unaggregated)

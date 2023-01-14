@@ -1,4 +1,6 @@
 
+from typing import Optional
+
 import pandas as pd
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -16,7 +18,7 @@ class ComputationalDesign:
                  dataset_design=None,
                  metrics_database_filename: str = 'metrics_default.db',
                  dichotomize: bool = False,
-                 composite_phenotypes_file: str = None,
+                 composite_phenotypes_file: Optional[str] = None,
                  **kwargs,
                  ):
         """

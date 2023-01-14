@@ -15,7 +15,7 @@ class CompressedMatrixWriter:
         self.report_subsample_for_inspection(data_arrays)
 
     def write_data_arrays(self, data_arrays):
-        study_names, study_indices = self.get_study_names_and_indices(
+        _, study_indices = self.get_study_names_and_indices(
             data_arrays)
         for study_name, study in data_arrays.studies.items():
             study_index = study_indices[study_name]
@@ -33,7 +33,7 @@ class CompressedMatrixWriter:
 
     def write_index(self, data_arrays):
         index = []
-        study_names, study_indices = self.get_study_names_and_indices(
+        _, study_indices = self.get_study_names_and_indices(
             data_arrays)
         for study_name in sorted(list(data_arrays.studies.keys())):
             study = data_arrays.studies[study_name]
@@ -43,7 +43,7 @@ class CompressedMatrixWriter:
             study_index = study_indices[study_name]
             specimen, specimen_indices = self.get_specimens_and_indices(
                 study_name, data_arrays)
-            for specimen, data_array in study['data arrays by specimen'].items():
+            for specimen in study['data arrays by specimen']:
                 specimen_index = specimen_indices[specimen]
                 filename = '.'.join([
                     self.get_data_array_filename_base(),
@@ -58,7 +58,7 @@ class CompressedMatrixWriter:
             index_item['target index lookup'] = study['target index lookup']
             index_item['target by symbol'] = study['target by symbol']
             index.append(index_item)
-        with open(expressions_index_filename, 'wt') as index_file:
+        with open(expressions_index_filename, 'wt', encoding='utf-8') as index_file:
             index_file.write(json.dumps({'': index}, indent=4))
         logger.debug('Wrote expression index file %s .',
                      expressions_index_filename)
@@ -89,6 +89,6 @@ class CompressedMatrixWriter:
         study_name = list(data_arrays.studies.keys())[0]
         data_arrays = data_arrays.studies[study_name]['data arrays by specimen']
         data_array = list(data_arrays.values())[0]
-        for i in range(size):
+        for _ in range(size):
             value = data_array[random.choice(range(len(data_array)))]
             print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))

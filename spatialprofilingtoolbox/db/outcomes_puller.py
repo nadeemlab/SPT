@@ -42,7 +42,7 @@ class OutcomesPuller(DatabaseConnectionMaker):
                 merged = pd.concat([dfs[outcome]
                                    for outcome in sorted(list(dfs.keys()))])
                 outcomes[study_name]['dataframe'] = merged
-                outcomes[study_name]['filename'] = 'outcomes.%s.tsv' % study_index
+                outcomes[study_name]['filename'] = f'outcomes.{study_index}.tsv'
         return outcomes
 
     def get_study_names(self):

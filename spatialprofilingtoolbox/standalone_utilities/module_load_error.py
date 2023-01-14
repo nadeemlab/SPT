@@ -9,7 +9,7 @@ class SuggestExtrasException:
             '\u001b[33m',
             'Got a module not found error.',
             'Did you install the required extras with:\u001b[0m\u001b[32m',
-            '    pip install "spatialprofilingtoolbox[%s]"' % extras_section,
+            f'    pip install "spatialprofilingtoolbox[{extras_section}]"',
             '\u001b[33m?',
             '\u001b[0m',
         ]))

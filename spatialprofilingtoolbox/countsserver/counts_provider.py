@@ -21,7 +21,7 @@ class CountsProvider:
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
             exit()
-        with open(join(data_directory, json_files[0]), 'rt') as file:
+        with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
             root = json.loads(file.read())
             entries = root[list(root.keys())[0]]
             self.studies = {}
@@ -112,4 +112,4 @@ class CountsProvider:
         ]
 
     def has_study(self, study_name):
-        return study_name in self.studies.keys()
+        return study_name in self.studies

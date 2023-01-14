@@ -2,7 +2,8 @@ import sqlite3
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import WaitingDatabaseContextManager
+from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
+    WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.workflow.density.data_logging import DensityDataLogger
@@ -92,8 +93,8 @@ class DensityCoreJob(CoreJob):
         :rtype: list
         """
         signatures_by_name = self.get_phenotype_signatures_by_name()
-        pheno_names = sorted(signatures_by_name.keys())
-        return pheno_names
+        phenotype_names = sorted(signatures_by_name.keys())
+        return phenotype_names
 
     def create_cell_table(self):
         """
@@ -103,7 +104,7 @@ class DensityCoreJob(CoreJob):
               FOV index integer).
         :rtype: pandas.DataFrame, dict
         """
-        pheno_names = self.get_phenotype_names()
+        phenotype_names = self.get_phenotype_names()
 
         cell_groups = []
         fov_lookup = {}
@@ -129,7 +130,7 @@ class DensityCoreJob(CoreJob):
             table = table_fov.copy()
             self.timer.record_timepoint('Finished copying FOV cells table')
             table = table.reset_index(drop=True)
-            self.timer.record_timepoint('Finished reseting cells table index')
+            self.timer.record_timepoint('Finished resetting cells table index')
             if 'compartment' in table.columns:
                 logger.error('Woops, name collision "compartment".')
                 break
@@ -144,14 +145,14 @@ class DensityCoreJob(CoreJob):
 
             signatures_by_name = self.get_phenotype_signatures_by_name()
             self.timer.record_timepoint('Start creating membership column')
-            for name in pheno_names:
+            for name in phenotype_names:
                 signature = signatures_by_name[name]
                 bools = self.dataset_design.get_pandas_signature(
                     table, signature)
                 ints = [1 if value else 0 for value in bools]
                 table[name + ' membership'] = ints
             phenotype_membership_columns = [
-                name + ' membership' for name in pheno_names]
+                name + ' membership' for name in phenotype_names]
             self.timer.record_timepoint('Finished creating membership columns')
 
             table['sample_identifier'] = sample_identifier

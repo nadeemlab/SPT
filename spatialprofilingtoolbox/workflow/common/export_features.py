@@ -50,8 +50,9 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
 
     def validate_specifiers(self, specifiers):
         if len(specifiers) != self.specifier_number:
-            message = 'Feature specified by "%s", but should only have %s specifiers.' % (
-                str(specifiers), str(self.specifier_number))
+            message = \
+                f'Feature specified by "{specifiers}", but should only have ' \
+                f'{self.specifier_number} specifiers.'
             logger.error(message)
             raise ValueError(message)
 
@@ -103,20 +104,20 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
     def check_exact_feature_values_already_present(self):
         count = self.count_known_feature_values_this_study()
         if count == len(self.feature_values):
-            tokens = (self.data_analysis_study, self.derivation_method)
-            message = 'Exactly %s feature values already associated with study "%s" of description "%s". This is the correct number; skipping upload without error.' % tokens
-            logger.info(message)
+            logger.info(
+                'Exactly %s feature values already associated with study "%s" of description "%s". This is the correct number; skipping upload without error.',
+                count, self.data_analysis_study, self.derivation_method)
             return True
         if count > 0:
-            tokens = (str(count), self.data_analysis_study,
-                      self.derivation_method)
-            message = 'Already have %s features associated with study "%s" of description "%s". Skipping upload with error.' % tokens
+            message = f'Already have {count} features associated with study ' \
+                f'"{self.data_analysis_study}" of description "{self.derivation_method}". ' \
+                'Skipping upload with error.'
             logger.error(message)
             raise ValueError(message)
         if count == 0:
-            tokens = (self.data_analysis_study, self.derivation_method)
-            message = 'No feature values yet associated with study "%s" of description "%s". Proceeding with upload.' % tokens
-            logger.info(message)
+            logger.info(
+                'No feature values yet associated with study "%s" of description "%s". Proceeding with upload.',
+                self.data_analysis_study, self.derivation_method)
             return False
 
     def count_known_feature_values_this_study(self):
@@ -159,7 +160,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         names = [row[0] for row in rows]
         cursor.close()
         if not self.data_analysis_study in names:
-            message = 'Data analysis study "%s" does not exist.' % self.data_analysis_study
+            message = f'Data analysis study "{self.data_analysis_study}" does not exist.'
             logger.error(message)
             raise ValueError(message)
 

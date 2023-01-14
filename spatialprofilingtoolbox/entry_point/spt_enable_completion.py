@@ -10,30 +10,30 @@ from jinja2 import BaseLoader
 from spatialprofilingtoolbox.entry_point.cli import get_commands
 from spatialprofilingtoolbox import submodule_names
 
-header = '### Start added by spatialprofilingtoolbox'
-footer = '### End added by spatialprofilingtoolbox'
+HEADER = '### Start added by spatialprofilingtoolbox'
+FOOTER = '### End added by spatialprofilingtoolbox'
 
 
 def remove_previous_installation(filename):
-    with open(filename, 'rt') as file:
+    with open(filename, 'rt', encoding='utf-8') as file:
         contents = file.read()
     header_index = None
     footer_index = None
     try:
-        header_index = contents.index(header)
+        header_index = contents.index(HEADER)
     except ValueError:
         pass
     try:
-        footer_index = contents.index(footer)
+        footer_index = contents.index(FOOTER)
     except ValueError:
         pass
     if (not header_index is None) and (not footer_index is None):
-        startpoint = header_index - 1
-        endpoint = footer_index + len(footer) + 1
-        new_contents = contents[0:startpoint] + contents[endpoint:]
-        with open(filename, 'wt') as file:
+        start_point = header_index - 1
+        end_point = footer_index + len(FOOTER) + 1
+        new_contents = contents[0:start_point] + contents[end_point:]
+        with open(filename, 'wt', encoding='utf-8') as file:
             file.write(new_contents)
-            print('Removed previous completion code from %s' % filename)
+            print(f'Removed previous completion code from {filename}')
 
 
 def get_nontrivial_module_names():
@@ -45,7 +45,7 @@ def get_modules_and_commands():
         {
             'name': module_name,
             'command_names_joined_space': ' '.join(get_commands(module_name)),
-            'command_names_joined_bar': '|'.join(["'%s'" % c for c in get_commands(module_name)]),
+            'command_names_joined_bar': '|'.join([f"'{c}'" for c in get_commands(module_name)]),
         }
         for module_name in get_nontrivial_module_names()
     ]
@@ -56,7 +56,7 @@ def create_completions_script():
         loader=BaseLoader, comment_start_string='###')
     with importlib.resources.path('spatialprofilingtoolbox.entry_point',
                                   'spt-completion.sh.jinja') as path:
-        with open(path, 'r') as file:
+        with open(path, 'r', encoding='utf-8') as file:
             template_source = file.read().rstrip('\n')
     template = jinja_environment.from_string(template_source)
     modules = get_modules_and_commands()
@@ -67,11 +67,11 @@ def create_completions_script():
 def attempt_append_to(filename, contents):
     if exists(filename):
         remove_previous_installation(filename)
-        with open(filename, 'a') as file:
+        with open(filename, 'a', encoding='utf-8') as file:
             file.write(contents)
-        print('Wrote completions script fragment to:\n %s' % filename)
+        print(f'Wrote completions script fragment to:\n {filename}')
         print('Either open a new shell or do:')
-        print('    source %s' % filename)
+        print(f'    source {filename}')
         exit()
 
 
@@ -107,7 +107,7 @@ def main_program():
         exit()
 
     completion_script = create_completions_script()
-    wrapped = '\n%s\n%s\n%s\n' % (header, completion_script, footer)
+    wrapped = f'\n{HEADER}\n{completion_script}\n{FOOTER}\n'
 
     for path in profile_files:
         attempt_append_to(path, wrapped)

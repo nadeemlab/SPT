@@ -7,9 +7,6 @@ logger = colorized_logger(__name__)
 
 
 class ChannelsPhenotypesParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(ChannelsPhenotypesParser, self).__init__(**kwargs)
-
     def parse(self,
               connection,
               fields,
@@ -40,7 +37,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
             'chemical_species', cursor)
         initial_value = identifier
         chemical_species_identifiers_by_symbol = {}
-        for i, phenotype in elementary_phenotypes.iterrows():
+        for _, phenotype in elementary_phenotypes.iterrows():
             symbol = phenotype['Name']
             chemical_structure_class = phenotype['Target structure class']
             record = (
@@ -72,7 +69,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         identifier = self.get_next_integer_identifier(
             'biological_marking_system', cursor)
         initial_value = identifier
-        for i, phenotype in elementary_phenotypes.iterrows():
+        for _, phenotype in elementary_phenotypes.iterrows():
             symbol = phenotype['Name']
             record = (
                 str(identifier),

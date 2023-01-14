@@ -71,10 +71,10 @@ class SourceToADIParser:
         return False
 
     def get_next_integer_identifier(self, tablename, cursor, key_name='identifier'):
-        cursor.execute('SELECT %s FROM %s;' % (key_name, tablename))
+        cursor.execute(f'SELECT {key_name} FROM {tablename};')
         try:
             identifiers = cursor.fetchall()
-        except psycopg2.ProgrammingError as e:
+        except psycopg2.ProgrammingError:
             return 0
         known_integer_identifiers = [
             int(i[0]) for i in identifiers if self.is_integer(i[0])]
@@ -104,12 +104,16 @@ class SourceToADIParser:
         else:
             identifying_record = record[1:]
             identifying_fields = fields[1:]
-        query = 'SELECT ' + primary + ' FROM ' + tablename + ' WHERE ' + ' AND '.join(
+        query = f'''
+        SELECT {primary} FROM {tablename} WHERE {
+            ' AND '.join(
                 [
-                    field + ' = %s ' % self.get_placeholder()
+                    f'{field} = {self.get_placeholder()} '
                     for field in identifying_fields
                 ]
-        ) + ' ;'
+        )
+        } ;
+        '''
         cursor.execute(query, tuple(identifying_record))
         if not no_primary:
             rows = cursor.fetchall()

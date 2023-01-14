@@ -1,17 +1,23 @@
 
 import importlib.resources
 import re
+from typing import Optional
 
 from psycopg2 import sql
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cellmanifests import CellManifestsParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.channels import ChannelsPhenotypesParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cellmanifestset import CellManifestSetParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cell_manifests import \
+    CellManifestsParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.channels import \
+    ChannelsPhenotypesParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cell_manifest_set import \
+    CellManifestSetParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.samples import SamplesParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.subjects import SubjectsParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.sample_stratification import SampleStratificationCreator
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.interventions import InterventionsParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.sample_stratification import \
+    SampleStratificationCreator
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.interventions import \
+    InterventionsParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.study import StudyParser
 from spatialprofilingtoolbox.db.source_file_parser_interface import DBBackend
@@ -22,21 +28,22 @@ logger = colorized_logger(__name__)
 
 
 class DataSkimmer(DatabaseConnectionMaker):
-    def __init__(self, database_config_file: str = None, db_backend=DBBackend.POSTGRES):
+    def __init__(self, database_config_file: Optional[str] = None, db_backend=DBBackend.POSTGRES):
         if db_backend != DBBackend.POSTGRES:
             raise ValueError('Only DBBackend.POSTGRES is supported.')
         self.db_backend = db_backend
         super(DataSkimmer, self).__init__(
             database_config_file=database_config_file)
+        self.record_counts = {}
 
     def normalize(self, name):
         return re.sub('[ \-]', '_', name).lower()
 
     def retrieve_record_counts(self, cursor, fields):
         record_counts = {}
-        tablenames = sorted(list(set(fields['Table'])))
-        tablenames = [self.normalize(t) for t in tablenames]
-        for table in tablenames:
+        table_names = sorted(list(set(fields['Table'])))
+        table_names = [self.normalize(t) for t in table_names]
+        for table in table_names:
             query = sql.SQL(
                 'SELECT COUNT(*) FROM {} ;').format(sql.Identifier(table))
             cursor.execute(query)
@@ -62,8 +69,7 @@ class DataSkimmer(DatabaseConnectionMaker):
             difference = changes[table]
             sign = '+' if difference >= 0 else '-'
             absolute_difference = difference if difference > 0 else -1*difference
-            difference_str = "{:<13}".format(
-                '%s%s' % (sign, absolute_difference))
+            difference_str = "{:<13}".format(f'{sign}{absolute_difference}')
             logger.debug('%s %s', difference_str, table)
 
     def parse(

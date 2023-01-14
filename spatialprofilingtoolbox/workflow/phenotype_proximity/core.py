@@ -8,7 +8,8 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import BallTree
 
-from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import WaitingDatabaseContextManager
+from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
+    WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -498,9 +499,8 @@ class PhenotypeProximityCoreJob(CoreJob):
                 ]  # Make this programmatic over the headers provided by computational design???
                 keys = '( ' + ' , '.join(keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = (
-                    'INSERT INTO %s ' % self.computational_design.get_cell_pair_counts_table_name(
-                    )) + keys + ' VALUES ' + values + ' ;'
+                cmd = f'INSERT INTO {self.computational_design.get_cell_pair_counts_table_name()}'\
+                    f' {keys} VALUES {values} ;'
                 try:
                     manager.execute(cmd)
                 except sqlite3.OperationalError as exception:

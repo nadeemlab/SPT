@@ -1,4 +1,5 @@
 import importlib.resources
+from typing import Optional
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -8,18 +9,18 @@ logger = colorized_logger(__name__)
 def verbose_sql_execute(
     filename,
     connection,
-    description: str = None,
+    description: Optional[str] = None,
     silent=False,
     contents=None,
     itemize=False,
-    source_package: str = None,
+    source_package: Optional[str] = None,
 ):
     if description is None:
         description = filename
     if not contents:
         logger.info('Executing %s.', description)
         with importlib.resources.path(source_package, filename) as path:
-            script = open(path).read()
+            script = open(path, encoding='utf-8').read()
     else:
         script = contents
     cursor = connection.cursor()

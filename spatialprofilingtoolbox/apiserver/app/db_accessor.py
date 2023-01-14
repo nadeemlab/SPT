@@ -18,8 +18,7 @@ class DBAccessor:
         ]
         unfound = [v for v in variables if not v in os.environ]
         if len(unfound) > 0:
-            message = 'Did not find: %s' % str(unfound)
-            raise EnvironmentError(message)
+            raise EnvironmentError(f'Did not find: {str(unfound)}')
 
         dbname = 'scstudies'
         if 'USE_ALTERNATIVE_TESTING_DATABASE' in os.environ:

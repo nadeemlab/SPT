@@ -1,5 +1,6 @@
 import pathlib
 import re
+from typing import Optional
 
 import pandas as pd
 
@@ -15,8 +16,8 @@ class HALOCellMetadataDesign:
     """
 
     def __init__(self,
-                 elementary_phenotypes_file: str = None,
-                 compartments_file: str = None,
+                 elementary_phenotypes_file: Optional[str] = None,
+                 compartments_file: Optional[str] = None,
                  **kwargs,
                  ):
         self.elementary_phenotypes = pd.read_csv(
@@ -25,7 +26,7 @@ class HALOCellMetadataDesign:
         )
         if compartments_file is not None:
             self.compartments = open(
-                compartments_file, 'rt').read().strip('\n').split('\n')
+                compartments_file, 'rt', encoding='utf-8').read().strip('\n').split('\n')
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -56,8 +57,8 @@ class HALOCellMetadataDesign:
                 column = re.sub(' ', '_', column)
                 if not column in table.columns:
                     raise ValueError(
-                        'Could not find "%s" even with underscore replacement, among: %s' % (
-                            column, str(list(table.columns))))
+                        f'Could not find "{column}" even with underscore replacement, among: '
+                        f'{list(table.columns)}')
         return column
 
     @staticmethod
@@ -324,7 +325,7 @@ class HALOCellMetadataDesign:
             '+': 1,
             '-': 0,
         }
-        if value in special_cases.keys():
+        if value in special_cases:
             return special_cases[value]
         else:
             return value

@@ -50,15 +50,15 @@ if __name__ == '__main__':
 
     if args.database_config_file:
         config_file = abspath(expanduser(args.database_config_file))
-    if not exists(config_file):
-        raise FileNotFoundError(
-            'Need to supply valid database config filename: %s', config_file)
+        if not exists(config_file):
+            raise FileNotFoundError(
+                f'Need to supply valid database config filename: {config_file}')
 
-    with SchemaInfuser(database_config_file=config_file) as infuser:
-        if not args.refresh_views_only and not args.recreate_views_only:
-            infuser.setup_schema(force=args.force)
-        else:
-            if args.refresh_views_only:
-                infuser.refresh_views()
-            if args.recreate_views_only:
-                infuser.recreate_views()
+        with SchemaInfuser(database_config_file=config_file) as infuser:
+            if not args.refresh_views_only and not args.recreate_views_only:
+                infuser.setup_schema(force=args.force)
+            else:
+                if args.refresh_views_only:
+                    infuser.refresh_views()
+                if args.recreate_views_only:
+                    infuser.recreate_views()

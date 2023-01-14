@@ -14,69 +14,68 @@ from spatialprofilingtoolbox import get_workflow_names
 
 workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
-nf_config_file = 'nextflow.config'
-nf_pipeline_file = 'main.nf'
+NF_CONFIG_FILE = 'nextflow.config'
+NF_PIPELINE_FILE = 'main.nf'
 
 
 def retrieve_from_library(subpackage, filename):
     contents = None
     with importlib.resources.path('.'.join(['spatialprofilingtoolbox', subpackage]),
                                   filename) as path:
-        with open(path, 'rt') as file:
+        with open(path, 'rt', encoding='utf-8') as file:
             contents = file.read()
     if contents is None:
-        raise Exception('Could not locate library file %s' % filename)
+        raise Exception(f'Could not locate library file {filename}')
     return contents
 
 
 def write_config_file(variables):
     contents = retrieve_from_library(
-        'workflow.templates', nf_config_file + '.jinja')
+        'workflow.templates', NF_CONFIG_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
-    config_file = template.render(**variables)
-    with open(join(getcwd(), nf_config_file), 'wt') as file:
-        file.write(config_file)
+    file_to_write = template.render(**variables)
+    with open(join(getcwd(), NF_CONFIG_FILE), 'wt', encoding='utf-8') as file:
+        file.write(file_to_write)
 
 
 def write_pipeline_script(variables):
     contents = retrieve_from_library(
-        'workflow.templates', nf_pipeline_file + '.jinja')
+        'workflow.templates', NF_PIPELINE_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
     pipeline_file = template.render(**variables)
-    with open(join(os.getcwd(), nf_pipeline_file), 'wt') as file:
+    with open(join(os.getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
         file.write(pipeline_file)
 
 
 def record_configuration_command(variables):
     tokens = ['spt workflow configure']
-    tokens.append('--workflow="%s"' % variables['workflow'])
+    tokens.append(f"--workflow=\"{variables['workflow']}\"")
     if variables['executor'] == 'local':
         tokens.append('--local')
     if variables['executor'] == 'lsf':
         tokens.append('--lsf')
     input_path = abspath(variables['input_path'])
     if ' ' in input_path:
-        input_path = "'%s'" % input_path
-    tokens.append('--input-path=%s' % input_path)
+        input_path = f"'{input_path}'"
+    tokens.append(f'--input-path={input_path}')
     if 'sif_file' in variables:
         sif_file = abspath(variables['sif_file'])
         if ' ' in sif_file:
-            sif_file = "'%s'" % sif_file
-        tokens.append('--sif-file=%s' % sif_file)
+            sif_file = f"'{sif_file}'"
+        tokens.append(f'--sif-file={sif_file}')
     if 'excluded_host' in variables:
-        tokens.append('--excluded-host=%s' % variables['excluded_host'])
+        tokens.append(f'--excluded-host={variables["excluded_host"]}')
     if 'db_config_file' in variables:
-        tokens.append('--database-config-file=%s' %
-                      variables['db_config_file'])
+        tokens.append(f'--database-config-file={variables["db_config_file"]}')
 
     command = ' \\\n '.join(tokens)
 
-    with open('configure.sh', 'wt') as file:
+    with open('configure.sh', 'wt', encoding='utf-8') as file:
         file.write('#!/bin/sh\n\n')
         file.write(command)
         file.write('\n')
 
-    with open('run.sh', 'wt') as file:
+    with open('run.sh', 'wt', encoding='utf-8') as file:
         file.write('#!/bin/sh\n\n')
         file.write('nextflow run .\n')
 
@@ -146,32 +145,35 @@ if __name__ == '__main__':
         SuggestExtrasException
     try:
         import jinja2
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
-            import default_file_manifest_filename
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+        from \
+            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+            import DEFAULT_FILE_MANIFEST_FILENAME
+        from \
+            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
             import get_input_filename_by_identifier
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+        from \
+            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
             import get_input_filenames_by_data_type
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
     jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader)
 
-    variables = {}
+    config_variables = {}
 
     if args.local:
-        variables['executor'] = 'local'
+        config_variables['executor'] = 'local'
     if args.lsf:
-        variables['executor'] = 'lsf'
+        config_variables['executor'] = 'lsf'
 
-    variables['workflow'] = args.workflow
+    config_variables['workflow'] = args.workflow
 
     if isdir(args.input_path):
         file_manifest_path = join(
-            args.input_path, default_file_manifest_filename)
+            args.input_path, DEFAULT_FILE_MANIFEST_FILENAME)
         if exists(file_manifest_path):
-            variables['input_path'] = args.input_path
-            variables['file_manifest_filename'] = file_manifest_path
+            config_variables['input_path'] = args.input_path
+            config_variables['file_manifest_filename'] = file_manifest_path
         else:
             raise FileNotFoundError(file_manifest_path)
     else:
@@ -179,54 +181,54 @@ if __name__ == '__main__':
 
     if not args.sif_file is None:
         if exists(args.sif_file):
-            variables['sif_file'] = args.sif_file
+            config_variables['sif_file'] = args.sif_file
         else:
             raise FileNotFoundError(args.sif_file)
 
     if not args.excluded_host is None:
-        variables['excluded_host'] = args.excluded_host
+        config_variables['excluded_host'] = args.excluded_host
 
-    variables['current_working_directory'] = getcwd()
+    config_variables['current_working_directory'] = getcwd()
 
     compartments_file = get_input_filename_by_identifier(
         input_file_identifier='Compartments file',
         file_manifest_filename=file_manifest_path,
     )
-    variables['compartments'] = False
+    config_variables['compartments'] = False
     if not compartments_file is None:
         compartments_file_abs = join(args.input_path, compartments_file)
         if exists(compartments_file_abs):
-            variables['compartments_file'] = compartments_file_abs
-            variables['compartments'] = True
+            config_variables['compartments_file'] = compartments_file_abs
+            config_variables['compartments'] = True
 
     outcomes_files = get_input_filenames_by_data_type(
         data_type='Outcome',
         file_manifest_filename=file_manifest_path,
     )
-    variables['outcomes'] = False
+    config_variables['outcomes'] = False
     if len(outcomes_files) > 0:
         outcomes_file_abs = join(args.input_path, outcomes_files[0])
         if exists(outcomes_file_abs):
-            variables['outcomes_file'] = outcomes_file_abs
-            variables['outcomes'] = True
+            config_variables['outcomes_file'] = outcomes_file_abs
+            config_variables['outcomes'] = True
 
     if args.database_config_file:
         config_file = expanduser(args.database_config_file)
-    if exists(config_file):
-        if workflows[variables['workflow']].computational_design.uses_database():
-            variables['db_config_file'] = config_file
-            variables['db_config'] = True
+        if exists(config_file):
+            if workflows[config_variables['workflow']].computational_design.uses_database():
+                config_variables['db_config_file'] = config_file
+                config_variables['db_config'] = True
 
     subjects_file = get_input_filename_by_identifier(
         input_file_identifier='Subjects file',
         file_manifest_filename=file_manifest_path,
     )
-    variables['subjects'] = False
+    config_variables['subjects'] = False
     if not subjects_file is None:
         subjects_file_abs = join(args.input_path, subjects_file)
         if exists(subjects_file_abs):
-            variables['subjects_file'] = subjects_file_abs
-            variables['subjects'] = True
+            config_variables['subjects_file'] = subjects_file_abs
+            config_variables['subjects'] = True
 
     study_file = get_input_filename_by_identifier(
         input_file_identifier='Study file',
@@ -234,10 +236,10 @@ if __name__ == '__main__':
     )
     study_file_abs = join(args.input_path, study_file)
     if not exists(study_file_abs):
-        print('Did not find study file (%s).' % str(study_file))
+        print(f'Did not find study file ({study_file}).')
         exit(1)
-    variables['study_file'] = study_file_abs
-    variables['study'] = True
+    config_variables['study_file'] = study_file_abs
+    config_variables['study'] = True
 
     diagnosis_file = get_input_filename_by_identifier(
         input_file_identifier='Diagnosis file',
@@ -245,10 +247,10 @@ if __name__ == '__main__':
     )
     diagnosis_file_abs = join(args.input_path, diagnosis_file)
     if not exists(diagnosis_file_abs):
-        print('Did not find diagnosis file (%s).' % str(diagnosis_file))
+        print(f'Did not find diagnosis file ({diagnosis_file}).')
         exit(1)
-    variables['diagnosis_file'] = diagnosis_file_abs
-    variables['diagnosis'] = True
+    config_variables['diagnosis_file'] = diagnosis_file_abs
+    config_variables['diagnosis'] = True
 
     interventions_file = get_input_filename_by_identifier(
         input_file_identifier='Interventions file',
@@ -256,12 +258,11 @@ if __name__ == '__main__':
     )
     interventions_file_abs = join(args.input_path, interventions_file)
     if not exists(interventions_file_abs):
-        print('Did not find interventions file (%s).' %
-              str(interventions_file))
+        print(f'Did not find interventions file ({interventions_file}).')
         exit(1)
-    variables['interventions_file'] = interventions_file_abs
-    variables['interventions'] = True
+    config_variables['interventions_file'] = interventions_file_abs
+    config_variables['interventions'] = True
 
-    write_config_file(variables)
-    write_pipeline_script(variables)
-    record_configuration_command(variables)
+    write_config_file(config_variables)
+    write_pipeline_script(config_variables)
+    record_configuration_command(config_variables)

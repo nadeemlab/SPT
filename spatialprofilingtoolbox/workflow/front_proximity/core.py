@@ -3,7 +3,8 @@ import sqlite3
 from scipy.spatial import KDTree
 
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
-from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import WaitingDatabaseContextManager
+from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
+    WaitingDatabaseContextManager
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -12,6 +13,7 @@ logger = colorized_logger(__name__)
 class FrontProximityCoreJob(CoreJob):
     def __init__(self, **kwargs):
         super(FrontProximityCoreJob, self).__init__(**kwargs)
+        self.fov_lookup = {}
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -65,11 +67,11 @@ class FrontProximityCoreJob(CoreJob):
 
     def get_phenotype_names(self):
         signatures_by_name = self.get_phenotype_signatures_by_name()
-        pheno_names = sorted(signatures_by_name.keys())
-        return pheno_names
+        phenotype_names = sorted(signatures_by_name.keys())
+        return phenotype_names
 
     def create_cell_tables(self):
-        pheno_names = self.get_phenotype_names()
+        phenotype_names = self.get_phenotype_names()
 
         number_fovs = 0
         filename = self.input_filename
@@ -91,7 +93,8 @@ class FrontProximityCoreJob(CoreJob):
             df_file.loc[df_file[col] == fov, col] = i
         number_fovs += len(fovs)
 
-        number_cells_by_phenotype = {phenotype: 0 for phenotype in pheno_names}
+        number_cells_by_phenotype = {
+            phenotype: 0 for phenotype in phenotype_names}
         cells = {}
         for fov_index, df_fov in df_file.groupby(col):
             df = df_fov.copy()
@@ -116,12 +119,12 @@ class FrontProximityCoreJob(CoreJob):
 
             # Add general phenotype membership columns
             signatures_by_name = self.get_phenotype_signatures_by_name()
-            for name in pheno_names:
+            for name in phenotype_names:
                 signature = signatures_by_name[name]
                 df[name +
                     ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
             phenotype_membership_columns = [
-                name + ' membership' for name in pheno_names]
+                name + ' membership' for name in phenotype_names]
 
             # Select pertinent columns and rename
             intensity_column_names = self.dataset_design.get_intensity_column_names()
@@ -147,7 +150,7 @@ class FrontProximityCoreJob(CoreJob):
             ): 'field of view index'}, inplace=True)
             cells[(filename, fov_index)] = df
 
-            for phenotype in pheno_names:
+            for phenotype in phenotype_names:
                 n = number_cells_by_phenotype[phenotype]
                 number_cells_by_phenotype[phenotype] = n + \
                     sum(df[phenotype + ' membership'])
@@ -167,7 +170,7 @@ class FrontProximityCoreJob(CoreJob):
 
     def calculate_front_distance_records(self, cells, outcome):
         distance_records = []
-        for (filename, fov_index), df in cells.items():
+        for (_, fov_index), df in cells.items():
             cell_indices = list(df.index)
             x_values = list(df['x value'])
             y_values = list(df['y value'])
@@ -185,14 +188,13 @@ class FrontProximityCoreJob(CoreJob):
                                  )
                     continue
                 tree = KDTree(compartment_points)
-                distances, indices = tree.query(all_points)
-                for i in range(len(cell_indices)):
+                distances, _ = tree.query(all_points)
+                for i, cell_index in enumerate(cell_indices):
                     compartment_i = compartment_assignments[i]
                     if compartment_i == compartment:
                         continue
-                    I = cell_indices[i]
                     for phenotype in self.get_phenotype_names():
-                        if df.loc[I, phenotype + ' membership']:
+                        if df.loc[cell_index, phenotype + ' membership']:
                             distance_records.append([
                                 self.sample_identifier,
                                 int(fov_index),

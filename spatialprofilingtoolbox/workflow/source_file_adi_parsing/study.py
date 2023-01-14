@@ -7,11 +7,8 @@ logger = colorized_logger(__name__)
 
 
 class StudyParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(StudyParser, self).__init__(**kwargs)
-
     def cautious_insert(self, tablename, record, cursor, fields, no_primary=True):
-        was_found, key = self.check_exists(
+        was_found, _ = self.check_exists(
             tablename, record, cursor, fields, no_primary=no_primary)
         if was_found:
             logger.debug('"%s" %s already exists.', tablename, str(record))
@@ -22,7 +19,7 @@ class StudyParser(SourceToADIParser):
             )
 
     def parse(self, connection, fields, study_file):
-        with open(study_file, 'rt') as study:
+        with open(study_file, 'rt', encoding='utf-8') as study:
             study = json.loads(study.read())
             study_name = study['Study name']
 

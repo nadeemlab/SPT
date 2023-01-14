@@ -8,9 +8,6 @@ logger = colorized_logger(__name__)
 
 
 class DiagnosisParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(DiagnosisParser, self).__init__(**kwargs)
-
     def parse(self, connection, fields, diagnosis_file):
         cursor = connection.cursor()
 
@@ -18,7 +15,7 @@ class DiagnosisParser(SourceToADIParser):
         diagnoses = pd.read_csv(diagnosis_file, sep='\t',
                                 na_filter=False, dtype=str)
         logger.info('Saving %s diagnosis records.', diagnoses.shape[0])
-        for i, row in diagnoses.iterrows():
+        for _, row in diagnoses.iterrows():
             diagnosis_record = (
                 row['Subject of diagnosis'],
                 row['Diagnosed condition'],

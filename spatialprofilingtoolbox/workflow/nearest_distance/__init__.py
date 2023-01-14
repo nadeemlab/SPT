@@ -4,15 +4,19 @@ regard to spatial information.
 """
 from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import WorkflowModules
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from \
+    spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+    import HALOCellMetadataDesign
 
 from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.nearest_distance.initializer import NearestDistanceInitializer
 from spatialprofilingtoolbox.workflow.nearest_distance.core import NearestDistanceCoreJob
-from spatialprofilingtoolbox.workflow.nearest_distance.computational_design import NearestDistanceDesign
-from spatialprofilingtoolbox.workflow.nearest_distance.integrator import NearestDistanceAnalysisIntegrator
+from spatialprofilingtoolbox.workflow.nearest_distance.computational_design import \
+    NearestDistanceDesign
+from spatialprofilingtoolbox.workflow.nearest_distance.integrator import \
+    NearestDistanceAnalysisIntegrator
 
-name = 'nearest distance to compartment'
+NAME = 'nearest distance to compartment'
 components = WorkflowModules(
     generator=JobGenerator,
     initializer=NearestDistanceInitializer,

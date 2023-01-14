@@ -30,7 +30,7 @@ def normalize(name):
 
 
 def get_constraint_status(cursor):
-    query = '''
+    query = f'''
     SELECT DISTINCT
         pg_constraint.contype as connection_type,
         pg_constraint.conname as constraint_name,
@@ -39,9 +39,9 @@ def get_constraint_status(cursor):
     JOIN pg_class ON pg_trigger.tgrelid = pg_class.oid
     JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace 
     JOIN pg_constraint ON pg_constraint.oid = pg_trigger.tgconstraint
-    WHERE relname IN %s
+    WHERE relname IN {str(tuple(big_tables()))}
     ORDER BY relname, constraint_name;
-    ''' % str(tuple(big_tables()))
+    '''
     cursor.execute(query)
 
     column_names = [desc[0] for desc in cursor.description]
@@ -65,7 +65,8 @@ def get_constraint_design():
 
 
 def print_constraint_status(column_names, info_rows):
-    def print_formatted(row): return print("{:<16} {:<65} {:<40}".format(*row))
+    def print_formatted(row):
+        return print(f"{row[0]:<16} {row[1]:<65} {row[2]:<40}")
     logger.info('Printing constraint info.')
     print_formatted(column_names)
     for row in info_rows:
@@ -73,10 +74,10 @@ def print_constraint_status(column_names, info_rows):
 
 
 def toggle_constraints(
-    database_config_file_elevated,
+    database_config_file,
     state: DBConstraintsToggling = DBConstraintsToggling.RECREATE,
 ):
-    with DatabaseConnectionMaker(database_config_file_elevated) as dcm:
+    with DatabaseConnectionMaker(database_config_file) as dcm:
         cursor = dcm.get_connection().cursor()
         try:
             if state == DBConstraintsToggling.RECREATE:
@@ -90,12 +91,12 @@ def toggle_constraints(
                         in foreign_key_constraints:
                     statement = pattern % (
                         tablename,
-                        '%s%s' % (tablename, ordinality),
+                        f'{tablename}{ordinality}',
                         field_name,
                         foreign_tablename,
                         foreign_field_name,
                     )
-                    logger.debug('Executing: %s' % statement)
+                    logger.debug('Executing: %s', statement)
                     cursor.execute(statement)
                 column_names, info_rows = get_constraint_status(cursor)
                 print_constraint_status(column_names, info_rows)
@@ -106,13 +107,13 @@ def toggle_constraints(
                 DROP CONSTRAINT IF EXISTS %s;'''
                 column_names, info_rows = get_constraint_status(cursor)
                 print_constraint_status(column_names, info_rows)
-                for connection_type, constraint_name, tablename in info_rows:
+                for _, constraint_name, tablename in info_rows:
                     statement = pattern % (tablename, constraint_name)
-                    logger.debug('Executing: %s' % statement)
+                    logger.debug('Executing: %s', statement)
                     cursor.execute(statement)
-        except Exception as e:
+        except Exception as exception:
             cursor.close()
-            raise e
+            raise exception
 
         cursor.close()
         dcm.get_connection().commit()
@@ -162,11 +163,13 @@ if __name__ == '__main__':
         expanduser(args.database_config_file_elevated))
     if not exists(database_config_file_elevated):
         raise FileNotFoundError(
-            'Need to supply valid database config filename, not: %s', database_config_file_elevated)
+            f'Need to supply valid database config filename, not: {database_config_file_elevated}')
 
     if args.recreate:
-        state = DBConstraintsToggling.RECREATE
-    if args.drop:
-        state = DBConstraintsToggling.DROP
+        db_state = DBConstraintsToggling.RECREATE
+    elif args.drop:
+        db_state = DBConstraintsToggling.DROP
+    else:
+        raise ValueError('--recreate or --drop must be flagged.')
 
-    toggle_constraints(database_config_file_elevated, state=state)
+    toggle_constraints(database_config_file_elevated, state=db_state)

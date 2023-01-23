@@ -7,12 +7,12 @@ MAKEFLAGS += --no-builtin-rules
 # Define globally used variables
 # Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
-PYTHON := python
+export PYTHON := python
 export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
 SOURCE_LOCATION := ${PACKAGE_NAME}
 BUILD_LOCATION := build
 export TEST_LOCATION := test
-TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
+export TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 export WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl

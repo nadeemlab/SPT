@@ -2,20 +2,20 @@
 .RECIPEPREFIX = >
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
-export
+# export
 
 # Define globally used variables
 # Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
 PYTHON := python
-BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
+export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
 SOURCE_LOCATION := ${PACKAGE_NAME}
 BUILD_LOCATION := build
-TEST_LOCATION := test
+export TEST_LOCATION := test
 TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
+export WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
 
 help:
@@ -59,8 +59,8 @@ UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(su
 # Define PHONY targets
 .PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
 
-# Submodule-specific variables
-DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
+# # Submodule-specific variables
+export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
 DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
 # Locations can't be relative because these are used by the submodules' Makefiles.
 

@@ -2,21 +2,21 @@
 .RECIPEPREFIX = >
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
-export
+# export
 
 # Define globally used variables
 # Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
-PYTHON := python
-BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
+export PYTHON := python
+export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
 SOURCE_LOCATION := ${PACKAGE_NAME}
 BUILD_LOCATION := build
-TEST_LOCATION := test
-TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
+export TEST_LOCATION := test
+export TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
 VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
-MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
+export WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
+export MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
 
 help:
 >@${MESSAGE} print ' The main targets are:'
@@ -46,8 +46,8 @@ help:
 >@${MESSAGE} print ' '
 
 # Docker and test variables
-DOCKER_ORG_NAME := nadeemlab
-DOCKER_REPO_PREFIX := spt
+export DOCKER_ORG_NAME := nadeemlab
+export DOCKER_REPO_PREFIX := spt
 DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
 DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
@@ -59,9 +59,9 @@ UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(su
 # Define PHONY targets
 .PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
 
-# Submodule-specific variables
-DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
-DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
+# # Submodule-specific variables
+export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
+export DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
 # Locations can't be relative because these are used by the submodules' Makefiles.
 
 # Fetch all runnable files that will be needed for making

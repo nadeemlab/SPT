@@ -12,6 +12,6 @@ COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
 COPY specific_requirements.txt .
 RUN python -m pip install -r specific_requirements.txt
+RUN python -m pip install dgl-cu116 dglgo -f https://data.dgl.ai/wheels/repo.html
 COPY $WHEEL_FILENAME ./
 RUN pip3 install "$WHEEL_FILENAME"
-RUN python -m pip install dgl-cu116 dglgo -f https://data.dgl.ai/wheels/repo.html

@@ -20,7 +20,7 @@ class CredentialChecker:
 
     def explain_arguments(self):
         print(f'Need to supply one of: {str(self.get_accounts())}')
-        exit(1)
+        sys.exit(1)
 
     def get_accounts(self):
         return self.checkers.keys()
@@ -32,9 +32,9 @@ class CredentialChecker:
         result = self.get_result()
         print(result, end='')
         if result == 'not_found':
-            exit(1)
+            sys.exit(1)
         else:
-            exit()
+            sys.exit()
 
     def check_for_credentials(self, account):
         checker = self.checkers[account]

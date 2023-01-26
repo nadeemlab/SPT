@@ -1,10 +1,16 @@
+"""
+A context manager from accessing the backend SPT database, from inside library
+functions.
+"""
 from typing import Optional
 from urllib.error import URLError
 from urllib.request import urlopen
 import re
 import configparser
 
-import psycopg2
+from psycopg2 import connect
+from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg2 import Error as Psycopg2Error
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -67,21 +73,33 @@ def check_credentials_availability(configured_credentials):
 
 
 class DatabaseConnectionMaker:
+    """
+    Provides a psycopg2 Postgres database connection. Takes care of connecting
+    and disconnecting.
+    """
+    connection: Psycopg2Connection
+
     def __init__(self, database_config_file: Optional[str] = None):
         credentials = retrieve_credentials(database_config_file)
         check_credentials_availability(credentials)
-        self.connection = None
         try:
-            self.connection = psycopg2.connect(
+            self.connection = connect(
                 dbname=credentials['database'],
                 host=credentials['endpoint'],
                 user=credentials['user'],
                 password=credentials['password'],
             )
-        except psycopg2.Error as excepted:
+        except Psycopg2Error as excepted:
             logger.error('Failed to connect to database: %s %s',
                          credentials['endpoint'], credentials['database'])
             raise excepted
+
+    def is_connected(self):
+        try:
+            connection = self.connection
+            return connection is not None
+        except AttributeError:
+            return False
 
     def get_connection(self):
         return self.connection

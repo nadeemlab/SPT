@@ -1,3 +1,4 @@
+"""The API service's endpoint handlers."""
 import os
 import json
 import re

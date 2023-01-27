@@ -87,7 +87,7 @@ class DataSkimmer(DatabaseConnectionMaker):
         interventions_file=None,
         **kwargs,
     ):
-        if not self.get_connection():
+        if not self.is_connected():
             logger.debug(
                 'No database connection was initialized. Skipping semantic parse.')
             return

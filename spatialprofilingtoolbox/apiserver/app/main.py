@@ -1,3 +1,4 @@
+"""The API service's endpoint handlers."""
 import os
 import json
 import re
@@ -274,11 +275,22 @@ def get_study_summary(
         FROM sample_strata sst
         JOIN specimen_collection_process scp
         ON scp.specimen = sst.sample
-        WHERE scp.study=%s
+        WHERE scp.study=%s ;
         '''
         cursor.execute(query, (specimen_collection_study,))
         sample_cohorts = cursor.fetchall()
         sample_cohorts = sorted(sample_cohorts, key=lambda x: int(x[0]))
+
+        query = '''
+        SELECT sst.sample, sst.stratum_identifier
+        FROM sample_strata sst
+        JOIN specimen_collection_process scp
+        ON scp.specimen = sst.sample
+        WHERE scp.study=%s
+        ORDER BY sample ;
+        '''
+        cursor.execute(query, (specimen_collection_study,))
+        sample_cohort_assignments = cursor.fetchall()
         cursor.close()
 
     representation = {}
@@ -299,6 +311,7 @@ def get_study_summary(
     representation['Number of channels measured'] = number_channels
     representation['Number of named composite phenotypes pre-specified'] = number_phenotypes
     representation['Sample cohorts'] = sample_cohorts
+    representation['Sample cohort assignments'] = sample_cohort_assignments
 
     return Response(
         content=json.dumps(representation),

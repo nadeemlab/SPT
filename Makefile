@@ -8,7 +8,7 @@ MAKEFLAGS += --no-builtin-rules
 # Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
 export PYTHON := python
-export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
+export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build/build_scripts
 SOURCE_LOCATION := ${PACKAGE_NAME}
 BUILD_LOCATION := build
 export TEST_LOCATION := test
@@ -232,7 +232,7 @@ data-loaded-image-%: ${BUILD_LOCATION}/db/docker.built development-image ${BUILD
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
-    pipeline_cmd="cd /mount_sources/; bash build_scripts/import_test_dataset$*.sh ; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
+    pipeline_cmd="cd /mount_sources/; bash build/build_scripts/import_test_dataset$*.sh ; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
     docker run \
      --rm \
      --network container:temporary-spt-db-preloading \

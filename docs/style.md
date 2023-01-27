@@ -11,3 +11,9 @@ New additions to the library should be fully type hinted and follow PEP 8 guidel
 ## IDEs
 
 We recommend developing in VS Code or PyCharm, but any environment that supports our recommended linters should be sufficient.
+
+The following line may be used to do whole-package linting:
+
+```sh
+pylint spatialprofilingtoolbox/ --output-format=colorized --rc-file .pylintrc
+```

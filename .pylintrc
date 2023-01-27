@@ -1,3 +1,6 @@
 [MASTER]
 disable=
     C0116
+
+[BASIC]
+good-names=df

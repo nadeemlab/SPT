@@ -221,8 +221,8 @@ class DensityAnalysisIntegrator:
             for phenotype_column, sum_column in sum_columns.items()
         }
 
-        def select_0(x):
-            return list(x)[0]
+        def select_0(argument):
+            return list(argument)[0]
         outcome_passthrough = {
             'outcome_assignment': pd.NamedAgg(column='outcome_assignment', aggfunc=select_0),
         }

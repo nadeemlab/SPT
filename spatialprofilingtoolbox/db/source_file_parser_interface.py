@@ -34,9 +34,6 @@ class SourceToADIParser:
     def get_data_analysis_study_name(study_name):
         return study_name + " - data analysis"
 
-    def parse(self):
-        pass
-
     def get_placeholder(self):
         placeholder = '%s'
         return placeholder

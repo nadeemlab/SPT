@@ -14,8 +14,8 @@ def get_table_names(uri):
     return names
 
 
-def get_column_names(table_name, db):
-    connection = sqlite3.connect(db)
+def get_column_names(table_name, database):
+    connection = sqlite3.connect(database)
     cursor = connection.execute(f'select * from {table_name} limit 1')
     return sorted([row[0] for row in cursor.description])
 

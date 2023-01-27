@@ -1,3 +1,4 @@
+"""Source file parsing for imaging/feature-assessment channel metadata."""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser

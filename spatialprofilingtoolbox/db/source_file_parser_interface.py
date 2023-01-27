@@ -1,3 +1,8 @@
+"""
+Interface (and common functionality) for classes whose concrete implementations
+are meant to be parsers of some specific source file into the 'single cell
+studies ADI' schema.
+"""
 import re
 from enum import Enum
 from enum import auto

@@ -1,3 +1,7 @@
+"""
+CLI entry point into the utility that reports (for informational purposess or
+debugging) the configuration of a Nextflow-managed workflow before it runs.
+"""
 import argparse
 
 if __name__ == '__main__':

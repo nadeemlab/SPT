@@ -1,3 +1,7 @@
+"""
+Convenience reporter of the run configuration for a given workflow, before it
+actually runs. For debugging and archival purposes.
+"""
 from os.path import getsize
 import datetime
 import socket

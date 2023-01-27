@@ -1,3 +1,6 @@
+"""
+Convenience script for aggregating custom-logged time performance data.
+"""
 import argparse
 
 

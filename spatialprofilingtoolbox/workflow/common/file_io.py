@@ -1,3 +1,4 @@
+"""Basic file analysis functionality."""
 import hashlib
 from itertools import takewhile
 from itertools import repeat

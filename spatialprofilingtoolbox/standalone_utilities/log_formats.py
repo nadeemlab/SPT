@@ -1,3 +1,4 @@
+"""Custom logger for general SPT functionality."""
 import logging
 import re
 

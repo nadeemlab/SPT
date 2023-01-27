@@ -1,3 +1,7 @@
+"""
+CLI entry point into the core/parallelizable phase of the Nextflow-managed
+workflows.
+"""
 import argparse
 
 from spatialprofilingtoolbox import get_workflow_names

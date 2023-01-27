@@ -1,4 +1,4 @@
-
+"""Source file parsing for diagnosis/outcome data."""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser

@@ -1,4 +1,4 @@
-
+"""Source file parsing for sample-level metadata."""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser

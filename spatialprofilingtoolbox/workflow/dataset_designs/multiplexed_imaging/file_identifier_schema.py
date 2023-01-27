@@ -1,4 +1,7 @@
-
+"""
+Convenience function for locating files listed in a file manifest describing
+an importable CSV/TSV bundle.
+"""
 from typing import Optional
 
 import pandas as pd

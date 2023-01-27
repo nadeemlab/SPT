@@ -1,3 +1,4 @@
+"""The entry point into `spt` CLI commands."""
 import argparse
 import sys
 import subprocess

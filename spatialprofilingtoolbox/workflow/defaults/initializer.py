@@ -1,3 +1,6 @@
+"""
+Basic interface for the initializer pattern for Nextflow workflows.
+"""
 from abc import ABC, abstractmethod
 
 

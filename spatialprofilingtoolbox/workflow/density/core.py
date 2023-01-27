@@ -1,3 +1,4 @@
+"""Core/parallelizable functionality for the phenotype density workflow."""
 import sqlite3
 
 import pandas as pd

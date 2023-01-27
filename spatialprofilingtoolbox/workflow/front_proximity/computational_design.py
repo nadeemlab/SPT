@@ -1,4 +1,4 @@
-
+"""The parameters of the overall design of the front proximity workflow."""
 from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
 
 

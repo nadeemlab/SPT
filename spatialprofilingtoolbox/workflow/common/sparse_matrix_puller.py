@@ -1,4 +1,7 @@
-
+"""
+Retrieve the "feature matrix" for a given study from the database, and store
+it in a special (in-memory) binary compressed format.
+"""
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

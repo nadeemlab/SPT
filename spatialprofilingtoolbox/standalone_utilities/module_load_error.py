@@ -1,4 +1,6 @@
-
+"""
+Convenience exception for notifying user of intended installation procedures.
+"""
 class SuggestExtrasException:
     def __init__(self, module_not_found_error, extras_section):
         self.suggest_extras(extras_section)

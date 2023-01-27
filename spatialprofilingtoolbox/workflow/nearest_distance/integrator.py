@@ -1,3 +1,6 @@
+"""
+The wrap-up functionality of the nearest distance to compartment workflow.
+"""
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

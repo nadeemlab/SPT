@@ -1,3 +1,4 @@
+"""CLI utility to configure an SPT workflow run."""
 import argparse
 import os
 from os import getcwd

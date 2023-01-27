@@ -1,3 +1,7 @@
+"""
+A convenience reporter of time performance. Keeps track of time used by
+specific named processes and reports an aggregation as a text table.
+"""
 import time
 
 import pandas as pd

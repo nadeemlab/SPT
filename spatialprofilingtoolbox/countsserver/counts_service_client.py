@@ -1,3 +1,4 @@
+"""The TCP client for the fast cell counts service."""
 import re
 import json
 import socket

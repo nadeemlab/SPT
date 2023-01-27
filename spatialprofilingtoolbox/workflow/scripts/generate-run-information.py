@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+"""
+CLI entry point into the "job generator" component of a given Nextflow-managed
+workflow. This component creates a manifest of the parallelizable jobs for
+Nextflow to run.
+"""
 import argparse
 from os.path import exists
 

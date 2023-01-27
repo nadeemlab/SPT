@@ -1,3 +1,6 @@
+"""
+Interface class for the core/parallelizable functions of a given workflow.
+"""
 from os.path import getsize
 import re
 from abc import ABC, abstractmethod

@@ -1,4 +1,4 @@
-
+"""The main data import workflow."""
 from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import WorkflowModules
 
 from \

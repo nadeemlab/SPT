@@ -1,4 +1,4 @@
-
+"""Retrieve outcome data for all studies."""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker

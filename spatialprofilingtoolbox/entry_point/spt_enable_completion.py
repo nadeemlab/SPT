@@ -1,3 +1,4 @@
+"""A utility to install bash completions for `spt`."""
 import importlib.resources
 from os.path import expanduser
 from os.path import join

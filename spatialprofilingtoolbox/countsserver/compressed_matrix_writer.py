@@ -1,3 +1,7 @@
+"""
+Utility for writing expression matrices in a specially-compressed binary
+format.
+"""
 import re
 import random
 import json

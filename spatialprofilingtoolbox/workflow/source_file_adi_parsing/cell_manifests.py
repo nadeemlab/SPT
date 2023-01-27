@@ -1,3 +1,4 @@
+"""Source file parsing for cell-level data."""
 from io import BytesIO as StringIO
 import base64
 import mmap

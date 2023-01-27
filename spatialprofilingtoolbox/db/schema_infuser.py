@@ -1,3 +1,7 @@
+"""
+Utility to write the single-cell studies "ADI" SQL schema, plus performance-
+and SPT-related tweaks, into a Postgresql instance.
+"""
 import importlib.resources
 import re
 from typing import Optional

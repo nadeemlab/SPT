@@ -1,3 +1,6 @@
+"""
+CLI wrapper around compartment-parsing functionality. Likely to be deprecated.
+"""
 import argparse
 
 

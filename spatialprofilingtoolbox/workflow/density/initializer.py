@@ -1,4 +1,4 @@
-
+"""Initializer functionality for the phenotype density workflow."""
 from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
 
 

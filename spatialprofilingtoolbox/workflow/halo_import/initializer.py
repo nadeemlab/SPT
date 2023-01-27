@@ -1,4 +1,4 @@
-
+"""The initializer of the main data import workflow."""
 from typing import Optional
 
 from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer

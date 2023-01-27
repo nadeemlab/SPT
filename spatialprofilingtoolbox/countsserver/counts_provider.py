@@ -1,3 +1,7 @@
+"""
+Do cell counting for a specific signature, over the specially-created
+binary-format index.
+"""
 import re
 import os
 from os.path import join

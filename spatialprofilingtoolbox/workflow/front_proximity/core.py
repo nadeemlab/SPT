@@ -1,3 +1,4 @@
+"""The core/parallelizable module for the front proximity workflow."""
 import sqlite3
 
 from scipy.spatial import KDTree

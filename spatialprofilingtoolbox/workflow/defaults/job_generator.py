@@ -1,3 +1,7 @@
+"""
+Interface class for the functionality of creating a manifest of the
+parallelizable jobs to be done as part of a given workflow.
+"""
 from os.path import join
 from os.path import exists
 from typing import Optional

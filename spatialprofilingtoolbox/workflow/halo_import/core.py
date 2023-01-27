@@ -1,3 +1,4 @@
+"""The core/parallelizable functionality of the main data import workflow."""
 import sqlite3
 
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob

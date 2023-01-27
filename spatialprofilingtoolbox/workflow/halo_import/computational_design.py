@@ -1,4 +1,4 @@
-
+"""The design parameters of the main data import workflow."""
 from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
 
 

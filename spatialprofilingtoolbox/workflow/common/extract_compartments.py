@@ -1,3 +1,7 @@
+"""
+Extract or create dummy compartment information for a study. Likely to be
+deprecated.
+"""
 import csv
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

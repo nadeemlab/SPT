@@ -1,3 +1,4 @@
+"""Utility to report basic health/status of the SPT database."""
 import argparse
 from os.path import exists
 from os.path import abspath

@@ -1,3 +1,7 @@
+"""
+The core/parallelizable functionality of the nearest distance to compartment
+workflow.
+"""
 import sqlite3
 
 import pandas as pd

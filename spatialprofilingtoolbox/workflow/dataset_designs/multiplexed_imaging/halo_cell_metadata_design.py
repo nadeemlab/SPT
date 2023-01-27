@@ -1,3 +1,7 @@
+"""
+Design parameters for a dataset (often HALO generated) to be imported by the
+main import workflow.
+"""
 import pathlib
 import re
 from typing import Optional

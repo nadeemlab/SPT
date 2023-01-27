@@ -1,3 +1,7 @@
+"""
+A light interface to a sqlite database, used by some legacy Nextflow workflow
+functions.
+"""
 import sqlite3
 import time
 

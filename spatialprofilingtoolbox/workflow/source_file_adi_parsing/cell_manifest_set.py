@@ -1,3 +1,4 @@
+"""Source file parsing for metadata at the level of a set of cell manifests."""
 from os.path import getsize
 import re
 

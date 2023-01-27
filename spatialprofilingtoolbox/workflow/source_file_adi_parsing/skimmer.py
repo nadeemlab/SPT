@@ -1,4 +1,4 @@
-
+"""Source file parsing into the single-cell ADI schema."""
 import importlib.resources
 import re
 from typing import Optional

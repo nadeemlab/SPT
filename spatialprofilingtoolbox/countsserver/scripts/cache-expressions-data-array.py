@@ -1,3 +1,6 @@
+"""
+Pull expression data from SPT database and store as compressed binary cache.
+"""
 import argparse
 from os.path import abspath
 from os.path import expanduser

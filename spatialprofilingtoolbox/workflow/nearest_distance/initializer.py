@@ -1,4 +1,4 @@
-
+"""The initializer of the nearest distance to compartment workflow."""
 from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
 
 

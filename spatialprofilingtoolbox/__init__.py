@@ -1,3 +1,4 @@
+"""Spatial Profiling Toolbox python package."""
 import re
 import pkgutil
 

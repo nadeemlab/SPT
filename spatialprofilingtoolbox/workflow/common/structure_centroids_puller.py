@@ -1,3 +1,4 @@
+"""Retrieves positional information for all cells in the SPT database."""
 import statistics
 
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points

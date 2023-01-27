@@ -1,3 +1,8 @@
+"""
+Convenience uploader of feature data into SPT database tables that comprise
+a sparse representation of the features. Abstracts (wraps) the actual SQL
+queries.
+"""
 import importlib.resources
 
 import pandas as pd

@@ -1,3 +1,4 @@
+"""Source file parsing regarding sample-level cohort identification."""
 import re
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

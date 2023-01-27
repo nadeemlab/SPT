@@ -1,4 +1,7 @@
-
+"""
+Interface for a class meant to describe the design of the overall workflow,
+for a given workflow.
+"""
 from typing import Optional
 
 import pandas as pd

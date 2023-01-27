@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+"""A convenience utility to merge sqlite databases with the same schema."""
 from os.path import exists
 import sqlite3
 import re

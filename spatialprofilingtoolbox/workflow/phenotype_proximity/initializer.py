@@ -1,4 +1,4 @@
-
+"""The initializer for the phenotype proximity workflow."""
 from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
 
 

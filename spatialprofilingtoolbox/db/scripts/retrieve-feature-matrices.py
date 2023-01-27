@@ -1,3 +1,7 @@
+"""
+Convenience CLI wrapper of FeatureMatrixExtractor functionality, writes to
+files.
+"""
 import argparse
 import json
 from os.path import exists

@@ -1,3 +1,4 @@
+"""Do execution of a SQL statement and log the activity."""
 import importlib.resources
 from typing import Optional
 

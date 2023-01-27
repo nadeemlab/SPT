@@ -1,3 +1,4 @@
+"""Entry point into the fast cell counts TCP server."""
 import argparse
 import json
 import socketserver

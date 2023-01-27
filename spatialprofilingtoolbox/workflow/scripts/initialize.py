@@ -1,3 +1,4 @@
+"""Invoker of the initialize phase of a Nextflow-managed workflow."""
 import argparse
 
 from spatialprofilingtoolbox import get_workflow

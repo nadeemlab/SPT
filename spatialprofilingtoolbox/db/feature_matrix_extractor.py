@@ -1,4 +1,7 @@
-
+"""
+Convenience provision of a feature matrix for each study, the data retrieved
+from the SPT database.
+"""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker

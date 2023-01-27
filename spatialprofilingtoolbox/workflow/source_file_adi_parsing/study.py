@@ -1,3 +1,4 @@
+"""Source file parsing for overall study/project metadata."""
 import json
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser

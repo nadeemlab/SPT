@@ -1,3 +1,7 @@
+"""
+CLI utility to infuse the single-cell ADI schema into a given Postgresql
+instance.
+"""
 import argparse
 from os.path import exists
 from os.path import abspath

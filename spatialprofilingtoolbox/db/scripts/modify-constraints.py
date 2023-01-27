@@ -1,3 +1,7 @@
+"""
+Utility to drop or recreate certain constraints in the single-cell ADI SQL
+schema. Used to boost performance of certain operations.
+"""
 import argparse
 from os.path import exists
 from os.path import abspath

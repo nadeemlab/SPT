@@ -80,10 +80,10 @@ def record_configuration_command(variables):
         file.write('#!/bin/sh\n\n')
         file.write('nextflow run .\n')
 
-    st = os.stat('configure.sh')
-    os.chmod('configure.sh', st.st_mode | stat.S_IEXEC)
-    st = os.stat('run.sh')
-    os.chmod('run.sh', st.st_mode | stat.S_IEXEC)
+    file_stat = os.stat('configure.sh')
+    os.chmod('configure.sh', file_stat.st_mode | stat.S_IEXEC)
+    file_stat = os.stat('run.sh')
+    os.chmod('run.sh', file_stat.st_mode | stat.S_IEXEC)
 
 
 if __name__ == '__main__':
@@ -147,13 +147,16 @@ if __name__ == '__main__':
     try:
         import jinja2
         from \
-            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+            spatialprofilingtoolbox.workflow.dataset_designs\
+            .multiplexed_imaging.file_identifier_schema \
             import DEFAULT_FILE_MANIFEST_FILENAME
         from \
-            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+            spatialprofilingtoolbox.workflow.dataset_designs.\
+            multiplexed_imaging.file_identifier_schema \
             import get_input_filename_by_identifier
         from \
-            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+            spatialprofilingtoolbox.workflow.dataset_designs.\
+            multiplexed_imaging.file_identifier_schema \
             import get_input_filenames_by_data_type
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')

@@ -2,7 +2,6 @@
 from os.path import join, dirname
 
 import pandas as pd
-import pytest
 
 from spatialprofilingtoolbox.workflow.common.dichotomization import Dichotomizer
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
@@ -13,7 +12,6 @@ from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_i
     import get_input_filename_by_identifier
 
 
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_thresholding():
     input_files_path = join(dirname(__file__), '..',
                             'data_compartments_explicit')

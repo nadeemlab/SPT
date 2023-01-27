@@ -3,4 +3,4 @@ disable=
     C0116
 
 [BASIC]
-good-names=df
+good-names=df, i, j, k

@@ -109,16 +109,16 @@ packages = [
 [tool.setuptools.package-data]
 "spatialprofilingtoolbox.entry_point" = ["spt-completion.sh.jinja"]
 "spatialprofilingtoolbox.workflow.scripts" = [
-    "aggregate-core-results.py",
-    "core-job.py",
-    "extract-compartments.py",
-    "generate-run-information.py",
+    "aggregate_core_results.py",
+    "core_job.py",
+    "extract_compartments.py",
+    "generate_run_information.py",
     "initialize.py",
-    "merge-performance-reports.py",
-    "merge-sqlite-dbs.py",
-    "report-run-configuration.py",
+    "merge_performance_reports.py",
+    "merge_sqlite_dbs.py",
+    "report_run_configuration.py",
     "configure.py",
-    "report-on-logs.py"
+    "report_on_logs.py"
 ]
 "spatialprofilingtoolbox.workflow.workflows" = [
     "main.nf.jinja"
@@ -131,16 +131,16 @@ packages = [
     "main.nf.jinja"
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [
-    "read-expression-dump-file.py",
-    "cache-expressions-data-array.py",
+    "read_expression_dump_file.py",
+    "cache_expressions_data_array.py",
     "start.py"
 ]
 "spatialprofilingtoolbox.db.scripts" = [
-    "create-schema.py",
-    "modify-constraints.py",
-    "guess-channels-from-object-files.py",
+    "create_schema.py",
+    "modify_constraints.py",
+    "guess_channels_from_object_files.py",
     "status.py",
-    "retrieve-feature-matrices.py"
+    "retrieve_feature_matrices.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",

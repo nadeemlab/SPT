@@ -20,13 +20,21 @@ def get_commands(submodule_name):
         for entry in (files / 'scripts').iterdir()
     ]
     return sorted([
-        re.sub(r'\.(py|sh)$', '', script.group(1))
+        re.sub(r'\.(py|sh)$', '', underscore_to_hyphen(script.group(1)))
         for script in scripts
         if script and (not re.search(r'^__.*__(\.py)?$', script.group(1)))
     ])
 
 
-def get_executable_and_script(submodule_name, script_name):
+def underscore_to_hyphen(string, inverse=False):
+    if not inverse:
+        return re.sub('_', '-', string)
+    else:
+        return re.sub('-', '_', string)
+
+
+def get_executable_and_script(submodule_name, script_name_hyphenated):
+    script_name = underscore_to_hyphen(script_name_hyphenated, inverse=True)
     full_script_name = None
     if importlib.resources.is_resource(f'spatialprofilingtoolbox.{submodule_name}.scripts',
                                        f'{script_name}.py'):

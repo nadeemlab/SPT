@@ -8,6 +8,7 @@ logger = colorized_logger(__name__)
 
 
 class ChannelsPhenotypesParser(SourceToADIParser):
+    """Source file parsing for imaging/feature-assessment channel metadata."""
     def parse(self,
               connection,
               fields,
@@ -105,7 +106,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         initial_value = identifier
         cell_phenotype_identifiers_by_symbol = {}
         number_criterion_records = 0
-        for i, phenotype in composite_phenotypes.iterrows():
+        for _, phenotype in composite_phenotypes.iterrows():
             symbol = phenotype['Name']
             record = (str(identifier), symbol, symbol)
             was_found, key = self.check_exists(
@@ -133,7 +134,8 @@ class ChannelsPhenotypesParser(SourceToADIParser):
             )
             if len(missing) > 0:
                 logger.warning(
-                    'Markers %s are part of phenotype %s but do not represent any known "chemical_species". This marker is skipped.',
+                    'Markers %s are part of phenotype %s but do not represent '
+                    'any known "chemical_species". This marker is skipped.',
                     missing,
                     record,
                 )

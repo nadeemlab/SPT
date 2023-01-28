@@ -8,6 +8,7 @@ logger = colorized_logger(__name__)
 
 
 class InterventionsParser(SourceToADIParser):
+    """Source file parsing for treatment/intervention event metadata."""
     def parse(self, connection, fields, interventions_file):
         cursor = connection.cursor()
 

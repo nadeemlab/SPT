@@ -7,6 +7,10 @@ logger = colorized_logger(__name__)
 
 
 class SampleStratificationCreator:
+    """
+    Create a simplified sample stratification (cohort definition) for the
+    samples across all studies.
+    """
     insert_assignment = '''
     INSERT INTO sample_strata
     ( stratum_identifier,
@@ -100,12 +104,12 @@ class SampleStratificationCreator:
     @staticmethod
     def get_diagnostic_state(extraction_date, diagnoses):
         logger.debug('Diagnoses:')
-        for d in diagnoses:
-            logger.debug(str(d))
+        for diagnosis in diagnoses:
+            logger.debug(str(diagnosis))
         logger.debug('Dates considered: %s', [
-                     extraction_date] + [d[2] for d in diagnoses])
+                     extraction_date] + [diagnosis[2] for diagnosis in diagnoses])
         valuation_function = SampleStratificationCreator.get_date_valuation(
-            [extraction_date] + [d[2] for d in diagnoses])
+            [extraction_date] + [diagnosis[2] for diagnosis in diagnoses])
         sequence = sorted(diagnoses, key=lambda x: valuation_function(x[2]))
         influenced_diagnoses = []
 
@@ -139,7 +143,7 @@ class SampleStratificationCreator:
             return float(date)
 
         def timepoint_extractor(date):
-            match = re.search('timepoint [\d]+$', date)
+            match = re.search(r'timepoint [\d]+$', date)
             if match:
                 return match.group()
             else:
@@ -156,7 +160,7 @@ class SampleStratificationCreator:
         try:
             valuation(string)
             return True
-        except:
+        except ValueError:
             return False
 
     @staticmethod

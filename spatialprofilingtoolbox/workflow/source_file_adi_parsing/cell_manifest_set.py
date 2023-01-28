@@ -15,6 +15,7 @@ logger = colorized_logger(__name__)
 
 
 class CellManifestSetParser(SourceToADIParser):
+    """Parse source files containing metadata at level of cell manifest set."""
     def parse(self, connection, fields, file_manifest_file, study_name):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source
@@ -81,7 +82,7 @@ class CellManifestSetParser(SourceToADIParser):
                 ),
             )
             match = re.search(
-                '\.([a-zA-Z0-9]{1,8})$', cell_manifest['File name'])
+                r'\.([a-zA-Z0-9]{1,8})$', cell_manifest['File name'])
             if match:
                 file_format = match.groups(1)[0].upper()
             else:

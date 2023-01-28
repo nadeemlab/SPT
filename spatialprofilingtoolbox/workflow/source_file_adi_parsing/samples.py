@@ -10,6 +10,7 @@ logger = colorized_logger(__name__)
 
 
 class SamplesParser(SourceToADIParser):
+    """Source file parsing for sample-level metadata."""
     def parse(self, connection, fields, samples_file, study_name):
         """
         Retrieve the samples information and parse records for:

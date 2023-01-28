@@ -9,6 +9,7 @@ logger = colorized_logger(__name__)
 
 
 class HALOImportInitializer(Initializer):
+    """Initial process for main data import workflow; does most of the import."""
     def __init__(self,
                  file_manifest_file=None,
                  elementary_phenotypes_file=None,

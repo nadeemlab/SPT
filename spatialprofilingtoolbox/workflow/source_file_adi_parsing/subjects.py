@@ -8,6 +8,7 @@ logger = colorized_logger(__name__)
 
 
 class SubjectsParser(SourceToADIParser):
+    """Parse source files containing subject-level metadata."""
     def parse(self, connection, fields, subjects_file):
         """
         Retrieve SUBJECT data in the same way that the main workflows do, and parse

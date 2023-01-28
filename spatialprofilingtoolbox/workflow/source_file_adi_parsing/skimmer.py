@@ -28,6 +28,10 @@ logger = colorized_logger(__name__)
 
 
 class DataSkimmer(DatabaseConnectionMaker):
+    """
+    Orchestration of source file parsing into single cell ADI schema database
+    for a bundle of source files.
+    """
     def __init__(self, database_config_file: Optional[str] = None, db_backend=DBBackend.POSTGRES):
         if db_backend != DBBackend.POSTGRES:
             raise ValueError('Only DBBackend.POSTGRES is supported.')
@@ -37,7 +41,7 @@ class DataSkimmer(DatabaseConnectionMaker):
         self.record_counts = {}
 
     def normalize(self, name):
-        return re.sub('[ \-]', '_', name).lower()
+        return re.sub(r'[ \-]', '_', name).lower()
 
     def retrieve_record_counts(self, cursor, fields):
         record_counts = {}
@@ -69,8 +73,9 @@ class DataSkimmer(DatabaseConnectionMaker):
             difference = changes[table]
             sign = '+' if difference >= 0 else '-'
             absolute_difference = difference if difference > 0 else -1*difference
-            difference_str = "{:<13}".format(f'{sign}{absolute_difference}')
-            logger.debug('%s %s', difference_str, table)
+            difference_str = f'{sign}{absolute_difference}'
+            padded = f"{difference_str:<13}"
+            logger.debug('%s %s', padded, table)
 
     def parse(
         self,
@@ -85,7 +90,7 @@ class DataSkimmer(DatabaseConnectionMaker):
         study_file=None,
         diagnosis_file=None,
         interventions_file=None,
-        **kwargs,
+        **kwargs, # pylint: disable=unused-argument
     ):
         if not self.is_connected():
             logger.debug(
@@ -138,7 +143,6 @@ class DataSkimmer(DatabaseConnectionMaker):
         )
         CellManifestsParser().parse(
             self.get_connection(),
-            fields,
             dataset_design,
             computational_design,
             file_manifest_file,

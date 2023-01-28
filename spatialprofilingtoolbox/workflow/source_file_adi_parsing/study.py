@@ -8,6 +8,7 @@ logger = colorized_logger(__name__)
 
 
 class StudyParser(SourceToADIParser):
+    """Parse source files containing study-level metadata."""
     def cautious_insert(self, tablename, record, cursor, fields, no_primary=True):
         was_found, _ = self.check_exists(
             tablename, record, cursor, fields, no_primary=no_primary)
@@ -29,9 +30,9 @@ class StudyParser(SourceToADIParser):
         record = (study['Study name'], study['Institution'])
         self.cautious_insert('study', record, cursor, fields)
 
-        for p in study['People']:
-            record = (p['Full name'], p['Surname'],
-                      p['Given name'], p['ORCID'])
+        for person in study['People']:
+            record = (person['Full name'], person['Surname'],
+                      person['Given name'], person['ORCID'])
             self.cautious_insert('research_professional',
                                  record, cursor, fields)
 

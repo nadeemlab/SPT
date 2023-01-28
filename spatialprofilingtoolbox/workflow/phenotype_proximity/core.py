@@ -82,7 +82,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         :type table_file: pandas.DataFrame
         """
         fovs = sorted(
-            list(set(table_file[self.dataset_design.get_FOV_column(table=table_file)])))
+            list(set(table_file[self.dataset_design.get_fov_column(table=table_file)])))
         for i, fov in enumerate(fovs):
             self.fov_lookup[i] = fov
 
@@ -91,7 +91,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         :param table_file: Table with cell data.
         :type table_file: pandas.DataFrame
         """
-        fov_column = self.dataset_design.get_FOV_column(table=table_file)
+        fov_column = self.dataset_design.get_fov_column(table=table_file)
         fovs = sorted(list(set(table_file[fov_column])))
         for i, fov in enumerate(fovs):
             table_file.loc[table_file[fov_column] == fov, fov_column] = i
@@ -195,7 +195,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             phenotype: 0 for phenotype in phenotype_names}
         self.timer.record_timepoint('Started grouping by FOV')
         grouped = table_file.groupby(
-            self.dataset_design.get_FOV_column(table=table_file))
+            self.dataset_design.get_fov_column(table=table_file))
         self.timer.record_timepoint('Finished grouping by FOV')
         for fov_index, table_fov in grouped:
             self.timer.record_timepoint('Started one FOV cell table iteration')

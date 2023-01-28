@@ -82,13 +82,13 @@ class FrontProximityCoreJob(CoreJob):
 
         # Cache original (*normalized) FOV strings
         self.fov_lookup = {}
-        col = self.dataset_design.get_FOV_column()
+        col = self.dataset_design.get_fov_column()
         fovs = sorted(list(set(df_file[col])))
         for i, fov in enumerate(fovs):
             self.fov_lookup[i] = fov
 
         # Replace original FOV string descriptor with index
-        col = self.dataset_design.get_FOV_column()
+        col = self.dataset_design.get_fov_column()
         fovs = sorted(list(set(df_file[col])))
         for i, fov in enumerate(fovs):
             df_file.loc[df_file[col] == fov, col] = i
@@ -147,7 +147,7 @@ class FrontProximityCoreJob(CoreJob):
 
             # Convert column names into normal form as stipulated by this module
             df.rename(columns=inverse, inplace=True)
-            df.rename(columns={self.dataset_design.get_FOV_column(
+            df.rename(columns={self.dataset_design.get_fov_column(
             ): 'field of view index'}, inplace=True)
             cells[(filename, fov_index)] = df
 

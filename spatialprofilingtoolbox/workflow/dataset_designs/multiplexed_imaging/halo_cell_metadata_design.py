@@ -22,7 +22,7 @@ class HALOCellMetadataDesign:
     def __init__(self,
                  elementary_phenotypes_file: Optional[str] = None,
                  compartments_file: Optional[str] = None,
-                 **kwargs,
+                 **kwargs, # pylint: disable=unused-argument
                  ):
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
@@ -47,7 +47,7 @@ class HALOCellMetadataDesign:
             required=True,
         )
 
-    def get_FOV_column(self, table=None):
+    def get_fov_column(self, table=None):
         """
         Returns:
             str:
@@ -87,7 +87,7 @@ class HALOCellMetadataDesign:
         :param table: Dataframe containing a field of view descriptor column.
         :type table: pandas.DataFrame
         """
-        column = self.get_FOV_column(table=table)
+        column = self.get_fov_column(table=table)
         table[column] = table[column].apply(self.normalize_fov_descriptor)
 
     def normalize_fov_descriptor(self, fov):
@@ -390,7 +390,7 @@ class HALOCellMetadataDesign:
         feature = [' '.join([prefix, suffix]) for suffix in suffixes]
         return list(table[feature[0]] + table[feature[1]] + table[feature[2]])
 
-    def add_combined_intensity_column(self, table, elementary_phenotype):
+    def add_combined_intensity_column(self, table):
         for phenotype in self.get_elementary_phenotype_names():
             column = self.get_intensity_column_name(phenotype)
             table[column] = self.get_combined_intensity(table, phenotype)

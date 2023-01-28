@@ -120,7 +120,7 @@ class DensityCoreJob(CoreJob):
         self.timer.record_timepoint(
             'Finished normalizing FOV strings in place')
 
-        col = self.dataset_design.get_FOV_column()
+        col = self.dataset_design.get_fov_column()
         fovs = sorted(list(set(table_file[col])))
         for i, fov in enumerate(fovs):
             fov_lookup[(sample_identifier, i)] = fov
@@ -170,7 +170,7 @@ class DensityCoreJob(CoreJob):
 
             pertinent_columns = [
                 'sample_identifier',
-                self.dataset_design.get_FOV_column(),
+                self.dataset_design.get_fov_column(),
                 'outcome_assignment',
                 'compartment',
                 self.dataset_design.get_cell_area_column(),
@@ -179,7 +179,7 @@ class DensityCoreJob(CoreJob):
             table = table[pertinent_columns]
             self.timer.record_timepoint('Restricted copy to subset of columns')
             table.rename(columns={
-                self.dataset_design.get_FOV_column(): 'fov_index',
+                self.dataset_design.get_fov_column(): 'fov_index',
                 self.dataset_design.get_cell_area_column(): 'cell_area',
             }, inplace=True)
 

@@ -16,6 +16,10 @@ logger = colorized_logger(__name__)
 
 
 class NearestDistanceCoreJob(CoreJob):
+    """
+    Core/parellelizable functionality for the nearest distance to a compartment
+    workflow.
+    """
     def __init__(self, **kwargs):
         super(NearestDistanceCoreJob, self).__init__(**kwargs)
 
@@ -246,17 +250,17 @@ class NearestDistanceCoreJob(CoreJob):
         uri = self.computational_design.get_database_uri()
         connection = sqlite3.connect(uri)
         cells.reset_index(drop=True, inplace=True)
-        c = cells.columns
+        cells_columns = cells.columns
         schema_columns = self.computational_design.get_cells_header(
             style='sql')
-        if all([c[i] == schema_columns[i][0] for i in range(len(c))]):
+        if all([cells_columns[i] == schema_columns[i][0] for i in range(len(cells_columns))]):
             logger.debug(
                 'Cells table to be written has correct (normalized, ordered) sql-style header '
                 'values.')
         else:
             logger.debug(
                 'Cells table to be written has INCORRECT sql-style header values.')
-            if set(c) == set(schema_columns):
+            if set(cells_columns) == set(schema_columns):
                 logger.debug(
                     'At least the sets are the same, only the order is wrong.')
             logger.error('Cannot write cell table with wrong headers.')

@@ -275,7 +275,7 @@ class CellManifestsParser(SourceToADIParser):
             if RECORD_PERFORMANCE:
                 timer.record_timepoint('Completed cell manifest parsing')
                 logger.debug('Performance report %s:\n%s', file_count,
-                             timer.report(as_string=True, by='total time spent'))
+                             timer.report(as_string=True, organize_by='total time spent'))
                 file_count += 1
             connection.commit()
 

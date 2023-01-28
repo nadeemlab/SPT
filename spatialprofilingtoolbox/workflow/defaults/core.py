@@ -9,7 +9,7 @@ from typing import Optional
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.common.file_io import raw_line_count
-from spatialprofilingtoolbox.workflow.common.dichotomization import Dichotomizer
+from spatialprofilingtoolbox.workflow.common.dichotomization import dichotomize
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -17,6 +17,9 @@ logger = colorized_logger(__name__)
 
 
 class CoreJob(ABC):
+    """
+    Default/interface for the various workflows' core (parallelizable) jobs.
+    """
     def __init__(
         self,
         dataset_design=None,
@@ -25,7 +28,7 @@ class CoreJob(ABC):
         input_filename: Optional[str] = None,
         sample_identifier: Optional[str] = None,
         outcome: Optional[str] = None,
-        **kwargs
+        **kwargs # pylint: disable=unused-argument
     ):
         """
         :param dataset_design: Design object providing metadata about the *kind* of
@@ -71,7 +74,7 @@ class CoreJob(ABC):
         """
         Concludes low-level performance metric collection for this job.
         """
-        df = self.timer.report(by='fraction')
+        df = self.timer.report(organize_by='fraction')
         df.to_csv(
             self.computational_design.get_performance_report_filename(), index=False)
 
@@ -95,7 +98,7 @@ class CoreJob(ABC):
                 if not intensity in table.columns:
                     self.dataset_design.add_combined_intensity_column(
                         table, phenotype)
-                Dichotomizer.dichotomize(
+                dichotomize(
                     phenotype,
                     table,
                     dataset_design=self.dataset_design,

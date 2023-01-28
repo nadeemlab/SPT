@@ -24,5 +24,5 @@ if __name__ == '__main__':
     expected = [517, 172, 707, 158]
     for comparison in zip(responses, expected, cases):
         if comparison[0] != comparison[1]:
-            print('Incorrect response: %s' % str(comparison))
+            print(f'Incorrect response: {comparison}')
             raise Exception("Incorrect cell count in an edge case.")

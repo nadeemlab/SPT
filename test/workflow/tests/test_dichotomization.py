@@ -57,7 +57,7 @@ def test_thresholding():
             }
             rows.append(row)
         print('')
-        print('In file %s' % filename)
+        print(f'In file {filename}')
         print(pd.DataFrame(rows))
 
 

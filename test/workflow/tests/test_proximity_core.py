@@ -49,10 +49,10 @@ correct_answers = {
 }
 
 
-def normalize_path_in_record(r):
-    r2 = list(r)
-    r2[1] = '.'
-    return tuple(r2)
+def normalize_path_in_record(record):
+    record_normalized = list(record)
+    record_normalized[1] = '.'
+    return tuple(record_normalized)
 
 
 def normalize_path_in_all_records(records):
@@ -103,25 +103,25 @@ def test_proximity_counting():
         cell_pairs = calc.create_cell_pairs_tables(cells)
         phenotype_indices, compartment_indices = calc.precalculate_masks(cells)
 
-        a = calc.do_aggregation_one_phenotype_pair(
+        aggregated = calc.do_aggregation_one_phenotype_pair(
             ['FOXP3+', 'CD3+'],
             cell_pairs,
             phenotype_indices,
             compartment_indices,
         )
         if set(normalize_path_in_all_records(correct_answers['group 1'])) != \
-                set(normalize_path_in_all_records([tuple(l) for l in a])):
+                set(normalize_path_in_all_records([tuple(l) for l in aggregated])):
             print('Incorrect proximity counts in group 1.')
             raise ValueError
 
-        a = calc.do_aggregation_one_phenotype_pair(
+        aggregated = calc.do_aggregation_one_phenotype_pair(
             ['FOXP3+', 'PDL1+'],
             cell_pairs,
             phenotype_indices,
             compartment_indices,
         )
         if set(normalize_path_in_all_records(correct_answers['group 2'])) != \
-                set(normalize_path_in_all_records([tuple(l) for l in a])):
+                set(normalize_path_in_all_records([tuple(l) for l in aggregated])):
             print('Incorrect proximity counts in group 2.')
             raise ValueError
     else:
@@ -129,7 +129,7 @@ def test_proximity_counting():
         cell_trees = calc.create_cell_trees(cells)
         phenotype_indices, compartment_indices = calc.precalculate_masks(cells)
 
-        a = calc.do_aggregation_one_phenotype_pair(
+        aggregated = calc.do_aggregation_one_phenotype_pair(
             ['FOXP3+', 'CD3+'],
             cells,
             cell_trees,
@@ -137,18 +137,19 @@ def test_proximity_counting():
             compartment_indices,
         )
         if set(normalize_path_in_all_records(correct_answers['group 1'])) != \
-                set(normalize_path_in_all_records([tuple(l) for l in a])):
+                set(normalize_path_in_all_records([tuple(l) for l in aggregated])):
             print('Incorrect proximity counts in group 1.')
             print('Got:')
-            for l in sorted(normalize_path_in_all_records(a)):
-                print(tuple(l))
+            for normalized_path in sorted(normalize_path_in_all_records(aggregated)):
+                print(tuple(normalized_path))
             print('')
             print('Expected:')
-            for l in sorted(normalize_path_in_all_records(correct_answers['group 1'])):
-                print(tuple(l))
+            for normalized_path in sorted(normalize_path_in_all_records(correct_answers['group 1']
+                                                                        )):
+                print(tuple(normalized_path))
             raise ValueError
 
-        a = calc.do_aggregation_one_phenotype_pair(
+        aggregated = calc.do_aggregation_one_phenotype_pair(
             ['FOXP3+', 'PDL1+'],
             cells,
             cell_trees,
@@ -156,7 +157,7 @@ def test_proximity_counting():
             compartment_indices,
         )
         if set(normalize_path_in_all_records(correct_answers['group 2'])) != \
-                set(normalize_path_in_all_records([tuple(l) for l in a])):
+                set(normalize_path_in_all_records([tuple(l) for l in aggregated])):
             print('Incorrect proximity counts in group 2.')
             raise ValueError
 

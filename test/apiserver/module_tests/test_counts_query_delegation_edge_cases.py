@@ -3,27 +3,28 @@ import json
 from urllib.parse import quote
 import subprocess
 
-study_name = quote('Melanoma intralesional IL2')
-positive_markers = quote('\t'.join(['CD3', 'CD4', 'CD8']))
-negative_markers = ''
-endpoint = 'anonymous-phenotype-counts-fast'
-host = 'spt-apiserver-testing'
-port = 8080
+STUDY_NAME = quote('Melanoma intralesional IL2')
+POSITIVE_MARKERS = quote('\t'.join(['CD3', 'CD4', 'CD8']))
+NEGATIVE_MARKERS = ''
+ENDPOINT = 'anonymous-phenotype-counts-fast'
+HOST = 'spt-apiserver-testing'
+PORT = 8080
 
 cases = [
-    (host, port, endpoint, study_name, positive_markers, negative_markers, 7),
-    (host, port, endpoint, study_name, negative_markers, positive_markers, 359),
+    (HOST, PORT, ENDPOINT, STUDY_NAME, POSITIVE_MARKERS, NEGATIVE_MARKERS, 7),
+    (HOST, PORT, ENDPOINT, STUDY_NAME, NEGATIVE_MARKERS, POSITIVE_MARKERS, 359),
 ]
 
 for host, port, endpoint, study_name, positive_markers, negative_markers, expected in cases:
-    url = 'http://%s:%s/%s/?study=%s&positive_markers_tab_delimited=%s&negative_markers_tab_delimited=%s' % (
-        host, port, endpoint, study_name, positive_markers, negative_markers)
+    url = f'http://{host}:{port}/{endpoint}/?study={study_name}&'\
+        f'positive_markers_tab_delimited={positive_markers}&'\
+        f'negative_markers_tab_delimited={negative_markers}'
     result = subprocess.run(['curl', '-s', url],
-                            capture_output=True, encoding='UTF-8').stdout
+                            capture_output=True, encoding='UTF-8', check=True).stdout
     counts = json.loads(result)
     phenotype_total = sum([row['phenotype count']
                           for row in counts['phenotype counts']['per specimen counts']])
     total = counts['phenotype counts']['total number of cells in all specimens of study']
     print(total)
     if phenotype_total != expected:
-        raise Exception('Got wrong number: %s' % phenotype_total)
+        raise Exception(f'Got wrong number: {phenotype_total}')

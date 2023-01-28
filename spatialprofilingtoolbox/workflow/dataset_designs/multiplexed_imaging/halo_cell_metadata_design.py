@@ -88,9 +88,9 @@ class HALOCellMetadataDesign:
         :type table: pandas.DataFrame
         """
         column = self.get_fov_column(table=table)
-        table[column] = table[column].apply(self.normalize_fov_descriptor)
+        table[column] = table[column].apply(self._normalize_fov_descriptor)
 
-    def normalize_fov_descriptor(self, fov):
+    def _normalize_fov_descriptor(self, fov):
         """
         Returns an normalized path string (file basename).
 
@@ -121,10 +121,6 @@ class HALOCellMetadataDesign:
     @staticmethod
     def get_compartment_column_name():
         return 'Classifier Label'
-
-    @staticmethod
-    def get_compartment_file_identifier():
-        return 'Compartments list'
 
     def get_compartments(self):
         """
@@ -159,7 +155,7 @@ class HALOCellMetadataDesign:
         ymax = 'YMax'
         return [xmin, xmax, ymin, ymax]
 
-    def get_indicator_prefix(self,
+    def _get_indicator_prefix(self,
                              phenotype_name,
                              metadata_file_column='Column header fragment prefix'):
         """
@@ -175,12 +171,12 @@ class HALOCellMetadataDesign:
                 The prefix which appears in many CSV column names, for which these
                 columns pertain to the given phenotype.
         """
-        e = self.elementary_phenotypes
-        row = e.loc[e['Name'] == phenotype_name].squeeze()
+        channels = self.elementary_phenotypes
+        row = channels.loc[channels['Name'] == phenotype_name].squeeze()
         value = row[metadata_file_column]
         return str(value)
 
-    def get_cellular_sites(self):
+    def _get_cellular_sites(self):
         """
         Returns:
             list:
@@ -197,21 +193,21 @@ class HALOCellMetadataDesign:
                 columns which are channel intensities along a given cellular site.
         """
         columns_by_elementary_phenotype = {}
-        sites = self.get_cellular_sites()
+        sites = self._get_cellular_sites()
         if not with_sites:
             sites = ['']
         for site in sites:
-            for e in sorted(list(self.elementary_phenotypes['Name'])):
+            for i in sorted(list(self.elementary_phenotypes['Name'])):
                 # parts = []
-                prefix = self.get_indicator_prefix(e)
+                prefix = self._get_indicator_prefix(i)
                 infix = site
                 suffix = 'Intensity'
                 if site == '':
                     column = prefix + ' ' + suffix
-                    key = e + ' ' + 'intensity'
+                    key = i + ' ' + 'intensity'
                 else:
                     column = prefix + ' ' + infix + ' ' + suffix
-                    key = e + ' ' + site.lower() + ' ' + 'intensity'
+                    key = i + ' ' + site.lower() + ' ' + 'intensity'
                 columns_by_elementary_phenotype[key] = column
         return columns_by_elementary_phenotype
 
@@ -257,10 +253,10 @@ class HALOCellMetadataDesign:
         if table is None:
             logger.error('Can not find subset of empty data; table is None.')
             return None
-        fn = self.get_feature_name
-        v = self.interpret_value_specification
+        get_feature_name = self.get_feature_name
+        evaluate = self._interpret_value_specification
         for key in signature.keys():
-            feature_name = fn(key, table=table)
+            feature_name = get_feature_name(key, table=table)
             if not feature_name in table.columns:
                 logger.warning('Key "%s" was not among feature/column names: %s',
                                feature_name, str(list(table.columns)))
@@ -268,11 +264,12 @@ class HALOCellMetadataDesign:
                 if not feature_name in table.columns:
                     logger.error('Key "%s" was not among feature/column names: %s',
                                  feature_name, str(list(table.columns)))
-        pandas_signature = self.non_infix_bitwise_AND(
-            [table[fn(key, table=table)] == v(value) for key, value in signature.items()])
+        pandas_signature = self._non_infix_bitwise_and(
+            [ table[get_feature_name(key, table=table)] == evaluate(value)
+              for key, value in signature.items()])
         return pandas_signature
 
-    def non_infix_bitwise_AND(self, args):
+    def _non_infix_bitwise_and(self, args):
         """
         Args:
             args (list):
@@ -302,14 +299,14 @@ class HALOCellMetadataDesign:
         """
         separator = ' '
         if not table is None:
-            if '_'.join([self.get_indicator_prefix(key), 'Positive']) in table.columns:
+            if '_'.join([self._get_indicator_prefix(key), 'Positive']) in table.columns:
                 separator = '_'
         if key in self.get_elementary_phenotype_names():
-            return separator.join([self.get_indicator_prefix(key), 'Positive'])
+            return separator.join([self._get_indicator_prefix(key), 'Positive'])
         else:
             return key
 
-    def interpret_value_specification(self, value):
+    def _interpret_value_specification(self, value):
         """
         This function provides an abstraction layer between the table cell values as
         they actually appear in original data files and more semantic tokens in the
@@ -385,8 +382,8 @@ class HALOCellMetadataDesign:
         intensity_column = self.get_intensity_column_name(elementary_phenotype)
         if intensity_column in table.columns:
             return table[intensity_column]
-        prefix = self.get_indicator_prefix(elementary_phenotype)
-        suffixes = [site + ' Intensity' for site in self.get_cellular_sites()]
+        prefix = self._get_indicator_prefix(elementary_phenotype)
+        suffixes = [site + ' Intensity' for site in self._get_cellular_sites()]
         feature = [' '.join([prefix, suffix]) for suffix in suffixes]
         return list(table[feature[0]] + table[feature[1]] + table[feature[2]])
 
@@ -399,4 +396,4 @@ class HALOCellMetadataDesign:
         """
         Currently only used for manually-created intensity column.
         """
-        return self.get_indicator_prefix(elementary_phenotype) + ' Intensity'
+        return self._get_indicator_prefix(elementary_phenotype) + ' Intensity'

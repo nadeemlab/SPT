@@ -321,6 +321,6 @@ class CellManifestsParser(SourceToADIParser):
         return ascii_representation
 
     def wrap_up_timer(self, timer, computational_design):
-        df = timer.report(by='fraction')
+        df = timer.report(organize_by='fraction')
         df.to_csv(
             computational_design.get_performance_report_filename(), index=False)

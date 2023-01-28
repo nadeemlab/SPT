@@ -12,6 +12,7 @@ logger = colorized_logger(__name__)
 
 
 class FrontProximityCoreJob(CoreJob):
+    """Core/parallelizable job for the front proximity workflow."""
     def __init__(self, **kwargs):
         super(FrontProximityCoreJob, self).__init__(**kwargs)
         self.fov_lookup = {}
@@ -152,8 +153,8 @@ class FrontProximityCoreJob(CoreJob):
             cells[(filename, fov_index)] = df
 
             for phenotype in phenotype_names:
-                n = number_cells_by_phenotype[phenotype]
-                number_cells_by_phenotype[phenotype] = n + \
+                number = number_cells_by_phenotype[phenotype]
+                number_cells_by_phenotype[phenotype] = number + \
                     sum(df[phenotype + ' membership'])
         most_frequent = sorted(
             [(k, v) for k, v in number_cells_by_phenotype.items()],
@@ -212,7 +213,7 @@ class FrontProximityCoreJob(CoreJob):
                      dtype in self.computational_design.get_cell_front_distances_header()]
 
         uri = self.computational_design.get_database_uri()
-        with WaitingDatabaseContextManager(uri) as m:
+        with WaitingDatabaseContextManager(uri) as manager:
             for row in distance_records:
                 values_list = [
                     '"' + row[0] + '"',
@@ -226,8 +227,4 @@ class FrontProximityCoreJob(CoreJob):
                 keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
                 cmd = 'INSERT INTO cell_front_distances ' + keys + ' VALUES ' + values + ' ;'
-                try:
-                    m.execute(cmd)
-                except Exception as e:
-                    logger.error('SQL query failed: %s', cmd)
-                    raise e
+                manager.execute(cmd)

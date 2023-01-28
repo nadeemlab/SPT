@@ -25,12 +25,11 @@ class PhenotypeProximityAnalysisIntegrator:
     """
     The main class of the integration phase.
     """
-
     def __init__(self,
                  computational_design: Optional[PhenotypeProximityDesign] = None,
                  database_config_file: Optional[str] = None,
                  file_manifest_file: Optional[str] = None,
-                 **kwargs
+                 **kwargs # pylint: disable=unused-argument
                  ):
         """
         :param computational_design: The design object for the proximity workflow.
@@ -194,7 +193,8 @@ class PhenotypeProximityAnalysisIntegrator:
                                          for i, row in grouped2.get_group(case).iterrows()])
 
                 logger.debug(
-                    'For "%s" vs "%s", phenotype pair (%s, %s), %s, pixels < %s, did t-test and KW on values: (1) %s   (2) %s',
+                    'For "%s" vs "%s", phenotype pair (%s, %s), %s, pixels < %s, '
+                    'did t-test and KW on values: (1) %s   (2) %s',
                     outcome1,
                     outcome2,
                     source_phenotype,
@@ -270,11 +270,11 @@ class PhenotypeProximityAnalysisIntegrator:
         ]  # Get this from computational design!!
         if self.computational_design.balanced:
             table = table.groupby(case_classifiers, as_index=False).agg('sum')
-            f1 = self.computational_design.get_primary_output_feature_name(
+            feature1 = self.computational_design.get_primary_output_feature_name(
                 style='sql')
-            f2 = self.computational_design.get_aggregated_metric_name(
+            feature2 = self.computational_design.get_aggregated_metric_name(
                 style='sql')
-            table.rename(columns={f1: f2}, inplace=True)
+            table.rename(columns={feature1: feature2}, inplace=True)
         else:
             agg = self.custom_per_sample_aggregation_function
             logger.debug(

@@ -6,13 +6,14 @@ import re
 import random
 import json
 
-from spatialprofilingtoolbox.countsserver.defaults import expressions_index_filename
+from spatialprofilingtoolbox.countsserver.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
 class CompressedMatrixWriter:
+    """Write the compressed in-memory binary format matrices to file."""
     def write(self, data_arrays):
         self.write_data_arrays(data_arrays)
         self.write_index(data_arrays)
@@ -62,10 +63,10 @@ class CompressedMatrixWriter:
             index_item['target index lookup'] = study['target index lookup']
             index_item['target by symbol'] = study['target by symbol']
             index.append(index_item)
-        with open(expressions_index_filename, 'wt', encoding='utf-8') as index_file:
+        with open(EXPRESSIONS_INDEX_FILENAME, 'wt', encoding='utf-8') as index_file:
             index_file.write(json.dumps({'': index}, indent=4))
         logger.debug('Wrote expression index file %s .',
-                     expressions_index_filename)
+                     EXPRESSIONS_INDEX_FILENAME)
 
     def get_study_names_and_indices(self, data_arrays):
         study_names = sorted(list(data_arrays.studies.keys()))

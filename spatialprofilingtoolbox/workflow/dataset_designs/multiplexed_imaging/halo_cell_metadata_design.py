@@ -4,7 +4,6 @@ main import workflow.
 """
 import pathlib
 import re
-from typing import Optional
 
 import pandas as pd
 
@@ -20,17 +19,17 @@ class HALOCellMetadataDesign:
     """
 
     def __init__(self,
-                 elementary_phenotypes_file: Optional[str] = None,
-                 compartments_file: Optional[str] = None,
-                 **kwargs, # pylint: disable=unused-argument
+                 elementary_phenotypes_file: str = '',
+                 compartments_file: str = '',
+                 **kwargs,  # pylint: disable=unused-argument
                  ):
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-        if compartments_file is not None:
-            self.compartments = open(
-                compartments_file, 'rt', encoding='utf-8').read().strip('\n').split('\n')
+        if compartments_file != '':
+            with open(compartments_file, 'rt', encoding='utf-8') as file:
+                self.compartments = file.read().strip('\n').split('\n')
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -156,8 +155,8 @@ class HALOCellMetadataDesign:
         return [xmin, xmax, ymin, ymax]
 
     def _get_indicator_prefix(self,
-                             phenotype_name,
-                             metadata_file_column='Column header fragment prefix'):
+                              phenotype_name,
+                              metadata_file_column='Column header fragment prefix'):
         """
         Args:
             phenotype_name (str):
@@ -265,8 +264,8 @@ class HALOCellMetadataDesign:
                     logger.error('Key "%s" was not among feature/column names: %s',
                                  feature_name, str(list(table.columns)))
         pandas_signature = self._non_infix_bitwise_and(
-            [ table[get_feature_name(key, table=table)] == evaluate(value)
-              for key, value in signature.items()])
+            [table[get_feature_name(key, table=table)] == evaluate(value)
+             for key, value in signature.items()])
         return pandas_signature
 
     def _non_infix_bitwise_and(self, args):

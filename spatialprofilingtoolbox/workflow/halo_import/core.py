@@ -1,5 +1,4 @@
 """The core/parallelizable functionality of the main data import workflow."""
-import sqlite3
 
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -21,9 +20,7 @@ class HALOImportCoreJob(CoreJob):
         self.timer.record_timepoint('Done parsing cells.')
 
     def initialize_metrics_database(self):
-        connection = sqlite3.connect(
-            self.computational_design.get_database_uri())
-        cursor = connection.cursor()
+        connection, cursor = super().connect_to_intermediate_database()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
             'dummy',

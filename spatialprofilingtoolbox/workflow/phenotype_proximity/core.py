@@ -32,10 +32,7 @@ class PhenotypeProximityCoreJob(CoreJob):
 
     def initialize_metrics_database(self):
         cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
-
-        connection = sqlite3.connect(
-            self.computational_design.get_database_uri())
-        cursor = connection.cursor()
+        connection, cursor = super().connect_to_intermediate_database()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
             self.computational_design.get_cell_pair_counts_table_name(),

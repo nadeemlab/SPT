@@ -13,6 +13,7 @@ logger = colorized_logger(__name__)
 
 class FrontProximityCoreJob(CoreJob):
     """Core/parallelizable job for the front proximity workflow."""
+
     def __init__(self, **kwargs):
         super(FrontProximityCoreJob, self).__init__(**kwargs)
         self.fov_lookup = {}
@@ -30,10 +31,7 @@ class FrontProximityCoreJob(CoreJob):
         intermediate outputs. This method initializes this database's tables.
         """
         cell_front_distances_header = self.computational_design.get_cell_front_distances_header()
-
-        connection = sqlite3.connect(
-            self.computational_design.get_database_uri())
-        cursor = connection.cursor()
+        connection, cursor = super().connect_to_intermediate_database()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
             'cell_front_distances',

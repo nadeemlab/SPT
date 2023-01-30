@@ -14,6 +14,7 @@ logger = colorized_logger(__name__)
 
 class DensityCoreJob(CoreJob):
     """Main parallelizable functionality for phenotype density workflow."""
+
     def __init__(self, **kwargs):
         super(DensityCoreJob, self).__init__(**kwargs)
 
@@ -30,9 +31,7 @@ class DensityCoreJob(CoreJob):
         intermediate outputs. This method initializes this database's tables.
         """
         cells_header = self.computational_design.get_cells_header(style='sql')
-        connection = sqlite3.connect(
-            self.computational_design.get_database_uri())
-        cursor = connection.cursor()
+        connection, cursor = super().connect_to_intermediate_database()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
             'cells',
@@ -48,9 +47,7 @@ class DensityCoreJob(CoreJob):
 
         # Check if fov_lookup is still used
         fov_lookup_header = self.computational_design.get_fov_lookup_header()
-        connection = sqlite3.connect(
-            self.computational_design.get_database_uri())
-        cursor = connection.cursor()
+        connection, cursor = super().connect_to_intermediate_database()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
             'fov_lookup',

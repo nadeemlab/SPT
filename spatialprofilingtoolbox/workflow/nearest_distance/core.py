@@ -20,6 +20,7 @@ class NearestDistanceCoreJob(CoreJob):
     Core/parellelizable functionality for the nearest distance to a compartment
     workflow.
     """
+
     def __init__(self, **kwargs):
         super(NearestDistanceCoreJob, self).__init__(**kwargs)
 
@@ -36,9 +37,7 @@ class NearestDistanceCoreJob(CoreJob):
         intermediate outputs. This method initializes this database's tables.
         """
         cells_header = self.computational_design.get_cells_header(style='sql')
-        connection = sqlite3.connect(
-            self.computational_design.get_database_uri())
-        cursor = connection.cursor()
+        connection, cursor = super().connect_to_intermediate_database()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
             'cells',
@@ -54,9 +53,7 @@ class NearestDistanceCoreJob(CoreJob):
 
         # Check if fov_lookup is still used
         fov_lookup_header = self.computational_design.get_fov_lookup_header()
-        connection = sqlite3.connect(
-            self.computational_design.get_database_uri())
-        cursor = connection.cursor()
+        connection, cursor = super().connect_to_intermediate_database()
         cmd = ' '.join([
             'CREATE TABLE IF NOT EXISTS',
             'fov_lookup',

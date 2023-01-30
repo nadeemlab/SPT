@@ -16,15 +16,14 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
-RECORD_PERFORMANCE = True
-
 
 class CellManifestsParser(SourceToADIParser):
     """
     Source file parsing for metadata at the level of the cell manifest set.
     """
+
     def __init__(self, **kwargs):
-        super(CellManifestsParser, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.using_intensities = False
 
     def parse(self,
@@ -40,37 +39,32 @@ class CellManifestsParser(SourceToADIParser):
         - shape file
         - expression quantification
         """
-        if RECORD_PERFORMANCE:
-            timer = PerformanceTimer()
-            timer.record_timepoint('Initial')
+        timer = PerformanceTimer()
+        timer.record_timepoint('Initial')
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         halo_data_type = dataset_design.get_cell_manifest_descriptor()
         cell_manifests = file_metadata[
             file_metadata['Data type'] == halo_data_type
         ]
         recognized_channel_symbols = dataset_design.get_elementary_phenotype_names()
-        missing_channel_symbols = set(
-            chemical_species_identifiers_by_symbol.keys()
-        ).difference(recognized_channel_symbols)
+        missing_channel_symbols = set(chemical_species_identifiers_by_symbol.keys()
+                                      ).difference(recognized_channel_symbols)
         if len(missing_channel_symbols) > 0:
             logger.warning(
                 'Cannot find channel metadata for %s .',
                 str(missing_channel_symbols),
             )
-        channel_symbols = set(
-            chemical_species_identifiers_by_symbol.keys()
-        ).difference(missing_channel_symbols)
+        channel_symbols = set(chemical_species_identifiers_by_symbol.keys()
+                              ).difference(missing_channel_symbols)
 
         cursor = connection.cursor()
-        if RECORD_PERFORMANCE:
-            timer.record_timepoint('Cursor opened')
+        timer.record_timepoint('Cursor opened')
         histological_structure_identifier_index = self.get_next_integer_identifier(
             'histological_structure', cursor)
         shape_file_identifier_index = self.get_next_integer_identifier(
             'shape_file', cursor)
-        if RECORD_PERFORMANCE:
-            timer.record_timepoint('Retrieved next integer identifiers')
-            file_count = 1
+        timer.record_timepoint('Retrieved next integer identifiers')
+        file_count = 1
         for _, cell_manifest in cell_manifests.iterrows():
             logger.debug(
                 'Considering contents of "%s" file "%s".',
@@ -82,8 +76,7 @@ class CellManifestsParser(SourceToADIParser):
                 file_manifest_filename=file_manifest_file,
             )
             sha256_hash = compute_sha256(filename)
-            cells = pd.read_csv(filename, sep=',',
-                                na_filter=False).drop_duplicates()
+            cells = pd.read_csv(filename, sep=',', na_filter=False).drop_duplicates()
             count = self.get_number_known_cells(sha256_hash, cursor)
             if count > 0 and count != cells.shape[0]:
                 logger.warning(
@@ -106,12 +99,10 @@ class CellManifestsParser(SourceToADIParser):
                 )
                 continue
             elif count == 0:
-                if RECORD_PERFORMANCE:
-                    timer.record_timepoint('Retrieved and hashed a cell manifest')
+                timer.record_timepoint('Retrieved and hashed a cell manifest')
                 chunk_size = 100000
                 for start in range(0, cells.shape[0], chunk_size):
-                    if RECORD_PERFORMANCE:
-                        timer.record_timepoint('Starting a chunk')
+                    timer.record_timepoint('Starting a chunk')
                     batch_cells_reference = cells.iloc[start:start + chunk_size]
                     batch_cells = batch_cells_reference.reset_index(drop=True)
                     records = {
@@ -120,19 +111,14 @@ class CellManifestsParser(SourceToADIParser):
                         'histological_structure_identification': [],
                         'expression_quantification': [],
                     }
-                    if RECORD_PERFORMANCE:
-                        timer.record_timepoint(
-                            'Subset cells dataframe on chunk')
-
+                    timer.record_timepoint('Subset cells dataframe on chunk')
                     if self.using_intensities:
                         intensities = {
                             symbol: dataset_design.get_combined_intensity(
                                 batch_cells, symbol)
                             for symbol in channel_symbols
                         }
-                        if RECORD_PERFORMANCE:
-                            timer.record_timepoint(
-                                'Retrieved intensities on chunk')
+                        timer.record_timepoint('Retrieved intensities on chunk')
                     else:
                         intensities = None
 
@@ -154,40 +140,28 @@ class CellManifestsParser(SourceToADIParser):
                             missing = [symbol for symbol in channel_symbols
                                        if not dataset_design.get_feature_name(symbol)
                                        in batch_cells.columns]
-                            logger.warning(
-                                'Specifically, the following features not found:')
+                            logger.warning('Specifically, the following features not found:')
                             for symbol in missing:
                                 logger.warning(symbol)
-                            raise ValueError(
-                                'Could not find feature names in cell manifest.')
+                            raise ValueError('Could not find feature names in cell manifest.')
 
                     discretizations = {
                         symbol: batch_cells[feature_names[symbol]]
                         for symbol in channel_symbols
                     }
-                    if RECORD_PERFORMANCE:
-                        timer.record_timepoint(
-                            'Retrieved discretizations on chunk')
+                    timer.record_timepoint('Retrieved discretizations on chunk')
 
-                    logger.debug(
-                        'Starting batch of cells that begins at index %s.', start)
-                    cell_index_error_count = 0
-                    if RECORD_PERFORMANCE:
-                        timer.record_timepoint('Started per-cell iteration')
+                    logger.debug('Starting batch of cells that begins at index %s.', start)
+                    timer.record_timepoint('Started per-cell iteration')
                     for j, cell in batch_cells.iterrows():
                         histological_structure_identifier = str(
                             histological_structure_identifier_index)
                         histological_structure_identifier_index += 1
-                        shape_file_identifier = str(
-                            shape_file_identifier_index)
+                        shape_file_identifier = str(shape_file_identifier_index)
                         shape_file_identifier_index += 1
-                        if RECORD_PERFORMANCE:
-                            timer.record_timepoint(
-                                'Beginning of one cell iteration')
-                        shape_file_contents = self.create_shape_file(
-                            cell, dataset_design)
-                        if RECORD_PERFORMANCE:
-                            timer.record_timepoint('Created shapefile contents')
+                        timer.record_timepoint('Beginning of one cell iteration')
+                        shape_file_contents = self.create_shape_file(cell, dataset_design)
+                        timer.record_timepoint('Created shapefile contents')
                         records['histological_structure'].append((
                             histological_structure_identifier,
                             'cell',
@@ -206,26 +180,7 @@ class CellManifestsParser(SourceToADIParser):
                             '',
                             '',
                         ))
-                        # if record_performance:
-                        #     timer.record_timepoint(
-                        #         'Added one new record by appending fields to all lists')
                         for symbol in channel_symbols:
-                            if not intensities is None:
-                                if len(intensities[symbol]) <= j:
-                                    if cell_index_error_count < 5:
-                                        logger.warning(
-                                            'Intensity channel %s has %s elements, '
-                                            'but looking for value for cell with index %s.',
-                                            symbol,
-                                            len(intensities[symbol]),
-                                            j,
-                                        )
-                                        cell_index_error_count += 1
-                                    if cell_index_error_count == 5:
-                                        logger.debug(
-                                            'Suppressing further cell index error messages.')
-                                        cell_index_error_count += 1
-                                    continue
                             target = chemical_species_identifiers_by_symbol[symbol]
                             if not intensities is None:
                                 quantity = intensities[symbol][j]
@@ -234,7 +189,7 @@ class CellManifestsParser(SourceToADIParser):
                                 quantity = str(quantity)
                             else:
                                 quantity = '-1'
-                            discrete_value = discretizations[symbol][j]
+                            discrete_value = discretizations[symbol][j]  # type: ignore
                             records['expression_quantification'].append((
                                 histological_structure_identifier,
                                 target,
@@ -252,31 +207,22 @@ class CellManifestsParser(SourceToADIParser):
                         'expression_quantification',
                     ]
                     for tablename in table_names:
-                        if RECORD_PERFORMANCE:
-                            timer.record_timepoint('Started encoding one chunk')
+                        timer.record_timepoint('Started encoding one chunk')
                         values_file_contents = '\n'.join([
                             '\t'.join(r) for r in records[tablename]
                         ]).encode('utf-8')
-                        if RECORD_PERFORMANCE:
-                            timer.record_timepoint(
-                                'Started inserting chunk into local memory')
+                        timer.record_timepoint('Started inserting chunk into local memory')
                         with mmap.mmap(-1, len(values_file_contents)) as memmap:
                             memmap.write(values_file_contents)
                             memmap.seek(0)
-                            if RECORD_PERFORMANCE:
-                                timer.record_timepoint(
-                                    'Started copy from command for bulk insertion')
+                            timer.record_timepoint('Started copy from command for bulk insertion')
                             cursor.copy_from(memmap, tablename)
-
-                        if RECORD_PERFORMANCE:
-                            timer.record_timepoint('Finished inserting one chunk')
-            logger.info('Parsed records for %s cells from "%s".',
-                        cells.shape[0], sha256_hash)
-            if RECORD_PERFORMANCE:
-                timer.record_timepoint('Completed cell manifest parsing')
-                logger.debug('Performance report %s:\n%s', file_count,
-                             timer.report(as_string=True, organize_by='total time spent'))
-                file_count += 1
+                        timer.record_timepoint('Finished inserting one chunk')
+            logger.info('Parsed records for %s cells from "%s".', cells.shape[0], sha256_hash)
+            timer.record_timepoint('Completed cell manifest parsing')
+            logger.debug('Performance report %s:\n%s', file_count,
+                         timer.report_string(organize_by='total time spent'))
+            file_count += 1
             connection.commit()
 
         cursor.close()
@@ -309,18 +255,15 @@ class CellManifestsParser(SourceToADIParser):
         dbf = StringIO()
         points = self.get_polygon_coordinates(cell, dataset_design)
         points = points + [points[0]]
-        writer = shapefile.Writer(shp=shp, shx=shx, dbf=dbf,
-                             shapeType=shapefile.POLYGON)
+        writer = shapefile.Writer(shp=shp, shx=shx, dbf=dbf, shapeType=shapefile.POLYGON)
         writer.field('name', 'C')
         writer.poly([points])
         writer.record()
         writer.close()
-        # contents = shp.getvalue()
         encoded = base64.b64encode(shp.getvalue())
         ascii_representation = encoded.decode('utf-8')
         return ascii_representation
 
     def wrap_up_timer(self, timer, computational_design):
         df = timer.report(organize_by='fraction')
-        df.to_csv(
-            computational_design.get_performance_report_filename(), index=False)
+        df.to_csv(computational_design.get_performance_report_filename(), index=False)

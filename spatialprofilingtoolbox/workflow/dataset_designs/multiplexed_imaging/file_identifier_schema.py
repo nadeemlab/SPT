@@ -40,7 +40,7 @@ def get_input_filenames_by_data_type(
 def get_input_filename_by_identifier(
     input_file_identifier: Optional[str] = None,
     file_manifest_filename: Optional[str] = None,
-):
+) -> str:
     """
     Uses the file identifier to lookup the name of the associated file in the file
     metadata table, and cache the name of the associated file.

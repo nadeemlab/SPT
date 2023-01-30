@@ -3,9 +3,13 @@ A convenience reporter of time performance. Keeps track of time used by
 specific named processes and reports an aggregation as a text table.
 """
 import time
+from typing import Literal
+from typing import get_args
 
 import pandas as pd
 import numpy as np
+
+ReportOrganization = Literal['average time spent', 'total time spent', 'frequency', 'fraction']
 
 
 class PerformanceTimer:
@@ -16,7 +20,7 @@ class PerformanceTimer:
 
     Use record_timepoint at key moments, supplying a short message/title that
     indicates what the context, typically an indication of what has just completed.
-    Whenever you want to assess the time performance, use report (as_string=True)
+    Whenever you want to assess the time performance, use report_string
     to get a markdown representation of a table of times, on the basis of *pairs*
     of code locations (as indicated by your messages) occurring consecutively.
     Included in the report are fraction of time spent, total time spent (seconds),
@@ -43,7 +47,7 @@ class PerformanceTimer:
             number = len(self.message_order)
             self.message_order[message] = number
 
-    def report(self, as_string=False, organize_by=None):
+    def report(self, organize_by: ReportOrganization) -> pd.DataFrame:
         transitions = sorted(
             list(self.times.keys()),
             key=lambda x: (self.message_order[x[0]], self.message_order[x[1]]),
@@ -62,8 +66,10 @@ class PerformanceTimer:
                 'fraction': total / all_totals,
             })
         df = pd.DataFrame(records)
-        if organize_by in ['average time spent', 'total time spent', 'frequency']:
+        if organize_by in get_args(ReportOrganization):
             df.sort_values(by=organize_by, inplace=True, ascending=False)
-        if as_string:
-            return df.to_markdown(index=False)
         return df
+
+    def report_string(self, organize_by: ReportOrganization):
+        df = self.report(organize_by=organize_by)
+        return df.to_markdown(index=False)

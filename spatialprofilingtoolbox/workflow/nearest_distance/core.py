@@ -84,22 +84,12 @@ class NearestDistanceCoreJob(CoreJob):
         self.write_fov_lookup_table(fov_lookup)
         logger.info('Finished writing cells and fov lookup helper.')
 
-    def get_phenotype_signatures_by_name(self):
-        """
-        Munges composite phenotype signature names from their markers.
-
-        :return: `signatures_by_name`. Mapping from munged names to signature dicts.
-        :rtype: dict
-        """
-        signatures = self.computational_design.get_all_phenotype_signatures()
-        return {self.dataset_design.munge_name(signature): signature for signature in signatures}
-
     def get_phenotype_names(self):
         """
         :return: `phenotype_names`. The munged names of composite phenotypes.
         :rtype: list
         """
-        signatures_by_name = self.get_phenotype_signatures_by_name()
+        signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
         phenotype_names = sorted(signatures_by_name.keys())
         return phenotype_names
 
@@ -185,7 +175,7 @@ class NearestDistanceCoreJob(CoreJob):
                 table.loc[signature, 'compartment'] = compartment
             self.timer.record_timepoint('Copy compartment column')
 
-            signatures_by_name = self.get_phenotype_signatures_by_name()
+            signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
             self.timer.record_timepoint('Start creating membership column')
             for name in phenotype_names:
                 signature = signatures_by_name[name]

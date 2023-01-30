@@ -63,12 +63,8 @@ class FrontProximityCoreJob(CoreJob):
             'Finished writing cell front distances in sample %s.', self.sample_identifier)
         self.timer.record_timepoint('Completed front proximity one job')
 
-    def get_phenotype_signatures_by_name(self):
-        signatures = self.computational_design.get_all_phenotype_signatures()
-        return {self.dataset_design.munge_name(signature): signature for signature in signatures}
-
     def get_phenotype_names(self):
-        signatures_by_name = self.get_phenotype_signatures_by_name()
+        signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
         phenotype_names = sorted(signatures_by_name.keys())
         return phenotype_names
 
@@ -120,7 +116,7 @@ class FrontProximityCoreJob(CoreJob):
             df['y value'] = 0.5 * (df[ymax] + df[ymin])
 
             # Add general phenotype membership columns
-            signatures_by_name = self.get_phenotype_signatures_by_name()
+            signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
             for name in phenotype_names:
                 signature = signatures_by_name[name]
                 df[name + ' membership'] = self.dataset_design.get_pandas_signature(df, signature)

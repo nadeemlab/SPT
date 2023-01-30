@@ -97,6 +97,10 @@ class ComputationalDesign:
             complex_signatures.append(signature)
         return elementary_signatures + complex_signatures
 
+    def get_phenotype_signatures_by_name(self):
+        signatures = self.get_all_phenotype_signatures()
+        return {self.dataset_design.munge_name(signature): signature for signature in signatures}
+
     @staticmethod
     def get_fov_lookup_header():
         """

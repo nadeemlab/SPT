@@ -8,6 +8,8 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import BallTree
 
+from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import \
+    PhenotypeProximityDesign
 from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
     WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
@@ -17,6 +19,7 @@ logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityCoreJob(CoreJob):
+    computational_design: PhenotypeProximityDesign
     radii = [20, 60, 100]
 
     def __init__(self, **kwargs):
@@ -124,19 +127,16 @@ class PhenotypeProximityCoreJob(CoreJob):
         :param table: Table with cell data.
         :type table: pandas.DataFrame
         """
-        signatures_by_name = self.computational_design.get_all_phenotype_signatures(
-            by_name=True)
+        signatures_by_name = self.computational_design.get_all_phenotype_signatures_by_name()
         for name, signature in signatures_by_name.items():
-            table[name +
-                  ' membership'] = self.dataset_design.get_pandas_signature(table, signature)
+            table[name + ' membership'] = self.dataset_design.get_pandas_signature(table, signature)
 
     def restrict_to_pertinent_columns(self, table):
         """
         :param table: Table with cell data.
         :type table: pandas.DataFrame
         """
-        signatures_by_name = self.computational_design.get_all_phenotype_signatures(
-            by_name=True)
+        signatures_by_name = self.computational_design.get_all_phenotype_signatures_by_name()
         phenotype_membership_columns = [
             name + ' membership' for name, _ in signatures_by_name.items()
         ]

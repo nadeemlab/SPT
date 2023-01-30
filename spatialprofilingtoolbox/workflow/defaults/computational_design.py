@@ -2,10 +2,11 @@
 Interface for a class meant to describe the design of the overall workflow,
 for a given workflow.
 """
-from typing import Optional
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
+    import HALOCellMetadataDesign
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -18,11 +19,11 @@ class ComputationalDesign:
     """
 
     def __init__(self,
-                 dataset_design=None,
+                 dataset_design: HALOCellMetadataDesign,
                  metrics_database_filename: str = 'metrics_default.db',
                  dichotomize: bool = False,
-                 composite_phenotypes_file: Optional[str] = None,
-                 **kwargs,
+                 composite_phenotypes_file: str = '',
+                 **kwargs,  # pylint: disable=unused-argument
                  ):
         """
         :param dataset_design: The design object describing the input data set.
@@ -71,3 +72,27 @@ class ComputationalDesign:
     @staticmethod
     def uses_database():
         return False
+
+    def get_all_phenotype_signatures(self):
+        """
+        :return: The "signatures" for all the composite phenotypes described by the
+            ``complex_phenotypes_file`` table. Each signature is a dictionary with keys
+            the elementary phenotype names and values either "+" or "-".
+        :rtype: list
+        """
+        elementary_signatures = [
+            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()
+        ]
+        complex_signatures = []
+        for _, row in self.complex_phenotypes.iterrows():
+            positive_markers = sorted(
+                [m for m in row['Positive markers'].split(';') if m != ''])
+            negative_markers = sorted(
+                [m for m in row['Negative markers'].split(';') if m != ''])
+            signature = {}
+            for marker in positive_markers:
+                signature[marker] = '+'
+            for marker in negative_markers:
+                signature[marker] = '-'
+            complex_signatures.append(signature)
+        return elementary_signatures + complex_signatures

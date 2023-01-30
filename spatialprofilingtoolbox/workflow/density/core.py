@@ -146,8 +146,7 @@ class DensityCoreJob(CoreJob):
             self.timer.record_timepoint('Start creating membership column')
             for name in phenotype_names:
                 signature = signatures_by_name[name]
-                bools = self.dataset_design.get_pandas_signature(
-                    table, signature)
+                bools = self.dataset_design.get_pandas_signature(table, signature)
                 ints = [1 if value else 0 for value in bools]
                 table[name + ' membership'] = ints
             phenotype_membership_columns = [

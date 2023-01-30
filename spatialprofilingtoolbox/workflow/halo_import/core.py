@@ -7,8 +7,14 @@ logger = colorized_logger(__name__)
 
 
 class HALOImportCoreJob(CoreJob):
+    """
+    The parallelizable (per file) part of the import workflow. Currently this
+    kind of a dummy implementation, beacuse a global view of the dataset is
+    needed in order to parse it.
+    """
+
     def __init__(self, **kwargs):
-        super(HALOImportCoreJob, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

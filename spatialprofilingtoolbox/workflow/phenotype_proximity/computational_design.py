@@ -64,16 +64,11 @@ class PhenotypeProximityDesign(ComputationalDesign):
             ('source_phenotype_count', 'INTEGER'),
         ]
 
-    def get_all_phenotype_signatures(self, by_name=False):
+    def get_all_phenotype_signatures_by_name(self):
         """
-        :param by_name: Whether to return a list (default) or a dictionary whose keys
-            are the munged names. (Default False).
-        :type by_name: bool
-
-        :return: ``signature``. Signatures for all the composite phenotypes described by
-            the ``complex_phenotypes_file`` table. Each signature is a dictionary with
-            keys the elementary phenotypes and values either "+" or "-".
-        :rtype: list
+        Returns a dictionary whose keys are the "munged" names, and values are
+        the phenotype signatures. See get_all_phenotype_signatures for details
+        regarging the values.
         """
         elementary_signatures = [
             {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()
@@ -91,18 +86,16 @@ class PhenotypeProximityDesign(ComputationalDesign):
                 signature[marker] = '-'
             complex_signatures.append(signature)
         signatures = elementary_signatures + complex_signatures
-        if by_name:
-            return {
-                self.dataset_design.munge_name(signature): signature for signature in signatures
-            }
-        return signatures
+        return {
+            self.dataset_design.munge_name(signature): signature for signature in signatures
+        }
 
     def get_all_phenotype_names(self):
         """
         :return: All (composite) phenotype names.
         :rtype: list
         """
-        return sorted(list(self.get_all_phenotype_signatures(by_name=True).keys()))
+        return sorted(list(self.get_all_phenotype_signatures_by_name().keys()))
 
     @staticmethod
     def get_primary_output_feature_name(style='readable'):

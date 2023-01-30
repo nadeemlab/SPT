@@ -229,7 +229,7 @@ class HALOCellMetadataDesign:
         name = ''.join(feature_list)
         return name
 
-    def get_pandas_signature(self, table, signature):
+    def get_pandas_signature(self, table, signature) -> list:
         """
         Args:
             table (pd.DataFrame):
@@ -248,10 +248,10 @@ class HALOCellMetadataDesign:
         if signature is None:
             logger.error(
                 'Can not get subset with no information about signature (None).')
-            return None
+            return []
         if table is None:
             logger.error('Can not find subset of empty data; table is None.')
-            return None
+            return []
         get_feature_name = self.get_feature_name
         evaluate = self._interpret_value_specification
         for key in signature.keys():
@@ -302,8 +302,7 @@ class HALOCellMetadataDesign:
                 separator = '_'
         if key in self.get_elementary_phenotype_names():
             return separator.join([self._get_indicator_prefix(key), 'Positive'])
-        else:
-            return key
+        return key
 
     def _interpret_value_specification(self, value):
         """
@@ -348,22 +347,19 @@ class HALOCellMetadataDesign:
                 compartment.)
         """
         signature = None
-
         if compartment in self.get_compartments():
             column = HALOCellMetadataDesign.get_compartment_column_name()
             if (not column in table.columns) and (self.get_compartments() == ['<any>']) \
                     and (compartment == '<any>'):
                 signature = [True for i in range(table.shape[0])]
             else:
-                signature = self.get_pandas_signature(
-                    table, {column: compartment})
+                signature = self.get_pandas_signature(table, {column: compartment})
 
         if signature is None:
             logger.error('Could not define compartment %s, from among %s',
                          compartment, self.get_compartments())
             return [False for i in range(table.shape[0])]
-        else:
-            return signature
+        return signature
 
     def get_combined_intensity(self, table, elementary_phenotype):
         """

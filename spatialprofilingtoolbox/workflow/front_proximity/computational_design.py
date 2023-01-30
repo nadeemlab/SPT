@@ -32,27 +32,3 @@ class FrontProximityDesign(ComputationalDesign):
             ('other_compartment', 'TEXT'),
             ('distance_to_front_in_pixels', 'NUMERIC'),
         ]
-
-    def get_all_phenotype_signatures(self):
-        """
-        Returns:
-            list:
-                The "signatures" for all the composite phenotypes described by the
-                complex_phenotypes_file table. Each signature is a dictionary with
-                keys the elementary phenotypes and values either "+" or "-".
-        """
-        elementary_signatures = [
-            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()]
-        complex_signatures = []
-        for _, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted(
-                [m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted(
-                [m for m in row['Negative markers'].split(';') if m != ''])
-            signature = {}
-            for marker in positive_markers:
-                signature[marker] = '+'
-            for marker in negative_markers:
-                signature[marker] = '-'
-            complex_signatures.append(signature)
-        return elementary_signatures + complex_signatures

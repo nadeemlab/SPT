@@ -7,6 +7,8 @@ import sqlite3
 import pandas as pd
 from scipy.spatial import KDTree
 
+from spatialprofilingtoolbox.workflow.nearest_distance.computational_design import \
+    NearestDistanceDesign
 from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
     WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
@@ -20,9 +22,10 @@ class NearestDistanceCoreJob(CoreJob):
     Core/parellelizable functionality for the nearest distance to a compartment
     workflow.
     """
+    computational_design: NearestDistanceDesign
 
     def __init__(self, **kwargs):
-        super(NearestDistanceCoreJob, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -186,8 +189,7 @@ class NearestDistanceCoreJob(CoreJob):
             self.timer.record_timepoint('Start creating membership column')
             for name in phenotype_names:
                 signature = signatures_by_name[name]
-                bools = self.dataset_design.get_pandas_signature(
-                    table, signature)
+                bools = self.dataset_design.get_pandas_signature(table, signature)
                 ints = [1 if value else 0 for value in bools]
                 table[name + ' membership'] = ints
             phenotype_membership_columns = [

@@ -1,5 +1,4 @@
 """The core/parallelizable module for the front proximity workflow."""
-import sqlite3
 
 from scipy.spatial import KDTree
 
@@ -121,8 +120,7 @@ class FrontProximityCoreJob(CoreJob):
             signatures_by_name = self.get_phenotype_signatures_by_name()
             for name in phenotype_names:
                 signature = signatures_by_name[name]
-                df[name +
-                    ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
+                df[name + ' membership'] = self.dataset_design.get_pandas_signature(df, signature)
             phenotype_membership_columns = [
                 name + ' membership' for name in phenotype_names]
 

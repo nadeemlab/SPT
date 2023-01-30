@@ -91,7 +91,7 @@ class CoreJob(ABC):
         number_cells = raw_line_count(self.input_filename) - 1
         logger.info('%s cells to be parsed from source file "%s".',
                     number_cells, self.input_filename)
-        logger.info('Cells source file has size %s bytes.', getsize(self.input_filename))
+        logger.info('Cells source file has size %s bytes.', getsize(filename=self.input_filename))
 
     def get_table(self, filename):
         table_from_file = pd.read_csv(filename)

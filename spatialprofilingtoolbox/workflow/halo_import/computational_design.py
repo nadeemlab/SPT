@@ -3,8 +3,10 @@ from spatialprofilingtoolbox.workflow.defaults.computational_design import Compu
 
 
 class HALOImportDesign(ComputationalDesign):
+    """Overall workflow design parameters for import workflow."""
+
     def __init__(self, **kwargs):
-        super(HALOImportDesign, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

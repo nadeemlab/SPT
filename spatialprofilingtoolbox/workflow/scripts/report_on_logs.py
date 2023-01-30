@@ -41,11 +41,8 @@ class LSFPreambleSkipper:
     def __init__(self, filename):
         with open(filename, 'rt', encoding='utf-8') as file:
             header = file.readline().rstrip('\n')
-        if re.match(r'^Sender: LSF System <[\w\d\_\.\@\-]+>$', header):
-            seek_to_stdout_capture = True
-        else:
-            seek_to_stdout_capture = False
-        self.file = open(filename, 'rt', encoding='utf-8')
+        seek_to_stdout_capture = bool(re.match(r'^Sender: LSF System <[\w\d\_\.\@\-]+>$', header))
+        self.file = open(filename, 'rt', encoding='utf-8')  # pylint: disable=consider-using-with
         if seek_to_stdout_capture:
             line = None
             # There is a failure mode; need to put a guard based on the line length for the
@@ -77,14 +74,9 @@ class LogParser:
     def __init__(self, path):
         self.path = path
         self.extractions = {}
-        self.performance_report_base64 = ''
-        self.performance_report_contents = ''
-        self.config_file = ''
-        self.nextflow_log = ''
-        self.log_files = []
-        self.performance_report = ''
-        self.run_configuration_log = ''
         self.year = ''
+        self.performance_report = {'file': '', 'base64': '', 'contents': ''}
+        self.source_files = {'config': '', 'nextflow log': '', 'logs': [], 'run configuration': ''}
 
     def get_path(self):
         return self.path
@@ -97,22 +89,20 @@ class LogParser:
             'performance report': join(path, 'results', 'performance_report.md'),
             'run configuration log': join(path, 'results', 'run_configuration.log'),
         }
-        self.config_file = self.check_file(filenames['config'])
-        self.nextflow_log = self.check_file(filenames['nextflow log'])
-        self.performance_report = self.check_file(
+        self.source_files['config'] = self.check_file(filenames['config'])
+        self.source_files['nextflow log'] = self.check_file(filenames['nextflow log'])
+        self.performance_report['file'] = self.check_file(
             filenames['performance report'])
-        self.run_configuration_log = self.check_file(
+        self.source_files['run configuration'] = self.check_file(
             filenames['run configuration log'])
-        self.log_files = glob.glob(join(path, 'work/*/*/.command.log'))
-        if len(self.log_files) == 0:
+        self.source_files['logs'] = glob.glob(join(path, 'work/*/*/.command.log'))
+        if len(self.source_files['log']) == 0:
             raise LogParsingError('No log files found.')
 
     def check_file(self, target):
         if exists(target):
             return target
-        else:
-            raise LogParsingError(
-                f'Essential log or config file not found: {target}')
+        raise LogParsingError(f'Essential log or config file not found: {target}')
 
     def remove_prefix(self, prefix, text):
         if text.startswith(prefix):
@@ -123,7 +113,8 @@ class LogParser:
         self.get_inputs()
         self.extract_from_run_configuration_log()
 
-        nf_header = open(self.nextflow_log, 'rt', encoding='utf-8').readline().rstrip('\n')
+        with open(self.source_files['nextflow log'], 'rt', encoding='utf-8') as file:
+            nf_header = file.readline().rstrip('\n')
         search = re.search(r'^(\w+)\-(\d+) \d+:\d+:\d+\.\d+', nf_header)
         if search:
             month = str(search.groups(1)[0])
@@ -139,9 +130,7 @@ class LogParser:
         runtime = self.get_total_runtime()
         self.extractions['Total runtime'] = self.format_duration(runtime)
 
-        number_cells = sum([
-            job_report['number of cells'] for job_report in job_reports
-        ])
+        number_cells = sum(job_report['number of cells'] for job_report in job_reports)
         self.extractions['# cells'] = number_cells
 
         self.extractions['Time per 1M cells'] = self.format_duration(
@@ -151,18 +140,18 @@ class LogParser:
         self.extractions['Longest job time'] = sorted(job_reports, key=lambda x: -x['duration']
                                                       )[0]['duration minutes']
 
-        self.performance_report_contents = open(
-            self.performance_report, 'rt', encoding='utf-8').read()
+        with open(self.performance_report['file'], 'rt', encoding='utf-8') as file:
+            self.performance_report['contents'] = file.read()
 
-        message_bytes = self.performance_report_contents.encode('ascii')
+        message_bytes = self.performance_report['contents'].encode('ascii')
         base64_bytes = base64.b64encode(message_bytes)
-        self.performance_report_base64 = base64_bytes.decode('ascii')
+        self.performance_report['base64'] = base64_bytes.decode('ascii')
 
         self.validate_all_extractions_found()
 
     def extract_from_run_configuration_log(self):
         self.year = ''
-        with open(self.run_configuration_log, 'rt', encoding='utf-8') as file:
+        with open(self.source_files['run configuration'], 'rt', encoding='utf-8') as file:
             for line in file:
                 parts = self.parse_log_line(line.rstrip('\n'))
                 if len(parts) != 0:
@@ -232,10 +221,11 @@ class LogParser:
                 f'Some extractions not made: {str(sorted(failed))}')
 
     def get_total_runtime(self):
-        nf_header = open(self.nextflow_log, 'rt', encoding='utf-8').readline().rstrip('\n')
+        with open(self.source_files['nextflow log'], 'rt', encoding='utf-8') as file:
+            nf_header = file.readline().rstrip('\n')
         timestamp1 = self.parse_nextflow_timestamp(nf_header)
         timestamp2 = self.parse_nextflow_timestamp(
-            self.get_last_line(self.nextflow_log))
+            self.get_last_line(self.source_files['nextflow log']))
         return self.get_timedelta(timestamp1, timestamp2)
 
     def parse_nextflow_timestamp(self, line):
@@ -268,7 +258,7 @@ class LogParser:
         return re.sub(r'\.0', '', minutes) + 'm'
 
     def extract_exact(self, pattern, lines_limit=1):
-        for log in self.log_files:
+        for log in self.source_files['logs']:
             with LSFPreambleSkipper(log) as file:
                 line_count = 0
                 line = None
@@ -286,7 +276,7 @@ class LogParser:
 
     def extract_job_reports(self):
         job_reports = []
-        for log in self.log_files:
+        for log in self.source_files['logs']:
             with open(log, 'rt', encoding='utf-8') as file:
                 job_report = {}
                 start_time = None
@@ -328,12 +318,11 @@ class LogParser:
     def days_diff(self, month1, month2, day1, day2):
         if month1 == month2:
             return day2 - day1
-        elif month2 > month1:
+        if month2 > month1:
             days_in_month = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
             return day2 + days_in_month[month1 - 1] - day1
-        else:
-            raise LogParsingError(
-                f'Month duration unreasonable, from {month1} to {month2}.')
+        raise LogParsingError(
+            f'Month duration unreasonable, from {month1} to {month2}.')
 
     def get_timedelta(self, time1, time2):
         duration = datetime.timedelta(
@@ -445,18 +434,18 @@ class LogReportAggregator:
         if format_description == 'tex':
             with importlib.resources.path('spatialprofilingtoolbox.templates',
                                           'log_table.tex.jinja') as path:
-                log_report_template = open(path, 'rt', encoding='utf-8').read()
-                template = self.jinja_environment.from_string(
-                    log_report_template)
+                with open(path, 'rt', encoding='utf-8') as file:
+                    log_report_template = file.read()
+                template = self.jinja_environment.from_string(log_report_template)
                 rows = [LogParser.get_order()] + [parser.get_extractions_ordered()
                                                   for parser in self.parsers]
                 rendered = template.render(rows=rows)
         if format_description == 'HTML':
             with importlib.resources.path('spatialprofilingtoolbox.templates',
                                           'log_table.html.jinja') as path:
-                log_report_template = open(path, 'rt', encoding='utf-8').read()
-                template = self.jinja_environment.from_string(
-                    log_report_template)
+                with open(path, 'rt', encoding='utf-8') as file:
+                    log_report_template = file.read()
+                template = self.jinja_environment.from_string(log_report_template)
                 ordered_parsers = sorted(
                     self.parsers, key=lambda p: p.get_sort_key())
                 rendered = template.render(
@@ -464,7 +453,7 @@ class LogReportAggregator:
                     rows=[parser.get_extractions_ordered() + [i]
                           for i, parser in enumerate(ordered_parsers)],
                     base64_contents=[
-                        parser.performance_report_base64 for parser in ordered_parsers],
+                        parser.performance_report['base64'] for parser in ordered_parsers],
                 )
         if format_description == 'TSV':
             rendered = table.to_csv(index=False, sep='\t')

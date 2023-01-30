@@ -110,16 +110,3 @@ class DensityDesign(ComputationalDesign):
         else:
             intensity_columns = []
         return intensity_columns
-
-    @staticmethod
-    def get_fov_lookup_header():
-        """
-        :return: A list of 2-tuples, column name followed by SQL-style datatype name,
-            describing the schema for the FOV lookup intermediate data table.
-        :rtype: list
-        """
-        return [
-            ('sample_identifier', 'TEXT'),
-            ('fov_index', 'INTEGER'),
-            ('fov_string', 'TEXT'),
-        ]

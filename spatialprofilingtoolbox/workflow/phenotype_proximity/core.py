@@ -19,6 +19,7 @@ logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityCoreJob(CoreJob):
+    """Core/parallelizable functionality for the phenotype proximity workflow."""
     computational_design: PhenotypeProximityDesign
     radii = [20, 60, 100]
 
@@ -392,6 +393,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             for radius in PhenotypeProximityCoreJob.get_radii_of_interest():
                 count = 0
                 source_count = 0
+                area = 1
                 self.timer.record_timepoint(
                     'Started one compartment/radius/phenotype pair')
                 for _, (fov_index, table) in enumerate(cells.items()):
@@ -433,16 +435,16 @@ class PhenotypeProximityCoreJob(CoreJob):
                     self.timer.record_timepoint(
                         'Finished aggregation iteration')
 
-                if balanced:
-                    area = sum(table.loc[compartment_indices[fov_index][compartment]][
-                        self.dataset_design.get_cell_area_column()
-                    ])
-                    if area == 0:
-                        logger.warning(
-                            'Area computation failed for compartment "%s" in "%s".',
-                            compartment,
-                            self.sample_identifier,
-                        )
+                    if balanced:
+                        area = sum(table.loc[compartment_indices[fov_index][compartment]][
+                            self.dataset_design.get_cell_area_column()
+                        ])
+                        if area == 0:
+                            logger.warning(
+                                'Area computation failed for compartment "%s" in "%s".',
+                                compartment,
+                                self.sample_identifier,
+                            )
 
                 if source_count == 0:
                     logger.warning(

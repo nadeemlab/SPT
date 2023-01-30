@@ -3,6 +3,7 @@ import sqlite3
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.density.computational_design import DensityDesign
 from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
     WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
@@ -14,9 +15,10 @@ logger = colorized_logger(__name__)
 
 class DensityCoreJob(CoreJob):
     """Main parallelizable functionality for phenotype density workflow."""
+    computational_design: DensityDesign
 
     def __init__(self, **kwargs):
-        super(DensityCoreJob, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

@@ -3,13 +3,15 @@ from spatialprofilingtoolbox.workflow.defaults.computational_design import Compu
 
 
 class FrontProximityDesign(ComputationalDesign):
+    """Overal workflow design parameters for the front proximity workflow."""
+
     def __init__(self,
                  **kwargs,
                  ):
         """
         :param dataset_design: The design object describing the input data set.
         """
-        super(FrontProximityDesign, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

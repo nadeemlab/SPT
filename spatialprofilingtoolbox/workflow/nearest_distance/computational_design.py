@@ -8,8 +8,10 @@ from spatialprofilingtoolbox.workflow.defaults.computational_design import Compu
 
 
 class NearestDistanceDesign(ComputationalDesign):
+    """Overall workflow design for nearest distance to compartment workflow."""
+
     def __init__(self, **kwargs):
-        super(NearestDistanceDesign, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

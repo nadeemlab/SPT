@@ -20,7 +20,7 @@ class DensityDesign(ComputationalDesign):
         :param use_intensities: Whether to use continuous channel intensity values.
         :type use_intensities: bool
         """
-        super(DensityDesign, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.use_intensities = use_intensities
 
     @staticmethod

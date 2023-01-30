@@ -23,7 +23,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
         :param use_intensities: Whether to use continue intensity values.
         :type use_intensities: bool
         """
-        super(PhenotypeProximityDesign, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.balanced = balanced
         self.use_intensities = use_intensities
 
@@ -107,6 +107,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
             return 'phenotype proximity metric'
         if style == 'sql':
             return 'phenotype_proximity_metric'
+        return ''
 
     @staticmethod
     def get_aggregated_metric_name(style='readable'):
@@ -114,12 +115,12 @@ class PhenotypeProximityDesign(ComputationalDesign):
             return 'aggregated metric'
         if style == 'sql':
             return 'aggregated_metric'
+        return ''
 
     def get_metric_description(self):
         if self.balanced:
             return 'cell pair counts per unit slide area'
-        else:
-            return 'number of neighbor cells of target type, averaged over cells of source type'
+        return 'number of neighbor cells of target type, averaged over cells of source type'
 
     @staticmethod
     def uses_database():

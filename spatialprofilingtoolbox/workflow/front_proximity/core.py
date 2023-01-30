@@ -2,6 +2,8 @@
 
 from scipy.spatial import KDTree
 
+from spatialprofilingtoolbox.workflow.front_proximity.computational_design \
+    import FrontProximityDesign
 from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
 from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
     WaitingDatabaseContextManager
@@ -12,9 +14,10 @@ logger = colorized_logger(__name__)
 
 class FrontProximityCoreJob(CoreJob):
     """Core/parallelizable job for the front proximity workflow."""
+    computational_design: FrontProximityDesign
 
     def __init__(self, **kwargs):
-        super(FrontProximityCoreJob, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.fov_lookup = {}
 
     @staticmethod
@@ -126,7 +129,7 @@ class FrontProximityCoreJob(CoreJob):
 
             # Select pertinent columns and rename
             intensity_column_names = self.dataset_design.get_intensity_column_names()
-            if any([not c in df.columns for c in intensity_column_names.values()]):
+            if any(not c in df.columns for c in intensity_column_names.values()):
                 intensity_column_names = self.dataset_design.get_intensity_column_names(
                     with_sites=False)
 
@@ -153,7 +156,7 @@ class FrontProximityCoreJob(CoreJob):
                 number_cells_by_phenotype[phenotype] = number + \
                     sum(df[phenotype + ' membership'])
         most_frequent = sorted(
-            [(k, v) for k, v in number_cells_by_phenotype.items()],
+            list(number_cells_by_phenotype.items()),
             key=lambda x: x[1],
             reverse=True,
         )[0]
@@ -188,8 +191,7 @@ class FrontProximityCoreJob(CoreJob):
                 tree = KDTree(compartment_points)
                 distances, _ = tree.query(all_points)
                 for i, cell_index in enumerate(cell_indices):
-                    compartment_i = compartment_assignments[i]
-                    if compartment_i == compartment:
+                    if compartment_assignments[i] == compartment:
                         continue
                     for phenotype in self.get_phenotype_names():
                         if df.loc[cell_index, phenotype + ' membership']:
@@ -198,7 +200,7 @@ class FrontProximityCoreJob(CoreJob):
                                 int(fov_index),
                                 str(outcome),
                                 str(phenotype),
-                                str(compartment_i),
+                                str(compartment_assignments[i]),
                                 str(compartment),
                                 float(distances[i]),
                             ])

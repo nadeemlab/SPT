@@ -175,7 +175,7 @@ class LogParser:
                     match = re.match(
                         r'^Version: SPT v([\d\.]+)$', parts['Message'])
                     if match:
-                        self.extractions['SPT'] = 'v' + match.groups(1)[0]
+                        self.extractions['SPT'] = 'v' + str(match.groups(1)[0])
                         continue
 
                     match = re.match(
@@ -430,8 +430,8 @@ class LogReportAggregator:
             try:
                 parser.parse()
             except LogParsingError as exception:
-                print(
-                    f'Warning: Parsing error for run located at: {parser.get_path()}', file=sys.stderr)
+                print(f'Warning: Parsing error for run located at: {parser.get_path()}',
+                      file=sys.stderr)
                 print(exception, file=sys.stderr)
 
     def aggregate_reports_dataframe(self):

@@ -5,7 +5,6 @@ import subprocess
 import importlib.resources
 import re
 import signal
-import sys
 
 import spatialprofilingtoolbox
 from spatialprofilingtoolbox import submodule_names
@@ -30,13 +29,13 @@ def get_commands(submodule_name):
 def underscore_to_hyphen(string, inverse=False):
     if not inverse:
         return re.sub('_', '-', string)
-    else:
-        return re.sub('-', '_', string)
+    return re.sub('-', '_', string)
 
 
 def get_executable_and_script(submodule_name, script_name_hyphenated):
     script_name = underscore_to_hyphen(script_name_hyphenated, inverse=True)
     full_script_name = None
+    executable = ''
     if importlib.resources.is_resource(f'spatialprofilingtoolbox.{submodule_name}.scripts',
                                        f'{script_name}.py'):
         executable = sys.executable
@@ -51,6 +50,9 @@ def get_executable_and_script(submodule_name, script_name_hyphenated):
     with importlib.resources.path(f'spatialprofilingtoolbox.{submodule_name}.scripts',
                                   full_script_name) as path:
         script_path = path
+    if executable == '':
+        raise EnvironmentError(
+            f'Could not locate appropriate executable for the script {script_name_hyphenated}')
     return executable, script_path
 
 

@@ -123,7 +123,7 @@ class FeatureMatrixExtractor:
     def create_feature_matrix_row(centroid, binary, number_channels):
         return [centroid[0], centroid[1]] + \
             [int(value) for value in
-             list(('{0:0%sb}' % str(number_channels)).format(binary)[::-1])]
+             list(f'{0:0{number_channels}b}'.format(binary)[::-1])]
 
     @staticmethod
     def create_channel_information(data_arrays):

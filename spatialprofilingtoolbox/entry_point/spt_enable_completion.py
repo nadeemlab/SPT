@@ -54,8 +54,7 @@ def get_modules_and_commands():
 
 
 def create_completions_script():
-    jinja_environment = Environment(
-        loader=BaseLoader, comment_start_string='###')
+    jinja_environment = Environment(loader=BaseLoader(), comment_start_string='###')
     with importlib.resources.path('spatialprofilingtoolbox.entry_point',
                                   'spt-completion.sh.jinja') as path:
         with open(path, 'r', encoding='utf-8') as file:
@@ -100,8 +99,7 @@ def main_program():
     if args.script_file:
         profile_files = [args.script_file]
     else:
-        profile_files = [join(expanduser('~'), f)
-                         for f in ['.bash_profile', '.bashrc', '.profile']]
+        profile_files = [join(expanduser('~'), f) for f in ['.bash_profile', '.bashrc', '.profile']]
     if args.disable:
         for path in profile_files:
             if exists(path):

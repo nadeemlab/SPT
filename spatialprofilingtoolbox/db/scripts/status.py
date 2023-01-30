@@ -9,7 +9,7 @@ import importlib.resources
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     import pandas as pd
-    from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+    from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker  # pylint: disable=ungrouped-imports
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
 

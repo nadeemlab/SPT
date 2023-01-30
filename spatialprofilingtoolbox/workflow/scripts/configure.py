@@ -147,22 +147,16 @@ if __name__ == '__main__':
         SuggestExtrasException
     try:
         import jinja2
-        from \
-            spatialprofilingtoolbox.workflow.dataset_designs\
-            .multiplexed_imaging.file_identifier_schema \
-            import DEFAULT_FILE_MANIFEST_FILENAME
-        from \
-            spatialprofilingtoolbox.workflow.dataset_designs.\
-            multiplexed_imaging.file_identifier_schema \
-            import get_input_filename_by_identifier
-        from \
-            spatialprofilingtoolbox.workflow.dataset_designs.\
-            multiplexed_imaging.file_identifier_schema \
-            import get_input_filenames_by_data_type
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.\
+            file_identifier_schema import DEFAULT_FILE_MANIFEST_FILENAME  # pylint: disable=ungrouped-imports
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.\
+            file_identifier_schema import get_input_filename_by_identifier
+        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.\
+            file_identifier_schema import get_input_filenames_by_data_type
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
-    jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader)
+    jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader())
 
     config_variables = {}
 

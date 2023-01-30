@@ -63,13 +63,8 @@ class FrontProximityCoreJob(CoreJob):
             'Finished writing cell front distances in sample %s.', self.sample_identifier)
         self.timer.record_timepoint('Completed front proximity one job')
 
-    def get_phenotype_names(self):
-        signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
-        phenotype_names = sorted(signatures_by_name.keys())
-        return phenotype_names
-
     def create_cell_tables(self):
-        phenotype_names = self.get_phenotype_names()
+        phenotype_names = self.computational_design.get_phenotype_names()
 
         number_fovs = 0
         filename = self.input_filename
@@ -189,7 +184,7 @@ class FrontProximityCoreJob(CoreJob):
                 for i, cell_index in enumerate(cell_indices):
                     if compartment_assignments[i] == compartment:
                         continue
-                    for phenotype in self.get_phenotype_names():
+                    for phenotype in self.computational_design.get_phenotype_names():
                         if df.loc[cell_index, phenotype + ' membership']:
                             distance_records.append([
                                 self.sample_identifier,

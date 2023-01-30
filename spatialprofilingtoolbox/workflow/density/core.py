@@ -78,15 +78,6 @@ class DensityCoreJob(CoreJob):
         self.write_fov_lookup_table(fov_lookup)
         logger.info('Finished writing cells and fov lookup helper.')
 
-    def get_phenotype_names(self):
-        """
-        :return: `phenotype_names`. The munged names of composite phenotypes.
-        :rtype: list
-        """
-        signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
-        phenotype_names = sorted(signatures_by_name.keys())
-        return phenotype_names
-
     def create_cell_table(self):
         """
         :return:
@@ -95,7 +86,7 @@ class DensityCoreJob(CoreJob):
               FOV index integer).
         :rtype: pandas.DataFrame, dict
         """
-        phenotype_names = self.get_phenotype_names()
+        phenotype_names = self.computational_design.get_phenotype_names()
 
         cell_groups = []
         fov_lookup = {}

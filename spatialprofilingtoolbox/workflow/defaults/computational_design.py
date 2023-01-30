@@ -101,6 +101,11 @@ class ComputationalDesign:
         signatures = self.get_all_phenotype_signatures()
         return {self.dataset_design.munge_name(signature): signature for signature in signatures}
 
+    def get_phenotype_names(self):
+        signatures_by_name = self.get_phenotype_signatures_by_name()
+        phenotype_names = sorted(signatures_by_name.keys())
+        return phenotype_names
+
     @staticmethod
     def get_fov_lookup_header():
         """

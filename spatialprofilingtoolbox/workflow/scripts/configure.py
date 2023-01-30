@@ -9,6 +9,7 @@ from os.path import abspath
 from os.path import expanduser
 import stat
 import importlib.resources
+import sys
 
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
@@ -241,7 +242,7 @@ if __name__ == '__main__':
     study_file_abs = join(args.input_path, study_file)
     if not exists(study_file_abs):
         print(f'Did not find study file ({study_file}).')
-        exit(1)
+        sys.exit(1)
     config_variables['study_file'] = study_file_abs
     config_variables['study'] = True
 
@@ -252,7 +253,7 @@ if __name__ == '__main__':
     diagnosis_file_abs = join(args.input_path, diagnosis_file)
     if not exists(diagnosis_file_abs):
         print(f'Did not find diagnosis file ({diagnosis_file}).')
-        exit(1)
+        sys.exit(1)
     config_variables['diagnosis_file'] = diagnosis_file_abs
     config_variables['diagnosis'] = True
 
@@ -263,7 +264,7 @@ if __name__ == '__main__':
     interventions_file_abs = join(args.input_path, interventions_file)
     if not exists(interventions_file_abs):
         print(f'Did not find interventions file ({interventions_file}).')
-        exit(1)
+        sys.exit(1)
     config_variables['interventions_file'] = interventions_file_abs
     config_variables['interventions'] = True
 

@@ -2,6 +2,7 @@
 Do cell counting for a specific signature, over the specially-created
 binary-format index.
 """
+import sys
 import re
 import os
 from os.path import join
@@ -13,6 +14,8 @@ logger = colorized_logger(__name__)
 
 
 class CountsProvider:
+    """Scan binary-format expression matrices for specific signatures."""
+
     def __init__(self, data_directory):
         self.load_expressions_indices(data_directory)
         self.load_data_matrices(data_directory)
@@ -24,7 +27,7 @@ class CountsProvider:
             join(data_directory, f)) and re.search(r'\.json$', f)]
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
-            exit()
+            sys.exit(1)
         with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
             root = json.loads(file.read())
             entries = root[list(root.keys())[0]]

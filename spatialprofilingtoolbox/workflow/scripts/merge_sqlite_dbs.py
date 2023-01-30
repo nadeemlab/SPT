@@ -3,6 +3,7 @@ from os.path import exists
 import sqlite3
 import re
 import argparse
+import sys
 
 
 def get_table_names(uri):
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     output_db = args.output
     if exists(output_db):
         print(f'{output_db} already exists. Aborting.')
-        exit()
+        sys.exit()
 
     conn = sqlite3.connect(output_db)
     conn.close()
@@ -88,6 +89,6 @@ if __name__ == '__main__':
             print(
                 f'Table names {table_names} and {these_table_names} do not match in '
                 'input databases. Aborting.')
-            exit()
+            sys.exit()
         for name in table_names:
             migrate_table(name, input_db, output_db)

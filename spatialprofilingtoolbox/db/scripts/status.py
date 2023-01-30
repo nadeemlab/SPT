@@ -1,4 +1,5 @@
 """Utility to report basic health/status of the SPT database."""
+import sys
 import argparse
 from os.path import exists
 from os.path import abspath
@@ -72,7 +73,7 @@ if __name__ == '__main__':
             cur = dcm.get_connection().cursor()
             present, counted = check_tables(cur)
             if not present:
-                exit(1)
+                sys.exit(1)
             cur.close()
 
         report_counts(counted)

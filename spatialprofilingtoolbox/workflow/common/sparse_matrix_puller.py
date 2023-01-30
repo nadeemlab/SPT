@@ -46,10 +46,11 @@ class CompressedDataArrays:
 
 
 class SparseMatrixPuller(DatabaseConnectionMaker):
+    """"Get sparse marix representation of cell x channel data in database."""
+    data_arrays: CompressedDataArrays
+
     def __init__(self, database_config_file):
-        super(SparseMatrixPuller, self).__init__(
-            database_config_file=database_config_file)
-        self.data_arrays = None
+        super().__init__(database_config_file=database_config_file)
 
     def pull(self):
         self.data_arrays = self.retrieve_data_arrays()
@@ -57,7 +58,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
     def get_data_arrays(self):
         return self.data_arrays
 
-    def retrieve_data_arrays(self):
+    def retrieve_data_arrays(self) -> CompressedDataArrays:
         study_names = self.get_study_names(self.get_connection())
         data_arrays = CompressedDataArrays()
         for study_name in study_names:

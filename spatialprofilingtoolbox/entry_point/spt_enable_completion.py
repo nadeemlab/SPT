@@ -4,6 +4,7 @@ from os.path import expanduser
 from os.path import join
 from os.path import exists
 import argparse
+import sys
 
 from jinja2 import Environment
 from jinja2 import BaseLoader
@@ -73,7 +74,7 @@ def attempt_append_to(filename, contents):
         print(f'Wrote completions script fragment to:\n {filename}')
         print('Either open a new shell or do:')
         print(f'    source {filename}')
-        exit()
+        sys.exit()
 
 
 def main_program():
@@ -105,7 +106,7 @@ def main_program():
         for path in profile_files:
             if exists(path):
                 remove_previous_installation(path)
-        exit()
+        sys.exit()
 
     completion_script = create_completions_script()
     wrapped = f'\n{HEADER}\n{completion_script}\n{FOOTER}\n'

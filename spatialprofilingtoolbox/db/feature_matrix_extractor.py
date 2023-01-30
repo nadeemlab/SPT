@@ -2,6 +2,8 @@
 Convenience provision of a feature matrix for each study, the data retrieved
 from the SPT database.
 """
+import sys
+
 import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -15,6 +17,10 @@ logger = colorized_logger(__name__)
 
 
 class FeatureMatrixExtractor:
+    """
+    Pull from the database and create convenience bundle of feature matrices
+    and metadata.
+    """
     @staticmethod
     def extract(database_config_file):
         E = FeatureMatrixExtractor
@@ -141,12 +147,12 @@ class FeatureMatrixExtractor:
         }
 
     @staticmethod
-    def merge_dictionaries(*args, new_keys=[], study_component_lookup={}):
+    def merge_dictionaries(*args, new_keys: list, study_component_lookup: dict):
         if not len(args) == len(new_keys):
             logger.error(
                 "Can not match up dictionaries to be merged with the list of key names to be "
                 "issued for them.")
-            exit(1)
+            sys.exit(1)
 
         merged = {}
         for i in range(len(new_keys)):

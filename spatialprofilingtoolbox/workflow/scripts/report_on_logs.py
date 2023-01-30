@@ -26,6 +26,7 @@ ansi_escape = re.compile(r'''
 
 class LogParsingError(Exception):
     """Custom exception for log parsing. To simply printing error messages."""
+
     def __init__(self, message):
         super().__init__(message)
         self.message = message
@@ -36,6 +37,7 @@ class LogParsingError(Exception):
 
 class LSFPreambleSkipper:
     """File reading that skips possible 'LSF' system-generated preamble."""
+
     def __init__(self, filename):
         with open(filename, 'rt', encoding='utf-8') as file:
             header = file.readline().rstrip('\n')
@@ -71,6 +73,7 @@ class LSFPreambleSkipper:
 
 class LogParser:
     """Parse logs generated during a Nextflow run of an SPT workflow."""
+
     def __init__(self, path):
         self.path = path
         self.extractions = {}
@@ -81,7 +84,7 @@ class LogParser:
         self.log_files = []
         self.performance_report = ''
         self.run_configuration_log = ''
-        self.year = None
+        self.year = ''
 
     def get_path(self):
         return self.path
@@ -123,8 +126,8 @@ class LogParser:
         nf_header = open(self.nextflow_log, 'rt', encoding='utf-8').readline().rstrip('\n')
         search = re.search(r'^(\w+)\-(\d+) \d+:\d+:\d+\.\d+', nf_header)
         if search:
-            month = search.groups(1)[0]
-            day = search.groups(1)[1]
+            month = str(search.groups(1)[0])
+            day = str(search.groups(1)[1])
             self.extractions['Run date'] = ' '.join([month, day, self.year])
 
         job_reports = self.extract_job_reports()
@@ -158,7 +161,7 @@ class LogParser:
         self.validate_all_extractions_found()
 
     def extract_from_run_configuration_log(self):
-        self.year = None
+        self.year = ''
         with open(self.run_configuration_log, 'rt', encoding='utf-8') as file:
             for line in file:
                 parts = self.parse_log_line(line.rstrip('\n'))
@@ -214,9 +217,9 @@ class LogParser:
                     match = re.match(r'^Run date year: (\d+)$',
                                      parts['Message'])
                     if match:
-                        self.year = match.groups(1)[0]
+                        self.year = str(match.groups(1)[0])
                         continue
-        if not self.year:
+        if self.year == '':
             self.year = 'YYYY'
 
     def validate_all_extractions_found(self):
@@ -397,6 +400,7 @@ class LogReportAggregator:
     Aggregate together many log files that are created by a Nextflow run of an
     SPT workflow.
     """
+
     def __init__(self, format_handle=None):
         working_directories = []
         for root, dirs, files in os.walk('.'):
@@ -405,7 +409,7 @@ class LogReportAggregator:
         self.parsers = [LogParser(path) for path in working_directories]
         self.format_handle = format_handle
 
-        self.jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader)
+        self.jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader())
 
         def quote_hash(input_string):
             return re.sub(r'\#', r'\\#', input_string)
@@ -426,8 +430,8 @@ class LogReportAggregator:
             try:
                 parser.parse()
             except LogParsingError as exception:
-                print(f'Warning: Parsing error for run located at: {parser.get_path()}'
-                      , file=sys.stderr)
+                print(
+                    f'Warning: Parsing error for run located at: {parser.get_path()}', file=sys.stderr)
                 print(exception, file=sys.stderr)
 
     def aggregate_reports_dataframe(self):

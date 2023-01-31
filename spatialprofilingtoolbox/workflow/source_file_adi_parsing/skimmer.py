@@ -20,7 +20,6 @@ from spatialprofilingtoolbox.workflow.source_file_adi_parsing.interventions impo
     InterventionsParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.study import StudyParser
-from spatialprofilingtoolbox.db.source_file_parser_interface import DBBackend
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -32,12 +31,8 @@ class DataSkimmer(DatabaseConnectionMaker):
     Orchestration of source file parsing into single cell ADI schema database
     for a bundle of source files.
     """
-    def __init__(self, database_config_file: Optional[str] = None, db_backend=DBBackend.POSTGRES):
-        if db_backend != DBBackend.POSTGRES:
-            raise ValueError('Only DBBackend.POSTGRES is supported.')
-        self.db_backend = db_backend
-        super(DataSkimmer, self).__init__(
-            database_config_file=database_config_file)
+    def __init__(self, database_config_file: Optional[str] = None):
+        super().__init__(database_config_file=database_config_file)
         self.record_counts = {}
 
     def normalize(self, name):

@@ -4,18 +4,12 @@ are meant to be parsers of some specific source file into the 'single cell
 studies ADI' schema.
 """
 import re
-from enum import Enum
-from enum import auto
 
 import psycopg2
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
-
-
-class DBBackend(Enum):
-    POSTGRES = auto()
 
 
 class SourceToADIParser:

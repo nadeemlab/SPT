@@ -62,8 +62,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         study_names = self.get_study_names(self.get_connection())
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
-            sparse_entries = self.get_sparse_entries(
-                self.get_connection(), study_name)
+            sparse_entries = self.get_sparse_entries(self.get_connection(), study_name)
             data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(
                 sparse_entries)
             data_arrays.add_study_data(
@@ -168,7 +167,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         with connection.cursor() as cursor:
             cursor.execute(query, (study_name,))
             rows = cursor.fetchall()
-        if len(rows) != len(set([row[1] for row in rows])):
+        if len(rows) != len(set(row[1] for row in rows)):
             logger.error(
                 'The symbols are not unique identifiers of the targets. The symbols are: %s',
                 [row[1] for row in rows])

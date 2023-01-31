@@ -72,8 +72,7 @@ def test_expression_vectors(study):
         channels = study['channel symbols by column name']
 
         expected_expression_vectors = sorted([
-            tuple(row[create_column_name(
-                channels, f'F{i}')] for i in range(26))
+            tuple(row[create_column_name(channels, f'F{i}')] for i in range(26))
             for _, row in reference.iterrows()
         ])
 
@@ -99,8 +98,7 @@ def test_outcomes(study):
 
 
 if __name__ == '__main__':
-    matrix_bundle = FeatureMatrixExtractor.extract(
-        '../db/.spt_db.config.container')
+    matrix_bundle = FeatureMatrixExtractor.extract('../db/.spt_db.config.container')
     test_study = get_study(matrix_bundle)
     test_sample_set(test_study)
     test_feature_matrix_schemas(test_study)

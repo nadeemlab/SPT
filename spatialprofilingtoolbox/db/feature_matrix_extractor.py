@@ -24,20 +24,15 @@ class FeatureMatrixExtractor:
     @staticmethod
     def extract(database_config_file):
         E = FeatureMatrixExtractor
-        data_arrays = E.retrieve_expressions_from_database(
-            database_config_file)
-        centroid_coordinates = E.retrieve_structure_centroids_from_database(
-            database_config_file)
-        outcomes = E.retrieve_derivative_outcomes_from_database(
-            database_config_file)
-        study_component_lookup = E.retrieve_study_component_lookup(
-            database_config_file)
+        data_arrays = E.retrieve_expressions_from_database(database_config_file)
+        centroid_coordinates = E.retrieve_structure_centroids_from_database(database_config_file)
+        outcomes = E.retrieve_derivative_outcomes_from_database(database_config_file)
+        study_component_lookup = E.retrieve_study_component_lookup(database_config_file)
         return E.merge_dictionaries(
             E.create_feature_matrices(data_arrays, centroid_coordinates),
             E.create_channel_information(data_arrays),
             outcomes,
-            new_keys=['feature matrices',
-                      'channel symbols by column name', 'outcomes'],
+            new_keys=['feature matrices','channel symbols by column name', 'outcomes'],
             study_component_lookup=study_component_lookup,
         )
 
@@ -122,14 +117,12 @@ class FeatureMatrixExtractor:
     @staticmethod
     def create_feature_matrix_row(centroid, binary, number_channels):
         return [centroid[0], centroid[1]] + \
-            [int(value) for value in
-             list(f'{0:0{number_channels}b}'.format(binary)[::-1])]
+            [int(value) for value in list(('{0:0%sb}' % number_channels).format(binary)[::-1])]
 
     @staticmethod
     def create_channel_information(data_arrays):
         return {
-            study_name: FeatureMatrixExtractor.create_channel_information_for_study(
-                study)
+            study_name: FeatureMatrixExtractor.create_channel_information_for_study(study)
             for study_name, study in data_arrays.items()
         }
 

@@ -15,17 +15,22 @@ logger = colorized_logger(__name__)
 
 
 class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
+    """
+    Upload sparse representation of feature values to tables
+    quantitative_feature_value, feature_specification, feature_specifier.
+    """
     def __init__(self,
                  database_config_file,
                  data_analysis_study,
                  derivation_method,
                  specifier_number,
                  **kwargs):
-        SourceToADIParser.__init__(self, **kwargs)
+        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+            fields = pd.read_csv(path, sep='\t', na_filter=False)
+        SourceToADIParser.__init__(self, fields)
         self.record_feature_specification_template(
             data_analysis_study, derivation_method, specifier_number)
-        DatabaseConnectionMaker.__init__(
-            self, database_config_file=database_config_file)
+        DatabaseConnectionMaker.__init__(self, database_config_file=database_config_file)
 
     def record_feature_specification_template(self,
                                               data_analysis_study,
@@ -34,10 +39,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
         self.specifier_number = specifier_number
-        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
-            fields = pd.read_csv(path, sep='\t', na_filter=False)
         self.insert_queries = {
-            tablename: self.generate_basic_insert_query(tablename, fields)
+            tablename: self.generate_basic_insert_query(tablename)
             for tablename in
             ['feature_specification', 'feature_specifier',
                 'quantitative_feature_value']
@@ -72,8 +75,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         cursor = self.get_connection().cursor()
         next_identifier = self.get_next_integer_identifier(
             'feature_specification', cursor)
-        specifiers_list = sorted(
-            list(set([row[0] for row in self.feature_values])))
+        specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
         specifiers_by_id = {
             next_identifier + i: specifiers
             for i, specifiers in enumerate(specifiers_list)
@@ -110,7 +112,9 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         count = self.count_known_feature_values_this_study()
         if count == len(self.feature_values):
             logger.info(
-                'Exactly %s feature values already associated with study "%s" of description "%s". This is the correct number; skipping upload without error.',
+                'Exactly %s feature values already associated with study "%s" of '
+                'description "%s". This is the correct number; skipping upload '
+                'without error.',
                 count, self.data_analysis_study, self.derivation_method)
             return True
         if count > 0:
@@ -121,9 +125,11 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
             raise ValueError(message)
         if count == 0:
             logger.info(
-                'No feature values yet associated with study "%s" of description "%s". Proceeding with upload.',
+                'No feature values yet associated with study "%s" of description "%s". '
+                'Proceeding with upload.',
                 self.data_analysis_study, self.derivation_method)
             return False
+        return None
 
     def count_known_feature_values_this_study(self):
         cursor = self.get_connection().cursor()

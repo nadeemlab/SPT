@@ -53,6 +53,7 @@ def get_study_components(study_name):
             for substudy in substudies:
                 if substudy in names:
                     components[key] = substudy
+        cursor.close()
     return components
 
 
@@ -101,6 +102,7 @@ def get_study_names():
         cursor = connection.cursor()
         cursor.execute('SELECT study_specifier FROM study;')
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
             'study names': [str(row[0]) for row in rows]
         }
@@ -264,6 +266,7 @@ def get_sample_stratification(cursor, specimen_collection_study):
     sample_cohort_assignments = get_sample_cohort_assignments(cursor, specimen_collection_study)
     return { 'cohort' : sample_cohorts, 'assignments' : sample_cohort_assignments }
 
+
 @app.get("/study-summary/{study}")
 def get_study_summary(
     study: str = Query(default='unknown', min_length=3),
@@ -371,8 +374,6 @@ async def get_phenotype_summary(
     * **minimum value**. The lowest fraction value.
     """
     components = get_study_components(study)
-    specimen_measurement_study = components['measurement']
-    data_analysis_study = components['analysis']
 
     columns = [
         'marker_symbol',
@@ -396,9 +397,10 @@ async def get_phenotype_summary(
                 AND data_analysis_study in (%s, \'none\')
             ;
             ''',
-            (specimen_measurement_study, data_analysis_study),
+            (components['measurement'], components['analysis']),
         )
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
             'fractions': [[str(entry) for entry in row] for row in rows]
         }
@@ -417,7 +419,6 @@ async def get_phenotype_symbols(
     composite phenotype symbols in the given study.
     """
     components = get_study_components(study)
-    data_analysis_study = components['analysis']
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -429,8 +430,9 @@ async def get_phenotype_symbols(
         ORDER BY cp.symbol
         ;
         '''
-        cursor.execute(query, (data_analysis_study,))
+        cursor.execute(query, (components['analysis'],))
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
             'phenotype symbols': rows,
         }
@@ -462,6 +464,7 @@ async def get_phenotype_criteria_name(
         cursor.execute(query, (phenotype_symbol,),
                        )
         rows = cursor.fetchall()
+        cursor.close()
         if len(rows) == 0:
             munged = phenotype_symbol + '+'
         else:
@@ -515,6 +518,7 @@ async def get_phenotype_criteria(
             cursor.execute(singles_query, (phenotype_symbol,))
             rows = cursor.fetchall()
             if len(rows) == 0:
+                cursor.close()
                 return Response(
                     content=json.dumps({
                         'error': {
@@ -524,6 +528,7 @@ async def get_phenotype_criteria(
                     }),
                     media_type='application/json',
                 )
+        cursor.close()
         signature = {row[0]: row[1] for row in rows}
         positive_markers = sorted(
             [marker for marker, polarity in signature.items() if polarity == 'positive'])
@@ -541,6 +546,13 @@ async def get_phenotype_criteria(
         )
 
 
+def split_on_tabs(string):
+    splitted = []
+    if string is not None:
+        splitted = string.split('\t')
+    return list(set(splitted).difference(['']))
+
+
 @app.get("/anonymous-phenotype-counts-fast/")
 async def get_anonymous_phenotype_counts_fast(
     positive_markers_tab_delimited: str = Query(default=None),
@@ -552,45 +564,19 @@ async def get_anonymous_phenotype_counts_fast(
     pre-build custom index for performance. It is about 500 times faster.
     """
     components = get_study_components(study)
-    specimen_measurement_study = components['measurement']
-    if not positive_markers_tab_delimited is None:
-        positive_markers = positive_markers_tab_delimited.split('\t')
-    else:
-        positive_markers = []
-    positive_markers = list(set(positive_markers).difference(['']))
-    if not negative_markers_tab_delimited is None:
-        negative_markers = negative_markers_tab_delimited.split('\t')
-    else:
-        negative_markers = []
-    negative_markers = list(set(negative_markers).difference(['']))
+    positive_markers = split_on_tabs(positive_markers_tab_delimited)
+    negative_markers = split_on_tabs(negative_markers_tab_delimited)
 
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
+        number_cells = get_number_cells(cursor, components['measurement'])
+        cursor.close()
 
-        total_query = '''
-        SELECT count(*)
-        FROM histological_structure_identification hsi
-        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-        JOIN data_file df ON hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ;
-        '''
-        cursor.execute(total_query, (specimen_measurement_study,))
-        rows = cursor.fetchall()
-        if len(rows) == 0:
-            return Response(media_type='application/json', content=json.dumps({
-                'specimen_measurement_study': specimen_measurement_study,
-                'status': 'not found'
-            }))
-        number_cells = rows[0][0]
-
-    host = os.environ['COUNTS_SERVER_HOST']
-    port = int(os.environ['COUNTS_SERVER_PORT'])
-    with CountRequester(host, port) as requester:
+    with CountRequester(os.environ['COUNTS_SERVER_HOST'],
+                        int(os.environ['COUNTS_SERVER_PORT']))as requester:
         counts = requester.get_counts_by_specimen(
-            positive_markers, negative_markers, specimen_measurement_study)
+            positive_markers, negative_markers, components['measurement'])
 
     def fancy_round(ratio):
         return 100 * round(ratio * 10000)/10000
@@ -671,6 +657,7 @@ async def get_phenotype_proximity_summary(
             (derivation_method, data_analysis_study),
         )
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
             'proximities': [[str(entry) for entry in row] for row in rows]
         }

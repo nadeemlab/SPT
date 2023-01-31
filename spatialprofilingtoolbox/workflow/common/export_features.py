@@ -150,8 +150,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
 
     def test_subject_existence(self):
         subject_ids = self.get_subject_identifiers()
-        unknown_subjects = set(
-            [row[1] for row in self.feature_values]).difference(subject_ids)
+        unknown_subjects = set(row[1] for row in self.feature_values).difference(subject_ids)
         if len(unknown_subjects) > 0:
             logger.warning('Feature values refer to %s unknown subjects: %s', len(
                 unknown_subjects), str(list(unknown_subjects)))

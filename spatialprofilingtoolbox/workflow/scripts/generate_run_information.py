@@ -66,6 +66,6 @@ if __name__ == '__main__':
     job_generator.write_job_specification_table(
         args.job_specification_table, outcomes_file=args.outcomes_file)
     job_generator.write_elementary_phenotypes_filename(
-        args.elementary_phenotypes_filename)
+        args.elementary_phenotypes_file)
     job_generator.write_composite_phenotypes_filename(
-        args.composite_phenotypes_filename)
+        args.composite_phenotypes_file)

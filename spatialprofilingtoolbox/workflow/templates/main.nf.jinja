@@ -60,8 +60,8 @@ process generate_run_information {
 {%- if outcomes %}
      --outcomes-file=${outcomes_file} \{% endif %}
      --job-specification-table=job_specification_table.csv \
-     --elementary-phenotypes-filename=elementary_phenotypes_filename \
-     --composite-phenotypes-filename=composite_phenotypes_filename
+     --elementary-phenotypes-file=elementary_phenotypes_filename \
+     --composite-phenotypes-file=composite_phenotypes_filename
     """
 }
 {% if not compartments %}

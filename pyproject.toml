@@ -96,7 +96,6 @@ packages = [
     "spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging",
     "spatialprofilingtoolbox.workflow.defaults",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
-    "spatialprofilingtoolbox.workflow.front_proximity",
     "spatialprofilingtoolbox.workflow.density",
     "spatialprofilingtoolbox.workflow.nearest_distance",
     "spatialprofilingtoolbox.workflow.halo_import",

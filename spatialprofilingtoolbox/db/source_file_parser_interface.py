@@ -13,8 +13,12 @@ logger = colorized_logger(__name__)
 
 
 class SourceToADIParser:
-    def __init__(self, **kwargs):
-        pass
+    """Interface for specific source file parsing into single cell schema."""
+    def __init__(self, fields, **kwargs):  # pylint: disable=unused-argument
+        self.fields_from_source = fields
+
+    def get_fields(self):
+        return self.fields_from_source
 
     @staticmethod
     def get_collection_study_name(study_name):
@@ -33,23 +37,22 @@ class SourceToADIParser:
         return placeholder
 
     def normalize(self, string):
-        string = re.sub('[ \-]', '_', string)
+        string = re.sub(r'[ \-]', '_', string)
         string = string.lower()
         return string
 
-    def get_field_names(self, tablename, fields):
+    def get_field_names(self, tablename):
         fields = [
             field
-            for i, field in fields.iterrows()
+            for i, field in self.get_fields().iterrows()
             if self.normalize(field['Table']) == self.normalize(tablename)
         ]
-        fields_sorted = sorted(
-            fields, key=lambda field: int(field['Ordinality']))
+        fields_sorted = sorted(fields, key=lambda field: int(field['Ordinality']))
         fields_sorted = [f['Name'] for f in fields_sorted]
         return fields_sorted
 
-    def generate_basic_insert_query(self, tablename, fields):
-        fields_sorted = self.get_field_names(tablename, fields)
+    def generate_basic_insert_query(self, tablename):
+        fields_sorted = self.get_field_names(tablename)
         handle_duplicates = 'ON CONFLICT DO NOTHING '
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join(fields_sorted) + ') '
@@ -76,10 +79,9 @@ class SourceToADIParser:
             int(i[0]) for i in identifiers if self.is_integer(i[0])]
         if len(known_integer_identifiers) == 0:
             return 0
-        else:
-            return max(known_integer_identifiers) + 1
+        return max(known_integer_identifiers) + 1
 
-    def check_exists(self, tablename, record, cursor, fields, no_primary=False):
+    def check_exists(self, tablename, record, cursor, no_primary=False):
         """
         Assumes that the first entry in records is a fiat identifier, omitted for
         the purpose of checking pre-existence of the record.
@@ -91,7 +93,7 @@ class SourceToADIParser:
         If no_primary = True, no fiat identifier column is assumed at all, and a key
         value of None is returned.
         """
-        fields = self.get_field_names(tablename, fields)
+        fields = self.get_field_names(tablename)
         primary = fields[0]
         if no_primary:
             primary = 'COUNT(*)'
@@ -119,9 +121,7 @@ class SourceToADIParser:
                 logger.warning('"%s" contains duplicates records.', tablename)
             key = rows[0][0]
             return [True, key]
-        else:
-            count = cursor.fetchall()[0][0]
-            if count == 0:
-                return [False, None]
-            else:
-                return [True, None]
+        count = cursor.fetchall()[0][0]
+        if count == 0:
+            return [False, None]
+        return [True, None]

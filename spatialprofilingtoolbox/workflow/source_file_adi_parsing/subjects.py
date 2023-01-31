@@ -9,7 +9,7 @@ logger = colorized_logger(__name__)
 
 class SubjectsParser(SourceToADIParser):
     """Parse source files containing subject-level metadata."""
-    def parse(self, connection, fields, subjects_file):
+    def parse(self, connection, subjects_file):
         """
         Retrieve SUBJECT data in the same way that the main workflows do, and parse
         records for:
@@ -27,7 +27,7 @@ class SubjectsParser(SourceToADIParser):
         logger.info('Saving %s subject records.', subjects.shape[0])
         for _, row in subjects.iterrows():
             cursor.execute(
-                self.generate_basic_insert_query('subject', fields),
+                self.generate_basic_insert_query('subject'),
                 create_subject_record(row['Subject ID'], row['Sex']),
             )
         connection.commit()

@@ -22,8 +22,8 @@ class CellManifestsParser(SourceToADIParser):
     Source file parsing for metadata at the level of the cell manifest set.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, fields, **kwargs):
+        super().__init__(fields, **kwargs)
         self.using_intensities = False
 
     def parse(self,

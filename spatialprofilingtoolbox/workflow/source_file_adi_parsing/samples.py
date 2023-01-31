@@ -11,7 +11,7 @@ logger = colorized_logger(__name__)
 
 class SamplesParser(SourceToADIParser):
     """Source file parsing for sample-level metadata."""
-    def parse(self, connection, fields, samples_file, study_name):
+    def parse(self, connection, samples_file, study_name):
         """
         Retrieve the samples information and parse records for:
         - specimen collection study
@@ -28,8 +28,7 @@ class SamplesParser(SourceToADIParser):
 
         cursor = connection.cursor()
         cursor.execute(
-            self.generate_basic_insert_query(
-                'specimen_collection_study', fields),
+            self.generate_basic_insert_query('specimen_collection_study'),
             (collection_study, extraction_method,
              preservation_method, storage_location, '', ''),
         )
@@ -39,21 +38,13 @@ class SamplesParser(SourceToADIParser):
                 sample,
                 collection_study,
             )
-            cursor.execute(
-                self.generate_basic_insert_query(
-                    'specimen_collection_process', fields),
-                record,
-            )
+            cursor.execute(self.generate_basic_insert_query('specimen_collection_process'), record)
 
         for _, sample in samples.iterrows():
             if sample['Assay'] == '' or sample['Assessment'] == '':
                 continue
             record = self.create_histology_assessment_process_record(sample)
-            cursor.execute(
-                self.generate_basic_insert_query(
-                    'histology_assessment_process', fields),
-                record,
-            )
+            cursor.execute(self.generate_basic_insert_query('histology_assessment_process'), record)
 
         logger.info('Parsed records for %s specimens.', samples.shape[0])
         connection.commit()

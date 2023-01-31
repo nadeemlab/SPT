@@ -96,47 +96,40 @@ class DataSkimmer(DatabaseConnectionMaker):
 
         self.cache_all_record_counts(self.get_connection(), fields)
 
-        study_name = StudyParser().parse(
+        study_name = StudyParser(fields).parse(
             self.get_connection(),
-            fields,
             study_file,
         )
-        SubjectsParser().parse(
+        SubjectsParser(fields).parse(
             self.get_connection(),
-            fields,
             subjects_file,
         )
-        DiagnosisParser().parse(
+        DiagnosisParser(fields).parse(
             self.get_connection(),
-            fields,
             diagnosis_file,
         )
-        InterventionsParser().parse(
+        InterventionsParser(fields).parse(
             self.get_connection(),
-            fields,
             interventions_file,
         )
         samples_file = outcomes_file
-        SamplesParser().parse(
+        SamplesParser(fields).parse(
             self.get_connection(),
-            fields,
             samples_file,
             study_name,
         )
-        CellManifestSetParser().parse(
+        CellManifestSetParser(fields).parse(
             self.get_connection(),
-            fields,
             file_manifest_file,
             study_name,
         )
-        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser().parse(
+        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(fields).parse(
             self.get_connection(),
-            fields,
             elementary_phenotypes_file,
             composite_phenotypes_file,
             study_name,
         )
-        CellManifestsParser().parse(
+        CellManifestsParser(fields).parse(
             self.get_connection(),
             dataset_design,
             computational_design,

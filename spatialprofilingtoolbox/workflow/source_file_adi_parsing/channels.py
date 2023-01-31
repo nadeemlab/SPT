@@ -11,7 +11,6 @@ class ChannelsPhenotypesParser(SourceToADIParser):
     """Source file parsing for imaging/feature-assessment channel metadata."""
     def parse(self,
               connection,
-              fields,
               elementary_phenotypes_file,
               composite_phenotypes_file,
               study_name):
@@ -28,15 +27,12 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         composite_phenotypes = pd.read_csv(
             composite_phenotypes_file, sep=',', na_filter=False, dtype=str)
 
-        data_analysis_study = SourceToADIParser.get_data_analysis_study_name(
-            study_name)
-        measurement_study = SourceToADIParser.get_measurement_study_name(
-            study_name)
+        data_analysis_study = SourceToADIParser.get_data_analysis_study_name(study_name)
+        measurement_study = SourceToADIParser.get_measurement_study_name(study_name)
 
         cursor = connection.cursor()
 
-        identifier = self.get_next_integer_identifier(
-            'chemical_species', cursor)
+        identifier = self.get_next_integer_identifier('chemical_species', cursor)
         initial_value = identifier
         chemical_species_identifiers_by_symbol = {}
         for _, phenotype in elementary_phenotypes.iterrows():
@@ -48,12 +44,10 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 phenotype['Target full name'],
                 chemical_structure_class,
             )
-            was_found, key = self.check_exists(
-                'chemical_species', record, cursor, fields)
+            was_found, key = self.check_exists('chemical_species', record, cursor)
             if not was_found:
                 cursor.execute(
-                    self.generate_basic_insert_query(
-                        'chemical_species', fields),
+                    self.generate_basic_insert_query('chemical_species'),
                     record,
                 )
                 chemical_species_identifiers_by_symbol[symbol] = str(
@@ -80,27 +74,19 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 phenotype['Marking mechanism'],
                 measurement_study,
             )
-            was_found, key = self.check_exists(
-                'biological_marking_system', record, cursor, fields)
+            was_found, key = self.check_exists('biological_marking_system', record, cursor)
             if not was_found:
-                cursor.execute(
-                    self.generate_basic_insert_query(
-                        'biological_marking_system', fields),
-                    record,
-                )
+                cursor.execute(self.generate_basic_insert_query('biological_marking_system'),record)
                 identifier = identifier + 1
             else:
                 logger.debug(
                     '"biological_marking_system" %s already exists.',
                     str([''] + list(record[1:])),
                 )
-        logger.info('Saved %s biological marking system records.',
-                    identifier - initial_value)
+        logger.info('Saved %s biological marking system records.', identifier - initial_value)
 
         cursor.execute(
-            self.generate_basic_insert_query('data_analysis_study', fields),
-            (data_analysis_study, ),
-        )
+            self.generate_basic_insert_query('data_analysis_study'), (data_analysis_study, ))
 
         identifier = self.get_next_integer_identifier('cell_phenotype', cursor)
         initial_value = identifier
@@ -109,11 +95,10 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         for _, phenotype in composite_phenotypes.iterrows():
             symbol = phenotype['Name']
             record = (str(identifier), symbol, symbol)
-            was_found, key = self.check_exists(
-                'cell_phenotype', record, cursor, fields)
+            was_found, key = self.check_exists('cell_phenotype', record, cursor)
             if not was_found:
                 cursor.execute(
-                    self.generate_basic_insert_query('cell_phenotype', fields),
+                    self.generate_basic_insert_query('cell_phenotype'),
                     record,
                 )
                 cell_phenotype_identifiers_by_symbol[symbol] = str(identifier)
@@ -153,12 +138,11 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                     polarity,
                     data_analysis_study,
                 )
-                was_found, _ = self.check_exists(
-                    'cell_phenotype_criterion', record, cursor, fields, no_primary=True)
+                was_found, _ = self.check_exists('cell_phenotype_criterion',
+                                                 record, cursor, no_primary=True)
                 if not was_found:
                     cursor.execute(
-                        self.generate_basic_insert_query(
-                            'cell_phenotype_criterion', fields),
+                        self.generate_basic_insert_query('cell_phenotype_criterion'),
                         record,
                     )
                     number_criterion_records += 1

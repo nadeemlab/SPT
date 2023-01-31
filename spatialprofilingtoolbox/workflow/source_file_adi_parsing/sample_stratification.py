@@ -28,11 +28,9 @@ class SampleStratificationCreator:
         logger.info(
             'Creating sample (specimen) stratification based on diagnoses and/or interventions.')
 
-        specimens = SampleStratificationCreator.get_unassigned_specimen_ids(
-            cursor)
+        specimens = SampleStratificationCreator.get_unassigned_specimen_ids(cursor)
         identifiers = {}
-        strata_count = SampleStratificationCreator.get_last_assigned_stratum_identifier(
-            cursor)
+        strata_count = SampleStratificationCreator.get_last_assigned_stratum_identifier(cursor)
         assignment_count = 0
         for specimen in specimens:
             key = tuple(
@@ -52,8 +50,7 @@ class SampleStratificationCreator:
                 subject_diagnosed_condition,
                 subject_diagnosed_result,
             )
-            cursor.execute(
-                SampleStratificationCreator.insert_assignment, record)
+            cursor.execute(SampleStratificationCreator.insert_assignment, record)
             assignment_count = assignment_count + 1
 
         connection.commit()
@@ -63,10 +60,8 @@ class SampleStratificationCreator:
 
     @staticmethod
     def get_interventional_diagnosis(specimen, cursor):
-        subject, extraction_date = SampleStratificationCreator.get_source_event(
-            specimen, cursor)
-        interventions = SampleStratificationCreator.get_interventions(
-            subject, cursor)
+        subject, extraction_date = SampleStratificationCreator.get_source_event(specimen, cursor)
+        interventions = SampleStratificationCreator.get_interventions(subject, cursor)
         diagnoses = SampleStratificationCreator.get_diagnoses(subject, cursor)
         return (SampleStratificationCreator.get_interventional_position(interventions,
                                                                         extraction_date) +
@@ -96,10 +91,8 @@ class SampleStratificationCreator:
             else:
                 raise ValueError(
                     'Not enough events to calculate interventional position.')
-
             return [local_temporal_position_indicator]
-        else:
-            return ['']
+        return ['']
 
     @staticmethod
     def get_diagnostic_state(extraction_date, diagnoses):
@@ -119,8 +112,7 @@ class SampleStratificationCreator:
         if len(influenced_diagnoses) > 0:
             diagnosis = influenced_diagnoses[0]
             return [diagnosis[0], diagnosis[1]]
-        else:
-            return ['', '']
+        return ['', '']
 
     @staticmethod
     def get_date_valuation(dates):
@@ -146,11 +138,10 @@ class SampleStratificationCreator:
             match = re.search(r'timepoint [\d]+$', date)
             if match:
                 return match.group()
-            else:
-                raise ValueError('Not marked with an explicit timepoint.')
+            raise ValueError('Not marked with an explicit timepoint.')
 
         for valuation in [iso_valuation, numeric_valuation, timepoint_extractor]:
-            if all([SampleStratificationCreator.is_convertible(date, valuation) for date in dates]):
+            if all(SampleStratificationCreator.is_convertible(date, valuation) for date in dates):
                 return valuation
         logger.warning('No order could be determined among: %s', dates)
         return None
@@ -168,7 +159,7 @@ class SampleStratificationCreator:
         all_specimens = SampleStratificationCreator.get_specimen_ids(cursor)
         cursor.execute('SELECT sample FROM sample_strata;')
         rows = cursor.fetchall()
-        assigned = set([row[0] for row in rows])
+        assigned = set(row[0] for row in rows)
         logger.debug('Samples already assigned to strata: %s', assigned)
         return sorted(list(set(all_specimens).difference(assigned)))
 
@@ -186,8 +177,7 @@ class SampleStratificationCreator:
         identifiers = [int(row[0]) for row in rows]
         if len(identifiers) == 0:
             return 0
-        else:
-            return max(identifiers)
+        return max(identifiers)
 
     @staticmethod
     def get_source_event(specimen, cursor):

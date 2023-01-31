@@ -14,9 +14,21 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+def halo_data_type():
+    return HALOCellMetadataDesign.get_cell_manifest_descriptor()
+
+
+def create_specimen_data_measurement_process_record(
+    identifier,
+    specimen,
+    study,
+):
+    return (identifier, specimen, '', '', study)
+
+
 class CellManifestSetParser(SourceToADIParser):
     """Parse source files containing metadata at level of cell manifest set."""
-    def parse(self, connection, fields, file_manifest_file, study_name):
+    def parse(self, connection, file_manifest_file, study_name):
         """
         Retrieve the set of cell manifests (i.e. just the "metadata" for each source
         file), and parse records for:
@@ -25,81 +37,49 @@ class CellManifestSetParser(SourceToADIParser):
         - data file
         """
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
-        halo_data_type = HALOCellMetadataDesign.get_cell_manifest_descriptor()
         cell_manifests = file_metadata[
-            file_metadata['Data type'] == halo_data_type
+            file_metadata['Data type'] == halo_data_type()
         ]
 
-        def create_specimen_data_measurement_process_record(
-            identifier,
-            specimen,
-            study,
-        ):
-            return (identifier, specimen, '', '', study)
-
-        def create_data_file_record(
-            sha256_hash,
-            file_name,
-            file_format,
-            contents_format,
-            size,
-            source_generation_process,
-        ):
-            return (
-                sha256_hash,
-                file_name,
-                file_format,
-                contents_format,
-                size,
-                source_generation_process,
-            )
-
-        measurement_study = SourceToADIParser.get_measurement_study_name(
-            study_name)
+        measurement_study = SourceToADIParser.get_measurement_study_name(study_name)
 
         cursor = connection.cursor()
         cursor.execute(
-            self.generate_basic_insert_query(
-                'specimen_measurement_study', fields),
+            self.generate_basic_insert_query('specimen_measurement_study'),
             (measurement_study, 'Multiplexed imaging', '', 'HALO', '', ''),
         )
 
         for _, cell_manifest in cell_manifests.iterrows():
-            logger.debug('Considering "%s" file "%s" .',
-                         halo_data_type, cell_manifest['File ID'])
+            logger.debug('Considering "%s" file "%s" .', halo_data_type(), cell_manifest['File ID'])
             sample_id = cell_manifest['Sample ID']
             filename = cell_manifest['File name']
             sha256_hash = compute_sha256(filename)
 
             measurement_process_identifier = sha256_hash + ' measurement'
             cursor.execute(
-                self.generate_basic_insert_query(
-                    'specimen_data_measurement_process', fields),
+                self.generate_basic_insert_query('specimen_data_measurement_process'),
                 create_specimen_data_measurement_process_record(
                     measurement_process_identifier,
                     sample_id,
                     measurement_study,
                 ),
             )
-            match = re.search(
-                r'\.([a-zA-Z0-9]{1,8})$', cell_manifest['File name'])
+            match = re.search(r'\.([a-zA-Z0-9]{1,8})$', cell_manifest['File name'])
             if match:
                 file_format = match.groups(1)[0].upper()
             else:
                 file_format = ''
-            size = getsize(filename)
             cursor.execute(
-                self.generate_basic_insert_query('data_file', fields),
-                create_data_file_record(
+                self.generate_basic_insert_query('data_file'),
+                (
                     sha256_hash,
                     cell_manifest['File name'],
                     file_format,
-                    halo_data_type,
-                    size,
+                    halo_data_type(),
+                    getsize(filename),
                     measurement_process_identifier,
                 ),
             )
-        logger.info('Parsed records for %s cell manifests.',
-                    cell_manifests.shape[0])
+        logger.info('Parsed records for %s cell manifests.', cell_manifests.shape[0])
         connection.commit()
         cursor.close()

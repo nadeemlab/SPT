@@ -56,6 +56,7 @@ DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOC
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
+DEV_USERNAME := $(shell id -u)
 
 # Define PHONY targets
 .PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
@@ -233,11 +234,12 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built development-imag
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
-    pipeline_cmd="cd /mount_sources/; bash build/build_scripts/import_test_dataset$*.sh && (rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.$* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; )"; \
+    pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \
     docker run \
      --rm \
      --network container:temporary-spt-db-preloading \
      --mount type=bind,src=${PWD},dst=/mount_sources \
+     --mount type=tmpfs,destination=/working_dir \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
      "$$pipeline_cmd" ; echo "$$?" > status_code

@@ -89,7 +89,7 @@ class CellManifestsParser(SourceToADIParser):
                     sha256_hash,
                 )
                 continue
-            elif count == cells.shape[0]:
+            if count == cells.shape[0]:
                 logger.debug(
                     ('Already found exactly %s cells recorded from data source '
                      ' file "%s". Skipping this file.'
@@ -98,7 +98,7 @@ class CellManifestsParser(SourceToADIParser):
                     sha256_hash,
                 )
                 continue
-            elif count == 0:
+            if count == 0:
                 timer.record_timepoint('Retrieved and hashed a cell manifest')
                 chunk_size = 100000
                 for start in range(0, cells.shape[0], chunk_size):

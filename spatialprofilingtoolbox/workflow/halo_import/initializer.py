@@ -104,7 +104,17 @@ class HALOImportInitializer(Initializer):
             raise ValueError(message)
         with DataSkimmer(database_config_file=database_config_file) as skimmer:
             skimmer.parse(
+                {
+                    'file manifest': kwargs['file_manifest_file'],
+                    'channels': kwargs['elementary_phenotypes_file'],
+                    'phenotypes': kwargs['composite_phenotypes_file'],
+                    'samples': kwargs['outcomes_file'],
+                    'compartments': kwargs['compartments_file'],
+                    'subjects': kwargs['subjects_file'],
+                    'study': kwargs['study_file'],
+                    'diagnosis': kwargs['diagnosis_file'],
+                    'interventions': kwargs['interventions_file'],
+                },
                 dataset_design=self.dataset_design,
                 computational_design=self.computational_design,
-                **kwargs,
             )

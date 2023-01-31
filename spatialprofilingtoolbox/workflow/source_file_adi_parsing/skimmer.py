@@ -74,18 +74,9 @@ class DataSkimmer(DatabaseConnectionMaker):
 
     def parse(
         self,
+        files,
         dataset_design=None,
         computational_design=None,
-        file_manifest_file=None,
-        elementary_phenotypes_file=None,
-        composite_phenotypes_file=None,
-        outcomes_file=None,
-        compartments_file=None,
-        subjects_file=None,
-        study_file=None,
-        diagnosis_file=None,
-        interventions_file=None,
-        **kwargs, # pylint: disable=unused-argument
     ):
         if not self.is_connected():
             logger.debug(
@@ -98,42 +89,41 @@ class DataSkimmer(DatabaseConnectionMaker):
 
         study_name = StudyParser(fields).parse(
             self.get_connection(),
-            study_file,
+            files['study'],
         )
         SubjectsParser(fields).parse(
             self.get_connection(),
-            subjects_file,
+            files['subjects'],
         )
         DiagnosisParser(fields).parse(
             self.get_connection(),
-            diagnosis_file,
+            files['diagnosis'],
         )
         InterventionsParser(fields).parse(
             self.get_connection(),
-            interventions_file,
+            files['interventions'],
         )
-        samples_file = outcomes_file
         SamplesParser(fields).parse(
             self.get_connection(),
-            samples_file,
+            files['samples'],
             study_name,
         )
         CellManifestSetParser(fields).parse(
             self.get_connection(),
-            file_manifest_file,
+            files['file manifest'],
             study_name,
         )
         chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(fields).parse(
             self.get_connection(),
-            elementary_phenotypes_file,
-            composite_phenotypes_file,
+            files['channels'],
+            files['phenotypes'],
             study_name,
         )
         CellManifestsParser(fields).parse(
             self.get_connection(),
             dataset_design,
             computational_design,
-            file_manifest_file,
+            files['file manifest'],
             chemical_species_identifiers_by_symbol,
         )
         SampleStratificationCreator.create_sample_stratification(

@@ -40,8 +40,9 @@ def get_credential_keys():
 def check_internet_connectivity():
     try:
         test_host = 'https://duckduckgo.com'
-        urlopen(test_host)
-        return True
+        with urlopen(test_host) as response:
+            logger.info('Checked internet connectivity and got response %s', response)
+            return True
     except URLError:
         return False
 

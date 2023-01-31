@@ -53,7 +53,7 @@ class PerformanceTimer:
             key=lambda x: (self.message_order[x[0]], self.message_order[x[1]]),
         )
         records = []
-        all_totals = sum([np.sum(self.times[t]) for t in transitions])
+        all_totals = sum(np.sum(self.times[t]) for t in transitions)
         for transition in transitions:
             total = np.sum(self.times[transition])
             frequency = len(self.times[transition])

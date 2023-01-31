@@ -50,7 +50,7 @@ class FeatureMatrixExtractor:
             puller.pull()
             data_arrays = puller.get_data_arrays()
         logger.info('Done retrieving expression data from database.')
-        return data_arrays.studies
+        return data_arrays.get_studies()
 
     @staticmethod
     def retrieve_structure_centroids_from_database(database_config_file):
@@ -59,7 +59,7 @@ class FeatureMatrixExtractor:
             puller.pull()
             structure_centroids = puller.get_structure_centroids()
         logger.info('Done retrieving centroids.')
-        return structure_centroids.studies
+        return structure_centroids.get_studies()
 
     @staticmethod
     def retrieve_derivative_outcomes_from_database(database_config_file):
@@ -116,8 +116,9 @@ class FeatureMatrixExtractor:
 
     @staticmethod
     def create_feature_matrix_row(centroid, binary, number_channels):
-        return [centroid[0], centroid[1]] + \
-            [int(value) for value in list(('{0:0%sb}' % number_channels).format(binary)[::-1])]
+        template = '{0:0%sb}' % number_channels   # pylint: disable=consider-using-f-string
+        feature_vector = [int(value) for value in list(template.format(binary)[::-1])]
+        return [centroid[0], centroid[1]] + feature_vector
 
     @staticmethod
     def create_channel_information(data_arrays):

@@ -5,13 +5,16 @@ logger = colorized_logger(__name__)
 
 
 class HALOImportIntegrator:
-    def __init__(
-        self,
-        computational_design=None,
-        **kwargs
-    ):
+    """
+    Wrap-up phase of the data import workflow. Currently no wrap-up is needed.
+    """
+    def __init__(self, computational_design=None, **kwargs): # pylint: disable=unused-argument
         self.computational_design = computational_design
+
+    def get_computational_design(self):
+        return self.computational_design
 
     def calculate(self, filename):
         logger.info('Doing integration.')
-        open(filename, 'wt', encoding='utf-8').write('')
+        with open(filename, 'wt', encoding='utf-8') as file:
+            file.write('')

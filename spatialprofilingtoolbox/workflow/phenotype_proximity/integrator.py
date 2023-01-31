@@ -87,14 +87,12 @@ class PhenotypeProximityAnalysisIntegrator:
         if len(compartments) > 1:
             if 'all' in compartments:
                 return feature_table[feature_table['compartment'] == 'all']
-            elif 'any' in compartments:
+            if 'any' in compartments:
                 return feature_table[feature_table['compartment'] == 'any']
-            else:
-                logger.warning(
-                    'Can\'t suppress compartment column in feature table; no "all" value among: %s',
-                    compartments)
-        else:
-            return feature_table
+            logger.warning(
+                'Can\'t suppress compartment column in feature table; no "all" value among: %s',
+                compartments)
+        return feature_table
 
     def retrieve_data_analysis_study_name(self):
         project_handle = get_unique_value(self.file_metadata, 'Project ID')

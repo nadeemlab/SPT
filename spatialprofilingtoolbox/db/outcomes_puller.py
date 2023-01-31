@@ -8,8 +8,9 @@ logger = colorized_logger(__name__)
 
 
 class OutcomesPuller(DatabaseConnectionMaker):
+    """Retrieve outcome data for all studies."""
     def __init__(self, database_config_file):
-        super(OutcomesPuller, self).__init__(
+        super().__init__(
             database_config_file=database_config_file)
         self.outcomes = None
 

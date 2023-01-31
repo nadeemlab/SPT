@@ -24,7 +24,7 @@ class PhenotypeProximityCoreJob(CoreJob):
     radii = [20, 60, 100]
 
     def __init__(self, **kwargs):
-        super(PhenotypeProximityCoreJob, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.fov_lookup = {}
 
     @staticmethod
@@ -293,8 +293,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         phenotypes = self.computational_design.get_all_phenotype_names()
         if self.computational_design.balanced:
             return list(combinations(phenotypes, 2))
-        else:
-            return [(p1, p2) for p1 in phenotypes for p2 in phenotypes]
+        return [(p1, p2) for p1 in phenotypes for p2 in phenotypes]
 
     def do_aggregation_counting(self,
                                 cells,
@@ -419,12 +418,9 @@ class PhenotypeProximityCoreJob(CoreJob):
                     )
                     self.timer.record_timepoint(
                         'Completed tree query at radius')
-                    target_indices = set(
-                        [i for i in range(len(cols)) if cols[i]])
-                    additional = sum(
-                        [len(target_indices.intersection(i)) for i in indices])
-                    self.timer.record_timepoint(
-                        'Completed counting result in target phenotype')
+                    target_indices = set(i for i in range(len(cols)) if cols[i])
+                    additional = sum(len(target_indices.intersection(i)) for i in indices)
+                    self.timer.record_timepoint('Completed counting result in target phenotype')
 
                     if np.isnan(additional):
                         continue
@@ -432,8 +428,7 @@ class PhenotypeProximityCoreJob(CoreJob):
                     count += additional
                     count -= sum(rows & cols)
                     source_count += sum(rows)
-                    self.timer.record_timepoint(
-                        'Finished aggregation iteration')
+                    self.timer.record_timepoint('Finished aggregation iteration')
 
                     if balanced:
                         area = sum(table.loc[compartment_indices[fov_index][compartment]][

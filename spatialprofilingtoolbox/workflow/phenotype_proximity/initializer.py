@@ -3,10 +3,12 @@ from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
 
 
 class PhenotypeProximityInitializer(Initializer):
-    def __init__(self,
-        **kwargs,
-    ):
-        super(PhenotypeProximityInitializer, self).__init__(**kwargs)
+    """
+    Initial job for the phenotype proximity metrics computation workflow.
+    Currently no such initialization functionality is needed.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

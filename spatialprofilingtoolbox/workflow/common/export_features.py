@@ -19,6 +19,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
     Upload sparse representation of feature values to tables
     quantitative_feature_value, feature_specification, feature_specifier.
     """
+    feature_value_identifier: int
+
     def __init__(self,
                  database_config_file,
                  data_analysis_study,
@@ -73,8 +75,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         self.test_study_existence()
 
         cursor = self.get_connection().cursor()
-        next_identifier = self.get_next_integer_identifier(
-            'feature_specification', cursor)
+        next_identifier = self.get_next_integer_identifier('feature_specification', cursor)
         specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
         specifiers_by_id = {
             next_identifier + i: specifiers
@@ -175,8 +176,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
             raise ValueError(message)
 
     def get_feature_value_next_identifier(self, cursor):
-        next_identifier = self.get_next_integer_identifier(
-            'quantitative_feature_value', cursor)
+        next_identifier = self.get_next_integer_identifier('quantitative_feature_value', cursor)
         self.feature_value_identifier = next_identifier
 
     def request_new_feature_value_identifier(self):

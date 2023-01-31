@@ -213,7 +213,7 @@ class FrontProximityCoreJob(CoreJob):
                     '"' + row[5] + '"',
                     str(float(row[6])),
                 ]
-                keys = '( ' + ' , '.join([k for k in keys_list]) + ' )'
+                keys = '( ' + ' , '.join(k for k in keys_list) + ' )'
                 values = '( ' + ' , '.join(values_list) + ' )'
                 cmd = 'INSERT INTO cell_front_distances ' + keys + ' VALUES ' + values + ' ;'
                 manager.execute(cmd)

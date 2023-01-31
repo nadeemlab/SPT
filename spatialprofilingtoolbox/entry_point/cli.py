@@ -119,9 +119,10 @@ def main_program():
     if len(sys.argv) > 3:
         executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
-        running_process = subprocess.Popen([executable, script_path,] + unparsed_arguments)
-        signal.signal(signal.SIGTERM, lambda signum,
-                      frame: running_process.send_signal(signal.SIGTERM))
-        signal.signal(signal.SIGINT, lambda signum,
-                      frame: running_process.send_signal(signal.SIGINT))
-        sys.exit(running_process.wait())
+        with subprocess.Popen([executable, script_path,] + unparsed_arguments) as running_process:
+            signal.signal(signal.SIGTERM, lambda signum,
+                        frame: running_process.send_signal(signal.SIGTERM))
+            signal.signal(signal.SIGINT, lambda signum,
+                        frame: running_process.send_signal(signal.SIGINT))
+            exit_code = running_process.wait()
+        sys.exit(exit_code)

@@ -569,8 +569,7 @@ class DensityAnalysisIntegrator:
         :rtype: str, float
         """
         values_column = column
-        table_sorted = table.sort_values(
-            by=values_column, ascending=True if sign == -1 else False)
+        table_sorted = table.sort_values(by=values_column, ascending= (sign == -1) )
         if table_sorted.shape[0] == 0:
             return ['none', -1]
         extreme_sample = list(table_sorted['sample_identifier'])[0]

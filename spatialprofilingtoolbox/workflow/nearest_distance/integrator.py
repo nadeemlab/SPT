@@ -10,15 +10,15 @@ class NearestDistanceAnalysisIntegrator:
     """
     Main class of the integration phase.
     """
-
-    def __init__(self,
-                 computational_design=None
-                 ):
+    def __init__(self, computational_design=None):
         """
         :param computational_design: Design object providing metadata specific to the
             density workflow.
         """
         self.computational_design = computational_design
+
+    def get_computational_design(self):
+        return self.computational_design
 
     def calculate(self, filename):
         """

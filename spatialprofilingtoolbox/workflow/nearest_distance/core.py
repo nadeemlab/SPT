@@ -233,7 +233,7 @@ class NearestDistanceCoreJob(CoreJob):
         cells_columns = cells.columns
         schema_columns = self.computational_design.get_cells_header(
             style='sql')
-        if all([cells_columns[i] == schema_columns[i][0] for i in range(len(cells_columns))]):
+        if all(cells_columns[i] == schema_columns[i][0] for i in range(len(cells_columns))):
             logger.debug(
                 'Cells table to be written has correct (normalized, ordered) sql-style header '
                 'values.')

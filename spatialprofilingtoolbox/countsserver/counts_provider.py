@@ -59,7 +59,7 @@ class CountsProvider:
     def compute_signature(self, channel_names, study_name):
         target_by_symbol = self.studies[study_name]['target by symbol']
         target_index_lookup = self.studies[study_name]['target index lookup']
-        if not all([name in target_by_symbol.keys() for name in channel_names]):
+        if not all(name in target_by_symbol.keys() for name in channel_names):
             return None
         identifiers = [target_by_symbol[name] for name in channel_names]
         indices = [target_index_lookup[identifier]

@@ -33,10 +33,10 @@ class CompressedDataArrays:
     def __init__(self):
         self.studies = {}
 
-    def add_study_data(self,
-                       study_name,
-                       data_arrays_by_specimen,
-                       target_index_lookup,
+    def get_studies(self):
+        return self.studies
+
+    def add_study_data(self, study_name, data_arrays_by_specimen, target_index_lookup,
                        target_by_symbol):
         self.studies[study_name] = {
             'data arrays by specimen': data_arrays_by_specimen,
@@ -87,12 +87,10 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
-                sparse_entries.extend(
-                    cursor.fetchmany(size=self.get_batch_size()))
-                logger.debug('Received %s entries from DB.', len(
-                    sparse_entries) - current_number_stored)
-        logger.debug('Received %s sparse entries total from DB.',
-                     len(sparse_entries))
+                sparse_entries.extend(cursor.fetchmany(size=self.get_batch_size()))
+                logger.debug('Received %s entries from DB.',
+                             len(sparse_entries) - current_number_stored)
+        logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
         return sparse_entries
 
     def get_sparse_matrix_query(self):
@@ -134,9 +132,8 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                     data_arrays_by_specimen[specimen], buffer, target_index_lookup)
                 number_mb = int(
                     100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
-                logger.debug(
-                    'Data array is %s MB for %s cells in specimen %s .',
-                    number_mb, cell_count, specimen)
+                logger.debug('Data array is %s MB for %s cells in '
+                             'specimen %s .', number_mb, cell_count, specimen)
                 if i != last_index:
                     specimen = sparse_entries[i + 1][3]
                     buffer = []
@@ -171,10 +168,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             logger.error(
                 'The symbols are not unique identifiers of the targets. The symbols are: %s',
                 [row[1] for row in rows])
-        target_by_symbol = {
-            row[1]: row[0]
-            for row in rows
-        }
+        target_by_symbol = {row[1]: row[0] for row in rows}
         logger.debug('Target by symbol: %s', target_by_symbol)
         return target_by_symbol
 

@@ -5,13 +5,8 @@ from abc import ABC, abstractmethod
 
 
 class Initializer(ABC):
-
-    def __init__(
-        self,
-        dataset_design=None,
-        computational_design=None,
-        **kwargs,
-    ):
+    """Interface for the intializer job for the Nextflow-managed workflows."""
+    def __init__(self, dataset_design=None, computational_design=None, **kwargs): # pylint: disable=unused-argument
         self.dataset_design = dataset_design
         self.computational_design = computational_design
 

@@ -5,6 +5,7 @@ import socket
 
 
 class CountRequester:
+    """TCP client for requesting counts from the fast cell counts service."""
     def __init__(self, host, port):
         self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_client.connect((host, port))

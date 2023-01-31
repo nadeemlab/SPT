@@ -5,10 +5,8 @@ the classes from each cell. The results are stratified by cell phenotype and
 region membership.
 """
 from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import WorkflowModules
-
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
     import HALOCellMetadataDesign
-
 from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.front_proximity.initializer import FrontProximityInitializer
 from spatialprofilingtoolbox.workflow.front_proximity.core import FrontProximityCoreJob

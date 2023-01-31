@@ -24,14 +24,17 @@ class StructureCentroids:
     def __init__(self):
         self.studies = {}
 
+    def get_studies(self):
+        return self.studies
+
     def add_study_data(self, study_name, structure_centroids_by_specimen):
         self.studies[study_name] = structure_centroids_by_specimen
 
 
 class StructureCentroidsPuller(DatabaseConnectionMaker):
+    """Retrieve positional information for all cells in single cell database."""
     def __init__(self, database_config_file):
-        super(StructureCentroidsPuller, self).__init__(
-            database_config_file=database_config_file)
+        super().__init__(database_config_file=database_config_file)
         self.structure_centroids = StructureCentroids()
 
     def pull(self):

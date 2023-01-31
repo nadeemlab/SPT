@@ -264,7 +264,7 @@ def get_sample_cohort_assignments(cursor, specimen_collection_study):
 def get_sample_stratification(cursor, specimen_collection_study):
     sample_cohorts = get_sample_cohorts(cursor, specimen_collection_study)
     sample_cohort_assignments = get_sample_cohort_assignments(cursor, specimen_collection_study)
-    return { 'cohort' : sample_cohorts, 'assignments' : sample_cohort_assignments }
+    return { 'cohorts' : sample_cohorts, 'assignments' : sample_cohort_assignments }
 
 
 @app.get("/study-summary/{study}")

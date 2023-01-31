@@ -64,8 +64,7 @@ def get_single_result_or_else(cursor, query, parameters=None, or_else_value='unk
     rows = cursor.fetchall()
     if len(rows) > 0:
         return rows[0][0]
-    else:
-        return or_else_value
+    return or_else_value
 
 
 def get_single_result_row(cursor, query, parameters=None):
@@ -76,8 +75,7 @@ def get_single_result_row(cursor, query, parameters=None):
     rows = cursor.fetchall()
     if len(rows) > 0:
         return list(rows[0])
-    else:
-        return []
+    return []
 
 
 def rough_check_is_email(string):
@@ -112,6 +110,160 @@ def get_study_names():
         )
 
 
+def get_contact(cursor, study):
+    row = get_single_result_row(
+        cursor,
+        query='''
+        SELECT name, contact_reference
+        FROM study_contact_person
+        WHERE study=%s
+        ''',
+        parameters=(study,),
+    )
+    if len(row) == 0:
+        contact = None
+    else:
+        contact_name, contact_email = row
+        contact = {'Name': contact_name}
+        if rough_check_is_email(contact_email):
+            contact['Email'] = contact_email
+    return contact
+
+
+def get_data_release(cursor, study):
+    query = '''
+    SELECT publisher, internet_reference, date_of_publication
+    FROM publication
+    WHERE study=%s AND document_type=\'Dataset\'
+    ;
+    '''
+    row = get_single_result_row(cursor, query=query, parameters=(study,),)
+    if len(row) == 0:
+        data_release = None
+    else:
+        repository, url, release_date = row
+        data_release = {
+            'Repository': repository,
+            'URL': url,
+            'Date': release_date,
+        }
+    return data_release
+
+
+def get_publication_info(cursor, study):
+    query = '''
+    SELECT title, internet_reference, date_of_publication
+    FROM publication
+    WHERE study=%s AND document_type=\'Article\'
+    ;
+    '''
+    row = get_single_result_row(cursor, query=query, parameters=(study,),)
+    if len(row) == 0:
+        publication_info = None
+    else:
+        publication_title, url, publication_date = row
+        first_author = get_single_result_or_else(
+            cursor,
+            query='''
+            SELECT person FROM author
+            WHERE publication=%s
+            ORDER BY regexp_replace(ordinality, '[^0-9]+', '', 'g')::int
+            ;
+            ''',
+            parameters=(publication_title,),
+            or_else_value='',
+        )
+        publication_info = {
+            'Title': publication_title,
+            'URL': url,
+            'First author': first_author,
+            'Date': publication_date,
+        }
+    return publication_info
+
+
+def get_number_cells(cursor, specimen_measurement_study):
+    query = '''
+    SELECT count(*)
+    FROM histological_structure_identification hsi
+    JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
+    JOIN data_file df ON hsi.data_source = df.sha256_hash
+    JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+    WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+    ;
+    '''
+    return get_single_result_or_else(
+        cursor,
+        query=query,
+        parameters=(specimen_measurement_study,),
+    )
+
+
+def get_number_channels(cursor, specimen_measurement_study):
+    query = '''
+    SELECT count(*)
+    FROM biological_marking_system bms
+    WHERE bms.study=%s
+    ;
+    '''
+    return get_single_result_or_else(
+        cursor,
+        query=query,
+        parameters=(specimen_measurement_study,),
+    )
+
+
+def get_measurement_counts(cursor, specimen_measurement_study):
+    number_specimens = get_single_result_or_else(
+        cursor,
+        query='''
+        SELECT count(DISTINCT specimen)
+        FROM specimen_data_measurement_process
+        WHERE study=%s
+        ;
+        ''',
+        parameters=(specimen_measurement_study,),
+    )
+    number_cells = get_number_cells(cursor, specimen_measurement_study)
+    number_channels = get_number_channels(cursor, specimen_measurement_study)
+    return { 'specimens': number_specimens, 'cells': number_cells, 'channels': number_channels }
+
+
+def get_sample_cohorts(cursor, specimen_collection_study):
+    query = '''
+    SELECT DISTINCT
+        sst.stratum_identifier,
+        sst.local_temporal_position_indicator,
+        sst.subject_diagnosed_condition,
+        sst.subject_diagnosed_result
+    FROM sample_strata sst
+    JOIN specimen_collection_process scp
+    ON scp.specimen = sst.sample
+    WHERE scp.study=%s ;
+    '''
+    cursor.execute(query, (specimen_collection_study,))
+    sample_cohorts = cursor.fetchall()
+    return sorted(sample_cohorts, key=lambda x: int(x[0]))
+
+
+def get_sample_cohort_assignments(cursor, specimen_collection_study):
+    query = '''
+    SELECT sst.sample, sst.stratum_identifier
+    FROM sample_strata sst
+    JOIN specimen_collection_process scp
+    ON scp.specimen = sst.sample
+    WHERE scp.study=%s
+    ORDER BY sample ;
+    '''
+    cursor.execute(query, (specimen_collection_study,))
+    return cursor.fetchall()
+
+
+def get_sample_stratification(cursor, specimen_collection_study):
+    sample_cohorts = get_sample_cohorts(cursor, specimen_collection_study)
+    sample_cohort_assignments = get_sample_cohort_assignments(cursor, specimen_collection_study)
+    return { 'cohort' : sample_cohorts, 'assignments' : sample_cohort_assignments }
+
 @app.get("/study-summary/{study}")
 def get_study_summary(
     study: str = Query(default='unknown', min_length=3),
@@ -139,9 +291,6 @@ def get_study_summary(
         evidence nearest to immediately after extraction; the date of diagnosis.
     """
     components = get_study_components(study)
-    specimen_collection_study = components['collection']
-    specimen_measurement_study = components['measurement']
-    data_analysis_study = components['analysis']
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -151,110 +300,15 @@ def get_study_summary(
             query='SELECT institution FROM study WHERE study_specifier=%s; ',
             parameters=(study,),
         )
-
-        row = get_single_result_row(
-            cursor,
-            query='''
-            SELECT name, contact_reference
-            FROM study_contact_person
-            WHERE study=%s
-            ''',
-            parameters=(study,),
-        )
-        if len(row) == 0:
-            contact = None
-        else:
-            contact_name, contact_email = row
-            contact = {'Name': contact_name}
-            if rough_check_is_email(contact_email):
-                contact['Email'] = contact_email
-
-        query = '''
-        SELECT publisher, internet_reference, date_of_publication
-        FROM publication
-        WHERE study=%s AND document_type=\'Dataset\'
-        ;
-        '''
-        row = get_single_result_row(cursor, query=query, parameters=(study,),)
-        if len(row) == 0:
-            data_release = None
-        else:
-            repository, url, release_date = row
-            data_release = {
-                'Repository': repository,
-                'URL': url,
-                'Date': release_date,
-            }
-
-        query = '''
-        SELECT title, internet_reference, date_of_publication
-        FROM publication
-        WHERE study=%s AND document_type=\'Article\'
-        ;
-        '''
-        row = get_single_result_row(cursor, query=query, parameters=(study,),)
-        if len(row) == 0:
-            publication_info = None
-        else:
-            publication_title, url, publication_date = row
-            first_author = get_single_result_or_else(
-                cursor,
-                query='''
-                SELECT person FROM author
-                WHERE publication=%s
-                ORDER BY regexp_replace(ordinality, '[^0-9]+', '', 'g')::int
-                ;
-                ''',
-                parameters=(publication_title,),
-                or_else_value='',
-            )
-            publication_info = {
-                'Title': publication_title,
-                'URL': url,
-                'First author': first_author,
-                'Date': publication_date,
-            }
-
+        contact = get_contact(cursor, study)
+        data_release = get_data_release(cursor, study)
+        publication_info = get_publication_info(cursor, study)
         assay = get_single_result_or_else(
             cursor,
             query='SELECT assay FROM specimen_measurement_study WHERE name=%s;',
-            parameters=(specimen_measurement_study,),
+            parameters=(components['measurement'],),
         )
-        number_specimens = get_single_result_or_else(
-            cursor,
-            query='''
-            SELECT count(DISTINCT specimen)
-            FROM specimen_data_measurement_process
-            WHERE study=%s
-            ;
-            ''',
-            parameters=(specimen_measurement_study,),
-        )
-        query = '''
-        SELECT count(*)
-        FROM histological_structure_identification hsi
-        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-        JOIN data_file df ON hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ;
-        '''
-        number_cells = get_single_result_or_else(
-            cursor,
-            query=query,
-            parameters=(specimen_measurement_study,),
-        )
-        query = '''
-        SELECT count(*)
-        FROM biological_marking_system bms
-        WHERE bms.study=%s
-        ;
-        '''
-        number_channels = get_single_result_or_else(
-            cursor,
-            query=query,
-            parameters=(specimen_measurement_study,),
-        )
+        measurement_counts = get_measurement_counts(cursor, components['measurement'])
         number_phenotypes = get_single_result_or_else(
             cursor,
             query='''
@@ -263,34 +317,10 @@ def get_study_summary(
             WHERE study=%s
             ;
             ''',
-            parameters=(data_analysis_study,),
+            parameters=(components['analysis'],),
         )
 
-        query = '''
-        SELECT DISTINCT
-            sst.stratum_identifier,
-            sst.local_temporal_position_indicator,
-            sst.subject_diagnosed_condition,
-            sst.subject_diagnosed_result
-        FROM sample_strata sst
-        JOIN specimen_collection_process scp
-        ON scp.specimen = sst.sample
-        WHERE scp.study=%s ;
-        '''
-        cursor.execute(query, (specimen_collection_study,))
-        sample_cohorts = cursor.fetchall()
-        sample_cohorts = sorted(sample_cohorts, key=lambda x: int(x[0]))
-
-        query = '''
-        SELECT sst.sample, sst.stratum_identifier
-        FROM sample_strata sst
-        JOIN specimen_collection_process scp
-        ON scp.specimen = sst.sample
-        WHERE scp.study=%s
-        ORDER BY sample ;
-        '''
-        cursor.execute(query, (specimen_collection_study,))
-        sample_cohort_assignments = cursor.fetchall()
+        sample_stratification = get_sample_stratification(cursor, components['collection'])
         cursor.close()
 
     representation = {}
@@ -306,12 +336,12 @@ def get_study_summary(
         representation['Data release'] = data_release
 
     representation['Assay'] = assay
-    representation['Number of specimens measured'] = number_specimens
-    representation['Number of cells detected'] = number_cells
-    representation['Number of channels measured'] = number_channels
+    representation['Number of specimens measured'] = measurement_counts['specimens']
+    representation['Number of cells detected'] = measurement_counts['cells']
+    representation['Number of channels measured'] = measurement_counts['channels']
     representation['Number of named composite phenotypes pre-specified'] = number_phenotypes
-    representation['Sample cohorts'] = sample_cohorts
-    representation['Sample cohort assignments'] = sample_cohort_assignments
+    representation['Sample cohorts'] = sample_stratification['cohorts']
+    representation['Sample cohort assignments'] = sample_stratification['assignments']
 
     return Response(
         content=json.dumps(representation),
@@ -503,190 +533,6 @@ async def get_phenotype_criteria(
             'phenotype criteria': {
                 'positive markers': positive_markers,
                 'negative markers': negative_markers,
-            }
-        }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
-
-
-@app.get("/anonymous-phenotype-counts/")
-async def get_anonymous_phenotype_counts(
-    positive_markers_tab_delimited: str = Query(default=None),
-    negative_markers_tab_delimited: str = Query(default=None),
-    study: str = Query(default='unknown', min_length=3),
-):
-    """
-    Get the total count of all cells belonging to the given study that satisfy
-    prescribed positive and negative criteria.
-
-    This method is relatively slow, not relying on any pre-built data structure.
-
-    Returns per-specimen counts, the number of all cells in each specimen for
-    the purpose of reference, and the totals of both.
-    """
-    components = get_study_components(study)
-    specimen_measurement_study = components['measurement']
-    if not positive_markers_tab_delimited is None:
-        positive_markers = positive_markers_tab_delimited.split('\t')
-    else:
-        positive_markers = []
-    positive_markers = list(set(positive_markers).difference(['']))
-    if not negative_markers_tab_delimited is None:
-        negative_markers = negative_markers_tab_delimited.split('\t')
-    else:
-        negative_markers = []
-    negative_markers = list(set(negative_markers).difference(['']))
-
-    positive_criteria = [
-        (marker, 'positive') for marker in positive_markers
-    ]
-    negative_criteria = [
-        (marker, 'negative') for marker in negative_markers
-    ]
-    criteria = positive_criteria + negative_criteria
-    number_criteria = len(criteria)
-
-    create_temporary_criterion_table = '''
-    CREATE TEMPORARY TABLE temporary_cell_phenotype_criterion_by_symbol
-    (
-        marker_symbol VARCHAR(512),
-        polarity VARCHAR(512)
-    )
-    ;
-    '''
-
-    insert_criteria = '''
-    INSERT INTO temporary_cell_phenotype_criterion_by_symbol VALUES (%s, %s)
-    ;
-    '''
-
-    counts_query = f'''
-    CREATE OR REPLACE TEMPORARY VIEW temporary_cell_phenotype_criterion AS
-    SELECT
-        cs.identifier as marker,
-        tccs.polarity as polarity
-    FROM
-        temporary_cell_phenotype_criterion_by_symbol tccs
-    JOIN
-        chemical_species cs ON
-            cs.symbol = tccs.marker_symbol
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_cells_count_criteria_satisfied AS
-    SELECT
-        eq.histological_structure as histological_structure,
-        COUNT(*) as number_criteria_satisfied
-    FROM
-        expression_quantification eq
-        JOIN histological_structure hs ON
-            eq.histological_structure = hs.identifier
-        JOIN temporary_cell_phenotype_criterion tcpc ON
-            eq.target = tcpc.marker
-    WHERE
-        tcpc.polarity = eq.discrete_value
-    AND
-        hs.anatomical_entity = 'cell'
-    GROUP BY
-        eq.histological_structure
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_all_criteria_satisfied AS
-    SELECT
-        tcs.histological_structure as histological_structure
-    FROM
-        temporary_cells_count_criteria_satisfied tcs
-    WHERE
-        tcs.number_criteria_satisfied = {str(number_criteria)}
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_composite_marker_positive_cell_count_by_specimen AS
-    SELECT
-        sdmp.specimen as specimen,
-        COUNT(*) as marked_cell_count
-    FROM
-        temporary_all_criteria_satisfied ts
-        JOIN histological_structure_identification hsi ON
-            ts.histological_structure = hsi.histological_structure
-        JOIN data_file df ON
-            hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON
-            df.source_generation_process = sdmp.identifier
-    WHERE
-        sdmp.study = %s
-    GROUP BY
-        sdmp.specimen
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_marked_and_all_cells_count AS
-    SELECT
-        cc.specimen as specimen,
-        CASE WHEN tccs.marked_cell_count is NULL THEN 0 ELSE tccs.marked_cell_count END AS marked_cell_count,
-        cc.cell_count as all_cells_count
-    FROM
-        cell_count_by_study_specimen cc
-        LEFT OUTER JOIN temporary_composite_marker_positive_cell_count_by_specimen tccs ON
-            tccs.specimen = cc.specimen
-    WHERE
-        cc.measurement_study = %s
-    ;
-
-    SELECT * FROM temporary_marked_and_all_cells_count
-    ;
-    '''
-
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
-
-        total_query = '''
-        SELECT count(*)
-        FROM histological_structure_identification hsi
-        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-        JOIN data_file df ON hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ;
-        '''
-        cursor.execute(total_query, (specimen_measurement_study,))
-        number_cells = cursor.fetchall()[0][0]
-
-        query = '\n'.join([
-            create_temporary_criterion_table,
-            '\n'.join([
-                insert_criteria % ("'"+criterion[0]+"'", "'"+criterion[1]+"'")
-                for criterion in criteria
-            ]),
-            counts_query
-        ])
-        cursor.execute(query, (specimen_measurement_study,
-                       specimen_measurement_study))
-        rows = cursor.fetchall()
-
-        if len(rows) == 0:
-            return Response(
-                content=json.dumps({
-                    'error': {
-                        'message': 'counts could not be made',
-                    }
-                }),
-                media_type='application/json',
-            )
-
-        def fancy_round(ratio):
-            return 100 * round(ratio * 10000)/10000
-        representation = {
-            'phenotype counts': {
-                'per specimen counts': [
-                    {
-                        'specimen': row[0],
-                        'phenotype count': row[1],
-                        'percent of all cells in specimen': fancy_round(row[1] / row[2]),
-                    }
-                    for row in rows
-                ],
-                'total number of cells in all specimens of study': number_cells,
             }
         }
         return Response(

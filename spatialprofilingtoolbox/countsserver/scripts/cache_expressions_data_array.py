@@ -5,6 +5,7 @@ import argparse
 from os.path import abspath
 from os.path import expanduser
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('cache-expressions-data-array')
@@ -15,12 +16,7 @@ if __name__ == '__main__':
         prog='spt countsserver cache-expressions-data-array',
         description='Server providing counts of samples satisfying given partial signatures.'
     )
-    parser.add_argument(
-        '--database-config-file',
-        dest='database_config_file',
-        type=str,
-        help='Provide the file for database configuration.',
-    )
+    add_argument(parser, 'database config')
     args = parser.parse_args()
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error \

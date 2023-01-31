@@ -10,6 +10,7 @@ logger = colorized_logger('spt countsserver start')
 
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):
+    """The TCP server for fast cell counts."""
     def handle(self):
         data = self.request.recv(512).strip()
         print('Request:')

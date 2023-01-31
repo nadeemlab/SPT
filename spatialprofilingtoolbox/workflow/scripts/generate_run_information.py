@@ -6,6 +6,7 @@ Nextflow to run.
 import argparse
 from os.path import exists
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_workflow
@@ -23,25 +24,8 @@ if __name__ == '__main__':
         are discovered by reading other files' contents.
         ''',
     )
-
-    parser.add_argument(
-        '--workflow',
-        dest='workflow',
-        type=str,
-        choices=get_workflow_names(),
-        required=True,
-    )
-    parser.add_argument(
-        '--file-manifest-file',
-        dest='file_manifest_file',
-        type=str,
-        required=True,
-        help='''
-        Path to the file manifest file. If just a file basename, it is presumed to be
-        in the current working directory, since this script is presumed to be
-        deployed as a Nextflow process.
-        ''',
-    )
+    add_argument(parser, 'workflow')
+    add_argument(parser, 'file manifest')
     parser.add_argument(
         '--input-path',
         dest='input_path',
@@ -51,13 +35,7 @@ if __name__ == '__main__':
         containing file_manifest.tsv).
         ''',
     )
-    parser.add_argument(
-        '--outcomes-file',
-        dest='outcomes_file',
-        type=str,
-        required=False,
-        help='File containing outcome assignments to Sample ID values.',
-    )
+    add_argument(parser, 'outcomes file')
     parser.add_argument(
         '--job-specification-table',
         dest='job_specification_table',
@@ -65,20 +43,8 @@ if __name__ == '__main__':
         required=True,
         help='Filename for output, job specification table CSV.',
     )
-    parser.add_argument(
-        '--elementary-phenotypes-filename',
-        dest='elementary_phenotypes_filename',
-        type=str,
-        required=True,
-        help='Filename for output, the elementary phenotypes filename.',
-    )
-    parser.add_argument(
-        '--composite-phenotypes-filename',
-        dest='composite_phenotypes_filename',
-        type=str,
-        required=True,
-        help='Filename for output, the composite phenotypes filename.',
-    )
+    add_argument(parser, 'channels file')
+    add_argument(parser, 'phenotypes file')
 
     args = parser.parse_args()
 

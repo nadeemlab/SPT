@@ -11,6 +11,7 @@ import stat
 import importlib.resources
 import sys
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
 
@@ -92,11 +93,7 @@ if __name__ == '__main__':
         prog='spt workflow configure',
         description='Configure an SPT (spatialprofilingtoolbox) run in the current directory.'
     )
-    parser.add_argument(
-        '--workflow',
-        choices=get_workflow_names(),
-        required=True
-    )
+    add_argument(parser, 'workflow')
     parser.add_argument(
         '--input-path',
         dest='input_path',
@@ -134,13 +131,7 @@ if __name__ == '__main__':
         required=False,
         help='If a machine must not have LSF jobs scheduled on it, supply its hostname here.'
     )
-    parser.add_argument(
-        '--database-config-file',
-        dest='database_config_file',
-        type=str,
-        required=False,
-        help='If workflow involves database, provide the config file here.'
-    )
+    add_argument(parser, 'database config')
     args = parser.parse_args()
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \

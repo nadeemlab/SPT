@@ -29,8 +29,8 @@ if __name__ == '__main__':
         from spatialprofilingtoolbox.workflow.common.extract_compartments import \
             extract_compartments
         from \
-            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-            import HALOCellMetadataDesign
+            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.\
+                halo_cell_metadata_design import HALOCellMetadataDesign
         COMPARTMENT_COLUMN_NAME = HALOCellMetadataDesign.get_compartment_column_name()
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')

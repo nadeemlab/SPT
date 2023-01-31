@@ -7,6 +7,7 @@ import pandas as pd
 
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
     import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -45,23 +46,9 @@ class ComputationalDesign:
 
     @staticmethod
     def solicit_cli_arguments(parser):
-        parser.add_argument(
-            '--metrics-database-filename',
-            dest='metrics_database_filename',
-            type=str,
-            required=True,
-        )
-        parser.add_argument(
-            '--composite-phenotypes-file',
-            dest='composite_phenotypes_file',
-            type=str,
-            required=True,
-        )
-        parser.add_argument(
-            '--dichotomize',
-            dest='dichotomize',
-            action='store_true',
-        )
+        add_argument(parser, 'metrics database')
+        add_argument(parser, 'phenotypes file')
+        add_argument(parser, 'dichotomize')
 
     def get_database_uri(self):
         return self.metrics_database_filename

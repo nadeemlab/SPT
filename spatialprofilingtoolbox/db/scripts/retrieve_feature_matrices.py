@@ -8,6 +8,7 @@ from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('spt db create-schema')
@@ -23,13 +24,7 @@ Writes TSV files to the current working directory, with filenames listed alongsi
 specimen and channel name information in:  features.json
 '''
     )
-    parser.add_argument(
-        '--database-config-file',
-        dest='database_config_file',
-        type=str,
-        required=True,
-        help='Provide the file for database configuration.',
-    )
+    add_argument(parser, 'database config')
     args = parser.parse_args()
 
     if args.database_config_file:

@@ -16,6 +16,7 @@ logger = colorized_logger('modify-constraints')
 
 
 class DBConstraintsToggling(Enum):
+    """Request type for modification of the DB constraints."""
     RECREATE = auto()
     DROP = auto()
 
@@ -30,7 +31,7 @@ def big_tables():
 
 
 def normalize(name):
-    return re.sub('[ \-]', '_', name).lower()
+    return re.sub(r'[ \-]', '_', name).lower()
 
 
 def get_constraint_status(cursor):
@@ -51,8 +52,7 @@ def get_constraint_status(cursor):
     column_names = [desc[0] for desc in cursor.description]
     rows = cursor.fetchall()
 
-    info_rows = [[entry for entry in row] for row in rows]
-    return [column_names, info_rows]
+    return [column_names, rows]
 
 
 def get_constraint_design():
@@ -90,9 +90,8 @@ def toggle_constraints(
                 ADD CONSTRAINT %s 
                 FOREIGN KEY (%s) 
                 REFERENCES %s (%s);'''
-                foreign_key_constraints = get_constraint_design()
                 for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
-                        in foreign_key_constraints:
+                        in get_constraint_design():
                     statement = pattern % (
                         tablename,
                         f'{tablename}{ordinality}',
@@ -139,8 +138,7 @@ if __name__ == '__main__':
         dest='database_config_file_elevated',
         type=str,
         required=True,
-        help='The file for database configuration. The user specified must have elevated '
-        'privileges.'
+        help='The file for database configuration. The user specified must have elevated privilege.'
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -159,7 +157,7 @@ if __name__ == '__main__':
         SuggestExtrasException
     try:
         import pandas as pd
-        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker # pylint: disable=ungrouped-imports
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'db')
 

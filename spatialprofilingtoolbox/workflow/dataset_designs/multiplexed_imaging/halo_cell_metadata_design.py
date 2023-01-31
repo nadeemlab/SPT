@@ -7,6 +7,7 @@ import re
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -33,18 +34,8 @@ class HALOCellMetadataDesign:
 
     @staticmethod
     def solicit_cli_arguments(parser):
-        parser.add_argument(
-            '--elementary-phenotypes-file',
-            dest='elementary_phenotypes_file',
-            type=str,
-            required=True,
-        )
-        parser.add_argument(
-            '--compartments-file',
-            dest='compartments_file',
-            type=str,
-            required=True,
-        )
+        add_argument(parser, 'channels file')
+        add_argument(parser, 'compartments file')
 
     def get_fov_column(self, table=None):
         """
@@ -103,8 +94,7 @@ class HALOCellMetadataDesign:
         """
         if r'\\' in fov:
             return pathlib.PureWindowsPath(fov).name
-        else:
-            return fov
+        return fov
 
     @staticmethod
     def get_cell_manifest_descriptor():
@@ -326,8 +316,7 @@ class HALOCellMetadataDesign:
         }
         if value in special_cases:
             return special_cases[value]
-        else:
-            return value
+        return value
 
     def get_compartmental_signature(self, table, compartment):
         """

@@ -7,6 +7,7 @@ from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
@@ -22,13 +23,7 @@ if __name__ == '__main__':
         prog='spt db create-schema',
         description='Create scstudies database with defined schema.'
     )
-    parser.add_argument(
-        '--database-config-file',
-        dest='database_config_file',
-        type=str,
-        required=False,
-        help='Provide the file for database configuration.',
-    )
+    add_argument(parser, 'database config')
     parser.add_argument(
         '--force',
         dest='force',

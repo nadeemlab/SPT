@@ -6,6 +6,7 @@ from os.path import abspath
 from os.path import expanduser
 import importlib.resources
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     import pandas as pd
@@ -54,13 +55,7 @@ if __name__ == '__main__':
         prog='spt db status',
         description='Report basic health status of the given scstudies database.'
     )
-    parser.add_argument(
-        '--database-config-file',
-        dest='database_config_file',
-        type=str,
-        required=False,
-        help='Provide the file for database configuration.',
-    )
+    add_argument(parser, 'database config')
     args = parser.parse_args()
 
     if args.database_config_file:

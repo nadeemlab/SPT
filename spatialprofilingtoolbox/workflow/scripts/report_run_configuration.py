@@ -4,6 +4,8 @@ debugging) the configuration of a Nextflow-managed workflow before it runs.
 """
 import argparse
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog='spt workflow report-run-configuration',
@@ -11,36 +13,12 @@ if __name__ == '__main__':
         Log information about an SPT run configuration.
         '''
     )
-    parser.add_argument(
-        '--workflow',
-        dest='workflow',
-        type=str,
-    )
-    parser.add_argument(
-        '--file-manifest-file',
-        dest='file_manifest_file',
-        type=str,
-    )
-    parser.add_argument(
-        '--outcomes-file',
-        dest='outcomes_file',
-        type=str,
-    )
-    parser.add_argument(
-        '--elementary-phenotypes-file',
-        dest='elementary_phenotypes_file',
-        type=str,
-    )
-    parser.add_argument(
-        '--composite-phenotypes-file',
-        dest='composite_phenotypes_file',
-        type=str,
-    )
-    parser.add_argument(
-        '--compartments-file',
-        dest='compartments_file',
-        type=str,
-    )
+    add_argument(parser, 'workflow')
+    add_argument(parser, 'file manifest')
+    add_argument(parser, 'outcomes file')
+    add_argument(parser, 'channels file')
+    add_argument(parser, 'phenotypes file')
+    add_argument(parser, 'compartments file')
     args = parser.parse_args()
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \

@@ -27,3 +27,4 @@ build/lib/
 # Development files
 .vscode/
 .mypy_cache/
+venv/

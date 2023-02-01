@@ -17,73 +17,12 @@ class NearestDistanceDesign(ComputationalDesign):
     def solicit_cli_arguments(parser):
         pass
 
-    def get_cells_header(self, style='readable'):
-        """
-        :param style: Either "readable" or "sql". See
-            :py:meth:`get_cells_header_variable_portion`.
-        :type style: str
-
-        :return: List of 2-tuples giving the schema for the cells. Each 2-tuple is a
-            column name followed by a SQL datatype name.
-        :rtype: list
-        """
-        constant_portion = NearestDistanceDesign.get_cells_header_constant_portion()
-        variable_portion = self.get_cells_header_variable_portion(style=style)
-        return constant_portion + variable_portion
-
-    @staticmethod
-    def get_cells_header_constant_portion():
-        """
-        :return: A list of 2-tuples, column name followed by SQL-style datatype name,
-            describing part of the schema for the cells intermediate data table.
-            "Constant" refers to the fact that this portion of the schema does not
-            depend on the metadata files.
-        :rtype: list
-        """
-        return [
-            ('sample_identifier', 'TEXT'),
-            ('fov_index', 'INTEGER'),
-            ('outcome_assignment', 'TEXT'),
-            ('compartment', 'TEXT'),
-            ('cell_area', 'NUMERIC'),
-        ]
-
-    def get_cells_header_variable_portion(self, style='readable'):
-        """
-        :param style: Either "readable" or "sql". If "sql", the '+' and '-' characters
-            are replaced with SQL-friendly '$PLUS' and '$MINUS'. Default "readable".
-        :type style: str
-
-        :return: A list of 2-tuples, column name followed by SQL-style datatype name,
-            describing a part of the schema for the cells intermediate data table.
-            "Variable" refers to the fact that this portion depends on the complex
-            phenotypes metadata.
-        :rtype: list
-        """
-        signatures = self.get_all_phenotype_signatures()
-        phenotype_names = sorted([self.dataset_design.munge_name(signature) for signature
-                                  in signatures])
-        if style == 'sql':
-            phenotype_names = [re.sub(r'\+', r'$PLUS', name)
-                               for name in phenotype_names]
-            phenotype_names = [re.sub('-', r'$MINUS', name)
-                               for name in phenotype_names]
-        phenotype_membership_columns = [
-            name + ' membership' for name in phenotype_names]
-        if style == 'sql':
-            phenotype_membership_columns = [
-                re.sub(' ', r'$SPACE', name) for name in phenotype_membership_columns
-            ]
-
+    def get_workflow_specific_columns(self, style):
         compartments = self.dataset_design.get_compartments()
-        nearest_cell_columns = ['distance to nearest cell ' + compartment for compartment
-                                in compartments]
+        nearest_cell_columns = ['distance to nearest cell ' + compartment
+                                for compartment in compartments]
         if style == 'sql':
             nearest_cell_columns = [
                 re.sub(r'[\- ]', '_', c) for c in nearest_cell_columns
             ]
-        return [
-            (column_name, 'INTEGER') for column_name in phenotype_membership_columns
-        ] + [
-            (column_name, 'NUMERIC') for column_name in nearest_cell_columns
-        ]
+        return nearest_cell_columns

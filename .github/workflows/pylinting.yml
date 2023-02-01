@@ -22,7 +22,7 @@ jobs:
         python-version: 3.9
     - name: Install dependencies if not cached.
       run: |
-        python -m ven venv &&
+        python -m venv venv &&
         source ./venv/bin/activate &&
         python -m pip install --upgrade pip &&
         bash build/build_scripts/create_requirements.sh > requirements.txt &&

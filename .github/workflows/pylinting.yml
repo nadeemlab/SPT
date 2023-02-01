@@ -1,0 +1,34 @@
+name: pylinting
+run-name: Python linting merged or pull-requested code.
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+
+jobs:
+  do_linting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9 .
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
+    - name: Install dependencies.
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+    - name: Linting the Python source code.
+      run: |
+        pylint --output-format=colorized --rc-file .pylintrc > linter_output.txt
+    - name: Upload linting results.
+      uses: actions/upload-artifact@v3
+      with:
+        name: pylint-results
+        path: linter_output.txt
+      if: ${{ always() }}

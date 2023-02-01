@@ -1,26 +1,34 @@
+"""
+Extract or create dummy compartment information for a study. Likely to be
+deprecated.
+"""
 import csv
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from \
+    spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+    import HALOCellMetadataDesign
 
-compartment_column_name = HALOCellMetadataDesign.get_compartment_column_name()
+COMPARTMENT_COLUMN_NAME = HALOCellMetadataDesign.get_compartment_column_name()
 logger = colorized_logger(__name__)
 
 
 def extract_compartments_single_file(filename):
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
         header_row = next(reader)
-        key = {header_row[i] : i for i in range(len(header_row))}
-        entry = lambda row, name: row[key[name]]
-        if not compartment_column_name in header_row:
+        key = {header_row[i]: i for i in range(len(header_row))}
+
+        def entry(row, name):
+            return row[key[name]]
+        if not COMPARTMENT_COLUMN_NAME in header_row:
             compartments = [
                 '<any>'
                 for row in reader
             ]
         else:
             compartments = [
-                entry(row, compartment_column_name)
+                entry(row, COMPARTMENT_COLUMN_NAME)
                 for row in reader
             ]
         return sorted(list(set(compartments)))

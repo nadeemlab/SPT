@@ -1,3 +1,4 @@
+"""Spatial Profiling Toolbox python package."""
 import re
 import pkgutil
 
@@ -31,9 +32,8 @@ def get_dataset_design(workflow=None, **kwargs):
 
 
 def get_computational_design(workflow=None, **kwargs):
-    ComputationalDesign = get_workflow(workflow).computational_design
     dataset_design = get_dataset_design(workflow=workflow, **kwargs)
-    computational_design = ComputationalDesign(
+    computational_design = get_workflow(workflow).computational_design(
         dataset_design=dataset_design, **kwargs)
     return computational_design
 
@@ -42,8 +42,7 @@ def get_initializer(workflow=None, **kwargs):
     dataset_design = get_dataset_design(workflow=workflow, **kwargs)
     computational_design = get_computational_design(
         workflow=workflow, **kwargs)
-    Initializer = get_workflow(workflow).initializer
-    return Initializer(
+    return get_workflow(workflow).initializer(
         dataset_design=dataset_design,
         computational_design=computational_design,
         **kwargs,
@@ -54,8 +53,7 @@ def get_core_job(workflow=None, **kwargs):
     dataset_design = get_dataset_design(workflow=workflow, **kwargs)
     computational_design = get_computational_design(
         workflow=workflow, **kwargs)
-    CoreJob = get_workflow(workflow).core_job
-    return CoreJob(
+    return get_workflow(workflow).core_job(
         dataset_design=dataset_design,
         computational_design=computational_design,
         **kwargs,
@@ -66,8 +64,7 @@ def get_integrator(workflow=None, **kwargs):
     computational_design = get_computational_design(
         workflow=workflow, **kwargs)
 
-    Integrator = get_workflow(workflow).integrator
-    return Integrator(
+    return get_workflow(workflow).integrator(
         computational_design=computational_design,
         **kwargs,
     )

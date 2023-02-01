@@ -1,3 +1,4 @@
+"""The entry point into `spt` CLI commands."""
 import argparse
 import sys
 import subprocess
@@ -11,7 +12,7 @@ from spatialprofilingtoolbox import submodule_names
 
 def get_commands(submodule_name):
     files = importlib.resources.files(
-        'spatialprofilingtoolbox.%s' % submodule_name)
+        f'spatialprofilingtoolbox.{submodule_name}')
     if submodule_name in ['entry_point', 'standalone_utilities']:
         return []
     scripts = [
@@ -19,28 +20,39 @@ def get_commands(submodule_name):
         for entry in (files / 'scripts').iterdir()
     ]
     return sorted([
-        re.sub(r'\.(py|sh)$', '', script.group(1))
+        re.sub(r'\.(py|sh)$', '', underscore_to_hyphen(script.group(1)))
         for script in scripts
         if script and (not re.search(r'^__.*__(\.py)?$', script.group(1)))
     ])
 
 
-def get_executable_and_script(submodule_name, script_name):
+def underscore_to_hyphen(string, inverse=False):
+    if not inverse:
+        return re.sub('_', '-', string)
+    return re.sub('-', '_', string)
+
+
+def get_executable_and_script(submodule_name, script_name_hyphenated):
+    script_name = underscore_to_hyphen(script_name_hyphenated, inverse=True)
     full_script_name = None
-    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name,
-                                       '%s.py' % script_name):
+    executable = ''
+    if importlib.resources.is_resource(f'spatialprofilingtoolbox.{submodule_name}.scripts',
+                                       f'{script_name}.py'):
         executable = sys.executable
-        full_script_name = '%s.py' % script_name
-    if importlib.resources.is_resource('spatialprofilingtoolbox.%s.scripts' % submodule_name,
-                                       '%s.sh' % script_name):
+        full_script_name = f'{script_name}.py'
+    if importlib.resources.is_resource(f'spatialprofilingtoolbox.{submodule_name}.scripts',
+                                       f'{script_name}.sh'):
         executable = '/bin/bash'
-        full_script_name = '%s.sh' % script_name
+        full_script_name = f'{script_name}.sh'
     if full_script_name is None:
-        raise ValueError('Did not locate %s from submodule "%s".' %
-                         (script_name, submodule_name))
-    with importlib.resources.path('spatialprofilingtoolbox.%s.scripts' % submodule_name,
+        raise ValueError(
+            f'Did not locate {script_name} from submodule "{submodule_name}".')
+    with importlib.resources.path(f'spatialprofilingtoolbox.{submodule_name}.scripts',
                                   full_script_name) as path:
         script_path = path
+    if executable == '':
+        raise EnvironmentError(
+            f'Could not locate appropriate executable for the script {script_name_hyphenated}')
     return executable, script_path
 
 
@@ -48,11 +60,11 @@ def print_version_and_all_commands():
     submodules_with_commands = [
         name for name in submodule_names if len(get_commands(name)) > 0]
     commands_description = '\n\n'.join([
-        '\n'.join(['spt %s %s' % (submodule, command)
-                  for command in get_commands(submodule)])
+        '\n'.join(
+            [f'spt {submodule} {command}' for command in get_commands(submodule)])
         for submodule in submodules_with_commands
     ])
-    print('Version %s' % spatialprofilingtoolbox.__version__)
+    print(f'Version {spatialprofilingtoolbox.__version__}')
     print('https://github.com/nadeemlab/SPT/')
     print('')
     print(commands_description)
@@ -89,7 +101,7 @@ def main_program():
 
     if module is None:
         print_version_and_all_commands()
-        exit()
+        sys.exit()
 
     command = None
     if len(sys.argv) >= 3:
@@ -99,20 +111,18 @@ def main_program():
     if command is None:
         commands = get_commands(module)
         print('    '.join(commands))
-        exit()
+        sys.exit()
 
     if len(sys.argv) == 3:
-        exit()
+        sys.exit()
 
     if len(sys.argv) > 3:
         executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
-        running_process = subprocess.Popen([
-            executable,
-            script_path,
-        ] + unparsed_arguments)
-        signal.signal(signal.SIGTERM, lambda signum,
-                      frame: running_process.send_signal(signal.SIGTERM))
-        signal.signal(signal.SIGINT, lambda signum,
-                      frame: running_process.send_signal(signal.SIGINT))
-        exit(running_process.wait())
+        with subprocess.Popen([executable, script_path,] + unparsed_arguments) as running_process:
+            signal.signal(signal.SIGTERM, lambda signum,
+                        frame: running_process.send_signal(signal.SIGTERM))
+            signal.signal(signal.SIGINT, lambda signum,
+                        frame: running_process.send_signal(signal.SIGINT))
+            exit_code = running_process.wait()
+        sys.exit(exit_code)

@@ -1,4 +1,5 @@
 from os.path import join
+import sys
 
 import pandas as pd
 
@@ -15,14 +16,14 @@ if __name__ == '__main__':
 
     signature = dataset_design.get_pandas_signature(
         cells, {'CD3': '+', 'B2M': '+'})
-    computed_sum = sum([1 for entry in signature if entry])
+    computed_sum = sum(1 for entry in signature if entry)
     if computed_sum != 27:
-        print('Got computed sum: %s' % computed_sum)
-        exit(1)
+        print(f'Got computed sum: {computed_sum}')
+        sys.exit(1)
 
     signature = dataset_design.get_pandas_signature(
         cells, {'PD1': '+', 'FOXP3': '-', 'CD3': '+'})
-    computed_sum = sum([1 for entry in signature if entry])
+    computed_sum = sum(1 for entry in signature if entry)
     if computed_sum != 4:
-        print('Got computed sum: %s' % computed_sum)
-        exit(1)
+        print(f'Got computed sum: {computed_sum}')
+        sys.exit(1)

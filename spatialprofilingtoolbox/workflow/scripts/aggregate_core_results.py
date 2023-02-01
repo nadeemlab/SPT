@@ -1,5 +1,10 @@
+"""
+CLI entry point into the wrap-up/integration phase of the Nextflow-managed
+workflows.
+"""
 import argparse
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_integrator
@@ -13,38 +18,24 @@ if __name__ == '__main__':
         Merge the results provided by all core jobs.
         ''',
     )
-    parser.add_argument(
-        '--workflow',
-        dest='workflow',
-        type=str,
-        required=True,
-    )
+    add_argument(parser, 'workflow')
     parser.add_argument(
         '--stats-tests-file',
         dest='stats_tests_file',
         type=str,
         required=True,
     )
-    parser.add_argument(
-        '--database-config-file',
-        dest='database_config_file',
-        type=str,
-        required=False,
-    )
-    parser.add_argument(
-        '--file-manifest-file',
-        dest='file_manifest_file',
-        type=str,
-        required=False,
-    )
+    add_argument(parser, 'database config')
+    add_argument(parser, 'file manifest')
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
         SuggestExtrasException
     try:
         from spatialprofilingtoolbox.workflow.defaults.computational_design import \
             ComputationalDesign
-        from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-            import HALOCellMetadataDesign
+        from \
+            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.\
+                halo_cell_metadata_design import HALOCellMetadataDesign
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

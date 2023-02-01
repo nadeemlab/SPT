@@ -8,9 +8,10 @@ MAKEFLAGS += --no-builtin-rules
 # Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
 export PYTHON := python
-export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build_scripts
+export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build/build_scripts
 SOURCE_LOCATION := ${PACKAGE_NAME}
 BUILD_LOCATION := build
+BUILD_LOCATION_ABSOLUTE := ${PWD}/build
 export TEST_LOCATION := test
 export TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
@@ -51,13 +52,13 @@ export DOCKER_REPO_PREFIX := spt
 DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
 DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
-DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/docker.built)
+DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 
 # Define PHONY targets
-.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} check-for-docker-credentials build-docker-images ${DOCKER_BUILD_TARGETS} check-docker-daemon-running test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
+.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
 
 # # Submodule-specific variables
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
@@ -154,13 +155,13 @@ build-docker-images: ${DOCKER_BUILD_TARGETS}
 ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-daemon-running check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
-    submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION}\///g') ; \
+    submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
     submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
-    submodule_name=$$(echo $$submodule_directory | sed 's/${BUILD_LOCATION}\///g') ; \
+    submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
     submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
@@ -226,30 +227,23 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1 data-loaded-image-1a
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-data-loaded-image-%: ${BUILD_LOCATION}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
+data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
-    pipeline_cmd="cd /mount_sources/; bash build_scripts/import_test_dataset$*.sh ; rm -rf .nextflow; rm -f .nextflow.log ; rm -f .nextflow.log.* ; rm -rf .nextflow/ ; rm -f configure.sh ; rm -f run.sh ; rm -f main.nf ; rm -f nextflow.config ; rm -rf work/ ; rm -rf results/; "; \
+    pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \
     docker run \
      --rm \
      --network container:temporary-spt-db-preloading \
      --mount type=bind,src=${PWD},dst=/mount_sources \
+     --mount type=tmpfs,destination=/working_dir \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
-     "$$pipeline_cmd" && \
-     docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*:latest && \
-     docker container rm --force temporary-spt-db-preloading ; \
-    allstatus=("$${PIPESTATUS[@]}") ; \
-    if [[ "$${allstatus[0]}" == "0" ]] ; \
-    then \
-        status_code=0 ; \
-    else \
-        status_code=1 ; \
-    fi ; \
-    echo $$status_code > status_code
+     "$$pipeline_cmd" ; echo "$$?" > status_code
+>@docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*:latest && \
+     docker container rm --force temporary-spt-db-preloading ;
 >@status_code=$$(cat status_code); \
     if [[ "$$status_code" == "0" ]]; \
     then \

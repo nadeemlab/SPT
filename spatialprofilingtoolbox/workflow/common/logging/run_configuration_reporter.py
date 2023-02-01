@@ -1,10 +1,17 @@
+"""
+Convenience reporter of the run configuration for a given workflow, before it
+actually runs. For debugging and archival purposes.
+"""
 from os.path import getsize
 import datetime
 import socket
+from typing import Optional
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design import HALOCellMetadataDesign
+from \
+    spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
+    import HALOCellMetadataDesign
 from spatialprofilingtoolbox.standalone_utilities.configuration_settings import get_version
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -12,14 +19,15 @@ logger = colorized_logger(__name__)
 
 
 class RunConfigurationReporter:
+    """Convenience reporter of run configuration."""
     def __init__(
         self,
-        workflow: str = None,
-        file_manifest_file: str = None,
-        outcomes_file: str = None,
-        elementary_phenotypes_file: str = None,
-        composite_phenotypes_file: str = None,
-        compartments_file: str = None,
+        workflow: Optional[str] = None,
+        file_manifest_file: Optional[str] = None,
+        outcomes_file: Optional[str] = None,
+        elementary_phenotypes_file: Optional[str] = None,
+        composite_phenotypes_file: Optional[str] = None,
+        compartments_file: Optional[str] = None,
     ):
         logger.info('Machine host: %s', socket.gethostname())
         logger.info('Version: SPT v%s', get_version())
@@ -60,8 +68,8 @@ class RunConfigurationReporter:
         composite_phenotypes = pd.read_csv(
             composite_phenotypes_file, keep_default_na=False)
         channels = sorted(list(set(elementary_phenotypes['Name'])))
-        compartments = open(compartments_file, 'rt').read().rstrip(
-            '\n').split('\n')
+        with open(compartments_file, 'rt', encoding='utf-8') as file:
+            compartments = file.read().rstrip('\n').split('\n')
 
         logger.info('Number of outcome labels: %s', len(labels))
         logger.info('Number of channels: %s', elementary_phenotypes.shape[0])
@@ -76,7 +84,7 @@ class RunConfigurationReporter:
     def get_frequencies(self, outcomes):
         column = outcomes[outcomes.columns[1]]
         labels = sorted(list(set(column)))
-        return {label: sum([1 for value in column if value == label]) for label in labels}
+        return {label: sum(1 for value in column if value == label) for label in labels}
 
     def format_mb(self, number_bytes):
         return int(10 * number_bytes / 1000000) / 10

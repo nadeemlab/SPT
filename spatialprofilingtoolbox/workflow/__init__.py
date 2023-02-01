@@ -1,5 +1,6 @@
 """
-Each of the workflow subpackages contains the implementation details for one full pipeline, consisting of:
+Each of the workflow subpackages contains the implementation details for one full pipeline.
+They are:
 
 1. A **job generator**. This writes the scripts that will run in the chosen runtime context
    (High-Performance Computing cluster, local, etc.).
@@ -17,7 +18,6 @@ __version__ = '0.5.0'
 
 workflow_names_and_subpackages = {
     'phenotype density': 'density',
-    'front proximity': 'front_proximity',
     'HALO import': 'halo_import',
     'nearest distance to compartment': 'nearest_distance',
     'phenotype proximity': 'phenotype_proximity',
@@ -30,5 +30,5 @@ def get_workflow_names():
 
 def get_workflow(workflow_name):
     subpackage_name = workflow_names_and_subpackages[workflow_name]
-    subpackage = importlib.import_module('.%s' % subpackage_name, __name__)
+    subpackage = importlib.import_module(f'.{subpackage_name}', __name__)
     return subpackage.components

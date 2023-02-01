@@ -1,9 +1,14 @@
+"""
+Convenience CLI wrapper of FeatureMatrixExtractor functionality, writes to
+files.
+"""
 import argparse
 import json
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('spt db create-schema')
@@ -19,23 +24,18 @@ Writes TSV files to the current working directory, with filenames listed alongsi
 specimen and channel name information in:  features.json
 '''
     )
-    parser.add_argument(
-        '--database-config-file',
-        dest='database_config_file',
-        type=str,
-        required=True,
-        help='Provide the file for database configuration.',
-    )
+    add_argument(parser, 'database config')
     args = parser.parse_args()
 
     if args.database_config_file:
         database_config_file = abspath(expanduser(args.database_config_file))
-    if not exists(database_config_file):
-        raise FileNotFoundError(
-            'Need to supply valid database config filename: %s', database_config_file
-        )
+        if not exists(database_config_file):
+            raise FileNotFoundError(
+                f'Need to supply valid database config filename: {database_config_file}'
+            )
 
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
     try:
         from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
     except ModuleNotFoundError as e:
@@ -52,5 +52,5 @@ specimen and channel name information in:  features.json
         filename = study['outcomes']['filename']
         outcomes.to_csv(filename, sep='\t', index=False)
     FeatureMatrixExtractor.redact_dataframes(bundle)
-    with open('features.json', 'wt') as file:
+    with open('features.json', 'wt', encoding='utf-8') as file:
         file.write(json.dumps(bundle, indent=2))

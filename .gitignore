@@ -22,7 +22,9 @@ build/countsserver/expression_data/*
 build/db/schema.sql
 build/db/initialize_schema.sql
 build/*.whl
+build/lib/
 
 # Development files
 .vscode/
 .mypy_cache/
+venv/

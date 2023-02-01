@@ -1,9 +1,15 @@
+"""
+Convenience provision of a feature matrix for each study, the data retrieved
+from the SPT database.
+"""
+import sys
 
 import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.outcomes_puller import OutcomesPuller
-from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import StructureCentroidsPuller
+from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
+    StructureCentroidsPuller
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -11,23 +17,22 @@ logger = colorized_logger(__name__)
 
 
 class FeatureMatrixExtractor:
+    """
+    Pull from the database and create convenience bundle of feature matrices
+    and metadata.
+    """
     @staticmethod
     def extract(database_config_file):
         E = FeatureMatrixExtractor
-        data_arrays = E.retrieve_expressions_from_database(
-            database_config_file)
-        centroid_coordinates = E.retrieve_structure_centroids_from_database(
-            database_config_file)
-        outcomes = E.retrieve_derivative_outcomes_from_database(
-            database_config_file)
-        study_component_lookup = E.retrieve_study_component_lookup(
-            database_config_file)
+        data_arrays = E.retrieve_expressions_from_database(database_config_file)
+        centroid_coordinates = E.retrieve_structure_centroids_from_database(database_config_file)
+        outcomes = E.retrieve_derivative_outcomes_from_database(database_config_file)
+        study_component_lookup = E.retrieve_study_component_lookup(database_config_file)
         return E.merge_dictionaries(
             E.create_feature_matrices(data_arrays, centroid_coordinates),
             E.create_channel_information(data_arrays),
             outcomes,
-            new_keys=['feature matrices',
-                      'channel symbols by column name', 'outcomes'],
+            new_keys=['feature matrices','channel symbols by column name', 'outcomes'],
             study_component_lookup=study_component_lookup,
         )
 
@@ -45,7 +50,7 @@ class FeatureMatrixExtractor:
             puller.pull()
             data_arrays = puller.get_data_arrays()
         logger.info('Done retrieving expression data from database.')
-        return data_arrays.studies
+        return data_arrays.get_studies()
 
     @staticmethod
     def retrieve_structure_centroids_from_database(database_config_file):
@@ -54,12 +59,12 @@ class FeatureMatrixExtractor:
             puller.pull()
             structure_centroids = puller.get_structure_centroids()
         logger.info('Done retrieving centroids.')
-        return structure_centroids.studies
+        return structure_centroids.get_studies()
 
     @staticmethod
     def retrieve_derivative_outcomes_from_database(database_config_file):
         logger.info('Retrieving outcomes from database.')
-        with OutcomesPuller(database_config_file='../db/.spt_db.config.container') as puller:
+        with OutcomesPuller(database_config_file=database_config_file) as puller:
             puller.pull()
             outcomes = puller.get_outcomes()
         logger.info('Done retrieving outcomes.')
@@ -67,8 +72,8 @@ class FeatureMatrixExtractor:
 
     @staticmethod
     def retrieve_study_component_lookup(database_config_file):
-        with DatabaseConnectionMaker(database_config_file=database_config_file) as m:
-            connection = m.get_connection()
+        with DatabaseConnectionMaker(database_config_file=database_config_file) as maker:
+            connection = maker.get_connection()
             cursor = connection.cursor()
             cursor.execute('SELECT * FROM study_component ; ')
             rows = cursor.fetchall()
@@ -101,25 +106,24 @@ class FeatureMatrixExtractor:
                 dataframe = pd.DataFrame(
                     rows,
                     columns=['pixel x', 'pixel y'] +
-                    ['F%s' % str(i) for i in range(number_channels)])
+                    [f'F{i}' for i in range(number_channels)])
                 matrices[study_name][specimen] = {
                     'dataframe': dataframe,
-                    'filename': '%s.%s.tsv' % (str(k), str(j)),
+                    'filename': f'{k}.{j}.tsv',
                 }
         logger.info('Done creating feature matrices.')
         return matrices
 
     @staticmethod
     def create_feature_matrix_row(centroid, binary, number_channels):
-        return [centroid[0], centroid[1]] + \
-            [int(value) for value in
-             list(('{0:0%sb}' % str(number_channels)).format(binary)[::-1])]
+        template = '{0:0%sb}' % number_channels   # pylint: disable=consider-using-f-string
+        feature_vector = [int(value) for value in list(template.format(binary)[::-1])]
+        return [centroid[0], centroid[1]] + feature_vector
 
     @staticmethod
     def create_channel_information(data_arrays):
         return {
-            study_name: FeatureMatrixExtractor.create_channel_information_for_study(
-                study)
+            study_name: FeatureMatrixExtractor.create_channel_information_for_study(study)
             for study_name, study in data_arrays.items()
         }
 
@@ -132,26 +136,26 @@ class FeatureMatrixExtractor:
                    target in study['target by symbol'].items()}
         logger.info('Done aggregating channel information.')
         return {
-            'F%s' % i: symbols[targets[i]]
+            f'F{i}': symbols[targets[i]]
             for i in sorted([int(index) for index in targets.keys()])
         }
 
     @staticmethod
-    def merge_dictionaries(*args, new_keys=[], study_component_lookup={}):
+    def merge_dictionaries(*args, new_keys: list, study_component_lookup: dict):
         if not len(args) == len(new_keys):
             logger.error(
                 "Can not match up dictionaries to be merged with the list of key names to be "
                 "issued for them.")
-            exit(1)
+            sys.exit(1)
 
         merged = {}
         for i in range(len(new_keys)):
             for substudy, value in args[i].items():
                 merged[study_component_lookup[substudy]] = {}
 
-        for i in range(len(new_keys)):
+        for i, key in enumerate(new_keys):
             for substudy, value in args[i].items():
-                merged[study_component_lookup[substudy]][new_keys[i]] = value
+                merged[study_component_lookup[substudy]][key] = value
 
         logger.info('Done merging into a single dictionary bundle.')
         return merged

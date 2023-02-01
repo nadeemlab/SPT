@@ -1,4 +1,4 @@
-
+"""Source file parsing for subject-level metadata."""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
@@ -8,10 +8,8 @@ logger = colorized_logger(__name__)
 
 
 class SubjectsParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(SubjectsParser, self).__init__(**kwargs)
-
-    def parse(self, connection, fields, subjects_file):
+    """Parse source files containing subject-level metadata."""
+    def parse(self, connection, subjects_file):
         """
         Retrieve SUBJECT data in the same way that the main workflows do, and parse
         records for:
@@ -27,9 +25,9 @@ class SubjectsParser(SourceToADIParser):
         subjects = pd.read_csv(subjects_file, sep='\t',
                                na_filter=False, dtype=str)
         logger.info('Saving %s subject records.', subjects.shape[0])
-        for i, row in subjects.iterrows():
+        for _, row in subjects.iterrows():
             cursor.execute(
-                self.generate_basic_insert_query('subject', fields),
+                self.generate_basic_insert_query('subject'),
                 create_subject_record(row['Subject ID'], row['Sex']),
             )
         connection.commit()

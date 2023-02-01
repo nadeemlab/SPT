@@ -1,3 +1,6 @@
+"""
+Wrapper class for describing the components of a given workflow.
+"""
 class WorkflowModules:
     """
     A wrapper object in which to list implementation classes comprising a workflow

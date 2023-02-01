@@ -1,3 +1,8 @@
+"""
+Do cell counting for a specific signature, over the specially-created
+binary-format index.
+"""
+import sys
 import re
 import os
 from os.path import join
@@ -9,6 +14,8 @@ logger = colorized_logger(__name__)
 
 
 class CountsProvider:
+    """Scan binary-format expression matrices for specific signatures."""
+
     def __init__(self, data_directory):
         self.load_expressions_indices(data_directory)
         self.load_data_matrices(data_directory)
@@ -20,8 +27,8 @@ class CountsProvider:
             join(data_directory, f)) and re.search(r'\.json$', f)]
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
-            exit()
-        with open(join(data_directory, json_files[0]), 'rt') as file:
+            sys.exit(1)
+        with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
             root = json.loads(file.read())
             entries = root[list(root.keys())[0]]
             self.studies = {}
@@ -52,7 +59,7 @@ class CountsProvider:
     def compute_signature(self, channel_names, study_name):
         target_by_symbol = self.studies[study_name]['target by symbol']
         target_index_lookup = self.studies[study_name]['target index lookup']
-        if not all([name in target_by_symbol.keys() for name in channel_names]):
+        if not all(name in target_by_symbol.keys() for name in channel_names):
             return None
         identifiers = [target_by_symbol[name] for name in channel_names]
         indices = [target_index_lookup[identifier]
@@ -112,4 +119,4 @@ class CountsProvider:
         ]
 
     def has_study(self, study_name):
-        return study_name in self.studies.keys()
+        return study_name in self.studies

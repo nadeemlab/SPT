@@ -1,4 +1,4 @@
-
+"""Configuration settings."""
 from importlib.metadata import version
 
 

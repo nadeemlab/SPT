@@ -1,8 +1,13 @@
+"""
+Design parameters for a dataset (often HALO generated) to be imported by the
+main import workflow.
+"""
 import pathlib
 import re
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -15,34 +20,24 @@ class HALOCellMetadataDesign:
     """
 
     def __init__(self,
-                 elementary_phenotypes_file: str = None,
-                 compartments_file: str = None,
-                 **kwargs,
+                 elementary_phenotypes_file: str = '',
+                 compartments_file: str = '',
+                 **kwargs,  # pylint: disable=unused-argument
                  ):
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-        if compartments_file is not None:
-            self.compartments = open(
-                compartments_file, 'rt').read().strip('\n').split('\n')
+        if compartments_file != '':
+            with open(compartments_file, 'rt', encoding='utf-8') as file:
+                self.compartments = file.read().strip('\n').split('\n')
 
     @staticmethod
     def solicit_cli_arguments(parser):
-        parser.add_argument(
-            '--elementary-phenotypes-file',
-            dest='elementary_phenotypes_file',
-            type=str,
-            required=True,
-        )
-        parser.add_argument(
-            '--compartments-file',
-            dest='compartments_file',
-            type=str,
-            required=True,
-        )
+        add_argument(parser, 'channels file')
+        add_argument(parser, 'compartments file')
 
-    def get_FOV_column(self, table=None):
+    def get_fov_column(self, table=None):
         """
         Returns:
             str:
@@ -56,8 +51,8 @@ class HALOCellMetadataDesign:
                 column = re.sub(' ', '_', column)
                 if not column in table.columns:
                     raise ValueError(
-                        'Could not find "%s" even with underscore replacement, among: %s' % (
-                            column, str(list(table.columns))))
+                        f'Could not find "{column}" even with underscore replacement, among: '
+                        f'{list(table.columns)}')
         return column
 
     @staticmethod
@@ -82,10 +77,10 @@ class HALOCellMetadataDesign:
         :param table: Dataframe containing a field of view descriptor column.
         :type table: pandas.DataFrame
         """
-        column = self.get_FOV_column(table=table)
-        table[column] = table[column].apply(self.normalize_fov_descriptor)
+        column = self.get_fov_column(table=table)
+        table[column] = table[column].apply(self._normalize_fov_descriptor)
 
-    def normalize_fov_descriptor(self, fov):
+    def _normalize_fov_descriptor(self, fov):
         """
         Returns an normalized path string (file basename).
 
@@ -99,8 +94,7 @@ class HALOCellMetadataDesign:
         """
         if r'\\' in fov:
             return pathlib.PureWindowsPath(fov).name
-        else:
-            return fov
+        return fov
 
     @staticmethod
     def get_cell_manifest_descriptor():
@@ -116,10 +110,6 @@ class HALOCellMetadataDesign:
     @staticmethod
     def get_compartment_column_name():
         return 'Classifier Label'
-
-    @staticmethod
-    def get_compartment_file_identifier():
-        return 'Compartments list'
 
     def get_compartments(self):
         """
@@ -154,9 +144,9 @@ class HALOCellMetadataDesign:
         ymax = 'YMax'
         return [xmin, xmax, ymin, ymax]
 
-    def get_indicator_prefix(self,
-                             phenotype_name,
-                             metadata_file_column='Column header fragment prefix'):
+    def _get_indicator_prefix(self,
+                              phenotype_name,
+                              metadata_file_column='Column header fragment prefix'):
         """
         Args:
             phenotype_name (str):
@@ -170,12 +160,12 @@ class HALOCellMetadataDesign:
                 The prefix which appears in many CSV column names, for which these
                 columns pertain to the given phenotype.
         """
-        e = self.elementary_phenotypes
-        row = e.loc[e['Name'] == phenotype_name].squeeze()
+        channels = self.elementary_phenotypes
+        row = channels.loc[channels['Name'] == phenotype_name].squeeze()
         value = row[metadata_file_column]
         return str(value)
 
-    def get_cellular_sites(self):
+    def _get_cellular_sites(self):
         """
         Returns:
             list:
@@ -192,21 +182,21 @@ class HALOCellMetadataDesign:
                 columns which are channel intensities along a given cellular site.
         """
         columns_by_elementary_phenotype = {}
-        sites = self.get_cellular_sites()
+        sites = self._get_cellular_sites()
         if not with_sites:
             sites = ['']
         for site in sites:
-            for e in sorted(list(self.elementary_phenotypes['Name'])):
+            for i in sorted(list(self.elementary_phenotypes['Name'])):
                 # parts = []
-                prefix = self.get_indicator_prefix(e)
+                prefix = self._get_indicator_prefix(i)
                 infix = site
                 suffix = 'Intensity'
                 if site == '':
                     column = prefix + ' ' + suffix
-                    key = e + ' ' + 'intensity'
+                    key = i + ' ' + 'intensity'
                 else:
                     column = prefix + ' ' + infix + ' ' + suffix
-                    key = e + ' ' + site.lower() + ' ' + 'intensity'
+                    key = i + ' ' + site.lower() + ' ' + 'intensity'
                 columns_by_elementary_phenotype[key] = column
         return columns_by_elementary_phenotype
 
@@ -229,7 +219,7 @@ class HALOCellMetadataDesign:
         name = ''.join(feature_list)
         return name
 
-    def get_pandas_signature(self, table, signature):
+    def get_pandas_signature(self, table, signature) -> list:
         """
         Args:
             table (pd.DataFrame):
@@ -248,14 +238,14 @@ class HALOCellMetadataDesign:
         if signature is None:
             logger.error(
                 'Can not get subset with no information about signature (None).')
-            return None
+            return []
         if table is None:
             logger.error('Can not find subset of empty data; table is None.')
-            return None
-        fn = self.get_feature_name
-        v = self.interpret_value_specification
+            return []
+        get_feature_name = self.get_feature_name
+        evaluate = self._interpret_value_specification
         for key in signature.keys():
-            feature_name = fn(key, table=table)
+            feature_name = get_feature_name(key, table=table)
             if not feature_name in table.columns:
                 logger.warning('Key "%s" was not among feature/column names: %s',
                                feature_name, str(list(table.columns)))
@@ -263,11 +253,12 @@ class HALOCellMetadataDesign:
                 if not feature_name in table.columns:
                     logger.error('Key "%s" was not among feature/column names: %s',
                                  feature_name, str(list(table.columns)))
-        pandas_signature = self.non_infix_bitwise_AND(
-            [table[fn(key, table=table)] == v(value) for key, value in signature.items()])
+        pandas_signature = self._non_infix_bitwise_and(
+            [table[get_feature_name(key, table=table)] == evaluate(value)
+             for key, value in signature.items()])
         return pandas_signature
 
-    def non_infix_bitwise_AND(self, args):
+    def _non_infix_bitwise_and(self, args):
         """
         Args:
             args (list):
@@ -297,14 +288,13 @@ class HALOCellMetadataDesign:
         """
         separator = ' '
         if not table is None:
-            if '_'.join([self.get_indicator_prefix(key), 'Positive']) in table.columns:
+            if '_'.join([self._get_indicator_prefix(key), 'Positive']) in table.columns:
                 separator = '_'
         if key in self.get_elementary_phenotype_names():
-            return separator.join([self.get_indicator_prefix(key), 'Positive'])
-        else:
-            return key
+            return separator.join([self._get_indicator_prefix(key), 'Positive'])
+        return key
 
-    def interpret_value_specification(self, value):
+    def _interpret_value_specification(self, value):
         """
         This function provides an abstraction layer between the table cell values as
         they actually appear in original data files and more semantic tokens in the
@@ -324,10 +314,9 @@ class HALOCellMetadataDesign:
             '+': 1,
             '-': 0,
         }
-        if value in special_cases.keys():
+        if value in special_cases:
             return special_cases[value]
-        else:
-            return value
+        return value
 
     def get_compartmental_signature(self, table, compartment):
         """
@@ -347,22 +336,19 @@ class HALOCellMetadataDesign:
                 compartment.)
         """
         signature = None
-
         if compartment in self.get_compartments():
             column = HALOCellMetadataDesign.get_compartment_column_name()
             if (not column in table.columns) and (self.get_compartments() == ['<any>']) \
                     and (compartment == '<any>'):
                 signature = [True for i in range(table.shape[0])]
             else:
-                signature = self.get_pandas_signature(
-                    table, {column: compartment})
+                signature = self.get_pandas_signature(table, {column: compartment})
 
         if signature is None:
             logger.error('Could not define compartment %s, from among %s',
                          compartment, self.get_compartments())
             return [False for i in range(table.shape[0])]
-        else:
-            return signature
+        return signature
 
     def get_combined_intensity(self, table, elementary_phenotype):
         """
@@ -380,12 +366,12 @@ class HALOCellMetadataDesign:
         intensity_column = self.get_intensity_column_name(elementary_phenotype)
         if intensity_column in table.columns:
             return table[intensity_column]
-        prefix = self.get_indicator_prefix(elementary_phenotype)
-        suffixes = [site + ' Intensity' for site in self.get_cellular_sites()]
+        prefix = self._get_indicator_prefix(elementary_phenotype)
+        suffixes = [site + ' Intensity' for site in self._get_cellular_sites()]
         feature = [' '.join([prefix, suffix]) for suffix in suffixes]
         return list(table[feature[0]] + table[feature[1]] + table[feature[2]])
 
-    def add_combined_intensity_column(self, table, elementary_phenotype):
+    def add_combined_intensity_column(self, table):
         for phenotype in self.get_elementary_phenotype_names():
             column = self.get_intensity_column_name(phenotype)
             table[column] = self.get_combined_intensity(table, phenotype)
@@ -394,4 +380,4 @@ class HALOCellMetadataDesign:
         """
         Currently only used for manually-created intensity column.
         """
-        return self.get_indicator_prefix(elementary_phenotype) + ' Intensity'
+        return self._get_indicator_prefix(elementary_phenotype) + ' Intensity'

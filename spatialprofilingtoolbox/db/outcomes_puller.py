@@ -1,4 +1,4 @@
-
+"""Retrieve outcome data for all studies."""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -8,8 +8,9 @@ logger = colorized_logger(__name__)
 
 
 class OutcomesPuller(DatabaseConnectionMaker):
+    """Retrieve outcome data for all studies."""
     def __init__(self, database_config_file):
-        super(OutcomesPuller, self).__init__(
+        super().__init__(
             database_config_file=database_config_file)
         self.outcomes = None
 
@@ -42,7 +43,7 @@ class OutcomesPuller(DatabaseConnectionMaker):
                 merged = pd.concat([dfs[outcome]
                                    for outcome in sorted(list(dfs.keys()))])
                 outcomes[study_name]['dataframe'] = merged
-                outcomes[study_name]['filename'] = 'outcomes.%s.tsv' % study_index
+                outcomes[study_name]['filename'] = f'outcomes.{study_index}.tsv'
         return outcomes
 
     def get_study_names(self):

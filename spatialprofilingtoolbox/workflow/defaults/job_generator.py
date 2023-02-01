@@ -1,12 +1,17 @@
+"""
+Interface class for the functionality of creating a manifest of the
+parallelizable jobs to be done as part of a given workflow.
+"""
 from os.path import join
 from os.path import exists
+from typing import Optional
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import \
-    elementary_phenotypes_file_identifier
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema import \
-    composite_phenotypes_file_identifier
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+    import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+    import COMPOSITE_PHENOTYPES_FILE_IDENTIFIER
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -21,10 +26,9 @@ class JobGenerator:
     """
 
     def __init__(self,
-                 input_path: str = None,
-                 file_manifest_file: str = None,
-                 dataset_design_class=None,
-                 **kwargs
+                 input_path: Optional[str] = None,
+                 file_manifest_file: Optional[str] = None,
+                 dataset_design_class=None
                  ):
         self.input_path = input_path
         self.dataset_design_class = dataset_design_class
@@ -75,18 +79,19 @@ class JobGenerator:
         df.to_csv(job_specification_table_filename, index=False, header=True)
 
     def write_filename(self, filename_file, identifier):
-        def validate(record): return record['File ID'] == identifier
+        def validate(record):
+            return record['File ID'] == identifier
         records = self.retrieve_file_records(condition=validate)
         if len(records) != 1:
-            raise ValueError('Found %s files "%s"; need exactly 1.' % (str(len(records)),
-                                                                       identifier))
-        with open(filename_file, 'wt') as file:
+            raise ValueError(
+                f'Found {len(records)} files "{identifier}"; need exactly 1.')
+        with open(filename_file, 'wt', encoding='utf-8') as file:
             file.write(join(self.input_path, records[0]['File name']))
 
     def write_elementary_phenotypes_filename(self, filename_file):
         self.write_filename(
-            filename_file, elementary_phenotypes_file_identifier)
+            filename_file, ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER)
 
     def write_composite_phenotypes_filename(self, filename_file):
         self.write_filename(
-            filename_file, composite_phenotypes_file_identifier)
+            filename_file, COMPOSITE_PHENOTYPES_FILE_IDENTIFIER)

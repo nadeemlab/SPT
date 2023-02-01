@@ -1,3 +1,7 @@
+"""
+A light interface to a sqlite database, used by some legacy Nextflow workflow
+functions.
+"""
 import sqlite3
 import time
 
@@ -24,6 +28,8 @@ class WaitingDatabaseContextManager:
         """
         self.uri = uri
         self.seconds = seconds
+        self.connection = None
+        self.cursor = None
 
     def __enter__(self):
         self.connection = sqlite3.connect(self.uri)

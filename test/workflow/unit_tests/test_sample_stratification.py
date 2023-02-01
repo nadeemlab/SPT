@@ -4,13 +4,10 @@ from spatialprofilingtoolbox.workflow.source_file_adi_parsing.sample_stratificat
 
 
 def test_is_convertible():
-    def numeric_valuation(x):
-        return float(x)
-
-    assert SSC.is_convertible('123', numeric_valuation)
-    assert SSC.is_convertible('000123', numeric_valuation)
-    assert SSC.is_convertible('000.123', numeric_valuation)
-    assert SSC.is_convertible('12x3', numeric_valuation) == False
+    assert SSC.is_convertible('123', float)
+    assert SSC.is_convertible('000123', float)
+    assert SSC.is_convertible('000.123', float)
+    assert not SSC.is_convertible('12x3', float)
 
 
 def test_get_date_valuation():

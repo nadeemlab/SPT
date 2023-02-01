@@ -1,4 +1,4 @@
-
+"""Source file parsing for treatment/intervention-related data."""
 import pandas as pd
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
@@ -8,25 +8,19 @@ logger = colorized_logger(__name__)
 
 
 class InterventionsParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(InterventionsParser, self).__init__(**kwargs)
-
-    def parse(self, connection, fields, interventions_file):
+    """Source file parsing for treatment/intervention event metadata."""
+    def parse(self, connection, interventions_file):
         cursor = connection.cursor()
 
         logger.debug('Considering %s', interventions_file)
-        interventions = pd.read_csv(
-            interventions_file, sep='\t', na_filter=False, dtype=str)
+        interventions = pd.read_csv(interventions_file, sep='\t', na_filter=False, dtype=str)
         logger.info('Saving %s intervention records.', interventions.shape[0])
-        for i, row in interventions.iterrows():
+        for _, row in interventions.iterrows():
             intervention_record = (
                 row['Subject of intervention'],
                 row['Intervention'],
                 row['Date of intervention'],
             )
-            cursor.execute(
-                self.generate_basic_insert_query('intervention', fields),
-                intervention_record,
-            )
+            cursor.execute(self.generate_basic_insert_query('intervention'), intervention_record)
         connection.commit()
         cursor.close()

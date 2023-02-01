@@ -1,20 +1,25 @@
-
+"""Source file parsing into the single-cell ADI schema."""
 import importlib.resources
 import re
+from typing import Optional
 
 from psycopg2 import sql
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cellmanifests import CellManifestsParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.channels import ChannelsPhenotypesParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cellmanifestset import CellManifestSetParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cell_manifests import \
+    CellManifestsParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.channels import \
+    ChannelsPhenotypesParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cell_manifest_set import \
+    CellManifestSetParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.samples import SamplesParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.subjects import SubjectsParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.sample_stratification import SampleStratificationCreator
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.interventions import InterventionsParser
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.sample_stratification import \
+    SampleStratificationCreator
+from spatialprofilingtoolbox.workflow.source_file_adi_parsing.interventions import \
+    InterventionsParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.study import StudyParser
-from spatialprofilingtoolbox.db.source_file_parser_interface import DBBackend
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -22,21 +27,22 @@ logger = colorized_logger(__name__)
 
 
 class DataSkimmer(DatabaseConnectionMaker):
-    def __init__(self, database_config_file: str = None, db_backend=DBBackend.POSTGRES):
-        if db_backend != DBBackend.POSTGRES:
-            raise ValueError('Only DBBackend.POSTGRES is supported.')
-        self.db_backend = db_backend
-        super(DataSkimmer, self).__init__(
-            database_config_file=database_config_file)
+    """
+    Orchestration of source file parsing into single cell ADI schema database
+    for a bundle of source files.
+    """
+    def __init__(self, database_config_file: Optional[str] = None):
+        super().__init__(database_config_file=database_config_file)
+        self.record_counts = {}
 
     def normalize(self, name):
-        return re.sub('[ \-]', '_', name).lower()
+        return re.sub(r'[ \-]', '_', name).lower()
 
     def retrieve_record_counts(self, cursor, fields):
         record_counts = {}
-        tablenames = sorted(list(set(fields['Table'])))
-        tablenames = [self.normalize(t) for t in tablenames]
-        for table in tablenames:
+        table_names = sorted(list(set(fields['Table'])))
+        table_names = [self.normalize(t) for t in table_names]
+        for table in table_names:
             query = sql.SQL(
                 'SELECT COUNT(*) FROM {} ;').format(sql.Identifier(table))
             cursor.execute(query)
@@ -62,26 +68,17 @@ class DataSkimmer(DatabaseConnectionMaker):
             difference = changes[table]
             sign = '+' if difference >= 0 else '-'
             absolute_difference = difference if difference > 0 else -1*difference
-            difference_str = "{:<13}".format(
-                '%s%s' % (sign, absolute_difference))
-            logger.debug('%s %s', difference_str, table)
+            difference_str = f'{sign}{absolute_difference}'
+            padded = f"{difference_str:<13}"
+            logger.debug('%s %s', padded, table)
 
     def parse(
         self,
+        files,
         dataset_design=None,
         computational_design=None,
-        file_manifest_file=None,
-        elementary_phenotypes_file=None,
-        composite_phenotypes_file=None,
-        outcomes_file=None,
-        compartments_file=None,
-        subjects_file=None,
-        study_file=None,
-        diagnosis_file=None,
-        interventions_file=None,
-        **kwargs,
     ):
-        if not self.get_connection():
+        if not self.is_connected():
             logger.debug(
                 'No database connection was initialized. Skipping semantic parse.')
             return
@@ -90,52 +87,42 @@ class DataSkimmer(DatabaseConnectionMaker):
 
         self.cache_all_record_counts(self.get_connection(), fields)
 
-        study_name = StudyParser().parse(
+        study_name = StudyParser(fields).parse(
             self.get_connection(),
-            fields,
-            study_file,
+            files['study'],
         )
-        SubjectsParser().parse(
+        SubjectsParser(fields).parse(
             self.get_connection(),
-            fields,
-            subjects_file,
+            files['subjects'],
         )
-        DiagnosisParser().parse(
+        DiagnosisParser(fields).parse(
             self.get_connection(),
-            fields,
-            diagnosis_file,
+            files['diagnosis'],
         )
-        InterventionsParser().parse(
+        InterventionsParser(fields).parse(
             self.get_connection(),
-            fields,
-            interventions_file,
+            files['interventions'],
         )
-        samples_file = outcomes_file
-        SamplesParser().parse(
+        SamplesParser(fields).parse(
             self.get_connection(),
-            fields,
-            samples_file,
+            files['samples'],
             study_name,
         )
-        CellManifestSetParser().parse(
+        CellManifestSetParser(fields).parse(
             self.get_connection(),
-            fields,
-            file_manifest_file,
+            files['file manifest'],
             study_name,
         )
-        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser().parse(
+        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(fields).parse(
             self.get_connection(),
-            fields,
-            elementary_phenotypes_file,
-            composite_phenotypes_file,
+            files['channels'],
+            files['phenotypes'],
             study_name,
         )
-        CellManifestsParser().parse(
+        CellManifestsParser(fields, dataset_design).parse(
             self.get_connection(),
-            fields,
-            dataset_design,
             computational_design,
-            file_manifest_file,
+            files['file manifest'],
             chemical_species_identifiers_by_symbol,
         )
         SampleStratificationCreator.create_sample_stratification(

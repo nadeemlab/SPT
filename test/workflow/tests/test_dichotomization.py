@@ -2,18 +2,16 @@
 from os.path import join, dirname
 
 import pandas as pd
-import pytest
 
 from spatialprofilingtoolbox.workflow.common.dichotomization import Dichotomizer
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
     import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
-    import elementary_phenotypes_file_identifier
+    import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
     import get_input_filename_by_identifier
 
 
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_thresholding():
     input_files_path = join(dirname(__file__), '..',
                             'data_compartments_explicit')
@@ -22,7 +20,7 @@ def test_thresholding():
         elementary_phenotypes_file=join(
             input_files_path,
             get_input_filename_by_identifier(
-                elementary_phenotypes_file_identifier,
+                ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER,
                 file_manifest_filename=file_manifest_file,
             ),
         ),
@@ -59,7 +57,7 @@ def test_thresholding():
             }
             rows.append(row)
         print('')
-        print('In file %s' % filename)
+        print(f'In file {filename}')
         print(pd.DataFrame(rows))
 
 

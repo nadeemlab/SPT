@@ -1,10 +1,12 @@
-
+"""The design parameters of the main data import workflow."""
 from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
 
 
 class HALOImportDesign(ComputationalDesign):
+    """Overall workflow design parameters for import workflow."""
+
     def __init__(self, **kwargs):
-        super(HALOImportDesign, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):
@@ -13,3 +15,6 @@ class HALOImportDesign(ComputationalDesign):
     @staticmethod
     def uses_database():
         return True
+
+    def get_workflow_specific_columns(self, style):
+        pass

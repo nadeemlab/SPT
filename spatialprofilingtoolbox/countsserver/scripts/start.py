@@ -1,3 +1,4 @@
+"""Entry point into the fast cell counts TCP server."""
 import argparse
 import json
 import socketserver
@@ -9,6 +10,7 @@ logger = colorized_logger('spt countsserver start')
 
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):
+    """The TCP server for fast cell counts."""
     def handle(self):
         data = self.request.recv(512).strip()
         print('Request:')
@@ -28,9 +30,9 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
             positive_channel_names = []
         if negative_channel_names == ['']:
             negative_channel_names = []
-        logger.info('Study: %s' % study_name)
-        logger.info('Positives: %s' % positive_channel_names)
-        logger.info('Negatives: %s' % negative_channel_names)
+        logger.info('Study: %s', study_name)
+        logger.info('Positives: %s', positive_channel_names)
+        logger.info('Negatives: %s', negative_channel_names)
         if not self.server.counts_provider.has_study(study_name):
             logger.error('Study not known to counts server: %s', study_name)
             self.request.sendall(''.encode('utf-8'))
@@ -43,19 +45,18 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         logger.info(positives_signature)
         logger.info(negatives_signature)
         if positives_signature is None:
-            logger.error(
-                'Could not understand channel names as defining a signature: %s'
-                % positive_channel_names)
+            logger.error('Could not understand channel names as defining a signature: %s',
+                         positive_channel_names)
             self.request.sendall(''.encode('utf-8'))
             return
         if negatives_signature is None:
             logger.error(
-                'Could not understand channel names as defining a signature: %s'
-                % negative_channel_names)
+                'Could not understand channel names as defining a signature: %s',
+                negative_channel_names)
             self.request.sendall(''.encode('utf-8'))
             return
-        logger.info(f'{positives_signature:064b}')
-        logger.info(f'{negatives_signature:064b}')
+        logger.info('%s', f'{positives_signature:064b}')
+        logger.info('%s', f'{negatives_signature:064b}')
         counts = self.server.counts_provider.count_structures_of_partial_signed_signature(
             positives_signature, negatives_signature, study_name)
         self.request.sendall(

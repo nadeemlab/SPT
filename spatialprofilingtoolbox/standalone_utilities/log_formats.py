@@ -1,8 +1,10 @@
+"""Custom logger for general SPT functionality."""
 import logging
 import re
 
 
 class CustomFormatter(logging.Formatter):
+    """A custom colorizing logger."""
     grey = '\x1b[38;21m'
     green = '\u001b[32m'
     bold_green = '\u001b[32;1m'
@@ -52,11 +54,11 @@ def colorized_logger(name):
     Returns:
         The logger.
     """
-    logger = logging.getLogger(re.sub('^spatialprofilingtoolbox\.', '', name))
+    logger = logging.getLogger(re.sub(r'^spatialprofilingtoolbox\.', '', name))
     level = logging.DEBUG
     logger.setLevel(level)
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    ch.setFormatter(CustomFormatter())
-    logger.addHandler(ch)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(level)
+    stream_handler.setFormatter(CustomFormatter())
+    logger.addHandler(stream_handler)
     return logger

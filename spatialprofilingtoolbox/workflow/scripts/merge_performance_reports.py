@@ -1,3 +1,6 @@
+"""
+Convenience script for aggregating custom-logged time performance data.
+"""
 import argparse
 
 
@@ -36,10 +39,10 @@ if __name__ == '__main__':
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
-    reports = [
+    performance_reports = [
         pd.read_csv(file).drop(columns=['average time spent', 'fraction'])
         for file in args.performance_reports
     ]
-    report = aggregate_performance_reports(reports)
-    with open(args.output, 'wt') as file:
+    report = aggregate_performance_reports(performance_reports)
+    with open(args.output, 'wt', encoding='utf-8') as file:
         file.write(report.to_markdown(index=False) + '\n')

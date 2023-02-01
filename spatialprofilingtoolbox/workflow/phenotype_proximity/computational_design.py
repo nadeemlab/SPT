@@ -23,7 +23,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
         :param use_intensities: Whether to use continue intensity values.
         :type use_intensities: bool
         """
-        super(PhenotypeProximityDesign, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.balanced = balanced
         self.use_intensities = use_intensities
 
@@ -64,45 +64,23 @@ class PhenotypeProximityDesign(ComputationalDesign):
             ('source_phenotype_count', 'INTEGER'),
         ]
 
-    def get_all_phenotype_signatures(self, by_name=False):
+    def get_all_phenotype_signatures_by_name(self):
         """
-        :param by_name: Whether to return a list (default) or a dictionary whose keys
-            are the munged names. (Default False).
-        :type by_name: bool
-
-        :return: ``signature``. Signatures for all the composite phenotypes described by
-            the ``complex_phenotypes_file`` table. Each signature is a dictionary with
-            keys the elementary phenotypes and values either "+" or "-".
-        :rtype: list
+        Returns a dictionary whose keys are the "munged" names, and values are
+        the phenotype signatures. See get_all_phenotype_signatures for details
+        regarging the values.
         """
-        elementary_signatures = [
-            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()
-        ]
-        complex_signatures = []
-        for _, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted(
-                [m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted(
-                [m for m in row['Negative markers'].split(';') if m != ''])
-            signature = {}
-            for marker in positive_markers:
-                signature[marker] = '+'
-            for marker in negative_markers:
-                signature[marker] = '-'
-            complex_signatures.append(signature)
-        signatures = elementary_signatures + complex_signatures
-        if by_name:
-            return {
-                self.dataset_design.munge_name(signature): signature for signature in signatures
-            }
-        return signatures
+        signatures = self.get_all_phenotype_signatures()
+        return {
+            self.dataset_design.munge_name(signature): signature for signature in signatures
+        }
 
     def get_all_phenotype_names(self):
         """
         :return: All (composite) phenotype names.
         :rtype: list
         """
-        return sorted(list(self.get_all_phenotype_signatures(by_name=True).keys()))
+        return sorted(list(self.get_all_phenotype_signatures_by_name().keys()))
 
     @staticmethod
     def get_primary_output_feature_name(style='readable'):
@@ -114,6 +92,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
             return 'phenotype proximity metric'
         if style == 'sql':
             return 'phenotype_proximity_metric'
+        return ''
 
     @staticmethod
     def get_aggregated_metric_name(style='readable'):
@@ -121,13 +100,16 @@ class PhenotypeProximityDesign(ComputationalDesign):
             return 'aggregated metric'
         if style == 'sql':
             return 'aggregated_metric'
+        return ''
 
     def get_metric_description(self):
         if self.balanced:
             return 'cell pair counts per unit slide area'
-        else:
-            return 'number of neighbor cells of target type, averaged over cells of source type'
+        return 'number of neighbor cells of target type, averaged over cells of source type'
 
     @staticmethod
     def uses_database():
         return True
+
+    def get_workflow_specific_columns(self, style):
+        pass

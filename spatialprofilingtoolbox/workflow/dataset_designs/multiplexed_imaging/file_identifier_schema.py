@@ -1,3 +1,8 @@
+"""
+Convenience function for locating files listed in a file manifest describing
+an importable CSV/TSV bundle.
+"""
+from typing import Optional
 
 import pandas as pd
 
@@ -5,15 +10,15 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
-elementary_phenotypes_file_identifier = 'Elementary phenotypes file'
-composite_phenotypes_file_identifier = 'Complex phenotypes file'
-compartments_file_identifier = 'Compartments file'
-default_file_manifest_filename = 'file_manifest.tsv'
+ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER = 'Elementary phenotypes file'
+COMPOSITE_PHENOTYPES_FILE_IDENTIFIER = 'Complex phenotypes file'
+COMPARTMENTS_FILE_IDENTIFIER = 'Compartments file'
+DEFAULT_FILE_MANIFEST_FILENAME = 'file_manifest.tsv'
 
 
 def get_input_filenames_by_data_type(
-    data_type: str = None,
-    file_manifest_filename: str = None,
+    data_type: Optional[str] = None,
+    file_manifest_filename: Optional[str] = None,
 ):
     """
     Retrieves from the file metadata table the names of all files with the given
@@ -33,9 +38,9 @@ def get_input_filenames_by_data_type(
 
 
 def get_input_filename_by_identifier(
-    input_file_identifier: str = None,
-    file_manifest_filename: str = None,
-):
+    input_file_identifier: Optional[str] = None,
+    file_manifest_filename: Optional[str] = None,
+) -> str:
     """
     Uses the file identifier to lookup the name of the associated file in the file
     metadata table, and cache the name of the associated file.

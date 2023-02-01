@@ -25,7 +25,7 @@ jobs:
         pip install pylint
     - name: Linting the Python source code.
       run: |
-        pylint --output-format=colorized --rc-file .pylintrc > linter_output.txt
+        pylint --output-format=colorized --rc-file .pylintrc spatialprofilingtoolbox/ > linter_output.txt
     - name: Upload linting results.
       uses: actions/upload-artifact@v3
       with:

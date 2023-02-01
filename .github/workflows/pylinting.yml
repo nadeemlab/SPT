@@ -19,7 +19,7 @@ jobs:
     - name: Create pip requirements.
       run: |
         bash build/build_scripts/create_requirements.sh > requirements.txt &&
-        bash build/build_scripts/create_requirements.sh all >> requirements.txt
+        bash build/build_scripts/create_requirements.sh all >> requirements.txt &&
         echo "pylint" >> requirements.txt
     - name: Set up Python 3.9 .
       uses: actions/setup-python@v4

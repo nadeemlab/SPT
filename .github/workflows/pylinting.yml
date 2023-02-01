@@ -31,7 +31,7 @@ jobs:
         pip install pylint &&
         deactivate
       if: steps.spt-pip-dependencies-cache.cache-hit != 'true'
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: spt-pip-dependencies-cache
       with:
         path: ./.venv/

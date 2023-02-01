@@ -70,22 +70,7 @@ class PhenotypeProximityDesign(ComputationalDesign):
         the phenotype signatures. See get_all_phenotype_signatures for details
         regarging the values.
         """
-        elementary_signatures = [
-            {name: '+'} for name in self.dataset_design.get_elementary_phenotype_names()
-        ]
-        complex_signatures = []
-        for _, row in self.complex_phenotypes.iterrows():
-            positive_markers = sorted(
-                [m for m in row['Positive markers'].split(';') if m != ''])
-            negative_markers = sorted(
-                [m for m in row['Negative markers'].split(';') if m != ''])
-            signature = {}
-            for marker in positive_markers:
-                signature[marker] = '+'
-            for marker in negative_markers:
-                signature[marker] = '-'
-            complex_signatures.append(signature)
-        signatures = elementary_signatures + complex_signatures
+        signatures = self.get_all_phenotype_signatures()
         return {
             self.dataset_design.munge_name(signature): signature for signature in signatures
         }
@@ -125,3 +110,6 @@ class PhenotypeProximityDesign(ComputationalDesign):
     @staticmethod
     def uses_database():
         return True
+
+    def get_workflow_specific_columns(self, style):
+        pass

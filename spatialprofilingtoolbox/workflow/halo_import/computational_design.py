@@ -15,3 +15,6 @@ class HALOImportDesign(ComputationalDesign):
     @staticmethod
     def uses_database():
         return True
+
+    def get_workflow_specific_columns(self, style):
+        pass

@@ -30,7 +30,7 @@ jobs:
         pip install -r requirements.txt &&
         pip install pylint &&
         deactivate
-      if: steps.spt-pip-dependencies-cache.cache-hit != 'true'
+      if: steps.spt-pip-dependencies-cache.outputs.cache-hit != 'true'
     - uses: actions/cache@v3
       id: spt-pip-dependencies-cache
       with:

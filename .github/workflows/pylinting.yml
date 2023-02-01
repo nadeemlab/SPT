@@ -40,7 +40,6 @@ jobs:
       id: spt-pip-dependencies-restore
       uses: actions/cache/restore@v3
       with:
-        path: |
         path: ./.venv/
         key: ${{ hashFiles('pyproject.toml') }}-v2
     - name: Linting the Python source code.

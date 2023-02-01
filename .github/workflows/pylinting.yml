@@ -24,7 +24,7 @@ jobs:
       id: spt-pip-dependencies-cache
       with:
         path: ./.venv/
-        key: ${{ hashFiles('pyproject.toml') }}
+        key: ${{ hashFiles('pyproject.toml') }}-v2
     - name: Install dependencies if not cached.
       run: |
         python -m venv venv &&
@@ -38,6 +38,7 @@ jobs:
       if: steps.spt-pip-dependencies-cache.outputs.cache-hit != 'true'
     - name: Linting the Python source code.
       run: |
+        source ./venv/bin/activate &&
         pylint --output-format=colorized --rc-file .pylintrc spatialprofilingtoolbox/ | tee linter_output.txt
     - name: Upload linter results.
       uses: actions/upload-artifact@v3

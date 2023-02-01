@@ -44,7 +44,7 @@ jobs:
         key: ${{ hashFiles('pyproject.toml') }}-v2
     - name: Linting the Python source code.
       run: |
-        source ./venv/bin/activate &&
+        source venv/bin/activate &&
         pylint --output-format=colorized --rc-file .pylintrc spatialprofilingtoolbox/ | tee linter_output.txt
     - name: Upload linter results.
       uses: actions/upload-artifact@v3

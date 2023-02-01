@@ -36,6 +36,13 @@ jobs:
         pip install pylint &&
         deactivate
       if: steps.spt-pip-dependencies-cache.outputs.cache-hit != 'true'
+    - name: Restore cache if available.
+      id: spt-pip-dependencies-restore
+      uses: actions/cache/restore@v3
+      with:
+        path: |
+        path: ./.venv/
+        key: ${{ hashFiles('pyproject.toml') }}-v2
     - name: Linting the Python source code.
       run: |
         source ./venv/bin/activate &&

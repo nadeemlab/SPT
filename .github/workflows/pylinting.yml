@@ -20,6 +20,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: 3.9
+    - name: Install Python dependencies.
       run: |
         python -m pip install --upgrade pip &&
         bash build/build_scripts/create_requirements.sh > requirements.txt &&

@@ -18,4 +18,4 @@ The following line may be used to do whole-package linting:
 pylint spatialprofilingtoolbox/ --output-format=colorized --rc-file .pylintrc
 ```
 
-Linting is also added as a Github action, triggered on every merge into main and on every pull request opening / pull request synchronize event.
+Linting is also added as a Github action, triggered on every merge into main and on every pull request opening, editing, repening, or synchronize events.

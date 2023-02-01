@@ -34,13 +34,13 @@ jobs:
     - uses: actions/cache/save@v3
       id: spt-pip-dependencies-cache
       with:
-        path: ./venv/
+        path: venv/
         key: ${{ hashFiles('pyproject.toml') }}-v2
     - name: Restore cache if available.
       id: spt-pip-dependencies-restore
       uses: actions/cache/restore@v3
       with:
-        path: ./venv/
+        path: venv/
         key: ${{ hashFiles('pyproject.toml') }}-v2
     - name: Linting the Python source code.
       run: |

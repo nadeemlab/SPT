@@ -132,7 +132,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         for name, signature in signatures_by_name.items():
             table[name + ' membership'] = self.dataset_design.get_pandas_signature(table, signature)
 
-    def restrict_to_pertinent_columns(self, table):
+    def restrict_to_pertinent_columns_comprehensive(self, table):
         """
         :param table: Table with cell data.
         :type table: pandas.DataFrame
@@ -207,7 +207,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             self.timer.record_timepoint('Done adding box center')
             self.add_membership(table)
             self.timer.record_timepoint('Done adding membership columns')
-            self.restrict_to_pertinent_columns(table)
+            self.restrict_to_pertinent_columns_comprehensive(table)
             self.timer.record_timepoint(
                 'Done restricting to pertinent columns')
             cells[fov_index] = table

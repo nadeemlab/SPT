@@ -1,11 +1,9 @@
 """Utility to report basic health/status of the SPT database."""
 import sys
 import argparse
-from os.path import exists
-from os.path import abspath
-from os.path import expanduser
 import importlib.resources
 
+from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
@@ -58,17 +56,12 @@ if __name__ == '__main__':
     add_argument(parser, 'database config')
     args = parser.parse_args()
 
-    if args.database_config_file:
-        config_file = abspath(expanduser(args.database_config_file))
-        if not exists(config_file):
-            raise FileNotFoundError(
-                f'Need to supply valid database config filename: {config_file}')
+    config_file = get_and_validate_database_config(args)
+    with DatabaseConnectionMaker(database_config_file=config_file) as dcm:
+        cur = dcm.get_connection().cursor()
+        present, counted = check_tables(cur)
+        if not present:
+            sys.exit(1)
+        cur.close()
 
-        with DatabaseConnectionMaker(database_config_file=config_file) as dcm:
-            cur = dcm.get_connection().cursor()
-            present, counted = check_tables(cur)
-            if not present:
-                sys.exit(1)
-            cur.close()
-
-        report_counts(counted)
+    report_counts(counted)

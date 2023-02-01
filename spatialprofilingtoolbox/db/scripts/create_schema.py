@@ -3,10 +3,8 @@ CLI utility to infuse the single-cell ADI schema into a given Postgresql
 instance.
 """
 import argparse
-from os.path import exists
-from os.path import abspath
-from os.path import expanduser
 
+from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
@@ -47,17 +45,12 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    if args.database_config_file:
-        config_file = abspath(expanduser(args.database_config_file))
-        if not exists(config_file):
-            raise FileNotFoundError(
-                f'Need to supply valid database config filename: {config_file}')
-
-        with SchemaInfuser(database_config_file=config_file) as infuser:
-            if not args.refresh_views_only and not args.recreate_views_only:
-                infuser.setup_schema(force=args.force)
-            else:
-                if args.refresh_views_only:
-                    infuser.refresh_views()
-                if args.recreate_views_only:
-                    infuser.recreate_views()
+    config_file = get_and_validate_database_config(args)
+    with SchemaInfuser(database_config_file=config_file) as infuser:
+        if not args.refresh_views_only and not args.recreate_views_only:
+            infuser.setup_schema(force=args.force)
+        else:
+            if args.refresh_views_only:
+                infuser.refresh_views()
+            if args.recreate_views_only:
+                infuser.recreate_views()

@@ -127,8 +127,6 @@ class NearestDistanceCoreJob(CoreJob):
               FOV index integer).
         :rtype: pandas.DataFrame, dict
         """
-        phenotype_names = self.computational_design.get_phenotype_names()
-
         cell_groups = []
         fov_lookup = {}
         # for filename, sample_identifier in self.sample_identifiers_by_file.items():
@@ -154,68 +152,28 @@ class NearestDistanceCoreJob(CoreJob):
             self.timer.record_timepoint('Finished copying FOV cells table')
             table = table.reset_index(drop=True)
             self.timer.record_timepoint('Finished resetting cells table index')
-            if 'compartment' in table.columns:
-                logger.error('Woops, name collision "compartment".')
-                break
-            all_compartments = self.dataset_design.get_compartments()
-            table['compartment'] = 'Not in ' + ';'.join(all_compartments)
 
-            for compartment in self.dataset_design.get_compartments():
-                signature = self.dataset_design.get_compartmental_signature(
-                    table, compartment)
-                table.loc[signature, 'compartment'] = compartment
-            self.timer.record_timepoint('Copy compartment column')
-
-            signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
-            self.timer.record_timepoint('Start creating membership column')
-            for name in phenotype_names:
-                signature = signatures_by_name[name]
-                bools = self.dataset_design.get_pandas_signature(table, signature)
-                ints = [1 if value else 0 for value in bools]
-                table[name + ' membership'] = ints
-            phenotype_membership_columns = [
-                name + ' membership' for name in phenotype_names]
-            self.timer.record_timepoint('Finished creating membership columns')
+            self.deal_with_compartments(table)
+            phenotype_membership_columns = self.add_and_return_membership_columns(table)
 
             self.timer.record_timepoint('Adding distance-to-nearest data')
-            for compartment in all_compartments:
+            for compartment in self.dataset_design.get_compartments():
                 self.add_nearest_cell_data(table, compartment)
             nearest_cell_columns = [
-                'distance to nearest cell ' + compartment for compartment in all_compartments]
+                'distance to nearest cell ' + compartment
+                for compartment in self.dataset_design.get_compartments()]
             self.timer.record_timepoint(
                 'Finished adding distance-to-nearest data')
+
             table['sample_identifier'] = sample_identifier
             table['outcome_assignment'] = self.outcome
 
-            pertinent_columns = [
-                'sample_identifier',
-                self.dataset_design.get_fov_column(),
-                'outcome_assignment',
-                'compartment',
-                self.dataset_design.get_cell_area_column(),
-            ] + phenotype_membership_columns + nearest_cell_columns
-
-            table = table[pertinent_columns]
-            self.timer.record_timepoint('Restricted copy to subset of columns')
-            table.rename(columns={
-                self.dataset_design.get_fov_column(): 'fov_index',
-                self.dataset_design.get_cell_area_column(): 'cell_area',
-            }, inplace=True)
-
-            header1 = self.computational_design.get_cells_header_variable_portion(
-                style='readable',
-            )
-            header2 = self.computational_design.get_cells_header_variable_portion(
-                style='sql',
-            )
-            table.rename(columns={
-                header1[i][0]: header2[i][0] for i in range(len(header1))
-            }, inplace=True)
+            table = self.restrict_to_pertinent_columns(table, phenotype_membership_columns,
+                                                       nearest_cell_columns)
 
             cell_groups.append(table)
-            self.timer.record_timepoint('Finished parsing one FOV cell table')
-        logger.debug('%s cells parsed from file %s.',
-                     table_file.shape[0], filename)
+            self.timer.record_timepoint('Finished parsing one FOV cell table for proximity calc.')
+        logger.debug('%s cells parsed from file %s.', table_file.shape[0], filename)
         logger.debug('Completed cell table collation.')
         return pd.concat(cell_groups), fov_lookup
 

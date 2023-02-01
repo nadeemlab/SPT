@@ -2,6 +2,9 @@
 A context manager from accessing the backend SPT database, from inside library
 functions.
 """
+from os.path import exists
+from os.path import abspath
+from os.path import expanduser
 from typing import Optional
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -111,3 +114,12 @@ class DatabaseConnectionMaker:
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection:
             self.connection.close()
+
+def get_and_validate_database_config(args):
+    if args.database_config_file:
+        config_file = abspath(expanduser(args.database_config_file))
+        if not exists(config_file):
+            raise FileNotFoundError(
+                f'Need to supply valid database config filename: {config_file}')
+        return config_file
+    raise ValueError('Could not parse CLI argument for database config.')

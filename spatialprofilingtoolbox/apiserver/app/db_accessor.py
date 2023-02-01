@@ -14,13 +14,6 @@ class DBAccessor:
     """
     connection: Psycopg2Connection
 
-    def is_connected(self):
-        try:
-            connection = self.connection
-            return connection is not None
-        except AttributeError:
-            return False
-
     def get_connection(self):
         return self.connection
 

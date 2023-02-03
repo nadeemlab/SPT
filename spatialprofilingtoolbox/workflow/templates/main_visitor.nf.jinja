@@ -1,0 +1,153 @@
+
+nextflow.enable.dsl = 2
+
+process echo_environment_variables {
+    output:
+    path 'workflow',                        emit: workflow
+    path 'db_config_file',                  emit: db_config_file
+
+    script:
+    """
+    #!/bin/bash
+    echo -n "${workflow_}" > workflow
+    echo -n "${db_config_file_}" > db_config_file
+    """
+}
+
+process generate_run_information {
+    input:
+    val workflow
+
+    output:
+    path 'job_specification_table.csv',     emit: job_specification_table
+
+    script:
+    """
+    spt workflow generate-run-information \
+     --workflow="${workflow}" \
+     --job-specification-table=job_specification_table.csv
+    """
+}
+
+process workflow_initialize {
+    input:
+    val workflow
+    path db_config_file
+
+    output:
+    stdout                                  emit: initialization_flag
+
+    script:
+    """
+    spt workflow initialize \
+     --workflow="${workflow}" \
+     --database-config-file=${db_config_file} \
+    echo "Success"
+    """
+}
+
+process core_job {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 4
+
+    input:
+    val initialization_flag
+    val workflow
+    val job_index
+
+    output:
+    path "performance_report${job_index}.csv",         emit: performance_report
+
+    script:
+    """
+    echo "Initialization status: ${initialization_flag}"
+    spt workflow core-job \
+     --workflow="${workflow}" \
+     --performance-report-filename=performancereport${job_index}.txt
+    """
+}
+
+process merge_performance_reports {
+    publishDir 'results'
+
+    input:
+    path all_performance_reports
+
+    output:
+    path 'performance_report.md'
+
+    script:
+    """
+    spt workflow merge-performance-reports ${all_performance_reports} --output=performance_report.md
+    """
+}
+
+process aggregate_results {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 6
+
+    publishDir 'results'
+
+    input:
+    path db_config_file
+    val workflow
+
+    output:
+    file 'stats_tests.csv'
+
+    script:
+    """
+    spt workflow aggregate-core-results \
+     --workflow="${workflow}" \
+     --database-config-file=${db_config_file} \
+     --stats-tests-file=stats_tests.csv
+    """
+}
+
+workflow {
+    echo_environment_variables()
+        .set{ environment_ch }
+
+    environment_ch.workflow.map{ it.text }
+        .set{ workflow_ch }
+
+    environment_ch.db_config_file.map{ file(it.text) }
+        .set{ db_config_file_ch }
+
+    generate_run_information(
+        workflow_ch
+    ).set { run_information_ch }
+
+    run_information_ch
+        .job_specification_table
+        .splitCsv(header: true)
+        .map{ row -> row.job_index) }
+        .set{ job_specifications_ch }
+
+    workflow_initialize(
+        workflow_ch,
+        db_config_file_ch,
+    )
+        .initialization_flag
+        .set{ initialization_flag_ch }
+
+    core_job(
+        initialization_flag_ch,
+        workflow_ch,
+        job_specifications_ch,
+    )
+        .set { core_job_results_ch }
+
+    merge_performance_reports(
+        core_job_results_ch.performance_report.collect()
+    )
+
+    aggregate_results(
+        db_config_file_ch
+        workflow_ch
+    )
+}

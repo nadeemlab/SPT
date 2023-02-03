@@ -2,21 +2,23 @@
 from typing import Literal
 from typing import Union
 from typing import get_args
+from typing import cast
 from argparse import ArgumentParser
 
 from spatialprofilingtoolbox import get_workflow_names
 
 
 SettingArgumentName = Literal['workflow', 'metrics database', 'source file identifier',
-                       'source file name', 'sample', 'outcome', 'dichotomize', 'database config',
-                       'file manifest']
+                              'source file name', 'sample', 'outcome', 'dichotomize',
+                              'database config', 'file manifest']
 FileArgumentName = Literal['phenotypes file', 'channels file', 'compartments file',
-                       'study file', 'outcomes file', 'subjects file', 'diagnosis file',
-                       'interventions file']
+                           'study file', 'outcomes file', 'subjects file', 'diagnosis file',
+                           'interventions file', 'performance report']
+
 
 def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileArgumentName]):
     if name in get_args(FileArgumentName):
-        add_file_argument(parser, name)
+        add_file_argument(parser, cast(name, FileArgumentName))
 
     if name == 'workflow':
         parser.add_argument('--workflow', dest='workflow', choices=get_workflow_names(),
@@ -49,6 +51,7 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
         parser.add_argument('--file-manifest-file', dest='file_manifest_file', type=str,
                             required=False)
 
+
 def add_file_argument(parser, name: FileArgumentName):
     if name == 'study file':
         parser.add_argument('--study-file', dest='study_file', type=str, required=False)
@@ -72,4 +75,7 @@ def add_file_argument(parser, name: FileArgumentName):
                             type=str, required=True)
     if name == 'channels file':
         parser.add_argument('--elementary-phenotypes-file', dest='elementary_phenotypes_file',
+                            type=str, required=True)
+    if name == 'performance report':
+        parser.add_argument('--performance-report-file', dest='performance_report_file',
                             type=str, required=True)

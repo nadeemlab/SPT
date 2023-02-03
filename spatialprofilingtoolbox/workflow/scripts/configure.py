@@ -9,7 +9,6 @@ from os.path import abspath
 from os.path import expanduser
 import stat
 import importlib.resources
-import sys
 
 from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 from spatialprofilingtoolbox import get_workflow
@@ -19,6 +18,7 @@ workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
 NF_CONFIG_FILE = 'nextflow.config'
 NF_PIPELINE_FILE = 'main.nf'
+NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
 
 
 def retrieve_from_library(subpackage, filename):
@@ -33,8 +33,7 @@ def retrieve_from_library(subpackage, filename):
 
 
 def write_config_file(variables):
-    contents = retrieve_from_library(
-        'workflow.templates', NF_CONFIG_FILE + '.jinja')
+    contents = retrieve_from_library('workflow.templates', NF_CONFIG_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
     file_to_write = template.render(**variables)
     with open(join(getcwd(), NF_CONFIG_FILE), 'wt', encoding='utf-8') as file:
@@ -42,8 +41,10 @@ def write_config_file(variables):
 
 
 def write_pipeline_script(variables):
-    contents = retrieve_from_library(
-        'workflow.templates', NF_PIPELINE_FILE + '.jinja')
+    if workflows[variables['workflow']].computational_design.is_database_visitor():
+        contents = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE_VISITOR + '.jinja')
+    else:
+        contents = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
     pipeline_file = template.render(**variables)
     with open(join(os.getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
@@ -57,10 +58,11 @@ def record_configuration_command(variables):
         tokens.append('--local')
     if variables['executor'] == 'lsf':
         tokens.append('--lsf')
-    input_path = abspath(variables['input_path'])
-    if ' ' in input_path:
-        input_path = f"'{input_path}'"
-    tokens.append(f'--input-path={input_path}')
+    if 'input_path' in variables:
+        input_path = abspath(variables['input_path'])
+        if ' ' in input_path:
+            input_path = f"'{input_path}'"
+        tokens.append(f'--input-path={input_path}')
     if 'sif_file' in variables:
         sif_file = abspath(variables['sif_file'])
         if ' ' in sif_file:
@@ -86,6 +88,85 @@ def record_configuration_command(variables):
     os.chmod('configure.sh', file_stat.st_mode | stat.S_IEXEC)
     file_stat = os.stat('run.sh')
     os.chmod('run.sh', file_stat.st_mode | stat.S_IEXEC)
+
+
+def process_filename_inputs(options, parsed_args):
+    if isdir(parsed_args.input_path):
+        file_manifest_path = join(parsed_args.input_path, DEFAULT_FILE_MANIFEST_FILENAME)
+        if exists(file_manifest_path):
+            options['input_path'] = parsed_args.input_path
+            options['file_manifest_filename'] = file_manifest_path
+        else:
+            raise FileNotFoundError(file_manifest_path)
+    else:
+        raise FileNotFoundError(parsed_args.input_path)
+
+    process_compartments_filename_input(options, parsed_args, file_manifest_path)
+
+    outcomes_files = get_input_filenames_by_data_type(
+        data_type='Outcome',
+        file_manifest_filename=file_manifest_path,
+    )
+    options['outcomes'] = False
+    if len(outcomes_files) > 0:
+        outcomes_file_abs = join(parsed_args.input_path, outcomes_files[0])
+        if exists(outcomes_file_abs):
+            options['outcomes_file'] = outcomes_file_abs
+            options['outcomes'] = True
+
+    subjects_file = get_input_filename_by_identifier(
+        input_file_identifier='Subjects file',
+        file_manifest_filename=file_manifest_path,
+    )
+    options['subjects'] = False
+    if not subjects_file is None:
+        subjects_file_abs = join(parsed_args.input_path, subjects_file)
+        if exists(subjects_file_abs):
+            options['subjects_file'] = subjects_file_abs
+            options['subjects'] = True
+
+    study_file = get_input_filename_by_identifier(
+        input_file_identifier='Study file',
+        file_manifest_filename=file_manifest_path,
+    )
+    study_file_abs = join(parsed_args.input_path, study_file)
+    if not exists(study_file_abs):
+        raise FileNotFoundError(f'Did not find study file ({study_file}).')
+    options['study_file'] = study_file_abs
+    options['study'] = True
+
+    diagnosis_file = get_input_filename_by_identifier(
+        input_file_identifier='Diagnosis file',
+        file_manifest_filename=file_manifest_path,
+    )
+    diagnosis_file_abs = join(parsed_args.input_path, diagnosis_file)
+    if not exists(diagnosis_file_abs):
+        raise FileNotFoundError(f'Did not find diagnosis file ({diagnosis_file}).')
+    options['diagnosis_file'] = diagnosis_file_abs
+    options['diagnosis'] = True
+
+    interventions_file = get_input_filename_by_identifier(
+        input_file_identifier='Interventions file',
+        file_manifest_filename=file_manifest_path,
+    )
+    interventions_file_abs = join(parsed_args.input_path, interventions_file)
+    if not exists(interventions_file_abs):
+        raise FileNotFoundError(f'Did not find interventions file ({interventions_file}).')
+    options['interventions_file'] = interventions_file_abs
+    options['interventions'] = True
+
+
+def process_compartments_filename_input(options, parsed_args, file_manifest_path):
+    compartments_file = get_input_filename_by_identifier(
+        input_file_identifier='Compartments file',
+        file_manifest_filename=file_manifest_path,
+    )
+    options['compartments'] = False
+    if not compartments_file is None:
+        compartments_file_abs = join(parsed_args.input_path, compartments_file)
+        if exists(compartments_file_abs):
+            options['compartments_file'] = compartments_file_abs
+            options['compartments'] = True
 
 
 if __name__ == '__main__':
@@ -151,23 +232,19 @@ if __name__ == '__main__':
 
     config_variables = {}
 
+    if args.database_config_file:
+        config_file = expanduser(args.database_config_file)
+        if exists(config_file):
+            if workflows[config_variables['workflow']].computational_design.uses_database():
+                config_variables['db_config_file'] = config_file
+                config_variables['db_config'] = True
+
     if args.local:
         config_variables['executor'] = 'local'
     if args.lsf:
         config_variables['executor'] = 'lsf'
 
     config_variables['workflow'] = args.workflow
-
-    if isdir(args.input_path):
-        file_manifest_path = join(
-            args.input_path, DEFAULT_FILE_MANIFEST_FILENAME)
-        if exists(file_manifest_path):
-            config_variables['input_path'] = args.input_path
-            config_variables['file_manifest_filename'] = file_manifest_path
-        else:
-            raise FileNotFoundError(file_manifest_path)
-    else:
-        raise FileNotFoundError(args.input_path)
 
     if not args.sif_file is None:
         if exists(args.sif_file):
@@ -180,78 +257,8 @@ if __name__ == '__main__':
 
     config_variables['current_working_directory'] = getcwd()
 
-    compartments_file = get_input_filename_by_identifier(
-        input_file_identifier='Compartments file',
-        file_manifest_filename=file_manifest_path,
-    )
-    config_variables['compartments'] = False
-    if not compartments_file is None:
-        compartments_file_abs = join(args.input_path, compartments_file)
-        if exists(compartments_file_abs):
-            config_variables['compartments_file'] = compartments_file_abs
-            config_variables['compartments'] = True
-
-    outcomes_files = get_input_filenames_by_data_type(
-        data_type='Outcome',
-        file_manifest_filename=file_manifest_path,
-    )
-    config_variables['outcomes'] = False
-    if len(outcomes_files) > 0:
-        outcomes_file_abs = join(args.input_path, outcomes_files[0])
-        if exists(outcomes_file_abs):
-            config_variables['outcomes_file'] = outcomes_file_abs
-            config_variables['outcomes'] = True
-
-    if args.database_config_file:
-        config_file = expanduser(args.database_config_file)
-        if exists(config_file):
-            if workflows[config_variables['workflow']].computational_design.uses_database():
-                config_variables['db_config_file'] = config_file
-                config_variables['db_config'] = True
-
-    subjects_file = get_input_filename_by_identifier(
-        input_file_identifier='Subjects file',
-        file_manifest_filename=file_manifest_path,
-    )
-    config_variables['subjects'] = False
-    if not subjects_file is None:
-        subjects_file_abs = join(args.input_path, subjects_file)
-        if exists(subjects_file_abs):
-            config_variables['subjects_file'] = subjects_file_abs
-            config_variables['subjects'] = True
-
-    study_file = get_input_filename_by_identifier(
-        input_file_identifier='Study file',
-        file_manifest_filename=file_manifest_path,
-    )
-    study_file_abs = join(args.input_path, study_file)
-    if not exists(study_file_abs):
-        print(f'Did not find study file ({study_file}).')
-        sys.exit(1)
-    config_variables['study_file'] = study_file_abs
-    config_variables['study'] = True
-
-    diagnosis_file = get_input_filename_by_identifier(
-        input_file_identifier='Diagnosis file',
-        file_manifest_filename=file_manifest_path,
-    )
-    diagnosis_file_abs = join(args.input_path, diagnosis_file)
-    if not exists(diagnosis_file_abs):
-        print(f'Did not find diagnosis file ({diagnosis_file}).')
-        sys.exit(1)
-    config_variables['diagnosis_file'] = diagnosis_file_abs
-    config_variables['diagnosis'] = True
-
-    interventions_file = get_input_filename_by_identifier(
-        input_file_identifier='Interventions file',
-        file_manifest_filename=file_manifest_path,
-    )
-    interventions_file_abs = join(args.input_path, interventions_file)
-    if not exists(interventions_file_abs):
-        print(f'Did not find interventions file ({interventions_file}).')
-        sys.exit(1)
-    config_variables['interventions_file'] = interventions_file_abs
-    config_variables['interventions'] = True
+    if not workflows[config_variables['workflow']].computational_design.is_database_visitor():
+        process_filename_inputs(config_variables, args)
 
     write_config_file(config_variables)
     write_pipeline_script(config_variables)

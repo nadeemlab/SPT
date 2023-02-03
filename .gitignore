@@ -13,7 +13,8 @@ __pycache__/
 .dockerignore
 .initiation_message_size
 *.pyc
-**/Dockerfile
+build/*/Dockerfile
+Dockerfile
 **.whl
 build/*/docker.built
 build/*/requirements.txt
@@ -28,3 +29,4 @@ build/lib/
 .vscode/
 .mypy_cache/
 venv/
+.venv/

@@ -66,7 +66,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
 
     def get_study_names(self):
         query = '''
-        SELECT
+        SELECT DISTINCT
         sdmp.study
         FROM specimen_data_measurement_process sdmp
         ;
@@ -85,9 +85,8 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         for row in rows:
             if current_specimen != row[field['specimen']]:
                 study_data[current_specimen] = specimen_centroids
+                logger.debug('Done parsing shapefiles for specimen "%s".', current_specimen)
                 current_specimen = row[field['specimen']]
-                logger.debug(
-                    'Done parsing shapefiles for specimen "%s".', current_specimen)
                 specimen_centroids = []
             specimen_centroids.append(self.compute_centroid(
                 extract_points(row[field['base64_contents']])

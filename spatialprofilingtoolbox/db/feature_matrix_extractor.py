@@ -7,7 +7,7 @@ import sys
 import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.db.outcomes_puller import OutcomesPuller
+from spatialprofilingtoolbox.db.stratification_puller import StratificationPuller
 from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
     StructureCentroidsPuller
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
@@ -26,13 +26,13 @@ class FeatureMatrixExtractor:
         E = FeatureMatrixExtractor
         data_arrays = E.retrieve_expressions_from_database(database_config_file)
         centroid_coordinates = E.retrieve_structure_centroids_from_database(database_config_file)
-        outcomes = E.retrieve_derivative_outcomes_from_database(database_config_file)
+        stratification = E.retrieve_derivative_stratification_from_database(database_config_file)
         study_component_lookup = E.retrieve_study_component_lookup(database_config_file)
         return E.merge_dictionaries(
             E.create_feature_matrices(data_arrays, centroid_coordinates),
             E.create_channel_information(data_arrays),
-            outcomes,
-            new_keys=['feature matrices','channel symbols by column name', 'outcomes'],
+            stratification,
+            new_keys=['feature matrices','channel symbols by column name', 'sample cohorts'],
             study_component_lookup=study_component_lookup,
         )
 
@@ -41,7 +41,8 @@ class FeatureMatrixExtractor:
         for study_name, study in extraction.items():
             for specimen in study['feature matrices'].keys():
                 extraction[study_name]['feature matrices'][specimen]['dataframe'] = None
-            extraction[study_name]['outcomes']['dataframe'] = None
+            extraction[study_name]['sample cohorts']['assignments'] = None
+            extraction[study_name]['sample cohorts']['strata'] = None
 
     @staticmethod
     def retrieve_expressions_from_database(database_config_file):
@@ -62,13 +63,13 @@ class FeatureMatrixExtractor:
         return structure_centroids.get_studies()
 
     @staticmethod
-    def retrieve_derivative_outcomes_from_database(database_config_file):
-        logger.info('Retrieving outcomes from database.')
-        with OutcomesPuller(database_config_file=database_config_file) as puller:
+    def retrieve_derivative_stratification_from_database(database_config_file):
+        logger.info('Retrieving stratification from database.')
+        with StratificationPuller(database_config_file=database_config_file) as puller:
             puller.pull()
-            outcomes = puller.get_outcomes()
-        logger.info('Done retrieving outcomes.')
-        return outcomes
+            stratification = puller.get_stratification()
+        logger.info('Done retrieving stratification.')
+        return stratification
 
     @staticmethod
     def retrieve_study_component_lookup(database_config_file):

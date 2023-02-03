@@ -1,0 +1,5 @@
+stratum identifier	local_temporal_position_indicator	subject_diagnosed_condition	subject_diagnosed_result
+1	After intervention	Response to intralesional IL-2 injection	Extreme responder
+2	After intervention	Response to intralesional IL-2 injection	Non-responder
+3	Before intervention	Response to intralesional IL-2 injection	Extreme responder
+4	Before intervention	Response to intralesional IL-2 injection	Non-responder

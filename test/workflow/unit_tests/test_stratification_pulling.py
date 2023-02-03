@@ -18,9 +18,11 @@ if __name__ == '__main__':
         df = stratification_study['assignments']
         rows2 = set(tuple(list(row)) for _, row in df.iterrows())
         if assignment_rows != rows2:
-            print(f'Wrong row set: {rows2}')
+            print(f'Wrong assignments set: {rows2}')
+            raise ValueError('Wrong assignments set.')
 
         strata = stratification_study['strata']
         rows3 = set(tuple(list(row)) for _, row in strata.iterrows())
         if stratum_rows != rows3:
             print(f'Wrong stratum set: {rows3}')
+            raise ValueError('Wrong stratum set.')

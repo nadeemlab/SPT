@@ -83,17 +83,20 @@ def test_expression_vectors(study):
                     print(f'At sorted value {i}:')
                     print(expected_vector)
                     print(expression_vectors[i])
-            exit(1)
+            sys.exit(1)
     print('Expression vector sets are as expected.')
 
 
-def test_outcomes(study):
-    print('Outcomes:')
-    print(study['outcomes']['dataframe'].to_string(index=False))
+def test_stratification(study):
+    df = study['sample cohorts']['assignments']
+    strata = study['sample cohorts']['strata']
+    print('Sample cohorts:')
+    print(df.to_string(index=False))
+    print(strata.to_string(index=False))
     print('')
-    if study['outcomes']['dataframe'].shape != (7, 2):
-        print('Wrong number of outcomes or outcome assignments. '
-              f'Dataframe shape: {study["outcomes"]["dataframe"].shape}')
+    if df.shape != (7, 2):
+        print('Wrong number of sample cohort/stratum assignments. '
+              f'Dataframe shape: {df.shape}')
         sys.exit(1)
 
 
@@ -105,7 +108,7 @@ if __name__ == '__main__':
     show_example_feature_matrix(test_study)
     test_channels(test_study)
     test_expression_vectors(test_study)
-    test_outcomes(test_study)
+    test_stratification(test_study)
 
     FeatureMatrixExtractor.redact_dataframes(matrix_bundle)
     print('\nMetadata "bundle" with dataframes removed:')

@@ -37,8 +37,8 @@ class StratificationPuller(DatabaseConnectionMaker):
                     specimen_collection_process scp ON sample=scp.specimen
                 JOIN
                     study_component sc ON sc.component_study=scp.study
-                ;
-                WHERE sc.primary_study=%s
+                WHERE
+                    sc.primary_study=%s
                 ;
                 ''', (study_name,))
                 df = pd.DataFrame(cursor.fetchall(), columns=['specimen',
@@ -46,7 +46,7 @@ class StratificationPuller(DatabaseConnectionMaker):
                                  'local temporal position indicator',
                                  'subject diagnosed condition', 'subject diagnosed result'])
                 assignments_columns = ['specimen', 'stratum identifier']
-                stratification[study_name]['assignments dataframe'] = df[assignments_columns]
+                stratification[study_name]['assignments'] = df[assignments_columns]
                 metadata_columns = ['stratum identifier', 'local temporal position indicator',
                                     'subject diagnosed condition', 'subject diagnosed result']
                 stratification[study_name]['strata'] = df[metadata_columns].drop_duplicates()
@@ -54,7 +54,7 @@ class StratificationPuller(DatabaseConnectionMaker):
 
     def get_study_names(self):
         with self.get_connection().cursor() as cursor:
-            cursor.execute('SELECT name FROM specimen_collection_study ;')
+            cursor.execute('SELECT specifier FROM study ;')
             rows = cursor.fetchall()
         study_names = [row[0] for row in rows]
         return sorted(study_names)

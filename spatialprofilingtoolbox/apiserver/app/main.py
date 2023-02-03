@@ -1,16 +1,17 @@
+"""The API service's endpoint handlers."""
 import os
 import json
+import re
 
 from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
-import spatialprofilingtoolbox
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-version = '0.2.0'
+VERSION = '0.3.0'
 
-description = """
+DESCRIPTION = """
 Get information about single cell phenotyping studies, including:
 
 * aggregated counts by outcome/case
@@ -21,8 +22,8 @@ Get information about single cell phenotyping studies, including:
 
 app = FastAPI(
     title="Single cell studies stats",
-    description=description,
-    version=version,
+    description=DESCRIPTION,
+    version=VERSION,
     contact={
         "name": "James Mathews",
         "url": "https://nadeemlab.org",
@@ -31,258 +32,353 @@ app = FastAPI(
 )
 
 
+def get_study_components(study_name):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            'SELECT component_study FROM study_component WHERE primary_study=%s;',
+            (study_name,),
+        )
+        substudies = [row[0] for row in cursor.fetchall()]
+        components = {}
+        substudy_tables = {
+            'collection': 'specimen_collection_study',
+            'measurement': 'specimen_measurement_study',
+            'analysis': 'data_analysis_study',
+        }
+        for key, tablename in substudy_tables.items():
+            cursor.execute(f'SELECT name FROM {tablename};')
+            names = [row[0] for row in cursor.fetchall()]
+            for substudy in substudies:
+                if substudy in names:
+                    components[key] = substudy
+        cursor.close()
+    return components
+
+
+def get_single_result_or_else(cursor, query, parameters=None, or_else_value='unknown'):
+    if not parameters is None:
+        cursor.execute(query, parameters)
+    else:
+        cursor.execute(query)
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        return rows[0][0]
+    return or_else_value
+
+
+def get_single_result_row(cursor, query, parameters=None):
+    if not parameters is None:
+        cursor.execute(query, parameters)
+    else:
+        cursor.execute(query)
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        return list(rows[0])
+    return []
+
+
+def rough_check_is_email(string):
+    return not re.match('^[A-Za-z0-9+_.-]+@([^ ]+)$', string) is None
+
+
 @app.get("/")
 def get_root():
     return Response(
-        content = json.dumps({ 'server description' : 'Single cell studies database views API'}),
-        media_type = 'application/json',
+        content=json.dumps(
+            {'server description': 'Single cell studies database views API'}),
+        media_type='application/json',
     )
 
 
-@app.get("/specimen-measurement-study-names")
-def get_specimen_measurement_study_names():
+@app.get("/study-names")
+def get_study_names():
     """
-    Get the names of specimen measurement studies. That is, the part of a
-    potentially larger study which is specifically about subjecting collected
-    specimens to measurement by a machine or assay to create measurements, often
-    data files.
+    Get the names of studies/datasets.
     """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
-        cursor.execute('SELECT name FROM specimen_measurement_study;')
+        cursor.execute('SELECT study_specifier FROM study;')
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
-            'specimen measurement study names' : [str(row[0]) for row in rows]
+            'study names': [str(row[0]) for row in rows]
         }
         return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+            content=json.dumps(representation),
+            media_type='application/json',
         )
 
 
-@app.get("/data-analysis-study-names")
-def get_data_analysis_study_names():
-    """
-    Get the names of data analysis studies. That is, the part of a potentially
-    larger study which is specifically about analyzing measured data. Here this
-    means the cell phenotype definitions used in analysis.
-    """
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
-        cursor.execute('SELECT name FROM data_analysis_study;')
-        rows = cursor.fetchall()
-        representation = {
-            'data analysis study names' : [str(row[0]) for row in rows]
+def get_contact(cursor, study):
+    row = get_single_result_row(
+        cursor,
+        query='''
+        SELECT name, contact_reference
+        FROM study_contact_person
+        WHERE study=%s
+        ''',
+        parameters=(study,),
+    )
+    if len(row) == 0:
+        contact = None
+    else:
+        contact_name, contact_email = row
+        contact = {'Name': contact_name}
+        if rough_check_is_email(contact_email):
+            contact['Email'] = contact_email
+    return contact
+
+
+def get_data_release(cursor, study):
+    query = '''
+    SELECT publisher, internet_reference, date_of_publication
+    FROM publication
+    WHERE study=%s AND document_type=\'Dataset\'
+    ;
+    '''
+    row = get_single_result_row(cursor, query=query, parameters=(study,),)
+    if len(row) == 0:
+        data_release = None
+    else:
+        repository, url, release_date = row
+        data_release = {
+            'Repository': repository,
+            'URL': url,
+            'Date': release_date,
         }
-        return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+    return data_release
+
+
+def get_publication_info(cursor, study):
+    query = '''
+    SELECT title, internet_reference, date_of_publication
+    FROM publication
+    WHERE study=%s AND document_type=\'Article\'
+    ;
+    '''
+    row = get_single_result_row(cursor, query=query, parameters=(study,),)
+    if len(row) == 0:
+        publication_info = None
+    else:
+        publication_title, url, publication_date = row
+        first_author = get_single_result_or_else(
+            cursor,
+            query='''
+            SELECT person FROM author
+            WHERE publication=%s
+            ORDER BY regexp_replace(ordinality, '[^0-9]+', '', 'g')::int
+            ;
+            ''',
+            parameters=(publication_title,),
+            or_else_value='',
         )
+        publication_info = {
+            'Title': publication_title,
+            'URL': url,
+            'First author': first_author,
+            'Date': publication_date,
+        }
+    return publication_info
 
 
-@app.get("/specimen-measurement-study-summary/{specimen_measurement_study}")
-async def get_specimen_measurement_study_summary(
-    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+def get_number_cells(cursor, specimen_measurement_study):
+    query = '''
+    SELECT count(*)
+    FROM histological_structure_identification hsi
+    JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
+    JOIN data_file df ON hsi.data_source = df.sha256_hash
+    JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+    WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+    ;
+    '''
+    return get_single_result_or_else(
+        cursor,
+        query=query,
+        parameters=(specimen_measurement_study,),
+    )
+
+
+def get_number_channels(cursor, specimen_measurement_study):
+    query = '''
+    SELECT count(*)
+    FROM biological_marking_system bms
+    WHERE bms.study=%s
+    ;
+    '''
+    return get_single_result_or_else(
+        cursor,
+        query=query,
+        parameters=(specimen_measurement_study,),
+    )
+
+
+def get_measurement_counts(cursor, specimen_measurement_study):
+    number_specimens = get_single_result_or_else(
+        cursor,
+        query='''
+        SELECT count(DISTINCT specimen)
+        FROM specimen_data_measurement_process
+        WHERE study=%s
+        ;
+        ''',
+        parameters=(specimen_measurement_study,),
+    )
+    number_cells = get_number_cells(cursor, specimen_measurement_study)
+    number_channels = get_number_channels(cursor, specimen_measurement_study)
+    return { 'specimens': number_specimens, 'cells': number_cells, 'channels': number_channels }
+
+
+def get_sample_cohorts(cursor, specimen_collection_study):
+    query = '''
+    SELECT DISTINCT
+        sst.stratum_identifier,
+        sst.local_temporal_position_indicator,
+        sst.subject_diagnosed_condition,
+        sst.subject_diagnosed_result
+    FROM sample_strata sst
+    JOIN specimen_collection_process scp
+    ON scp.specimen = sst.sample
+    WHERE scp.study=%s ;
+    '''
+    cursor.execute(query, (specimen_collection_study,))
+    sample_cohorts = cursor.fetchall()
+    return sorted(sample_cohorts, key=lambda x: int(x[0]))
+
+
+def get_sample_cohort_assignments(cursor, specimen_collection_study):
+    query = '''
+    SELECT sst.sample, sst.stratum_identifier
+    FROM sample_strata sst
+    JOIN specimen_collection_process scp
+    ON scp.specimen = sst.sample
+    WHERE scp.study=%s
+    ORDER BY sample ;
+    '''
+    cursor.execute(query, (specimen_collection_study,))
+    return cursor.fetchall()
+
+
+def get_sample_stratification(cursor, specimen_collection_study):
+    sample_cohorts = get_sample_cohorts(cursor, specimen_collection_study)
+    sample_cohort_assignments = get_sample_cohort_assignments(cursor, specimen_collection_study)
+    return { 'cohorts' : sample_cohorts, 'assignments' : sample_cohort_assignments }
+
+
+@app.get("/study-summary/{study}")
+def get_study_summary(
+    study: str = Query(default='unknown', min_length=3),
 ):
     """
-    Get basic summary information about a specimen measurement study by name:
-
-    * **Assay**
+    Get a summary of the given named study:
+    * **Publication**. *Title*, *URL*, *First author*, *Date*.
+    * **Contact**. *Name*, *Email*.
+    * **Data release**. *Repository*, *URL*, *Date*.
+    * **Assay**. I.e. "data modality".
     * **Number of specimens measured**
     * **Number of cells detected**
-    * **Number of channels meaured**
+    * **Number of channels measured**
+    * **Number of named composite phenotypes pre-specified**
+    * **Sample cohorts**. A list of convenience cohorts/strata, described by attributes:
+      - Sample cohort identifier
+      - Whether defined by extraction "Before" or "After" the given intervention (or neither "").
+      - The referenced intervention.
+      - The referenced intervention date.
+      - For the diagnosis of the subject from which the sample was extracted, which considered
+        evidence nearest to immediately after extraction; the diagnosed condition.
+      - For the diagnosis of the subject from which the sample was extracted, which considered
+        evidence nearest to immediately after extraction; the diagnosis result.
+      - For the diagnosis of the subject from which the sample was extracted, which considered
+        evidence nearest to immediately after extraction; the date of diagnosis.
     """
+    components = get_study_components(study)
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
 
-        cursor.execute(
-            'SELECT assay FROM specimen_measurement_study WHERE name=%s;',
-            (specimen_measurement_study,),
+        institution = get_single_result_or_else(
+            cursor,
+            query='SELECT institution FROM study WHERE study_specifier=%s; ',
+            parameters=(study,),
         )
-        rows = cursor.fetchall()
-        if len(rows) == 0:
-            return Response(media_type = 'application/json', content = json.dumps({
-                'specimen_measurement_study' : specimen_measurement_study,
-                'status' : 'not found'
-            }))
-        if len(rows) > 0:
-            assay = rows[0][0]
-        else:
-            assay = "unknown"
-
-        cursor.execute(
-            'SELECT count(DISTINCT specimen) FROM specimen_data_measurement_process WHERE study=%s;',
-            (specimen_measurement_study,),
+        contact = get_contact(cursor, study)
+        data_release = get_data_release(cursor, study)
+        publication_info = get_publication_info(cursor, study)
+        assay = get_single_result_or_else(
+            cursor,
+            query='SELECT assay FROM specimen_measurement_study WHERE name=%s;',
+            parameters=(components['measurement'],),
         )
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            number_specimens = rows[0][0]
-        else:
-            number_specimens = "unknown"
-
-        query = '''
-        SELECT count(*)
-        FROM histological_structure_identification hsi
-        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-        JOIN data_file df ON hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ;
-        '''
-        cursor.execute(query, (specimen_measurement_study,))
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            number_cells = rows[0][0]
-        else:
-            number_cells = "unknown"
-
-        query = '''
-        SELECT count(*)
-        FROM biological_marking_system bms
-        WHERE bms.study=%s
-        ;
-        '''
-        cursor.execute(query, (specimen_measurement_study,))
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            number_channels = rows[0][0]
-        else:
-            number_channels = "unknown"
-
-        representation = {
-           'Assay' : assay,
-           'Number of specimens measured' : number_specimens,
-           'Number of cells detected' : number_cells,
-           'Number of channels measured' : number_channels,
-        }
-        cursor.close()
-        return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
-        )
-
-
-@app.get("/data-analysis-study-summary/{data_analysis_study}")
-async def get_data_analysis_study_summary(
-    data_analysis_study : str = Query(default='unknown', min_length=3),
-):
-    """
-    Get basic summary information about a data analysis study by name:
-
-    * **Number of composite phenotypes specified**
-    * **Number of markers referenced**
-    * **Largest number of positive markers in a phenotype**
-    * **Largest number of negative markers in a phenotype**
-    """
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
-
-        cursor.execute(
-            'SELECT count(*) FROM data_analysis_study WHERE name=%s;',
-            (data_analysis_study,),
-        )
-        rows = cursor.fetchall()
-        if len(rows) == 0:
-            return Response(media_type = 'application/json', content = json.dumps({
-                'data_analysis_study' : data_analysis_study,
-                'status' : 'not found'
-            }))
-
-        cursor.execute(
-            'SELECT count(DISTINCT cell_phenotype) FROM cell_phenotype_criterion WHERE study=%s;',
-            (data_analysis_study,),
-        )
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            number_phenotypes = rows[0][0]
-        else:
-            number_phenotypes = "unknown"
-
-        cursor.execute(
-            'SELECT count(DISTINCT marker) FROM cell_phenotype_criterion WHERE study=%s;',
-            (data_analysis_study,),
-        )
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            number_markers = rows[0][0]
-        else:
-            number_markers = "unknown"
-
-        query = '''
-        SELECT MAX(number_positives) FROM
-            (
-            SELECT cell_phenotype, count(marker) as number_positives
+        measurement_counts = get_measurement_counts(cursor, components['measurement'])
+        number_phenotypes = get_single_result_or_else(
+            cursor,
+            query='''
+            SELECT count(DISTINCT cell_phenotype)
             FROM cell_phenotype_criterion
-            WHERE study=%s AND polarity='positive'
-            GROUP BY cell_phenotype
-            ) count_positives
-        ;
-        '''
-        cursor.execute(query, (data_analysis_study,))
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            max_positives = rows[0][0]
-        else:
-            max_positives = "unknown"
-
-        query = '''
-        SELECT MAX(number_negatives) FROM
-            (
-            SELECT cell_phenotype, count(marker) as number_negatives
-            FROM cell_phenotype_criterion
-            WHERE study=%s AND polarity='negative'
-            GROUP BY cell_phenotype
-            ) count_negatives
-        ;
-        '''
-        cursor.execute(query,(data_analysis_study,))
-        rows = cursor.fetchall()
-        if len(rows) > 0:
-            max_negatives = rows[0][0]
-        else:
-            max_negatives = "unknown"
-
-        representation = {
-            'Number of composite phenotypes specified' : number_phenotypes,
-            'Number of markers referenced' : number_markers,
-            'Largest number of positive markers in a phenotype' : max_positives,
-            'Largest number of negative markers in a phenotype' : max_negatives,
-        }
-        cursor.close()
-        return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+            WHERE study=%s
+            ;
+            ''',
+            parameters=(components['analysis'],),
         )
+
+        sample_stratification = get_sample_stratification(cursor, components['collection'])
+        cursor.close()
+
+    representation = {}
+    representation['Institution'] = institution
+
+    if publication_info:
+        representation['Publication'] = publication_info
+
+    if contact:
+        representation['Contact'] = contact
+
+    if data_release:
+        representation['Data release'] = data_release
+
+    representation['Assay'] = assay
+    representation['Number of specimens measured'] = measurement_counts['specimens']
+    representation['Number of cells detected'] = measurement_counts['cells']
+    representation['Number of channels measured'] = measurement_counts['channels']
+    representation['Number of named composite phenotypes pre-specified'] = number_phenotypes
+    representation['Sample cohorts'] = sample_stratification['cohorts']
+    representation['Sample cohort assignments'] = sample_stratification['assignments']
+
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
 
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
-    specimen_measurement_study : str = Query(default='unknown', min_length=3),
-    data_analysis_study : str = Query(default='unknown', min_length=3),
+    study: str = Query(default='unknown', min_length=3),
 ):
     """
     Get a table of all cell fractions in the given study. A single key value pair,
     key **fractions** and value a list of lists with entries:
-    * **marker symbol**. The marker symbol for a single marker, or phenotype name in the case of a (composite) phenotype.
-    * **multiplicity**. Whether the marker symbol is 'single' or else 'composite' (i.e. a phenotype name).
-    * **assay**. The assay/condition assessed in order to define a subcohort.
-    * **assessment**. The assessment value defining a subcohort.
-    * **average percent**. The average, over the subcohort, of the percent representation of the fraction of cells in the slide or specimen having the given phenotype.
+    * **marker symbol**. The marker symbol for a single marker, or phenotype name in the case of a
+      (composite) phenotype.
+    * **multiplicity**. Whether the marker symbol is 'single' or else 'composite' (i.e. a phenotype
+      name).
+    * **sample cohort**. Indicator of which convenience cohort or stratum a given sample was
+      assigned to.
+    * **average percent**. The average, over the subcohort, of the percent representation of the
+      fraction of cells in the slide or specimen having the given phenotype.
     * **standard deviation of percents**. The standard deviation of the above.
     * **maximum**. The slide or specimen achieving the highest fraction.
     * **maximum value**. The highest fraction value.
     * **minimum**. The slide or specimen achieving the lowest fraction.
     * **minimum value**. The lowest fraction value.
     """
+    components = get_study_components(study)
+
     columns = [
         'marker_symbol',
         'multiplicity',
-        'assay',
-        'assessment',
+        'stratum_identifier',
         'average_percent',
         'standard_deviation_of_percents',
         'maximum',
@@ -294,27 +390,35 @@ async def get_phenotype_summary(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT %s FROM fraction_stats WHERE measurement_study=%s AND data_analysis_study in (%s, \'none\');' % (', '.join(columns),'%s', '%s'),
-            (specimen_measurement_study, data_analysis_study),
+            f'''
+            SELECT {', '.join(columns)}
+            FROM fraction_stats
+            WHERE measurement_study=%s
+                AND data_analysis_study in (%s, \'none\')
+            ;
+            ''',
+            (components['measurement'], components['analysis']),
         )
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
-            'fractions' : [[str(entry) for entry in row] for row in rows]
+            'fractions': [[str(entry) for entry in row] for row in rows]
         }
         return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+            content=json.dumps(representation),
+            media_type='application/json',
         )
 
 
 @app.get("/phenotype-symbols/")
 async def get_phenotype_symbols(
-    data_analysis_study : str = Query(default='unknown', min_length=3),
+    study: str = Query(default='unknown', min_length=3),
 ):
     """
     Get a dictionary, key **phenotype symbols** with value a list of all the
     composite phenotype symbols in the given study.
     """
+    components = get_study_components(study)
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -326,20 +430,21 @@ async def get_phenotype_symbols(
         ORDER BY cp.symbol
         ;
         '''
-        cursor.execute(query, (data_analysis_study,))
+        cursor.execute(query, (components['analysis'],))
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
-            'phenotype symbols' : rows,
+            'phenotype symbols': rows,
         }
         return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+            content=json.dumps(representation),
+            media_type='application/json',
         )
 
 
 @app.get("/phenotype-criteria-name/")
 async def get_phenotype_criteria_name(
-    phenotype_symbol : str = Query(default='unknown', min_length=3),
+    phenotype_symbol: str = Query(default='unknown', min_length=3),
 ):
     """
     Get a string representation of the markers (positive and negative) defining
@@ -357,28 +462,32 @@ async def get_phenotype_criteria_name(
         ;
         '''
         cursor.execute(query, (phenotype_symbol,),
-        )
+                       )
         rows = cursor.fetchall()
+        cursor.close()
         if len(rows) == 0:
             munged = phenotype_symbol + '+'
         else:
-            signature = { row[0] : row[1] for row in rows}
-            positive_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'positive'])
-            negative_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'negative'])
-            parts = [marker + '+' for marker in positive_markers] + [marker + '-' for marker in negative_markers]
+            signature = {row[0]: row[1] for row in rows}
+            positive_markers = sorted(
+                [marker for marker, polarity in signature.items() if polarity == 'positive'])
+            negative_markers = sorted(
+                [marker for marker, polarity in signature.items() if polarity == 'negative'])
+            parts = [marker + '+' for marker in positive_markers] + \
+                [marker + '-' for marker in negative_markers]
             munged = ''.join(parts)
         representation = {
-            'phenotype criteria name' : munged,
+            'phenotype criteria name': munged,
         }
         return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+            content=json.dumps(representation),
+            media_type='application/json',
         )
 
 
 @app.get("/phenotype-criteria/")
 async def get_phenotype_criteria(
-    phenotype_symbol : str = Query(default='unknown', min_length=3),
+    phenotype_symbol: str = Query(default='unknown', min_length=3),
 ):
     """
     Get a list of the positive markers and negative markers defining a given named
@@ -409,282 +518,94 @@ async def get_phenotype_criteria(
             cursor.execute(singles_query, (phenotype_symbol,))
             rows = cursor.fetchall()
             if len(rows) == 0:
+                cursor.close()
                 return Response(
-                    content = json.dumps({
-                        'error' : {
-                            'message' : 'unknown phenotype',
-                            'phenotype_symbol value provided' : phenotype_symbol,
+                    content=json.dumps({
+                        'error': {
+                            'message': 'unknown phenotype',
+                            'phenotype_symbol value provided': phenotype_symbol,
                         }
                     }),
-                    media_type = 'application/json',
+                    media_type='application/json',
                 )
-        signature = { row[0] : row[1] for row in rows}
-        positive_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'positive'])
-        negative_markers = sorted([marker for marker, polarity in signature.items() if polarity == 'negative'])
+        cursor.close()
+        signature = {row[0]: row[1] for row in rows}
+        positive_markers = sorted(
+            [marker for marker, polarity in signature.items() if polarity == 'positive'])
+        negative_markers = sorted(
+            [marker for marker, polarity in signature.items() if polarity == 'negative'])
         representation = {
-            'phenotype criteria' : {
-                'positive markers' : positive_markers,
-                'negative markers' : negative_markers,            
+            'phenotype criteria': {
+                'positive markers': positive_markers,
+                'negative markers': negative_markers,
             }
         }
         return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+            content=json.dumps(representation),
+            media_type='application/json',
         )
 
 
-@app.get("/anonymous-phenotype-counts/")
-async def get_phenotype_criteria(
-    positive_markers_tab_delimited : str = Query(default=None),
-    negative_markers_tab_delimited : str = Query(default=None),
-    specimen_measurement_study : str = Query(default='unknown', min_length=3),
-):
-    """
-    Get the total count of all cells belonging to the given study that satisfy
-    prescribed positive and negative criteria.
-
-    This method is relatively slow, not relying on any pre-built data structure.
-
-    Returns per-specimen counts, the number of all cells in each specimen for
-    the purpose of reference, and the totals of both.
-    """
-    if not positive_markers_tab_delimited is None:
-        positive_markers = positive_markers_tab_delimited.split('\t')
-    else:
-        positive_markers = []
-    positive_markers = list(set(positive_markers).difference(['']))
-    if not negative_markers_tab_delimited is None:
-        negative_markers = negative_markers_tab_delimited.split('\t')
-    else:
-        negative_markers = []
-    negative_markers = list(set(negative_markers).difference(['']))
-
-    positive_criteria = [
-        (marker, 'positive') for marker in positive_markers
-    ]
-    negative_criteria = [
-        (marker, 'negative') for marker in negative_markers
-    ]
-    criteria = positive_criteria + negative_criteria
-    number_criteria = len(criteria)
-
-    create_temporary_criterion_table = '''
-    CREATE TEMPORARY TABLE temporary_cell_phenotype_criterion_by_symbol
-    (
-        marker_symbol VARCHAR(512),
-        polarity VARCHAR(512)
-    )
-    ;
-    '''
-
-    insert_criteria = '''
-    INSERT INTO temporary_cell_phenotype_criterion_by_symbol VALUES (%s, %s)
-    ;
-    '''
-
-    counts_query = '''
-    CREATE OR REPLACE TEMPORARY VIEW temporary_cell_phenotype_criterion AS
-    SELECT
-        cs.identifier as marker,
-        tccs.polarity as polarity
-    FROM
-        temporary_cell_phenotype_criterion_by_symbol tccs
-    JOIN
-        chemical_species cs ON
-            cs.symbol = tccs.marker_symbol
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_cells_count_criteria_satisfied AS
-    SELECT
-        eq.histological_structure as histological_structure,
-        COUNT(*) as number_criteria_satisfied
-    FROM
-        expression_quantification eq
-        JOIN histological_structure hs ON
-            eq.histological_structure = hs.identifier
-        JOIN temporary_cell_phenotype_criterion tcpc ON
-            eq.target = tcpc.marker
-    WHERE
-        tcpc.polarity = eq.discrete_value
-    AND
-        hs.anatomical_entity = 'cell'
-    GROUP BY
-        eq.histological_structure
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_all_criteria_satisfied AS
-    SELECT
-        tcs.histological_structure as histological_structure
-    FROM
-        temporary_cells_count_criteria_satisfied tcs
-    WHERE
-        tcs.number_criteria_satisfied = %s
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_composite_marker_positive_cell_count_by_specimen AS
-    SELECT
-        sdmp.specimen as specimen,
-        COUNT(*) as marked_cell_count
-    FROM
-        temporary_all_criteria_satisfied ts
-        JOIN histological_structure_identification hsi ON
-            ts.histological_structure = hsi.histological_structure
-        JOIN data_file df ON 
-            hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON
-            df.source_generation_process = sdmp.identifier
-    WHERE
-        sdmp.study = %s
-    GROUP BY
-        sdmp.specimen
-    ;
-
-    CREATE OR REPLACE TEMPORARY VIEW temporary_marked_and_all_cells_count AS
-    SELECT
-        cc.specimen as specimen,
-        CASE WHEN tccs.marked_cell_count is NULL THEN 0 ELSE tccs.marked_cell_count END AS marked_cell_count,
-        cc.cell_count as all_cells_count
-    FROM
-        cell_count_by_study_specimen cc
-        LEFT OUTER JOIN temporary_composite_marker_positive_cell_count_by_specimen tccs ON
-            tccs.specimen = cc.specimen
-    WHERE
-        cc.measurement_study = %s
-    ;
-
-    SELECT * FROM temporary_marked_and_all_cells_count
-    ;
-    ''' % (str(number_criteria), '%s', '%s')
-
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
-
-        total_query = '''
-        SELECT count(*)
-        FROM histological_structure_identification hsi
-        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-        JOIN data_file df ON hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ;
-        '''
-        cursor.execute(total_query, (specimen_measurement_study,))
-        number_cells = cursor.fetchall()[0][0]
-
-        query = '\n'.join([
-            create_temporary_criterion_table,
-            '\n'.join([
-                insert_criteria % ("'"+criterion[0]+"'", "'"+criterion[1]+"'") for criterion in criteria
-            ]),
-            counts_query
-        ])
-        cursor.execute(query, (specimen_measurement_study, specimen_measurement_study))
-        rows = cursor.fetchall()
-
-        if len(rows) == 0:
-            return Response(
-                content = json.dumps({
-                    'error' : {
-                        'message' : 'counts could not be made',
-                    }
-                }),
-                media_type = 'application/json',
-            )
-
-        fancy_round = lambda ratio: 100 * round(ratio * 10000)/10000
-        representation = {
-            'phenotype counts' : {
-                'per specimen counts' : [
-                    {
-                        'specimen' : row[0],
-                        'phenotype count' : row[1],
-                        'percent of all cells in specimen' : fancy_round(row[1] / row[2]),
-                    }
-                    for row in rows
-                ],
-                'total number of cells in all specimens of study' : number_cells,
-            }
-        }
-        return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
-        )
+def split_on_tabs(string):
+    splitted = []
+    if string is not None:
+        splitted = string.split('\t')
+    return list(set(splitted).difference(['']))
 
 
 @app.get("/anonymous-phenotype-counts-fast/")
-async def get_phenotype_criteria(
-    positive_markers_tab_delimited : str = Query(default=None),
-    negative_markers_tab_delimited : str = Query(default=None),
-    specimen_measurement_study : str = Query(default='unknown', min_length=3),
+async def get_anonymous_phenotype_counts_fast(
+    positive_markers_tab_delimited: str = Query(default=None),
+    negative_markers_tab_delimited: str = Query(default=None),
+    study: str = Query(default='unknown', min_length=3),
 ):
     """
     The same as endpoint `anonymous-phenotype-counts/`, except this method uses a
     pre-build custom index for performance. It is about 500 times faster.
     """
-    if not positive_markers_tab_delimited is None:
-        positive_markers = positive_markers_tab_delimited.split('\t')
-    else:
-        positive_markers = []
-    positive_markers = list(set(positive_markers).difference(['']))
-    if not negative_markers_tab_delimited is None:
-        negative_markers = negative_markers_tab_delimited.split('\t')
-    else:
-        negative_markers = []
-    negative_markers = list(set(negative_markers).difference(['']))
+    components = get_study_components(study)
+    positive_markers = split_on_tabs(positive_markers_tab_delimited)
+    negative_markers = split_on_tabs(negative_markers_tab_delimited)
 
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
+        number_cells = get_number_cells(cursor, components['measurement'])
+        cursor.close()
 
-        total_query = '''
-        SELECT count(*)
-        FROM histological_structure_identification hsi
-        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-        JOIN data_file df ON hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ;
-        '''
-        cursor.execute(total_query, (specimen_measurement_study,))
-        rows = cursor.fetchall()
-        if len(rows) == 0:
-            return Response(media_type = 'application/json', content = json.dumps({
-                'specimen_measurement_study' : specimen_measurement_study,
-                'status' : 'not found'
-            }))
-        number_cells = rows[0][0]
+    with CountRequester(os.environ['COUNTS_SERVER_HOST'],
+                        int(os.environ['COUNTS_SERVER_PORT']))as requester:
+        counts = requester.get_counts_by_specimen(
+            positive_markers, negative_markers, components['measurement'])
 
-    host = os.environ['COUNTS_SERVER_HOST']
-    port = int(os.environ['COUNTS_SERVER_PORT'])
-    with CountRequester(host, port) as requester:
-        counts = requester.get_counts_by_specimen(positive_markers, negative_markers, specimen_measurement_study)
-    fancy_round = lambda ratio: 100 * round(ratio * 10000)/10000
+    def fancy_round(ratio):
+        return 100 * round(ratio * 10000)/10000
     if counts is None:
-        representation = { 'error' : 'Counts could not be computed.'}
+        representation = {'error': 'Counts could not be computed.'}
     else:
         representation = {
-            'phenotype counts' : {
-                'per specimen counts' : [
+            'phenotype counts': {
+                'per specimen counts': [
                     {
-                        'specimen' : specimen,
-                        'phenotype count' : count,
-                        'percent of all cells in specimen' : fancy_round(count / count_all_in_specimen),
+                        'specimen': specimen,
+                        'phenotype count': count,
+                        'percent of all cells in specimen': fancy_round(
+                            count / count_all_in_specimen),
                     }
                     for specimen, (count, count_all_in_specimen) in counts.items()
                 ],
-                'total number of cells in all specimens of study' : number_cells,
+                'total number of cells in all specimens of study': number_cells,
             }
         }
     return Response(
-        content = json.dumps(representation),
-        media_type = 'application/json',
+        content=json.dumps(representation),
+        media_type='application/json',
     )
-    
+
 
 @app.get("/phenotype-proximity-summary/")
 async def get_phenotype_proximity_summary(
-    data_analysis_study : str = Query(default='unknown', min_length=3),
+    study: str = Query(default='unknown', min_length=3),
 ):
     """
     Spatial proximity statistics between pairs of cell populations defined by the
@@ -695,8 +616,8 @@ async def get_phenotype_proximity_summary(
     * **Phenotype 1**
     * **Phenotype 2**
     * **Distance limit**. In pixels.
-    * **Assay**. Used to define a subcohort for aggegation.
-    * **Assessment**. The assessment result.
+    * **Sample cohort**. Indicator of which convenience cohort or stratum a given sample was
+      assigned to.
     * **Average value**. Of the metric value in the subcohort.
     * **Standard deviation**. Of the metric value in the subcohort.
     * **Maximum**. Of the metric value in the subcohort.
@@ -704,12 +625,13 @@ async def get_phenotype_proximity_summary(
     * **Minimum**. Of the metric value in the subcohort.
     * **Minimum value**. Of the metric value in the subcohort.
     """
+    components = get_study_components(study)
+    data_analysis_study = components['analysis']
     columns = [
         'specifier1',
         'specifier2',
         'specifier3',
-        'assay',
-        'assessment',
+        'stratum_identifier',
         'average_value',
         'standard_deviation',
         'maximum',
@@ -718,20 +640,28 @@ async def get_phenotype_proximity_summary(
         'minimum_value',
     ]
     tablename = 'computed_feature_3_specifiers_stats'
-    derivation_method = 'For a given cell phenotype (first specifier), the average number of cells of a second phenotype (second specifier) within a specified radius (third specifier).'
+    derivation_method = 'For a given cell phenotype (first specifier), the average number of'\
+        ' cells of a second phenotype (second specifier) within a specified radius'\
+        ' (third specifier).'
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute(
-            'SELECT %s FROM %s WHERE derivation_method=%s AND data_analysis_study in (%s, \'none\');' % (', '.join(columns), tablename, '%s', '%s'),
+            f'''
+            SELECT {', '.join(columns)}
+            FROM {tablename}
+            WHERE derivation_method=%s
+                AND data_analysis_study in (%s, \'none\')
+            ;
+            ''',
             (derivation_method, data_analysis_study),
         )
         rows = cursor.fetchall()
+        cursor.close()
         representation = {
-            'proximities' : [[str(entry) for entry in row] for row in rows]
+            'proximities': [[str(entry) for entry in row] for row in rows]
         }
         return Response(
-            content = json.dumps(representation),
-            media_type = 'application/json',
+            content=json.dumps(representation),
+            media_type='application/json',
         )
-

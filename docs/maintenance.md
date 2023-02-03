@@ -1,5 +1,14 @@
 # Development, maintenance, administration
 
+1. <a href="#building-and-testing-modules">Building and testing modules</a>
+2. <a href="#python-package">Python package</a>
+3. <a href="#modules">Modules</a>
+4. <a href="#test-managed-development">Test-managed development</a>
+5. <a href="#spt-tab-completion">`spt` tab-completion</a>
+6. <a href="#throwaway-testing">Throwaway testing</a>
+
+## <a id="building-and-testing-modules"></a> 1. Building and testing modules
+
 The modules in this repository are built, tested, and deployed using `make` and Docker.
 
 | Development environment software requirements              | Version required or tested under |
@@ -91,25 +100,26 @@ Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox <span sty
 Uploading spatialprofilingtoolbox==0.11.0 to PyPI <span style="color:olive;">...</span><span style="color:olive;">...........................</span> <span style="font-weight:bold;color:green;">Uploaded.</span>      <span style="color:purple;">(3s)</span>
 </pre>
 
-### Python package
+## <a id="python-package"></a> 2. Python package
 The source code is contained in one Python package, `spatialprofilingtoolbox`. The package metadata uses the declarative `pyproject.toml` format.
 
-### Modules
-The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
+## <a id="modules"></a> 3. Modules
+The main functionality is provided by 4 modules designed to operate as services, and one command-line tool. Each module's source is wrapped in a Docker image.
 
 | Module name     | Description |
 | --------------- | ----------- |
 | `apiserver`     | FastAPI application supporting queries over cell data. |
+| `cggnn`         | Command line tool to apply cell graph neural network models to data stored in an SPT framework. |
 | `countsserver`  | An optimized class-counting program served by a custom TCP server. |
 | `db`            | Data model/interface and PostgresQL database management SQL fragments. |
 | `workflow`      | [Nextflow](https://www.nextflow.io)-orchestrated computation workflows. |
 
 - *The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.*
 
-### Test-managed development
+## <a id="test-managed-development"></a> 4. Test-managed development
 Test scripts are located under
-- `spatialprofilingtoolbox/<module name>/unit_tests`
-- `spatialprofilingtoolbox/<module name>/module_tests`
+- `test/<module name>/unit_tests`
+- `test/<module name>/module_tests`
 
 These tests serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.
@@ -117,7 +127,7 @@ These tests serve multiple purposes for us:
 
 Each test is performed inside an isolated for-development-only `spatialprofilingtoolbox`-loaded Docker container, in the presence of a running module-specific Docker composition that provides the given module's service as well as other modules' services (if needed).
 
-### `spt` tab completion
+## <a id="spt-tab-completion"></a> 5. `spt` tab completion
 You might want to install `spatialprofilingtoolbox` to your local machine in order to initiate database control actions, ETL, etc.
 
 In this case bash completion is available that allows you to readily assess and find functionality provided at the command line. This reduces the need for some kinds of documentation, since such documentation is already folded in to the executables in such a way that it can be readily accessed.
@@ -151,5 +161,36 @@ optional arguments:
   --recreate-views-only Only recreate views, do not touch main table schema.
 ```
 
+## <a id="throwaway-testing"></a> 6. Throwaway testing
+
+Development often entails "throwaway" test scripts that you modify and run frequently in order to check your understanding of functionality and verify that it works as expected.
+
+For this purpose, a pattern that has worked for me in this repository is:
+
+1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory, for each module that you will use.
+2. Choose a pertinent module for your work (or create a new one, i.e. a subdirectory of `build/`, modeled on one of the others).
+3. Go into the module: `cd build/<module name>`.
+4. Create `throwaway_script.py`.
+5. Setup the testing environment:
+```sh
+docker compose up -d
+```
+6. As many times as you need to, run your script with the following (replacing `<module name>`):
+```
+test_cmd="cd /mount_sources/<module name>/; python throwaway_script.py" ;
+docker run \
+  --rm \
+  --network <module name>_isolated_temporary_test \
+  --mount type=bind,src=$(realpath ..),dst=/mount_sources \
+  -t nadeemlab-development/spt-development:latest \
+  /bin/bash -c "$test_cmd";
+```
+7. Tear down the testing environment when you're done:
+```sh
+docker compose down;
+docker compose rm --force --stop;
+```
+
+You can of course also modify the testing environment, involving more or fewer modules, even docker containers from external images, by editing `compose.yaml`.
 
 

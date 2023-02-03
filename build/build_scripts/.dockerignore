@@ -1,0 +1,4 @@
+.git
+docs/image_assets/**
+.venv
+venv

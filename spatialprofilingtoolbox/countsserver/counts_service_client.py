@@ -1,14 +1,17 @@
+"""The TCP client for the fast cell counts service."""
 import re
 import json
 import socket
 
 
 class CountRequester:
+    """TCP client for requesting counts from the fast cell counts service."""
     def __init__(self, host, port):
         self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_client.connect((host, port))
 
-    def get_counts_by_specimen(self, positive_signature_channels, negative_signature_channels, study_name):
+    def get_counts_by_specimen(
+            self, positive_signature_channels, negative_signature_channels, study_name):
         query = self.form_query(
             [self.sanitize_token(c) for c in positive_signature_channels],
             [self.sanitize_token(c) for c in negative_signature_channels],
@@ -34,7 +37,8 @@ class CountRequester:
         return json.loads(buffer.decode('utf-8'))
 
     def sanitize_token(self, text):
-        return re.sub('[' + self.get_record_separator() + self.get_group_separator() + ']', ' ', text)
+        return re.sub('[' + self.get_record_separator() + self.get_group_separator() + ']', ' ',
+                      text)
 
     def get_group_separator(self):
         return chr(29)

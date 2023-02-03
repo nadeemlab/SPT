@@ -1,11 +1,18 @@
-import os
+"""
+A context manager for accessing the backend SPT database, from the API service.
+"""
+from os import environ
 
-import psycopg2
+from psycopg2 import connect
+from psycopg2.extensions import connection as Psycopg2Connection
 
 
 class DBAccessor:
-    def __init__(self):
-        self.connection = None
+    """
+    Provides a psycopg2 Postgres database connection. Takes care of connecting
+    and disconnecting.
+    """
+    connection: Psycopg2Connection
 
     def get_connection(self):
         return self.connection
@@ -16,22 +23,21 @@ class DBAccessor:
             'SINGLE_CELL_DATABASE_USER',
             'SINGLE_CELL_DATABASE_PASSWORD',
         ]
-        unfound = [v for v in variables if not v in os.environ]
+        unfound = [v for v in variables if not v in environ]
         if len(unfound) > 0:
-            message = 'Did not find: %s' % str(unfound)
-            raise EnvironmentError(message)
+            raise EnvironmentError(f'Did not find: {str(unfound)}')
 
         dbname = 'scstudies'
-        if 'USE_ALTERNATIVE_TESTING_DATABASE' in os.environ:
+        if 'USE_ALTERNATIVE_TESTING_DATABASE' in environ:
             dbname = 'postgres'
-        if 'USE_LEGACY_DATABASE' in os.environ:
+        if 'USE_LEGACY_DATABASE' in environ:
             dbname = 'pathstudies'
 
-        self.connection = psycopg2.connect(
+        self.connection = connect(
             dbname=dbname,
-            host=os.environ['SINGLE_CELL_DATABASE_HOST'],
-            user=os.environ['SINGLE_CELL_DATABASE_USER'],
-            password=os.environ['SINGLE_CELL_DATABASE_PASSWORD'],
+            host=environ['SINGLE_CELL_DATABASE_HOST'],
+            user=environ['SINGLE_CELL_DATABASE_USER'],
+            password=environ['SINGLE_CELL_DATABASE_PASSWORD'],
         )
         return self
 

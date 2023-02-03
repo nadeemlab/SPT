@@ -1,9 +1,0 @@
-File ID	Project ID	File name	Sample ID	Data type
-core_254	Single-cell pathology of breast cancer	254.csv	BaselTMA_SP43_1_X1Y8	HALO software cell manifest
-core_320	Single-cell pathology of breast cancer	320.csv	BaselTMA_SP43_3_X13Y6	HALO software cell manifest
-core_282	Single-cell pathology of breast cancer	282.csv	BaselTMA_SP43_4_X15Y3	HALO software cell manifest
-core_225	Single-cell pathology of breast cancer	225.csv	BaselTMA_SP42_5_X8Y7	HALO software cell manifest
-Elementary phenotypes file	Single-cell pathology of breast cancer	elementary_phenotypes.csv	None	Manifest of basic channels/phenotypes
-Complex phenotypes file	Single-cell pathology of breast cancer	composite_phenotypes.csv	None	Manifest of composite phenotypes
-Outcomes file	Single-cell pathology of breast cancer	outcomes.tsv	None	Outcome
-Subjects file	Single-cell pathology of breast cancer	subjects.tsv	None	Manifest of subjects

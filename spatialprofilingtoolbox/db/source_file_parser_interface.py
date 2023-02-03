@@ -1,51 +1,64 @@
+"""
+Interface (and common functionality) for classes whose concrete implementations
+are meant to be parsers of some specific source file into the 'single cell
+studies ADI' schema.
+"""
 import re
-import enum
-from enum import Enum
-from enum import auto
 
 import psycopg2
 
-from ..standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
-class DBBackend(Enum):
-    POSTGRES = auto()
-
-
 class SourceToADIParser:
-    def __init__(self, **kwargs):
-        pass
+    """Interface for specific source file parsing into single cell schema."""
+    def __init__(self, fields, **kwargs):  # pylint: disable=unused-argument
+        self.fields_from_source = fields
 
-    def parse(self):
-        pass
+    def get_fields(self):
+        return self.fields_from_source
+
+    @staticmethod
+    def get_collection_study_name(study_name):
+        return study_name + " - specimen collection"
+
+    @staticmethod
+    def get_measurement_study_name(study_name):
+        return study_name + " - measurement"
+
+    @staticmethod
+    def get_data_analysis_study_name(study_name):
+        return study_name + " - data analysis"
 
     def get_placeholder(self):
         placeholder = '%s'
         return placeholder
 
     def normalize(self, string):
-        string = re.sub('[ \-]', '_', string)
+        string = re.sub(r'[ \-]', '_', string)
         string = string.lower()
         return string
 
-    def get_field_names(self, tablename, fields):
+    def get_field_names(self, tablename):
         fields = [
             field
-            for i, field in fields.iterrows()
+            for i, field in self.get_fields().iterrows()
             if self.normalize(field['Table']) == self.normalize(tablename)
         ]
         fields_sorted = sorted(fields, key=lambda field: int(field['Ordinality']))
         fields_sorted = [f['Name'] for f in fields_sorted]
         return fields_sorted
 
-    def generate_basic_insert_query(self, tablename, fields):
-        fields_sorted = self.get_field_names(tablename, fields)
+    def generate_basic_insert_query(self, tablename):
+        fields_sorted = self.get_field_names(tablename)
         handle_duplicates = 'ON CONFLICT DO NOTHING '
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join(fields_sorted) + ') '
-            'VALUES (' + ', '.join([self.get_placeholder()]*len(fields_sorted)) + ') '
-            + handle_duplicates + ' ;' 
+            'VALUES (' + ', '.join([self.get_placeholder()]
+                                   * len(fields_sorted)) + ') '
+            + handle_duplicates + ' ;'
         )
         return query
 
@@ -56,21 +69,21 @@ class SourceToADIParser:
             return True
         return False
 
-    def get_next_integer_identifier(self, tablename, cursor, key_name = 'identifier'):
-        cursor.execute('SELECT %s FROM %s;' % (key_name, tablename))
+    def get_next_integer_identifier(self, tablename, cursor, key_name='identifier'):
+        cursor.execute(f'SELECT {key_name} FROM {tablename};')
         try:
             identifiers = cursor.fetchall()
-        except psycopg2.ProgrammingError as e:
+        except psycopg2.ProgrammingError:
             return 0
-        known_integer_identifiers = [int(i[0]) for i in identifiers if self.is_integer(i[0])]
+        known_integer_identifiers = [
+            int(i[0]) for i in identifiers if self.is_integer(i[0])]
         if len(known_integer_identifiers) == 0:
             return 0
-        else:
-            return max(known_integer_identifiers) + 1
+        return max(known_integer_identifiers) + 1
 
-    def check_exists(self, tablename, record, cursor, fields, no_primary=False):
+    def check_exists(self, tablename, record, cursor, no_primary=False):
         """
-        Assumes that the first entry in records is a fiat identifier, omitted for 
+        Assumes that the first entry in records is a fiat identifier, omitted for
         the purpose of checking pre-existence of the record.
 
         Returns pair:
@@ -80,7 +93,7 @@ class SourceToADIParser:
         If no_primary = True, no fiat identifier column is assumed at all, and a key
         value of None is returned.
         """
-        fields = self.get_field_names(tablename, fields)
+        fields = self.get_field_names(tablename)
         primary = fields[0]
         if no_primary:
             primary = 'COUNT(*)'
@@ -89,12 +102,16 @@ class SourceToADIParser:
         else:
             identifying_record = record[1:]
             identifying_fields = fields[1:]
-        query = 'SELECT ' + primary + ' FROM ' + tablename + ' WHERE ' + ' AND '.join(
+        query = f'''
+        SELECT {primary} FROM {tablename} WHERE {
+            ' AND '.join(
                 [
-                    field + ' = %s ' % self.get_placeholder()
+                    f'{field} = {self.get_placeholder()} '
                     for field in identifying_fields
                 ]
-            ) + ' ;'
+        )
+        } ;
+        '''
         cursor.execute(query, tuple(identifying_record))
         if not no_primary:
             rows = cursor.fetchall()
@@ -104,9 +121,7 @@ class SourceToADIParser:
                 logger.warning('"%s" contains duplicates records.', tablename)
             key = rows[0][0]
             return [True, key]
-        else:
-            count = cursor.fetchall()[0][0]
-            if count == 0:
-                return [False, None]
-            else:
-                return [True, None]
+        count = cursor.fetchall()[0][0]
+        if count == 0:
+            return [False, None]
+        return [True, None]

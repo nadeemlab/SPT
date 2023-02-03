@@ -1,18 +1,19 @@
-import os
-from os.path import join
-
+"""Source file parsing for imaging/feature-assessment channel metadata."""
 import pandas as pd
 
-from ...db.source_file_parser_interface import SourceToADIParser
-from ...standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
 logger = colorized_logger(__name__)
 
 
 class ChannelsPhenotypesParser(SourceToADIParser):
-    def __init__(self, **kwargs):
-        super(ChannelsPhenotypesParser, self).__init__(**kwargs)
-
-    def parse(self, connection, fields, file_manifest_file, elementary_phenotypes_file, composite_phenotypes_file):
+    """Source file parsing for imaging/feature-assessment channel metadata."""
+    def parse(self,
+              connection,
+              elementary_phenotypes_file,
+              composite_phenotypes_file,
+              study_name):
         """
         Retrieve the phenotype and channel metadata, and parse records for:
         - chemical species
@@ -21,27 +22,20 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         - cell phenotype
         - cell phenotype criterion
         """
-        elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, sep=',', na_filter=False, dtype=str)
-        composite_phenotypes = pd.read_csv(composite_phenotypes_file, sep=',', na_filter=False, dtype=str)
+        elementary_phenotypes = pd.read_csv(
+            elementary_phenotypes_file, sep=',', na_filter=False, dtype=str)
+        composite_phenotypes = pd.read_csv(
+            composite_phenotypes_file, sep=',', na_filter=False, dtype=str)
 
-        file_metadata = pd.read_csv(file_manifest_file, sep='\t')
-        project_ids = list(set(file_metadata['Project ID']).difference(['']))
-        if len(project_ids) > 1:
-            logger.warning('Too many "Project ID" values found; just using "%s".', project_ids[0])
-        if len(project_ids) == 0:
-            message = 'No "Project ID" value found. Will not guess a value, aborting.'
-            logger.error(message)
-            raise ValueError(message)
-        project_handle = sorted(project_ids)[0]
-        data_analysis_study = project_handle + ' - data analysis'
-        measurement_study = project_handle + ' - measurement'
+        data_analysis_study = SourceToADIParser.get_data_analysis_study_name(study_name)
+        measurement_study = SourceToADIParser.get_measurement_study_name(study_name)
 
         cursor = connection.cursor()
 
         identifier = self.get_next_integer_identifier('chemical_species', cursor)
         initial_value = identifier
         chemical_species_identifiers_by_symbol = {}
-        for i, phenotype in elementary_phenotypes.iterrows():
+        for _, phenotype in elementary_phenotypes.iterrows():
             symbol = phenotype['Name']
             chemical_structure_class = phenotype['Target structure class']
             record = (
@@ -50,13 +44,14 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 phenotype['Target full name'],
                 chemical_structure_class,
             )
-            was_found, key = self.check_exists('chemical_species', record, cursor, fields)
+            was_found, key = self.check_exists('chemical_species', record, cursor)
             if not was_found:
                 cursor.execute(
-                    self.generate_basic_insert_query('chemical_species', fields),
+                    self.generate_basic_insert_query('chemical_species'),
                     record,
                 )
-                chemical_species_identifiers_by_symbol[symbol] = str(identifier)
+                chemical_species_identifiers_by_symbol[symbol] = str(
+                    identifier)
                 identifier = identifier + 1
             else:
                 chemical_species_identifiers_by_symbol[symbol] = key
@@ -64,11 +59,13 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                     '"chemical_species" %s already exists.',
                     str([''] + list(record[1:])),
                 )
-        logger.info('Saved %s chemical species records.', identifier - initial_value)
+        logger.info('Saved %s chemical species records.',
+                    identifier - initial_value)
 
-        identifier = self.get_next_integer_identifier('biological_marking_system', cursor)
+        identifier = self.get_next_integer_identifier(
+            'biological_marking_system', cursor)
         initial_value = identifier
-        for i, phenotype in elementary_phenotypes.iterrows():
+        for _, phenotype in elementary_phenotypes.iterrows():
             symbol = phenotype['Name']
             record = (
                 str(identifier),
@@ -77,12 +74,9 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 phenotype['Marking mechanism'],
                 measurement_study,
             )
-            was_found, key = self.check_exists('biological_marking_system', record, cursor, fields)
+            was_found, key = self.check_exists('biological_marking_system', record, cursor)
             if not was_found:
-                cursor.execute(
-                    self.generate_basic_insert_query('biological_marking_system', fields),
-                    record,
-                )
+                cursor.execute(self.generate_basic_insert_query('biological_marking_system'),record)
                 identifier = identifier + 1
             else:
                 logger.debug(
@@ -92,39 +86,41 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         logger.info('Saved %s biological marking system records.', identifier - initial_value)
 
         cursor.execute(
-            self.generate_basic_insert_query('data_analysis_study', fields),
-            (data_analysis_study, ),
-        )
+            self.generate_basic_insert_query('data_analysis_study'), (data_analysis_study, ))
 
         identifier = self.get_next_integer_identifier('cell_phenotype', cursor)
         initial_value = identifier
         cell_phenotype_identifiers_by_symbol = {}
         number_criterion_records = 0
-        for i, phenotype in composite_phenotypes.iterrows():
+        for _, phenotype in composite_phenotypes.iterrows():
             symbol = phenotype['Name']
             record = (str(identifier), symbol, symbol)
-            was_found, key = self.check_exists('cell_phenotype', record, cursor, fields)
+            was_found, key = self.check_exists('cell_phenotype', record, cursor)
             if not was_found:
                 cursor.execute(
-                    self.generate_basic_insert_query('cell_phenotype', fields),
+                    self.generate_basic_insert_query('cell_phenotype'),
                     record,
                 )
                 cell_phenotype_identifiers_by_symbol[symbol] = str(identifier)
                 identifier = identifier + 1
+                logger.debug('Recognized phenotype: %s', symbol)
             else:
                 cell_phenotype_identifiers_by_symbol[symbol] = key
                 logger.debug(
                     '"cell_phenotype" %s already exists.',
                     str([''] + list(record[1:])),
                 )
-            positive_markers = set(str(phenotype['Positive markers']).split(';')).difference([''])
-            negative_markers = set(str(phenotype['Negative markers']).split(';')).difference([''])
+            positive_markers = set(
+                str(phenotype['Positive markers']).split(';')).difference([''])
+            negative_markers = set(
+                str(phenotype['Negative markers']).split(';')).difference([''])
             missing = positive_markers.union(negative_markers).difference(
                 chemical_species_identifiers_by_symbol.keys()
             )
             if len(missing) > 0:
                 logger.warning(
-                    'Markers %s are part of phenotype %s but do not represent any known "chemical_species". This marker is skipped.',
+                    'Markers %s are part of phenotype %s but do not represent '
+                    'any known "chemical_species". This marker is skipped.',
                     missing,
                     record,
                 )
@@ -142,10 +138,11 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                     polarity,
                     data_analysis_study,
                 )
-                was_found, _ = self.check_exists('cell_phenotype_criterion', record, cursor, fields, no_primary=True)
+                was_found, _ = self.check_exists('cell_phenotype_criterion',
+                                                 record, cursor, no_primary=True)
                 if not was_found:
                     cursor.execute(
-                        self.generate_basic_insert_query('cell_phenotype_criterion', fields),
+                        self.generate_basic_insert_query('cell_phenotype_criterion'),
                         record,
                     )
                     number_criterion_records += 1
@@ -154,8 +151,10 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                         '"cell_phenotype_criterion" %s already exists.',
                         str(record),
                     )
-        logger.info('Saved %s cell phenotype records.', identifier - initial_value)
-        logger.info('Saved %s cell phenotype criterion records.', number_criterion_records)
+        logger.info('Saved %s cell phenotype records.',
+                    identifier - initial_value)
+        logger.info('Saved %s cell phenotype criterion records.',
+                    number_criterion_records)
 
         logger.info(
             'Parsed records implied by "%s" and "%s".',

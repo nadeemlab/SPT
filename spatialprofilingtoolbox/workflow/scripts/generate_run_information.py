@@ -1,0 +1,71 @@
+"""
+CLI entry point into the "job generator" component of a given Nextflow-managed
+workflow. This component creates a manifest of the parallelizable jobs for
+Nextflow to run.
+"""
+import argparse
+from os.path import exists
+
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
+from spatialprofilingtoolbox import get_workflow_names
+from spatialprofilingtoolbox import get_workflow
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='spt workflow generate-run-information',
+        description='''
+        Create a list of core, parallelizable job specifications for a given SPT
+        workflow, as well as lists of file dependencies.
+        
+        Note: Due to orchestration design constraints, if this script must
+        depend on file contents, it can *only* depend on the contents of explicitly
+        indicated files. That is, it cannot "bootstrap" and open files whose names
+        are discovered by reading other files' contents.
+        ''',
+    )
+    add_argument(parser, 'workflow')
+    add_argument(parser, 'file manifest')
+    parser.add_argument(
+        '--input-path',
+        dest='input_path',
+        type=str,
+        required=True,
+        help='''Path to directory containing input data files. (For example,
+        containing file_manifest.tsv).
+        ''',
+    )
+    add_argument(parser, 'outcomes file')
+    parser.add_argument(
+        '--job-specification-table',
+        dest='job_specification_table',
+        type=str,
+        required=True,
+        help='Filename for output, job specification table CSV.',
+    )
+    add_argument(parser, 'channels file')
+    add_argument(parser, 'phenotypes file')
+
+    args = parser.parse_args()
+
+    if not exists(args.file_manifest_file):
+        raise FileNotFoundError(args.file_manifest_file)
+
+    try:
+        workflows = {name: get_workflow(name) for name in get_workflow_names()}
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
+
+    Generator = workflows[args.workflow].generator
+    DatasetDesign = workflows[args.workflow].dataset_design
+    job_generator = Generator(
+        file_manifest_file=args.file_manifest_file,
+        input_path=args.input_path,
+        dataset_design_class=DatasetDesign,
+    )
+    job_generator.write_job_specification_table(
+        args.job_specification_table, outcomes_file=args.outcomes_file)
+    job_generator.write_elementary_phenotypes_filename(
+        args.elementary_phenotypes_file)
+    job_generator.write_composite_phenotypes_filename(
+        args.composite_phenotypes_file)

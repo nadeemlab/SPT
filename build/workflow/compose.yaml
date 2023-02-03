@@ -1,0 +1,17 @@
+services:
+  testing-database:
+    image: nadeemlab/spt-db-preloaded-1
+    container_name: spt-db-testing
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+    networks:
+      - isolated_temporary_test
+    environment:
+      POSTGRES_PASSWORD: postgres
+    pull_policy: never
+
+networks:
+  isolated_temporary_test:
+    driver: bridge

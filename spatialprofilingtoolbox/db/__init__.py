@@ -1,1 +1,2 @@
-__version__ = '0.3.0'
+"""Database-related SPT functionality."""
+__version__ = '0.5.0'

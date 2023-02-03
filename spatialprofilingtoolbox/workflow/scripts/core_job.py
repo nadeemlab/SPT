@@ -1,0 +1,35 @@
+"""
+CLI entry point into the core/parallelizable phase of the Nextflow-managed
+workflows.
+"""
+import argparse
+
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox import get_workflow_names
+from spatialprofilingtoolbox import get_workflow
+from spatialprofilingtoolbox import get_core_job
+workflows = {name: get_workflow(name) for name in get_workflow_names()}
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='spt workflow core-job',
+        description='One parallelizable "core" computation job.',
+    )
+
+    for CoreJob in [w.core_job for w in workflows.values()]:
+        CoreJob.solicit_cli_arguments(parser)
+
+    add_argument(parser, 'workflow')
+    add_argument(parser, 'source file identifier')
+    add_argument(parser, 'source file name')
+    add_argument(parser, 'channels file')
+    add_argument(parser, 'phenotypes file')
+    add_argument(parser, 'sample')
+    add_argument(parser, 'outcome')
+    add_argument(parser, 'compartments file')
+    add_argument(parser, 'metrics database')
+
+    parameters = vars(parser.parse_args())
+    core_job = get_core_job(**parameters)
+    core_job.calculate()

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
-version = "0.11.1"
+version = "0.12.3"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]
@@ -16,24 +16,63 @@ readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering",
-    "Intended Audience :: Science/Research",
+    "Intended Audience :: Science/Research"
 ]
 requires-python = ">=3.9"
 dependencies = [
     "psycopg2==2.9.3",
-    "adisinglecell==0.10.4",
+    "adiscstudies==0.10.10"
 ]
-urls = { "Documentation" = "https://github.com/nadeemlab/SPT", "Source code" = "https://github.com/nadeemlab/SPT" }
+
+[project.urls]
+documentation = "https://github.com/nadeemlab/SPT"
+repository = "https://github.com/nadeemlab/SPT"
 
 [project.optional-dependencies]
-apiserver = ["fastapi>=0.68.0,<0.69.0", "uvicorn>=0.15.0,<0.16.0"]
-db = ["pandas>=1.1.5"]
-workflow = ["numpy==1.22.3", "scipy==1.8.0", "scikit-learn==1.1.2", "pyshp==2.2.0", "pandas>=1.1.5", "Jinja2==3.0.1", "tabulate==0.8.10"]
-building = ["Jinja2==3.0.1"]
-all = ["fastapi>=0.68.0,<0.69.0", "uvicorn>=0.15.0,<0.16.0", "Jinja2==3.0.1", "pandas>=1.1.5", "numpy==1.22.3", "scipy==1.8.0", "scikit-learn==1.1.2", "pyshp==2.2.0", "tabulate==0.8.10"]
+apiserver = [
+    "fastapi>=0.68.0,<0.69.0",
+    "uvicorn>=0.15.0,<0.16.0"
+]
+db = [
+    "pandas>=1.1.5",
+    "pyshp==2.2.0"
+]
+countsserver = []
+cggnn = [
+    "cg-gnn"
+]
+workflow = [
+    "numpy==1.22.3",
+    "scipy==1.8.0",
+    "scikit-learn==1.1.2",
+    "pyshp==2.2.0",
+    "pandas>=1.1.5",
+    "Jinja2==3.0.1",
+    "tabulate==0.8.10"
+]
+building = [
+    "Jinja2==3.0.1"
+]
+all = [
+    "fastapi>=0.68.0,<0.69.0",
+    "uvicorn>=0.15.0,<0.16.0",
+    "Jinja2==3.0.1",
+    "pandas>=1.1.5",
+    "numpy==1.22.3",
+    "scipy==1.8.0",
+    "scikit-learn==1.1.2",
+    "pyshp==2.2.0",
+    "tabulate==0.8.10"
+]
+dev = [
+    "autopep8",
+    "mypy",
+    "pylint",
+    "pytest"
+]
 
 [project.scripts]
-spt = "spatialprofilingtoolbox.entry_point.spt:main_program"
+spt = "spatialprofilingtoolbox.entry_point.cli:main_program"
 spt-enable-completion = "spatialprofilingtoolbox.entry_point.spt_enable_completion:main_program"
 
 [tool.setuptools]
@@ -44,6 +83,8 @@ packages = [
     "spatialprofilingtoolbox.apiserver",
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
+    "spatialprofilingtoolbox.cggnn",
+    "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.countsserver",
     "spatialprofilingtoolbox.countsserver.scripts",
     "spatialprofilingtoolbox.db",
@@ -53,53 +94,52 @@ packages = [
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.dataset_designs",
     "spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging",
-    "spatialprofilingtoolbox.workflow.workflows",
-    "spatialprofilingtoolbox.workflow.workflows.defaults",
-    "spatialprofilingtoolbox.workflow.workflows.phenotype_proximity",
-    "spatialprofilingtoolbox.workflow.workflows.front_proximity",
-    "spatialprofilingtoolbox.workflow.workflows.density",
-    "spatialprofilingtoolbox.workflow.workflows.nearest_distance",
-    "spatialprofilingtoolbox.workflow.workflows.halo_import",
+    "spatialprofilingtoolbox.workflow.defaults",
+    "spatialprofilingtoolbox.workflow.phenotype_proximity",
+    "spatialprofilingtoolbox.workflow.density",
+    "spatialprofilingtoolbox.workflow.nearest_distance",
+    "spatialprofilingtoolbox.workflow.halo_import",
     "spatialprofilingtoolbox.workflow.common",
     "spatialprofilingtoolbox.workflow.common.logging",
     "spatialprofilingtoolbox.workflow.source_file_adi_parsing",
-    "spatialprofilingtoolbox.workflow.templates",
+    "spatialprofilingtoolbox.workflow.templates"
 ]
 
 [tool.setuptools.package-data]
-"spatialprofilingtoolbox.entry_point" = ["spt-completion.sh"]
+"spatialprofilingtoolbox.entry_point" = ["spt-completion.sh.jinja"]
 "spatialprofilingtoolbox.workflow.scripts" = [
-    "aggregate-core-results.py",
-    "core-job.py",
-    "extract-compartments.py",
-    "generate-run-information.py",
+    "aggregate_core_results.py",
+    "core_job.py",
+    "extract_compartments.py",
+    "generate_run_information.py",
     "initialize.py",
-    "merge-performance-reports.py",
-    "merge-sqlite-dbs.py",
-    "report-run-configuration.py",
+    "merge_performance_reports.py",
+    "merge_sqlite_dbs.py",
+    "report_run_configuration.py",
     "configure.py",
-    "report-on-logs.py",
+    "report_on_logs.py"
 ]
 "spatialprofilingtoolbox.workflow.workflows" = [
-    "main.nf.jinja",
+    "main.nf.jinja"
 ]
 "spatialprofilingtoolbox.workflow.templates" = [
     "nextflow.config.jinja",
     "log_table.tex.jinja",
     "log_table.html.jinja",
     ".spt_db.config.template",
-    "main.nf.jinja",
+    "main.nf.jinja"
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [
-    "read-expression-dump-file.py",
-    "cache-expressions-data-array.py",
-    "start.py",
+    "read_expression_dump_file.py",
+    "cache_expressions_data_array.py",
+    "start.py"
 ]
 "spatialprofilingtoolbox.db.scripts" = [
-    "create-schema.py",
-    "modify-constraints.py",
-    "guess-channels-from-object-files.py",
+    "create_schema.py",
+    "modify_constraints.py",
+    "guess_channels_from_object_files.py",
     "status.py",
+    "retrieve_feature_matrices.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",
@@ -108,5 +148,8 @@ packages = [
     "fields.tsv",
     "grant_on_tables.sql",
     "performance_tweaks.sql",
-    "refresh_views.sql",
+    "refresh_views.sql"
+]
+"spatialprofilingtoolbox.cggnn.scripts" = [
+    "run.py",
 ]

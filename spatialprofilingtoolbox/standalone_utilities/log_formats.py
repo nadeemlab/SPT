@@ -1,7 +1,10 @@
+"""Custom logger for general SPT functionality."""
 import logging
 import re
 
+
 class CustomFormatter(logging.Formatter):
+    """A custom colorizing logger."""
     grey = '\x1b[38;21m'
     green = '\u001b[32m'
     bold_green = '\u001b[32;1m'
@@ -15,11 +18,21 @@ class CustomFormatter(logging.Formatter):
     reset = '\u001b[0m'
 
     FORMATS = {
-        logging.DEBUG: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + "%(levelname)s" + reset + magenta + '  ] ' + "%(name)s:" + reset + blue + "%(lineno)d" + magenta + ": " + reset + "%(message)s",
-        logging.INFO: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + bold_green + "%(levelname)s" + reset + magenta + '   ] ' + "%(name)s: " + reset + "%(message)s",
-        logging.WARNING: blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_yellow + "%(levelname)s" + reset + magenta + ' ] ' + "%(name)s:" + reset + blue + "%(lineno)d" + magenta + ": " + reset + "%(message)s",
-        logging.ERROR: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + bold_red + "%(levelname)s" + reset + magenta + '  ] ' + "%(name)s:" + reset + blue + "%(lineno)d" + magenta + ": " + reset + "%(message)s",
-        logging.CRITICAL: blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_red + "%(levelname)s" + reset + magenta + '] ' + "%(name)s:" + reset + blue + "%(lineno)d" + magenta + ": " + reset + "%(message)s",
+        logging.DEBUG: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + "%(levelname)s" +
+        reset + magenta + '  ] ' + "%(name)s:" + reset + blue + "%(lineno)d" + magenta + ": " +
+        reset + "%(message)s",
+        logging.INFO: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + bold_green +
+        "%(levelname)s" + reset + magenta + '   ] ' +
+        "%(name)s: " + reset + "%(message)s",
+        logging.WARNING: blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_yellow +
+        "%(levelname)s" + reset + magenta + ' ] ' + "%(name)s:" + reset + blue + "%(lineno)d" +
+        magenta + ": " + reset + "%(message)s",
+        logging.ERROR: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + bold_red +
+        "%(levelname)s" + reset + magenta + '  ] ' + "%(name)s:" + reset + blue + "%(lineno)d" +
+        magenta + ": " + reset + "%(message)s",
+        logging.CRITICAL: blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_red +
+        "%(levelname)s" + reset + magenta + '] ' + "%(name)s:" + reset + blue + "%(lineno)d" +
+        magenta + ": " + reset + "%(message)s",
     }
 
     def format(self, record):
@@ -41,11 +54,11 @@ def colorized_logger(name):
     Returns:
         The logger.
     """
-    logger = logging.getLogger(re.sub('^spatialprofilingtoolbox\.', '', name))
+    logger = logging.getLogger(re.sub(r'^spatialprofilingtoolbox\.', '', name))
     level = logging.DEBUG
     logger.setLevel(level)
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    ch.setFormatter(CustomFormatter())
-    logger.addHandler(ch)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(level)
+    stream_handler.setFormatter(CustomFormatter())
+    logger.addHandler(stream_handler)
     return logger

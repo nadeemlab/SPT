@@ -14,6 +14,7 @@ __pycache__/
 .initiation_message_size
 *.pyc
 build/*/Dockerfile
+Dockerfile
 **.whl
 build/*/docker.built
 build/*/requirements.txt

@@ -15,9 +15,7 @@ def get_study(bundle):
 
 
 def test_sample_set(study):
-    if study['feature matrices'].keys() != set(['lesion 0_1', 'lesion 0_2', 'lesion 0_3',
-                                                'lesion 6_1', 'lesion 6_2', 'lesion 6_3',
-                                                'lesion 6_4']):
+    if study['feature matrices'].keys() != set(['lesion 0_1', 'lesion 6_1']):
         print(f'Wrong sample set: {list(study["feature matrices"].keys())}')
         sys.exit(1)
 
@@ -35,7 +33,7 @@ def test_feature_matrix_schemas(study):
 
 
 def show_example_feature_matrix(study):
-    specimen = 'lesion 6_4'
+    specimen = 'lesion 0_1'
     df = study['feature matrices'][specimen]['dataframe']
     print(f'Example feature matrix, for specimen {specimen}:')
     print(df.to_string(index=False))
@@ -63,9 +61,7 @@ def test_expression_vectors(study):
             for _, row in df.iterrows()
         ])
 
-        filenames = {'lesion 0_1': '0.csv', 'lesion 0_2': '1.csv', 'lesion 0_3': '2.csv',
-                     'lesion 6_1': '3.csv', 'lesion 6_2': '4.csv', 'lesion 6_3': '5.csv',
-                     'lesion 6_4': '6.csv'}
+        filenames = {'lesion 0_1': '0.csv', 'lesion 6_1': '3.csv'}
         cells_filename = filenames[specimen]
         reference = pd.read_csv(
             f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')

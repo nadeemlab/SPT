@@ -32,16 +32,13 @@ class OutcomesPuller(DatabaseConnectionMaker):
                 WHERE study=%s
                 ;
                 ''', (study_name,))
-
-                df = pd.DataFrame(cursor.fetchall(), columns=[
-                                  'specimen', 'outcome', 'label'])
+                df = pd.DataFrame(cursor.fetchall(), columns=['specimen', 'outcome', 'label'])
                 dfs = {
                     outcome: df2.sort_values(by='specimen').rename(
                         columns={'label': outcome}).drop(['outcome'], axis=1)
                     for outcome, df2 in df.groupby('outcome')
                 }
-                merged = pd.concat([dfs[outcome]
-                                   for outcome in sorted(list(dfs.keys()))])
+                merged = pd.concat([dfs[outcome] for outcome in sorted(list(dfs.keys()))])
                 outcomes[study_name]['dataframe'] = merged
                 outcomes[study_name]['filename'] = f'outcomes.{study_index}.tsv'
         return outcomes

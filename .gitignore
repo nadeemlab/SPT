@@ -28,3 +28,4 @@ build/lib/
 .vscode/
 .mypy_cache/
 venv/
+.venv/

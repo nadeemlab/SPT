@@ -95,6 +95,7 @@ packages = [
     "spatialprofilingtoolbox.workflow.dataset_designs",
     "spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging",
     "spatialprofilingtoolbox.workflow.defaults",
+    "spatialprofilingtoolbox.workflow.computational_visitor",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.density",
     "spatialprofilingtoolbox.workflow.nearest_distance",

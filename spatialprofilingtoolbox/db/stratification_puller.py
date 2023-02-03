@@ -26,6 +26,7 @@ class StratificationPuller(DatabaseConnectionMaker):
             for study_name in study_names:
                 cursor.execute('''
                 SELECT
+                    scp.study,
                     sample,
                     stratum_identifier,
                     local_temporal_position_indicator,
@@ -41,20 +42,21 @@ class StratificationPuller(DatabaseConnectionMaker):
                     sc.primary_study=%s
                 ;
                 ''', (study_name,))
-                df = pd.DataFrame(cursor.fetchall(), columns=['specimen',
+                df = pd.DataFrame(cursor.fetchall(), columns=['specimen collection study', 'specimen',
                                  'stratum identifier',
                                  'local temporal position indicator',
                                  'subject diagnosed condition', 'subject diagnosed result'])
+                substudy_name = list(df['specimen collection study'])[0]
                 assignments_columns = ['specimen', 'stratum identifier']
-                stratification[study_name]['assignments'] = df[assignments_columns]
+                stratification[substudy_name]['assignments'] = df[assignments_columns]
                 metadata_columns = ['stratum identifier', 'local temporal position indicator',
                                     'subject diagnosed condition', 'subject diagnosed result']
-                stratification[study_name]['strata'] = df[metadata_columns].drop_duplicates()
+                stratification[substudy_name]['strata'] = df[metadata_columns].drop_duplicates()
         return stratification
 
     def get_study_names(self):
         with self.get_connection().cursor() as cursor:
-            cursor.execute('SELECT specifier FROM study ;')
+            cursor.execute('SELECT study_specifier FROM study ;')
             rows = cursor.fetchall()
         study_names = [row[0] for row in rows]
         return sorted(study_names)

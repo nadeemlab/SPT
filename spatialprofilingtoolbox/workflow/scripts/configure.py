@@ -179,7 +179,7 @@ if __name__ == '__main__':
         '--input-path',
         dest='input_path',
         type=str,
-        required=True,
+        required=False,
         help='Path to directory containing input data files. (For example, containing '
         'file_manifest.tsv).'
     )

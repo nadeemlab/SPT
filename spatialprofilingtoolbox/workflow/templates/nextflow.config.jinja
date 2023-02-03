@@ -10,8 +10,10 @@ singularity.runOptions = '-B {{ input_path }} -B {{ current_working_directory }}
 process.container = '{{ sif_file }}'{% endif %}
 
 env.workflow_ = '{{ workflow }}'
-env.input_path_ = '{{ input_path }}'
-env.file_manifest_filename_ = '{{ file_manifest_filename }}'
+{% if input_path is defined %}
+env.input_path_ = '{{ input_path }}'{% endif %}
+{% if file_manifest_filename is defined %}
+env.file_manifest_filename_ = '{{ file_manifest_filename }}'{% endif %}
 
 {%- if compartments_file is defined and compartments_file|length %}
 env.compartments_file_ = '{{ compartments_file }}'{% endif %}

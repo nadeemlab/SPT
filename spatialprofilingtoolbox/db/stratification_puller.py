@@ -21,7 +21,7 @@ class StratificationPuller(DatabaseConnectionMaker):
 
     def retrieve_stratification(self):
         study_names = self.get_study_names()
-        stratification = {study_name: {} for study_name in study_names}
+        stratification = {}
         with self.get_connection().cursor() as cursor:
             for study_name in study_names:
                 cursor.execute('''
@@ -47,6 +47,7 @@ class StratificationPuller(DatabaseConnectionMaker):
                                  'local temporal position indicator',
                                  'subject diagnosed condition', 'subject diagnosed result'])
                 substudy_name = list(df['specimen collection study'])[0]
+                stratification[substudy_name] = {}
                 assignments_columns = ['specimen', 'stratum identifier']
                 stratification[substudy_name]['assignments'] = df[assignments_columns]
                 metadata_columns = ['stratum identifier', 'local temporal position indicator',

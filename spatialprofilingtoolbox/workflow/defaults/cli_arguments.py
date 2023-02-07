@@ -10,7 +10,7 @@ from spatialprofilingtoolbox import get_workflow_names
 
 SettingArgumentName = Literal['workflow', 'metrics database', 'source file identifier',
                               'source file name', 'sample', 'outcome', 'dichotomize',
-                              'database config', 'file manifest']
+                              'database config', 'file manifest', 'study name']
 FileArgumentName = Literal['phenotypes file', 'channels file', 'compartments file',
                            'study file', 'outcomes file', 'subjects file', 'diagnosis file',
                            'interventions file', 'performance report']
@@ -25,7 +25,7 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
                             required=True)
     if name == 'metrics database':
         parser.add_argument('--metrics-database-filename', dest='metrics_database_filename',
-                            type=str, required=True,
+                            type=str, required=False,
                             help='Filename for sqlite database file storing intermediate results.')
     if name == 'source file identifier':
         parser.add_argument('--input-file-identifier', dest='input_file_identifier', type=str,
@@ -50,6 +50,10 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
     if name == 'file manifest':
         parser.add_argument('--file-manifest-file', dest='file_manifest_file', type=str,
                             required=False)
+    if name == 'study name':
+        parser.add_argument('--study-name', dest='study_name', type=str, required=False,
+                            help='The name of the study/dataset to do the workflow computation'
+                                 ' over.')
 
 
 def add_file_argument(parser, name: FileArgumentName):
@@ -69,13 +73,13 @@ def add_file_argument(parser, name: FileArgumentName):
                             required=False)
     if name == 'compartments file':
         parser.add_argument('--compartments-file', dest='compartments_file', type=str,
-                            required=True, help='File containing compartment names.')
+                            required=False, help='File containing compartment names.')
     if name == 'phenotypes file':
         parser.add_argument('--composite-phenotypes-file', dest='composite_phenotypes_file',
-                            type=str, required=True)
+                            type=str, required=False)
     if name == 'channels file':
         parser.add_argument('--elementary-phenotypes-file', dest='elementary_phenotypes_file',
-                            type=str, required=True)
+                            type=str, required=False)
     if name == 'performance report':
-        parser.add_argument('--performance-report-file', dest='performance_report_file',
-                            type=str, required=True)
+        parser.add_argument('--performance-report-filename', dest='performance_report_filename',
+                            type=str, required=False)

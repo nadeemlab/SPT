@@ -54,6 +54,7 @@ process generate_run_information {
     script:
     """
     spt workflow generate-run-information \
+     --use-file-based-data-model \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --input-path='${input_path}' \

@@ -30,7 +30,7 @@ if __name__ == '__main__':
         '--input-path',
         dest='input_path',
         type=str,
-        required=True,
+        required=False,
         help='''Path to directory containing input data files. (For example,
         containing file_manifest.tsv).
         ''',
@@ -43,8 +43,16 @@ if __name__ == '__main__':
         required=True,
         help='Filename for output, job specification table CSV.',
     )
+    add_argument(parser, 'study name')
     add_argument(parser, 'channels file')
     add_argument(parser, 'phenotypes file')
+    parser.add_argument(
+        '--use-file-based-data-model',
+        dest='use_file_based_data_model',
+        required=False,
+        action='store_true',
+        help='If set, will rely on files as dataset input.',
+    )
 
     args = parser.parse_args()
 
@@ -57,15 +65,19 @@ if __name__ == '__main__':
         SuggestExtrasException(e, 'workflow')
 
     Generator = workflows[args.workflow].generator
-    DatasetDesign = workflows[args.workflow].dataset_design
-    job_generator = Generator(
-        file_manifest_file=args.file_manifest_file,
-        input_path=args.input_path,
-        dataset_design_class=DatasetDesign,
-    )
-    job_generator.write_job_specification_table(
-        args.job_specification_table, outcomes_file=args.outcomes_file)
-    job_generator.write_elementary_phenotypes_filename(
-        args.elementary_phenotypes_file)
-    job_generator.write_composite_phenotypes_filename(
-        args.composite_phenotypes_file)
+    if args.use_file_based_data_model:
+        DatasetDesign = workflows[args.workflow].dataset_design
+        job_generator = Generator(
+            file_manifest_file=args.file_manifest_file,
+            input_path=args.input_path,
+            dataset_design_class=DatasetDesign,
+        )
+        job_generator.write_job_specification_table(
+            args.job_specification_table, outcomes_file=args.outcomes_file)
+        job_generator.write_elementary_phenotypes_filename(
+            args.elementary_phenotypes_file)
+        job_generator.write_composite_phenotypes_filename(
+            args.composite_phenotypes_file)
+    else:
+        job_generator = Generator(study_name=args.study_name)
+        job_generator.write_job_specification_table(args.job_specification_table)

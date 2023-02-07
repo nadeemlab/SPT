@@ -42,11 +42,11 @@ def write_config_file(variables):
 
 def write_pipeline_script(variables):
     if workflows[variables['workflow']].computational_design.is_database_visitor():
-        contents = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE_VISITOR + '.jinja')
+        pipeline_file = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE_VISITOR)
     else:
         contents = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE + '.jinja')
-    template = jinja_environment.from_string(contents)
-    pipeline_file = template.render(**variables)
+        template = jinja_environment.from_string(contents)
+        pipeline_file = template.render(**variables)
     with open(join(os.getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
         file.write(pipeline_file)
 
@@ -175,6 +175,7 @@ if __name__ == '__main__':
         description='Configure an SPT (spatialprofilingtoolbox) run in the current directory.'
     )
     add_argument(parser, 'workflow')
+    add_argument(parser, 'study name')
     parser.add_argument(
         '--input-path',
         dest='input_path',
@@ -245,6 +246,9 @@ if __name__ == '__main__':
         config_variables['executor'] = 'lsf'
 
     config_variables['workflow'] = args.workflow
+
+    if args.study_name:
+        config_variables['study_name'] = args.study_name
 
     if not args.sif_file is None:
         if exists(args.sif_file):

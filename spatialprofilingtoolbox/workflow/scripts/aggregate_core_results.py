@@ -23,10 +23,11 @@ if __name__ == '__main__':
         '--stats-tests-file',
         dest='stats_tests_file',
         type=str,
-        required=True,
+        required=False,
     )
     add_argument(parser, 'database config')
     add_argument(parser, 'file manifest')
+    add_argument(parser, 'study name')
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
         SuggestExtrasException
@@ -49,4 +50,7 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
 
     integrator = get_integrator(**args)
-    integrator.calculate(args['stats_tests_file'])
+    if 'stats_tests_file' in args:
+        integrator.calculate(args['stats_tests_file'])
+    else:
+        integrator.calculate()

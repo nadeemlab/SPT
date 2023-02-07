@@ -16,6 +16,7 @@ from \
     import HALOCellMetadataDesign
 
 from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
+from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import ProximityJobGenerator
 from spatialprofilingtoolbox.workflow.phenotype_proximity.initializer import \
     PhenotypeProximityInitializer
 from spatialprofilingtoolbox.workflow.phenotype_proximity.core import PhenotypeProximityCoreJob
@@ -25,7 +26,7 @@ from spatialprofilingtoolbox.workflow.phenotype_proximity.integrator import \
     PhenotypeProximityAnalysisIntegrator
 
 components = WorkflowModules(
-    generator=JobGenerator,
+    generator=ProximityJobGenerator,
     initializer=PhenotypeProximityInitializer,
     dataset_design=HALOCellMetadataDesign,
     computational_design=PhenotypeProximityDesign,

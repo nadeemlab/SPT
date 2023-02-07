@@ -21,6 +21,7 @@ if __name__ == '__main__':
         CoreJob.solicit_cli_arguments(parser)
 
     add_argument(parser, 'workflow')
+    add_argument(parser, 'performance report')
     add_argument(parser, 'source file identifier')
     add_argument(parser, 'source file name')
     add_argument(parser, 'channels file')

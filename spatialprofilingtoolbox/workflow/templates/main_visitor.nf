@@ -5,18 +5,22 @@ process echo_environment_variables {
     output:
     path 'workflow',                        emit: workflow
     path 'db_config_file',                  emit: db_config_file
+    path 'study_name',                      emit: study_name
 
     script:
     """
     #!/bin/bash
     echo -n "${workflow_}" > workflow
     echo -n "${db_config_file_}" > db_config_file
+    echo -n "${study_name_}" > study_name
     """
 }
 
 process generate_run_information {
     input:
     val workflow
+    val study_name
+    val db_config_file
 
     output:
     path 'job_specification_table.csv',     emit: job_specification_table
@@ -25,6 +29,8 @@ process generate_run_information {
     """
     spt workflow generate-run-information \
      --workflow="${workflow}" \
+     --study-name="${study_name}" \
+     --database-config-file="${db_config_file}" \
      --job-specification-table=job_specification_table.csv
     """
 }
@@ -32,6 +38,7 @@ process generate_run_information {
 process workflow_initialize {
     input:
     val workflow
+    val study_name
     path db_config_file
 
     output:
@@ -41,6 +48,7 @@ process workflow_initialize {
     """
     spt workflow initialize \
      --workflow="${workflow}" \
+     --study-name="${study_name}" \
      --database-config-file=${db_config_file} \
     echo "Success"
     """
@@ -55,6 +63,7 @@ process core_job {
     input:
     val initialization_flag
     val workflow
+    val study_name
     val job_index
 
     output:
@@ -62,9 +71,9 @@ process core_job {
 
     script:
     """
-    echo "Initialization status: ${initialization_flag}"
     spt workflow core-job \
      --workflow="${workflow}" \
+     --study-name="${study_name}" \
      --performance-report-filename=performancereport${job_index}.txt
     """
 }
@@ -95,22 +104,23 @@ process aggregate_results {
     input:
     path db_config_file
     val workflow
-
-    output:
-    file 'stats_tests.csv'
+    val study_name
 
     script:
     """
     spt workflow aggregate-core-results \
      --workflow="${workflow}" \
-     --database-config-file=${db_config_file} \
-     --stats-tests-file=stats_tests.csv
+     --study-name="${study_name}" \
+     --database-config-file=${db_config_file}
     """
 }
 
 workflow {
     echo_environment_variables()
         .set{ environment_ch }
+
+    environment_ch.study_name.map{ it.text }
+        .set{ study_name_ch }
 
     environment_ch.workflow.map{ it.text }
         .set{ workflow_ch }
@@ -119,7 +129,9 @@ workflow {
         .set{ db_config_file_ch }
 
     generate_run_information(
-        workflow_ch
+        workflow_ch,
+        study_name_ch,
+        database_config_file_ch,
     ).set { run_information_ch }
 
     run_information_ch
@@ -130,6 +142,7 @@ workflow {
 
     workflow_initialize(
         workflow_ch,
+        study_name_ch,
         db_config_file_ch,
     )
         .initialization_flag
@@ -138,6 +151,7 @@ workflow {
     core_job(
         initialization_flag_ch,
         workflow_ch,
+        study_name_ch,
         job_specifications_ch,
     )
         .set { core_job_results_ch }
@@ -147,7 +161,8 @@ workflow {
     )
 
     aggregate_results(
-        db_config_file_ch
-        workflow_ch
+        db_config_file_ch,
+        workflow_ch,
+        study_name_ch,
     )
 }

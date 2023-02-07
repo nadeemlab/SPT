@@ -62,7 +62,8 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         study_names = self.get_study_names(self.get_connection())
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
-            sparse_entries = self.get_sparse_entries(self.get_connection(), study_name, specimen=specimen)
+            sparse_entries = self.get_sparse_entries(self.get_connection(),
+                                                     study_name, specimen=specimen)
             data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(
                 sparse_entries)
             data_arrays.add_study_data(

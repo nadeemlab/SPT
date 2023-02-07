@@ -20,6 +20,12 @@ def test_sample_set(study):
         sys.exit(1)
 
 
+def test_one_sample_set(study):
+    if study['feature matrices'].keys() != set(['lesion 6_1']):
+        print(f'Wrong sample set: {list(study["feature matrices"].keys())}')
+        sys.exit(1)
+
+
 def test_feature_matrix_schemas(study):
     for specimen, sample in study['feature matrices'].items():
         df = sample['dataframe']
@@ -105,6 +111,13 @@ if __name__ == '__main__':
     test_channels(test_study)
     test_expression_vectors(test_study)
     test_stratification(test_study)
+
+    one_sample_bundle = FeatureMatrixExtractor.extract('../db/.spt_db.config.container', specimen='lesion 6_1')
+    one_sample_study = get_study(one_sample_bundle)
+    test_one_sample_set(one_sample_study)
+    test_feature_matrix_schemas(one_sample_study)
+    test_channels(one_sample_study)
+    test_expression_vectors(test_study)
 
     FeatureMatrixExtractor.redact_dataframes(matrix_bundle)
     print('\nMetadata "bundle" with dataframes removed:')

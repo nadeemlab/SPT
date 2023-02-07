@@ -107,6 +107,7 @@ process aggregate_results {
     path db_config_file
     val workflow
     val study_name
+    path 'performance_report.md'
 
     script:
     """
@@ -167,10 +168,12 @@ workflow {
     merge_performance_reports(
         core_job_results_ch.performance_report.collect()
     )
+        .set{final_performance_report_ch}
 
     aggregate_results(
         db_config_file_ch,
         workflow_ch,
         study_name_ch,
+        final_performance_report_ch,
     )
 }

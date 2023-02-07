@@ -65,6 +65,7 @@ process core_job {
     val workflow
     val study_name
     val job_index
+    path db_config_file
 
     output:
     path "performance_report${job_index}.csv",         emit: performance_report
@@ -74,7 +75,8 @@ process core_job {
     spt workflow core-job \
      --workflow="${workflow}" \
      --study-name="${study_name}" \
-     --performance-report-filename=performancereport${job_index}.txt
+     --performance-report-filename=performancereport${job_index}.txt \
+     --database-config-file=${db_config_file}
     """
 }
 
@@ -158,6 +160,7 @@ workflow {
         workflow_ch,
         study_name_ch,
         job_indices_ch,
+        db_config_file_ch,
     )
         .set { core_job_results_ch }
 

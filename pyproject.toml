@@ -129,7 +129,7 @@ packages = [
     "log_table.html.jinja",
     ".spt_db.config.template",
     "main.nf.jinja",
-    "main_visitor.nf.jinja"
+    "main_visitor.nf"
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [
     "read_expression_dump_file.py",

@@ -1,12 +1,11 @@
 """
 The core calculator for the proximity calculation on a single source file.
 """
-from abc import ABC
-from itertools import combinations
+# from itertools import combinations
 
-import pandas as pd
-import numpy as np
-from sklearn.neighbors import BallTree
+# import pandas as pd
+# import numpy as np
+# from sklearn.neighbors import BallTree
 
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -453,7 +452,7 @@ class PhenotypeProximityCoreJob:
     #             ]  # Make this programmatic over the headers provided by computational design???
     #             keys = '( ' + ' , '.join(keys_list) + ' )'
     #             values = '( ' + ' , '.join(values_list) + ' )'
-    #             cmd = f'INSERT INTO {self.computational_design.get_cell_pair_counts_table_name()}'\
+    #             cmd=f'INSERT INTO {self.computational_design.get_cell_pair_counts_table_name()}'\
     #                 f' {keys} VALUES {values} ;'
     #             try:
     #                 manager.execute(cmd)

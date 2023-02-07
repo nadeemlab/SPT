@@ -25,6 +25,7 @@ if __name__ == '__main__':
         ''',
     )
     add_argument(parser, 'workflow')
+    add_argument(parser, 'database config')
     add_argument(parser, 'file manifest')
     parser.add_argument(
         '--input-path',

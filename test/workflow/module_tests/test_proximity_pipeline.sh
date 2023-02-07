@@ -4,7 +4,8 @@ FM=../test_data/adi_preprocessed_tables/dataset1/file_manifest.tsv
 cp $FM file_manifest.tsv.bak
 (cat file_manifest.tsv.bak | grep -vE '(0_2|0_3|6_2|6_3|6_4)') > $FM
 
-spt workflow configure --local --input-path=../test_data/adi_preprocessed_tables/dataset1/ --workflow='phenotype proximity' --database-config-file=../db/.spt_db.config.container
+spt workflow configure --local --workflow='phenotype proximity' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container
+cat nextflow.config #ed
 nextflow run .
 
 cp file_manifest.tsv.bak $FM

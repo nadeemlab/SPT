@@ -18,7 +18,7 @@ FileArgumentName = Literal['phenotypes file', 'channels file', 'compartments fil
 
 def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileArgumentName]):
     if name in get_args(FileArgumentName):
-        add_file_argument(parser, cast(name, FileArgumentName))
+        add_file_argument(parser, cast(FileArgumentName, name))
 
     if name == 'workflow':
         parser.add_argument('--workflow', dest='workflow', choices=get_workflow_names(),

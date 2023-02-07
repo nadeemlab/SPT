@@ -49,7 +49,7 @@ process workflow_initialize {
     spt workflow initialize \
      --workflow="${workflow}" \
      --study-name="${study_name}" \
-     --database-config-file=${db_config_file} \
+     --database-config-file=${db_config_file}
     echo "Success"
     """
 }
@@ -131,13 +131,13 @@ workflow {
     generate_run_information(
         workflow_ch,
         study_name_ch,
-        database_config_file_ch,
+        db_config_file_ch,
     ).set { run_information_ch }
 
     run_information_ch
         .job_specification_table
         .splitCsv(header: true)
-        .map{ row -> row.job_index) }
+        .map{ row -> tuple(row.job_index, row.sample_identifier) }
         .set{ job_specifications_ch }
 
     workflow_initialize(

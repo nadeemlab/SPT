@@ -233,6 +233,8 @@ if __name__ == '__main__':
 
     config_variables = {}
 
+    config_variables['workflow'] = args.workflow
+
     if args.database_config_file:
         config_file = expanduser(args.database_config_file)
         if exists(config_file):
@@ -244,8 +246,6 @@ if __name__ == '__main__':
         config_variables['executor'] = 'local'
     if args.lsf:
         config_variables['executor'] = 'lsf'
-
-    config_variables['workflow'] = args.workflow
 
     if args.study_name:
         config_variables['study_name'] = args.study_name

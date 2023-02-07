@@ -24,6 +24,7 @@ if __name__ == '__main__':
     add_argument(parser, 'study name')
     add_argument(parser, 'database config')
     add_argument(parser, 'performance report')
+    add_argument(parser, 'results file')
     add_argument(parser, 'job index')
     add_argument(parser, 'source file identifier')
     add_argument(parser, 'source file name')

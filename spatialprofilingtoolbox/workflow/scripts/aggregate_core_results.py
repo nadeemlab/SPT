@@ -18,6 +18,7 @@ if __name__ == '__main__':
         Merge the results provided by all core jobs.
         ''',
     )
+    parser.add_argument('core_computation_results_file', nargs='*', type=str)
     add_argument(parser, 'workflow')
     parser.add_argument(
         '--stats-tests-file',
@@ -53,4 +54,4 @@ if __name__ == '__main__':
     if 'stats_tests_file' in args and args['stats_tests_file']:
         integrator.calculate(args['stats_tests_file'])
     else:
-        integrator.calculate()
+        integrator.calculate(args['core_computation_results_file'])

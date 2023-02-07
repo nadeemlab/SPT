@@ -34,11 +34,13 @@ class PhenotypeProximityAnalysisIntegrator:
         # self.cell_proximity_tests = None
         # self.cached_table = None
 
-    def calculate(self):
+    def calculate(self, core_computation_results_files):
         """
         Performs statistical comparison tests and writes results to file.
         """
         logger.info('(Should do integration phase.)')
+        for filename in core_computation_results_files:
+            logger.info('Will consider file %s', filename)
         # logger.info(
         #     'Doing %s phenotype proximity workflow integration phase.',
         #     'balanced' if self.computational_design.balanced else 'unbalanced',

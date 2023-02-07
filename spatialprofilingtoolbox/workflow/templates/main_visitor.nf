@@ -31,7 +31,7 @@ process generate_run_information {
      --workflow="${workflow}" \
      --study-name="${study_name}" \
      --database-config-file="${db_config_file}" \
-     --job-specification-table=job_specification_table.csv
+     --job-specification-table=job_specification_table.csv ;
     """
 }
 
@@ -69,6 +69,7 @@ process core_job {
 
     output:
     path "performance_report${job_index}.csv",         emit: performance_report
+    path "core_computation_results${job_index}.file",  emit: core_computation_results
 
     script:
     """
@@ -76,8 +77,9 @@ process core_job {
      --workflow="${workflow}" \
      --study-name="${study_name}" \
      --job-index="${job_index}" \
-     --performance-report-filename=performancereport${job_index}.csv \
-     --database-config-file=${db_config_file}
+     --performance-report-filename=performance_report${job_index}.csv \
+     --database-config-file=${db_config_file} \
+     --results-file=core_computation_results${job_index}.file
     """
 }
 
@@ -109,10 +111,12 @@ process aggregate_results {
     val workflow
     val study_name
     path 'performance_report.md'
+    path all_core_computation_results
 
     script:
     """
     spt workflow aggregate-core-results \
+     ${all_core_computation_results} \
      --workflow="${workflow}" \
      --study-name="${study_name}" \
      --database-config-file=${db_config_file}
@@ -176,5 +180,6 @@ workflow {
         workflow_ch,
         study_name_ch,
         final_performance_report_ch,
+        core_job_results_ch.core_computation_results.collect(),
     )
 }

@@ -44,9 +44,9 @@ class ProximityJobGenerator:
             FROM specimen_collection_process scp
             JOIN study_component sc ON sc.component_study=scp.study
             WHERE sc.primary_study=%s
+            AND EXISTS (SELECT sdmp.identifier FROM specimen_data_measurement_process sdmp WHERE sdmp.specimen=scp.specimen)
             ORDER BY scp.specimen
-            ;
-            '''
+            ;            '''
             cursor.execute(query, (self.study_name,))
             rows = cursor.fetchall()
             cursor.close()

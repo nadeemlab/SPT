@@ -29,12 +29,14 @@ class PhenotypeProximityCoreJob:
         database_config_file: str='',
         performance_report_filename: str='',
         job_index: str='',
+        results_file: str='',
         **kwargs  # pylint: disable=unused-argument
     ):
         self.study_name = study_name
         self.database_config_file = database_config_file
         self.performance_report_filename = performance_report_filename
         self.timer = PerformanceTimer()
+        self.results_file = results_file
         self.job_index = job_index
         self.sample_identifier = self.lookup_sample()
 
@@ -54,6 +56,9 @@ class PhenotypeProximityCoreJob:
         self._calculate()
         logger.info('Completed core calculator job.')
         self.wrap_up_timer()
+
+        with open(self.results_file, 'wt', encoding='utf-8') as file:
+            file.write(f'Example contents. Job index: {self.job_index}')
 
     def wrap_up_timer(self):
         """

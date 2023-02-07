@@ -13,7 +13,7 @@ SettingArgumentName = Literal['workflow', 'metrics database', 'source file ident
                               'database config', 'file manifest', 'study name', 'job_index']
 FileArgumentName = Literal['phenotypes file', 'channels file', 'compartments file',
                            'study file', 'outcomes file', 'subjects file', 'diagnosis file',
-                           'interventions file', 'performance report']
+                           'interventions file', 'performance report', 'results file']
 
 
 def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileArgumentName]):
@@ -84,4 +84,7 @@ def add_file_argument(parser, name: FileArgumentName):
                             type=str, required=False)
     if name == 'performance report':
         parser.add_argument('--performance-report-filename', dest='performance_report_filename',
+                            type=str, required=False)
+    if name == 'results file':
+        parser.add_argument('--results-file', dest='results_file',
                             type=str, required=False)

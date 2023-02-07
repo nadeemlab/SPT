@@ -11,6 +11,8 @@ from spatialprofilingtoolbox.workflow.common.logging.performance_timer import Pe
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import \
     PhenotypeProximityDesign
+from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
+    ProximityJobGenerator
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -23,17 +25,23 @@ class PhenotypeProximityCoreJob:
 
     def __init__(
         self,
-        sample_identifier: str='',
         study_name: str='',
         database_config_file: str='',
         performance_report_filename: str='',
+        job_index: str='',
         **kwargs  # pylint: disable=unused-argument
     ):
-        self.sample_identifier = sample_identifier
         self.study_name = study_name
         self.database_config_file = database_config_file
         self.performance_report_filename = performance_report_filename
         self.timer = PerformanceTimer()
+        self.job_index = job_index
+        self.sample_identifier = self.lookup_sample()
+
+    def lookup_sample(self):
+        generator = ProximityJobGenerator(self.study_name, self.database_config_file)
+        samples = {sample : i for i, sample in enumerate(generator.retrieve_sample_identifiers())}
+        return samples[int(self.job_index)]
 
     def get_performance_report_filename(self):
         return self.performance_report_filename
@@ -53,6 +61,7 @@ class PhenotypeProximityCoreJob:
         Concludes low-level performance metric collection for this job.
         """
         df = self.timer.report(organize_by='fraction')
+        logger.info('Report to: %s', self.get_performance_report_filename())
         df.to_csv(self.get_performance_report_filename(), index=False)
 
     def get_number_cells_to_be_processed(self):

@@ -75,6 +75,7 @@ process core_job {
     spt workflow core-job \
      --workflow="${workflow}" \
      --study-name="${study_name}" \
+     --job-index="${job_index}" \
      --performance-report-filename=performancereport${job_index}.txt \
      --database-config-file=${db_config_file}
     """

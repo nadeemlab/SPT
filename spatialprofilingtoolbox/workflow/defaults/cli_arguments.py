@@ -10,7 +10,7 @@ from spatialprofilingtoolbox import get_workflow_names
 
 SettingArgumentName = Literal['workflow', 'metrics database', 'source file identifier',
                               'source file name', 'sample', 'outcome', 'dichotomize',
-                              'database config', 'file manifest', 'study name']
+                              'database config', 'file manifest', 'study name', 'job_index']
 FileArgumentName = Literal['phenotypes file', 'channels file', 'compartments file',
                            'study file', 'outcomes file', 'subjects file', 'diagnosis file',
                            'interventions file', 'performance report']
@@ -54,6 +54,8 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
         parser.add_argument('--study-name', dest='study_name', type=str, required=False,
                             help='The name of the study/dataset to do the workflow computation'
                                  ' over.')
+    if name == 'job index':
+        parser.add_argument('--job-index', dest='job_index', type=str, required=False)
 
 
 def add_file_argument(parser, name: FileArgumentName):

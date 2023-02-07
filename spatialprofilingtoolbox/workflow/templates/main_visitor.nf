@@ -148,11 +148,17 @@ workflow {
         .initialization_flag
         .set{ initialization_flag_ch }
 
+
+    job_specifications_ch
+        .map{ row -> row[0] }
+        .collect()
+        .set(job_indices_ch)
+
     core_job(
         initialization_flag_ch,
         workflow_ch,
         study_name_ch,
-        job_specifications_ch,
+        job_indices_ch,
     )
         .set { core_job_results_ch }
 

@@ -22,24 +22,24 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
 
     if name == 'workflow':
         parser.add_argument('--workflow', dest='workflow', choices=get_workflow_names(),
-                            required=True)
+                            required=False)
     if name == 'metrics database':
         parser.add_argument('--metrics-database-filename', dest='metrics_database_filename',
                             type=str, required=False,
                             help='Filename for sqlite database file storing intermediate results.')
     if name == 'source file identifier':
         parser.add_argument('--input-file-identifier', dest='input_file_identifier', type=str,
-                            required=True,
+                            required=False,
                             help='An input file identifier, as it appears in the file manifest.')
     if name == 'source file name':
-        parser.add_argument('--input-filename', dest='input_filename', type=str, required=True)
+        parser.add_argument('--input-filename', dest='input_filename', type=str, required=False)
     if name == 'sample':
         parser.add_argument('--sample-identifier', dest='sample_identifier', type=str,
-                            required=True,
+                            required=False,
                             help='The sample identifier associated with the given input file, as '
                             'it appears in the file manifest.')
     if name == 'outcome':
-        parser.add_argument('--outcome', dest='outcome', type=str, required=True,
+        parser.add_argument('--outcome', dest='outcome', type=str, required=False,
                             help='The outcome assignment for the sample associated with the given '
                             'input file.')
     if name == 'dichotomize':

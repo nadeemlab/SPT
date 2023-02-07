@@ -86,7 +86,9 @@ class PhenotypeProximityCoreJob:
 
         Aggregates and writes counts to database.
         """
-        logger.info('(Should do proximity metric here.')
+        self.timer.record_timepoint('Started dummy calculation.')
+        logger.info('(Should do proximity metric here.)')
+        self.timer.record_timepoint('Stopped dummy calculation.')
 
         # logger.info(
         #     'Started core calculation, %s, for %s.',

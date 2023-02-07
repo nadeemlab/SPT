@@ -7,6 +7,7 @@ The core calculator for the proximity calculation on a single source file.
 # import numpy as np
 # from sklearn.neighbors import BallTree
 
+from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import \
@@ -99,6 +100,15 @@ class PhenotypeProximityCoreJob:
 
         Aggregates and writes counts to database.
         """
+        self.timer.record_timepoint('Start pulling data for one sample.')
+        bundle = FeatureMatrixExtractor.extract(database_config_file=self.database_config_file,
+                                                specimen=self.sample_identifier)
+        self.timer.record_timepoint('Finished pulling data for one sample.')
+        study_name = list(bundle.keys())[0]
+        _, sample = list(bundle[study_name]['feature matrices'].items())
+        df = sample['dataframe']
+        logger.info('Dataframe created: %s', df.head())
+
         self.timer.record_timepoint('Started dummy calculation.')
         logger.info('(Should do proximity metric here.)')
         self.timer.record_timepoint('Stopped dummy calculation.')

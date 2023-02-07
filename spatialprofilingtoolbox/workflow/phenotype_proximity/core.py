@@ -105,7 +105,7 @@ class PhenotypeProximityCoreJob:
                                                 specimen=self.sample_identifier)
         self.timer.record_timepoint('Finished pulling data for one sample.')
         study_name = list(bundle.keys())[0]
-        _, sample = list(bundle[study_name]['feature matrices'].items())
+        _, sample = list(bundle[study_name]['feature matrices'].items())[0]
         df = sample['dataframe']
         logger.info('Dataframe created: %s', df.head())
 

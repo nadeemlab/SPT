@@ -151,8 +151,7 @@ workflow {
 
     job_specifications_ch
         .map{ row -> row[0] }
-        .collect()
-        .set(job_indices_ch)
+        .set{job_indices_ch}
 
     core_job(
         initialization_flag_ch,

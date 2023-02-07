@@ -11,9 +11,7 @@ as discriminators of selected correlates.
 """
 from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import WorkflowModules
 
-from \
-    spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.dataset_designs.adi_dataset_design import ADIDatasetDesign
 
 from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import ProximityJobGenerator
@@ -28,7 +26,7 @@ from spatialprofilingtoolbox.workflow.phenotype_proximity.integrator import \
 components = WorkflowModules(
     generator=ProximityJobGenerator,
     initializer=PhenotypeProximityInitializer,
-    dataset_design=HALOCellMetadataDesign,
+    dataset_design=ADIDatasetDesign,
     computational_design=PhenotypeProximityDesign,
     core_job=PhenotypeProximityCoreJob,
     integrator=PhenotypeProximityAnalysisIntegrator,

@@ -5,7 +5,6 @@ cp $FM file_manifest.tsv.bak
 (cat file_manifest.tsv.bak | grep -vE '(0_2|0_3|6_2|6_3|6_4)') > $FM
 
 spt workflow configure --local --workflow='phenotype proximity' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container
-cat nextflow.config #ed
 nextflow run .
 
 cp file_manifest.tsv.bak $FM

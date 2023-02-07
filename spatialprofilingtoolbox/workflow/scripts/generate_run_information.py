@@ -57,8 +57,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not exists(args.file_manifest_file):
-        raise FileNotFoundError(args.file_manifest_file)
+    if args.use_file_based_data_model:
+        if not exists(args.file_manifest_file):
+            raise FileNotFoundError(args.file_manifest_file)
 
     try:
         workflows = {name: get_workflow(name) for name in get_workflow_names()}

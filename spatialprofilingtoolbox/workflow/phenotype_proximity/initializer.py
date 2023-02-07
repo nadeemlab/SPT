@@ -1,5 +1,6 @@
 """The initializer for the phenotype proximity workflow."""
 from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
+from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
 
 
 class PhenotypeProximityInitializer(Initializer):
@@ -12,4 +13,4 @@ class PhenotypeProximityInitializer(Initializer):
 
     @staticmethod
     def solicit_cli_arguments(parser):
-        pass
+        add_argument(parser, 'study name')

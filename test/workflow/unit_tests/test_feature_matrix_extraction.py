@@ -112,13 +112,19 @@ if __name__ == '__main__':
     test_expression_vectors(test_study)
     test_stratification(test_study)
 
-    one_sample_bundle = FeatureMatrixExtractor.extract('../db/.spt_db.config.container', specimen='lesion 6_1')
+    one_sample_bundle = FeatureMatrixExtractor.extract('../db/.spt_db.config.container',
+                                                       specimen='lesion 6_1')
     one_sample_study = get_study(one_sample_bundle)
     test_one_sample_set(one_sample_study)
     test_feature_matrix_schemas(one_sample_study)
     test_channels(one_sample_study)
-    test_expression_vectors(test_study)
+    test_expression_vectors(one_sample_study)
 
     FeatureMatrixExtractor.redact_dataframes(matrix_bundle)
     print('\nMetadata "bundle" with dataframes removed:')
     print(json.dumps(matrix_bundle, indent=2))
+
+    print('\n... and in the one-sample case:')
+    FeatureMatrixExtractor.redact_dataframes(one_sample_bundle)
+    print('\nMetadata "bundle" with dataframes removed:')
+    print(json.dumps(one_sample_bundle, indent=2))

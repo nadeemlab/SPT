@@ -7,10 +7,11 @@ cp $FM file_manifest.tsv.bak
 spt workflow configure --local --workflow='phenotype proximity' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container
 nextflow run .
 
+status=$?
+
 cp file_manifest.tsv.bak $FM
 rm file_manifest.tsv.bak
 
-status=$?
 rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
 if [ $? -gt 0 ] ;

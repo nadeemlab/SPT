@@ -19,10 +19,23 @@ class ProximityJobGenerator:
     this package).
     """
 
-    def __init__(self, database_config_file):
+    def __init__(self, study_name, database_config_file):
         self.database_config_file = database_config_file
+        self.study_name = self.validate_study_name(study_name)
 
-    def retrieve_sample_identifiers(self, study_name):
+    def validate_study_name(self, study_name):
+        with DatabaseConnectionMaker(database_config_file=self.database_config_file) as maker:
+            connection = maker.get_connection()
+            cursor = connection.cursor()
+            query = 'SELECT DISTINCT primary_study FROM study_component ;'
+            cursor.execute(query, (study_name,))
+            rows = cursor.fetchall()
+            cursor.close()
+        if study_name in [row[0] for row in rows]:
+            return study_name
+        raise ValueError(f'Could not locate study named: {study_name}')
+
+    def retrieve_sample_identifiers(self):
         with DatabaseConnectionMaker(database_config_file=self.database_config_file) as maker:
             connection = maker.get_connection()
             cursor = connection.cursor()
@@ -34,18 +47,16 @@ class ProximityJobGenerator:
             ORDER BY scp.specimen
             ;
             '''
-            cursor.execute(query, (study_name,))
+            cursor.execute(query, (self.study_name,))
             rows = cursor.fetchall()
             cursor.close()
         return [row[0] for row in rows]
 
-    def write_job_specification_table(self,
-                                      study_name,
-                                      job_specification_table_filename):
+    def write_job_specification_table(self, job_specification_table_filename):
         """
         Prepares the job specification table for the orchestrator.
         """
-        samples = self.retrieve_sample_identifiers(study_name)
+        samples = self.retrieve_sample_identifiers()
         rows = [
             {
                 'job_index': i,

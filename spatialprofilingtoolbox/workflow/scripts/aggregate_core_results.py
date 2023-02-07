@@ -50,7 +50,7 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
 
     integrator = get_integrator(**args)
-    if 'stats_tests_file' in args:
+    if 'stats_tests_file' in args and args['stats_tests_file']:
         integrator.calculate(args['stats_tests_file'])
     else:
         integrator.calculate()

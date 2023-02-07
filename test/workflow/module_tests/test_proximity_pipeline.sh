@@ -5,6 +5,8 @@ nextflow run .
 
 status=$?
 
+cat work/*/*/.command.log
+
 rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
 if [ $? -gt 0 ] ;

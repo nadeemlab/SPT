@@ -76,7 +76,7 @@ process core_job {
      --workflow="${workflow}" \
      --study-name="${study_name}" \
      --job-index="${job_index}" \
-     --performance-report-filename=performancereport${job_index}.txt \
+     --performance-report-filename=performancereport${job_index}.csv \
      --database-config-file=${db_config_file}
     """
 }

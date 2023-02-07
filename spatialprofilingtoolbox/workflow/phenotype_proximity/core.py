@@ -40,8 +40,7 @@ class PhenotypeProximityCoreJob:
 
     def lookup_sample(self):
         generator = ProximityJobGenerator(self.study_name, self.database_config_file)
-        samples = {sample : i for i, sample in enumerate(generator.retrieve_sample_identifiers())}
-        return samples[int(self.job_index)]
+        return generator.retrieve_sample_identifiers()[int(self.job_index)]
 
     def get_performance_report_filename(self):
         return self.performance_report_filename

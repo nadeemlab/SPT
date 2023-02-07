@@ -58,7 +58,7 @@ class PhenotypeProximityCoreJob:
     def get_number_cells_to_be_processed(self):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
-            cursor = connection.get_cursor()
+            cursor = connection.cursor()
             cursor.execute('''
             SELECT COUNT(*)
             FROM specimen_collection_process scp

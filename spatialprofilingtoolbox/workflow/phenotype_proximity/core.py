@@ -44,6 +44,7 @@ class PhenotypeProximityCoreJob:
         self.results_file = results_file
         self.job_index = job_index
         self.sample_identifier = self.lookup_sample()
+        self.channel_symbols_by_column_name = None
         self.phenotype_names = None
         self.tree = None
 
@@ -120,7 +121,7 @@ class PhenotypeProximityCoreJob:
         logger.info('Named phenotypes: ')
         logger.info(signatures)
 
-        channels = sorted(channel_symbols_by_column_name.keys())
+        channels = sorted(self.channel_symbols_by_column_name.keys())
         singleton_signatures = [{'positive' : [column_name], 'negative' : []}
                                 for column_name in channels]
         all_signatures = singleton_signatures + signatures
@@ -228,7 +229,4 @@ class PhenotypeProximityCoreJob:
         bundle = [df, self.channel_symbols_by_column_name]
         with open(self.results_file, 'wb') as file:
             pickle.dump(bundle, file)
-
-        df.to_csv(self.results_file, sep='\t', index=False)
-
         logger.info('Computed metrics: %s', df.head(1000))

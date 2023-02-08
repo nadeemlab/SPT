@@ -53,31 +53,33 @@ class PhenotypeProximityAnalysisIntegrator:
         return name
 
     def export_feature_values(self, core_computation_results_files, data_analysis_study):
-        subjects = ProximityJobGenerator.retrieve_sample_identifiers_from_db(
-            self.study_name, self.database_config_file)
         with ADIFeaturesUploader(
             database_config_file=self.database_config_file,
             data_analysis_study=data_analysis_study,
             derivation_method=self.describe_feature_derivation_method(),
             specifier_number=3,
         ) as feature_uploader:
-            for subject, results_file in zip(subjects, core_computation_results_files):
-                with open(results_file, 'rb') as file:
-                    feature_values, channel_symbols_by_column_name = pickle.load(file)
-                for _, row in feature_values.iterrows():
-                    specifiers = (
-                        self.phenotype_identifier_lookup(row['Phenotype 1'],
-                                                         channel_symbols_by_column_name),
-                        self.phenotype_identifier_lookup(row['Phenotype 2'],
-                                                         channel_symbols_by_column_name),
-                        row['Pixel radius'])
-                    value = row['Proximity']
-                    feature_uploader.stage_feature_value(specifiers, subject, value)
+            self.send_features_to_uploader(feature_uploader, core_computation_results_files)
             feature_uploader.upload()
+
+    def send_features_to_uploader(self, feature_uploader, core_computation_results_files):
+        subjects = ProximityJobGenerator.retrieve_sample_identifiers_from_db(
+            self.study_name, self.database_config_file)
+        for subject, results_file in zip(subjects, core_computation_results_files):
+            with open(results_file, 'rb') as file:
+                feature_values, channel_symbols_by_column_name = pickle.load(file)
+            for _, row in feature_values.iterrows():
+                specifiers = (self.phenotype_identifier_lookup(row['Phenotype 1'],
+                              channel_symbols_by_column_name),
+                              self.phenotype_identifier_lookup(row['Phenotype 2'],
+                              channel_symbols_by_column_name),
+                              row['Pixel radius'])
+                value = row['Proximity']
+                feature_uploader.stage_feature_value(specifiers, subject, value)
 
     def phenotype_identifier_lookup(self, handle, channel_symbols_by_column_name):
         if re.match(r'^\d+$', handle):
-            return 'cell_phenotype ${handle}'
+            return f'cell_phenotype ${handle}'
         if re.match(r'^F\d+$', handle):
             channel_symbol = channel_symbols_by_column_name[handle]
             return channel_symbol

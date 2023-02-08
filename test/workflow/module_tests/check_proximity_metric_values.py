@@ -93,7 +93,7 @@ def main():
             WHERE qfv.feature=%s AND qfv.subject=%s
             ''', (specifications[row[0]], row[4]))
             result = cursor.fetchall()
-            value = result[0][0]
+            value = float(result[0][0])
             cases.append((row[5], value))
         cursor.close()
     for case in cases:

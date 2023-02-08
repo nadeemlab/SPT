@@ -204,16 +204,16 @@ class PhenotypeProximityCoreJob:
         try:
             loc = cells.set_index(multiindex).index.get_loc(value)
         except KeyError:
-            return [False,] * cells.shape[1]
+            return np.ndarray([False,] * cells.shape[1])
+        if isinstance(loc, np.ndarray):
+            return loc
         if isinstance(loc, slice):
             range1 = [False,]*(loc.start - 0)
             range2 = [True,]*(loc.stop - loc.start)
             range3 = [False,]*(cells.shape[1] - loc.stop)
-            return range1 + range2 + range3
-        if isinstance(loc, np.ndarray):
-            return loc
+            return np.ndarray(range1 + range2 + range3)
         if isinstance(loc, int):
-            return [i == loc for i in range(cells.shape[1])]
+            return np.ndarray([i == loc for i in range(cells.shape[1])])
         raise ValueError(f'Could not select by index: {multiindex}. Got: {loc}')
 
     def get_value_and_multiindex(self, signature):

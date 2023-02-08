@@ -4,7 +4,7 @@
                        cell_phenotype        4
              cell_phenotype_criterion       27
                      chemical_species       26
-                  data_analysis_study        1
+                  data_analysis_study        2
                             data_file        2
                             diagnosis        2
        diagnostic_selection_criterion        0
@@ -25,7 +25,7 @@ histological_structure_identification      200
     specimen_data_measurement_process        2
            specimen_measurement_study        1
                                 study        1
-                      study_component        3
+                      study_component        4
                  study_contact_person        1
                               subject        2
   two_cohort_feature_association_test        0

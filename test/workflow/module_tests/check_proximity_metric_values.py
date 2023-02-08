@@ -37,7 +37,7 @@ def retrieve_cell_phenotype_identifier(description_string, lookup):
         return list(signature)[0][0]
     for key, value in lookup.items():
         if value == signature:
-            return key
+            return f'cell_phenotype {key}'
     raise KeyError(f'Could not figure out {description_string}. '
                     f'Looked for {signature} in values of: {lookup}')
 
@@ -59,17 +59,20 @@ def retrieve_specification_identifiers(feature_values, database_config_file):
             connection = dcm.get_connection()
             cursor = connection.cursor()
             cursor.execute('''
-            SELECT * FROM feature_specifier fs
-            WHERE (fs.specifier=%s AND fs.ordinality='1')
-            OR (fs.specifier=%s AND fs.ordinality='2')
-            OR (fs.specifier=%s AND fs.ordinality='3')
-            ''', (f'cell_phenotype {cp1}', f'cell_phenotype {cp2}', specifier3))
+            SELECT DISTINCT fs1.feature_specification FROM
+            feature_specifier fs1
+            JOIN feature_specifier fs2 ON fs1.feature_specification=fs2.feature_specification
+            JOIN feature_specifier fs3 ON fs1.feature_specification=fs3.feature_specification
+            WHERE (fs1.specifier=%s AND fs1.ordinality='1')
+            AND (fs2.specifier=%s AND fs2.ordinality='2')
+            AND (fs3.specifier=%s AND fs3.ordinality='3')
+            ;
+            ''', (cp1, cp2, specifier3))
             results = cursor.fetchall()
-            cursor.close()
-            if len(results) != 3:
+            if len(results) != 1:
+                print(results)
                 raise ValueError(f'Could not locate feature specification for row {row}')
-            if not all(result[0] == results[0][0] for result in results):
-                raise ValueError('Referenced feature specifications not all the same.')
+            cursor.close()
             specifications[row[0]] = results[0][0]
     return specifications
 

@@ -2,6 +2,8 @@
 The core calculator for the proximity calculation on a single source file.
 """
 # from itertools import combinations
+import warnings
+import pickle
 
 import pandas as pd
 import numpy as np
@@ -16,13 +18,15 @@ from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
     ProximityJobGenerator
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
 logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityCoreJob:
     """Core/parallelizable functionality for the phenotype proximity workflow."""
     computational_design: PhenotypeProximityDesign
-    radius = 60
+    radii = [60, 120]
 
     def __init__(
         self,
@@ -111,9 +115,8 @@ class PhenotypeProximityCoreJob:
 
         self.create_ball_tree(cells)
 
-        channel_symbols_by_column_name = bundle[study_name]['channel symbols by column name']
-        phenotype_identifiers, signatures = self.get_named_phenotype_signatures(
-            channel_symbols_by_column_name)
+        self.channel_symbols_by_column_name = bundle[study_name]['channel symbols by column name']
+        phenotype_identifiers, signatures = self.get_named_phenotype_signatures()
         logger.info('Named phenotypes: ')
         logger.info(signatures)
 
@@ -123,14 +126,14 @@ class PhenotypeProximityCoreJob:
         all_signatures = singleton_signatures + signatures
 
         cases = self.get_cases(all_signatures)
-        proximity_metrics = [
-            self.compute_proximity_metric_for_signature_pair(s1, s2, cells) for s1, s2 in cases]
+        proximity_metrics = [self.compute_proximity_metric_for_signature_pair(s1, s2, r, cells)
+                             for s1, s2, r in cases]
         self.write_table(proximity_metrics, self.get_cases(channels + phenotype_identifiers))
 
     def create_ball_tree(self, cells):
         self.tree = BallTree(cells[['pixel x', 'pixel y']].to_numpy())
 
-    def get_named_phenotype_signatures(self, context):
+    def get_named_phenotype_signatures(self):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
@@ -146,7 +149,7 @@ class PhenotypeProximityCoreJob:
             ''', (self.study_name,))
             rows = cursor.fetchall()
             cursor.close()
-        lookup = {value : key for key, value in context.items()}
+        lookup = {value : key for key, value in self.channel_symbols_by_column_name.items()}
         criteria = pd.DataFrame(rows, columns=['phenotype', 'name', 'channel', 'polarity'])
         self.phenotype_names = {row['phenotype'] : row['name'] for _, row in criteria.iterrows()}
         criteria = criteria[['phenotype', 'channel', 'polarity']]
@@ -163,29 +166,21 @@ class PhenotypeProximityCoreJob:
         return identifiers, [by_identifier[i] for i in identifiers]
 
     def get_cases(self, items):
-        return [(s1, s2) for s1 in items for s2 in items]
+        return [(s1, s2, radius) for s1 in items for s2 in items
+                for radius in PhenotypeProximityCoreJob.radii]
 
-    def compute_proximity_metric_for_signature_pair(self, signature1, signature2, cells):
-        logger.info('Doing case: %s, %s', signature1, signature2)
-        value1, multiindex1 = self.get_value_and_multiindex(signature1)
-        value2, multiindex2 = self.get_value_and_multiindex(signature2)
+    def compute_proximity_metric_for_signature_pair(self, signature1, signature2, radius, cells):
+        mask1 = self.get_mask(cells, signature1)
+        mask2 = self.get_mask(cells, signature2)
 
-        logger.info('Value 1: %s', value1)
-        logger.info('Multiindex 1: %s', multiindex1)
+        source_count = sum(mask1)
+        if source_count == 0:
+            return None
 
-        logger.info('Value 2: %s', value2)
-        logger.info('Multiindex 2: %s', multiindex2)
-
-        mask1 = self.get_mask(cells, multiindex1, value1)
-        mask2 = self.get_mask(cells, multiindex2, value2)
-
-        logger.info('Mask 1: %s', mask1)
-        logger.info('Mask 2: %s', mask2)
-
-        source_cell_locations = cells.loc(axis=0)[mask1][['pixel x', 'pixel y']]
+        source_cell_locations = cells.loc()[mask1][['pixel x', 'pixel y']]
         within_radius_indices_list = self.tree.query_radius(
             source_cell_locations,
-            PhenotypeProximityCoreJob.radius,
+            radius,
             return_distance=False,
         )
 
@@ -193,27 +188,25 @@ class PhenotypeProximityCoreJob:
             sum(mask2[index] for index in list(indices))
             for indices in within_radius_indices_list
         ]
-        logger.info('Counts: %s', counts)
         count = sum(counts) - sum(mask1 & mask2)
         source_count = sum(mask1)
-        if source_count > 0:
-            return count / source_count
-        return None
+        return count / source_count
 
-    def get_mask(self, cells, multiindex, value):
+    def get_mask(self, cells, signature):
+        value, multiindex = self.get_value_and_multiindex(signature)
         try:
             loc = cells.set_index(multiindex).index.get_loc(value)
         except KeyError:
-            return np.asarray([False,] * cells.shape[1])
+            return np.asarray([False,] * cells.shape[0])
         if isinstance(loc, np.ndarray):
             return loc
         if isinstance(loc, slice):
             range1 = [False,]*(loc.start - 0)
             range2 = [True,]*(loc.stop - loc.start)
-            range3 = [False,]*(cells.shape[1] - loc.stop)
+            range3 = [False,]*(cells.shape[0] - loc.stop)
             return np.asarray(range1 + range2 + range3)
         if isinstance(loc, int):
-            return np.asarray([i == loc for i in range(cells.shape[1])])
+            return np.asarray([i == loc for i in range(cells.shape[0])])
         raise ValueError(f'Could not select by index: {multiindex}. Got: {loc}')
 
     def get_value_and_multiindex(self, signature):
@@ -225,10 +218,17 @@ class PhenotypeProximityCoreJob:
 
     def write_table(self, proximity_metrics, cases):
         if len(proximity_metrics) != len(cases):
-            raise ValueError('Number of computed features not equal to numbero cases.')
+            raise ValueError('Number of computed features not equal to number of cases.')
         df = pd.DataFrame(list(zip([case[0] for case in cases],
                                    [case[1] for case in cases],
+                                   [case[2] for case in cases],
                                    proximity_metrics)),
-                          columns=['Phenotype 1', 'Phenotype 2', 'Proximity'])
+                          columns=['Phenotype 1', 'Phenotype 2', 'Pixel radius', 'Proximity'])
+
+        bundle = [df, self.channel_symbols_by_column_name]
+        with open(self.results_file, 'wb') as file:
+            pickle.dump(bundle, file)
+
         df.to_csv(self.results_file, sep='\t', index=False)
-        logger.info('Computed metrics: %s', df.head())
+
+        logger.info('Computed metrics: %s', df.head(1000))

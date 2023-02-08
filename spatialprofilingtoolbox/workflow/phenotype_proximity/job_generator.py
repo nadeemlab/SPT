@@ -36,7 +36,12 @@ class ProximityJobGenerator:
         raise ValueError(f'Could not locate study named: {study_name}')
 
     def retrieve_sample_identifiers(self):
-        with DatabaseConnectionMaker(database_config_file=self.database_config_file) as maker:
+        return ProximityJobGenerator.retrieve_sample_identifiers_from_db(
+            self.study_name, self.database_config_file)
+
+    @staticmethod
+    def retrieve_sample_identifiers_from_db(study_name, database_config_file):
+        with DatabaseConnectionMaker(database_config_file=database_config_file) as maker:
             connection = maker.get_connection()
             cursor = connection.cursor()
             query = '''
@@ -47,7 +52,7 @@ class ProximityJobGenerator:
             AND EXISTS (SELECT sdmp.identifier FROM specimen_data_measurement_process sdmp WHERE sdmp.specimen=scp.specimen)
             ORDER BY scp.specimen
             ;            '''
-            cursor.execute(query, (self.study_name,))
+            cursor.execute(query, (study_name,))
             rows = cursor.fetchall()
             cursor.close()
         return [row[0] for row in rows]

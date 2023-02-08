@@ -229,4 +229,4 @@ class PhenotypeProximityCoreJob:
         bundle = [df, self.channel_symbols_by_column_name]
         with open(self.results_file, 'wb') as file:
             pickle.dump(bundle, file)
-        logger.info('Computed metrics: %s', df.head(1000))
+        logger.info('Computed metrics: %s', df.to_string())

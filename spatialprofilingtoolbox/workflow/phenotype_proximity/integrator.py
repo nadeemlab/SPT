@@ -5,6 +5,7 @@ from typing import Optional
 import datetime
 import re
 import pickle
+from math import isnan
 
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import ProximityJobGenerator
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -75,11 +76,19 @@ class PhenotypeProximityAnalysisIntegrator:
                               channel_symbols_by_column_name),
                               row['Pixel radius'])
                 value = row['Proximity']
-                feature_uploader.stage_feature_value(specifiers, subject, value)
+                if self.validate_value(value):
+                    feature_uploader.stage_feature_value(specifiers, subject, value)
+
+    def validate_value(self, value):
+        if (not isinstance(value, float)) and (not isinstance(value, int)):
+            return False
+        if isnan(value):
+            return False
+        return True
 
     def phenotype_identifier_lookup(self, handle, channel_symbols_by_column_name):
         if re.match(r'^\d+$', handle):
-            return f'cell_phenotype ${handle}'
+            return f'cell_phenotype {handle}'
         if re.match(r'^F\d+$', handle):
             channel_symbol = channel_symbols_by_column_name[handle]
             return channel_symbol

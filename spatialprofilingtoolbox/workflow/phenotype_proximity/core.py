@@ -183,7 +183,7 @@ class PhenotypeProximityCoreJob:
         mask1 = self.get_mask(cells, multiindex1, value1)
         mask2 = self.get_mask(cells, multiindex2, value2)
 
-        logger.info('Mask 1: %s', mask2)
+        logger.info('Mask 1: %s', mask1)
         logger.info('Mask 2: %s', mask2)
 
         source_cell_locations = cells.loc(axis=0)[mask1][['pixel x', 'pixel y']]
@@ -211,9 +211,9 @@ class PhenotypeProximityCoreJob:
         except KeyError:
             return (False,) * cells.shape[1]
         if isinstance(loc, slice):
-            range1 = (False,)*(loc.start - 0)
-            range2 = (True,)*(loc.stop - loc.start)
-            range3 = (False,)*(cells.shape[1] - loc.stop)
+            range1 = [False,]*(loc.start - 0)
+            range2 = [True,]*(loc.stop - loc.start)
+            range3 = [False,]*(cells.shape[1] - loc.stop)
             return range1 + range2 + range3
         if isinstance(loc, np.ndarray):
             return loc

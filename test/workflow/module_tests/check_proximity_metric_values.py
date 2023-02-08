@@ -52,6 +52,8 @@ def retrieve_specification_identifiers(feature_values, database_config_file):
 
         cp1 = retrieve_cell_phenotype_identifier(specifier1, lookup)
         cp2 = retrieve_cell_phenotype_identifier(specifier2, lookup)
+        print(f'Retrieved cell phenotype identifier: {cp1}')
+        print(f'Retrieved cell phenotype identifier: {cp2}')
 
         with DatabaseConnectionMaker(database_config_file) as dcm:
             connection = dcm.get_connection()
@@ -61,7 +63,7 @@ def retrieve_specification_identifiers(feature_values, database_config_file):
             WHERE (fs.specifier=%s AND fs.ordinality='1')
             OR (fs.specifier=%s AND fs.ordinality='2')
             OR (fs.specifier=%s AND fs.ordinality='3')
-            ''', (cp1, cp2, specifier3))
+            ''', (f'cell_phenotype {cp1}', f'cell_phenotype {cp2}', specifier3))
             results = cursor.fetchall()
             cursor.close()
             if len(results) != 3:

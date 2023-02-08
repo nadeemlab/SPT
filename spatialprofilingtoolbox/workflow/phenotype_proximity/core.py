@@ -4,7 +4,7 @@ The core calculator for the proximity calculation on a single source file.
 # from itertools import combinations
 
 import pandas as pd
-# import numpy as np
+import numpy as np
 from sklearn.neighbors import BallTree
 
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
@@ -215,7 +215,7 @@ class PhenotypeProximityCoreJob:
             range2 = (True,)*(loc.stop - loc.start)
             range3 = (False,)*(cells.shape[1] - loc.stop)
             return range1 + range2 + range3
-        if isinstance(loc, list):
+        if isinstance(loc, np.ndarray):
             return loc
         if isinstance(loc, int):
             return [i == loc for i in range(cells.shape[1])]

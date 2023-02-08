@@ -186,7 +186,7 @@ class PhenotypeProximityCoreJob:
         logger.info('Mask 1: %s', mask2)
         logger.info('Mask 2: %s', mask2)
 
-        source_cell_locations = cells.loc[mask1][['pixel x', 'pixel y']]
+        source_cell_locations = cells.loc(axis=0)[mask1][['pixel x', 'pixel y']]
         within_radius_indices_list = self.tree.query_radius(
             source_cell_locations,
             PhenotypeProximityCoreJob.radius,

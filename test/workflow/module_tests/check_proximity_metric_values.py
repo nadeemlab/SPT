@@ -31,7 +31,7 @@ def lookup_all_cell_phenotype_signatures(database_config_file):
     }
 
 def retrieve_cell_phenotype_identifier(description_string, lookup):
-    signature = set((re.sub(r'\+\-', '', token), re.search('[\+\-]', token).group(0))
+    signature = set((re.sub(r'[\+\-]', '', token), re.search(r'[\+\-]', token).group(0))
                     for token in description_string.split(' '))
     if len(signature) == 1:
         return list(signature)[0][0]

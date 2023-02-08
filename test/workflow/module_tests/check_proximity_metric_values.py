@@ -84,6 +84,7 @@ def main():
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()
         cursor = connection.cursor()
+        cases = []
         for _, rowseries in feature_values.iterrows():
             row = list(rowseries)
             cursor.execute('''
@@ -91,10 +92,18 @@ def main():
             FROM quantitative_feature_value qfv
             WHERE qfv.feature=%s AND qfv.subject=%s
             ''', (specifications[row[0]], row[4]))
-            value = cursor.fetchall()[0][0]
-            if value != row[5]:
-                raise ValueError(f'Expected {value} got {row[5]}')
+            result = cursor.fetchall()
+            value = result[0][0]
+            print(row)
+            print(result)
+            print((row[5], value))
+            cases.append((row[5], value))
         cursor.close()
+    for case in cases:
+        print(case)
+    for case in cases:
+        if case[0] != case[1]:
+            raise ValueError(f'Expected {case[0]} got {case[1]}')
 
 if __name__=='__main__':
     main()

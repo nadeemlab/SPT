@@ -7,7 +7,6 @@ import re
 import pickle
 from math import isnan
 
-from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import ProximityJobGenerator
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -63,11 +62,9 @@ class PhenotypeProximityAnalysisIntegrator:
             self.send_features_to_uploader(feature_uploader, core_computation_results_files)
 
     def send_features_to_uploader(self, feature_uploader, core_computation_results_files):
-        subjects = ProximityJobGenerator.retrieve_sample_identifiers_from_db(
-            self.study_name, self.database_config_file)
-        for subject, results_file in zip(subjects, core_computation_results_files):
+        for results_file in core_computation_results_files:
             with open(results_file, 'rb') as file:
-                feature_values, channel_symbols_by_column_name = pickle.load(file)
+                feature_values, channel_symbols_by_column_name, sample_identifier = pickle.load(file)
             for _, row in feature_values.iterrows():
                 specifiers = (self.phenotype_identifier_lookup(row['Phenotype 1'],
                               channel_symbols_by_column_name),
@@ -76,7 +73,7 @@ class PhenotypeProximityAnalysisIntegrator:
                               row['Pixel radius'])
                 value = row['Proximity']
                 if self.validate_value(value):
-                    feature_uploader.stage_feature_value(specifiers, subject, value)
+                    feature_uploader.stage_feature_value(specifiers, sample_identifier, value)
 
     def validate_value(self, value):
         if (not isinstance(value, float)) and (not isinstance(value, int)):

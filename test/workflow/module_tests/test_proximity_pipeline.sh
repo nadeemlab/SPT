@@ -20,6 +20,6 @@ diff current_status.txt module_tests/expected_proximity_record_counts.txt
 status=$?
 rm current_status.txt
 
-# Also check a few specific values of the metric
+python module_tests/check_proximity_metric_values.py ../db/.spt_db.config.container
 
 exit $status

@@ -61,7 +61,6 @@ class PhenotypeProximityAnalysisIntegrator:
             specifier_number=3,
         ) as feature_uploader:
             self.send_features_to_uploader(feature_uploader, core_computation_results_files)
-            feature_uploader.upload()
 
     def send_features_to_uploader(self, feature_uploader, core_computation_results_files):
         subjects = ProximityJobGenerator.retrieve_sample_identifiers_from_db(

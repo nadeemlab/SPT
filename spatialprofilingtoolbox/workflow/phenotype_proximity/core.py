@@ -209,7 +209,7 @@ class PhenotypeProximityCoreJob:
         try:
             loc = cells.set_index(multiindex).index.get_loc(value)
         except KeyError:
-            return (False,) * cells.shape[1]
+            return [False,] * cells.shape[1]
         if isinstance(loc, slice):
             range1 = [False,]*(loc.start - 0)
             range2 = [True,]*(loc.stop - loc.start)

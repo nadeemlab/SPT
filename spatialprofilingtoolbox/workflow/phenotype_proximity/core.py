@@ -168,9 +168,7 @@ class PhenotypeProximityCoreJob:
     def compute_proximity_metric_for_signature_pair(self, signature1, signature2, cells):
         logger.info('Doing case: %s, %s', signature1, signature2)
         value1, multiindex1 = self.get_value_and_multiindex(signature1)
-        value2, multiindex2 = self.get_value_and_multiindex(signature1)
-
-        logger.info(cells.head())
+        value2, multiindex2 = self.get_value_and_multiindex(signature2)
 
         logger.info('Value 1: %s', value1)
         logger.info('Multiindex 1: %s', multiindex1)
@@ -193,7 +191,6 @@ class PhenotypeProximityCoreJob:
             return_distance=False,
         )
 
-        logger.info('Queried indices: %s', within_radius_indices_list)
         counts = [
             sum(mask2[index] for index in list(indices))
             for indices in within_radius_indices_list

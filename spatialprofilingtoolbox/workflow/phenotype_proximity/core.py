@@ -187,15 +187,19 @@ class PhenotypeProximityCoreJob:
         logger.info('Mask 2: %s', mask2)
 
         source_cell_locations = cells.loc[mask1][['pixel x', 'pixel y']]
-        within_radius_indices = self.tree.query_radius(
+        within_radius_indices_list = self.tree.query_radius(
             source_cell_locations,
             PhenotypeProximityCoreJob.radius,
             return_distance=False,
         )
 
-        logger.info('Queried indices: %s', within_radius_indices)
-        count = sum(mask2[index] for index in within_radius_indices)
-        count = count - sum(mask1 & mask2)
+        logger.info('Queried indices: %s', within_radius_indices_list)
+        counts = [
+            sum(mask2[index] for index in list(indices))
+            for indices in within_radius_indices_list
+        ]
+        logger.info('Counts: %s', counts)
+        count = sum(counts) - sum(mask1 & mask2)
         source_count = sum(mask1)
         if source_count > 0:
             return count / source_count
@@ -215,7 +219,7 @@ class PhenotypeProximityCoreJob:
             return loc
         if isinstance(loc, int):
             return [i == loc for i in range(cells.shape[1])]
-        raise ValueError(f'Could not select by index: {multiindex}')
+        raise ValueError(f'Could not select by index: {multiindex}. Got: {loc}')
 
     def get_value_and_multiindex(self, signature):
         value = (1,) * len(signature['positive']) + (0,) * len(signature['negative'])

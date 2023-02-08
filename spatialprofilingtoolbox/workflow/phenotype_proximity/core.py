@@ -112,7 +112,8 @@ class PhenotypeProximityCoreJob:
         self.create_ball_tree(cells)
 
         channel_symbols_by_column_name = bundle[study_name]['channel symbols by column name']
-        phenotype_identifiers, signatures = self.get_named_phenotype_signatures(channel_symbols_by_column_name)
+        phenotype_identifiers, signatures = self.get_named_phenotype_signatures(
+            channel_symbols_by_column_name)
         logger.info('Named phenotypes: ')
         logger.info(signatures)
 
@@ -165,12 +166,25 @@ class PhenotypeProximityCoreJob:
         return [(s1, s2) for s1 in items for s2 in items]
 
     def compute_proximity_metric_for_signature_pair(self, signature1, signature2, cells):
-        value1 = (1,) * len(signature1['positive']) + (0,) * len(signature1['negative'])
-        mask1 = cells.set_index([*signature1['positive'],
-                                 *signature1['negative']]).index.get_loc(value1)
-        value2 = (1,) * len(signature2['positive']) + (0,) * len(signature2['negative'])
-        mask2 = cells.set_index([*signature2['positive'],
-                                 *signature2['negative']]).index.get_loc(value2)
+        logger.info('Doing case: %s, %s', signature1, signature2)
+        value1, multiindex1 = self.get_value_and_multiindex(signature1)
+        value2, multiindex2 = self.get_value_and_multiindex(signature1)
+
+        logger.info(cells.head())
+
+        logger.info('Value 1: %s', value1)
+        logger.info('Multiindex 1: %s', multiindex1)
+        logger.info('Index 1: %s', cells.set_index(multiindex1).index)
+
+        logger.info('Value 2: %s', value2)
+        logger.info('Multiindex 2: %s', multiindex2)
+        logger.info('Index 2: %s', cells.set_index(multiindex2).index)
+
+        mask1 = self.get_mask(cells, multiindex1, value1)
+        mask2 = self.get_mask(cells, multiindex2, value2)
+
+        logger.info('Mask 1: %s', mask2)
+        logger.info('Mask 2: %s', mask2)
 
         source_cell_locations = cells.loc[mask1][['pixel x', 'pixel y']]
         within_radius_indices = self.tree.query_radius(
@@ -178,12 +192,37 @@ class PhenotypeProximityCoreJob:
             PhenotypeProximityCoreJob.radius,
             return_distance=False,
         )
+
+        logger.info('Queried indices: %s', within_radius_indices)
         count = sum(mask2[index] for index in within_radius_indices)
         count = count - sum(mask1 & mask2)
         source_count = sum(mask1)
         if source_count > 0:
             return count / source_count
         return None
+
+    def get_mask(self, cells, multiindex, value):
+        try:
+            loc = cells.set_index(multiindex).index.get_loc(value)
+        except KeyError:
+            return (False,) * cells.shape[1]
+        if isinstance(loc, slice):
+            range1 = (False,)*(loc.start - 0)
+            range2 = (True,)*(loc.stop - loc.start)
+            range3 = (False,)*(cells.shape[1] - loc.stop)
+            return range1 + range2 + range3
+        if isinstance(loc, list):
+            return loc
+        if isinstance(loc, int):
+            return [i == loc for i in range(cells.shape[1])]
+        raise ValueError(f'Could not select by index: {multiindex}')
+
+    def get_value_and_multiindex(self, signature):
+        value = (1,) * len(signature['positive']) + (0,) * len(signature['negative'])
+        if len(value) == 1:
+            value = value[0]
+        multiindex = [*signature['positive'], *signature['negative']]
+        return value, multiindex
 
     def write_table(self, proximity_metrics, cases):
         if len(proximity_metrics) != len(cases):

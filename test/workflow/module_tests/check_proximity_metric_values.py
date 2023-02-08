@@ -88,6 +88,7 @@ def main():
             row = list(rowseries)
             cursor.execute('''
             SELECT qfv.value
+            FROM quantitative_feature_value qfv
             WHERE qfv.feature=%s AND qfv.subject=%s
             ''', (specifications[row[0]], row[4]))
             value = cursor.fetchall()[0][0]

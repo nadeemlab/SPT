@@ -172,11 +172,9 @@ class PhenotypeProximityCoreJob:
 
         logger.info('Value 1: %s', value1)
         logger.info('Multiindex 1: %s', multiindex1)
-        logger.info('Index 1: %s', cells.set_index(multiindex1).index)
 
         logger.info('Value 2: %s', value2)
         logger.info('Multiindex 2: %s', multiindex2)
-        logger.info('Index 2: %s', cells.set_index(multiindex2).index)
 
         mask1 = self.get_mask(cells, multiindex1, value1)
         mask2 = self.get_mask(cells, multiindex2, value2)

@@ -50,16 +50,6 @@ class PhenotypeProximityCoreJob:
     def get_performance_report_filename(self):
         return self.performance_report_filename
 
-    def calculate(self):
-        """
-        The main calculation of this job, to be called by pipeline orchestration.
-        """
-        logger.info('Started core calculator job.')
-        self.log_job_info()
-        self._calculate()
-        logger.info('Completed core calculator job.')
-        self.wrap_up_timer()
-
     def wrap_up_timer(self):
         """
         Concludes low-level performance metric collection for this job.
@@ -96,15 +86,20 @@ class PhenotypeProximityCoreJob:
     def solicit_cli_arguments(parser):
         pass
 
+    def calculate(self):
+        """
+        The main calculation of this job, to be called by pipeline orchestration.
+        """
+        logger.info('Started core calculator job.')
+        self.log_job_info()
+        self._calculate()
+        logger.info('Completed core calculator job.')
+        self.wrap_up_timer()
+
     def _calculate(self):
         self.calculate_proximity()
 
     def calculate_proximity(self):
-        """
-        The main exposed entrypoint into the calculation.
-
-        Aggregates and writes counts to database.
-        """
         self.timer.record_timepoint('Start pulling data for one sample.')
         bundle = FeatureMatrixExtractor.extract(database_config_file=self.database_config_file,
                                                 specimen=self.sample_identifier)
@@ -115,104 +110,24 @@ class PhenotypeProximityCoreJob:
         logger.info('Dataframe pulled: %s', cells.head())
 
         self.create_ball_tree(cells)
+
         channel_symbols_by_column_name = bundle[study_name]['channel symbols by column name']
         phenotype_identifiers, signatures = self.get_named_phenotype_signatures(channel_symbols_by_column_name)
         logger.info('Named phenotypes: ')
         logger.info(signatures)
 
         channels = sorted(channel_symbols_by_column_name.keys())
-        singleton_signatures = [{'positive' : [column_name]} for column_name in channels]
+        singleton_signatures = [{'positive' : [column_name], 'negative' : []}
+                                for column_name in channels]
         all_signatures = singleton_signatures + signatures
+
         cases = self.get_cases(all_signatures)
         proximity_metrics = [
             self.compute_proximity_metric_for_signature_pair(s1, s2, cells) for s1, s2 in cases]
         self.write_table(proximity_metrics, self.get_cases(channels + phenotype_identifiers))
 
-    def write_table(self, proximity_metrics, cases):
-        if len(proximity_metrics) != len(cases):
-            raise ValueError('Number of computed features not equal to numbero cases.')
-        df = pd.DataFrame(list(zip([case[0] for case in cases],
-                                   [case[1] for case in cases],
-                                   proximity_metrics)),
-                          columns=['Phenotype 1', 'Phenotype 2', 'Proximity'])
-        df.to_csv(self.results_file, sep='\t', index=False)
-        logger.info('Computed metrics: %s', df.head())
-
-    def get_cases(self, items):
-        return [(s1, s2) for s1 in items for s2 in items]
-
     def create_ball_tree(self, cells):
         self.tree = BallTree(cells[['pixel x', 'pixel y']].to_numpy())
-
-    def compute_proximity_metric_for_signature_pair(self, signature1, signature2, cells):
-        value1 = (1,) * len(signature1['positive']) + (0,) * len(signature1['negative'])
-        mask1 = cells.set_index([*signature1['positive'],
-                                 *signature1['negative']]).index.get_loc(value1)
-        value2 = (1,) * len(signature2['positive']) + (0,) * len(signature2['negative'])
-        mask2 = cells.set_index([*signature2['positive'],
-                                 *signature2['negative']]).index.get_loc(value2)
-
-        source_cell_locations = cells.loc[mask1][['pixel x', 'pixel y']]
-        within_radius_indices = self.tree.query_radius(
-            source_cell_locations,
-            PhenotypeProximityCoreJob.radius,
-            return_distance=False,
-        )
-        count = sum(mask2[index] for index in within_radius_indices)
-        count = count - sum(mask1 & mask2)
-        source_count = sum(mask1)
-        if source_count > 0:
-            return count / source_count
-        return None
-
-        # radius_limited_counts = self.do_aggregation_counting(
-        #     cells,
-        #     cell_pairs,
-        #     phenotype_indices,
-        #     compartment_indices,
-        # )
-        # self.write_cell_pair_counts(radius_limited_counts)
-        # self.timer.record_timepoint('Finished writing pair counts')
-
-    #         for radius in PhenotypeProximityCoreJob.get_radii_of_interest():
-    #             count = 0
-    #             source_count = 0
-    #             area = 1
-    #             for _, (fov_index, table) in enumerate(cells.items()):
-    #                 rows = phenotype_indices[fov_index][source]
-    #                 cols = phenotype_indices[fov_index][target]
-    #                 source_cell_locations = table.loc[rows][['x value', 'y value']]
-    #                 self.timer.record_timepoint('Retrieved cell locations')
-    #                 if source_cell_locations.shape[0] == 0:
-    #                     continue
-    #                 indices = tree.query_radius(
-    #                     source_cell_locations,
-    #                     radius,
-    #                     return_distance=False,
-    #                 )
-    #                 target_indices = set(i for i in range(len(cols)) if cols[i])
-    #                 additional = sum(len(target_indices.intersection(i)) for i in indices)
-
-    #                 if np.isnan(additional):
-    #                     continue
-
-    #                 count += additional
-    #                 count -= sum(rows & cols)
-    #                 source_count += sum(rows)
-            # feature_value = count / source_count  # See GitHub issue #20
-            # records.append([
-            #     self.sample_identifier,
-            #     self.input_filename,
-            #     self.outcome,
-            #     source,
-            #     target,
-            #     compartment,
-            #     radius,
-            #     feature_value,
-            #     source_count,
-            # ])
-    #     return records
-
 
     def get_named_phenotype_signatures(self, context):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
@@ -236,13 +151,46 @@ class PhenotypeProximityCoreJob:
         criteria = criteria[['phenotype', 'channel', 'polarity']]
 
         def make_signature(df):
-            return {
-                'positive' : [lookup[r['channel']] for r in df.iterrows() if r['polarity'] == 1],
-                'negative' : [lookup[r['channel']] for r in df.iterrows() if r['polarity'] == 0],
-            }
-        signatures = criteria.groupby(['phenotype']).aggregate(
-            signatures=pd.NamedAgg(aggfunc=make_signature))
+            return pd.Series({'signature' : {
+                'positive' : [lookup[r['channel']] for _, r in df.iterrows() if r['polarity'] == 1],
+                'negative' : [lookup[r['channel']] for _, r in df.iterrows() if r['polarity'] == 0],
+            }})
+        signatures = criteria.groupby(['phenotype']).apply(make_signature)
         by_identifier = {
             str(phenotype) : row['signature'] for phenotype, row in signatures.iterrows()}
         identifiers = sorted(by_identifier.keys())
         return identifiers, [by_identifier[i] for i in identifiers]
+
+    def get_cases(self, items):
+        return [(s1, s2) for s1 in items for s2 in items]
+
+    def compute_proximity_metric_for_signature_pair(self, signature1, signature2, cells):
+        value1 = (1,) * len(signature1['positive']) + (0,) * len(signature1['negative'])
+        mask1 = cells.set_index([*signature1['positive'],
+                                 *signature1['negative']]).index.get_loc(value1)
+        value2 = (1,) * len(signature2['positive']) + (0,) * len(signature2['negative'])
+        mask2 = cells.set_index([*signature2['positive'],
+                                 *signature2['negative']]).index.get_loc(value2)
+
+        source_cell_locations = cells.loc[mask1][['pixel x', 'pixel y']]
+        within_radius_indices = self.tree.query_radius(
+            source_cell_locations,
+            PhenotypeProximityCoreJob.radius,
+            return_distance=False,
+        )
+        count = sum(mask2[index] for index in within_radius_indices)
+        count = count - sum(mask1 & mask2)
+        source_count = sum(mask1)
+        if source_count > 0:
+            return count / source_count
+        return None
+
+    def write_table(self, proximity_metrics, cases):
+        if len(proximity_metrics) != len(cases):
+            raise ValueError('Number of computed features not equal to numbero cases.')
+        df = pd.DataFrame(list(zip([case[0] for case in cases],
+                                   [case[1] for case in cases],
+                                   proximity_metrics)),
+                          columns=['Phenotype 1', 'Phenotype 2', 'Proximity'])
+        df.to_csv(self.results_file, sep='\t', index=False)
+        logger.info('Computed metrics: %s', df.head())

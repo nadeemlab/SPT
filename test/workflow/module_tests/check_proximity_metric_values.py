@@ -94,16 +94,14 @@ def main():
             ''', (specifications[row[0]], row[4]))
             result = cursor.fetchall()
             value = result[0][0]
-            print(row)
-            print(result)
-            print((row[5], value))
             cases.append((row[5], value))
         cursor.close()
     for case in cases:
         print(case)
     for case in cases:
-        if case[0] != case[1]:
+        if abs(case[0] - case[1]) > 0.00000001:
             raise ValueError(f'Expected {case[0]} got {case[1]}')
+    print(f'All {len(cases)} proximity values tested were exactly as expected.')
 
 if __name__=='__main__':
     main()

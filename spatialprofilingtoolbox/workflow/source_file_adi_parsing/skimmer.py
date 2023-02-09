@@ -103,7 +103,7 @@ class DataSkimmer(DatabaseConnectionMaker):
             files['samples'],
             study_name,
         )
-        CellManifestSetParser(fields, elementary_phenotype_file=files['channels']).parse(
+        CellManifestSetParser(fields).parse(
             self.get_connection(),
             files['file manifest'],
             study_name,
@@ -114,7 +114,7 @@ class DataSkimmer(DatabaseConnectionMaker):
             files['phenotypes'],
             study_name,
         )
-        CellManifestsParser(fields).parse(
+        CellManifestsParser(fields, elementary_phenotype_file=files['channels']).parse(
             self.get_connection(),
             files['file manifest'],
             chemical_species_identifiers_by_symbol,

@@ -38,14 +38,6 @@ class HALOImportDesign:
     def get_performance_report_filename(self):
         return self.metrics_database_filename.rstrip('.db') + '.csv'
 
-    @staticmethod
-    def uses_database():
-        return True
-
-    @staticmethod
-    def is_database_visitor():
-        return False
-
     def get_all_phenotype_signatures(self):
         """
         :return: The "signatures" for all the composite phenotypes described by the

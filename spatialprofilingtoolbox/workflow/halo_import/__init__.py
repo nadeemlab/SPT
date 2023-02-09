@@ -11,6 +11,7 @@ from spatialprofilingtoolbox.workflow.halo_import.core import HALOImportCoreJob
 from spatialprofilingtoolbox.workflow.halo_import.integrator import HALOImportIntegrator
 
 components = WorkflowModules(
+    is_database_visitor=False,
     generator=JobGenerator,
     initializer=HALOImportInitializer,
     dataset_design=HALOCellMetadataDesign,

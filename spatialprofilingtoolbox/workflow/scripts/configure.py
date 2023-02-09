@@ -41,7 +41,7 @@ def write_config_file(variables):
 
 
 def write_pipeline_script(variables):
-    if workflows[variables['workflow']].computational_design.is_database_visitor():
+    if workflows[variables['workflow']].is_database_visitor:
         pipeline_file = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE_VISITOR)
     else:
         contents = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE + '.jinja')
@@ -223,9 +223,8 @@ if __name__ == '__main__':
     if args.database_config_file:
         config_file = expanduser(args.database_config_file)
         if exists(config_file):
-            if workflows[config_variables['workflow']].computational_design.uses_database():
-                config_variables['db_config_file'] = config_file
-                config_variables['db_config'] = True
+            config_variables['db_config_file'] = config_file
+            config_variables['db_config'] = True
 
     if args.local:
         config_variables['executor'] = 'local'
@@ -246,7 +245,7 @@ if __name__ == '__main__':
 
     config_variables['current_working_directory'] = getcwd()
 
-    if not workflows[config_variables['workflow']].computational_design.is_database_visitor():
+    if not workflows[config_variables['workflow']].is_database_visitor:
         process_filename_inputs(config_variables, args)
 
     write_config_file(config_variables)

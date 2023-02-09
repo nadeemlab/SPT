@@ -24,14 +24,6 @@ class ComputationalVisitorDesign:
     def get_performance_report_filename(self):
         return 'performance_report.csv'
 
-    @staticmethod
-    def uses_database():
-        return True
-
-    @staticmethod
-    def is_database_visitor():
-        return True
-
     def get_all_phenotype_signatures(self):
         pass
 

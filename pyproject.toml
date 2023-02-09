@@ -98,9 +98,9 @@ packages = [
     "spatialprofilingtoolbox.workflow.computational_visitor",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.tabular_import",
+    "spatialprofilingtoolbox.workflow.tabular_import.parsing",
     "spatialprofilingtoolbox.workflow.common",
     "spatialprofilingtoolbox.workflow.common.logging",
-    "spatialprofilingtoolbox.workflow.source_file_adi_parsing",
     "spatialprofilingtoolbox.workflow.templates"
 ]
 

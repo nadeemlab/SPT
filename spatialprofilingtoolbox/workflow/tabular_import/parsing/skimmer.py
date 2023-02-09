@@ -6,20 +6,20 @@ from typing import Optional
 from psycopg2 import sql
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cell_manifests import \
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.cell_manifests import \
     CellManifestsParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.channels import \
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.channels import \
     ChannelsPhenotypesParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.cell_manifest_set import \
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.cell_manifest_set import \
     CellManifestSetParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.samples import SamplesParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.subjects import SubjectsParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.sample_stratification import \
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.samples import SamplesParser
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.subjects import SubjectsParser
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.sample_stratification import \
     SampleStratificationCreator
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.interventions import \
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.interventions import \
     InterventionsParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.diagnosis import DiagnosisParser
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.study import StudyParser
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.diagnosis import DiagnosisParser
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyParser
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
-from spatialprofilingtoolbox.workflow.source_file_adi_parsing.skimmer import DataSkimmer
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.skimmer import DataSkimmer
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

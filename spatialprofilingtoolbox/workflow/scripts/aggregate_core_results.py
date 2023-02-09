@@ -34,8 +34,8 @@ if __name__ == '__main__':
         SuggestExtrasException
     try:
         from \
-            spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.\
-                halo_cell_metadata_design import TabularCellMetadataDesign
+            spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
+                import TabularCellMetadataDesign
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

@@ -14,7 +14,7 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-def halo_data_type():
+def cell_manifest_data_type():
     return TabularCellMetadataDesign.get_cell_manifest_descriptor()
 
 
@@ -38,7 +38,7 @@ class CellManifestSetParser(SourceToADIParser):
         """
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
         cell_manifests = file_metadata[
-            file_metadata['Data type'] == halo_data_type()
+            file_metadata['Data type'] == cell_manifest_data_type()
         ]
 
         measurement_study = SourceToADIParser.get_measurement_study_name(study_name)
@@ -50,7 +50,7 @@ class CellManifestSetParser(SourceToADIParser):
         )
 
         for _, cell_manifest in cell_manifests.iterrows():
-            logger.debug('Considering "%s" file "%s" .', halo_data_type(), cell_manifest['File ID'])
+            logger.debug('Considering "%s" file "%s" .', cell_manifest_data_type(), cell_manifest['File ID'])
             sample_id = cell_manifest['Sample ID']
             filename = cell_manifest['File name']
             sha256_hash = compute_sha256(filename)
@@ -75,7 +75,7 @@ class CellManifestSetParser(SourceToADIParser):
                     sha256_hash,
                     cell_manifest['File name'],
                     file_format,
-                    halo_data_type(),
+                    cell_manifest_data_type(),
                     getsize(filename),
                     measurement_process_identifier,
                 ),

@@ -76,7 +76,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog='spt db guess-channels-from-object-files',
-        description='Attempt to extract channel information from a list of HALO cell manifest '
+        description='Attempt to extract channel information from a list of tabular cell manifest '
         'files.'
     )
 

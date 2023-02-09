@@ -7,8 +7,8 @@ import re
 import shapefile
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.file_io import compute_sha256
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
@@ -26,7 +26,7 @@ class CellManifestsParser(SourceToADIParser):
 
     def __init__(self, fields, **kwargs):
         super().__init__(fields, **kwargs)
-        self.dataset_design = HALOCellMetadataDesign(**kwargs)
+        self.dataset_design = TabularCellMetadataDesign(**kwargs)
 
     def insert_chunks(self, cursor, cells, timer, sha256_hash, channel_symbols,
                       chemical_species_identifiers_by_symbol,

@@ -21,7 +21,7 @@ class Initializer(ABC):
         pass
 
 
-class HALOImportInitializer(Initializer):
+class TabularImportInitializer(Initializer):
     """Initial process for main data import workflow; does most of the import."""
 
     @staticmethod

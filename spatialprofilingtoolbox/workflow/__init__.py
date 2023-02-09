@@ -17,7 +17,7 @@ import importlib
 __version__ = '0.5.0'
 
 workflow_names_and_subpackages = {
-    'HALO import': 'halo_import',
+    'tabular import': 'tabular_import',
     'phenotype proximity': 'phenotype_proximity',
 }
 

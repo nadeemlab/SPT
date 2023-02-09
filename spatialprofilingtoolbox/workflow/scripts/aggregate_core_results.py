@@ -35,11 +35,11 @@ if __name__ == '__main__':
     try:
         from \
             spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.\
-                halo_cell_metadata_design import HALOCellMetadataDesign
+                halo_cell_metadata_design import TabularCellMetadataDesign
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
-    HALOCellMetadataDesign.solicit_cli_arguments(parser)
+    TabularCellMetadataDesign.solicit_cli_arguments(parser)
 
     args = vars(parser.parse_args())
 

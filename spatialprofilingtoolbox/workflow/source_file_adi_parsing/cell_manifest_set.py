@@ -5,8 +5,8 @@ import re
 import pandas as pd
 
 from \
-    spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+    spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.file_io import compute_sha256
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -15,7 +15,7 @@ logger = colorized_logger(__name__)
 
 
 def halo_data_type():
-    return HALOCellMetadataDesign.get_cell_manifest_descriptor()
+    return TabularCellMetadataDesign.get_cell_manifest_descriptor()
 
 
 def create_specimen_data_measurement_process_record(
@@ -46,7 +46,7 @@ class CellManifestSetParser(SourceToADIParser):
         cursor = connection.cursor()
         cursor.execute(
             self.generate_basic_insert_query('specimen_measurement_study'),
-            (measurement_study, 'Multiplexed imaging', '', 'HALO', '', ''),
+            (measurement_study, 'Multiplexed imaging', '', 'Tabular', '', ''),
         )
 
         for _, cell_manifest in cell_manifests.iterrows():

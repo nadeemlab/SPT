@@ -10,8 +10,8 @@ from typing import Optional
 import pandas as pd
 
 from \
-    spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+    spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.standalone_utilities.configuration_settings import get_version
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -85,7 +85,7 @@ class RunConfigurationReporter:
         return int(10 * number_bytes / 1000000) / 10
 
     def retrieve_cell_manifest_sizes(self, file_manifest_file):
-        validate = HALOCellMetadataDesign.validate_cell_manifest_descriptor
+        validate = TabularCellMetadataDesign.validate_cell_manifest_descriptor
         return [
             getsize(row['File name'])
             for i, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()
@@ -93,7 +93,7 @@ class RunConfigurationReporter:
         ]
 
     def retrieve_cell_manifest_sample_identifiers(self, file_manifest_file):
-        validate = HALOCellMetadataDesign.validate_cell_manifest_descriptor
+        validate = TabularCellMetadataDesign.validate_cell_manifest_descriptor
         return [
             row['Sample ID']
             for i, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()

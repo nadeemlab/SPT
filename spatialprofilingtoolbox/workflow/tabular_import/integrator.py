@@ -4,7 +4,7 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class HALOImportIntegrator:
+class TabularImportIntegrator:
     """
     Wrap-up phase of the data import workflow. Currently no wrap-up is needed.
     """

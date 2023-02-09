@@ -3,14 +3,14 @@ import re
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class HALOImportDesign:
+class TabularImportDesign:
     """Overall workflow design parameters for import workflow."""
 
     def __init__(self,
@@ -19,7 +19,7 @@ class HALOImportDesign:
                  composite_phenotypes_file: str = '',
                  **kwargs,  # pylint: disable=unused-argument
                  ):
-        self.dataset_design = HALOCellMetadataDesign(
+        self.dataset_design = TabularCellMetadataDesign(
             composite_phenotypes_file=composite_phenotypes_file, **kwargs)
         self.metrics_database_filename = metrics_database_filename
         self.complex_phenotypes = pd.read_csv(composite_phenotypes_file, keep_default_na=False)

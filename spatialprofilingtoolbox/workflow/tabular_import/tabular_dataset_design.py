@@ -1,6 +1,5 @@
 """
-Design parameters for a dataset (often HALO generated) to be imported by the
-main import workflow.
+Design parameters for a tabular dataset to be imported by the main import workflow.
 """
 import pathlib
 import re
@@ -13,10 +12,9 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class HALOCellMetadataDesign:
+class TabularCellMetadataDesign:
     """
-    This class provides the schema necessary to interpret cell metadata manifests
-    exported from the HALO software.
+    This class provides the schema necessary to interpret cell metadata manifests.
     """
 
     def __init__(self,
@@ -33,13 +31,6 @@ class HALOCellMetadataDesign:
         add_argument(parser, 'channels file')
 
     def get_fov_column(self, table=None):
-        """
-        Returns:
-            str:
-                The column name for the column in the HALO-exported CSV which indicates
-                the field of view in which the cell corresponding to a table record
-                appears.
-        """
         column = 'Image Location'
         if not table is None:
             if not column in table.columns:
@@ -98,26 +89,13 @@ class HALOCellMetadataDesign:
     @staticmethod
     def validate_cell_manifest_descriptor(descriptor):
         return descriptor in [
-            HALOCellMetadataDesign.get_cell_manifest_descriptor(),
-            'simulated HALO-exported cell manifest',
+            TabularCellMetadataDesign.get_cell_manifest_descriptor(),
         ]
 
     def get_elementary_phenotype_names(self):
-        """
-        Returns:
-            list:
-                A list of the phenotype or channel names, as they appear in the
-                various header/column names in the HALO-exported CSV files.
-        """
         return list(self.elementary_phenotypes['Name'])
 
     def get_box_limit_column_names(self):
-        """
-        Returns:
-            list:
-                [xmin, xmax, ymin, ymax]. The column names, in reference to the HALO-
-                exported cell manifest CSV, indicating the bounding box for each cell.
-        """
         xmin = 'XMin'
         xmax = 'XMax'
         ymin = 'YMin'
@@ -146,21 +124,9 @@ class HALOCellMetadataDesign:
         return str(value)
 
     def _get_cellular_sites(self):
-        """
-        Returns:
-            list:
-                The string names of the cellular sites pertinent to the HALO-exported
-                CSV. (E.g. "Cytoplasm", "Nucleus", "Membrane".)
-        """
         return ['Cytoplasm', 'Nucleus', 'Membrane']
 
     def get_intensity_column_names(self, with_sites=True):
-        """
-        Returns:
-            list:
-                All column names for columns in the HALO-exported cell manifest CSV for
-                columns which are channel intensities along a given cellular site.
-        """
         columns_by_elementary_phenotype = {}
         sites = self._get_cellular_sites()
         if not with_sites:
@@ -186,7 +152,7 @@ class HALOCellMetadataDesign:
             signature (dict):
                 The keys are typically phenotype names and the values are "+" or "-". If
                 a key is not a phenotype name, it is presumed to be the exact name of
-                one of the columns in the HALO-exported CSV. In this case the value
+                one of the columns in the tabular CSV. In this case the value
                 should be an exact string of one of the cell values of this CSV.
 
         Returns:
@@ -200,21 +166,6 @@ class HALOCellMetadataDesign:
         return name
 
     def get_pandas_signature(self, table, signature) -> list:
-        """
-        Args:
-            table (pd.DataFrame):
-                The HALO cell metadata dataframe, unprocessed.
-            signature (dict):
-                The keys are typically phenotype names and the values are "+" or "-". If
-                a key is not a phenotype name, it is presumed to be the exact name of
-                one of the columns in the HALO-exported CSV. In this case the value
-                should be an exact string of one of the cell values of this CSV.
-
-        Returns:
-            pd.Series:
-                The boolean series indicating the records in table that express the
-                provided signature.
-        """
         if signature is None:
             logger.error(
                 'Can not get subset with no information about signature (None).')
@@ -262,7 +213,7 @@ class HALOCellMetadataDesign:
 
         Returns:
             str:
-                The exact column name for the column in the HALO-exported CSV which
+                The exact column name for the column in the tabular CSV which
                 indicates (boolean) thresholded positivity for the given phenotype.
                 If the key is not a phenotype name, then the key is returned unchanged.
         """
@@ -288,7 +239,7 @@ class HALOCellMetadataDesign:
 
         Returns:
             The corresponding value as it is expected to appear as a table cell value
-            in the HALO-exported CSV.
+            in the CSV.
         """
         special_cases = {
             '+': 1,
@@ -299,18 +250,6 @@ class HALOCellMetadataDesign:
         return value
 
     def get_combined_intensity(self, table, elementary_phenotype):
-        """
-        Args:
-            table (pd.DataFrame):
-                The HALO cell metadata dataframe, unprocessed.
-            elementary_phenotype (str):
-                The name of a phenotype/channel.
-
-        Returns:
-            list:
-                A list representation of the sum of the columns containing the
-                intensities at each cellular site for the given phenotype.
-        """
         intensity_column = self.get_intensity_column_name(elementary_phenotype)
         if intensity_column in table.columns:
             return table[intensity_column]

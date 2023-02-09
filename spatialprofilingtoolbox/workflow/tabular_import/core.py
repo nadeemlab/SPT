@@ -7,8 +7,8 @@ import sqlite3
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
     WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.common.file_io import raw_line_count
@@ -30,7 +30,7 @@ class FileBasedCoreJob(ABC):
         :param computational_design: Design object providing metadata specific to the
             density workflow.
         """
-        self.dataset_design = HALOCellMetadataDesign(**kwargs)
+        self.dataset_design = TabularCellMetadataDesign(**kwargs)
         self.computational_design = kwargs['computational_design']
         self.input_file_identifier = kwargs['input_file_identifier']
         self.input_filename = kwargs['input_filename']
@@ -299,7 +299,7 @@ class FileBasedCoreJob(ABC):
         self.timer.record_timepoint('Done writing FOV lookup')
 
 
-class HALOImportCoreJob(FileBasedCoreJob):
+class TabularImportCoreJob(FileBasedCoreJob):
     """
     The parallelizable (per file) part of the import workflow. Currently this
     kind of a dummy implementation, beacuse a global view of the dataset is

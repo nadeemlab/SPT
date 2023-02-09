@@ -7,6 +7,7 @@ import sqlite3
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.tabular_import.computational_design import TabularImportDesign
 from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
     import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
@@ -31,7 +32,7 @@ class FileBasedCoreJob(ABC):
             density workflow.
         """
         self.dataset_design = TabularCellMetadataDesign(**kwargs)
-        self.computational_design = kwargs['computational_design']
+        self.computational_design = TabularImportDesign(**kwargs)
         self.input_file_identifier = kwargs['input_file_identifier']
         self.input_filename = kwargs['input_filename']
         self.sample_identifier = kwargs['sample_identifier']

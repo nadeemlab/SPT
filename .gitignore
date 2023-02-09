@@ -1,21 +1,22 @@
 # Always present status files
-check-docker-daemon-running
+/check-docker-daemon-running
 status_code
 
 # Generated files
-check-for-docker-credentials
-data-loaded-image-1
-data-loaded-image-1small
-data-loaded-image-1and2
-development-image
+/check-for-docker-credentials
+/data-loaded-image-1
+/data-loaded-image-1small
+/data-loaded-image-1and2
+/development-image
 dist/**
 __pycache__/
 .current_time.txt
-.dockerignore
+/.dockerignore
 .initiation_message_size
+/.initial_time.txt
 *.pyc
 build/*/Dockerfile
-./Dockerfile
+/Dockerfile
 **.whl
 build/*/docker.built
 build/*/requirements.txt

@@ -39,10 +39,6 @@ if __name__ == '__main__':
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
-    computational_designs = [
-        w.computational_design
-        for w in workflows.values()
-    ]
     HALOCellMetadataDesign.solicit_cli_arguments(parser)
 
     args = vars(parser.parse_args())

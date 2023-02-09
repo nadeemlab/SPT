@@ -8,6 +8,8 @@ from typing import Optional
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
+    import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
     import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
@@ -28,7 +30,7 @@ class JobGenerator:
     def __init__(self,
                  input_path: Optional[str] = None,
                  file_manifest_file: Optional[str] = None,
-                 dataset_design_class=None
+                 dataset_design_class=HALOCellMetadataDesign
                  ):
         self.input_path = input_path
         self.dataset_design_class = dataset_design_class

@@ -10,9 +10,6 @@ logger = colorized_logger(__name__)
 
 class Initializer(ABC):
     """Interface for the intializer job for the Nextflow-managed workflows."""
-    def __init__(self, dataset_design=None, computational_design=None, **kwargs): # pylint: disable=unused-argument
-        self.dataset_design = dataset_design
-        self.computational_design = computational_design
 
     @staticmethod
     @abstractmethod
@@ -56,6 +53,4 @@ class HALOImportInitializer(Initializer):
                     'diagnosis': kwargs['diagnosis_file'],
                     'interventions': kwargs['interventions_file'],
                 },
-                dataset_design=self.dataset_design,
-                computational_design=self.computational_design,
             )

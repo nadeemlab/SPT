@@ -23,12 +23,10 @@ class CellManifestsParser(SourceToADIParser):
     """
     Source file parsing for metadata at the level of the cell manifest set.
     """
-    dataset_design: HALOCellMetadataDesign
 
-    def __init__(self, fields, dataset_design, **kwargs):
+    def __init__(self, fields, **kwargs):
         super().__init__(fields, **kwargs)
-        self.using_intensities = False
-        self.dataset_design = dataset_design
+        self.dataset_design = HALOCellMetadataDesign(**kwargs)
 
     def insert_chunks(self, cursor, cells, timer, sha256_hash, channel_symbols,
                       chemical_species_identifiers_by_symbol,
@@ -47,15 +45,6 @@ class CellManifestsParser(SourceToADIParser):
                 'expression_quantification': [],
             }
             timer.record_timepoint('Subset cells dataframe on chunk')
-            if self.using_intensities:
-                intensities = {
-                    symbol: self.dataset_design.get_combined_intensity(
-                        batch_cells, symbol)
-                    for symbol in channel_symbols
-                }
-                timer.record_timepoint('Retrieved intensities on chunk')
-            else:
-                intensities = None
 
             if all(self.dataset_design.get_feature_name(symbol) in batch_cells.columns
                     for symbol in channel_symbols):
@@ -117,13 +106,7 @@ class CellManifestsParser(SourceToADIParser):
                 ))
                 for symbol in channel_symbols:
                     target = chemical_species_identifiers_by_symbol[symbol]
-                    if not intensities is None:
-                        quantity = intensities[symbol][j]
-                        if quantity in [None, '']:
-                            continue
-                        quantity = str(quantity)
-                    else:
-                        quantity = '-1'
+                    quantity = '-1'
                     discrete_value = discretizations[symbol][j]  # type: ignore
                     records['expression_quantification'].append((
                         histological_structure_identifier,
@@ -210,7 +193,6 @@ class CellManifestsParser(SourceToADIParser):
 
     def parse(self,
               connection,
-              computational_design,
               file_manifest_file,
               chemical_species_identifiers_by_symbol):
         """
@@ -255,7 +237,7 @@ class CellManifestsParser(SourceToADIParser):
             connection.commit()
 
         cursor.close()
-        self.wrap_up_timer(timer, computational_design)
+        self.wrap_up_timer(timer)
 
     def get_number_known_cells(self, sha256_hash, cursor):
         query = (
@@ -293,6 +275,6 @@ class CellManifestsParser(SourceToADIParser):
         ascii_representation = encoded.decode('utf-8')
         return ascii_representation
 
-    def wrap_up_timer(self, timer, computational_design):
+    def wrap_up_timer(self, timer):
         df = timer.report(organize_by='fraction')
-        df.to_csv(computational_design.get_performance_report_filename(), index=False)
+        df.to_csv('performance_report.csv', index=False)

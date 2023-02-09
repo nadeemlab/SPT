@@ -7,6 +7,8 @@ import sqlite3
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design\
+    import HALOCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
     WaitingDatabaseContextManager
 from spatialprofilingtoolbox.workflow.common.file_io import raw_line_count
@@ -25,13 +27,10 @@ class FileBasedCoreJob(ABC):
 
     def __init__(self, **kwargs):
         """
-        :param dataset_design: Design object providing metadata about the *kind* of
-            input data being provided.
-
         :param computational_design: Design object providing metadata specific to the
             density workflow.
         """
-        self.dataset_design = kwargs['dataset_design']
+        self.dataset_design = HALOCellMetadataDesign(**kwargs)
         self.computational_design = kwargs['computational_design']
         self.input_file_identifier = kwargs['input_file_identifier']
         self.input_filename = kwargs['input_filename']

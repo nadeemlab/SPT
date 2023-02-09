@@ -68,11 +68,9 @@ if __name__ == '__main__':
 
     Generator = workflows[args.workflow].generator
     if args.use_file_based_data_model:
-        DatasetDesign = workflows[args.workflow].dataset_design
         job_generator = Generator(
             file_manifest_file=args.file_manifest_file,
             input_path=args.input_path,
-            dataset_design_class=DatasetDesign,
         )
         job_generator.write_job_specification_table(
             args.job_specification_table, outcomes_file=args.outcomes_file)

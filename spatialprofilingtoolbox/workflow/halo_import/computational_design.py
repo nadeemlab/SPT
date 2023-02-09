@@ -14,18 +14,15 @@ class HALOImportDesign:
     """Overall workflow design parameters for import workflow."""
 
     def __init__(self,
-                 dataset_design: HALOCellMetadataDesign,
                  metrics_database_filename: str = 'metrics_default.db',
                  dichotomize: bool = False,
                  composite_phenotypes_file: str = '',
                  **kwargs,  # pylint: disable=unused-argument
                  ):
-        self.dataset_design = dataset_design
+        self.dataset_design = HALOCellMetadataDesign(
+            composite_phenotypes_file=composite_phenotypes_file, **kwargs)
         self.metrics_database_filename = metrics_database_filename
-        self.complex_phenotypes = pd.read_csv(
-            composite_phenotypes_file,
-            keep_default_na=False,
-        )
+        self.complex_phenotypes = pd.read_csv(composite_phenotypes_file, keep_default_na=False)
         self.dichotomize = dichotomize
 
     @staticmethod

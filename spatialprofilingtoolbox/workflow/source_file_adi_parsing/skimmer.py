@@ -72,12 +72,7 @@ class DataSkimmer(DatabaseConnectionMaker):
             padded = f"{difference_str:<13}"
             logger.debug('%s %s', padded, table)
 
-    def parse(
-        self,
-        files,
-        dataset_design=None,
-        computational_design=None,
-    ):
+    def parse(self, files):
         if not self.is_connected():
             logger.debug(
                 'No database connection was initialized. Skipping semantic parse.')
@@ -119,9 +114,8 @@ class DataSkimmer(DatabaseConnectionMaker):
             files['phenotypes'],
             study_name,
         )
-        CellManifestsParser(fields, dataset_design).parse(
+        CellManifestsParser(fields).parse(
             self.get_connection(),
-            computational_design,
             files['file manifest'],
             chemical_species_identifiers_by_symbol,
         )

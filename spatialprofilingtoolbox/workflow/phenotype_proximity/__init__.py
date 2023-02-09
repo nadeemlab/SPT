@@ -13,7 +13,7 @@ from spatialprofilingtoolbox.workflow.defaults.workflow_module_exporting import 
 
 from spatialprofilingtoolbox.workflow.dataset_designs.adi_dataset_design import ADIDatasetDesign
 
-from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
+from spatialprofilingtoolbox.workflow.halo_import.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import ProximityJobGenerator
 from spatialprofilingtoolbox.workflow.phenotype_proximity.initializer import \
     PhenotypeProximityInitializer

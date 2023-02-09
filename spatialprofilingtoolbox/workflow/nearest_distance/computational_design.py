@@ -4,10 +4,10 @@ design of the nearest-distance-to-compartment workflow.
 """
 import re
 
-from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflow.halo_import.computational_design import HALOImportDesign
 
 
-class NearestDistanceDesign(ComputationalDesign):
+class NearestDistanceDesign(HALOImportDesign):
     """Overall workflow design for nearest distance to compartment workflow."""
 
     def __init__(self, **kwargs):

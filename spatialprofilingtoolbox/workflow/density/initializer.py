@@ -1,5 +1,5 @@
 """Initializer functionality for the phenotype density workflow."""
-from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
+from spatialprofilingtoolbox.workflow.halo_import.initializer import Initializer
 
 
 class DensityInitializer(Initializer):

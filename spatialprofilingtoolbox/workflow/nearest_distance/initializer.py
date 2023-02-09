@@ -1,5 +1,5 @@
 """The initializer of the nearest distance to compartment workflow."""
-from spatialprofilingtoolbox.workflow.defaults.initializer import Initializer
+from spatialprofilingtoolbox.workflow.halo_import.initializer import Initializer
 
 
 class NearestDistanceInitializer(Initializer):

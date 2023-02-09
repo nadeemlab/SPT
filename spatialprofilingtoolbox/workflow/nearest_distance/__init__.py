@@ -8,7 +8,7 @@ from \
     spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
     import HALOCellMetadataDesign
 
-from spatialprofilingtoolbox.workflow.defaults.job_generator import JobGenerator
+from spatialprofilingtoolbox.workflow.halo_import.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.nearest_distance.initializer import NearestDistanceInitializer
 from spatialprofilingtoolbox.workflow.nearest_distance.core import NearestDistanceCoreJob
 from spatialprofilingtoolbox.workflow.nearest_distance.computational_design import \

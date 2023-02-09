@@ -6,13 +6,13 @@ from scipy.spatial import KDTree
 
 from spatialprofilingtoolbox.workflow.nearest_distance.computational_design import \
     NearestDistanceDesign
-from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
+from spatialprofilingtoolbox.workflow.halo_import.core import FileBasedCoreJob
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class NearestDistanceCoreJob(CoreJob):
+class NearestDistanceCoreJob(FileBasedCoreJob):
     """
     Core/parellelizable functionality for the nearest distance to a compartment
     workflow.

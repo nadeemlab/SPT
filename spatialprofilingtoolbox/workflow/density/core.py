@@ -1,13 +1,13 @@
 """Core/parallelizable functionality for the phenotype density workflow."""
 from spatialprofilingtoolbox.workflow.density.computational_design import DensityDesign
-from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
+from spatialprofilingtoolbox.workflow.halo_import.core import FileBasedCoreJob
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.workflow.density.data_logging import DensityDataLogger
 
 logger = colorized_logger(__name__)
 
 
-class DensityCoreJob(CoreJob):
+class DensityCoreJob(FileBasedCoreJob):
     """Main parallelizable functionality for phenotype density workflow."""
     computational_design: DensityDesign
 

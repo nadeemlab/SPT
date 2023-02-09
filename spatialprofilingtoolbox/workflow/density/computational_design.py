@@ -4,10 +4,10 @@ design of the cell phenotype density analysis workflow.
 """
 import re
 
-from spatialprofilingtoolbox.workflow.defaults.computational_design import ComputationalDesign
+from spatialprofilingtoolbox.workflow.halo_import.computational_design import HALOImportDesign
 
 
-class DensityDesign(ComputationalDesign):
+class DensityDesign(HALOImportDesign):
     """
     The design object.
     """

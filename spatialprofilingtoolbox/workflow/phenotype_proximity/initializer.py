@@ -1,6 +1,6 @@
 """The initializer for the phenotype proximity workflow."""
 from spatialprofilingtoolbox.workflow.halo_import.initializer import Initializer
-from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 
 
 class PhenotypeProximityInitializer(Initializer):

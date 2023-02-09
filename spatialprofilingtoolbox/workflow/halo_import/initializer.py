@@ -1,7 +1,7 @@
 """The initializer of the main data import workflow."""
 from abc import ABC, abstractmethod
 
-from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.workflow.source_file_adi_parsing.skimmer import DataSkimmer
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

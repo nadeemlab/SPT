@@ -4,7 +4,7 @@ debugging) the configuration of a Nextflow-managed workflow before it runs.
 """
 import argparse
 
-from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

@@ -4,7 +4,7 @@ import argparse
 import importlib.resources
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
-from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     import pandas as pd

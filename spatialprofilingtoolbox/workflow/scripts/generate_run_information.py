@@ -6,7 +6,7 @@ Nextflow to run.
 import argparse
 from os.path import exists
 
-from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_workflow

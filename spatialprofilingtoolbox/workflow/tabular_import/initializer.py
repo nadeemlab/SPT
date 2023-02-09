@@ -11,6 +11,9 @@ logger = colorized_logger(__name__)
 class Initializer(ABC):
     """Interface for the intializer job for the Nextflow-managed workflows."""
 
+    def __init__(self, **kwargs):
+        pass
+
     @staticmethod
     @abstractmethod
     def solicit_cli_arguments(parser):

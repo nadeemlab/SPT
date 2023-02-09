@@ -8,8 +8,6 @@ class PhenotypeProximityInitializer(Initializer):
     Initial job for the phenotype proximity metrics computation workflow.
     Currently no such initialization functionality is needed.
     """
-    def __init__(self, **kwargs):
-        super().__init__(self, **kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

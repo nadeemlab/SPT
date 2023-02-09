@@ -97,8 +97,6 @@ packages = [
     "spatialprofilingtoolbox.workflow.defaults",
     "spatialprofilingtoolbox.workflow.computational_visitor",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
-    "spatialprofilingtoolbox.workflow.density",
-    "spatialprofilingtoolbox.workflow.nearest_distance",
     "spatialprofilingtoolbox.workflow.halo_import",
     "spatialprofilingtoolbox.workflow.common",
     "spatialprofilingtoolbox.workflow.common.logging",

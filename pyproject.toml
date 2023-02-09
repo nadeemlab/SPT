@@ -92,8 +92,6 @@ packages = [
     "spatialprofilingtoolbox.db.data_model",
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
-    "spatialprofilingtoolbox.workflow.dataset_designs",
-    "spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging",
     "spatialprofilingtoolbox.workflow.defaults",
     "spatialprofilingtoolbox.workflow.computational_visitor",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",

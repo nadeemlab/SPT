@@ -11,7 +11,7 @@ from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
     import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.file_io import compute_sha256
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+from spatialprofilingtoolbox.workflow.common.file_identifier_schema \
     import get_input_filename_by_identifier
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

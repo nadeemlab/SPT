@@ -9,7 +9,7 @@ class PhenotypeProximityInitializer(Initializer):
     Currently no such initialization functionality is needed.
     """
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(self, **kwargs)
 
     @staticmethod
     def solicit_cli_arguments(parser):

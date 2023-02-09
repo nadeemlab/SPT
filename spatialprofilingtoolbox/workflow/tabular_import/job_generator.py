@@ -10,9 +10,9 @@ import pandas as pd
 
 from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
     import TabularCellMetadataDesign
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+from spatialprofilingtoolbox.workflow.common.file_identifier_schema \
     import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
+from spatialprofilingtoolbox.workflow.common.file_identifier_schema \
     import COMPOSITE_PHENOTYPES_FILE_IDENTIFIER
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

@@ -14,3 +14,6 @@ class PhenotypeProximityInitializer(Initializer):
     @staticmethod
     def solicit_cli_arguments(parser):
         add_argument(parser, 'study name')
+
+    def initialize(self, **kwargs):
+        pass

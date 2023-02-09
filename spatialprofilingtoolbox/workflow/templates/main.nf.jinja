@@ -157,7 +157,7 @@ process report_run_configuration {
 {%- if outcomes %}
      --outcomes-file=${outcomes_file} \{% endif %}
      --elementary-phenotypes-file=${elementary_phenotypes} \
-     --composite-phenotypes-file=${composite_phenotypes}
+     --composite-phenotypes-file=${composite_phenotypes} >& run_configuration.log
     """
 }
 

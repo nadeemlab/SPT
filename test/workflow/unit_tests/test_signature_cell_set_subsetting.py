@@ -3,11 +3,11 @@ import sys
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
+    import TabularCellMetadataDesign
 
 if __name__ == '__main__':
-    dataset_design = HALOCellMetadataDesign(
+    dataset_design = TabularCellMetadataDesign(
         elementary_phenotypes_file=join(
             '..', 'test_data', 'adi_preprocessed_tables/dataset1', 'elementary_phenotypes.csv'),
     )

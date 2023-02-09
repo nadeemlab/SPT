@@ -3,8 +3,8 @@ from os.path import join
 
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
     import get_input_filenames_by_data_type
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.extract_compartments import extract_compartments
 
 
@@ -15,7 +15,7 @@ def test_extract_compartments():
         [
             join('./data', f)
             for f in get_input_filenames_by_data_type(
-                data_type=HALOCellMetadataDesign.get_cell_manifest_descriptor(),
+                data_type=TabularCellMetadataDesign.get_cell_manifest_descriptor(),
                 file_manifest_filename=join('./data', 'file_manifest.tsv'),
             )
         ]

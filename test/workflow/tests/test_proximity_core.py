@@ -8,8 +8,8 @@ from spatialprofilingtoolbox.workflow.phenotype_proximity.core import \
     PhenotypeProximityCoreJob
 from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design \
     import PhenotypeProximityDesign
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
     import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
@@ -62,7 +62,7 @@ def normalize_path_in_all_records(records):
 def test_proximity_counting():
     input_files_path = join(dirname(__file__), '..', 'data_proximity')
     file_manifest_file = join(input_files_path, 'file_manifest.tsv')
-    dataset_design = HALOCellMetadataDesign(
+    dataset_design = TabularCellMetadataDesign(
         elementary_phenotypes_file=join(
             input_files_path,
             get_input_filename_by_identifier(

@@ -4,8 +4,8 @@ from os.path import join, dirname
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.common.dichotomization import Dichotomizer
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
+    import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
     import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
 from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.file_identifier_schema \
@@ -16,7 +16,7 @@ def test_thresholding():
     input_files_path = join(dirname(__file__), '..',
                             'data_compartments_explicit')
     file_manifest_file = join(input_files_path, 'file_manifest.tsv')
-    dataset_design = HALOCellMetadataDesign(
+    dataset_design = TabularCellMetadataDesign(
         elementary_phenotypes_file=join(
             input_files_path,
             get_input_filename_by_identifier(
@@ -33,7 +33,7 @@ def test_thresholding():
         )
     )
     file_manifest = pd.read_csv(file_manifest_file, sep='\t')
-    cell_manifest = HALOCellMetadataDesign.get_cell_manifest_descriptor()
+    cell_manifest = TabularCellMetadataDesign.get_cell_manifest_descriptor()
     input_files = file_manifest[file_manifest['Data type']
                                 == cell_manifest]['File name']
     for filename in input_files:

@@ -1,11 +1,11 @@
 File ID	Project ID	File name	Sample ID	Data type
-lesion 0_1 cells	Melanoma intralesional IL2	0.csv	lesion 0_1	HALO software cell manifest
-lesion 0_2 cells	Melanoma intralesional IL2	1.csv	lesion 0_2	HALO software cell manifest
-lesion 0_3 cells	Melanoma intralesional IL2	2.csv	lesion 0_3	HALO software cell manifest
-lesion 6_1 cells	Melanoma intralesional IL2	3.csv	lesion 6_1	HALO software cell manifest
-lesion 6_2 cells	Melanoma intralesional IL2	4.csv	lesion 6_2	HALO software cell manifest
-lesion 6_3 cells	Melanoma intralesional IL2	5.csv	lesion 6_3	HALO software cell manifest
-lesion 6_4 cells	Melanoma intralesional IL2	6.csv	lesion 6_4	HALO software cell manifest
+lesion 0_1 cells	Melanoma intralesional IL2	0.csv	lesion 0_1	Tabular cell manifest
+lesion 0_2 cells	Melanoma intralesional IL2	1.csv	lesion 0_2	Tabular cell manifest
+lesion 0_3 cells	Melanoma intralesional IL2	2.csv	lesion 0_3	Tabular cell manifest
+lesion 6_1 cells	Melanoma intralesional IL2	3.csv	lesion 6_1	Tabular cell manifest
+lesion 6_2 cells	Melanoma intralesional IL2	4.csv	lesion 6_2	Tabular cell manifest
+lesion 6_3 cells	Melanoma intralesional IL2	5.csv	lesion 6_3	Tabular cell manifest
+lesion 6_4 cells	Melanoma intralesional IL2	6.csv	lesion 6_4	Tabular cell manifest
 Elementary phenotypes file	Melanoma intralesional IL2	elementary_phenotypes.csv	None	Manifest of basic channels/phenotypes
 Complex phenotypes file	Melanoma intralesional IL2	composite_phenotypes.csv	None	Manifest of composite phenotypes
 Outcomes file	Melanoma intralesional IL2	samples.tsv	None	Outcome

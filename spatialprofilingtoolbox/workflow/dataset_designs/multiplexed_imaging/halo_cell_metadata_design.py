@@ -93,7 +93,7 @@ class HALOCellMetadataDesign:
 
     @staticmethod
     def get_cell_manifest_descriptor():
-        return 'HALO software cell manifest'
+        return 'Tabular cell manifest'
 
     @staticmethod
     def validate_cell_manifest_descriptor(descriptor):

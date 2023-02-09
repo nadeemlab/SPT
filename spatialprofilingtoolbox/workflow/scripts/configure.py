@@ -28,7 +28,7 @@ def retrieve_from_library(subpackage, filename):
         with open(path, 'rt', encoding='utf-8') as file:
             contents = file.read()
     if contents is None:
-        raise Exception(f'Could not locate library file {filename}')
+        raise FileNotFoundError(f'Could not locate library file {filename}')
     return contents
 
 
@@ -101,8 +101,6 @@ def process_filename_inputs(options, parsed_args):
     else:
         raise FileNotFoundError(parsed_args.input_path)
 
-    process_compartments_filename_input(options, parsed_args, file_manifest_path)
-
     outcomes_files = get_input_filenames_by_data_type(
         data_type='Outcome',
         file_manifest_filename=file_manifest_path,
@@ -154,19 +152,6 @@ def process_filename_inputs(options, parsed_args):
         raise FileNotFoundError(f'Did not find interventions file ({interventions_file}).')
     options['interventions_file'] = interventions_file_abs
     options['interventions'] = True
-
-
-def process_compartments_filename_input(options, parsed_args, file_manifest_path):
-    compartments_file = get_input_filename_by_identifier(
-        input_file_identifier='Compartments file',
-        file_manifest_filename=file_manifest_path,
-    )
-    options['compartments'] = False
-    if not compartments_file is None:
-        compartments_file_abs = join(parsed_args.input_path, compartments_file)
-        if exists(compartments_file_abs):
-            options['compartments_file'] = compartments_file_abs
-            options['compartments'] = True
 
 
 if __name__ == '__main__':

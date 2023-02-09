@@ -80,21 +80,10 @@ class DensityAnalysisIntegrator:
         else:
             logger.debug('(Not using intensity information.)')
 
-        area_sums, sum_columns = self.sum_areas_over_compartments_per_phenotype(
+        area_sums, _ = self.sum_areas_over_compartments_per_phenotype(
             cells,
             phenotype_columns,
         )
-        areas_all_phenotypes_dict = self.overlay_area_total_all_phenotypes(
-            cells, area_sums)
-        DensityDataLogger.log_normalization_factors(areas_all_phenotypes_dict)
-
-        normalized_sum_columns = self.add_normalized_columns(
-            area_sums,
-            phenotype_columns,
-            sum_columns,
-        )
-        DensityDataLogger.log_normalized_areas(
-            cells, area_sums, normalized_sum_columns)
 
         phenotype_names = [re.sub(' membership', '', column)
                            for column in phenotype_columns]
@@ -170,7 +159,7 @@ class DensityAnalysisIntegrator:
             column for column in cells.columns if re.search('membership$', str(column))
         ]
         for phenotype in phenotype_columns:
-            mask = (cells[phenotype] == 1)
+            mask = cells[phenotype] == 1
             cells.loc[mask, phenotype] = cells.loc[mask, 'cell_area']
         return phenotype_columns
 
@@ -569,7 +558,7 @@ class DensityAnalysisIntegrator:
         :rtype: str, float
         """
         values_column = column
-        table_sorted = table.sort_values(by=values_column, ascending= (sign == -1) )
+        table_sorted = table.sort_values(by=values_column, ascending= sign == -1 )
         if table_sorted.shape[0] == 0:
             return ['none', -1]
         extreme_sample = list(table_sorted['sample_identifier'])[0]

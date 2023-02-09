@@ -11,23 +11,19 @@ as discriminators of selected correlates.
 """
 from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 
-from spatialprofilingtoolbox.workflow.dataset_designs.adi_dataset_design import ADIDatasetDesign
-
 from spatialprofilingtoolbox.workflow.halo_import.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import ProximityJobGenerator
 from spatialprofilingtoolbox.workflow.phenotype_proximity.initializer import \
     PhenotypeProximityInitializer
 from spatialprofilingtoolbox.workflow.phenotype_proximity.core import PhenotypeProximityCoreJob
-from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import \
-    PhenotypeProximityDesign
 from spatialprofilingtoolbox.workflow.phenotype_proximity.integrator import \
     PhenotypeProximityAnalysisIntegrator
 
 components = WorkflowModules(
     generator=ProximityJobGenerator,
     initializer=PhenotypeProximityInitializer,
-    dataset_design=ADIDatasetDesign,
-    computational_design=PhenotypeProximityDesign,
+    dataset_design=None,
+    computational_design=None,
     core_job=PhenotypeProximityCoreJob,
     integrator=PhenotypeProximityAnalysisIntegrator,
 )

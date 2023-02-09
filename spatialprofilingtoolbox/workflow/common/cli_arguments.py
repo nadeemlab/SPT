@@ -11,7 +11,7 @@ from spatialprofilingtoolbox import get_workflow_names
 SettingArgumentName = Literal['workflow', 'metrics database', 'source file identifier',
                               'source file name', 'sample', 'outcome', 'dichotomize',
                               'database config', 'file manifest', 'study name', 'job_index']
-FileArgumentName = Literal['phenotypes file', 'channels file', 'compartments file',
+FileArgumentName = Literal['phenotypes file', 'channels file',
                            'study file', 'outcomes file', 'subjects file', 'diagnosis file',
                            'interventions file', 'performance report', 'results file']
 
@@ -73,9 +73,6 @@ def add_file_argument(parser, name: FileArgumentName):
     if name == 'interventions file':
         parser.add_argument('--interventions-file', dest='interventions_file', type=str,
                             required=False)
-    if name == 'compartments file':
-        parser.add_argument('--compartments-file', dest='compartments_file', type=str,
-                            required=False, help='File containing compartment names.')
     if name == 'phenotypes file':
         parser.add_argument('--composite-phenotypes-file', dest='composite_phenotypes_file',
                             type=str, required=False)

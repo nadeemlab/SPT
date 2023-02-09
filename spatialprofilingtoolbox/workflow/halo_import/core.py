@@ -112,19 +112,6 @@ class FileBasedCoreJob(ABC):
                     number_cells, self.input_filename)
         logger.info('Cells source file has size %s bytes.', getsize(filename=self.input_filename))
 
-    def deal_with_compartments(self, table):
-        if 'compartment' in table.columns:
-            logger.error('Woops, name collision "compartment".')
-            return False
-        all_compartments = self.dataset_design.get_compartments()
-        table['compartment'] = 'Not in ' + ';'.join(all_compartments)
-
-        for compartment in self.dataset_design.get_compartments():
-            signature = self.dataset_design.get_compartmental_signature(table, compartment)
-            table.loc[signature, 'compartment'] = compartment
-        self.timer.record_timepoint('Copy compartment column')
-        return True
-
     def add_and_return_membership_columns(self, table):
         phenotype_names = self.computational_design.get_phenotype_names()
         signatures_by_name = self.computational_design.get_phenotype_signatures_by_name()
@@ -234,7 +221,7 @@ class FileBasedCoreJob(ABC):
             table = table.reset_index(drop=True)
             self.timer.record_timepoint('Finished resetting cells table index')
 
-            self.deal_with_compartments(table)
+            # self.deal_with_compartments(table)
             phenotype_membership_columns = self.add_and_return_membership_columns(table)
 
             extra = self.get_and_add_extra_columns(table)

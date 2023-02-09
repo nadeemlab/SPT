@@ -18,7 +18,6 @@ if __name__ == '__main__':
     add_argument(parser, 'outcomes file')
     add_argument(parser, 'channels file')
     add_argument(parser, 'phenotypes file')
-    add_argument(parser, 'compartments file')
     args = parser.parse_args()
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \

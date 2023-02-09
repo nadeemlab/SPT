@@ -35,7 +35,6 @@ class HALOImportInitializer(Initializer):
         add_argument(parser, 'channels file')
         add_argument(parser, 'phenotypes file')
         add_argument(parser, 'outcomes file')
-        add_argument(parser, 'compartments file')
         add_argument(parser, 'subjects file')
         add_argument(parser, 'diagnosis file')
         add_argument(parser, 'interventions file')
@@ -52,7 +51,6 @@ class HALOImportInitializer(Initializer):
                     'channels': kwargs['elementary_phenotypes_file'],
                     'phenotypes': kwargs['composite_phenotypes_file'],
                     'samples': kwargs['outcomes_file'],
-                    'compartments': kwargs['compartments_file'],
                     'subjects': kwargs['subjects_file'],
                     'study': kwargs['study_file'],
                     'diagnosis': kwargs['diagnosis_file'],

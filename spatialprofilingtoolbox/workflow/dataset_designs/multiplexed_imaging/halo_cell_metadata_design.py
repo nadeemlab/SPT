@@ -21,21 +21,16 @@ class HALOCellMetadataDesign:
 
     def __init__(self,
                  elementary_phenotypes_file: str = '',
-                 compartments_file: str = '',
                  **kwargs,  # pylint: disable=unused-argument
                  ):
         self.elementary_phenotypes = pd.read_csv(
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-        if compartments_file != '':
-            with open(compartments_file, 'rt', encoding='utf-8') as file:
-                self.compartments = file.read().strip('\n').split('\n')
 
     @staticmethod
     def solicit_cli_arguments(parser):
         add_argument(parser, 'channels file')
-        add_argument(parser, 'compartments file')
 
     def get_fov_column(self, table=None):
         """
@@ -106,21 +101,6 @@ class HALOCellMetadataDesign:
             HALOCellMetadataDesign.get_cell_manifest_descriptor(),
             'simulated HALO-exported cell manifest',
         ]
-
-    @staticmethod
-    def get_compartment_column_name():
-        return 'Classifier Label'
-
-    def get_compartments(self):
-        """
-        Returns:
-            list:
-                A list of the expected compartment names (i.e. "Classifier Label"
-                values). This method may need to be migrated to a more specific
-                dataset design module, or else obtain its values from a separate
-                metadata file, as it will potentially vary by dataset.
-        """
-        return self.compartments
 
     def get_elementary_phenotype_names(self):
         """
@@ -317,38 +297,6 @@ class HALOCellMetadataDesign:
         if value in special_cases:
             return special_cases[value]
         return value
-
-    def get_compartmental_signature(self, table, compartment):
-        """
-        Args:
-            table (pd.DataFrame):
-                The HALO cell metadata dataframe, unprocessed.
-            compartment (str):
-                The name of a compartment to focus on.
-
-        Returns:
-            pd.Series:
-                The boolean series indicating the records in table (i.e. cells) which
-                should be regarded as part of the given compartment. This is currently
-                just finding the records marked for this compartment, but more
-                functionality may need to be modified for specific cases (e.g. involving
-                additional knowledge of the expected characteristics of the
-                compartment.)
-        """
-        signature = None
-        if compartment in self.get_compartments():
-            column = HALOCellMetadataDesign.get_compartment_column_name()
-            if (not column in table.columns) and (self.get_compartments() == ['<any>']) \
-                    and (compartment == '<any>'):
-                signature = [True for i in range(table.shape[0])]
-            else:
-                signature = self.get_pandas_signature(table, {column: compartment})
-
-        if signature is None:
-            logger.error('Could not define compartment %s, from among %s',
-                         compartment, self.get_compartments())
-            return [False for i in range(table.shape[0])]
-        return signature
 
     def get_combined_intensity(self, table, elementary_phenotype):
         """

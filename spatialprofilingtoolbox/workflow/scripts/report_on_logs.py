@@ -197,12 +197,6 @@ class LogParser:
                         self.extractions['Phenotypes'] = match.groups(1)[0]
                         continue
 
-                    match = re.match(
-                        r'^Number of compartments: (\d+)$', parts['Message'])
-                    if match:
-                        self.extractions['Compartments'] = match.groups(1)[0]
-                        continue
-
                     match = re.match(r'^Run date year: (\d+)$',
                                      parts['Message'])
                     if match:

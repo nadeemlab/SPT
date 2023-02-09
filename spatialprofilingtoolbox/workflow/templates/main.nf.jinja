@@ -9,8 +9,6 @@ process echo_environment_variables {
     path 'study_file',                      emit: study_file
     path 'diagnosis_file',                  emit: diagnosis_file
     path 'interventions_file',              emit: interventions_file
-{%- if compartments %}
-    path 'compartments_file',               emit: compartments_file{% endif %}
 {%- if outcomes %}
     path 'outcomes_file',                   emit: outcomes_file{% endif %}
 {%- if db_config %}
@@ -27,8 +25,6 @@ process echo_environment_variables {
     echo -n "${study_file_}" > study_file
     echo -n "${diagnosis_file_}" > diagnosis_file
     echo -n "${interventions_file_}" > interventions_file
-{%- if compartments %}
-    echo -n "${compartments_file_}" > compartments_file{% endif %}
 {%- if outcomes %}
     echo -n "${outcomes_file_}" > outcomes_file{% endif %}
 {%- if db_config %}
@@ -65,22 +61,7 @@ process generate_run_information {
      --composite-phenotypes-file=composite_phenotypes_filename
     """
 }
-{% if not compartments %}
-process extract_compartments {
-    input:
-    path cell_manifest_files
 
-    output:
-    path '._compartments.txt',              emit: compartments_file
-
-    script:
-    """
-    spt workflow extract-compartments \
-     ${cell_manifest_files} \
-     --compartments-list-file=._compartments.txt
-    """
-}
-{% endif %}
 process workflow_initialize {
     input:
     val workflow
@@ -89,7 +70,6 @@ process workflow_initialize {
     path composite_phenotypes_file
 {%- if outcomes %}
     path outcomes_file{% endif %}
-    path compartments_file
 {%- if db_config %}
     path db_config_file{% endif %}
 {%- if subjects %}
@@ -116,7 +96,6 @@ process workflow_initialize {
      --study-file=${study} \
      --diagnosis-file=${diagnosis} \
      --interventions-file=${interventions} \
-     --compartments-file=${compartments_file} \
      --elementary-phenotypes-file=${elementary_phenotypes_file} \
      --composite-phenotypes-file=${composite_phenotypes_file}
     echo "Success"
@@ -135,7 +114,6 @@ process core_job {
     tuple val(input_file_identifier), file(input_filename), val(job_index), val(outcome), val(sample_identifier)
     path elementary_phenotypes
     path composite_phenotypes
-    path compartments
 
     output:
     path "metrics${job_index}.db",          emit: metrics_database
@@ -152,7 +130,6 @@ process core_job {
      --outcome='${outcome}' \
      --elementary-phenotypes-file=${elementary_phenotypes} \
      --composite-phenotypes-file=${composite_phenotypes} \
-     --compartments-file=${compartments} \
      --metrics-database-filename=metrics${job_index}.db
     """
 }
@@ -168,7 +145,6 @@ process report_run_configuration {
     path outcomes_file{% endif %}
     path elementary_phenotypes
     path composite_phenotypes
-    path compartments
 
     output:
     path "run_configuration.log"
@@ -181,8 +157,7 @@ process report_run_configuration {
 {%- if outcomes %}
      --outcomes-file=${outcomes_file} \{% endif %}
      --elementary-phenotypes-file=${elementary_phenotypes} \
-     --composite-phenotypes-file=${composite_phenotypes} \
-     --compartments-file=${compartments} >& run_configuration.log
+     --composite-phenotypes-file=${composite_phenotypes}
     """
 }
 
@@ -237,7 +212,6 @@ process aggregate_results {
     val workflow
     path elementary_phenotypes
     path composite_phenotypes
-    path compartments
 
     output:
     file 'stats_tests.csv'
@@ -252,7 +226,6 @@ process aggregate_results {
      --database-config-file=${db_config_file} \{% endif %}
      --elementary-phenotypes-file=${elementary_phenotypes} \
      --composite-phenotypes-file=${composite_phenotypes} \
-     --compartments-file=${compartments} \
      --stats-tests-file=stats_tests.csv
     """
 }
@@ -319,12 +292,6 @@ workflow {
         .map{ row -> row[1] }
         .collect()
         .set{ cell_manifest_files_ch }
-{% if compartments %}
-    environment_ch.compartments_file.map{ file(it.text) }
-        .set{ compartments_file_ch }{% else %}
-    extract_compartments(cell_manifest_files_ch)
-        .compartments_file
-        .set{ compartments_file_ch }{% endif %}
 
     report_run_configuration(
         cell_manifest_files_ch,
@@ -334,7 +301,6 @@ workflow {
         outcomes_file_ch,{% endif %}
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
-        compartments_file_ch,
     )
 
     workflow_initialize(
@@ -344,7 +310,6 @@ workflow {
         composite_phenotypes_ch,
 {%- if outcomes %}
         outcomes_file_ch,{% endif %}
-        compartments_file_ch,
 {%- if db_config %}
         db_config_file_ch,{% endif %}
 {%- if subjects %}
@@ -363,7 +328,6 @@ workflow {
         job_specifications_ch,
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
-        compartments_file_ch,
     )
         .set { core_job_results_ch }
 
@@ -385,6 +349,5 @@ workflow {
         workflow_ch,
         elementary_phenotypes_ch,
         composite_phenotypes_ch,
-        compartments_file_ch,
     )
 }

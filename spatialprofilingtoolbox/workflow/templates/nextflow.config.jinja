@@ -15,9 +15,6 @@ env.input_path_ = '{{ input_path }}'{% endif %}
 {% if file_manifest_filename is defined %}
 env.file_manifest_filename_ = '{{ file_manifest_filename }}'{% endif %}
 
-{%- if compartments_file is defined and compartments_file|length %}
-env.compartments_file_ = '{{ compartments_file }}'{% endif %}
-
 {%- if outcomes_file is defined and outcomes_file|length %}
 env.outcomes_file_ = '{{ outcomes_file }}'{% endif %}
 

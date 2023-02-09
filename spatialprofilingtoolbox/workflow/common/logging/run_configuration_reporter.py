@@ -27,7 +27,6 @@ class RunConfigurationReporter:
         outcomes_file: Optional[str] = None,
         elementary_phenotypes_file: Optional[str] = None,
         composite_phenotypes_file: Optional[str] = None,
-        compartments_file: Optional[str] = None,
     ):
         logger.info('Machine host: %s', socket.gethostname())
         logger.info('Version: SPT v%s', get_version())
@@ -68,18 +67,14 @@ class RunConfigurationReporter:
         composite_phenotypes = pd.read_csv(
             composite_phenotypes_file, keep_default_na=False)
         channels = sorted(list(set(elementary_phenotypes['Name'])))
-        with open(compartments_file, 'rt', encoding='utf-8') as file:
-            compartments = file.read().rstrip('\n').split('\n')
 
         logger.info('Number of outcome labels: %s', len(labels))
         logger.info('Number of channels: %s', elementary_phenotypes.shape[0])
         logger.info('Number of phenotypes considered: %s',
                     composite_phenotypes.shape[0])
-        logger.info('Number of compartments: %s', len(compartments))
         logger.info('Outcomes: %s', '; '.join(labels))
         logger.info('Outcome frequencies: %s', self.get_frequencies(outcomes))
         logger.info('Channels: %s', '; '.join(channels))
-        logger.info('Compartments: %s', '; '.join(compartments))
 
     def get_frequencies(self, outcomes):
         column = outcomes[outcomes.columns[1]]

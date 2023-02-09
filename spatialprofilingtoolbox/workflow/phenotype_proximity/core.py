@@ -12,8 +12,6 @@ from sklearn.neighbors import BallTree
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import \
-    PhenotypeProximityDesign
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
     ProximityJobGenerator
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -25,7 +23,6 @@ logger = colorized_logger(__name__)
 
 class PhenotypeProximityCoreJob:
     """Core/parallelizable functionality for the phenotype proximity workflow."""
-    computational_design: PhenotypeProximityDesign
     radii = [60, 120]
 
     def __init__(

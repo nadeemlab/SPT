@@ -29,6 +29,8 @@ class TabularCellMetadataDesign:
     @staticmethod
     def solicit_cli_arguments(parser):
         add_argument(parser, 'channels file')
+        add_argument(parser, 'phenotypes file')
+        add_argument(parser, 'metrics database')
 
     def get_fov_column(self, table=None):
         column = 'Image Location'

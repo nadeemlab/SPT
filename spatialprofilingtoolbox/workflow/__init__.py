@@ -17,9 +17,7 @@ import importlib
 __version__ = '0.5.0'
 
 workflow_names_and_subpackages = {
-    'phenotype density': 'density',
     'HALO import': 'halo_import',
-    'nearest distance to compartment': 'nearest_distance',
     'phenotype proximity': 'phenotype_proximity',
 }
 

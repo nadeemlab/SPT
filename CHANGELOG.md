@@ -1,3 +1,6 @@
+# v0.12.4
+Deprecated nearest distance and density workflows.
+
 # v0.12.3
 
 Includes convenience whole-dataset pulling from the database.

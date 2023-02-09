@@ -23,8 +23,6 @@ components = WorkflowModules(
     is_database_visitor=True,
     generator=ProximityJobGenerator,
     initializer=PhenotypeProximityInitializer,
-    dataset_design=None,
-    computational_design=None,
     core_job=PhenotypeProximityCoreJob,
     integrator=PhenotypeProximityAnalysisIntegrator,
 )

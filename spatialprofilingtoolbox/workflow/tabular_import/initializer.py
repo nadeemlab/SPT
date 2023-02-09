@@ -23,6 +23,8 @@ class Initializer(ABC):
 
 class TabularImportInitializer(Initializer):
     """Initial process for main data import workflow; does most of the import."""
+    def __init__(self, **kwargs):
+        pass
 
     @staticmethod
     def solicit_cli_arguments(parser):

@@ -1,12 +1,8 @@
 """
 Design parameters for a tabular dataset to be imported by the main import workflow.
 """
-import pathlib
-import re
-
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -25,64 +21,6 @@ class TabularCellMetadataDesign:
             elementary_phenotypes_file,
             keep_default_na=False,
         )
-
-    @staticmethod
-    def solicit_cli_arguments(parser):
-        add_argument(parser, 'channels file')
-        add_argument(parser, 'phenotypes file')
-        add_argument(parser, 'metrics database')
-
-    def get_fov_column(self, table=None):
-        column = 'Image Location'
-        if not table is None:
-            if not column in table.columns:
-                column = re.sub(' ', '_', column)
-                if not column in table.columns:
-                    raise ValueError(
-                        f'Could not find "{column}" even with underscore replacement, among: '
-                        f'{list(table.columns)}')
-        return column
-
-    @staticmethod
-    def get_cell_area_column():
-        """
-        :return: The name of the table column containing cell area values.
-        :rtype: str
-        """
-        return 'Cell Area'
-
-    def normalize_fov_descriptors(self, table):
-        """
-        Modifies field of view descriptor column of ``table`` *in-place*, sanitizes each
-        according to the assumption that each value is a Windows-style path string
-        for which only the file basename is needed.
-
-        This was needed because in some datasets, field of view descriptors were not
-        used consistently. Note that this function may be deprecated if a more rigorous
-        data model is eventually enforced with respect to the field of view descriptor
-        strings.
-
-        :param table: Dataframe containing a field of view descriptor column.
-        :type table: pandas.DataFrame
-        """
-        column = self.get_fov_column(table=table)
-        table[column] = table[column].apply(self._normalize_fov_descriptor)
-
-    def _normalize_fov_descriptor(self, fov):
-        """
-        Returns an normalized path string (file basename).
-
-        :param fov: A field of view descriptor string to normalize (i.e. to put into
-            normal form).
-        :type fov: str
-
-        :return: The normal form. Currently just the file basename, assuming that the
-            original descriptor is a Windows-style file path string.
-        :rtype: str
-        """
-        if r'\\' in fov:
-            return pathlib.PureWindowsPath(fov).name
-        return fov
 
     @staticmethod
     def get_cell_manifest_descriptor():
@@ -125,29 +63,6 @@ class TabularCellMetadataDesign:
         value = row[metadata_file_column]
         return str(value)
 
-    def _get_cellular_sites(self):
-        return ['Cytoplasm', 'Nucleus', 'Membrane']
-
-    def get_intensity_column_names(self, with_sites=True):
-        columns_by_elementary_phenotype = {}
-        sites = self._get_cellular_sites()
-        if not with_sites:
-            sites = ['']
-        for site in sites:
-            for i in sorted(list(self.elementary_phenotypes['Name'])):
-                # parts = []
-                prefix = self._get_indicator_prefix(i)
-                infix = site
-                suffix = 'Intensity'
-                if site == '':
-                    column = prefix + ' ' + suffix
-                    key = i + ' ' + 'intensity'
-                else:
-                    column = prefix + ' ' + infix + ' ' + suffix
-                    key = i + ' ' + site.lower() + ' ' + 'intensity'
-                columns_by_elementary_phenotype[key] = column
-        return columns_by_elementary_phenotype
-
     def munge_name(self, signature):
         """
         Args:
@@ -162,50 +77,10 @@ class TabularCellMetadataDesign:
                 A de-facto name for the class delineated by this signature, obtained by
                 concatenating key/value pairs in a standardized order.
         """
-        # keys = sorted(list(signature.keys()))
-        feature_list = [key + signature[key] for key in signature]
+        keys = sorted(list(signature.keys()))
+        feature_list = [key + signature[key] for key in keys]
         name = ''.join(feature_list)
         return name
-
-    def get_pandas_signature(self, table, signature) -> list:
-        if signature is None:
-            logger.error(
-                'Can not get subset with no information about signature (None).')
-            return []
-        if table is None:
-            logger.error('Can not find subset of empty data; table is None.')
-            return []
-        get_feature_name = self.get_feature_name
-        evaluate = self._interpret_value_specification
-        for key in signature.keys():
-            feature_name = get_feature_name(key, table=table)
-            if not feature_name in table.columns:
-                logger.warning('Key "%s" was not among feature/column names: %s',
-                               feature_name, str(list(table.columns)))
-                feature_name = re.sub(' ', '_', feature_name)
-                if not feature_name in table.columns:
-                    logger.error('Key "%s" was not among feature/column names: %s',
-                                 feature_name, str(list(table.columns)))
-        pandas_signature = self._non_infix_bitwise_and(
-            [table[get_feature_name(key, table=table)] == evaluate(value)
-             for key, value in signature.items()])
-        return pandas_signature
-
-    def _non_infix_bitwise_and(self, args):
-        """
-        Args:
-            args (list):
-                A list of boolean lists/series of the same length.
-
-        Returns:
-            list:
-                The component-wise boolean AND operation output.
-        """
-        accumulator = args[0]
-        if len(args) > 1:
-            for arg in args[1:len(args)]:
-                accumulator = accumulator & arg
-        return accumulator
 
     def get_feature_name(self, key, table=None):
         """
@@ -226,47 +101,3 @@ class TabularCellMetadataDesign:
         if key in self.get_elementary_phenotype_names():
             return separator.join([self._get_indicator_prefix(key), 'Positive'])
         return key
-
-    def _interpret_value_specification(self, value):
-        """
-        This function provides an abstraction layer between the table cell values as
-        they actually appear in original data files and more semantic tokens in the
-        context of signature definition.
-
-        In the future this may need to be made column-specific.
-
-        Args:
-            value:
-                Typically "+" or "-", but may be an arbitrary expected table cell value.
-
-        Returns:
-            The corresponding value as it is expected to appear as a table cell value
-            in the CSV.
-        """
-        special_cases = {
-            '+': 1,
-            '-': 0,
-        }
-        if value in special_cases:
-            return special_cases[value]
-        return value
-
-    def get_combined_intensity(self, table, elementary_phenotype):
-        intensity_column = self.get_intensity_column_name(elementary_phenotype)
-        if intensity_column in table.columns:
-            return table[intensity_column]
-        prefix = self._get_indicator_prefix(elementary_phenotype)
-        suffixes = [site + ' Intensity' for site in self._get_cellular_sites()]
-        feature = [' '.join([prefix, suffix]) for suffix in suffixes]
-        return list(table[feature[0]] + table[feature[1]] + table[feature[2]])
-
-    def add_combined_intensity_column(self, table):
-        for phenotype in self.get_elementary_phenotype_names():
-            column = self.get_intensity_column_name(phenotype)
-            table[column] = self.get_combined_intensity(table, phenotype)
-
-    def get_intensity_column_name(self, elementary_phenotype):
-        """
-        Currently only used for manually-created intensity column.
-        """
-        return self._get_indicator_prefix(elementary_phenotype) + ' Intensity'

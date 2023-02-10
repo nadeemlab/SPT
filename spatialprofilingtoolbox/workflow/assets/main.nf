@@ -205,8 +205,7 @@ process aggregate_results {
      --metrics-database-filename=${metrics_database} \
      --database-config-file=${db_config_file}
      --elementary-phenotypes-file=${channels} \
-     --composite-phenotypes-file=${phenotypes} \
-     --stats-tests-file=stats_tests.csv
+     --composite-phenotypes-file=${phenotypes}
     """
 }
 

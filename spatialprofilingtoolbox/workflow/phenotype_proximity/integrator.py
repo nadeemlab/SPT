@@ -7,6 +7,7 @@ import re
 import pickle
 from math import isnan
 
+from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -14,7 +15,7 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class PhenotypeProximityAnalysisIntegrator:
+class PhenotypeProximityAnalysisIntegrator(Integrator):
     """
     The main class of the integration phase.
     """
@@ -26,7 +27,7 @@ class PhenotypeProximityAnalysisIntegrator:
         self.study_name = study_name
         self.database_config_file = database_config_file
 
-    def calculate(self, core_computation_results_files):
+    def calculate(self, core_computation_results_files=None):
         """
         Performs statistical comparison tests and writes results to file.
         """

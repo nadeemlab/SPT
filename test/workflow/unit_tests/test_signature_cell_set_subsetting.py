@@ -3,8 +3,6 @@ import sys
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
-    import TabularCellMetadataDesign
 
 def get_pandas_signature(df, signature):
     return [
@@ -14,20 +12,16 @@ def get_pandas_signature(df, signature):
 
 
 if __name__ == '__main__':
-    dataset_design = TabularCellMetadataDesign(
-        elementary_phenotypes_file=join(
-            '..', 'test_data', 'adi_preprocessed_tables/dataset1', 'elementary_phenotypes.csv'),
-    )
     filename = join('..', 'test_data', 'adi_preprocessed_tables/dataset1', '0.csv')
     cells = pd.read_csv(filename, sep=',', keep_default_na=False)
 
-    signature1 = dataset_design.get_pandas_signature(cells, {'CD3': '+', 'B2M': '+'})
+    signature1 = get_pandas_signature(cells, {'CD3': '+', 'B2M': '+'})
     computed_sum = sum(1 for entry in signature1 if entry)
     if computed_sum != 27:
         print(f'Got computed sum: {computed_sum}')
         sys.exit(1)
 
-    signature2 = dataset_design.get_pandas_signature(cells, {'PD1': '+', 'FOXP3': '-', 'CD3': '+'})
+    signature2 = get_pandas_signature(cells, {'PD1': '+', 'FOXP3': '-', 'CD3': '+'})
     computed_sum = sum(1 for entry in signature2 if entry)
     if computed_sum != 4:
         print(f'Got computed sum: {computed_sum}')

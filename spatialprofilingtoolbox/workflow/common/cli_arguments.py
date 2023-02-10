@@ -1,4 +1,5 @@
 """CLI arguments solicitation."""
+import re
 from typing import Literal
 from typing import Union
 from typing import get_args
@@ -12,7 +13,7 @@ SettingArgumentName = Literal['workflow', 'source file identifier',
                               'source file name', 'sample', 'outcome', 'dichotomize',
                               'database config', 'file manifest', 'study name', 'job_index']
 FileArgumentName = Literal['phenotypes file', 'channels file',
-                           'study file', 'outcomes file', 'subjects file', 'diagnosis file',
+                           'study file', 'samples file', 'subjects file', 'diagnosis file',
                            'interventions file', 'performance report', 'results file']
 
 
@@ -55,29 +56,13 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
 
 
 def add_file_argument(parser, name: FileArgumentName):
-    if name == 'study file':
-        parser.add_argument('--study-file', dest='study_file', type=str, required=False)
-    if name == 'outcomes file':
-        parser.add_argument('--outcomes-file', dest='outcomes_file', type=str, required=False,
-                            help='The outcome assignments file.')
-    if name == 'subjects file':
-        parser.add_argument('--subjects-file', dest='subjects_file', type=str, required=False,
-                            help='File containing subject information: age at specimen collection,'
-                            ' sex, diagnosis.')
-    if name == 'diagnosis file':
-        parser.add_argument('--diagnosis-file', dest='diagnosis_file', type=str, required=False)
-    if name == 'interventions file':
-        parser.add_argument('--interventions-file', dest='interventions_file', type=str,
-                            required=False)
-    if name == 'phenotypes file':
-        parser.add_argument('--composite-phenotypes-file', dest='composite_phenotypes_file',
-                            type=str, required=False)
-    if name == 'channels file':
-        parser.add_argument('--elementary-phenotypes-file', dest='elementary_phenotypes_file',
-                            type=str, required=False)
-    if name == 'performance report':
-        parser.add_argument('--performance-report-filename', dest='performance_report_filename',
-                            type=str, required=False)
-    if name == 'results file':
-        parser.add_argument('--results-file', dest='results_file',
-                            type=str, required=False)
+    hyphens = re.sub(' ', '-', name)
+    snake = re.sub(' ', '_', name)
+    parser.add_argument(f'--{hyphens}', dest=f'{snake}', type=str, required=False)
+
+    # if name == 'phenotypes file':
+    #     parser.add_argument('--composite-phenotypes-file', dest='composite_phenotypes_file',
+    #                         type=str, required=False)
+    # if name == 'channels file':
+    #     parser.add_argument('--elementary-phenotypes-file', dest='elementary_phenotypes_file',
+    #                         type=str, required=False)

@@ -9,7 +9,7 @@ process echo_environment_variables {
     path 'study_file',                      emit: study_file
     path 'diagnosis_file',                  emit: diagnosis_file
     path 'interventions_file',              emit: interventions_file
-    path 'outcomes_file',                   emit: outcomes_file
+    path 'samples_file',                    emit: samples_file
     path 'db_config_file',                  emit: db_config_file
     path 'subjects_file',                   emit: subjects_file
     path 'channels_file',                   emit: channels_file
@@ -24,7 +24,7 @@ process echo_environment_variables {
     echo -n "${study_file_}" > study_file
     echo -n "${diagnosis_file_}" > diagnosis_file
     echo -n "${interventions_file_}" > interventions_file
-    echo -n "${outcomes_file_}" > outcomes_file
+    echo -n "${samples_file_}" > samples_file
     echo -n "${db_config_file_}" > db_config_file
     echo -n "${subjects_file_}" > subjects_file
     echo -n "${channels_file_}" > channels_file
@@ -37,7 +37,7 @@ process generate_run_information {
     val workflow
     path file_manifest_file
     val input_path
-    path outcomes_file
+    path samples_file
 
     output:
     path 'job_specification_table.csv',     emit: job_specification_table
@@ -49,7 +49,7 @@ process generate_run_information {
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --input-path='${input_path}' \
-     --outcomes-file=${outcomes_file} \
+     --samples-file=${samples_file} \
      --job-specification-table=job_specification_table.csv
     """
 }
@@ -60,7 +60,7 @@ process workflow_main {
     path file_manifest_file
     path channels_file
     path phenotypes_file
-    path outcomes_file
+    path samples_file
     path db_config_file
     path subjects_file
     path cell_manifest_files
@@ -73,14 +73,14 @@ process workflow_main {
     spt workflow initialize \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
-     --outcomes-file=${outcomes_file} \
+     --samples-file=${samples_file} \
      --database-config-file=${db_config_file} \
      --subjects-file=${subjects_file} \
      --study-file=${study} \
      --diagnosis-file=${diagnosis} \
      --interventions-file=${interventions} \
-     --elementary-phenotypes-file=${channels_file} \
-     --composite-phenotypes-file=${phenotypes_file}
+     --channels-file=${channels_file} \
+     --phenotypes-file=${phenotypes_file}
     """
 }
 
@@ -91,7 +91,7 @@ process report_run_configuration {
     path all_cell_manifests
     val workflow
     path file_manifest_file
-    path outcomes_file
+    path samples_file
     path channels
     path phenotypes
 
@@ -103,7 +103,7 @@ process report_run_configuration {
     spt workflow report-run-configuration \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
-     --outcomes-file=${outcomes_file} \
+     --samples-file=${samples_file} \
      --elementary-phenotypes-file=${channels} \
      --composite-phenotypes-file=${phenotypes} >& run_configuration.log
     """
@@ -143,14 +143,14 @@ workflow {
     environment_ch.subjects_file.map{ file(it.text) }
         .set{ subjects_file_ch }
 
-    environment_ch.outcomes_file.map{ file(it.text) }
-        .set{ outcomes_file_ch }
+    environment_ch.samples_file.map{ file(it.text) }
+        .set{ samples_file_ch }
 
     generate_run_information(
         workflow_ch,
         file_manifest_ch,
         input_path_ch,
-        outcomes_file_ch,
+        samples_file_ch,
     ).set { run_information_ch }
 
     run_information_ch
@@ -168,7 +168,7 @@ workflow {
         cell_manifest_files_ch,
         workflow_ch,
         file_manifest_ch,
-        outcomes_file_ch,
+        samples_file_ch,
         channels_ch,
         phenotypes_ch,
     )
@@ -178,7 +178,7 @@ workflow {
         file_manifest_ch,
         channels_ch,
         phenotypes_ch,
-        outcomes_file_ch,
+        samples_file_ch,
         db_config_file_ch,
         subjects_file_ch,
         cell_manifest_files_ch,

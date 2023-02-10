@@ -10,11 +10,6 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
-ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER = 'Elementary phenotypes file'
-COMPOSITE_PHENOTYPES_FILE_IDENTIFIER = 'Complex phenotypes file'
-COMPARTMENTS_FILE_IDENTIFIER = 'Compartments file'
-DEFAULT_FILE_MANIFEST_FILENAME = 'file_manifest.tsv'
-
 
 def get_input_filenames_by_data_type(
     data_type: Optional[str] = None,

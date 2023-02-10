@@ -90,7 +90,7 @@ def record_configuration_command(variables):
 
 def process_filename_inputs(options, parsed_args):
     if isdir(parsed_args.input_path):
-        file_manifest_path = join(parsed_args.input_path, DEFAULT_FILE_MANIFEST_FILENAME)
+        file_manifest_path = join(parsed_args.input_path, 'file_manifest.tsv')
         if exists(file_manifest_path):
             options['input_path'] = parsed_args.input_path
             options['file_manifest_filename'] = file_manifest_path
@@ -99,16 +99,16 @@ def process_filename_inputs(options, parsed_args):
     else:
         raise FileNotFoundError(parsed_args.input_path)
 
-    outcomes_files = get_input_filenames_by_data_type(
-        data_type='Outcome',
+    samples_file = get_input_filename_by_identifier(
+        input_file_identifier='Samples file',
         file_manifest_filename=file_manifest_path,
     )
-    options['outcomes'] = False
-    if len(outcomes_files) > 0:
-        outcomes_file_abs = join(parsed_args.input_path, outcomes_files[0])
-        if exists(outcomes_file_abs):
-            options['outcomes_file'] = outcomes_file_abs
-            options['outcomes'] = True
+    options['samples'] = False
+    if not samples_file is None > 0:
+        samples_file_abs = join(parsed_args.input_path, samples_file)
+        if exists(samples_file_abs):
+            options['samples_file'] = samples_file_abs
+            options['samples'] = True
 
     subjects_file = get_input_filename_by_identifier(
         input_file_identifier='Subjects file',
@@ -152,7 +152,7 @@ def process_filename_inputs(options, parsed_args):
     options['interventions'] = True
 
     channels_file = get_input_filename_by_identifier(
-        input_file_identifier=ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER ,
+        input_file_identifier='Channels file',
         file_manifest_filename=file_manifest_path,
     )
     channels_file_abs = join(parsed_args.input_path, channels_file)
@@ -162,7 +162,7 @@ def process_filename_inputs(options, parsed_args):
     options['channels'] = True
 
     phenotypes_file = get_input_filename_by_identifier(
-        input_file_identifier=COMPOSITE_PHENOTYPES_FILE_IDENTIFIER,
+        input_file_identifier='Phenotypes file',
         file_manifest_filename=file_manifest_path,
     )
     phenotypes_file_abs = join(parsed_args.input_path, phenotypes_file)
@@ -224,15 +224,7 @@ if __name__ == '__main__':
     try:
         import jinja2
         from spatialprofilingtoolbox.workflow.common.\
-            file_identifier_schema import DEFAULT_FILE_MANIFEST_FILENAME  # pylint: disable=ungrouped-imports
-        from spatialprofilingtoolbox.workflow.common.\
-            file_identifier_schema import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
-        from spatialprofilingtoolbox.workflow.common.\
-            file_identifier_schema import COMPOSITE_PHENOTYPES_FILE_IDENTIFIER
-        from spatialprofilingtoolbox.workflow.common.\
-            file_identifier_schema import get_input_filename_by_identifier
-        from spatialprofilingtoolbox.workflow.common.\
-            file_identifier_schema import get_input_filenames_by_data_type
+            file_identifier_schema import get_input_filename_by_identifier # pylint: disable=ungrouped-imports
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 

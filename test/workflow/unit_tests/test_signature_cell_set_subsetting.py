@@ -6,7 +6,7 @@ import pandas as pd
 
 def get_pandas_signature(df, signature):
     return [
-        all(df[key] == 1 if value=='+' else df[key] == 0 for key, value in signature.items())
+        all(row[key] == 1 if value=='+' else row[key] == 0 for key, value in signature.items())
         for i, row in df.iterrows()
     ]
 
@@ -21,7 +21,8 @@ if __name__ == '__main__':
         print(f'Got computed sum: {computed_sum}')
         sys.exit(1)
 
-    signature2 = get_pandas_signature(cells, {'PD1_Positive': '+', 'FOXP3_Positive': '-', 'CD3_Positive': '+'})
+    signature2 = get_pandas_signature(cells,
+        {'PD1_Positive': '+', 'FOXP3_Positive': '-', 'CD3_Positive': '+'})
     computed_sum = sum(1 for entry in signature2 if entry)
     if computed_sum != 4:
         print(f'Got computed sum: {computed_sum}')

@@ -98,7 +98,7 @@ packages = [
     "spatialprofilingtoolbox.workflow.tabular_import.parsing",
     "spatialprofilingtoolbox.workflow.common",
     "spatialprofilingtoolbox.workflow.common.logging",
-    "spatialprofilingtoolbox.workflow.templates"
+    "spatialprofilingtoolbox.workflow.assets"
 ]
 
 [tool.setuptools.package-data]

@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from spatialprofilingtoolbox import get_workflow_names
 
 
-SettingArgumentName = Literal['workflow', 'metrics database', 'source file identifier',
+SettingArgumentName = Literal['workflow', 'source file identifier',
                               'source file name', 'sample', 'outcome', 'dichotomize',
                               'database config', 'file manifest', 'study name', 'job_index']
 FileArgumentName = Literal['phenotypes file', 'channels file',
@@ -23,10 +23,6 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
     if name == 'workflow':
         parser.add_argument('--workflow', dest='workflow', choices=get_workflow_names(),
                             required=False)
-    if name == 'metrics database':
-        parser.add_argument('--metrics-database-filename', dest='metrics_database_filename',
-                            type=str, required=False,
-                            help='Filename for sqlite database file storing intermediate results.')
     if name == 'source file identifier':
         parser.add_argument('--input-file-identifier', dest='input_file_identifier', type=str,
                             required=False,

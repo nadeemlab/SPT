@@ -97,6 +97,6 @@ class TabularCellMetadataDesign:
         if not table is None:
             if '_'.join([self._get_indicator_prefix(key), 'Positive']) in table.columns:
                 separator = '_'
-        if key in self.get_elementary_phenotype_names():
+        if key in self.get_channel_names():
             return separator.join([self._get_indicator_prefix(key), 'Positive'])
         return key

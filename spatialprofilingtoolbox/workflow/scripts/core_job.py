@@ -20,7 +20,7 @@ if __name__ == '__main__':
     add_argument(parser, 'workflow')
     add_argument(parser, 'study name')
     add_argument(parser, 'database config')
-    add_argument(parser, 'performance report')
+    add_argument(parser, 'performance report file')
     add_argument(parser, 'results file')
     add_argument(parser, 'job index')
     add_argument(parser, 'source file identifier')
@@ -28,7 +28,6 @@ if __name__ == '__main__':
     add_argument(parser, 'channels file')
     add_argument(parser, 'phenotypes file')
     add_argument(parser, 'sample')
-    add_argument(parser, 'metrics database')
 
     parameters = vars(parser.parse_args())
     core_job = get_core_job(**parameters)

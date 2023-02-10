@@ -5,7 +5,6 @@ actually runs. For debugging and archival purposes.
 from os.path import getsize
 import datetime
 import socket
-from typing import Optional
 
 import pandas as pd
 
@@ -22,25 +21,22 @@ class RunConfigurationReporter:
     """Convenience reporter of run configuration."""
     def __init__(
         self,
-        workflow: Optional[str] = None,
-        file_manifest_file: Optional[str] = None,
-        outcomes_file: Optional[str] = None,
-        channels_file: Optional[str] = None,
-        phenotypes_file: Optional[str] = None,
+        workflow: str = '',
+        file_manifest_file: str = '',
+        samples_file: str = '',
+        channels_file: str = '',
+        phenotypes_file: str = '',
     ):
         logger.info('Machine host: %s', socket.gethostname())
         logger.info('Version: SPT v%s', get_version())
         logger.info('Workflow: "%s"', workflow)
 
-        file_metadata = pd.read_csv(
-            file_manifest_file, sep='\t', keep_default_na=False)
-        project_handle = sorted(
-            list(set(file_metadata['Project ID']).difference([''])))[0]
+        file_metadata = pd.read_csv(file_manifest_file, sep='\t', keep_default_na=False)
+        project_handle = sorted(list(set(file_metadata['Project ID']).difference([''])))[0]
         if project_handle != '':
             logger.info('Dataset/project: "%s"', project_handle)
             current = datetime.datetime.now()
-            year = current.date().strftime("%Y")
-            logger.info('Run date year: %s', year)
+            logger.info('Run date year: %s', current.date().strftime("%Y"))
 
         sizes = self.retrieve_cell_manifest_sizes(file_manifest_file)
         logger.info('Number of cell manifest files: %s', len(sizes))
@@ -50,32 +46,31 @@ class RunConfigurationReporter:
                     self.format_mb(min(sizes)))
         logger.info('Largest cell manifest: %s MB', self.format_mb(max(sizes)))
 
-        if outcomes_file:
-            outcomes = pd.read_csv(
-                outcomes_file, sep='\t', keep_default_na=False, dtype=str)
+        if samples_file:
+            samples = pd.read_csv(
+                samples_file, sep='\t', keep_default_na=False, dtype=str)
         else:
             sample_ids = self.retrieve_cell_manifest_sample_identifiers(
                 file_manifest_file)
-            outcomes = pd.DataFrame({
+            samples = pd.DataFrame({
                 'Sample ID': sample_ids,
                 'Outcome': ['Unknown outcome assignment' for i in sample_ids],
             })[['Sample ID', 'Outcome']]
-        labels = sorted(list(set(outcomes[outcomes.columns[1]])))
+        labels = sorted(list(set(samples[samples.columns[1]])))
 
-        channels = pd.read_csv(channels_file, keep_default_na=False)
+        channels_df = pd.read_csv(channels_file, keep_default_na=False)
         phenotypes = pd.read_csv(phenotypes_file, keep_default_na=False)
-        channels = sorted(list(set(channels['Name'])))
+        channels = sorted(list(set(channels_df['Name'])))
 
         logger.info('Number of outcome labels: %s', len(labels))
-        logger.info('Number of channels: %s', channels.shape[0])
-        logger.info('Number of phenotypes considered: %s',
-                    phenotypes.shape[0])
+        logger.info('Number of channels: %s', channels_df.shape[0])
+        logger.info('Number of phenotypes considered: %s', phenotypes.shape[0])
         logger.info('Outcomes: %s', '; '.join(labels))
-        logger.info('Outcome frequencies: %s', self.get_frequencies(outcomes))
+        logger.info('Outcome frequencies: %s', self.get_frequencies(samples))
         logger.info('Channels: %s', '; '.join(channels))
 
-    def get_frequencies(self, outcomes):
-        column = outcomes[outcomes.columns[1]]
+    def get_frequencies(self, samples):
+        column = samples[samples.columns[1]]
         labels = sorted(list(set(column)))
         return {label: sum(1 for value in column if value == label) for label in labels}
 

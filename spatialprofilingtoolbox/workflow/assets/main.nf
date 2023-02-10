@@ -105,7 +105,7 @@ process report_run_configuration {
      --file-manifest-file=${file_manifest_file} \
      --samples-file=${samples_file} \
      --channels-file=${channels} \
-     --phenotypes-file=${phenotypes} >& run_configuration.log
+     --phenotypes-file=${phenotypes} | tee run_configuration.log
     """
 }
 

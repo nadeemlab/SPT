@@ -52,7 +52,7 @@ process generate_run_information {
     """
 }
 
-process workflow_initialize {
+process workflow_main {
     input:
     val workflow
     path file_manifest_file
@@ -65,9 +65,6 @@ process workflow_initialize {
     path study
     path diagnosis
     path interventions
-
-    output:
-    stdout                                  emit: initialization_flag
 
     script:
     """
@@ -83,38 +80,6 @@ process workflow_initialize {
      --elementary-phenotypes-file=${channels_file} \
      --composite-phenotypes-file=${phenotypes_file}
     echo "Success"
-    """
-}
-
-process core_job {
-    memory { 2.GB * task.attempt }
-
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 4
-
-    input:
-    val initialization_flag
-    val workflow
-    tuple val(input_file_identifier), file(input_filename), val(job_index), val(outcome), val(sample_identifier)
-    path channels
-    path phenotypes
-
-    output:
-    path "metrics${job_index}.db",          emit: metrics_database
-    path "metrics${job_index}.csv",         emit: performance_report
-
-    script:
-    """
-    echo "Initialization status: ${initialization_flag}"
-    spt workflow core-job \
-     --workflow='${workflow}' \
-     --input-file-identifier='${input_file_identifier}' \
-     --input-filename=${input_filename} \
-     --sample-identifier='${sample_identifier}' \
-     --outcome='${outcome}' \
-     --elementary-phenotypes-file=${channels} \
-     --composite-phenotypes-file=${phenotypes} \
-     --metrics-database-filename=metrics${job_index}.db
     """
 }
 
@@ -140,72 +105,6 @@ process report_run_configuration {
      --outcomes-file=${outcomes_file}
      --elementary-phenotypes-file=${channels} \
      --composite-phenotypes-file=${phenotypes} >& run_configuration.log
-    """
-}
-
-process merge_databases {
-    memory { 2.GB * task.attempt }
-
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 6
-
-    publishDir 'results'
-
-    input:
-    path all_metrics_databases
-
-    output:
-    path 'metrics_database.db',             emit: metrics_database
-
-    script:
-    """
-    spt workflow merge-sqlite-dbs ${all_metrics_databases} --output=metrics_database.db
-    """
-}
-
-process merge_performance_reports {
-    publishDir 'results'
-
-    input:
-    path all_performance_reports
-
-    output:
-    path 'performance_report.md'
-
-    script:
-    """
-    spt workflow merge-performance-reports ${all_performance_reports} --output=performance_report.md
-    """
-}
-
-process aggregate_results {
-    memory { 2.GB * task.attempt }
-
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 6
-
-    publishDir 'results'
-
-    input:
-    path metrics_database
-    path db_config_file
-    path file_manifest_file
-    val workflow
-    path channels
-    path phenotypes
-
-    output:
-    file 'stats_tests.csv'
-
-    script:
-    """
-    spt workflow aggregate-core-results \
-     --workflow='${workflow}' \
-     --file-manifest-file=${file_manifest_file} \
-     --metrics-database-filename=${metrics_database} \
-     --database-config-file=${db_config_file}
-     --elementary-phenotypes-file=${channels} \
-     --composite-phenotypes-file=${phenotypes}
     """
 }
 
@@ -273,7 +172,7 @@ workflow {
         phenotypes_ch,
     )
 
-    workflow_initialize(
+    workflow_main(
         workflow_ch,
         file_manifest_ch,
         channels_ch,
@@ -285,35 +184,5 @@ workflow {
         study_ch,
         diagnosis_ch,
         interventions_ch,
-    )
-        .initialization_flag
-        .set{ initialization_flag_ch }
-
-    core_job(
-        initialization_flag_ch,
-        workflow_ch,
-        job_specifications_ch,
-        channels_ch,
-        phenotypes_ch,
-    )
-        .set { core_job_results_ch }
-
-    merge_databases(
-        core_job_results_ch.metrics_database.collect(),
-    )
-        .metrics_database
-        .set{ merged_metrics_database_ch }
-
-    merge_performance_reports(
-        core_job_results_ch.performance_report.collect()
-    )
-
-    aggregate_results(
-        merged_metrics_database_ch,
-        db_config_file_ch,
-        file_manifest_ch,
-        workflow_ch,
-        channels_ch,
-        phenotypes_ch,
     )
 }

@@ -184,7 +184,7 @@ class CellManifestsParser(SourceToADIParser):
         ]
 
     def get_channel_symbols(self, chemical_species_identifiers_by_symbol):
-        recognized_channel_symbols = self.dataset_design.get_elementary_phenotype_names()
+        recognized_channel_symbols = self.dataset_design.get_channel_names()
         missing = set(chemical_species_identifiers_by_symbol.keys()
                                       ).difference(recognized_channel_symbols)
         if len(missing) > 0:

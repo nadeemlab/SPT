@@ -15,7 +15,7 @@ if __name__ == '__main__':
     )
     add_argument(parser, 'workflow')
     add_argument(parser, 'file manifest')
-    add_argument(parser, 'outcomes file')
+    add_argument(parser, 'samples file')
     add_argument(parser, 'channels file')
     add_argument(parser, 'phenotypes file')
     args = parser.parse_args()

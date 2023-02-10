@@ -21,9 +21,9 @@ class TabularImportInitializer(Initializer): #pylint: disable=too-few-public-met
             skimmer.parse(
                 {
                     'file manifest': kwargs['file_manifest_file'],
-                    'channels': kwargs['elementary_phenotypes_file'],
-                    'phenotypes': kwargs['composite_phenotypes_file'],
-                    'samples': kwargs['outcomes_file'],
+                    'channels': kwargs['channels_file'],
+                    'phenotypes': kwargs['phenotypes_file'],
+                    'samples': kwargs['samples_file'],
                     'subjects': kwargs['subjects_file'],
                     'study': kwargs['study_file'],
                     'diagnosis': kwargs['diagnosis_file'],

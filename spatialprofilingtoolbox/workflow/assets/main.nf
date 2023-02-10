@@ -104,8 +104,8 @@ process report_run_configuration {
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --samples-file=${samples_file} \
-     --elementary-phenotypes-file=${channels} \
-     --composite-phenotypes-file=${phenotypes} >& run_configuration.log
+     --channels-file=${channels} \
+     --phenotypes-file=${phenotypes} >& run_configuration.log
     """
 }
 
@@ -156,7 +156,7 @@ workflow {
     run_information_ch
         .job_specification_table
         .splitCsv(header: true)
-        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index, row.outcome, row.sample_identifier) }
+        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename)) }
         .set{ job_specifications_ch }
 
     job_specifications_ch

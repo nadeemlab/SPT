@@ -16,7 +16,7 @@ if __name__ == '__main__':
     add_argument(parser, 'database config')
     add_argument(parser, 'channels file')
     add_argument(parser, 'phenotypes file')
-    add_argument(parser, 'outcomes file')
+    add_argument(parser, 'samples file')
     add_argument(parser, 'subjects file')
     add_argument(parser, 'diagnosis file')
     add_argument(parser, 'interventions file')

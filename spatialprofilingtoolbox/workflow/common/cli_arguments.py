@@ -9,12 +9,12 @@ from argparse import ArgumentParser
 from spatialprofilingtoolbox import get_workflow_names
 
 
-SettingArgumentName = Literal['workflow', 'source file identifier',
-                              'source file name', 'sample', 'outcome', 'dichotomize',
-                              'database config', 'file manifest', 'study name', 'job_index']
-FileArgumentName = Literal['phenotypes file', 'channels file',
-                           'study file', 'samples file', 'subjects file', 'diagnosis file',
-                           'interventions file', 'performance report', 'results file']
+SettingArgumentName = Literal['workflow', 'source file identifier', 'source file name', 'sample',
+                              'dichotomize', 'database config', 'file manifest', 'study name',
+                              'job_index']
+FileArgumentName = Literal['phenotypes file', 'channels file', 'study file', 'samples file',
+                           'subjects file', 'diagnosis file', 'interventions file',
+                           'performance report', 'results file']
 
 
 def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileArgumentName]):
@@ -35,10 +35,6 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
                             required=False,
                             help='The sample identifier associated with the given input file, as '
                             'it appears in the file manifest.')
-    if name == 'outcome':
-        parser.add_argument('--outcome', dest='outcome', type=str, required=False,
-                            help='The outcome assignment for the sample associated with the given '
-                            'input file.')
     if name == 'dichotomize':
         parser.add_argument('--dichotomize', dest='dichotomize', action='store_true')
     if name == 'database config':
@@ -59,10 +55,3 @@ def add_file_argument(parser, name: FileArgumentName):
     hyphens = re.sub(' ', '-', name)
     snake = re.sub(' ', '_', name)
     parser.add_argument(f'--{hyphens}', dest=f'{snake}', type=str, required=False)
-
-    # if name == 'phenotypes file':
-    #     parser.add_argument('--composite-phenotypes-file', dest='composite_phenotypes_file',
-    #                         type=str, required=False)
-    # if name == 'channels file':
-    #     parser.add_argument('--elementary-phenotypes-file', dest='elementary_phenotypes_file',
-    #                         type=str, required=False)

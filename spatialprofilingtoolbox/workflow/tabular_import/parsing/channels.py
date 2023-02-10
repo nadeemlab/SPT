@@ -11,8 +11,8 @@ class ChannelsPhenotypesParser(SourceToADIParser):
     """Source file parsing for imaging/feature-assessment channel metadata."""
     def parse(self,
               connection,
-              elementary_phenotypes_file,
-              composite_phenotypes_file,
+              channels_file,
+              phenotypes_file,
               study_name):
         """
         Retrieve the phenotype and channel metadata, and parse records for:
@@ -22,10 +22,10 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         - cell phenotype
         - cell phenotype criterion
         """
-        elementary_phenotypes = pd.read_csv(
-            elementary_phenotypes_file, sep=',', na_filter=False, dtype=str)
-        composite_phenotypes = pd.read_csv(
-            composite_phenotypes_file, sep=',', na_filter=False, dtype=str)
+        channels = pd.read_csv(
+            channels_file, sep=',', na_filter=False, dtype=str)
+        phenotypes = pd.read_csv(
+            phenotypes_file, sep=',', na_filter=False, dtype=str)
 
         data_analysis_study = SourceToADIParser.get_data_analysis_study_name(study_name)
         measurement_study = SourceToADIParser.get_measurement_study_name(study_name)
@@ -35,7 +35,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         identifier = self.get_next_integer_identifier('chemical_species', cursor)
         initial_value = identifier
         chemical_species_identifiers_by_symbol = {}
-        for _, phenotype in elementary_phenotypes.iterrows():
+        for _, phenotype in channels.iterrows():
             symbol = phenotype['Name']
             chemical_structure_class = phenotype['Target structure class']
             record = (
@@ -65,7 +65,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         identifier = self.get_next_integer_identifier(
             'biological_marking_system', cursor)
         initial_value = identifier
-        for _, phenotype in elementary_phenotypes.iterrows():
+        for _, phenotype in channels.iterrows():
             symbol = phenotype['Name']
             record = (
                 str(identifier),
@@ -92,7 +92,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         initial_value = identifier
         cell_phenotype_identifiers_by_symbol = {}
         number_criterion_records = 0
-        for _, phenotype in composite_phenotypes.iterrows():
+        for _, phenotype in phenotypes.iterrows():
             symbol = phenotype['Name']
             record = (str(identifier), symbol, symbol)
             was_found, key = self.check_exists('cell_phenotype', record, cursor)
@@ -158,8 +158,8 @@ class ChannelsPhenotypesParser(SourceToADIParser):
 
         logger.info(
             'Parsed records implied by "%s" and "%s".',
-            elementary_phenotypes_file,
-            composite_phenotypes_file,
+            channels_file,
+            phenotypes_file,
         )
         connection.commit()
         cursor.close()

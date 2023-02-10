@@ -28,7 +28,6 @@ if __name__ == '__main__':
     add_argument(parser, 'channels file')
     add_argument(parser, 'phenotypes file')
     add_argument(parser, 'sample')
-    add_argument(parser, 'outcome')
     add_argument(parser, 'metrics database')
 
     parameters = vars(parser.parse_args())

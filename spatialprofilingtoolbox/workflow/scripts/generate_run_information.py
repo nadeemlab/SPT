@@ -36,7 +36,7 @@ if __name__ == '__main__':
         containing file_manifest.tsv).
         ''',
     )
-    add_argument(parser, 'outcomes file')
+    add_argument(parser, 'samples file')
     parser.add_argument(
         '--job-specification-table',
         dest='job_specification_table',
@@ -68,13 +68,9 @@ if __name__ == '__main__':
 
     Generator = workflows[args.workflow].generator
     if args.use_file_based_data_model:
-        job_generator = Generator(
-            file_manifest_file=args.file_manifest_file,
-            input_path=args.input_path,
-        )
-        job_generator.write_job_specification_table(
-            args.job_specification_table, outcomes_file=args.outcomes_file)
+        job_generator = Generator(file_manifest_file=args.file_manifest_file,
+                                  input_path=args.input_path)
     else:
         job_generator = Generator(study_name=args.study_name,
                                   database_config_file=args.database_config_file)
-        job_generator.write_job_specification_table(args.job_specification_table)
+    job_generator.write_job_specification_table(args.job_specification_table)

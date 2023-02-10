@@ -14,11 +14,11 @@ class TabularCellMetadataDesign:
     """
 
     def __init__(self,
-                 elementary_phenotypes_file: str = '',
+                 channels_file: str = '',
                  **kwargs,  # pylint: disable=unused-argument
                  ):
-        self.elementary_phenotypes = pd.read_csv(
-            elementary_phenotypes_file,
+        self.channels = pd.read_csv(
+            channels_file,
             keep_default_na=False,
         )
 
@@ -33,7 +33,7 @@ class TabularCellMetadataDesign:
         ]
 
     def get_elementary_phenotype_names(self):
-        return list(self.elementary_phenotypes['Name'])
+        return list(self.channels['Name'])
 
     def get_box_limit_column_names(self):
         xmin = 'XMin'
@@ -58,8 +58,7 @@ class TabularCellMetadataDesign:
                 The prefix which appears in many CSV column names, for which these
                 columns pertain to the given phenotype.
         """
-        channels = self.elementary_phenotypes
-        row = channels.loc[channels['Name'] == phenotype_name].squeeze()
+        row = self.channels.loc[self.channels['Name'] == phenotype_name].squeeze()
         value = row[metadata_file_column]
         return str(value)
 

@@ -3,8 +3,8 @@ core_254	Breast cancer IMC	254.csv	BaselTMA_SP43_1_X1Y8	Tabular cell manifest
 core_320	Breast cancer IMC	320.csv	BaselTMA_SP43_3_X13Y6	Tabular cell manifest
 core_282	Breast cancer IMC	282.csv	BaselTMA_SP43_4_X15Y3	Tabular cell manifest
 core_225	Breast cancer IMC	225.csv	BaselTMA_SP42_5_X8Y7	Tabular cell manifest
-Elementary phenotypes file	Breast cancer IMC	elementary_phenotypes.csv	None	Manifest of basic channels/phenotypes
-Complex phenotypes file	Breast cancer IMC	composite_phenotypes.csv	None	Manifest of composite phenotypes
+Channels file	Breast cancer IMC	elementary_phenotypes.csv	None	Manifest of basic channels/phenotypes
+Phenotypes file	Breast cancer IMC	composite_phenotypes.csv	None	Manifest of composite phenotypes
 Samples file	Breast cancer IMC	samples.tsv	None	Samples
 Subjects file	Breast cancer IMC	subjects.tsv	None	Manifest of subjects
 Study file	Breast cancer IMC	study.json	None	Project-level data

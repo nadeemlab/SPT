@@ -6,6 +6,7 @@
 4. <a href="#test-managed-development">Test-managed development</a>
 5. <a href="#spt-tab-completion">`spt` tab-completion</a>
 6. <a href="#throwaway-testing">Throwaway testing</a>
+7. <a href="#new-workflows">Add a new workflow</a>
 
 ## <a id="building-and-testing-modules"></a> 1. Building and testing modules
 
@@ -23,7 +24,7 @@ The modules in this repository are built, tested, and deployed using `make` and 
 A typical development workflow looks like:
 
 1. Modify or add source files.
-2. Add new unit and "module" tests.
+2. Add new tests.
 3. `$ make clean`
 <pre>
 Checking that Docker daemon is running <span style="color:olive;">...</span><span style="color:olive;">......................................</span> <span style="font-weight:bold;color:green;">Running.</span>       <span style="color:purple;">(1s)</span>
@@ -31,52 +32,50 @@ Running docker compose rm (remove) <span style="color:olive;">...</span><span st
 </pre>
 4. `$ make test`
 
-
 ```txt
-Creating venv for basic package introspection .................................. Created.       (4s)      
-Creating spt CLI completions script ............................................ Created.       (5s)      
-Building development image ..................................................... Built.         (14s)     
-Building apiserver Dockerfile .................................................. Built.         (0s)      
-Building countsserver Dockerfile ............................................... Built.         (0s)      
-Building db Dockerfile ......................................................... Built.         (0s)      
-Building workflow Dockerfile ................................................... Built.         (0s)      
-Building Docker image nadeemlab/spt-db ......................................... Built.         (10s)     
-Building test-data-loaded spt-db image (1) ..................................... Built.         (19s)     
-Building test-data-loaded spt-db image (1and2) ................................. Built.         (36s)     
-Building Docker image nadeemlab/spt-apiserver .................................. Built.         (10s)     
-Building Docker image nadeemlab/spt-countsserver ............................... Built.         (10s)     
-Building Docker image nadeemlab/spt-workflow ................................... Built.         (10s)     
-Running docker compose rm (remove) ............................................. Down.          (0s)      
-apiserver (setup testing environment) .......................................... Setup.         (3s)      
-  API internal basic database accessor ......................................... Passed.        (1s)      
-apiserver (teardown testing environment) ....................................... Down.          (1s)      
-countsserver (setup testing environment) ....................................... Setup.         (1s)      
-  binary expression viewer ..................................................... Passed.        (1s)      
-countsserver (teardown testing environment) .................................... Down.          (0s)      
-db (setup testing environment) ................................................. Setup.         (2s)      
-  drop recreate database constraints ........................................... Passed.        (3s)      
-  guess channels from object files ............................................. Passed.        (1s)      
-db (teardown testing environment) .............................................. Down.          (0s)      
-workflow (setup testing environment) ........................................... Setup.         (3s)      
-  signature cell set subsetting ................................................ Passed.        (1s)      
-workflow (teardown testing environment) ........................................ Down.          (0s)      
-apiserver (setup testing environment) .......................................... Setup.         (3s)      
-  single API route ............................................................. Passed.        (0s)      
-  counts query delegation edge cases ........................................... Passed.        (1s)      
-apiserver (teardown testing environment) ....................................... Down.          (1s)      
-countsserver (setup testing environment) ....................................... Setup.         (1s)      
-  class counts cohoused datasets ............................................... Passed.        (1s)      
-  expression data caching ...................................................... Passed.        (2s)      
-  edge cases few markers ....................................................... Passed.        (1s)      
-  single signature count query ................................................. Passed.        (0s)      
-countsserver (teardown testing environment) .................................... Down.          (1s)      
-db (setup testing environment) ................................................. Setup.         (3s)      
-  basic health of database ..................................................... Passed.        (1s)      
-  record counts cohoused datasets .............................................. Passed.        (1s)      
-db (teardown testing environment) .............................................. Down.          (0s)      
-workflow (setup testing environment) ........................................... Setup.         (2s)      
-  proximity pipeline ........................................................... Passed.        (71s)     
+Running docker compose rm (remove) ............................................. Down.          (0s)
+apiserver (setup testing environment) .......................................... Setup.         (7s)
+  API internal basic database accessor ......................................... Passed.        (1s)
+apiserver (teardown testing environment) ....................................... Down.          (0s)
+cggnn (setup testing environment) .............................................. Setup.         (5s)
+  image runs properly .......................................................... Passed.        (1s)
+  run .......................................................................... Passed.        (5s)
+cggnn (teardown testing environment) ........................................... Down.          (1s)
+countsserver (setup testing environment) ....................................... Setup.         (5s)
+  binary expression viewer ..................................................... Passed.        (1s)
+countsserver (teardown testing environment) .................................... Down.          (1s)
+db (setup testing environment) ................................................. Setup.         (11s)
+  guess channels from object files ............................................. Passed.        (2s)
+  drop recreate database constraints ........................................... Passed.        (12s)
+  shapefile polygon extraction ................................................. Passed.        (0s)
+db (teardown testing environment) .............................................. Down.          (1s)
+workflow (setup testing environment) ........................................... Setup.         (6s)
+  centroid pulling ............................................................. Passed.        (4s)
+  feature matrix extraction .................................................... Passed.        (26s)
+  stratification pulling ....................................................... Passed.        (5s)
+  signature cell set subsetting ................................................ Passed.        (1s)
+  sample stratification ........................................................ Passed.        (1s)
+workflow (teardown testing environment) ........................................ Down.          (0s)
+apiserver (setup testing environment) .......................................... Setup.         (7s)
+  single API route ............................................................. Passed.        (1s)
+  study summary retrieval ...................................................... Passed.        (1s)
+  counts query delegation edge cases ........................................... Passed.        (1s)
+apiserver (teardown testing environment) ....................................... Down.          (0s)
+cggnn (teardown testing environment) ........................................... Down.          (0s)
+countsserver (setup testing environment) ....................................... Setup.         (6s)
+  expression data caching ...................................................... Passed.        (5s)
+  class counts cohoused datasets ............................................... Passed.        (1s)
+  edge cases few markers ....................................................... Passed.        (1s)
+  single signature count query ................................................. Passed.        (1s)
+countsserver (teardown testing environment) .................................... Down.          (0s)
+db (setup testing environment) ................................................. Setup.         (6s)
+  basic health of database ..................................................... Passed.        (5s)
+  record counts cohoused datasets .............................................. Passed.        (4s)
+db (teardown testing environment) .............................................. Down.          (1s)
+workflow (setup testing environment) ........................................... Setup.         (5s)
+  proximity pipeline ........................................................... Passed.        (73s)
 workflow (teardown testing environment) ........................................ Down.          (1s)
+  .............................................................................. Total time:    (216s)
 ```
 
 Optionally, if the images are ready to be released:
@@ -117,9 +116,7 @@ The main functionality is provided by 4 modules designed to operate as services,
 - *The `db` module is for testing only. A real PostgresQL database should generally not be deployed in a container.*
 
 ## <a id="test-managed-development"></a> 4. Test-managed development
-Test scripts are located under
-- `test/<module name>/unit_tests`
-- `test/<module name>/module_tests`
+Test scripts are located under `test/`.
 
 These tests serve multiple purposes for us:
 1. To verify preserved functionality during source code modification.
@@ -168,14 +165,13 @@ Development often entails "throwaway" test scripts that you modify and run frequ
 For this purpose, a pattern that has worked for me in this repository is:
 
 1. Ensure at least one successful run of `make build-docker-images` at the top level of this repository's directory, for each module that you will use.
-2. Choose a pertinent module for your work (or create a new one, i.e. a subdirectory of `build/`, modeled on one of the others).
-3. Go into the module: `cd build/<module name>`.
-4. Create `throwaway_script.py`.
-5. Setup the testing environment:
+2. Go into the build are for a pertinent module: `cd build/<module name>`.
+3. Create `throwaway_script.py`.
+4. Setup the testing environment:
 ```sh
 docker compose up -d
 ```
-6. As many times as you need to, run your script with the following (replacing `<module name>`):
+5. As many times as you need to, run your script with the following (replacing `<module name>`):
 ```
 test_cmd="cd /mount_sources/<module name>/; python throwaway_script.py" ;
 docker run \
@@ -185,7 +181,7 @@ docker run \
   -t nadeemlab-development/spt-development:latest \
   /bin/bash -c "$test_cmd";
 ```
-7. Tear down the testing environment when you're done:
+6. Tear down the testing environment when you're done:
 ```sh
 docker compose down;
 docker compose rm --force --stop;
@@ -193,4 +189,16 @@ docker compose rm --force --stop;
 
 You can of course also modify the testing environment, involving more or fewer modules, even docker containers from external images, by editing `compose.yaml`.
 
+## <a id="new-workflows"></a> 7. Add a new workflow
 
+The computation workflows are orchestrated with Nextflow, using the process definition script [`main_visitor.nf`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/main_visitor.nf). "Visitor" refers to the visitor pattern, whereby the process steps access the database, do some reads, do some computations, and return some results by sending them to the database.
+
+Each workflow consists of:
+- "job" definition (in case the workflow calls for parallelization)
+- initialization
+- core jobs
+- integration/wrap-up
+
+**To make a new workflow**: copy the `phenotype_proximity` subdirectory to a sibling directory with a new name. Update the components accordingly, and update [`workflow/__init__.py`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/__init__.py) with a new entry for your workflow, to ensure that it is discovered. You'll also need to update [`pyproject.toml`](https://github.com/nadeemlab/SPT/blob/main/pyproject.toml) to declare your new subpackage.
+
+The basic interface for each workflow component is defined in [`workflow/component_interfaces`](https://github.com/nadeemlab/SPT/tree/main/spatialprofilingtoolbox/workflow/component_interfaces).

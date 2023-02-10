@@ -46,7 +46,7 @@ class TabularImportJobGenerator(JobGenerator):
         records = self.retrieve_file_records(condition=lambda record: validate(record['Data type']))
 
         rows = [{
-                'input_file_identifier' : record['File identifier'],
+                'input_file_identifier' : record['File ID'],
                 'input_filename': join(self.input_path, record['File name']),
                 } for record in records]
         df = pd.DataFrame(rows)

@@ -151,6 +151,26 @@ def process_filename_inputs(options, parsed_args):
     options['interventions_file'] = interventions_file_abs
     options['interventions'] = True
 
+    channels_file = get_input_filename_by_identifier(
+        input_file_identifier=ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER ,
+        file_manifest_filename=file_manifest_path,
+    )
+    channels_file_abs = join(parsed_args.input_path, channels_file)
+    if not exists(channels_file_abs):
+        raise FileNotFoundError(f'Did not find channels file ({channels_file}).')
+    options['channels_file'] = channels_file_abs
+    options['channels'] = True
+
+    phenotypes_file = get_input_filename_by_identifier(
+        input_file_identifier=COMPOSITE_PHENOTYPES_FILE_IDENTIFIER,
+        file_manifest_filename=file_manifest_path,
+    )
+    phenotypes_file_abs = join(parsed_args.input_path, phenotypes_file)
+    if not exists(phenotypes_file_abs):
+        raise FileNotFoundError(f'Did not find phenotypes file ({phenotypes_file}).')
+    options['phenotypes_file'] = phenotypes_file_abs
+    options['phenotypes'] = True
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -205,6 +225,10 @@ if __name__ == '__main__':
         import jinja2
         from spatialprofilingtoolbox.workflow.common.\
             file_identifier_schema import DEFAULT_FILE_MANIFEST_FILENAME  # pylint: disable=ungrouped-imports
+        from spatialprofilingtoolbox.workflow.common.\
+            file_identifier_schema import ELEMENTARY_PHENOTYPES_FILE_IDENTIFIER
+        from spatialprofilingtoolbox.workflow.common.\
+            file_identifier_schema import COMPOSITE_PHENOTYPES_FILE_IDENTIFIER
         from spatialprofilingtoolbox.workflow.common.\
             file_identifier_schema import get_input_filename_by_identifier
         from spatialprofilingtoolbox.workflow.common.\

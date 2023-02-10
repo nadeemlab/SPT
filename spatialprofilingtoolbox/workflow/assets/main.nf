@@ -12,6 +12,8 @@ process echo_environment_variables {
     path 'outcomes_file',                   emit: outcomes_file
     path 'db_config_file',                  emit: db_config_file
     path 'subjects_file',                   emit: subjects_file
+    path 'channels_file',                   emit: channels_file
+    path 'phenotypes_file',                 emit: phenotypes_file
 
     script:
     """

@@ -38,6 +38,7 @@ def write_config_file(variables):
     file_to_write = template.render(**variables)
     with open(join(getcwd(), NF_CONFIG_FILE), 'wt', encoding='utf-8') as file:
         file.write(file_to_write)
+    print(file_to_write)
 
 
 def write_pipeline_script(variables):
@@ -271,5 +272,6 @@ if __name__ == '__main__':
         process_filename_inputs(config_variables, args)
 
     write_config_file(config_variables)
+    print(config_variables)
     write_pipeline_script(config_variables)
     record_configuration_command(config_variables)

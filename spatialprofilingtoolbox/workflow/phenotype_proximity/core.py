@@ -29,14 +29,14 @@ class PhenotypeProximityCoreJob(CoreJob):
         self,
         study_name: str='',
         database_config_file: str='',
-        performance_report_filename: str='',
+        performance_report_file: str='',
         job_index: str='',
         results_file: str='',
         **kwargs  # pylint: disable=unused-argument
     ):
         self.study_name = study_name
         self.database_config_file = database_config_file
-        self.performance_report_filename = performance_report_filename
+        self.performance_report_file = performance_report_file
         self.timer = PerformanceTimer()
         self.results_file = results_file
         self.job_index = job_index
@@ -50,7 +50,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         return generator.retrieve_sample_identifiers()[int(self.job_index)]
 
     def get_performance_report_filename(self):
-        return self.performance_report_filename
+        return self.performance_report_file
 
     def wrap_up_timer(self):
         """

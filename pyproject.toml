@@ -93,7 +93,6 @@ packages = [
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.component_interfaces",
-    "spatialprofilingtoolbox.workflow.computational_visitor",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.tabular_import",
     "spatialprofilingtoolbox.workflow.tabular_import.parsing",

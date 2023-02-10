@@ -50,7 +50,8 @@ class CellManifestSetParser(SourceToADIParser):
         )
 
         for _, cell_manifest in cell_manifests.iterrows():
-            logger.debug('Considering "%s" file "%s" .', cell_manifest_data_type(), cell_manifest['File ID'])
+            logger.debug('Considering "%s" file "%s" .', cell_manifest_data_type(),
+                         cell_manifest['File ID'])
             sample_id = cell_manifest['Sample ID']
             filename = cell_manifest['File name']
             sha256_hash = compute_sha256(filename)

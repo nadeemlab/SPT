@@ -92,7 +92,7 @@ packages = [
     "spatialprofilingtoolbox.db.data_model",
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
-    "spatialprofilingtoolbox.workflow.defaults",
+    "spatialprofilingtoolbox.workflow.component_interfaces",
     "spatialprofilingtoolbox.workflow.computational_visitor",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.tabular_import",
@@ -116,15 +116,12 @@ packages = [
     "configure.py",
     "report_on_logs.py"
 ]
-"spatialprofilingtoolbox.workflow.workflows" = [
-    "main.nf.jinja"
-]
-"spatialprofilingtoolbox.workflow.templates" = [
+"spatialprofilingtoolbox.workflow.assets" = [
     "nextflow.config.jinja",
     "log_table.tex.jinja",
     "log_table.html.jinja",
     ".spt_db.config.template",
-    "main.nf.jinja",
+    "main.nf",
     "main_visitor.nf"
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [

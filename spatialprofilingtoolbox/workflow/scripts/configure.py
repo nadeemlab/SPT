@@ -33,7 +33,7 @@ def retrieve_from_library(subpackage, filename):
 
 
 def write_config_file(variables):
-    contents = retrieve_from_library('workflow.templates', NF_CONFIG_FILE + '.jinja')
+    contents = retrieve_from_library('workflow.assets', NF_CONFIG_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
     file_to_write = template.render(**variables)
     with open(join(getcwd(), NF_CONFIG_FILE), 'wt', encoding='utf-8') as file:
@@ -42,11 +42,9 @@ def write_config_file(variables):
 
 def write_pipeline_script(variables):
     if workflows[variables['workflow']].is_database_visitor:
-        pipeline_file = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE_VISITOR)
+        pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
     else:
-        contents = retrieve_from_library('workflow.templates', NF_PIPELINE_FILE + '.jinja')
-        template = jinja_environment.from_string(contents)
-        pipeline_file = template.render(**variables)
+        pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE)
     with open(join(os.getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
         file.write(pipeline_file)
 

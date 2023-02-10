@@ -35,3 +35,9 @@ env.diagnosis_file_ = '{{ diagnosis_file }}'{% endif %}
 
 {%- if interventions_file is defined and interventions_file|length %}
 env.interventions_file_ = '{{ interventions_file }}'{% endif %}
+
+{%- if channels_file is defined and channels_file|length %}
+env.channels_file_ = '{{ channels_file }}'{% endif %}
+
+{%- if phenotypes_file is defined and phenotypes_file|length %}
+env.phenotypes_file_ = '{{ phenotypes_file }}'{% endif %}

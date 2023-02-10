@@ -1,6 +1,5 @@
 """
-Interface class for the functionality of creating a manifest of the
-parallelizable jobs to be done as part of a given workflow.
+Generate the list of jobs for tabular import.
 """
 from os.path import join
 from os.path import exists
@@ -8,6 +7,7 @@ from typing import Optional
 
 import pandas as pd
 
+from spatialprofilingtoolbox.workflow.component_interfaces.job_generator import JobGenerator
 from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
     import TabularCellMetadataDesign
 from spatialprofilingtoolbox.workflow.common.file_identifier_schema \
@@ -19,12 +19,9 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class JobGenerator:
+class TabularImportJobGenerator(JobGenerator):
     """
-    An interface for pipeline job generation. Minimally assumes that the pipeline
-    acts on input files listed in a file manifest file, itself in a format
-    controlled by a relatively precise schema (distributed with the source code of
-    this package).
+    Generate the list of jobs for tabular import.
     """
 
     def __init__(self,

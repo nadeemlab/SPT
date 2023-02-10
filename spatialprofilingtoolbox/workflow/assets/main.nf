@@ -9,12 +9,9 @@ process echo_environment_variables {
     path 'study_file',                      emit: study_file
     path 'diagnosis_file',                  emit: diagnosis_file
     path 'interventions_file',              emit: interventions_file
-{%- if outcomes %}
-    path 'outcomes_file',                   emit: outcomes_file{% endif %}
-{%- if db_config %}
-    path 'db_config_file',                  emit: db_config_file{% endif %}
-{%- if subjects %}
-    path 'subjects_file',                   emit: subjects_file{% endif %}
+    path 'outcomes_file',                   emit: outcomes_file
+    path 'db_config_file',                  emit: db_config_file
+    path 'subjects_file',                   emit: subjects_file
 
     script:
     """
@@ -25,12 +22,11 @@ process echo_environment_variables {
     echo -n "${study_file_}" > study_file
     echo -n "${diagnosis_file_}" > diagnosis_file
     echo -n "${interventions_file_}" > interventions_file
-{%- if outcomes %}
-    echo -n "${outcomes_file_}" > outcomes_file{% endif %}
-{%- if db_config %}
-    echo -n "${db_config_file_}" > db_config_file{% endif %}
-{%- if subjects %}
-    echo -n "${subjects_file_}" > subjects_file{% endif %}
+    echo -n "${outcomes_file_}" > outcomes_file
+    echo -n "${db_config_file_}" > db_config_file
+    echo -n "${subjects_file_}" > subjects_file
+    echo -n "${channels_file_}" > channels_file
+    echo -n "${phenotypes_file_}" > phenotypes_file
     """
 }
 
@@ -39,13 +35,10 @@ process generate_run_information {
     val workflow
     path file_manifest_file
     val input_path
-{%- if outcomes %}
-    path outcomes_file{% endif %}
+    path outcomes_file
 
     output:
     path 'job_specification_table.csv',     emit: job_specification_table
-    path 'elementary_phenotypes_filename',  emit: elementary_phenotypes_filename
-    path 'composite_phenotypes_filename',   emit: composite_phenotypes_filename
 
     script:
     """
@@ -54,11 +47,8 @@ process generate_run_information {
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --input-path='${input_path}' \
-{%- if outcomes %}
-     --outcomes-file=${outcomes_file} \{% endif %}
-     --job-specification-table=job_specification_table.csv \
-     --elementary-phenotypes-file=elementary_phenotypes_filename \
-     --composite-phenotypes-file=composite_phenotypes_filename
+     --outcomes-file=${outcomes_file} \
+     --job-specification-table=job_specification_table.csv
     """
 }
 
@@ -66,14 +56,11 @@ process workflow_initialize {
     input:
     val workflow
     path file_manifest_file
-    path elementary_phenotypes_file
-    path composite_phenotypes_file
-{%- if outcomes %}
-    path outcomes_file{% endif %}
-{%- if db_config %}
-    path db_config_file{% endif %}
-{%- if subjects %}
-    path subjects_file{% endif %}
+    path channels_file
+    path phenotypes_file
+    path outcomes_file
+    path db_config_file
+    path subjects_file
     path cell_manifest_files
     path study
     path diagnosis
@@ -87,17 +74,14 @@ process workflow_initialize {
     spt workflow initialize \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
-{%- if outcomes %}
-     --outcomes-file=${outcomes_file} \{% endif %}
-{%- if db_config %}
-     --database-config-file=${db_config_file} \{% endif %}
-{%- if subjects %}
-     --subjects-file=${subjects_file} \{% endif %}
+     --outcomes-file=${outcomes_file}
+     --database-config-file=${db_config_file}
+     --subjects-file=${subjects_file}
      --study-file=${study} \
      --diagnosis-file=${diagnosis} \
      --interventions-file=${interventions} \
-     --elementary-phenotypes-file=${elementary_phenotypes_file} \
-     --composite-phenotypes-file=${composite_phenotypes_file}
+     --elementary-phenotypes-file=${channels_file} \
+     --composite-phenotypes-file=${phenotypes_file}
     echo "Success"
     """
 }
@@ -112,8 +96,8 @@ process core_job {
     val initialization_flag
     val workflow
     tuple val(input_file_identifier), file(input_filename), val(job_index), val(outcome), val(sample_identifier)
-    path elementary_phenotypes
-    path composite_phenotypes
+    path channels
+    path phenotypes
 
     output:
     path "metrics${job_index}.db",          emit: metrics_database
@@ -128,8 +112,8 @@ process core_job {
      --input-filename=${input_filename} \
      --sample-identifier='${sample_identifier}' \
      --outcome='${outcome}' \
-     --elementary-phenotypes-file=${elementary_phenotypes} \
-     --composite-phenotypes-file=${composite_phenotypes} \
+     --elementary-phenotypes-file=${channels} \
+     --composite-phenotypes-file=${phenotypes} \
      --metrics-database-filename=metrics${job_index}.db
     """
 }
@@ -141,10 +125,9 @@ process report_run_configuration {
     path all_cell_manifests
     val workflow
     path file_manifest_file
-{%- if outcomes %}
-    path outcomes_file{% endif %}
-    path elementary_phenotypes
-    path composite_phenotypes
+    path outcomes_file
+    path channels
+    path phenotypes
 
     output:
     path "run_configuration.log"
@@ -154,10 +137,9 @@ process report_run_configuration {
     spt workflow report-run-configuration \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
-{%- if outcomes %}
-     --outcomes-file=${outcomes_file} \{% endif %}
-     --elementary-phenotypes-file=${elementary_phenotypes} \
-     --composite-phenotypes-file=${composite_phenotypes} >& run_configuration.log
+     --outcomes-file=${outcomes_file}
+     --elementary-phenotypes-file=${channels} \
+     --composite-phenotypes-file=${phenotypes} >& run_configuration.log
     """
 }
 
@@ -206,12 +188,11 @@ process aggregate_results {
 
     input:
     path metrics_database
-{%- if db_config %}
-    path db_config_file{% endif %}
+    path db_config_file
     path file_manifest_file
     val workflow
-    path elementary_phenotypes
-    path composite_phenotypes
+    path channels
+    path phenotypes
 
     output:
     file 'stats_tests.csv'
@@ -222,10 +203,9 @@ process aggregate_results {
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
      --metrics-database-filename=${metrics_database} \
-{%- if db_config %}
-     --database-config-file=${db_config_file} \{% endif %}
-     --elementary-phenotypes-file=${elementary_phenotypes} \
-     --composite-phenotypes-file=${composite_phenotypes} \
+     --database-config-file=${db_config_file}
+     --elementary-phenotypes-file=${channels} \
+     --composite-phenotypes-file=${phenotypes} \
      --stats-tests-file=stats_tests.csv
     """
 }
@@ -252,24 +232,26 @@ workflow {
     environment_ch.interventions_file.map{ file(it.text) }
         .set{ interventions_ch }
 
-{% if outcomes %}
-    environment_ch.outcomes_file.map{ file(it.text) }
-        .set{ outcomes_file_ch }
-{% endif %}
-{% if db_config %}
+    environment_ch.channels_file.map{ file(it.text) }
+        .set{ channels_file_ch }
+
+    environment_ch.phenotypes_file.map{ file(it.text) }
+        .set{ phenotypes_file_ch }
+
     environment_ch.db_config_file.map{ file(it.text) }
         .set{ db_config_file_ch }
-{% endif %}
-{% if subjects %}
+
     environment_ch.subjects_file.map{ file(it.text) }
         .set{ subjects_file_ch }
-{% endif %}
+
+    environment_ch.outcomes_file.map{ file(it.text) }
+        .set{ outcomes_file_ch }
+
     generate_run_information(
         workflow_ch,
         file_manifest_ch,
         input_path_ch,
-{%- if outcomes %}
-        outcomes_file_ch,{% endif %}
+        outcomes_file_ch,
     ).set { run_information_ch }
 
     run_information_ch
@@ -277,16 +259,6 @@ workflow {
         .splitCsv(header: true)
         .map{ row -> tuple(row.input_file_identifier, file(row.input_filename), row.job_index, row.outcome, row.sample_identifier) }
         .set{ job_specifications_ch }
-
-    run_information_ch
-        .elementary_phenotypes_filename
-        .map{ file(it.text) }
-        .set{ elementary_phenotypes_ch }
-
-    run_information_ch
-        .composite_phenotypes_filename
-        .map{ file(it.text) }
-        .set{ composite_phenotypes_ch }
 
     job_specifications_ch
         .map{ row -> row[1] }
@@ -297,23 +269,19 @@ workflow {
         cell_manifest_files_ch,
         workflow_ch,
         file_manifest_ch,
-{%- if outcomes %}
-        outcomes_file_ch,{% endif %}
-        elementary_phenotypes_ch,
-        composite_phenotypes_ch,
+        outcomes_file_ch,
+        channels_ch,
+        phenotypes_ch,
     )
 
     workflow_initialize(
         workflow_ch,
         file_manifest_ch,
-        elementary_phenotypes_ch,
-        composite_phenotypes_ch,
-{%- if outcomes %}
-        outcomes_file_ch,{% endif %}
-{%- if db_config %}
-        db_config_file_ch,{% endif %}
-{%- if subjects %}
-        subjects_file_ch,{% endif %}
+        channels_ch,
+        phenotypes_ch,
+        outcomes_file_ch,
+        db_config_file_ch,
+        subjects_file_ch,
         cell_manifest_files_ch,
         study_ch,
         diagnosis_ch,
@@ -326,8 +294,8 @@ workflow {
         initialization_flag_ch,
         workflow_ch,
         job_specifications_ch,
-        elementary_phenotypes_ch,
-        composite_phenotypes_ch,
+        channels_ch,
+        phenotypes_ch,
     )
         .set { core_job_results_ch }
 
@@ -343,11 +311,10 @@ workflow {
 
     aggregate_results(
         merged_metrics_database_ch,
-{%- if db_config %}
-        db_config_file_ch,{% endif %}
+        db_config_file_ch,
         file_manifest_ch,
         workflow_ch,
-        elementary_phenotypes_ch,
-        composite_phenotypes_ch,
+        channels_ch,
+        phenotypes_ch,
     )
 }

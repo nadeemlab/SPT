@@ -1,45 +1,16 @@
 """The initializer of the main data import workflow."""
-from abc import ABC, abstractmethod
 
-from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.component_interfaces.initializer import Initializer
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.skimmer import DataSkimmer
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class Initializer(ABC):
-    """Interface for the intializer job for the Nextflow-managed workflows."""
-
-    def __init__(self, **kwargs):
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def solicit_cli_arguments(parser):
-        pass
-
-    @abstractmethod
-    def initialize(self, **kwargs):
-        pass
-
-
 class TabularImportInitializer(Initializer):
     """Initial process for main data import workflow; does most of the import."""
     def __init__(self, **kwargs):
         pass
-
-    @staticmethod
-    def solicit_cli_arguments(parser):
-        add_argument(parser, 'file manifest')
-        add_argument(parser, 'study file')
-        add_argument(parser, 'database config')
-        add_argument(parser, 'channels file')
-        add_argument(parser, 'phenotypes file')
-        add_argument(parser, 'outcomes file')
-        add_argument(parser, 'subjects file')
-        add_argument(parser, 'diagnosis file')
-        add_argument(parser, 'interventions file')
 
     def initialize(self, database_config_file: str = '', **kwargs):
         if database_config_file == '':

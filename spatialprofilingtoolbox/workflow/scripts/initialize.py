@@ -2,11 +2,7 @@
 import argparse
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
-from spatialprofilingtoolbox import get_workflow
-from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_initializer
-
-workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -14,9 +10,16 @@ if __name__ == '__main__':
         description='A job that runs before all the main (parallelizable) jobs.',
     )
 
-    for Initializer in [w.initializer for w in workflows.values()]:
-        Initializer.solicit_cli_arguments(parser)
-
+    add_argument(parser, 'study name')
+    add_argument(parser, 'file manifest')
+    add_argument(parser, 'study file')
+    add_argument(parser, 'database config')
+    add_argument(parser, 'channels file')
+    add_argument(parser, 'phenotypes file')
+    add_argument(parser, 'outcomes file')
+    add_argument(parser, 'subjects file')
+    add_argument(parser, 'diagnosis file')
+    add_argument(parser, 'interventions file')
     add_argument(parser, 'workflow')
 
     parameters = vars(parser.parse_args())

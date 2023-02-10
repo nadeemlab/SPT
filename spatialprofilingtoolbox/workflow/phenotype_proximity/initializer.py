@@ -1,17 +1,12 @@
 """The initializer for the phenotype proximity workflow."""
-from spatialprofilingtoolbox.workflow.tabular_import.initializer import Initializer
-from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.component_interfaces.initializer import Initializer
 
 
-class PhenotypeProximityInitializer(Initializer):
+class PhenotypeProximityInitializer(Initializer): #pylint: disable=too-few-public-methods
     """
     Initial job for the phenotype proximity metrics computation workflow.
-    Currently no such initialization functionality is needed.
+    Currently no such initialization functionality is done.
     """
-
-    @staticmethod
-    def solicit_cli_arguments(parser):
-        add_argument(parser, 'study name')
 
     def initialize(self, **kwargs):
         pass

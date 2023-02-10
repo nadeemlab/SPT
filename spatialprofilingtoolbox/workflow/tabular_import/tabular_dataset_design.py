@@ -32,7 +32,7 @@ class TabularCellMetadataDesign:
             TabularCellMetadataDesign.get_cell_manifest_descriptor(),
         ]
 
-    def get_elementary_phenotype_names(self):
+    def get_channel_names(self):
         return list(self.channels['Name'])
 
     def get_box_limit_column_names(self):

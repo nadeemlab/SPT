@@ -40,6 +40,12 @@ help:
 >@${MESSAGE} print '      make clean'
 >@${MESSAGE} print '          Attempt to remove all build or partial-build artifacts.'
 >@${MESSAGE} print ' '
+>@${MESSAGE} print '      make clean-docker-images'
+>@${MESSAGE} print '          Aggressively removes the Docker images created here.'
+>@${MESSAGE} print '          It makes use `docker system prune`, which might delete other images, so use at your own risk.'
+>@${MESSAGE} print '          This target does not attempt to remove external images pulled as base images, however.'
+>@${MESSAGE} print '          Note that normal `make clean` does not attempt to remove Docker images at all.'
+>@${MESSAGE} print ' '
 >@${MESSAGE} print '      make help'
 >@${MESSAGE} print '          Show this text.'
 >@${MESSAGE} print ' '
@@ -287,6 +293,7 @@ clean-files:
 >@rm -f status_code
 >@rm -f check-docker-daemon-running
 >@rm -f check-for-docker-credentials
+>@rm -rf ${BUILD_LOCATION}/lib
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"
@@ -300,3 +307,11 @@ docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} end "Down." "Error."
 
 clean-network-environment: docker-compositions-rm
+
+clean-docker-images:
+>@docker system prune -f
+>@for tag in $$(docker image ls | grep ${DOCKER_ORG_NAME} | awk '{print $$1":"$$2}'); \
+    do \
+    docker image rm $$tag; \
+    done;
+>@docker system prune -f

@@ -73,15 +73,14 @@ process workflow_main {
     spt workflow initialize \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
-     --outcomes-file=${outcomes_file}
-     --database-config-file=${db_config_file}
-     --subjects-file=${subjects_file}
+     --outcomes-file=${outcomes_file} \
+     --database-config-file=${db_config_file} \
+     --subjects-file=${subjects_file} \
      --study-file=${study} \
      --diagnosis-file=${diagnosis} \
      --interventions-file=${interventions} \
      --elementary-phenotypes-file=${channels_file} \
      --composite-phenotypes-file=${phenotypes_file}
-    echo "Success"
     """
 }
 
@@ -104,7 +103,7 @@ process report_run_configuration {
     spt workflow report-run-configuration \
      --workflow='${workflow}' \
      --file-manifest-file=${file_manifest_file} \
-     --outcomes-file=${outcomes_file}
+     --outcomes-file=${outcomes_file} \
      --elementary-phenotypes-file=${channels} \
      --composite-phenotypes-file=${phenotypes} >& run_configuration.log
     """

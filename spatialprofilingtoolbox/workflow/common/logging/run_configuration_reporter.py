@@ -62,10 +62,8 @@ class RunConfigurationReporter:
             })[['Sample ID', 'Outcome']]
         labels = sorted(list(set(outcomes[outcomes.columns[1]])))
 
-        elementary_phenotypes = pd.read_csv(
-            elementary_phenotypes_file, keep_default_na=False)
-        composite_phenotypes = pd.read_csv(
-            composite_phenotypes_file, keep_default_na=False)
+        elementary_phenotypes = pd.read_csv(elementary_phenotypes_file, keep_default_na=False)
+        composite_phenotypes = pd.read_csv(composite_phenotypes_file, keep_default_na=False)
         channels = sorted(list(set(elementary_phenotypes['Name'])))
 
         logger.info('Number of outcome labels: %s', len(labels))

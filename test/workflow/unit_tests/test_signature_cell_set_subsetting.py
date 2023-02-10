@@ -3,27 +3,27 @@ import sys
 
 import pandas as pd
 
-from spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging.halo_cell_metadata_design \
-    import HALOCellMetadataDesign
+
+def get_pandas_signature(df, signature):
+    return [
+        all(row[key] == 1 if value=='+' else row[key] == 0 for key, value in signature.items())
+        for i, row in df.iterrows()
+    ]
+
 
 if __name__ == '__main__':
-    dataset_design = HALOCellMetadataDesign(
-        elementary_phenotypes_file=join(
-            '..', 'test_data', 'adi_preprocessed_tables/dataset1', 'elementary_phenotypes.csv'),
-    )
-    cells = pd.read_csv(join('..', 'test_data', 'adi_preprocessed_tables/dataset1',
-                        '0.csv'), sep=',', keep_default_na=False)
+    filename = join('..', 'test_data', 'adi_preprocessed_tables/dataset1', '0.csv')
+    cells = pd.read_csv(filename, sep=',', keep_default_na=False)
 
-    signature = dataset_design.get_pandas_signature(
-        cells, {'CD3': '+', 'B2M': '+'})
-    computed_sum = sum(1 for entry in signature if entry)
+    signature1 = get_pandas_signature(cells, {'CD3_Positive': '+', 'B2M_Positive': '+'})
+    computed_sum = sum(1 for entry in signature1 if entry)
     if computed_sum != 27:
         print(f'Got computed sum: {computed_sum}')
         sys.exit(1)
 
-    signature = dataset_design.get_pandas_signature(
-        cells, {'PD1': '+', 'FOXP3': '-', 'CD3': '+'})
-    computed_sum = sum(1 for entry in signature if entry)
+    signature2 = get_pandas_signature(cells,
+        {'PD1_Positive': '+', 'FOXP3_Positive': '-', 'CD3_Positive': '+'})
+    computed_sum = sum(1 for entry in signature2 if entry)
     if computed_sum != 4:
         print(f'Got computed sum: {computed_sum}')
         sys.exit(1)

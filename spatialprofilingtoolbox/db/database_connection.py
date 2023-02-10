@@ -43,8 +43,7 @@ def get_credential_keys():
 def check_internet_connectivity():
     try:
         test_host = 'https://duckduckgo.com'
-        with urlopen(test_host) as response:
-            logger.info('Checked internet connectivity and got response %s', response)
+        with urlopen(test_host) as _:
             return True
     except URLError:
         return False
@@ -59,10 +58,6 @@ def check_credentials_availability(configured_credentials):
     if all(found):
         credentials = {c: configured_credentials[c]
                        for c in get_credential_keys()}
-        logger.info('Found database credentials %s', get_credential_keys())
-        logger.info('endpoint: %s', credentials['endpoint'])
-        logger.info('database: %s', credentials['database'])
-        logger.info('user:     %s', credentials['user'])
         if (not connectivity) and (credentials['endpoint'] in ['localhost', '127.0.0.1']):
             message = 'Without network connection, you can only use endpoint=localhost for ' \
                 'backend database.'

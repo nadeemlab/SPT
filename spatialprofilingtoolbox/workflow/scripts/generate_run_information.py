@@ -6,7 +6,7 @@ Nextflow to run.
 import argparse
 from os.path import exists
 
-from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_workflow
@@ -25,17 +25,18 @@ if __name__ == '__main__':
         ''',
     )
     add_argument(parser, 'workflow')
+    add_argument(parser, 'database config')
     add_argument(parser, 'file manifest')
     parser.add_argument(
         '--input-path',
         dest='input_path',
         type=str,
-        required=True,
+        required=False,
         help='''Path to directory containing input data files. (For example,
         containing file_manifest.tsv).
         ''',
     )
-    add_argument(parser, 'outcomes file')
+    add_argument(parser, 'samples file')
     parser.add_argument(
         '--job-specification-table',
         dest='job_specification_table',
@@ -43,13 +44,22 @@ if __name__ == '__main__':
         required=True,
         help='Filename for output, job specification table CSV.',
     )
+    add_argument(parser, 'study name')
     add_argument(parser, 'channels file')
     add_argument(parser, 'phenotypes file')
+    parser.add_argument(
+        '--use-file-based-data-model',
+        dest='use_file_based_data_model',
+        required=False,
+        action='store_true',
+        help='If set, will rely on files as dataset input.',
+    )
 
     args = parser.parse_args()
 
-    if not exists(args.file_manifest_file):
-        raise FileNotFoundError(args.file_manifest_file)
+    if args.use_file_based_data_model:
+        if not exists(args.file_manifest_file):
+            raise FileNotFoundError(args.file_manifest_file)
 
     try:
         workflows = {name: get_workflow(name) for name in get_workflow_names()}
@@ -57,15 +67,10 @@ if __name__ == '__main__':
         SuggestExtrasException(e, 'workflow')
 
     Generator = workflows[args.workflow].generator
-    DatasetDesign = workflows[args.workflow].dataset_design
-    job_generator = Generator(
-        file_manifest_file=args.file_manifest_file,
-        input_path=args.input_path,
-        dataset_design_class=DatasetDesign,
-    )
-    job_generator.write_job_specification_table(
-        args.job_specification_table, outcomes_file=args.outcomes_file)
-    job_generator.write_elementary_phenotypes_filename(
-        args.elementary_phenotypes_file)
-    job_generator.write_composite_phenotypes_filename(
-        args.composite_phenotypes_file)
+    if args.use_file_based_data_model:
+        job_generator = Generator(file_manifest_file=args.file_manifest_file,
+                                  input_path=args.input_path)
+    else:
+        job_generator = Generator(study_name=args.study_name,
+                                  database_config_file=args.database_config_file)
+    job_generator.write_job_specification_table(args.job_specification_table)

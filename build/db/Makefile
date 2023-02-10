@@ -54,45 +54,17 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
->@rm -rf .nextflow/
->@rm -f .nextflow.log
->@rm -f .nextflow.log.*
->@rm -rf work/
->@rm -rf results/
->@rm -f main.nf
->@rm -f configure.sh
->@rm -f nextflow.config
->@rm -f run.sh
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
->@rm -f status_code
->@rm -rf .nextflow/
->@rm -f .nextflow.log
->@rm -f .nextflow.log.*
->@rm -rf work/
->@rm -rf results/
->@rm -f main.nf
->@rm -f configure.sh
->@rm -f nextflow.config
->@rm -f run.sh
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "db (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
->@rm -rf .nextflow/
->@rm -f .nextflow.log
->@rm -f .nextflow.log.*
->@rm -rf work/
->@rm -rf results/
->@rm -f main.nf
->@rm -f configure.sh
->@rm -f nextflow.config
->@rm -f run.sh
 
 ${TESTS}: setup-testing
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
@@ -131,12 +103,3 @@ clean:
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
 >@rm -rf Dockerfile
->@rm -rf .nextflow/
->@rm -f .nextflow.log
->@rm -f .nextflow.log.*
->@rm -rf work/
->@rm -rf results/
->@rm -f main.nf
->@rm -f configure.sh
->@rm -f nextflow.config
->@rm -f run.sh

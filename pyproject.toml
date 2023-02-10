@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
-version = "0.12.3"
+version = "0.12.4"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]
@@ -92,17 +92,13 @@ packages = [
     "spatialprofilingtoolbox.db.data_model",
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
-    "spatialprofilingtoolbox.workflow.dataset_designs",
-    "spatialprofilingtoolbox.workflow.dataset_designs.multiplexed_imaging",
-    "spatialprofilingtoolbox.workflow.defaults",
+    "spatialprofilingtoolbox.workflow.component_interfaces",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
-    "spatialprofilingtoolbox.workflow.density",
-    "spatialprofilingtoolbox.workflow.nearest_distance",
-    "spatialprofilingtoolbox.workflow.halo_import",
+    "spatialprofilingtoolbox.workflow.tabular_import",
+    "spatialprofilingtoolbox.workflow.tabular_import.parsing",
     "spatialprofilingtoolbox.workflow.common",
     "spatialprofilingtoolbox.workflow.common.logging",
-    "spatialprofilingtoolbox.workflow.source_file_adi_parsing",
-    "spatialprofilingtoolbox.workflow.templates"
+    "spatialprofilingtoolbox.workflow.assets"
 ]
 
 [tool.setuptools.package-data]
@@ -119,15 +115,13 @@ packages = [
     "configure.py",
     "report_on_logs.py"
 ]
-"spatialprofilingtoolbox.workflow.workflows" = [
-    "main.nf.jinja"
-]
-"spatialprofilingtoolbox.workflow.templates" = [
+"spatialprofilingtoolbox.workflow.assets" = [
     "nextflow.config.jinja",
     "log_table.tex.jinja",
     "log_table.html.jinja",
     ".spt_db.config.template",
-    "main.nf.jinja"
+    "main.nf",
+    "main_visitor.nf"
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [
     "read_expression_dump_file.py",

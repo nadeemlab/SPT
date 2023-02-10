@@ -197,12 +197,6 @@ class LogParser:
                         self.extractions['Phenotypes'] = match.groups(1)[0]
                         continue
 
-                    match = re.match(
-                        r'^Number of compartments: (\d+)$', parts['Message'])
-                    if match:
-                        self.extractions['Compartments'] = match.groups(1)[0]
-                        continue
-
                     match = re.match(r'^Run date year: (\d+)$',
                                      parts['Message'])
                     if match:
@@ -432,7 +426,7 @@ class LogReportAggregator:
         table = self.aggregate_reports_dataframe()
         rendered = ''
         if format_description == 'tex':
-            with importlib.resources.path('spatialprofilingtoolbox.templates',
+            with importlib.resources.path('spatialprofilingtoolbox.workflow.assets',
                                           'log_table.tex.jinja') as path:
                 with open(path, 'rt', encoding='utf-8') as file:
                     log_report_template = file.read()
@@ -441,7 +435,7 @@ class LogReportAggregator:
                                                   for parser in self.parsers]
                 rendered = template.render(rows=rows)
         if format_description == 'HTML':
-            with importlib.resources.path('spatialprofilingtoolbox.templates',
+            with importlib.resources.path('spatialprofilingtoolbox.workflow.assets',
                                           'log_table.html.jinja') as path:
                 with open(path, 'rt', encoding='utf-8') as file:
                     log_report_template = file.read()

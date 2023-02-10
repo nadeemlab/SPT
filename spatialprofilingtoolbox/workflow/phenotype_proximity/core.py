@@ -1,521 +1,217 @@
 """
 The core calculator for the proximity calculation on a single source file.
 """
-from itertools import combinations
-import sqlite3
+import warnings
+import pickle
 
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import BallTree
 
-from spatialprofilingtoolbox.workflow.phenotype_proximity.computational_design import \
-    PhenotypeProximityDesign
-from spatialprofilingtoolbox.workflow.common.sqlite_context_utility import \
-    WaitingDatabaseContextManager
-from spatialprofilingtoolbox.workflow.defaults.core import CoreJob
+from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
+from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
+from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
+    ProximityJobGenerator
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityCoreJob(CoreJob):
     """Core/parallelizable functionality for the phenotype proximity workflow."""
-    computational_design: PhenotypeProximityDesign
-    radii = [20, 60, 100]
+    radii = [60, 120]
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fov_lookup = {}
+    def __init__(
+        self,
+        study_name: str='',
+        database_config_file: str='',
+        performance_report_file: str='',
+        job_index: str='',
+        results_file: str='',
+        **kwargs  # pylint: disable=unused-argument
+    ):
+        self.study_name = study_name
+        self.database_config_file = database_config_file
+        self.performance_report_file = performance_report_file
+        self.timer = PerformanceTimer()
+        self.results_file = results_file
+        self.job_index = job_index
+        self.sample_identifier = self.lookup_sample()
+        self.channel_symbols_by_column_name = None
+        self.phenotype_names = None
+        self.tree = None
 
-    @staticmethod
-    def solicit_cli_arguments(parser):
-        pass
+    def lookup_sample(self):
+        generator = ProximityJobGenerator(self.study_name, self.database_config_file)
+        return generator.retrieve_sample_identifiers()[int(self.job_index)]
+
+    def get_performance_report_filename(self):
+        return self.performance_report_file
+
+    def wrap_up_timer(self):
+        """
+        Concludes low-level performance metric collection for this job.
+        """
+        df = self.timer.report(organize_by='fraction')
+        logger.info('Report to: %s', self.get_performance_report_filename())
+        df.to_csv(self.get_performance_report_filename(), index=False)
+
+    def get_number_cells_to_be_processed(self):
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT COUNT(*)
+            FROM
+            histological_structure_identification hsi
+            JOIN histological_structure hs ON hsi.histological_structure=hs.identifier
+            JOIN data_file df ON df.sha256_hash=hsi.data_source
+            JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
+            JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
+            JOIN study_component sc ON sc.component_study=scp.study
+            WHERE sc.primary_study=%s AND sdmp.specimen=%s AND hs.anatomical_entity='cell'
+            ;
+            ''', (self.study_name, self.sample_identifier))
+            rows = cursor.fetchall()
+            cursor.close()
+        return rows[0][0]
 
     def _calculate(self):
+        self.log_job_info()
         self.calculate_proximity()
+        self.wrap_up_timer()
 
-    def initialize_metrics_database(self):
-        cell_pair_counts_header = self.computational_design.get_cell_pair_counts_table_header()
-        connection, cursor = super().connect_to_intermediate_database()
-        cmd = ' '.join([
-            'CREATE TABLE IF NOT EXISTS',
-            self.computational_design.get_cell_pair_counts_table_name(),
-            '(',
-            'id INTEGER PRIMARY KEY AUTOINCREMENT,',
-            ' , '.join([
-                column_name + ' ' + data_type_descriptor
-                for column_name, data_type_descriptor in cell_pair_counts_header
-            ]),
-            ');',
-        ])
-        cursor.execute(cmd)
-        cursor.close()
-        connection.commit()
-        connection.close()
+    def log_job_info(self):
+        number_cells = self.get_number_cells_to_be_processed()
+        logger.info('%s cells to be analyzed for sample "%s".',number_cells,self.sample_identifier)
 
     def calculate_proximity(self):
-        """
-        The main exposed entrypoint into the calculation.
+        self.timer.record_timepoint('Start pulling data for one sample.')
+        bundle = FeatureMatrixExtractor.extract(database_config_file=self.database_config_file,
+                                                specimen=self.sample_identifier)
+        self.timer.record_timepoint('Finished pulling data for one sample.')
+        study_name = list(bundle.keys())[0]
+        _, sample = list(bundle[study_name]['feature matrices'].items())[0]
+        cells = sample['dataframe']
+        logger.info('Dataframe pulled: %s', cells.head())
 
-        Aggregates and writes counts to database.
-        """
-        logger.info(
-            'Started core calculation, %s, for %s.',
-            'balanced' if self.computational_design.balanced else 'unbalanced',
-            self.input_filename,
+        self.create_ball_tree(cells)
+
+        self.channel_symbols_by_column_name = bundle[study_name]['channel symbols by column name']
+        phenotype_identifiers, signatures = self.get_named_phenotype_signatures()
+        logger.info('Named phenotypes: ')
+        logger.info(signatures)
+
+        channels = sorted(self.channel_symbols_by_column_name.keys())
+        singleton_signatures = [{'positive' : [column_name], 'negative' : []}
+                                for column_name in channels]
+        all_signatures = singleton_signatures + signatures
+
+        cases = self.get_cases(all_signatures)
+        proximity_metrics = [self.compute_proximity_metric_for_signature_pair(s1, s2, r, cells)
+                             for s1, s2, r in cases]
+        self.write_table(proximity_metrics, self.get_cases(channels + phenotype_identifiers))
+
+    def create_ball_tree(self, cells):
+        self.tree = BallTree(cells[['pixel x', 'pixel y']].to_numpy())
+
+    def get_named_phenotype_signatures(self):
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT cp.identifier, cp.symbol, cs.symbol, CASE cpc.polarity WHEN 'positive' THEN 1 WHEN 'negative' THEN 0 END coded_value
+            FROM cell_phenotype cp
+            JOIN cell_phenotype_criterion cpc ON cpc.cell_phenotype=cp.identifier
+            JOIN chemical_species cs ON cs.identifier=cpc.marker
+            JOIN study_component sc ON sc.component_study=cpc.study
+            WHERE sc.primary_study=%s
+            ORDER BY cp.identifier
+            ;
+            ''', (self.study_name,))
+            rows = cursor.fetchall()
+            cursor.close()
+        lookup = {value : key for key, value in self.channel_symbols_by_column_name.items()}
+        criteria = pd.DataFrame(rows, columns=['phenotype', 'name', 'channel', 'polarity'])
+        self.phenotype_names = {row['phenotype'] : row['name'] for _, row in criteria.iterrows()}
+        criteria = criteria[['phenotype', 'channel', 'polarity']]
+
+        def make_signature(df):
+            return pd.Series({'signature' : {
+                'positive' : [lookup[r['channel']] for _, r in df.iterrows() if r['polarity'] == 1],
+                'negative' : [lookup[r['channel']] for _, r in df.iterrows() if r['polarity'] == 0],
+            }})
+        signatures = criteria.groupby(['phenotype']).apply(make_signature)
+        by_identifier = {
+            str(phenotype) : row['signature'] for phenotype, row in signatures.iterrows()}
+        identifiers = sorted(by_identifier.keys())
+        return identifiers, [by_identifier[i] for i in identifiers]
+
+    def get_cases(self, items):
+        return [(s1, s2, radius) for s1 in items for s2 in items
+                for radius in PhenotypeProximityCoreJob.radii]
+
+    def compute_proximity_metric_for_signature_pair(self, signature1, signature2, radius, cells):
+        mask1 = self.get_mask(cells, signature1)
+        mask2 = self.get_mask(cells, signature2)
+
+        source_count = sum(mask1)
+        if source_count == 0:
+            return None
+
+        source_cell_locations = cells.loc()[mask1][['pixel x', 'pixel y']]
+        within_radius_indices_list = self.tree.query_radius(
+            source_cell_locations,
+            radius,
+            return_distance=False,
         )
-        self.timer.record_timepoint('Started cell table calculation')
-        cells = self.create_cell_tables()
-        cell_pairs = self.create_cell_trees(cells)
-        phenotype_indices, compartment_indices = self.precalculate_masks(cells)
-        radius_limited_counts = self.do_aggregation_counting(
-            cells,
-            cell_pairs,
-            phenotype_indices,
-            compartment_indices,
-        )
-        self.write_cell_pair_counts(radius_limited_counts)
-        self.timer.record_timepoint('Finished writing pair counts')
 
-    def cache_fov_strings(self, table_file):
-        """
-        :param table_file: Table with cell data.
-        :type table_file: pandas.DataFrame
-        """
-        fovs = sorted(
-            list(set(table_file[self.dataset_design.get_fov_column(table=table_file)])))
-        for i, fov in enumerate(fovs):
-            self.fov_lookup[i] = fov
-
-    def replace_fov_strings_with_index(self, table_file):
-        """
-        :param table_file: Table with cell data.
-        :type table_file: pandas.DataFrame
-        """
-        fov_column = self.dataset_design.get_fov_column(table=table_file)
-        fovs = sorted(list(set(table_file[fov_column])))
-        for i, fov in enumerate(fovs):
-            table_file.loc[table_file[fov_column] == fov, fov_column] = i
-
-    def add_compartment_information(self, table):
-        """
-        :param table: Table with cell data.
-        :type table: pandas.DataFrame
-        """
-        if 'regional compartment' in table.columns:
-            logger.error(
-                'Woops, name collision in "regional compartment". Trying to create new column.'
-            )
-            return
-        compartments = self.dataset_design.get_compartments()
-        table['regional compartment'] = 'Not in ' + ';'.join(compartments)
-        for compartment in compartments:
-            signature = self.dataset_design.get_compartmental_signature(
-                table, compartment)
-            table.loc[signature, 'regional compartment'] = compartment
-
-    def add_box_centers(self, table):
-        """
-        :param table: Table with cell data.
-        :type table: pandas.DataFrame
-        """
-        xmin, xmax, ymin, ymax = self.dataset_design.get_box_limit_column_names()
-        table['x value'] = 0.5 * (table[xmax] + table[xmin])
-        table['y value'] = 0.5 * (table[ymax] + table[ymin])
-
-    def add_membership(self, table):
-        """
-        :param table: Table with cell data.
-        :type table: pandas.DataFrame
-        """
-        signatures_by_name = self.computational_design.get_all_phenotype_signatures_by_name()
-        for name, signature in signatures_by_name.items():
-            table[name + ' membership'] = self.dataset_design.get_pandas_signature(table, signature)
-
-    def restrict_to_pertinent_columns_comprehensive(self, table):
-        """
-        :param table: Table with cell data.
-        :type table: pandas.DataFrame
-        """
-        signatures_by_name = self.computational_design.get_all_phenotype_signatures_by_name()
-        phenotype_membership_columns = [
-            name + ' membership' for name, _ in signatures_by_name.items()
+        counts = [
+            sum(mask2[index] for index in list(indices))
+            for indices in within_radius_indices_list
         ]
-        intensity_column_names = self.dataset_design.get_intensity_column_names()
-        inverse = {value: key for key, value in intensity_column_names.items()}
-        source_columns = list(intensity_column_names.values())
-        pertinent_columns = [
-            'regional compartment',
-            'x value',
-            'y value',
-        ] + source_columns + phenotype_membership_columns + [
-            self.dataset_design.get_cell_area_column()]
-        table.drop(
-            [column for column in table.columns if not column in pertinent_columns],
-            axis=1,
-            inplace=True,
-        )
-        table.rename(columns=inverse, inplace=True)
+        count = sum(counts) - sum(mask1 & mask2)
+        source_count = sum(mask1)
+        return count / source_count
 
-    def create_cell_tables(self):
-        """
-        Create tables, one for each field of view in the given source file, whose
-        records correspond to individual cells. The schema is:
+    def get_mask(self, cells, signature):
+        value, multiindex = self.get_value_and_multiindex(signature)
+        try:
+            loc = cells.set_index(multiindex).index.get_loc(value)
+        except KeyError:
+            return np.asarray([False,] * cells.shape[0])
+        if isinstance(loc, np.ndarray):
+            return loc
+        if isinstance(loc, slice):
+            range1 = [False,]*(loc.start - 0)
+            range2 = [True,]*(loc.stop - loc.start)
+            range3 = [False,]*(cells.shape[0] - loc.stop)
+            return np.asarray(range1 + range2 + range3)
+        if isinstance(loc, int):
+            return np.asarray([i == loc for i in range(cells.shape[0])])
+        raise ValueError(f'Could not select by index: {multiindex}. Got: {loc}')
 
-        - "regional compartment"
-        - "x value"
-        - "y value"
-        - "<elementary phenotype 1> <cellular site 1> intensity"
-        - "<elementary phenotype 2> <cellular site 1> intensity"
-        - ...
-        - "<elementary phenotype 1> <cellular site 2> intensity"
-        - "<elementary phenotype 2> <cellular site 2> intensity"
-        - ...
-        - "<general phenotype 1> membership"
-        - "<general phenotype 2> membership"
-        - ...
+    def get_value_and_multiindex(self, signature):
+        value = (1,) * len(signature['positive']) + (0,) * len(signature['negative'])
+        if len(value) == 1:
+            value = value[0]
+        multiindex = [*signature['positive'], *signature['negative']]
+        return value, multiindex
 
-        :return: Dictionary whose keys are field of view integer indices and values are
-            tables of cells.
-        :rtype: dict
-        """
-        self.timer.record_timepoint('Started loading cell table into memory')
-        table_file = self.get_table(self.input_filename)
-        self.timer.record_timepoint('Finished loading cell table')
-        self.dataset_design.normalize_fov_descriptors(table_file)
-        self.cache_fov_strings(table_file)
-        self.replace_fov_strings_with_index(table_file)
+    def write_table(self, proximity_metrics, cases):
+        if len(proximity_metrics) != len(cases):
+            raise ValueError('Number of computed features not equal to number of cases.')
+        df = pd.DataFrame(list(zip([case[0] for case in cases],
+                                   [case[1] for case in cases],
+                                   [case[2] for case in cases],
+                                   proximity_metrics)),
+                          columns=['Phenotype 1', 'Phenotype 2', 'Pixel radius', 'Proximity'])
 
-        self.timer.record_timepoint('Done normalizing FOV strings')
-        cells = {}
-        phenotype_names = self.computational_design.get_all_phenotype_names()
-        number_cells_by_phenotype = {
-            phenotype: 0 for phenotype in phenotype_names}
-        self.timer.record_timepoint('Started grouping by FOV')
-        grouped = table_file.groupby(
-            self.dataset_design.get_fov_column(table=table_file))
-        self.timer.record_timepoint('Finished grouping by FOV')
-        for fov_index, table_fov in grouped:
-            self.timer.record_timepoint('Started one FOV cell table iteration')
-            table = table_fov.copy()
-            self.timer.record_timepoint('Done copying table')
-            table = table.reset_index(drop=True)
-            self.timer.record_timepoint('Done resetting index table')
-            self.add_compartment_information(table)
-            self.timer.record_timepoint('Done adding compartments')
-            self.add_box_centers(table)
-            self.timer.record_timepoint('Done adding box center')
-            self.add_membership(table)
-            self.timer.record_timepoint('Done adding membership columns')
-            self.restrict_to_pertinent_columns_comprehensive(table)
-            self.timer.record_timepoint(
-                'Done restricting to pertinent columns')
-            cells[fov_index] = table
-            self.timer.record_timepoint('Done saving one FOV cell table')
-
-            for phenotype in phenotype_names:
-                number_cells_by_phenotype[phenotype] += sum(
-                    table[phenotype + ' membership'])
-            self.timer.record_timepoint(
-                'Done one FOV recording counts by phenotype')
-
-        most_frequent = sorted(
-            list(number_cells_by_phenotype.items()),
-            key=lambda x: x[1],
-            reverse=True
-        )[0]
-        logger.debug(
-            '%s cells parsed from file. Most frequent signature %s (%s)',
-            table_file.shape[0],
-            most_frequent[0],
-            most_frequent[1],
-        )
-        logger.debug(
-            'Completed cell table collation from input file %s.',
-            self.input_filename,
-        )
-        return cells
-
-    def create_cell_trees(self, cells):
-        """
-        :param cells: Input collection of cells tables, see
-            :py:meth:`create_cell_tables`.
-        :type cells: dict
-
-        :return: Dictionary whose keys are field of view integer indices and values are
-            sklearn.neighbors.BallTree objects.
-        :rtype: dict
-        """
-        cell_trees = {}
-        self.timer.record_timepoint('Started creating cell trees')
-        logger.debug(
-            'Calculating cell trees for cells from %s.',
-            self.input_filename,
-        )
-        for _, (fov_index, table) in enumerate(cells.items()):
-            cell_trees[fov_index] = BallTree(
-                table[['x value', 'y value']].to_numpy())
-        logger.debug(
-            'Completed (field of view limited) cell tree construction from %s.',
-            self.input_filename,
-        )
-        self.timer.record_timepoint('Done creating cell trees')
-        return cell_trees
-
-    def precalculate_masks(self, cells):
-        """
-        :param cells: Cells tables by field of view integer index.
-        :type cells: dict
-
-        :return: A 2-element list, phenotype and compartment masks.
-        :rtype: list
-        """
-        phenotypes = self.computational_design.get_all_phenotype_names()
-
-        phenotype_indices = {
-            fov_index: {
-                p: table[p + ' membership'] for p in phenotypes
-            } for fov_index, table in cells.items()
-        }
-        self.timer.record_timepoint('Done creating phenotype masks')
-
-        compartments = self.dataset_design.get_compartments()
-        compartment_indices = {
-            fov_index: {
-                c: (table['regional compartment'] == c) for c in compartments
-            } for fov_index, table in cells.items()
-        }
-        self.timer.record_timepoint('Done creating compartment masks')
-
-        return [phenotype_indices, compartment_indices]
-
-    def get_considered_phenotype_pairs(self):
-        phenotypes = self.computational_design.get_all_phenotype_names()
-        if self.computational_design.balanced:
-            return list(combinations(phenotypes, 2))
-        return [(p1, p2) for p1 in phenotypes for p2 in phenotypes]
-
-    def do_aggregation_counting(self,
-                                cells,
-                                cell_trees,
-                                phenotype_indices,
-                                compartment_indices,
-                                ):
-        """
-        :param cell_trees: See :py:meth:`create_cell_trees`.
-        :type cell_trees: dict
-
-        :param phenotype_indices: See :py:meth:`precalculate_masks`.
-        :type phenotype_indices: dict
-
-        :param compartment_indices: See :py:meth:`precalculate_masks`.
-        :type compartment_indices: dict
-
-        :return: Table of radius-limited counts.
-        :rtype: pandas.DataFrame
-        """
-        combinations2 = self.get_considered_phenotype_pairs()
-        logger.debug(
-            'Creating radius-limited counts for %s phenotype pairs.',
-            len(combinations2),
-        )
-        results = []
-        self.timer.record_timepoint('Done retrieving phenotype pairs')
-        for combination in combinations2:
-            results_combo = self.do_aggregation_one_phenotype_pair(
-                combination,
-                cells,
-                cell_trees,
-                phenotype_indices,
-                compartment_indices,
-            )
-            results.append(results_combo)
-            logger.debug('Cell pairs of types %s counted.', combination)
-        self.timer.record_timepoint(
-            'Done aggregating over all phenotype pairs')
-        logger.debug('All %s combinations counted.', len(combinations2))
-        columns = [
-            'sample identifier',
-            'input filename',
-            'outcome assignment',
-            'source phenotype',
-            'target phenotype',
-            'compartment',
-            'distance limit in pixels',
-            self.computational_design.get_primary_output_feature_name(),
-            'source phenotype count',
-        ]  # Get this from computational design??
-        radius_limited_counts = pd.DataFrame(
-            PhenotypeProximityCoreJob.flatten_lists(results),
-            columns=columns,
-        )
-        self.timer.record_timepoint('Done flattening into radius-limit counts')
-        logger.debug(
-            'Completed counting cell pairs in "%s" under radius constraint.',
-            self.input_filename,
-        )
-        return radius_limited_counts
-
-    def do_aggregation_one_phenotype_pair(self,
-                                          pair,
-                                          cells,
-                                          cell_trees,
-                                          phenotype_indices,
-                                          compartment_indices,
-                                          ):
-        """
-        :param pairs: Pair of phenotype names.
-        :type pairs: 2-tuple
-
-        :param cells: Values are pairs, FOV index and cell table.
-        :type cells: dict
-
-        :param cell_trees: See :py:meth:`create_cell_trees`.
-        :type cell_trees: dict
-
-        :param phenotype_indices: See :py:meth:`precalculate_masks`.
-        :type phenotype_indices: dict
-
-        :param compartment_indices: See :py:meth:`precalculate_masks`.
-        :type compartment_indices: dict
-
-        :return: Table of radius-limited counts for just this one phenotype pair.
-        :rtype: pandas.DataFrame
-        """
-        balanced = self.computational_design.balanced
-        if balanced:
-            source, target = sorted(list(pair))
-        else:
-            source, target = [pair[0], pair[1]]
-        records = []
-        for compartment in list(set(self.dataset_design.get_compartments())) + ['all']:
-            for radius in PhenotypeProximityCoreJob.get_radii_of_interest():
-                count = 0
-                source_count = 0
-                area = 1
-                self.timer.record_timepoint(
-                    'Started one compartment/radius/phenotype pair')
-                for _, (fov_index, table) in enumerate(cells.items()):
-                    rows = phenotype_indices[fov_index][source]
-                    cols = phenotype_indices[fov_index][target]
-                    self.timer.record_timepoint('Retrieved phenotype masks')
-                    if compartment != 'all':
-                        rows = rows & compartment_indices[fov_index][compartment]
-                        cols = cols & compartment_indices[fov_index][compartment]
-                        self.timer.record_timepoint(
-                            'Overlaid compartment masks')
-                    tree = cell_trees[fov_index]
-                    self.timer.record_timepoint('Retrieved cell tree')
-                    source_cell_locations = table.loc[rows][[
-                        'x value', 'y value']]
-                    self.timer.record_timepoint('Retrieved cell locations')
-                    if source_cell_locations.shape[0] == 0:
-                        continue
-                    indices = tree.query_radius(
-                        source_cell_locations,
-                        radius,
-                        return_distance=False,
-                    )
-                    self.timer.record_timepoint(
-                        'Completed tree query at radius')
-                    target_indices = set(i for i in range(len(cols)) if cols[i])
-                    additional = sum(len(target_indices.intersection(i)) for i in indices)
-                    self.timer.record_timepoint('Completed counting result in target phenotype')
-
-                    if np.isnan(additional):
-                        continue
-
-                    count += additional
-                    count -= sum(rows & cols)
-                    source_count += sum(rows)
-                    self.timer.record_timepoint('Finished aggregation iteration')
-
-                    if balanced:
-                        area = sum(table.loc[compartment_indices[fov_index][compartment]][
-                            self.dataset_design.get_cell_area_column()
-                        ])
-                        if area == 0:
-                            logger.warning(
-                                'Area computation failed for compartment "%s" in "%s".',
-                                compartment,
-                                self.sample_identifier,
-                            )
-
-                if source_count == 0:
-                    logger.warning(
-                        'No cells of "source" phenotype %s in %s, %s, within %s .',
-                        source,
-                        self.sample_identifier,
-                        compartment,
-                        radius,
-                    )
-                else:
-                    if balanced:
-                        feature_value = count / area
-                    else:
-                        feature_value = count / source_count  # See GitHub issue #20
-                    records.append([
-                        self.sample_identifier,
-                        self.input_filename,
-                        self.outcome,
-                        source,
-                        target,
-                        compartment,
-                        radius,
-                        feature_value,
-                        source_count,
-                    ])
-        self.timer.record_timepoint('Completed aggregation one phenotype pair')
-        return records
-
-    def write_cell_pair_counts(self, radius_limited_counts):
-        """
-        :param radius_limited_counts: Cell pair counts table.
-        :type radius_limited_counts: pandas.DataFrame
-        """
-        header = self.computational_design.get_cell_pair_counts_table_header()
-        keys_list = [column_name for column_name, dtype in header]
-
-        uri = self.computational_design.get_database_uri()
-        with WaitingDatabaseContextManager(uri) as manager:
-            for _, row in radius_limited_counts.iterrows():
-                values_list = [
-                    '"' + row['sample identifier'] + '"',
-                    '"' + row['input filename'] + '"',
-                    '"' + row['outcome assignment'] + '"',
-                    '"' + row['source phenotype'] + '"',
-                    '"' + row['target phenotype'] + '"',
-                    '"' + row['compartment'] + '"',
-                    str(int(row['distance limit in pixels'])),
-                    str(float(
-                        row[self.computational_design.get_primary_output_feature_name()])),
-                    str(int(row['source phenotype count'])),
-                ]  # Make this programmatic over the headers provided by computational design???
-                keys = '( ' + ' , '.join(keys_list) + ' )'
-                values = '( ' + ' , '.join(values_list) + ' )'
-                cmd = f'INSERT INTO {self.computational_design.get_cell_pair_counts_table_name()}'\
-                    f' {keys} VALUES {values} ;'
-                try:
-                    manager.execute(cmd)
-                except sqlite3.OperationalError as exception:
-                    logger.error('SQL query failed: %s', cmd)
-                    raise exception
-        self.timer.record_timepoint('Done writing cell pair counts to file')
-
-    @staticmethod
-    def get_radii_of_interest():
-        return PhenotypeProximityCoreJob.radii
-
-    @staticmethod
-    def flatten_lists(the_lists):
-        """
-        :param the_lists: List of lists to be flattened into a single list.
-        :type the_lists: list
-
-        :return: The flattened list.
-        :rtype: list
-        """
-        result = []
-        for _list in the_lists:
-            result += _list
-        return result
+        bundle = [df, self.channel_symbols_by_column_name, self.sample_identifier]
+        with open(self.results_file, 'wb') as file:
+            pickle.dump(bundle, file)
+        logger.info('Computed metrics: %s', df.head())

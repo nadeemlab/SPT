@@ -96,8 +96,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
                 [row[1], row[2]] for row in self.feature_values
                 if row[0] == specifiers
             ]
-            self.insert_feature_values(
-                cursor, feature_identifier, feature_values)
+            self.insert_feature_values(cursor, feature_identifier, feature_values)
             logger.debug('Inserted %s feature values.', len(feature_values))
 
         self.get_connection().commit()

@@ -5,7 +5,7 @@ import argparse
 from os.path import abspath
 from os.path import expanduser
 
-from spatialprofilingtoolbox.workflow.defaults.cli_arguments import add_argument
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('cache-expressions-data-array')

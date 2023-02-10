@@ -37,8 +37,24 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         super().__init__(database_config_file=database_config_file)
         self.structure_centroids = StructureCentroids()
 
-    def pull(self):
-        shapefiles_query = '''
+    def pull(self, specimen: str=None):
+        study_names = self.get_study_names()
+        cursor = self.get_connection().cursor()
+        for study_name in study_names:
+            if specimen is None:
+                cursor.execute(self.get_shapefiles_query(), (study_name,))
+            else:
+                cursor.execute(self.get_shapefiles_query_specimen_specific(),
+                              (study_name, specimen))
+            rows = cursor.fetchall()
+            self.structure_centroids.add_study_data(
+                study_name,
+                self.create_study_data(rows)
+            )
+        cursor.close()
+
+    def get_shapefiles_query(self):
+        return '''
         SELECT
         hsi.histological_structure,
         sdmp.specimen,
@@ -53,16 +69,23 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         hsi.histological_structure
         ;
         '''
-        study_names = self.get_study_names()
-        cursor = self.get_connection().cursor()
-        for study_name in study_names:
-            cursor.execute(shapefiles_query, (study_name,))
-            rows = cursor.fetchall()
-            self.structure_centroids.add_study_data(
-                study_name,
-                self.create_study_data(rows)
-            )
-        cursor.close()
+
+    def get_shapefiles_query_specimen_specific(self):
+        return '''
+        SELECT
+        hsi.histological_structure,
+        sdmp.specimen,
+        sf.base64_contents
+        FROM histological_structure_identification hsi
+        JOIN shape_file sf ON sf.identifier=hsi.shape_file
+        JOIN data_file df ON hsi.data_source=df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON sdmp.identifier=df.source_generation_process
+        WHERE sdmp.study=%s AND sdmp.specimen=%s
+        ORDER BY
+        sdmp.specimen,
+        hsi.histological_structure
+        ;
+        '''
 
     def get_study_names(self):
         query = '''

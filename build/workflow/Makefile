@@ -9,6 +9,9 @@ MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tes
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
+TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
+TD := ${TEST_DIRECTORY}
+
 Dockerfile:
 >@${MESSAGE} start "Building workflow Dockerfile"
 >@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
@@ -33,21 +36,21 @@ setup-testing:
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "workflow (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f nextflow.log; rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "workflow (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f nextflow.log; rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "workflow (teardown testing environment)"
 >@docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f nextflow.log; rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
+>@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
@@ -81,15 +84,7 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f Dockerfile
 >@rm -f ${WHEEL_FILENAME}
->@rm -f .nextflow.log
->@rm -f .nextflow.log*
->@rm -rf .nextflow/
->@rm -f configure.sh
->@rm -f run.sh
->@rm -f main.nf
->@rm -f nextflow.config
->@rm -rf work/
->@rm -rf results/
+>@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@rm -f status_code
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt

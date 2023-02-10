@@ -83,15 +83,6 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
->@rm -rf .nextflow/
->@rm -f .nextflow
->@rm -f .nextflow.*
->@rm -f nextflow.config
->@rm -f main.nf
->@rm -f configure.sh
->@rm -f run.sh
->@rm -rf work/
->@rm -rf results/
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
 >@rm -rf Dockerfile

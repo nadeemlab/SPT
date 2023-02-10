@@ -52,17 +52,18 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
     def __init__(self, database_config_file):
         super().__init__(database_config_file=database_config_file)
 
-    def pull(self):
-        self.data_arrays = self.retrieve_data_arrays()
+    def pull(self, specimen: str=None):
+        self.data_arrays = self.retrieve_data_arrays(specimen=specimen)
 
     def get_data_arrays(self):
         return self.data_arrays
 
-    def retrieve_data_arrays(self) -> CompressedDataArrays:
+    def retrieve_data_arrays(self, specimen: str=None) -> CompressedDataArrays:
         study_names = self.get_study_names(self.get_connection())
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
-            sparse_entries = self.get_sparse_entries(self.get_connection(), study_name)
+            sparse_entries = self.get_sparse_entries(self.get_connection(),
+                                                     study_name, specimen=specimen)
             data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(
                 sparse_entries)
             data_arrays.add_study_data(
@@ -79,11 +80,15 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             rows = cursor.fetchall()
         return sorted([row[0] for row in rows])
 
-    def get_sparse_entries(self, connection, study_name):
+    def get_sparse_entries(self, connection, study_name, specimen: str=None):
         sparse_entries = []
         logger.debug('Pulling sparse entries for study "%s".', study_name)
         with connection.cursor() as cursor:
-            cursor.execute(self.get_sparse_matrix_query(), (study_name,))
+            if specimen is None:
+                cursor.execute(self.get_sparse_matrix_query(), (study_name,))
+            else:
+                cursor.execute(self.get_sparse_matrix_query_specimen_specific(),
+                               (study_name, specimen))
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
@@ -106,6 +111,23 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         JOIN data_file df ON hsi.data_source=df.sha256_hash
         JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
         WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
+        ORDER BY sdmp.specimen, eq.histological_structure, eq.target
+        ;
+        '''
+
+    def get_sparse_matrix_query_specimen_specific(self):
+        return '''
+        SELECT
+        eq.histological_structure,
+        eq.target,
+        CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
+        sdmp.specimen as specimen
+        FROM expression_quantification eq
+        JOIN histological_structure hs ON eq.histological_structure=hs.identifier
+        JOIN histological_structure_identification hsi ON hs.identifier=hsi.histological_structure
+        JOIN data_file df ON hsi.data_source=df.sha256_hash
+        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
+        WHERE sdmp.study=%s AND hs.anatomical_entity='cell' AND sdmp.specimen=%s
         ORDER BY sdmp.specimen, eq.histological_structure, eq.target
         ;
         '''

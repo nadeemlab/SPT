@@ -133,10 +133,10 @@ workflow {
         .set{ interventions_ch }
 
     environment_ch.channels_file.map{ file(it.text) }
-        .set{ channels_file_ch }
+        .set{ channels_ch }
 
     environment_ch.phenotypes_file.map{ file(it.text) }
-        .set{ phenotypes_file_ch }
+        .set{ phenotypes_ch }
 
     environment_ch.db_config_file.map{ file(it.text) }
         .set{ db_config_file_ch }

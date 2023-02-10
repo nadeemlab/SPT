@@ -27,7 +27,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         self.study_name = study_name
         self.database_config_file = database_config_file
 
-    def calculate(self, core_computation_results_files=None):
+    def calculate(self, core_computation_results_files=None, **kwargs):
         """
         Performs statistical comparison tests and writes results to file.
         """

@@ -17,9 +17,6 @@ if __name__ == '__main__':
         description='One parallelizable "core" computation job.',
     )
 
-    for CoreJob in [w.core_job for w in workflows.values()]:
-        CoreJob.solicit_cli_arguments(parser)
-
     add_argument(parser, 'workflow')
     add_argument(parser, 'study name')
     add_argument(parser, 'database config')

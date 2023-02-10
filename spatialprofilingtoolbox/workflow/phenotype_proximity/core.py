@@ -1,7 +1,6 @@
 """
 The core calculator for the proximity calculation on a single source file.
 """
-# from itertools import combinations
 import warnings
 import pickle
 
@@ -9,6 +8,7 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import BallTree
 
+from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -21,7 +21,7 @@ warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 logger = colorized_logger(__name__)
 
 
-class PhenotypeProximityCoreJob:
+class PhenotypeProximityCoreJob(CoreJob):
     """Core/parallelizable functionality for the phenotype proximity workflow."""
     radii = [60, 120]
 
@@ -80,26 +80,14 @@ class PhenotypeProximityCoreJob:
             cursor.close()
         return rows[0][0]
 
+    def _calculate(self):
+        self.log_job_info()
+        self.calculate_proximity()
+        self.wrap_up_timer()
+
     def log_job_info(self):
         number_cells = self.get_number_cells_to_be_processed()
         logger.info('%s cells to be analyzed for sample "%s".',number_cells,self.sample_identifier)
-
-    @staticmethod
-    def solicit_cli_arguments(parser):
-        pass
-
-    def calculate(self):
-        """
-        The main calculation of this job, to be called by pipeline orchestration.
-        """
-        logger.info('Started core calculator job.')
-        self.log_job_info()
-        self._calculate()
-        logger.info('Completed core calculator job.')
-        self.wrap_up_timer()
-
-    def _calculate(self):
-        self.calculate_proximity()
 
     def calculate_proximity(self):
         self.timer.record_timepoint('Start pulling data for one sample.')

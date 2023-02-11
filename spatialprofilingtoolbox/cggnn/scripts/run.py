@@ -12,26 +12,14 @@ except ModuleNotFoundError as e:
 def parse_arguments():
     "Process command line arguments."
     parser = ArgumentParser(
-        prog = 'spt cggnn run',
-        description = 'Create cell graphs from SPT tables, train a graph neural network on them, '\
-            'and save resultant model, metrics, and visualizations (if requested) to file.'
+        prog='spt cggnn run',
+        description='Create cell graphs from SPT tables, train a graph neural network on them, '
+        'and save resultant model, metrics, and visualizations (if requested) to file.'
     )
     parser.add_argument(
-        '--measurement_study',
+        '--study',
         type=str,
-        help='Name of the measurement study table in SPT.',
-        required=True
-    )
-    parser.add_argument(
-        '--analysis_study',
-        type=str,
-        help='Name of the analysis study table in SPT.',
-        required=True
-    )
-    parser.add_argument(
-        '--specimen_study',
-        type=str,
-        help='Name of the specimen study table in SPT.',
+        help='Name of the study to query data for in SPT.',
         required=True
     )
     parser.add_argument(
@@ -138,9 +126,7 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    run_pipeline(args.measurement_study,
-                 args.analysis_study,
-                 args.specimen_study,
+    run_pipeline(args.study,
                  args.host,
                  args.dbname,
                  args.user,

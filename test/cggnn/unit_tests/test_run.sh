@@ -1,7 +1,5 @@
 spt cggnn run \
-    --measurement_study "Melanoma intralesional IL2 (Hollmann lab) - measurement" \
-    --analysis_study "Melanoma intralesional IL2 (Hollmann lab) - data analysis" \
-    --specimen_study "Melanoma intralesional IL2 (Hollmann lab) - specimen collection" \
+    --study "Melanoma intralesional IL2" \
     --host spt-db-testing \
     --dbname postgres \
     --user postgres \

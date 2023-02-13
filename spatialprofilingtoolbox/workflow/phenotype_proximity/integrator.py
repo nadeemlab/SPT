@@ -6,6 +6,10 @@ import datetime
 import re
 import pickle
 from math import isnan
+import pandas as pd
+import itertools
+from scipy.stats import ttest_ind
+from sqlalchemy import create_engine
 
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -36,6 +40,83 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
         self.export_feature_values(core_computation_results_files, data_analysis_study)
+        print('Start compute statistical tests')
+        self.compute_statistical_tests()
+
+    def compute_statistical_tests(self):
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            feat_extr_query = """
+            SELECT qfl.feature,qfl.value,ss.stratum_identifier,fs.study
+            FROM quantitative_feature_value qfl 
+            JOIN feature_specification fs 
+            ON qfl.feature = fs.identifier
+            JOIN sample_strata ss 
+            ON qfl.subject = ss.sample; 
+            """
+            df = pd.read_sql(feat_extr_query, connection)
+            cursor.close()
+            connection.commit()
+        studies = df['study'].unique()
+        strats = df['stratum_identifier'].unique()
+        features = df['feature'].unique()
+        stat_test_data = {}
+        for study in studies:
+            if study not in stat_test_data:
+                stat_test_data[study] = {}
+            for feature in features[:10]:
+                if feature not in stat_test_data[study]:
+                    stat_test_data[study][feature] = {}
+                for strat in strats:
+                    feature_values = df.loc[
+                        (df['study'] == study) & (df['stratum_identifier'] == strat) & (
+                                df['feature'] == feature)].value.values
+                    if len(feature_values) > 0:
+                        stat_test_data[study][feature][strat] = feature_values
+
+        test_result = {}
+        s, f, c, t, p = [], [], [], [], []
+        for study in list(stat_test_data.keys()):
+            test_result[study] = {}
+            for feature in list(stat_test_data[study].keys())[:10]:
+                test_result[study][feature] = {}
+                cohort_pairs = list(itertools.combinations(list(stat_test_data[study][feature].keys()), 2))[:10]
+
+                for cohort_1, cohort_2 in cohort_pairs:
+                    v1, v2 = stat_test_data[study][feature][cohort_1], stat_test_data[study][feature][
+                        cohort_2]
+                    ttest = ttest_ind(v1, v2)
+                    stat, p_value = ttest.statistic, ttest.pvalue
+                    s.append('Response to intralesional IL-2 injection')
+                    f.append(feature)
+                    c.append(cohort_1)
+                    t.append(stat)
+                    p.append(p_value)
+                # test_result[study][feature][cohort_1] = ttest
+                # test_result[study][feature][cohort_2] = ttest
+                # print(test_result)
+        print(t)
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            df = pd.DataFrame({'selection_criterion_1': s,
+                           'selection_criterion_2': s,
+                           'test': ['t test'] * len(t),
+                           'p_value': p,
+                           'feature_tested': f})
+            values = [tuple(x) for x in df.to_numpy()]
+
+            insert_query = """INSERT INTO two_cohort_feature_association_test (
+                            selection_criterion_1,
+                            selection_criterion_2,
+                            test,
+                            p_value,
+                            feature_tested) 
+                            VALUES (%s, %s, %s, %s, %s)"""
+            cursor.executemany(insert_query, values)
+            cursor.close()
+            connection.commit()
 
     def insert_new_data_analysis_study(self):
         timestring = str(datetime.datetime.now())

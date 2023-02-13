@@ -402,7 +402,7 @@ async def get_phenotype_summary(
         rows = cursor.fetchall()
         cursor.close()
         representation = {
-            'fractions': [[str(entry) for entry in row] for row in rows]
+            'fractions': [[str(entry) for entry in row] + ['1,2'] for row in rows]
         }
         return Response(
             content=json.dumps(representation),

@@ -42,11 +42,14 @@ class StratificationPuller(DatabaseConnectionMaker):
                     sc.primary_study=%s
                 ;
                 ''', (study_name,))
-                df = pd.DataFrame(cursor.fetchall(), columns=['specimen collection study',
-                                  'specimen',
-                                  'stratum identifier',
-                                  'local temporal position indicator',
-                                  'subject diagnosed condition', 'subject diagnosed result'])
+                df = pd.DataFrame(cursor.fetchall(),
+                                  dtype=str,
+                                  columns=['specimen collection study',
+                                           'specimen',
+                                           'stratum identifier',
+                                           'local temporal position indicator',
+                                           'subject diagnosed condition',
+                                           'subject diagnosed result'])
                 substudy_name = list(df['specimen collection study'])[0]
                 stratification[substudy_name] = {}
                 assignments_columns = ['specimen', 'stratum identifier']

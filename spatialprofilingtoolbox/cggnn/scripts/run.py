@@ -3,7 +3,7 @@
 from argparse import ArgumentParser
 from typing import Dict, Tuple
 
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat, merge
 from numpy import sort
 
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
@@ -129,18 +129,18 @@ def _create_cell_df(cell_dfs: Dict[str, DataFrame], feature_names: Dict[str, str
 
     # TODO: Reorder so that it's feature, specimen, phenotype, xy
     # TODO: Verify histological structure ID or recreate one
-    df = concat(cell_dfs.values(), axis=1)
+    df = concat(cell_dfs.values(), axis=0)
     df.index.name = 'histological_structure'
     return df
 
 
-def _create_label_df(df_assignments: DataFrame, df_strata: DataFrame) -> Tuple[DataFrame, Dict[int, str]]:
+def _create_label_df(df_assignments: DataFrame,
+                     df_strata: DataFrame) -> Tuple[DataFrame, Dict[int, str]]:
     """Get slide-level results."""
-    df = df_assignments.join(df_strata, on='stratum identifier', how='left')[
+    df = merge(df_assignments, df_strata, on='stratum identifier', how='left')[
         ['specimen', 'subject diagnosed result']].rename(
         {'specimen': 'slide', 'subject diagnosed result': 'result'}, axis=1)
-    label_to_result = {i: res for i, res in enumerate(
-        sort(df['result'].unique()))}
+    label_to_result = dict(enumerate(sort(df['result'].unique())))
     return df.replace({res: i for i, res in label_to_result.items()}), label_to_result
 
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     df_cell = _create_cell_df(
         {slide: data['dataframe']
-            for slide, data in study_data['feature_matrices'].items()},
+            for slide, data in study_data['feature matrices'].items()},
         study_data['channel symbols by column name'])
     df_label, label_to_result_text = _create_label_df(
         study_data['sample cohorts']['assignments'],

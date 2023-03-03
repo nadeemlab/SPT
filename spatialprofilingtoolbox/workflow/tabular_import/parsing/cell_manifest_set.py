@@ -26,24 +26,6 @@ def create_specimen_data_measurement_process_record(
     return (identifier, specimen, '', '', study)
 
 
-def infer_common_marking_mechanism(measurement_study, connection):
-    cursor = connection.cursor()
-    cursor.execute('''
-    SELECT marking_mechanism
-    FROM biological_marking_system bms
-    WHERE bms.study=%s ;
-    ''', (measurement_study,))
-    mechanisms = list(set(row[0] for row in cursor.fetchall()))
-    cursor.close()
-    if len(mechanisms) > 1:
-        logger.warning('Encountered multiple marking mechanisms: %s', mechanisms)
-    if len(mechanisms) == 1:
-        mechanism = mechanisms[0]
-    else:
-        mechanism = ''
-    return mechanism
-
-
 class CellManifestSetParser(SourceToADIParser):
     """Parse source files containing metadata at level of cell manifest set."""
     def parse(self, connection, file_manifest_file, study_name):
@@ -63,9 +45,7 @@ class CellManifestSetParser(SourceToADIParser):
         cursor = connection.cursor()
         cursor.execute(
             self.generate_basic_insert_query('specimen_measurement_study'),
-            (measurement_study,
-            infer_common_marking_mechanism(measurement_study, connection),
-            '', '', '', ''),
+            (measurement_study, '', '', '', '', ''),
         )
 
         for _, cell_manifest in cell_manifests.iterrows():

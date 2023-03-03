@@ -104,7 +104,7 @@ def process_filename_inputs(options, parsed_args):
         file_manifest_filename=file_manifest_path,
     )
     options['samples'] = False
-    if not samples_file is None > 0:
+    if not samples_file is None:
         samples_file_abs = join(parsed_args.input_path, samples_file)
         if exists(samples_file_abs):
             options['samples_file'] = samples_file_abs

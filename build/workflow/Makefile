@@ -35,6 +35,7 @@ setup-testing:
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "workflow (teardown testing environment)"
+>@docker compose down
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
@@ -42,6 +43,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "workflow (teardown testing environment)"
+>@docker compose down
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
@@ -49,6 +51,7 @@ teardown-module-testing: ${MODULE_TESTS}
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "workflow (teardown testing environment)"
+>@docker compose down
 >@docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."

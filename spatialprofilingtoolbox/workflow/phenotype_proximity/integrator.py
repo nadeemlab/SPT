@@ -24,7 +24,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
     The main class of the integration phase.
     """
     def __init__(self,
-                 study_name: str='',
+                 study_name: str = '',
                  database_config_file: Optional[str] = None,
                  **kwargs # pylint: disable=unused-argument
                  ):
@@ -40,8 +40,33 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
         self.export_feature_values(core_computation_results_files, data_analysis_study)
-        print('Start compute statistical tests')
-        self.compute_statistical_tests()
+        # self.create_diagnostic_selection_criterion()
+        # self.compute_statistical_tests()
+
+    def create_diagnostic_selection_criterion(self):
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            sample_strata = pd.read_sql("""SELECT * FROM sample_strata""", connection)
+            sample_strata = sample_strata.drop_duplicates(
+                ['stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition',
+                 'subject_diagnosed_result'])
+            diagnostic_selection_criterion = pd.DataFrame({'identifier': sample_strata.stratum_identifier,
+                                                           'condition': [f"{x}_{y}" for x, y in
+                                                                         zip(sample_strata.subject_diagnosed_condition,
+                                                                             sample_strata.local_temporal_position_indicator)],
+                                                           'result': sample_strata.subject_diagnosed_result})
+
+            values = [tuple(x) for x in diagnostic_selection_criterion.to_numpy()]
+            insert_query = """INSERT INTO diagnostic_selection_criterion (
+                                        identifier,
+                                        condition,
+                                        result) 
+                                        VALUES (%s, %s, %s)"""
+            cursor.executemany(insert_query, values)
+
+            cursor.close()
+            connection.commit()
 
     def compute_statistical_tests(self):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
@@ -76,7 +101,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
                         stat_test_data[study][feature][strat] = feature_values
 
         test_result = {}
-        s, f, c, t, p = [], [], [], [], []
+        c1, f, c2, t, p = [], [], [], [], []
         for study in list(stat_test_data.keys()):
             test_result[study] = {}
             for feature in list(stat_test_data[study].keys())[:10]:
@@ -88,9 +113,9 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
                         cohort_2]
                     ttest = ttest_ind(v1, v2)
                     stat, p_value = ttest.statistic, ttest.pvalue
-                    s.append('Response to intralesional IL-2 injection')
+                    c1.append(cohort_1)
                     f.append(feature)
-                    c.append(cohort_1)
+                    c2.append(cohort_2)
                     t.append(stat)
                     p.append(p_value)
                 # test_result[study][feature][cohort_1] = ttest
@@ -100,8 +125,8 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
-            df = pd.DataFrame({'selection_criterion_1': s,
-                           'selection_criterion_2': s,
+            df = pd.DataFrame({'selection_criterion_1': c1,
+                           'selection_criterion_2': c2,
                            'test': ['t test'] * len(t),
                            'p_value': p,
                            'feature_tested': f})

@@ -7,10 +7,13 @@ import re
 from typing import Optional
 
 import pandas as pd
+import datetime
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
+from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 
 logger = colorized_logger(__name__)
 
@@ -54,6 +57,7 @@ class SchemaInfuser(DatabaseConnectionMaker):
     def refresh_views(self):
         self.verbose_sql_execute(('refresh_views.sql', 'refresh views of main schema'),
                                   verbosity='silent')
+        self.link_fraction_views()
 
     def recreate_views(self):
         self.verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
@@ -66,3 +70,49 @@ class SchemaInfuser(DatabaseConnectionMaker):
                             **kwargs):
         verbose_sql_execute(filename_description, self.get_connection(),
                             source_package=source_package, **kwargs)
+
+    def link_fraction_views(self):
+        """
+        Transcribe phenotype fraction features in phenotype fraction system
+        """
+        connection = self.get_connection()
+        cursor = connection.cursor()
+        feat_extr_query = """SELECT * FROM fraction_stats"""
+        fraction_features = pd.read_sql(feat_extr_query, connection)
+        cursor.close()
+        connection.commit()
+        for study in fraction_features['measurement_study'].unique():
+            study_name = study.replace(' - measurement', '')
+
+            with ADIFeaturesUploader(
+                    database_config_file=self.database_config_file,
+                    data_analysis_study=self.insert_new_data_analysis_study(study_name),
+                    derivation_method=self.describe_feature_derivation_method(),
+                    specifier_number=1,
+            ) as feature_uploader:
+                values = fraction_features['average_percent'].values
+                subjects = ['question']*len(values)
+                specifiers_lists = fraction_features['marker_symbol'].values
+                for value, subject, specifiers_list in (zip(values, subjects, specifiers_lists)):
+                    feature_uploader.stage_feature_value((specifiers_list,), subject, value)
+
+    def describe_feature_derivation_method(self):
+        return '''
+        For a given cell phenotype (first specifier), the average number of cells of a second phenotype (second specifier) within a specified radius (third specifier).
+        '''.lstrip().rstrip()
+
+    def insert_new_data_analysis_study(self, study_name):
+        timestring = str(datetime.datetime.now())
+        name = study_name + f'{study_name} : fraction calculation : {timestring}'
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            INSERT INTO data_analysis_study(name)
+            VALUES (%s) ;
+            INSERT INTO study_component(primary_study, component_study)
+            VALUES (%s, %s) ;
+            ''', (name, study_name, name))
+            cursor.close()
+            connection.commit()
+        return name

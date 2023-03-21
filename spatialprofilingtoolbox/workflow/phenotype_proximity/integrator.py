@@ -39,7 +39,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
 
     def insert_new_data_analysis_study(self):
         timestring = str(datetime.datetime.now())
-        name = self.study_name + f'{self.study_name} : proximity calculation : {timestring}'
+        name = f'{self.study_name} : proximity calculation : {timestring}'
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()

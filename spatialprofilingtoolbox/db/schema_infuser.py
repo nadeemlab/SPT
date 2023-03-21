@@ -53,7 +53,7 @@ class SchemaInfuser(DatabaseConnectionMaker):
 
     def refresh_views(self):
         self.verbose_sql_execute(('refresh_views.sql', 'refresh views of main schema'),
-                                  verbosity='silent')
+                                  verbosity='itemize')
 
     def recreate_views(self):
         self.verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))

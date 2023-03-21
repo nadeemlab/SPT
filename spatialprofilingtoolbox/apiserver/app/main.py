@@ -52,7 +52,8 @@ def get_study_components(study_name):
             names = [row[0] for row in cursor.fetchall()]
             for substudy in substudies:
                 if substudy in names:
-                    components[key] = substudy
+                    if not re.search('proximity calculation', substudy):
+                        components[key] = substudy
         cursor.close()
     return components
 

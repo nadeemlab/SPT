@@ -9,7 +9,6 @@ from math import isnan
 import pandas as pd
 import itertools
 from scipy.stats import ttest_ind
-from sqlalchemy import create_engine
 
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -40,9 +39,10 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
         self.export_feature_values(core_computation_results_files, data_analysis_study)
-        # self.create_diagnostic_selection_criterion()
-        # self.compute_statistical_tests()
+        self.create_diagnostic_selection_criterion()
+        self.compute_statistical_tests()
 
+    # TODO: consider doing this elsewhere because it only has to be done once
     def create_diagnostic_selection_criterion(self):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
@@ -63,12 +63,21 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
                                         condition,
                                         result) 
                                         VALUES (%s, %s, %s)"""
-            cursor.executemany(insert_query, values)
+
+            try:
+                cursor.executemany(insert_query, values)
+            except:
+                # hotfix: if workflow is called on updated data and this table already exists
+                pass
 
             cursor.close()
             connection.commit()
 
     def compute_statistical_tests(self):
+        """
+        For each study, for each feature compute statistical difference test.
+        Currently used ttest.
+        """
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
@@ -78,7 +87,8 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             JOIN feature_specification fs 
             ON qfl.feature = fs.identifier
             JOIN sample_strata ss 
-            ON qfl.subject = ss.sample; 
+            ON qfl.subject = ss.sample
+            WHERE fs.study NOT LIKE '%proximity%'; 
             """
             df = pd.read_sql(feat_extr_query, connection)
             cursor.close()
@@ -86,11 +96,12 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         studies = df['study'].unique()
         strats = df['stratum_identifier'].unique()
         features = df['feature'].unique()
+        print(features)
         stat_test_data = {}
         for study in studies:
             if study not in stat_test_data:
                 stat_test_data[study] = {}
-            for feature in features[:10]:
+            for feature in features:
                 if feature not in stat_test_data[study]:
                     stat_test_data[study][feature] = {}
                 for strat in strats:
@@ -104,9 +115,9 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         c1, f, c2, t, p = [], [], [], [], []
         for study in list(stat_test_data.keys()):
             test_result[study] = {}
-            for feature in list(stat_test_data[study].keys())[:10]:
+            for feature in list(stat_test_data[study].keys()):
                 test_result[study][feature] = {}
-                cohort_pairs = list(itertools.combinations(list(stat_test_data[study][feature].keys()), 2))[:10]
+                cohort_pairs = list(itertools.combinations(list(stat_test_data[study][feature].keys()), 2))
 
                 for cohort_1, cohort_2 in cohort_pairs:
                     v1, v2 = stat_test_data[study][feature][cohort_1], stat_test_data[study][feature][
@@ -121,7 +132,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
                 # test_result[study][feature][cohort_1] = ttest
                 # test_result[study][feature][cohort_2] = ttest
                 # print(test_result)
-        print(t)
+
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()

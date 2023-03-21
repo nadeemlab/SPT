@@ -13,7 +13,6 @@ from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMak
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
-from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 
 logger = colorized_logger(__name__)
 
@@ -73,26 +72,35 @@ class SchemaInfuser(DatabaseConnectionMaker):
 
     def link_fraction_views(self):
         """
-        Transcribe phenotype fraction features in phenotype fraction system
+        Transcribe phenotype fraction features in features system
         """
         connection = self.get_connection()
         cursor = connection.cursor()
-        feat_extr_query = """SELECT * FROM fraction_stats"""
+        feat_extr_query = """
+            SELECT t1.marker_symbol, t1.measurement_study, t1.average_percent, t1.stratum_identifier, t2.sample
+            FROM fraction_stats  t1
+            LEFT JOIN (
+                SELECT stratum_identifier, MIN(sample) as sample
+                FROM sample_strata
+                GROUP BY stratum_identifier
+            ) t2 ON t1.stratum_identifier = t2.stratum_identifier;
+            """
         fraction_features = pd.read_sql(feat_extr_query, connection)
         cursor.close()
         connection.commit()
         for study in fraction_features['measurement_study'].unique():
             study_name = study.replace(' - measurement', '')
-
+            fraction_features_study = fraction_features[fraction_features.measurement_study == study]
             with ADIFeaturesUploader(
                     database_config_file=self.database_config_file,
                     data_analysis_study=self.insert_new_data_analysis_study(study_name),
                     derivation_method=self.describe_feature_derivation_method(),
                     specifier_number=1,
             ) as feature_uploader:
-                values = fraction_features['average_percent'].values
-                subjects = ['question']*len(values)
-                specifiers_lists = fraction_features['marker_symbol'].values
+                values = fraction_features_study['average_percent'].values
+                # TODO: remove hardcode
+                subjects = fraction_features_study['sample']
+                specifiers_lists = fraction_features_study['marker_symbol'].values
                 for value, subject, specifiers_list in (zip(values, subjects, specifiers_lists)):
                     feature_uploader.stage_feature_value((specifiers_list,), subject, value)
 

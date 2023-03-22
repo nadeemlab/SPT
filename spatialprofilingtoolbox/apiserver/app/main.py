@@ -246,6 +246,8 @@ def get_sample_cohorts(cursor, specimen_collection_study):
     '''
     cursor.execute(query, (specimen_collection_study,))
     sample_cohorts = cursor.fetchall()
+    if len(sample_cohorts) == 0:
+        return 0, []
     decrement = min((int(row[0]) for row in sample_cohorts)) - 1
     sample_cohorts_decremented = [
         (str(int(row[0]) - decrement), row[1], row[2], row[3])

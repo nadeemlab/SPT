@@ -415,9 +415,9 @@ async def get_phenotype_summary(
             (components['measurement'], components['analysis']),
         )
         rows = cursor.fetchall()
+        decrement, _ = get_sample_cohorts(cursor, components['collection'])
         cursor.close()
 
-        decrement, _ = get_sample_cohorts(cursor, components['collection'])
         representation = {
             'fractions': [format_stratum_in_row(row, decrement, 2) for row in rows]
         }
@@ -674,9 +674,9 @@ async def get_phenotype_proximity_summary(
             (derivation_method, data_analysis_study),
         )
         rows = cursor.fetchall()
+        decrement, _ = get_sample_cohorts(cursor, components['collection'])
         cursor.close()
 
-        decrement, _ = get_sample_cohorts(cursor, components['collection'])
         representation = {
             'proximities': [format_stratum_in_row(row, decrement, 3) for row in rows]
         }

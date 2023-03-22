@@ -246,10 +246,15 @@ def get_sample_cohorts(cursor, specimen_collection_study):
     '''
     cursor.execute(query, (specimen_collection_study,))
     sample_cohorts = cursor.fetchall()
-    return sorted(sample_cohorts, key=lambda x: int(x[0]))
+    decrement = min((int(row[0]) for row in sample_cohorts)) - 1
+    sample_cohorts_decremented = [
+        (str(int(row[0]) - decrement), row[1], row[2], row[3])
+        for row in sample_cohorts
+    ]
+    return decrement, sorted(sample_cohorts_decremented, key=lambda x: int(x[0]))
 
 
-def get_sample_cohort_assignments(cursor, specimen_collection_study):
+def get_sample_cohort_assignments(cursor, specimen_collection_study, decrement):
     query = '''
     SELECT sst.sample, sst.stratum_identifier
     FROM sample_strata sst
@@ -259,12 +264,17 @@ def get_sample_cohort_assignments(cursor, specimen_collection_study):
     ORDER BY sample ;
     '''
     cursor.execute(query, (specimen_collection_study,))
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    return [
+        (row[0], str(int(row[1]) - decrement))
+        for row in rows
+    ]
 
 
 def get_sample_stratification(cursor, specimen_collection_study):
-    sample_cohorts = get_sample_cohorts(cursor, specimen_collection_study)
-    sample_cohort_assignments = get_sample_cohort_assignments(cursor, specimen_collection_study)
+    decrement, sample_cohorts = get_sample_cohorts(cursor, specimen_collection_study)
+    sample_cohort_assignments = get_sample_cohort_assignments(cursor, specimen_collection_study,
+                                                              decrement)
     return { 'cohorts' : sample_cohorts, 'assignments' : sample_cohort_assignments }
 
 
@@ -353,6 +363,10 @@ def get_study_summary(
     )
 
 
+def format_stratum_in_row(row, decrement, index):
+    return [str(x) if not i==index else str(int(x)-decrement) for i, x in enumerate(row)]
+
+
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
     study: str = Query(default='unknown', min_length=3),
@@ -401,9 +415,11 @@ async def get_phenotype_summary(
             (components['measurement'], components['analysis']),
         )
         rows = cursor.fetchall()
+        decrement, _ = get_sample_cohorts(cursor, components['collection'])
         cursor.close()
+
         representation = {
-            'fractions': [[str(entry) for entry in row] for row in rows]
+            'fractions': [format_stratum_in_row(row, decrement, 2) for row in rows]
         }
         return Response(
             content=json.dumps(representation),
@@ -658,9 +674,11 @@ async def get_phenotype_proximity_summary(
             (derivation_method, data_analysis_study),
         )
         rows = cursor.fetchall()
+        decrement, _ = get_sample_cohorts(cursor, components['collection'])
         cursor.close()
+
         representation = {
-            'proximities': [[str(entry) for entry in row] for row in rows]
+            'proximities': [format_stratum_in_row(row, decrement, 3) for row in rows]
         }
         return Response(
             content=json.dumps(representation),

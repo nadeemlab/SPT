@@ -267,9 +267,27 @@ def get_sample_cohort_assignments(cursor, specimen_collection_study, decrement):
     '''
     cursor.execute(query, (specimen_collection_study,))
     rows = cursor.fetchall()
+
+    cohort_identifier = { row[0] : row[1] for row in rows }
+
+    query = '''
+    SELECT sdmp.specimen, COUNT(*)
+    FROM specimen_collection_process scp
+    JOIN specimen_data_measurement_process sdmp
+    ON scp.specimen=sdmp.specimen
+    JOIN data_file df
+    ON df.source_generation_process=sdmp.identifier
+    JOIN histological_structure_identification hsi
+    ON hsi.data_source=df.sha256_hash
+    WHERE scp.study=%s ;
+    '''
+    cursor.execute(query, (specimen_collection_process,))
+    rows = cursor.fetchall()
+    cell_count = { row[0] : row[1] for row in rows }
+
     return [
-        (row[0], str(int(row[1]) - decrement))
-        for row in rows
+        (sample, str(int(cohort_identifier[sample]) - decrement), str(cell_count[sample]))
+        for sample in sorted(list(set(cell_count.keys()).intersection(cohort_identifier.keys())))
     ]
 
 

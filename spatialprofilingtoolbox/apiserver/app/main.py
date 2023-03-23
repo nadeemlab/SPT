@@ -271,7 +271,7 @@ def get_sample_cohort_assignments(cursor, specimen_collection_study, decrement):
     cohort_identifier = { row[0] : row[1] for row in rows }
 
     query = '''
-    SELECT sdmp.specimen, COUNT(*)
+    SELECT scp.specimen, COUNT(*)
     FROM specimen_collection_process scp
     JOIN specimen_data_measurement_process sdmp
     ON scp.specimen=sdmp.specimen
@@ -279,7 +279,8 @@ def get_sample_cohort_assignments(cursor, specimen_collection_study, decrement):
     ON df.source_generation_process=sdmp.identifier
     JOIN histological_structure_identification hsi
     ON hsi.data_source=df.sha256_hash
-    WHERE scp.study=%s ;
+    WHERE scp.study=%s
+    GROUP BY scp.specimen ;
     '''
     cursor.execute(query, (specimen_collection_study,))
     rows = cursor.fetchall()

@@ -281,7 +281,7 @@ def get_sample_cohort_assignments(cursor, specimen_collection_study, decrement):
     ON hsi.data_source=df.sha256_hash
     WHERE scp.study=%s ;
     '''
-    cursor.execute(query, (specimen_collection_process,))
+    cursor.execute(query, (specimen_collection_study,))
     rows = cursor.fetchall()
     cell_count = { row[0] : row[1] for row in rows }
 

@@ -45,7 +45,7 @@ def get_constraint_status(cursor):
     JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace 
     JOIN pg_constraint ON pg_constraint.oid = pg_trigger.tgconstraint
     WHERE relname IN {str(tuple(big_tables()))}
-    ORDER BY relname, constraint_name;
+    ORDER BY relation_name, constraint_name;
     '''
     cursor.execute(query)
 

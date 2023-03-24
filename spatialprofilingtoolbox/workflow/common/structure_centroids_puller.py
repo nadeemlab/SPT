@@ -47,6 +47,8 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
                 cursor.execute(self.get_shapefiles_query_specimen_specific(),
                               (study_name, specimen))
             rows = cursor.fetchall()
+            if len(rows) == 0:
+                continue
             self.structure_centroids.add_study_data(
                 study_name,
                 self.create_study_data(rows)

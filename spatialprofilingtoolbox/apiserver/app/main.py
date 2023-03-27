@@ -687,12 +687,12 @@ async def get_phenotype_proximity_summary(
         cursor.execute(
             f'''
             SELECT {', '.join(columns)}
-            FROM {tablename}
-            WHERE derivation_method=%s
-                AND data_analysis_study in (%s, \'none\')
+            FROM {tablename} cf
+            JOIN study_component sc ON sc.component_study=cf.data_analysis_study
+            WHERE derivation_method=%s AND sc.primary_study=%s
             ;
             ''',
-            (derivation_method, data_analysis_study),
+            (derivation_method, study),
         )
         rows = cursor.fetchall()
         decrement, _ = get_sample_cohorts(cursor, components['collection'])

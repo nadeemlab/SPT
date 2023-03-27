@@ -38,7 +38,9 @@ class SampleStratificationCreator:
             (local_temporal_position_indicator,
              subject_diagnosed_condition,
              subject_diagnosed_result) = key
-            if key not in identifiers and key != ('', '', ''):
+            if key == ('', '', ''):
+                continue
+            if key not in identifiers:
                 strata_count = strata_count + 1
                 identifiers[key] = strata_count
             record = (
@@ -57,7 +59,9 @@ class SampleStratificationCreator:
             (local_temporal_position_indicator,
              subject_diagnosed_condition,
              subject_diagnosed_result) = key
-            if key not in identifiers and key == ('', '', ''):
+            if key != ('', '', ''):
+                continue
+            if key not in identifiers:
                 strata_count = strata_count + 1
                 identifiers[key] = strata_count
             record = (

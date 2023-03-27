@@ -38,9 +38,26 @@ class SampleStratificationCreator:
             (local_temporal_position_indicator,
              subject_diagnosed_condition,
              subject_diagnosed_result) = key
-            if key == ('', '', ''):
-                continue
-            if key not in identifiers:
+            if key not in identifiers and key != ('', '', ''):
+                strata_count = strata_count + 1
+                identifiers[key] = strata_count
+            record = (
+                str(identifiers[key]),
+                specimen,
+                local_temporal_position_indicator,
+                subject_diagnosed_condition,
+                subject_diagnosed_result,
+            )
+            cursor.execute(SampleStratificationCreator.insert_assignment, record)
+            assignment_count = assignment_count + 1
+
+        for specimen in specimens:
+            key = tuple(
+                SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
+            (local_temporal_position_indicator,
+             subject_diagnosed_condition,
+             subject_diagnosed_result) = key
+            if key not in identifiers and key == ('', '', ''):
                 strata_count = strata_count + 1
                 identifiers[key] = strata_count
             record = (

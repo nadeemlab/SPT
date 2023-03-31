@@ -525,11 +525,13 @@ async def get_phenotype_criteria_name(
 
 @app.get("/phenotype-criteria/")
 async def get_phenotype_criteria(
+    study: str = Query(default='unknown', min_length=3),
     phenotype_symbol: str = Query(default='unknown', min_length=3),
 ):
     """
     Get a list of the positive markers and negative markers defining a given named
-    phenotype. Key **phenotype criteria**, with value dictionary with keys:
+    phenotype, in the context of the given study. Key **phenotype criteria**,
+    with value dictionary with keys:
 
     * **positive markers**
     * **negative markers**
@@ -542,10 +544,11 @@ async def get_phenotype_criteria(
         FROM cell_phenotype_criterion cpc
         JOIN cell_phenotype cp ON cpc.cell_phenotype = cp.identifier
         JOIN chemical_species cs ON cs.identifier = cpc.marker
-        WHERE cp.symbol = %s
+        JOIN study_component sc ON sc.component_study=cpc.study
+        WHERE cp.symbol=%s AND sc.primary_study=%s
         ;
         '''
-        cursor.execute(query, (phenotype_symbol,),)
+        cursor.execute(query, (phenotype_symbol, study),)
         rows = cursor.fetchall()
         if len(rows) == 0:
             singles_query = '''

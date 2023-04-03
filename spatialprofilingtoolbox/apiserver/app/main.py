@@ -98,19 +98,43 @@ def get_study_names():
     """
     Get the names of studies/datasets.
     """
+    name_pairs = []
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute('SELECT study_specifier FROM study;')
         rows = cursor.fetchall()
+        for row in rows:
+            study_name = str(row[0])
+            publication_summary_text = get_publication_summary_text(cursor, study_name)
+            name_pairs.append((study_name, publication_summary_text))
         cursor.close()
-        representation = {
-            'study names': [str(row[0]) for row in rows]
-        }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
+    representation = {'study names': name_pairs}
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
+
+
+def get_publication_summary_text(cursor, study):
+    query = '''
+    SELECT publisher, date_of_publication
+    FROM publication
+    WHERE study=%s AND document_type=\'Article\'
+    ;
+    '''
+    row = get_single_result_row(cursor, query=query, parameters=(study,),)
+    if len(row) == 0:
+        publication_summary_text = ''
+    else:
+        publisher, publication_date = row
+        year_match = re.search(r'^\d{4}', publication_date)
+        if year_match:
+            year = year_match.group()
+            publication_summary_text = f'{publisher} {year}'
+        else:
+            publication_summary_text = publisher
+    return publication_summary_text
 
 
 def get_contact(cursor, study):

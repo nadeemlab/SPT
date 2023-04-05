@@ -68,7 +68,8 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             with open(results_file, 'rb') as file:
                 feature_values, channel_symbols_by_column_name, sample_identifier= pickle.load(file)
 
-            stage_proximity_feature_values(feature_uploader, feature_values, channel_symbols_by_column_name, sample_identifier)
+            stage_proximity_feature_values(feature_uploader, feature_values,
+                                           channel_symbols_by_column_name, sample_identifier)
             # for _, row in feature_values.iterrows():
             #     specifiers = (self.phenotype_identifier_lookup(row['Phenotype 1'],
             #                   channel_symbols_by_column_name),

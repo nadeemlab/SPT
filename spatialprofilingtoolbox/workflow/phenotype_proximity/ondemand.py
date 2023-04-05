@@ -22,24 +22,24 @@ class ProximityCalculator:
         logger.info(
             'Start pulling feature matrix data for proximity on-demand calculator, study %s.',
             study)
-        self.study_name = study
         bundle = FeatureMatrixExtractor.extract(database_config_file=database_config_file)
-        logger.info('Finished pulling data for %s.', self.get_study_name())
+        logger.info('Finished pulling data for %s.', study)
 
-        for sample_identifier, sample in list(bundle[self.get_study_name()]['feature matrices'].items()):
-            logger.info('Cells dataframe for %s has size %s', sampe_identifier, sample['dataframe'].shape)
-        study_bundle = bundle[self.get_study_name()]
+        for identifier, sample in list(bundle[study]['feature matrices'].items()):
+            logger.info('Cells dataframe for %s has size %s', identifier, sample['dataframe'].shape)
+        study_bundle = bundle[study]
         self.cells_by_sample = {
             sample_identifier: sample['dataframe']
             for sample_identifier, sample in study_bundle['feature matrices'].items()
         }
 
-        self.channel_symbols_by_column_name = bundle[self.get_study_name()]['channel symbols by column name']
+        self.channel_symbols_by_column_name = bundle[study]['channel symbols by column name']
         self.channels = sorted(self.channel_symbols_by_column_name.keys())
 
         logger.info('Start creating ball trees.')
-        self.create_ball_trees(bundle[self.get_study_name()])
+        self.create_ball_trees(bundle[study])
         logger.info('Finished creating ball trees.')
+        self.study_name = study
 
     def get_study_name(self):
         return self.study_name
@@ -65,7 +65,7 @@ class ProximityCalculator:
 
     def get_cells(self, sample_identifier):
         return self.cells_by_sample[sample_identifier]
-    
+
     def get_tree(self, sample_identifier):
         return self.trees[sample_identifier]
 

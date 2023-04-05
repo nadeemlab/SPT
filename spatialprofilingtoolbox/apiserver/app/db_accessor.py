@@ -14,6 +14,12 @@ class DBAccessor:
     """
     connection: Psycopg2Connection
 
+    def __init__(self):
+        self.endpoint = None
+        self.database = None
+        self.user = None
+        self.password = None
+
     def get_connection(self):
         return self.connection
 
@@ -33,6 +39,11 @@ class DBAccessor:
         if 'USE_LEGACY_DATABASE' in environ:
             dbname = 'pathstudies'
 
+        self.endpoint = environ['SINGLE_CELL_DATABASE_HOST']
+        self.database = dbname
+        self.user = environ['SINGLE_CELL_DATABASE_USER']
+        self.password = environ['SINGLE_CELL_DATABASE_PASSWORD']
+
         self.connection = connect(
             dbname=dbname,
             host=environ['SINGLE_CELL_DATABASE_HOST'],
@@ -40,6 +51,15 @@ class DBAccessor:
             password=environ['SINGLE_CELL_DATABASE_PASSWORD'],
         )
         return self
+
+    def get_datase_config_file_contents(self):
+        return f'''
+[database-credentials]
+endpoint =  {self.endpoint}
+database = {self.database}
+user = {self.user}
+password = {self.password}
+'''
 
     def __exit__(self, exception_type, exception_value, traceback):
         if not self.connection is None:

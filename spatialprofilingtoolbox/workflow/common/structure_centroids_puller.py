@@ -37,8 +37,11 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         super().__init__(database_config_file=database_config_file)
         self.structure_centroids = StructureCentroids()
 
-    def pull(self, specimen: str=None):
-        study_names = self.get_study_names()
+    def pull(self, specimen: str=None, study: str=None):
+        if study is None:
+            study_names = self.get_study_names()
+        else:
+            study_names = [study]
         cursor = self.get_connection().cursor()
         for study_name in study_names:
             if specimen is None:

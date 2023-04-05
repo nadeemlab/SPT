@@ -9,6 +9,7 @@ from fastapi import Response
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.workflow.phenotype_proximity.ondemand import get_proximity_calculators
 VERSION = '0.3.0'
 
 DESCRIPTION = """
@@ -30,6 +31,12 @@ app = FastAPI(
         "email": "mathewj2@mskcc.org",
     },
 )
+
+with DBAccessor() as initialization_db_accessor:
+    database_config_file = '/tmp/.spt_db.config.tmp'
+    with open(database_config_file, 'wt', encoding='utf-8') as file:
+        file.write(initialization_db_accessor.get_datase_config_file_contents())
+    proximity_calculators = get_proximity_calculators(database_config_file)
 
 
 def get_study_components(study_name):
@@ -732,3 +739,33 @@ async def get_phenotype_proximity_summary(
             content=json.dumps(representation),
             media_type='application/json',
         )
+
+
+@app.get("/request-phenotype-proximity-computation/")
+async def request_phenotype_proximity_computation(
+    study: str = Query(default='unknown', min_length=3),
+    positive_markers_tab_delimited1: str = Query(default=None),
+    negative_markers_tab_delimited1: str = Query(default=None),
+    positive_markers_tab_delimited2: str = Query(default=None),
+    negative_markers_tab_delimited2: str = Query(default=None),
+):
+    """
+    Spatial proximity statistics between pairs of cell populations defined by
+    phenotype criteria. The metric is the average number of cells of a second
+    phenotype within a fixed distance to a given cell of a primary phenotype.
+    """
+    phenotype1 = {'positive': split_on_tabs(positive_markers_tab_delimited1),
+                  'negative': split_on_tabs(negative_markers_tab_delimited1), }
+    phenotype2 = {'positive': split_on_tabs(positive_markers_tab_delimited2),
+                  'negative': split_on_tabs(negative_markers_tab_delimited2), }
+
+    if study in proximity_calculators.keys():
+        proximity_calculators[study].request_computation(phenotype1, phenotype2)
+        metrics = proximity_calculators[study].retrieve_metrics(phenotype1, phenotype2)
+        representation = {'proximities': metrics}
+    else:
+        representation = { 'proximities': None}
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )

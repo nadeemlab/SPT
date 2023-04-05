@@ -5,7 +5,6 @@ import warnings
 import pickle
 
 import pandas as pd
-import numpy as np
 from sklearn.neighbors import BallTree
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
@@ -14,6 +13,8 @@ from spatialprofilingtoolbox.workflow.common.logging.performance_timer import Pe
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
     ProximityJobGenerator
+from spatialprofilingtoolbox.workflow.common.proximity import \
+    compute_proximity_metric_for_signature_pair
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
@@ -112,7 +113,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         all_signatures = singleton_signatures + signatures
 
         cases = self.get_cases(all_signatures)
-        proximity_metrics = [self.compute_proximity_metric_for_signature_pair(s1, s2, r, cells)
+        proximity_metrics = [compute_proximity_metric_for_signature_pair(s1, s2, r, cells, self.tree)
                              for s1, s2, r in cases]
         self.write_table(proximity_metrics, self.get_cases(channels + phenotype_identifiers))
 
@@ -155,52 +156,52 @@ class PhenotypeProximityCoreJob(CoreJob):
         return [(s1, s2, radius) for s1 in items for s2 in items
                 for radius in PhenotypeProximityCoreJob.radii]
 
-    def compute_proximity_metric_for_signature_pair(self, signature1, signature2, radius, cells):
-        mask1 = self.get_mask(cells, signature1)
-        mask2 = self.get_mask(cells, signature2)
+    # def compute_proximity_metric_for_signature_pair(self, signature1, signature2, radius, cells):
+    #     mask1 = self.get_mask(cells, signature1)
+    #     mask2 = self.get_mask(cells, signature2)
 
-        source_count = sum(mask1)
-        if source_count == 0:
-            return None
+    #     source_count = sum(mask1)
+    #     if source_count == 0:
+    #         return None
 
-        source_cell_locations = cells.loc()[mask1][['pixel x', 'pixel y']]
-        within_radius_indices_list = self.tree.query_radius(
-            source_cell_locations,
-            radius,
-            return_distance=False,
-        )
+    #     source_cell_locations = cells.loc()[mask1][['pixel x', 'pixel y']]
+    #     within_radius_indices_list = self.tree.query_radius(
+    #         source_cell_locations,
+    #         radius,
+    #         return_distance=False,
+    #     )
 
-        counts = [
-            sum(mask2[index] for index in list(indices))
-            for indices in within_radius_indices_list
-        ]
-        count = sum(counts) - sum(mask1 & mask2)
-        source_count = sum(mask1)
-        return count / source_count
+    #     counts = [
+    #         sum(mask2[index] for index in list(indices))
+    #         for indices in within_radius_indices_list
+    #     ]
+    #     count = sum(counts) - sum(mask1 & mask2)
+    #     source_count = sum(mask1)
+    #     return count / source_count
 
-    def get_mask(self, cells, signature):
-        value, multiindex = self.get_value_and_multiindex(signature)
-        try:
-            loc = cells.set_index(multiindex).index.get_loc(value)
-        except KeyError:
-            return np.asarray([False,] * cells.shape[0])
-        if isinstance(loc, np.ndarray):
-            return loc
-        if isinstance(loc, slice):
-            range1 = [False,]*(loc.start - 0)
-            range2 = [True,]*(loc.stop - loc.start)
-            range3 = [False,]*(cells.shape[0] - loc.stop)
-            return np.asarray(range1 + range2 + range3)
-        if isinstance(loc, int):
-            return np.asarray([i == loc for i in range(cells.shape[0])])
-        raise ValueError(f'Could not select by index: {multiindex}. Got: {loc}')
+    # def get_mask(self, cells, signature):
+    #     value, multiindex = self.get_value_and_multiindex(signature)
+    #     try:
+    #         loc = cells.set_index(multiindex).index.get_loc(value)
+    #     except KeyError:
+    #         return np.asarray([False,] * cells.shape[0])
+    #     if isinstance(loc, np.ndarray):
+    #         return loc
+    #     if isinstance(loc, slice):
+    #         range1 = [False,]*(loc.start - 0)
+    #         range2 = [True,]*(loc.stop - loc.start)
+    #         range3 = [False,]*(cells.shape[0] - loc.stop)
+    #         return np.asarray(range1 + range2 + range3)
+    #     if isinstance(loc, int):
+    #         return np.asarray([i == loc for i in range(cells.shape[0])])
+    #     raise ValueError(f'Could not select by index: {multiindex}. Got: {loc}')
 
-    def get_value_and_multiindex(self, signature):
-        value = (1,) * len(signature['positive']) + (0,) * len(signature['negative'])
-        if len(value) == 1:
-            value = value[0]
-        multiindex = [*signature['positive'], *signature['negative']]
-        return value, multiindex
+    # def get_value_and_multiindex(self, signature):
+    #     value = (1,) * len(signature['positive']) + (0,) * len(signature['negative'])
+    #     if len(value) == 1:
+    #         value = value[0]
+    #     multiindex = [*signature['positive'], *signature['negative']]
+    #     return value, multiindex
 
     def write_table(self, proximity_metrics, cases):
         if len(proximity_metrics) != len(cases):

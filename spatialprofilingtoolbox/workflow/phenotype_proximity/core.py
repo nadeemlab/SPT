@@ -113,8 +113,8 @@ class PhenotypeProximityCoreJob(CoreJob):
         all_signatures = singleton_signatures + signatures
 
         cases = self.get_cases(all_signatures)
-        proximity_metrics = [compute_proximity_metric_for_signature_pair(s1, s2, r, cells, self.tree)
-                             for s1, s2, r in cases]
+        proximity_metrics=[compute_proximity_metric_for_signature_pair(s1, s2, r, cells, self.tree)
+                           for s1, s2, r in cases]
         self.write_table(proximity_metrics, self.get_cases(channels + phenotype_identifiers))
 
     def create_ball_tree(self, cells):

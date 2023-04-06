@@ -70,27 +70,3 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
 
             stage_proximity_feature_values(feature_uploader, feature_values,
                                            channel_symbols_by_column_name, sample_identifier)
-            # for _, row in feature_values.iterrows():
-            #     specifiers = (self.phenotype_identifier_lookup(row['Phenotype 1'],
-            #                   channel_symbols_by_column_name),
-            #                   self.phenotype_identifier_lookup(row['Phenotype 2'],
-            #                   channel_symbols_by_column_name),
-            #                   row['Pixel radius'])
-            #     value = row['Proximity']
-            #     if self.validate_value(value):
-            #         feature_uploader.stage_feature_value(specifiers, sample_identifier, value)
-
-    # def validate_value(self, value):
-    #     if (not isinstance(value, float)) and (not isinstance(value, int)):
-    #         return False
-    #     if isnan(value):
-    #         return False
-    #     return True
-
-    # def phenotype_identifier_lookup(self, handle, channel_symbols_by_column_name):
-    #     if re.match(r'^\d+$', handle):
-    #         return f'cell_phenotype {handle}'
-    #     if re.match(r'^F\d+$', handle):
-    #         channel_symbol = channel_symbols_by_column_name[handle]
-    #         return channel_symbol
-    #     raise ValueError(f'Did not understand meaning of specifier: {handle}')

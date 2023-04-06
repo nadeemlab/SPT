@@ -59,10 +59,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         return self.data_arrays
 
     def retrieve_data_arrays(self, specimen: str=None, study: str=None) -> CompressedDataArrays:
-        if study is None:
-            study_names = self.get_study_names(self.get_connection())
-        else:
-            study_names = [study]
+        study_names = self.get_study_names(self.get_connection(), study=study)
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
             sparse_entries = self.get_sparse_entries(self.get_connection(),
@@ -79,10 +76,20 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             )
         return data_arrays
 
-    def get_study_names(self, connection):
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT name FROM specimen_measurement_study ;')
-            rows = cursor.fetchall()
+    def get_study_names(self, connection, study=None):
+        if study is None:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT name FROM specimen_measurement_study ;')
+                rows = cursor.fetchall()
+        else:
+            with connection.cursor() as cursor:
+                cursor.execute('''
+                SELECT sms.name FROM specimen_measurement_study sms
+                JOIN study_component sc ON sc.component_study=sms.name
+                WHERE sc.primary_study=%s
+                ;
+                ''', (study,))
+                rows = cursor.fetchall()
         return sorted([row[0] for row in rows])
 
     def get_sparse_entries(self, connection, study_name, specimen: str=None):

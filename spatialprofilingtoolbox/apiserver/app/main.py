@@ -489,7 +489,7 @@ async def get_phenotype_symbols(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         query = '''
-        SELECT DISTINCT cp.symbol
+        SELECT DISTINCT cp.symbol, cp.identifier
         FROM cell_phenotype_criterion cpc
         JOIN cell_phenotype cp ON cpc.cell_phenotype=cp.identifier
         WHERE cpc.study=%s
@@ -500,7 +500,10 @@ async def get_phenotype_symbols(
         rows = cursor.fetchall()
         cursor.close()
         representation = {
-            'phenotype symbols': rows,
+            'phenotype symbols': [
+                {'handle': row[0], 'identifier': row[1]}
+                for row in rows
+            ]
         }
         return Response(
             content=json.dumps(representation),

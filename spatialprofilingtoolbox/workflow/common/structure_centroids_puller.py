@@ -38,10 +38,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         self.structure_centroids = StructureCentroids()
 
     def pull(self, specimen: str=None, study: str=None):
-        if study is None:
-            study_names = self.get_study_names()
-        else:
-            study_names = [study]
+        study_names = self.get_study_names(study=study)
         cursor = self.get_connection().cursor()
         for study_name in study_names:
             if specimen is None:
@@ -92,17 +89,19 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         ;
         '''
 
-    def get_study_names(self):
-        query = '''
-        SELECT DISTINCT
-        sdmp.study
-        FROM specimen_data_measurement_process sdmp
-        ;
-        '''
+    def get_study_names(self, study=None):
         cursor = self.get_connection().cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        cursor.close()
+        if study is None:
+            cursor.execute('SELECT name FROM specimen_measurement_study ;')
+            rows = cursor.fetchall()
+        else:
+            cursor.execute('''
+            SELECT sms.name FROM specimen_measurement_study sms
+            JOIN study_component sc ON sc.component_study=sms.name
+            WHERE sc.primary_study=%s
+            ;
+            ''', (study,))
+            rows = cursor.fetchall()
         return sorted([row[0] for row in rows])
 
     def create_study_data(self, rows):

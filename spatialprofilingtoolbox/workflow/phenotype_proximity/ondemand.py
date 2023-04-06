@@ -28,7 +28,8 @@ class ProximityCalculator:
         logger.info(
             'Start pulling feature matrix data for proximity on-demand calculator, study %s.',
             study)
-        bundle = FeatureMatrixExtractor.extract(database_config_file=database_config_file)
+        bundle = FeatureMatrixExtractor.extract(database_config_file=database_config_file,
+                                                study=study)
         logger.info('Finished pulling data for %s.', study)
 
         for identifier, sample in list(bundle[study]['feature matrices'].items()):
@@ -69,7 +70,6 @@ class ProximityCalculator:
             for sample_identifier in self.get_sample_identifiers()
         }
         self.cache_metrics(metrics)
-        # self.insert_metrics(metrics, phenotype1, phenotype2, radius)
 
     def cache_metrics(self, metrics):
         self.cached_metrics = metrics
@@ -109,43 +109,6 @@ class ProximityCalculator:
                 sign: [row[0] for row in rows if row[1] == sign]
                 for sign in ['positive', 'negative']
             }
-
-    # def insert_metrics(self, metrics, phenotype1, phenotype2, radius):
-    #     data_analysis_study = self.insert_new_data_analysis_study()
-    #     with ADIFeaturesUploader(
-    #         database_config_file=self.get_database_config_file(),
-    #         data_analysis_study=data_analysis_study,
-    #         derivation_method=describe_proximity_feature_derivation_method(),
-    #         specifier_number=3,
-    #     ) as feature_uploader:
-    #         for sample_identifier, value in metrics.items():
-    #             name1 = self.munge_name(phenotype1)
-    #             name2 = self.munge_name(phenotype2)
-    #             specifiers = (name1, name2, radius)
-    #             if validate_value(value):
-    #                 feature_uploader.stage_feature_value(specifiers, sample_identifier, value)
-
-    # def munge_name(self, phenotype):
-    #     # Eventually, make this figure out the cell phenotype ID if available... otherwise just
-    #     # this I guess.
-    #     # Or the single channel name if that's there.
-    #     return str(tuple(tuple(phenotype['positive']), phenotype['negative']))
-
-    # def insert_new_data_analysis_study(self):
-    #     timestring = str(datetime.datetime.now())
-    #     name = f'{self.get_study_name()} : proximity calculation : {timestring}'
-    #     with DatabaseConnectionMaker(self.get_database_config_file()) as dcm:
-    #         connection = dcm.get_connection()
-    #         cursor = connection.cursor()
-    #         cursor.execute('''
-    #         INSERT INTO data_analysis_study(name)
-    #         VALUES (%s) ;
-    #         INSERT INTO study_component(primary_study, component_study)
-    #         VALUES (%s, %s) ;
-    #         ''', (name, self.get_study_name(), name))
-    #         cursor.close()
-    #         connection.commit()
-    #     return name
 
     def get_sample_identifiers(self):
         return self.cells_by_sample.keys()

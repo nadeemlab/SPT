@@ -52,7 +52,7 @@ class DBAccessor:
         )
         return self
 
-    def get_datase_config_file_contents(self):
+    def get_database_config_file_contents(self):
         return f'''
 [database-credentials]
 endpoint =  {self.endpoint}

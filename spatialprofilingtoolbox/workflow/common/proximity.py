@@ -71,11 +71,9 @@ def phenotype_identifier_lookup(handle, channel_symbols_by_column_name):
 def stage_proximity_feature_values(feature_uploader, feature_values, channel_symbols_by_column_name,
                                    sample_identifier):
     for _, row in feature_values.iterrows():
-        specifiers = (phenotype_identifier_lookup(row['Phenotype 1'],
-                        channel_symbols_by_column_name),
-                        phenotype_identifier_lookup(row['Phenotype 2'],
-                        channel_symbols_by_column_name),
-                        row['Pixel radius'])
+        specifiers=(phenotype_identifier_lookup(row['Phenotype 1'], channel_symbols_by_column_name),
+                    phenotype_identifier_lookup(row['Phenotype 2'], channel_symbols_by_column_name),
+                    row['Pixel radius'])
         value = row['Proximity']
         if validate_value(value):
             feature_uploader.stage_feature_value(specifiers, sample_identifier, value)

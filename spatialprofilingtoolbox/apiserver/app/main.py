@@ -32,11 +32,7 @@ app = FastAPI(
     },
 )
 
-with DBAccessor() as initialization_db_accessor:
-    database_config_file = '/tmp/.spt_db.config.tmp'
-    with open(database_config_file, 'wt', encoding='utf-8') as file:
-        file.write(initialization_db_accessor.get_datase_config_file_contents())
-    proximity_calculators = get_proximity_calculators(database_config_file)
+proximity_calculators = {}
 
 
 def get_study_components(study_name):
@@ -744,24 +740,25 @@ async def get_phenotype_proximity_summary(
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
     study: str = Query(default='unknown', min_length=3),
-    positive_markers_tab_delimited1: str = Query(default=None),
-    negative_markers_tab_delimited1: str = Query(default=None),
-    positive_markers_tab_delimited2: str = Query(default=None),
-    negative_markers_tab_delimited2: str = Query(default=None),
+    phenotype1: str = Query(default='unknown', min_length=3),
+    phenotype2: str = Query(default='unknown', min_length=3),
 ):
     """
     Spatial proximity statistics between pairs of cell populations defined by
     phenotype criteria. The metric is the average number of cells of a second
     phenotype within a fixed distance to a given cell of a primary phenotype.
     """
-    phenotype1 = {'positive': split_on_tabs(positive_markers_tab_delimited1),
-                  'negative': split_on_tabs(negative_markers_tab_delimited1), }
-    phenotype2 = {'positive': split_on_tabs(positive_markers_tab_delimited2),
-                  'negative': split_on_tabs(negative_markers_tab_delimited2), }
+    if len(proximity_calculators) == 0:
+        with DBAccessor() as initialization_db_accessor:
+            database_config_file = '/tmp/.spt_db.config.tmp'
+            with open(database_config_file, 'wt', encoding='utf-8') as file:
+                file.write(initialization_db_accessor.get_database_config_file_contents())
+        for _study, calculator in get_proximity_calculators(database_config_file).items():
+            proximity_calculators[_study] = calculator
 
-    if study in proximity_calculators.keys():
+    if study in proximity_calculators:
         proximity_calculators[study].request_computation(phenotype1, phenotype2)
-        metrics = proximity_calculators[study].retrieve_metrics(phenotype1, phenotype2)
+        metrics = proximity_calculators[study].retrieve_cached_metrics()
         representation = {'proximities': metrics}
     else:
         representation = { 'proximities': None}

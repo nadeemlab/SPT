@@ -1,5 +1,6 @@
 """The API service's endpoint handlers."""
 import os
+from os.path import exists
 import json
 import re
 
@@ -9,7 +10,7 @@ from fastapi import Response
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-from spatialprofilingtoolbox.workflow.phenotype_proximity.ondemand import get_proximity_calculators
+from spatialprofilingtoolbox.workflow.phenotype_proximity.ondemand import get_proximity_calculator
 VERSION = '0.3.0'
 
 DESCRIPTION = """
@@ -737,31 +738,41 @@ async def get_phenotype_proximity_summary(
         )
 
 
+def check_database_config_initialized():
+    database_config_file = '/tmp/.spt_db.config.tmp'
+    if not exists(database_config_file):
+        with DBAccessor() as initialization_db_accessor:
+            with open(database_config_file, 'wt', encoding='utf-8') as file:
+                file.write(initialization_db_accessor.get_database_config_file_contents())
+
+
+def check_calculator_initialized(study):
+    if len(get_study_components(study)) != 0:
+        database_config_file = '/tmp/.spt_db.config.tmp'
+        if not study in proximity_calculators:
+            proximity_calculators[study] = get_proximity_calculator(database_config_file, study)
+
+
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
     study: str = Query(default='unknown', min_length=3),
-    phenotype1: str = Query(default='unknown', min_length=3),
-    phenotype2: str = Query(default='unknown', min_length=3),
+    phenotype1: str = Query(default='unknown', min_length=1),
+    phenotype2: str = Query(default='unknown', min_length=1),
+    radius: int = Query(default=100),
 ):
     """
     Spatial proximity statistics between pairs of cell populations defined by
     phenotype criteria. The metric is the average number of cells of a second
     phenotype within a fixed distance to a given cell of a primary phenotype.
     """
-    if len(proximity_calculators) == 0:
-        with DBAccessor() as initialization_db_accessor:
-            database_config_file = '/tmp/.spt_db.config.tmp'
-            with open(database_config_file, 'wt', encoding='utf-8') as file:
-                file.write(initialization_db_accessor.get_database_config_file_contents())
-        for _study, calculator in get_proximity_calculators(database_config_file).items():
-            proximity_calculators[_study] = calculator
-
+    check_database_config_initialized()
+    check_calculator_initialized(study)
     if study in proximity_calculators:
-        proximity_calculators[study].request_computation(phenotype1, phenotype2)
+        proximity_calculators[study].request_computation(phenotype1, phenotype2, radius)
         metrics = proximity_calculators[study].retrieve_cached_metrics()
         representation = {'proximities': metrics}
     else:
-        representation = { 'proximities': None}
+        representation = {'proximities': None}
     return Response(
         content=json.dumps(representation),
         media_type='application/json',

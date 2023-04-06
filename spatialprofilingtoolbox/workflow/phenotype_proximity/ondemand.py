@@ -40,7 +40,7 @@ class ProximityCalculator:
         }
 
         self.channel_symbols_by_column_name = bundle[study]['channel symbols by column name']
-        self.channels = sorted(self.channel_symbols_by_column_name.keys())
+        self.channels = sorted(self.channel_symbols_by_column_name.values())
 
         logger.info('Start creating ball trees.')
         self.create_ball_trees(bundle[study])
@@ -55,7 +55,7 @@ class ProximityCalculator:
     def get_database_config_file(self):
         return self.database_config_file
 
-    def request_computation(self, phenotype1, phenotype2, radius=100):
+    def request_computation(self, phenotype1, phenotype2, radius):
         logger.debug('Requesting computation.')
         signature1 = self.retrieve_signature(phenotype1)
         signature2 = self.retrieve_signature(phenotype2)
@@ -76,12 +76,12 @@ class ProximityCalculator:
 
     def retrieve_signature(self, phenotype):
         signature = None
-        if phenotype in self.channels():
+        if phenotype in self.channels:
             signature = {'positive': [phenotype], 'negative': []}
         if re.match(r'^\d+$', phenotype):
             signature = self.get_signature_of_cell_phenotype(phenotype)
         if signature is None:
-            return None
+            raise ValueError(f'Phenotype {phenotype} could not be looked up.')
         column_name_by_channel_symbol = {
             value: key
             for key, value in self.channel_symbols_by_column_name.items()
@@ -156,7 +156,7 @@ class ProximityCalculator:
     def get_tree(self, sample_identifier):
         return self.trees[sample_identifier]
 
-    def retreive_cached_metrics(self):
+    def retrieve_cached_metrics(self):
         return self.cached_metrics
 
     def create_ball_trees(self, study_bundle):
@@ -175,10 +175,5 @@ def get_study_names(database_config_file):
     return [str(row[0]) for row in rows]
 
 
-def get_proximity_calculators(database_config_file):
-    studies = get_study_names(database_config_file)
-    proximity_calculators = {
-        study_name: ProximityCalculator(study_name, database_config_file)
-        for study_name in studies
-    }
-    return proximity_calculators
+def get_proximity_calculator(database_config_file, study_name):
+    return ProximityCalculator(study_name, database_config_file)

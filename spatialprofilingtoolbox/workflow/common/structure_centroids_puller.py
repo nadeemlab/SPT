@@ -1,7 +1,10 @@
 """Retrieves positional information for all cells in the SPT database."""
 import statistics
+from pickle import dump
+from pickle import load
 
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
+from spatialprofilingtoolbox.countsserver.defaults import CENTROIDS_FILENAME
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -20,7 +23,6 @@ class StructureCentroids:
     order is ascending lexicographical order of the corresponding "histological
     structure" identifier strings.
     """
-
     def __init__(self):
         self.studies = {}
 
@@ -29,6 +31,14 @@ class StructureCentroids:
 
     def add_study_data(self, study_name, structure_centroids_by_specimen):
         self.studies[study_name] = structure_centroids_by_specimen
+
+    def write_to_file(self):
+        with open(CENTROIDS_FILENAME, 'wb') as file:
+            dump(self.get_studies(), file)
+
+    def load_from_file(self):
+        with open(CENTROIDS_FILENAME, 'rb') as file:
+            self.studies = load(file)
 
 
 class StructureCentroidsPuller(DatabaseConnectionMaker):
@@ -119,16 +129,15 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
                 extract_points(row[field['base64_contents']])
             ))
         study_data[current_specimen] = specimen_centroids
-        logger.debug('Done parsing shapefiles for specimen "%s".',
-                     current_specimen)
+        logger.debug('Done parsing shapefiles for specimen "%s".', current_specimen)
         return study_data
 
     def compute_centroid(self, points):
         nonrepeating_points = points[0:(len(points)-1)]
-        return [
+        return (
             statistics.mean([point[0] for point in nonrepeating_points]),
             statistics.mean([point[1] for point in nonrepeating_points]),
-        ]
+        )
 
     def get_structure_centroids(self):
         return self.structure_centroids

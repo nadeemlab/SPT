@@ -72,6 +72,7 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/apiserver/; $$executor $$test_script" ; \
+    docker compose logs -f & \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \

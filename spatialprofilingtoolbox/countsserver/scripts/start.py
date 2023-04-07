@@ -4,6 +4,7 @@ import json
 import socketserver
 
 from spatialprofilingtoolbox.countsserver.counts_provider import CountsProvider
+from spatialprofilingtoolbox.countsserver.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('spt countsserver start')
@@ -18,6 +19,27 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
             return
         if self.handle_single_phenotype_counts_request(data):
             return
+        if self.handle_proximity_request(data):
+            return
+
+    def handle_proximity_request(self, data):
+        groups = self.get_groups(data)
+        if len(groups) != 6:
+            return False
+        specification = self.get_phenotype_pair_specification(groups)
+        study_name = specification[0]
+        if self.handle_missing_study(study_name):
+            return True
+
+        metrics = self.get_proximity_metrics(*specification)
+        message = json.dumps(metrics) + self.get_end_of_transmission()
+        self.request.sendall(message.encode('utf-8'))
+        return True
+
+    def get_proximity_metrics(self, study, radius, positives1, negatives1, positives2, negatives2):
+        phenotype1 = {'positive': positives1, 'negative': negatives1}
+        phenotype2 = {'positive': positives2, 'negative': negatives2}
+        return self.server.proximity_provider.compute_metrics(study, phenotype1, phenotype2, radius)
 
     def handle_single_phenotype_counts_request(self, data):
         groups = self.get_groups(data)
@@ -68,16 +90,22 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         study_name = groups[0]
         positive_channel_names = groups[1].split(record_separator)
         negative_channel_names = groups[2].split(record_separator)
-        def trim_empty_entry(element):
-            if element == ['']:
-                return []
-            return element
-        positive_channel_names = trim_empty_entry(positive_channel_names)
-        negative_channel_names = trim_empty_entry(negative_channel_names)
+        positive_channel_names = self.trim_empty_entry(positive_channel_names)
+        negative_channel_names = self.trim_empty_entry(negative_channel_names)
         logger.info('Study: %s', study_name)
         logger.info('Positives: %s', positive_channel_names)
         logger.info('Negatives: %s', negative_channel_names)
         return study_name, positive_channel_names, negative_channel_names
+
+    def get_phenotype_pair_specification(self, groups):
+        record_separator = chr(30)
+        study_name = groups[0]
+        radius = int(groups[1])
+        channel_lists = [
+            self.trim_empty_entry(group.split(record_separator))
+            for group in groups[2:6]
+        ]
+        return [study_name, radius, *channel_lists]
 
     def get_groups(self, data):
         group_separator = chr(29)
@@ -97,6 +125,11 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
 
     def get_end_of_transmission(self):
         return chr(4)
+
+    def trim_empty_entry(self, element):
+        if element == ['']:
+            return []
+        return element
 
 
 if __name__ == '__main__':
@@ -130,6 +163,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     counts_provider = CountsProvider(args.source_data_location)
+    proximity_provider = ProximityProvider(args.source_data_location)
     tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
     tcp_server.counts_provider = counts_provider
+    tcp_server.proximity_provider = proximity_provider
+    logger.info('countsserver is ready to accept connections.')
     tcp_server.serve_forever(poll_interval=0.2)

@@ -41,7 +41,11 @@ db = [
     "pandas>=1.1.5",
     "pyshp==2.2.0"
 ]
-countsserver = []
+countsserver = [
+    "pandas>=1.1.5",
+    "numpy==1.22.3",
+    "scikit-learn==1.1.2"
+]
 cggnn = [
     "cg-gnn"
 ]

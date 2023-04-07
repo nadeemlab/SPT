@@ -5,6 +5,7 @@ Also pulls location data.
 import argparse
 from os.path import abspath
 from os.path import expanduser
+from os import getcwd
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -43,4 +44,4 @@ if __name__ == '__main__':
 
     with StructureCentroidsPuller(database_config_file) as puller:
         puller.pull()
-        puller.get_structure_centroids().write_to_file()
+        puller.get_structure_centroids().write_to_file(getcwd())

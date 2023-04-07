@@ -47,13 +47,13 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         if positives_signature is None:
             logger.error('Could not understand channel names as defining a signature: %s',
                          positive_channel_names)
-            self.request.sendall(''.encode('utf-8'))
+            self.request.sendall(self.get_end_of_transmission().encode('utf-8'))
             return
         if negatives_signature is None:
             logger.error(
                 'Could not understand channel names as defining a signature: %s',
                 negative_channel_names)
-            self.request.sendall(''.encode('utf-8'))
+            self.request.sendall(self.get_end_of_transmission().encode('utf-8'))
             return
         logger.info('%s', f'{positives_signature:064b}')
         logger.info('%s', f'{negatives_signature:064b}')
@@ -97,7 +97,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     counts_provider = CountsProvider(args.source_data_location)
-    tcp_server = socketserver.TCPServer(
-        (args.host, args.port), CountsRequestHandler)
+    tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
     tcp_server.counts_provider = counts_provider
     tcp_server.serve_forever(poll_interval=0.2)

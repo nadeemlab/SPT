@@ -6,6 +6,10 @@ import re
 
 import numpy as np
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
+
 
 def get_value_and_multiindex(signature):
     value = (1,) * len(signature['positive']) + (0,) * len(signature['negative'])
@@ -18,6 +22,7 @@ def get_mask(cells, signature):
     value, multiindex = get_value_and_multiindex(signature)
     try:
         loc = cells.set_index(multiindex).index.get_loc(value)
+        logger.debug(loc)
     except KeyError:
         return np.asarray([False,] * cells.shape[0])
     if isinstance(loc, np.ndarray):
@@ -34,18 +39,15 @@ def get_mask(cells, signature):
 def compute_proximity_metric_for_signature_pair(signature1, signature2, radius, cells, tree):
     mask1 = get_mask(cells, signature1)
     mask2 = get_mask(cells, signature2)
-
     source_count = sum(mask1)
     if source_count == 0:
         return None
-
     source_cell_locations = cells.loc()[mask1][['pixel x', 'pixel y']]
     within_radius_indices_list = tree.query_radius(
         source_cell_locations,
         radius,
         return_distance=False,
     )
-
     counts = [
         sum(mask2[index] for index in list(indices))
         for indices in within_radius_indices_list

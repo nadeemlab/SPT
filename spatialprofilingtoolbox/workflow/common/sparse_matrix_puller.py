@@ -164,8 +164,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                 data_arrays_by_specimen[specimen] = [0] * cell_count
                 self.fill_data_array(
                     data_arrays_by_specimen[specimen], buffer, target_index_lookup)
-                number_mb = int(
-                    100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
+                number_mb = int(100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
                 logger.debug('Data array is %s MB for %s cells in '
                              'specimen %s .', number_mb, cell_count, specimen)
                 if i != last_index:

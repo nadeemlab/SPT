@@ -93,10 +93,13 @@ class ProximityProvider:
         columns = self.list_columns(target_index_lookup, target_by_symbol)
         with open(filename, 'rb') as file:
             buffer = None
-            while buffer != b'':
+            while True:
                 buffer = file.read(8)
-                integer64 = int.from_bytes(buffer, 'little')
-                row = list(map(int, list(bin(integer64)[2:].ljust(len(columns), '0'))))
+                if buffer == b'':
+                    break
+                binary_expression_64_string = ''.join([''.join(list(reversed(bin(ii)[2:].rjust(8,'0')))) for ii in buffer])
+                binary_expression_truncated_to_channels = binary_expression_64_string[0:len(columns)]
+                row = [int(b) for b in list(binary_expression_truncated_to_channels)]
                 rows.append(row)
         df = pd.DataFrame(rows, columns=columns)
         df['pixel x'] = [point[0] for point in centroids[study_name][sample]]
@@ -123,7 +126,6 @@ class ProximityProvider:
                 self.get_tree(sample_identifier, study_name))
             for sample_identifier in self.get_sample_identifiers(study_name)
         }
-        raise ValueError(f'Temporary debugging exception/breakpoint 2. {metrics}')
         return metrics
 
     def get_cells(self, sample_identifier, study_name):

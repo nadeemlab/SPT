@@ -48,21 +48,28 @@ class CellManifestsParser(SourceToADIParser):
 
             if all(self.dataset_design.get_feature_name(symbol) in batch_cells.columns
                     for symbol in channel_symbols):
-                feature_names = {symbol: self.dataset_design.get_feature_name(
-                    symbol) for symbol in channel_symbols}
+                feature_names = {symbol: [
+                    self.dataset_design.get_feature_name(symbol),
+                    self.dataset_design.get_intensity_feature_name(symbol)]
+                    for symbol in channel_symbols}
             else:
                 logger.warning(
                     'Exact feature names not found in tables. Trying with underscores...')
                 if all(re.sub(' ', '_', self.dataset_design.get_feature_name(symbol))
                         in batch_cells.columns for symbol in channel_symbols):
-                    feature_names = {symbol: re.sub(' ', '_',
-                                                    self.dataset_design.get_feature_name(
-                                                        symbol)
-                                                    ) for symbol in channel_symbols}
+                    feature_names = {symbol: [
+                                    re.sub(' ', '_',
+                                           self.dataset_design.get_feature_name(symbol)
+                                           ),
+                                    re.sub(' ', '_',
+                                           self.dataset_design.get_intensity_feature_name(symbol)
+                                           )]
+                                    for symbol in channel_symbols}
                 else:
                     logger.warning('Not even with underscores.')
                     missing = [symbol for symbol in channel_symbols
                                 if not self.dataset_design.get_feature_name(symbol)
+                                or not self.dataset_design.get_intensity_feature_name(symbol)
                                 in batch_cells.columns]
                     logger.warning('Specifically, the following features not found:')
                     for symbol in missing:
@@ -106,12 +113,13 @@ class CellManifestsParser(SourceToADIParser):
                 ))
                 for symbol in channel_symbols:
                     target = chemical_species_identifiers_by_symbol[symbol]
-                    quantity = '-1'
-                    discrete_value = discretizations[symbol][j]  # type: ignore
+
+                    quantity = discretizations[symbol].iloc[j, 1]
+                    discrete_value = discretizations[symbol].iloc[j, 0]  # type: ignore
                     records['expression_quantification'].append((
                         histological_structure_identifier,
                         target,
-                        quantity,
+                        str(quantity),
                         '',
                         '',
                         'positive' if discrete_value == 1 else 'negative',

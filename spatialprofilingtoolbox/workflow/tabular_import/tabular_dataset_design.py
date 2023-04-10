@@ -100,3 +100,23 @@ class TabularCellMetadataDesign:
         if key in self.get_channel_names():
             return separator.join([self._get_indicator_prefix(key), 'Positive'])
         return key
+
+    def get_intensity_feature_name(self, key, table=None):
+        """
+        Args:
+            key (str):
+                A phenotype/channel name (usually).
+
+        Returns:
+            str:
+                The exact column name for the column in the tabular CSV which
+                indicates (boolean) thresholded positivity for the given phenotype.
+                If the key is not a phenotype name, then the key is returned unchanged.
+        """
+        separator = ' '
+        if not table is None:
+            if '_'.join([self._get_indicator_prefix(key), 'Intensity']) in table.columns:
+                separator = '_'
+        if key in self.get_channel_names():
+            return separator.join([self._get_indicator_prefix(key), 'Intensity'])
+        return key

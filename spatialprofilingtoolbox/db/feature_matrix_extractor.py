@@ -22,11 +22,14 @@ class FeatureMatrixExtractor:
     and metadata.
     """
     @staticmethod
-    def extract(database_config_file, specimen: str=None):
+    def extract(database_config_file, specimen: str=None, study: str=None):
         E = FeatureMatrixExtractor
-        data_arrays = E.retrieve_expressions_from_database(database_config_file, specimen=specimen)
+        data_arrays = E.retrieve_expressions_from_database(database_config_file,
+                                                           specimen=specimen,
+                                                           study=study)
         centroid_coordinates = E.retrieve_structure_centroids_from_database(database_config_file,
-                                                                            specimen=specimen)
+                                                                            specimen=specimen,
+                                                                            study=study)
         stratification = E.retrieve_derivative_stratification_from_database(database_config_file)
         study_component_lookup = E.retrieve_study_component_lookup(database_config_file)
         return E.merge_dictionaries(
@@ -46,19 +49,21 @@ class FeatureMatrixExtractor:
             extraction[study_name]['sample cohorts']['strata'] = None
 
     @staticmethod
-    def retrieve_expressions_from_database(database_config_file, specimen: str=None):
+    def retrieve_expressions_from_database(database_config_file, specimen: str=None,
+                                           study: str=None):
         logger.info('Retrieving expression data from database.')
         with SparseMatrixPuller(database_config_file) as puller:
-            puller.pull(specimen=specimen)
+            puller.pull(specimen=specimen, study=study)
             data_arrays = puller.get_data_arrays()
         logger.info('Done retrieving expression data from database.')
         return data_arrays.get_studies()
 
     @staticmethod
-    def retrieve_structure_centroids_from_database(database_config_file, specimen: str=None):
+    def retrieve_structure_centroids_from_database(database_config_file, specimen: str=None,
+                                                   study: str=None):
         logger.info('Retrieving polygon centroids from shapefiles in database.')
         with StructureCentroidsPuller(database_config_file) as puller:
-            puller.pull(specimen=specimen)
+            puller.pull(specimen=specimen, study=study)
             structure_centroids = puller.get_structure_centroids()
         logger.info('Done retrieving centroids.')
         return structure_centroids.get_studies()

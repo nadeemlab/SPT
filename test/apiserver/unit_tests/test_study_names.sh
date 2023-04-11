@@ -11,7 +11,7 @@ fi
 
 curl -s $query | python -m json.tool > names.json
 
-diff module_tests/expected_study_names.json names.json
+diff unit_tests/expected_study_names.json names.json
 status=$?
 [ $status -eq 0 ] || (echo "API query for study name pairs failed."; )
 

@@ -6,6 +6,7 @@ import argparse
 from os.path import abspath
 from os.path import expanduser
 from os import getcwd
+import sys
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -20,6 +21,7 @@ if __name__ == '__main__':
                     ' signatures.'
     )
     add_argument(parser, 'database config')
+    parser.add_argument('--centroids-only', dest='centroids_only', action='store_true')
     args = parser.parse_args()
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error \
@@ -35,13 +37,16 @@ if __name__ == '__main__':
 
     database_config_file = abspath(expanduser(args.database_config_file))
 
+    with StructureCentroidsPuller(database_config_file) as puller:
+        puller.pull()
+        puller.get_structure_centroids().write_to_file(getcwd())
+
+    if args.centroids_only:
+        sys.exit()
+
     with SparseMatrixPuller(database_config_file) as puller:
         puller.pull()
         data_arrays = puller.get_data_arrays()
 
     writer = CompressedMatrixWriter()
     writer.write(data_arrays)
-
-    with StructureCentroidsPuller(database_config_file) as puller:
-        puller.pull()
-        puller.get_structure_centroids().write_to_file(getcwd())

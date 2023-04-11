@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
-version = "0.12.6"
+version = "0.13.0"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]

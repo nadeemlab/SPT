@@ -56,7 +56,7 @@ class SchemaInfuser(DatabaseConnectionMaker):
     def refresh_views(self):
         self.verbose_sql_execute(('refresh_views.sql', 'refresh views of main schema'),
                                   verbosity='silent')
-        self.link_fraction_views()
+        self.transcribe_fraction_features()
 
     def recreate_views(self):
         self.verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
@@ -70,43 +70,49 @@ class SchemaInfuser(DatabaseConnectionMaker):
         verbose_sql_execute(filename_description, self.get_connection(),
                             source_package=source_package, **kwargs)
 
-    def link_fraction_views(self):
+    def transcribe_fraction_features(self):
         """
-        Transcribe phenotype fraction features in features system
+        Transcribe phenotype fraction features in features system.
         """
         connection = self.get_connection()
         cursor = connection.cursor()
-        feat_extr_query = """
-            SELECT t1.marker_symbol, t1.measurement_study, t1.average_percent, t1.stratum_identifier, t2.sample
-            FROM fraction_stats  t1
-            LEFT JOIN (
-                SELECT stratum_identifier, MIN(sample) as sample
-                FROM sample_strata
-                GROUP BY stratum_identifier
-            ) t2 ON t1.stratum_identifier = t2.stratum_identifier;
-            """
-        fraction_features = pd.read_sql(feat_extr_query, connection)
+        feature_extraction_query="""
+            SELECT
+                sc.primary_study as study,
+                f.specimen as sample,
+                f.marker_symbol,
+                f.percent_positive,
+                ss.stratum_identifier
+            FROM fraction_by_marker_study_specimen f
+            JOIN sample_strata ss ON ss.sample=f.specimen
+            JOIN study_component sc ON sc.component_study=f.measurement_study
+            ORDER BY
+                sc.primary_study,
+                f.data_analysis_study,
+                ss.stratum_identifier,
+                f.specimen
+            ;
+        """
+        fraction_features = pd.read_sql(feature_extraction_query, connection)
         cursor.close()
         connection.commit()
-        for study in fraction_features['measurement_study'].unique():
-            study_name = study.replace(' - measurement', '')
-            fraction_features_study = fraction_features[fraction_features.measurement_study == study]
+        for study in fraction_features['study'].unique():
+            fraction_features_study = fraction_features[fraction_features.study == study]
             with ADIFeaturesUploader(
                     database_config_file=self.database_config_file,
-                    data_analysis_study=self.insert_new_data_analysis_study(study_name),
-                    derivation_method=self.describe_feature_derivation_method(),
+                    data_analysis_study=self.insert_new_data_analysis_study(study),
+                    derivation_method=self.describe_fractions_feature_derivation_method(),
                     specifier_number=1,
             ) as feature_uploader:
-                values = fraction_features_study['average_percent'].values
-                # TODO: remove hardcode
+                values = fraction_features_study['percent_positive'].values
                 subjects = fraction_features_study['sample']
-                specifiers_lists = fraction_features_study['marker_symbol'].values
-                for value, subject, specifiers_list in (zip(values, subjects, specifiers_lists)):
-                    feature_uploader.stage_feature_value((specifiers_list,), subject, value)
+                specifiers = fraction_features_study['marker_symbol'].values
+                for value, subject, specifier in (zip(values, subjects, specifiers)):
+                    feature_uploader.stage_feature_value((specifier,), subject, value)
 
-    def describe_feature_derivation_method(self):
+    def describe_fractions_feature_derivation_method(self):
         return '''
-        For a given cell phenotype (first specifier), the average number of cells of a second phenotype (second specifier) within a specified radius (third specifier).
+        For a given cell phenotype, the average number of cells of that phenotype in the given sample.
         '''.lstrip().rstrip()
 
     def insert_new_data_analysis_study(self, study_name):

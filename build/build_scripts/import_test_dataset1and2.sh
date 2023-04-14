@@ -22,3 +22,5 @@ cat work/*/*/.command.log
 nf_clean
 
 spt db create-schema --refresh-views-only --database-config-file build/db/.spt_db.config.local
+spt db status --database-config-file build/db/.spt_db.config.local
+

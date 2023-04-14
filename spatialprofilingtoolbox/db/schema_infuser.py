@@ -7,12 +7,11 @@ import re
 from typing import Optional
 
 import pandas as pd
-import datetime
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
+from spatialprofilingtoolbox.db.fractions_transcriber import transcribe_fraction_features
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 
 logger = colorized_logger(__name__)
 
@@ -56,7 +55,7 @@ class SchemaInfuser(DatabaseConnectionMaker):
     def refresh_views(self):
         self.verbose_sql_execute(('refresh_views.sql', 'refresh views of main schema'),
                                   verbosity='silent')
-        self.transcribe_fraction_features()
+        transcribe_fraction_features(self.database_config_file)
 
     def recreate_views(self):
         self.verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
@@ -69,64 +68,3 @@ class SchemaInfuser(DatabaseConnectionMaker):
                             **kwargs):
         verbose_sql_execute(filename_description, self.get_connection(),
                             source_package=source_package, **kwargs)
-
-    def transcribe_fraction_features(self):
-        """
-        Transcribe phenotype fraction features in features system.
-        """
-        connection = self.get_connection()
-        cursor = connection.cursor()
-        feature_extraction_query="""
-            SELECT
-                sc.primary_study as study,
-                f.specimen as sample,
-                f.marker_symbol,
-                f.percent_positive,
-                ss.stratum_identifier
-            FROM fraction_by_marker_study_specimen f
-            JOIN sample_strata ss ON ss.sample=f.specimen
-            JOIN study_component sc ON sc.component_study=f.measurement_study
-            ORDER BY
-                sc.primary_study,
-                f.data_analysis_study,
-                ss.stratum_identifier,
-                f.specimen
-            ;
-        """
-        fraction_features = pd.read_sql(feature_extraction_query, connection)
-        cursor.close()
-        connection.commit()
-        for study in fraction_features['study'].unique():
-            fraction_features_study = fraction_features[fraction_features.study == study]
-            with ADIFeaturesUploader(
-                database_config_file=self.database_config_file,
-                data_analysis_study=self.insert_new_data_analysis_study(study),
-                derivation_method=self.describe_fractions_feature_derivation_method(),
-                specifier_number=1,
-            ) as feature_uploader:
-                values = fraction_features_study['percent_positive'].values
-                subjects = fraction_features_study['sample']
-                specifiers = fraction_features_study['marker_symbol'].values
-                for value, subject, specifier in zip(values, subjects, specifiers):
-                    feature_uploader.stage_feature_value((specifier,), subject, value)
-
-    def describe_fractions_feature_derivation_method(self):
-        return '''
-        For a given cell phenotype, the average number of cells of that phenotype in the given sample.
-        '''.lstrip().rstrip()
-
-    def insert_new_data_analysis_study(self, study_name):
-        timestring = str(datetime.datetime.now())
-        name = study_name + f'{study_name} : fraction calculation : {timestring}'
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
-            cursor.execute('''
-            INSERT INTO data_analysis_study(name)
-            VALUES (%s) ;
-            INSERT INTO study_component(primary_study, component_study)
-            VALUES (%s, %s) ;
-            ''', (name, study_name, name))
-            cursor.close()
-            connection.commit()
-        return name

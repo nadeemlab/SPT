@@ -294,6 +294,7 @@ clean-files:
 >@rm -f check-docker-daemon-running
 >@rm -f check-for-docker-credentials
 >@rm -rf ${BUILD_LOCATION}/lib
+>@rm -rf test/cggnn/out/
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"

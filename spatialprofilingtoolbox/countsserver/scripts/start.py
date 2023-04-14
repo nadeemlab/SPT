@@ -97,7 +97,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     counts_provider = CountsProvider(args.source_data_location)
-    tcp_server = socketserver.TCPServer(
-        (args.host, args.port), CountsRequestHandler)
+    tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
     tcp_server.counts_provider = counts_provider
     tcp_server.serve_forever(poll_interval=0.2)

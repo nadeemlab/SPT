@@ -42,15 +42,12 @@ def transcribe_fraction_features(database_config_file):
                 sc.primary_study as study,
                 f.specimen as sample,
                 f.marker_symbol,
-                f.percent_positive,
-                ss.stratum_identifier
+                f.percent_positive
             FROM fraction_by_marker_study_specimen f
-            JOIN sample_strata ss ON ss.sample=f.specimen
             JOIN study_component sc ON sc.component_study=f.measurement_study
             ORDER BY
                 sc.primary_study,
                 f.data_analysis_study,
-                ss.stratum_identifier,
                 f.specimen
             ;
         """

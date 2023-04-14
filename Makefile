@@ -243,7 +243,7 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-ima
 data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built development-image ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
->@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=${PWD}/.postgresql/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
+>@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
     pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \

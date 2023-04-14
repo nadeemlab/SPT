@@ -16,7 +16,7 @@ def describe_fractions_feature_derivation_method():
 
 def insert_new_data_analysis_study(database_config_file, study_name, specifier):
     timestring = str(datetime.datetime.now())
-    name = study_name + f'{study_name} : {specifier} : {timestring}'
+    name = f'{study_name} : {specifier} : {timestring}'
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()
         cursor = connection.cursor()

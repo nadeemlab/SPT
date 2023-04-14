@@ -99,15 +99,15 @@ class SchemaInfuser(DatabaseConnectionMaker):
         for study in fraction_features['study'].unique():
             fraction_features_study = fraction_features[fraction_features.study == study]
             with ADIFeaturesUploader(
-                    database_config_file=self.database_config_file,
-                    data_analysis_study=self.insert_new_data_analysis_study(study),
-                    derivation_method=self.describe_fractions_feature_derivation_method(),
-                    specifier_number=1,
+                database_config_file=self.database_config_file,
+                data_analysis_study=self.insert_new_data_analysis_study(study),
+                derivation_method=self.describe_fractions_feature_derivation_method(),
+                specifier_number=1,
             ) as feature_uploader:
                 values = fraction_features_study['percent_positive'].values
                 subjects = fraction_features_study['sample']
                 specifiers = fraction_features_study['marker_symbol'].values
-                for value, subject, specifier in (zip(values, subjects, specifiers)):
+                for value, subject, specifier in zip(values, subjects, specifiers):
                     feature_uploader.stage_feature_value((specifier,), subject, value)
 
     def describe_fractions_feature_derivation_method(self):

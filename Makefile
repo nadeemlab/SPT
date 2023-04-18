@@ -60,6 +60,7 @@ DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
+DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
 
@@ -124,6 +125,8 @@ print-source-files:
 
 build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
 
+build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_TARGETS}
+
 ${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
@@ -142,6 +145,24 @@ ${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+${DOCKER_PUSH_DEV_TARGETS}: build-docker-images check-for-docker-credentials
+>@submodule_directory=$$(echo $@ | sed 's/^docker-push-dev-//g') ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name"
+>@submodule_directory=$$(echo $@ | sed 's/^docker-push-dev-//g') ; \
+    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
+    echo "$$submodule_version"; \
+    submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
+    echo "$$submodule_name"; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    echo "$$repository_name"; \
+    docker push $$repository_name:dev ; \
+    exit_code1=$$?; \
+    echo "$$exit_code1" > status_code
 >@${MESSAGE} end "Pushed." "Not pushed."
 
 check-for-docker-credentials:
@@ -179,6 +200,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
      -f ./Dockerfile \
      -t $$repository_name:$$submodule_version \
      -t $$repository_name:latest \
+     -t $$repository_name:dev \
      --build-arg version=$$submodule_version \
      --build-arg service_name=$$submodule_name \
      --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \

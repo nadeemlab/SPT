@@ -9,7 +9,7 @@ from fastapi import Response
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
-VERSION = '0.3.0'
+VERSION = '0.4.0'
 
 DESCRIPTION = """
 Get information about single cell phenotyping studies, including:
@@ -485,7 +485,7 @@ async def get_phenotype_symbols(
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         query = '''
-        SELECT DISTINCT cp.symbol
+        SELECT DISTINCT cp.symbol, cp.identifier
         FROM cell_phenotype_criterion cpc
         JOIN cell_phenotype cp ON cpc.cell_phenotype=cp.identifier
         WHERE cpc.study=%s
@@ -496,7 +496,10 @@ async def get_phenotype_symbols(
         rows = cursor.fetchall()
         cursor.close()
         representation = {
-            'phenotype symbols': rows,
+            'phenotype symbols': [
+                {'handle': row[0], 'identifier': row[1]}
+                for row in rows
+            ]
         }
         return Response(
             content=json.dumps(representation),
@@ -633,13 +636,13 @@ async def get_anonymous_phenotype_counts_fast(
     negative_markers = split_on_tabs(negative_markers_tab_delimited)
 
     with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+        cursor = db_accessor.get_connection().cursor()
         number_cells = get_number_cells(cursor, components['measurement'])
         cursor.close()
 
-    with CountRequester(os.environ['COUNTS_SERVER_HOST'],
-                        int(os.environ['COUNTS_SERVER_PORT']))as requester:
+    host = os.environ['COUNTS_SERVER_HOST']
+    port = int(os.environ['COUNTS_SERVER_PORT'])
+    with CountRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(
             positive_markers, negative_markers, components['measurement'])
 
@@ -732,3 +735,80 @@ async def get_phenotype_proximity_summary(
             content=json.dumps(representation),
             media_type='application/json',
         )
+
+
+def create_signature_with_channel_names(handle, study):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT cs.symbol
+            FROM biological_marking_system bms
+            JOIN chemical_species cs ON bms.target=cs.identifier
+            WHERE bms.study=%s
+            ;
+            ''',
+            (study,),
+        )
+        rows = cursor.fetchall()
+        channels = [row[0] for row in rows]
+
+    if handle in channels:
+        return [handle], []
+
+    if re.match(r'^\d+$', handle):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+                SELECT cs.symbol, cpc.polarity
+                FROM cell_phenotype_criterion cpc
+                JOIN chemical_species cs ON cs.identifier=cpc.marker
+                WHERE cpc.cell_phenotype=%s
+                ;
+                ''',
+                (handle,),
+            )
+            rows = cursor.fetchall()
+            markers = [
+                sorted([row[0] for row in rows if row[1] == sign])
+                for sign in ['positive', 'negative']
+            ]
+            return markers
+    return [[], []]
+
+
+@app.get("/request-phenotype-proximity-computation/")
+async def request_phenotype_proximity_computation(
+    study: str = Query(default='unknown', min_length=3),
+    phenotype1: str = Query(default='unknown', min_length=1),
+    phenotype2: str = Query(default='unknown', min_length=1),
+    radius: int = Query(default=100),
+):
+    """
+    Spatial proximity statistics between pairs of cell populations defined by
+    phenotype criteria. The metric is the average number of cells of a second
+    phenotype within a fixed distance to a given cell of a primary phenotype.
+    """
+    components = get_study_components(study)
+    measurement_study = components['measurement']
+    positives1, negatives1 = create_signature_with_channel_names(phenotype1, measurement_study)
+    positives2, negatives2 = create_signature_with_channel_names(phenotype2, measurement_study)
+
+    host = os.environ['COUNTS_SERVER_HOST']
+    port = int(os.environ['COUNTS_SERVER_PORT'])
+    with CountRequester(host, port) as requester:
+        metrics = requester.get_proximity_metrics(
+            components['measurement'],
+            radius,
+            positives1,
+            negatives1,
+            positives2,
+            negatives2,
+        )
+        representation = {'proximities': metrics}
+
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )

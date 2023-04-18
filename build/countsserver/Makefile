@@ -29,6 +29,7 @@ setup-testing:
      spt-countsserver-testing \
      spt-db-testing ; \
     echo "$$?" > status_code
+>@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;
 >@${MESSAGE} end "Setup." "Not setup."
 >@rm -f status_code
 

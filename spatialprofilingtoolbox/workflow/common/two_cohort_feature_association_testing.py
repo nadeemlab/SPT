@@ -33,13 +33,15 @@ def retrieve_feature_values(data_analysis_study, connection):
     return pd.DataFrame(rows, columns=columns)
 
 def do_tests_on_feature_values(feature_values):
-    cohort_identifiers = sorted(list(feature_values['stratum_identifier'].unique))
+    cohort_identifiers = sorted(list(feature_values['stratum_identifier'].unique()))
     cohort_pairs = combinations(cohort_identifiers, 2)
     test_results = []
     for feature, df in feature_values.groupby('feature'):
         for cohort1, cohort2 in cohort_pairs:
             values1 = df[df['stratum_identifier'] == cohort1]['value']
             values2 = df[df['stratum_identifier'] == cohort2]['value']
+            if len(values1) == 0 or len(values2) == 0:
+                continue
             ttest = ttest_ind(values1, values2)
             test_results.append((cohort1, cohort2, 't-test', ttest.pvalue, feature))
     return test_results

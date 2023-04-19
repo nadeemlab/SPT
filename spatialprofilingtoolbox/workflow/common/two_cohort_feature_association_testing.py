@@ -4,6 +4,11 @@ from itertools import combinations
 import pandas as pd
 from scipy.stats import ttest_ind
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
+
+
 def perform_tests(data_analysis_study, connection):
     """
     For each of the given study's features, do tests for significant difference
@@ -42,7 +47,7 @@ def do_tests_on_feature_values(feature_values):
         for cohort1, cohort2 in cohort_pairs:
             values1 = [float(v) for v in df[df['stratum_identifier'] == cohort1]['value']]
             values2 = [float(v) for v in df[df['stratum_identifier'] == cohort2]['value']]
-            if len(values1) == 0 or len(values2) == 0:
+            if len(values1) < 2 or len(values2) < 2:
                 continue
             ttest = ttest_ind(values1, values2)
             test_results.append((cohort1, cohort2, 't-test', ttest.pvalue, feature))
@@ -68,8 +73,11 @@ def tests_already_recorded(feature_values, connection):
     features = list(feature_values['feature'].unique())
     cursor = connection.cursor()
     cursor.execute('''
-    SELECT feature_tested FROM two_cohort_feature_association_test ;
-    ''')
+    SELECT feature_tested
+    FROM two_cohort_feature_association_test
+    WHERE test=%s
+    ;
+    ''', ('t-test',))
     tested_features = [row[0] for row in cursor.fetchall()]
     cursor.close()
     if len(set(features).intersection(set(tested_features))) > 0:

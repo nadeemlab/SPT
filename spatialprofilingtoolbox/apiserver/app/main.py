@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
+from spatialprofilingtoolbox.db.fractions_transcriber import \
+    describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
 VERSION = '0.3.0'
@@ -355,6 +357,7 @@ def get_study_summary(
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
     study: str = Query(default='unknown', min_length=3),
+    pvalue: str = Query(default='0.05'),
 ):
     """
     Get a table of all cell fractions in the given study. A single key value pair,
@@ -400,14 +403,47 @@ async def get_phenotype_summary(
             (components['measurement'], components['analysis']),
         )
         rows = cursor.fetchall()
+        fractions = rows
+
+        derivation_method = describe_fractions_feature_derivation_method()
+        cursor.execute('''
+        SELECT
+            t.selection_criterion_1,
+            t.selection_criterion_2,
+            t.p_value,
+            fs.specifier
+        FROM two_cohort_feature_association_test t
+        JOIN feature_specification fsn ON fsn.identifier=t.feature_tested
+        JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
+        JOIN study_component sc ON sc.component_study=fsn.study
+        WHERE fsn.derivation_method=%s
+            AND sc.primary_study=%s
+            AND t.test=%s
+        ;
+        ''', (derivation_method, study, 't-test'))
+        rows = cursor.fetchall()
+        features = set(row[3] for row in rows)
+        cohorts = set(row[0] for row in rows).union(set(row[1] for row in rows))
+        associations = {feature: {cohort: set() for cohort in cohorts} for feature in features}
+        for row in rows:
+            if row[2] <= float(pvalue):
+                associations[row[3]][row[0]].add(row[1])
+                associations[row[3]][row[1]].add(row[0])
         cursor.close()
-        representation = {
-            'fractions': [[str(entry) for entry in row] + ['1,2'] for row in rows]
-        }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
+
+    associated_cohorts = [
+        sorted(list(associations[row[0]])) if row[0] in associations else []
+        for row in fractions
+    ]
+
+    representation = {
+        'fractions': [[str(entry) for entry in row] for row in fractions],
+        'associations': associated_cohorts,
+    }
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
 
 
 @app.get("/phenotype-symbols/")

@@ -75,4 +75,6 @@ def transcribe_fraction_features(database_config_file):
             for value, subject, specifier in zip(values, subjects, specifiers):
                 feature_uploader.stage_feature_value((specifier,), subject, value)
 
-        perform_tests(das, connection)
+        with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
+            connection = dcm.get_connection()
+            perform_tests(das, connection)

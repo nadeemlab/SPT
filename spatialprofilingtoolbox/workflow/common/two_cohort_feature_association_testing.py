@@ -10,6 +10,8 @@ def perform_tests(data_analysis_study, connection):
     between each pair of cohorts. Currently using t-test.
     """
     feature_values = retrieve_feature_values(data_analysis_study, connection)
+    if tests_already_recorded(feature_values, connection):
+        return
     test_results = do_tests_on_feature_values(feature_values)
     insert_test_results(test_results, connection)
 
@@ -38,8 +40,8 @@ def do_tests_on_feature_values(feature_values):
     test_results = []
     for feature, df in feature_values.groupby('feature'):
         for cohort1, cohort2 in cohort_pairs:
-            values1 = df[df['stratum_identifier'] == cohort1]['value']
-            values2 = df[df['stratum_identifier'] == cohort2]['value']
+            values1 = [float(v) for v in df[df['stratum_identifier'] == cohort1]['value']]
+            values2 = [float(v) for v in df[df['stratum_identifier'] == cohort2]['value']]
             if len(values1) == 0 or len(values2) == 0:
                 continue
             ttest = ttest_ind(values1, values2)
@@ -61,3 +63,15 @@ def insert_test_results(test_results, connection):
     cursor.executemany(insert_query, test_results)
     cursor.close()
     connection.commit()
+
+def tests_already_recorded(feature_values, connection):
+    features = list(feature_values['feature'].unique())
+    cursor = connection.cursor()
+    cursor.execute('''
+    SELECT feature_tested FROM two_cohort_feature_association_test ;
+    ''')
+    tested_features = [row[0] for row in cursor.fetchall()]
+    cursor.close()
+    if len(set(features).intersection(set(tested_features))) > 0:
+        return True
+    return False

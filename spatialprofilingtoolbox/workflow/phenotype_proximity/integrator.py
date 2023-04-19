@@ -176,6 +176,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             data_analysis_study=data_analysis_study,
             derivation_method=self.describe_feature_derivation_method(),
             specifier_number=3,
+            impute_zeros=True,
         ) as feature_uploader:
             self.send_features_to_uploader(feature_uploader, core_computation_results_files)
 

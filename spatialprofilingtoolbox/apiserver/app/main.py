@@ -51,7 +51,7 @@ def get_study_components(study_name):
             cursor.execute(f'SELECT name FROM {tablename};')
             names = [row[0] for row in cursor.fetchall()]
             for substudy in substudies:
-                if substudy in names:
+                if substudy in names and not re.search('phenotype fractions', substudy):
                     components[key] = substudy
         cursor.close()
     return components

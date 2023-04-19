@@ -7,7 +7,7 @@
                   data_analysis_study        2
                             data_file        7
                             diagnosis        2
-       diagnostic_selection_criterion        0
+       diagnostic_selection_criterion        4
             expression_quantification    18200
                 feature_specification       30
                     feature_specifier       30

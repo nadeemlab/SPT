@@ -243,4 +243,3 @@ class SampleStratificationCreator:
         cursor.executemany(insert_query, values)
         cursor.close()
         connection.commit()
-

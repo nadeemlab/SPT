@@ -6,6 +6,9 @@ import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 
 def describe_fractions_feature_derivation_method():
@@ -28,6 +31,7 @@ def insert_new_data_analysis_study(database_config_file, study_name, specifier):
         ''', (name, study_name, name))
         cursor.close()
         connection.commit()
+    logger.info('Inserted data analysis study: "%s"', name)
     return name
 
 
@@ -61,6 +65,7 @@ def transcribe_fraction_features(database_config_file):
             data_analysis_study=das,
             derivation_method=describe_fractions_feature_derivation_method(),
             specifier_number=1,
+            impute_zeros=True,
         ) as feature_uploader:
             values = fraction_features_study['percent_positive'].values
             subjects = fraction_features_study['sample']

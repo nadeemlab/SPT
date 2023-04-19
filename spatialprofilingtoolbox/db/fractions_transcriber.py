@@ -6,6 +6,8 @@ import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
+from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
+    perform_tests
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -72,3 +74,5 @@ def transcribe_fraction_features(database_config_file):
             specifiers = fraction_features_study['marker_symbol'].values
             for value, subject, specifier in zip(values, subjects, specifiers):
                 feature_uploader.stage_feature_value((specifier,), subject, value)
+
+        perform_tests(das, connection)

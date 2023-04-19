@@ -39,39 +39,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
         self.export_feature_values(core_computation_results_files, data_analysis_study)
-        self.create_diagnostic_selection_criterion()
         self.compute_statistical_tests()
-
-    # TODO: consider doing this elsewhere because it only has to be done once
-    def create_diagnostic_selection_criterion(self):
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
-            sample_strata = pd.read_sql("""SELECT * FROM sample_strata""", connection)
-            sample_strata = sample_strata.drop_duplicates(
-                ['stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition',
-                 'subject_diagnosed_result'])
-            diagnostic_selection_criterion = pd.DataFrame({'identifier': sample_strata.stratum_identifier,
-                                                           'condition': [f"{x}_{y}" for x, y in
-                                                                         zip(sample_strata.subject_diagnosed_condition,
-                                                                             sample_strata.local_temporal_position_indicator)],
-                                                           'result': sample_strata.subject_diagnosed_result})
-
-            values = [tuple(x) for x in diagnostic_selection_criterion.to_numpy()]
-            insert_query = """INSERT INTO diagnostic_selection_criterion (
-                                        identifier,
-                                        condition,
-                                        result) 
-                                        VALUES (%s, %s, %s)"""
-
-            try:
-                cursor.executemany(insert_query, values)
-            except:
-                # hotfix: if workflow is called on updated data and this table already exists
-                pass
-
-            cursor.close()
-            connection.commit()
 
     def compute_statistical_tests(self):
         """

@@ -28,4 +28,4 @@ histological_structure_identification      700
                       study_component        4
                  study_contact_person        1
                               subject        2
-  two_cohort_feature_association_test        0
+  two_cohort_feature_association_test       85

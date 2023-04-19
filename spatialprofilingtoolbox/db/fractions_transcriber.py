@@ -44,18 +44,18 @@ def transcribe_fraction_features(database_config_file):
     with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
         connection = dcm.get_connection()
         feature_extraction_query="""
-            SELECT
-                sc.primary_study as study,
-                f.specimen as sample,
-                f.marker_symbol,
-                f.percent_positive
-            FROM fraction_by_marker_study_specimen f
-            JOIN study_component sc ON sc.component_study=f.measurement_study
-            ORDER BY
-                sc.primary_study,
-                f.data_analysis_study,
-                f.specimen
-            ;
+        SELECT
+            sc.primary_study as study,
+            f.specimen as sample,
+            f.marker_symbol,
+            f.percent_positive
+        FROM fraction_by_marker_study_specimen f
+        JOIN study_component sc ON sc.component_study=f.measurement_study
+        ORDER BY
+            sc.primary_study,
+            f.data_analysis_study,
+            f.specimen
+        ;
         """
         fraction_features = pd.read_sql(feature_extraction_query, connection)
 

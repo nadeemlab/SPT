@@ -1,5 +1,6 @@
 """Simple statistical significance testing of single features along pairs of cohorts."""
 from itertools import combinations
+from math import isnan
 
 import pandas as pd
 from scipy.stats import ttest_ind
@@ -23,13 +24,13 @@ def perform_tests(data_analysis_study, connection):
 def retrieve_feature_values(data_analysis_study, connection):
     feature_extraction_query = '''
     SELECT
-        qfl.feature,
-        qfl.value,
+        qfv.feature,
+        qfv.value,
         ss.stratum_identifier
     FROM
-        quantitative_feature_value qfl
-    JOIN feature_specification fs ON qfl.feature = fs.identifier
-    JOIN sample_strata ss ON qfl.subject = ss.sample
+        quantitative_feature_value qfv
+    JOIN feature_specification fs ON qfv.feature = fs.identifier
+    JOIN sample_strata ss ON qfv.subject = ss.sample
     WHERE fs.study=%s ;
     '''
     cursor = connection.cursor()
@@ -41,7 +42,7 @@ def retrieve_feature_values(data_analysis_study, connection):
 
 def do_tests_on_feature_values(feature_values):
     cohort_identifiers = sorted(list(feature_values['stratum_identifier'].unique()))
-    cohort_pairs = combinations(cohort_identifiers, 2)
+    cohort_pairs = list(combinations(cohort_identifiers, 2))
     test_results = []
     for feature, df in feature_values.groupby('feature'):
         for cohort1, cohort2 in cohort_pairs:
@@ -50,6 +51,8 @@ def do_tests_on_feature_values(feature_values):
             if len(values1) < 2 or len(values2) < 2:
                 continue
             ttest = ttest_ind(values1, values2)
+            if isnan(ttest.pvalue):
+                continue
             test_results.append((cohort1, cohort2, 't-test', ttest.pvalue, feature))
     return test_results
 

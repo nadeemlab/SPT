@@ -15,7 +15,7 @@ then
     then
         exec /bin/bash -c "$@"
     else
-        exec /bin/bash -c "$@" >/dev/null 2>&1
+        exec /bin/bash -c "$@" >>log_of_build.log 2>&1
     fi
 else
     echo "Error: use -super-verbose or -not-super-verbose in this wrapper shell."

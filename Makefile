@@ -316,6 +316,8 @@ clean-files:
 >@rm -f check-docker-daemon-running
 >@rm -f check-for-docker-credentials
 >@rm -rf ${BUILD_LOCATION}/lib
+>@rm -f log_of_build.log
+>@rm -f build/*/log_of_build.log
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"

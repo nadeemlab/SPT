@@ -426,13 +426,13 @@ async def get_phenotype_summary(
         cohorts = set(row[0] for row in rows).union(set(row[1] for row in rows))
         associations = {feature: {cohort: set() for cohort in cohorts} for feature in features}
         for row in rows:
-            if row[2] <= float(pvalue):
+            if float(row[2]) <= float(pvalue):
                 associations[row[3]][row[0]].add(row[1])
                 associations[row[3]][row[1]].add(row[0])
         cursor.close()
 
     associated_cohorts = [
-        sorted(list(associations[row[0]])) if row[0] in associations else []
+        sorted(list(associations[row[0]][row[2]])) if row[0] in associations and row[2] in associations[row[0]] else []
         for row in fractions
     ]
 

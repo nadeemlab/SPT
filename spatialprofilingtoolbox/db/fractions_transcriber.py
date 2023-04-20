@@ -15,7 +15,7 @@ logger = colorized_logger(__name__)
 
 def describe_fractions_feature_derivation_method():
     return '''
-    For a given cell phenotype, the average number of cells of that phenotype in the given sample.
+    For a given cell phenotype, the average number of cells of that phenotype in the given sample relative to the number of cells in the sample.
     '''.lstrip().rstrip()
 
 
@@ -73,7 +73,7 @@ def transcribe_fraction_features(database_config_file):
             subjects = fraction_features_study['sample']
             specifiers = fraction_features_study['marker_symbol'].values
             for value, subject, specifier in zip(values, subjects, specifiers):
-                feature_uploader.stage_feature_value((specifier,), subject, value)
+                feature_uploader.stage_feature_value((specifier,), subject, value / 100)
 
         with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
             connection = dcm.get_connection()

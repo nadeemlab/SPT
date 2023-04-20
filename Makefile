@@ -262,13 +262,14 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-ima
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-# Dependency on ${BUILD_LOCATION_ABSOLUTE}/db/docker.built deliberately omitted
-# from the below as a performance measure.
+# Dependency on ${BUILD_LOCATION_ABSOLUTE}/db/docker.built and
+# development-image deliberately omitted from the below as a
+# performance-enhancing measure.
 # In principle this is bad because it means that a brand-new, fresh setup of
 # the development environment will have failing "make test" initial behavior,
 # since spt-db image will not be around. The in-development time savings is
 # high however.
-data-loaded-image-%: development-image ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
+data-loaded-image-%: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=.postgres/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \

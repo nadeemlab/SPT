@@ -34,19 +34,19 @@ setup-testing:
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "countsserver (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "countsserver (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "countsserver (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 

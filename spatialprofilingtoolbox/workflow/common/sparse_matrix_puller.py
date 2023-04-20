@@ -52,18 +52,20 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
     def __init__(self, database_config_file):
         super().__init__(database_config_file=database_config_file)
 
-    def pull(self, specimen: str=None):
-        self.data_arrays = self.retrieve_data_arrays(specimen=specimen)
+    def pull(self, specimen: str=None, study: str=None):
+        self.data_arrays = self.retrieve_data_arrays(specimen=specimen, study=study)
 
     def get_data_arrays(self):
         return self.data_arrays
 
-    def retrieve_data_arrays(self, specimen: str=None) -> CompressedDataArrays:
-        study_names = self.get_study_names(self.get_connection())
+    def retrieve_data_arrays(self, specimen: str=None, study: str=None) -> CompressedDataArrays:
+        study_names = self.get_study_names(self.get_connection(), study=study)
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
             sparse_entries = self.get_sparse_entries(self.get_connection(),
                                                      study_name, specimen=specimen)
+            if len(sparse_entries) == 0:
+                continue
             data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(
                 sparse_entries)
             data_arrays.add_study_data(
@@ -74,10 +76,20 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             )
         return data_arrays
 
-    def get_study_names(self, connection):
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT name FROM specimen_measurement_study ;')
-            rows = cursor.fetchall()
+    def get_study_names(self, connection, study=None):
+        if study is None:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT name FROM specimen_measurement_study ;')
+                rows = cursor.fetchall()
+        else:
+            with connection.cursor() as cursor:
+                cursor.execute('''
+                SELECT sms.name FROM specimen_measurement_study sms
+                JOIN study_component sc ON sc.component_study=sms.name
+                WHERE sc.primary_study=%s
+                ;
+                ''', (study,))
+                rows = cursor.fetchall()
         return sorted([row[0] for row in rows])
 
     def get_sparse_entries(self, connection, study_name, specimen: str=None):
@@ -152,8 +164,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                 data_arrays_by_specimen[specimen] = [0] * cell_count
                 self.fill_data_array(
                     data_arrays_by_specimen[specimen], buffer, target_index_lookup)
-                number_mb = int(
-                    100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
+                number_mb = int(100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
                 logger.debug('Data array is %s MB for %s cells in '
                              'specimen %s .', number_mb, cell_count, specimen)
                 if i != last_index:

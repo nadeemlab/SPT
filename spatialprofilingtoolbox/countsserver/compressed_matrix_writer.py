@@ -38,16 +38,14 @@ class CompressedMatrixWriter:
 
     def write_index(self, data_arrays: CompressedDataArrays):
         index = []
-        _, study_indices = self.get_study_names_and_indices(
-            data_arrays)
+        _, study_indices = self.get_study_names_and_indices(data_arrays)
         for study_name in sorted(list(data_arrays.get_studies().keys())):
             study = data_arrays.get_studies()[study_name]
             index_item = {}
             index_item['specimen measurement study name'] = study_name
             index_item['expressions files'] = []
             study_index = study_indices[study_name]
-            specimen, specimen_indices = self.get_specimens_and_indices(
-                study_name, data_arrays)
+            specimen, specimen_indices = self.get_specimens_and_indices(study_name, data_arrays)
             for specimen in study['data arrays by specimen']:
                 specimen_index = specimen_indices[specimen]
                 filename = '.'.join([
@@ -65,8 +63,7 @@ class CompressedMatrixWriter:
             index.append(index_item)
         with open(EXPRESSIONS_INDEX_FILENAME, 'wt', encoding='utf-8') as index_file:
             index_file.write(json.dumps({'': index}, indent=4))
-        logger.debug('Wrote expression index file %s .',
-                     EXPRESSIONS_INDEX_FILENAME)
+        logger.debug('Wrote expression index file %s .', EXPRESSIONS_INDEX_FILENAME)
 
     def get_study_names_and_indices(self, data_arrays: CompressedDataArrays):
         study_names = sorted(list(data_arrays.get_studies().keys()))

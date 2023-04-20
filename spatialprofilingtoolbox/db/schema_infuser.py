@@ -54,7 +54,7 @@ class SchemaInfuser(DatabaseConnectionMaker):
 
     def refresh_views(self):
         self.verbose_sql_execute(('refresh_views.sql', 'refresh views of main schema'),
-                                  verbosity='silent')
+                                  verbosity='itemize')
         transcribe_fraction_features(self.database_config_file)
 
     def recreate_views(self):

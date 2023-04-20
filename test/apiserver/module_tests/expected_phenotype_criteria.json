@@ -1,0 +1,14 @@
+{
+    "phenotype criteria": {
+        "positive markers": [
+            "SOX10"
+        ],
+        "negative markers": [
+            "CD20",
+            "CD3",
+            "CD4",
+            "CD8",
+            "FOXP3"
+        ]
+    }
+}

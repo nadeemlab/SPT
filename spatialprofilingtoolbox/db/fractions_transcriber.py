@@ -1,6 +1,6 @@
 """Make the phenotype fractions values available as general features."""
-
 import datetime
+import re
 
 import pandas as pd
 
@@ -37,6 +37,28 @@ def insert_new_data_analysis_study(database_config_file, study_name, specifier):
     return name
 
 
+def fractions_study_exists(database_config_file, study):
+    with DatabaseConnectionMaker(database_config_file) as dcm:
+        connection = dcm.get_connection()
+        cursor = connection.cursor()
+        cursor.execute('''
+        SELECT das.name
+        FROM data_analysis_study das
+        JOIN study_component sc ON sc.component_study=das.name
+        WHERE sc.primary_study=%s
+        ;
+        ''', (study,))
+        names = [row[0] for row in cursor.fetchall()]
+    if any(re.search('phenotype fractions', name) for name in names):
+        return True
+    return False
+
+
+def create_fractions_study(database_config_file, study):
+    das = insert_new_data_analysis_study(database_config_file, study, 'phenotype fractions')
+    return das
+
+
 def transcribe_fraction_features(database_config_file):
     """
     Transcribe phenotype fraction features in features system.
@@ -61,7 +83,10 @@ def transcribe_fraction_features(database_config_file):
 
     for study in fraction_features['study'].unique():
         fraction_features_study = fraction_features[fraction_features.study == study]
-        das = insert_new_data_analysis_study(database_config_file, study, 'phenotype fractions')
+        if fractions_study_exists(database_config_file, study):
+            logger.debug('Fractions study already exists for %s.', study)
+            continue
+        das = create_fractions_study(database_config_file, study)
         with ADIFeaturesUploader(
             database_config_file=database_config_file,
             data_analysis_study=das,

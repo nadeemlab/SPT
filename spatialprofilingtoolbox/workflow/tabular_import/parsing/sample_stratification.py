@@ -1,6 +1,8 @@
 """Source file parsing regarding sample-level cohort identification."""
 import re
 
+import pandas as pd
+
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -25,16 +27,15 @@ class SampleStratificationCreator:
     @staticmethod
     def create_sample_stratification(connection):
         cursor = connection.cursor()
-        logger.info(
-            'Creating sample (specimen) stratification based on diagnoses and/or interventions.')
+        text = 'Creating sample (specimen) stratification based on diagnoses and/or interventions.'
+        logger.info(text)
 
         specimens = SampleStratificationCreator.get_unassigned_specimen_ids(cursor)
         identifiers = {}
         strata_count = SampleStratificationCreator.get_last_assigned_stratum_identifier(cursor)
         assignment_count = 0
         for specimen in specimens:
-            key = tuple(
-                SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
+            key = tuple(SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
             (local_temporal_position_indicator,
              subject_diagnosed_condition,
              subject_diagnosed_result) = key
@@ -76,8 +77,9 @@ class SampleStratificationCreator:
 
         connection.commit()
         cursor.close()
-        logger.info('Assigned %s / %s samples to an annotated stratum.',
-                    assignment_count, len(specimens))
+        counts_message = 'Assigned %s / %s samples to an annotated stratum.'
+        logger.info(counts_message, assignment_count, len(specimens))
+        SampleStratificationCreator.transcribe_diagnostic_selection_criteria(connection)
 
     @staticmethod
     def get_interventional_diagnosis(specimen, cursor):
@@ -96,12 +98,18 @@ class SampleStratificationCreator:
             sequence = sorted(
                 interventions + [('source extraction', extraction_date)],
                 key=lambda x: valuation_function(x[1]))
-            extraction_index = [index for index, event in enumerate(
-                sequence) if event[0] == 'source extraction'][0]
-            earlier_events = [event for index, event in enumerate(
-                sequence) if index < extraction_index]
-            later_events = [event for index, event in enumerate(
-                sequence) if index > extraction_index]
+            extraction_index = [
+                index for index, event in enumerate(sequence)
+                if event[0] == 'source extraction'
+            ][0]
+            earlier_events = [
+                event for index, event in enumerate(sequence)
+                if index < extraction_index
+            ]
+            later_events = [
+                event for index, event in enumerate(sequence)
+                if index > extraction_index
+            ]
 
             if len(earlier_events) > 0 and len(later_events) > 0:
                 local_temporal_position_indicator = 'Between interventions'
@@ -110,8 +118,7 @@ class SampleStratificationCreator:
             elif len(later_events) == 0:
                 local_temporal_position_indicator = 'After intervention'
             else:
-                raise ValueError(
-                    'Not enough events to calculate interventional position.')
+                raise ValueError('Not enough events to calculate interventional position.')
             return [local_temporal_position_indicator]
         return ['']
 
@@ -222,3 +229,38 @@ class SampleStratificationCreator:
             (subject,))
         rows = cursor.fetchall()
         return [list(row) for row in rows]
+
+    @staticmethod
+    def transcribe_diagnostic_selection_criteria(connection):
+        sample_strata = pd.read_sql('SELECT * FROM sample_strata', connection)
+        columns = [
+            'stratum_identifier',
+            'local_temporal_position_indicator',
+            'subject_diagnosed_condition',
+            'subject_diagnosed_result',
+        ]
+        sample_strata = sample_strata.drop_duplicates(columns)
+        condition_parameters = zip(
+            sample_strata.subject_diagnosed_condition,
+            sample_strata.local_temporal_position_indicator
+        )
+        condition = [f'{x}_{y}' for x, y in condition_parameters]
+        diagnostic_selection_criterion = pd.DataFrame({
+            'identifier': sample_strata.stratum_identifier,
+            'condition': condition,
+            'result': sample_strata.subject_diagnosed_result,
+        })
+        values = [tuple(x) for x in diagnostic_selection_criterion.to_numpy()]
+        cursor = connection.cursor()
+        cursor.execute('SELECT identifier FROM diagnostic_selection_criterion;')
+        existing_criteria = [row[0] for row in cursor.fetchall()]
+        values = [v for v in values if v[0] not in existing_criteria]
+        insert_query = '''
+        INSERT INTO
+        diagnostic_selection_criterion (identifier, condition, result)
+        VALUES (%s, %s, %s)
+        ;
+        '''
+        cursor.executemany(insert_query, values)
+        cursor.close()
+        connection.commit()

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
-version = "0.13.0"
+version = "0.13.1"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]
@@ -32,8 +32,9 @@ repository = "https://github.com/nadeemlab/SPT"
 apiserver = [
     "fastapi>=0.68.0,<0.69.0",
     "uvicorn>=0.15.0,<0.16.0",
-    "numpy==1.22.3",
     "pandas>=1.1.5",
+    "scipy==1.8.0",
+    "numpy==1.22.3",
     "pyshp==2.2.0",
     "scikit-learn==1.1.2"
 ]
@@ -138,6 +139,7 @@ packages = [
 ]
 "spatialprofilingtoolbox.db.scripts" = [
     "create_schema.py",
+    "do_fractions_tests.py",
     "modify_constraints.py",
     "guess_channels_from_object_files.py",
     "status.py",

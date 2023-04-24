@@ -294,6 +294,32 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
 
+force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
+>@${MESSAGE} start "Rebuilding test-data-loaded spt-db image ($*)"
+>@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
+>@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_image_exists.sh; \
+    docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=.postgres/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
+    docker container start temporary-spt-db-preloading && \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
+    pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \
+    docker run \
+    --rm \
+    --network container:temporary-spt-db-preloading \
+    --mount type=bind,src=${PWD},dst=/mount_sources \
+    --mount type=tmpfs,destination=/working_dir \
+    -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+    /bin/bash -c \
+    "$$pipeline_cmd" ; echo "$$?" > status_code && \
+    docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*:latest && \
+    docker container rm --force temporary-spt-db-preloading ;
+>@status_code=$$(cat status_code); \
+    if [[ "$$status_code" == "0" ]]; \
+    then \
+        touch data-loaded-image-$* ; \
+    fi
+>@${MESSAGE} end "Rebuilt." "Rebuild failed."
+>@rm -f .dockerignore
+
 clean: clean-files clean-network-environment
 
 clean-files:

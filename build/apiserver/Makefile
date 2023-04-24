@@ -35,22 +35,19 @@ setup-testing:
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "apiserver (teardown testing environment)"
->@docker compose down
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "apiserver (teardown testing environment)"
->@docker compose down
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "apiserver (teardown testing environment)"
->@docker compose down
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
@@ -72,6 +69,7 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/apiserver/; $$executor $$test_script" ; \
+    docker compose logs -f & \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \

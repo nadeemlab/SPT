@@ -20,6 +20,20 @@ class CountRequester:
         self.tcp_client.sendall(query)
         return self.parse_response()
 
+    def get_proximity_metrics(self, study, radius, positives1, negatives1, positives2, negatives2):
+        separator = self.get_record_separator()
+        groups = [
+            self.sanitize_token(study),
+            str(radius),
+            separator.join([self.sanitize_token(c) for c in positives1]),
+            separator.join([self.sanitize_token(c) for c in negatives1]),
+            separator.join([self.sanitize_token(c) for c in positives2]),
+            separator.join([self.sanitize_token(c) for c in negatives2]),
+        ]
+        query = self.get_group_separator().join(groups).encode('utf-8')
+        self.tcp_client.sendall(query)
+        return self.parse_response()
+
     def form_query(self, positive_signature_channels, negative_signature_channels, study_name):
         group1 = study_name
         group2 = self.get_record_separator().join(positive_signature_channels)
@@ -29,7 +43,7 @@ class CountRequester:
     def parse_response(self):
         received = None
         buffer = bytearray()
-        bytelimit = 100000
+        bytelimit = 1000000
         while (not received in [self.get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)

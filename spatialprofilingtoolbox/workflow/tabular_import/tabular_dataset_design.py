@@ -8,6 +8,10 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+class MissingPositivityColumnError(ValueError):
+    pass
+
+
 class TabularCellMetadataDesign:
     """
     This class provides the schema necessary to interpret cell metadata manifests.
@@ -81,7 +85,7 @@ class TabularCellMetadataDesign:
         name = ''.join(feature_list)
         return name
 
-    def get_feature_name(self, key, table=None):
+    def get_feature_name(self, key, table=None, separator=' '):
         """
         Args:
             key (str):
@@ -93,15 +97,11 @@ class TabularCellMetadataDesign:
                 indicates (boolean) thresholded positivity for the given phenotype.
                 If the key is not a phenotype name, then the key is returned unchanged.
         """
-        separator = ' '
-        if not table is None:
-            if '_'.join([self._get_indicator_prefix(key), 'Positive']) in table.columns:
-                separator = '_'
         if key in self.get_channel_names():
             return separator.join([self._get_indicator_prefix(key), 'Positive'])
         return key
 
-    def get_intensity_feature_name(self, key, table=None):
+    def get_intensity_feature_name(self, key, table=None, separator=' '):
         """
         Args:
             key (str):
@@ -113,10 +113,45 @@ class TabularCellMetadataDesign:
                 indicates (boolean) thresholded positivity for the given phenotype.
                 If the key is not a phenotype name, then the key is returned unchanged.
         """
-        separator = ' '
-        if not table is None:
-            if '_'.join([self._get_indicator_prefix(key), 'Intensity']) in table.columns:
-                separator = '_'
         if key in self.get_channel_names():
             return separator.join([self._get_indicator_prefix(key), 'Intensity'])
         return key
+
+    def get_specific_columns(self, symbols, columns, column_getter):
+        specific_columns = None
+        missing = []
+        for separator in [' ', '_']:
+            _specific_columns = [column_getter(symbol, separator=separator) for symbol in symbols]
+            _missing = [c for c in _specific_columns if not c in columns]
+            if len(_missing) == 0:
+                specific_columns = _specific_columns
+                break
+            missing = missing + _missing
+            continue
+        return specific_columns is not None, specific_columns, missing
+
+    def get_dichotomized_columns(self, symbols, columns):
+        all_found, dichotomized_columns, missing = self.get_specific_columns(
+            symbols, columns, self.get_feature_name)
+        if not all_found:
+            raise MissingPositivityColumnError(f'Missing positivity columns: {missing}')
+        return dichotomized_columns
+
+    def get_intensity_columns(self, symbols, columns):
+        all_found, intensity_columns, missing = self.get_specific_columns(
+            symbols, columns, self.get_intensity_feature_name)
+        if not all_found:
+            logger.warning('Did not find all "intensity" features: %s', missing)
+        return intensity_columns
+
+    def get_exact_column_names(self, requested_symbols, columns):
+        dichotomized_columns = self.get_dichotomized_columns(requested_symbols, columns)
+        intensity_columns = self.get_intensity_columns(requested_symbols, columns)
+        feature_names = {symbol: [] for symbol in requested_symbols}
+        for column, symbol in zip(dichotomized_columns, requested_symbols):
+            feature_names[symbol].append(column)
+        intensities_available = intensity_columns is not None
+        if intensities_available:
+            for column, symbol in zip(intensity_columns, requested_symbols):
+                feature_names[symbol].append(column)
+        return feature_names, intensities_available

@@ -89,7 +89,7 @@ class CellManifestsParser(SourceToADIParser):
                     if intensities_available:
                         quantity = str(float(values[symbol].iloc[j, 1]))
                     else:
-                        quantity = ''
+                        quantity = '\\N'
                     records['expression_quantification'].append((
                         histological_structure_identifier,
                         target,

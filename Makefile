@@ -258,7 +258,7 @@ test: unit-tests module-tests
 
 module-tests: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
+${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
 >@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
@@ -269,7 +269,8 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-ima
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
 # The below explicitly checks whether the docker image already exists locally.
-# If so, not rebuilt. To trigger rebuild, use "make clean-docker-images" first.
+# If so, not rebuilt. To trigger rebuild, use "make clean-docker-images" first,
+# or directly force-rebuild-data-loaded-images .
 data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
@@ -300,7 +301,7 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
 
-force-rebuild-data-loaded-images: ${DLI}-1 ${DLI}-2 ${DLI}-1and2 ${DLI}-1small
+force-rebuild-data-loaded-images: ${DLI}-1 ${DLI}-2 ${DLI}-1and2 ${DLI}-1small ${DLI}-1smallnointensity
 
 force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
 >@${MESSAGE} start "Rebuilding test-data-loaded spt-db image ($*)"

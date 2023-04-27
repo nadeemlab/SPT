@@ -141,7 +141,6 @@ packages = [
 ]
 "spatialprofilingtoolbox.db.scripts" = [
     "create_schema.py",
-    "do_fractions_tests.py",
     "modify_constraints.py",
     "guess_channels_from_object_files.py",
     "status.py",

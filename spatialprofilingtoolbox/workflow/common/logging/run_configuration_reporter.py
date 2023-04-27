@@ -8,8 +8,7 @@ import socket
 
 import pandas as pd
 
-from \
-    spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
+from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
     import TabularCellMetadataDesign
 from spatialprofilingtoolbox.standalone_utilities.configuration_settings import get_version
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -50,8 +49,7 @@ class RunConfigurationReporter:
             samples = pd.read_csv(
                 samples_file, sep='\t', keep_default_na=False, dtype=str)
         else:
-            sample_ids = self.retrieve_cell_manifest_sample_identifiers(
-                file_manifest_file)
+            sample_ids = self.retrieve_cell_manifest_sample_identifiers(file_manifest_file)
             samples = pd.DataFrame({
                 'Sample ID': sample_ids,
                 'Outcome': ['Unknown outcome assignment' for i in sample_ids],
@@ -65,8 +63,6 @@ class RunConfigurationReporter:
         logger.info('Number of outcome labels: %s', len(labels))
         logger.info('Number of channels: %s', channels_df.shape[0])
         logger.info('Number of phenotypes considered: %s', phenotypes.shape[0])
-        logger.info('Outcomes: %s', '; '.join(labels))
-        logger.info('Outcome frequencies: %s', self.get_frequencies(samples))
         logger.info('Channels: %s', '; '.join(channels))
 
     def get_frequencies(self, samples):

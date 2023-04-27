@@ -9,6 +9,13 @@ function nf_clean() {
     rm -f main.nf
 }
 
+function consider_exit() {
+    if [[ "$1" != "0" ]];
+    then
+        exit 1
+    fi
+}
+
 spt workflow configure --local --input-path test/test_data/adi_preprocessed_tables/dataset1/ --workflow='tabular import' --database-config-file build/db/.spt_db.config.local
 nextflow run .
 cat work/*/*/.command.log
@@ -20,3 +27,11 @@ nextflow run .
 cat work/*/*/.command.log
 
 nf_clean
+
+spt db create-schema --refresh-views-only --database-config-file build/db/.spt_db.config.local
+spt db status --database-config-file build/db/.spt_db.config.local > counts.txt
+cat counts.txt
+diff counts.txt build/build_scripts/expected_counts_1and2.txt
+status=$?
+rm counts.txt
+consider_exit $status

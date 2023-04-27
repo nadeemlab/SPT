@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 
+from spatialprofilingtoolbox.db.fractions_transcriber import \
+    describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
 VERSION = '0.4.0'
@@ -51,9 +53,8 @@ def get_study_components(study_name):
             cursor.execute(f'SELECT name FROM {tablename};')
             names = [row[0] for row in cursor.fetchall()]
             for substudy in substudies:
-                if substudy in names:
-                    if not re.search('proximity calculation', substudy):
-                        components[key] = substudy
+                if substudy in names and not re.search('phenotype fractions', substudy) and not re.search('proximity calculation', substudy):
+                    components[key] = substudy
         cursor.close()
     return components
 
@@ -407,14 +408,16 @@ def get_study_summary(
         media_type='application/json',
     )
 
+def format_stratum(stratum, decrement):
+    return str(int(stratum) - decrement)
 
 def format_stratum_in_row(row, decrement, index):
-    return [str(x) if not i==index else str(int(x)-decrement) for i, x in enumerate(row)]
-
+    return [str(x) if not i==index else format_stratum(x, decrement) for i, x in enumerate(row)]
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
     study: str = Query(default='unknown', min_length=3),
+    pvalue: str = Query(default='0.05'),
 ):
     """
     Get a table of all cell fractions in the given study. A single key value pair,
@@ -460,16 +463,57 @@ async def get_phenotype_summary(
             (components['measurement'], components['analysis']),
         )
         rows = cursor.fetchall()
+        fractions = rows
+
+        derivation_method = describe_fractions_feature_derivation_method()
+        cursor.execute('''
+        SELECT
+            t.selection_criterion_1,
+            t.selection_criterion_2,
+            t.p_value,
+            fs.specifier
+        FROM two_cohort_feature_association_test t
+        JOIN feature_specification fsn ON fsn.identifier=t.feature_tested
+        JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
+        JOIN study_component sc ON sc.component_study=fsn.study
+        WHERE fsn.derivation_method=%s
+            AND sc.primary_study=%s
+            AND t.test=%s
+        ;
+        ''', (derivation_method, study, 't-test'))
+        rows = cursor.fetchall()
+        features = set(row[3] for row in rows)
+        cohorts = set(row[0] for row in rows).union(set(row[1] for row in rows))
         decrement, _ = get_sample_cohorts(cursor, components['collection'])
+        associations = {
+            feature: {
+                format_stratum(cohort, decrement): set()
+                for cohort in cohorts
+            }
+            for feature in features
+        }
+        for row in rows:
+            cohort1 = format_stratum(row[0], decrement)
+            cohort2 = format_stratum(row[1], decrement)
+            if float(row[2]) <= float(pvalue):
+                associations[row[3]][cohort1].add(cohort2)
+                associations[row[3]][cohort2].add(cohort1)
         cursor.close()
 
-        representation = {
-            'fractions': [format_stratum_in_row(row, decrement, 2) for row in rows]
-        }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
+    fractions_formatted = [format_stratum_in_row(row, decrement, 2) for row in fractions]
+    associated_cohorts = [
+        sorted(list(associations[row[0]][row[2]]))
+        if row[0] in associations and row[2] in associations[row[0]] else []
+        for row in fractions_formatted
+    ]
+    representation = {
+        'fractions': fractions_formatted,
+        'associations': associated_cohorts,
+    }
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
 
 
 @app.get("/phenotype-symbols/")
@@ -694,7 +738,6 @@ async def get_phenotype_proximity_summary(
     * **Minimum value**. Of the metric value in the subcohort.
     """
     components = get_study_components(study)
-    data_analysis_study = components['analysis']
     columns = [
         'specifier1',
         'specifier2',
@@ -717,12 +760,12 @@ async def get_phenotype_proximity_summary(
         cursor.execute(
             f'''
             SELECT {', '.join(columns)}
-            FROM {tablename}
-            WHERE derivation_method=%s
-                AND data_analysis_study in (%s, \'none\')
+            FROM {tablename} cf
+            JOIN study_component sc ON sc.component_study=cf.data_analysis_study
+            WHERE derivation_method=%s AND sc.primary_study=%s
             ;
             ''',
-            (derivation_method, data_analysis_study),
+            (derivation_method, study),
         )
         rows = cursor.fetchall()
         decrement, _ = get_sample_cohorts(cursor, components['collection'])

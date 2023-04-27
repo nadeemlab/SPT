@@ -6,6 +6,7 @@ import re
 import os
 from os.path import join
 import json
+from threading import Thread
 
 import pandas as pd
 import numpy as np
@@ -119,7 +120,8 @@ class ProximityProvider:
             for i in range(len(target_by_index))
         ]
 
-    def get_or_create_feature_specification(self, study_name, phenotype1, phenotype2, radius):
+    @staticmethod
+    def get_or_create_feature_specification(study_name, phenotype1, phenotype2, radius):
         with DBAccessor() as db_accessor:
             connection = db_accessor.get_connection()
             cursor = connection.cursor()
@@ -140,7 +142,7 @@ class ProximityProvider:
             rows = cursor.fetchall()
             cursor.close()
         if len(rows) == 0:
-            return self.create_feature_specification(study_name, phenotype1, phenotype2, radius)
+            return ProximityProvider.create_feature_specification(study_name, phenotype1, phenotype2, radius)
         if len(rows) == 3:
             feature_specifications = list(set(row[0] for row in rows))
             if len(feature_specifications) != 1:
@@ -148,7 +150,8 @@ class ProximityProvider:
             return feature_specifications[0]
         raise ValueError('Somehow got the wrong number of specifiers for an existing specification, or duplicates, or something similar.')
 
-    def create_feature_specification(self, study_name, phenotype1, phenotype2, radius):
+    @staticmethod
+    def create_feature_specification(study_name, phenotype1, phenotype2, radius):
         specifiers = [phenotype1, phenotype2, str(radius)]
         method = describe_proximity_feature_derivation_method()
         with DBAccessor() as db_accessor:
@@ -158,7 +161,8 @@ class ProximityProvider:
                 specifiers, method, study_name, cursor)
         return feature_specification
 
-    def is_already_computed(self, feature_specification):
+    @staticmethod
+    def is_already_computed(feature_specification):
         expected = ProximityProvider.get_expected_number_of_computed_values(feature_specification)
         actual = ProximityProvider.get_actual_number_of_computed_values(feature_specification)
         if actual < expected:
@@ -197,6 +201,20 @@ class ProximityProvider:
             return len(rows)
 
     @staticmethod
+    def is_already_pending(feature_specification):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT * FROM pending_feature_computation pfc
+            WHERE pfc.feature_specification=%s
+            ''', (feature_specification,))
+            rows = cursor.fetchall()
+        if len(rows) >=1:
+            return True
+        return False
+
+    @staticmethod
     def retrieve_specifiers(feature_specification):
         with DBAccessor() as db_accessor:
             connection = db_accessor.get_connection()
@@ -216,6 +234,13 @@ class ProximityProvider:
         return study, specifiers[0], specifiers[1], float(specifiers[2])
 
     def fork_computation_task(self, feature_specification):
+        background_thread = Thread(
+            target=self.do_proximity_metrics_one_feature,
+            args=(feature_specification,)
+        )
+        background_thread.start()
+   
+    def do_proximity_metrics_one_feature(self, feature_specification):
         specifiers = ProximityProvider.retrieve_specifiers(feature_specification)
         study_name, phenotype1, phenotype2, radius = specifiers
         for sample_identifier in self.get_sample_identifiers(study_name):
@@ -233,7 +258,8 @@ class ProximityProvider:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
                 cursor.close()
 
-    def query_for_computed_feature_values(self, feature_specification, still_pending=False):
+    @staticmethod
+    def query_for_computed_feature_values(feature_specification, still_pending=False):
         with DBAccessor() as db_accessor:
             connection = db_accessor.get_connection()
             cursor = connection.cursor()
@@ -251,16 +277,17 @@ class ProximityProvider:
 
     def compute_metrics(self, study_name, phenotype1, phenotype2, radius):
         logger.debug('Requesting computation.')
-        feature_specification = self.get_or_create_feature_specification(
+        PP = ProximityProvider
+        feature_specification = PP.get_or_create_feature_specification(
             study_name, phenotype1, phenotype2, radius)
-        if self.is_already_computed(feature_specification):
+        if PP.is_already_computed(feature_specification):
             is_pending=False
         else:
-            is_pending = self.is_already_pending(feature_specification)
+            is_pending = PP.is_already_pending(feature_specification)
             if not is_pending:
                 self.fork_computation_task(feature_specification)
                 is_pending = True
-        return self.query_for_computed_feature_values(feature_specification, still_pending=is_pending)
+        return PP.query_for_computed_feature_values(feature_specification, still_pending=is_pending)
 
     def get_cells(self, sample_identifier, study_name):
         return self.data_arrays[study_name][sample_identifier]

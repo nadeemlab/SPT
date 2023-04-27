@@ -13,6 +13,8 @@ import numpy as np
 from sklearn.neighbors import BallTree
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.countsserver.phenotype_str import phenotype_str_to_phenotype
+from spatialprofilingtoolbox.countsserver.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.workflow.common.proximity import \
@@ -122,6 +124,15 @@ class ProximityProvider:
 
     @staticmethod
     def get_or_create_feature_specification(study_name, phenotype1, phenotype2, radius):
+        phenotype1_str = phenotype_to_phenotype_str(phenotype1)
+        phenotype2_str = phenotype_to_phenotype_str(phenotype2)
+        args = (
+            study_name,
+            phenotype1_str,
+            phenotype2_str,
+            str(radius),
+            describe_proximity_feature_derivation_method(),
+        )
         with DBAccessor() as db_accessor:
             connection = db_accessor.get_connection()
             cursor = connection.cursor()
@@ -138,11 +149,11 @@ class ProximityProvider:
                    OR (fs.specifier=%s AND fs.ordinality=3) ) AND
                   fsn.derivation_method=%s
             ;
-            ''', (study_name, phenotype1, phenotype2, str(radius), describe_proximity_feature_derivation_method()))
+            ''', args)
             rows = cursor.fetchall()
             cursor.close()
         if len(rows) == 0:
-            return ProximityProvider.create_feature_specification(study_name, phenotype1, phenotype2, radius)
+            return ProximityProvider.create_feature_specification(study_name, phenotype1_str, phenotype2_str, radius)
         if len(rows) == 3:
             feature_specifications = list(set(row[0] for row in rows))
             if len(feature_specifications) != 1:
@@ -231,7 +242,12 @@ class ProximityProvider:
             WHERE fs.identifier=%s
             ''', (feature_specification,))
             study = cursor.fetchall()[0][0]
-        return study, specifiers[0], specifiers[1], float(specifiers[2])
+        return [
+            study,
+            phenotype_str_to_phenotype(specifiers[0]),
+            phenotype_str_to_phenotype(specifiers[1]),
+            float(specifiers[2]),
+        ]
 
     def fork_computation_task(self, feature_specification):
         background_thread = Thread(

@@ -31,7 +31,13 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         if self.handle_missing_study(study_name):
             return True
 
-        metrics = self.get_proximity_metrics(*specification)
+        try:
+            metrics = self.get_proximity_metrics(*specification)
+        except Exception as exception:
+            message = "Error response."+ self.get_end_of_transmission()
+            self.request.sendall(message.encode('utf-8'))
+            raise exception
+
         message = json.dumps(metrics) + self.get_end_of_transmission()
         self.request.sendall(message.encode('utf-8'))
         return True

@@ -855,3 +855,88 @@ async def request_phenotype_proximity_computation(
         content=json.dumps(representation),
         media_type='application/json',
     )
+
+def get_visualisation_components(study_name):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            'SELECT component_study FROM study_component WHERE primary_study=%s;',
+            (study_name,),
+        )
+        substudies = [row[0] for row in cursor.fetchall()]
+        components = []
+        key, tablename = 'analysis', 'data_analysis_study'
+
+        cursor.execute(f'SELECT name FROM {tablename};')
+        names = [row[0] for row in cursor.fetchall()]
+        for substudy in substudies:
+            if substudy in names:
+                if re.search('reduction visual', substudy):
+                    components.append(substudy)
+        cursor.close()
+    return components
+
+@app.get("/visualization-plots/")
+async def get_plots(
+    study: str = Query(default='unknown', min_length=3),
+):
+    """
+    Byte64-encoded plots of UMAP visualizations.
+     Each row is:
+
+    * **Identifier**
+    * **Study name**. Name of the component study.
+    * **Target**. Integer id of the target species used in coloring of a plot.
+    * **Plot String**. Byte64-encoding of the SVG plot image.
+
+    JSON output format:
+    {
+        'substudies': {
+            'name': ' xxxx: visual reduction : timestamp '
+            'plots': {
+                * target id 1 * : * byte string for corresponding plot 1 *,
+                * target id 2 * : * byte string for corresponding plot 2 *,
+                ...
+        }
+    """
+
+    columns = [
+        # 'identifier',
+        'target',
+        # 'study',
+        'svg_string'
+    ]
+    tablename = 'visualization_plots'
+    data_analysis_studies = get_visualisation_components(study)
+    representation = {'substudies': []}
+
+    derivation_method = ''
+    with DatabaseConnectionMaker(cfg) as dcm:
+        connection = dcm.get_connection()
+        cursor = connection.cursor()
+        for substudy_name in data_analysis_studies:
+            print(substudy_name)
+            cursor.execute(
+                f'''
+                SELECT {', '.join(columns)}
+                FROM {tablename}
+                WHERE study=%s
+                ;
+                ''',
+                (substudy_name,)
+            )
+            rows = cursor.fetchall()
+            if len(rows) > 0:
+                representation['substudies'].append(
+                    [
+                        substudy_name,
+                        {target: plot for target, plot in rows}
+                    ])
+
+        cursor.close()
+
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )

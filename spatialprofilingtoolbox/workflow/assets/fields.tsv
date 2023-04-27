@@ -1,0 +1,5 @@
+"Name"	"Label"	"Table"	"Property"	"Ordinality"
+"identifier"	"Identifier"	"Visualization plots"	"Identifier"	1
+"svg_string"	"SVG string"	"Visualization plots"	"Base 64 string encoded SVG plot"	4
+"target"	"Target"	"Visualization plots"	"Chemical species quantified"	2
+"study"	"Study"	"Visualization plots"	"Visualization study"	3

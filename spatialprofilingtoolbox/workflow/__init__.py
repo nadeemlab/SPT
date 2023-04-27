@@ -19,6 +19,7 @@ __version__ = '0.6.0'
 workflow_names_and_subpackages = {
     'tabular import': 'tabular_import',
     'phenotype proximity': 'phenotype_proximity',
+    'reduction visual': 'reduction_visual'
 }
 
 

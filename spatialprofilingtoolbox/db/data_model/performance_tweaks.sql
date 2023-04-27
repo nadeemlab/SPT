@@ -23,3 +23,8 @@ CREATE TABLE sample_strata (
     subject_diagnosed_condition VARCHAR(512),
     subject_diagnosed_result VARCHAR(512)
 );
+
+CREATE TABLE pending_feature_computation (
+    feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
+    time_initiated VARCHAR(512)
+);

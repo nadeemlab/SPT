@@ -206,9 +206,9 @@ class CellManifestsParser(SourceToADIParser):
         timer.record_timepoint('Initial')
         cursor = connection.cursor()
         timer.record_timepoint('Cursor opened')
-        histological_structure_identifier_index = self.get_next_integer_identifier(
+        histological_structure_identifier_index = SourceToADIParser.get_next_integer_identifier(
             'histological_structure', cursor)
-        shape_file_identifier_index = self.get_next_integer_identifier('shape_file', cursor)
+        shape_file_identifier_index = SourceToADIParser.get_next_integer_identifier('shape_file', cursor)
         timer.record_timepoint('Retrieved next integer identifiers')
         initial_indices = {
             'structure' : histological_structure_identifier_index,

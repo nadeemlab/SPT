@@ -51,21 +51,18 @@ setup-testing:
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "db (teardown testing environment)"
->@docker compose down
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "db (teardown testing environment)"
->@docker compose down
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "db (teardown testing environment)"
->@docker compose down
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 

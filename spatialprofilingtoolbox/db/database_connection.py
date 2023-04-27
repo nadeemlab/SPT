@@ -79,6 +79,7 @@ class DatabaseConnectionMaker:
     connection: Psycopg2Connection
 
     def __init__(self, database_config_file: Optional[str] = None):
+        self.database_config_file = database_config_file
         credentials = retrieve_credentials(database_config_file)
         check_credentials_availability(credentials)
         try:
@@ -109,6 +110,7 @@ class DatabaseConnectionMaker:
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection:
             self.connection.close()
+
 
 def get_and_validate_database_config(args):
     if args.database_config_file:

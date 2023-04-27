@@ -119,7 +119,6 @@ class DataSkimmer(DatabaseConnectionMaker):
             files['file manifest'],
             chemical_species_identifiers_by_symbol,
         )
-        SampleStratificationCreator.create_sample_stratification(
-            self.get_connection())
+        SampleStratificationCreator.create_sample_stratification(self.get_connection())
 
         self.report_record_count_changes(self.get_connection(), fields)

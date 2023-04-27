@@ -22,7 +22,6 @@ def get_mask(cells, signature):
     value, multiindex = get_value_and_multiindex(signature)
     try:
         loc = cells.set_index(multiindex).index.get_loc(value)
-        logger.debug(loc)
     except KeyError:
         return np.asarray([False,] * cells.shape[0])
     if isinstance(loc, np.ndarray):

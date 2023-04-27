@@ -8,6 +8,8 @@ import pickle
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
+from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
+    perform_tests
 from spatialprofilingtoolbox.workflow.common.proximity import stage_proximity_feature_values
 from spatialprofilingtoolbox.workflow.common.proximity import \
     describe_proximity_feature_derivation_method
@@ -21,7 +23,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
     The main class of the integration phase.
     """
     def __init__(self,
-                 study_name: str='',
+                 study_name: str = '',
                  database_config_file: Optional[str] = None,
                  **kwargs # pylint: disable=unused-argument
                  ):
@@ -37,6 +39,9 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
         self.export_feature_values(core_computation_results_files, data_analysis_study)
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            perform_tests(data_analysis_study, connection)
 
     def insert_new_data_analysis_study(self):
         timestring = str(datetime.datetime.now())
@@ -60,6 +65,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             data_analysis_study=data_analysis_study,
             derivation_method=describe_proximity_feature_derivation_method(),
             specifier_number=3,
+            impute_zeros=True,
         ) as feature_uploader:
             self.send_features_to_uploader(feature_uploader, core_computation_results_files)
 

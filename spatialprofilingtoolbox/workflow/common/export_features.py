@@ -230,16 +230,23 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
 class ADIFeatureSpecificationUploader:
     """Just upload a new feature specification."""
     @staticmethod
-    def add_new_feature(specifiers, derivation_method, study, cursor):
+    def add_new_feature(specifiers, derivation_method, measurement_study, cursor):
         FSU = ADIFeatureSpecificationUploader
-        data_analysis_study = FSU.get_data_analysis_study(study, cursor)
+        data_analysis_study = FSU.get_data_analysis_study(measurement_study, cursor)
         next_specification = SourceToADIParser.get_next_integer_identifier('feature_specification', cursor)
-        FSU.insert_specification(next_specification, derivation_method, data_analysis_study, cursor)
-        FSU.insert_specifiers(next_specification, specifiers, cursor)
-        return next_specification
+        identifier = str(next_specification)
+        FSU.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
+        FSU.insert_specifiers(identifier, specifiers, cursor)
+        return identifier
 
     @staticmethod
-    def get_data_analysis_study(study, cursor):
+    def get_data_analysis_study(measurement_study, cursor):
+        cursor.execute('''
+        SELECT sc.primary_study FROM study_component sc
+        WHERE sc.component_study=%s
+        ''', (measurement_study,))
+        study = cursor.fetchall()[0][0]
+
         cursor.execute('''
         SELECT das.name
         FROM data_analysis_study das
@@ -256,23 +263,27 @@ class ADIFeatureSpecificationUploader:
         INSERT INTO data_analysis_study (name) VALUES (%s) ;
         INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ;
         ''', (data_analysis_study, study, data_analysis_study))
-        cursor.commit()
+        # cursor.commit()
         return data_analysis_study
 
     @staticmethod
     def insert_specification(specification, derivation_method, data_analysis_study, cursor):
+        logger.debug('Inserting specification %s, data_analysis_study %s', specification, data_analysis_study)
         cursor.execute('''
         INSERT INTO feature_specification (identifier, derivation_method, study)
         VALUES (%s, %s, %s) ;
         ''', (specification, derivation_method, data_analysis_study))
-        cursor.commit()
+        # cursor.commit()
 
     @staticmethod
     def insert_specifiers(specification, specifiers, cursor):
-        cursor.execute_values('''
-        INSERT INTO feature_specifier (feature_specification, specifier, ordinality) VALUES %s ;
-        ''', [(specification, specifier, str(i+1)) for specifier, i in enumerate(specifiers)])
-        cursor.commit()
+        many = [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)]
+        for entry in many:
+            logger.debug('Inserting specifier: %s', entry)
+        cursor.executemany('''
+        INSERT INTO feature_specifier (feature_specification, specifier, ordinality) VALUES (%s, %s, %s) ;
+        ''', [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)])
+        # cursor.commit()
 
 
 def add_feature_value(feature_specification, subject, value, cursor):
@@ -280,4 +291,4 @@ def add_feature_value(feature_specification, subject, value, cursor):
     cursor.execute('''
     INSERT INTO quantitative_feature_value VALUES (%s, %s, %s, %s) ;
     ''', (identifier, feature_specification, subject, value))
-    cursor.commit()
+    # cursor.commit()

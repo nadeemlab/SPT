@@ -144,9 +144,9 @@ class ProximityProvider:
             JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
             JOIN study_component sc ON sc.component_study=fsn.study
             WHERE sc.primary_study=%s AND
-                  (   (fs.specifier=%s AND fs.ordinality=1)
-                   OR (fs.specifier=%s AND fs.ordinality=2)
-                   OR (fs.specifier=%s AND fs.ordinality=3) ) AND
+                  (   (fs.specifier=%s AND fs.ordinality='1')
+                   OR (fs.specifier=%s AND fs.ordinality='2')
+                   OR (fs.specifier=%s AND fs.ordinality='3') ) AND
                   fsn.derivation_method=%s
             ;
             ''', args)
@@ -196,7 +196,8 @@ class ProximityProvider:
             ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
-            return len(rows)
+            logger.debug('Expected number computed: %s', rows[0][0])
+            return rows[0][0]
 
     @staticmethod
     def get_actual_number_of_computed_values(feature_specification):
@@ -209,7 +210,8 @@ class ProximityProvider:
             ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
-            return len(rows)
+            logger.debug('Actual number computed: %s', rows[0][0])
+            return rows[0][0]
 
     @staticmethod
     def is_already_pending(feature_specification):
@@ -298,10 +300,17 @@ class ProximityProvider:
             study_name, phenotype1, phenotype2, radius)
         if PP.is_already_computed(feature_specification):
             is_pending=False
+            logger.debug('Already computed.')
         else:
             is_pending = PP.is_already_pending(feature_specification)
+            if is_pending:
+                logger.debug('Already already pending.')
+            else:
+                logger.debug('Not already pending.')
             if not is_pending:
+                logger.debug('Starting background task.')
                 self.fork_computation_task(feature_specification)
+                logger.debug('Background task just started, is pending.')
                 is_pending = True
         return PP.query_for_computed_feature_values(feature_specification, still_pending=is_pending)
 

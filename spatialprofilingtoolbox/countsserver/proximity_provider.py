@@ -144,7 +144,8 @@ class ProximityProvider:
             FROM feature_specification fsn
             JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
             JOIN study_component sc ON sc.component_study=fsn.study
-            WHERE sc.primary_study=%s AND
+            JOIN study_component sc2 ON sc2.primary_study=sc.primary_study
+            WHERE sc2.component_study=%s AND
                   (   (fs.specifier=%s AND fs.ordinality='1')
                    OR (fs.specifier=%s AND fs.ordinality='2')
                    OR (fs.specifier=%s AND fs.ordinality='3') ) AND
@@ -153,17 +154,15 @@ class ProximityProvider:
             ''', args)
             rows = cursor.fetchall()
             cursor.close()
-        if len(rows) == 0:
-            logger.debug('Creating feature with specifiers: (%s) %s, %s, %s', study_name, phenotype1_str, phenotype2_str, radius)
-            specification = ProximityProvider.create_feature_specification(study_name, phenotype1_str, phenotype2_str, radius)
-            return specification
-        if len(rows) == 3:
-            feature_specifications = list(set(row[0] for row in rows))
-            logger.debug('Proximity features with the given specifiers already exist: %s', feature_specifications)
-            if len(feature_specifications) != 1:
-                raise ValueError(f'Somehow did not get just 1 feature specification: {rows}' )
-            return feature_specifications[0]
-        raise ValueError('Somehow got the wrong number of specifiers for an existing specification, or duplicates, or something similar.')
+        feature_specifications = {row[0]: [] for row in rows}
+        for row in rows:
+            feature_specifications[row[0]].append(row[1])
+        for key, specifiers in feature_specifications.items():
+            if len(specifiers) == 3:
+                return key
+        logger.debug('Creating feature with specifiers: (%s) %s, %s, %s', study_name, phenotype1_str, phenotype2_str, radius)
+        specification = ProximityProvider.create_feature_specification(study_name, phenotype1_str, phenotype2_str, radius)
+        return specification
 
     @staticmethod
     def create_feature_specification(study_name, phenotype1, phenotype2, radius):
@@ -202,7 +201,7 @@ class ProximityProvider:
             ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
-            logger.debug('Expected number computed: %s', rows[0][0])
+            logger.debug('Number of values possible to be computed: %s', rows[0][0])
             cursor.close()            
             return rows[0][0]
 
@@ -242,13 +241,17 @@ class ProximityProvider:
             cursor.execute('''
             SELECT fs.specifier, fs.ordinality
             FROM feature_specifier fs
-            WHERE fs.feature_specification=%s
+            WHERE fs.feature_specification=%s ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
             specifiers = [row[0] for row in sorted(rows, key=lambda row: int(row[1]))]
             cursor.execute('''
-            SELECT fs.study FROM feature_specification fs
-            WHERE fs.identifier=%s
+            SELECT sc2.component_study FROM feature_specification fs
+            JOIN study_component sc ON sc.component_study=fs.study
+            JOIN study_component sc2 ON sc.primary_study=sc2.primary_study
+            WHERE fs.identifier=%s AND
+                sc2.component_study IN ( SELECT name FROM specimen_measurement_study )
+                ;
             ''', (feature_specification,))
             study = cursor.fetchall()[0][0]
         return [

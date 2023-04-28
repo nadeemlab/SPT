@@ -1,0 +1,5 @@
+Name,Positive markers,Negative markers
+T cell/null phenotype,CD3,CD4;CD8;FOXP3;CD20;CD56;SOX10
+Tumor,SOX10,CD3;CD4;CD8;FOXP3;CD20
+CD4+ T cell,CD3;CD4,CD8;FOXP3;CD20;CD56;SOX10
+CD8+ T cell,CD3;CD8,CD4;FOXP3;CD20;CD56;SOX10

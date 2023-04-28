@@ -11,6 +11,7 @@ from spatialprofilingtoolbox.db.fractions_transcriber import \
     describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 VERSION = '0.4.0'
 
 DESCRIPTION = """
@@ -53,7 +54,9 @@ def get_study_components(study_name):
             cursor.execute(f'SELECT name FROM {tablename};')
             names = [row[0] for row in cursor.fetchall()]
             for substudy in substudies:
-                if substudy in names and not re.search('phenotype fractions', substudy) and not re.search('proximity calculation', substudy):
+                if ( substudy in names and not re.search('phenotype fractions', substudy)
+                     and not re.search('proximity calculation', substudy)
+                     and not re.search(ADIFeatureSpecificationUploader.ondemand_descriptor(), substudy) ):
                     components[key] = substudy
         cursor.close()
     return components

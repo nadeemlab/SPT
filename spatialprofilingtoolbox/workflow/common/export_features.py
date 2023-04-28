@@ -240,6 +240,10 @@ class ADIFeatureSpecificationUploader:
         return identifier
 
     @staticmethod
+    def ondemand_descriptor():
+        return 'ondemand computed features'
+
+    @staticmethod
     def get_data_analysis_study(measurement_study, cursor):
         cursor.execute('''
         SELECT sc.primary_study FROM study_component sc
@@ -254,7 +258,7 @@ class ADIFeatureSpecificationUploader:
         WHERE sc.primary_study=%s
         ''', (study,))
         rows = cursor.fetchall()
-        ondemand = 'ondemand computed features'
+        ondemand = ADIFeatureSpecificationUploader.ondemand_descriptor()
         names = sorted([row[0] for row in rows if re.search(f'{ondemand}', row[0])])
         if len(names) >= 1:
             return names[0]

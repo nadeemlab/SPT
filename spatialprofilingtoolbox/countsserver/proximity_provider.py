@@ -7,6 +7,7 @@ import os
 from os.path import join
 import json
 from threading import Thread
+from datetime import datetime
 
 import pandas as pd
 import numpy as np
@@ -153,9 +154,12 @@ class ProximityProvider:
             rows = cursor.fetchall()
             cursor.close()
         if len(rows) == 0:
-            return ProximityProvider.create_feature_specification(study_name, phenotype1_str, phenotype2_str, radius)
+            logger.debug('Creating feature with specifiers: (%s) %s, %s, %s', study_name, phenotype1_str, phenotype2_str, radius)
+            specification = ProximityProvider.create_feature_specification(study_name, phenotype1_str, phenotype2_str, radius)
+            return specification
         if len(rows) == 3:
             feature_specifications = list(set(row[0] for row in rows))
+            logger.debug('Proximity features with the given specifiers already exist: %s', feature_specifications)
             if len(feature_specifications) != 1:
                 raise ValueError(f'Somehow did not get just 1 feature specification: {rows}' )
             return feature_specifications[0]
@@ -170,6 +174,8 @@ class ProximityProvider:
             cursor = connection.cursor()
             feature_specification = ADIFeatureSpecificationUploader.add_new_feature(
                 specifiers, method, study_name, cursor)
+            cursor.close()
+            connection.commit()
         return feature_specification
 
     @staticmethod
@@ -197,6 +203,7 @@ class ProximityProvider:
             ''', (feature_specification,))
             rows = cursor.fetchall()
             logger.debug('Expected number computed: %s', rows[0][0])
+            cursor.close()            
             return rows[0][0]
 
     @staticmethod
@@ -257,7 +264,32 @@ class ProximityProvider:
             args=(feature_specification,)
         )
         background_thread.start()
-   
+
+    @staticmethod
+    def set_pending_computation(feature_specification):
+        time_str = datetime.now().ctime()
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            INSERT INTO pending_feature_computation (feature_specification, time_initiated)
+            VALUES (%s, %s) ;
+            ''', (feature_specification, time_str))
+            cursor.close()
+            connection.commit()
+
+    @staticmethod
+    def drop_pending_computation(feature_specification):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            DELETE FROM pending_feature_computation pfc
+            WHERE pfc.feature_specification=%s ;
+            ''', (feature_specification, ))
+            cursor.close()
+            connection.commit()
+
     def do_proximity_metrics_one_feature(self, feature_specification):
         specifiers = ProximityProvider.retrieve_specifiers(feature_specification)
         study_name, phenotype1, phenotype2, radius = specifiers
@@ -275,6 +307,9 @@ class ProximityProvider:
                 cursor = connection.cursor()
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
                 cursor.close()
+                connection.commit()
+        ProximityProvider.drop_pending_computation(feature_specification)
+        logger.debug('Wrapped up proximity metric calculation, feature "%s".', feature_specification)
 
     @staticmethod
     def query_for_computed_feature_values(feature_specification, still_pending=False):
@@ -310,6 +345,7 @@ class ProximityProvider:
             if not is_pending:
                 logger.debug('Starting background task.')
                 self.fork_computation_task(feature_specification)
+                PP.set_pending_computation(feature_specification)
                 logger.debug('Background task just started, is pending.')
                 is_pending = True
         return PP.query_for_computed_feature_values(feature_specification, still_pending=is_pending)

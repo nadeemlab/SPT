@@ -8,7 +8,6 @@ from io import BytesIO
 from base64 import b64encode
 
 import pandas as pd
-import numpy as np
 
 from umap import UMAP
 from sklearn.impute import SimpleImputer
@@ -60,8 +59,8 @@ class ReductionVisualCoreJob(CoreJob):
 
     def generate_and_write_plots(self):
         dense_df = self.retrieve_feature_matrix_dense()
-        plot_strings = UMAPReducer.create_plots_base64(dense_df)
-        self.write_to_table(plot_strings, dense_df)
+        plots_base64 = UMAPReducer.create_plots_base64(dense_df)
+        self.write_to_table(plots_base64)
 
     def retrieve_feature_matrix_dense(self):
         sparse_df = self.retrieve_feature_matrix_sparse()
@@ -87,7 +86,7 @@ class ReductionVisualCoreJob(CoreJob):
         self.timer.record_timepoint('Finished pulling data.')
         sparse_df = pd.DataFrame(rows, columns=['structure', 'channel', 'quantity'])
         sparse_df = sparse_df.astype({'structure': str, 'channel': str, 'quantity': float})
-        self.validate_all_structures_have_same_targets(sparse_df)
+        self.validate_all_structures_have_same_channels(sparse_df)
         logger.info('Dataframe pulled: %s', sparse_df.columns.values.tolist())
         return sparse_df
 
@@ -98,24 +97,27 @@ class ReductionVisualCoreJob(CoreJob):
         logger.info('Feature matrix created, with columns: %s', dense_df.columns)
         return dense_df
 
-    def validate_all_structures_have_same_targets(self, df):
-        if not (df.target.value_counts() == len(df.structure.unique())).all():
+    def validate_all_structures_have_same_channels(self, df):
+        if not (df.channel.value_counts() == len(df.structure.unique())).all():
             message = 'Cannot create a UMAP representation for study %s because given objects \
             have different sets of targets provided. Hence object representations have different \
             dimension which is incompatible with UMAP dimension reduction.'
             logger.error(message, self.study_name)
             raise ValueError(message % self.study_name)
 
-    def write_to_table(self, plot_strings, dense_df):
-        if len(plot_strings) != len(dense_df.columns):
-            raise ValueError('Number of computed features not equal to number of cases.')
-        df = pd.DataFrame(list(zip(cases, plot_strings)),
-                          columns=['Target', 'PlotString'])
+    def write_to_table(self, plots_base64):
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            for channel, plot_base64 in plots_base64.items():
+                cursor.execute('''
+                INSERT INTO umap_plots (study, channel, svg_base64)
+                VALUES (%s, %s, %s) ;
+                ''', (self.study_name, channel, plot_base64))
+            connection.commit()
 
-        bundle = [df, self.sample_identifier]
         with open(self.results_file, 'wb') as file:
-            pickle.dump(bundle, file)
-        logger.info('Computed metrics: %s', df.head())
+            pickle.dump([plots_base64, self.sample_identifier], file)
         logger.info('Saved job output to file  %s', self.results_file)
 
     def log_job_info(self):

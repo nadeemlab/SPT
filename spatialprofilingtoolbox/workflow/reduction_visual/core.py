@@ -106,6 +106,30 @@ class ReductionVisualCoreJob(CoreJob):
             raise ValueError(message % self.study_name)
 
     def write_to_table(self, plots_base64):
+        if not self.probably_already_uploaded(plots_base64):
+            self.upload_to_database(plots_base64)
+        with open(self.results_file, 'wb') as file:
+            pickle.dump([plots_base64, self.sample_identifier], file)
+        logger.info('Saved job output to file  %s', self.results_file)
+
+    def probably_already_uploaded(self, plots_base64):
+        with DatabaseConnectionMaker(self.database_config_file) as dcm:
+            connection = dcm.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT COUNT(*) FROM umap_plots
+            WHERE study=%s ;
+            ''', (self.study_name,))
+            count = cursor.fetchall()[0][0]
+        if count == len(plots_base64):
+            return True
+        if count == 0:
+            return False
+        message = 'Mismatch between number %s of already-uploaded plots and %s \
+                   available now to be uploaded.'
+        raise ValueError(message, count, len(plots_base64))
+
+    def upload_to_database(self, plots_base64):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
@@ -115,10 +139,7 @@ class ReductionVisualCoreJob(CoreJob):
                 VALUES (%s, %s, %s) ;
                 ''', (self.study_name, channel, plot_base64))
             connection.commit()
-
-        with open(self.results_file, 'wb') as file:
-            pickle.dump([plots_base64, self.sample_identifier], file)
-        logger.info('Saved job output to file  %s', self.results_file)
+        logger.info('Saved %s plots to table umap_plots.', len(plots_base64))
 
     def log_job_info(self):
         number_cells = get_number_cells_to_be_processed(
@@ -142,7 +163,7 @@ class ReductionVisualCoreJob(CoreJob):
 
 class UMAPReducer:
     """
-    From dataframe create UMAP-reduce plots in base64 format.
+    From dataframe create UMAP-reduced plots in base64 format.
     """
     @staticmethod
     def create_plots_base64(dense_df):

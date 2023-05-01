@@ -21,7 +21,7 @@ def create_page_from_plots(plots_base64):
         img_template % (plot_base64, channel)
         for channel, plot_base64 in plots_base64
     ])
-    return html_template % imgs
+    return (html_template % imgs).lstrip()
 
 def create_page():
     study = sys.argv[1]

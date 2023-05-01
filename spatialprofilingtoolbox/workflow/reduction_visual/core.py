@@ -88,6 +88,8 @@ class ReductionVisualCoreJob(CoreJob):
     def sparse_to_dense(sparse_df):
         logger.info('Converting sparse matrix to dense matrix.')
         dense_df = sparse_df.pivot(index='structure', columns=['channel'], values=['quantity'])
+        simplified_columns = [c[1] for c in dense_df.columns]
+        dense_df.columns = simplified_columns
         logger.info('Feature matrix created, with columns: %s', dense_df.columns)
         return dense_df
 
@@ -104,15 +106,14 @@ class ReductionVisualCoreJob(CoreJob):
             self.upload_to_database(plots_base64)
         with open(self.results_file, 'wb') as file:
             pickle.dump([plots_base64, self.study_name], file)
-        logger.info('Saved job output to file  %s', self.results_file)
+        logger.info('Saved job output to file: %s', self.results_file)
 
     def probably_already_uploaded(self, plots_base64):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
             cursor.execute('''
-            SELECT COUNT(*) FROM umap_plots
-            WHERE study=%s ;
+            SELECT COUNT(*) FROM umap_plots WHERE study=%s ;
             ''', (self.study_name,))
             count = cursor.fetchall()[0][0]
         if count == len(plots_base64):
@@ -161,7 +162,7 @@ class UMAPReducer:
     @staticmethod
     def create_plots_base64(dense_df):
         normalized = UMAPReducer.preprocess_univariate_adjustments(dense_df)
-        array = UMAPReducer.umap_reduce_to_2d(normalized.to_numpy())
+        array = UMAPReducer.umap_reduce_to_2d(normalized)
         return UMAPReducer.make_plots_base64(array, dense_df)
 
     @staticmethod
@@ -198,9 +199,10 @@ class UMAPReducer:
                 cmap=cmap,
                 alpha=0.7,
             )
-            figure.colorbar(points)
-            plot_svg_base64 = UMAPReducer.retrieve_base64_from_plot()
-            plots_base64[channel] = plot_svg_base64
+            axes.xaxis.set_ticklabels([])
+            axes.yaxis.set_ticklabels([])
+            plt.tight_layout()
+            plots_base64[channel] = UMAPReducer.retrieve_base64_from_plot()
             plt.close()
         return plots_base64
 
@@ -209,4 +211,4 @@ class UMAPReducer:
         inmemory_file = BytesIO()
         plt.savefig(inmemory_file, format='svg')
         inmemory_file.seek(0)
-        return b64encode(inmemory_file.getvalue())
+        return b64encode(bytes(inmemory_file.getvalue())).decode('utf-8')

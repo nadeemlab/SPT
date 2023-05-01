@@ -12,7 +12,7 @@ html_template = '''
 </html>
 '''
 img_template = '''
-<img src="data:image/svg+xml;base64,%s"><br>
+<img width="500" src="data:image/svg+xml;base64,%s"><br>
 <p>%s</p><br>
 '''
 

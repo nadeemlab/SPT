@@ -190,8 +190,8 @@ class UMAPReducer:
         plots_base64 = {}
         cmap = UMAPReducer.get_cmap()
         for channel in dense_df.columns:
-            figure, axes = plt.subplots(figsize=(6, 5))
-            points = axes.scatter(
+            _, axes = plt.subplots(figsize=(4, 4))
+            axes.scatter(
                 array[:, 0],
                 array[:, 1],
                 c=dense_df[channel],
@@ -199,8 +199,8 @@ class UMAPReducer:
                 cmap=cmap,
                 alpha=0.7,
             )
-            axes.xaxis.set_ticklabels([])
-            axes.yaxis.set_ticklabels([])
+            plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+            plt.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
             plt.tight_layout()
             plots_base64[channel] = UMAPReducer.retrieve_base64_from_plot()
             plt.close()

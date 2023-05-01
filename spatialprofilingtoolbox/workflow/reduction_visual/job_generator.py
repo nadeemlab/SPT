@@ -7,6 +7,8 @@ import pandas as pd
 
 from spatialprofilingtoolbox.workflow.component_interfaces.job_generator import JobGenerator
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.workflow.common.job_generator import \
+    retrieve_sample_identifiers_from_db
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -41,7 +43,7 @@ class ReductionVisualJobGenerator(JobGenerator):
 
     @staticmethod
     def retrieve_sample_identifiers_from_db(study_name, database_config_file):
-        return [study_name]
+        return retrieve_sample_identifiers_from_db(study_name, database_config_file)
 
     def write_job_specification_table(self, job_specification_table_filename):
         samples = self.retrieve_sample_identifiers()

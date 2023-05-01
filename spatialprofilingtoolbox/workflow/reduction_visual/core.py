@@ -1,5 +1,5 @@
 """
-The core calculator for the proximity calculation on a single source file.
+The core calculator for the UMAP dimensional reduction.
 """
 import warnings
 import pickle
@@ -10,7 +10,7 @@ import base64
 import pandas as pd
 import numpy as np
 
-import umap  # pip install umap-learn
+from umap import UMAP
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import QuantileTransformer
@@ -18,11 +18,11 @@ from matplotlib import pyplot as plt
 from  matplotlib.colors import LinearSegmentedColormap
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
-from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
-    ProximityJobGenerator
+from spatialprofilingtoolbox.workflow.reduction_visual.job_generator import \
+    ReductionVisualJobGenerator
+from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
@@ -31,8 +31,7 @@ logger = colorized_logger(__name__)
 
 
 class ReductionVisualCoreJob(CoreJob):
-    """Core/parallelizable functionality for the phenotype proximity workflow."""
-    radii = [60, 120]
+    """Core/parallelizable functionality for the UMAP dimensional reduction workflow."""
 
     def __init__(
         self,
@@ -51,10 +50,13 @@ class ReductionVisualCoreJob(CoreJob):
         self.job_index = job_index
         self.sample_identifier = self.lookup_sample()
         self.target_order = None
-        self.cmap = LinearSegmentedColormap.from_list('gg',["gray", "green"], N=256, gamma=1.0)
+
+    @staticmethod
+    def get_cmap():
+        return LinearSegmentedColormap.from_list('gg', ["gray", "green"], N=256, gamma=1.0)
 
     def lookup_sample(self):
-        generator = ProximityJobGenerator(self.study_name, self.database_config_file)
+        generator = ReductionVisualJobGenerator(self.study_name, self.database_config_file)
         return generator.retrieve_sample_identifiers()[int(self.job_index)]
 
     def get_performance_report_filename(self):
@@ -68,26 +70,17 @@ class ReductionVisualCoreJob(CoreJob):
         logger.info('Report to: %s', self.get_performance_report_filename())
         df.to_csv(self.get_performance_report_filename(), index=False)
 
-    def get_number_cells_to_be_processed(self):
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
-            # todo: select rows for the specific study
-            cursor.execute('''
-            SELECT COUNT(*) FROM expression_quantification
-            ;
-            ''')
-            rows = cursor.fetchall()
-            cursor.close()
-        return rows[0][0]
-
     def _calculate(self):
         self.log_job_info()
         self.generate_plots()
         self.wrap_up_timer()
 
     def log_job_info(self):
-        number_cells = self.get_number_cells_to_be_processed()
+        number_cells = get_number_cells_to_be_processed(
+            self.database_config_file,
+            self.study_name,
+            self.sample_identifier,
+        )
         logger.info('%s cells to be analyzed for sample "%s".',number_cells,self.sample_identifier)
 
     def generate_plots(self):
@@ -95,7 +88,7 @@ class ReductionVisualCoreJob(CoreJob):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
-            cursor.execute(f'''
+            cursor.execute('''
             SELECT eq.histological_structure, target, quantity
             FROM expression_quantification eq
             JOIN histological_structure_identification hsi ON eq.histological_structure=hsi.histological_structure
@@ -103,9 +96,9 @@ class ReductionVisualCoreJob(CoreJob):
             JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
             JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
             JOIN study_component sc ON scp.study=sc.component_study
-            WHERE sc.primary_study='{self.study_name}'
+            WHERE sc.primary_study=%s
             ;
-            ''')
+            ''', (self.study_name,))
             rows = cursor.fetchall()
             cursor.close()
 
@@ -115,11 +108,6 @@ class ReductionVisualCoreJob(CoreJob):
         quantity_df = quantity_df.astype(
             {'structure': 'int64', 'target': 'int64', 'quantity': 'float'})
 
-        # check that all structures (cells) have the same set of targets
-        if not (quantity_df.target.value_counts() == len(quantity_df.structure.unique())).all():
-            # logger.warn("Cannot create a UMAP representation for study {study_id} because given objects have different sets of targets provided. Hence object representations have different dimension which is incompatible with UMAP dimension reduction.")
-            print(
-                "Cannot create a UMAP representation for study {study_id} because given objects have different sets of targets provided. Hence object representations have different dimension which is incompatible with UMAP dimension reduction.")
 
         # take target order from the first structure
         self.target_order = quantity_df.loc[quantity_df.structure == quantity_df.structure.iloc[0], 'target'].values
@@ -132,6 +120,14 @@ class ReductionVisualCoreJob(CoreJob):
         plot_strings = self.make_plots(X, cell_matrix=cell_matrix)
 
         self.write_table(plot_strings, self.target_order)
+
+    def validate_all_structures_have_same_targets(self, df):
+        if not (df.target.value_counts() == len(df.structure.unique())).all():
+            message = 'Cannot create a UMAP representation for study %s because given objects'
+            'have different sets of targets provided. Hence object representations have different'
+            'dimension which is incompatible with UMAP dimension reduction.'
+            logger.error(message, self.study_name)
+            raise ValueError(message % self.study_name)
 
     def extract_and_reduce_dimensions(self, quantity_df):
         # collect vector representations for every structure from (structure-target_quantity) pairs
@@ -150,7 +146,7 @@ class ReductionVisualCoreJob(CoreJob):
         X = pipe.fit_transform(cell_matrix.copy())
 
         # Fit UMAP to processed data
-        manifold = umap.UMAP().fit(X)
+        manifold = UMAP().fit(X)
         X_reduced = manifold.transform(X)
 
         logger.info("Finished umap transformation")
@@ -162,10 +158,11 @@ class ReductionVisualCoreJob(CoreJob):
         :param X_reduced: 2d-umap output to use as plot coordinates
         :param cell_matrix: original target quantity values to use for coloring """
         plots = []
+        cmap = ReductionVisualCoreJob.get_cmap()
         for target_idx, target_id in enumerate(self.target_order):
             f, ax = plt.subplots()  # figsize=(6, 5))
 
-            points = ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=cell_matrix[:, target_idx], s=5, cmap=self.cmap,
+            points = ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=cell_matrix[:, target_idx], s=5, cmap=cmap,
                                 alpha=0.7)
             f.colorbar(points)
 

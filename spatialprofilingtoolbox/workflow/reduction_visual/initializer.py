@@ -1,8 +1,10 @@
 """The initializer for the phenotype proximity workflow."""
 from typing import Optional
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.component_interfaces.initializer import Initializer
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 
 class ReductionVisualInitializer(Initializer): #pylint: disable=too-few-public-methods
@@ -11,24 +13,8 @@ class ReductionVisualInitializer(Initializer): #pylint: disable=too-few-public-m
     Creates a dedicated table for the string-encoded plots.
     """
 
-    def __init__(self,
-                 database_config_file: Optional[str] = None,
-                 **kwargs):
+    def __init__(self, database_config_file: Optional[str] = None, **kwargs):
         self.database_config_file = database_config_file
 
     def initialize(self, **kwargs):
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
-            cursor.execute('''
-            CREATE TABLE IF NOT EXISTS visualization_plots (
-                identifier integer,
-                svg_string bytea,
-                target integer,
-                study text
-                );
-            ''', )
-            cursor.close()
-            connection.commit()
-
-
+        logger.info('No initialization to do for UMAP workflow.')

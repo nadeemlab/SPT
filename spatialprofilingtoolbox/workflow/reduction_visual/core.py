@@ -89,8 +89,9 @@ class ReductionVisualCoreJob(CoreJob):
             connection = dcm.get_connection()
             cursor = connection.cursor()
             cursor.execute('''
-            SELECT eq.histological_structure, target, quantity
+            SELECT eq.histological_structure, cs.symbol, eq.quantity
             FROM expression_quantification eq
+            JOIN chemical_species cs ON cs.identifier=eq.target
             JOIN histological_structure_identification hsi ON eq.histological_structure=hsi.histological_structure
             JOIN data_file df ON df.sha256_hash=hsi.data_source            
             JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
@@ -104,10 +105,9 @@ class ReductionVisualCoreJob(CoreJob):
 
         self.timer.record_timepoint('Finished pulling data for the study.')
 
-        quantity_df = pd.DataFrame(rows, columns=['structure', 'target', 'quantity'])
+        quantity_df = pd.DataFrame(rows, columns=['structure', 'channel', 'quantity'])
         quantity_df = quantity_df.astype(
-            {'structure': 'int64', 'target': 'int64', 'quantity': 'float'})
-
+            {'structure': str, 'channel': str, 'quantity': float})
 
         # take target order from the first structure
         self.target_order = quantity_df.loc[quantity_df.structure == quantity_df.structure.iloc[0], 'target'].values
@@ -123,9 +123,9 @@ class ReductionVisualCoreJob(CoreJob):
 
     def validate_all_structures_have_same_targets(self, df):
         if not (df.target.value_counts() == len(df.structure.unique())).all():
-            message = 'Cannot create a UMAP representation for study %s because given objects'
-            'have different sets of targets provided. Hence object representations have different'
-            'dimension which is incompatible with UMAP dimension reduction.'
+            message = 'Cannot create a UMAP representation for study %s because given objects \
+            have different sets of targets provided. Hence object representations have different \
+            dimension which is incompatible with UMAP dimension reduction.'
             logger.error(message, self.study_name)
             raise ValueError(message % self.study_name)
 

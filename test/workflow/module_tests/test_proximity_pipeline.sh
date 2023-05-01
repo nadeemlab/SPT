@@ -1,4 +1,3 @@
-#!/bin/bash
 
 spt workflow configure --local --workflow='phenotype proximity' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container
 nextflow run .

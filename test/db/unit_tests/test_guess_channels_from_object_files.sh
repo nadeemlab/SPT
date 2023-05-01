@@ -1,4 +1,4 @@
-#!/bin/bash
+
 spt db guess-channels-from-object-files \
 ../test_data/adi_preprocessed_tables/dataset1/0.csv \
 ../test_data/adi_preprocessed_tables/dataset1/1.csv \

@@ -51,6 +51,8 @@ cggnn = [
     "cg-gnn"
 ]
 workflow = [
+    "matplotlib==3.5.3",
+    "umap-learn==0.5.3",
     "numpy==1.22.3",
     "scipy==1.8.0",
     "scikit-learn==1.1.2",

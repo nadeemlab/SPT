@@ -32,7 +32,6 @@ logger = colorized_logger(__name__)
 
 class ReductionVisualCoreJob(CoreJob):
     """Core/parallelizable functionality for the UMAP dimensional reduction workflow."""
-
     def __init__(
         self,
         study_name: str='',
@@ -49,42 +48,29 @@ class ReductionVisualCoreJob(CoreJob):
         self.results_file = results_file
         self.job_index = job_index
         self.sample_identifier = self.lookup_sample()
-        self.target_order = None
-
-    @staticmethod
-    def get_cmap():
-        return LinearSegmentedColormap.from_list('gg', ["gray", "green"], N=256, gamma=1.0)
 
     def lookup_sample(self):
         generator = ReductionVisualJobGenerator(self.study_name, self.database_config_file)
         return generator.retrieve_sample_identifiers()[int(self.job_index)]
 
-    def get_performance_report_filename(self):
-        return self.performance_report_file
-
-    def wrap_up_timer(self):
-        """
-        Concludes low-level performance metric collection for this job.
-        """
-        df = self.timer.report(organize_by='fraction')
-        logger.info('Report to: %s', self.get_performance_report_filename())
-        df.to_csv(self.get_performance_report_filename(), index=False)
-
     def _calculate(self):
         self.log_job_info()
-        self.generate_plots()
+        self.generate_and_write_plots()
         self.wrap_up_timer()
 
-    def log_job_info(self):
-        number_cells = get_number_cells_to_be_processed(
-            self.database_config_file,
-            self.study_name,
-            self.sample_identifier,
-        )
-        logger.info('%s cells to be analyzed for sample "%s".',number_cells,self.sample_identifier)
+    def generate_and_write_plots(self):
+        RVCJ = ReductionVisualCoreJob
+        dense_df = self.retrieve_feature_matrix_dense()
+        normalized = RVCJ.preprocess_univariate_adjustments(dense_df)
+        plot_strings = RVCJ.make_plots(normalized, dense_df)
+        RVCJ.write_table(plot_strings, dense_df)
 
-    def generate_plots(self):
-        self.timer.record_timepoint('Start pulling data for the study.')
+    def retrieve_feature_matrix_dense(self):
+        sparse_df = self.retrieve_feature_matrix_sparse()
+        return ReductionVisualCoreJob.sparse_to_dense(sparse_df)
+
+    def retrieve_feature_matrix_sparse(self):
+        self.timer.record_timepoint(f'Start pulling data for the sample: {self.sample_identifier}')
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
@@ -95,31 +81,17 @@ class ReductionVisualCoreJob(CoreJob):
             JOIN histological_structure_identification hsi ON eq.histological_structure=hsi.histological_structure
             JOIN data_file df ON df.sha256_hash=hsi.data_source            
             JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
-            JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
-            JOIN study_component sc ON scp.study=sc.component_study
-            WHERE sc.primary_study=%s
+            WHERE sdmp.specimen=%s
             ;
-            ''', (self.study_name,))
+            ''', (self.sample_identifier,))
             rows = cursor.fetchall()
             cursor.close()
-
-        self.timer.record_timepoint('Finished pulling data for the study.')
-
-        quantity_df = pd.DataFrame(rows, columns=['structure', 'channel', 'quantity'])
-        quantity_df = quantity_df.astype(
-            {'structure': str, 'channel': str, 'quantity': float})
-
-        # take target order from the first structure
-        self.target_order = quantity_df.loc[quantity_df.structure == quantity_df.structure.iloc[0], 'target'].values
-
-        quantity_df = quantity_df.reset_index(drop=True).set_index('structure')
-
-        logger.info('Dataframe pulled: %s', quantity_df.columns.values.tolist())
-
-        X, cell_matrix = self.extract_and_reduce_dimensions(quantity_df)
-        plot_strings = self.make_plots(X, cell_matrix=cell_matrix)
-
-        self.write_table(plot_strings, self.target_order)
+        self.timer.record_timepoint('Finished pulling data.')
+        sparse_df = pd.DataFrame(rows, columns=['structure', 'channel', 'quantity'])
+        sparse_df = sparse_df.astype({'structure': str, 'channel': str, 'quantity': float})
+        self.validate_all_structures_have_same_targets(sparse_df)
+        logger.info('Dataframe pulled: %s', sparse_df.columns.values.tolist())
+        return sparse_df
 
     def validate_all_structures_have_same_targets(self, df):
         if not (df.target.value_counts() == len(df.structure.unique())).all():
@@ -129,17 +101,34 @@ class ReductionVisualCoreJob(CoreJob):
             logger.error(message, self.study_name)
             raise ValueError(message % self.study_name)
 
-    def extract_and_reduce_dimensions(self, quantity_df):
+    @staticmethod
+    def sparse_to_dense(sparse_df):
+        logger.info('Converting sparse matrix to dense matrix.')
+        dense_df = sparse_df.pivot(index='structure', columns=['channel'], values=['quantity'])
+        logger.info('Feature matrix created, with columns: %s', dense_df.columns)
+        return dense_df
+
+    @staticmethod
+    def preprocess_univariate_adjustments(df):
+        pipe = make_pipeline(SimpleImputer(strategy="mean"), QuantileTransformer())
+        return pipe.fit_transform(df.copy())
+
+    def extract_and_reduce_dimensions(self, df):
+        # logger.info("Converting sparse matrix to dense matrix.")
+        # dense_df = df.pivot(index='structure', columns=['channel'], values=['quantity'])
+        # logger.info("Feature matrix created.")
+
         # collect vector representations for every structure from (structure-target_quantity) pairs
         cell_matrix = []
         cell_classes = []
-        for cell_id in quantity_df.index.unique():
-            cell_df = quantity_df.loc[cell_id]
+        for cell_id in sparse_df.index.unique():
+            cell_df = sparse_df.loc[cell_id]
             cell_values = cell_df.set_index('target').loc[self.target_order].quantity.values
             cell_matrix.append(cell_values)
 
         cell_matrix = np.stack(cell_matrix)
         logger.info("Feature matrix created")
+
 
         # Preprocess
         pipe = make_pipeline(SimpleImputer(strategy="mean"), QuantileTransformer())
@@ -153,7 +142,12 @@ class ReductionVisualCoreJob(CoreJob):
 
         return X_reduced, cell_matrix
 
-    def make_plots(self, X_reduced, cell_matrix):
+    @staticmethod
+    def get_cmap():
+        return LinearSegmentedColormap.from_list('gg', ["gray", "green"], N=256, gamma=1.0)
+
+    @staticmethod
+    def make_plots(X_reduced, dense_df):
         """ Make scatter plots with color-coded values
         :param X_reduced: 2d-umap output to use as plot coordinates
         :param cell_matrix: original target quantity values to use for coloring """
@@ -202,8 +196,9 @@ class ReductionVisualCoreJob(CoreJob):
     #     multiindex = [*signature['positive'], *signature['negative']]
     #     return value, multiindex
 
-    def write_table(self, plot_strings, cases):
-        if len(plot_strings) != len(cases):
+    @staticmethod
+    def write_table(plot_strings, dense_df):
+        if len(plot_strings) != len(dense_df.columns):
             raise ValueError('Number of computed features not equal to number of cases.')
         df = pd.DataFrame(list(zip(cases, plot_strings)),
                           columns=['Target', 'PlotString'])
@@ -213,3 +208,22 @@ class ReductionVisualCoreJob(CoreJob):
             pickle.dump(bundle, file)
         logger.info('Computed metrics: %s', df.head())
         logger.info('Saved job output to file  %s', self.results_file)
+
+    def log_job_info(self):
+        number_cells = get_number_cells_to_be_processed(
+            self.database_config_file,
+            self.study_name,
+            self.sample_identifier,
+        )
+        logger.info('%s cells to be analyzed for sample "%s".',number_cells,self.sample_identifier)
+
+    def wrap_up_timer(self):
+        """
+        Concludes low-level performance metric collection for this job.
+        """
+        df = self.timer.report(organize_by='fraction')
+        logger.info('Report to: %s', self.get_performance_report_filename())
+        df.to_csv(self.get_performance_report_filename(), index=False)
+
+    def get_performance_report_filename(self):
+        return self.performance_report_file

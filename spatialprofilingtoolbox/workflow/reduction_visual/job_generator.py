@@ -46,15 +46,6 @@ class ReductionVisualJobGenerator(JobGenerator):
         return retrieve_sample_identifiers_from_db(study_name, database_config_file)
 
     def write_job_specification_table(self, job_specification_table_filename):
-        samples = self.retrieve_sample_identifiers()
-        rows = [
-            {
-                'job_index': i,
-                'sample_identifier': sample,
-            }
-            for i, sample in enumerate(samples)
-        ]
+        rows = [{'job_index': 0}]
         df = pd.DataFrame(rows)
-        columns = df.columns
-        df = df[sorted(columns)]
         df.to_csv(job_specification_table_filename, index=False, header=True)

@@ -19,8 +19,6 @@ from  matplotlib.colors import LinearSegmentedColormap
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.workflow.reduction_visual.job_generator import \
-    ReductionVisualJobGenerator
 from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -45,12 +43,6 @@ class ReductionVisualCoreJob(CoreJob):
         self.performance_report_file = performance_report_file
         self.timer = PerformanceTimer()
         self.results_file = results_file
-        self.job_index = job_index
-        self.sample_identifier = self.lookup_sample()
-
-    def lookup_sample(self):
-        generator = ReductionVisualJobGenerator(self.study_name, self.database_config_file)
-        return generator.retrieve_sample_identifiers()[int(self.job_index)]
 
     def _calculate(self):
         self.log_job_info()
@@ -67,7 +59,7 @@ class ReductionVisualCoreJob(CoreJob):
         return ReductionVisualCoreJob.sparse_to_dense(sparse_df)
 
     def retrieve_feature_matrix_sparse(self):
-        self.timer.record_timepoint(f'Start pulling data for the sample: {self.sample_identifier}')
+        self.timer.record_timepoint(f'Start pulling data for the study: {self.study_name}')
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
@@ -78,9 +70,11 @@ class ReductionVisualCoreJob(CoreJob):
             JOIN histological_structure_identification hsi ON eq.histological_structure=hsi.histological_structure
             JOIN data_file df ON df.sha256_hash=hsi.data_source            
             JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
-            WHERE sdmp.specimen=%s
+            JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
+            JOIN study_component sc ON scp.study=sc.component_study
+            WHERE sc.primary_study=%s
             ;
-            ''', (self.sample_identifier,))
+            ''', (self.study_name,))
             rows = cursor.fetchall()
             cursor.close()
         self.timer.record_timepoint('Finished pulling data.')
@@ -109,7 +103,7 @@ class ReductionVisualCoreJob(CoreJob):
         if not self.probably_already_uploaded(plots_base64):
             self.upload_to_database(plots_base64)
         with open(self.results_file, 'wb') as file:
-            pickle.dump([plots_base64, self.sample_identifier], file)
+            pickle.dump([plots_base64, self.study_name], file)
         logger.info('Saved job output to file  %s', self.results_file)
 
     def probably_already_uploaded(self, plots_base64):
@@ -145,9 +139,8 @@ class ReductionVisualCoreJob(CoreJob):
         number_cells = get_number_cells_to_be_processed(
             self.database_config_file,
             self.study_name,
-            self.sample_identifier,
         )
-        logger.info('%s cells to be analyzed for sample "%s".',number_cells,self.sample_identifier)
+        logger.info('%s cells to be analyzed for study "%s".', number_cells, self.study_name)
 
     def wrap_up_timer(self):
         """

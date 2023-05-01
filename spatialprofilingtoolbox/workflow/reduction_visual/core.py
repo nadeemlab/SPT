@@ -220,7 +220,8 @@ class UMAPReducer:
     def remove_randomly_generated_tokens(contents):
         """
         Matplotlib does not deterministically generate SVG contents. Many randomly
-        assigned IDs are used, plus the date.
+        assigned IDs are used, plus the date and time, which will of course change
+        from run to run.
         This functions strips this random noise out.
         """
         buffer = contents

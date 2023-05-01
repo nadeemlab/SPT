@@ -172,7 +172,7 @@ class UMAPReducer:
 
     @staticmethod
     def umap_reduce_to_2d(array):
-        manifold = UMAP().fit(array)
+        manifold = UMAP(random_state=99).fit(array)
         return manifold.transform(array)
 
     @staticmethod

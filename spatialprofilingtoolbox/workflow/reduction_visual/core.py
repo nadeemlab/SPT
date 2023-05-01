@@ -6,6 +6,7 @@ import pickle
 
 from io import BytesIO
 from base64 import b64encode
+import re
 
 import pandas as pd
 
@@ -211,4 +212,22 @@ class UMAPReducer:
         inmemory_file = BytesIO()
         plt.savefig(inmemory_file, format='svg')
         inmemory_file.seek(0)
-        return b64encode(bytes(inmemory_file.getvalue())).decode('utf-8')
+        string_contents = bytes(inmemory_file.getvalue()).decode('utf-8')
+        normalized = UMAPReducer.remove_randomly_generated_tokens(string_contents)
+        return b64encode(normalized.encode('utf-8')).decode('utf-8')
+
+    @staticmethod
+    def remove_randomly_generated_tokens(contents):
+        """
+        Matplotlib does not deterministically generate SVG contents. Many randomly
+        assigned IDs are used, plus the date.
+        This functions strips this random noise out.
+        """
+        buffer = contents
+        buffer = re.sub(r'href="#[\w\d_]+"', 'href="#ABCDEF"', buffer)
+        buffer = re.sub(r'path id="[\w\d_]+"', 'path id="ABCDEF"', buffer)
+        buffer = re.sub(r'url\(#[\w\d_]+\)', 'url(#1234)', buffer)
+        buffer = re.sub(r'clipPath id="[\w\d_]+"', 'clipPath id="abcdef"', buffer)
+        lines = [l for l in buffer.split('\n') if not re.search('dc:date', l)]
+        return '\n'.join(lines)
+

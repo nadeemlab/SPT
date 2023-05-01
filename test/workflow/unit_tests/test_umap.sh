@@ -17,11 +17,13 @@ fi
 
 python unit_tests/create_plots_page.py "Melanoma intralesional IL2" ../db/.spt_db.config.container > plots.html
 
-# spt db status --database-config-file=../db/.spt_db.config.container > current_status.txt
-# diff current_status.txt module_tests/expected_proximity_record_counts.txt
-# status=$?
-# rm current_status.txt
-
-# python module_tests/check_proximity_metric_values.py ../db/.spt_db.config.container
-
-# exit $status
+diff plots.html unit_tests/expected_plots.html
+status=$?
+if [ $status -gt 0 ] ;
+then
+    echo "Not exactly expected UMAP page." >&2
+    cat plots.html >&2
+    rm plots.html
+    exit 1
+fi
+rm plots.html

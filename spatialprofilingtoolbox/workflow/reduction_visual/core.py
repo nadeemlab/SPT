@@ -231,4 +231,3 @@ class UMAPReducer:
         buffer = re.sub(r'clipPath id="[\w\d_]+"', 'clipPath id="abcdef"', buffer)
         lines = [l for l in buffer.split('\n') if not re.search('dc:date', l)]
         return '\n'.join(lines)
-

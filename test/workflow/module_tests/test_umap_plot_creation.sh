@@ -22,7 +22,7 @@ if [ $status -gt 0 ] ;
 then
     echo "Not exactly expected UMAP page." >&2
     cat plots.html >&2
-    rm plots.html
+    # rm plots.html
     exit 1
 fi
-rm plots.html
+# rm plots.html

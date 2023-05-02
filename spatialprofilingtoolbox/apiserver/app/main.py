@@ -887,13 +887,13 @@ async def get_plots(
 
     * **channel**. The name of the target (e.g. gene) used in coloring of a plot
                    (e.g. using expression values).
-    * **base64 plot**. Base64-encoding of the SVG plot image.
+    * **base64 plot**. Base64-encoding of the PNG plot image.
     """
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
         cursor.execute('''
-        SELECT up.channel, up.svg_base64 FROM umap_plots up
+        SELECT up.channel, up.png_base64 FROM umap_plots up
         WHERE up.study=%s
         ORDER BY up.channel ;
         ''', (study,))

@@ -12,7 +12,7 @@ HTML_TEMPLATE = '''
 </html>
 '''
 IMG_TEMPLATE = '''
-<img width="500" src="data:image/svg+xml;base64,%s"><br>
+<img width="350" src="data:image/png;base64,%s"><br>
 <p>%s</p><br>
 '''
 
@@ -29,7 +29,7 @@ def create_page():
     with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
         connection = dcm.get_connection()
         cursor=connection.cursor()
-        cursor.execute('SELECT channel, svg_base64 FROM umap_plots WHERE study=%s', (study,))
+        cursor.execute('SELECT channel, png_base64 FROM umap_plots WHERE study=%s', (study,))
         rows = cursor.fetchall()
         plots_base64 = sorted([(row[0], row[1]) for row in rows], key=lambda x: x[0])
     html = create_page_from_plots(plots_base64)

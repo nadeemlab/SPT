@@ -27,5 +27,5 @@ CREATE TABLE sample_strata (
 CREATE TABLE umap_plots (
     study VARCHAR(512),
     channel VARCHAR(512),
-    svg_base64 VARCHAR
+    png_base64 VARCHAR
 );

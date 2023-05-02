@@ -152,7 +152,7 @@ class ReductionVisualCoreJob(CoreJob):
             cursor = connection.cursor()
             for channel, plot_base64 in plots_base64.items():
                 cursor.execute('''
-                INSERT INTO umap_plots (study, channel, svg_base64)
+                INSERT INTO umap_plots (study, channel, png_base64)
                 VALUES (%s, %s, %s) ;
                 ''', (self.study_name, channel, plot_base64))
             connection.commit()
@@ -231,24 +231,6 @@ class UMAPReducer:
     @staticmethod
     def retrieve_base64_from_plot():
         inmemory_file = BytesIO()
-        plt.savefig(inmemory_file, format='svg')
+        plt.savefig(inmemory_file, format='png')
         inmemory_file.seek(0)
-        string_contents = bytes(inmemory_file.getvalue()).decode('utf-8')
-        normalized = UMAPReducer.remove_randomly_generated_tokens(string_contents)
-        return b64encode(normalized.encode('utf-8')).decode('utf-8')
-
-    @staticmethod
-    def remove_randomly_generated_tokens(contents):
-        """
-        Matplotlib does not deterministically generate SVG contents. Many randomly
-        assigned IDs are used, plus the date and time, which will of course change
-        from run to run.
-        This functions strips this random noise out.
-        """
-        buffer = contents
-        buffer = re.sub(r'href="#[\w\d_]+"', 'href="#ABCDEF"', buffer)
-        buffer = re.sub(r'path id="[\w\d_]+"', 'path id="ABCDEF"', buffer)
-        buffer = re.sub(r'url\(#[\w\d_]+\)', 'url(#1234)', buffer)
-        buffer = re.sub(r'clipPath id="[\w\d_]+"', 'clipPath id="abcdef"', buffer)
-        lines = [l for l in buffer.split('\n') if not re.search('dc:date', l)]
-        return '\n'.join(lines)
+        return b64encode(inmemory_file.getvalue()).decode('utf-8')

@@ -3,6 +3,7 @@ The core calculator for the UMAP dimensional reduction.
 """
 import warnings
 import pickle
+import random
 
 from io import BytesIO
 from base64 import b64encode
@@ -26,6 +27,8 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 logger = colorized_logger(__name__)
+
+UMAP_POINT_LIMIT = 50000
 
 
 class ReductionVisualCoreJob(CoreJob):
@@ -52,13 +55,13 @@ class ReductionVisualCoreJob(CoreJob):
 
     def generate_and_write_plots(self):
         plots_base64 = UMAPReducer.create_plots_base64(
-            self.retrieve_feature_matrix_dense()
+            self.retrieve_feature_matrix_dense(row_limit=UMAP_POINT_LIMIT)
         )
         self.write_to_table(plots_base64)
 
-    def retrieve_feature_matrix_dense(self):
+    def retrieve_feature_matrix_dense(self, row_limit=None):
         sparse_df = self.retrieve_feature_matrix_sparse()
-        return ReductionVisualCoreJob.sparse_to_dense(sparse_df)
+        return ReductionVisualCoreJob.sparse_to_dense(sparse_df, row_limit=row_limit)
 
     def retrieve_feature_matrix_sparse(self):
         self.timer.record_timepoint(f'Start pulling data for the study: {self.study_name}')
@@ -87,13 +90,30 @@ class ReductionVisualCoreJob(CoreJob):
         return sparse_df
 
     @staticmethod
-    def sparse_to_dense(sparse_df):
+    def sparse_to_dense(sparse_df, row_limit=None):
         logger.info('Converting sparse matrix to dense matrix.')
+        if row_limit is not None:
+            logger.info('Using cell limit %s.', row_limit)
         dense_df = sparse_df.pivot(index='structure', columns=['channel'], values=['quantity'])
-        simplified_columns = [c[1] for c in dense_df.columns]
-        dense_df.columns = simplified_columns
-        logger.info('Feature matrix created, with columns: %s', dense_df.columns)
-        return dense_df
+        number_rows = dense_df.shape[0]
+        subselection = dense_df.loc[
+            ReductionVisualCoreJob.select_randomly(
+                dense_df.index.tolist(),
+                min(row_limit, number_rows)
+            )
+        ]
+        dense_df = None
+        logger.info('Dense matrix has size: %s', subselection.shape)
+        simplified_columns = [c[1] for c in subselection.columns]
+        subselection.columns = simplified_columns
+        return subselection
+
+    @staticmethod
+    def select_randomly(series, number):
+        if number > len(series):
+            return series
+        random.seed(101)
+        return random.sample(series, k=number)
 
     def validate_all_structures_have_same_channels(self, df):
         if not (df.channel.value_counts() == len(df.structure.unique())).all():

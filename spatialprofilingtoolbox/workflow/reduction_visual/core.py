@@ -51,8 +51,9 @@ class ReductionVisualCoreJob(CoreJob):
         self.wrap_up_timer()
 
     def generate_and_write_plots(self):
-        dense_df = self.retrieve_feature_matrix_dense()
-        plots_base64 = UMAPReducer.create_plots_base64(dense_df)
+        plots_base64 = UMAPReducer.create_plots_base64(
+            self.retrieve_feature_matrix_dense()
+        )
         self.write_to_table(plots_base64)
 
     def retrieve_feature_matrix_dense(self):

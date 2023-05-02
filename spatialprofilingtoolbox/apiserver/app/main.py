@@ -882,61 +882,25 @@ async def get_plots(
     study: str = Query(default='unknown', min_length=3),
 ):
     """
-    Byte64-encoded plots of UMAP visualizations.
-     Each row is:
+    Base64-encoded plots of UMAP visualizations.
+    Each row is:
 
-    * **Identifier**
-    * **Study name**. Name of the component study.
-    * **Target**. Integer id of the target species used in coloring of a plot.
-    * **Plot String**. Byte64-encoding of the SVG plot image.
-
-    JSON output format:
-    {
-        'substudies': {
-            'name': ' xxxx: visual reduction : timestamp '
-            'plots': {
-                * target id 1 * : * byte string for corresponding plot 1 *,
-                * target id 2 * : * byte string for corresponding plot 2 *,
-                ...
-        }
+    * **channel**. The name of the target (e.g. gene) used in coloring of a plot
+                   (e.g. using expression values).
+    * **base64 plot**. Base64-encoding of the SVG plot image.
     """
-
-    columns = [
-        # 'identifier',
-        'target',
-        # 'study',
-        'svg_string'
-    ]
-    tablename = 'visualization_plots'
-    data_analysis_studies = get_visualisation_components(study)
-    representation = {'substudies': []}
-
-    derivation_method = ''
-    with DatabaseConnectionMaker(cfg) as dcm:
-        connection = dcm.get_connection()
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
         cursor = connection.cursor()
-        for substudy_name in data_analysis_studies:
-            print(substudy_name)
-            cursor.execute(
-                f'''
-                SELECT {', '.join(columns)}
-                FROM {tablename}
-                WHERE study=%s
-                ;
-                ''',
-                (substudy_name,)
-            )
-            rows = cursor.fetchall()
-            if len(rows) > 0:
-                representation['substudies'].append(
-                    [
-                        substudy_name,
-                        {target: plot for target, plot in rows}
-                    ])
-
+        cursor.execute('''
+        SELECT up.channel, up.svg_base64 FROM umap_plots up
+        WHERE up.study=%s
+        ORDER BY up.channel ;
+        ''', (study,))
+        rows = [(row[0], row[1]) for row in cursor.fetchall()]
         cursor.close()
 
     return Response(
-        content=json.dumps(representation),
+        content=json.dumps({'rows': rows}),
         media_type='application/json',
     )

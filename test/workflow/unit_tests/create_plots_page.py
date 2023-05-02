@@ -3,7 +3,7 @@ import sys
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 
-html_template = '''
+HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html>
 <body>
@@ -11,17 +11,17 @@ html_template = '''
 </body>
 </html>
 '''
-img_template = '''
+IMG_TEMPLATE = '''
 <img width="500" src="data:image/svg+xml;base64,%s"><br>
 <p>%s</p><br>
 '''
 
 def create_page_from_plots(plots_base64):
     imgs = '\n'.join([
-        img_template % (plot_base64, channel)
+        IMG_TEMPLATE % (plot_base64, channel)
         for channel, plot_base64 in plots_base64
     ])
-    return (html_template % imgs).lstrip()
+    return (HTML_TEMPLATE % imgs).lstrip()
 
 def create_page():
     study = sys.argv[1]

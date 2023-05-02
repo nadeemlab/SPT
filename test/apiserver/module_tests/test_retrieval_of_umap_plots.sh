@@ -15,10 +15,10 @@ status=$?
 
 if [ $status -eq 0 ];
 then
-	# rm rows.json
+	rm rows.json
     exit 0
 else
 	cat rows.json
-	# rm rows.json
+	rm rows.json
     exit 1
 fi

@@ -31,7 +31,7 @@ def all_tables_list():
     with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     tables = sorted(list(set(list(fields['Table']))))
-    return tables
+    return [normalize(t) for t in tables]
 
 
 def big_tables():

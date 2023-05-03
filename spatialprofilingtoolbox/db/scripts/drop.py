@@ -28,4 +28,4 @@ if __name__ == '__main__':
     database_config_file = get_and_validate_database_config(args)
     with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
         connection = dcm.get_connection()
-        StudyDropper.drop(connection, study_name=args.study_name)
+        StudyDropper.drop(connection, study=args.study_name)

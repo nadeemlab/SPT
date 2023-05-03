@@ -45,7 +45,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
 
         cursor = connection.cursor()
 
-        identifier = self.get_next_integer_identifier('chemical_species', cursor)
+        identifier = SourceToADIParser.get_next_integer_identifier('chemical_species', cursor)
         initial_value = identifier
         chemical_species_identifiers_by_symbol = {}
         for _, phenotype in channels.iterrows():
@@ -74,7 +74,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 )
         logger.info('Saved %s chemical species records.', identifier - initial_value)
 
-        identifier = self.get_next_integer_identifier('biological_marking_system', cursor)
+        identifier = SourceToADIParser.get_next_integer_identifier('biological_marking_system', cursor)
         initial_value = identifier
         for _, phenotype in channels.iterrows():
             symbol = phenotype['Name']
@@ -103,7 +103,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         cursor.execute(
             self.generate_basic_insert_query('data_analysis_study'), (data_analysis_study, ))
 
-        identifier = self.get_next_integer_identifier('cell_phenotype', cursor)
+        identifier = SourceToADIParser.get_next_integer_identifier('cell_phenotype', cursor)
         initial_value = identifier
         cell_phenotype_identifiers_by_symbol = {}
         number_criterion_records = 0

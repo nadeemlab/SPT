@@ -62,21 +62,23 @@ class SourceToADIParser:
         )
         return query
 
-    def is_integer(self, i):
+    @staticmethod
+    def is_integer(i):
         if isinstance(i, int):
             return True
         if re.match('^[0-9][0-9]*$', i):
             return True
         return False
 
-    def get_next_integer_identifier(self, tablename, cursor, key_name='identifier'):
+    @staticmethod
+    def get_next_integer_identifier(tablename, cursor, key_name='identifier'):
         cursor.execute(f'SELECT {key_name} FROM {tablename};')
         try:
             identifiers = cursor.fetchall()
         except psycopg2.ProgrammingError:
             return 0
         known_integer_identifiers = [
-            int(i[0]) for i in identifiers if self.is_integer(i[0])]
+            int(i[0]) for i in identifiers if SourceToADIParser.is_integer(i[0])]
         if len(known_integer_identifiers) == 0:
             return 0
         return max(known_integer_identifiers) + 1

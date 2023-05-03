@@ -6,11 +6,20 @@ import re
 import os
 from os.path import join
 import json
+from threading import Thread
+from datetime import datetime
 
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import BallTree
 
+from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.countsserver.phenotype_str import phenotype_str_to_phenotype
+from spatialprofilingtoolbox.countsserver.phenotype_str import phenotype_to_phenotype_str
+from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
+from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
+from spatialprofilingtoolbox.workflow.common.proximity import \
+    describe_proximity_feature_derivation_method
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.proximity import \
     compute_proximity_metric_for_signature_pair
@@ -114,19 +123,235 @@ class ProximityProvider:
             for i in range(len(target_by_index))
         ]
 
-    def compute_metrics(self, study_name, phenotype1, phenotype2, radius):
-        logger.debug('Requesting computation.')
-        metrics = {
-            sample_identifier:
-            compute_proximity_metric_for_signature_pair(
+    @staticmethod
+    def get_or_create_feature_specification(study_name, phenotype1, phenotype2, radius):
+        phenotype1_str = phenotype_to_phenotype_str(phenotype1)
+        phenotype2_str = phenotype_to_phenotype_str(phenotype2)
+        args = (
+            study_name,
+            phenotype1_str,
+            phenotype2_str,
+            str(radius),
+            describe_proximity_feature_derivation_method(),
+        )
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT
+                fsn.identifier,
+                fs.specifier
+            FROM feature_specification fsn
+            JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
+            JOIN study_component sc ON sc.component_study=fsn.study
+            JOIN study_component sc2 ON sc2.primary_study=sc.primary_study
+            WHERE sc2.component_study=%s AND
+                  (   (fs.specifier=%s AND fs.ordinality='1')
+                   OR (fs.specifier=%s AND fs.ordinality='2')
+                   OR (fs.specifier=%s AND fs.ordinality='3') ) AND
+                  fsn.derivation_method=%s
+            ;
+            ''', args)
+            rows = cursor.fetchall()
+            cursor.close()
+        feature_specifications = {row[0]: [] for row in rows}
+        for row in rows:
+            feature_specifications[row[0]].append(row[1])
+        for key, specifiers in feature_specifications.items():
+            if len(specifiers) == 3:
+                return key
+        logger.debug('Creating feature with specifiers: (%s) %s, %s, %s', study_name, phenotype1_str, phenotype2_str, radius)
+        specification = ProximityProvider.create_feature_specification(study_name, phenotype1_str, phenotype2_str, radius)
+        return specification
+
+    @staticmethod
+    def create_feature_specification(study_name, phenotype1, phenotype2, radius):
+        specifiers = [phenotype1, phenotype2, str(radius)]
+        method = describe_proximity_feature_derivation_method()
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            feature_specification = ADIFeatureSpecificationUploader.add_new_feature(
+                specifiers, method, study_name, cursor)
+            cursor.close()
+            connection.commit()
+        return feature_specification
+
+    @staticmethod
+    def is_already_computed(feature_specification):
+        expected = ProximityProvider.get_expected_number_of_computed_values(feature_specification)
+        actual = ProximityProvider.get_actual_number_of_computed_values(feature_specification)
+        if actual < expected:
+            return False
+        if actual == expected:
+            return True
+        raise ValueError(f'Possibly too many computed values of the given type? Feature "{feature_specification}"')
+
+    @staticmethod
+    def get_expected_number_of_computed_values(feature_specification):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT COUNT(DISTINCT sdmp.specimen) FROM specimen_data_measurement_process sdmp
+            JOIN study_component sc1 ON sc1.component_study=sdmp.study
+            JOIN study_component sc2 ON sc1.primary_study=sc2.primary_study
+            JOIN feature_specification fsn ON fsn.study=sc2.component_study
+            WHERE fsn.identifier=%s
+            ;
+            ''', (feature_specification,))
+            rows = cursor.fetchall()
+            logger.debug('Number of values possible to be computed: %s', rows[0][0])
+            cursor.close()            
+            return rows[0][0]
+
+    @staticmethod
+    def get_actual_number_of_computed_values(feature_specification):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT COUNT(*) FROM quantitative_feature_value qfv
+            WHERE qfv.feature=%s
+            ;
+            ''', (feature_specification,))
+            rows = cursor.fetchall()
+            logger.debug('Actual number computed: %s', rows[0][0])
+            return rows[0][0]
+
+    @staticmethod
+    def is_already_pending(feature_specification):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT * FROM pending_feature_computation pfc
+            WHERE pfc.feature_specification=%s
+            ''', (feature_specification,))
+            rows = cursor.fetchall()
+        if len(rows) >=1:
+            return True
+        return False
+
+    @staticmethod
+    def retrieve_specifiers(feature_specification):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT fs.specifier, fs.ordinality
+            FROM feature_specifier fs
+            WHERE fs.feature_specification=%s ;
+            ''', (feature_specification,))
+            rows = cursor.fetchall()
+            specifiers = [row[0] for row in sorted(rows, key=lambda row: int(row[1]))]
+            cursor.execute('''
+            SELECT sc2.component_study FROM feature_specification fs
+            JOIN study_component sc ON sc.component_study=fs.study
+            JOIN study_component sc2 ON sc.primary_study=sc2.primary_study
+            WHERE fs.identifier=%s AND
+                sc2.component_study IN ( SELECT name FROM specimen_measurement_study )
+                ;
+            ''', (feature_specification,))
+            study = cursor.fetchall()[0][0]
+        return [
+            study,
+            phenotype_str_to_phenotype(specifiers[0]),
+            phenotype_str_to_phenotype(specifiers[1]),
+            float(specifiers[2]),
+        ]
+
+    def fork_computation_task(self, feature_specification):
+        background_thread = Thread(
+            target=self.do_proximity_metrics_one_feature,
+            args=(feature_specification,)
+        )
+        background_thread.start()
+
+    @staticmethod
+    def set_pending_computation(feature_specification):
+        time_str = datetime.now().ctime()
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            INSERT INTO pending_feature_computation (feature_specification, time_initiated)
+            VALUES (%s, %s) ;
+            ''', (feature_specification, time_str))
+            cursor.close()
+            connection.commit()
+
+    @staticmethod
+    def drop_pending_computation(feature_specification):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            DELETE FROM pending_feature_computation pfc
+            WHERE pfc.feature_specification=%s ;
+            ''', (feature_specification, ))
+            cursor.close()
+            connection.commit()
+
+    def do_proximity_metrics_one_feature(self, feature_specification):
+        specifiers = ProximityProvider.retrieve_specifiers(feature_specification)
+        study_name, phenotype1, phenotype2, radius = specifiers
+        for sample_identifier in self.get_sample_identifiers(study_name):
+            value = compute_proximity_metric_for_signature_pair(
                 phenotype1,
                 phenotype2,
                 radius,
                 self.get_cells(sample_identifier, study_name),
-                self.get_tree(sample_identifier, study_name))
-            for sample_identifier in self.get_sample_identifiers(study_name)
+                self.get_tree(sample_identifier, study_name),
+            )
+            logger.debug('Computed one feature value of %s: %s, %s', feature_specification, sample_identifier, value)
+            with DBAccessor() as db_accessor:
+                connection = db_accessor.get_connection()
+                cursor = connection.cursor()
+                add_feature_value(feature_specification, sample_identifier, value, cursor)
+                cursor.close()
+                connection.commit()
+        ProximityProvider.drop_pending_computation(feature_specification)
+        logger.debug('Wrapped up proximity metric calculation, feature "%s".', feature_specification)
+
+    @staticmethod
+    def query_for_computed_feature_values(feature_specification, still_pending=False):
+        with DBAccessor() as db_accessor:
+            connection = db_accessor.get_connection()
+            cursor = connection.cursor()
+            cursor.execute('''
+            SELECT qfv.subject, qfv.value
+            FROM quantitative_feature_value qfv
+            WHERE qfv.feature=%s
+            ''', (feature_specification,))
+            rows = cursor.fetchall()
+            metrics = {row[0]: float(row[1]) for row in rows}
+        return {
+            'metrics': metrics,
+            'pending': still_pending,
         }
-        return metrics
+
+    def compute_metrics(self, study_name, phenotype1, phenotype2, radius):
+        logger.debug('Requesting computation.')
+        PP = ProximityProvider
+        feature_specification = PP.get_or_create_feature_specification(
+            study_name, phenotype1, phenotype2, radius)
+        if PP.is_already_computed(feature_specification):
+            is_pending=False
+            logger.debug('Already computed.')
+        else:
+            is_pending = PP.is_already_pending(feature_specification)
+            if is_pending:
+                logger.debug('Already already pending.')
+            else:
+                logger.debug('Not already pending.')
+            if not is_pending:
+                logger.debug('Starting background task.')
+                self.fork_computation_task(feature_specification)
+                PP.set_pending_computation(feature_specification)
+                logger.debug('Background task just started, is pending.')
+                is_pending = True
+        return PP.query_for_computed_feature_values(feature_specification, still_pending=is_pending)
 
     def get_cells(self, sample_identifier, study_name):
         return self.data_arrays[study_name][sample_identifier]

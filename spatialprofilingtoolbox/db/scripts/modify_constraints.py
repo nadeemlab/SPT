@@ -89,7 +89,8 @@ def toggle_constraints(
                 ALTER TABLE %s 
                 ADD CONSTRAINT %s 
                 FOREIGN KEY (%s) 
-                REFERENCES %s (%s);'''
+                REFERENCES %s (%s)
+                ON DELETE CASCADE ;'''
                 for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
                         in get_constraint_design():
                     statement = pattern % (

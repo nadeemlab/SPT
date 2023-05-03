@@ -27,7 +27,7 @@ def is_table_for_dropping(table, all_tables=False):
     return table in big_tables()
 
 
-def all_tables():
+def all_tables_list():
     with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     tables = sorted(list(set(list(fields['Table']))))

@@ -24,8 +24,14 @@ class DBConstraintsToggling(Enum):
 def is_table_for_dropping(table, all_tables=False):
     if all_tables:
         return True
-    else:
-        return table in big_tables()
+    return table in big_tables()
+
+
+def all_tables():
+    with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+        fields = pd.read_csv(path, sep='\t', na_filter=False)
+    tables = sorted(list(set(list(fields['Table']))))
+    return tables
 
 
 def big_tables():

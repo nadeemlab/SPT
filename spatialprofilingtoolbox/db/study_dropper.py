@@ -1,5 +1,7 @@
 """Drop a single study."""
+import re
 
+from spatialprofilingtoolbox.db.check_tables import check_tables
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -11,6 +13,7 @@ class StudyDropper:
         self.connection = connection
         self.study = study
         self.cursor = None
+        self.cached_counts = None
 
     def __enter__(self):
         self.cursor = self.connection.cursor()
@@ -22,6 +25,28 @@ class StudyDropper:
 
     def get_cursor(self):
         return self.cursor
+
+    def cache_record_counts(self, counts):
+        self.cached_counts = counts
+
+    def report_record_count_change(self):
+        _, counts = check_tables(self.get_cursor())
+        cacheable = [
+            (row[0], row[1]) for row in counts
+        ]
+        if self.cached_counts is None:
+            self.cache_record_counts(cacheable)
+            return
+        for (table1, count1), (table2, count2) in zip(self.cached_counts, cacheable):
+            if table1 != table2:
+                logger.warning('Mismatched tablenames: %s, %s.', table1, table2)
+            if count1 != count2:
+                justified = table1.ljust(50, ' ')
+                difference = str(count2 - count1)
+                if not re.search('-', difference):
+                    difference = '+' + difference
+                logger.info('%s %s', justified, difference)
+        self.cache_record_counts(cacheable)
 
     @staticmethod
     def drop(connection, study):
@@ -41,19 +66,26 @@ class StudyDropper:
         self.drop_substudies()
 
     def drop_specially_queried_records(self):
-        self.drop_diagnostic_selection_criterion()
-        self.cache_shape_file_identifiers()
-        self.drop_histological_structure()
-        self.drop_shape_file()
+        for command in [
+            self.drop_diagnostic_selection_criterion,
+            self.cache_shape_file_identifiers,
+            self.drop_histological_structure,
+            self.drop_shape_file,
+        ]:
+            command()
+            self.report_record_count_change()
 
     def drop_substudies(self):
-        self.drop_data_analysis_study()
-        self.drop_measurement_study()
-        self.drop_study()
-        self.drop_sample_strata()
-        self.drop_subject()
-        self.drop_specimen_collection_study()
-        self.drop_study_component()
+        for command in [self.drop_data_analysis_study,
+            self.drop_measurement_study,
+            self.drop_study,
+            self.drop_sample_strata,
+            self.drop_subject,
+            self.drop_specimen_collection_study,
+            self.drop_study_component,
+        ]:
+            command()
+            self.report_record_count_change()
 
     def drop_diagnostic_selection_criterion(self):
         logger.info('Dropping from diagnostic_selection_criterion.')
@@ -141,7 +173,7 @@ class StudyDropper:
                     'study_contact_person.')
         self.get_cursor().execute('''
         DELETE FROM study st
-        WHERE st.specifier=%s
+        WHERE st.study_specifier=%s
         ;
         ''', (self.study,))
 

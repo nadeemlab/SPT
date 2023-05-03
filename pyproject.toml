@@ -21,7 +21,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "psycopg2==2.9.3",
-    "adiscstudies==0.10.10"
+    "adiscstudies==0.11.0"
 ]
 
 [project.urls]
@@ -143,7 +143,8 @@ packages = [
     "modify_constraints.py",
     "guess_channels_from_object_files.py",
     "status.py",
-    "retrieve_feature_matrices.py"
+    "retrieve_feature_matrices.py",
+    "drop.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",

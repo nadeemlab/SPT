@@ -68,6 +68,7 @@ DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-
 DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
+SINGLETON_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),singleton-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 
 # Define PHONY targets
@@ -267,6 +268,10 @@ unit-tests: ${UNIT_TEST_TARGETS}
 ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
+
+${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
+>@submodule_directory=$$(echo $@ | sed 's/^singleton-test-/${BUILD_LOCATION}\//g') ; \
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory singleton-tests ;
 
 # The below explicitly checks whether the docker image already exists locally.
 # If so, not rebuilt. To trigger rebuild, use "make clean-docker-images" first,

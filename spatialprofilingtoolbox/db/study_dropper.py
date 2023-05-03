@@ -41,11 +41,11 @@ class StudyDropper:
             if table1 != table2:
                 logger.warning('Mismatched tablenames: %s, %s.', table1, table2)
             if count1 != count2:
-                justified = table1.ljust(50, ' ')
+                justified = table1.ljust(42, ' ')
                 difference = str(count2 - count1)
                 if not re.search('-', difference):
                     difference = '+' + difference
-                logger.info('%s %s', justified, difference)
+                logger.info('    %s %s', justified, difference)
         self.cache_record_counts(cacheable)
 
     @staticmethod
@@ -54,6 +54,7 @@ class StudyDropper:
         with StudyDropper(connection, study) as dropper:
             dropper.check_existence_of_study()
             dropper.drop_records()
+        connection.commit()
 
     def check_existence_of_study(self):
         self.get_cursor().execute('SELECT * FROM study WHERE study_specifier=%s', (self.study,))
@@ -62,6 +63,7 @@ class StudyDropper:
         logger.info('Study "%s" exists.', self.study)
 
     def drop_records(self):
+        self.report_record_count_change()
         self.drop_specially_queried_records()
         self.drop_substudies()
 
@@ -88,7 +90,8 @@ class StudyDropper:
             self.report_record_count_change()
 
     def drop_diagnostic_selection_criterion(self):
-        logger.info('Dropping from diagnostic_selection_criterion.')
+        logger.info('Dropping from diagnostic_selection_criterion, with cascade to '
+                    'two_cohort_feature_association_test.')
         self.get_cursor().execute('''
         DELETE FROM diagnostic_selection_criterion dsc
         WHERE dsc.identifier IN (

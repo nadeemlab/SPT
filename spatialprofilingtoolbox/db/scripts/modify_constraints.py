@@ -21,6 +21,13 @@ class DBConstraintsToggling(Enum):
     DROP = auto()
 
 
+def is_table_for_dropping(table, all_tables=False):
+    if all_tables:
+        return True
+    else:
+        return table in big_tables()
+
+
 def big_tables():
     return [
         'histological_structure',
@@ -55,7 +62,7 @@ def get_constraint_status(cursor):
     return [column_names, rows]
 
 
-def get_constraint_design():
+def get_constraint_design(all_tables=False):
     with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     foreign_key_constraints = [
@@ -63,7 +70,7 @@ def get_constraint_design():
                                      row['Foreign table'], row['Foreign key'], row['Ordinality']]]
         for i, row in fields.iterrows()
         if row['Foreign table'] != '' and row['Foreign key'] != ''
-        and (normalize(row['Table']) in big_tables())
+            and is_table_for_dropping(normalize(row['Table']), all_tables=all_tables)
     ]
     return foreign_key_constraints
 
@@ -80,6 +87,7 @@ def print_constraint_status(column_names, info_rows):
 def toggle_constraints(
     database_config_file,
     state: DBConstraintsToggling = DBConstraintsToggling.RECREATE,
+    all_tables=False,
 ):
     with DatabaseConnectionMaker(database_config_file) as dcm:
         cursor = dcm.get_connection().cursor()
@@ -92,7 +100,7 @@ def toggle_constraints(
                 REFERENCES %s (%s)
                 ON DELETE CASCADE ;'''
                 for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
-                        in get_constraint_design():
+                        in get_constraint_design(all_tables=all_tables):
                     statement = pattern % (
                         tablename,
                         f'{tablename}{ordinality}',
@@ -152,6 +160,11 @@ if __name__ == '__main__':
         action='store_true',
         default=False,
     )
+    parser.add_argument(
+        '--all-tables',
+        action='store_true',
+        default=False,
+    )
     args = parser.parse_args()
 
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
@@ -175,4 +188,4 @@ if __name__ == '__main__':
     else:
         raise ValueError('--recreate or --drop must be flagged.')
 
-    toggle_constraints(database_config_file_elevated, state=db_state)
+    toggle_constraints(database_config_file_elevated, state=db_state, all_tables=args.all_tables)

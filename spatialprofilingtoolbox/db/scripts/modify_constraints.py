@@ -47,7 +47,11 @@ def normalize(name):
     return re.sub(r'[ \-]', '_', name).lower()
 
 
-def get_constraint_status(cursor):
+def get_constraint_status(cursor, all_tables=False):
+    if all_tables:
+        droppable_tables = all_tables_list()
+    else:
+        droppable_tables = big_tables()
     query = f'''
     SELECT DISTINCT
         pg_constraint.contype as connection_type,
@@ -57,14 +61,12 @@ def get_constraint_status(cursor):
     JOIN pg_class ON pg_trigger.tgrelid = pg_class.oid
     JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace 
     JOIN pg_constraint ON pg_constraint.oid = pg_trigger.tgconstraint
-    WHERE relname IN {str(tuple(big_tables()))}
+    WHERE relname IN {str(tuple(droppable_tables))}
     ORDER BY relation_name, constraint_name;
     '''
     cursor.execute(query)
-
     column_names = [desc[0] for desc in cursor.description]
     rows = cursor.fetchall()
-
     return [column_names, rows]
 
 
@@ -116,14 +118,14 @@ def toggle_constraints(
                     )
                     logger.debug('Executing: %s', statement)
                     cursor.execute(statement)
-                column_names, info_rows = get_constraint_status(cursor)
+                column_names, info_rows = get_constraint_status(cursor, all_tables=all_tables)
                 print_constraint_status(column_names, info_rows)
 
             if state == DBConstraintsToggling.DROP:
                 pattern = '''
                 ALTER TABLE %s
                 DROP CONSTRAINT IF EXISTS %s;'''
-                column_names, info_rows = get_constraint_status(cursor)
+                column_names, info_rows = get_constraint_status(cursor, all_tables=all_tables)
                 print_constraint_status(column_names, info_rows)
                 for _, constraint_name, tablename in info_rows:
                     statement = pattern % (tablename, constraint_name)

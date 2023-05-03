@@ -10,6 +10,11 @@ then
 fi
 
 spt db drop --study-name="Melanoma intralesional IL2"  --database-config-file .spt_db.config.container
+if [[ "$?" != "0" ]];
+then
+    exit 1
+fi
+
 spt db status --database-config-file .spt_db.config.container > counts_after_drop.txt;
 
 diff counts_after_drop.txt module_tests/record_counts_1_2.txt

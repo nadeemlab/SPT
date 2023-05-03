@@ -33,9 +33,8 @@ class StudyDropper:
     def check_existence_of_study(self):
         self.get_cursor().execute('SELECT * FROM study WHERE study_specifier=%s', (self.study,))
         if len(self.get_cursor().fetchall()) == 0:
-            return False
+            raise ValueError(f'Study "{self.study}" does not exist.')
         logger.info('Study "%s" exists.', self.study)
-        return True
 
     def drop_records(self):
         self.drop_specially_queried_records()
@@ -86,7 +85,7 @@ class StudyDropper:
         WHERE sc.primary_study=%s
         WITH DATA
         ;
-        ''', (self.study))
+        ''', (self.study,))
 
     def drop_histological_structure(self):
         logger.info('Dropping histological_structure records. Should cascade upon '
@@ -100,7 +99,7 @@ class StudyDropper:
             JOIN study_component sc ON sc.component_study=sdmp.study
             WHERE sc.primary_study=%s
         ) ;
-        ''', (self.study))
+        ''', (self.study,))
 
     def drop_shape_file(self):
         logger.info('Dropping shape_file records.')

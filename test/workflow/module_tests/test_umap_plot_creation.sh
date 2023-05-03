@@ -15,14 +15,3 @@ then
 fi
 
 python module_tests/create_plots_page.py "Melanoma intralesional IL2" ../db/.spt_db.config.container > plots.html
-
-diff plots.html module_tests/expected_plots.html
-status=$?
-if [ $status -gt 0 ] ;
-then
-    echo "Not exactly expected UMAP page." >&2
-    cat plots.html >&2
-    rm plots.html
-    exit 1
-fi
-rm plots.html

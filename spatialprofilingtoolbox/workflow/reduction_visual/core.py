@@ -7,7 +7,6 @@ import random
 
 from io import BytesIO
 from base64 import b64encode
-import re
 
 import pandas as pd
 
@@ -55,15 +54,17 @@ class ReductionVisualCoreJob(CoreJob):
 
     def generate_and_write_plots(self):
         plots_base64 = UMAPReducer.create_plots_base64(
-            self.retrieve_feature_matrix_dense(row_limit=UMAP_POINT_LIMIT)
+            self.retrieve_feature_matrix_dense(cell_limit=UMAP_POINT_LIMIT)
         )
         self.write_to_table(plots_base64)
 
-    def retrieve_feature_matrix_dense(self, row_limit=None):
-        sparse_df = self.retrieve_feature_matrix_sparse()
-        return ReductionVisualCoreJob.sparse_to_dense(sparse_df, row_limit=row_limit)
+    def retrieve_feature_matrix_dense(self, cell_limit=None):
+        sparse_df = self.retrieve_feature_matrix_sparse(cell_limit=cell_limit)
+        return ReductionVisualCoreJob.sparse_to_dense(sparse_df)
 
-    def retrieve_feature_matrix_sparse(self):
+    def retrieve_feature_matrix_sparse(self, cell_limit=None):
+        if cell_limit is None:
+            raise ValueError('Need to choose a cell_limit.')
         self.timer.record_timepoint(f'Start pulling data for the study: {self.study_name}')
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
@@ -77,9 +78,17 @@ class ReductionVisualCoreJob(CoreJob):
             JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
             JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
             JOIN study_component sc ON scp.study=sc.component_study
-            WHERE sc.primary_study=%s
+            WHERE sc.primary_study=%s AND eq.histological_structure IN (
+                    SELECT hsi2.histological_structure FROM histological_structure_identification hsi2
+                    JOIN data_file df2 ON df2.sha256_hash=hsi2.data_source            
+                    JOIN specimen_data_measurement_process sdmp2 ON df2.source_generation_process=sdmp2.identifier
+                    JOIN specimen_collection_process scp2 ON scp2.specimen=sdmp2.specimen
+                    JOIN study_component sc2 ON scp2.study=sc2.component_study
+                    WHERE sc2.primary_study=%s
+                    ORDER BY RANDOM() LIMIT %s
+                )
             ;
-            ''', (self.study_name,))
+            ''', (self.study_name, self.study_name, cell_limit))
             rows = cursor.fetchall()
             cursor.close()
         self.timer.record_timepoint('Finished pulling data.')
@@ -90,23 +99,13 @@ class ReductionVisualCoreJob(CoreJob):
         return sparse_df
 
     @staticmethod
-    def sparse_to_dense(sparse_df, row_limit=None):
+    def sparse_to_dense(sparse_df):
         logger.info('Converting sparse matrix to dense matrix.')
-        if row_limit is not None:
-            logger.info('Using cell limit %s.', row_limit)
         dense_df = sparse_df.pivot(index='structure', columns=['channel'], values=['quantity'])
-        number_rows = dense_df.shape[0]
-        subselection = dense_df.loc[
-            ReductionVisualCoreJob.select_randomly(
-                dense_df.index.tolist(),
-                min(row_limit, number_rows)
-            )
-        ]
-        dense_df = None
-        logger.info('Dense matrix has size: %s', subselection.shape)
-        simplified_columns = [c[1] for c in subselection.columns]
-        subselection.columns = simplified_columns
-        return subselection
+        logger.info('Dense matrix has size: %s', dense_df.shape)
+        simplified_columns = [c[1] for c in dense_df.columns]
+        dense_df.columns = simplified_columns
+        return dense_df
 
     @staticmethod
     def select_randomly(series, number):

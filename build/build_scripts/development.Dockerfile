@@ -1,4 +1,4 @@
-FROM nadeemlab-development-prereqs/nadeemlab-development-prereqs:latest
+FROM nadeemlab-development/spt-development-prereqs:latest
 ARG WHEEL_FILENAME
 COPY pyproject.toml .
 COPY spatialprofilingtoolbox spatialprofilingtoolbox

@@ -15,7 +15,7 @@ BUILD_LOCATION_ABSOLUTE := ${PWD}/build
 export TEST_LOCATION := test
 export TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
-VERSION := $(shell cat pyproject.toml | grep version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+VERSION := $(shell cat version.txt | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 export WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 export MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
 
@@ -104,11 +104,28 @@ check-for-pypi-credentials:
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py pypi ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
-development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile
+development-image-prerequisites-installed: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile
+>@${MESSAGE} start "Building development image precursor"
+>@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
+>@docker build \
+     --rm \
+     -f ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development-prereqs:latest \
+     . ; echo "$$?" > status_code ; \
+     status_code=$$(cat status_code); \
+    if [[ "$$status_code" == "0" ]]; \
+    then \
+        touch development-image-prerequisites-installed ; \
+    fi
+>@${MESSAGE} end "Built." "Build failed."
+>@rm -f .dockerignore
+
+development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile development-image-prerequisites-installed
 >@${MESSAGE} start "Building development image"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker build \
      --rm \
+     --pull=false \
      -f ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
@@ -126,6 +143,11 @@ development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/de
     fi
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
+
+pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_pyproject.py
+>@${MESSAGE} start "Creating pyproject.toml"
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_pyproject.py; echo "$$?" > status_code
+>@${MESSAGE} end "Created." "Failed."
 
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
@@ -354,6 +376,8 @@ clean-files:
 >@rm -rf spatialprofilingtoolbox.egg-info/
 >@rm -rf __pycache__/
 >@rm -f development-image
+>@rm -f development-image-prerequisites-installed
+>@rm -f pyproject.toml
 >@rm -f data-loaded-image-1
 >@rm -f data-loaded-image-2
 >@rm -f data-loaded-image-1and2

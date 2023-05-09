@@ -222,7 +222,7 @@ class UMAPReducer:
                 array[:, 0],
                 array[:, 1],
                 c=dense_df[channel],
-                s=0.2,
+                marker=',',
                 cmap=cmap,
                 alpha=0.9,
             )

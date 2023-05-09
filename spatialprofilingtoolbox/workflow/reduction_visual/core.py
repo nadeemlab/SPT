@@ -222,7 +222,7 @@ class UMAPReducer:
                 array[:, 0],
                 array[:, 1],
                 c=dense_df[channel],
-                s=0.2,
+                s=1,
                 marker='.',
                 cmap=cmap,
                 alpha=0.9,
@@ -237,6 +237,6 @@ class UMAPReducer:
     @staticmethod
     def retrieve_base64_from_plot():
         inmemory_file = BytesIO()
-        plt.savefig(inmemory_file, format='png')
+        plt.savefig(inmemory_file, format='png', dpi=300)
         inmemory_file.seek(0)
         return b64encode(inmemory_file.getvalue()).decode('utf-8')

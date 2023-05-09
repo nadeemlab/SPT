@@ -149,6 +149,7 @@ class ReductionVisualCoreJob(CoreJob):
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
+            self.drop_existing_umap_plots(cursor)
             for channel, plot_base64 in plots_base64.items():
                 cursor.execute('''
                 INSERT INTO umap_plots (study, channel, png_base64)
@@ -156,6 +157,11 @@ class ReductionVisualCoreJob(CoreJob):
                 ''', (self.study_name, channel, plot_base64))
             connection.commit()
         logger.info('Saved %s plots to table umap_plots.', len(plots_base64))
+
+    def drop_existing_umap_plots(self, cursor):
+        cursor.execute('''
+        DELETE FROM umap_plots WHERE study=%s ;
+        ''', (self.study_name,))
 
     def log_job_info(self):
         number_cells = get_number_cells_to_be_processed(
@@ -198,7 +204,7 @@ class UMAPReducer:
 
     @staticmethod
     def get_cmap():
-        return LinearSegmentedColormap.from_list('gg', ["gray", "green"], N=256, gamma=1.0)
+        return LinearSegmentedColormap.from_list('gg', ["lightgray", "lime"], N=256, gamma=1.0)
 
     @staticmethod
     def make_plots_base64(array, dense_df):
@@ -211,14 +217,14 @@ class UMAPReducer:
         plots_base64 = {}
         cmap = UMAPReducer.get_cmap()
         for channel in dense_df.columns:
-            _, axes = plt.subplots(figsize=(4, 4))
+            _, axes = plt.subplots(figsize=(8, 8))
             axes.scatter(
                 array[:, 0],
                 array[:, 1],
                 c=dense_df[channel],
-                s=5,
+                s=0.5,
                 cmap=cmap,
-                alpha=0.7,
+                alpha=0.9,
             )
             plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
             plt.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)

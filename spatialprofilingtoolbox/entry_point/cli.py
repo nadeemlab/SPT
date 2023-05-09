@@ -10,6 +10,9 @@ import spatialprofilingtoolbox
 from spatialprofilingtoolbox import submodule_names
 
 
+def get_argument_free_commands():
+    return ['tail-logs']
+
 def get_commands(submodule_name):
     files = importlib.resources.files(
         f'spatialprofilingtoolbox.{submodule_name}')
@@ -113,10 +116,10 @@ def main_program():
         print('    '.join(commands))
         sys.exit()
 
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 3 and command not in get_argument_free_commands():
         sys.exit()
 
-    if len(sys.argv) > 3:
+    if len(sys.argv) >= 3:
         executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
         with subprocess.Popen([executable, script_path,] + unparsed_arguments) as running_process:

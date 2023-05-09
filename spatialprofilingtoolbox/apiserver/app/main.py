@@ -858,3 +858,52 @@ async def request_phenotype_proximity_computation(
         content=json.dumps(representation),
         media_type='application/json',
     )
+
+def get_visualisation_components(study_name):
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            'SELECT component_study FROM study_component WHERE primary_study=%s;',
+            (study_name,),
+        )
+        substudies = [row[0] for row in cursor.fetchall()]
+        components = []
+        key, tablename = 'analysis', 'data_analysis_study'
+
+        cursor.execute(f'SELECT name FROM {tablename};')
+        names = [row[0] for row in cursor.fetchall()]
+        for substudy in substudies:
+            if substudy in names:
+                if re.search('reduction visual', substudy):
+                    components.append(substudy)
+        cursor.close()
+    return components
+
+@app.get("/visualization-plots/")
+async def get_plots(
+    study: str = Query(default='unknown', min_length=3),
+):
+    """
+    Base64-encoded plots of UMAP visualizations.
+    Each row is:
+
+    * **channel**. The name of the target (e.g. gene) used in coloring of a plot
+                   (e.g. using expression values).
+    * **base64 plot**. Base64-encoding of the PNG plot image.
+    """
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute('''
+        SELECT up.channel, up.png_base64 FROM umap_plots up
+        WHERE up.study=%s
+        ORDER BY up.channel ;
+        ''', (study,))
+        rows = [(row[0], row[1]) for row in cursor.fetchall()]
+        cursor.close()
+
+    return Response(
+        content=json.dumps({'rows': rows}),
+        media_type='application/json',
+    )

@@ -1,4 +1,3 @@
-#!/bin/bash
 
 profile_file=.temp_bash_profile
 touch $profile_file

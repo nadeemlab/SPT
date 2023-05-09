@@ -50,6 +50,8 @@ cggnn = [
     "cg-gnn"
 ]
 workflow = [
+    "matplotlib==3.5.3",
+    "umap-learn==0.5.3",
     "numpy==1.22.3",
     "scipy==1.8.0",
     "scikit-learn==1.1.2",
@@ -62,6 +64,8 @@ building = [
     "Jinja2==3.0.1"
 ]
 all = [
+    "matplotlib==3.5.3",
+    "umap-learn==0.5.3",
     "fastapi>=0.68.0,<0.69.0",
     "uvicorn>=0.15.0,<0.16.0",
     "Jinja2==3.0.1",
@@ -102,6 +106,7 @@ packages = [
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.component_interfaces",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
+    "spatialprofilingtoolbox.workflow.reduction_visual",
     "spatialprofilingtoolbox.workflow.tabular_import",
     "spatialprofilingtoolbox.workflow.tabular_import.parsing",
     "spatialprofilingtoolbox.workflow.common",
@@ -121,7 +126,9 @@ packages = [
     "merge_sqlite_dbs.py",
     "report_run_configuration.py",
     "configure.py",
-    "report_on_logs.py"
+    "report_on_logs.py",
+    "tail_logs.py",
+    "create_plots_page.py"
 ]
 "spatialprofilingtoolbox.workflow.assets" = [
     "nextflow.config.jinja",
@@ -129,7 +136,8 @@ packages = [
     "log_table.html.jinja",
     ".spt_db.config.template",
     "main.nf",
-    "main_visitor.nf"
+    "main_visitor.nf",
+    "fields.tsv"
 ]
 "spatialprofilingtoolbox.countsserver.scripts" = [
     "read_expression_dump_file.py",
@@ -138,7 +146,6 @@ packages = [
 ]
 "spatialprofilingtoolbox.db.scripts" = [
     "create_schema.py",
-    "do_fractions_tests.py",
     "modify_constraints.py",
     "guess_channels_from_object_files.py",
     "status.py",

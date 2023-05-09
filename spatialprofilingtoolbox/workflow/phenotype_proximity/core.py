@@ -13,6 +13,7 @@ from spatialprofilingtoolbox.workflow.common.logging.performance_timer import Pe
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
     ProximityJobGenerator
+from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed
 from spatialprofilingtoolbox.workflow.common.proximity import \
     compute_proximity_metric_for_signature_pair
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -61,33 +62,17 @@ class PhenotypeProximityCoreJob(CoreJob):
         logger.info('Report to: %s', self.get_performance_report_filename())
         df.to_csv(self.get_performance_report_filename(), index=False)
 
-    def get_number_cells_to_be_processed(self):
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
-            cursor.execute('''
-            SELECT COUNT(*)
-            FROM
-            histological_structure_identification hsi
-            JOIN histological_structure hs ON hsi.histological_structure=hs.identifier
-            JOIN data_file df ON df.sha256_hash=hsi.data_source
-            JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
-            JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
-            JOIN study_component sc ON sc.component_study=scp.study
-            WHERE sc.primary_study=%s AND sdmp.specimen=%s AND hs.anatomical_entity='cell'
-            ;
-            ''', (self.study_name, self.sample_identifier))
-            rows = cursor.fetchall()
-            cursor.close()
-        return rows[0][0]
-
     def _calculate(self):
         self.log_job_info()
         self.calculate_proximity()
         self.wrap_up_timer()
 
     def log_job_info(self):
-        number_cells = self.get_number_cells_to_be_processed()
+        number_cells = get_number_cells_to_be_processed(
+            self.database_config_file,
+            self.study_name,
+            self.sample_identifier,
+        )
         logger.info('%s cells to be analyzed for sample "%s".',number_cells,self.sample_identifier)
 
     def calculate_proximity(self):

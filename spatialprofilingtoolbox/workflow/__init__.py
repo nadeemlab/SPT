@@ -14,7 +14,7 @@ They are:
 this pipeline are stored and managed.
 """
 import importlib
-__version__ = '0.6.0'
+__version__ = '0.7.0'
 
 workflow_names_and_subpackages = {
     'tabular import': 'tabular_import',

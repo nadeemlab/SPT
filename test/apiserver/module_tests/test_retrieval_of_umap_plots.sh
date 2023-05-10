@@ -8,6 +8,7 @@ then
     curl "$query"
     exit 1
 fi
+<<<<<<< HEAD
 
 size=$(stat -c "%s" _rows.json)
 if [ $size -lt 1000000 ];
@@ -18,3 +19,6 @@ else
     echo "JSON file is unexpectedly large: $size bytes."
     exit 1
 fi
+=======
+rm _rows.json
+>>>>>>> main

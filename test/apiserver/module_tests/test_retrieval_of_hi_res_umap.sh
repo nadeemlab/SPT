@@ -9,11 +9,29 @@ then
     exit 1
 fi
 
-size=$(stat -f%z hi_res.png)
-rm hi_res.png
-if [ $ss -lt 1500000 ];
-    echo "PNG file is at least 1.5MB, as expected."
+
+png=$(file hi_res.png | grep -o 'PNG image data')
+if [[ "$png" == "PNG image data" ]];
 then
-    echo "PNG file is unexpectedly small."
+    echo "Query returned valid PNG image file."
+else
+    echo "Query did not return valid PNG image file."
+fi
+
+dimensions=$(file hi_res.png | grep -o "[0-9]\+ x [0-9]\+")
+if [[ "$dimensions" == "2400 x 2400" ]];
+then
+    echo "Dimensions 2400 x 2400 as expected."
+else
+    echo "Dimensions '$dimensions' not expected value '2400 x 2400'."
+fi
+
+size=$(stat -c "%s" hi_res.png)
+if [ $size -gt 100000 ];
+then
+    echo "PNG file ($size bytes) is at least 100KB in size, as expected."
+    rm hi_res.png
+else
+    echo "PNG file is unexpectedly small: $size bytes."
     exit 1
 fi

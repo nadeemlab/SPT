@@ -2,10 +2,15 @@
 import os
 import json
 import re
+from io import BytesIO
+from base64 import b64encode
+from base64 import b64decode
 
+from PIL import Image
 from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
+from fastapi.responses import StreamingResponse
 
 from spatialprofilingtoolbox.db.fractions_transcriber import \
     describe_fractions_feature_derivation_method
@@ -50,13 +55,14 @@ def get_study_components(study_name):
             'measurement': 'specimen_measurement_study',
             'analysis': 'data_analysis_study',
         }
+        descriptor = ADIFeatureSpecificationUploader.ondemand_descriptor()
         for key, tablename in substudy_tables.items():
             cursor.execute(f'SELECT name FROM {tablename};')
             names = [row[0] for row in cursor.fetchall()]
             for substudy in substudies:
                 if ( substudy in names and not re.search('phenotype fractions', substudy)
                      and not re.search('proximity calculation', substudy)
-                     and not re.search(ADIFeatureSpecificationUploader.ondemand_descriptor(), substudy) ):
+                     and not re.search(descriptor, substudy) ):
                     components[key] = substudy
         cursor.close()
     return components
@@ -859,27 +865,6 @@ async def request_phenotype_proximity_computation(
         media_type='application/json',
     )
 
-def get_visualisation_components(study_name):
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
-        cursor.execute(
-            'SELECT component_study FROM study_component WHERE primary_study=%s;',
-            (study_name,),
-        )
-        substudies = [row[0] for row in cursor.fetchall()]
-        components = []
-        key, tablename = 'analysis', 'data_analysis_study'
-
-        cursor.execute(f'SELECT name FROM {tablename};')
-        names = [row[0] for row in cursor.fetchall()]
-        for substudy in substudies:
-            if substudy in names:
-                if re.search('reduction visual', substudy):
-                    components.append(substudy)
-        cursor.close()
-    return components
-
 @app.get("/visualization-plots/")
 async def get_plots(
     study: str = Query(default='unknown', min_length=3),
@@ -903,7 +888,58 @@ async def get_plots(
         rows = [(row[0], row[1]) for row in cursor.fetchall()]
         cursor.close()
 
+    downsampled_rows = []
+    for row in rows:
+        input_buffer = BytesIO(b64decode(row[1]))
+        output_buffer = BytesIO()
+        with Image.open(input_buffer) as image:
+            new_size = 550
+            image_resized = image.resize((new_size, new_size))
+            image_resized.save(output_buffer, format='PNG')
+            output_buffer.seek(0)
+            downsampled_64 = b64encode(output_buffer.getvalue()).decode('utf-8')
+        output_buffer.close()
+        input_buffer.close()
+        downsampled_rows.append((row[0], downsampled_64))
+
     return Response(
-        content=json.dumps({'rows': rows}),
+        content=json.dumps({'rows': downsampled_rows}),
         media_type='application/json',
     )
+
+@app.get("/visualization-plot-high-resolution/")
+async def get_plot_high_resolution(
+    study: str = Query(default='unknown', min_length=3),
+    channel: str = Query(default='unknown', min_length=3),
+):
+    """
+    Base64-encoded plots of UMAP visualizations.
+    Each row is:
+
+    * **channel**. The name of the target (e.g. gene) used in coloring of a plot
+                   (e.g. using expression values).
+    * **base64 plot**. Base64-encoding of the PNG plot image.
+    """
+    with DBAccessor() as db_accessor:
+        connection = db_accessor.get_connection()
+        cursor = connection.cursor()
+        cursor.execute('''
+        SELECT up.png_base64 FROM umap_plots up
+        WHERE up.study=%s AND up.channel=%s
+        ORDER BY up.channel ;
+        ''', (study, channel))
+        rows = [row[0] for row in cursor.fetchall()]
+        cursor.close()
+
+    if len(rows) == 0:
+        return Response(
+            content=json.dumps({'error': 'Requested image not found.'}),
+            media_type='application/json',
+        )
+
+    png_base64 = rows[0]
+    input_buffer = BytesIO(b64decode(png_base64))
+    input_buffer.seek(0)
+    def streaming_iteration():
+        yield from input_buffer
+    return StreamingResponse(streaming_iteration(), media_type="image/png")

@@ -809,6 +809,7 @@ def create_signature_with_channel_names(handle, study):
         return [handle], []
 
     if re.match(r'^\d+$', handle):
+        components = get_study_components(study)
         with DBAccessor() as db_accessor:
             connection = db_accessor.get_connection()
             cursor = connection.cursor()
@@ -816,10 +817,10 @@ def create_signature_with_channel_names(handle, study):
                 SELECT cs.symbol, cpc.polarity
                 FROM cell_phenotype_criterion cpc
                 JOIN chemical_species cs ON cs.identifier=cpc.marker
-                WHERE cpc.cell_phenotype=%s
+                WHERE cpc.cell_phenotype=%s AND cpc.study=%s
                 ;
                 ''',
-                (handle,),
+                (handle, components['analysis'],),
             )
             rows = cursor.fetchall()
             markers = [

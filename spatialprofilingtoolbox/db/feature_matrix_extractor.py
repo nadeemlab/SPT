@@ -32,13 +32,18 @@ class FeatureMatrixExtractor:
                                                                             study=study)
         stratification = E.retrieve_derivative_stratification_from_database(database_config_file)
         study_component_lookup = E.retrieve_study_component_lookup(database_config_file)
-        return E.merge_dictionaries(
+        merged = E.merge_dictionaries(
             E.create_feature_matrices(data_arrays, centroid_coordinates),
             E.create_channel_information(data_arrays),
             stratification,
             new_keys=['feature matrices','channel symbols by column name', 'sample cohorts'],
             study_component_lookup=study_component_lookup,
         )
+        if study is not None:
+            for key in list(merged.keys()):
+                if not key == study:
+                    del merged[key]
+        return merged
 
     @staticmethod
     def redact_dataframes(extraction):

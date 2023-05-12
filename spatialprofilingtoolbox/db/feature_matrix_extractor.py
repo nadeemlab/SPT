@@ -40,7 +40,7 @@ class FeatureMatrixExtractor:
             study_component_lookup=study_component_lookup,
         )
         if study is not None:
-            for key in merged.keys():
+            for key in list(merged.keys()):
                 if not key == study:
                     del merged[key]
         return merged

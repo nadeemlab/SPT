@@ -789,7 +789,7 @@ async def get_phenotype_proximity_summary(
         )
 
 
-def create_signature_with_channel_names(handle, study):
+def create_signature_with_channel_names(handle, measurement_study, data_analysis_study):
     with DBAccessor() as db_accessor:
         connection = db_accessor.get_connection()
         cursor = connection.cursor()
@@ -800,7 +800,7 @@ def create_signature_with_channel_names(handle, study):
             WHERE bms.study=%s
             ;
             ''',
-            (study,),
+            (measurement_study,),
         )
         rows = cursor.fetchall()
         channels = [row[0] for row in rows]
@@ -809,7 +809,6 @@ def create_signature_with_channel_names(handle, study):
         return [handle], []
 
     if re.match(r'^\d+$', handle):
-        components = get_study_components(study)
         with DBAccessor() as db_accessor:
             connection = db_accessor.get_connection()
             cursor = connection.cursor()
@@ -820,7 +819,7 @@ def create_signature_with_channel_names(handle, study):
                 WHERE cpc.cell_phenotype=%s AND cpc.study=%s
                 ;
                 ''',
-                (handle, components['analysis'],),
+                (handle, data_analysis_study,),
             )
             rows = cursor.fetchall()
             markers = [
@@ -845,8 +844,9 @@ async def request_phenotype_proximity_computation(
     """
     components = get_study_components(study)
     measurement_study = components['measurement']
-    positives1, negatives1 = create_signature_with_channel_names(phenotype1, measurement_study)
-    positives2, negatives2 = create_signature_with_channel_names(phenotype2, measurement_study)
+    data_analysis_study = components['analysis']
+    positives1, negatives1 = create_signature_with_channel_names(phenotype1, measurement_study, data_analysis_study)
+    positives2, negatives2 = create_signature_with_channel_names(phenotype2, measurement_study, data_analysis_study)
 
     host = os.environ['COUNTS_SERVER_HOST']
     port = int(os.environ['COUNTS_SERVER_PORT'])

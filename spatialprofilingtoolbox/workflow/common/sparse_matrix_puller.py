@@ -181,23 +181,6 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
         return sparse_entries
 
-    def get_sparse_matrix_query(self):
-        return '''
-        SELECT
-        eq.histological_structure,
-        eq.target,
-        CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-        sdmp.specimen as specimen
-        FROM expression_quantification eq
-        JOIN histological_structure hs ON eq.histological_structure=hs.identifier
-        JOIN histological_structure_identification hsi ON hs.identifier=hsi.histological_structure
-        JOIN data_file df ON hsi.data_source=df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ORDER BY sdmp.specimen, eq.histological_structure, eq.target
-        ;
-        '''
-
     def get_sparse_matrix_query_specimen_specific(self):
         return '''
         SELECT

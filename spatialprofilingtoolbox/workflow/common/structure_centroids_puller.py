@@ -33,7 +33,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
                 continue
             self.structure_centroids.add_study_data(
                 study_name,
-                self.create_study_data(rows, specimen_count)
+                self.create_study_data(rows, specimen_count, study_name)
             )
         cursor.close()
 
@@ -93,7 +93,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
             rows = cursor.fetchall()
         return sorted([row[0] for row in rows])
 
-    def create_study_data(self, rows, specimen_count):
+    def create_study_data(self, rows, specimen_count, study):
         study_data = {}
         field = {'structure': 0, 'specimen': 1, 'base64_contents': 2}
         current_specimen = rows[0][field['specimen']]
@@ -101,7 +101,8 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         progress_reporter = FractionalProgressReporter(
             specimen_count,
             parts=6,
-            task_description='parsing shapefiles',
+            task_description='parsing shapefiles for %s' % study,
+            logger=logger,
         )
         for row in rows:
             if current_specimen != row[field['specimen']]:

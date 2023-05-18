@@ -1,15 +1,16 @@
 """Logs basic indicator of amount of progress, at a configurable interval."""
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-logger = colorized_logger(__name__)
+_logger = colorized_logger(__name__)
 
 class FractionalProgressReporter:
     """Logs basic indicator of amount of progress, at a configurable interval."""
-    def __init__(self, size, parts=2, task_description='task', done_message=None):
+    def __init__(self, size, parts=2, task_description='task', done_message=None, logger=_logger):
         self.size = size
         self.parts = parts
         self.task_description = task_description
         self.done_message = done_message
+        self.logger = logger
         self.counter = 0
         self.key_times = [round((i+1) * (size / parts)) for i in range(parts)]
 
@@ -25,10 +26,10 @@ class FractionalProgressReporter:
         if iteration_details is not None:
             arguments.append(iteration_details)
             message = '%s%% finished with %s. (%s ...)'
-        logger.info(message, *arguments)
+        self.logger.info(message, *arguments)
 
     def done(self):
         if self.done_message is not None:
-            logger.info(self.done_message)
+            self.logger.info(self.done_message)
         else:
-            logger.info('Done %s.', self.task_description)
+            self.logger.info('Done %s.', self.task_description)

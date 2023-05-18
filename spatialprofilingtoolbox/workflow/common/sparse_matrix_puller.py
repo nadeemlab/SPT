@@ -107,6 +107,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             len(specimens),
             parts=8,
             task_description='pulling sparse entries from the study',
+            logger=logger,
         )
         for _specimen in specimens:
             sparse_entries = self.get_sparse_entries(

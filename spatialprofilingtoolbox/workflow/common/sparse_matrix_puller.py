@@ -36,14 +36,64 @@ class CompressedDataArrays:
     def get_studies(self):
         return self.studies
 
-    def add_study_data(self, study_name, data_arrays_by_specimen, target_index_lookup,
-                       target_by_symbol):
-        self.studies[study_name] = {
-            'data arrays by specimen': data_arrays_by_specimen,
-            'target index lookup': target_index_lookup,
-            'target by symbol': target_by_symbol,
-        }
+    def add_study_data(
+            self,
+            study_name,
+            data_arrays_by_specimen,
+            target_index_lookup,
+            target_by_symbol,
+        ):
+        self.check_target_index_lookup(study_name, target_index_lookup)
+        self.check_target_by_symbol(study_name, target_by_symbol)
+        if not study_name in self.studies:
+            self.studies[study_name] = {
+                'data arrays by specimen': data_arrays_by_specimen,
+                'target index lookup': target_index_lookup,
+                'target by symbol': target_by_symbol,
+            }
+        else:
+            self.add_more_data_arrays(study_name, data_arrays_by_specimen)
 
+    def add_more_data_arrays(self, study_name, data_arrays_by_specimen):
+        for key, integers_list in data_arrays_by_specimen.items():
+            self.studies[study_name]['data arrays by specimen'][key] = integers_list
+
+    def check_target_index_lookup(self, study_name, target_index_lookup):
+        if study_name in self.studies:
+            check = CompressedDataArrays.check_dicts_equal
+            check(self.studies[study_name]['target index lookup'], target_index_lookup)
+
+    def check_target_by_symbol(self, study_name, target_by_symbol):
+        if study_name in self.studies:
+            check = CompressedDataArrays.check_dicts_equal
+            check(self.studies[study_name]['target by symbol'], target_by_symbol)
+
+    @staticmethod
+    def check_dicts_equal(dict1, dict2):
+        if sorted(list(dict1.keys())) != sorted(list(dict2.keys())):
+            raise ValueError('Dictionary key sets not equal: %s, %s' % (dict1.keys(), dict2.keys()))
+        for key, value in dict1.items():
+            if value != dict2[key]:
+                raise ValueError('Dictionary values not equal: %s, %s' % (value, dict2[key]))
+
+class FractionalProgressReporter:
+    """Logs basic indicator of amount of progress, at a configurable interval."""
+    def __init__(self, size, parts=2, task_description='task', done_message='Done.'):
+        self.size = size
+        self.parts = parts
+        self.task_description = task_description
+        self.done_message = done_message
+        self.counter = 0
+        self.key_times = [round((i+1) * (size / parts)) for i in range(parts)]
+
+    def increment(self):
+        self.counter = self.counter + 1
+        if self.counter in self.key_times:
+            percent = round(100 * (self.counter / self.size))
+            logger.info('%s%% finished with %s.', percent, self.task_description)
+
+    def done(self):
+        logger.info(self.done_message)
 
 class SparseMatrixPuller(DatabaseConnectionMaker):
     """"Get sparse marix representation of cell x channel data in database."""
@@ -62,19 +112,46 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         study_names = self.get_study_names(self.get_connection(), study=study)
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
-            sparse_entries = self.get_sparse_entries(self.get_connection(),
-                                                     study_name, specimen=specimen)
+            self.fill_data_arrays_for_study(data_arrays, study_name, specimen=specimen)
+        return data_arrays
+
+    def fill_data_arrays_for_study(self, data_arrays, study_name, specimen: str=None):
+        specimens = self.get_pertinent_specimens(study_name, specimen=specimen)
+        target_by_symbol = self.get_target_by_symbol(study_name, self.get_connection())
+        progress = FractionalProgressReporter(len(specimens), parts=3, task_description='pulling sparse entries from the study')
+        logger.debug('Pulling sparse entries for study "%s".', study_name)
+        for _specimen in specimens:
+            sparse_entries = self.get_sparse_entries(
+                self.get_connection(),
+                study_name,
+                specimen=_specimen,
+            )
             if len(sparse_entries) == 0:
                 continue
-            data_arrays_by_specimen, target_index_lookup = self.parse_data_arrays_by_specimen(
-                sparse_entries)
+            parsed = self.parse_data_arrays_by_specimen(sparse_entries)
+            data_arrays_by_specimen, target_index_lookup = parsed
             data_arrays.add_study_data(
                 study_name,
                 data_arrays_by_specimen,
                 target_index_lookup,
-                self.get_target_by_symbol(study_name, self.get_connection())
+                target_by_symbol,
             )
-        return data_arrays
+            progress.increment()
+        progress.done()
+
+    def get_pertinent_specimens(self, study_name, specimen: str=None):
+        if specimen is not None:
+            return [specimen]
+        with self.get_connection().cursor() as cursor:
+            cursor.execute('''
+            SELECT sdmp.specimen
+            FROM specimen_data_measurement_process sdmp
+            WHERE sdmp.study=%s
+            ORDER BY sdmp.specimen
+            ;
+            ''', (study_name,))
+            rows = cursor.fetchall()
+        return [row[0] for row in rows]
 
     def get_study_names(self, connection, study=None):
         if study is None:
@@ -90,17 +167,19 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                 ;
                 ''', (study,))
                 rows = cursor.fetchall()
-        return sorted([row[0] for row in rows])
+        logger.info('Will pull feature matrices for studies:')
+        names = sorted([row[0] for row in rows])
+        for name in names:
+            logger.info(name)
+        return names
 
-    def get_sparse_entries(self, connection, study_name, specimen: str=None):
+    def get_sparse_entries(self, connection, study_name, specimen):
         sparse_entries = []
-        logger.debug('Pulling sparse entries for study "%s".', study_name)
         with connection.cursor() as cursor:
-            if specimen is None:
-                cursor.execute(self.get_sparse_matrix_query(), (study_name,))
-            else:
-                cursor.execute(self.get_sparse_matrix_query_specimen_specific(),
-                               (study_name, specimen))
+            cursor.execute(
+                self.get_sparse_matrix_query_specimen_specific(),
+                (study_name, specimen),
+            )
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
@@ -182,8 +261,6 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             target: i
             for i, target in enumerate(targets)
         }
-        logger.debug('Unique channels: %s', len(lookup))
-        logger.debug('Channel index assignments: %s', lookup)
         return lookup
 
     def get_target_by_symbol(self, study_name, connection):

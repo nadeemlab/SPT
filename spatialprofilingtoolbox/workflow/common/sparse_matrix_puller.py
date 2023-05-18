@@ -3,6 +3,8 @@ Retrieve the "feature matrix" for a given study from the database, and store
 it in a special (in-memory) binary compressed format.
 """
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
+    import FractionalProgressReporter
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -76,24 +78,6 @@ class CompressedDataArrays:
             if value != dict2[key]:
                 raise ValueError('Dictionary values not equal: %s, %s' % (value, dict2[key]))
 
-class FractionalProgressReporter:
-    """Logs basic indicator of amount of progress, at a configurable interval."""
-    def __init__(self, size, parts=2, task_description='task', done_message='Done.'):
-        self.size = size
-        self.parts = parts
-        self.task_description = task_description
-        self.done_message = done_message
-        self.counter = 0
-        self.key_times = [round((i+1) * (size / parts)) for i in range(parts)]
-
-    def increment(self):
-        self.counter = self.counter + 1
-        if self.counter in self.key_times:
-            percent = round(100 * (self.counter / self.size))
-            logger.info('%s%% finished with %s.', percent, self.task_description)
-
-    def done(self):
-        logger.info(self.done_message)
 
 class SparseMatrixPuller(DatabaseConnectionMaker):
     """"Get sparse marix representation of cell x channel data in database."""
@@ -118,8 +102,12 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
     def fill_data_arrays_for_study(self, data_arrays, study_name, specimen: str=None):
         specimens = self.get_pertinent_specimens(study_name, specimen=specimen)
         target_by_symbol = self.get_target_by_symbol(study_name, self.get_connection())
-        progress = FractionalProgressReporter(len(specimens), parts=3, task_description='pulling sparse entries from the study')
         logger.debug('Pulling sparse entries for study "%s".', study_name)
+        progress_reporter = FractionalProgressReporter(
+            len(specimens),
+            parts=8,
+            task_description='pulling sparse entries from the study',
+        )
         for _specimen in specimens:
             sparse_entries = self.get_sparse_entries(
                 self.get_connection(),
@@ -136,8 +124,8 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                 target_index_lookup,
                 target_by_symbol,
             )
-            progress.increment()
-        progress.done()
+            progress_reporter.increment(iteration_details=_specimen)
+        progress_reporter.done()
 
     def get_pertinent_specimens(self, study_name, specimen: str=None):
         if specimen is not None:
@@ -170,11 +158,12 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         logger.info('Will pull feature matrices for studies:')
         names = sorted([row[0] for row in rows])
         for name in names:
-            logger.info(name)
+            logger.info('    %s', name)
         return names
 
     def get_sparse_entries(self, connection, study_name, specimen):
         sparse_entries = []
+        number_log_messages = 0
         with connection.cursor() as cursor:
             cursor.execute(
                 self.get_sparse_matrix_query_specimen_specific(),
@@ -186,7 +175,9 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                 sparse_entries.extend(cursor.fetchmany(size=self.get_batch_size()))
                 logger.debug('Received %s entries from DB.',
                              len(sparse_entries) - current_number_stored)
-        logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
+                number_log_messages = number_log_messages + 1
+        if number_log_messages > 1:
+            logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
         return sparse_entries
 
     def get_sparse_matrix_query(self):
@@ -241,11 +232,9 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
                     cell_count = cell_count + 1
             else:
                 data_arrays_by_specimen[specimen] = [0] * cell_count
-                self.fill_data_array(
-                    data_arrays_by_specimen[specimen], buffer, target_index_lookup)
+                self.fill_data_array(data_arrays_by_specimen[specimen], buffer, target_index_lookup)
+                logger.debug('Done parsing %s feature vectors from %s.', len(data_arrays_by_specimen[specimen]), specimen)
                 number_mb = int(100 * len(data_arrays_by_specimen[specimen]) * 8 / 1000000) / 100
-                logger.debug('Data array is %s MB for %s cells in '
-                             'specimen %s .', number_mb, cell_count, specimen)
                 if i != last_index:
                     specimen = sparse_entries[i + 1][3]
                     buffer = []

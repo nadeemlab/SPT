@@ -29,7 +29,8 @@ class FractionalProgressReporter:
         self.logger.info(message, *arguments)
 
     def done(self):
+        appendix = f'({self.size} iterations)'
         if self.done_message is not None:
-            self.logger.info(self.done_message)
+            self.logger.info('%s %s',  self.done_message, appendix)
         else:
-            self.logger.info('Done %s.', self.task_description)
+            self.logger.info('Done %s. %s', self.task_description, appendix)

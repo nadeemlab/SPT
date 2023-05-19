@@ -60,6 +60,7 @@ help:
 # Docker and test variables
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
+export DOCKER_SCAN_SUGGEST:=false
 DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
 DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)

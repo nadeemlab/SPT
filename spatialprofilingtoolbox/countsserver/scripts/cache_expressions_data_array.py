@@ -12,6 +12,7 @@ from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMak
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.structure_centroids import CENTROIDS_FILENAME
+from spatialprofilingtoolbox.countsserver.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -50,6 +51,10 @@ if __name__ == '__main__':
 
     if args.centroids_only:
         sys.exit()
+
+    if CompressedMatrixWriter.already_exists():
+        logger.info('%s already exists, skipping feature matrix pull.', EXPRESSIONS_INDEX_FILENAME)
+        sys.exit(1)
 
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()

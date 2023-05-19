@@ -38,18 +38,24 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/countsserver/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/countsserver/test_expression_data/.spt_db.config.generated
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "countsserver (teardown testing environment)"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/countsserver/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/countsserver/test_expression_data/.spt_db.config.generated
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "countsserver (teardown testing environment)"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/countsserver/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/countsserver/test_expression_data/.spt_db.config.generated
 
 ${TESTS}: setup-testing
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \

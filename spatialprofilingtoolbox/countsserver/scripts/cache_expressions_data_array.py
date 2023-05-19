@@ -8,7 +8,10 @@ from os.path import expanduser
 from os import getcwd
 import sys
 
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
+from spatialprofilingtoolbox.workflow.common.structure_centroids import CENTROIDS_FILENAME
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -42,9 +45,15 @@ if __name__ == '__main__':
         with StructureCentroidsPuller(database_config_file) as puller:
             puller.pull()
             puller.get_structure_centroids().write_to_file(getcwd())
+    else:
+        logger.info('%s already exists, skipping shapefile pull.', CENTROIDS_FILENAME)
 
     if args.centroids_only:
         sys.exit()
+
+    with DatabaseConnectionMaker(database_config_file) as dcm:
+        connection = dcm.get_connection()
+        ExpressionsTableIndexer.ensure_indexed_expressions_table(connection)
 
     with SparseMatrixPuller(database_config_file) as puller:
         puller.pull()

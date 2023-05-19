@@ -2,6 +2,7 @@
 Retrieve the "feature matrix" for a given study from the database, and store
 it in a special (in-memory) binary compressed format.
 """
+from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
     import FractionalProgressReporter
@@ -80,7 +81,7 @@ class CompressedDataArrays:
 
 
 class SparseMatrixPuller(DatabaseConnectionMaker):
-    """"Get sparse marix representation of cell x channel data in database."""
+    """"Get sparse matrix representation of cell x channel data in database."""
     data_arrays: CompressedDataArrays
 
     def __init__(self, database_config_file):
@@ -182,6 +183,25 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         return sparse_entries
 
     def get_sparse_matrix_query_specimen_specific(self):
+        if ExpressionsTableIndexer.expressions_table_is_indexed(self.get_connection()):
+            return self.sparse_entries_query_optimized()
+        return self.sparse_entries_query_unoptimized()
+
+    def sparse_entries_query_optimized(self):
+        return '''
+        -- absorb/ignore first string formatting argument: %s
+        SELECT
+        eq.histological_structure,
+        eq.target,
+        CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
+        eq.source_specimen as specimen
+        FROM expression_quantification eq
+        WHERE eq.source_specimen=%s
+        ORDER BY eq.source_specimen, eq.histological_structure, eq.target
+        ;
+        '''
+
+    def sparse_entries_query_unoptimized(self):
         return '''
         SELECT
         eq.histological_structure,

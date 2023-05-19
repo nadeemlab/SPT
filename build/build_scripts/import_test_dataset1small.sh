@@ -17,6 +17,8 @@ status=$?
 [ $status -eq 0 ] && echo "Import created correct number of records." || echo "Import failed."
 rm table_counts.txt
 
+spt db index-expressions-table --database-config-file=build/db/.spt_db.config.local
+
 if [ $status -eq 0 ];
 then
     exit 0

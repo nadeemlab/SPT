@@ -3,8 +3,12 @@ import argparse
 import json
 import socketserver
 import os
+from os.path import join
+import time
 
-from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
+from psycopg2 import OperationalError
+
+from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.countsserver.counts_provider import CountsProvider
 from spatialprofilingtoolbox.countsserver.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -139,6 +143,24 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
             return []
         return element
 
+def create_database_config_file(filename):
+    with DBAccessor() as db_accessor:
+        contents = db_accessor.get_database_config_file_contents()
+    logger.info('Creating database configuration file: %s', filename)
+    logger.debug(contents)
+    with open(filename, 'wt', encoding='utf-8') as file:
+        file.write(contents)
+
+def wait_for_database_ready():
+    while True:
+        try:
+            with DBAccessor() as db_accessor:
+                contents = db_accessor.get_database_config_file_contents()
+            break
+        except OperationalError:
+            logger.debug('Database is not ready.')
+            time.sleep(2.0)
+    logger.info('Database is ready.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -169,17 +191,17 @@ if __name__ == '__main__':
         'the JSON index file. If they are not found, this program will attempt to create them '
         'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
     )
-    add_argument(parser, 'database config')
     args = parser.parse_args()
 
-    config = args.database_config_file
-    if config:
-        commands = [
-            f'cd {args.source_data_location}',
-            f'spt countsserver cache-expressions-data-array --database-config-file={config}',
-        ]
-        command = '; '.join(commands)
-        os.system(command)
+    wait_for_database_ready()
+    config = join(args.source_data_location, '.spt_db.config.generated')
+    create_database_config_file(config)
+    commands = [
+        f'cd {args.source_data_location}',
+        f'spt countsserver cache-expressions-data-array --database-config-file={config}',
+    ]
+    command = '; '.join(commands)
+    os.system(command)
 
     counts_provider = CountsProvider(args.source_data_location)
     proximity_provider = ProximityProvider(args.source_data_location)

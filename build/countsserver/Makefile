@@ -86,3 +86,4 @@ clean:
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
 >@rm -rf expression_data/
+>@rm -f ../../test/countsserver/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated

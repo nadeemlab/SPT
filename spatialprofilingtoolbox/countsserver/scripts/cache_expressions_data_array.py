@@ -8,6 +8,7 @@ from os.path import expanduser
 from os import getcwd
 import sys
 
+from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -37,9 +38,10 @@ if __name__ == '__main__':
 
     database_config_file = abspath(expanduser(args.database_config_file))
 
-    with StructureCentroidsPuller(database_config_file) as puller:
-        puller.pull()
-        puller.get_structure_centroids().write_to_file(getcwd())
+    if not StructureCentroids.already_exists(getcwd()):
+        with StructureCentroidsPuller(database_config_file) as puller:
+            puller.pull()
+            puller.get_structure_centroids().write_to_file(getcwd())
 
     if args.centroids_only:
         sys.exit()

@@ -2,7 +2,9 @@
 import argparse
 import json
 import socketserver
+import os
 
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.countsserver.counts_provider import CountsProvider
 from spatialprofilingtoolbox.countsserver.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -164,9 +166,20 @@ if __name__ == '__main__':
         type=str,
         default='/countsserver/source_data/',
         help='The directory in which this process will search for expression data binaries and '
-        'the JSON index file.',
+        'the JSON index file. If they are not found, this program will attempt to create them '
+        'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
     )
+    add_argument(parser, 'database config')
     args = parser.parse_args()
+
+    config = args.database_config_file
+    if config:
+        commands = [
+            f'cd {args.source_data_location}',
+            f'spt countsserver cache-expressions-data-array --database-config-file={config}',
+        ]
+        command = '; '.join(commands)
+        os.system(command)
 
     counts_provider = CountsProvider(args.source_data_location)
     proximity_provider = ProximityProvider(args.source_data_location)

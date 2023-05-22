@@ -112,7 +112,7 @@ Optionally, if the images are ready to be released:
 <pre>
 Checking for Docker credentials in ~/.docker/config.json <span style="color:olive;">...</span><span style="color:olive;">....................</span> <span style="font-weight:bold;color:green;">Found.</span>         <span style="color:purple;">(0s)</span>
 Pushing Docker container nadeemlab/spt-apiserver <span style="color:olive;">...</span><span style="color:olive;">............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(16s)</span>
-Pushing Docker container nadeemlab/spt-ondemand <span style="color:olive;">...</span><span style="color:olive;">.........................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(15s)</span>
+Pushing Docker container nadeemlab/spt-ondemand <span style="color:olive;">...</span><span style="color:olive;">.............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(15s)</span>
 Pushing Docker container nadeemlab/spt-db <span style="color:olive;">...</span><span style="color:olive;">...................................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(23s)</span>
 Pushing Docker container nadeemlab/spt-workflow <span style="color:olive;">...</span><span style="color:olive;">.............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(27s)</span>
 </pre>
@@ -165,7 +165,7 @@ For example:
 
 ```
 $ spt [TAB]
-ondemand  db  workflow
+apiserver ondemand  db  workflow
 
 $ spt db [TAB]
 create-schema  guess-channels-from-object-files  modify-constraints  status
@@ -226,6 +226,4 @@ Each workflow consists of:
 - core jobs
 - integration/wrap-up
 
-**To make a new workflow**: copy the `phenotype_proximity` subdirectory to a sibling directory with a new name. Update the components accordingly, and update [`workflow/__init__.py`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/__init__.py) with a new entry for your workflow, to ensure that it is discovered. You'll also need to update [`pyproject.toml`](https://github.com/nadeemlab/SPT/blob/main/pyproject.toml) to declare your new subpackage.
-
-The basic interface for each workflow component is defined in [`workflow/component_interfaces`](https://github.com/nadeemlab/SPT/tree/main/spatialprofilingtoolbox/workflow/component_interfaces).
+**To make a new workflow**: copy the `phenotype_proximity` subdirectory to a sibling directory with a new name. Update the components accordingly, and update [`workflow/__init__.py`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/__init__.py) with a new entry for your workflow, to ensure that it is discovered. You'll also need to update [`pyproject.toml`](https://github.com/nadeemlab/SPT/blob/main/pyproject.toml.unversioned) to declare your new subpackage.

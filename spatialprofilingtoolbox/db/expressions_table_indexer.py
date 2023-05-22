@@ -74,7 +74,7 @@ class ExpressionsTableIndexer:
             AND subquery.target=eq.target ;
         ''')
         ExpressionsTableIndexer.log_summary_of_index_values(cursor)
-    
+
     @staticmethod
     def log_summary_of_index_values(cursor):
         logger.debug('Inserted values: ')

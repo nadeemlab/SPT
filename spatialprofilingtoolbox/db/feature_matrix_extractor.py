@@ -22,11 +22,12 @@ class FeatureMatrixExtractor:
     and metadata.
     """
     @staticmethod
-    def extract(database_config_file, specimen: str=None, study: str=None):
+    def extract(database_config_file, specimen: str=None, study: str=None, continuous_also=False):
         E = FeatureMatrixExtractor
         data_arrays = E.retrieve_expressions_from_database(database_config_file,
                                                            specimen=specimen,
-                                                           study=study)
+                                                           study=study,
+                                                           continuous_also=continuous_also)
         centroid_coordinates = E.retrieve_structure_centroids_from_database(database_config_file,
                                                                             specimen=specimen,
                                                                             study=study)
@@ -50,15 +51,18 @@ class FeatureMatrixExtractor:
         for study_name, study in extraction.items():
             for specimen in study['feature matrices'].keys():
                 extraction[study_name]['feature matrices'][specimen]['dataframe'] = None
+                key = 'continuous dataframe'
+                if key in extraction[study_name]['feature matrices'][specimen]:
+                    extraction[study_name]['feature matrices'][specimen][key] = None
             extraction[study_name]['sample cohorts']['assignments'] = None
             extraction[study_name]['sample cohorts']['strata'] = None
 
     @staticmethod
     def retrieve_expressions_from_database(database_config_file, specimen: str=None,
-                                           study: str=None):
+                                           study: str=None, continuous_also=False):
         logger.info('Retrieving expression data from database.')
         with SparseMatrixPuller(database_config_file) as puller:
-            puller.pull(specimen=specimen, study=study)
+            puller.pull(specimen=specimen, study=study, continuous_also=continuous_also)
             data_arrays = puller.get_data_arrays()
         logger.info('Done retrieving expression data from database.')
         return data_arrays.get_studies()
@@ -123,6 +127,19 @@ class FeatureMatrixExtractor:
                     'dataframe': dataframe,
                     'filename': f'{k}.{j}.tsv',
                 }
+
+            if 'continuous data arrays by specimen' in study:
+                specimens = list(study['continuous data arrays by specimen'].keys())
+                for j, specimen in enumerate(sorted(specimens)):
+                    logger.debug('Specimen %s .', specimen)
+                    expression_vectors = study['continuous data arrays by specimen'][specimen]
+                    number_channels = len(study['target index lookup'])
+                    dataframe = pd.DataFrame(
+                        expression_vectors,
+                        columns=[f'F{i}' for i in range(number_channels)],
+                    )
+                    matrices[study_name][specimen]['continuous dataframe'] = dataframe
+
         logger.info('Done creating feature matrices.')
         return matrices
 

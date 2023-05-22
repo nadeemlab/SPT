@@ -1,10 +1,10 @@
 
-from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 
 
 def retrieve_case(case):
     study_name = 'Melanoma intralesional IL2 - measurement'
-    host = 'spt-countsserver-testing'
+    host = 'spt-ondemand-testing'
     port = 8016
     with CountRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(case[0], case[1], study_name)

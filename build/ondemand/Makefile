@@ -11,7 +11,7 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 Dockerfile: ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base Dockerfile.append
->@${MESSAGE} start "Building countsserver Dockerfile"
+>@${MESSAGE} start "Building ondemand Dockerfile"
 >@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
 >@${MESSAGE} end "Built." "Not built."
 >@rm -f status_code
@@ -23,10 +23,10 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "countsserver (setup testing environment)"
+>@${MESSAGE} start "ondemand (setup testing environment)"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-countsserver-testing \
+     spt-ondemand-testing \
      spt-db-testing ; \
     echo "$$?" > status_code
 >@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;
@@ -34,22 +34,28 @@ setup-testing:
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "countsserver (teardown testing environment)"
+>@${MESSAGE} start "ondemand (teardown testing environment)"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "countsserver (teardown testing environment)"
+>@${MESSAGE} start "ondemand (teardown testing environment)"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "countsserver (teardown testing environment)"
+>@${MESSAGE} start "ondemand (teardown testing environment)"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
+>@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 ${TESTS}: setup-testing
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
@@ -68,7 +74,7 @@ ${TESTS}: setup-testing
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    test_cmd="cd /mount_sources/countsserver/; $$executor $$test_script" ; \
+    test_cmd="cd /mount_sources/ondemand/; $$executor $$test_script" ; \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
@@ -86,3 +92,4 @@ clean:
 >@rm -rf requirements.txt
 >@rm -rf specific_requirements.txt
 >@rm -rf expression_data/
+>@rm -f ../../test/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated

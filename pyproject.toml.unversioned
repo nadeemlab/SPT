@@ -20,7 +20,8 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "psycopg2==2.9.3",
-    "adiscstudies==0.11.0"
+    "adiscstudies==0.11.0",
+    "numba==0.56.4"
 ]
 
 [project.urls]
@@ -42,10 +43,11 @@ db = [
     "pandas>=1.1.5",
     "pyshp==2.2.0"
 ]
-countsserver = [
+ondemand = [
     "pandas>=1.1.5",
     "numpy==1.22.3",
-    "scikit-learn==1.1.2"
+    "scikit-learn==1.1.2",
+    "pyshp==2.2.0"
 ]
 cggnn = [
     "cg-gnn"
@@ -98,8 +100,8 @@ packages = [
     "spatialprofilingtoolbox.apiserver.scripts",
     "spatialprofilingtoolbox.cggnn",
     "spatialprofilingtoolbox.cggnn.scripts",
-    "spatialprofilingtoolbox.countsserver",
-    "spatialprofilingtoolbox.countsserver.scripts",
+    "spatialprofilingtoolbox.ondemand",
+    "spatialprofilingtoolbox.ondemand.scripts",
     "spatialprofilingtoolbox.db",
     "spatialprofilingtoolbox.db.scripts",
     "spatialprofilingtoolbox.db.data_model",
@@ -140,7 +142,7 @@ packages = [
     "main_visitor.nf",
     "fields.tsv"
 ]
-"spatialprofilingtoolbox.countsserver.scripts" = [
+"spatialprofilingtoolbox.ondemand.scripts" = [
     "read_expression_dump_file.py",
     "cache_expressions_data_array.py",
     "start.py"
@@ -151,7 +153,8 @@ packages = [
     "guess_channels_from_object_files.py",
     "status.py",
     "retrieve_feature_matrices.py",
-    "drop.py"
+    "drop.py",
+    "index_expressions_table.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",

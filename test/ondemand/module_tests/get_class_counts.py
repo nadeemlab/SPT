@@ -2,9 +2,9 @@
 import sys
 import json
 
-from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 
-HOST = 'spt-countsserver-testing'
+HOST = 'spt-ondemand-testing'
 PORT = 8016
 
 

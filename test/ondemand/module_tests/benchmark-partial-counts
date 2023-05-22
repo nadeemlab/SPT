@@ -6,7 +6,7 @@ import configparser
 import argparse
 
 import spatialprofilingtoolbox
-from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 
 
 def get_default_counts_server_port():
@@ -22,14 +22,14 @@ if __name__=='__main__':
         description = 'Benchmark the counts server performance.',
     )
     parser.add_argument(
-        '--countsserver-host',
-        dest='countsserver_host',
+        '--ondemand-host',
+        dest='ondemand_host',
         type=str,
-        default='spt-service-countsserver.local',
+        default='spt-service-ondemand.local',
     )
     parser.add_argument(
-        '--countsserver-port',
-        dest='countsserver_port',
+        '--ondemand-port',
+        dest='ondemand_port',
         type=int,
         default=get_default_counts_server_port(),
     )

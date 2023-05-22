@@ -15,7 +15,7 @@ from fastapi.responses import StreamingResponse
 from spatialprofilingtoolbox.db.fractions_transcriber import \
     describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
-from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 VERSION = '0.4.0'
 

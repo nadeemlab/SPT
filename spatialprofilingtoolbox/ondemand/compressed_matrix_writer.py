@@ -5,9 +5,10 @@ format.
 import re
 import random
 import json
+from os.path import isfile
 
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import CompressedDataArrays
-from spatialprofilingtoolbox.countsserver.defaults import EXPRESSIONS_INDEX_FILENAME
+from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -19,6 +20,10 @@ class CompressedMatrixWriter:
         self.write_data_arrays(data_arrays)
         self.write_index(data_arrays)
         self.report_subsample_for_inspection(data_arrays)
+
+    @staticmethod
+    def already_exists():
+        return isfile(EXPRESSIONS_INDEX_FILENAME)
 
     def write_data_arrays(self, data_arrays: CompressedDataArrays):
         _, study_indices = self.get_study_names_and_indices(data_arrays)

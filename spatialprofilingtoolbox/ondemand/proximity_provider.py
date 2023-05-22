@@ -14,8 +14,8 @@ import numpy as np
 from sklearn.neighbors import BallTree
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
-from spatialprofilingtoolbox.countsserver.phenotype_str import phenotype_str_to_phenotype
-from spatialprofilingtoolbox.countsserver.phenotype_str import phenotype_to_phenotype_str
+from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_str_to_phenotype
+from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.workflow.common.proximity import \

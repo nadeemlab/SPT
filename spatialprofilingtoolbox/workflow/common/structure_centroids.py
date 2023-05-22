@@ -4,8 +4,9 @@ An object for in-memory storage of summarized-location data for all cells of eac
 from pickle import dump
 from pickle import load
 from os.path import join
+from os.path import isfile
 
-from spatialprofilingtoolbox.countsserver.defaults import CENTROIDS_FILENAME
+from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
 
 
 class StructureCentroids:
@@ -36,3 +37,7 @@ class StructureCentroids:
     def load_from_file(self, data_directory):
         with open(join(data_directory, CENTROIDS_FILENAME), 'rb') as file:
             self.studies = load(file)
+
+    @staticmethod
+    def already_exists(data_directory):
+        return isfile(join(data_directory, CENTROIDS_FILENAME))

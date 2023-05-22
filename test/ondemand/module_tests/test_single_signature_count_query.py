@@ -1,11 +1,11 @@
 import json
 import sys
 
-from spatialprofilingtoolbox.countsserver.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 
 if __name__ == '__main__':
     STUDY_NAME = 'Melanoma intralesional IL2 - measurement'
-    HOST = 'spt-countsserver-testing'
+    HOST = 'spt-ondemand-testing'
     PORT = 8016
     with CountRequester(HOST, PORT) as requester:
         counts = requester.get_counts_by_specimen(

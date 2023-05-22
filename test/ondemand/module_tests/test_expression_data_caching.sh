@@ -9,7 +9,7 @@ function consider_exit() {
 rm -rf expression_data/
 mkdir expression_data
 cd expression_data
-spt countsserver cache-expressions-data-array --database-config-file ../../db/.spt_db.config.container
+spt ondemand cache-expressions-data-array --database-config-file ../../db/.spt_db.config.container
 if [[ "$?" != "0" ]];
 then
     echo "Caching of expressions data array failed."

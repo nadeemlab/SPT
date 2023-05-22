@@ -28,7 +28,7 @@ setup-testing:
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-apiserver-testing \
      spt-db-testing \
-     spt-countsserver-testing ; \
+     spt-ondemand-testing ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup." "Not setup."
 >@rm -f status_code

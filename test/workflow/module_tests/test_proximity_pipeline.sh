@@ -15,6 +15,7 @@ then
 fi
 
 spt db status --database-config-file=../db/.spt_db.config.container > current_status.txt
+echo "Left is computed, right is expected."
 diff current_status.txt module_tests/expected_proximity_record_counts.txt
 status=$?
 rm current_status.txt

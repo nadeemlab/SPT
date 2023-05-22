@@ -46,7 +46,8 @@ db = [
 ondemand = [
     "pandas>=1.1.5",
     "numpy==1.22.3",
-    "scikit-learn==1.1.2"
+    "scikit-learn==1.1.2",
+    "pyshp==2.2.0"
 ]
 cggnn = [
     "cg-gnn"

@@ -147,7 +147,6 @@ def create_database_config_file(filename):
     with DBAccessor() as db_accessor:
         contents = db_accessor.get_database_config_file_contents()
     logger.info('Creating database configuration file: %s', filename)
-    logger.debug(contents)
     with open(filename, 'wt', encoding='utf-8') as file:
         file.write(contents)
 

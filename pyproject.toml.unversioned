@@ -43,7 +43,7 @@ db = [
     "pandas>=1.1.5",
     "pyshp==2.2.0"
 ]
-countsserver = [
+ondemand = [
     "pandas>=1.1.5",
     "numpy==1.22.3",
     "scikit-learn==1.1.2"
@@ -99,8 +99,8 @@ packages = [
     "spatialprofilingtoolbox.apiserver.scripts",
     "spatialprofilingtoolbox.cggnn",
     "spatialprofilingtoolbox.cggnn.scripts",
-    "spatialprofilingtoolbox.countsserver",
-    "spatialprofilingtoolbox.countsserver.scripts",
+    "spatialprofilingtoolbox.ondemand",
+    "spatialprofilingtoolbox.ondemand.scripts",
     "spatialprofilingtoolbox.db",
     "spatialprofilingtoolbox.db.scripts",
     "spatialprofilingtoolbox.db.data_model",
@@ -141,7 +141,7 @@ packages = [
     "main_visitor.nf",
     "fields.tsv"
 ]
-"spatialprofilingtoolbox.countsserver.scripts" = [
+"spatialprofilingtoolbox.ondemand.scripts" = [
     "read_expression_dump_file.py",
     "cache_expressions_data_array.py",
     "start.py"

@@ -12,7 +12,7 @@ from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMak
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.structure_centroids import CENTROIDS_FILENAME
-from spatialprofilingtoolbox.countsserver.defaults import EXPRESSIONS_INDEX_FILENAME
+from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -21,7 +21,7 @@ logger = colorized_logger('cache-expressions-data-array')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog='spt countsserver cache-expressions-data-array',
+        prog='spt ondemand cache-expressions-data-array',
         description='Preload data structure to efficiently serve samples satisfying given partial'
                     ' signatures.'
     )
@@ -33,7 +33,7 @@ if __name__ == '__main__':
         import SuggestExtrasException
     try:
         from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
-        from spatialprofilingtoolbox.countsserver.compressed_matrix_writer \
+        from spatialprofilingtoolbox.ondemand.compressed_matrix_writer \
             import CompressedMatrixWriter
         from spatialprofilingtoolbox.workflow.common.structure_centroids_puller \
             import StructureCentroidsPuller

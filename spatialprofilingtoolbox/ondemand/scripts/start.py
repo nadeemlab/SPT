@@ -9,11 +9,11 @@ import time
 from psycopg2 import OperationalError
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
-from spatialprofilingtoolbox.countsserver.counts_provider import CountsProvider
-from spatialprofilingtoolbox.countsserver.proximity_provider import ProximityProvider
+from spatialprofilingtoolbox.ondemand.counts_provider import CountsProvider
+from spatialprofilingtoolbox.ondemand.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-logger = colorized_logger('spt countsserver start')
+logger = colorized_logger('spt ondemand start')
 
 
 class CountsRequestHandler(socketserver.BaseRequestHandler):
@@ -164,7 +164,7 @@ def wait_for_database_ready():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog='spt countsserver start',
+        prog='spt ondemand start',
         description='Server providing counts of samples satisfying given partial signatures.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -186,7 +186,7 @@ if __name__ == '__main__':
         '--source-data-location',
         dest='source_data_location',
         type=str,
-        default='/countsserver/source_data/',
+        default='/ondemand/source_data/',
         help='The directory in which this process will search for expression data binaries and '
         'the JSON index file. If they are not found, this program will attempt to create them '
         'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
@@ -198,7 +198,7 @@ if __name__ == '__main__':
     create_database_config_file(config)
     commands = [
         f'cd {args.source_data_location}',
-        f'spt countsserver cache-expressions-data-array --database-config-file={config}',
+        f'spt ondemand cache-expressions-data-array --database-config-file={config}',
     ]
     command = '; '.join(commands)
     os.system(command)
@@ -208,5 +208,5 @@ if __name__ == '__main__':
     tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
     tcp_server.counts_provider = counts_provider
     tcp_server.proximity_provider = proximity_provider
-    logger.info('countsserver is ready to accept connections.')
+    logger.info('ondemand is ready to accept connections.')
     tcp_server.serve_forever(poll_interval=0.2)

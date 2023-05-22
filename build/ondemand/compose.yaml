@@ -1,7 +1,7 @@
 services:
   testing-fast-counts-server:
-    image: nadeemlab/spt-countsserver
-    container_name: spt-countsserver-testing
+    image: nadeemlab/spt-ondemand
+    container_name: spt-ondemand-testing
     ports:
       - target: 8016
         published: 8016
@@ -15,8 +15,8 @@ services:
       USE_ALTERNATIVE_TESTING_DATABASE: 1
     volumes:
       - type: bind
-        source: ../../test/countsserver/module_tests/expected_binary_expression_data_cohoused
-        target: /countsserver/source_data/
+        source: ../../test/ondemand/module_tests/expected_binary_expression_data_cohoused
+        target: /ondemand/source_data/
     pull_policy: never
 
   testing-database:

@@ -6,7 +6,7 @@ from pickle import load
 from os.path import join
 from os.path import isfile
 
-from spatialprofilingtoolbox.countsserver.defaults import CENTROIDS_FILENAME
+from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
 
 
 class StructureCentroids:

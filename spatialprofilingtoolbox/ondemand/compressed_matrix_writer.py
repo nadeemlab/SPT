@@ -8,7 +8,7 @@ import json
 from os.path import isfile
 
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import CompressedDataArrays
-from spatialprofilingtoolbox.countsserver.defaults import EXPRESSIONS_INDEX_FILENAME
+from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

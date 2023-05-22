@@ -39,7 +39,7 @@ help:
 >@${MESSAGE} print '  make test'
 >@${MESSAGE} print '    Do unit and module tests.'
 >@${MESSAGE} print ' '
->@${MESSAGE} print '  make [unit | module]-test-[apiserver | cggnn | countsserver | db | workflow]'
+>@${MESSAGE} print '  make [unit | module]-test-[apiserver | cggnn | ondemand | db | workflow]'
 >@${MESSAGE} print '    Do only the unit or module tests for the indicated module.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print '  make clean'
@@ -61,7 +61,7 @@ help:
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
-DOCKERIZED_SUBMODULES := apiserver cggnn countsserver db workflow
+DOCKERIZED_SUBMODULES := apiserver cggnn ondemand db workflow
 DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
 DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
@@ -395,7 +395,7 @@ docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"
 >@docker compose --project-directory ./build/apiserver/ rm --force --stop ; status_code1="$$?" ; \
     docker compose --project-directory ./build/cggnn/ rm --force --stop ; status_code5="$$?" ; \
-    docker compose --project-directory ./build/countsserver/ rm --force --stop ; status_code2="$$?" ; \
+    docker compose --project-directory ./build/ondemand/ rm --force --stop ; status_code2="$$?" ; \
     docker compose --project-directory ./build/db/ rm --force --stop ; status_code3="$$?" ; \
     docker compose --project-directory ./build/workflow/ rm --force --stop ; status_code4="$$?" ; \
     status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 + status_code5 )) ; echo $$status_code > status_code

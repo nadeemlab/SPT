@@ -4,14 +4,14 @@
 _spt_completions()
 {
     if [[ "${#COMP_WORDS[@]}" -eq "2" ]]; then
-        COMPREPLY=($(compgen -W "cggnn countsserver db workflow" "${COMP_WORDS[1]}"));
+        COMPREPLY=($(compgen -W "cggnn ondemand db workflow" "${COMP_WORDS[1]}"));
     fi
     if [[ "${#COMP_WORDS[@]}" -eq "3" ]]; then
         case ${COMP_WORDS[1]} in
             cggnn)
                 COMPREPLY=($(compgen -W "run" "${COMP_WORDS[2]}"));
             ;;
-            countsserver)
+            ondemand)
                 COMPREPLY=($(compgen -W "cache-expressions-data-array start" "${COMP_WORDS[2]}"));
             ;;
             db)
@@ -33,11 +33,11 @@ _spt_completions()
                     ;;
                 esac
             ;;
-            countsserver)
+            ondemand)
                 case ${COMP_WORDS[2]} in
                     'cache-expressions-data-array'|'start')
                         echo ''
-                        spt countsserver ${COMP_WORDS[2]} --help
+                        spt ondemand ${COMP_WORDS[2]} --help
                         echo '<press enter>'
                     ;;
                 esac

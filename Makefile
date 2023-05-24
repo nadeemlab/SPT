@@ -376,6 +376,7 @@ clean-files:
 >@rm -f data-loaded-image-2
 >@rm -f data-loaded-image-1and2
 >@rm -f data-loaded-image-1small
+>@rm -f data-loaded-image-1smallnointensity
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@rm -f status_code
 >@rm -f check-docker-daemon-running

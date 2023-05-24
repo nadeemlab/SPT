@@ -203,7 +203,15 @@ check-for-docker-credentials:
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py docker ; status="$$?"; echo "$$status" > status_code; if [[ "$$status" == "0" ]]; then touch check-for-docker-credentials; fi;
 >@${MESSAGE} end "Found." "Not found."
 
-build-docker-images: ${DOCKER_BUILD_TARGETS}
+check-dockerfiles-consistency:
+>@${MESSAGE} start "Checking dependency lists in Dockerfiles."
+>@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_dockerfiles_consistency.py ${DOCKERIZED_SUBMODULES}; echo "$$?" > status_code;
+>@${MESSAGE} end "Consistent." "Something missing."
+
+${BUILD_LOCATION}/db/initialize_schema.sql:
+>@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${BUILD_LOCATION}/db/ initialize_schema.sql ;
+
+build-docker-images: ${DOCKER_BUILD_TARGETS} ${BUILD_LOCATION}/db/initialize_schema.sql
 
 # Build the Docker container for each submodule by doing the following:
 #   1. Identify the submodule being built
@@ -211,7 +219,7 @@ build-docker-images: ${DOCKER_BUILD_TARGETS}
 #   3. Copy relevant files to the build folder
 #   4. docker build the container
 #   5. Remove copied files
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
@@ -350,7 +358,7 @@ force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${
 >@${MESSAGE} end "Rebuilt." "Rebuild failed."
 >@rm -f .dockerignore
 
-clean: clean-files clean-network-environment
+clean: clean-network-environment clean-files
 
 clean-files:
 >@rm -rf ${PACKAGE_NAME}.egg-info/
@@ -377,13 +385,14 @@ clean-files:
 >@rm -f data-loaded-image-1and2
 >@rm -f data-loaded-image-1small
 >@rm -f data-loaded-image-1smallnointensity
+>@rm -f file_manifest.tsv.bak
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@rm -f status_code
 >@rm -f check-docker-daemon-running
 >@rm -f check-for-docker-credentials
 >@rm -rf ${BUILD_LOCATION}/lib
->@rm -f log_of_build.log
 >@rm -f build/*/log_of_build.log
+>@rm -f log_of_build.log
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"

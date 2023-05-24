@@ -10,12 +10,6 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-# Dockerfile: Dockerfile.template
-# >@${MESSAGE} start "Building apiserver Dockerfile"
-# >@cp Dockerfile.template Dockerfile ; echo "$$?" > status_code
-# >@${MESSAGE} end "Built." "Not built."
-# >@rm -f status_code
-
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
 unit-tests: teardown-unit-testing
@@ -84,6 +78,3 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
-# >@rm -rf requirements.txt
-# >@rm -rf specific_requirements.txt
-# >@rm -rf Dockerfile

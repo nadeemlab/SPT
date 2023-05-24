@@ -211,7 +211,7 @@ check-dockerfiles-consistency:
 ${BUILD_LOCATION}/db/initialize_schema.sql:
 >@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${BUILD_LOCATION}/db/ initialize_schema.sql ;
 
-build-docker-images: ${DOCKER_BUILD_TARGETS} ${BUILD_LOCATION}/db/initialize_schema.sql
+build-docker-images: ${DOCKER_BUILD_TARGETS}
 
 # Build the Docker container for each submodule by doing the following:
 #   1. Identify the submodule being built
@@ -219,7 +219,7 @@ build-docker-images: ${DOCKER_BUILD_TARGETS} ${BUILD_LOCATION}/db/initialize_sch
 #   3. Copy relevant files to the build folder
 #   4. docker build the container
 #   5. Remove copied files
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ${BUILD_LOCATION}/db/initialize_schema.sql
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \

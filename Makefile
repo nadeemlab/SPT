@@ -62,8 +62,11 @@ export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
 DOCKERIZED_SUBMODULES := apiserver cggnn ondemand db workflow
-DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
-DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
+
+# DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
+# DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
+DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
+
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
@@ -203,13 +206,12 @@ check-for-docker-credentials:
 build-docker-images: ${DOCKER_BUILD_TARGETS}
 
 # Build the Docker container for each submodule by doing the following:
-#   0. Make the Dockerfiles for all submodules
 #   1. Identify the submodule being built
 #   2. Emit a message about it
 #   3. Copy relevant files to the build folder
 #   4. docker build the container
 #   5. Remove copied files
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-daemon-running check-for-docker-credentials
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
@@ -224,8 +226,6 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
-    if [ ! -f $$submodule_directory/requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_requirements.sh > $$submodule_directory/requirements.txt ; fi; \
-    if [ ! -f $$submodule_directory/specific_requirements.txt ]; then bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_requirements.sh $$submodule_name > $$submodule_directory/specific_requirements.txt ; fi; \
     docker build \
      -f ./Dockerfile \
      -t $$repository_name:$$submodule_version \
@@ -244,13 +244,6 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILE_TARGETS} development-image check-docker-da
     rm $$submodule_directory/${WHEEL_FILENAME} ; \
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
-
-# Assemble the Dockerfile for the submodule using either
-#   1. Dockerfile.base and [submodule]/Dockerfile.append, or
-#   2. [submodule]/Dockerfile.template 
-${DOCKERFILE_TARGETS}: development-image ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ${DOCKERFILE_SOURCES}
->@submodule_directory=$$(echo $@ | sed 's/Dockerfile//g' ) ; \
-    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory Dockerfile
 
 check-docker-daemon-running:
 >@${MESSAGE} start "Checking that Docker daemon is running"

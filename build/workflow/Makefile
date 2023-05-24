@@ -12,11 +12,11 @@ TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
 
-Dockerfile:
->@${MESSAGE} start "Building workflow Dockerfile"
->@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
->@${MESSAGE} end "Built." "Not built."
->@rm -f status_code
+# Dockerfile:
+# >@${MESSAGE} start "Building workflow Dockerfile"
+# >@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
+# >@${MESSAGE} end "Built." "Not built."
+# >@rm -f status_code
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
@@ -82,9 +82,9 @@ ${TESTS}: setup-testing
 >@rm -f status_code
 
 clean:
->@rm -f Dockerfile
+# >@rm -f Dockerfile
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@rm -f status_code
->@rm -rf requirements.txt
->@rm -rf specific_requirements.txt
+# >@rm -rf requirements.txt
+# >@rm -rf specific_requirements.txt

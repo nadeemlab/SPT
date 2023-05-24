@@ -10,12 +10,6 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-Dockerfile: ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base Dockerfile.append
->@${MESSAGE} start "Building ondemand Dockerfile"
->@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
->@${MESSAGE} end "Built." "Not built."
->@rm -f status_code
-
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
 unit-tests: teardown-unit-testing
@@ -86,10 +80,7 @@ ${TESTS}: setup-testing
 >@rm -f status_code
 
 clean:
->@rm -f Dockerfile
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
->@rm -rf requirements.txt
->@rm -rf specific_requirements.txt
 >@rm -rf expression_data/
 >@rm -f ../../test/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated

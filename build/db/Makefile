@@ -15,12 +15,6 @@ TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
 
 DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
 
-Dockerfile: Dockerfile.template initialize_schema.sql
->@${MESSAGE} start "Building db Dockerfile"
->@cp Dockerfile.template Dockerfile ; echo "$$?" > status_code
->@${MESSAGE} end "Built." "Not built."
->@rm -f status_code
-
 initialize_schema.sql: schema.sql ${DATA_MODEL_SOURCE_LOCATION}/performance_tweaks.sql ${DATA_MODEL_SOURCE_LOCATION}/create_views.sql
 >@cat \
     schema.sql \
@@ -110,6 +104,3 @@ clean:
 >@rm -rf schema.sql
 >@rm -f status_code
 >@rm -f err_log.*.txt
->@rm -rf requirements.txt
->@rm -rf specific_requirements.txt
->@rm -rf Dockerfile

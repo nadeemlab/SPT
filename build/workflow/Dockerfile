@@ -11,9 +11,10 @@ RUN python -m pip install numpy==1.24.3
 RUN python -m pip install scipy==1.10.1
 RUN python -m pip install scikit-learn==1.2.2
 RUN python -m pip install pyshp==2.2.0
-RUN python -m pip install "pandas==2.0.2"
+RUN python -m pip install pandas==2.0.2
 RUN python -m pip install Jinja2==3.1.2
 RUN python -m pip install tabulate==0.8.10
+RUN python -m pip install Pillow==9.5.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

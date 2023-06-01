@@ -9,14 +9,14 @@ RUN apt install openjdk-11-jdk -y
 RUN apt install xxd -y
 RUN apt install file -y
 WORKDIR /usr/src/app
-ENV PATH="/usr/src/app:$PATH" 
-RUN curl -s https://get.nextflow.io | bash
+ENV PATH="/usr/src/app:$PATH"
+RUN apt install curl -y
+RUN curl -s https://get.nextflow.io | bash; if [[ "$(which nextflow)" == "" ]]; then echo "nextflow not really installed."; exit 1; fi;
 RUN apt install python3.11 -y
 RUN apt install python3.11-dev -y
 RUN apt install python3.11-venv -y
 RUN apt install python3.11-distutils
 RUN ln -s /usr/bin/python3.11 /usr/bin/python
-RUN apt install curl -y
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
 RUN apt install gcc -y
 RUN apt install postgresql-client -y

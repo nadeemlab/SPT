@@ -1,5 +1,6 @@
 """A utility to install bash completions for `spt`."""
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 from os.path import expanduser
 from os.path import join
 from os.path import exists
@@ -55,8 +56,7 @@ def get_modules_and_commands():
 
 def create_completions_script():
     jinja_environment = Environment(loader=BaseLoader(), comment_start_string='###')
-    with importlib.resources.path('spatialprofilingtoolbox.entry_point',
-                                  'spt-completion.sh.jinja') as path:
+    with as_file(files('spatialprofilingtoolbox.entry_point').joinpath('spt-completion.sh.jinja')) as path:
         with open(path, 'r', encoding='utf-8') as file:
             template_source = file.read().rstrip('\n')
     template = jinja_environment.from_string(template_source)

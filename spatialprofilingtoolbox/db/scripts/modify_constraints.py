@@ -72,7 +72,7 @@ def get_constraint_status(cursor, all_tables=False):
 
 
 def get_constraint_design(all_tables=False):
-    with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+    with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     foreign_key_constraints = [
         [normalize(str(s)) for s in [row['Table'], row['Name'],

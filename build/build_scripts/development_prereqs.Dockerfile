@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 RUN apt update && apt-get install -y apt-transport-https
-RUN apt install python3 python3-pip -y
-RUN apt install python3-venv -y
+RUN apt install python3.11 python3-pip -y
+RUN apt install python3.11-venv -y
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN apt-get install -y libpq-dev
 RUN apt install curl -y

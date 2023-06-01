@@ -2,7 +2,8 @@
 Utility to write the single-cell studies "ADI" SQL schema, plus performance-
 and SPT-related tweaks, into a Postgresql instance.
 """
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 import re
 from typing import Optional
 
@@ -44,7 +45,7 @@ class SchemaInfuser(DatabaseConnectionMaker):
         ]
 
     def create_drop_tables(self):
-        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+        with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)
         table_names = sorted(list(set(self.normalize(t) for t in fields['Table'])))
         performance_extras = ['sample_strata', 'pending_feature_computation', 'umap_plots']

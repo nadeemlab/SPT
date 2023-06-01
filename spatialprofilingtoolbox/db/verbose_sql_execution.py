@@ -1,5 +1,6 @@
 """Do execution of a SQL statement and log the activity."""
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 from typing import Optional
 from typing import Literal
 
@@ -21,7 +22,7 @@ def verbose_sql_execute(
         description = filename
     if not contents:
         logger.info('Executing %s.', description)
-        with importlib.resources.path(source_package, filename) as path:
+        with as_file(files(source_package).joinpath(filename)) as path:
             with open(path, encoding='utf-8') as file:
                 script = file.read()
     else:

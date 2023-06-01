@@ -25,7 +25,7 @@ def main():
         dependencies = project['project']['optional-dependencies'][submodule]
         for dependency in dependencies:
             if not check_exists(dependency, dockerfile):
-                print(f'Something wrong with dependencies in Dockerfile "{submodule}".')
+                print(f'Something wrong with dependencies ({dependency}) in Dockerfile "{submodule}".')
                 sys.exit(1)
     print('All Dockerfiles have expected Python package dependencies mentioned correctly.')
 

@@ -1,5 +1,6 @@
 """Source file parsing into the single-cell ADI schema."""
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 import re
 from typing import Optional
 
@@ -72,51 +73,51 @@ class DataSkimmer(DatabaseConnectionMaker):
             padded = f"{difference_str:<13}"
             logger.debug('%s %s', padded, table)
 
-    def parse(self, files):
+    def parse(self, _files):
         if not self.is_connected():
             logger.debug(
                 'No database connection was initialized. Skipping semantic parse.')
             return
-        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+        with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
         self.cache_all_record_counts(self.get_connection(), fields)
 
         study_name = StudyParser(fields).parse(
             self.get_connection(),
-            files['study'],
+            _files['study'],
         )
         SubjectsParser(fields).parse(
             self.get_connection(),
-            files['subjects'],
+            _files['subjects'],
         )
         DiagnosisParser(fields).parse(
             self.get_connection(),
-            files['diagnosis'],
+            _files['diagnosis'],
         )
         InterventionsParser(fields).parse(
             self.get_connection(),
-            files['interventions'],
+            _files['interventions'],
         )
         SamplesParser(fields).parse(
             self.get_connection(),
-            files['samples'],
+            _files['samples'],
             study_name,
         )
         CellManifestSetParser(fields).parse(
             self.get_connection(),
-            files['file manifest'],
+            _files['file manifest'],
             study_name,
         )
         chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(fields).parse(
             self.get_connection(),
-            files['channels'],
-            files['phenotypes'],
+            _files['channels'],
+            _files['phenotypes'],
             study_name,
         )
-        CellManifestsParser(fields, channels_file=files['channels']).parse(
+        CellManifestsParser(fields, channels_file=_files['channels']).parse(
             self.get_connection(),
-            files['file manifest'],
+            _files['file manifest'],
             chemical_species_identifiers_by_symbol,
         )
         SampleStratificationCreator.create_sample_stratification(self.get_connection())

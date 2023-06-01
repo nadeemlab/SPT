@@ -3,4 +3,4 @@ ARG WHEEL_FILENAME
 COPY pyproject.toml .
 COPY spatialprofilingtoolbox spatialprofilingtoolbox
 RUN python -m build
-RUN pip install --no-deps "dist/$WHEEL_FILENAME"
+RUN python -m pip install --no-deps "dist/$WHEEL_FILENAME"

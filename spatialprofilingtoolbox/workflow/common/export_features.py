@@ -3,7 +3,8 @@ Convenience uploader of feature data into SPT database tables that comprise
 a sparse representation of the features. Abstracts (wraps) the actual SQL
 queries.
 """
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 from itertools import product
 import re
 
@@ -32,7 +33,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
                  **kwargs):
         self.feature_values = None
         self.impute_zeros=impute_zeros
-        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+        with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         SourceToADIParser.__init__(self, fields)
         args = (data_analysis_study, derivation_method, specifier_number)

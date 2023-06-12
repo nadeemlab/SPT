@@ -2,10 +2,10 @@ FROM postgres:14.5-bullseye
 WORKDIR /usr/src/app
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt install -y python3 python3-pip libpq-dev && rm -rf /var/lib/apt/lists/*
-RUN python3 -m pip install psycopg2==2.9.3
+RUN python3 -m pip install psycopg2==2.9.6
 RUN python3 -m pip install adiscstudies==0.11.0
-RUN python3 -m pip install numba==0.56.4
-RUN python3 -m pip install "pandas>=1.1.5"
+RUN python3 -m pip install numba==0.57.0
+RUN python3 -m pip install "pandas==2.0.2"
 RUN python3 -m pip install pyshp==2.2.0
 ARG version
 ARG service_name

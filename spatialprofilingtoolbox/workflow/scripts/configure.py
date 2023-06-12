@@ -8,7 +8,8 @@ from os.path import join
 from os.path import abspath
 from os.path import expanduser
 import stat
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox import get_workflow
@@ -23,8 +24,7 @@ NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
 
 def retrieve_from_library(subpackage, filename):
     contents = None
-    with importlib.resources.path('.'.join(['spatialprofilingtoolbox', subpackage]),
-                                  filename) as path:
+    with as_file(files('.'.join(['spatialprofilingtoolbox', subpackage])).joinpath(filename)) as path:
         with open(path, 'rt', encoding='utf-8') as file:
             contents = file.read()
     if contents is None:

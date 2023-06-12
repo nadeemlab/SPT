@@ -206,6 +206,7 @@ check-for-docker-credentials:
 check-dockerfiles-consistency:
 >@${MESSAGE} start "Checking dependency lists in Dockerfiles."
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_dockerfiles_consistency.py ${DOCKERIZED_SUBMODULES}; echo "$$?" > status_code;
+>@status_code=$$(cat status_code); if [[ "$$status_code" == "0" && ( ! -f check-dockerfiles-consistency ) ]]; then touch check-dockerfiles-consistency; fi;
 >@${MESSAGE} end "Consistent." "Something missing."
 
 ${BUILD_LOCATION}/db/initialize_schema.sql:

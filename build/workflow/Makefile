@@ -79,3 +79,4 @@ clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@rm -f status_code
+>@rm -f ${TD}/plots.html

@@ -1,4 +1,5 @@
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 
 import pandas as pd
 
@@ -8,7 +9,7 @@ logger = colorized_logger(__name__)
 
 
 def check_tables(cursor):
-    with importlib.resources.path('adiscstudies', 'tables.tsv') as path:
+    with as_file(files('adiscstudies').joinpath('tables.tsv')) as path:
         tables = pd.read_csv(path, sep='\t', keep_default_na=False)
     table_names = list(tables['Name'])
     cursor.execute(

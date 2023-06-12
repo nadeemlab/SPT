@@ -8,7 +8,8 @@ from os.path import abspath
 from os.path import expanduser
 from enum import Enum
 from enum import auto
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 import re
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -28,7 +29,7 @@ def is_table_for_dropping(table, all_tables=False):
 
 
 def all_tables_list():
-    with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+    with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     tables = sorted(list(set(list(fields['Table']))))
     return [normalize(t) for t in tables]
@@ -71,7 +72,7 @@ def get_constraint_status(cursor, all_tables=False):
 
 
 def get_constraint_design(all_tables=False):
-    with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+    with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
         fields = pd.read_csv(path, sep='\t', na_filter=False)
     foreign_key_constraints = [
         [normalize(str(s)) for s in [row['Table'], row['Name'],

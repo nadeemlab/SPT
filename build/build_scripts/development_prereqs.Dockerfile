@@ -1,17 +1,27 @@
 FROM ubuntu:22.04
 RUN apt update && apt-get install -y apt-transport-https
-RUN apt install python3 python3-pip -y
-RUN apt install python3-venv -y
-RUN ln -s /usr/bin/python3 /usr/bin/python
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt install software-properties-common -y
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt update
 RUN apt-get install -y libpq-dev
-RUN apt install curl -y
 RUN apt install openjdk-11-jdk -y
 RUN apt install xxd -y
 RUN apt install file -y
 WORKDIR /usr/src/app
-ENV PATH="/usr/src/app:$PATH" 
-RUN curl -s https://get.nextflow.io | bash
+ENV PATH="/usr/src/app:$PATH"
+RUN apt install curl -y
+RUN curl -s https://get.nextflow.io | bash; if [[ "$(which nextflow)" == "" ]]; then echo "nextflow not really installed."; exit 1; fi;
+RUN apt install python3.11 -y
+RUN apt install python3.11-dev -y
+RUN apt install python3.11-venv -y
+RUN apt install python3.11-distutils
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
+RUN apt install gcc -y
 RUN apt install postgresql-client -y
+RUN apt-get install -y build-essential libssl-dev libffi-dev
+RUN python -m pip install -U pip
 COPY README.md .
 COPY pyproject.toml.unversioned .
 RUN python -m pip install toml

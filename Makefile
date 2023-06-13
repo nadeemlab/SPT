@@ -359,7 +359,7 @@ force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${
 >@${MESSAGE} end "Rebuilt." "Rebuild failed."
 >@rm -f .dockerignore
 
-clean: clean-network-environment clean-files
+clean: clean-files clean-network-environment
 
 clean-files:
 >@rm -rf ${PACKAGE_NAME}.egg-info/

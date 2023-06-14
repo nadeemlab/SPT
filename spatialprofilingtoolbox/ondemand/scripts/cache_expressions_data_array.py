@@ -52,9 +52,11 @@ if __name__ == '__main__':
     if args.centroids_only:
         sys.exit()
 
-    if CompressedMatrixWriter.already_exists():
+    if CompressedMatrixWriter.already_exists(getcwd()):
         logger.info('%s already exists, skipping feature matrix pull.', EXPRESSIONS_INDEX_FILENAME)
         sys.exit(1)
+    else:
+        logger.info('%s was not found, will do feature matrix pull after all.', EXPRESSIONS_INDEX_FILENAME)
 
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()

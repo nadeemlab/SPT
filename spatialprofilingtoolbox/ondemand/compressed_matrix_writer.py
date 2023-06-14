@@ -6,6 +6,7 @@ import re
 import random
 import json
 from os.path import isfile
+from os.path import join
 
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import CompressedDataArrays
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
@@ -22,8 +23,8 @@ class CompressedMatrixWriter:
         self.report_subsample_for_inspection(data_arrays)
 
     @staticmethod
-    def already_exists():
-        return isfile(EXPRESSIONS_INDEX_FILENAME)
+    def already_exists(data_directory):
+        return isfile(join(data_directory, EXPRESSIONS_INDEX_FILENAME))
 
     def write_data_arrays(self, data_arrays: CompressedDataArrays):
         _, study_indices = self.get_study_names_and_indices(data_arrays)

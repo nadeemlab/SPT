@@ -2,11 +2,15 @@
 A context manager for accessing the backend SPT database, from the API service.
 """
 from os import environ
+from os.path import join
 
 from psycopg2 import connect
 from psycopg2.extensions import connection as Psycopg2Connection
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 class DBAccessor:
     """
@@ -71,3 +75,13 @@ password = {self.password}
         self.cursor.close()
         self.connection.commit()
         self.connection.close()
+
+    @staticmethod
+    def create_database_config_file(source_data_location):
+        filename = join(source_data_location, '.spt_db.config.generated')
+        with DBAccessor() as (db_accessor, _, _):
+            contents = db_accessor.get_database_config_file_contents()
+        logger.info('Creating database configuration file: %s', filename)
+        with open(filename, 'wt', encoding='utf-8') as file:
+            file.write(contents)
+        return filename

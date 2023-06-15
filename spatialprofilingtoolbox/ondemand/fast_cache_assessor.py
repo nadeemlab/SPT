@@ -24,11 +24,7 @@ class FastCacheAssessor:
         self.centroids = None
         self.expressions_index = None
 
-    def assess(self):
-        up_to_date = self.cache_is_up_to_date()
-        return up_to_date
-
-    def act(self):
+    def assess_and_act(self):
         up_to_date = self.cache_is_up_to_date()
         if not self.recreation_enabled():
             logger.info('Recreation not enabled, done assessing fast cache.')
@@ -54,7 +50,7 @@ class FastCacheAssessor:
         logger.info('Deleting the fast cache files.')
         expressions_files = [
             f for f in listdir(self.source_data_location)
-            if re.match(r'^expressions_data_array\.[\d]+\.[\d]+\.bin$', f)
+            if re.match(r'^expression_data_array\.[\d]+\.[\d]+\.bin$', f)
         ]
         for filename in [CENTROIDS_FILENAME, EXPRESSIONS_INDEX_FILENAME] + expressions_files:
             try:

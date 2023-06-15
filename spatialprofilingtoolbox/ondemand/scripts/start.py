@@ -19,7 +19,7 @@ def start():
 def setup_data_sources(source_data_location):
     DBAccessor.wait_for_database_ready()
     assessor = FastCacheAssessor(source_data_location)
-    assessor.act()
+    assessor.assess_and_act()
 
 def start_services(source_data_location, host, port):
     counts_provider = CountsProvider(source_data_location)

@@ -1,3 +1,4 @@
+"""Basic testing that expression vectors are in the database."""
 import os
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
@@ -14,9 +15,7 @@ def test_one_expression_vector():
     for key, value in environment.items():
         os.environ[key] = value
 
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute('''
         SELECT
         hsi.histological_structure,
@@ -31,20 +30,28 @@ def test_one_expression_vector():
         ;
         ''', ('lesion 0_1', 'positive'))
         rows = cursor.fetchall()
-        cursor.close()
 
-    for key in environment.keys():
+    for key in environment:
         os.environ.pop(key)
 
     expected = set([('0', 'B2M'), ('0', 'B7H3'), ('0', 'DAPI'), ('0', 'MHCI')])
     print(expected)
     print(set(rows[0:4]))
-    assert(set(rows[0:4]) == expected)
+    assert set(rows[0:4]) == expected
 
-    expected = set([('1', 'B2M'), ('1', 'B7H3'), ('1', 'DAPI'), ('1', 'KI67'), ('1', 'MHCI'), ('1', 'MRC1'), ('1', 'S100B'), ('1', 'SOX10')])
+    expected = set([
+        ('1', 'B2M'),
+        ('1', 'B7H3'),
+        ('1', 'DAPI'),
+        ('1', 'KI67'),
+        ('1', 'MHCI'),
+        ('1', 'MRC1'),
+        ('1', 'S100B'),
+        ('1', 'SOX10'),
+    ])
     print(expected)
     print(set(rows[4:12]))
-    assert(set(rows[4:12]) == expected)
+    assert set(rows[4:12]) == expected
 
 
 if __name__=='__main__':

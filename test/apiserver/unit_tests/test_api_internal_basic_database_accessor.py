@@ -1,4 +1,6 @@
+"""Test that the database accessor wrapper basically works."""
 import os
+import sys
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 
@@ -14,17 +16,14 @@ if __name__ == '__main__':
     for key, value in environment.items():
         os.environ[key] = value
 
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute('SELECT COUNT(*) FROM specimen_measurement_study;')
         rows = cursor.fetchall()
         count = rows[0][0]
-        cursor.close()
 
-    for key in environment.keys():
+    for key in environment:
         os.environ.pop(key)
 
     if count != 1:
-        print('Number of specimen_measurement_study rows was: %s' % count)
-        exit(1)
+        print(f'Number of specimen_measurement_study rows was: {count}')
+        sys.exit(1)

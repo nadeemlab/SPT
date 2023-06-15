@@ -3,7 +3,8 @@ Do proximity calculation from pair of signatures.
 """
 import sys
 import re
-import os
+from os import listdir
+from os.path import isfile
 from os.path import join
 import json
 from threading import Thread
@@ -52,8 +53,8 @@ class ProximityProvider:
     def load_expressions_indices(self):
         logger.debug('Searching for source data in: %s', self.get_data_directory())
         json_files = [
-            f for f in os.listdir(self.get_data_directory())
-            if os.path.isfile(join(self.get_data_directory(), f)) and re.search(r'\.json$', f)
+            f for f in listdir(self.get_data_directory())
+            if isfile(join(self.get_data_directory(), f)) and re.search(r'\.json$', f)
         ]
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
@@ -83,7 +84,9 @@ class ProximityProvider:
             }
             shapes = [df.shape for df in self.data_arrays[study_name].values()]
             logger.debug('Loaded dataframes of sizes %s', shapes)
-            logger.debug(f'{len(self.data_arrays[study_name])} specimens loaded ({self.data_arrays[study_name].keys()}).')
+            number_specimens = len(self.data_arrays[study_name])
+            specimens = self.data_arrays[study_name].keys()
+            logger.debug('%s specimens loaded (%s).', number_specimens, specimens)
 
     def create_ball_trees(self, centroids):
         self.trees = {
@@ -107,16 +110,20 @@ class ProximityProvider:
                 buffer = file.read(8)
                 if buffer == b'':
                     break
-                binary_expression_64_string = ''.join([''.join(list(reversed(bin(ii)[2:].rjust(8,'0')))) for ii in buffer])
-                binary_expression_truncated_to_channels = binary_expression_64_string[0:len(columns)]
-                row = [int(b) for b in list(binary_expression_truncated_to_channels)]
+                binary_expression_64_string = ''.join([
+                    ''.join(list(reversed(bin(ii)[2:].rjust(8,'0'))))
+                    for ii in buffer
+                ])
+                truncated_to_channels = binary_expression_64_string[0:len(columns)]
+                row = [int(b) for b in list(truncated_to_channels)]
                 rows.append(row)
         df = pd.DataFrame(rows, columns=columns)
         df['pixel x'] = [point[0] for point in centroids[study_name][sample]]
         df['pixel y'] = [point[1] for point in centroids[study_name][sample]]
         return df
 
-    def list_columns(self, target_index_lookup, target_by_symbol):
+    @staticmethod
+    def list_columns(target_index_lookup, target_by_symbol):
         target_by_index = {value: key for key, value in target_index_lookup.items()}
         symbol_by_target = {value: key for key, value in target_by_symbol.items()}
         return [
@@ -135,9 +142,7 @@ class ProximityProvider:
             str(radius),
             describe_proximity_feature_derivation_method(),
         )
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             SELECT
                 fsn.identifier,
@@ -154,28 +159,25 @@ class ProximityProvider:
             ;
             ''', args)
             rows = cursor.fetchall()
-            cursor.close()
         feature_specifications = {row[0]: [] for row in rows}
         for row in rows:
             feature_specifications[row[0]].append(row[1])
         for key, specifiers in feature_specifications.items():
             if len(specifiers) == 3:
                 return key
-        logger.debug('Creating feature with specifiers: (%s) %s, %s, %s', study_name, phenotype1_str, phenotype2_str, radius)
-        specification = ProximityProvider.create_feature_specification(study_name, phenotype1_str, phenotype2_str, radius)
+        message = 'Creating feature with specifiers: (%s) %s, %s, %s'
+        logger.debug(message, study_name, phenotype1_str, phenotype2_str, radius)
+        create = ProximityProvider.create_feature_specification
+        specification = create(study_name, phenotype1_str, phenotype2_str, radius)
         return specification
 
     @staticmethod
     def create_feature_specification(study_name, phenotype1, phenotype2, radius):
         specifiers = [phenotype1, phenotype2, str(radius)]
         method = describe_proximity_feature_derivation_method()
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
-            feature_specification = ADIFeatureSpecificationUploader.add_new_feature(
-                specifiers, method, study_name, cursor)
-            cursor.close()
-            connection.commit()
+        with DBAccessor() as (_, _, cursor):
+            Uploader = ADIFeatureSpecificationUploader
+            feature_specification = Uploader.add_new_feature(specifiers, method, study_name, cursor)
         return feature_specification
 
     @staticmethod
@@ -186,7 +188,8 @@ class ProximityProvider:
             return False
         if actual == expected:
             return True
-        raise ValueError(f'Possibly too many computed values of the given type? Feature "{feature_specification}"')
+        message = 'Possibly too many computed values of the given type?'
+        raise ValueError(f'{message} Feature "{feature_specification}"')
 
     @staticmethod
     def get_expected_number_of_computed_values(feature_specification):
@@ -197,9 +200,7 @@ class ProximityProvider:
 
     @staticmethod
     def get_expected_domain_for_computed_values(feature_specification):
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp
             JOIN study_component sc1 ON sc1.component_study=sdmp.study
@@ -209,14 +210,11 @@ class ProximityProvider:
             ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
-            cursor.close()
         return [row[0] for row in rows]
 
     @staticmethod
     def get_actual_number_of_computed_values(feature_specification):
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             SELECT COUNT(*) FROM quantitative_feature_value qfv
             WHERE qfv.feature=%s
@@ -228,9 +226,7 @@ class ProximityProvider:
 
     @staticmethod
     def is_already_pending(feature_specification):
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             SELECT * FROM pending_feature_computation pfc
             WHERE pfc.feature_specification=%s
@@ -242,9 +238,7 @@ class ProximityProvider:
 
     @staticmethod
     def retrieve_specifiers(feature_specification):
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             SELECT fs.specifier, fs.ordinality
             FROM feature_specifier fs
@@ -278,27 +272,19 @@ class ProximityProvider:
     @staticmethod
     def set_pending_computation(feature_specification):
         time_str = datetime.now().ctime()
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             INSERT INTO pending_feature_computation (feature_specification, time_initiated)
             VALUES (%s, %s) ;
             ''', (feature_specification, time_str))
-            cursor.close()
-            connection.commit()
 
     @staticmethod
     def drop_pending_computation(feature_specification):
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             DELETE FROM pending_feature_computation pfc
             WHERE pfc.feature_specification=%s ;
             ''', (feature_specification, ))
-            cursor.close()
-            connection.commit()
 
     def do_proximity_metrics_one_feature(self, feature_specification):
         specifiers = ProximityProvider.retrieve_specifiers(feature_specification)
@@ -312,22 +298,18 @@ class ProximityProvider:
                 self.get_cells(sample_identifier, study_name),
                 self.get_tree(sample_identifier, study_name),
             )
-            logger.debug('Computed one feature value of %s: %s, %s', feature_specification, sample_identifier, value)
-            with DBAccessor() as db_accessor:
-                connection = db_accessor.get_connection()
-                cursor = connection.cursor()
+            message = 'Computed one feature value of %s: %s, %s'
+            logger.debug(message, feature_specification, sample_identifier, value)
+            with DBAccessor() as (_, _, cursor):
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
-                cursor.close()
-                connection.commit()
         ProximityProvider.drop_pending_computation(feature_specification)
-        logger.debug('Wrapped up proximity metric calculation, feature "%s".', feature_specification)
-        logger.debug(f'The samples considered were: {sample_identifiers}')
+        message = 'Wrapped up proximity metric calculation, feature "%s".'
+        logger.debug(message, feature_specification)
+        logger.debug('The samples considered were: %s', sample_identifiers)
 
     @staticmethod
     def query_for_computed_feature_values(feature_specification, still_pending=False):
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             SELECT qfv.subject, qfv.value
             FROM quantitative_feature_value qfv
@@ -368,5 +350,6 @@ class ProximityProvider:
     def get_tree(self, sample_identifier, study_name):
         return self.trees[study_name][sample_identifier]
 
-    def get_sample_identifiers(self, feature_specification):
+    @staticmethod
+    def get_sample_identifiers(feature_specification):
         return ProximityProvider.get_expected_domain_for_computed_values(feature_specification)

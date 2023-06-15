@@ -161,7 +161,7 @@ def wait_for_database_ready():
             time.sleep(2.0)
     logger.info('Database is ready.')
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         prog='spt ondemand start',
         description='Server providing counts of samples satisfying given partial signatures.',
@@ -209,3 +209,6 @@ if __name__ == '__main__':
     tcp_server.proximity_provider = proximity_provider
     logger.info('ondemand is ready to accept connections.')
     tcp_server.serve_forever(poll_interval=0.2)
+
+if __name__ == '__main__':
+    main()

@@ -26,27 +26,31 @@ class FastCacheAssessor:
 
     def assess(self):
         up_to_date = self.cache_is_up_to_date()
+        return up_to_date
+
+    def act(self):
+        up_to_date = self.cache_is_up_to_date()
         if not self.recreation_enabled():
             logger.info('Recreation not enabled, done assessing fast cache.')
             return
 
         if not up_to_date:
-            self.clear()
-            self.recreate()
+            self._clear()
+            self._recreate()
         else:
             logger.info('Cache is basically as expected, not recreating.')
 
     def cache_is_up_to_date(self) -> bool:
-        if not self.check_files_present():
+        if not self._check_files_present():
             return False
-        self.retrieve_files()
+        self._retrieve_files()
         checkers = [
-            self.check_study_sets,
-            self.check_sample_sets,
+            self._check_study_sets,
+            self._check_sample_sets,
         ]
         return all(checker() for checker in checkers)
 
-    def clear(self):
+    def _clear(self):
         logger.info('Deleting the fast cache files.')
         expressions_files = [
             f for f in listdir(self.source_data_location)
@@ -59,7 +63,7 @@ class FastCacheAssessor:
             except FileNotFoundError:
                 pass
 
-    def recreate(self):
+    def _recreate(self):
         logger.info('Recreating fast cache files.')
         change_directory = f'cd {self.source_data_location}'
         main_command = 'spt ondemand cache-expressions-data-array'
@@ -70,7 +74,7 @@ class FastCacheAssessor:
         logger.debug(command)
         system(command)
 
-    def check_files_present(self) -> bool:
+    def _check_files_present(self) -> bool:
         files_present = {
             filename: isfile(join(self.source_data_location, filename))
             for filename in [CENTROIDS_FILENAME, EXPRESSIONS_INDEX_FILENAME]
@@ -80,10 +84,10 @@ class FastCacheAssessor:
             logger.info('File %s is %s.', filename, indicator)
         return all(files_present.values())
 
-    def check_study_sets(self) -> bool:
-        return self.check_centroids_bundle_studies() and self.check_expressions_index_studies()
+    def _check_study_sets(self) -> bool:
+        return self._check_centroids_bundle_studies() and self._check_expressions_index_studies()
 
-    def retrieve_files(self):
+    def _retrieve_files(self):
         filename = join(self.source_data_location, CENTROIDS_FILENAME)
         with open(filename, 'rb') as file:
             self.centroids = load_pickle(file)
@@ -92,9 +96,9 @@ class FastCacheAssessor:
         with open(filename, 'rt', encoding='utf-8') as file:
             self.expressions_index = load_json_string(file.read())['']
 
-    def check_centroids_bundle_studies(self):
+    def _check_centroids_bundle_studies(self):
         indexed_studies = self.centroids.keys()
-        known_studies = self.retrieve_measurement_studies()
+        known_studies = self._retrieve_measurement_studies()
         log_expected_found(
             known_studies,
             indexed_studies,
@@ -104,12 +108,12 @@ class FastCacheAssessor:
         )
         return set(known_studies).issubset(set(indexed_studies))
 
-    def check_expressions_index_studies(self):
+    def _check_expressions_index_studies(self):
         indexed_measurement_studies = [
             row['specimen measurement study name']
             for row in self.expressions_index
         ]
-        known_measurement_studies = self.retrieve_measurement_studies()
+        known_measurement_studies = self._retrieve_measurement_studies()
         log_expected_found(
             known_measurement_studies,
             indexed_measurement_studies,
@@ -119,24 +123,24 @@ class FastCacheAssessor:
         )
         return set(known_measurement_studies).issubset(set(indexed_measurement_studies))
 
-    def retrieve_measurement_studies(self):
+    def _retrieve_measurement_studies(self):
         with DBAccessor() as (_, _, cursor):
             cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = cursor.fetchall()
         return [row[0] for row in rows]
 
-    def check_sample_sets(self) -> bool:
-        return self.check_sample_sets_centroids() and self.check_sample_sets_expressions_index()
+    def _check_sample_sets(self) -> bool:
+        return self._check_sample_sets_centroids() and self._check_sample_sets_expressions_index()
 
-    def check_sample_sets_centroids(self):
+    def _check_sample_sets_centroids(self):
         return all(
-            self.check_centroids_samples(study)
-            for study in self.retrieve_measurement_studies()
+            self._check_centroids_samples(study)
+            for study in self._retrieve_measurement_studies()
         )
 
-    def check_centroids_samples(self, study):
+    def _check_centroids_samples(self, study):
         indexed_samples = self.centroids[study].keys()
-        known_samples = self.retrieve_known_samples_measurement(study)
+        known_samples = self._retrieve_known_samples_measurement(study)
         log_expected_found(
             known_samples,
             indexed_samples,
@@ -146,13 +150,13 @@ class FastCacheAssessor:
         )
         return set(known_samples).issubset(set(indexed_samples))
 
-    def check_sample_sets_expressions_index(self):
+    def _check_sample_sets_expressions_index(self):
         return all(
-            self.check_expressions_index_samples(study)
-            for study in self.retrieve_measurement_studies()
+            self._check_expressions_index_samples(study)
+            for study in self._retrieve_measurement_studies()
         )
 
-    def check_expressions_index_samples(self, measurement_study):
+    def _check_expressions_index_samples(self, measurement_study):
         index = [
             row for row in self.expressions_index
             if row['specimen measurement study name'] == measurement_study
@@ -161,7 +165,7 @@ class FastCacheAssessor:
             entry['specimen']
             for entry in index['expressions files']
         ]
-        known_samples = self.retrieve_known_samples_measurement(measurement_study)
+        known_samples = self._retrieve_known_samples_measurement(measurement_study)
         log_expected_found(
             known_samples,
             indexed_samples,
@@ -171,7 +175,7 @@ class FastCacheAssessor:
         )
         return set(known_samples).issubset(set(indexed_samples))
 
-    def retrieve_known_samples_measurement(self, measurement_study):
+    def _retrieve_known_samples_measurement(self, measurement_study):
         with DBAccessor() as (_, _, cursor):
             cursor.execute('''
             SELECT specimen FROM specimen_data_measurement_process sdmp

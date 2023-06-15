@@ -3,7 +3,8 @@ Do proximity calculation from pair of signatures.
 """
 import sys
 import re
-import os
+from os import listdir
+from os.path import isfile
 from os.path import join
 import json
 from threading import Thread
@@ -52,8 +53,8 @@ class ProximityProvider:
     def load_expressions_indices(self):
         logger.debug('Searching for source data in: %s', self.get_data_directory())
         json_files = [
-            f for f in os.listdir(self.get_data_directory())
-            if os.path.isfile(join(self.get_data_directory(), f)) and re.search(r'\.json$', f)
+            f for f in listdir(self.get_data_directory())
+            if isfile(join(self.get_data_directory(), f)) and re.search(r'\.json$', f)
         ]
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
@@ -83,6 +84,9 @@ class ProximityProvider:
             }
             shapes = [df.shape for df in self.data_arrays[study_name].values()]
             logger.debug('Loaded dataframes of sizes %s', shapes)
+            number_specimens = len(self.data_arrays[study_name])
+            specimens = self.data_arrays[study_name].keys()
+            logger.debug('%s specimens loaded (%s).', number_specimens, specimens)
 
     def create_ball_trees(self, centroids):
         self.trees = {
@@ -118,7 +122,8 @@ class ProximityProvider:
         df['pixel y'] = [point[1] for point in centroids[study_name][sample]]
         return df
 
-    def list_columns(self, target_index_lookup, target_by_symbol):
+    @staticmethod
+    def list_columns(target_index_lookup, target_by_symbol):
         target_by_index = {value: key for key, value in target_index_lookup.items()}
         symbol_by_target = {value: key for key, value in target_by_symbol.items()}
         return [
@@ -188,9 +193,16 @@ class ProximityProvider:
 
     @staticmethod
     def get_expected_number_of_computed_values(feature_specification):
+        domain = ProximityProvider.get_expected_domain_for_computed_values(feature_specification)
+        number = len(domain)
+        logger.debug('Number of values possible to be computed: %s', number)
+        return number
+
+    @staticmethod
+    def get_expected_domain_for_computed_values(feature_specification):
         with DBAccessor() as (_, _, cursor):
             cursor.execute('''
-            SELECT COUNT(DISTINCT sdmp.specimen) FROM specimen_data_measurement_process sdmp
+            SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp
             JOIN study_component sc1 ON sc1.component_study=sdmp.study
             JOIN study_component sc2 ON sc1.primary_study=sc2.primary_study
             JOIN feature_specification fsn ON fsn.study=sc2.component_study
@@ -198,8 +210,7 @@ class ProximityProvider:
             ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
-            logger.debug('Number of values possible to be computed: %s', rows[0][0])
-            return rows[0][0]
+        return [row[0] for row in rows]
 
     @staticmethod
     def get_actual_number_of_computed_values(feature_specification):
@@ -278,7 +289,8 @@ class ProximityProvider:
     def do_proximity_metrics_one_feature(self, feature_specification):
         specifiers = ProximityProvider.retrieve_specifiers(feature_specification)
         study_name, phenotype1, phenotype2, radius = specifiers
-        for sample_identifier in self.get_sample_identifiers(study_name):
+        sample_identifiers = self.get_sample_identifiers(feature_specification)
+        for sample_identifier in sample_identifiers:
             value = compute_proximity_metric_for_signature_pair(
                 phenotype1,
                 phenotype2,
@@ -293,6 +305,7 @@ class ProximityProvider:
         ProximityProvider.drop_pending_computation(feature_specification)
         message = 'Wrapped up proximity metric calculation, feature "%s".'
         logger.debug(message, feature_specification)
+        logger.debug('The samples considered were: %s', sample_identifiers)
 
     @staticmethod
     def query_for_computed_feature_values(feature_specification, still_pending=False):
@@ -337,9 +350,6 @@ class ProximityProvider:
     def get_tree(self, sample_identifier, study_name):
         return self.trees[study_name][sample_identifier]
 
-    def get_sample_identifiers(self, study_name):
-        return self.data_arrays[study_name].keys()
-
-    def get_channels(self, study_name):
-        key = list(self.get_sample_identifiers(study_name))[0]
-        return list(self.data_arrays[study_name][key].columns)
+    @staticmethod
+    def get_sample_identifiers(feature_specification):
+        return ProximityProvider.get_expected_domain_for_computed_values(feature_specification)

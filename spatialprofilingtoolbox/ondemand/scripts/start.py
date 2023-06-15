@@ -1,13 +1,9 @@
 """Entry point into the fast cell counts TCP server."""
 import socketserver
 import argparse
-import os
-from os.path import join
-import time
-
-from psycopg2 import OperationalError
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
 from spatialprofilingtoolbox.ondemand.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.counts_request_handler import CountsRequestHandler
@@ -15,26 +11,26 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger('spt ondemand start')
 
+def start():
+    source_data_location, host, port = get_cli_arguments()
+    setup_data_sources(source_data_location)
+    start_services(source_data_location, host, port)
 
-def create_database_config_file(filename):
-    with DBAccessor() as (db_accessor, _, _):
-        contents = db_accessor.get_database_config_file_contents()
-    logger.info('Creating database configuration file: %s', filename)
-    with open(filename, 'wt', encoding='utf-8') as file:
-        file.write(contents)
+def setup_data_sources(source_data_location):
+    DBAccessor.wait_for_database_ready()
+    assessor = FastCacheAssessor(source_data_location)
+    assessor.assess_and_act()
 
-def wait_for_database_ready():
-    while True:
-        try:
-            with DBAccessor() as (db_accessor, _, _):
-                db_accessor.get_database_config_file_contents()
-            break
-        except OperationalError:
-            logger.debug('Database is not ready.')
-            time.sleep(2.0)
-    logger.info('Database is ready.')
+def start_services(source_data_location, host, port):
+    counts_provider = CountsProvider(source_data_location)
+    proximity_provider = ProximityProvider(source_data_location)
+    tcp_server = socketserver.TCPServer((host, port), CountsRequestHandler)
+    tcp_server.counts_provider = counts_provider
+    tcp_server.proximity_provider = proximity_provider
+    logger.info('ondemand is ready to accept connections.')
+    tcp_server.serve_forever(poll_interval=0.2)
 
-def main():
+def get_cli_arguments():
     parser = argparse.ArgumentParser(
         prog='spt ondemand start',
         description='Server providing counts of samples satisfying given partial signatures.',
@@ -64,24 +60,7 @@ def main():
         'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
     )
     args = parser.parse_args()
-
-    wait_for_database_ready()
-    config = join(args.source_data_location, '.spt_db.config.generated')
-    create_database_config_file(config)
-    commands = [
-        f'cd {args.source_data_location}',
-        f'spt ondemand cache-expressions-data-array --database-config-file={config}',
-    ]
-    command = '; '.join(commands)
-    os.system(command)
-
-    counts_provider = CountsProvider(args.source_data_location)
-    proximity_provider = ProximityProvider(args.source_data_location)
-    tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
-    tcp_server.counts_provider = counts_provider
-    tcp_server.proximity_provider = proximity_provider
-    logger.info('ondemand is ready to accept connections.')
-    tcp_server.serve_forever(poll_interval=0.2)
+    return args.source_data_location, args.host, args.port
 
 if __name__ == '__main__':
-    main()
+    start()

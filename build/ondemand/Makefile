@@ -68,7 +68,7 @@ ${TESTS}: setup-testing
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    test_cmd="cd /mount_sources/ondemand/; $$executor $$test_script" ; \
+    test_cmd="cd /mount_sources/ondemand/; SINGLE_CELL_DATABASE_HOST=spt-db-testing SINGLE_CELL_DATABASE_USER=postgres SINGLE_CELL_DATABASE_PASSWORD=postgres USE_ALTERNATIVE_TESTING_DATABASE=1 $$executor $$test_script" ; \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
@@ -84,3 +84,4 @@ clean:
 >@rm -f status_code
 >@rm -rf expression_data/
 >@rm -f ../../test/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
+>@rm -rf ../../test/test_data/fast_cache_testing

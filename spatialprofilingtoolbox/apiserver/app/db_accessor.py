@@ -5,6 +5,7 @@ from os import environ
 
 from psycopg2 import connect
 from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg2.extensions import cursor as Psycopg2Cursor
 
 
 class DBAccessor:
@@ -13,6 +14,7 @@ class DBAccessor:
     and disconnecting.
     """
     connection: Psycopg2Connection
+    cursor: Psycopg2Cursor
 
     def __init__(self):
         self.endpoint = None
@@ -22,6 +24,9 @@ class DBAccessor:
 
     def get_connection(self):
         return self.connection
+
+    def get_cursor(self):
+        return self.cursor
 
     def __enter__(self):
         variables = [
@@ -50,7 +55,8 @@ class DBAccessor:
             user=environ['SINGLE_CELL_DATABASE_USER'],
             password=environ['SINGLE_CELL_DATABASE_PASSWORD'],
         )
-        return self
+        self.cursor = self.connection.cursor()
+        return self, self.connection, self.cursor
 
     def get_database_config_file_contents(self):
         return f'''
@@ -62,5 +68,6 @@ password = {self.password}
 '''
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if not self.connection is None:
-            self.connection.close()
+        self.cursor.close()
+        self.connection.commit()
+        self.connection.close()

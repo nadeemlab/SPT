@@ -1,10 +1,13 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
 from os import system
 from os import environ
+from os import remove
+from os import listdir
 from os.path import isfile
 from os.path import join
 from pickle import load as load_pickle
 from json import loads as load_json_string
+import re
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
@@ -45,6 +48,16 @@ class FastCacheAssessor:
 
     def clear(self):
         logger.info('Deleting the fast cache files.')
+        expressions_files = [
+            f for f in listdir(self.source_data_location)
+            if re.match(r'^expressions_data_array\.[\d]+\.[\d]+\.bin$', f)
+        ]
+        for filename in [CENTROIDS_FILENAME, EXPRESSIONS_INDEX_FILENAME] + expressions_files:
+            try:
+                remove(join(self.source_data_location, filename))
+                logger.info('Deleted %s .', filename)
+            except FileNotFoundError:
+                pass
 
     def recreate(self):
         logger.info('Recreating fast cache files.')
@@ -53,6 +66,8 @@ class FastCacheAssessor:
         main_flags = [f'--database-config-file={self.database_config_file}']
         commands = [change_directory, ' '.join([main_command] + main_flags)]
         command = '; '.join(commands)
+        logger.debug('Command is:')
+        logger.debug(command)
         system(command)
 
     def check_files_present(self) -> bool:
@@ -188,7 +203,7 @@ def log_expected_found(set1, set2, message1, message2, context: str=''):
     (expected).
     """
     matches = set(set1).intersection(set(set2))
-    message = '"%s" found as expected.'
+    message = 'Elements found as expected: "%s".'
     if context != '':
         message = message + f' ({context}).'
     logger.info(message, matches)

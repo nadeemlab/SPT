@@ -1,9 +1,6 @@
 """Entry point into the fast cell counts TCP server."""
 import socketserver
 import argparse
-import time
-
-from psycopg2 import OperationalError
 
 from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
@@ -14,14 +11,20 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger('spt ondemand start')
 
-def start_server():
-    args = get_cli_arguments()
-    wait_for_database_ready()
-    assessor = FastCacheAssessor(args.source_data_location)
+def start():
+    source_data_location, host, port = get_cli_arguments()
+    setup_data_sources(source_data_location)
+    start_services(source_data_location, host, port)
+
+def setup_data_sources(source_data_location):
+    DBAccessor.wait_for_database_ready()
+    assessor = FastCacheAssessor(source_data_location)
     assessor.assess()
-    counts_provider = CountsProvider(args.source_data_location)
-    proximity_provider = ProximityProvider(args.source_data_location)
-    tcp_server = socketserver.TCPServer((args.host, args.port), CountsRequestHandler)
+
+def start_services(source_data_location, host, port):
+    counts_provider = CountsProvider(source_data_location)
+    proximity_provider = ProximityProvider(source_data_location)
+    tcp_server = socketserver.TCPServer((host, port), CountsRequestHandler)
     tcp_server.counts_provider = counts_provider
     tcp_server.proximity_provider = proximity_provider
     logger.info('ondemand is ready to accept connections.')
@@ -56,18 +59,8 @@ def get_cli_arguments():
         'the JSON index file. If they are not found, this program will attempt to create them '
         'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
     )
-    return parser.parse_args()
-
-def wait_for_database_ready():
-    while True:
-        try:
-            with DBAccessor() as (db_accessor, _, _):
-                db_accessor.get_database_config_file_contents()
-            break
-        except OperationalError:
-            logger.debug('Database is not ready.')
-            time.sleep(2.0)
-    logger.info('Database is ready.')
+    args = parser.parse_args()
+    return args.source_data_location, args.host, args.port
 
 if __name__ == '__main__':
-    start_server()
+    start()

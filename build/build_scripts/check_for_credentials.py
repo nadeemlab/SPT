@@ -19,7 +19,8 @@ class CredentialChecker:
         self.result = None
 
     def explain_arguments(self):
-        print(f'Need to supply one of: {str(self.get_accounts())}')
+        accounts = self.get_accounts()
+        print(f'Need to supply one of: {accounts}')
         sys.exit(1)
 
     def get_accounts(self):

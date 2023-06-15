@@ -41,9 +41,7 @@ app = FastAPI(
 
 
 def get_study_components(study_name):
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute(
             'SELECT component_study FROM study_component WHERE primary_study=%s;',
             (study_name,),
@@ -64,7 +62,6 @@ def get_study_components(study_name):
                      and not re.search('proximity calculation', substudy)
                      and not re.search(descriptor, substudy) ):
                     components[key] = substudy
-        cursor.close()
     return components
 
 
@@ -109,16 +106,13 @@ def get_study_names():
     Get the names of studies/datasets.
     """
     name_pairs = []
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute('SELECT study_specifier FROM study;')
         rows = cursor.fetchall()
         for row in rows:
             study_name = str(row[0])
             publication_summary_text = get_publication_summary_text(cursor, study_name)
             name_pairs.append((study_name, publication_summary_text))
-        cursor.close()
     representation = {'study names': name_pairs}
     return Response(
         content=json.dumps(representation),
@@ -360,10 +354,7 @@ def get_study_summary(
         evidence nearest to immediately after extraction; the date of diagnosis.
     """
     components = get_study_components(study)
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
-
+    with DBAccessor() as (_, _, cursor):
         institution = get_single_result_or_else(
             cursor,
             query='SELECT institution FROM study WHERE study_specifier=%s; ',
@@ -390,7 +381,6 @@ def get_study_summary(
         )
 
         sample_stratification = get_sample_stratification(cursor, components['collection'])
-        cursor.close()
 
     representation = {}
     representation['Institution'] = institution
@@ -458,9 +448,7 @@ async def get_phenotype_summary(
         'minimum',
         'minimum_value',
     ]
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute(
             f'''
             SELECT {', '.join(columns)}
@@ -507,7 +495,6 @@ async def get_phenotype_summary(
             if float(row[2]) <= float(pvalue):
                 associations[row[3]][cohort1].add(cohort2)
                 associations[row[3]][cohort2].add(cohort1)
-        cursor.close()
 
     fractions_formatted = [format_stratum_in_row(row, decrement, 2) for row in fractions]
     associated_cohorts = [
@@ -534,9 +521,7 @@ async def get_phenotype_symbols(
     composite phenotype symbols in the given study.
     """
     components = get_study_components(study)
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         query = '''
         SELECT DISTINCT cp.symbol, cp.identifier
         FROM cell_phenotype_criterion cpc
@@ -547,17 +532,16 @@ async def get_phenotype_symbols(
         '''
         cursor.execute(query, (components['analysis'],))
         rows = cursor.fetchall()
-        cursor.close()
-        representation = {
-            'phenotype symbols': [
-                {'handle': row[0], 'identifier': row[1]}
-                for row in rows
-            ]
-        }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
+    representation = {
+        'phenotype symbols': [
+            {'handle': row[0], 'identifier': row[1]}
+            for row in rows
+        ]
+    }
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
 
 
 @app.get("/phenotype-criteria-name/")
@@ -568,9 +552,7 @@ async def get_phenotype_criteria_name(
     Get a string representation of the markers (positive and negative) defining
     a given named phenotype, by name (i.e. phenotype symbol). Key **phenotype criteria name**.
     """
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         query = '''
         SELECT cs.symbol, cpc.polarity
         FROM cell_phenotype_criterion cpc
@@ -579,28 +561,26 @@ async def get_phenotype_criteria_name(
         WHERE cp.symbol = %s
         ;
         '''
-        cursor.execute(query, (phenotype_symbol,),
-                       )
+        cursor.execute(query, (phenotype_symbol,),)
         rows = cursor.fetchall()
-        cursor.close()
-        if len(rows) == 0:
-            munged = phenotype_symbol + '+'
-        else:
-            signature = {row[0]: row[1] for row in rows}
-            positive_markers = sorted(
-                [marker for marker, polarity in signature.items() if polarity == 'positive'])
-            negative_markers = sorted(
-                [marker for marker, polarity in signature.items() if polarity == 'negative'])
-            parts = [marker + '+' for marker in positive_markers] + \
-                [marker + '-' for marker in negative_markers]
-            munged = ''.join(parts)
-        representation = {
-            'phenotype criteria name': munged,
-        }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
+    if len(rows) == 0:
+        munged = phenotype_symbol + '+'
+    else:
+        signature = {row[0]: row[1] for row in rows}
+        positive_markers = sorted(
+            [marker for marker, polarity in signature.items() if polarity == 'positive'])
+        negative_markers = sorted(
+            [marker for marker, polarity in signature.items() if polarity == 'negative'])
+        parts = [marker + '+' for marker in positive_markers] + \
+            [marker + '-' for marker in negative_markers]
+        munged = ''.join(parts)
+    representation = {
+        'phenotype criteria name': munged,
+    }
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
 
 
 @app.get("/phenotype-criteria/")
@@ -616,9 +596,7 @@ async def get_phenotype_criteria(
     * **positive markers**
     * **negative markers**
     """
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         query = '''
         SELECT cs.symbol, cpc.polarity
         FROM cell_phenotype_criterion cpc
@@ -639,7 +617,6 @@ async def get_phenotype_criteria(
             cursor.execute(singles_query, (phenotype_symbol,))
             rows = cursor.fetchall()
             if len(rows) == 0:
-                cursor.close()
                 return Response(
                     content=json.dumps({
                         'error': {
@@ -649,22 +626,21 @@ async def get_phenotype_criteria(
                     }),
                     media_type='application/json',
                 )
-        cursor.close()
-        signature = {row[0]: row[1] for row in rows}
-        positive_markers = sorted(
-            [marker for marker, polarity in signature.items() if polarity == 'positive'])
-        negative_markers = sorted(
-            [marker for marker, polarity in signature.items() if polarity == 'negative'])
-        representation = {
-            'phenotype criteria': {
-                'positive markers': positive_markers,
-                'negative markers': negative_markers,
-            }
+    signature = {row[0]: row[1] for row in rows}
+    positive_markers = sorted(
+        [marker for marker, polarity in signature.items() if polarity == 'positive'])
+    negative_markers = sorted(
+        [marker for marker, polarity in signature.items() if polarity == 'negative'])
+    representation = {
+        'phenotype criteria': {
+            'positive markers': positive_markers,
+            'negative markers': negative_markers,
         }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
+    }
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
 
 
 def split_on_tabs(string):
@@ -688,10 +664,8 @@ async def get_anonymous_phenotype_counts_fast(
     positive_markers = split_on_tabs(positive_markers_tab_delimited)
     negative_markers = split_on_tabs(negative_markers_tab_delimited)
 
-    with DBAccessor() as db_accessor:
-        cursor = db_accessor.get_connection().cursor()
+    with DBAccessor() as (_, _, cursor):
         number_cells = get_number_cells(cursor, components['measurement'])
-        cursor.close()
 
     host = os.environ['COUNTS_SERVER_HOST']
     port = int(os.environ['COUNTS_SERVER_PORT'])
@@ -763,9 +737,7 @@ async def get_phenotype_proximity_summary(
     derivation_method = 'For a given cell phenotype (first specifier), the average number of'\
         ' cells of a second phenotype (second specifier) within a specified radius'\
         ' (third specifier).'
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute(
             f'''
             SELECT {', '.join(columns)}
@@ -778,21 +750,18 @@ async def get_phenotype_proximity_summary(
         )
         rows = cursor.fetchall()
         decrement, _ = get_sample_cohorts(cursor, components['collection'])
-        cursor.close()
 
-        representation = {
-            'proximities': [format_stratum_in_row(row, decrement, 3) for row in rows]
-        }
-        return Response(
-            content=json.dumps(representation),
-            media_type='application/json',
-        )
+    representation = {
+        'proximities': [format_stratum_in_row(row, decrement, 3) for row in rows]
+    }
+    return Response(
+        content=json.dumps(representation),
+        media_type='application/json',
+    )
 
 
 def create_signature_with_channel_names(handle, measurement_study, data_analysis_study):
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute('''
             SELECT cs.symbol
             FROM biological_marking_system bms
@@ -803,15 +772,11 @@ def create_signature_with_channel_names(handle, measurement_study, data_analysis
             (measurement_study,),
         )
         rows = cursor.fetchall()
-        channels = [row[0] for row in rows]
-
+    channels = [row[0] for row in rows]
     if handle in channels:
         return [handle], []
-
     if re.match(r'^\d+$', handle):
-        with DBAccessor() as db_accessor:
-            connection = db_accessor.get_connection()
-            cursor = connection.cursor()
+        with DBAccessor() as (_, _, cursor):
             cursor.execute('''
                 SELECT cs.symbol, cpc.polarity
                 FROM cell_phenotype_criterion cpc
@@ -845,8 +810,9 @@ async def request_phenotype_proximity_computation(
     components = get_study_components(study)
     measurement_study = components['measurement']
     data_analysis_study = components['analysis']
-    positives1, negatives1 = create_signature_with_channel_names(phenotype1, measurement_study, data_analysis_study)
-    positives2, negatives2 = create_signature_with_channel_names(phenotype2, measurement_study, data_analysis_study)
+    create = create_signature_with_channel_names
+    positives1, negatives1 = create(phenotype1, measurement_study, data_analysis_study)
+    positives2, negatives2 = create(phenotype2, measurement_study, data_analysis_study)
 
     host = os.environ['COUNTS_SERVER_HOST']
     port = int(os.environ['COUNTS_SERVER_PORT'])
@@ -878,16 +844,13 @@ async def get_plots(
                    (e.g. using expression values).
     * **base64 plot**. Base64-encoding of the PNG plot image.
     """
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute('''
         SELECT up.channel, up.png_base64 FROM umap_plots up
         WHERE up.study=%s
         ORDER BY up.channel ;
         ''', (study,))
         rows = [(row[0], row[1]) for row in cursor.fetchall()]
-        cursor.close()
 
     downsampled_rows = []
     for row in rows:
@@ -921,16 +884,13 @@ async def get_plot_high_resolution(
                    (e.g. using expression values).
     * **base64 plot**. Base64-encoding of the PNG plot image.
     """
-    with DBAccessor() as db_accessor:
-        connection = db_accessor.get_connection()
-        cursor = connection.cursor()
+    with DBAccessor() as (_, _, cursor):
         cursor.execute('''
         SELECT up.png_base64 FROM umap_plots up
         WHERE up.study=%s AND up.channel=%s
         ORDER BY up.channel ;
         ''', (study, channel))
         rows = [row[0] for row in cursor.fetchall()]
-        cursor.close()
 
     if len(rows) == 0:
         return Response(

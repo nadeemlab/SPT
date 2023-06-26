@@ -28,7 +28,7 @@ function configure_all_umaps() {
     db_config_file="$2"
     while read -r study_name
     do
-        configure_umaps_one_dataset "$runs_directory" "db_config_file" "$study_name"
+        configure_umaps_one_dataset "$runs_directory" "$db_config_file" "$study_name"
         if [[ "$?" != "0" ]];
         then
             echo "Failed to configure '$study_name' UMAPs workflow."

@@ -17,30 +17,30 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "apiserver (setup testing environment)"
+>@${MESSAGE} start "apiserver"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-apiserver-testing \
      spt-db-testing \
      spt-ondemand-testing ; \
     echo "$$?" > status_code
->@${MESSAGE} end "Setup." "Not setup."
+>@${MESSAGE} end "Setup env." "Env not setup."
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "apiserver (teardown testing environment)"
+>@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "apiserver (teardown testing environment)"
+>@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "apiserver (teardown testing environment)"
+>@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -53,7 +53,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "  $$test_name"
+    ${MESSAGE} start "\u2503 $$test_name"
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \

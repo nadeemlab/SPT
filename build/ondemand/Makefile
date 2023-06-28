@@ -17,18 +17,18 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "ondemand (setup testing environment)"
+>@${MESSAGE} start "ondemand"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-ondemand-testing \
      spt-db-testing ; \
     echo "$$?" > status_code
 >@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;
->@${MESSAGE} end "Setup." "Not setup."
+>@${MESSAGE} end "Setup env." "Env not setup."
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "ondemand (teardown testing environment)"
+>@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -36,7 +36,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "ondemand (teardown testing environment)"
+>@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -44,7 +44,7 @@ teardown-module-testing: ${MODULE_TESTS}
 >@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "ondemand (teardown testing environment)"
+>@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -59,7 +59,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "  $$test_name"
+    ${MESSAGE} start "\u2503 $$test_name"
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \

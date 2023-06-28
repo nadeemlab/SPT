@@ -15,6 +15,10 @@ from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger('spt db configure')
+
 workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
 NF_CONFIG_FILE = 'nextflow.config'
@@ -239,6 +243,10 @@ if __name__ == '__main__':
         if exists(config_file):
             config_variables['db_config_file'] = config_file
             config_variables['db_config'] = True
+        else:
+            logger.warning('Database configuration file was not located at indicated location.')
+            logger.debug('args.database_config_file: %s', args.database_config_file)
+            logger.debug('config_file: %s', config_file)
 
     if args.local:
         config_variables['executor'] = 'local'

@@ -148,7 +148,7 @@ development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/de
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
 
-pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_pyproject.py
+pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_pyproject.py version.txt
 >@${MESSAGE} start "Creating pyproject.toml"
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_pyproject.py; echo "$$?" > status_code
 >@${MESSAGE} end "Created." "Failed."

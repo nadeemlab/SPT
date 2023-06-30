@@ -290,7 +290,7 @@ ${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity da
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
-${UNIT_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
+${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 

@@ -132,7 +132,8 @@ packages = [
     "configure.py",
     "report_on_logs.py",
     "tail_logs.py",
-    "create_plots_page.py"
+    "create_plots_page.py",
+    "compute_umaps_all.py"
 ]
 "spatialprofilingtoolbox.workflow.assets" = [
     "nextflow.config.jinja",
@@ -141,7 +142,8 @@ packages = [
     ".spt_db.config.template",
     "main.nf",
     "main_visitor.nf",
-    "fields.tsv"
+    "fields.tsv",
+    "compute_umaps_all.sh"
 ]
 "spatialprofilingtoolbox.ondemand.scripts" = [
     "read_expression_dump_file.py",

@@ -2,11 +2,17 @@
 A context manager for accessing the backend SPT database, from the API service.
 """
 from os import environ
+from os.path import join
+import time
 
 from psycopg2 import connect
 from psycopg2.extensions import connection as Psycopg2Connection
 from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg2 import OperationalError
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 class DBAccessor:
     """
@@ -59,9 +65,8 @@ class DBAccessor:
         return self, self.connection, self.cursor
 
     def get_database_config_file_contents(self):
-        return f'''
-[database-credentials]
-endpoint =  {self.endpoint}
+        return f'''[database-credentials]
+endpoint = {self.endpoint}
 database = {self.database}
 user = {self.user}
 password = {self.password}
@@ -71,3 +76,26 @@ password = {self.password}
         self.cursor.close()
         self.connection.commit()
         self.connection.close()
+
+    @staticmethod
+    def create_database_config_file(source_data_location):
+        basename = '.spt_db.config.generated'
+        filename = join(source_data_location, basename)
+        with DBAccessor() as (db_accessor, _, _):
+            contents = db_accessor.get_database_config_file_contents()
+        logger.info('Creating database configuration file: %s', filename)
+        with open(filename, 'wt', encoding='utf-8') as file:
+            file.write(contents)
+        return basename
+
+    @staticmethod
+    def wait_for_database_ready():
+        while True:
+            try:
+                with DBAccessor() as (db_accessor, _, _):
+                    db_accessor.get_database_config_file_contents()
+                break
+            except OperationalError:
+                logger.debug('Database is not ready.')
+                time.sleep(2.0)
+        logger.info('Database is ready.')

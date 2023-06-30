@@ -316,7 +316,7 @@ class ProximityProvider:
             WHERE qfv.feature=%s
             ''', (feature_specification,))
             rows = cursor.fetchall()
-            metrics = {row[0]: float(row[1]) for row in rows}
+            metrics = {row[0]: float(row[1]) if row[1] else None for row in rows}
         return {
             'metrics': metrics,
             'pending': still_pending,

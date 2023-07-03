@@ -45,10 +45,6 @@ class DBAccessor:
             raise EnvironmentError(f'Did not find: {str(unfound)}')
 
         dbname = 'scstudies'
-        if 'USE_ALTERNATIVE_TESTING_DATABASE' in environ:
-            dbname = 'postgres'
-        if 'USE_LEGACY_DATABASE' in environ:
-            dbname = 'pathstudies'
 
         self.endpoint = environ['SINGLE_CELL_DATABASE_HOST']
         self.database = dbname

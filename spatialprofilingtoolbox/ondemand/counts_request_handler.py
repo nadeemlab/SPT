@@ -108,7 +108,7 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
             self.trim_empty_entry(group.split(record_separator))
             for group in groups[2:6]
         ]
-        return [study_name, radius, *channel_lists]
+        return [study_name, radius, channel_lists]
 
     @staticmethod
     def get_groups(data):

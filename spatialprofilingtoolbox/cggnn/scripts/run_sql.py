@@ -1,15 +1,10 @@
-"Run through the entire SPT CG-GNN pipeline using a local db config."
+"Run through the entire SPT CG-GNN pipeline, starting from a SPT SQL database."
 
 from argparse import ArgumentParser
-from typing import Dict, Tuple
 
-from pandas import DataFrame, concat, merge
-from numpy import sort
-
-from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
-    from cggnn.run_all import run_with_dfs
+    from cggnn.run_all import run_pipeline
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'cggnn')
 
@@ -17,21 +12,38 @@ except ModuleNotFoundError as e:
 def parse_arguments():
     "Process command line arguments."
     parser = ArgumentParser(
-        prog='spt cggnn run',
-        description='Create cell graphs from SPT tables saved locally, train a graph neural '
-        'network on them, and save resultant model, metrics, and visualizations (if requested) '
-        'to file.'
-    )
-    parser.add_argument(
-        '--spt_db_config_location',
-        type=str,
-        help='File location for SPT DB config file.',
-        required=True
+        prog='spt cggnn run_sql',
+        description='Create cell graphs from SPT SQL tables, train a graph neural network on '
+        'them, and save resultant model, metrics, and visualizations (if requested) to file.'
     )
     parser.add_argument(
         '--study',
         type=str,
         help='Name of the study to query data for in SPT.',
+        required=True
+    )
+    parser.add_argument(
+        '--host',
+        type=str,
+        help='Host SQL server IP.',
+        required=True
+    )
+    parser.add_argument(
+        '--dbname',
+        type=str,
+        help='Database in SQL server to query.',
+        required=True
+    )
+    parser.add_argument(
+        '--user',
+        type=str,
+        help='Server login username.',
+        required=True
+    )
+    parser.add_argument(
+        '--password',
+        type=str,
+        help='Server login password.',
         required=True
     )
     parser.add_argument(
@@ -116,50 +128,13 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def _create_cell_df(cell_dfs: Dict[str, DataFrame], feature_names: Dict[str, str]) -> DataFrame:
-    "Find chemical species, phenotypes, and locations and merge into a DataFrame."
-
-    for specimen, df_specimen in cell_dfs.items():
-        df_specimen.rename({ft_id: 'FT_' + ft_name for ft_id, ft_name in feature_names.items()},
-                           axis=1, inplace=True)
-        # TODO: Create phenotype columns
-        df_specimen.rename({'pixel x': 'center_x', 'pixel y': 'center_y'},
-                           axis=1, inplace=True)
-        df_specimen['specimen'] = specimen
-
-    # TODO: Reorder so that it's feature, specimen, phenotype, xy
-    # TODO: Verify histological structure ID or recreate one
-    df = concat(cell_dfs.values(), axis=0)
-    df.index.name = 'histological_structure'
-    return df
-
-
-def _create_label_df(df_assignments: DataFrame,
-                     df_strata: DataFrame) -> Tuple[DataFrame, Dict[int, str]]:
-    """Get slide-level results."""
-    df = merge(df_assignments, df_strata, on='stratum identifier', how='left')[
-        ['specimen', 'subject diagnosed result']].rename(
-        {'specimen': 'slide', 'subject diagnosed result': 'result'}, axis=1)
-    label_to_result = dict(enumerate(sort(df['result'].unique())))
-    return df.replace({res: i for i, res in label_to_result.items()}), label_to_result
-
-
 if __name__ == "__main__":
     args = parse_arguments()
-    study_data: Dict[str, Dict] = FeatureMatrixExtractor.extract(
-        args.spt_db_config_location)[args.study]
-
-    df_cell = _create_cell_df(
-        {slide: data['dataframe']
-            for slide, data in study_data['feature matrices'].items()},
-        study_data['channel symbols by column name'])
-    df_label, label_to_result_text = _create_label_df(
-        study_data['sample cohorts']['assignments'],
-        study_data['sample cohorts']['strata'])
-
-    run_with_dfs(df_cell,
-                 df_label,
-                 label_to_result_text,
+    run_pipeline(args.study,
+                 args.host,
+                 args.dbname,
+                 args.user,
+                 args.password,
                  args.validation_data_percent,
                  args.test_data_percent,
                  args.roi_side_length,

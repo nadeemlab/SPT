@@ -42,11 +42,10 @@ class CellManifestSetParser(SourceToADIParser):
         ]
 
         measurement_study = SourceToADIParser.get_measurement_study_name(study_name)
-
         cursor = connection.cursor()
         cursor.execute(
             self.generate_basic_insert_query('specimen_measurement_study'),
-            (measurement_study, 'Multiplexed imaging', '', 'Tabular', '', ''),
+            (measurement_study, '', '', '', '', ''),
         )
 
         for _, cell_manifest in cell_manifests.iterrows():

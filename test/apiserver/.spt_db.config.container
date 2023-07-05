@@ -1,0 +1,5 @@
+[database-credentials]
+endpoint = spt-db-testing
+database = postgres
+user = postgres
+password = postgres

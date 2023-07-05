@@ -3,7 +3,10 @@ Convenience uploader of feature data into SPT database tables that comprise
 a sparse representation of the features. Abstracts (wraps) the actual SQL
 queries.
 """
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
+from itertools import product
+import re
 
 import pandas as pd
 
@@ -26,12 +29,15 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
                  data_analysis_study,
                  derivation_method,
                  specifier_number,
+                 impute_zeros=False,
                  **kwargs):
-        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+        self.feature_values = None
+        self.impute_zeros=impute_zeros
+        with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         SourceToADIParser.__init__(self, fields)
-        self.record_feature_specification_template(
-            data_analysis_study, derivation_method, specifier_number)
+        args = (data_analysis_study, derivation_method, specifier_number)
+        self.record_feature_specification_template(*args)
         DatabaseConnectionMaker.__init__(self, database_config_file=database_config_file)
 
     def record_feature_specification_template(self,
@@ -44,8 +50,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         self.insert_queries = {
             tablename: self.generate_basic_insert_query(tablename)
             for tablename in
-            ['feature_specification', 'feature_specifier',
-                'quantitative_feature_value']
+            ['feature_specification', 'feature_specifier', 'quantitative_feature_value']
         }
         self.feature_values = []
 
@@ -74,8 +79,11 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         self.test_subject_existence()
         self.test_study_existence()
 
+        if self.impute_zeros:
+            self.add_imputed_zero_values()
+
         cursor = self.get_connection().cursor()
-        next_identifier = self.get_next_integer_identifier('feature_specification', cursor)
+        next_identifier = SourceToADIParser.get_next_integer_identifier('feature_specification', cursor)
         specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
         specifiers_by_id = {
             next_identifier + i: specifiers
@@ -83,8 +91,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         }
 
         self.get_feature_value_next_identifier(cursor)
-        logger.info('Inserting feature "%s" for study "%s".',
-                    self.derivation_method, self.data_analysis_study)
+        insert_notice = 'Inserting feature "%s" for study "%s".'
+        logger.info(insert_notice, self.derivation_method, self.data_analysis_study)
         for feature_identifier, specifiers in specifiers_by_id.items():
             cursor.execute(
                 self.insert_queries['feature_specification'],
@@ -151,17 +159,23 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
     def test_subject_existence(self):
         subject_ids = self.get_subject_identifiers()
         unknown_subjects = set(row[1] for row in self.feature_values).difference(subject_ids)
-        if len(unknown_subjects) > 0:
-            logger.warning('Feature values refer to %s unknown subjects: %s', len(
-                unknown_subjects), str(list(unknown_subjects)))
+        number_unknown = len(unknown_subjects)
+        if number_unknown > 0:
+            unknowns_message = 'Feature values refer to %s unknown subjects: %s'
+            logger.warning(unknowns_message, number_unknown, unknown_subjects)
+        else:
+            logger.info('All feature value subjects were known "subjects" or "specimens".')
 
     def get_subject_identifiers(self):
         cursor = self.get_connection().cursor()
         cursor.execute('SELECT identifier FROM subject;')
         rows = cursor.fetchall()
         subject_ids = [row[0] for row in rows]
+        cursor.execute('SELECT specimen FROM specimen_collection_process;')
+        rows = cursor.fetchall()
+        specimen_ids = [row[0] for row in rows]
         cursor.close()
-        return subject_ids
+        return subject_ids + specimen_ids
 
     def test_study_existence(self):
         cursor = self.get_connection().cursor()
@@ -174,8 +188,23 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
             logger.error(message)
             raise ValueError(message)
 
+    def coordinate_set(self, tuples, coordinate):
+        return sorted(list(set(t[coordinate] for t in tuples)))
+
+    def add_imputed_zero_values(self):
+        support = [(specifiers, subject) for specifiers, subject, value in self.feature_values]
+        known_specifications = self.coordinate_set(support, 0)
+        known_subjects = self.coordinate_set(support, 1)
+        no_value_cases = []
+        for case in product(known_specifications, known_subjects):
+            if case not in support:
+                no_value_cases.append(case)
+        logger.info('Imputed %s zero-value assignments.', len(no_value_cases))
+        assignments = [(case[0], case[1], 0) for case in no_value_cases]
+        self.feature_values = self.feature_values + assignments
+
     def get_feature_value_next_identifier(self, cursor):
-        next_identifier = self.get_next_integer_identifier('quantitative_feature_value', cursor)
+        next_identifier = SourceToADIParser.get_next_integer_identifier('quantitative_feature_value', cursor)
         self.feature_value_identifier = next_identifier
 
     def request_new_feature_value_identifier(self):
@@ -198,3 +227,73 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
                 self.insert_queries['quantitative_feature_value'],
                 (identifier, feature_identifier, subject, value),
             )
+
+class ADIFeatureSpecificationUploader:
+    """Just upload a new feature specification."""
+    @staticmethod
+    def add_new_feature(specifiers, derivation_method, measurement_study, cursor):
+        FSU = ADIFeatureSpecificationUploader
+        data_analysis_study = FSU.get_data_analysis_study(measurement_study, cursor)
+        next_specification = SourceToADIParser.get_next_integer_identifier('feature_specification', cursor)
+        identifier = str(next_specification)
+        FSU.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
+        FSU.insert_specifiers(identifier, specifiers, cursor)
+        return identifier
+
+    @staticmethod
+    def ondemand_descriptor():
+        return 'ondemand computed features'
+
+    @staticmethod
+    def get_data_analysis_study(measurement_study, cursor):
+        cursor.execute('''
+        SELECT sc.primary_study FROM study_component sc
+        WHERE sc.component_study=%s
+        ''', (measurement_study,))
+        study = cursor.fetchall()[0][0]
+
+        cursor.execute('''
+        SELECT das.name
+        FROM data_analysis_study das
+        JOIN study_component sc ON sc.component_study=das.name
+        WHERE sc.primary_study=%s
+        ''', (study,))
+        rows = cursor.fetchall()
+        ondemand = ADIFeatureSpecificationUploader.ondemand_descriptor()
+        names = sorted([row[0] for row in rows if re.search(f'{ondemand}', row[0])])
+        if len(names) >= 1:
+            return names[0]
+        data_analysis_study = f'{study} - {ondemand}'
+        cursor.execute('''
+        INSERT INTO data_analysis_study (name) VALUES (%s) ;
+        INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ;
+        ''', (data_analysis_study, study, data_analysis_study))
+        # cursor.commit()
+        return data_analysis_study
+
+    @staticmethod
+    def insert_specification(specification, derivation_method, data_analysis_study, cursor):
+        logger.debug('Inserting specification %s, data_analysis_study %s', specification, data_analysis_study)
+        cursor.execute('''
+        INSERT INTO feature_specification (identifier, derivation_method, study)
+        VALUES (%s, %s, %s) ;
+        ''', (specification, derivation_method, data_analysis_study))
+        # cursor.commit()
+
+    @staticmethod
+    def insert_specifiers(specification, specifiers, cursor):
+        many = [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)]
+        for entry in many:
+            logger.debug('Inserting specifier: %s', entry)
+        cursor.executemany('''
+        INSERT INTO feature_specifier (feature_specification, specifier, ordinality) VALUES (%s, %s, %s) ;
+        ''', [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)])
+        # cursor.commit()
+
+
+def add_feature_value(feature_specification, subject, value, cursor):
+    identifier = SourceToADIParser.get_next_integer_identifier('quantitative_feature_value', cursor)
+    cursor.execute('''
+    INSERT INTO quantitative_feature_value VALUES (%s, %s, %s, %s) ;
+    ''', (identifier, feature_specification, subject, value))
+    # cursor.commit()

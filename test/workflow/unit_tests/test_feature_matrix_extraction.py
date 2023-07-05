@@ -89,6 +89,40 @@ def test_expression_vectors(study):
     print('Expression vector sets are as expected.')
 
 
+def test_expression_vectors_continuous(study):
+    def create_column_name(channels, channel_num):
+        return channels[channel_num] + '_Intensity'
+
+    for specimen in study['feature matrices'].keys():
+        df = study['feature matrices'][specimen]['continuous dataframe']
+        print(df.head())
+        expression_vectors = sorted([
+            tuple(row[f'F{i}'] for i in range(26))
+            for _, row in df.iterrows()
+        ])
+
+        filenames = {'lesion 0_1': '0.csv', 'lesion 6_1': '3.csv'}
+        cells_filename = filenames[specimen]
+        reference = pd.read_csv(
+            f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')
+        channels = study['channel symbols by column name']
+
+        expected_expression_vectors = sorted([
+            tuple(row[create_column_name(channels, f'F{i}')] for i in range(26))
+            for _, row in reference.iterrows()
+        ])
+
+        if expected_expression_vectors != expression_vectors:
+            print('Expression vector sets not equal.')
+            for i, expected_vector in enumerate(expected_expression_vectors):
+                if expected_vector != expression_vectors[i]:
+                    print(f'At sorted value {i}:')
+                    print(expected_vector)
+                    print(expression_vectors[i])
+            sys.exit(1)
+    print('Expression vector sets are as expected.')
+
+
 def test_stratification(study):
     df = study['sample cohorts']['assignments']
     strata = study['sample cohorts']['strata']
@@ -119,6 +153,14 @@ if __name__ == '__main__':
     test_feature_matrix_schemas(one_sample_study)
     test_channels(one_sample_study)
     test_expression_vectors(one_sample_study)
+
+    one_sample_bundle_continuous = FeatureMatrixExtractor.extract('../db/.spt_db.config.container',
+                                                       specimen='lesion 6_1', continuous_also=True)
+    one_sample_study_continuous = get_study(one_sample_bundle_continuous)
+    test_one_sample_set(one_sample_study_continuous)
+    test_feature_matrix_schemas(one_sample_study_continuous)
+    test_channels(one_sample_study_continuous)
+    test_expression_vectors_continuous(one_sample_study_continuous)
 
     FeatureMatrixExtractor.redact_dataframes(matrix_bundle)
     print('\nMetadata "bundle" with dataframes removed:')

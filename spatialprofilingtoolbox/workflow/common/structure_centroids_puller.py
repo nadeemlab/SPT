@@ -2,33 +2,13 @@
 import statistics
 
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
+from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
+    import FractionalProgressReporter
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
-
-
-class StructureCentroids:
-    """
-    An object for in-memory storage of summarized-location data for all cells of
-    each study.
-
-    Member `studies` is a dictionary with keys the study names. The values are
-    dictionaries, providing for each specimen name (for specimens collected as
-    part of the given study) the list of pairs of pixel coordinate values
-    representing the centroid of the shape specification for a given cell. The
-    order is ascending lexicographical order of the corresponding "histological
-    structure" identifier strings.
-    """
-
-    def __init__(self):
-        self.studies = {}
-
-    def get_studies(self):
-        return self.studies
-
-    def add_study_data(self, study_name, structure_centroids_by_specimen):
-        self.studies[study_name] = structure_centroids_by_specimen
 
 
 class StructureCentroidsPuller(DatabaseConnectionMaker):
@@ -37,21 +17,32 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         super().__init__(database_config_file=database_config_file)
         self.structure_centroids = StructureCentroids()
 
-    def pull(self, specimen: str=None):
-        study_names = self.get_study_names()
+    def pull(self, specimen: str=None, study: str=None):
+        study_names = self.get_study_names(study=study)
         cursor = self.get_connection().cursor()
         for study_name in study_names:
             if specimen is None:
+                specimen_count = self.get_specimen_count(study_name, cursor)
                 cursor.execute(self.get_shapefiles_query(), (study_name,))
             else:
+                specimen_count = 1
                 cursor.execute(self.get_shapefiles_query_specimen_specific(),
                               (study_name, specimen))
             rows = cursor.fetchall()
+            if len(rows) == 0:
+                continue
             self.structure_centroids.add_study_data(
                 study_name,
-                self.create_study_data(rows)
+                self.create_study_data(rows, specimen_count, study_name)
             )
         cursor.close()
+
+    def get_specimen_count(self, study_name, cursor):
+        cursor.execute('''
+        SELECT COUNT(*) FROM specimen_data_measurement_process sdmp
+        WHERE sdmp.study=%s ;
+        ''', (study_name,))
+        return cursor.fetchall()[0][0]
 
     def get_shapefiles_query(self):
         return '''
@@ -87,44 +78,51 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         ;
         '''
 
-    def get_study_names(self):
-        query = '''
-        SELECT DISTINCT
-        sdmp.study
-        FROM specimen_data_measurement_process sdmp
-        ;
-        '''
+    def get_study_names(self, study=None):
         cursor = self.get_connection().cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        cursor.close()
+        if study is None:
+            cursor.execute('SELECT name FROM specimen_measurement_study ;')
+            rows = cursor.fetchall()
+        else:
+            cursor.execute('''
+            SELECT sms.name FROM specimen_measurement_study sms
+            JOIN study_component sc ON sc.component_study=sms.name
+            WHERE sc.primary_study=%s
+            ;
+            ''', (study,))
+            rows = cursor.fetchall()
         return sorted([row[0] for row in rows])
 
-    def create_study_data(self, rows):
+    def create_study_data(self, rows, specimen_count, study):
         study_data = {}
         field = {'structure': 0, 'specimen': 1, 'base64_contents': 2}
         current_specimen = rows[0][field['specimen']]
         specimen_centroids = []
+        progress_reporter = FractionalProgressReporter(
+            specimen_count,
+            parts=6,
+            task_description=f'parsing shapefiles for {study}',
+            logger=logger,
+        )
         for row in rows:
             if current_specimen != row[field['specimen']]:
                 study_data[current_specimen] = specimen_centroids
-                logger.debug('Done parsing shapefiles for specimen "%s".', current_specimen)
+                progress_reporter.increment(iteration_details=current_specimen)
                 current_specimen = row[field['specimen']]
                 specimen_centroids = []
             specimen_centroids.append(self.compute_centroid(
                 extract_points(row[field['base64_contents']])
             ))
+        progress_reporter.done()
         study_data[current_specimen] = specimen_centroids
-        logger.debug('Done parsing shapefiles for specimen "%s".',
-                     current_specimen)
         return study_data
 
     def compute_centroid(self, points):
         nonrepeating_points = points[0:(len(points)-1)]
-        return [
+        return (
             statistics.mean([point[0] for point in nonrepeating_points]),
             statistics.mean([point[1] for point in nonrepeating_points]),
-        ]
+        )
 
     def get_structure_centroids(self):
         return self.structure_centroids

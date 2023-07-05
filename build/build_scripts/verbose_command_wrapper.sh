@@ -9,8 +9,9 @@ status_message_size_limit=15
 
 function display_initiation_message() {
     echo -en "$initiation_color_code"
-    echo -n "$1 "
-    echo -en "$reset_code$dots_color""...""$reset_code"
+    echo -en "$1 "
+    padchar=$(echo -en "\u2508")
+    echo -en "$reset_code$dots_color""$padchar$padchar$padchar""$reset_code"
 }
 
 function display_completion_message() {
@@ -49,7 +50,8 @@ function print_dots {
     else
         pad_size=0
     fi
-    dots_bar=$(printf %${pad_size}s |tr " " ".")
+    padchar=$(echo -en "\u2508")
+    dots_bar=$(printf %${pad_size}s |tr " " "$padchar")
     echo -en "$dots_color$dots_bar$reset_code "
 }
 
@@ -63,7 +65,8 @@ then
     message="$2"
     display_initiation_message "$2"
     date +%s > .current_time.txt
-    echo -n "${#message}" > .initiation_message_size
+    message_length=$(echo -ne "$message" | tr -d '\n' | wc -m)
+    echo -n "$message_length" > .initiation_message_size
 fi
 
 if [[ "$1" == "end" ]];

@@ -12,12 +12,6 @@ TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
 
-Dockerfile:
->@${MESSAGE} start "Building workflow Dockerfile"
->@cat ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/Dockerfile.base ./Dockerfile.append > Dockerfile ; echo "$$?" > status_code
->@${MESSAGE} end "Built." "Not built."
->@rm -f status_code
-
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
 unit-tests: teardown-unit-testing
@@ -25,31 +19,31 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "workflow (setup testing environment)"
+>@${MESSAGE} start "workflow"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-db-testing; \
     echo "$$?" > status_code
->@${MESSAGE} end "Setup." "Not setup."
+>@${MESSAGE} end "Setup env." "Env not setup."
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "workflow (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} start "\u2517\u2501"
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "workflow (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} start "\u2517\u2501"
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "workflow (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} start "\u2517\u2501"
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
@@ -62,7 +56,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "  $$test_name"
+    ${MESSAGE} start "\u2503 $$test_name"
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -82,9 +76,7 @@ ${TESTS}: setup-testing
 >@rm -f status_code
 
 clean:
->@rm -f Dockerfile
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@rm -f status_code
->@rm -rf requirements.txt
->@rm -rf specific_requirements.txt
+>@rm -f ${TD}/plots.html

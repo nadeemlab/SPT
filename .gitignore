@@ -2,6 +2,7 @@
 /check-docker-daemon-running
 status_code
 
+
 # Generated files
 /check-for-docker-credentials
 /data-loaded-image-1
@@ -26,6 +27,16 @@ build/db/schema.sql
 build/db/initialize_schema.sql
 build/*.whl
 build/lib/
+build/apiserver/log_of_build.log
+build/cggnn/log_of_build.log
+build/db/log_of_build.log
+build/ondemand/log_of_build.log
+build/workflow/log_of_build.log
+check-dockerfiles-consistency
+data-loaded-image-1smallnointensity
+development-image-prerequisites-installed
+log_of_build.log
+pyproject.toml
 
 # Development files
 .vscode/

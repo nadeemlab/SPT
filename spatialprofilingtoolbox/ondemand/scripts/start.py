@@ -2,7 +2,7 @@
 import socketserver
 import argparse
 
-from spatialprofilingtoolbox.apiserver.app.db_accessor import wait_for_database_ready
+from spatialprofilingtoolbox.db.database_connection import wait_for_database_ready
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
 from spatialprofilingtoolbox.ondemand.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.proximity_provider import ProximityProvider

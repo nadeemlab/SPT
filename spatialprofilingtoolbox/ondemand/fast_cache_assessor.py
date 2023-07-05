@@ -9,7 +9,7 @@ from pickle import load as load_pickle
 from json import loads as load_json_string
 import re
 
-from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -118,7 +118,7 @@ class FastCacheAssessor:
         return set(known_measurement_studies).issubset(set(indexed_measurement_studies))
 
     def _retrieve_measurement_studies(self):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = cursor.fetchall()
         return [row[0] for row in rows]
@@ -170,7 +170,7 @@ class FastCacheAssessor:
         return set(known_samples).issubset(set(indexed_samples))
 
     def _retrieve_known_samples_measurement(self, measurement_study):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT specimen FROM specimen_data_measurement_process sdmp
             WHERE sdmp.study=%s

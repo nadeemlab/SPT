@@ -2,14 +2,18 @@
 A context manager from accessing the backend SPT database, from inside library
 functions.
 """
+import time
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
 
 from psycopg2 import connect
 from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg2.extensions import cursor as Psycopg2Cursor
 from psycopg2 import Error as Psycopg2Error
+from psycopg2 import OperationalError
 
+from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import get_credentials_from_environment
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -19,37 +23,37 @@ logger = colorized_logger(__name__)
 
 class DatabaseConnectionMaker:
     """
-    Provides a psycopg2 Postgres database connection. Takes care of connecting
-    and disconnecting.
+    Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
     """
     connection: Psycopg2Connection
+    autocommit: bool
 
-    def __init__(self, database_config_file: str | None=None):
+    def __init__(self, database_config_file: str | None=None, autocommit: bool=True):
         if database_config_file is not None:
             credentials = retrieve_credentials_from_file(database_config_file)
         else:
             credentials = get_credentials_from_environment()
         try:
-            self.connection = connect(
-                dbname=credentials.database,
-                host=credentials.endpoint,
-                user=credentials.user,
-                password=credentials.password,
-            )
+            self._make_connection(credentials)
         except Psycopg2Error:
             message = 'Failed to connect to database: %s %s'
             logger.warning(message, credentials.endpoint, credentials.database)
             logger.info('Trying with alternative database name.')
+            credentials.database = 'postgres'
             try:
-                self.connection = connect(
-                    dbname='postgres',
-                    host=credentials.endpoint,
-                    user=credentials.user,
-                    password=credentials.password,
-                )
+                self._make_connection(credentials)
             except Psycopg2Error as exception:
-                logger.error(message, credentials.endpoint, 'postgres')
+                logger.error(message, credentials.endpoint, credentials.database)
                 raise exception
+        self.autocommit = autocommit
+
+    def _make_connection(self, credentials: DBCredentials):
+        self.connection = connect(
+            dbname=credentials.database,
+            host=credentials.endpoint,
+            user=credentials.user,
+            password=credentials.password,
+        )
 
     def is_connected(self):
         try:
@@ -65,7 +69,31 @@ class DatabaseConnectionMaker:
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if self.connection:
+        if self.is_connected():
+            if self.autocommit:
+                self.connection.commit()
+            self.connection.close()
+
+
+class DBCursor(DatabaseConnectionMaker):
+    """Context manager for shortcutting right to provision of a cursor."""
+    cursor: Psycopg2Cursor
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def get_cursor(self) -> Psycopg2Cursor:
+        return self.cursor
+
+    def __enter__(self):
+        self.cursor = self.get_connection().cursor()
+        return self.get_cursor()
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        if self.is_connected():
+            if self.autocommit:
+                self.connection.commit()
+            self.cursor.close()
             self.connection.close()
 
 
@@ -77,3 +105,21 @@ def get_and_validate_database_config(args):
                 f'Need to supply valid database config filename: {config_file}')
         return config_file
     raise ValueError('Could not parse CLI argument for database config.')
+
+
+def wait_for_database_ready():
+    while True:
+        try:
+            if _check_database_is_ready():
+                break
+        except OperationalError:
+            logger.debug('Database is not ready.')
+            time.sleep(2.0)
+    logger.info('Database is ready.')
+
+
+def _check_database_is_ready() -> bool:
+    with DatabaseConnectionMaker() as dcm:
+        if dcm.is_connected():
+            return True
+    return False

@@ -14,7 +14,7 @@ from fastapi.responses import StreamingResponse
 
 from spatialprofilingtoolbox.db.fractions_transcriber import \
     describe_fractions_feature_derivation_method
-from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 VERSION = '0.4.0'
@@ -41,7 +41,7 @@ app = FastAPI(
 
 
 def get_study_components(study_name):
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute(
             'SELECT component_study FROM study_component WHERE primary_study=%s;',
             (study_name,),
@@ -106,7 +106,7 @@ def get_study_names():
     Get the names of studies/datasets.
     """
     name_pairs = []
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute('SELECT study_specifier FROM study;')
         rows = cursor.fetchall()
         for row in rows:
@@ -354,7 +354,7 @@ def get_study_summary(
         evidence nearest to immediately after extraction; the date of diagnosis.
     """
     components = get_study_components(study)
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         institution = get_single_result_or_else(
             cursor,
             query='SELECT institution FROM study WHERE study_specifier=%s; ',
@@ -448,7 +448,7 @@ async def get_phenotype_summary(
         'minimum',
         'minimum_value',
     ]
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute(
             f'''
             SELECT {', '.join(columns)}
@@ -521,7 +521,7 @@ async def get_phenotype_symbols(
     composite phenotype symbols in the given study.
     """
     components = get_study_components(study)
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         query = '''
         SELECT DISTINCT cp.symbol, cp.identifier
         FROM cell_phenotype_criterion cpc
@@ -552,7 +552,7 @@ async def get_phenotype_criteria_name(
     Get a string representation of the markers (positive and negative) defining
     a given named phenotype, by name (i.e. phenotype symbol). Key **phenotype criteria name**.
     """
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         query = '''
         SELECT cs.symbol, cpc.polarity
         FROM cell_phenotype_criterion cpc
@@ -596,7 +596,7 @@ async def get_phenotype_criteria(
     * **positive markers**
     * **negative markers**
     """
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         query = '''
         SELECT cs.symbol, cpc.polarity
         FROM cell_phenotype_criterion cpc
@@ -664,7 +664,7 @@ async def get_anonymous_phenotype_counts_fast(
     positive_markers = split_on_tabs(positive_markers_tab_delimited)
     negative_markers = split_on_tabs(negative_markers_tab_delimited)
 
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         number_cells = get_number_cells(cursor, components['measurement'])
 
     host = os.environ['COUNTS_SERVER_HOST']
@@ -737,7 +737,7 @@ async def get_phenotype_proximity_summary(
     derivation_method = 'For a given cell phenotype (first specifier), the average number of'\
         ' cells of a second phenotype (second specifier) within a specified radius'\
         ' (third specifier).'
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute(
             f'''
             SELECT {', '.join(columns)}
@@ -761,7 +761,7 @@ async def get_phenotype_proximity_summary(
 
 
 def create_signature_with_channel_names(handle, measurement_study, data_analysis_study):
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute('''
             SELECT cs.symbol
             FROM biological_marking_system bms
@@ -776,7 +776,7 @@ def create_signature_with_channel_names(handle, measurement_study, data_analysis
     if handle in channels:
         return [handle], []
     if re.match(r'^\d+$', handle):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
                 SELECT cs.symbol, cpc.polarity
                 FROM cell_phenotype_criterion cpc
@@ -845,7 +845,7 @@ async def get_plots(
                    (e.g. using expression values).
     * **base64 plot**. Base64-encoding of the PNG plot image.
     """
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute('''
         SELECT up.channel, up.png_base64 FROM umap_plots up
         WHERE up.study=%s
@@ -885,7 +885,7 @@ async def get_plot_high_resolution(
                    (e.g. using expression values).
     * **base64 plot**. Base64-encoding of the PNG plot image.
     """
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute('''
         SELECT up.png_base64 FROM umap_plots up
         WHERE up.study=%s AND up.channel=%s

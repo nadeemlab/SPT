@@ -28,7 +28,8 @@ NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
 
 def retrieve_from_library(subpackage, filename):
     contents = None
-    with as_file(files('.'.join(['spatialprofilingtoolbox', subpackage])).joinpath(filename)) as path:
+    filepath = files('.'.join(['spatialprofilingtoolbox', subpackage])).joinpath(filename)
+    with as_file(filepath) as path:
         with open(path, 'rt', encoding='utf-8') as file:
             contents = file.read()
     if contents is None:

@@ -90,10 +90,10 @@ class CompressedDataArrays:
     @staticmethod
     def check_dicts_equal(dict1, dict2):
         if sorted(list(dict1.keys())) != sorted(list(dict2.keys())):
-            raise ValueError('Dictionary key sets not equal: %s, %s' % (dict1.keys(), dict2.keys()))
+            raise ValueError(f'Dictionary key sets not equal: {dict1.keys()}, {dict2.keys()}')
         for key, value in dict1.items():
             if value != dict2[key]:
-                raise ValueError('Dictionary values not equal: %s, %s' % (value, dict2[key]))
+                raise ValueError(f'Dictionary values not equal: {value}, {dict2[key]}')
 
 
 class SparseMatrixPuller(DatabaseConnectionMaker):
@@ -110,7 +110,11 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
     def get_data_arrays(self):
         return self.data_arrays
 
-    def retrieve_data_arrays(self, specimen: str=None, study: str=None, continuous_also=False) -> CompressedDataArrays:
+    def retrieve_data_arrays(self,
+            specimen: str=None,
+            study: str=None,
+            continuous_also=False,
+        ) -> CompressedDataArrays:
         study_names = self.get_study_names(self.get_connection(), study=study)
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
@@ -131,9 +135,10 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
         progress_reporter = FractionalProgressReporter(
             len(specimens),
             parts=8,
-            task_description='pulling sparse entries from the study',
+            task_and_done_message=('pulling sparse entries from the study', None),
             logger=logger,
         )
+        parse = self.parse_data_arrays_by_specimen
         for _specimen in specimens:
             sparse_entries = self.get_sparse_entries(
                 self.get_connection(),
@@ -142,7 +147,7 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             )
             if len(sparse_entries) == 0:
                 continue
-            parsed = self.parse_data_arrays_by_specimen(sparse_entries, continuous_also=continuous_also)
+            parsed = parse(sparse_entries, continuous_also=continuous_also)
             data_arrays_by_specimen, \
             target_index_lookup, \
             continuous_data_arrays_by_specimen = parsed
@@ -267,7 +272,8 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             else:
                 data_arrays_by_specimen[specimen] = [0] * cell_count
                 if continuous_also:
-                    continuous_data_arrays_by_specimen[specimen] = [[0]*len(target_index_lookup) for i in range(cell_count)]
+                    zerovector = [[0]*len(target_index_lookup) for i in range(cell_count)]
+                    continuous_data_arrays_by_specimen[specimen] = zerovector
                 else:
                     continuous_data_arrays_by_specimen[specimen] = None
                 self.fill_data_array(
@@ -323,10 +329,11 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             if entry[2] == 1:
                 data_array[structure_index] = data_array[structure_index] + \
                     (1 << target_index_lookup[entry[1]])
-        if continuous_data_array is not None:
-            structure_index = 0
-            for i, entry in enumerate(entries):
-                if i > 0:
-                    if entries[i][0] != entries[i-1][0]:
-                        structure_index = structure_index + 1
-                continuous_data_array[structure_index][target_index_lookup[entry[1]]] = float(entry[4])
+        if continuous_data_array is None:
+            return
+        structure_index = 0
+        for i, entry in enumerate(entries):
+            if i > 0:
+                if entries[i][0] != entries[i-1][0]:
+                    structure_index = structure_index + 1
+            continuous_data_array[structure_index][target_index_lookup[entry[1]]] = float(entry[4])

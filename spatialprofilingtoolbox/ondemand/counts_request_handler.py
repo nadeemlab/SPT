@@ -38,7 +38,8 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
         self.request.sendall(message.encode('utf-8'))
         return True
 
-    def get_proximity_metrics(self, study, radius, positives1, negatives1, positives2, negatives2):
+    def get_proximity_metrics(self, study, radius, signature):
+        positives1, negatives1, positives2, negatives2 = signature
         phenotype1 = {'positive': positives1, 'negative': negatives1}
         phenotype2 = {'positive': positives2, 'negative': negatives2}
         return self.server.proximity_provider.compute_metrics(study, phenotype1, phenotype2, radius)
@@ -107,7 +108,7 @@ class CountsRequestHandler(socketserver.BaseRequestHandler):
             self.trim_empty_entry(group.split(record_separator))
             for group in groups[2:6]
         ]
-        return [study_name, radius, *channel_lists]
+        return [study_name, radius, channel_lists]
 
     @staticmethod
     def get_groups(data):

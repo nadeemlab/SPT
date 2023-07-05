@@ -32,7 +32,6 @@ class PhenotypeProximityCoreJob(CoreJob):
         study_name: str='',
         database_config_file: str='',
         performance_report_file: str='',
-        job_index: str='',
         results_file: str='',
         **kwargs  # pylint: disable=unused-argument
     ):
@@ -41,7 +40,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         self.performance_report_file = performance_report_file
         self.timer = PerformanceTimer()
         self.results_file = results_file
-        self.job_index = job_index
+        self.job_index = kwargs['job_index']
         self.sample_identifier = self.lookup_sample()
         self.channel_symbols_by_column_name = None
         self.phenotype_names = None

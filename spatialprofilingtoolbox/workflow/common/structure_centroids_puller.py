@@ -101,7 +101,7 @@ class StructureCentroidsPuller(DatabaseConnectionMaker):
         progress_reporter = FractionalProgressReporter(
             specimen_count,
             parts=6,
-            task_description=f'parsing shapefiles for {study}',
+            task_and_done_message=(f'parsing shapefiles for {study}', None),
             logger=logger,
         )
         for row in rows:

@@ -18,8 +18,7 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger('cache-expressions-data-array')
 
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         prog='spt ondemand cache-expressions-data-array',
         description='Preload data structure to efficiently serve samples satisfying given partial'
@@ -28,17 +27,6 @@ if __name__ == '__main__':
     add_argument(parser, 'database config')
     parser.add_argument('--centroids-only', dest='centroids_only', action='store_true')
     args = parser.parse_args()
-
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error \
-        import SuggestExtrasException
-    try:
-        from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
-        from spatialprofilingtoolbox.ondemand.compressed_matrix_writer \
-            import CompressedMatrixWriter
-        from spatialprofilingtoolbox.workflow.common.structure_centroids_puller \
-            import StructureCentroidsPuller
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
 
     database_config_file = abspath(expanduser(args.database_config_file))
 
@@ -56,7 +44,8 @@ if __name__ == '__main__':
         logger.info('%s already exists, skipping feature matrix pull.', EXPRESSIONS_INDEX_FILENAME)
         sys.exit(1)
     else:
-        logger.info('%s was not found, will do feature matrix pull after all.', EXPRESSIONS_INDEX_FILENAME)
+        message = '%s was not found, will do feature matrix pull after all.'
+        logger.info(message, EXPRESSIONS_INDEX_FILENAME)
 
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()
@@ -68,3 +57,17 @@ if __name__ == '__main__':
 
     writer = CompressedMatrixWriter()
     writer.write(data_arrays)
+
+if __name__ == '__main__':
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error \
+        import SuggestExtrasException
+    try:
+        from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+        from spatialprofilingtoolbox.ondemand.compressed_matrix_writer \
+            import CompressedMatrixWriter
+        from spatialprofilingtoolbox.workflow.common.structure_centroids_puller \
+            import StructureCentroidsPuller
+    except ModuleNotFoundError as e:
+        SuggestExtrasException(e, 'workflow')
+
+    main()

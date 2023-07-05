@@ -1,4 +1,4 @@
-
+"""Convenience utility to follow logs during a nextflow workflow run."""
 import argparse
 from os import system
 

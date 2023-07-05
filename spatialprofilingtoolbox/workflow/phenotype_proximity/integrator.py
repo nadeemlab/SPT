@@ -63,8 +63,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         with ADIFeaturesUploader(
             database_config_file=self.database_config_file,
             data_analysis_study=data_analysis_study,
-            derivation_method=describe_proximity_feature_derivation_method(),
-            specifier_number=3,
+            derivation_and_number_specifiers=(describe_proximity_feature_derivation_method(), 3),
             impute_zeros=True,
         ) as feature_uploader:
             self.send_features_to_uploader(feature_uploader, core_computation_results_files)

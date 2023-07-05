@@ -1,0 +1,11 @@
+
+import argparse
+from os import system
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='spt workflow tail-logs',
+        description='Show and follow logs in a running workflow directory.'
+    )
+    args = parser.parse_args()
+    system('tail -f -n1000 work/*/*/.command.log')

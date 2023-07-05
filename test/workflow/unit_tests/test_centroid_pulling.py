@@ -18,8 +18,8 @@ if __name__ == '__main__':
                 sys.exit(1)
 
             if sample == 'lesion 0_1':
-                point_first = [4935.0, 12.0]
-                point_last = [5330.0, 290.0]
+                point_first = (4935.0, 12.0)
+                point_last = (5330.0, 290.0)
                 if point_first != points[0]:
                     print(f'Wrong first centroid: {points[0]}')
                     sys.exit(1)

@@ -14,11 +14,12 @@ They are:
 this pipeline are stored and managed.
 """
 import importlib
-__version__ = '0.5.0'
+__version__ = '0.7.2'
 
 workflow_names_and_subpackages = {
     'tabular import': 'tabular_import',
     'phenotype proximity': 'phenotype_proximity',
+    'reduction visual': 'reduction_visual'
 }
 
 

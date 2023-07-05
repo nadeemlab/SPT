@@ -2,7 +2,8 @@
 Utility to write the single-cell studies "ADI" SQL schema, plus performance-
 and SPT-related tweaks, into a Postgresql instance.
 """
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 import re
 from typing import Optional
 
@@ -10,6 +11,7 @@ import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
+from spatialprofilingtoolbox.db.fractions_transcriber import transcribe_fraction_features
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -43,17 +45,19 @@ class SchemaInfuser(DatabaseConnectionMaker):
         ]
 
     def create_drop_tables(self):
-        with importlib.resources.path('adiscstudies', 'fields.tsv') as path:
+        with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)
         table_names = sorted(list(set(self.normalize(t) for t in fields['Table'])))
-        table_names = table_names + self.get_schema_documentation_tables() + ['sample_strata']
+        performance_extras = ['sample_strata', 'pending_feature_computation', 'umap_plots']
+        table_names = table_names + self.get_schema_documentation_tables() + performance_extras
         return '\n'.join([
             f'DROP TABLE IF EXISTS {t} CASCADE ; ' for t in table_names
         ])
 
     def refresh_views(self):
         self.verbose_sql_execute(('refresh_views.sql', 'refresh views of main schema'),
-                                  verbosity='silent')
+                                  verbosity='itemize')
+        transcribe_fraction_features(self.database_config_file)
 
     def recreate_views(self):
         self.verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))

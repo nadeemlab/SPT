@@ -7,6 +7,19 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+def infer_common_marking_mechanism(channels):
+    mechanisms = list(set(row['Marking mechanism'] for i, row in channels.iterrows()))
+    if len(mechanisms) > 1:
+        logger.warning('Encountered multiple marking mechanisms: %s', mechanisms)
+    if len(mechanisms) == 1:
+        mechanism = mechanisms[0]
+    else:
+        mechanism = ''
+        logger.warning('Failed to infer marking mechanism.')
+    logger.info('Inferred marking mechanism: %s', mechanism)
+    return mechanism
+
+
 class ChannelsPhenotypesParser(SourceToADIParser):
     """Source file parsing for imaging/feature-assessment channel metadata."""
     def parse(self,
@@ -32,7 +45,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
 
         cursor = connection.cursor()
 
-        identifier = self.get_next_integer_identifier('chemical_species', cursor)
+        identifier = SourceToADIParser.get_next_integer_identifier('chemical_species', cursor)
         initial_value = identifier
         chemical_species_identifiers_by_symbol = {}
         for _, phenotype in channels.iterrows():
@@ -59,11 +72,9 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                     '"chemical_species" %s already exists.',
                     str([''] + list(record[1:])),
                 )
-        logger.info('Saved %s chemical species records.',
-                    identifier - initial_value)
+        logger.info('Saved %s chemical species records.', identifier - initial_value)
 
-        identifier = self.get_next_integer_identifier(
-            'biological_marking_system', cursor)
+        identifier = SourceToADIParser.get_next_integer_identifier('biological_marking_system', cursor)
         initial_value = identifier
         for _, phenotype in channels.iterrows():
             symbol = phenotype['Name']
@@ -85,10 +96,14 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 )
         logger.info('Saved %s biological marking system records.', identifier - initial_value)
 
+        mechanism = infer_common_marking_mechanism(channels)
+        cursor.execute('UPDATE specimen_measurement_study SET assay=%s WHERE name=%s ;',
+                       (mechanism, measurement_study))
+
         cursor.execute(
             self.generate_basic_insert_query('data_analysis_study'), (data_analysis_study, ))
 
-        identifier = self.get_next_integer_identifier('cell_phenotype', cursor)
+        identifier = SourceToADIParser.get_next_integer_identifier('cell_phenotype', cursor)
         initial_value = identifier
         cell_phenotype_identifiers_by_symbol = {}
         number_criterion_records = 0

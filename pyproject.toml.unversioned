@@ -1,0 +1,173 @@
+[build-system]
+requires = [
+    "setuptools>=63",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spatialprofilingtoolbox"
+authors = [
+    { name = "James Mathews", email = "mathewj2@mskcc.org" }
+]
+description = "Toolbox for spatial analysis of single cell data."
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research"
+]
+requires-python = ">=3.9"
+dependencies = [
+    "psycopg2==2.9.6",
+    "adiscstudies==0.11.0",
+    "numba==0.57.0"
+]
+
+[project.urls]
+documentation = "https://github.com/nadeemlab/SPT"
+repository = "https://github.com/nadeemlab/SPT"
+
+[project.optional-dependencies]
+apiserver = [
+    "fastapi>=0.68.0,<0.69.0",
+    "uvicorn>=0.15.0,<0.16.0",
+    "pandas==2.0.2",
+    "scipy==1.10.1",
+    "numpy==1.24.3",
+    "pyshp==2.2.0",
+    "scikit-learn==1.2.2",
+    "Pillow==9.5.0"
+]
+db = [
+    "pandas==2.0.2",
+    "pyshp==2.2.0"
+]
+ondemand = [
+    "pandas==2.0.2",
+    "numpy==1.24.3",
+    "scikit-learn==1.2.2",
+    "pyshp==2.2.0"
+]
+cggnn = [
+    "cg-gnn"
+]
+workflow = [
+    "matplotlib==3.7.1",
+    "umap-learn==0.5.3",
+    "numpy==1.24.3",
+    "scipy==1.10.1",
+    "scikit-learn==1.2.2",
+    "pyshp==2.2.0",
+    "pandas==2.0.2",
+    "Jinja2==3.1.2",
+    "tabulate==0.8.10",
+    "Pillow==9.5.0"
+]
+building = [
+    "Jinja2==3.1.2"
+]
+all = [
+    "matplotlib==3.7.1",
+    "umap-learn==0.5.3",
+    "fastapi>=0.68.0,<0.69.0",
+    "uvicorn>=0.15.0,<0.16.0",
+    "Jinja2==3.1.2",
+    "pandas==2.0.2",
+    "numpy==1.24.3",
+    "scipy==1.10.1",
+    "scikit-learn==1.2.2",
+    "pyshp==2.2.0",
+    "tabulate==0.8.10"
+]
+dev = [
+    "autopep8",
+    "mypy",
+    "pylint",
+    "pytest"
+]
+
+[project.scripts]
+spt = "spatialprofilingtoolbox.entry_point.cli:main_program"
+spt-enable-completion = "spatialprofilingtoolbox.entry_point.spt_enable_completion:main_program"
+
+[tool.setuptools]
+packages = [
+    "spatialprofilingtoolbox",
+    "spatialprofilingtoolbox.standalone_utilities",
+    "spatialprofilingtoolbox.entry_point",
+    "spatialprofilingtoolbox.apiserver",
+    "spatialprofilingtoolbox.apiserver.app",
+    "spatialprofilingtoolbox.apiserver.scripts",
+    "spatialprofilingtoolbox.cggnn",
+    "spatialprofilingtoolbox.cggnn.scripts",
+    "spatialprofilingtoolbox.ondemand",
+    "spatialprofilingtoolbox.ondemand.scripts",
+    "spatialprofilingtoolbox.db",
+    "spatialprofilingtoolbox.db.scripts",
+    "spatialprofilingtoolbox.db.data_model",
+    "spatialprofilingtoolbox.workflow",
+    "spatialprofilingtoolbox.workflow.scripts",
+    "spatialprofilingtoolbox.workflow.component_interfaces",
+    "spatialprofilingtoolbox.workflow.phenotype_proximity",
+    "spatialprofilingtoolbox.workflow.reduction_visual",
+    "spatialprofilingtoolbox.workflow.tabular_import",
+    "spatialprofilingtoolbox.workflow.tabular_import.parsing",
+    "spatialprofilingtoolbox.workflow.common",
+    "spatialprofilingtoolbox.workflow.common.logging",
+    "spatialprofilingtoolbox.workflow.assets"
+]
+
+[tool.setuptools.package-data]
+"spatialprofilingtoolbox.entry_point" = ["spt-completion.sh.jinja"]
+"spatialprofilingtoolbox.workflow.scripts" = [
+    "aggregate_core_results.py",
+    "core_job.py",
+    "extract_compartments.py",
+    "generate_run_information.py",
+    "initialize.py",
+    "merge_performance_reports.py",
+    "merge_sqlite_dbs.py",
+    "report_run_configuration.py",
+    "configure.py",
+    "report_on_logs.py",
+    "tail_logs.py",
+    "create_plots_page.py",
+    "compute_umaps_all.py"
+]
+"spatialprofilingtoolbox.workflow.assets" = [
+    "nextflow.config.jinja",
+    "log_table.tex.jinja",
+    "log_table.html.jinja",
+    ".spt_db.config.template",
+    "main.nf",
+    "main_visitor.nf",
+    "fields.tsv",
+    "compute_umaps_all.sh"
+]
+"spatialprofilingtoolbox.ondemand.scripts" = [
+    "read_expression_dump_file.py",
+    "cache_expressions_data_array.py",
+    "start.py"
+]
+"spatialprofilingtoolbox.db.scripts" = [
+    "create_schema.py",
+    "modify_constraints.py",
+    "guess_channels_from_object_files.py",
+    "status.py",
+    "retrieve_feature_matrices.py",
+    "drop.py",
+    "index_expressions_table.py"
+]
+"spatialprofilingtoolbox.db.data_model" = [
+    "create_roles.sql",
+    "create_views.sql",
+    "drop_views.sql",
+    "fields.tsv",
+    "grant_on_tables.sql",
+    "performance_tweaks.sql",
+    "refresh_views.sql"
+]
+"spatialprofilingtoolbox.cggnn.scripts" = [
+    "run.py",
+]

@@ -33,49 +33,76 @@ Running docker compose rm (remove) <span style="color:olive;">...</span><span st
 4. `$ make test`
 
 ```txt
-Running docker compose rm (remove) ............................................. Down.          (0s)
-apiserver (setup testing environment) .......................................... Setup.         (7s)
+Creating pyproject.toml ........................................................ Created.       (0s)
+Building development image precursor ........................................... Built.         (0s)
+Building development image ..................................................... Built.         (1s)
+Building apiserver Dockerfile .................................................. Built.         (0s)
+Building cggnn Dockerfile ...................................................... Built.         (0s)
+Building ondemand Dockerfile ................................................... Built.         (0s)
+Building db Dockerfile ......................................................... Built.         (0s)
+Building workflow Dockerfile ................................................... Built.         (0s)
+Checking for Docker credentials in ~/.docker/config.json ....................... Found.         (0s)
+Building Docker image nadeemlab/spt-db ......................................... Built.         (6s)
+Building test-data-loaded spt-db image (1small) ................................ Built.         (0s)
+Building test-data-loaded spt-db image (1) ..................................... Built.         (0s)
+Building test-data-loaded spt-db image (1and2) ................................. Built.         (1s)
+Building Docker image nadeemlab/spt-apiserver .................................. Built.         (5s)
+Building Docker image nadeemlab/spt-cggnn ...................................... Built.         (6s)
+Building Docker image nadeemlab/spt-ondemand ................................... Built.         (6s)
+Building Docker image nadeemlab/spt-workflow ................................... Built.         (6s)
+Running docker compose rm (remove) ............................................. Down.          (1s)
+apiserver (setup testing environment) .......................................... Setup.         (4s)
+  study names .................................................................. Passed.        (1s)
+  record counts ................................................................ Passed.        (4s)
   API internal basic database accessor ......................................... Passed.        (1s)
-apiserver (teardown testing environment) ....................................... Down.          (0s)
-cggnn (setup testing environment) .............................................. Setup.         (5s)
+  expressions in db ............................................................ Passed.        (1s)
+apiserver (teardown testing environment) ....................................... Down.          (1s)
+cggnn (setup testing environment) .............................................. Setup.         (2s)
   image runs properly .......................................................... Passed.        (1s)
-  run .......................................................................... Passed.        (5s)
 cggnn (teardown testing environment) ........................................... Down.          (1s)
-countsserver (setup testing environment) ....................................... Setup.         (5s)
+ondemand (setup testing environment) ........................................... Setup.         (4s)
   binary expression viewer ..................................................... Passed.        (1s)
-countsserver (teardown testing environment) .................................... Down.          (1s)
-db (setup testing environment) ................................................. Setup.         (11s)
-  guess channels from object files ............................................. Passed.        (2s)
-  drop recreate database constraints ........................................... Passed.        (12s)
-  shapefile polygon extraction ................................................. Passed.        (0s)
-db (teardown testing environment) .............................................. Down.          (1s)
-workflow (setup testing environment) ........................................... Setup.         (6s)
-  centroid pulling ............................................................. Passed.        (4s)
+  intensity values imported .................................................... Passed.        (4s)
+ondemand (teardown testing environment) ........................................ Down.          (0s)
+db (setup testing environment) ................................................. Setup.         (3s)
+  guess channels from object files ............................................. Passed.        (1s)
+  drop recreate database constraints ........................................... Passed.        (13s)
+  shapefile polygon extraction ................................................. Passed.        (1s)
+db (teardown testing environment) .............................................. Down.          (0s)
+workflow (setup testing environment) ........................................... Setup.         (3s)
+  centroid pulling ............................................................. Passed.        (3s)
   feature matrix extraction .................................................... Passed.        (26s)
-  stratification pulling ....................................................... Passed.        (5s)
+  stratification pulling ....................................................... Passed.        (2s)
   signature cell set subsetting ................................................ Passed.        (1s)
   sample stratification ........................................................ Passed.        (1s)
-workflow (teardown testing environment) ........................................ Down.          (0s)
-apiserver (setup testing environment) .......................................... Setup.         (7s)
-  single API route ............................................................. Passed.        (1s)
-  study summary retrieval ...................................................... Passed.        (1s)
+workflow (teardown testing environment) ........................................ Down.          (1s)
+Building test-data-loaded spt-db image (1smallnointensity) ..................... Built.         (0s)
+apiserver (setup testing environment) .......................................... Setup.         (5s)
+  phenotype criteria ........................................................... Passed.        (0s)
+  proximity .................................................................... Passed.        (4s)
+  phenotype summary ............................................................ Passed.        (0s)
+  retrieval of umap plots ...................................................... Passed.        (5s)
+  retrieval of hi res umap ..................................................... Passed.        (1s)
+  study summary retrieval ...................................................... Passed.        (0s)
   counts query delegation edge cases ........................................... Passed.        (1s)
-apiserver (teardown testing environment) ....................................... Down.          (0s)
+apiserver (teardown testing environment) ....................................... Down.          (1s)
 cggnn (teardown testing environment) ........................................... Down.          (0s)
-countsserver (setup testing environment) ....................................... Setup.         (6s)
-  expression data caching ...................................................... Passed.        (5s)
+ondemand (setup testing environment) ........................................... Setup.         (4s)
+  expression data caching ...................................................... Passed.        (13s)
   class counts cohoused datasets ............................................... Passed.        (1s)
   edge cases few markers ....................................................... Passed.        (1s)
-  single signature count query ................................................. Passed.        (1s)
-countsserver (teardown testing environment) .................................... Down.          (0s)
-db (setup testing environment) ................................................. Setup.         (6s)
+  single signature count query ................................................. Passed.        (0s)
+ondemand (teardown testing environment) ........................................ Down.          (1s)
+db (setup testing environment) ................................................. Setup.         (3s)
   basic health of database ..................................................... Passed.        (5s)
+  expression table indexing .................................................... Passed.        (13s)
   record counts cohoused datasets .............................................. Passed.        (4s)
-db (teardown testing environment) .............................................. Down.          (1s)
-workflow (setup testing environment) ........................................... Setup.         (5s)
-  proximity pipeline ........................................................... Passed.        (73s)
+  fractions assessment ......................................................... Passed.        (4s)
+db (teardown testing environment) .............................................. Down.          (0s)
+workflow (setup testing environment) ........................................... Setup.         (3s)
+  proximity pipeline ........................................................... Passed.        (95s)
+  umap plot creation ........................................................... Passed.        (56s)
 workflow (teardown testing environment) ........................................ Down.          (1s)
-  .............................................................................. Total time:    (216s)
 ```
 
 Optionally, if the images are ready to be released:
@@ -85,7 +112,7 @@ Optionally, if the images are ready to be released:
 <pre>
 Checking for Docker credentials in ~/.docker/config.json <span style="color:olive;">...</span><span style="color:olive;">....................</span> <span style="font-weight:bold;color:green;">Found.</span>         <span style="color:purple;">(0s)</span>
 Pushing Docker container nadeemlab/spt-apiserver <span style="color:olive;">...</span><span style="color:olive;">............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(16s)</span>
-Pushing Docker container nadeemlab/spt-countsserver <span style="color:olive;">...</span><span style="color:olive;">.........................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(15s)</span>
+Pushing Docker container nadeemlab/spt-ondemand <span style="color:olive;">...</span><span style="color:olive;">.............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(15s)</span>
 Pushing Docker container nadeemlab/spt-db <span style="color:olive;">...</span><span style="color:olive;">...................................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(23s)</span>
 Pushing Docker container nadeemlab/spt-workflow <span style="color:olive;">...</span><span style="color:olive;">.............................</span> <span style="font-weight:bold;color:green;">Pushed.</span>        <span style="color:purple;">(27s)</span>
 </pre>
@@ -103,13 +130,13 @@ Uploading spatialprofilingtoolbox==0.11.0 to PyPI <span style="color:olive;">...
 The source code is contained in one Python package, `spatialprofilingtoolbox`. The package metadata uses the declarative `pyproject.toml` format.
 
 ## <a id="modules"></a> 3. Modules
-The main functionality is provided by 4 modules designed to operate as services, and one command-line tool. Each module's source is wrapped in a Docker image.
+The main functionality is provided by 4 modules designed to operate as services. Each module's source is wrapped in a Docker image.
 
 | Module name     | Description |
 | --------------- | ----------- |
 | `apiserver`     | FastAPI application supporting queries over cell data. |
 | `cggnn`         | Command line tool to apply cell graph neural network models to data stored in an SPT framework. |
-| `countsserver`  | An optimized class-counting program served by a custom TCP server. |
+| `ondemand`      | An optimized class-counting and other metrics-calculation program served by a custom TCP server. |
 | `db`            | Data model/interface and PostgresQL database management SQL fragments. |
 | `workflow`      | [Nextflow](https://www.nextflow.io)-orchestrated computation workflows. |
 
@@ -138,7 +165,7 @@ For example:
 
 ```
 $ spt [TAB]
-countsserver  db  workflow
+apiserver ondemand  db  workflow
 
 $ spt db [TAB]
 create-schema  guess-channels-from-object-files  modify-constraints  status
@@ -199,6 +226,4 @@ Each workflow consists of:
 - core jobs
 - integration/wrap-up
 
-**To make a new workflow**: copy the `phenotype_proximity` subdirectory to a sibling directory with a new name. Update the components accordingly, and update [`workflow/__init__.py`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/__init__.py) with a new entry for your workflow, to ensure that it is discovered. You'll also need to update [`pyproject.toml`](https://github.com/nadeemlab/SPT/blob/main/pyproject.toml) to declare your new subpackage.
-
-The basic interface for each workflow component is defined in [`workflow/component_interfaces`](https://github.com/nadeemlab/SPT/tree/main/spatialprofilingtoolbox/workflow/component_interfaces).
+**To make a new workflow**: copy the `phenotype_proximity` subdirectory to a sibling directory with a new name. Update the components accordingly, and update [`workflow/__init__.py`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/__init__.py) with a new entry for your workflow, to ensure that it is discovered. You'll also need to update [`pyproject.toml`](https://github.com/nadeemlab/SPT/blob/main/pyproject.toml.unversioned) to declare your new subpackage.

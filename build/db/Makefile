@@ -2,21 +2,18 @@
 
 MODULE_NAME := $(shell echo "verbose-shell-override" >/dev/null ; pwd | grep -o '[^/]\+$$' )
 
+SINGLETON_TEST_FILES := ../../${TEST_LOCATION}/${MODULE_NAME}/singleton_tests/test_study_dropping.sh
+SINGLETON_TESTS := $(foreach test_file,$(SINGLETON_TEST_FILES),test-$(test_file))
+
 UNIT_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/unit_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/unit_tests/test_*.py )
 UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 
 MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
-TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
+TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
 
 DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
-
-Dockerfile: Dockerfile.template initialize_schema.sql
->@${MESSAGE} start "Building db Dockerfile"
->@cp Dockerfile.template Dockerfile ; echo "$$?" > status_code
->@${MESSAGE} end "Built." "Not built."
->@rm -f status_code
 
 initialize_schema.sql: schema.sql ${DATA_MODEL_SOURCE_LOCATION}/performance_tweaks.sql ${DATA_MODEL_SOURCE_LOCATION}/create_views.sql
 >@cat \
@@ -36,33 +33,40 @@ schema.sql:
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
+singleton-tests: teardown-singleton-testing
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "db (setup testing environment)"
+>@${MESSAGE} start "db"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-db-testing ; \
     echo "$$?" > status_code
->@${MESSAGE} end "Setup." "Not setup."
+>@${MESSAGE} end "Setup env." "Env not setup."
+>@rm -f status_code
+
+teardown-singleton-testing: ${SINGLETON_TESTS}
+>@${MESSAGE} start "\u2517\u2501"
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "db (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} start "\u2517\u2501"
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "db (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} start "\u2517\u2501"
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "db (teardown testing environment)"
->@docker compose rm --force --stop ; echo "$$?" > status_code
+>@${MESSAGE} start "\u2517\u2501"
+>@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
@@ -74,7 +78,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "  $$test_name"
+    ${MESSAGE} start "\u2503 $$test_name"
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -100,6 +104,3 @@ clean:
 >@rm -rf schema.sql
 >@rm -f status_code
 >@rm -f err_log.*.txt
->@rm -rf requirements.txt
->@rm -rf specific_requirements.txt
->@rm -rf Dockerfile

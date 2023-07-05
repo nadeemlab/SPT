@@ -15,7 +15,7 @@
         "URL": "https://doi.org/10.5281/zenodo.4300912",
         "Date": "2022-01-04"
     },
-    "Assay": "Multiplexed imaging",
+    "Assay": "Immunofluorescence",
     "Number of specimens measured": 7,
     "Number of cells detected": 700,
     "Number of channels measured": 26,
@@ -49,31 +49,38 @@
     "Sample cohort assignments": [
         [
             "lesion 0_1",
-            "1"
+            "1",
+            "100"
         ],
         [
             "lesion 0_2",
-            "2"
+            "2",
+            "100"
         ],
         [
             "lesion 0_3",
-            "2"
+            "2",
+            "100"
         ],
         [
             "lesion 6_1",
-            "3"
+            "3",
+            "100"
         ],
         [
             "lesion 6_2",
-            "4"
+            "4",
+            "100"
         ],
         [
             "lesion 6_3",
-            "4"
+            "4",
+            "100"
         ],
         [
             "lesion 6_4",
-            "3"
+            "3",
+            "100"
         ]
     ]
 }

@@ -1,4 +1,3 @@
-#!/bin/bash
 
 merged='example_merged.db'
 if [[ -f $merged ]];

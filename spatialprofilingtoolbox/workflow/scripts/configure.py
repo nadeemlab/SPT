@@ -8,11 +8,16 @@ from os.path import join
 from os.path import abspath
 from os.path import expanduser
 import stat
-import importlib.resources
+from importlib.resources import as_file
+from importlib.resources import files
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
+
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger('spt db configure')
 
 workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
@@ -23,8 +28,7 @@ NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
 
 def retrieve_from_library(subpackage, filename):
     contents = None
-    with importlib.resources.path('.'.join(['spatialprofilingtoolbox', subpackage]),
-                                  filename) as path:
+    with as_file(files('.'.join(['spatialprofilingtoolbox', subpackage])).joinpath(filename)) as path:
         with open(path, 'rt', encoding='utf-8') as file:
             contents = file.read()
     if contents is None:
@@ -104,7 +108,7 @@ def process_filename_inputs(options, parsed_args):
         file_manifest_filename=file_manifest_path,
     )
     options['samples'] = False
-    if not samples_file is None > 0:
+    if not samples_file is None:
         samples_file_abs = join(parsed_args.input_path, samples_file)
         if exists(samples_file_abs):
             options['samples_file'] = samples_file_abs
@@ -239,6 +243,10 @@ if __name__ == '__main__':
         if exists(config_file):
             config_variables['db_config_file'] = config_file
             config_variables['db_config'] = True
+        else:
+            logger.warning('Database configuration file was not located at indicated location.')
+            logger.debug('args.database_config_file: %s', args.database_config_file)
+            logger.debug('config_file: %s', config_file)
 
     if args.local:
         config_variables['executor'] = 'local'

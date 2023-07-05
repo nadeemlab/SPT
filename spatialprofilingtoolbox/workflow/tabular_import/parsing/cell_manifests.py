@@ -46,34 +46,13 @@ class CellManifestsParser(SourceToADIParser):
             }
             timer.record_timepoint('Subset cells dataframe on chunk')
 
-            if all(self.dataset_design.get_feature_name(symbol) in batch_cells.columns
-                    for symbol in channel_symbols):
-                feature_names = {symbol: self.dataset_design.get_feature_name(
-                    symbol) for symbol in channel_symbols}
-            else:
-                logger.warning(
-                    'Exact feature names not found in tables. Trying with underscores...')
-                if all(re.sub(' ', '_', self.dataset_design.get_feature_name(symbol))
-                        in batch_cells.columns for symbol in channel_symbols):
-                    feature_names = {symbol: re.sub(' ', '_',
-                                                    self.dataset_design.get_feature_name(
-                                                        symbol)
-                                                    ) for symbol in channel_symbols}
-                else:
-                    logger.warning('Not even with underscores.')
-                    missing = [symbol for symbol in channel_symbols
-                                if not self.dataset_design.get_feature_name(symbol)
-                                in batch_cells.columns]
-                    logger.warning('Specifically, the following features not found:')
-                    for symbol in missing:
-                        logger.warning(symbol)
-                    raise ValueError('Could not find feature names in cell manifest.')
-
-            discretizations = {
+            feature_names, intensities_available = self.dataset_design.get_exact_column_names(
+                channel_symbols, batch_cells.columns)
+            values = {
                 symbol: batch_cells[feature_names[symbol]]
                 for symbol in channel_symbols
             }
-            timer.record_timepoint('Retrieved discretizations on chunk')
+            timer.record_timepoint('Retrieved feature values on chunk')
 
             logger.debug('Starting batch of cells that begins at index %s.', start)
             timer.record_timepoint('Started per-cell iteration')
@@ -106,8 +85,11 @@ class CellManifestsParser(SourceToADIParser):
                 ))
                 for symbol in channel_symbols:
                     target = chemical_species_identifiers_by_symbol[symbol]
-                    quantity = '-1'
-                    discrete_value = discretizations[symbol][j]  # type: ignore
+                    discrete_value = values[symbol].iloc[j, 0]  # type: ignore
+                    if intensities_available:
+                        quantity = str(float(values[symbol].iloc[j, 1]))
+                    else:
+                        quantity = '\\N'
                     records['expression_quantification'].append((
                         histological_structure_identifier,
                         target,
@@ -138,7 +120,6 @@ class CellManifestsParser(SourceToADIParser):
                 timer.record_timepoint('Finished inserting one chunk')
         return {'structure' : histological_structure_identifier_index,
                 'shape file' : shape_file_identifier_index}
-
 
     def parse_cell_manifest(self, cursor, filename, channel_symbols,
                             initial_indices, timer, chemical_species_identifiers_by_symbol):
@@ -206,9 +187,9 @@ class CellManifestsParser(SourceToADIParser):
         timer.record_timepoint('Initial')
         cursor = connection.cursor()
         timer.record_timepoint('Cursor opened')
-        histological_structure_identifier_index = self.get_next_integer_identifier(
+        histological_structure_identifier_index = SourceToADIParser.get_next_integer_identifier(
             'histological_structure', cursor)
-        shape_file_identifier_index = self.get_next_integer_identifier('shape_file', cursor)
+        shape_file_identifier_index = SourceToADIParser.get_next_integer_identifier('shape_file', cursor)
         timer.record_timepoint('Retrieved next integer identifiers')
         initial_indices = {
             'structure' : histological_structure_identifier_index,

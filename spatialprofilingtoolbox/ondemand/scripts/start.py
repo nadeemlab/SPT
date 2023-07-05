@@ -2,7 +2,7 @@
 import socketserver
 import argparse
 
-from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.apiserver.app.db_accessor import wait_for_database_ready
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
 from spatialprofilingtoolbox.ondemand.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.proximity_provider import ProximityProvider
@@ -17,7 +17,7 @@ def start():
     start_services(source_data_location, host, port)
 
 def setup_data_sources(source_data_location):
-    DBAccessor.wait_for_database_ready()
+    wait_for_database_ready()
     assessor = FastCacheAssessor(source_data_location)
     assessor.assess_and_act()
 

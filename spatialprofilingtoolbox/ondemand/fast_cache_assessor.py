@@ -20,7 +20,6 @@ class FastCacheAssessor:
     """Assess "fast cache"."""
     def __init__(self, source_data_location):
         self.source_data_location = source_data_location
-        self.database_config_file = DBAccessor.create_database_config_file(source_data_location)
         self.centroids = None
         self.expressions_index = None
 
@@ -62,9 +61,8 @@ class FastCacheAssessor:
     def _recreate(self):
         logger.info('Recreating fast cache files.')
         change_directory = f'cd {self.source_data_location}'
-        main_command = 'spt ondemand cache-expressions-data-array'
-        main_flags = [f'--database-config-file={self.database_config_file}']
-        commands = [change_directory, ' '.join([main_command] + main_flags)]
+        main_command = 'spt ondemand cache-expressions-data-array --database-config-file=none'
+        commands = [change_directory, main_command]
         command = '; '.join(commands)
         logger.debug('Command is:')
         logger.debug(command)

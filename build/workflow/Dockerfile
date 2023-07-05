@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 RUN python -m pip install psycopg2==2.9.6
 RUN python -m pip install adiscstudies==0.11.0
 RUN python -m pip install numba==0.57.0
+RUN python -m pip install attrs==23.1.0
 RUN python -m pip install matplotlib==3.7.1
 RUN python -m pip install umap-learn==0.5.3
 RUN python -m pip install numpy==1.24.3

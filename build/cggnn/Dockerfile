@@ -6,6 +6,7 @@ RUN python -m pip install dgl-cu116 dglgo -f https://data.dgl.ai/wheels/repo.htm
 RUN python -m pip install psycopg2==2.9.6
 RUN python -m pip install adiscstudies==0.11.0
 RUN python -m pip install numba==0.57.0
+RUN python -m pip install attrs==23.1.0
 RUN python -m pip install cg-gnn
 ARG version
 ARG service_name

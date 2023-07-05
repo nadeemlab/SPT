@@ -13,11 +13,11 @@ logger = colorized_logger(__name__)
 
 class StructureCentroidsPuller(DatabaseConnectionMaker):
     """Retrieve positional information for all cells in single cell database."""
-    def __init__(self, database_config_file):
+    def __init__(self, database_config_file: str | None=None):
         super().__init__(database_config_file=database_config_file)
         self.structure_centroids = StructureCentroids()
 
-    def pull(self, specimen: str=None, study: str=None):
+    def pull(self, specimen: str | None=None, study: str | None=None):
         study_names = self.get_study_names(study=study)
         cursor = self.get_connection().cursor()
         for study_name in study_names:

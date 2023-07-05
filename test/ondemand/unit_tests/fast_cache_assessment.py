@@ -3,7 +3,12 @@ from os import environ
 
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
 
+def clear_environment():
+    if 'DISABLE_FAST_CACHE_RECREATION' in environ:
+        del environ['DISABLE_FAST_CACHE_RECREATION']
+
 def test_behavior(source_data_location, message):
+    clear_environment()
     print('')
     print(message)
     assessor = FastCacheAssessor(source_data_location)

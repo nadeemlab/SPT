@@ -74,7 +74,8 @@ class ChannelsPhenotypesParser(SourceToADIParser):
                 )
         logger.info('Saved %s chemical species records.', identifier - initial_value)
 
-        identifier = SourceToADIParser.get_next_integer_identifier('biological_marking_system', cursor)
+        get_next = SourceToADIParser.get_next_integer_identifier
+        identifier = get_next('biological_marking_system', cursor)
         initial_value = identifier
         for _, phenotype in channels.iterrows():
             symbol = phenotype['Name']

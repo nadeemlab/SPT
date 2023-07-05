@@ -1,3 +1,4 @@
+"""Convenience function providing summary of number of records per table."""
 from importlib.resources import as_file
 from importlib.resources import files
 

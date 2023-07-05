@@ -37,7 +37,6 @@ class ReductionVisualCoreJob(CoreJob):
         study_name: str='',
         database_config_file: str='',
         performance_report_file: str='',
-        job_index: str='',
         results_file: str='',
         **kwargs  # pylint: disable=unused-argument
     ):

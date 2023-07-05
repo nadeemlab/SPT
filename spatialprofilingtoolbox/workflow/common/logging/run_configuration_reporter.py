@@ -2,6 +2,7 @@
 Convenience reporter of the run configuration for a given workflow, before it
 actually runs. For debugging and archival purposes.
 """
+from typing import cast
 from os.path import getsize
 import datetime
 import socket
@@ -22,10 +23,9 @@ class RunConfigurationReporter:
         self,
         workflow: str = '',
         file_manifest_file: str = '',
-        samples_file: str = '',
-        channels_file: str = '',
-        phenotypes_file: str = '',
+        data_files: dict[str, str] | None=None,
     ):
+        data_files = cast(dict[str, str], data_files)
         logger.info('Machine host: %s', socket.gethostname())
         logger.info('Version: SPT v%s', get_version())
         logger.info('Workflow: "%s"', workflow)
@@ -45,9 +45,8 @@ class RunConfigurationReporter:
                     self.format_mb(min(sizes)))
         logger.info('Largest cell manifest: %s MB', self.format_mb(max(sizes)))
 
-        if samples_file:
-            samples = pd.read_csv(
-                samples_file, sep='\t', keep_default_na=False, dtype=str)
+        if data_files['samples']:
+            samples = pd.read_csv(data_files['samples'], sep='\t', keep_default_na=False, dtype=str)
         else:
             sample_ids = self.retrieve_cell_manifest_sample_identifiers(file_manifest_file)
             samples = pd.DataFrame({
@@ -56,8 +55,8 @@ class RunConfigurationReporter:
             })[['Sample ID', 'Outcome']]
         labels = sorted(list(set(samples[samples.columns[1]])))
 
-        channels_df = pd.read_csv(channels_file, keep_default_na=False)
-        phenotypes = pd.read_csv(phenotypes_file, keep_default_na=False)
+        channels_df = pd.read_csv(data_files['channels'], keep_default_na=False)
+        phenotypes = pd.read_csv(data_files['phenotypes'], keep_default_na=False)
         channels = sorted(list(set(channels_df['Name'])))
 
         logger.info('Number of outcome labels: %s', len(labels))

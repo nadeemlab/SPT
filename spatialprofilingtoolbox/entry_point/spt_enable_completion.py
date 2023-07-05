@@ -56,7 +56,8 @@ def get_modules_and_commands():
 
 def create_completions_script():
     jinja_environment = Environment(loader=BaseLoader(), comment_start_string='###')
-    with as_file(files('spatialprofilingtoolbox.entry_point').joinpath('spt-completion.sh.jinja')) as path:
+    filepath = files('spatialprofilingtoolbox.entry_point').joinpath('spt-completion.sh.jinja')
+    with as_file(filepath) as path:
         with open(path, 'r', encoding='utf-8') as file:
             template_source = file.read().rstrip('\n')
     template = jinja_environment.from_string(template_source)

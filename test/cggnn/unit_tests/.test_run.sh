@@ -1,9 +1,6 @@
 spt cggnn run \
     --study "Melanoma intralesional IL2" \
-    --host spt-db-testing \
-    --dbname postgres \
-    --user postgres \
-    --password postgres \
+    --spt_db_config_location ../db/.spt_db.config.container \
     --b 8 \
     --epochs 10 \
     --k 3 \

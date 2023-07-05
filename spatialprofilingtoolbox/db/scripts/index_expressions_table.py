@@ -31,8 +31,8 @@ if __name__ == '__main__':
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()
         if args.drop_index:
-            status = ExpressionsTableIndexer.drop_index(connection)
-            if status is False:
+            STATUS = ExpressionsTableIndexer.drop_index(connection)
+            if STATUS is False:
                 logger.debug('Can not drop index, does not exists.')
                 sys.exit(1)
         else:

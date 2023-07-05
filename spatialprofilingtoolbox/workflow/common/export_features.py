@@ -25,12 +25,13 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
     feature_value_identifier: int
 
     def __init__(self,
-                 database_config_file,
-                 data_analysis_study,
-                 derivation_method,
-                 specifier_number,
-                 impute_zeros=False,
-                 **kwargs):
+            database_config_file,
+            data_analysis_study,
+            derivation_and_number_specifiers,
+            impute_zeros=False,
+            **kwargs
+        ):
+        derivation_method, specifier_number = derivation_and_number_specifiers
         self.feature_values = None
         self.impute_zeros=impute_zeros
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
@@ -41,9 +42,10 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         DatabaseConnectionMaker.__init__(self, database_config_file=database_config_file)
 
     def record_feature_specification_template(self,
-                                              data_analysis_study,
-                                              derivation_method,
-                                              specifier_number):
+            data_analysis_study,
+            derivation_method,
+            specifier_number
+        ):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
         self.specifier_number = specifier_number
@@ -83,7 +85,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
             self.add_imputed_zero_values()
 
         cursor = self.get_connection().cursor()
-        next_identifier = SourceToADIParser.get_next_integer_identifier('feature_specification', cursor)
+        get_next = SourceToADIParser.get_next_integer_identifier
+        next_identifier = get_next('feature_specification', cursor)
         specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
         specifiers_by_id = {
             next_identifier + i: specifiers
@@ -204,7 +207,8 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         self.feature_values = self.feature_values + assignments
 
     def get_feature_value_next_identifier(self, cursor):
-        next_identifier = SourceToADIParser.get_next_integer_identifier('quantitative_feature_value', cursor)
+        get_next = SourceToADIParser.get_next_integer_identifier
+        next_identifier = get_next('quantitative_feature_value', cursor)
         self.feature_value_identifier = next_identifier
 
     def request_new_feature_value_identifier(self):
@@ -234,7 +238,8 @@ class ADIFeatureSpecificationUploader:
     def add_new_feature(specifiers, derivation_method, measurement_study, cursor):
         FSU = ADIFeatureSpecificationUploader
         data_analysis_study = FSU.get_data_analysis_study(measurement_study, cursor)
-        next_specification = SourceToADIParser.get_next_integer_identifier('feature_specification', cursor)
+        get_next = SourceToADIParser.get_next_integer_identifier
+        next_specification = get_next('feature_specification', cursor)
         identifier = str(next_specification)
         FSU.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
         FSU.insert_specifiers(identifier, specifiers, cursor)
@@ -273,12 +278,15 @@ class ADIFeatureSpecificationUploader:
 
     @staticmethod
     def insert_specification(specification, derivation_method, data_analysis_study, cursor):
-        logger.debug('Inserting specification %s, data_analysis_study %s', specification, data_analysis_study)
+        logger.debug(
+            'Inserting specification %s, data_analysis_study %s',
+            specification,
+            data_analysis_study,
+        )
         cursor.execute('''
         INSERT INTO feature_specification (identifier, derivation_method, study)
         VALUES (%s, %s, %s) ;
         ''', (specification, derivation_method, data_analysis_study))
-        # cursor.commit()
 
     @staticmethod
     def insert_specifiers(specification, specifiers, cursor):
@@ -288,7 +296,6 @@ class ADIFeatureSpecificationUploader:
         cursor.executemany('''
         INSERT INTO feature_specifier (feature_specification, specifier, ordinality) VALUES (%s, %s, %s) ;
         ''', [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)])
-        # cursor.commit()
 
 
 def add_feature_value(feature_specification, subject, value, cursor):
@@ -296,4 +303,3 @@ def add_feature_value(feature_specification, subject, value, cursor):
     cursor.execute('''
     INSERT INTO quantitative_feature_value VALUES (%s, %s, %s, %s) ;
     ''', (identifier, feature_specification, subject, value))
-    # cursor.commit()

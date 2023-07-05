@@ -9,7 +9,7 @@ logger = colorized_logger(__name__)
 
 
 class MissingPositivityColumnError(ValueError):
-    pass
+    """Raised when columns indicating dichotomized value for a phenotype are not all present."""
 
 
 class TabularCellMetadataDesign:
@@ -85,7 +85,7 @@ class TabularCellMetadataDesign:
         name = ''.join(feature_list)
         return name
 
-    def get_feature_name(self, key, table=None, separator=' '):
+    def get_feature_name(self, key, separator=' '):
         """
         Args:
             key (str):
@@ -101,7 +101,7 @@ class TabularCellMetadataDesign:
             return separator.join([self._get_indicator_prefix(key), 'Positive'])
         return key
 
-    def get_intensity_feature_name(self, key, table=None, separator=' '):
+    def get_intensity_feature_name(self, key, separator=' '):
         """
         Args:
             key (str):

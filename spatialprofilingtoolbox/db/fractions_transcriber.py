@@ -90,8 +90,7 @@ def transcribe_fraction_features(database_config_file):
         with ADIFeaturesUploader(
             database_config_file=database_config_file,
             data_analysis_study=das,
-            derivation_method=describe_fractions_feature_derivation_method(),
-            specifier_number=1,
+            derivation_and_number_specifiers = (describe_fractions_feature_derivation_method(), 1),
             impute_zeros=True,
         ) as feature_uploader:
             values = fraction_features_study['percent_positive'].values

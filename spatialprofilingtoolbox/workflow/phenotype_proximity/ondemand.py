@@ -10,10 +10,6 @@ from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMak
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.proximity import \
     compute_proximity_metric_for_signature_pair
-# from spatialprofilingtoolbox.workflow.common.proximity import \
-#     describe_proximity_feature_derivation_method
-# from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
-# from spatialprofilingtoolbox.workflow.common.proximity import validate_value
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

@@ -12,10 +12,12 @@ as discriminators of selected correlates.
 from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 
 from spatialprofilingtoolbox.workflow.tabular_import.job_generator import JobGenerator
-from spatialprofilingtoolbox.workflow.reduction_visual.job_generator import ReductionVisualJobGenerator
+from spatialprofilingtoolbox.workflow.reduction_visual.job_generator import \
+    ReductionVisualJobGenerator
 from spatialprofilingtoolbox.workflow.reduction_visual.initializer import ReductionVisualInitializer
 from spatialprofilingtoolbox.workflow.reduction_visual.core import ReductionVisualCoreJob
-from spatialprofilingtoolbox.workflow.reduction_visual.integrator import ReductionVisualAnalysisIntegrator
+from spatialprofilingtoolbox.workflow.reduction_visual.integrator import \
+    ReductionVisualAnalysisIntegrator
 
 components = WorkflowModules(
     is_database_visitor=True,

@@ -119,16 +119,16 @@ def toggle_constraints(
                     )
                     logger.debug('Executing: %s', statement)
                     cursor.execute(statement)
-                column_names, info_rows = get_constraint_status(cursor, all_tables=all_tables)
-                print_constraint_status(column_names, info_rows)
+                status = get_constraint_status(cursor, all_tables=all_tables)
+                print_constraint_status(*status)
 
             if state == DBConstraintsToggling.DROP:
                 pattern = '''
                 ALTER TABLE %s
                 DROP CONSTRAINT IF EXISTS %s;'''
-                column_names, info_rows = get_constraint_status(cursor, all_tables=all_tables)
-                print_constraint_status(column_names, info_rows)
-                for _, constraint_name, tablename in info_rows:
+                status = get_constraint_status(cursor, all_tables=all_tables)
+                print_constraint_status(*status)
+                for _, constraint_name, tablename in status[1]:
                     statement = pattern % (tablename, constraint_name)
                     logger.debug('Executing: %s', statement)
                     cursor.execute(statement)

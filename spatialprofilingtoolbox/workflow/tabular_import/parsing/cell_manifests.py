@@ -2,7 +2,6 @@
 from io import BytesIO as StringIO
 import base64
 import mmap
-import re
 
 import shapefile
 import pandas as pd
@@ -187,9 +186,9 @@ class CellManifestsParser(SourceToADIParser):
         timer.record_timepoint('Initial')
         cursor = connection.cursor()
         timer.record_timepoint('Cursor opened')
-        histological_structure_identifier_index = SourceToADIParser.get_next_integer_identifier(
-            'histological_structure', cursor)
-        shape_file_identifier_index = SourceToADIParser.get_next_integer_identifier('shape_file', cursor)
+        get_next = SourceToADIParser.get_next_integer_identifier
+        histological_structure_identifier_index = get_next('histological_structure', cursor)
+        shape_file_identifier_index = get_next('shape_file', cursor)
         timer.record_timepoint('Retrieved next integer identifiers')
         initial_indices = {
             'structure' : histological_structure_identifier_index,

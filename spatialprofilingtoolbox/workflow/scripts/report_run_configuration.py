@@ -28,4 +28,9 @@ if __name__ == '__main__':
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'workflow')
 
-    r = RunConfigurationReporter(**vars(args))
+    data_files = {
+        'samples': vars(args)['samples file'],
+        'channels': vars(args)['channels file'],
+        'phenotypes': vars(args)['phenotypes file'],
+    }
+    r = RunConfigurationReporter(**vars(args), data_files=data_files)

@@ -3,11 +3,12 @@ import re
 import pkgutil
 import warnings
 
+from numba.core.errors import NumbaDeprecationWarning
+
 from spatialprofilingtoolbox.standalone_utilities.configuration_settings import get_version
 from spatialprofilingtoolbox.workflow import get_workflow
 from spatialprofilingtoolbox.workflow import get_workflow_names as get_workflow_names  # pylint: disable=useless-import-alias
 
-from numba.core.errors import NumbaDeprecationWarning
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 
 def get_subpackage_name(module_info):

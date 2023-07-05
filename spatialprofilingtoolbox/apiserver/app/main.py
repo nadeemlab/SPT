@@ -795,6 +795,12 @@ def create_signature_with_channel_names(handle, measurement_study, data_analysis
     return [[], []]
 
 
+def get_ondemand_host_port():
+    host = os.environ['COUNTS_SERVER_HOST']
+    port = int(os.environ['COUNTS_SERVER_PORT'])
+    return (host, port)
+
+
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
     study: str = Query(default='unknown', min_length=3),
@@ -814,16 +820,11 @@ async def request_phenotype_proximity_computation(
     positives1, negatives1 = create(phenotype1, measurement_study, data_analysis_study)
     positives2, negatives2 = create(phenotype2, measurement_study, data_analysis_study)
 
-    host = os.environ['COUNTS_SERVER_HOST']
-    port = int(os.environ['COUNTS_SERVER_PORT'])
-    with CountRequester(host, port) as requester:
+    with CountRequester(*get_ondemand_host_port()) as requester:
         metrics = requester.get_proximity_metrics(
             components['measurement'],
             radius,
-            positives1,
-            negatives1,
-            positives2,
-            negatives2,
+            [positives1, negatives1, positives2, negatives2],
         )
         representation = {'proximities': metrics}
 

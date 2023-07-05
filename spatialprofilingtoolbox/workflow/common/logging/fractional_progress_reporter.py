@@ -5,7 +5,8 @@ _logger = colorized_logger(__name__)
 
 class FractionalProgressReporter:
     """Logs basic indicator of amount of progress, at a configurable interval."""
-    def __init__(self, size, parts=2, task_description='task', done_message=None, logger=_logger):
+    def __init__(self, size, parts=2, task_and_done_message=('task', None), logger=_logger):
+        task_description, done_message = task_and_done_message
         self.size = size
         self.parts = parts
         self.task_description = task_description

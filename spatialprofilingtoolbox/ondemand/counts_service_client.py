@@ -20,7 +20,8 @@ class CountRequester:
         self.tcp_client.sendall(query)
         return self.parse_response()
 
-    def get_proximity_metrics(self, study, radius, positives1, negatives1, positives2, negatives2):
+    def get_proximity_metrics(self, study, radius, signature):
+        positives1, negatives1, positives2, negatives2 = signature
         separator = self.get_record_separator()
         groups = [
             self.sanitize_token(study),

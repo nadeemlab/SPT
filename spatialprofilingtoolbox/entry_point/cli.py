@@ -39,15 +39,18 @@ def get_executable_and_script(submodule_name, script_name_hyphenated):
     script_name = underscore_to_hyphen(script_name_hyphenated, inverse=True)
     full_script_name = None
     executable = ''
-    if files(f'spatialprofilingtoolbox.{submodule_name}.scripts').joinpath(f'{script_name}.py').is_file():
+    _file = files(f'spatialprofilingtoolbox.{submodule_name}.scripts').joinpath(f'{script_name}.py')
+    if _file.is_file():
         executable = sys.executable
         full_script_name = f'{script_name}.py'
-    if files(f'spatialprofilingtoolbox.{submodule_name}.scripts').joinpath(f'{script_name}.sh').is_file():
+    _file = files(f'spatialprofilingtoolbox.{submodule_name}.scripts').joinpath(f'{script_name}.sh')
+    if _file.is_file():
         executable = '/bin/bash'
         full_script_name = f'{script_name}.sh'
     if full_script_name is None:
         raise ValueError(f'Did not locate {script_name} from submodule "{submodule_name}".')
-    with as_file(files(f'spatialprofilingtoolbox.{submodule_name}.scripts').joinpath(full_script_name)) as path:
+    _file = files(f'spatialprofilingtoolbox.{submodule_name}.scripts').joinpath(full_script_name)
+    with as_file(_file) as path:
         script_path = path
     if executable == '':
         raise EnvironmentError(

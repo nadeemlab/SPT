@@ -60,13 +60,15 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         return name
 
     def export_feature_values(self, core_computation_results_files, data_analysis_study):
-        with ADIFeaturesUploader(
-            database_config_file=self.database_config_file,
-            data_analysis_study=data_analysis_study,
-            derivation_and_number_specifiers=(describe_proximity_feature_derivation_method(), 3),
-            impute_zeros=True,
-        ) as feature_uploader:
-            self.send_features_to_uploader(feature_uploader, core_computation_results_files)
+        description = describe_proximity_feature_derivation_method()
+        with DatabaseConnectionMaker(database_config_file=self.database_config_file) as dcm:
+            with ADIFeaturesUploader(
+                dcm,
+                data_analysis_study=data_analysis_study,
+                derivation_and_number_specifiers=(description, 3),
+                impute_zeros=True,
+            ) as feature_uploader:
+                self.send_features_to_uploader(feature_uploader, core_computation_results_files)
 
     def send_features_to_uploader(self, feature_uploader, core_computation_results_files):
         for results_file in core_computation_results_files:

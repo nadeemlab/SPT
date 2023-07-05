@@ -23,9 +23,9 @@ class RunConfigurationReporter:
         self,
         workflow: str = '',
         file_manifest_file: str = '',
-        data_files: dict[str, str] | None=None,
+        data_files: dict[str, str | None] | None=None,
     ):
-        data_files = cast(dict[str, str], data_files)
+        data_files = cast(dict[str, str | None], data_files)
         logger.info('Machine host: %s', socket.gethostname())
         logger.info('Version: SPT v%s', get_version())
         logger.info('Workflow: "%s"', workflow)

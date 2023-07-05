@@ -63,7 +63,6 @@ class ADIFeaturesUploader(SourceToADIParser):
     def __exit__(self, exception_type, exception_value, traceback):
         if self.database_connection_maker.is_connected():
             self.upload()
-            self.get_connection().close()
 
     def stage_feature_value(self, specifiers, subject, value):
         self.validate_specifiers(specifiers)

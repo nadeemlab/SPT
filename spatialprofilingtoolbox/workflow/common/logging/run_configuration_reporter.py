@@ -55,8 +55,8 @@ class RunConfigurationReporter:
             })[['Sample ID', 'Outcome']]
         labels = sorted(list(set(samples[samples.columns[1]])))
 
-        channels_df = pd.read_csv(data_files['channels'], keep_default_na=False)
-        phenotypes = pd.read_csv(data_files['phenotypes'], keep_default_na=False)
+        channels_df = pd.read_csv(cast(str, data_files['channels']), keep_default_na=False)
+        phenotypes = pd.read_csv(cast(str, data_files['phenotypes']), keep_default_na=False)
         channels = sorted(list(set(channels_df['Name'])))
 
         logger.info('Number of outcome labels: %s', len(labels))
@@ -76,7 +76,7 @@ class RunConfigurationReporter:
         validate = TabularCellMetadataDesign.validate_cell_manifest_descriptor
         return [
             getsize(row['File name'])
-            for i, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()
+            for _, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()
             if validate(row['Data type'])
         ]
 

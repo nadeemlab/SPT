@@ -1,8 +1,6 @@
-{
-    "study names": [
-        [
-            "Melanoma intralesional IL2",
-            "Cancer Immunology Research 2022"
-        ]
-    ]
-}
+[
+    {
+        "handle": "Melanoma intralesional IL2",
+        "display_name_detail": "Cancer Immunology Research 2022"
+    }
+]

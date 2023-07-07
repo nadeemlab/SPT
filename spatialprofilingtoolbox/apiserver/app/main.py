@@ -16,7 +16,10 @@ from spatialprofilingtoolbox.db.fractions_transcriber import \
     describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
-from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
+from spatialprofilingtoolbox.db.querying import get_study_components
+from spatialprofilingtoolbox.db.querying import retrieve_study_handles
+from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
+
 VERSION = '0.5.0'
 
 DESCRIPTION = """
@@ -38,31 +41,6 @@ app = FastAPI(
         "email": "mathewj2@mskcc.org",
     },
 )
-
-
-def get_study_components(study_name):
-    with DBCursor() as cursor:
-        cursor.execute(
-            'SELECT component_study FROM study_component WHERE primary_study=%s;',
-            (study_name,),
-        )
-        substudies = [row[0] for row in cursor.fetchall()]
-        components = {}
-        substudy_tables = {
-            'collection': 'specimen_collection_study',
-            'measurement': 'specimen_measurement_study',
-            'analysis': 'data_analysis_study',
-        }
-        descriptor = ADIFeatureSpecificationUploader.ondemand_descriptor()
-        for key, tablename in substudy_tables.items():
-            cursor.execute(f'SELECT name FROM {tablename};')
-            names = [row[0] for row in cursor.fetchall()]
-            for substudy in substudies:
-                if ( substudy in names and not re.search('phenotype fractions', substudy)
-                     and not re.search('proximity calculation', substudy)
-                     and not re.search(descriptor, substudy) ):
-                    components[key] = substudy
-    return components
 
 
 def get_single_result_or_else(cursor, query, parameters=None, or_else_value='unknown'):
@@ -101,44 +79,11 @@ def get_root():
 
 
 @app.get("/study-names")
-def get_study_names():
+def get_study_names() -> list[StudyHandle]:
     """
-    Get the names of studies/datasets.
+    Get the names of studies/datasets, with display names.
     """
-    name_pairs = []
-    with DBCursor() as cursor:
-        cursor.execute('SELECT study_specifier FROM study;')
-        rows = cursor.fetchall()
-        for row in rows:
-            study_name = str(row[0])
-            publication_summary_text = get_publication_summary_text(cursor, study_name)
-            name_pairs.append((study_name, publication_summary_text))
-    representation = {'study names': name_pairs}
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
-    )
-
-
-def get_publication_summary_text(cursor, study):
-    query = '''
-    SELECT publisher, date_of_publication
-    FROM publication
-    WHERE study=%s AND document_type=\'Article\'
-    ;
-    '''
-    row = get_single_result_row(cursor, query=query, parameters=(study,),)
-    if len(row) == 0:
-        publication_summary_text = ''
-    else:
-        publisher, publication_date = row
-        year_match = re.search(r'^\d{4}', publication_date)
-        if year_match:
-            year = year_match.group()
-            publication_summary_text = f'{publisher} {year}'
-        else:
-            publication_summary_text = publisher
-    return publication_summary_text
+    return retrieve_study_handles()
 
 
 def get_contact(cursor, study):
@@ -366,9 +311,9 @@ def get_study_summary(
         assay = get_single_result_or_else(
             cursor,
             query='SELECT assay FROM specimen_measurement_study WHERE name=%s;',
-            parameters=(components['measurement'],),
+            parameters=(components.measurement,),
         )
-        measurement_counts = get_measurement_counts(cursor, components['measurement'])
+        measurement_counts = get_measurement_counts(cursor, components.measurement)
         number_phenotypes = get_single_result_or_else(
             cursor,
             query='''
@@ -377,10 +322,10 @@ def get_study_summary(
             WHERE study=%s
             ;
             ''',
-            parameters=(components['analysis'],),
+            parameters=(components.analysis,),
         )
 
-        sample_stratification = get_sample_stratification(cursor, components['collection'])
+        sample_stratification = get_sample_stratification(cursor, components.collection)
 
     representation = {}
     representation['Institution'] = institution
@@ -457,7 +402,7 @@ async def get_phenotype_summary(
                 AND data_analysis_study in (%s, \'none\')
             ;
             ''',
-            (components['measurement'], components['analysis']),
+            (components.measurement, components.analysis),
         )
         rows = cursor.fetchall()
         fractions = rows
@@ -481,7 +426,7 @@ async def get_phenotype_summary(
         rows = cursor.fetchall()
         features = set(row[3] for row in rows)
         cohorts = set(row[0] for row in rows).union(set(row[1] for row in rows))
-        decrement, _ = get_sample_cohorts(cursor, components['collection'])
+        decrement, _ = get_sample_cohorts(cursor, components.collection)
         associations = {
             feature: {
                 format_stratum(cohort, decrement): set()
@@ -530,7 +475,7 @@ async def get_phenotype_symbols(
         ORDER BY cp.symbol
         ;
         '''
-        cursor.execute(query, (components['analysis'],))
+        cursor.execute(query, (components.analysis,))
         rows = cursor.fetchall()
     representation = {
         'phenotype symbols': [
@@ -665,13 +610,13 @@ async def get_anonymous_phenotype_counts_fast(
     negative_markers = split_on_tabs(negative_markers_tab_delimited)
 
     with DBCursor() as cursor:
-        number_cells = get_number_cells(cursor, components['measurement'])
+        number_cells = get_number_cells(cursor, components.measurement)
 
     host = os.environ['COUNTS_SERVER_HOST']
     port = int(os.environ['COUNTS_SERVER_PORT'])
     with CountRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(
-            positive_markers, negative_markers, components['measurement'])
+            positive_markers, negative_markers, components.measurement)
 
     def fancy_round(ratio):
         return 100 * round(ratio * 10000)/10000
@@ -749,7 +694,7 @@ async def get_phenotype_proximity_summary(
             (derivation_method, study),
         )
         rows = cursor.fetchall()
-        decrement, _ = get_sample_cohorts(cursor, components['collection'])
+        decrement, _ = get_sample_cohorts(cursor, components.collection)
 
     representation = {
         'proximities': [format_stratum_in_row(row, decrement, 3) for row in rows]
@@ -814,15 +759,15 @@ async def request_phenotype_proximity_computation(
     phenotype within a fixed distance to a given cell of a primary phenotype.
     """
     components = get_study_components(study)
-    measurement_study = components['measurement']
-    data_analysis_study = components['analysis']
+    measurement_study = components.measurement
+    data_analysis_study = components.analysis
     create = create_signature_with_channel_names
     positives1, negatives1 = create(phenotype1, measurement_study, data_analysis_study)
     positives2, negatives2 = create(phenotype2, measurement_study, data_analysis_study)
 
     with CountRequester(*get_ondemand_host_port()) as requester:
         metrics = requester.get_proximity_metrics(
-            components['measurement'],
+            components.measurement,
             radius,
             [positives1, negatives1, positives2, negatives2],
         )

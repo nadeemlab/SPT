@@ -107,6 +107,7 @@ packages = [
     "spatialprofilingtoolbox.ondemand",
     "spatialprofilingtoolbox.ondemand.scripts",
     "spatialprofilingtoolbox.db",
+    "spatialprofilingtoolbox.db.exchange_data_formats",
     "spatialprofilingtoolbox.db.scripts",
     "spatialprofilingtoolbox.db.data_model",
     "spatialprofilingtoolbox.workflow",

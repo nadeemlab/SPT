@@ -10,6 +10,15 @@ class StudyComponents(BaseModel):
     analysis: str
 
 
+class StudyHandle(BaseModel):
+    """
+    A study specifier (or handle), together with additional information to display in the context
+    of an item header/label.
+    """
+    handle: str
+    display_name_detail: str
+
+
 class Institution(BaseModel):
     """An institution, e.g. research organization in which a study took place."""
     name: str

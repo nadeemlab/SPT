@@ -32,7 +32,7 @@ class Assay(BaseModel):
 class StudyContact(BaseModel):
     """Contact information for a person to contact regarding a study."""
     name: str
-    email_address: str
+    email_address: str | None
 
 
 class DataRelease(BaseModel):
@@ -63,7 +63,7 @@ class CountsSummary(BaseModel):
 
 class Cohort(BaseModel):
     """A cohort/stratum in the primary stratification for a study, if available."""
-    identifier: int
+    identifier: str
     temporality: str
     diagnosis: str
     result: str
@@ -72,7 +72,7 @@ class Cohort(BaseModel):
 class CohortAssignment(BaseModel):
     """One sample assignment, see SampleCohorts."""
     sample: str
-    cohort: int
+    cohort: str
 
 
 class SampleCohorts(BaseModel):
@@ -91,7 +91,7 @@ class Context(BaseModel):
 class Products(BaseModel):
     """Formal research products of a given study."""
     data_release: DataRelease
-    publication: Publication
+    publication: Publication | None
 
 
 class StudySummary(BaseModel):

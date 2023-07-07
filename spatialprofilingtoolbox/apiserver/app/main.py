@@ -17,7 +17,7 @@ from spatialprofilingtoolbox.db.fractions_transcriber import \
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
-VERSION = '0.4.0'
+VERSION = '0.5.0'
 
 DESCRIPTION = """
 Get information about single cell phenotyping studies, including:
@@ -327,7 +327,7 @@ def get_sample_stratification(cursor, specimen_collection_study):
     return { 'cohorts' : sample_cohorts, 'assignments' : sample_cohort_assignments }
 
 
-@app.get("/study-summary/{study}")
+@app.get("/study-summary")
 def get_study_summary(
     study: str = Query(default='unknown', min_length=3),
 ):

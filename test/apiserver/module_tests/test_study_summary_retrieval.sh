@@ -1,5 +1,5 @@
 
-query=http://spt-apiserver-testing:8080/study-summary/Melanoma%20intralesional%20IL2
+query=http://spt-apiserver-testing:8080/study-summary?study=Melanoma%20intralesional%20IL2
 
 curl -s $query ;
 if [ "$?" -gt 0 ];

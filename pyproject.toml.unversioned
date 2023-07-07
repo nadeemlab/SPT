@@ -31,7 +31,7 @@ repository = "https://github.com/nadeemlab/SPT"
 
 [project.optional-dependencies]
 apiserver = [
-    "fastapi>=0.68.0,<0.69.0",
+    "fastapi==0.100.0",
     "uvicorn>=0.15.0,<0.16.0",
     "pandas==2.0.2",
     "scipy==1.10.1",
@@ -39,12 +39,12 @@ apiserver = [
     "pyshp==2.2.0",
     "scikit-learn==1.2.2",
     "Pillow==9.5.0",
-    "pydantic==1.10.11"
+    "pydantic==2.0.2"
 ]
 db = [
     "pandas==2.0.2",
     "pyshp==2.2.0",
-    "pydantic==1.10.11"
+    "pydantic==2.0.2"
 ]
 ondemand = [
     "pandas==2.0.2",

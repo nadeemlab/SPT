@@ -38,11 +38,13 @@ apiserver = [
     "numpy==1.24.3",
     "pyshp==2.2.0",
     "scikit-learn==1.2.2",
-    "Pillow==9.5.0"
+    "Pillow==9.5.0",
+    "pydantic==1.10.11"
 ]
 db = [
     "pandas==2.0.2",
-    "pyshp==2.2.0"
+    "pyshp==2.2.0",
+    "pydantic==1.10.11"
 ]
 ondemand = [
     "pandas==2.0.2",

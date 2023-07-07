@@ -543,7 +543,7 @@ async def get_phenotype_symbols(
         media_type='application/json',
     )
 
-
+# TODO deprecate
 @app.get("/phenotype-criteria-name/")
 async def get_phenotype_criteria_name(
     phenotype_symbol: str = Query(default='unknown', min_length=3),
@@ -697,7 +697,7 @@ async def get_anonymous_phenotype_counts_fast(
         media_type='application/json',
     )
 
-
+# TODO deprecate
 @app.get("/phenotype-proximity-summary/")
 async def get_phenotype_proximity_summary(
     study: str = Query(default='unknown', min_length=3),

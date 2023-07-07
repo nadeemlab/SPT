@@ -90,11 +90,13 @@ def get_study_summary_path_op(
 ):
     return get_study_summary(study)
 
+
 def format_stratum(stratum, decrement):
     return str(int(stratum) - decrement)
 
 def format_stratum_in_row(row, decrement, index):
     return [str(x) if not i==index else format_stratum(x, decrement) for i, x in enumerate(row)]
+
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(

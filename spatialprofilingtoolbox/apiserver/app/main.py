@@ -12,15 +12,18 @@ from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
-from spatialprofilingtoolbox.db.fractions_transcriber import \
-    describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 from spatialprofilingtoolbox.db.querying import get_study_components
 from spatialprofilingtoolbox.db.querying import retrieve_study_handles
 from spatialprofilingtoolbox.db.querying import get_study_summary
-
+from spatialprofilingtoolbox.db.querying import get_number_cells
+from spatialprofilingtoolbox.db.querying import get_cell_fractions_summary
+from spatialprofilingtoolbox.db.querying import get_phenotype_symbols
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
+from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 
 VERSION = '0.5.0'
 
@@ -45,30 +48,8 @@ app = FastAPI(
 )
 
 
-def get_single_result_or_else(cursor, query, parameters=None, or_else_value='unknown'):
-    if not parameters is None:
-        cursor.execute(query, parameters)
-    else:
-        cursor.execute(query)
-    rows = cursor.fetchall()
-    if len(rows) > 0:
-        return rows[0][0]
-    return or_else_value
-
-
-def get_single_result_row(cursor, query, parameters=None):
-    if not parameters is None:
-        cursor.execute(query, parameters)
-    else:
-        cursor.execute(query)
-    rows = cursor.fetchall()
-    if len(rows) > 0:
-        return list(rows[0])
-    return []
-
-
 @app.get("/")
-def get_root():
+async def get_root():
     return Response(
         content=json.dumps(
             {'server description': 'Single cell studies database views API'}),
@@ -77,195 +58,38 @@ def get_root():
 
 
 @app.get("/study-names")
-def get_study_names() -> list[StudyHandle]:
+async def get_study_names() -> list[StudyHandle]:
     """
-    Get the names of studies/datasets, with display names.
+    The names of studies/datasets, with display names.
     """
     return retrieve_study_handles()
 
 
 @app.get("/study-summary")
-def get_study_summary_path_op(
+async def get_study_summary_path_operation(
     study: str = Query(default='unknown', min_length=3),
-):
+) -> StudySummary:
+    """
+    A summary of a study's publications, authors, etc., as well as a summary of its datasets.
+    """
     return get_study_summary(study)
-
-
-def format_stratum(stratum, decrement):
-    return str(int(stratum) - decrement)
-
-def format_stratum_in_row(row, decrement, index):
-    return [str(x) if not i==index else format_stratum(x, decrement) for i, x in enumerate(row)]
 
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
     study: str = Query(default='unknown', min_length=3),
-    pvalue: str = Query(default='0.05'),
-):
-    """
-    Get a table of all cell fractions in the given study. A single key value pair,
-    key **fractions** and value a list of lists with entries:
-    * **marker symbol**. The marker symbol for a single marker, or phenotype name in the case of a
-      (composite) phenotype.
-    * **multiplicity**. Whether the marker symbol is 'single' or else 'composite' (i.e. a phenotype
-      name).
-    * **sample cohort**. Indicator of which convenience cohort or stratum a given sample was
-      assigned to.
-    * **average percent**. The average, over the subcohort, of the percent representation of the
-      fraction of cells in the slide or specimen having the given phenotype.
-    * **standard deviation of percents**. The standard deviation of the above.
-    * **maximum**. The slide or specimen achieving the highest fraction.
-    * **maximum value**. The highest fraction value.
-    * **minimum**. The slide or specimen achieving the lowest fraction.
-    * **minimum value**. The lowest fraction value.
-    """
-    components = get_study_components(study)
-
-    columns = [
-        'marker_symbol',
-        'multiplicity',
-        'stratum_identifier',
-        'average_percent',
-        'standard_deviation_of_percents',
-        'maximum',
-        'maximum_value',
-        'minimum',
-        'minimum_value',
-    ]
-    with DBCursor() as cursor:
-        cursor.execute(
-            f'''
-            SELECT {', '.join(columns)}
-            FROM fraction_stats
-            WHERE measurement_study=%s
-                AND data_analysis_study in (%s, \'none\')
-            ;
-            ''',
-            (components.measurement, components.analysis),
-        )
-        rows = cursor.fetchall()
-        fractions = rows
-
-        derivation_method = describe_fractions_feature_derivation_method()
-        cursor.execute('''
-        SELECT
-            t.selection_criterion_1,
-            t.selection_criterion_2,
-            t.p_value,
-            fs.specifier
-        FROM two_cohort_feature_association_test t
-        JOIN feature_specification fsn ON fsn.identifier=t.feature_tested
-        JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
-        JOIN study_component sc ON sc.component_study=fsn.study
-        WHERE fsn.derivation_method=%s
-            AND sc.primary_study=%s
-            AND t.test=%s
-        ;
-        ''', (derivation_method, study, 't-test'))
-        rows = cursor.fetchall()
-        features = set(row[3] for row in rows)
-        cohorts = set(row[0] for row in rows).union(set(row[1] for row in rows))
-        decrement, _ = get_sample_cohorts(cursor, components.collection)
-        associations = {
-            feature: {
-                format_stratum(cohort, decrement): set()
-                for cohort in cohorts
-            }
-            for feature in features
-        }
-        for row in rows:
-            cohort1 = format_stratum(row[0], decrement)
-            cohort2 = format_stratum(row[1], decrement)
-            if float(row[2]) <= float(pvalue):
-                associations[row[3]][cohort1].add(cohort2)
-                associations[row[3]][cohort2].add(cohort1)
-
-    fractions_formatted = [format_stratum_in_row(row, decrement, 2) for row in fractions]
-    associated_cohorts = [
-        sorted(list(associations[row[0]][row[2]]))
-        if row[0] in associations and row[2] in associations[row[0]] else []
-        for row in fractions_formatted
-    ]
-    representation = {
-        'fractions': fractions_formatted,
-        'associations': associated_cohorts,
-    }
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
-    )
+    pvalue: float = Query(default=0.05),
+) -> list[CellFractionsSummary]:
+    """Averaging summary of cell fractions per phenotype."""
+    return get_cell_fractions_summary(study, pvalue)
 
 
 @app.get("/phenotype-symbols/")
-async def get_phenotype_symbols(
+async def get_phenotype_symbols_path_operation(
     study: str = Query(default='unknown', min_length=3),
-):
-    """
-    Get a dictionary, key **phenotype symbols** with value a list of all the
-    composite phenotype symbols in the given study.
-    """
-    components = get_study_components(study)
-    with DBCursor() as cursor:
-        query = '''
-        SELECT DISTINCT cp.symbol, cp.identifier
-        FROM cell_phenotype_criterion cpc
-        JOIN cell_phenotype cp ON cpc.cell_phenotype=cp.identifier
-        WHERE cpc.study=%s
-        ORDER BY cp.symbol
-        ;
-        '''
-        cursor.execute(query, (components.analysis,))
-        rows = cursor.fetchall()
-    representation = {
-        'phenotype symbols': [
-            {'handle': row[0], 'identifier': row[1]}
-            for row in rows
-        ]
-    }
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
-    )
-
-# TODO deprecate
-@app.get("/phenotype-criteria-name/")
-async def get_phenotype_criteria_name(
-    phenotype_symbol: str = Query(default='unknown', min_length=3),
-):
-    """
-    Get a string representation of the markers (positive and negative) defining
-    a given named phenotype, by name (i.e. phenotype symbol). Key **phenotype criteria name**.
-    """
-    with DBCursor() as cursor:
-        query = '''
-        SELECT cs.symbol, cpc.polarity
-        FROM cell_phenotype_criterion cpc
-        JOIN cell_phenotype cp ON cpc.cell_phenotype = cp.identifier
-        JOIN chemical_species cs ON cs.identifier = cpc.marker
-        WHERE cp.symbol = %s
-        ;
-        '''
-        cursor.execute(query, (phenotype_symbol,),)
-        rows = cursor.fetchall()
-    if len(rows) == 0:
-        munged = phenotype_symbol + '+'
-    else:
-        signature = {row[0]: row[1] for row in rows}
-        positive_markers = sorted(
-            [marker for marker, polarity in signature.items() if polarity == 'positive'])
-        negative_markers = sorted(
-            [marker for marker, polarity in signature.items() if polarity == 'negative'])
-        parts = [marker + '+' for marker in positive_markers] + \
-            [marker + '-' for marker in negative_markers]
-        munged = ''.join(parts)
-    representation = {
-        'phenotype criteria name': munged,
-    }
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
-    )
+) -> list[PhenotypeSymbol]:
+    """The display names and identifiers for the "composite" phenotypes in a given study."""
+    return get_phenotype_symbols(study)
 
 
 @app.get("/phenotype-criteria/")
@@ -349,8 +173,7 @@ async def get_anonymous_phenotype_counts_fast(
     positive_markers = split_on_tabs(positive_markers_tab_delimited)
     negative_markers = split_on_tabs(negative_markers_tab_delimited)
 
-    with DBCursor() as cursor:
-        number_cells = get_number_cells(cursor, components.measurement)
+    number_cells = get_number_cells(study)
 
     host = os.environ['COUNTS_SERVER_HOST']
     port = int(os.environ['COUNTS_SERVER_PORT'])

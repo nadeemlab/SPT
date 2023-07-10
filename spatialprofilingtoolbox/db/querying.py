@@ -6,16 +6,18 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.cohorts import _get_cohort_identifiers
 from spatialprofilingtoolbox.db.study_access import _get_study_summary
 from spatialprofilingtoolbox.db.study_access import _get_study_handles
 from spatialprofilingtoolbox.db.study_access import _get_number_cells
 from spatialprofilingtoolbox.db.study_access import _get_study_components
-from spatialprofilingtoolbox.db.study_access import _get_phenotype_symbols
 from spatialprofilingtoolbox.db.fractions_and_associations import _get_fractions_rows
 from spatialprofilingtoolbox.db.fractions_and_associations import _get_fractions_test_results
 from spatialprofilingtoolbox.db.fractions_and_associations import _get_feature_associations
 from spatialprofilingtoolbox.db.fractions_and_associations import _create_cell_fractions_summary
+from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_symbols
+from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_criteria
 
 
 def get_study_components(study_name: str) -> StudyComponents:
@@ -57,3 +59,9 @@ def get_phenotype_symbols(study: str) -> list[PhenotypeSymbol]:
     with DBCursor() as cursor:
         phenotype_symbols = _get_phenotype_symbols(cursor, study)
     return phenotype_symbols
+
+
+def get_phenotype_criteria(study: str, phenotype_symbol: str) -> PhenotypeCriteria:
+    with DBCursor() as cursor:
+        criteria = _get_phenotype_criteria(cursor, study, phenotype_symbol)
+    return criteria

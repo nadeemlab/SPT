@@ -20,10 +20,12 @@ from spatialprofilingtoolbox.db.querying import get_study_summary
 from spatialprofilingtoolbox.db.querying import get_number_cells
 from spatialprofilingtoolbox.db.querying import get_cell_fractions_summary
 from spatialprofilingtoolbox.db.querying import get_phenotype_symbols
+from spatialprofilingtoolbox.db.querying import get_phenotype_criteria
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 
 VERSION = '0.5.0'
 
@@ -93,64 +95,15 @@ async def get_phenotype_symbols_path_operation(
 
 
 @app.get("/phenotype-criteria/")
-async def get_phenotype_criteria(
+async def get_phenotype_criteria_path_operation(
     study: str = Query(default='unknown', min_length=3),
     phenotype_symbol: str = Query(default='unknown', min_length=3),
-):
+) -> PhenotypeCriteria:
     """
-    Get a list of the positive markers and negative markers defining a given named
-    phenotype, in the context of the given study. Key **phenotype criteria**,
-    with value dictionary with keys:
-
-    * **positive markers**
-    * **negative markers**
+    Get lists of the positive markers and negative markers defining a given named phenotype, in the
+    context of the given study.
     """
-    with DBCursor() as cursor:
-        query = '''
-        SELECT cs.symbol, cpc.polarity
-        FROM cell_phenotype_criterion cpc
-        JOIN cell_phenotype cp ON cpc.cell_phenotype = cp.identifier
-        JOIN chemical_species cs ON cs.identifier = cpc.marker
-        JOIN study_component sc ON sc.component_study=cpc.study
-        WHERE cp.symbol=%s AND sc.primary_study=%s
-        ;
-        '''
-        cursor.execute(query, (phenotype_symbol, study),)
-        rows = cursor.fetchall()
-        if len(rows) == 0:
-            singles_query = '''
-            SELECT symbol, 'positive' as polarity FROM chemical_species
-            WHERE symbol=%s
-            ;
-            '''
-            cursor.execute(singles_query, (phenotype_symbol,))
-            rows = cursor.fetchall()
-            if len(rows) == 0:
-                return Response(
-                    content=json.dumps({
-                        'error': {
-                            'message': 'unknown phenotype',
-                            'phenotype_symbol value provided': phenotype_symbol,
-                        }
-                    }),
-                    media_type='application/json',
-                )
-    signature = {row[0]: row[1] for row in rows}
-    positive_markers = sorted(
-        [marker for marker, polarity in signature.items() if polarity == 'positive'])
-    negative_markers = sorted(
-        [marker for marker, polarity in signature.items() if polarity == 'negative'])
-    representation = {
-        'phenotype criteria': {
-            'positive markers': positive_markers,
-            'negative markers': negative_markers,
-        }
-    }
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
-    )
-
+    return get_phenotype_criteria(study, phenotype_symbol)
 
 def split_on_tabs(string):
     splitted = []

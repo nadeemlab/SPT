@@ -14,7 +14,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.study import Context
 from spatialprofilingtoolbox.db.exchange_data_formats.study import Products
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult
 from spatialprofilingtoolbox.db.cohorts import _get_sample_cohorts
 
@@ -236,21 +235,3 @@ def _get_institution(cursor, study: str) -> Institution:
         parameters=(study,),
     )
     return Institution(name=name)
-
-
-def _get_phenotype_symbols(cursor, study: str) -> list[PhenotypeSymbol]:
-    components = _get_study_components(cursor, study)
-    query = '''
-    SELECT DISTINCT cp.symbol, cp.identifier
-    FROM cell_phenotype_criterion cpc
-    JOIN cell_phenotype cp ON cpc.cell_phenotype=cp.identifier
-    WHERE cpc.study=%s
-    ORDER BY cp.symbol
-    ;
-    '''
-    cursor.execute(query, (components.analysis,))
-    rows = cursor.fetchall()
-    return [
-        PhenotypeSymbol(handle_string=row[0], identifier=row[1])
-        for row in rows
-    ]

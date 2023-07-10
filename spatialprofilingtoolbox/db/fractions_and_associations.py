@@ -15,6 +15,7 @@ def _get_fractions_rows(cursor, study: str) -> list[CellFractionsAverage]:
         FROM fraction_stats
         WHERE measurement_study=%s
             AND data_analysis_study in (%s, \'none\')
+        ORDER BY multiplicity, marker_symbol
         ;
         ''',
         (components.measurement, components.analysis),
@@ -29,7 +30,7 @@ def _get_fractions_rows(cursor, study: str) -> list[CellFractionsAverage]:
     ]
 
 
-def _get_fractions_test_results(cursor, study: str) -> list:
+def _get_fractions_test_results(cursor, study: str) -> list[FeatureAssociationTest]:
     derivation_method = describe_fractions_feature_derivation_method()
     cursor.execute('''
     SELECT
@@ -49,15 +50,18 @@ def _get_fractions_test_results(cursor, study: str) -> list:
     rows = cursor.fetchall()
     rows = _replace_stratum_identifiers(rows, study, column_index=0)
     rows = _replace_stratum_identifiers(rows, study, column_index=1)
-    return rows
+    return [
+        FeatureAssociationTest(feature=row[3], cohort1=row[0], cohort2=row[1], pvalue=row[2])
+        for row in rows
+    ]
 
 
 def _get_feature_associations(
         tests: list[FeatureAssociationTest],
         pvalue: float,
         cohort_identifiers: list[str],
+        features: list[str],
     ) -> dict[str, dict[str, set[str]]]:
-    features = set(test.feature for test in tests)
     associations: dict[str, dict[str, set[str]]] = {
         feature: {identifier: set() for identifier in cohort_identifiers}
         for feature in features

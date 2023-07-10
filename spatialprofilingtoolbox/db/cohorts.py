@@ -26,7 +26,7 @@ class StratumIdentifierReplacer:
 
     def _get_decrement(self, study: str) -> int:
         with DBCursor() as cursor:
-            cohort_identifiers = _get_cohort_identifiers_by_sample(cursor, study).values()
+            cohort_identifiers = _get_cohort_identifiers_by_sample_original(cursor, study).values()
         return min((int(entry) for entry in cohort_identifiers)) - 1
 
     def replace(self, identifier: str) -> str:
@@ -49,7 +49,7 @@ def _get_cohorts_list(cursor, study: str) -> list[Cohort]:
     FROM sample_strata sst
     JOIN specimen_collection_process scp ON scp.specimen = sst.sample
     JOIN study_component sc ON sc.component_study=scp.study
-    WHERE sc.study=%s ;
+    WHERE sc.primary_study=%s ;
     '''
     cursor.execute(query, (study,))
     sample_cohorts = cursor.fetchall()
@@ -69,9 +69,9 @@ def _get_cohort_assignments(cursor, study: str) -> list[CohortAssignment]:
     ON scp.specimen=sdmp.specimen
     JOIN data_file df
     ON df.source_generation_process=sdmp.identifier
-    JOIN histological_structure_identification hsi
-    ON hsi.data_source=df.sha256_hash
-    WHERE scp.study=%s
+    JOIN histological_structure_identification hsi ON hsi.data_source=df.sha256_hash
+    JOIN study_component sc ON sc.component_study=scp.study
+    WHERE sc.primary_study=%s
     GROUP BY scp.specimen ;
     '''
     cursor.execute(query, (study,))
@@ -86,17 +86,25 @@ def _get_cohort_assignments(cursor, study: str) -> list[CohortAssignment]:
 
 
 def _get_cohort_identifiers_by_sample(cursor, study: str) -> dict[str, str]:
+    cohort_identifiers = _get_cohort_identifiers_by_sample_original(cursor, study)
+    replacer = StratumIdentifierReplacer(study)
+    return {
+        key: replacer.replace(value)
+        for key, value in cohort_identifiers.items()
+    }
+
+
+def _get_cohort_identifiers_by_sample_original(cursor, study: str) -> dict[str, str]:
     query = '''
     SELECT sst.sample, sst.stratum_identifier
     FROM sample_strata sst
     JOIN specimen_collection_process scp ON scp.specimen = sst.sample
     JOIN study_component sc ON sc.component_study=scp.study
-    WHERE sc.study=%s
+    WHERE sc.primary_study=%s
     ORDER BY sample ;
     '''
     cursor.execute(query, (study,))
     rows = cursor.fetchall()
-    rows = _replace_stratum_identifiers(rows, study, column_index=1)
     return {row[0]: row[1] for row in rows}
 
 

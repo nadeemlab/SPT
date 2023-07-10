@@ -48,7 +48,8 @@ def get_cell_fractions_summary(study: str, pvalue: float) -> list[CellFractionsS
         fractions = _get_fractions_rows(cursor, study)
         tests = _get_fractions_test_results(cursor, study)
         cohort_identifiers = _get_cohort_identifiers(cursor, study)
-    associations = _get_feature_associations(tests, pvalue, cohort_identifiers)
+    features = [f.marker_symbol for f in fractions]
+    associations = _get_feature_associations(tests, pvalue, cohort_identifiers, features)
     return _create_cell_fractions_summary(fractions, associations)
 
 

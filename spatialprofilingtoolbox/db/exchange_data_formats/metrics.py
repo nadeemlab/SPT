@@ -48,8 +48,8 @@ class CompositePhenotype(BaseModel):
     """
     For named phenotypes, the name and the internal identifier used for matching up related records.
     """
-    name: str
-    identifier: str
+    name: str | None
+    identifier: str | None
     criteria: PhenotypeCriteria
 
 

@@ -5,6 +5,7 @@ import re
 from io import BytesIO
 from base64 import b64encode
 from base64 import b64decode
+from typing import Annotated
 
 from PIL import Image
 from fastapi import FastAPI
@@ -26,6 +27,9 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCount
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCounts
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CompositePhenotype
 
 VERSION = '0.5.0'
 
@@ -105,119 +109,47 @@ async def get_phenotype_criteria_path_operation(
     """
     return get_phenotype_criteria(study, phenotype_symbol)
 
-def split_on_tabs(string):
-    splitted = []
-    if string is not None:
-        splitted = string.split('\t')
-    return list(set(splitted).difference(['']))
+
+def fancy_round(ratio):
+    return 100 * round(ratio * 10000)/10000
 
 
 @app.get("/anonymous-phenotype-counts-fast/")
 async def get_anonymous_phenotype_counts_fast(
-    positive_markers_tab_delimited: str = Query(default=None),
-    negative_markers_tab_delimited: str = Query(default=None),
-    study: str = Query(default='unknown', min_length=3),
-):
-    """
-    The same as endpoint `anonymous-phenotype-counts/`, except this method uses a
-    pre-build custom index for performance. It is about 500 times faster.
-    """
-    components = get_study_components(study)
-    positive_markers = split_on_tabs(positive_markers_tab_delimited)
-    negative_markers = split_on_tabs(negative_markers_tab_delimited)
-
+    positive_marker: Annotated[list[str], Query()],
+    negative_marker: Annotated[list[str], Query()],
+    study: str = Query(min_length=3),
+) -> PhenotypeCounts:
+    positive_markers = [m for m in positive_marker if m != '']
+    negative_markers = [m for m in negative_marker if m != '']
+    measurement_study = get_study_components(study).measurement
     number_cells = get_number_cells(study)
-
-    host = os.environ['COUNTS_SERVER_HOST']
-    port = int(os.environ['COUNTS_SERVER_PORT'])
+    host, port = get_ondemand_host_port()
     with CountRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(
-            positive_markers, negative_markers, components.measurement)
-
-    def fancy_round(ratio):
-        return 100 * round(ratio * 10000)/10000
-    if counts is None:
-        representation = {'error': 'Counts could not be computed.'}
-    else:
-        representation = {
-            'phenotype counts': {
-                'per specimen counts': [
-                    {
-                        'specimen': specimen,
-                        'phenotype count': count,
-                        'percent of all cells in specimen': fancy_round(
-                            count / count_all_in_specimen),
-                    }
-                    for specimen, (count, count_all_in_specimen) in counts.items()
-                ],
-                'total number of cells in all specimens of study': number_cells,
-            }
-        }
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
-    )
-
-# TODO deprecate
-@app.get("/phenotype-proximity-summary/")
-async def get_phenotype_proximity_summary(
-    study: str = Query(default='unknown', min_length=3),
-):
-    """
-    Spatial proximity statistics between pairs of cell populations defined by the
-    phenotype criteria (whether single or composite). Statistics of the metric
-    which is the average number of cells of a second phenotype within a fixed
-    distance to a given cell of a primary phenotype. Each row is:
-
-    * **Phenotype 1**
-    * **Phenotype 2**
-    * **Distance limit**. In pixels.
-    * **Sample cohort**. Indicator of which convenience cohort or stratum a given sample was
-      assigned to.
-    * **Average value**. Of the metric value in the subcohort.
-    * **Standard deviation**. Of the metric value in the subcohort.
-    * **Maximum**. Of the metric value in the subcohort.
-    * **Maximum value**. Of the metric value in the subcohort.
-    * **Minimum**. Of the metric value in the subcohort.
-    * **Minimum value**. Of the metric value in the subcohort.
-    """
-    components = get_study_components(study)
-    columns = [
-        'specifier1',
-        'specifier2',
-        'specifier3',
-        'stratum_identifier',
-        'average_value',
-        'standard_deviation',
-        'maximum',
-        'maximum_value',
-        'minimum',
-        'minimum_value',
-    ]
-    tablename = 'computed_feature_3_specifiers_stats'
-    derivation_method = 'For a given cell phenotype (first specifier), the average number of'\
-        ' cells of a second phenotype (second specifier) within a specified radius'\
-        ' (third specifier).'
-    with DBCursor() as cursor:
-        cursor.execute(
-            f'''
-            SELECT {', '.join(columns)}
-            FROM {tablename} cf
-            JOIN study_component sc ON sc.component_study=cf.data_analysis_study
-            WHERE derivation_method=%s AND sc.primary_study=%s
-            ;
-            ''',
-            (derivation_method, study),
+            positive_markers,
+            negative_markers,
+            measurement_study,
         )
-        rows = cursor.fetchall()
-        decrement, _ = get_sample_cohorts(cursor, components.collection)
-
-    representation = {
-        'proximities': [format_stratum_in_row(row, decrement, 3) for row in rows]
-    }
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
+    criteria = PhenotypeCriteria(
+        positive_markers=positive_markers,
+        negative_markers=negative_markers,
+    )
+    return PhenotypeCounts(
+        counts=[
+            PhenotypeCount(
+                specimen=specimen,
+                count=count,
+                percentage=fancy_round(count / count_all_in_specimen)
+            )
+            for specimen, (count, count_all_in_specimen) in counts.items()
+        ],
+        phenotype=CompositePhenotype(
+            name=None,
+            identifier=None,
+            criteria=criteria,
+        ),
+        number_cells_in_study=number_cells,
     )
 
 

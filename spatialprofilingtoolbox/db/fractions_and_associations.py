@@ -81,9 +81,9 @@ def _create_cell_fractions_summary(
         CellFractionsSummary(
             phenotype=f.marker_symbol,
             sample_cohort=f.stratum_identifier,
-            significantly_different_cohorts=list(
+            significantly_different_cohorts=sorted(list(
                 associations[f.marker_symbol][f.stratum_identifier]
-            ),
+            )),
             average_percent=f.average_percent,
         )
         for f in fractions

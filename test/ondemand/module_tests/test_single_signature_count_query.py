@@ -1,3 +1,4 @@
+"""Test that fast counts server can handle a request."""
 import json
 import sys
 
@@ -8,10 +9,9 @@ if __name__ == '__main__':
     HOST = 'spt-ondemand-testing'
     PORT = 8016
     with CountRequester(HOST, PORT) as requester:
-        counts = requester.get_counts_by_specimen(
-            ['CD3'], ['CD8', 'CD20'], STUDY_NAME)
+        counts = requester.get_counts_by_specimen(['CD3'], ['CD8', 'CD20'], STUDY_NAME, 0)
 
-    counts_json = json.dumps(counts, indent=4).rstrip()
+    counts_json = json.dumps(counts.model_dump(), indent=4).rstrip()
     with open('module_tests/expected_counts1.json', 'rt', encoding='utf-8') as file:
         expected_counts_json = file.read().rstrip()
     if counts_json != expected_counts_json:

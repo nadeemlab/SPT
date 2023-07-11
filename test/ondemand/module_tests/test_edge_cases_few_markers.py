@@ -7,9 +7,8 @@ def retrieve_case(case):
     host = 'spt-ondemand-testing'
     port = 8016
     with CountRequester(host, port) as requester:
-        counts = requester.get_counts_by_specimen(case[0], case[1], study_name)
-        total = sum([specimen_counts[0]
-                    for specimen_counts in counts.values()])
+        counts = requester.get_counts_by_specimen(case[0], case[1], study_name, 0)
+        total = sum(entry.count for entry in counts.counts)
         return total
 
 
@@ -25,4 +24,4 @@ if __name__ == '__main__':
     for comparison in zip(responses, expected, cases):
         if comparison[0] != comparison[1]:
             print(f'Incorrect response: {comparison}')
-            raise Exception("Incorrect cell count in an edge case.")
+            raise ValueError("Incorrect cell count in an edge case.")

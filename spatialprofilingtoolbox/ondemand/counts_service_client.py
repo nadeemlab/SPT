@@ -8,15 +8,22 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCr
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCount
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCounts
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CompositePhenotype
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import ProximityMetricsComputationResult
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
+    ProximityMetricsComputationResult
 
 
 class CountRequester:
     """TCP client for requesting counts from the fast cell counts service."""
-    def __init__(self):
-        host, port = self.get_ondemand_host_port()
+    def __init__(self, host: str | None=None, port: int | None=None):
+        _host, _port = None, None
+        if host is None and port is None:
+            _host, _port = self.get_ondemand_host_port()
+        if host is not None:
+            _host = host
+        if port is not None:
+            _port = port
         self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.tcp_client.connect((host, port))
+        self.tcp_client.connect((_host, _port))
 
     def get_counts_by_specimen(self,
             positive_signature_channels: list[str],

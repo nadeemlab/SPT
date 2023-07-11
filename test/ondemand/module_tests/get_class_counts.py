@@ -1,4 +1,4 @@
-
+"""CLI wrapper around CountRequester."""
 import sys
 import json
 
@@ -10,8 +10,7 @@ PORT = 8016
 
 def get_counts(study_name, positives, negatives):
     with CountRequester(HOST, PORT) as requester:
-        counts_by_specimen = requester.get_counts_by_specimen(
-            positives, negatives, study_name)
+        counts_by_specimen = requester.get_counts_by_specimen(positives, negatives, study_name, 0)
     return counts_by_specimen
 
 
@@ -28,4 +27,4 @@ if __name__ == '__main__':
         )
     else:
         raise ValueError(f'{sys.argv[1]} is not a valid case to test.')
-    print(json.dumps(counts, indent=4), end='')
+    print(json.dumps(counts.model_dump(), indent=4), end='')

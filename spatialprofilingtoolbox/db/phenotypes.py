@@ -59,7 +59,11 @@ def _get_phenotype_criteria(cursor, study: str, phenotype_symbol: str) -> Phenot
     return PhenotypeCriteria(positive_markers=positive_markers, negative_markers=negative_markers)
 
 
-def _get_phenotype_criteria_by_identifier(cursor, phenotype_handle: str, analysis_study: str) -> PhenotypeCriteria:
+def _get_phenotype_criteria_by_identifier(
+        cursor,
+        phenotype_handle: str,
+        analysis_study: str
+    ) -> PhenotypeCriteria:
     cursor.execute('''
         SELECT cs.symbol, cpc.polarity
         FROM cell_phenotype_criterion cpc

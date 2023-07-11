@@ -8,6 +8,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.cohorts import _get_cohort_identifiers
 from spatialprofilingtoolbox.db.study_access import _get_study_summary
 from spatialprofilingtoolbox.db.study_access import _get_study_handles
@@ -21,6 +22,9 @@ from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_symbols
 from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_criteria
 from spatialprofilingtoolbox.db.phenotypes import _get_channel_names
 from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_criteria_by_identifier
+from spatialprofilingtoolbox.db.umap import _get_umap_rows
+from spatialprofilingtoolbox.db.umap import _downsample_umaps_base64
+from spatialprofilingtoolbox.db.umap import _get_umap_row_for_channel
 
 def get_study_components(study_name: str) -> StudyComponents:
     with DBCursor() as cursor:
@@ -83,3 +87,16 @@ def retrieve_signature_of_phenotype(phenotype_handle: str, study: str) -> Phenot
                 components.analysis,
             )
     return PhenotypeCriteria(positive_markers=[], negative_markers=[])
+
+
+def get_umaps_low_resolution(study: str) -> list[UMAPChannel]:
+    with DBCursor() as cursor:
+        umap_rows = _get_umap_rows(cursor, study)
+    umaps = _downsample_umaps_base64(umap_rows)
+    return umaps
+
+
+def get_umap(study: str, channel: str) -> UMAPChannel:
+    with DBCursor() as cursor:
+        row = _get_umap_row_for_channel(cursor, study, channel)
+    return UMAPChannel(channel=row[0], base64_png=row[1])

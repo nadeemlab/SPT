@@ -50,7 +50,8 @@ ondemand = [
     "pandas==2.0.2",
     "numpy==1.24.3",
     "scikit-learn==1.2.2",
-    "pyshp==2.2.0"
+    "pyshp==2.2.0",
+    "pydantic==2.0.2"
 ]
 cggnn = [
     "cg-gnn"
@@ -67,13 +68,9 @@ workflow = [
     "tabulate==0.8.10",
     "Pillow==9.5.0"
 ]
-building = [
-    "Jinja2==3.1.2"
-]
 all = [
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
-    "fastapi>=0.68.0,<0.69.0",
     "uvicorn>=0.15.0,<0.16.0",
     "Jinja2==3.1.2",
     "pandas==2.0.2",
@@ -81,7 +78,10 @@ all = [
     "scipy==1.10.1",
     "scikit-learn==1.2.2",
     "pyshp==2.2.0",
-    "tabulate==0.8.10"
+    "tabulate==0.8.10",
+    "pydantic==2.0.2",
+    "fastapi==0.100.0",
+    "Pillow==9.5.0"
 ]
 dev = [
     "autopep8",

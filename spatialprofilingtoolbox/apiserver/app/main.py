@@ -1,17 +1,14 @@
 """The API service's endpoint handlers."""
 import json
-from io import BytesIO
-from base64 import b64encode
-from base64 import b64decode
 from typing import Annotated
+from io import BytesIO
+from base64 import b64decode
 
-from PIL import Image
 from fastapi import FastAPI
 from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 from spatialprofilingtoolbox.db.querying import get_study_components
 from spatialprofilingtoolbox.db.querying import retrieve_study_handles
@@ -21,15 +18,19 @@ from spatialprofilingtoolbox.db.querying import get_cell_fractions_summary
 from spatialprofilingtoolbox.db.querying import get_phenotype_symbols
 from spatialprofilingtoolbox.db.querying import get_phenotype_criteria
 from spatialprofilingtoolbox.db.querying import retrieve_signature_of_phenotype
+from spatialprofilingtoolbox.db.querying import get_umaps_low_resolution
+from spatialprofilingtoolbox.db.querying import get_umap
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCounts
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import ProximityMetricsComputationResult
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
+    ProximityMetricsComputationResult
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 
-VERSION = '0.5.0'
+VERSION = '0.6.0'
 
 DESCRIPTION = """
 Get information about single cell phenotyping studies, including:
@@ -159,72 +160,21 @@ async def request_phenotype_proximity_computation(
 
 @app.get("/visualization-plots/")
 async def get_plots(
-    study: str = Query(default='unknown', min_length=3),
-):
+    study: str = Query(min_length=3),
+) -> list[UMAPChannel]:
     """
-    Base64-encoded plots of UMAP visualizations.
-    Each row is:
-
-    * **channel**. The name of the target (e.g. gene) used in coloring of a plot
-                   (e.g. using expression values).
-    * **base64 plot**. Base64-encoding of the PNG plot image.
+    Base64-encoded plots of UMAP visualizations, one per channel.
     """
-    with DBCursor() as cursor:
-        cursor.execute('''
-        SELECT up.channel, up.png_base64 FROM umap_plots up
-        WHERE up.study=%s
-        ORDER BY up.channel ;
-        ''', (study,))
-        rows = [(row[0], row[1]) for row in cursor.fetchall()]
+    return get_umaps_low_resolution(study)
 
-    downsampled_rows = []
-    for row in rows:
-        input_buffer = BytesIO(b64decode(row[1]))
-        output_buffer = BytesIO()
-        with Image.open(input_buffer) as image:
-            new_size = 550
-            image_resized = image.resize((new_size, new_size))
-            image_resized.save(output_buffer, format='PNG')
-            output_buffer.seek(0)
-            downsampled_64 = b64encode(output_buffer.getvalue()).decode('utf-8')
-        output_buffer.close()
-        input_buffer.close()
-        downsampled_rows.append((row[0], downsampled_64))
-
-    return Response(
-        content=json.dumps({'rows': downsampled_rows}),
-        media_type='application/json',
-    )
 
 @app.get("/visualization-plot-high-resolution/")
 async def get_plot_high_resolution(
     study: str = Query(default='unknown', min_length=3),
     channel: str = Query(default='unknown', min_length=3),
 ):
-    """
-    Base64-encoded plots of UMAP visualizations.
-    Each row is:
-
-    * **channel**. The name of the target (e.g. gene) used in coloring of a plot
-                   (e.g. using expression values).
-    * **base64 plot**. Base64-encoding of the PNG plot image.
-    """
-    with DBCursor() as cursor:
-        cursor.execute('''
-        SELECT up.png_base64 FROM umap_plots up
-        WHERE up.study=%s AND up.channel=%s
-        ORDER BY up.channel ;
-        ''', (study, channel))
-        rows = [row[0] for row in cursor.fetchall()]
-
-    if len(rows) == 0:
-        return Response(
-            content=json.dumps({'error': 'Requested image not found.'}),
-            media_type='application/json',
-        )
-
-    png_base64 = rows[0]
-    input_buffer = BytesIO(b64decode(png_base64))
+    umap = get_umap(study, channel)
+    input_buffer = BytesIO(b64decode(umap.base64_png))
     input_buffer.seek(0)
     def streaming_iteration():
         yield from input_buffer

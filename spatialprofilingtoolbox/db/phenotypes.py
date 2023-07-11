@@ -57,3 +57,33 @@ def _get_phenotype_criteria(cursor, study: str, phenotype_symbol: str) -> Phenot
         marker for marker, polarity in rows if polarity == 'negative'
     ])
     return PhenotypeCriteria(positive_markers=positive_markers, negative_markers=negative_markers)
+
+
+def _get_phenotype_criteria_by_identifier(cursor, phenotype_handle: str, analysis_study: str) -> PhenotypeCriteria:
+    cursor.execute('''
+        SELECT cs.symbol, cpc.polarity
+        FROM cell_phenotype_criterion cpc
+        JOIN chemical_species cs ON cs.identifier=cpc.marker
+        WHERE cpc.cell_phenotype=%s AND cpc.study=%s
+        ;
+        ''',
+        (phenotype_handle, analysis_study,),
+    )
+    rows = cursor.fetchall()
+    positives = sorted([str(row[0]) for row in rows if row[1] == 'positive'])
+    negatives = sorted([str(row[0]) for row in rows if row[1] == 'negative'])
+    return PhenotypeCriteria(positive_markers=positives, negative_markers=negatives)
+
+
+def _get_channel_names(cursor, study: str) -> list[str]:
+    components = _get_study_components(cursor, study)
+    cursor.execute('''
+        SELECT cs.symbol
+        FROM biological_marking_system bms
+        JOIN chemical_species cs ON bms.target=cs.identifier
+        WHERE bms.study=%s
+        ;
+        ''',
+        (components.measurement,),
+    )
+    return [row[0] for row in cursor.fetchall()]

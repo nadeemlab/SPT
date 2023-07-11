@@ -75,7 +75,7 @@ class ProximityMetricsComputationResult(BaseModel):
     The response to a request for retrieval of proximity metrics in some specific case. This request
     may also be a request for computation of these metrics in the background (which may be pending).
     """
-    values: dict[str, float]
+    values: dict[str, float | None]
     is_pending: bool
 
 
@@ -84,11 +84,5 @@ class UMAPChannel(BaseModel):
     A UMAP dimensional reduction of a cell set, with one intensity channel's overlay.
     The image is encoded in base 64.
     """
-    channel: str
-    base64_svg: str
-
-
-class UMAPHighResolution(BaseModel):
-    """A high-resolution raster image of one of the UMAP visualizations."""
     channel: str
     base64_png: str

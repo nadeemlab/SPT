@@ -16,7 +16,7 @@ function test_proximity() {
             rm _proximity.json
             exit 1
         fi
-        pending=$(python -c 'import json; o=json.loads(open("_proximity.json").read()); print(o["proximities"]["pending"])')
+        pending=$(python -c 'import json; o=json.loads(open("_proximity.json").read()); print(o["is_pending"])')
         if [[ "$pending" == "False" ]];
         then
             echo "Metrics available."

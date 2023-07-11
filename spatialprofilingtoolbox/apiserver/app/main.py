@@ -1,7 +1,5 @@
 """The API service's endpoint handlers."""
-import os
 import json
-import re
 from io import BytesIO
 from base64 import b64encode
 from base64 import b64decode
@@ -22,14 +20,14 @@ from spatialprofilingtoolbox.db.querying import get_number_cells
 from spatialprofilingtoolbox.db.querying import get_cell_fractions_summary
 from spatialprofilingtoolbox.db.querying import get_phenotype_symbols
 from spatialprofilingtoolbox.db.querying import get_phenotype_criteria
+from spatialprofilingtoolbox.db.querying import retrieve_signature_of_phenotype
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCount
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCounts
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CompositePhenotype
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import ProximityMetricsComputationResult
 
 VERSION = '0.5.0'
 
@@ -110,10 +108,6 @@ async def get_phenotype_criteria_path_operation(
     return get_phenotype_criteria(study, phenotype_symbol)
 
 
-def fancy_round(ratio):
-    return 100 * round(ratio * 10000)/10000
-
-
 @app.get("/anonymous-phenotype-counts-fast/")
 async def get_anonymous_phenotype_counts_fast(
     positive_marker: Annotated[list[str], Query()],
@@ -124,107 +118,44 @@ async def get_anonymous_phenotype_counts_fast(
     negative_markers = [m for m in negative_marker if m != '']
     measurement_study = get_study_components(study).measurement
     number_cells = get_number_cells(study)
-    host, port = get_ondemand_host_port()
-    with CountRequester(host, port) as requester:
+    with CountRequester() as requester:
         counts = requester.get_counts_by_specimen(
             positive_markers,
             negative_markers,
             measurement_study,
+            number_cells,
         )
-    criteria = PhenotypeCriteria(
-        positive_markers=positive_markers,
-        negative_markers=negative_markers,
-    )
-    return PhenotypeCounts(
-        counts=[
-            PhenotypeCount(
-                specimen=specimen,
-                count=count,
-                percentage=fancy_round(count / count_all_in_specimen)
-            )
-            for specimen, (count, count_all_in_specimen) in counts.items()
-        ],
-        phenotype=CompositePhenotype(
-            name=None,
-            identifier=None,
-            criteria=criteria,
-        ),
-        number_cells_in_study=number_cells,
-    )
-
-
-def create_signature_with_channel_names(handle, measurement_study, data_analysis_study):
-    with DBCursor() as cursor:
-        cursor.execute('''
-            SELECT cs.symbol
-            FROM biological_marking_system bms
-            JOIN chemical_species cs ON bms.target=cs.identifier
-            WHERE bms.study=%s
-            ;
-            ''',
-            (measurement_study,),
-        )
-        rows = cursor.fetchall()
-    channels = [row[0] for row in rows]
-    if handle in channels:
-        return [handle], []
-    if re.match(r'^\d+$', handle):
-        with DBCursor() as cursor:
-            cursor.execute('''
-                SELECT cs.symbol, cpc.polarity
-                FROM cell_phenotype_criterion cpc
-                JOIN chemical_species cs ON cs.identifier=cpc.marker
-                WHERE cpc.cell_phenotype=%s AND cpc.study=%s
-                ;
-                ''',
-                (handle, data_analysis_study,),
-            )
-            rows = cursor.fetchall()
-            markers = [
-                sorted([row[0] for row in rows if row[1] == sign])
-                for sign in ['positive', 'negative']
-            ]
-            return markers
-    return [[], []]
-
-
-def get_ondemand_host_port():
-    host = os.environ['COUNTS_SERVER_HOST']
-    port = int(os.environ['COUNTS_SERVER_PORT'])
-    return (host, port)
+    return counts
 
 
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
-    study: str = Query(default='unknown', min_length=3),
-    phenotype1: str = Query(default='unknown', min_length=1),
-    phenotype2: str = Query(default='unknown', min_length=1),
+    study: str = Query(min_length=3),
+    phenotype1: str = Query(min_length=1),
+    phenotype2: str = Query(min_length=1),
     radius: int = Query(default=100),
-):
+) -> ProximityMetricsComputationResult:
     """
-    Spatial proximity statistics between pairs of cell populations defined by
-    phenotype criteria. The metric is the average number of cells of a second
-    phenotype within a fixed distance to a given cell of a primary phenotype.
+    Spatial proximity statistics between pairs of cell populations defined by phenotype criteria.
+    The metric is the average number of cells of a second phenotype within a fixed distance to a
+    given cell of a primary phenotype.
     """
-    components = get_study_components(study)
-    measurement_study = components.measurement
-    data_analysis_study = components.analysis
-    create = create_signature_with_channel_names
-    positives1, negatives1 = create(phenotype1, measurement_study, data_analysis_study)
-    positives2, negatives2 = create(phenotype2, measurement_study, data_analysis_study)
-
-    with CountRequester(*get_ondemand_host_port()) as requester:
+    retrieve = retrieve_signature_of_phenotype
+    criteria1 = retrieve(phenotype1, study)
+    criteria2 = retrieve(phenotype2, study)
+    with CountRequester() as requester:
         metrics = requester.get_proximity_metrics(
-            components.measurement,
+            get_study_components(study).measurement,
             radius,
-            [positives1, negatives1, positives2, negatives2],
+            [
+                criteria1.positive_markers,
+                criteria1.negative_markers,
+                criteria2.positive_markers,
+                criteria2.negative_markers,
+            ],
         )
-        representation = {'proximities': metrics}
+    return metrics
 
-    return Response(
-        content=json.dumps(representation),
-        media_type='application/json',
-    )
 
 @app.get("/visualization-plots/")
 async def get_plots(

@@ -1,0 +1,37 @@
+{
+    "counts": [
+        {
+            "specimen": "BaselTMA_SP42_5_X8Y7",
+            "count": 247,
+            "percentage": 10.37
+        },
+        {
+            "specimen": "BaselTMA_SP43_1_X1Y8",
+            "count": 19,
+            "percentage": 0.65
+        },
+        {
+            "specimen": "BaselTMA_SP43_3_X13Y6",
+            "count": 20,
+            "percentage": 1.28
+        },
+        {
+            "specimen": "BaselTMA_SP43_4_X15Y3",
+            "count": 36,
+            "percentage": 1.17
+        }
+    ],
+    "phenotype": {
+        "name": null,
+        "identifier": null,
+        "criteria": {
+            "positive_markers": [
+                "CD3 epsilon"
+            ],
+            "negative_markers": [
+                "CD20"
+            ]
+        }
+    },
+    "number_cells_in_study": 0
+}

@@ -1,4 +1,4 @@
-
+"""Test a few cases of using the counts service."""
 from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
 
 

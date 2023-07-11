@@ -1,0 +1,53 @@
+{
+    "counts": [
+        {
+            "specimen": "lesion 0_1",
+            "count": 10,
+            "percentage": 9.9
+        },
+        {
+            "specimen": "lesion 0_2",
+            "count": 28,
+            "percentage": 27.72
+        },
+        {
+            "specimen": "lesion 0_3",
+            "count": 23,
+            "percentage": 22.77
+        },
+        {
+            "specimen": "lesion 6_1",
+            "count": 34,
+            "percentage": 33.66
+        },
+        {
+            "specimen": "lesion 6_2",
+            "count": 17,
+            "percentage": 16.83
+        },
+        {
+            "specimen": "lesion 6_3",
+            "count": 28,
+            "percentage": 27.72
+        },
+        {
+            "specimen": "lesion 6_4",
+            "count": 27,
+            "percentage": 26.73
+        }
+    ],
+    "phenotype": {
+        "name": null,
+        "identifier": null,
+        "criteria": {
+            "positive_markers": [
+                "CD3"
+            ],
+            "negative_markers": [
+                "CD8",
+                "CD20"
+            ]
+        }
+    },
+    "number_cells_in_study": 0
+}

@@ -115,8 +115,8 @@
         "phenotype": "B7H3",
         "sample_cohort": "2",
         "significantly_different_cohorts": [
-            "4",
-            "3"
+            "3",
+            "4"
         ],
         "average_percent": 5.0
     },

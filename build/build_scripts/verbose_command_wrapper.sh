@@ -51,8 +51,14 @@ function print_dots {
         pad_size=0
     fi
     padchar=$(echo -en "\u2508")
-    dots_bar=$(printf %${pad_size}s |tr " " "$padchar")
-    echo -en "$dots_color$dots_bar$reset_code "
+    count=0
+    echo -en "$dots_color"
+    while [[ "$count" != "$pad_size" ]];
+    do
+        echo -en "$padchar"
+        count=$(( count + 1 ))
+    done
+    echo -en "$reset_code "
 }
 
 if [[ "$1" == "print" ]];

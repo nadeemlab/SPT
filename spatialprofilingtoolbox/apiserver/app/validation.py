@@ -28,14 +28,19 @@ async def valid_channel(channel: str=Query(min_length=1)) -> str:
 
 ValidChannel = Annotated[str, Depends(valid_channel)]
 
-async def valid_composite_phenotype_identifier(identifier: str=Query(min_length=1)) -> str:
-    if identifier in query().get_composite_phenotype_identifiers():
+
+def valid_composite_phenotype_name(identifier: str) -> str:
+    if identifier in query().get_phenotype_symbols_all_studies():
         return identifier
     raise ValueError(f'Composite phenotype identifier invalid: {abbreviate_string(identifier)}')
 
-ValidCompositePhenotype = Annotated[str, Depends(valid_composite_phenotype_identifier)]
+async def valid_phenotype_symbol(phenotype_symbol: str=Query(min_length=1)) -> str:
+    return valid_composite_phenotype_name(phenotype_symbol)
 
-async def valid_single_or_composite(identifier: str=Query(min_length=1)) -> str:
+ValidPhenotypeSymbol = Annotated[str, Depends(valid_phenotype_symbol)]
+
+
+def valid_single_or_composite_identifier(identifier) -> str:
     if identifier in query().get_composite_phenotype_identifiers():
         return identifier
     if identifier in query().get_channel_names_all_studies():
@@ -43,4 +48,14 @@ async def valid_single_or_composite(identifier: str=Query(min_length=1)) -> str:
     abbreviation = abbreviate_string(identifier)
     raise ValueError(f'Channel name or phenotype identifier invalid: {abbreviation}')
 
-ValidSingleComposite = Annotated[str, Depends(valid_single_or_composite)]
+
+async def valid_phenotype1(phenotype1: str=Query(min_length=1)) -> str:
+    return valid_single_or_composite_identifier(phenotype1)
+
+ValidPhenotype1 = Annotated[str, Depends(valid_phenotype1)]
+
+
+async def valid_phenotype2(phenotype2: str=Query(min_length=1)) -> str:
+    return valid_single_or_composite_identifier(phenotype2)
+
+ValidPhenotype2 = Annotated[str, Depends(valid_phenotype2)]

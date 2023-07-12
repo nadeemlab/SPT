@@ -30,6 +30,15 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
             for row in rows
         ]
 
+    def get_phenotype_symbols_all_studies(self) -> list[str]:
+        query = '''
+        SELECT DISTINCT cp.symbol FROM cell_phenotype cp
+        ;
+        '''
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        return [row[0] for row in rows]
+
     def get_composite_phenotype_identifiers(self) -> list[str]:
         query = '''
         SELECT cpc.cell_phenotype FROM cell_phenotype_criterion cpc

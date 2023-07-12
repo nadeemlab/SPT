@@ -23,8 +23,9 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import ValidChannel
 from spatialprofilingtoolbox.apiserver.app.validation import ValidStudy
-from spatialprofilingtoolbox.apiserver.app.validation import ValidSingleComposite
-from spatialprofilingtoolbox.apiserver.app.validation import ValidCompositePhenotype
+from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotypeSymbol
+from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotype1
+from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotype2
 
 VERSION = '0.6.0'
 
@@ -111,7 +112,7 @@ async def get_phenotype_symbols(
 @app.get("/phenotype-criteria/")
 async def get_phenotype_criteria(
     study: ValidStudy,
-    phenotype_symbol: ValidCompositePhenotype,
+    phenotype_symbol: ValidPhenotypeSymbol,
 ) -> PhenotypeCriteria:
     """
     Get lists of the positive markers and negative markers defining a given named phenotype, in the
@@ -147,8 +148,8 @@ async def get_anonymous_phenotype_counts_fast(
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
     study: ValidStudy,
-    phenotype1: ValidSingleComposite,
-    phenotype2: ValidSingleComposite,
+    phenotype1: ValidPhenotype1,
+    phenotype2: ValidPhenotype2,
     radius: int = Query(default=100),
 ) -> ProximityMetricsComputationResult:
     """

@@ -147,6 +147,7 @@ class QueryCursor:
     get_study_summary: Callable
     get_cell_fractions_summary: Callable
     get_phenotype_symbols: Callable
+    get_phenotype_symbols_all_studies: Callable
     get_composite_phenotype_identifiers: Callable
     get_phenotype_criteria: Callable
     get_channel_names_all_studies: Callable

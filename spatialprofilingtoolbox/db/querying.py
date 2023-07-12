@@ -58,6 +58,10 @@ class QueryHandler:
         return PhenotypesAccess(cursor).get_phenotype_symbols(study)
 
     @classmethod
+    def get_phenotype_symbols_all_studies(cls, cursor) -> list[str]:
+        return PhenotypesAccess(cursor).get_phenotype_symbols_all_studies()
+
+    @classmethod
     def get_phenotype_criteria(cls, cursor, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
         return PhenotypesAccess(cursor).get_phenotype_criteria(study, phenotype_symbol)
 

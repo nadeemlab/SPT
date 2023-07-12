@@ -50,6 +50,10 @@ class QueryHandler:
         return access.create_cell_fractions_summary(fractions, associations)
 
     @classmethod
+    def get_composite_phenotype_identifiers(cls, cursor) -> list[str]:
+        return PhenotypesAccess(cursor).get_composite_phenotype_identifiers()
+
+    @classmethod
     def get_phenotype_symbols(cls, cursor, study: str) -> list[PhenotypeSymbol]:
         return PhenotypesAccess(cursor).get_phenotype_symbols(study)
 
@@ -73,6 +77,10 @@ class QueryHandler:
                 components.analysis,
             )
         return PhenotypeCriteria(positive_markers=[], negative_markers=[])
+
+    @classmethod
+    def get_channel_names_all_studies(cls, cursor) -> list[str]:
+        return PhenotypesAccess(cursor).get_channel_names_all_studies()
 
     @classmethod
     def get_umaps_low_resolution(cls, cursor, study: str) -> list[UMAPChannel]:

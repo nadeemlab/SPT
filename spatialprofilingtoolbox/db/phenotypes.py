@@ -30,6 +30,14 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
             for row in rows
         ]
 
+    def get_composite_phenotype_identifiers(self) -> list[str]:
+        query = '''
+        SELECT cpc.cell_phenotype FROM cell_phenotype_criterion cpc
+        ;
+        '''
+        self.cursor.execute(query)
+        return [row[0] for row in self.cursor.fetchall()]
+
     def get_phenotype_criteria(self, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
         query = '''
         SELECT cs.symbol, cpc.polarity
@@ -89,5 +97,15 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
             ;
             ''',
             (components.measurement,),
+        )
+        return [row[0] for row in self.cursor.fetchall()]
+
+    def get_channel_names_all_studies(self) -> list[str]:
+        self.cursor.execute('''
+            SELECT cs.symbol
+            FROM biological_marking_system bms
+            JOIN chemical_species cs ON bms.target=cs.identifier
+            ;
+            '''
         )
         return [row[0] for row in self.cursor.fetchall()]

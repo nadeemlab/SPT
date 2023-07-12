@@ -7,7 +7,6 @@ from base64 import b64decode
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi import Query
-from fastapi import Depends
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
@@ -22,6 +21,10 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
     ProximityMetricsComputationResult
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
+from spatialprofilingtoolbox.apiserver.app.validation import ValidChannel
+from spatialprofilingtoolbox.apiserver.app.validation import ValidStudy
+from spatialprofilingtoolbox.apiserver.app.validation import ValidSingleComposite
+from spatialprofilingtoolbox.apiserver.app.validation import ValidCompositePhenotype
 
 VERSION = '0.6.0'
 
@@ -59,21 +62,6 @@ def custom_openapi():
     return app.openapi_schema
 
 setattr(app, 'openapi', custom_openapi)
-
-
-def abbreviate_string(string: str) -> str:
-    abbreviation = string[0:40]
-    if len(string) > 40:
-        abbreviation = abbreviation + '...'
-    return abbreviation
-
-
-async def valid_study_name(study: str=Query(default='unknown', min_length=3)) -> str:
-    if study in [item.handle for item in query().retrieve_study_handles()]:
-        return study
-    raise ValueError(f'Study name invalid: "{abbreviate_string(study)}"')
-
-ValidStudy = Annotated[str, Depends(valid_study_name)]
 
 
 @app.get("/")
@@ -123,7 +111,7 @@ async def get_phenotype_symbols(
 @app.get("/phenotype-criteria/")
 async def get_phenotype_criteria(
     study: ValidStudy,
-    phenotype_symbol: str = Query(default='unknown', min_length=3),
+    phenotype_symbol: ValidCompositePhenotype,
 ) -> PhenotypeCriteria:
     """
     Get lists of the positive markers and negative markers defining a given named phenotype, in the
@@ -159,8 +147,8 @@ async def get_anonymous_phenotype_counts_fast(
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
     study: ValidStudy,
-    phenotype1: str = Query(min_length=1),
-    phenotype2: str = Query(min_length=1),
+    phenotype1: ValidSingleComposite,
+    phenotype2: ValidSingleComposite,
     radius: int = Query(default=100),
 ) -> ProximityMetricsComputationResult:
     """
@@ -198,7 +186,7 @@ async def get_plots(
 @app.get("/visualization-plot-high-resolution/")
 async def get_plot_high_resolution(
     study: ValidStudy,
-    channel: str = Query(default='unknown', min_length=3),
+    channel: ValidChannel,
 ):
     """
     One full-resolution UMAP plot (for the given channel in the given study), provided as a

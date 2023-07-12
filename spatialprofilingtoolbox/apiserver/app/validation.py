@@ -54,11 +54,11 @@ def valid_channel_list(markers: list[str]) -> list[str]:
 
 ChannelList = Annotated[list[str], Query()]
 
-async def valid_channel_list_positives(positive_markers: ChannelList) -> list[str]:
-    return valid_channel_list(positive_markers)
+async def valid_channel_list_positives(positive_marker: ChannelList) -> list[str]:
+    return valid_channel_list(positive_marker)
 
-async def valid_channel_list_negatives(negative_markers: ChannelList) -> list[str]:
-    return valid_channel_list(negative_markers)
+async def valid_channel_list_negatives(negative_marker: ChannelList) -> list[str]:
+    return valid_channel_list(negative_marker)
 
 ValidChannel = Annotated[str, Depends(valid_channel)]
 ValidStudy = Annotated[str, Depends(valid_study_name)]

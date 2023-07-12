@@ -28,7 +28,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotype2
 from spatialprofilingtoolbox.apiserver.app.validation import ValidChannelListPositives
 from spatialprofilingtoolbox.apiserver.app.validation import ValidChannelListNegatives
 
-VERSION = '0.6.0'
+VERSION = '0.9.0'
 
 TITLE = 'Single cell studies data API'
 

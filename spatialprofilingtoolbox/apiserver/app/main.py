@@ -5,6 +5,7 @@ from io import BytesIO
 from base64 import b64decode
 
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
@@ -43,6 +44,21 @@ app = FastAPI(
         "email": "mathewj2@mskcc.org",
     },
 )
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Single cell studies stats",
+        version=VERSION,
+        openapi_version='3.0.0',
+        description=DESCRIPTION,
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+setattr(app, 'openapi', custom_openapi)
 
 
 @app.get("/")

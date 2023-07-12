@@ -32,7 +32,7 @@ class Assay(BaseModel):
 class StudyContact(BaseModel):
     """Contact information for a person to contact regarding a study."""
     name: str
-    email_address: str | None
+    email_address: str
 
 
 class DataRelease(BaseModel):
@@ -91,7 +91,7 @@ class Context(BaseModel):
 class Products(BaseModel):
     """Formal research products of a given study."""
     data_release: DataRelease
-    publication: Publication | None
+    publication: Publication
 
 
 class StudySummary(BaseModel):

@@ -1,6 +1,5 @@
 """The API service's endpoint handlers."""
 import json
-from typing import Annotated
 from io import BytesIO
 from base64 import b64decode
 
@@ -26,8 +25,12 @@ from spatialprofilingtoolbox.apiserver.app.validation import ValidStudy
 from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotypeSymbol
 from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotype1
 from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotype2
+from spatialprofilingtoolbox.apiserver.app.validation import ValidChannelListPositives
+from spatialprofilingtoolbox.apiserver.app.validation import ValidChannelListNegatives
 
 VERSION = '0.6.0'
+
+TITLE = 'Single cell studies data API'
 
 DESCRIPTION = """
 Get information about single cell phenotyping studies, including:
@@ -39,13 +42,13 @@ Get information about single cell phenotyping studies, including:
 """
 
 app = FastAPI(
-    title="Single cell studies stats",
+    title=TITLE,
     description=DESCRIPTION,
     version=VERSION,
     contact={
-        "name": "James Mathews",
-        "url": "https://nadeemlab.org",
-        "email": "mathewj2@mskcc.org",
+        'name': 'James Mathews',
+        'url': 'https://nadeemlab.org',
+        'email': 'mathewj2@mskcc.org"',
     },
 )
 
@@ -53,9 +56,10 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="Single cell studies stats",
+        title=TITLE,
         version=VERSION,
-        openapi_version='3.0.0',
+        openapi_version='3.0.0', # This is a manual replacement for 3.1.0 default, which seems not supported by Swagger UI yet.
+        summary=TITLE,
         description=DESCRIPTION,
         routes=app.routes,
     )
@@ -123,8 +127,8 @@ async def get_phenotype_criteria(
 
 @app.get("/anonymous-phenotype-counts-fast/")
 async def get_anonymous_phenotype_counts_fast(
-    positive_marker: Annotated[list[str], Query()],
-    negative_marker: Annotated[list[str], Query()],
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
     """

@@ -10,16 +10,6 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 
 from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
-from spatialprofilingtoolbox.db.querying import get_study_components
-from spatialprofilingtoolbox.db.querying import retrieve_study_handles
-from spatialprofilingtoolbox.db.querying import get_study_summary
-from spatialprofilingtoolbox.db.querying import get_number_cells
-from spatialprofilingtoolbox.db.querying import get_cell_fractions_summary
-from spatialprofilingtoolbox.db.querying import get_phenotype_symbols
-from spatialprofilingtoolbox.db.querying import get_phenotype_criteria
-from spatialprofilingtoolbox.db.querying import retrieve_signature_of_phenotype
-from spatialprofilingtoolbox.db.querying import get_umaps_low_resolution
-from spatialprofilingtoolbox.db.querying import get_umap
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
@@ -29,6 +19,8 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCo
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
     ProximityMetricsComputationResult
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
+
+from spatialprofilingtoolbox.db.querying import query
 
 VERSION = '0.6.0'
 
@@ -67,17 +59,17 @@ async def get_study_names() -> list[StudyHandle]:
     """
     The names of studies/datasets, with display names.
     """
-    return retrieve_study_handles()
+    return query().retrieve_study_handles()
 
 
 @app.get("/study-summary")
-async def get_study_summary_path_operation(
+async def get_study_summary(
     study: str = Query(default='unknown', min_length=3),
 ) -> StudySummary:
     """
     A summary of a study's publications, authors, etc., as well as a summary of its datasets.
     """
-    return get_study_summary(study)
+    return query().get_study_summary(study)
 
 
 @app.get("/phenotype-summary/")
@@ -86,19 +78,19 @@ async def get_phenotype_summary(
     pvalue: float = Query(default=0.05),
 ) -> list[CellFractionsSummary]:
     """Averaging summary of cell fractions per phenotype."""
-    return get_cell_fractions_summary(study, pvalue)
+    return query().get_cell_fractions_summary(study, pvalue)
 
 
 @app.get("/phenotype-symbols/")
-async def get_phenotype_symbols_path_operation(
+async def get_phenotype_symbols(
     study: str = Query(default='unknown', min_length=3),
 ) -> list[PhenotypeSymbol]:
     """The display names and identifiers for the "composite" phenotypes in a given study."""
-    return get_phenotype_symbols(study)
+    return query().get_phenotype_symbols(study)
 
 
 @app.get("/phenotype-criteria/")
-async def get_phenotype_criteria_path_operation(
+async def get_phenotype_criteria(
     study: str = Query(default='unknown', min_length=3),
     phenotype_symbol: str = Query(default='unknown', min_length=3),
 ) -> PhenotypeCriteria:
@@ -106,7 +98,7 @@ async def get_phenotype_criteria_path_operation(
     Get lists of the positive markers and negative markers defining a given named phenotype, in the
     context of the given study.
     """
-    return get_phenotype_criteria(study, phenotype_symbol)
+    return query().get_phenotype_criteria(study, phenotype_symbol)
 
 
 @app.get("/anonymous-phenotype-counts-fast/")
@@ -117,8 +109,8 @@ async def get_anonymous_phenotype_counts_fast(
 ) -> PhenotypeCounts:
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    measurement_study = get_study_components(study).measurement
-    number_cells = get_number_cells(study)
+    measurement_study = query().get_study_components(study).measurement
+    number_cells = query().get_number_cells(study)
     with CountRequester() as requester:
         counts = requester.get_counts_by_specimen(
             positive_markers,
@@ -141,12 +133,12 @@ async def request_phenotype_proximity_computation(
     The metric is the average number of cells of a second phenotype within a fixed distance to a
     given cell of a primary phenotype.
     """
-    retrieve = retrieve_signature_of_phenotype
+    retrieve = query().retrieve_signature_of_phenotype
     criteria1 = retrieve(phenotype1, study)
     criteria2 = retrieve(phenotype2, study)
     with CountRequester() as requester:
         metrics = requester.get_proximity_metrics(
-            get_study_components(study).measurement,
+            query().get_study_components(study).measurement,
             radius,
             [
                 criteria1.positive_markers,
@@ -165,7 +157,7 @@ async def get_plots(
     """
     Base64-encoded plots of UMAP visualizations, one per channel.
     """
-    return get_umaps_low_resolution(study)
+    return query().get_umaps_low_resolution(study)
 
 
 @app.get("/visualization-plot-high-resolution/")
@@ -173,7 +165,7 @@ async def get_plot_high_resolution(
     study: str = Query(default='unknown', min_length=3),
     channel: str = Query(default='unknown', min_length=3),
 ):
-    umap = get_umap(study, channel)
+    umap = query().get_umap(study, channel)
     input_buffer = BytesIO(b64decode(umap.base64_png))
     input_buffer.seek(0)
     def streaming_iteration():

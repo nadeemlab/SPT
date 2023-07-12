@@ -6,12 +6,15 @@ import time
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
+from typing import Type
+from typing import Callable
 
 from psycopg2 import connect
 from psycopg2.extensions import connection as Psycopg2Connection
 from psycopg2.extensions import cursor as Psycopg2Cursor
 from psycopg2 import Error as Psycopg2Error
 from psycopg2 import OperationalError
+from attr import define
 
 from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import get_credentials_from_environment
@@ -123,3 +126,41 @@ def _check_database_is_ready() -> bool:
         if dcm.is_connected():
             return True
     return False
+
+
+@define
+class SimpleReadOnlyProvider:
+    """State-holder for basic read-only one-time database data provider classes."""
+    cursor: Psycopg2Cursor
+
+
+class QueryCursor:
+    """
+    Dispatches to any class methods of the special handler class, that require a cursor, with a
+    cursor for a one-time connection.
+    """
+    query_handler: Type
+
+    get_study_components: Callable
+    retrieve_study_handles: Callable
+    get_number_cells: Callable
+    get_study_summary: Callable
+    get_cell_fractions_summary: Callable
+    get_phenotype_symbols: Callable
+    get_phenotype_criteria: Callable
+    retrieve_signature_of_phenotype: Callable
+    get_umaps_low_resolution: Callable
+    get_umap: Callable
+
+    def __init__(self, query_handler: Type):
+        self.query_handler = query_handler
+        methods = [method for method in dir(query_handler) if not method.startswith('__')]
+        for method_name in methods:
+            def dispatched(*args, _method_name=method_name, **kwargs):
+                return self._query(*args, _method_name=_method_name, **kwargs)
+            setattr(self, method_name, dispatched)
+
+    def _query(self, *args, _method_name: str='', **kwargs):
+        method_function = getattr(self.query_handler, _method_name)
+        with DBCursor() as cursor:
+            return method_function(cursor, *args, **kwargs)

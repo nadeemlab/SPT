@@ -37,8 +37,8 @@
         }
     ],
     "phenotype": {
-        "name": null,
-        "identifier": null,
+        "name": "",
+        "identifier": "",
         "criteria": {
             "positive_markers": [
                 "CD3"

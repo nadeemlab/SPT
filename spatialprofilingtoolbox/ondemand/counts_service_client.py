@@ -48,8 +48,8 @@ class CountRequester:
                 for specimen, (count, count_all_in_specimen) in response.items()
             ],
             phenotype=CompositePhenotype(
-                name=None,
-                identifier=None,
+                name='',
+                identifier='',
                 criteria=PhenotypeCriteria(
                     positive_markers=positive_signature_channels,
                     negative_markers=negative_signature_channels,

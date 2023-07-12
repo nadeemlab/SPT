@@ -2,6 +2,7 @@
 import re
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import QueryCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyComponents
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
@@ -10,93 +11,81 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSy
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.cohorts import _get_cohort_identifiers
-from spatialprofilingtoolbox.db.study_access import _get_study_summary
-from spatialprofilingtoolbox.db.study_access import _get_study_handles
-from spatialprofilingtoolbox.db.study_access import _get_number_cells
-from spatialprofilingtoolbox.db.study_access import _get_study_components
-from spatialprofilingtoolbox.db.fractions_and_associations import _get_fractions_rows
-from spatialprofilingtoolbox.db.fractions_and_associations import _get_fractions_test_results
-from spatialprofilingtoolbox.db.fractions_and_associations import _get_feature_associations
-from spatialprofilingtoolbox.db.fractions_and_associations import _create_cell_fractions_summary
-from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_symbols
-from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_criteria
-from spatialprofilingtoolbox.db.phenotypes import _get_channel_names
-from spatialprofilingtoolbox.db.phenotypes import _get_phenotype_criteria_by_identifier
-from spatialprofilingtoolbox.db.umap import _get_umap_rows
-from spatialprofilingtoolbox.db.umap import _downsample_umaps_base64
-from spatialprofilingtoolbox.db.umap import _get_umap_row_for_channel
+from spatialprofilingtoolbox.db.study_access import StudyAccess
+from spatialprofilingtoolbox.db.fractions_and_associations import FractionsAccess
+from spatialprofilingtoolbox.db.phenotypes import PhenotypesAccess
+from spatialprofilingtoolbox.db.umap import UMAPAccess
 
-def get_study_components(study_name: str) -> StudyComponents:
-    with DBCursor() as cursor:
-        components = _get_study_components(cursor, study_name)
-    return components
+class QueryHandler:
+    """Handle simple queries to the database."""
+    @classmethod
+    def get_study_components(cls, cursor, study: str) -> StudyComponents:
+        return StudyAccess(cursor).get_study_components(study)
 
+    @classmethod
+    def retrieve_study_handles(cls, cursor) -> list[StudyHandle]:
+        return StudyAccess(cursor).get_study_handles()
 
-def retrieve_study_handles() -> list[StudyHandle]:
-    with DBCursor() as cursor:
-        handles = _get_study_handles(cursor)
-    return handles
+    @classmethod
+    def get_number_cells(cls, cursor, study: str) -> int:
+        access = StudyAccess(cursor)
+        components = access.get_study_components(study)
+        return access.get_number_cells(components.measurement)
 
+    @classmethod
+    def get_study_summary(cls, cursor, study: str) -> StudySummary:
+        return StudyAccess(cursor).get_study_summary(study)
 
-def get_number_cells(study: str) -> int:
-    with DBCursor() as cursor:
-        components = _get_study_components(cursor, study)
-        cells=_get_number_cells(cursor, components.measurement)
-    return cells
-
-
-def get_study_summary(study: str) -> StudySummary:
-    with DBCursor() as cursor:
-        summary = _get_study_summary(cursor, study)
-    return summary
-
-
-def get_cell_fractions_summary(study: str, pvalue: float) -> list[CellFractionsSummary]:
-    with DBCursor() as cursor:
-        fractions = _get_fractions_rows(cursor, study)
-        tests = _get_fractions_test_results(cursor, study)
+    @classmethod
+    def get_cell_fractions_summary(cls,
+            cursor,
+            study: str,
+            pvalue: float,
+        ) -> list[CellFractionsSummary]:
+        access = FractionsAccess(cursor)
+        fractions = access.get_fractions_rows(study)
+        tests = access.get_fractions_test_results(study)
         cohort_identifiers = _get_cohort_identifiers(cursor, study)
-    features = [f.marker_symbol for f in fractions]
-    associations = _get_feature_associations(tests, pvalue, cohort_identifiers, features)
-    return _create_cell_fractions_summary(fractions, associations)
+        features = [f.marker_symbol for f in fractions]
+        associations = access.get_feature_associations(tests, pvalue, cohort_identifiers, features)
+        return access.create_cell_fractions_summary(fractions, associations)
 
+    @classmethod
+    def get_phenotype_symbols(cls, cursor, study: str) -> list[PhenotypeSymbol]:
+        return PhenotypesAccess(cursor).get_phenotype_symbols(study)
 
-def get_phenotype_symbols(study: str) -> list[PhenotypeSymbol]:
-    with DBCursor() as cursor:
-        phenotype_symbols = _get_phenotype_symbols(cursor, study)
-    return phenotype_symbols
-
-
-def get_phenotype_criteria(study: str, phenotype_symbol: str) -> PhenotypeCriteria:
-    with DBCursor() as cursor:
-        criteria = _get_phenotype_criteria(cursor, study, phenotype_symbol)
-    return criteria
-
-
-def retrieve_signature_of_phenotype(phenotype_handle: str, study: str) -> PhenotypeCriteria:
-    with DBCursor() as cursor:
-        channel_names = _get_channel_names(cursor, study)
-        components = _get_study_components(cursor, study)
-    if phenotype_handle in channel_names:
-        return PhenotypeCriteria(positive_markers=[phenotype_handle], negative_markers=[])
-    if re.match(r'^\d+$', phenotype_handle):
+    @classmethod
+    def get_phenotype_criteria(cls, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
         with DBCursor() as cursor:
-            return _get_phenotype_criteria_by_identifier(
-                cursor,
+            return PhenotypesAccess(cursor).get_phenotype_criteria(study, phenotype_symbol)
+
+    @classmethod
+    def retrieve_signature_of_phenotype(cls,
+            cursor,
+            phenotype_handle: str,
+            study: str
+        ) -> PhenotypeCriteria:
+        channel_names = PhenotypesAccess(cursor).get_channel_names(study)
+        components = StudyAccess(cursor).get_study_components(study)
+        if phenotype_handle in channel_names:
+            return PhenotypeCriteria(positive_markers=[phenotype_handle], negative_markers=[])
+        if re.match(r'^\d+$', phenotype_handle):
+            return PhenotypesAccess(cursor).get_phenotype_criteria_by_identifier(
                 phenotype_handle,
                 components.analysis,
             )
-    return PhenotypeCriteria(positive_markers=[], negative_markers=[])
+        return PhenotypeCriteria(positive_markers=[], negative_markers=[])
+
+    @classmethod
+    def get_umaps_low_resolution(cls, cursor, study: str) -> list[UMAPChannel]:
+        access = UMAPAccess(cursor)
+        umap_rows = access.get_umap_rows(study)
+        return UMAPAccess.downsample_umaps_base64(umap_rows)
+
+    @classmethod
+    def get_umap(cls, cursor, study: str, channel: str) -> UMAPChannel:
+        return UMAPAccess(cursor).get_umap_row_for_channel(study, channel)
 
 
-def get_umaps_low_resolution(study: str) -> list[UMAPChannel]:
-    with DBCursor() as cursor:
-        umap_rows = _get_umap_rows(cursor, study)
-    umaps = _downsample_umaps_base64(umap_rows)
-    return umaps
-
-
-def get_umap(study: str, channel: str) -> UMAPChannel:
-    with DBCursor() as cursor:
-        row = _get_umap_row_for_channel(cursor, study, channel)
-    return UMAPChannel(channel=row[0], base64_png=row[1])
+def query() -> QueryCursor:
+    return QueryCursor(QueryHandler)

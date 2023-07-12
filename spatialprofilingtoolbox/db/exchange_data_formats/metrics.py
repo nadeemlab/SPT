@@ -75,7 +75,7 @@ class ProximityMetricsComputationResult(BaseModel):
     The response to a request for retrieval of proximity metrics in some specific case. This request
     may also be a request for computation of these metrics in the background (which may be pending).
     """
-    values: dict[str, float]
+    values: dict[str, float | None]
     is_pending: bool
 
 

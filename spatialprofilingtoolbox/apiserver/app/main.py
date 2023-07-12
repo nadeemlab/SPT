@@ -7,6 +7,7 @@ from base64 import b64decode
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi import Query
+from fastapi import Depends
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
@@ -20,7 +21,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCo
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
     ProximityMetricsComputationResult
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
-
 from spatialprofilingtoolbox.db.querying import query
 
 VERSION = '0.6.0'
@@ -61,6 +61,21 @@ def custom_openapi():
 setattr(app, 'openapi', custom_openapi)
 
 
+def abbreviate_string(string: str) -> str:
+    abbreviation = string[0:40]
+    if len(string) > 40:
+        abbreviation = abbreviation + '...'
+    return abbreviation
+
+
+async def valid_study_name(study: str=Query(default='unknown', min_length=3)) -> str:
+    if study in [item.handle for item in query().retrieve_study_handles()]:
+        return study
+    raise ValueError(f'Study name invalid: "{abbreviate_string(study)}"')
+
+ValidStudy = Annotated[str, Depends(valid_study_name)]
+
+
 @app.get("/")
 async def get_root():
     return Response(
@@ -80,7 +95,7 @@ async def get_study_names() -> list[StudyHandle]:
 
 @app.get("/study-summary")
 async def get_study_summary(
-    study: str = Query(default='unknown', min_length=3),
+    study: ValidStudy,
 ) -> StudySummary:
     """
     A summary of a study's publications, authors, etc., as well as a summary of its datasets.
@@ -90,7 +105,7 @@ async def get_study_summary(
 
 @app.get("/phenotype-summary/")
 async def get_phenotype_summary(
-    study: str = Query(default='unknown', min_length=3),
+    study: ValidStudy,
     pvalue: float = Query(default=0.05),
 ) -> list[CellFractionsSummary]:
     """Averaging summary of cell fractions per phenotype."""
@@ -99,7 +114,7 @@ async def get_phenotype_summary(
 
 @app.get("/phenotype-symbols/")
 async def get_phenotype_symbols(
-    study: str = Query(default='unknown', min_length=3),
+    study: ValidStudy,
 ) -> list[PhenotypeSymbol]:
     """The display names and identifiers for the "composite" phenotypes in a given study."""
     return query().get_phenotype_symbols(study)
@@ -107,7 +122,7 @@ async def get_phenotype_symbols(
 
 @app.get("/phenotype-criteria/")
 async def get_phenotype_criteria(
-    study: str = Query(default='unknown', min_length=3),
+    study: ValidStudy,
     phenotype_symbol: str = Query(default='unknown', min_length=3),
 ) -> PhenotypeCriteria:
     """
@@ -121,7 +136,7 @@ async def get_phenotype_criteria(
 async def get_anonymous_phenotype_counts_fast(
     positive_marker: Annotated[list[str], Query()],
     negative_marker: Annotated[list[str], Query()],
-    study: str = Query(min_length=3),
+    study: ValidStudy,
 ) -> PhenotypeCounts:
     """
     Computes the number of cells satisfying the given positive and negative criteria, in the
@@ -143,7 +158,7 @@ async def get_anonymous_phenotype_counts_fast(
 
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
-    study: str = Query(min_length=3),
+    study: ValidStudy,
     phenotype1: str = Query(min_length=1),
     phenotype2: str = Query(min_length=1),
     radius: int = Query(default=100),
@@ -172,7 +187,7 @@ async def request_phenotype_proximity_computation(
 
 @app.get("/visualization-plots/")
 async def get_plots(
-    study: str = Query(min_length=3),
+    study: ValidStudy,
 ) -> list[UMAPChannel]:
     """
     Base64-encoded plots of UMAP visualizations, one per channel.
@@ -182,7 +197,7 @@ async def get_plots(
 
 @app.get("/visualization-plot-high-resolution/")
 async def get_plot_high_resolution(
-    study: str = Query(default='unknown', min_length=3),
+    study: ValidStudy,
     channel: str = Query(default='unknown', min_length=3),
 ):
     """

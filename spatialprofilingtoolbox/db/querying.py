@@ -1,7 +1,6 @@
 """Some basic accessors that retrieve from the database."""
 import re
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyComponents
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -55,9 +54,8 @@ class QueryHandler:
         return PhenotypesAccess(cursor).get_phenotype_symbols(study)
 
     @classmethod
-    def get_phenotype_criteria(cls, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
-        with DBCursor() as cursor:
-            return PhenotypesAccess(cursor).get_phenotype_criteria(study, phenotype_symbol)
+    def get_phenotype_criteria(cls, cursor, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
+        return PhenotypesAccess(cursor).get_phenotype_criteria(study, phenotype_symbol)
 
     @classmethod
     def retrieve_signature_of_phenotype(cls,

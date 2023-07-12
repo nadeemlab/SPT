@@ -107,6 +107,10 @@ async def get_anonymous_phenotype_counts_fast(
     negative_marker: Annotated[list[str], Query()],
     study: str = Query(min_length=3),
 ) -> PhenotypeCounts:
+    """
+    Computes the number of cells satisfying the given positive and negative criteria, in the
+    context of a given study.
+    """
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
     measurement_study = query().get_study_components(study).measurement
@@ -165,6 +169,10 @@ async def get_plot_high_resolution(
     study: str = Query(default='unknown', min_length=3),
     channel: str = Query(default='unknown', min_length=3),
 ):
+    """
+    One full-resolution UMAP plot (for the given channel in the given study), provided as a
+    streaming PNG.
+    """
     umap = query().get_umap(study, channel)
     input_buffer = BytesIO(b64decode(umap.base64_png))
     input_buffer.seek(0)

@@ -141,8 +141,10 @@ class SimpleReadOnlyProvider:
 
 class QueryCursor:
     """
-    Dispatches to any class methods of the special handler class, that require a cursor, with a
-    cursor for a one-time connection.
+    Dispatches calls to a provided handler class (most likely QueryHandler).
+    The provided class' class methods require a cursor as first argument, which this dispatcher
+    class (QueryCursor) newly provides on each invocation.
+    This allows the user of QueryCursor to omit mention of the cursor.
     """
     query_handler: Type
 

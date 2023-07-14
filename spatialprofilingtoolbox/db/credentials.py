@@ -2,15 +2,13 @@
 from os import environ
 import re
 import configparser
-
-from attr import define
+from typing import NamedTuple
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-@define
-class DBCredentials: #pylint: disable=too-few-public-methods
+class DBCredentials(NamedTuple):
     """Data structure for database credentials."""
     endpoint: str
     database: str

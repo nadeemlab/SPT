@@ -42,7 +42,12 @@ class DatabaseConnectionMaker:
             message = 'Failed to connect to database: %s %s'
             logger.warning(message, credentials.endpoint, credentials.database)
             logger.info('Trying with alternative database name.')
-            credentials.database = 'postgres'
+            credentials = DBCredentials(
+                credentials.endpoint,
+                'postgres',
+                credentials.user,
+                credentials.password,
+            )
             try:
                 self._make_connection(credentials)
             except Psycopg2Error as exception:

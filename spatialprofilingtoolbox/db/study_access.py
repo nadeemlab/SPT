@@ -108,7 +108,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         row = cast(tuple, row)
         return StudyContact(
             name=row[0],
-            email_address=row[1] if self._rough_check_is_email(row[1]) else None
+            email_address=row[1] if self._rough_check_is_email(row[1]) else ''
         )
 
     @staticmethod
@@ -126,7 +126,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         row = cast(tuple, row)
         return DataRelease(**dict(zip(['repository', 'url', 'date'], row)))
 
-    def _get_publication(self, study: str) -> Publication | None:
+    def _get_publication(self, study: str) -> Publication:
         query = '''
         SELECT title, internet_reference, date_of_publication
         FROM publication
@@ -135,7 +135,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         '''
         row = GetSingleResult.row(self.cursor, query=query, parameters=(study,),)
         if row is None:
-            return None
+            row = ('', '', '')
         title, url, date = row
         first_author_name = GetSingleResult.string(
             self.cursor,

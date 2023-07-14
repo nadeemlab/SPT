@@ -9,7 +9,7 @@ then
     exit 1
 fi
 
-diff module_tests/expected_phenotype_summary.json summary.json
+diff module_tests/expected_phenotype_summary_structured.json summary.json
 status=$?
 [ $status -eq 0 ] || (echo "API query for phenotype summary failed."; )
 

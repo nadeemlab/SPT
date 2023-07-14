@@ -1,5 +1,5 @@
 
-query=http://spt-apiserver-testing:8080/study-summary/Melanoma%20intralesional%20IL2
+query=http://spt-apiserver-testing:8080/study-summary?study=Melanoma%20intralesional%20IL2
 
 curl -s $query ;
 if [ "$?" -gt 0 ];
@@ -11,7 +11,7 @@ fi
 
 curl -s $query | python -m json.tool > summary.json
 
-diff module_tests/expected_study_summary.json summary.json
+diff module_tests/expected_study_summary_structured.json summary.json
 status=$?
 [ $status -eq 0 ] || (echo "API query for study summary failed."; )
 

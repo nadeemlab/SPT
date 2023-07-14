@@ -1,0 +1,12 @@
+{
+    "positive_markers": [
+        "SOX10"
+    ],
+    "negative_markers": [
+        "CD20",
+        "CD3",
+        "CD4",
+        "CD8",
+        "FOXP3"
+    ]
+}

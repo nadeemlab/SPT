@@ -1,0 +1,91 @@
+{
+    "context": {
+        "institution": {
+            "name": "Memorial Sloan-Kettering Cancer Center"
+        },
+        "assay": {
+            "name": "Immunofluorescence"
+        },
+        "contact": {
+            "name": "Maryam Pourmaleki",
+            "email_address": "pourmalm@mskcc.org"
+        }
+    },
+    "products": {
+        "data_release": {
+            "repository": "Zenodo (CERN)",
+            "url": "https://doi.org/10.5281/zenodo.4300912",
+            "date": "2022-01-04"
+        },
+        "publication": {
+            "title": "Tumor MHC Class I Expression Associates with Intralesional IL2 Response in Melanoma",
+            "url": "https://doi.org/10.1158/2326-6066.CIR-21-1083",
+            "first_author_name": "Maryam Pourmaleki",
+            "date": "2022-03-01"
+        }
+    },
+    "counts": {
+        "specimens": 7,
+        "cells": 700,
+        "channels": 26,
+        "composite_phenotypes": 4
+    },
+    "cohorts": {
+        "assignments": [
+            {
+                "sample": "lesion 0_1",
+                "cohort": "1"
+            },
+            {
+                "sample": "lesion 0_2",
+                "cohort": "2"
+            },
+            {
+                "sample": "lesion 0_3",
+                "cohort": "2"
+            },
+            {
+                "sample": "lesion 6_1",
+                "cohort": "3"
+            },
+            {
+                "sample": "lesion 6_2",
+                "cohort": "4"
+            },
+            {
+                "sample": "lesion 6_3",
+                "cohort": "4"
+            },
+            {
+                "sample": "lesion 6_4",
+                "cohort": "3"
+            }
+        ],
+        "cohorts": [
+            {
+                "identifier": "1",
+                "temporality": "Before intervention",
+                "diagnosis": "Response to intralesional IL-2 injection",
+                "result": "Non-responder"
+            },
+            {
+                "identifier": "2",
+                "temporality": "After intervention",
+                "diagnosis": "Response to intralesional IL-2 injection",
+                "result": "Non-responder"
+            },
+            {
+                "identifier": "3",
+                "temporality": "Before intervention",
+                "diagnosis": "Response to intralesional IL-2 injection",
+                "result": "Extreme responder"
+            },
+            {
+                "identifier": "4",
+                "temporality": "After intervention",
+                "diagnosis": "Response to intralesional IL-2 injection",
+                "result": "Extreme responder"
+            }
+        ]
+    }
+}

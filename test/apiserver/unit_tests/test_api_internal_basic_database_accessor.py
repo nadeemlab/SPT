@@ -2,8 +2,7 @@
 import os
 import sys
 
-from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
-
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 if __name__ == '__main__':
     environment = {
@@ -16,7 +15,7 @@ if __name__ == '__main__':
     for key, value in environment.items():
         os.environ[key] = value
 
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute('SELECT COUNT(*) FROM specimen_measurement_study;')
         rows = cursor.fetchall()
         count = rows[0][0]

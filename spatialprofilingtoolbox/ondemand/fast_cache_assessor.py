@@ -9,7 +9,7 @@ from pickle import load as load_pickle
 from json import loads as load_json_string
 import re
 
-from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -20,7 +20,6 @@ class FastCacheAssessor:
     """Assess "fast cache"."""
     def __init__(self, source_data_location):
         self.source_data_location = source_data_location
-        self.database_config_file = DBAccessor.create_database_config_file(source_data_location)
         self.centroids = None
         self.expressions_index = None
 
@@ -62,9 +61,8 @@ class FastCacheAssessor:
     def _recreate(self):
         logger.info('Recreating fast cache files.')
         change_directory = f'cd {self.source_data_location}'
-        main_command = 'spt ondemand cache-expressions-data-array'
-        main_flags = [f'--database-config-file={self.database_config_file}']
-        commands = [change_directory, ' '.join([main_command] + main_flags)]
+        main_command = 'spt ondemand cache-expressions-data-array --database-config-file=none'
+        commands = [change_directory, main_command]
         command = '; '.join(commands)
         logger.debug('Command is:')
         logger.debug(command)
@@ -120,7 +118,7 @@ class FastCacheAssessor:
         return set(known_measurement_studies).issubset(set(indexed_measurement_studies))
 
     def _retrieve_measurement_studies(self):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = cursor.fetchall()
         return [row[0] for row in rows]
@@ -172,7 +170,7 @@ class FastCacheAssessor:
         return set(known_samples).issubset(set(indexed_samples))
 
     def _retrieve_known_samples_measurement(self, measurement_study):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT specimen FROM specimen_data_measurement_process sdmp
             WHERE sdmp.study=%s

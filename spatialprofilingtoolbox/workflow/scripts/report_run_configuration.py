@@ -29,8 +29,13 @@ if __name__ == '__main__':
         SuggestExtrasException(e, 'workflow')
 
     data_files = {
-        'samples': vars(args)['samples file'],
-        'channels': vars(args)['channels file'],
-        'phenotypes': vars(args)['phenotypes file'],
+        name: vars(args)['_'.join([name, 'file'])]
+        if '_'.join([name, 'file']) in vars(args) else None
+        for name in ['samples', 'channels', 'phenotypes']
     }
-    r = RunConfigurationReporter(**vars(args), data_files=data_files)
+    args_dict = vars(args)
+    for name in ['samples', 'channels', 'phenotypes']:
+        key = '_'.join([name, 'file'])
+        if key in args_dict:
+            del args_dict[key]
+    r = RunConfigurationReporter(**args_dict, data_files=data_files)

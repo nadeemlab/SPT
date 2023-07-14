@@ -28,7 +28,11 @@ def main():
     parser.add_argument('--centroids-only', dest='centroids_only', action='store_true')
     args = parser.parse_args()
 
-    database_config_file = abspath(expanduser(args.database_config_file))
+    database_config_file = args.database_config_file
+    if database_config_file == 'none':
+        database_config_file = None
+    if database_config_file is not None:
+        database_config_file = abspath(expanduser(database_config_file))
 
     if not StructureCentroids.already_exists(getcwd()):
         with StructureCentroidsPuller(database_config_file) as puller:

@@ -1,7 +1,7 @@
 """Basic testing that expression vectors are in the database."""
 import os
 
-from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 
 def test_one_expression_vector():
@@ -15,7 +15,7 @@ def test_one_expression_vector():
     for key, value in environment.items():
         os.environ[key] = value
 
-    with DBAccessor() as (_, _, cursor):
+    with DBCursor() as cursor:
         cursor.execute('''
         SELECT
         hsi.histological_structure,

@@ -17,15 +17,16 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
+class ADIFeaturesUploader(SourceToADIParser):
     """
     Upload sparse representation of feature values to tables
     quantitative_feature_value, feature_specification, feature_specifier.
     """
     feature_value_identifier: int
+    database_connection_maker: DatabaseConnectionMaker
 
     def __init__(self,
-            database_config_file,
+            database_connection_maker: DatabaseConnectionMaker,
             data_analysis_study,
             derivation_and_number_specifiers,
             impute_zeros=False,
@@ -39,7 +40,7 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         SourceToADIParser.__init__(self, fields)
         args = (data_analysis_study, derivation_method, specifier_number)
         self.record_feature_specification_template(*args)
-        DatabaseConnectionMaker.__init__(self, database_config_file=database_config_file)
+        self.database_connection_maker = database_connection_maker
 
     def record_feature_specification_template(self,
             data_analysis_study,
@@ -56,10 +57,12 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
         }
         self.feature_values = []
 
+    def __enter__(self):
+        return self
+
     def __exit__(self, exception_type, exception_value, traceback):
-        if self.connection:
+        if self.database_connection_maker.is_connected():
             self.upload()
-            self.connection.close()
 
     def stage_feature_value(self, specifiers, subject, value):
         self.validate_specifiers(specifiers)
@@ -72,6 +75,9 @@ class ADIFeaturesUploader(SourceToADIParser, DatabaseConnectionMaker):
                 f'{self.specifier_number} specifiers.'
             logger.error(message)
             raise ValueError(message)
+
+    def get_connection(self):
+        return self.database_connection_maker.get_connection()
 
     def upload(self):
         if self.check_nothing_to_upload():

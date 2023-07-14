@@ -1,0 +1,683 @@
+[
+    {
+        "phenotype": "CD4+ T cell",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 9.0
+    },
+    {
+        "phenotype": "CD4+ T cell",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 23.5
+    },
+    {
+        "phenotype": "CD4+ T cell",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 18.0
+    },
+    {
+        "phenotype": "CD4+ T cell",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 17.0
+    },
+    {
+        "phenotype": "CD8+ T cell",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 5.0
+    },
+    {
+        "phenotype": "CD8+ T cell",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [
+            "3"
+        ],
+        "average_percent": 26.5
+    },
+    {
+        "phenotype": "CD8+ T cell",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [
+            "2"
+        ],
+        "average_percent": 10.0
+    },
+    {
+        "phenotype": "CD8+ T cell",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 24.0
+    },
+    {
+        "phenotype": "T cell/null phenotype",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.5
+    },
+    {
+        "phenotype": "T cell/null phenotype",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "T cell/null phenotype",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "Tumor",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 34.0
+    },
+    {
+        "phenotype": "Tumor",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "B2M",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 100.0
+    },
+    {
+        "phenotype": "B2M",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 96.5
+    },
+    {
+        "phenotype": "B2M",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 91.5
+    },
+    {
+        "phenotype": "B2M",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 83.0
+    },
+    {
+        "phenotype": "B7H3",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 85.0
+    },
+    {
+        "phenotype": "B7H3",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [
+            "3",
+            "4"
+        ],
+        "average_percent": 5.0
+    },
+    {
+        "phenotype": "B7H3",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [
+            "2"
+        ],
+        "average_percent": 95.0
+    },
+    {
+        "phenotype": "B7H3",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [
+            "2"
+        ],
+        "average_percent": 73.5
+    },
+    {
+        "phenotype": "CD14",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 7.0
+    },
+    {
+        "phenotype": "CD14",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 43.5
+    },
+    {
+        "phenotype": "CD14",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 28.5
+    },
+    {
+        "phenotype": "CD14",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 37.5
+    },
+    {
+        "phenotype": "CD163",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 25.0
+    },
+    {
+        "phenotype": "CD163",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [
+            "3"
+        ],
+        "average_percent": 4.0
+    },
+    {
+        "phenotype": "CD163",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [
+            "2"
+        ],
+        "average_percent": 24.0
+    },
+    {
+        "phenotype": "CD163",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 13.5
+    },
+    {
+        "phenotype": "CD20",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 25.0
+    },
+    {
+        "phenotype": "CD20",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 4.0
+    },
+    {
+        "phenotype": "CD20",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 8.0
+    },
+    {
+        "phenotype": "CD20",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "CD25",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 16.0
+    },
+    {
+        "phenotype": "CD25",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 6.5
+    },
+    {
+        "phenotype": "CD25",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "CD27",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "CD27",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 12.0
+    },
+    {
+        "phenotype": "CD27",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 26.5
+    },
+    {
+        "phenotype": "CD27",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 10.5
+    },
+    {
+        "phenotype": "CD3",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 27.0
+    },
+    {
+        "phenotype": "CD3",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [
+            "3"
+        ],
+        "average_percent": 55.5
+    },
+    {
+        "phenotype": "CD3",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [
+            "2"
+        ],
+        "average_percent": 43.0
+    },
+    {
+        "phenotype": "CD3",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 47.0
+    },
+    {
+        "phenotype": "CD4",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 31.0
+    },
+    {
+        "phenotype": "CD4",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 27.5
+    },
+    {
+        "phenotype": "CD4",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 32.5
+    },
+    {
+        "phenotype": "CD4",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 22.5
+    },
+    {
+        "phenotype": "CD56",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "CD56",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 18.0
+    },
+    {
+        "phenotype": "CD56",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 9.0
+    },
+    {
+        "phenotype": "CD68",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 51.5
+    },
+    {
+        "phenotype": "CD68",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [
+            "4"
+        ],
+        "average_percent": 3.5
+    },
+    {
+        "phenotype": "CD68",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [
+            "3"
+        ],
+        "average_percent": 11.5
+    },
+    {
+        "phenotype": "CD8",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 13.0
+    },
+    {
+        "phenotype": "CD8",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [
+            "3"
+        ],
+        "average_percent": 31.0
+    },
+    {
+        "phenotype": "CD8",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [
+            "2"
+        ],
+        "average_percent": 12.5
+    },
+    {
+        "phenotype": "CD8",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 24.0
+    },
+    {
+        "phenotype": "DAPI",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 100.0
+    },
+    {
+        "phenotype": "DAPI",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 100.0
+    },
+    {
+        "phenotype": "DAPI",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 100.0
+    },
+    {
+        "phenotype": "DAPI",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 100.0
+    },
+    {
+        "phenotype": "FOXP3",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "FOXP3",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "FOXP3",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 13.5
+    },
+    {
+        "phenotype": "FOXP3",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 4.0
+    },
+    {
+        "phenotype": "IDO1",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "IDO1",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 3.0
+    },
+    {
+        "phenotype": "IDO1",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "KI67",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 28.0
+    },
+    {
+        "phenotype": "KI67",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "KI67",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 4.0
+    },
+    {
+        "phenotype": "KI67",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 3.5
+    },
+    {
+        "phenotype": "LAG3",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 3.5
+    },
+    {
+        "phenotype": "LAG3",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.5
+    },
+    {
+        "phenotype": "LAG3",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 8.0
+    },
+    {
+        "phenotype": "MHCI",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 100.0
+    },
+    {
+        "phenotype": "MHCI",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 56.5
+    },
+    {
+        "phenotype": "MHCI",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 87.0
+    },
+    {
+        "phenotype": "MHCI",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 61.0
+    },
+    {
+        "phenotype": "MHCII",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 8.0
+    },
+    {
+        "phenotype": "MHCII",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 37.0
+    },
+    {
+        "phenotype": "MHCII",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 33.5
+    },
+    {
+        "phenotype": "MHCII",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 28.0
+    },
+    {
+        "phenotype": "MRC1",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 56.0
+    },
+    {
+        "phenotype": "MRC1",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 16.0
+    },
+    {
+        "phenotype": "MRC1",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 10.0
+    },
+    {
+        "phenotype": "MRC1",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 21.5
+    },
+    {
+        "phenotype": "PD1",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 4.0
+    },
+    {
+        "phenotype": "PD1",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 8.0
+    },
+    {
+        "phenotype": "PD1",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 10.0
+    },
+    {
+        "phenotype": "PD1",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 8.5
+    },
+    {
+        "phenotype": "PDL1",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 5.0
+    },
+    {
+        "phenotype": "PDL1",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "PDL1",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 19.5
+    },
+    {
+        "phenotype": "S100B",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 28.0
+    },
+    {
+        "phenotype": "S100B",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "S100B",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "S100B",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "SOX10",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 36.0
+    },
+    {
+        "phenotype": "SOX10",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 1.0
+    },
+    {
+        "phenotype": "TGM2",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 4.0
+    },
+    {
+        "phenotype": "TGM2",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 24.0
+    },
+    {
+        "phenotype": "TGM2",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 2.0
+    },
+    {
+        "phenotype": "TGM2",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 18.0
+    },
+    {
+        "phenotype": "TIM3",
+        "sample_cohort": "1",
+        "significantly_different_cohorts": [],
+        "average_percent": 28.0
+    },
+    {
+        "phenotype": "TIM3",
+        "sample_cohort": "2",
+        "significantly_different_cohorts": [],
+        "average_percent": 44.0
+    },
+    {
+        "phenotype": "TIM3",
+        "sample_cohort": "3",
+        "significantly_different_cohorts": [],
+        "average_percent": 78.5
+    },
+    {
+        "phenotype": "TIM3",
+        "sample_cohort": "4",
+        "significantly_different_cohorts": [],
+        "average_percent": 63.5
+    }
+]

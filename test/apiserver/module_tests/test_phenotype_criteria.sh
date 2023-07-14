@@ -13,7 +13,7 @@ fi
 
 curl -s $query | python -m json.tool > criteria.json
 
-diff module_tests/expected_phenotype_criteria.json criteria.json
+diff module_tests/expected_phenotype_criteria_structured.json criteria.json
 status=$?
 [ $status -eq 0 ] || (echo "API query for named phenotype criteria in the scope of a given study has failed."; )
 

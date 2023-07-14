@@ -2,97 +2,66 @@
 A context manager from accessing the backend SPT database, from inside library
 functions.
 """
+import time
 from os.path import exists
 from os.path import abspath
 from os.path import expanduser
-from typing import Optional
-from urllib.error import URLError
-from urllib.request import urlopen
-import re
-import configparser
+from typing import Type
+from typing import Callable
 
 from psycopg2 import connect
 from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg2.extensions import cursor as Psycopg2Cursor
 from psycopg2 import Error as Psycopg2Error
+from psycopg2 import OperationalError
+from attr import define
 
+from spatialprofilingtoolbox.db.credentials import DBCredentials
+from spatialprofilingtoolbox.db.credentials import get_credentials_from_environment
+from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-def retrieve_credentials(database_config_file):
-    parser = configparser.ConfigParser()
-    credentials = {}
-    parser.read(database_config_file)
-    if 'database-credentials' in parser.sections():
-        for key in get_credential_keys():
-            if key in parser['database-credentials']:
-                credentials[key] = parser['database-credentials'][key]
-    if not re.match('^[a-z][a-z0-9_]+[a-z0-9]$', credentials['database']):
-        logger.warning(
-            'The database name "%s" is too complex. Reverting to "postgres".',
-            credentials['database'])
-        credentials['database'] = 'postgres'
-    return credentials
-
-
-def get_credential_keys():
-    return ['endpoint', 'database', 'user', 'password']
-
-
-def check_internet_connectivity():
-    try:
-        test_host = 'https://duckduckgo.com'
-        with urlopen(test_host) as _:
-            return True
-    except URLError:
-        return False
-
-
-def check_credentials_availability(configured_credentials):
-    connectivity = check_internet_connectivity()
-    if not connectivity:
-        logger.info('No internet connection.')
-
-    found = [key in configured_credentials for key in get_credential_keys()]
-    if all(found):
-        credentials = {c: configured_credentials[c]
-                       for c in get_credential_keys()}
-        if (not connectivity) and (credentials['endpoint'] in ['localhost', '127.0.0.1']):
-            message = 'Without network connection, you can only use endpoint=localhost for ' \
-                'backend database.'
-            logger.error(message)
-            raise ConnectionError(message)
-    else:
-        logger.error(
-            'Some database credentials missing: %s',
-            [c for c in get_credential_keys() if not c in configured_credentials]
-        )
-        raise EnvironmentError
-
-
 class DatabaseConnectionMaker:
     """
-    Provides a psycopg2 Postgres database connection. Takes care of connecting
-    and disconnecting.
+    Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
     """
     connection: Psycopg2Connection
+    autocommit: bool
 
-    def __init__(self, database_config_file: Optional[str] = None):
-        self.database_config_file = database_config_file
-        credentials = retrieve_credentials(database_config_file)
-        check_credentials_availability(credentials)
+    def __init__(self, database_config_file: str | None=None, autocommit: bool=True):
+        if database_config_file is not None:
+            credentials = retrieve_credentials_from_file(database_config_file)
+        else:
+            credentials = get_credentials_from_environment()
         try:
-            self.connection = connect(
-                dbname=credentials['database'],
-                host=credentials['endpoint'],
-                user=credentials['user'],
-                password=credentials['password'],
+            self._make_connection(credentials)
+        except Psycopg2Error:
+            message = 'Failed to connect to database: %s %s'
+            logger.warning(message, credentials.endpoint, credentials.database)
+            logger.info('Trying with alternative database name.')
+            credentials = DBCredentials(
+                credentials.endpoint,
+                'postgres',
+                credentials.user,
+                credentials.password,
             )
-        except Psycopg2Error as excepted:
-            logger.error('Failed to connect to database: %s %s',
-                         credentials['endpoint'], credentials['database'])
-            raise excepted
+            try:
+                self._make_connection(credentials)
+            except Psycopg2Error as exception:
+                logger.error(message, credentials.endpoint, credentials.database)
+                raise exception
+        self.autocommit = autocommit
+
+    def _make_connection(self, credentials: DBCredentials):
+        self.connection = connect(
+            dbname=credentials.database,
+            host=credentials.endpoint,
+            user=credentials.user,
+            password=credentials.password,
+        )
 
     def is_connected(self):
         try:
@@ -108,7 +77,31 @@ class DatabaseConnectionMaker:
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if self.connection:
+        if self.is_connected():
+            if self.autocommit:
+                self.connection.commit()
+            self.connection.close()
+
+
+class DBCursor(DatabaseConnectionMaker):
+    """Context manager for shortcutting right to provision of a cursor."""
+    cursor: Psycopg2Cursor
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def get_cursor(self) -> Psycopg2Cursor:
+        return self.cursor
+
+    def __enter__(self):
+        self.cursor = self.get_connection().cursor()
+        return self.get_cursor()
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        if self.is_connected():
+            if self.autocommit:
+                self.connection.commit()
+            self.cursor.close()
             self.connection.close()
 
 
@@ -120,3 +113,64 @@ def get_and_validate_database_config(args):
                 f'Need to supply valid database config filename: {config_file}')
         return config_file
     raise ValueError('Could not parse CLI argument for database config.')
+
+
+def wait_for_database_ready():
+    while True:
+        try:
+            if _check_database_is_ready():
+                break
+        except OperationalError:
+            logger.debug('Database is not ready.')
+            time.sleep(2.0)
+    logger.info('Database is ready.')
+
+
+def _check_database_is_ready() -> bool:
+    with DatabaseConnectionMaker() as dcm:
+        if dcm.is_connected():
+            return True
+    return False
+
+
+@define
+class SimpleReadOnlyProvider:
+    """State-holder for basic read-only one-time database data provider classes."""
+    cursor: Psycopg2Cursor
+
+
+class QueryCursor:
+    """
+    Dispatches calls to a provided handler class (most likely QueryHandler).
+    The provided class' class methods require a cursor as first argument, which this dispatcher
+    class (QueryCursor) newly provides on each invocation.
+    This allows the user of QueryCursor to omit mention of the cursor.
+    """
+    query_handler: Type
+
+    get_study_components: Callable
+    retrieve_study_handles: Callable
+    get_number_cells: Callable
+    get_study_summary: Callable
+    get_cell_fractions_summary: Callable
+    get_phenotype_symbols: Callable
+    get_phenotype_symbols_all_studies: Callable
+    get_composite_phenotype_identifiers: Callable
+    get_phenotype_criteria: Callable
+    get_channel_names_all_studies: Callable
+    retrieve_signature_of_phenotype: Callable
+    get_umaps_low_resolution: Callable
+    get_umap: Callable
+
+    def __init__(self, query_handler: Type):
+        self.query_handler = query_handler
+        methods = [method for method in dir(query_handler) if not method.startswith('__')]
+        for method_name in methods:
+            def dispatched(*args, _method_name=method_name, **kwargs):
+                return self._query(*args, _method_name=_method_name, **kwargs)
+            setattr(self, method_name, dispatched)
+
+    def _query(self, *args, _method_name: str='', **kwargs):
+        method_function = getattr(self.query_handler, _method_name)
+        with DBCursor() as cursor:
+            return method_function(cursor, *args, **kwargs)

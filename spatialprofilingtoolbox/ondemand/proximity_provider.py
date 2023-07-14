@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import BallTree
 
-from spatialprofilingtoolbox.apiserver.app.db_accessor import DBAccessor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_str_to_phenotype
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
@@ -142,7 +142,7 @@ class ProximityProvider:
             str(radius),
             describe_proximity_feature_derivation_method(),
         )
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT
                 fsn.identifier,
@@ -167,15 +167,19 @@ class ProximityProvider:
                 return key
         message = 'Creating feature with specifiers: (%s) %s, %s, %s'
         logger.debug(message, study_name, phenotype1_str, phenotype2_str, radius)
-        create = ProximityProvider.create_feature_specification
-        specification = create(study_name, phenotype1_str, phenotype2_str, radius)
+        specification = ProximityProvider.create_feature_specification(
+            study_name,
+            phenotype1_str,
+            phenotype2_str,
+            radius,
+        )
         return specification
 
     @staticmethod
     def create_feature_specification(study_name, phenotype1, phenotype2, radius):
         specifiers = [phenotype1, phenotype2, str(radius)]
         method = describe_proximity_feature_derivation_method()
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             Uploader = ADIFeatureSpecificationUploader
             feature_specification = Uploader.add_new_feature(specifiers, method, study_name, cursor)
         return feature_specification
@@ -200,7 +204,7 @@ class ProximityProvider:
 
     @staticmethod
     def get_expected_domain_for_computed_values(feature_specification):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp
             JOIN study_component sc1 ON sc1.component_study=sdmp.study
@@ -214,7 +218,7 @@ class ProximityProvider:
 
     @staticmethod
     def get_actual_number_of_computed_values(feature_specification):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT COUNT(*) FROM quantitative_feature_value qfv
             WHERE qfv.feature=%s
@@ -226,7 +230,7 @@ class ProximityProvider:
 
     @staticmethod
     def is_already_pending(feature_specification):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT * FROM pending_feature_computation pfc
             WHERE pfc.feature_specification=%s
@@ -238,7 +242,7 @@ class ProximityProvider:
 
     @staticmethod
     def retrieve_specifiers(feature_specification):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT fs.specifier, fs.ordinality
             FROM feature_specifier fs
@@ -272,7 +276,7 @@ class ProximityProvider:
     @staticmethod
     def set_pending_computation(feature_specification):
         time_str = datetime.now().ctime()
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             INSERT INTO pending_feature_computation (feature_specification, time_initiated)
             VALUES (%s, %s) ;
@@ -280,7 +284,7 @@ class ProximityProvider:
 
     @staticmethod
     def drop_pending_computation(feature_specification):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             DELETE FROM pending_feature_computation pfc
             WHERE pfc.feature_specification=%s ;
@@ -300,7 +304,7 @@ class ProximityProvider:
             )
             message = 'Computed one feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)
-            with DBAccessor() as (_, _, cursor):
+            with DBCursor() as cursor:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
         ProximityProvider.drop_pending_computation(feature_specification)
         message = 'Wrapped up proximity metric calculation, feature "%s".'
@@ -309,7 +313,7 @@ class ProximityProvider:
 
     @staticmethod
     def query_for_computed_feature_values(feature_specification, still_pending=False):
-        with DBAccessor() as (_, _, cursor):
+        with DBCursor() as cursor:
             cursor.execute('''
             SELECT qfv.subject, qfv.value
             FROM quantitative_feature_value qfv

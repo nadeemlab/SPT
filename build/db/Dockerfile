@@ -5,8 +5,10 @@ RUN apt update && apt install -y python3 python3-pip libpq-dev && rm -rf /var/li
 RUN python3 -m pip install psycopg2==2.9.6
 RUN python3 -m pip install adiscstudies==0.11.0
 RUN python3 -m pip install numba==0.57.0
-RUN python3 -m pip install "pandas==2.0.2"
+RUN python3 -m pip install attrs==23.1.0
+RUN python3 -m pip install pandas==2.0.2
 RUN python3 -m pip install pyshp==2.2.0
+RUN python3 -m pip install pydantic==2.0.2
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

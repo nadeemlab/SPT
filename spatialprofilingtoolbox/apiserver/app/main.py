@@ -20,14 +20,15 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
     ProximityMetricsComputationResult
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
-from spatialprofilingtoolbox.apiserver.app.validation import ValidChannel
-from spatialprofilingtoolbox.apiserver.app.validation import ValidStudy
-from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotypeSymbol
-from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotype1
-from spatialprofilingtoolbox.apiserver.app.validation import ValidPhenotype2
-from spatialprofilingtoolbox.apiserver.app.validation import ValidChannelListPositives
-from spatialprofilingtoolbox.apiserver.app.validation import ValidChannelListNegatives
-
+from spatialprofilingtoolbox.apiserver.app.validation import (
+    ValidChannel,
+    ValidStudy,
+    ValidPhenotypeSymbol,
+    ValidPhenotype1,
+    ValidPhenotype2,
+    ValidChannelListPositives,
+    ValidChannelListNegatives,
+)
 VERSION = '0.9.0'
 
 TITLE = 'Single cell studies data API'

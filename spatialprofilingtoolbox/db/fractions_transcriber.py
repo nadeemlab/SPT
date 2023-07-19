@@ -3,8 +3,8 @@
 import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.db.create_data_analysis_study import (insert_new_data_analysis_study,
-                                                                   data_analysis_study_exists)
+from spatialprofilingtoolbox.db.create_data_analysis_study import (
+    insert_new_data_analysis_study, data_analysis_study_exists)
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
     perform_tests

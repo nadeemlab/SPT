@@ -21,9 +21,9 @@ def parse_arguments():
         required=True
     )
     parser.add_argument(
-        '--target_var',
+        '--cohort_stratifier',
         type=str,
-        help='Name of the variable the GNN was trained on to produce importance_score.',
+        help='Name of the classification cohort variable the GNN was trained on to produce importance_score.',
         required=True
     )
     parser.add_argument(
@@ -33,9 +33,10 @@ def parse_arguments():
         required=True
     )
     parser.add_argument(
-        '--n',
+        '--per_specimen_selection_number',
         type=str,
-        help='Grab this many of the most important cells from each slide.',
+        help='Grab this many of the most important cells from each specimen (or fewer if there '
+             'aren\'t enough cells in the specimen).',
         required=False,
         default=1000
     )
@@ -43,7 +44,9 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    transcribe_importance(read_csv(args.filename, index_col=0),
-                          args.target_var,
-                          DatabaseConnectionMaker(args.database_config_file),
-                          args.n)
+    transcribe_importance(
+        read_csv(args.filename, index_col=0),
+        args.cohort_stratifier,
+        DatabaseConnectionMaker(args.database_config_file),
+        args.per_specimen_selection_number
+    )

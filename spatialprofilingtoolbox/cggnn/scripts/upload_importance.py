@@ -23,7 +23,8 @@ def parse_arguments():
     parser.add_argument(
         '--cohort_stratifier',
         type=str,
-        help='Name of the classification cohort variable the GNN was trained on to produce importance_score.',
+        help='Name of the classification cohort variable the GNN was trained on to produce '
+             'importance_score.',
         required=True
     )
     parser.add_argument(

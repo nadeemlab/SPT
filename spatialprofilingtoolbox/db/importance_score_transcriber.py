@@ -1,25 +1,54 @@
-"""Ingest important scores and upload them to the local db."""
+"""Ingest important scores and upload them to the local database."""
+from typing import cast
 
-from pandas import DataFrame, read_sql
-
+from pandas import DataFrame
+from pandas import read_sql
 from psycopg2.extensions import connection as Connection
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.db.create_data_analysis_study import (
-    insert_new_data_analysis_study, data_analysis_study_exists)
+from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
-from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
-    perform_tests
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
+def transcribe_importance(
+    df: DataFrame,
+    cohort_stratifier: str,
+    connection: Connection,
+    per_specimen_selection_number: int = 1000
+) -> None:
+    r"""Upload importance score output from a cg-gnn instance to the local db.
+
+    Parameters:
+        df: DataFrame
+            One column, `importance_score`, indexed by `histological_structure`.
+        cohort_stratifier: str
+            Name of the classification cohort variable the GNN was trained on to produce
+                the importance score.
+        connection: psycopg2.connection
+        per_specimen_selection_number: int
+            Grab this many of the most important cells from each specimen (or fewer if there
+            aren\'t enough cells in the specimen).
+    """
+    study = _get_referenced_study(connection, df)
+    indicator: str = f'cell importance ({cohort_stratifier})'
+    data_analysis_study = DataAnalysisStudyFactory(connection, study, indicator).create()
+    _add_slide_column(connection, df)
+    df_most_important = _group_and_filter(df, per_specimen_selection_number)
+    _upload(df_most_important, connection, data_analysis_study)
+
+
+def _get_referenced_study(connection, df: DataFrame) -> str:
+    first_index = df.iloc[0, 0]
+    return _recover_study_from_histological_structure(connection, first_index)
+
+
 def _recover_study_from_histological_structure(
-        connection: Connection,
-        histological_structure: int) -> str:
-    """Recover the study name from the database given a histological_structure."""
-    return read_sql(f"""
+    connection: Connection,
+    histological_structure,
+) -> str:
+    value = read_sql(f"""
         SELECT
             hsi.histological_structure,
             sdmp.study
@@ -32,39 +61,10 @@ def _recover_study_from_histological_structure(
         LIMIT 1
         ;
     """, connection)['study'][0]
+    return cast(str, value)
 
 
-def transcribe_importance(
-    df: DataFrame,
-        cohort_stratifier: str,
-        database_connection_maker: DatabaseConnectionMaker,
-        per_specimen_selection_number: int = 1000
-) -> None:
-    r"""Upload importance score output from a cg-gnn instance to the local db.
-
-    Parameters:
-        df: DataFrame
-            One column, `importance_score`, indexed by `histological_structure`.
-        cohort_stratifier: str
-            Name of the classification cohort variable the GNN was trained on to produce
-                the importance score.
-        database_connection_maker: DatabaseConnectionMaker
-        per_specimen_selection_number: int
-            Grab this many of the most important cells from each specimen (or fewer if there
-            aren\'t enough cells in the specimen).
-    """
-    # Recover the study from the histological_structure
-    connection = database_connection_maker.get_connection()
-    study: str = _recover_study_from_histological_structure(
-        connection, df.iloc[0, 0])
-
-    study_indicator: str = f'cell importance ({cohort_stratifier})'
-    if data_analysis_study_exists(database_connection_maker, study, study_indicator):
-        logger.warning('GNN study already exists for %s.', study)
-        return
-    connection = database_connection_maker.get_connection()
-
-    # Get the slide for each histological_structure from the study
+def _add_slide_column(connection: Connection, df: DataFrame) -> None:
     df['specimen'] = read_sql("""
         SELECT
             hsi.histological_structure,
@@ -77,28 +77,29 @@ def transcribe_importance(
         ;
     """, connection).set_index('histological_structure').loc[df.index, 'specimen']
 
-    # Group by specimen and get the top n_most_important cells
+
+def _group_and_filter(df: DataFrame, filter_number) -> DataFrame:
     df_most_important = df.groupby('specimen').head(
-        per_specimen_selection_number).reset_index(drop=False)
+        filter_number).reset_index(drop=False)
     df_most_important.rename(
         {'index': 'importance_order'}, axis=1, inplace=True)
+    return df_most_important
 
-    # Upload to db
-    das = insert_new_data_analysis_study(
-        database_connection_maker, study, study_indicator)
+
+def _upload(df: DataFrame, connection: Connection, data_analysis_study: str) -> None:
     with ADIFeaturesUploader(
-        database_connection_maker,
-        data_analysis_study=das,
-        derivation_and_number_specifiers=(
-            'For a given cohort stratification variable (the specifier), the integer rank of each '
-            'cell (the subjects of the feature) with respect to the importance scores derived '
-            'from a GNN trained on this variable.',
-            1
-        ),
+        None,
+        data_analysis_study=data_analysis_study,
+        derivation_and_number_specifiers=(describe_derivation_method(), 1),
         impute_zeros=True,
+        connection=connection,
     ) as feature_uploader:
-        for histological_structure, row in df_most_important.iterrows():
+        for histological_structure, row in df.iterrows():
             feature_uploader.stage_feature_value(
-                (histological_structure,), das, row['importance_order'])
+                (histological_structure,), data_analysis_study, row['importance_order'])
 
-        perform_tests(das, connection)
+
+def describe_derivation_method() -> str:
+    return 'For a given cohort stratification variable (the specifier), the integer rank of each '\
+           'cell (the subjects of the feature) with respect to the importance scores derived '\
+           'from a GNN trained on this variable.'

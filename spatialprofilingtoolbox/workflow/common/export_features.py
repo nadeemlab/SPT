@@ -3,15 +3,18 @@ Convenience uploader of feature data into SPT database tables that comprise
 a sparse representation of the features. Abstracts (wraps) the actual SQL
 queries.
 """
+from typing import cast
 from importlib.resources import as_file
 from importlib.resources import files
 from itertools import product
 import re
 
 import pandas as pd
+from psycopg2.extensions import connection as Psycopg2Connection
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -23,15 +26,16 @@ class ADIFeaturesUploader(SourceToADIParser):
     quantitative_feature_value, feature_specification, feature_specifier.
     """
     feature_value_identifier: int
-    database_connection_maker: DatabaseConnectionMaker
+    connection_provider: ConnectionProvider
 
     def __init__(self,
-            database_connection_maker: DatabaseConnectionMaker,
-            data_analysis_study,
-            derivation_and_number_specifiers,
-            impute_zeros=False,
-            **kwargs
-        ):
+        database_connection_maker: DatabaseConnectionMaker | None,
+        data_analysis_study,
+        derivation_and_number_specifiers,
+        impute_zeros=False,
+        connection: Psycopg2Connection | None=None,
+        **kwargs
+    ):
         derivation_method, specifier_number = derivation_and_number_specifiers
         self.feature_values = None
         self.impute_zeros=impute_zeros
@@ -40,13 +44,16 @@ class ADIFeaturesUploader(SourceToADIParser):
         SourceToADIParser.__init__(self, fields)
         args = (data_analysis_study, derivation_method, specifier_number)
         self.record_feature_specification_template(*args)
-        self.database_connection_maker = database_connection_maker
+        if connection is not None:
+            self.connection_provider = ConnectionProvider(connection)
+        else:
+            self.connection_provider = cast(ConnectionProvider, database_connection_maker)
 
     def record_feature_specification_template(self,
-            data_analysis_study,
-            derivation_method,
-            specifier_number
-        ):
+        data_analysis_study,
+        derivation_method,
+        specifier_number
+    ):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
         self.specifier_number = specifier_number
@@ -61,7 +68,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if self.database_connection_maker.is_connected():
+        if self.connection_provider.is_connected():
             self.upload()
 
     def stage_feature_value(self, specifiers, subject, value):
@@ -77,7 +84,7 @@ class ADIFeaturesUploader(SourceToADIParser):
             raise ValueError(message)
 
     def get_connection(self):
-        return self.database_connection_maker.get_connection()
+        return self.connection_provider.get_connection()
 
     def upload(self):
         if self.check_nothing_to_upload():

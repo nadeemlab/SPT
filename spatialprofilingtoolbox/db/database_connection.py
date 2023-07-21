@@ -24,7 +24,24 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class DatabaseConnectionMaker:
+class ConnectionProvider:
+    """Simple wrapper of a database connection."""
+    connection: Psycopg2Connection
+    def __init__(self, connection: Psycopg2Connection):
+        self.connection = connection
+
+    def get_connection(self):
+        return self.connection
+
+    def is_connected(self):
+        try:
+            connection = self.connection
+            return connection is not None
+        except AttributeError:
+            return False
+
+
+class DatabaseConnectionMaker(ConnectionProvider):
     """
     Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
     """
@@ -37,7 +54,7 @@ class DatabaseConnectionMaker:
         else:
             credentials = get_credentials_from_environment()
         try:
-            self._make_connection(credentials)
+            super().__init__(self._make_connection(credentials))
         except Psycopg2Error:
             message = 'Failed to connect to database: %s %s'
             logger.warning(message, credentials.endpoint, credentials.database)
@@ -49,29 +66,19 @@ class DatabaseConnectionMaker:
                 credentials.password,
             )
             try:
-                self._make_connection(credentials)
+                super().__init__(self._make_connection(credentials))
             except Psycopg2Error as exception:
                 logger.error(message, credentials.endpoint, credentials.database)
                 raise exception
         self.autocommit = autocommit
 
-    def _make_connection(self, credentials: DBCredentials):
-        self.connection = connect(
+    def _make_connection(self, credentials: DBCredentials) -> Psycopg2Connection:
+        return connect(
             dbname=credentials.database,
             host=credentials.endpoint,
             user=credentials.user,
             password=credentials.password,
         )
-
-    def is_connected(self):
-        try:
-            connection = self.connection
-            return connection is not None
-        except AttributeError:
-            return False
-
-    def get_connection(self):
-        return self.connection
 
     def __enter__(self):
         return self

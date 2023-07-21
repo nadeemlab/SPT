@@ -54,7 +54,7 @@ class DatabaseConnectionMaker(ConnectionProvider):
         else:
             credentials = get_credentials_from_environment()
         try:
-            super().__init__(self._make_connection(credentials))
+            super().__init__(self.make_connection(credentials))
         except Psycopg2Error:
             message = 'Failed to connect to database: %s %s'
             logger.warning(message, credentials.endpoint, credentials.database)
@@ -66,13 +66,14 @@ class DatabaseConnectionMaker(ConnectionProvider):
                 credentials.password,
             )
             try:
-                super().__init__(self._make_connection(credentials))
+                super().__init__(self.make_connection(credentials))
             except Psycopg2Error as exception:
                 logger.error(message, credentials.endpoint, credentials.database)
                 raise exception
         self.autocommit = autocommit
 
-    def _make_connection(self, credentials: DBCredentials) -> Psycopg2Connection:
+    @staticmethod
+    def make_connection(credentials: DBCredentials) -> Psycopg2Connection:
         return connect(
             dbname=credentials.database,
             host=credentials.endpoint,

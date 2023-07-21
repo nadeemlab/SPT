@@ -1,6 +1,4 @@
 """Test that transcription of importance scores from GNN output into the database succeeds."""
-import re
-
 from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker

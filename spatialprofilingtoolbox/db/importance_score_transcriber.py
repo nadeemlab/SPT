@@ -96,7 +96,10 @@ def _upload(df: DataFrame, connection: Connection, data_analysis_study: str) -> 
     ) as feature_uploader:
         for histological_structure, row in df.iterrows():
             feature_uploader.stage_feature_value(
-                (histological_structure,), data_analysis_study, row['importance_order'])
+                (histological_structure,),
+                data_analysis_study,
+                row['importance_order'],
+            )
 
 
 def describe_derivation_method() -> str:

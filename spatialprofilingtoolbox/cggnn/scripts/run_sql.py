@@ -1,7 +1,5 @@
 "Run through the entire SPT CG-GNN pipeline, starting from a SPT SQL database."
-
 from argparse import ArgumentParser
-
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from cggnn.run_all import run_pipeline

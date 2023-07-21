@@ -32,15 +32,15 @@ def transcribe_importance(
             aren\'t enough cells in the specimen).
     """
     study = _get_referenced_study(connection, df)
-    indicator: str = f'cell importance ({cohort_stratifier})'
+    indicator: str = 'cell importance'
     data_analysis_study = DataAnalysisStudyFactory(connection, study, indicator).create()
     _add_slide_column(connection, df)
     df_most_important = _group_and_filter(df, per_specimen_selection_number)
-    _upload(df_most_important, connection, data_analysis_study)
+    _upload(df_most_important, connection, data_analysis_study, cohort_stratifier)
 
 
 def _get_referenced_study(connection, df: DataFrame) -> str:
-    first_index = df.iloc[0, 0]
+    first_index = str(df.index[0])
     return _recover_study_from_histological_structure(connection, first_index)
 
 
@@ -57,7 +57,7 @@ def _recover_study_from_histological_structure(
                 ON hsi.data_source=df.sha256_hash
             JOIN specimen_data_measurement_process sdmp
                 ON df.source_generation_process=sdmp.identifier
-        WHERE hsi.histological_structure={histological_structure}
+        WHERE hsi.histological_structure='{histological_structure}'
         LIMIT 1
         ;
     """, connection)['study'][0]
@@ -65,7 +65,7 @@ def _recover_study_from_histological_structure(
 
 
 def _add_slide_column(connection: Connection, df: DataFrame) -> None:
-    df['specimen'] = read_sql("""
+    lookup = read_sql("""
         SELECT
             hsi.histological_structure,
             sdmp.specimen
@@ -75,18 +75,25 @@ def _add_slide_column(connection: Connection, df: DataFrame) -> None:
             JOIN specimen_data_measurement_process sdmp
                 ON df.source_generation_process=sdmp.identifier
         ;
-    """, connection).set_index('histological_structure').loc[df.index, 'specimen']
+    """, connection)
+    reindexed = lookup.set_index('histological_structure')
+    df['specimen'] = reindexed.loc[df.index, 'specimen']
 
 
 def _group_and_filter(df: DataFrame, filter_number) -> DataFrame:
-    df_most_important = df.groupby('specimen').head(
-        filter_number).reset_index(drop=False)
-    df_most_important.rename(
-        {'index': 'importance_order'}, axis=1, inplace=True)
+    ordered = df.sort_values(by='importance_score')
+    df_most_important = ordered.groupby('specimen').head(filter_number)
+    df_most_important = df_most_important.reset_index(drop=False)
+    df_most_important['importance_order'] = df_most_important.index
     return df_most_important
 
 
-def _upload(df: DataFrame, connection: Connection, data_analysis_study: str) -> None:
+def _upload(
+    df: DataFrame,
+    connection: Connection,
+    data_analysis_study: str,
+    cohort_stratifier: str,
+) -> None:
     with ADIFeaturesUploader(
         None,
         data_analysis_study=data_analysis_study,
@@ -94,10 +101,10 @@ def _upload(df: DataFrame, connection: Connection, data_analysis_study: str) -> 
         impute_zeros=True,
         connection=connection,
     ) as feature_uploader:
-        for histological_structure, row in df.iterrows():
+        for _, row in df.iterrows():
             feature_uploader.stage_feature_value(
-                (histological_structure,),
-                data_analysis_study,
+                (cohort_stratifier,),
+                row['histological_structure'],
                 row['importance_order'],
             )
 

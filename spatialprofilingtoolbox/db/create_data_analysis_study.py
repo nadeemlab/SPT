@@ -1,10 +1,10 @@
 """Functions to create, insert, and check for a data analysis study in the database."""
 import re
 import datetime
+from typing import cast
 
 from psycopg2.extensions import connection as Psycopg2Connection
 
-# from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -23,7 +23,7 @@ class DataAnalysisStudyFactory:
         self.specifier = specifier
         self._retrieve_existing_study()
         if self._already_exists():
-            raise ValueError(f'Data analysis study "{self.name}" already exists.')
+            logger.warning('Data analysis study "%s" already exists.', self.name)
 
     def _retrieve_existing_study(self) -> None:
         cursor = self.connection.cursor()
@@ -46,6 +46,8 @@ class DataAnalysisStudyFactory:
         return self.name is not None
 
     def create(self) -> str:
+        if self._already_exists():
+            return cast(str, self.name)
         timestring = str(datetime.datetime.now())
         name = f'{self.study} : {self.specifier} : {timestring}'
         cursor = self.connection.cursor()

@@ -26,7 +26,7 @@ def transcribe_importance(
         cohort_stratifier: str
             Name of the classification cohort variable the GNN was trained on to produce
                 the importance score.
-        connection: psycopg2.connection
+        connection: psycopg2.extensions.connection
         per_specimen_selection_number: int
             Grab this many of the most important cells from each specimen (or fewer if there
             aren\'t enough cells in the specimen).

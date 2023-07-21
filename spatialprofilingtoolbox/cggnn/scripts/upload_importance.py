@@ -11,7 +11,7 @@ from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_i
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn upload_importance',
+        prog='spt cggnn upload-importance',
         description='Upload importance score output from a cg-gnn model to db.'
     )
     parser.add_argument(
@@ -36,18 +36,20 @@ def parse_arguments():
     parser.add_argument(
         '--per_specimen_selection_number',
         type=str,
-        help='Grab this many of the most important cells from each specimen (or fewer if there '
-             'aren\'t enough cells in the specimen).',
+        help='The number of most important cells from each specimen that will be selected (or '
+             'fewer if there aren\'t enough cells in the specimen).',
         required=False,
         default=1000
     )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_arguments()
-    transcribe_importance(
-        read_csv(args.filename, index_col=0),
-        args.cohort_stratifier,
-        DatabaseConnectionMaker(args.database_config_file),
-        args.per_specimen_selection_number
-    )
+    with DatabaseConnectionMaker(args.database_config_file) as dcm:
+        transcribe_importance(
+            read_csv(args.filename, index_col=0),
+            args.cohort_stratifier,
+            dcm.get_connection(),
+            args.per_specimen_selection_number,
+        )

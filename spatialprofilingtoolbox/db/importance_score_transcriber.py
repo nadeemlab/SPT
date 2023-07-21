@@ -14,9 +14,9 @@ logger = colorized_logger(__name__)
 
 def transcribe_importance(
     df: DataFrame,
-    cohort_stratifier: str,
     connection: Connection,
-    per_specimen_selection_number: int = 1000
+    per_specimen_selection_number: int = 1000,
+    cohort_stratifier: str='default sample stratification',
 ) -> None:
     r"""Upload importance score output from a cg-gnn instance to the local db.
 

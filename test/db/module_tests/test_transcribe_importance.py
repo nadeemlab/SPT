@@ -64,7 +64,7 @@ def test_transcribe_importances():
     df = df.set_index('histological_structure')
     with DatabaseConnectionMaker(database_config_file='../db/.spt_db.config.container') as dcm:
         connection = dcm.get_connection()
-        transcribe_importance(df, 'dummy training variable name', connection)
+        transcribe_importance(df, connection)
         feature_values = retrieve_feature_values(connection)
     check_records(feature_values)
 

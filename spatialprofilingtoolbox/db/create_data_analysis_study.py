@@ -3,7 +3,7 @@ import re
 import datetime
 from typing import cast
 
-from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg2.extensions import connection as Connection
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -12,7 +12,7 @@ logger = colorized_logger(__name__)
 
 class DataAnalysisStudyFactory:
     """Creates and retrieves custom data analysis studies in the database."""
-    connection: Psycopg2Connection
+    connection: Connection
     study: str
     specifier: str
     name: str | None

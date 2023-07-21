@@ -10,7 +10,7 @@ from typing import Type
 from typing import Callable
 
 from psycopg2 import connect
-from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg2.extensions import connection as Connection
 from psycopg2.extensions import cursor as Psycopg2Cursor
 from psycopg2 import Error as Psycopg2Error
 from psycopg2 import OperationalError
@@ -26,8 +26,8 @@ logger = colorized_logger(__name__)
 
 class ConnectionProvider:
     """Simple wrapper of a database connection."""
-    connection: Psycopg2Connection
-    def __init__(self, connection: Psycopg2Connection):
+    connection: Connection
+    def __init__(self, connection: Connection):
         self.connection = connection
 
     def get_connection(self):
@@ -45,7 +45,7 @@ class DatabaseConnectionMaker(ConnectionProvider):
     """
     Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
     """
-    connection: Psycopg2Connection
+    connection: Connection
     autocommit: bool
 
     def __init__(self, database_config_file: str | None=None, autocommit: bool=True):
@@ -73,7 +73,7 @@ class DatabaseConnectionMaker(ConnectionProvider):
         self.autocommit = autocommit
 
     @staticmethod
-    def make_connection(credentials: DBCredentials) -> Psycopg2Connection:
+    def make_connection(credentials: DBCredentials) -> Connection:
         return connect(
             dbname=credentials.database,
             host=credentials.endpoint,

@@ -10,7 +10,7 @@ from itertools import product
 import re
 
 import pandas as pd
-from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg2.extensions import connection as Connection
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -33,7 +33,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         data_analysis_study,
         derivation_and_number_specifiers,
         impute_zeros=False,
-        connection: Psycopg2Connection | None=None,
+        connection: Connection | None=None,
         **kwargs
     ):
         derivation_method, specifier_number = derivation_and_number_specifiers

@@ -1,13 +1,5 @@
 "Run through the entire SPT CG-GNN pipeline, starting from a SPT SQL database."
 from argparse import ArgumentParser
-from os.path import join
-
-from pandas import DataFrame
-from pandas import read_csv
-
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.db.database_connection import DBCredentials
-from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from cggnn.run_all import run_pipeline
@@ -134,20 +126,6 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def retrieve_importances() -> DataFrame:
-    filename = join('out', 'importances.csv')
-    return read_csv(filename, index_col=0)
-
-
-def save_importances(_args):
-    df = retrieve_importances()
-    cohort_stratifier = _args.target_column # Is this right?
-    credentials = DBCredentials(_args.dbname, _args.host, _args.user, _args.password)
-    connection = DatabaseConnectionMaker.make_connection(credentials)
-    transcribe_importance(df, cohort_stratifier, connection)
-    connection.close()
-
-
 if __name__ == "__main__":
     args = parse_arguments()
     run_pipeline(args.study,
@@ -166,4 +144,3 @@ if __name__ == "__main__":
                  args.explainer,
                  args.merge_rois,
                  args.prune_misclassified)
-    save_importances(args)

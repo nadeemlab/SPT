@@ -1,11 +1,16 @@
 "Run through the entire SPT CG-GNN pipeline using a local db config."
-
 from argparse import ArgumentParser
 from typing import Dict, Tuple
+from os.path import join
 
-from pandas import DataFrame, concat, merge
+from pandas import DataFrame
+from pandas import read_csv
+from pandas import concat, merge
 from numpy import sort
 
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBCredentials
+from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
@@ -144,6 +149,19 @@ def _create_label_df(df_assignments: DataFrame,
     return df.replace({res: i for i, res in label_to_result.items()}), label_to_result
 
 
+def retrieve_importances() -> DataFrame:
+    filename = join('out', 'importances.csv')
+    return read_csv(filename, index_col=0)
+
+
+def save_importances(_args):
+    df = retrieve_importances()
+    credentials = DBCredentials(_args.dbname, _args.host, _args.user, _args.password)
+    connection = DatabaseConnectionMaker.make_connection(credentials)
+    transcribe_importance(df, connection)
+    connection.close()
+
+
 if __name__ == "__main__":
     args = parse_arguments()
     study_data: Dict[str, Dict] = FeatureMatrixExtractor.extract(
@@ -171,3 +189,5 @@ if __name__ == "__main__":
                  args.explainer,
                  args.merge_rois,
                  args.prune_misclassified)
+
+    save_importances(args)

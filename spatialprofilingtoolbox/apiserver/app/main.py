@@ -98,7 +98,7 @@ async def get_study_summary(
     return query().get_study_summary(study)
 
 
-@app.get("/channels")
+@app.get("/channels/")
 async def get_channels(
     study: ValidStudy,
 ) -> list[Channel]:

@@ -8,6 +8,9 @@ from spatialprofilingtoolbox.db.fractions_transcriber import \
     describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+logger = colorized_logger(__name__)
+
 
 class FractionsAccess(SimpleReadOnlyProvider):
     """Access to cell fractions features from database."""

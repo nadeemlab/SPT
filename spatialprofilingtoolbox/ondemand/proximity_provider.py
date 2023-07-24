@@ -83,10 +83,19 @@ class ProximityProvider:
                 for item in self.studies[study_name]['expressions files']
             }
             shapes = [df.shape for df in self.data_arrays[study_name].values()]
-            logger.debug('Loaded dataframes of sizes %s', shapes)
+            logger.debug('Loaded dataframes of sizes %s', self.abbreviate_list(list(shapes)))
             number_specimens = len(self.data_arrays[study_name])
             specimens = self.data_arrays[study_name].keys()
-            logger.debug('%s specimens loaded (%s).', number_specimens, specimens)
+            logger.debug(
+                '%s specimens loaded (%s).',
+                number_specimens,
+                self.abbreviate_list(list(specimens)),
+            )
+
+    def abbreviate_list(self, items: list):
+        if len(items) > 5:
+            return items[0:5] + [f'... ({len(items)} total items)']
+        return items
 
     def create_ball_trees(self, centroids):
         self.trees = {

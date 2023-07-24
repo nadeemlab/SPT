@@ -94,7 +94,7 @@ class ProximityProvider:
 
     def abbreviate_list(self, items: list):
         if len(items) > 5:
-            return items + [f'... ({len(items)} total items)']
+            return items[0:5] + [f'... ({len(items)} total items)']
         return items
 
     def create_ball_trees(self, centroids):

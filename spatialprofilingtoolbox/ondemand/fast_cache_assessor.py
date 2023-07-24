@@ -212,5 +212,5 @@ def log_expected_found(set1, set2, message1, message2, context: str=''):
 
 def abbreviate_list(items: list[str]):
     if len(items) > 5:
-        return items + [f'... ({len(items)} total items)']
+        return items[0:5] + [f'... ({len(items)} total items)']
     return items

@@ -27,6 +27,7 @@ class FractionsAccess(SimpleReadOnlyProvider):
             (components.measurement, components.analysis),
         )
         rows = self.cursor.fetchall()
+        rows = _replace_stratum_identifiers(rows, study, column_index=2)
         return [
             CellFractionsAverage(**dict(zip(
                 ['marker_symbol', 'multiplicity', 'stratum_identifier', 'average_percent'],

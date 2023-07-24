@@ -204,8 +204,13 @@ def log_expected_found(set1, set2, message1, message2, context: str=''):
     message = 'Elements found as expected: "%s".'
     if context != '':
         message = message + f' ({context}).'
-    logger.info(message, matches)
+    logger.info(message, abbreviate_list(list(matches)))
     for element in set(set1).difference(set(set2)):
         logger.error(message1, element)
     for element in set(set2).difference(set(set1)):
         logger.warning(message2, element)
+
+def abbreviate_list(items: list[str]):
+    if len(items) > 5:
+        return items + [f'... ({len(items)} total items)']
+    return items

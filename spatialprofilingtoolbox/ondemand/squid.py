@@ -9,7 +9,7 @@ from squidpy.gr import spatial_neighbors, nhood_enrichment, co_occurrence, riple
 from anndata import AnnData
 
 
-def prepare_data(df: DataFrame, phenotypes_to_cluster_on: Optional[list[str]]) -> AnnData:
+def prepare_data(df: DataFrame, phenotypes_to_cluster_on: Optional[list[str]] = None) -> AnnData:
     """Convert SPT DataFrame to AnnData object.
 
     Parameters:
@@ -28,11 +28,9 @@ def prepare_data(df: DataFrame, phenotypes_to_cluster_on: Optional[list[str]]) -
                 Histological structures that do not have any of the phenotypes will be assigned to
                 cluster 0. 
     """
-    if len(phenotypes_to_cluster_on) == 0:
-        phenotypes_to_cluster_on = None
     locations: ndarray = df[['x', 'y']].to_numpy()
-    phenotype_expression: DataFrame = df.delete(['x', 'y'], axis=1)
-    if phenotypes_to_cluster_on is not None:
+    phenotype_expression: DataFrame = df.drop(['x', 'y'], axis=1)
+    if (phenotypes_to_cluster_on is not None) and (len(phenotypes_to_cluster_on) > 0):
         clustering = phenotype_expression[phenotypes_to_cluster_on[0]].astype(
             int)
         i_cluster = 2
@@ -40,7 +38,7 @@ def prepare_data(df: DataFrame, phenotypes_to_cluster_on: Optional[list[str]]) -
             clustering[phenotype_expression[phenotype]
                        & (clustering == 0)] = i_cluster
             i_cluster += 1
-        phenotype_expression['cluster'] = clustering
+        phenotype_expression['cluster'] = clustering.astype('category')
     # TODO: Consider allowing for multiple clustering arrangements?
     data = AnnData(obs=phenotype_expression, obsm={'spatial': locations})
     spatial_neighbors(data)

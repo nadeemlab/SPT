@@ -80,7 +80,7 @@ async def get_root():
     )
 
 
-@app.get("/study-names")
+@app.get("/study-names/")
 async def get_study_names() -> list[StudyHandle]:
     """
     The names of studies/datasets, with display names.
@@ -88,7 +88,7 @@ async def get_study_names() -> list[StudyHandle]:
     return query().retrieve_study_handles()
 
 
-@app.get("/study-summary")
+@app.get("/study-summary/")
 async def get_study_summary(
     study: ValidStudy,
 ) -> StudySummary:

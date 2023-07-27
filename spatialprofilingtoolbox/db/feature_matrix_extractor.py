@@ -2,7 +2,6 @@
 Convenience provision of a feature matrix for each study, the data retrieved from the SPT database.
 """
 import sys
-from typing import cast
 
 import pandas as pd
 from psycopg2.extensions import cursor as Psycopg2Cursor
@@ -22,7 +21,7 @@ class FeatureMatrixExtractor:
     Pull from the database and create convenience bundle of feature matrices and metadata.
     """
 
-    cursor: Psycopg2Cursor
+    cursor: Psycopg2Cursor | None
     database_config_file: str | None
 
     def __init__(self,
@@ -36,7 +35,7 @@ class FeatureMatrixExtractor:
             message = 'A cursor and database configuration file were both specified. Using the '\
                 'cursor.'
             logger.warning(message)
-        self.cursor = cast(Psycopg2Cursor, cursor)
+        self.cursor = cursor
         self.database_config_file = database_config_file
 
     def extract(self,
@@ -44,14 +43,16 @@ class FeatureMatrixExtractor:
         study: str | None=None,
         continuous_also: bool=False,
     ):
+        extraction = None
         if self.cursor is not None:
-            return self._extract(specimen=specimen, study=study, continuous_also=continuous_also)
+            extraction = self._extract(specimen=specimen, study=study, continuous_also=continuous_also)
         if self.database_config_file is not None:
             with DatabaseConnectionMaker(self.database_config_file) as dcm:
                 with dcm.get_connection().cursor() as cursor:
                     self.cursor = cursor
-                    return self._extract(specimen=specimen, study=study, continuous_also=continuous_also)
-        return None
+                    extraction = self._extract(specimen=specimen, study=study, continuous_also=continuous_also)
+                self.cursor = None
+        return extraction
 
     def _extract(self,
         specimen: str | None=None,

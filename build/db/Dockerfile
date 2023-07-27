@@ -9,6 +9,7 @@ RUN python3 -m pip install attrs==23.1.0
 RUN python3 -m pip install pandas==2.0.2
 RUN python3 -m pip install pyshp==2.2.0
 RUN python3 -m pip install pydantic==2.0.2
+RUN python3 -m pip install squidpy==1.3.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

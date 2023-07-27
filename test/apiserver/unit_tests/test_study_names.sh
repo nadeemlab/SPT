@@ -1,5 +1,5 @@
 
-query=http://spt-apiserver-testing:8080/study-names
+query=http://spt-apiserver-testing:8080/study-names/
 
 curl -s $query ;
 if [ "$?" -gt 0 ];

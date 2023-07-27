@@ -14,6 +14,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCounts
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
@@ -29,7 +30,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListPositives,
     ValidChannelListNegatives,
 )
-VERSION = '0.9.0'
+VERSION = '0.9.1'
 
 TITLE = 'Single cell studies data API'
 
@@ -79,7 +80,7 @@ async def get_root():
     )
 
 
-@app.get("/study-names")
+@app.get("/study-names/")
 async def get_study_names() -> list[StudyHandle]:
     """
     The names of studies/datasets, with display names.
@@ -87,7 +88,7 @@ async def get_study_names() -> list[StudyHandle]:
     return query().retrieve_study_handles()
 
 
-@app.get("/study-summary")
+@app.get("/study-summary/")
 async def get_study_summary(
     study: ValidStudy,
 ) -> StudySummary:
@@ -95,6 +96,16 @@ async def get_study_summary(
     A summary of a study's publications, authors, etc., as well as a summary of its datasets.
     """
     return query().get_study_summary(study)
+
+
+@app.get("/channels/")
+async def get_channels(
+    study: ValidStudy,
+) -> list[Channel]:
+    """
+    The short symbolic names of the channels imaged or measured in a given study.
+    """
+    return query().get_channel_names(study)
 
 
 @app.get("/phenotype-summary/")

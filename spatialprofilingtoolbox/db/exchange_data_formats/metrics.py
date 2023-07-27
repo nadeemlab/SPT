@@ -35,6 +35,11 @@ class PhenotypeSymbol(BaseModel):
     identifier: str
 
 
+class Channel(BaseModel):
+    """The symbol for one of the imaged or measured channels.."""
+    symbol: str
+
+
 class PhenotypeCriteria(BaseModel):
     """
     The criteria defining a given "comopsite" phenotype in terms of expression or non-expression of

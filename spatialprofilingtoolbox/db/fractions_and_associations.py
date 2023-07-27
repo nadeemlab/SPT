@@ -8,6 +8,9 @@ from spatialprofilingtoolbox.db.fractions_transcriber import \
     describe_fractions_feature_derivation_method
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+logger = colorized_logger(__name__)
+
 
 class FractionsAccess(SimpleReadOnlyProvider):
     """Access to cell fractions features from database."""
@@ -24,6 +27,7 @@ class FractionsAccess(SimpleReadOnlyProvider):
             (components.measurement, components.analysis),
         )
         rows = self.cursor.fetchall()
+        rows = _replace_stratum_identifiers(rows, study, column_index=2)
         return [
             CellFractionsAverage(**dict(zip(
                 ['marker_symbol', 'multiplicity', 'stratum_identifier', 'average_percent'],
@@ -70,8 +74,11 @@ class FractionsAccess(SimpleReadOnlyProvider):
         }
         for test in tests:
             if float(test.pvalue) <= float(pvalue):
-                associations[test.feature][test.cohort1].add(test.cohort2)
-                associations[test.feature][test.cohort2].add(test.cohort1)
+                if not test.feature in associations.keys():
+                    logger.warning('Tested feature "%s" not among expected features for the given study.', test.feature)
+                else:
+                    associations[test.feature][test.cohort1].add(test.cohort2)
+                    associations[test.feature][test.cohort2].add(test.cohort1)
         return associations
 
     @staticmethod

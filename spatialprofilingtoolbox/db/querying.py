@@ -7,6 +7,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.cohorts import _get_cohort_identifiers
@@ -81,6 +82,13 @@ class QueryHandler:
                 components.analysis,
             )
         return PhenotypeCriteria(positive_markers=[], negative_markers=[])
+
+    @classmethod
+    def get_channel_names(cls, cursor, study: str) -> list[Channel]:
+        return [
+            Channel(symbol=name)
+            for name in PhenotypesAccess(cursor).get_channel_names(study)
+        ]
 
     @classmethod
     def get_channel_names_all_studies(cls, cursor) -> list[str]:

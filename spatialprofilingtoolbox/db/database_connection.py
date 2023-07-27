@@ -158,6 +158,7 @@ class QueryCursor:
 
     get_study_components: Callable
     retrieve_study_handles: Callable
+    get_channel_names: Callable
     get_number_cells: Callable
     get_study_summary: Callable
     get_cell_fractions_summary: Callable

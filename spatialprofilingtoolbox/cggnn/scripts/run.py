@@ -164,8 +164,8 @@ def save_importances(_args):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    study_data: Dict[str, Dict] = FeatureMatrixExtractor.extract(
-        args.spt_db_config_location)[args.study]
+    extractor = FeatureMatrixExtractor(database_config_file=args.spt_db_config_location)
+    study_data: Dict[str, Dict] = extractor.extract(study=args.study)
 
     df_cell = _create_cell_df(
         {slide: data['dataframe']

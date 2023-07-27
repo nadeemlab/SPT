@@ -2,6 +2,9 @@
 Retrieve the "feature matrix" for a given study from the database, and store
 it in a special (in-memory) binary compressed format.
 """
+
+from psycopg2.extensions import cursor as Psycopg2Cursor
+
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
@@ -96,26 +99,31 @@ class CompressedDataArrays:
                 raise ValueError(f'Dictionary values not equal: {value}, {dict2[key]}')
 
 
-class SparseMatrixPuller(DatabaseConnectionMaker):
+class SparseMatrixPuller:
     """"Get sparse matrix representation of cell x channel data in database."""
+
+    cursor: Psycopg2Cursor
     data_arrays: CompressedDataArrays
 
-    def __init__(self, database_config_file):
-        super().__init__(database_config_file=database_config_file)
+    def __init__(self, cursor: Psycopg2Cursor):
+        self.cursor = cursor
 
-    def pull(self, specimen: str=None, study: str=None, continuous_also=False):
+    def pull(self, specimen: str | None=None, study: str | None=None, continuous_also: bool=False):
         self.data_arrays = self.retrieve_data_arrays(
-            specimen=specimen, study=study, continuous_also=continuous_also)
+            specimen=specimen,
+            study=study,
+            continuous_also=continuous_also,
+        )
 
     def get_data_arrays(self):
         return self.data_arrays
 
     def retrieve_data_arrays(self,
-            specimen: str=None,
-            study: str=None,
-            continuous_also=False,
+            specimen: str | None=None,
+            study: str | None=None,
+            continuous_also: bool=False,
         ) -> CompressedDataArrays:
-        study_names = self.get_study_names(self.get_connection(), study=study)
+        study_names = self.get_study_names(study=study)
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
             self.fill_data_arrays_for_study(
@@ -175,20 +183,18 @@ class SparseMatrixPuller(DatabaseConnectionMaker):
             rows = cursor.fetchall()
         return [row[0] for row in rows]
 
-    def get_study_names(self, connection, study=None):
+    def get_study_names(self, study: str | None=None):
         if study is None:
-            with connection.cursor() as cursor:
-                cursor.execute('SELECT name FROM specimen_measurement_study ;')
-                rows = cursor.fetchall()
+            self.cursor.execute('SELECT name FROM specimen_measurement_study ;')
+            rows = self.cursor.fetchall()
         else:
-            with connection.cursor() as cursor:
-                cursor.execute('''
-                SELECT sms.name FROM specimen_measurement_study sms
-                JOIN study_component sc ON sc.component_study=sms.name
-                WHERE sc.primary_study=%s
-                ;
-                ''', (study,))
-                rows = cursor.fetchall()
+            self.cursor.execute('''
+            SELECT sms.name FROM specimen_measurement_study sms
+            JOIN study_component sc ON sc.component_study=sms.name
+            WHERE sc.primary_study=%s
+            ;
+            ''', (study,))
+            rows = self.cursor.fetchall()
         logger.info('Will pull feature matrices for studies:')
         names = sorted([row[0] for row in rows])
         for name in names:

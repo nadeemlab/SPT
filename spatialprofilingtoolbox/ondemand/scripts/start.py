@@ -4,8 +4,7 @@ import argparse
 
 from spatialprofilingtoolbox.db.database_connection import wait_for_database_ready
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
-from spatialprofilingtoolbox.ondemand.counts_provider import CountsProvider
-from spatialprofilingtoolbox.ondemand.proximity_provider import ProximityProvider
+from spatialprofilingtoolbox.ondemand.providers import CountsProvider, ProximityProvider
 from spatialprofilingtoolbox.ondemand.counts_request_handler import CountsRequestHandler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

@@ -29,7 +29,7 @@ def transcribe_importance(
         connection: psycopg2.extensions.connection
         per_specimen_selection_number: int
             Grab this many of the most important cells from each specimen (or fewer if there
-            aren\'t enough cells in the specimen).
+            aren't enough cells in the specimen).
     """
     study = _get_referenced_study(connection, df)
     indicator: str = 'cell importance'

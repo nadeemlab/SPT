@@ -37,8 +37,7 @@ class FeatureMatrixExtractor:
                 'cursor.'
             logger.warning(message)
         self.cursor = cast(Psycopg2Cursor, cursor)
-        if cursor is not None:
-            self.database_config_file = database_config_file
+        self.database_config_file = database_config_file
 
     def extract(self,
         specimen: str | None=None,

@@ -63,23 +63,24 @@ class FeatureMatrixExtractor:
         continuous_also: bool=False,
     ):
         extraction = None
-        if self.db_source == DBSource.CURSOR:
-            extraction = self._extract(
-                specimen=specimen,
-                study=study,
-                continuous_also=continuous_also,
-            )
-        if self.db_source == DBSource.CONFIG_FILE:
-            with DatabaseConnectionMaker(self.database_config_file) as dcm:
-                with dcm.get_connection().cursor() as cursor:
-                    self.cursor = cursor
-                    extraction = self._extract(
-                        specimen=specimen,
-                        study=study,
-                        continuous_also=continuous_also,
-                    )
-        if self.db_source == DBSource.UNKNOWN:
-            logger.error('The database source can not be determined.')
+        match self.db_source:
+            case DBSource.CURSOR:
+                extraction = self._extract(
+                    specimen=specimen,
+                    study=study,
+                    continuous_also=continuous_also,
+                )
+            case DBSource.CONFIG_FILE:
+                with DatabaseConnectionMaker(self.database_config_file) as dcm:
+                    with dcm.get_connection().cursor() as cursor:
+                        self.cursor = cursor
+                        extraction = self._extract(
+                            specimen=specimen,
+                            study=study,
+                            continuous_also=continuous_also,
+                        )
+            case DBSource.UNKNOWN:
+                logger.error('The database source can not be determined.')
         return extraction
 
     def _extract(self,

@@ -40,19 +40,21 @@ class FeatureMatrixExtractor:
     ):
         self.cursor = cursor
         self.database_config_file = database_config_file
-        if cursor is None and database_config_file is None:
-            logger.error('Must supply either cursor or database_config_file.')
-            return
-        if cursor is not None and database_config_file is not None:
-            message = 'A cursor and database configuration file were both specified. Using the '\
-                'cursor.'
-            logger.warning(message)
         if cursor is not None:
             self.db_source = DBSource.CURSOR
         elif database_config_file is not None:
             self.db_source = DBSource.CONFIG_FILE
         else:
             self.db_source = DBSource.UNKNOWN
+        self._report_on_arguments()
+
+    def _report_on_arguments(self):
+        if self.cursor is None and self.database_config_file is None:
+            logger.error('Must supply either cursor or database_config_file.')
+        if self.cursor is not None and self.database_config_file is not None:
+            message = 'A cursor and database configuration file were both specified. Using the '\
+                'cursor.'
+            logger.warning(message)
 
     def extract(self,
         specimen: str | None=None,

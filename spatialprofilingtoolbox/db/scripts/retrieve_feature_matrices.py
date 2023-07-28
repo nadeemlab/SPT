@@ -41,7 +41,8 @@ specimen and channel name information in:  features.json
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'db')
 
-    bundle = FeatureMatrixExtractor.extract(database_config_file)
+    extractor = FeatureMatrixExtractor(database_config_file=database_config_file)
+    bundle: dict = extractor.extract()
 
     for study_name, study in bundle.items():
         for specimen, specimen_data in study['feature matrices']:

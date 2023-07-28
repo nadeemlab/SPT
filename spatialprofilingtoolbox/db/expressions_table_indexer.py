@@ -15,10 +15,14 @@ class ExpressionsTableIndexer:
         connection.commit()
 
     @staticmethod
+    def expressions_table_is_indexed_cursor(cursor):
+        columns = ExpressionsTableIndexer.get_expression_quantification_columns(cursor)
+        return 'source_specimen' in columns
+
+    @staticmethod
     def expressions_table_is_indexed(connection):
         with connection.cursor() as cursor:
-            columns = ExpressionsTableIndexer.get_expression_quantification_columns(cursor)
-        return 'source_specimen' in columns
+            return ExpressionsTableIndexer.expressions_table_is_indexed_cursor(cursor)
 
     @staticmethod
     def get_expression_quantification_columns(cursor):
@@ -31,7 +35,7 @@ class ExpressionsTableIndexer:
 
     @staticmethod
     def create_index(cursor):
-        ETI = ExpressionsTableIndexer()
+        ETI = ExpressionsTableIndexer() #pylint: disable=invalid-name
         ExpressionsTableIndexer.log_current_indexes(cursor)
         logger.debug('Will create extra index column "source_specimen".')
         ETI.create_extra_column(cursor)

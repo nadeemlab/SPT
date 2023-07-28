@@ -24,8 +24,8 @@ class ProximityCalculator:
         logger.info(
             'Start pulling feature matrix data for proximity on-demand calculator, study %s.',
             study)
-        bundle = FeatureMatrixExtractor.extract(database_config_file=database_config_file,
-                                                study=study)
+        extractor = FeatureMatrixExtractor(database_config_file=database_config_file)
+        bundle: dict = extractor.extract(study=study)
         logger.info('Finished pulling data for %s.', study)
 
         for identifier, sample in list(bundle[study]['feature matrices'].items()):

@@ -1,6 +1,5 @@
 "Run through the entire SPT CG-GNN pipeline using a local db config."
 from argparse import ArgumentParser
-from typing import Dict, Tuple
 from os.path import join
 
 from pandas import DataFrame
@@ -121,7 +120,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def _create_cell_df(cell_dfs: Dict[str, DataFrame], feature_names: Dict[str, str]) -> DataFrame:
+def _create_cell_df(cell_dfs: dict[str, DataFrame], feature_names: dict[str, str]) -> DataFrame:
     "Find chemical species, phenotypes, and locations and merge into a DataFrame."
 
     for specimen, df_specimen in cell_dfs.items():
@@ -140,7 +139,7 @@ def _create_cell_df(cell_dfs: Dict[str, DataFrame], feature_names: Dict[str, str
 
 
 def _create_label_df(df_assignments: DataFrame,
-                     df_strata: DataFrame) -> Tuple[DataFrame, Dict[int, str]]:
+                     df_strata: DataFrame) -> tuple[DataFrame, dict[int, str]]:
     """Get slide-level results."""
     df = merge(df_assignments, df_strata, on='stratum identifier', how='left')[
         ['specimen', 'subject diagnosed result']].rename(
@@ -165,7 +164,7 @@ def save_importances(_args):
 if __name__ == "__main__":
     args = parse_arguments()
     extractor = FeatureMatrixExtractor(database_config_file=args.spt_db_config_location)
-    study_data: Dict[str, Dict] = extractor.extract(study=args.study)
+    study_data: dict[str, dict] = extractor.extract(study=args.study)
 
     df_cell = _create_cell_df(
         {slide: data['dataframe']

@@ -2,6 +2,8 @@
 Convenience provision of a feature matrix for each study, the data retrieved from the SPT database.
 """
 import sys
+from enum import Enum
+from enum import auto
 
 import pandas as pd
 from psycopg2.extensions import cursor as Psycopg2Cursor
@@ -16,6 +18,13 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+class DBSource(Enum):
+    """Indicator of intended database source."""
+    CURSOR = auto()
+    CONFIG_FILE = auto()
+    UNKNOWN = auto()
+
+
 class FeatureMatrixExtractor:
     """
     Pull from the database and create convenience bundle of feature matrices and metadata.
@@ -23,11 +32,14 @@ class FeatureMatrixExtractor:
 
     cursor: Psycopg2Cursor | None
     database_config_file: str | None
+    db_source: DBSource
 
     def __init__(self,
         cursor: Psycopg2Cursor | None=None,
         database_config_file: str | None=None,
     ):
+        self.cursor = cursor
+        self.database_config_file = database_config_file
         if cursor is None and database_config_file is None:
             logger.error('Must supply either cursor or database_config_file.')
             return
@@ -35,8 +47,12 @@ class FeatureMatrixExtractor:
             message = 'A cursor and database configuration file were both specified. Using the '\
                 'cursor.'
             logger.warning(message)
-        self.cursor = cursor
-        self.database_config_file = database_config_file
+        if cursor is not None:
+            self.db_source = DBSource.CURSOR
+        elif database_config_file is not None:
+            self.db_source = DBSource.CONFIG_FILE
+        else:
+            self.db_source = DBSource.UNKNOWN
 
     def extract(self,
         specimen: str | None=None,
@@ -44,13 +60,13 @@ class FeatureMatrixExtractor:
         continuous_also: bool=False,
     ):
         extraction = None
-        if self.cursor is not None:
+        if self.db_source == DBSource.CURSOR:
             extraction = self._extract(
                 specimen=specimen,
                 study=study,
                 continuous_also=continuous_also,
             )
-        elif self.database_config_file is not None:
+        if self.db_source == DBSource.CONFIG_FILE:
             with DatabaseConnectionMaker(self.database_config_file) as dcm:
                 with dcm.get_connection().cursor() as cursor:
                     self.cursor = cursor
@@ -59,7 +75,9 @@ class FeatureMatrixExtractor:
                         study=study,
                         continuous_also=continuous_also,
                     )
-                self.cursor = None
+            self.cursor = None
+        if self.db_source == DBSource.UNKNOWN:
+            logger.error('The database source can not be determined.')
         return extraction
 
     def _extract(self,

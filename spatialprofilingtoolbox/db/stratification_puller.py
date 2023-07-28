@@ -1,13 +1,14 @@
 """Retrieve outcome data for all studies."""
 from typing import cast
 
-import pandas as pd
+from pandas import DataFrame
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
+Stratification = dict[str, dict[str, DataFrame]]
 
 class StratificationPuller:
     """Retrieve sample cohort data for all studies."""
@@ -22,12 +23,12 @@ class StratificationPuller:
     def pull(self) -> None:
         self.stratification = self._retrieve_stratification()
 
-    def get_stratification(self) -> dict:
+    def get_stratification(self) -> Stratification:
         return cast(dict, self.stratification)
 
-    def _retrieve_stratification(self) -> dict:
+    def _retrieve_stratification(self) -> Stratification:
         study_names = self._get_study_names()
-        stratification: dict = {}
+        stratification: dict[str, dict[str, DataFrame]] = {}
         for study_name in study_names:
             self.cursor.execute('''
             SELECT
@@ -58,7 +59,7 @@ class StratificationPuller:
                 'subject diagnosed condition',
                 'subject diagnosed result',
             ]
-            df = pd.DataFrame(rows, columns=columns)
+            df = DataFrame(rows, columns=columns)
             substudy_name = list(df['specimen collection study'])[0]
             stratification[substudy_name] = {}
             assignments_columns = ['specimen', 'stratum identifier']
@@ -72,8 +73,8 @@ class StratificationPuller:
             stratification[substudy_name]['strata'] = df[metadata_columns].drop_duplicates()
         return stratification
 
-    def _get_study_names(self) -> list[str]:
+    def _get_study_names(self) -> tuple[str, ...]:
         self.cursor.execute('SELECT study_specifier FROM study ;')
         rows = self.cursor.fetchall()
         study_names = [row[0] for row in rows]
-        return sorted(study_names)
+        return tuple(sorted(study_names))

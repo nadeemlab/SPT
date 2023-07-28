@@ -4,6 +4,7 @@ Convenience provision of a feature matrix for each study, the data retrieved fro
 import sys
 from enum import Enum
 from enum import auto
+from typing import cast
 
 import pandas as pd
 from psycopg2.extensions import cursor as Psycopg2Cursor
@@ -30,7 +31,7 @@ class FeatureMatrixExtractor:
     Pull from the database and create convenience bundle of feature matrices and metadata.
     """
 
-    cursor: Psycopg2Cursor | None
+    cursor: Psycopg2Cursor
     database_config_file: str | None
     db_source: DBSource
 
@@ -38,7 +39,7 @@ class FeatureMatrixExtractor:
         cursor: Psycopg2Cursor | None=None,
         database_config_file: str | None=None,
     ):
-        self.cursor = cursor
+        self.cursor = cast(Psycopg2Cursor, cursor)
         self.database_config_file = database_config_file
         if cursor is not None:
             self.db_source = DBSource.CURSOR
@@ -77,7 +78,6 @@ class FeatureMatrixExtractor:
                         study=study,
                         continuous_also=continuous_also,
                     )
-            self.cursor = None
         if self.db_source == DBSource.UNKNOWN:
             logger.error('The database source can not be determined.')
         return extraction

@@ -28,7 +28,7 @@ class StratificationPuller:
 
     def _retrieve_stratification(self) -> Stratification:
         study_names = self._get_study_names()
-        stratification: dict[str, dict[str, DataFrame]] = {}
+        stratification: Stratification = {}
         for study_name in study_names:
             self.cursor.execute('''
             SELECT

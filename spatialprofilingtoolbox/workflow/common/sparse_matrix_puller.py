@@ -1,7 +1,9 @@
 """
-Retrieve the "feature matrix" for a given study from the database, and store
-it in a special (in-memory) binary compressed format.
+Retrieve the "feature matrix" for a given study from the database, and store it in a special
+(in-memory) binary compressed format.
 """
+
+from typing import cast
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
@@ -170,9 +172,12 @@ class SparseMatrixPuller:
             progress_reporter.increment(iteration_details=_specimen)
         progress_reporter.done()
 
-    def _get_pertinent_specimens(self, study_name: str, specimen: str | None=None):
+    def _get_pertinent_specimens(self,
+        study_name: str,
+        specimen: str | None=None,
+    ) -> tuple[str, ...]:
         if specimen is not None:
-            return [specimen]
+            return (specimen,)
         self.cursor.execute('''
         SELECT sdmp.specimen
         FROM specimen_data_measurement_process sdmp
@@ -181,9 +186,9 @@ class SparseMatrixPuller:
         ;
         ''', (study_name,))
         rows = self.cursor.fetchall()
-        return [row[0] for row in rows]
+        return tuple(cast(str, row[0]) for row in rows)
 
-    def _get_study_names(self, study: str | None=None) -> list[str]:
+    def _get_study_names(self, study: str | None=None) -> tuple[str, ...]:
         if study is None:
             self.cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = self.cursor.fetchall()
@@ -196,7 +201,7 @@ class SparseMatrixPuller:
             ''', (study,))
             rows = self.cursor.fetchall()
         logger.info('Will pull feature matrices for studies:')
-        names = sorted([row[0] for row in rows])
+        names = tuple(sorted([row[0] for row in rows]))
         for name in names:
             logger.info('    %s', name)
         return names
@@ -307,7 +312,7 @@ class SparseMatrixPuller:
         }
         return lookup
 
-    def _get_target_by_symbol(self, study_name: str):
+    def _get_target_by_symbol(self, study_name: str) -> dict[str, str]:
         query = '''
         SELECT cs.identifier, cs.symbol
         FROM chemical_species cs
@@ -329,7 +334,7 @@ class SparseMatrixPuller:
         entries,
         target_index_lookup: dict[str, int],
         continuous_data_array=None,
-    ):
+    ) -> None:
         structure_index = 0
         for i, entry in enumerate(entries):
             if i > 0:

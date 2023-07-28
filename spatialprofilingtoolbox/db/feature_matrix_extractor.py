@@ -45,12 +45,20 @@ class FeatureMatrixExtractor:
     ):
         extraction = None
         if self.cursor is not None:
-            extraction = self._extract(specimen=specimen, study=study, continuous_also=continuous_also)
-        if self.database_config_file is not None:
+            extraction = self._extract(
+                specimen=specimen,
+                study=study,
+                continuous_also=continuous_also,
+            )
+        elif self.database_config_file is not None:
             with DatabaseConnectionMaker(self.database_config_file) as dcm:
                 with dcm.get_connection().cursor() as cursor:
                     self.cursor = cursor
-                    extraction = self._extract(specimen=specimen, study=study, continuous_also=continuous_also)
+                    extraction = self._extract(
+                        specimen=specimen,
+                        study=study,
+                        continuous_also=continuous_also,
+                    )
                 self.cursor = None
         return extraction
 

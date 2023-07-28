@@ -229,7 +229,7 @@ class SparseMatrixPuller:
             return self.sparse_entries_query_optimized()
         return self.sparse_entries_query_unoptimized()
 
-    def sparse_entries_query_optimized(self):
+    def sparse_entries_query_optimized(self) -> str:
         return '''
         -- absorb/ignore first string formatting argument: %s
         SELECT
@@ -244,7 +244,7 @@ class SparseMatrixPuller:
         ;
         '''
 
-    def sparse_entries_query_unoptimized(self):
+    def sparse_entries_query_unoptimized(self) -> str:
         return '''
         SELECT
         eq.histological_structure,
@@ -262,7 +262,7 @@ class SparseMatrixPuller:
         ;
         '''
 
-    def _get_batch_size(self):
+    def _get_batch_size(self) -> int:
         return 10000000
 
     def _parse_data_arrays_by_specimen(self,

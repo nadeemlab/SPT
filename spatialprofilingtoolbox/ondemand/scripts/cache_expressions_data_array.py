@@ -35,9 +35,11 @@ def main():
         database_config_file = abspath(expanduser(database_config_file))
 
     if not StructureCentroids.already_exists(getcwd()):
-        with StructureCentroidsPuller(database_config_file) as puller:
-            puller.pull()
-            puller.get_structure_centroids().write_to_file(getcwd())
+        with DatabaseConnectionMaker(database_config_file) as dcm:
+            with dcm.get_connection().cursor() as cursor:
+                puller = StructureCentroidsPuller(cursor)
+                puller.pull()
+                puller.get_structure_centroids().write_to_file(getcwd())
     else:
         logger.info('%s already exists, skipping shapefile pull.', CENTROIDS_FILENAME)
 
@@ -54,10 +56,10 @@ def main():
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()
         ExpressionsTableIndexer.ensure_indexed_expressions_table(connection)
-
-    with SparseMatrixPuller(database_config_file) as puller:
-        puller.pull()
-        data_arrays = puller.get_data_arrays()
+        with connection.cursor() as cursor:
+            puller = SparseMatrixPuller(cursor)
+            puller.pull()
+            data_arrays = puller.get_data_arrays()
 
     writer = CompressedMatrixWriter()
     writer.write(data_arrays)

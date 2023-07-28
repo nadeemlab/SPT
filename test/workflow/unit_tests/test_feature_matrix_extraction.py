@@ -137,7 +137,8 @@ def test_stratification(study):
 
 
 if __name__ == '__main__':
-    matrix_bundle = FeatureMatrixExtractor.extract('../db/.spt_db.config.container')
+    extractor = FeatureMatrixExtractor(database_config_file='../db/.spt_db.config.container')
+    matrix_bundle = extractor.extract()
     test_study = get_study(matrix_bundle)
     test_sample_set(test_study)
     test_feature_matrix_schemas(test_study)
@@ -146,16 +147,14 @@ if __name__ == '__main__':
     test_expression_vectors(test_study)
     test_stratification(test_study)
 
-    one_sample_bundle = FeatureMatrixExtractor.extract('../db/.spt_db.config.container',
-                                                       specimen='lesion 6_1')
+    one_sample_bundle = extractor.extract(specimen='lesion 6_1')
     one_sample_study = get_study(one_sample_bundle)
     test_one_sample_set(one_sample_study)
     test_feature_matrix_schemas(one_sample_study)
     test_channels(one_sample_study)
     test_expression_vectors(one_sample_study)
 
-    one_sample_bundle_continuous = FeatureMatrixExtractor.extract('../db/.spt_db.config.container',
-                                                       specimen='lesion 6_1', continuous_also=True)
+    one_sample_bundle_continuous = extractor.extract(specimen='lesion 6_1', continuous_also=True)
     one_sample_study_continuous = get_study(one_sample_bundle_continuous)
     test_one_sample_set(one_sample_study_continuous)
     test_feature_matrix_schemas(one_sample_study_continuous)

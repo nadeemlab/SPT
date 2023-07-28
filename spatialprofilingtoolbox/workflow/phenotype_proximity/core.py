@@ -76,8 +76,8 @@ class PhenotypeProximityCoreJob(CoreJob):
 
     def calculate_proximity(self):
         self.timer.record_timepoint('Start pulling data for one sample.')
-        bundle = FeatureMatrixExtractor.extract(database_config_file=self.database_config_file,
-                                                specimen=self.sample_identifier)
+        extractor = FeatureMatrixExtractor(database_config_file=self.database_config_file)
+        bundle: dict = extractor.extract(specimen=self.sample_identifier)
         self.timer.record_timepoint('Finished pulling data for one sample.')
         study_name = list(bundle.keys())[0]
         _, sample = list(bundle[study_name]['feature matrices'].items())[0]

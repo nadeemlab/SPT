@@ -9,24 +9,19 @@ from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
-from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCounts
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
-    ProximityMetricsComputationResult
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary, \
+    PhenotypeSymbol, Channel, PhenotypeCriteria, PhenotypeCounts, \
+    ProximityMetricsComputationResult, SquidpyMetricsComputationResult
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannel,
     ValidStudy,
     ValidPhenotypeSymbol,
-    ValidPhenotype1,
-    ValidPhenotype2,
+    ValidPhenotype,
     ValidChannelListPositives,
     ValidChannelListNegatives,
 )
@@ -54,19 +49,22 @@ app = FastAPI(
     },
 )
 
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
         title=TITLE,
         version=VERSION,
-        openapi_version='3.0.0', # This is a manual replacement for 3.1.0 default, which seems not supported by Swagger UI yet.
+        # This is a manual replacement for 3.1.0 default, which isn't supported by Swagger UI yet.
+        openapi_version='3.0.0',
         summary=TITLE,
         description=DESCRIPTION,
         routes=app.routes,
     )
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 setattr(app, 'openapi', custom_openapi)
 
@@ -151,7 +149,7 @@ async def get_anonymous_phenotype_counts_fast(
     negative_markers = [m for m in negative_marker if m != '']
     measurement_study = query().get_study_components(study).measurement
     number_cells = query().get_number_cells(study)
-    with CountRequester() as requester:
+    with OnDemandRequester() as requester:
         counts = requester.get_counts_by_specimen(
             positive_markers,
             negative_markers,
@@ -164,8 +162,8 @@ async def get_anonymous_phenotype_counts_fast(
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
     study: ValidStudy,
-    phenotype1: ValidPhenotype1,
-    phenotype2: ValidPhenotype2,
+    phenotype1: ValidPhenotype,
+    phenotype2: ValidPhenotype,
     radius: int = Query(default=100),
 ) -> ProximityMetricsComputationResult:
     """
@@ -176,17 +174,35 @@ async def request_phenotype_proximity_computation(
     retrieve = query().retrieve_signature_of_phenotype
     criteria1 = retrieve(phenotype1, study)
     criteria2 = retrieve(phenotype2, study)
-    with CountRequester() as requester:
+    with OnDemandRequester() as requester:
         metrics = requester.get_proximity_metrics(
             query().get_study_components(study).measurement,
             radius,
-            [
+            (
                 criteria1.positive_markers,
                 criteria1.negative_markers,
                 criteria2.positive_markers,
                 criteria2.negative_markers,
-            ],
+            ),
         )
+    return metrics
+
+
+@app.get("/request-squidpy-computation/")
+async def request_squidpy_computation(
+    study: ValidStudy,
+    phenotypes: list[ValidPhenotype],
+) -> SquidpyMetricsComputationResult:
+    """Spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
+    criteria: list[PhenotypeCriteria] = [
+        query().retrieve_signature_of_phenotype(p, study) for p in phenotypes]
+    markers: list[list[str]] = []
+    for criterion in criteria:
+        markers.append(criterion.positive_markers)
+        markers.append(criterion.negative_markers)
+    with OnDemandRequester() as requester:
+        metrics = requester.get_squidpy_metrics(
+            query().get_study_components(study).measurement, markers)
     return metrics
 
 
@@ -212,6 +228,7 @@ async def get_plot_high_resolution(
     umap = query().get_umap(study, channel)
     input_buffer = BytesIO(b64decode(umap.base64_png))
     input_buffer.seek(0)
+
     def streaming_iteration():
         yield from input_buffer
     return StreamingResponse(streaming_iteration(), media_type="image/png")

@@ -1,12 +1,12 @@
 """Test a few cases of using the counts service."""
-from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 
 
 def retrieve_case(case):
     study_name = 'Melanoma intralesional IL2 - measurement'
     host = 'spt-ondemand-testing'
     port = 8016
-    with CountRequester(host, port) as requester:
+    with OnDemandRequester(host, port) as requester:
         counts = requester.get_counts_by_specimen(case[0], case[1], study_name, 0)
         total = sum(entry.count for entry in counts.counts)
         return total

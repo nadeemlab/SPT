@@ -1,6 +1,7 @@
 """Data structures for ready exchange, related to computations or derived metrics."""
 
-from pydantic import BaseModel #pylint: disable=no-name-in-module
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
+
 
 class CellFractionsSummary(BaseModel):
     """
@@ -41,10 +42,8 @@ class Channel(BaseModel):
 
 
 class PhenotypeCriteria(BaseModel):
-    """
-    The criteria defining a given "comopsite" phenotype in terms of expression or non-expression of
-    given markers.
-    """
+    """Criteria defining a "composite" phenotype by expression and non-expression of markers."""
+
     positive_markers: list[str]
     negative_markers: list[str]
 
@@ -81,6 +80,18 @@ class ProximityMetricsComputationResult(BaseModel):
     may also be a request for computation of these metrics in the background (which may be pending).
     """
     values: dict[str, float | None]
+    is_pending: bool
+
+
+class SquidpyMetricsComputationResult(BaseModel):
+    """Response to an on demand request for computation of Squidpy metrics."""
+
+    values: dict[
+        str,
+        dict[str, list[float] | list[int]] |
+        dict[str, list[float]] |
+        dict[str, list[list[float]] | list[float] | list[int]]
+    ]
     is_pending: bool
 
 

@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 from pandas import DataFrame
 from anndata import AnnData
 from squidpy.gr import spatial_autocorr, spatial_neighbors
+from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
@@ -61,18 +62,14 @@ def convert_df_to_anndata(
     return data
 
 
-def _spatial_autocorr(data: AnnData) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]:
-    autocorr_metrics: DataFrame = spatial_autocorr(
+def _spatial_autocorr(data: AnnData) -> DataFrame:
+    return spatial_autocorr(
         data,
         attr='obs',
         genes=data.obs.drop('cluster', axis=1).columns.tolist(),
         corr_method=None,
         copy=True,
     )
-    i_statistic = autocorr_metrics['I'].to_numpy()
-    pval_z_sim = autocorr_metrics['pval_z_sim'].to_numpy()
-    pval_sim = autocorr_metrics['pval_sim'].to_numpy()
-    return i_statistic, pval_z_sim, pval_sim
 
 
 def create_and_transcribe_squidpy_features(
@@ -81,13 +78,13 @@ def create_and_transcribe_squidpy_features(
 ) -> None:
     """Transcribe "off-demand" Squidpy feature(s) in features system."""
     connection = database_connection_maker.get_connection()
+    das = DataAnalysisStudyFactory(
+        connection, study, 'spatial autocorrelation').create()
     features_by_specimen = _fetch_cells_and_phenotypes(
-        database_connection_maker, study)
+        connection.cursor(), study)
     for sample, df in features_by_specimen.items():
         adata = convert_df_to_anndata(df)
         autocorr_stats = _spatial_autocorr(adata)
-        das = DataAnalysisStudyFactory(
-            connection, study, 'spatial autocorrelation').create()
         with ADIFeaturesUploader(
             database_connection_maker,
             data_analysis_study=das,
@@ -95,16 +92,17 @@ def create_and_transcribe_squidpy_features(
                 _describe_spatial_autocorr_derivation_method(), 1),
             impute_zeros=True,
         ) as feature_uploader:
-            value = autocorr_stats
-            for specifier, value in zip(['thing', 'thing'], autocorr_stats):
-                feature_uploader.stage_feature_value(
-                    (specifier,), sample, value)
+            for i_cluster, row in autocorr_stats.iterrows():
+                for metric_name, metric in zip(row.index, row.to_numpy()):
+                    feature_uploader.stage_feature_value(
+                        (metric_name, i_cluster), sample, metric)
 
 
 def _fetch_cells_and_phenotypes(
-    database_connection_maker: DatabaseConnectionMaker,
+    cursor: Psycopg2Cursor,
     study: str
 ) -> dict[str, DataFrame]:
-    study_data: dict[str, dict[str, DataFrame | str]] = FeatureMatrixExtractor.extract(
-        database_connection_maker, study=study)[study]['feature_matrices']
+    extractor = FeatureMatrixExtractor(cursor)
+    study_data: dict[str, dict[str, DataFrame | str]] = extractor.extract(
+        study=study)[study]['feature_matrices']
     return {specimen: packet['dataframe'] for specimen, packet in study_data.items()}

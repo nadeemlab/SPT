@@ -82,16 +82,6 @@ class Provider(ABC):
         """Retrieve names of the studies held in memory."""
         return self.studies.keys()
 
-    # def get_data_array_from_file(self, filename: str) -> list[int]:
-    #     """Load data arrays from a precomputed JSON artifact."""
-    #     data_array = []
-    #     with open(filename, 'rb') as file:
-    #         buffer = None
-    #         while buffer != b'':
-    #             buffer = file.read(8)
-    #             data_array.append(int.from_bytes(buffer, 'little'))
-    #     return data_array
-
     def get_data_array_from_file(
         self,
         filename: str,

@@ -15,9 +15,7 @@ class CoreJob(ABC): #pylint: disable=too-few-public-methods
         pass
 
     def calculate(self):
-        """
-        The main calculation of this job, to be called by pipeline orchestration.
-        """
+        """The main calculation of this job, to be called by pipeline orchestration."""
         logger.info('Started core calculator job.')
         self._calculate()
         logger.info('Completed core calculator job.')

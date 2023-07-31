@@ -16,8 +16,7 @@ logger = colorized_logger(__name__)
 
 
 class ProximityCalculator:
-    """
-    Provides functionality to request computation of proximity of specific
+    """Provides functionality to request computation of proximity of specific
     phenotypes, and to give back these features if already computed.
     """
     def __init__(self, study, database_config_file):

@@ -84,8 +84,7 @@ class SourceToADIParser:
         return max(known_integer_identifiers) + 1
 
     def check_exists(self, tablename, record, cursor, no_primary=False):
-        """
-        Assumes that the first entry in records is a fiat identifier, omitted for
+        """Assumes that the first entry in records is a fiat identifier, omitted for
         the purpose of checking pre-existence of the record.
 
         Returns pair:

@@ -11,8 +11,7 @@ logger = colorized_logger(__name__)
 
 
 def perform_tests(data_analysis_study, connection):
-    """
-    For each of the given study's features, do tests for significant difference
+    """For each of the given study's features, do tests for significant difference
     between each pair of cohorts. Currently using t-test.
     """
     feature_values = retrieve_feature_values(data_analysis_study, connection)

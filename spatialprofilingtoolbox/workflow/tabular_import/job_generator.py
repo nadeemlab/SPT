@@ -16,9 +16,7 @@ logger = colorized_logger(__name__)
 
 
 class TabularImportJobGenerator(JobGenerator):
-    """
-    Generate the list of jobs for tabular import.
-    """
+    """Generate the list of jobs for tabular import."""
 
     def __init__(self,
                  input_path: Optional[str] = None,
@@ -39,9 +37,7 @@ class TabularImportJobGenerator(JobGenerator):
         ]
 
     def write_job_specification_table(self, job_specification_table_filename):
-        """
-        Prepares the job specification table for the orchestrator.
-        """
+        """Prepares the job specification table for the orchestrator."""
         validate = self.dataset_design_class.validate_cell_manifest_descriptor
         records = self.retrieve_file_records(condition=lambda record: validate(record['Data type']))
 

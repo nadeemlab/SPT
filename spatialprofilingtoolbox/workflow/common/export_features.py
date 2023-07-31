@@ -21,8 +21,7 @@ logger = colorized_logger(__name__)
 
 
 class ADIFeaturesUploader(SourceToADIParser):
-    """
-    Upload sparse representation of feature values to tables
+    """Upload sparse representation of feature values to tables
     quantitative_feature_value, feature_specification, feature_specifier.
     """
     feature_value_identifier: int

@@ -54,9 +54,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         return self.performance_report_file
 
     def wrap_up_timer(self):
-        """
-        Concludes low-level performance metric collection for this job.
-        """
+        """Concludes low-level performance metric collection for this job."""
         df = self.timer.report(organize_by='fraction')
         logger.info('Report to: %s', self.get_performance_report_filename())
         df.to_csv(self.get_performance_report_filename(), index=False)

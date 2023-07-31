@@ -170,9 +170,7 @@ class ReductionVisualCoreJob(CoreJob):
         logger.info('%s cells to be analyzed for study "%s".', number_cells, self.study_name)
 
     def wrap_up_timer(self):
-        """
-        Concludes low-level performance metric collection for this job.
-        """
+        """Concludes low-level performance metric collection for this job."""
         df = self.timer.report(organize_by='fraction')
         logger.info('Report to: %s', self.get_performance_report_filename())
         df.to_csv(self.get_performance_report_filename(), index=False)
@@ -182,9 +180,7 @@ class ReductionVisualCoreJob(CoreJob):
 
 
 class UMAPReducer:
-    """
-    From dataframe create UMAP-reduced plots in base64 format.
-    """
+    """From dataframe create UMAP-reduced plots in base64 format."""
     @staticmethod
     def create_plots_base64(dense_df):
         normalized = UMAPReducer.preprocess_univariate_adjustments(dense_df)
@@ -207,8 +203,7 @@ class UMAPReducer:
 
     @staticmethod
     def make_plots_base64(array, dense_df):
-        """
-        Make scatter plots with color-coded values
+        """Make scatter plots with color-coded values
 
         :param array: 2D UMAP output in numpy format to use as plot coordinates.
         :param cell_matrix: Original channel intensity values, pandas DataFrame.

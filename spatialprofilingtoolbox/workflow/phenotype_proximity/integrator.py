@@ -19,9 +19,7 @@ logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityAnalysisIntegrator(Integrator):
-    """
-    The main class of the integration phase.
-    """
+    """The main class of the integration phase."""
     def __init__(self,
                  study_name: str = '',
                  database_config_file: Optional[str] = None,
@@ -31,9 +29,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         self.database_config_file = database_config_file
 
     def calculate(self, core_computation_results_files=None, **kwargs):
-        """
-        Performs statistical comparison tests and writes results to file.
-        """
+        """Performs statistical comparison tests and writes results to file."""
         logger.info('(Should do integration phase.)')
         for filename in core_computation_results_files:
             logger.info('Will consider file %s', filename)

@@ -9,8 +9,7 @@ logger = colorized_logger(__name__)
 
 
 class SampleStratificationCreator:
-    """
-    Create a simplified sample stratification (cohort definition) for the
+    """Create a simplified sample stratification (cohort definition) for the
     samples across all studies.
     """
     insert_assignment = '''

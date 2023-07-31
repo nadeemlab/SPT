@@ -42,9 +42,7 @@ class ConnectionProvider:
 
 
 class DatabaseConnectionMaker(ConnectionProvider):
-    """
-    Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
-    """
+    """Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting."""
     connection: Connection
     autocommit: bool
 
@@ -148,8 +146,7 @@ class SimpleReadOnlyProvider:
 
 
 class QueryCursor:
-    """
-    Dispatches calls to a provided handler class (most likely QueryHandler).
+    """Dispatches calls to a provided handler class (most likely QueryHandler).
     The provided class' class methods require a cursor as first argument, which this dispatcher
     class (QueryCursor) newly provides on each invocation.
     This allows the user of QueryCursor to omit mention of the cursor.

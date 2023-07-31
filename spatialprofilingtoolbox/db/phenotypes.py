@@ -6,9 +6,7 @@ from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvide
 
 
 class PhenotypeNotFoundError(Exception):
-    """
-    Raised when information is requested for a phenotype that cannot be located by the given name.
-    """
+    """Raised when information is requested for a phenotype that cannot be located by the given name."""
 
 
 class PhenotypesAccess(SimpleReadOnlyProvider):

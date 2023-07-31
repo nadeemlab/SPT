@@ -379,8 +379,7 @@ class LogParser:
 
 
 class LogReportAggregator:
-    """
-    Aggregate together many log files that are created by a Nextflow run of an
+    """Aggregate together many log files that are created by a Nextflow run of an
     SPT workflow.
     """
 

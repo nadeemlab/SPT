@@ -13,8 +13,7 @@ ReportOrganization = Literal['average time spent', 'total time spent', 'frequenc
 
 
 class PerformanceTimer:
-    """
-    An object of this class makes it easy to track which part of complex
+    """An object of this class makes it easy to track which part of complex
     branching code is taking a long time, with only a few additional lines of
     monitoring code.
 

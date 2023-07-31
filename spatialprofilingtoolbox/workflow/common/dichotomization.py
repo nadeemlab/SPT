@@ -22,8 +22,7 @@ def dichotomize(
     floor_value: float = -10.0,
     enable_overwrite_warning: bool = True,
 ):
-    """
-    In-place adds (or overwrites) the phenotype positivity column in ``table``, by
+    """In-place adds (or overwrites) the phenotype positivity column in ``table``, by
     dichotomizing the values in the intensity column according to the procedure:
 
     1. Logarithm of values.

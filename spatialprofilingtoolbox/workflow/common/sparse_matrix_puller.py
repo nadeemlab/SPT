@@ -16,8 +16,7 @@ logger = colorized_logger(__name__)
 
 
 class CompressedDataArrays:
-    """
-    An object for in-memory storage of all expression data for each study, in a
+    """An object for in-memory storage of all expression data for each study, in a
     compressed binary format. It assumes that there are 64 or fewer channels for a
     given study.
 

@@ -29,8 +29,7 @@ def create_specimen_data_measurement_process_record(
 class CellManifestSetParser(SourceToADIParser):
     """Parse source files containing metadata at level of cell manifest set."""
     def parse(self, connection, file_manifest_file, study_name):
-        """
-        Retrieve the set of cell manifests (i.e. just the "metadata" for each source
+        """Retrieve the set of cell manifests (i.e. just the "metadata" for each source
         file), and parse records for:
         - specimen measurement study
         - specimen data measurement process

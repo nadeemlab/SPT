@@ -4,8 +4,7 @@ from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 
 class CellFractionsSummary(BaseModel):
-    """
-    Summary of a cell fractions feature of the sample set, including "report" of significantly
+    """Summary of a cell fractions feature of the sample set, including "report" of significantly
     associated cohorts.
     """
     phenotype: str
@@ -49,17 +48,14 @@ class PhenotypeCriteria(BaseModel):
 
 
 class CompositePhenotype(BaseModel):
-    """
-    For named phenotypes, the name and the internal identifier used for matching up related records.
-    """
+    """For named phenotypes, the name and the internal identifier used for matching up related records."""
     name: str
     identifier: str
     criteria: PhenotypeCriteria
 
 
 class PhenotypeCount(BaseModel):
-    """
-    The number of cells (and formatted/rounded percentage or fraction) in a given specimen,
+    """The number of cells (and formatted/rounded percentage or fraction) in a given specimen,
     belonging to some specific class.
     """
     specimen: str
@@ -75,8 +71,7 @@ class PhenotypeCounts(BaseModel):
 
 
 class ProximityMetricsComputationResult(BaseModel):
-    """
-    The response to a request for retrieval of proximity metrics in some specific case. This request
+    """The response to a request for retrieval of proximity metrics in some specific case. This request
     may also be a request for computation of these metrics in the background (which may be pending).
     """
     values: dict[str, float | None]
@@ -96,8 +91,7 @@ class SquidpyMetricsComputationResult(BaseModel):
 
 
 class UMAPChannel(BaseModel):
-    """
-    A UMAP dimensional reduction of a cell set, with one intensity channel's overlay.
+    """A UMAP dimensional reduction of a cell set, with one intensity channel's overlay.
     The image is encoded in base 64.
     """
     channel: str

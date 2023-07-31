@@ -28,8 +28,7 @@ logger = colorized_logger(__name__)
 
 
 class DataSkimmer(DatabaseConnectionMaker):
-    """
-    Orchestration of source file parsing into single cell ADI schema database
+    """Orchestration of source file parsing into single cell ADI schema database
     for a bundle of source files.
     """
     def __init__(self, database_config_file: Optional[str] = None):

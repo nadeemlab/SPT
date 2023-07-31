@@ -15,8 +15,7 @@ def get_input_filenames_by_data_type(
     data_type: Optional[str] = None,
     file_manifest_filename: Optional[str] = None,
 ):
-    """
-    Retrieves from the file metadata table the names of all files with the given
+    """Retrieves from the file metadata table the names of all files with the given
     "Data type" field.
 
     :param data_type: The file type descriptor.
@@ -36,8 +35,7 @@ def get_input_filename_by_identifier(
     input_file_identifier: Optional[str] = None,
     file_manifest_filename: Optional[str] = None,
 ) -> str:
-    """
-    Uses the file identifier to lookup the name of the associated file in the file
+    """Uses the file identifier to lookup the name of the associated file in the file
     metadata table, and cache the name of the associated file.
 
     :param file_metadata: The table of files.

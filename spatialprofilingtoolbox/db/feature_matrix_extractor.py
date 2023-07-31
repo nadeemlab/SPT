@@ -27,9 +27,7 @@ class DBSource(Enum):
 
 
 class FeatureMatrixExtractor:
-    """
-    Pull from the database and create convenience bundle of feature matrices and metadata.
-    """
+    """Pull from the database and create convenience bundle of feature matrices and metadata."""
 
     cursor: Psycopg2Cursor
     database_config_file: str | None

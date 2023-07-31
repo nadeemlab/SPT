@@ -80,9 +80,7 @@ async def get_root():
 
 @app.get("/study-names/")
 async def get_study_names() -> list[StudyHandle]:
-    """
-    The names of studies/datasets, with display names.
-    """
+    """The names of studies/datasets, with display names."""
     return query().retrieve_study_handles()
 
 
@@ -90,9 +88,7 @@ async def get_study_names() -> list[StudyHandle]:
 async def get_study_summary(
     study: ValidStudy,
 ) -> StudySummary:
-    """
-    A summary of a study's publications, authors, etc., as well as a summary of its datasets.
-    """
+    """A summary of a study's publications, authors, etc., as well as a summary of its datasets."""
     return query().get_study_summary(study)
 
 
@@ -100,9 +96,7 @@ async def get_study_summary(
 async def get_channels(
     study: ValidStudy,
 ) -> list[Channel]:
-    """
-    The short symbolic names of the channels imaged or measured in a given study.
-    """
+    """The short symbolic names of the channels imaged or measured in a given study."""
     return query().get_channel_names(study)
 
 
@@ -128,8 +122,7 @@ async def get_phenotype_criteria(
     study: ValidStudy,
     phenotype_symbol: ValidPhenotypeSymbol,
 ) -> PhenotypeCriteria:
-    """
-    Get lists of the positive markers and negative markers defining a given named phenotype, in the
+    """Get lists of the positive markers and negative markers defining a given named phenotype, in the
     context of the given study.
     """
     return query().get_phenotype_criteria(study, phenotype_symbol)
@@ -141,8 +134,7 @@ async def get_anonymous_phenotype_counts_fast(
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
-    """
-    Computes the number of cells satisfying the given positive and negative criteria, in the
+    """Computes the number of cells satisfying the given positive and negative criteria, in the
     context of a given study.
     """
     positive_markers = [m for m in positive_marker if m != '']
@@ -166,8 +158,7 @@ async def request_phenotype_proximity_computation(
     phenotype2: ValidPhenotype,
     radius: int = Query(default=100),
 ) -> ProximityMetricsComputationResult:
-    """
-    Spatial proximity statistics between pairs of cell populations defined by phenotype criteria.
+    """Spatial proximity statistics between pairs of cell populations defined by phenotype criteria.
     The metric is the average number of cells of a second phenotype within a fixed distance to a
     given cell of a primary phenotype.
     """
@@ -210,9 +201,7 @@ async def request_squidpy_computation(
 async def get_plots(
     study: ValidStudy,
 ) -> list[UMAPChannel]:
-    """
-    Base64-encoded plots of UMAP visualizations, one per channel.
-    """
+    """Base64-encoded plots of UMAP visualizations, one per channel."""
     return query().get_umaps_low_resolution(study)
 
 
@@ -221,8 +210,7 @@ async def get_plot_high_resolution(
     study: ValidStudy,
     channel: ValidChannel,
 ):
-    """
-    One full-resolution UMAP plot (for the given channel in the given study), provided as a
+    """One full-resolution UMAP plot (for the given channel in the given study), provided as a
     streaming PNG.
     """
     umap = query().get_umap(study, channel)

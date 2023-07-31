@@ -15,8 +15,7 @@ logger = colorized_logger(__name__)
 
 
 class ProximityJobGenerator(JobGenerator):
-    """
-    Generate a list of parallelizable jobs for the proximity metric calculation
+    """Generate a list of parallelizable jobs for the proximity metric calculation
     pipeline.
     """
 

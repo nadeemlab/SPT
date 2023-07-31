@@ -180,8 +180,7 @@ class FastCacheAssessor:
 
     @staticmethod
     def recreation_enabled() -> bool:
-        """
-        If environment variable DISABLE_FAST_CACHE_RECREATION=1, the fast cache assessor will not
+        """If environment variable DISABLE_FAST_CACHE_RECREATION=1, the fast cache assessor will not
         do cache recreation, and it will not delete old cache. It will do only read operations.
         If this environment variable does not exist or is not equal to 1, recreation will be
         considered and possibly attempted.
@@ -194,8 +193,7 @@ class FastCacheAssessor:
         return not disable_fast_cache_recreation
 
 def log_expected_found(set1, set2, message1, message2, context: str=''):
-    """
-    Logs error message1 (one formattable argument) for each element of set1 (expected) that is
+    """Logs error message1 (one formattable argument) for each element of set1 (expected) that is
     missing from set2 (found).
     Also logs warning message2 for each element of set2 (found) that is not present in set1
     (expected).

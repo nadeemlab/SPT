@@ -27,8 +27,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
               channels_file,
               phenotypes_file,
               study_name):
-        """
-        Retrieve the phenotype and channel metadata, and parse records for:
+        """Retrieve the phenotype and channel metadata, and parse records for:
         - chemical species
         - biological marking system
         - data analysis study

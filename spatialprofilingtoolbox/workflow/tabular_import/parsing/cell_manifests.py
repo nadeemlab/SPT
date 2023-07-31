@@ -19,9 +19,7 @@ logger = colorized_logger(__name__)
 
 
 class CellManifestsParser(SourceToADIParser):
-    """
-    Source file parsing for metadata at the level of the cell manifest set.
-    """
+    """Source file parsing for metadata at the level of the cell manifest set."""
 
     def __init__(self, fields, **kwargs):
         super().__init__(fields, **kwargs)
@@ -175,8 +173,7 @@ class CellManifestsParser(SourceToADIParser):
               connection,
               file_manifest_file,
               chemical_species_identifiers_by_symbol):
-        """
-        Retrieve each cell manifest, and parse records for:
+        """Retrieve each cell manifest, and parse records for:
         - histological structure identification
         - histological structure
         - shape file

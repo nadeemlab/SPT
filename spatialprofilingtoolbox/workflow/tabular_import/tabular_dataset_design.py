@@ -13,9 +13,7 @@ class MissingPositivityColumnError(ValueError):
 
 
 class TabularCellMetadataDesign:
-    """
-    This class provides the schema necessary to interpret cell metadata manifests.
-    """
+    """This class provides the schema necessary to interpret cell metadata manifests."""
 
     def __init__(self,
                  channels_file: str = '',
@@ -49,8 +47,7 @@ class TabularCellMetadataDesign:
     def _get_indicator_prefix(self,
                               phenotype_name,
                               metadata_file_column='Column header fragment prefix'):
-        """
-        Args:
+        """Args:
             phenotype_name (str):
                 One of the elementary phenotype names.
             metadata_file_column (str):
@@ -67,8 +64,7 @@ class TabularCellMetadataDesign:
         return str(value)
 
     def munge_name(self, signature):
-        """
-        Args:
+        """Args:
             signature (dict):
                 The keys are typically phenotype names and the values are "+" or "-". If
                 a key is not a phenotype name, it is presumed to be the exact name of
@@ -86,8 +82,7 @@ class TabularCellMetadataDesign:
         return name
 
     def get_feature_name(self, key, separator=' '):
-        """
-        Args:
+        """Args:
             key (str):
                 A phenotype/channel name (usually).
 
@@ -102,8 +97,7 @@ class TabularCellMetadataDesign:
         return key
 
     def get_intensity_feature_name(self, key, separator=' '):
-        """
-        Args:
+        """Args:
             key (str):
                 A phenotype/channel name (usually).
 

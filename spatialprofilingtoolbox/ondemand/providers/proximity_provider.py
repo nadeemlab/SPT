@@ -5,13 +5,19 @@ from sklearn.neighbors import BallTree
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.ondemand.phenotype_str import \
-    phenotype_str_to_phenotype, phenotype_to_phenotype_str
+from spatialprofilingtoolbox.ondemand.phenotype_str import (\
+    phenotype_str_to_phenotype,
+    phenotype_to_phenotype_str,
+)
 from spatialprofilingtoolbox.ondemand.providers import PendingProvider
-from spatialprofilingtoolbox.workflow.common.export_features import \
-    ADIFeatureSpecificationUploader, add_feature_value
-from spatialprofilingtoolbox.workflow.common.proximity import \
-    describe_proximity_feature_derivation_method, compute_proximity_metric_for_signature_pair
+from spatialprofilingtoolbox.workflow.common.export_features import (\
+    ADIFeatureSpecificationUploader,
+    add_feature_value,
+)
+from spatialprofilingtoolbox.workflow.common.proximity import (\
+    describe_proximity_feature_derivation_method,
+    compute_proximity_metric_for_signature_pair,
+)
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

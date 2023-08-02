@@ -50,10 +50,14 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     def _get_proximity_metrics(self, study, radius, signature):
         positives1, negatives1, positives2, negatives2 = signature
-        phenotype1 = PhenotypeCriteria(positives1, negatives1)
-        phenotype2 = PhenotypeCriteria(positives2, negatives2)
+        phenotype1 = PhenotypeCriteria(positive_markers=positives1, negative_markers=negatives1)
+        phenotype2 = PhenotypeCriteria(positive_markers=positives2, negative_markers=negatives2)
         return self.server.proximity_provider.get_metrics(
-            study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
+            study,
+            phenotype1=phenotype1,
+            phenotype2=phenotype2,
+            radius=radius,
+        )
 
     def _handle_single_phenotype_counts_request(self, data):
         groups = self._get_groups(data)
@@ -156,12 +160,15 @@ class OnDemandRequestHandler(BaseRequestHandler):
     def _get_squidpy_metrics(
         self,
         study: str,
-        channel_lists: list[list[str]]
-    ) -> dict[str, dict[str, float]]:
+        channel_lists: list[list[str]],
+    ) -> dict[str, dict[str, float | None] | bool]:
         phenotypes: list[PhenotypeCriteria] = []
         for i in range(len(channel_lists)//2):
-            phenotypes.append(PhenotypeCriteria(channel_lists[2*i], channel_lists[2*i+1]))
-        raise self.server.squidpy_provider.get_metrics(study, phenotypes=phenotypes)
+            phenotypes.append(PhenotypeCriteria(
+                positive_markers=channel_lists[2*i],
+                negative_markers=channel_lists[2*i+1],
+            ))
+        return self.server.squidpy_provider.get_metrics(study, phenotypes=phenotypes)
 
     def _handle_empty_body(self, data):
         if data == '':

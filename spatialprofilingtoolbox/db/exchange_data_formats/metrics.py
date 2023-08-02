@@ -42,13 +42,14 @@ class Channel(BaseModel):
 
 class PhenotypeCriteria(BaseModel):
     """Criteria defining a "composite" phenotype by expression and non-expression of markers."""
-
     positive_markers: list[str]
     negative_markers: list[str]
 
 
 class CompositePhenotype(BaseModel):
-    """For named phenotypes, the name and the internal identifier used for matching up related records."""
+    """For named phenotypes, the name and the internal identifier used for matching up related
+    records.
+    """
     name: str
     identifier: str
     criteria: PhenotypeCriteria
@@ -71,8 +72,9 @@ class PhenotypeCounts(BaseModel):
 
 
 class ProximityMetricsComputationResult(BaseModel):
-    """The response to a request for retrieval of proximity metrics in some specific case. This request
-    may also be a request for computation of these metrics in the background (which may be pending).
+    """The response to a request for retrieval of proximity metrics in some specific case. This
+    request may also be a request for computation of these metrics in the background (which may be
+    pending).
     """
     values: dict[str, float | None]
     is_pending: bool

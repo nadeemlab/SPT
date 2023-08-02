@@ -49,6 +49,14 @@ async def valid_phenotype(phenotype: str = Query(min_length=1)) -> str:
     return valid_single_or_composite_identifier(phenotype)
 
 
+async def valid_phenotype1(phenotype1: str = Query(min_length=1)) -> str:
+    return valid_single_or_composite_identifier(phenotype1)
+
+
+async def valid_phenotype2(phenotype2: str = Query(min_length=1)) -> str:
+    return valid_single_or_composite_identifier(phenotype2)
+
+
 def valid_channel_list(markers: list[str]) -> list[str]:
     channels = query().get_channel_names_all_studies() + ['']
     if all(marker in channels for marker in markers):
@@ -71,5 +79,7 @@ ValidChannel = Annotated[str, Depends(valid_channel)]
 ValidStudy = Annotated[str, Depends(valid_study_name)]
 ValidPhenotypeSymbol = Annotated[str, Depends(valid_phenotype_symbol)]
 ValidPhenotype = Annotated[str, Depends(valid_phenotype)]
+ValidPhenotype1 = Annotated[str, Depends(valid_phenotype1)]
+ValidPhenotype2 = Annotated[str, Depends(valid_phenotype2)]
 ValidChannelListPositives = Annotated[list[str], Depends(valid_channel_list_positives)]
 ValidChannelListNegatives = Annotated[list[str], Depends(valid_channel_list_negatives)]

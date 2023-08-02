@@ -22,6 +22,8 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidStudy,
     ValidPhenotypeSymbol,
     ValidPhenotype,
+    ValidPhenotype1,
+    ValidPhenotype2,
     ValidChannelListPositives,
     ValidChannelListNegatives,
 )
@@ -122,8 +124,8 @@ async def get_phenotype_criteria(
     study: ValidStudy,
     phenotype_symbol: ValidPhenotypeSymbol,
 ) -> PhenotypeCriteria:
-    """Get lists of the positive markers and negative markers defining a given named phenotype, in the
-    context of the given study.
+    """Get lists of the positive markers and negative markers defining a given named phenotype, in
+    the context of the given study.
     """
     return query().get_phenotype_criteria(study, phenotype_symbol)
 
@@ -154,8 +156,8 @@ async def get_anonymous_phenotype_counts_fast(
 @app.get("/request-phenotype-proximity-computation/")
 async def request_phenotype_proximity_computation(
     study: ValidStudy,
-    phenotype1: ValidPhenotype,
-    phenotype2: ValidPhenotype,
+    phenotype1: ValidPhenotype1,
+    phenotype2: ValidPhenotype2,
     radius: int = Query(default=100),
 ) -> ProximityMetricsComputationResult:
     """Spatial proximity statistics between pairs of cell populations defined by phenotype criteria.

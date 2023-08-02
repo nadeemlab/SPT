@@ -44,8 +44,8 @@ class PendingProvider(Provider, ABC):
         return self._query_for_computed_feature_values(
             feature_specification, still_pending=is_pending)
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def get_or_create_feature_specification(
         cls,
         study_name: str,

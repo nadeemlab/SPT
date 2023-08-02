@@ -13,4 +13,4 @@ def phenotype_to_phenotype_str(phenotype: PhenotypeCriteria) -> str:
 def phenotype_str_to_phenotype(phenotype_str: str) -> PhenotypeCriteria:
     """Convert controlled phenotype string into a PhenotypeCriteria object."""
     parts = literal_eval(phenotype_str)
-    return PhenotypeCriteria(parts[0], parts[1])
+    return PhenotypeCriteria(positive_markers=parts[0], negative_markers=parts[1])

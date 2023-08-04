@@ -70,6 +70,7 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/ondemand/; SINGLE_CELL_DATABASE_HOST=spt-db-testing SINGLE_CELL_DATABASE_USER=postgres SINGLE_CELL_DATABASE_PASSWORD=postgres USE_ALTERNATIVE_TESTING_DATABASE=1 $$executor $$test_script" ; \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh & \
+    sleep 0.2; \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
@@ -78,7 +79,7 @@ ${TESTS}: setup-testing
      /bin/bash -c "$$test_cmd" ; \
     echo "$$?" > status_code ; \
     kill %1
->@echo "Printing docker compose logs:"; for f in dlogs.api.txt dlogs.od.txt; do cat $$f; rm $$f; done; rm dlogs.db.txt; echo ""; docker network ls; echo ""; docker container ls;
+>@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 

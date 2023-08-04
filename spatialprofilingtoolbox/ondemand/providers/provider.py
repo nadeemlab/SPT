@@ -1,5 +1,6 @@
 """Base class for providers."""
 
+from typing import cast
 from abc import ABC
 from sys import exit
 from re import search
@@ -70,13 +71,11 @@ class Provider(ABC):
                     )
                     for item in self.studies[study_name]['expressions files']
                 }
-                shapes = [
-                    df.shape for df in self.data_arrays[study_name].values()]
+                shapes = [df.shape for df in self.data_arrays[study_name].values()]
                 logger.debug('Loaded dataframes of sizes %s', shapes)
                 number_specimens = len(self.data_arrays[study_name])
                 specimens = self.data_arrays[study_name].keys()
-                logger.debug('%s specimens loaded (%s).',
-                             number_specimens, specimens)
+                logger.debug('%s specimens loaded (%s).', number_specimens, specimens)
 
     def get_study_names(self) -> list[str]:
         """Retrieve names of the studies held in memory."""
@@ -93,16 +92,23 @@ class Provider(ABC):
     ) -> DataFrame:
         """Load data arrays from a precomputed JSON artifact."""
         rows = []
-        columns = self.list_columns(target_index_lookup, target_by_symbol) if \
-            (target_index_lookup is not None) and (target_by_symbol is not None) else ['entry']
+        use_feature_columns = (target_index_lookup is not None) and (target_by_symbol is not None)
+        binary_only = not use_feature_columns
+        columns = []
+        if use_feature_columns:
+            target_index_lookup = cast(dict, target_index_lookup)
+            target_by_symbol = cast(dict, target_by_symbol)
+            columns =  self.list_columns(target_index_lookup, target_by_symbol)
+        if binary_only:
+            columns = ['entry']
+
         with open(filename, 'rb') as file:
             buffer = None
             while True:
                 buffer = file.read(8)
                 if buffer == b'':
                     break
-                if target_index_lookup is None:
-                    buffer = file.read(8)
+                if binary_only:
                     row = [int.from_bytes(buffer, 'little')]
                 else:
                     binary_expression_64_string = ''.join([
@@ -115,10 +121,8 @@ class Provider(ABC):
                     rows.append(row)
         df = DataFrame(rows, columns=columns)
         if (centroids is not None) and (study_name is not None) and (sample is not None):
-            df['pixel x'] = [point[0]
-                             for point in centroids[study_name][sample]]
-            df['pixel y'] = [point[1]
-                             for point in centroids[study_name][sample]]
+            df['pixel x'] = [point[0] for point in centroids[study_name][sample]]
+            df['pixel y'] = [point[1] for point in centroids[study_name][sample]]
         return df
 
     @staticmethod

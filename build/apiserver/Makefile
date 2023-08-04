@@ -63,18 +63,20 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/apiserver/; $$executor $$test_script" ; \
-    docker compose logs -f & \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh & \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \
-    echo "$$?" > status_code ;
->@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;
+    echo "$$?" > status_code ; \
+    kill %1
+>@echo "Printing docker compose logs:"; for f in dlogs.api.txt dlogs.od.txt; do cat $$f; rm $$f; done; rm dlogs.db.txt; echo ""; docker network ls; echo ""; docker container ls;
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
+>@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;

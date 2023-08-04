@@ -69,13 +69,16 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/ondemand/; SINGLE_CELL_DATABASE_HOST=spt-db-testing SINGLE_CELL_DATABASE_USER=postgres SINGLE_CELL_DATABASE_PASSWORD=postgres USE_ALTERNATIVE_TESTING_DATABASE=1 $$executor $$test_script" ; \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh & \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \
-    echo "$$?" > status_code
+    echo "$$?" > status_code ; \
+    kill %1
+>@echo "Printing docker compose logs:"; for f in dlogs.api.txt dlogs.od.txt; do cat $$f; rm $$f; done; rm dlogs.db.txt; echo ""; docker network ls; echo ""; docker container ls;
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 
@@ -85,3 +88,4 @@ clean:
 >@rm -rf expression_data/
 >@rm -f ../../test/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
 >@rm -rf ../../test/test_data/fast_cache_testing
+>@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;

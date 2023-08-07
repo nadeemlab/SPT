@@ -3,6 +3,7 @@ The core calculator for the proximity calculation on a single source file.
 """
 import warnings
 import pickle
+from typing import cast
 
 import pandas as pd
 from pandas import DataFrame
@@ -118,14 +119,14 @@ class PhenotypeProximityCoreJob(CoreJob):
         def list_channels(df: DataFrame, polarity: int) -> list[str]:
             return [lookup[r['channel']] for _, r in df.iterrows() if r['polarity'] == polarity]
 
-        def make_signature(df) -> PhenotypeCriteria:
-            return PhenotypeCriteria(
+        def make_signature(df) -> pd.Series:
+            return pd.Series(PhenotypeCriteria(
                 positive_markers = list_channels(df, 1),
                 negative_markers = list_channels(df, 0),
-            )
+            ))
         signatures = criteria.groupby(['phenotype']).apply(make_signature)
         by_identifier = {
-            str(phenotype) : row
+            str(phenotype) : cast(PhenotypeCriteria, row.iloc[0])
             for phenotype, row in signatures.items()
         }
         identifiers = sorted(by_identifier.keys())

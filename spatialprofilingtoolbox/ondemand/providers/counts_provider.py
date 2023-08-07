@@ -18,15 +18,14 @@ class CountsProvider(OnDemandProvider):
         """
         super().__init__(data_directory, False)
 
-    def compute_signature(self, channel_names: list[str], study_name: str) -> int:
+    def compute_signature(self, channel_names: list[str], study_name: str) -> int | None:
         """Compute int signature of this channel name combination."""
         target_by_symbol = self.studies[study_name]['target by symbol']
         target_index_lookup = self.studies[study_name]['target index lookup']
         if not all(name in target_by_symbol.keys() for name in channel_names):
             return None
         identifiers = [target_by_symbol[name] for name in channel_names]
-        indices = [target_index_lookup[identifier]
-                   for identifier in identifiers]
+        indices = [target_index_lookup[identifier] for identifier in identifiers]
         signature = 0
         for index in indices:
             signature = signature + (1 << index)

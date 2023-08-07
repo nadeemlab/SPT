@@ -84,26 +84,33 @@ class Provider(ABC):
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
         feature_columns =  self.list_columns(target_index_lookup, target_by_symbol)
+        size = len(feature_columns)
         with open(filename, 'rb') as file:
-            buffer = None
             while True:
                 buffer = file.read(8)
-                if buffer == b'':
+                row = self.parse_cell_row(buffer, size)
+                if row is None:
                     break
-                binary_expression_64_string = ''.join([
-                    ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
-                    for ii in buffer
-                ])
-                truncated_to_channels = binary_expression_64_string[0:len(feature_columns)]
-                integer = int.from_bytes(buffer, 'little')
-                row = [int(b) for b in list(truncated_to_channels)] + [integer]
                 rows.append(row)
         return DataFrame(rows, columns=feature_columns + ['integer'])
+
+    @staticmethod
+    def parse_cell_row(buffer: bytes, size: int) -> tuple[int, ...] | None:
+        if buffer == b'':
+            return None
+        binary_expression_64_string = ''.join([
+            ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
+            for ii in buffer
+        ])
+        truncated_to_channels = binary_expression_64_string[0:size]
+        integer = int.from_bytes(buffer, 'little')
+        return tuple([int(b) for b in list(truncated_to_channels)] + [integer])
 
     def add_centroids(self,
         df: DataFrame,
         centroids: dict[str, dict[str, list[tuple[float, float]]]],
-        study_name: str, sample: str,
+        study_name: str,
+        sample: str,
     ):
         if (centroids is not None) and (study_name is not None) and (sample is not None):
             df['pixel x'] = [point[0] for point in centroids[study_name][sample]]
@@ -111,10 +118,12 @@ class Provider(ABC):
 
     @staticmethod
     def list_columns(target_index_lookup: dict, target_by_symbol: dict) -> list[str]:
-        target_by_index = {value: key for key,
-                           value in target_index_lookup.items()}
-        symbol_by_target = {value: key for key,
-                            value in target_by_symbol.items()}
+        target_by_index = {
+            value: key for key, value in target_index_lookup.items()
+        }
+        symbol_by_target = {
+            value: key for key, value in target_by_symbol.items()
+        }
         return [
             symbol_by_target[target_by_index[i]]
             for i in range(len(target_by_index))

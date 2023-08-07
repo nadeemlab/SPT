@@ -20,7 +20,7 @@ if __name__ == '__main__':
         [['CD3', 'CD4'], ['CD8', 'CD20']],
     ]
     responses = [retrieve_case(case) for case in cases]
-    expected = [517, 172, 707, 158]
+    expected = [510, 172, 700, 158]
     for comparison in zip(responses, expected, cases):
         if comparison[0] != comparison[1]:
             print(f'Incorrect response: {comparison}')

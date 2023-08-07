@@ -2,6 +2,7 @@
 function consider_exit() {
     if [[ "$1" != "0" ]];
     then
+        echo "Incorrect result."
         exit 1
     fi
 }

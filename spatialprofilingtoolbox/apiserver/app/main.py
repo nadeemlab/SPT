@@ -12,9 +12,15 @@ from fastapi.responses import StreamingResponse
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary, \
-    PhenotypeSymbol, Channel, PhenotypeCriteria, PhenotypeCounts, \
-    ProximityMetricsComputationResult, SquidpyMetricsComputationResult
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
+    CellFractionsSummary,
+    PhenotypeSymbol,
+    Channel,
+    PhenotypeCriteria,
+    PhenotypeCounts,
+    ProximityMetricsComputationResult,
+    SquidpyMetricsComputationResult,
+)
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
@@ -75,7 +81,8 @@ setattr(app, 'openapi', custom_openapi)
 async def get_root():
     return Response(
         content=json.dumps(
-            {'server description': 'Single cell studies database views API'}),
+            {'server description': 'Single cell studies database views API'}
+        ),
         media_type='application/json',
     )
 
@@ -170,8 +177,7 @@ async def request_phenotype_proximity_computation(
     with OnDemandRequester() as requester:
         metrics = requester.get_proximity_metrics(
             query().get_study_components(study).measurement,
-            radius,
-            (
+            radius, (
                 criteria1.positive_markers,
                 criteria1.negative_markers,
                 criteria2.positive_markers,
@@ -188,14 +194,16 @@ async def request_squidpy_computation(
 ) -> SquidpyMetricsComputationResult:
     """Spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
     criteria: list[PhenotypeCriteria] = [
-        query().retrieve_signature_of_phenotype(p, study) for p in phenotypes]
+        query().retrieve_signature_of_phenotype(p, study) for p in phenotypes
+    ]
     markers: list[list[str]] = []
     for criterion in criteria:
         markers.append(criterion.positive_markers)
         markers.append(criterion.negative_markers)
     with OnDemandRequester() as requester:
         metrics = requester.get_squidpy_metrics(
-            query().get_study_components(study).measurement, markers)
+            query().get_study_components(study).measurement, markers
+        )
     return metrics
 
 

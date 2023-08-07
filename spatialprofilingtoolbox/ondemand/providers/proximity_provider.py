@@ -34,18 +34,16 @@ class ProximityProvider(PendingProvider):
         super().__init__(data_directory, load_centroids=True)
 
         logger.info('Start loading location data and creating ball trees.')
-        self._create_ball_trees(self.centroids)
+        self._create_ball_trees()
         logger.info('Finished creating ball trees.')
 
-        del self.centroids
-
-    def _create_ball_trees(self, centroids):
+    def _create_ball_trees(self) -> None:
         self.trees = {
             study_name: {
-                sample_identifier: BallTree(np.array(points_list))
-                for sample_identifier, points_list in points_lists.items()
+                sample_identifier: BallTree(df[['pixel x', 'pixel y']].to_numpy())
+                for sample_identifier, df in _data_arrays.items()
             }
-            for study_name, points_lists in centroids.items()
+            for study_name, _data_arrays in self.data_arrays.items()
         }
 
     @classmethod

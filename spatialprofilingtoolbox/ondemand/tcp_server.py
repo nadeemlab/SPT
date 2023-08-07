@@ -2,8 +2,11 @@
 
 from socketserver import TCPServer, BaseRequestHandler
 
-from spatialprofilingtoolbox.ondemand.providers import CountsProvider, ProximityProvider, \
-    SquidpyProvider
+from spatialprofilingtoolbox.ondemand.providers import (
+    CountsProvider,
+    ProximityProvider,
+    SquidpyProvider,
+)
 
 class OnDemandTCPServer(TCPServer):
     """Custom TCP server for on demand metrics."""
@@ -21,4 +24,3 @@ class OnDemandTCPServer(TCPServer):
         self.counts_provider = counts_provider
         self.proximity_provider = proximity_provider
         self.squidpy_provider = squidpy_provider
-        

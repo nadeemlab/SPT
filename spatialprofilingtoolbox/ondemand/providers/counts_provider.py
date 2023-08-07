@@ -40,11 +40,7 @@ class CountsProvider(Provider):
         """Count the number of structures that have this exact channel signature."""
         counts = {}
         for specimen, data_array in self.data_arrays[study_name].items():
-            count = (data_array['entry'] == signature).sum()
-            # count = 0
-            # for entry in data_array:
-            #     if entry == signature:
-            #         count = count + 1
+            count = (data_array['integer'] == signature).sum()
             counts[specimen] = [count, len(data_array)]
         return counts
 
@@ -57,7 +53,7 @@ class CountsProvider(Provider):
         counts = {}
         for specimen, data_array in self.data_arrays[study_name].items():
             count = 0
-            for entry in data_array['entry']:
+            for entry in data_array['integer']:
                 if entry | signature == entry:
                     count = count + 1
             counts[specimen] = [count, len(data_array)]
@@ -73,7 +69,9 @@ class CountsProvider(Provider):
         counts = {}
         for specimen, data_array in self.data_arrays[study_name].items():
             count = 0
-            for entry in data_array['entry']:
+            if len(data_array) == 0:
+                raise ValueError(f'Data array for specimen "{specimen}" is empty.')
+            for entry in data_array['integer']:
                 if (entry | positives_signature == entry) and \
                         (~entry | negatives_signature == ~entry):
                     count = count + 1

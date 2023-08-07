@@ -2,7 +2,7 @@
 
 from typing import cast
 from abc import ABC
-from sys import exit
+import sys
 from re import search
 from os import listdir
 from os.path import join, isfile
@@ -18,29 +18,29 @@ logger = colorized_logger(__name__)
 
 class Provider(ABC):
     """Base class for Provider instances, since they share data ingestion methods."""
+    data_arrays: dict[str, dict[str, DataFrame]]
 
     def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
         """Load from a precomputed JSON artifact in the data directory."""
         self.load_expressions_indices(data_directory)
 
+        centroids = None
         if load_centroids:
             loader = StructureCentroids()
             loader.load_from_file(data_directory)
-            self.centroids = loader.get_studies()
-        else:
-            self.centroids = None
+            centroids = loader.get_studies()
 
-        self.load_data_matrices(data_directory, self.centroids)
+        self.load_data_matrices(data_directory, centroids)
         logger.info('%s is finished loading source data.', type(self).__name__)
 
     def load_expressions_indices(self, data_directory: str) -> None:
-        """Load expression indices from a precomputed JSON artifact."""
+        """Load expression indices in reference to a JSON-formatted index file."""
         logger.debug('Searching for source data in: %s', data_directory)
         json_files = [f for f in listdir(data_directory) if isfile(
             join(data_directory, f)) and search(r'\.json$', f)]
         if len(json_files) != 1:
             logger.error('Did not find index JSON file.')
-            exit(1)
+            sys.exit(1)
         with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
             root = loads(file.read())
             entries = root[list(root.keys())[0]]
@@ -49,81 +49,65 @@ class Provider(ABC):
                 self.studies[entry['specimen measurement study name']] = entry
 
     def load_data_matrices(self, data_directory: str, centroids: dict | None = None) -> None:
-        """Load data matrices from a precomputed JSON artifact."""
-        self.data_arrays: dict[str, dict[str, DataFrame]] = {}
+        """Load data matrices in reference to a JSON-formatted index file."""
+        self.data_arrays = {}
         for study_name in self.get_study_names():
-            if centroids is None:
-                self.data_arrays[study_name] = {
-                    item['specimen']: self.get_data_array_from_file(
-                        join(data_directory, item['filename'])
-                    )
-                    for item in self.studies[study_name]['expressions files']
-                }
-            else:
-                self.data_arrays[study_name] = {
-                    item['specimen']: self.get_data_array_from_file(
-                        join(data_directory, item['filename']),
-                        self.studies[study_name]['target index lookup'],
-                        self.studies[study_name]['target by symbol'],
-                        study_name,
-                        item['specimen'],
-                        centroids,
-                    )
-                    for item in self.studies[study_name]['expressions files']
-                }
-                shapes = [df.shape for df in self.data_arrays[study_name].values()]
-                logger.debug('Loaded dataframes of sizes %s', shapes)
-                number_specimens = len(self.data_arrays[study_name])
-                specimens = self.data_arrays[study_name].keys()
-                logger.debug('%s specimens loaded (%s).', number_specimens, specimens)
+            self.data_arrays[study_name] = {
+                item['specimen']: self.get_data_array_from_file(
+                    join(data_directory, item['filename']),
+                    self.studies[study_name]['target index lookup'],
+                    self.studies[study_name]['target by symbol'],
+                )
+                for item in self.studies[study_name]['expressions files']
+            }
+            shapes = [df.shape for df in self.data_arrays[study_name].values()]
+            logger.debug('Loaded dataframes of sizes %s', shapes)
+            number_specimens = len(self.data_arrays[study_name])
+            specimens = self.data_arrays[study_name].keys()
+            logger.debug('%s specimens loaded (%s).', number_specimens, specimens)
+            if centroids is not None:
+                for sample, df in self.data_arrays[study_name].items():
+                    self.add_centroids(df, centroids, study_name, sample)
 
     def get_study_names(self) -> list[str]:
         """Retrieve names of the studies held in memory."""
-        return self.studies.keys()
+        return list(self.studies.keys())
 
     def get_data_array_from_file(
         self,
         filename: str,
-        target_index_lookup: dict | None = None,
-        target_by_symbol: dict | None = None,
-        study_name: str | None = None,
-        sample: str | None = None,
-        centroids: dict | None = None,
+        target_index_lookup: dict,
+        target_by_symbol: dict,
     ) -> DataFrame:
         """Load data arrays from a precomputed JSON artifact."""
         rows = []
-        use_feature_columns = (target_index_lookup is not None) and (target_by_symbol is not None)
-        binary_only = not use_feature_columns
-        columns = []
-        if use_feature_columns:
-            target_index_lookup = cast(dict, target_index_lookup)
-            target_by_symbol = cast(dict, target_by_symbol)
-            columns =  self.list_columns(target_index_lookup, target_by_symbol)
-        if binary_only:
-            columns = ['entry']
-
+        target_index_lookup = cast(dict, target_index_lookup)
+        target_by_symbol = cast(dict, target_by_symbol)
+        feature_columns =  self.list_columns(target_index_lookup, target_by_symbol)
         with open(filename, 'rb') as file:
             buffer = None
             while True:
                 buffer = file.read(8)
                 if buffer == b'':
                     break
-                if binary_only:
-                    row = [int.from_bytes(buffer, 'little')]
-                else:
-                    binary_expression_64_string = ''.join([
-                        ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
-                        for ii in buffer
-                    ])
-                    truncated_to_channels = binary_expression_64_string[0:len(
-                        columns)]
-                    row = [int(b) for b in list(truncated_to_channels)]
-                    rows.append(row)
-        df = DataFrame(rows, columns=columns)
+                binary_expression_64_string = ''.join([
+                    ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
+                    for ii in buffer
+                ])
+                truncated_to_channels = binary_expression_64_string[0:len(feature_columns)]
+                integer = int.from_bytes(buffer, 'little')
+                row = [int(b) for b in list(truncated_to_channels)] + [integer]
+                rows.append(row)
+        return DataFrame(rows, columns=feature_columns + ['integer'])
+
+    def add_centroids(self,
+        df: DataFrame,
+        centroids: dict[str, dict[str, list[tuple[float, float]]]],
+        study_name: str, sample: str,
+    ):
         if (centroids is not None) and (study_name is not None) and (sample is not None):
             df['pixel x'] = [point[0] for point in centroids[study_name][sample]]
             df['pixel y'] = [point[1] for point in centroids[study_name][sample]]
-        return df
 
     @staticmethod
     def list_columns(target_index_lookup: dict, target_by_symbol: dict) -> list[str]:

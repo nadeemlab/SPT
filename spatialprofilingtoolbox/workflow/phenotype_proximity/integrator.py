@@ -24,7 +24,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
     def __init__(self,
         study_name: str = '',
         database_config_file: Optional[str] = None,
-        **kwargs # pylint: disable=unused-argument
+        **kwargs  # pylint: disable=unused-argument
     ):
         self.study_name = study_name
         self.database_config_file = database_config_file

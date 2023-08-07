@@ -72,3 +72,22 @@ class PerformanceTimer:
     def report_string(self, organize_by: ReportOrganization):
         df = self.report(organize_by=organize_by)
         return df.to_markdown(index=False)
+
+
+class PerformanceTimerReporter:
+    """Logger/reporter of performance timer results."""
+    timer: PerformanceTimer
+
+    def __init__(self, performance_report_file: str, logger):
+        self.performance_report_file = performance_report_file
+        self.logger = logger
+        self.timer = PerformanceTimer()
+
+    def record_timepoint(self, moment_name: str):
+        self.timer.record_timepoint(moment_name)
+
+    def wrap_up_timer(self):
+        """Concludes low-level performance metric collection."""
+        df = self.timer.report(organize_by='fraction')
+        self.logger.info('Report to: %s', self.performance_report_file)
+        df.to_csv(self.performance_report_file, index=False)

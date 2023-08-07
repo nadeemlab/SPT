@@ -11,6 +11,7 @@ from sklearn.neighbors import BallTree # type: ignore
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
+from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import \
     PerformanceTimerReporter
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -66,16 +67,21 @@ class PhenotypeProximityCoreJob(CoreJob):
     def calculate_proximity(self):
         self.reporter.record_timepoint('Start pulling data for one sample.')
         extractor = FeatureMatrixExtractor(database_config_file=self.database_config_file)
-        bundle: dict = extractor.extract(specimen=self.sample_identifier)
+        bundle = cast(Bundle, extractor.extract(specimen=self.sample_identifier))
         self.reporter.record_timepoint('Finished pulling data for one sample.')
         study_name = list(bundle.keys())[0]
-        _, sample = list(bundle[study_name]['feature matrices'].items())[0]
-        cells = sample['dataframe']
+        identifier = list(bundle[study_name]['feature matrices'].keys())[0]
+        Sample = dict[str, DataFrame | str]
+        sample = cast(Sample, bundle[study_name]['feature matrices'][identifier])
+        cells = cast(DataFrame, sample['dataframe'])
         logger.info('Dataframe pulled: %s', cells.head())
 
         self.create_ball_tree(cells)
 
-        self.channel_symbols_by_column_name = bundle[study_name]['channel symbols by column name']
+        self.channel_symbols_by_column_name = cast(
+            dict[str, str],
+            bundle[study_name]['channel symbols by column name'],
+        )
         phenotype_identifiers, signatures = self.get_named_phenotype_signatures()
         logger.info('Named phenotypes:')
         logger.info(signatures)

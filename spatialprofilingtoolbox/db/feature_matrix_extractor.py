@@ -6,7 +6,7 @@ from enum import Enum
 from enum import auto
 from typing import cast
 
-import pandas as pd
+from pandas import DataFrame
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -18,6 +18,8 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
+BundlePart = dict[str, DataFrame | str | dict[str, DataFrame | str ]]
+Bundle = dict[str, dict[str, BundlePart]]
 
 class DBSource(Enum):
     """Indicator of intended database source."""
@@ -59,7 +61,7 @@ class FeatureMatrixExtractor:
         specimen: str | None=None,
         study: str | None=None,
         continuous_also: bool=False,
-    ):
+    ) -> Bundle | None:
         extraction = None
         match self.db_source:
             case DBSource.CURSOR:
@@ -85,7 +87,7 @@ class FeatureMatrixExtractor:
         specimen: str | None=None,
         study: str | None=None,
         continuous_also: bool=False,
-    ):
+    ) -> Bundle:
         data_arrays = self._retrieve_expressions_from_database(
             specimen=specimen,
             study=study,
@@ -178,7 +180,7 @@ class FeatureMatrixExtractor:
                     )
                     for i in range(len(expressions))
                 ]
-                dataframe = pd.DataFrame(
+                dataframe = DataFrame(
                     rows,
                     columns=['pixel x', 'pixel y'] +
                     [f'F{i}' for i in range(number_channels)])
@@ -193,7 +195,7 @@ class FeatureMatrixExtractor:
                     logger.debug('Specimen %s .', specimen)
                     expression_vectors = study['continuous data arrays by specimen'][specimen]
                     number_channels = len(study['target index lookup'])
-                    dataframe = pd.DataFrame(
+                    dataframe = DataFrame(
                         expression_vectors,
                         columns=[f'F{i}' for i in range(number_channels)],
                     )

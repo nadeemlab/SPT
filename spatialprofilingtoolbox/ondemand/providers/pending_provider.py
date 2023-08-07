@@ -8,13 +8,13 @@ from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.ondemand.providers import Provider
+from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class PendingProvider(Provider, ABC):
+class PendingProvider(OnDemandProvider, ABC):
     """Provide precalculated metrics or start, wait, receive, and then provide them."""
 
     def get_metrics(

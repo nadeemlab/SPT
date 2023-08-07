@@ -2,13 +2,13 @@
 
 from typing import Any
 
-from spatialprofilingtoolbox.ondemand.providers import Provider
+from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class CountsProvider(Provider):
+class CountsProvider(OnDemandProvider):
     """Scan binary-format expression matrices for specific signatures."""
 
     def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
@@ -31,33 +31,6 @@ class CountsProvider(Provider):
         for index in indices:
             signature = signature + (1 << index)
         return signature
-
-    def count_structures_of_exact_signature(
-        self,
-        signature: int,
-        study_name: str,
-    ) -> dict[str, list[int]]:
-        """Count the number of structures that have this exact channel signature."""
-        counts = {}
-        for specimen, data_array in self.data_arrays[study_name].items():
-            count = (data_array['integer'] == signature).sum()
-            counts[specimen] = [count, len(data_array)]
-        return counts
-
-    def count_structures_of_partial_signature(
-        self,
-        signature: int,
-        study_name: str,
-    ) -> dict[str, list[int]]:
-        """Count the number of structures that have part of this channel signature."""
-        counts = {}
-        for specimen, data_array in self.data_arrays[study_name].items():
-            count = 0
-            for entry in data_array['integer']:
-                if entry | signature == entry:
-                    count = count + 1
-            counts[specimen] = [count, len(data_array)]
-        return counts
 
     def count_structures_of_partial_signed_signature(
         self,

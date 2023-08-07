@@ -1,4 +1,4 @@
-"""Base class for providers."""
+"""Base class for on-demand calculation providers."""
 
 from typing import cast
 from abc import ABC
@@ -16,8 +16,8 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class Provider(ABC):
-    """Base class for Provider instances, since they share data ingestion methods."""
+class OnDemandProvider(ABC):
+    """Base class for OnDemandProvider instances, since they share data ingestion methods."""
     data_arrays: dict[str, dict[str, DataFrame]]
 
     def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
@@ -53,7 +53,7 @@ class Provider(ABC):
         self.data_arrays = {}
         for study_name in self.get_study_names():
             self.data_arrays[study_name] = {
-                item['specimen']: self.get_data_array_from_file(
+                item['specimen']: OnDemandProvider.get_data_array_from_file(
                     join(data_directory, item['filename']),
                     self.studies[study_name]['target index lookup'],
                     self.studies[study_name]['target by symbol'],
@@ -73,8 +73,9 @@ class Provider(ABC):
         """Retrieve names of the studies held in memory."""
         return list(self.studies.keys())
 
+    @classmethod
     def get_data_array_from_file(
-        self,
+        cls,
         filename: str,
         target_index_lookup: dict,
         target_by_symbol: dict,
@@ -83,12 +84,12 @@ class Provider(ABC):
         rows = []
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
-        feature_columns =  self.list_columns(target_index_lookup, target_by_symbol)
+        feature_columns =  cls.list_columns(target_index_lookup, target_by_symbol)
         size = len(feature_columns)
         with open(filename, 'rb') as file:
             while True:
                 buffer = file.read(8)
-                row = self.parse_cell_row(buffer, size)
+                row = cls.parse_cell_row(buffer, size)
                 if row is None:
                     break
                 rows.append(row)
@@ -106,7 +107,8 @@ class Provider(ABC):
         integer = int.from_bytes(buffer, 'little')
         return tuple([int(b) for b in list(truncated_to_channels)] + [integer])
 
-    def add_centroids(self,
+    @staticmethod
+    def add_centroids(
         df: DataFrame,
         centroids: dict[str, dict[str, list[tuple[float, float]]]],
         study_name: str,

@@ -7,7 +7,7 @@ from typing import cast
 
 import pandas as pd
 from pandas import DataFrame
-from sklearn.neighbors import BallTree # type: ignore
+from sklearn.neighbors import BallTree  # type: ignore
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
@@ -102,7 +102,7 @@ class PhenotypeProximityCoreJob(CoreJob):
     def create_ball_tree(self, cells):
         self.tree = BallTree(cells[['pixel x', 'pixel y']].to_numpy())
 
-    def get_named_phenotype_signatures(self):
+    def get_named_phenotype_signatures(self) -> tuple[list[str], list[PhenotypeCriteria]]:
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
@@ -125,16 +125,14 @@ class PhenotypeProximityCoreJob(CoreJob):
         def list_channels(df: DataFrame, polarity: int) -> list[str]:
             return [lookup[r['channel']] for _, r in df.iterrows() if r['polarity'] == polarity]
 
-        def make_signature(df) -> pd.Series:
-            return pd.Series(PhenotypeCriteria(
+        def make_signature(df) -> PhenotypeCriteria:
+            return PhenotypeCriteria(
                 positive_markers = list_channels(df, 1),
                 negative_markers = list_channels(df, 0),
-            ))
-        signatures = criteria.groupby(['phenotype']).apply(make_signature)
-        by_identifier = {
-            str(phenotype) : cast(PhenotypeCriteria, row.iloc[0])
-            for phenotype, row in signatures.items()
-        }
+            )
+        by_identifier: dict[str, PhenotypeCriteria] = {}
+        for key, criteria in criteria.groupby(['phenotype']):
+            by_identifier[str(key[0])] = make_signature(criteria)
         identifiers = sorted(by_identifier.keys())
         return identifiers, [by_identifier[i] for i in identifiers]
 

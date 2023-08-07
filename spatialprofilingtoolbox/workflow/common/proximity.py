@@ -56,8 +56,12 @@ def _phenotype_identifier_lookup(handle, channel_symbols_by_column_name):
     raise ValueError(f'Did not understand meaning of specifier: {handle}')
 
 
-def stage_proximity_feature_values(feature_uploader, feature_values, channel_symbols_by_column_name,
-                                   sample_identifier):
+def stage_proximity_feature_values(
+    feature_uploader,
+    feature_values,
+    channel_symbols_by_column_name,
+    sample_identifier,
+):
     for _, row in feature_values.iterrows():
         specifiers = (
             _phenotype_identifier_lookup(row['Phenotype 1'], channel_symbols_by_column_name),

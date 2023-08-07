@@ -1,7 +1,7 @@
 
 query="http://spt-apiserver-testing:8080/phenotype-summary/?study=Melanoma%20intralesional%20IL2&pvalue=0.1"
 
-curl -s $query | python -m json.tool | tee summary.json | tr '\n' ' ' | sed 's/ \+//g'
+curl -s $query | python -m json.tool | tee summary.json > /dev/null
 if [ "$?" -gt 0 ];
 then
     echo "Error with apiserver query."

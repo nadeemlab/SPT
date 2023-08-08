@@ -1,6 +1,7 @@
 """Proximity calculation from pairs of signatures."""
 
-import numpy as np
+from typing import cast
+
 from sklearn.neighbors import BallTree
 
 from spatialprofilingtoolbox import DBCursor
@@ -50,11 +51,36 @@ class ProximityProvider(PendingProvider):
     def get_or_create_feature_specification(
         cls,
         study_name: str,
-        **kwargs: int | PhenotypeCriteria | list[PhenotypeCriteria]
+        phenotype1: PhenotypeCriteria | None = None,
+        phenotype2: PhenotypeCriteria | None = None,
+        radius: int | None = None,
+        **kwargs,
     ) -> str:
-        phenotype1_str = phenotype_to_phenotype_str(kwargs['phenotype1'])
-        phenotype2_str = phenotype_to_phenotype_str(kwargs['phenotype2'])
-        radius: int = kwargs['radius']
+        phenotype1 = cast(PhenotypeCriteria, phenotype1)
+        phenotype2 = cast(PhenotypeCriteria, phenotype2)
+        radius = cast(int, radius)
+        specification = cls._get_feature_specification(study_name, phenotype1, phenotype2, radius)
+        if specification is not None:
+            return specification
+        specifiers_arguments = (
+            study_name,
+            phenotype_to_phenotype_str(phenotype1),
+            phenotype_to_phenotype_str(phenotype2),
+            str(radius),
+        )
+        message = 'Creating feature with specifiers: (%s) %s, %s, %s'
+        logger.debug(message, *specifiers_arguments)
+        return ProximityProvider._create_feature_specification(*specifiers_arguments)
+
+    @classmethod
+    def _get_feature_specification(cls,
+        study_name: str,
+        phenotype1: PhenotypeCriteria,
+        phenotype2: PhenotypeCriteria,
+        radius: int,
+    ) -> str | None:
+        phenotype1_str = phenotype_to_phenotype_str(phenotype1)
+        phenotype2_str = phenotype_to_phenotype_str(phenotype2)
         args = (
             study_name,
             phenotype1_str,
@@ -79,22 +105,13 @@ class ProximityProvider(PendingProvider):
             ;
             ''', args)
             rows = cursor.fetchall()
-        feature_specifications = {row[0]: [] for row in rows}
+        feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
         for row in rows:
             feature_specifications[row[0]].append(row[1])
         for key, specifiers in feature_specifications.items():
             if len(specifiers) == 3:
                 return key
-        message = 'Creating feature with specifiers: (%s) %s, %s, %s'
-        logger.debug(message, study_name, phenotype1_str,
-                     phenotype2_str, radius)
-        specification = ProximityProvider._create_feature_specification(
-            study_name,
-            phenotype1_str,
-            phenotype2_str,
-            radius,
-        )
-        return specification
+        return None
 
     @staticmethod
     def _create_feature_specification(

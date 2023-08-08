@@ -4,9 +4,15 @@ import argparse
 
 from spatialprofilingtoolbox.db.database_connection import wait_for_database_ready
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
-from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
-from spatialprofilingtoolbox.ondemand.providers import CountsProvider, ProximityProvider, \
-    SquidpyProvider
+from spatialprofilingtoolbox.ondemand.tcp_server import (
+    OnDemandTCPServer,
+    OnDemandProviderSet,
+)
+from spatialprofilingtoolbox.ondemand.providers import (
+    CountsProvider,
+    ProximityProvider,
+    SquidpyProvider,
+)
 from spatialprofilingtoolbox.ondemand.request_handler import OnDemandRequestHandler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -26,15 +32,13 @@ def setup_data_sources(source_data_location):
 
 
 def start_services(source_data_location: str, host: str, port: int) -> None:
-    counts_provider = CountsProvider(source_data_location)
-    proximity_provider = ProximityProvider(source_data_location)
-    squidpy_provider = SquidpyProvider(source_data_location)
+    counts = CountsProvider(source_data_location)
+    proximity = ProximityProvider(source_data_location)
+    squidpy = SquidpyProvider(source_data_location)
     tcp_server = OnDemandTCPServer(
         (host, port),
         OnDemandRequestHandler,
-        counts_provider,
-        proximity_provider,
-        squidpy_provider
+        OnDemandProviderSet(counts = counts, proximity = proximity, squidpy = squidpy),
     )
     logger.info('ondemand is ready to accept connections.')
     tcp_server.serve_forever(poll_interval=0.2)

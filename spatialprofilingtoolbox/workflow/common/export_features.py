@@ -13,7 +13,7 @@ import pandas as pd
 from psycopg2.extensions import connection as Connection
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

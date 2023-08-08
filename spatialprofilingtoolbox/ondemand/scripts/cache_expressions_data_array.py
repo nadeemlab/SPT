@@ -8,7 +8,7 @@ from os.path import expanduser
 from os import getcwd
 import sys
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.structure_centroids import CENTROIDS_FILENAME

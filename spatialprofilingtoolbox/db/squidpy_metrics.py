@@ -5,7 +5,7 @@ from anndata import AnnData
 from squidpy.gr import spatial_autocorr
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.squidpy import convert_df_to_anndata

@@ -8,7 +8,7 @@ from typing import cast
 from pandas import DataFrame
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.stratification_puller import StratificationPuller
 from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
     StructureCentroidsPuller
@@ -22,6 +22,7 @@ Bundle = dict[str, dict[str, BundlePart]]
 
 class DBSource(Enum):
     """Indicator of intended database source."""
+
     CURSOR = auto()
     CONFIG_FILE = auto()
     UNKNOWN = auto()

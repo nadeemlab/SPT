@@ -1,6 +1,6 @@
 """Convenience accessors and manipulators of cohort tables, identifiers, etc."""
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import Cohort
 from spatialprofilingtoolbox.db.exchange_data_formats.study import CohortAssignment
 from spatialprofilingtoolbox.db.exchange_data_formats.study import SampleCohorts

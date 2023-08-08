@@ -9,7 +9,7 @@ from typing import Optional
 
 import pandas as pd
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
 from spatialprofilingtoolbox.db.fractions_transcriber import transcribe_fraction_features
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

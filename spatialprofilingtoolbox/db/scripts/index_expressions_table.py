@@ -7,7 +7,7 @@ from os.path import expanduser
 import sys
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

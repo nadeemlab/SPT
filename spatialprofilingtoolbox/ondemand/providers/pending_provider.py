@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

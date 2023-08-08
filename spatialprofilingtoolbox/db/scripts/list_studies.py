@@ -5,7 +5,7 @@ from spatialprofilingtoolbox.db.database_connection import get_and_validate_data
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
-    from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker  # pylint: disable=ungrouped-imports
+    from spatialprofilingtoolbox import DatabaseConnectionMaker  # pylint: disable=ungrouped-imports
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
 

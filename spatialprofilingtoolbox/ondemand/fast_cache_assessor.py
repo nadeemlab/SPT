@@ -9,7 +9,7 @@ from pickle import load as load_pickle
 from json import loads as load_json_string
 import re
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

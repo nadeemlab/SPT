@@ -180,7 +180,7 @@ if __name__ == '__main__':
         SuggestExtrasException
     try:
         import pandas as pd
-        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker # pylint: disable=ungrouped-imports
+        from spatialprofilingtoolbox import DatabaseConnectionMaker # pylint: disable=ungrouped-imports
     except ModuleNotFoundError as e:
         SuggestExtrasException(e, 'db')
 

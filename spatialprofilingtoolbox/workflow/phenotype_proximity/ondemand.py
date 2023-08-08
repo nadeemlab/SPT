@@ -6,7 +6,7 @@ import re
 
 from sklearn.neighbors import BallTree
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.proximity import \
     compute_proximity_metric_for_signature_pair

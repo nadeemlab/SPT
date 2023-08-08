@@ -1,6 +1,6 @@
 """Selected metrics from the squidpy library, adapted for use with SPT."""
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import \
     phenotype_str_to_phenotype, phenotype_to_phenotype_str

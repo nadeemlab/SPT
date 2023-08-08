@@ -21,7 +21,7 @@ from spatialprofilingtoolbox.workflow.tabular_import.parsing.interventions impor
     InterventionsParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyParser
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

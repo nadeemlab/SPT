@@ -6,7 +6,7 @@ pipeline.
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.component_interfaces.job_generator import JobGenerator
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.job_generator import \
     retrieve_sample_identifiers_from_db
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

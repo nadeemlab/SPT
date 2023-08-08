@@ -19,7 +19,7 @@ from  matplotlib.colors import LinearSegmentedColormap
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

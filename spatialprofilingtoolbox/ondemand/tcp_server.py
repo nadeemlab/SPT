@@ -2,7 +2,7 @@
 
 from socketserver import TCPServer, BaseRequestHandler
 
-from pydantic import BaseModel  #pylint: disable=no-name-in-module
+from attr import define
 
 from spatialprofilingtoolbox.ondemand.providers import (
     CountsProvider,
@@ -10,7 +10,9 @@ from spatialprofilingtoolbox.ondemand.providers import (
     SquidpyProvider,
 )
 
-class OnDemandProviderSet(BaseModel):
+
+@define
+class OnDemandProviderSet:
     """Gather together the set/collection of ondemand providers."""
     counts: CountsProvider
     proximity: ProximityProvider

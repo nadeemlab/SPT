@@ -1,16 +1,13 @@
-"Run through the entire SPT CG-GNN pipeline using a local db config."
+"""Run through the entire SPT CG-GNN pipeline using a local db config."""
+
 from argparse import ArgumentParser
 from os.path import join
 
-from pandas import DataFrame
 from pandas import read_csv
-from pandas import concat, merge
-from numpy import sort
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.db.database_connection import DBCredentials
+from spatialprofilingtoolbox.cggnn import extract_cggnn_data
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker, DBCredentials
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
-from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from cggnn.run_all import run_with_dfs
@@ -19,7 +16,7 @@ except ModuleNotFoundError as e:
 
 
 def parse_arguments():
-    "Process command line arguments."
+    """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt cggnn run',
         description='Create cell graphs from SPT tables saved locally, train a graph neural '
@@ -120,42 +117,10 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def _create_cell_df(cell_dfs: dict[str, DataFrame], feature_names: dict[str, str]) -> DataFrame:
-    "Find chemical species, phenotypes, and locations and merge into a DataFrame."
-
-    for specimen, df_specimen in cell_dfs.items():
-        df_specimen.rename({ft_id: 'FT_' + ft_name for ft_id, ft_name in feature_names.items()},
-                           axis=1, inplace=True)
-        # TODO: Create phenotype columns
-        df_specimen.rename({'pixel x': 'center_x', 'pixel y': 'center_y'},
-                           axis=1, inplace=True)
-        df_specimen['specimen'] = specimen
-
-    # TODO: Reorder so that it's feature, specimen, phenotype, xy
-    # TODO: Verify histological structure ID or recreate one
-    df = concat(cell_dfs.values(), axis=0)
-    df.index.name = 'histological_structure'
-    return df
-
-
-def _create_label_df(df_assignments: DataFrame,
-                     df_strata: DataFrame) -> tuple[DataFrame, dict[int, str]]:
-    """Get slide-level results."""
-    df = merge(df_assignments, df_strata, on='stratum identifier', how='left')[
-        ['specimen', 'subject diagnosed result']].rename(
-        {'specimen': 'slide', 'subject diagnosed result': 'result'}, axis=1)
-    label_to_result = dict(enumerate(sort(df['result'].unique())))
-    return df.replace({res: i for i, res in label_to_result.items()}), label_to_result
-
-
-def retrieve_importances() -> DataFrame:
-    filename = join('out', 'importances.csv')
-    return read_csv(filename, index_col=0)
-
-
-def save_importances(_args):
-    df = retrieve_importances()
-    credentials = DBCredentials(_args.dbname, _args.host, _args.user, _args.password)
+def save_importance(dbname: str, host: str, user: str, password: str) -> None:
+    """Save cell importance scores as defined by cggnn to the database."""
+    df = read_csv(join('out', 'importances.csv'), index_col=0)
+    credentials = DBCredentials(dbname, host, user, password)
     connection = DatabaseConnectionMaker.make_connection(credentials)
     transcribe_importance(df, connection)
     connection.close()
@@ -163,20 +128,10 @@ def save_importances(_args):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    extractor = FeatureMatrixExtractor(database_config_file=args.spt_db_config_location)
-    study_data: dict[str, dict] = extractor.extract(study=args.study)
-
-    df_cell = _create_cell_df(
-        {slide: data['dataframe']
-            for slide, data in study_data['feature matrices'].items()},
-        study_data['channel symbols by column name'])
-    df_label, label_to_result_text = _create_label_df(
-        study_data['sample cohorts']['assignments'],
-        study_data['sample cohorts']['strata'])
-
+    df_cell, df_label, label_to_result = extract_cggnn_data(args.spt_db_config_location, args.study)
     run_with_dfs(df_cell,
                  df_label,
-                 label_to_result_text,
+                 label_to_result,
                  args.validation_data_percent,
                  args.test_data_percent,
                  args.roi_side_length,
@@ -189,4 +144,4 @@ if __name__ == "__main__":
                  args.merge_rois,
                  args.prune_misclassified)
 
-    save_importances(args)
+    save_importance(args.dbname, args.host, args.user, args.password)

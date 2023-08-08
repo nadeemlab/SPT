@@ -2,10 +2,10 @@
 
 from typing import cast
 from abc import ABC
-import sys
 from re import search
 from os import listdir
-from os.path import join, isfile
+from os.path import join
+from os.path import isfile
 from json import loads
 
 from pandas import DataFrame
@@ -21,26 +21,27 @@ class OnDemandProvider(ABC):
     data_arrays: dict[str, dict[str, DataFrame]]
 
     def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
-        """Load from a precomputed JSON artifact in the data directory."""
+        """Load expressions from data files and a JSON index file in the data directory."""
         self.load_expressions_indices(data_directory)
-
         centroids = None
         if load_centroids:
             loader = StructureCentroids()
             loader.load_from_file(data_directory)
             centroids = loader.get_studies()
-
         self.load_data_matrices(data_directory, centroids)
         logger.info('%s is finished loading source data.', type(self).__name__)
 
     def load_expressions_indices(self, data_directory: str) -> None:
-        """Load expression indices in reference to a JSON-formatted index file."""
+        """Load expressions metadata from a JSON-formatted index file."""
         logger.debug('Searching for source data in: %s', data_directory)
-        json_files = [f for f in listdir(data_directory) if isfile(
-            join(data_directory, f)) and search(r'\.json$', f)]
+        json_files = [
+            f for f in listdir(data_directory)
+            if isfile(join(data_directory, f)) and search(r'\.json$', f)
+        ]
         if len(json_files) != 1:
-            logger.error('Did not find index JSON file.')
-            sys.exit(1)
+            message = 'Did not find index JSON file.'
+            logger.error(message)
+            raise FileNotFoundError(message)
         with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
             root = loads(file.read())
             entries = root[list(root.keys())[0]]
@@ -61,10 +62,10 @@ class OnDemandProvider(ABC):
                 for item in self.studies[study_name]['expressions files']
             }
             shapes = [df.shape for df in self.data_arrays[study_name].values()]
-            logger.debug('Loaded dataframes of sizes %s', shapes)
+            logger.debug('Loaded dataframes of sizes %s ...', shapes[0:5])
             number_specimens = len(self.data_arrays[study_name])
-            specimens = self.data_arrays[study_name].keys()
-            logger.debug('%s specimens loaded (%s).', number_specimens, specimens)
+            specimens = list(self.data_arrays[study_name].keys())
+            logger.debug('%s specimens loaded (%s ...).', number_specimens, specimens[0:5])
             if centroids is not None:
                 for sample, df in self.data_arrays[study_name].items():
                     self.add_centroids(df, centroids, study_name, sample)

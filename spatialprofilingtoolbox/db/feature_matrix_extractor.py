@@ -1,6 +1,7 @@
 """
 Convenience provision of a feature matrix for each study, the data retrieved from the SPT database.
 """
+
 from enum import Enum
 from enum import auto
 from typing import cast
@@ -22,7 +23,6 @@ Bundle = dict[str, dict[str, BundlePart]]
 
 class DBSource(Enum):
     """Indicator of intended database source."""
-
     CURSOR = auto()
     CONFIG_FILE = auto()
     UNKNOWN = auto()
@@ -30,7 +30,6 @@ class DBSource(Enum):
 
 class FeatureMatrixExtractor:
     """Pull from the database and create convenience bundle of feature matrices and metadata."""
-
     cursor: Psycopg2Cursor
     database_config_file: str | None
     db_source: DBSource

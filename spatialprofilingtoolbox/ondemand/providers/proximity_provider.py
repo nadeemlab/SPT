@@ -2,7 +2,7 @@
 
 from typing import cast
 
-from sklearn.neighbors import BallTree
+from sklearn.neighbors import BallTree  # type: ignore
 
 from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
@@ -53,12 +53,12 @@ class ProximityProvider(PendingProvider):
         study_name: str,
         phenotype1: PhenotypeCriteria | None = None,
         phenotype2: PhenotypeCriteria | None = None,
-        radius: int | None = None,
+        radius: float | None = None,
         **kwargs,
     ) -> str:
         phenotype1 = cast(PhenotypeCriteria, phenotype1)
         phenotype2 = cast(PhenotypeCriteria, phenotype2)
-        radius = cast(int, radius)
+        radius = cast(float, radius)
         specifiers_arguments = (
             study_name,
             phenotype_to_phenotype_str(phenotype1),
@@ -122,13 +122,11 @@ class ProximityProvider(PendingProvider):
         method = describe_proximity_feature_derivation_method()
         with DBCursor() as cursor:
             Uploader = ADIFeatureSpecificationUploader
-            feature_specification = Uploader.add_new_feature(
-                specifiers, method, study_name, cursor)
+            feature_specification = Uploader.add_new_feature(specifiers, method, study_name, cursor)
         return feature_specification
 
     def have_feature_computed(self, feature_specification: str) -> None:
-        study_name, specifiers = ProximityProvider.retrieve_specifiers(
-            feature_specification)
+        study_name, specifiers = ProximityProvider.retrieve_specifiers(feature_specification)
         phenotype1 = phenotype_str_to_phenotype(specifiers[0])
         phenotype2 = phenotype_str_to_phenotype(specifiers[1])
         radius = float(specifiers[2])
@@ -142,11 +140,9 @@ class ProximityProvider(PendingProvider):
                 self._get_tree(sample_identifier, study_name),
             )
             message = 'Computed one feature value of %s: %s, %s'
-            logger.debug(message, feature_specification,
-                         sample_identifier, value)
+            logger.debug(message, feature_specification, sample_identifier, value)
             with DBCursor() as cursor:
-                add_feature_value(feature_specification,
-                                  sample_identifier, value, cursor)
+                add_feature_value(feature_specification, sample_identifier, value, cursor)
         ProximityProvider.drop_pending_computation(feature_specification)
         message = 'Wrapped up proximity metric calculation, feature "%s".'
         logger.debug(message, feature_specification)

@@ -1,7 +1,6 @@
 """
 Convenience provision of a feature matrix for each study, the data retrieved from the SPT database.
 """
-import sys
 from enum import Enum
 from enum import auto
 from typing import cast
@@ -87,7 +86,7 @@ class FeatureMatrixExtractor:
         specimen: str | None=None,
         study: str | None=None,
         continuous_also: bool=False,
-    ) -> Bundle:
+    ) -> Bundle | None:
         data_arrays = self._retrieve_expressions_from_database(
             specimen=specimen,
             study=study,
@@ -106,6 +105,8 @@ class FeatureMatrixExtractor:
             new_keys=['feature matrices','channel symbols by column name', 'sample cohorts'],
             study_component_lookup=study_component_lookup,
         )
+        if merged is None:
+            return None
         if study is not None:
             for key in list(merged.keys()):
                 if not key == study:
@@ -182,8 +183,8 @@ class FeatureMatrixExtractor:
                 ]
                 dataframe = DataFrame(
                     rows,
-                    columns=['pixel x', 'pixel y'] +
-                    [f'F{i}' for i in range(number_channels)])
+                    columns=['pixel x', 'pixel y'] + [f'F{i}' for i in range(number_channels)],
+                )
                 matrices[study_name][specimen] = {
                     'dataframe': dataframe,
                     'filename': f'{k}.{j}.tsv',
@@ -232,12 +233,17 @@ class FeatureMatrixExtractor:
             for i in sorted([int(index) for index in targets.keys()])
         }
 
-    def _merge_dictionaries(self, *args, new_keys: list, study_component_lookup: dict):
+    def _merge_dictionaries(self,
+        *args,
+        new_keys: list,
+        study_component_lookup: dict
+    ) -> Bundle | None:
         if not len(args) == len(new_keys):
             logger.error(
                 "Can not match up dictionaries to be merged with the list of key names to be "
-                "issued for them.")
-            sys.exit(1)
+                "issued for them."
+            )
+            return None
 
         merged: dict = {}
         for i in range(len(new_keys)):

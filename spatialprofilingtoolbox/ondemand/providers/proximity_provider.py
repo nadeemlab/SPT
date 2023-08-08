@@ -59,15 +59,15 @@ class ProximityProvider(PendingProvider):
         phenotype1 = cast(PhenotypeCriteria, phenotype1)
         phenotype2 = cast(PhenotypeCriteria, phenotype2)
         radius = cast(int, radius)
-        specification = cls._get_feature_specification(study_name, phenotype1, phenotype2, radius)
-        if specification is not None:
-            return specification
         specifiers_arguments = (
             study_name,
             phenotype_to_phenotype_str(phenotype1),
             phenotype_to_phenotype_str(phenotype2),
             str(radius),
         )
+        specification = cls._get_feature_specification(*specifiers_arguments)
+        if specification is not None:
+            return specification
         message = 'Creating feature with specifiers: (%s) %s, %s, %s'
         logger.debug(message, *specifiers_arguments)
         return ProximityProvider._create_feature_specification(*specifiers_arguments)
@@ -75,17 +75,15 @@ class ProximityProvider(PendingProvider):
     @classmethod
     def _get_feature_specification(cls,
         study_name: str,
-        phenotype1: PhenotypeCriteria,
-        phenotype2: PhenotypeCriteria,
-        radius: int,
+        phenotype1_str: str,
+        phenotype2_str: str,
+        radius_str: str,
     ) -> str | None:
-        phenotype1_str = phenotype_to_phenotype_str(phenotype1)
-        phenotype2_str = phenotype_to_phenotype_str(phenotype2)
         args = (
             study_name,
             phenotype1_str,
             phenotype2_str,
-            str(radius),
+            radius_str,
             describe_proximity_feature_derivation_method(),
         )
         with DBCursor() as cursor:

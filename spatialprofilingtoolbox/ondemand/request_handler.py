@@ -52,7 +52,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         positives1, negatives1, positives2, negatives2 = signature
         phenotype1 = PhenotypeCriteria(positive_markers=positives1, negative_markers=negatives1)
         phenotype2 = PhenotypeCriteria(positive_markers=positives2, negative_markers=negatives2)
-        return self.server.proximity_provider.get_metrics(
+        return self.server.providers.proximity.get_metrics(
             study,
             phenotype1=phenotype1,
             phenotype2=phenotype2,
@@ -81,7 +81,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     def _get_counts(self, study, positives_signature, negatives_signature):
         arguments = [positives_signature, negatives_signature, study]
-        return self.server.counts_provider.count_structures_of_partial_signed_signature(*arguments)
+        return self.server.providers.counts.count_structures_of_partial_signed_signature(*arguments)
 
     def _handle_unparseable_signature(self, signature, names):
         if signature is None:
@@ -91,13 +91,13 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return False
 
     def _get_signatures(self, study_name, positives, negatives):
-        signature1 = self.server.counts_provider.compute_signature(positives, study_name)
-        signature2 = self.server.counts_provider.compute_signature(negatives, study_name)
+        signature1 = self.server.providers.counts.compute_signature(positives, study_name)
+        signature2 = self.server.providers.counts.compute_signature(negatives, study_name)
         logger.info('Signature: %s, %s', signature1, signature2)
         return signature1, signature2
 
     def _handle_missing_study(self, study_name):
-        if self.server.counts_provider.has_study(study_name):
+        if self.server.providers.counts.has_study(study_name):
             return False
         logger.error('Study not known to counts server: %s', study_name)
         self._wrap_up_transmission()
@@ -168,12 +168,12 @@ class OnDemandRequestHandler(BaseRequestHandler):
                 positive_markers=channel_lists[2*i],
                 negative_markers=channel_lists[2*i+1],
             ))
-        return self.server.squidpy_provider.get_metrics(study, phenotypes=phenotypes)
+        return self.server.providers.squidpy.get_metrics(study, phenotypes=phenotypes)
 
     def _handle_empty_body(self, data):
         if data == '':
             logger.info('Empty body. Serving status.')
-            status = dumps(self.server.counts_provider.get_status(), indent=4)
+            status = dumps(self.server.providers.counts.get_status(), indent=4)
             message = status + self._get_end_of_transmission()
             self.request.sendall(message.encode('utf-8'))
             return True

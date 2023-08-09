@@ -1,40 +1,59 @@
 """Low-level calculations of squidpy metrics."""
 
 from typing import Any
+from typing import cast
 
 from numpy.typing import NDArray
 from pandas import DataFrame
-from squidpy.gr import spatial_neighbors, nhood_enrichment, co_occurrence, ripley
-from anndata import AnnData
+from squidpy.gr import spatial_neighbors, nhood_enrichment, co_occurrence, ripley  # type: ignore
+from anndata import AnnData  # type: ignore
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.workflow.common.cell_df_indexer import get_mask
+from spatialprofilingtoolbox.ondemand import squidpy_feature_classnames_descriptions
+
+def describe_squidpy_feature_derivation_method(feature_class: str) -> str | None:
+    if feature_class in squidpy_feature_classnames_descriptions:
+        return squidpy_feature_classnames_descriptions[feature_class]
+    return None
 
 
-def describe_squidpy_feature_derivation_method():
-    return '''
-    Calculates nhood_enrichment, co_occurrence, and ripley from squidpy.gr using clusters derived
-    from the phenotypes provided. Reference db.squidpy_metrics.convert_df_to_anndata for the
-    clustering method.
-    '''.lstrip().rstrip()
+def lookup_squidpy_feature_class(method: str) -> str | None:
+    if method in squidpy_feature_classnames_descriptions.values():
+        for key, _method in squidpy_feature_classnames_descriptions.items():
+            if method == _method:
+                return key
+    return None
 
 
-def compute_squidpy_metrics_for_one_sample(
+def compute_squidpy_metric_for_one_sample(
     df_cell: DataFrame,
-    phenotypes: list[PhenotypeCriteria]
-) -> dict[
-    str,
-    dict[str, list[float] | list[int]] |
-    dict[str, list[float]] | dict[str, list[list[float]] | list[float] | list[int]]
-] | None:
+    phenotypes: list[PhenotypeCriteria],
+    feature_class: str,
+) -> float | None:
     """Compute Squidpy metrics for a tissue sample with a clustering of the given phenotypes."""
     masks: list[NDArray[Any]] = [get_mask(df_cell, signature) for signature in phenotypes]
     adata = convert_df_to_anndata(df_cell, masks)
-    return {
-        'nhood_enrichment': _nhood_enrichment(adata),
-        'co_occurence': _co_occurrence(adata),
-        'ripley': _ripley(adata)
-    }
+    match feature_class:
+        case 'neighborhood enrichment':
+            return summarize_neighborhood_enrichment(_nhood_enrichment(adata))
+        case 'co-occurrence':
+            return summarize_co_occurrence(_co_occurrence(adata))
+        case 'ripley':
+            return summarize_ripley(_ripley(adata))
+    return None
+
+
+def summarize_neighborhood_enrichment(unstructured_metrics) -> float | None:
+    return 1
+
+
+def summarize_co_occurrence(unstructured_metrics) -> float | None:
+    return 2
+
+
+def summarize_ripley(unstructured_metrics) -> float | None:
+    return 3
 
 
 def convert_df_to_anndata(
@@ -76,13 +95,15 @@ def convert_df_to_anndata(
 
 def _nhood_enrichment(adata: AnnData) -> dict[str, list[float] | list[int]]:
     """Compute neighborhood enrichment by permutation test."""
-    zscore, count = nhood_enrichment(adata, 'cluster', copy=True)
+    result = nhood_enrichment(adata, 'cluster', copy=True)
+    zscore, count = cast(tuple[NDArray[Any], NDArray[Any]], result)
     return {'zscore': zscore.tolist(), 'count': count.tolist()}
 
 
 def _co_occurrence(adata: AnnData) -> dict[str, list[float]]:
     """Compute co-occurrence probability of clusters."""
-    occ, interval = co_occurrence(adata, 'cluster', copy=True)
+    result = co_occurrence(adata, 'cluster', copy=True)
+    occ, interval = cast(tuple[NDArray[Any], NDArray[Any]], result)
     return {'occ': occ.tolist(), 'interval': interval.tolist()}
 
 

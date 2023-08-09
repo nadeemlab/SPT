@@ -213,3 +213,15 @@ class PendingProvider(OnDemandProvider, ABC):
             'metrics': metrics,
             'pending': still_pending,
         }
+
+    @classmethod
+    def retrieve_feature_derivation_method(cls, feature_specification: str) -> str:
+        with DBCursor() as cursor:
+            cursor.execute('''
+                SELECT derivation_method FROM feature_specificiation
+                WHERE identifier=%s ;
+                ''',
+                (feature_specification,),
+            )
+            rows = cursor.fetchall()
+        return rows[0][0]

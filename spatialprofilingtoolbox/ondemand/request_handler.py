@@ -21,46 +21,25 @@ class OnDemandRequestHandler(BaseRequestHandler):
         logger.info('Request: %s', data)
         if self._handle_empty_body(data):
             return
-        if self._handle_single_phenotype_counts_request(data):
-            return
-        if self._handle_proximity_request(data):
-            return
-        if self._handle_squidpy_request(data):
-            return
+        request_class, groups = self._get_request_class_and_groups(data)
+        handled = False
+        match request_class:
+            case 'counts':
+                handled = self._handle_single_phenotype_counts_request(groups)
+            case 'proximity':
+                handled = self._handle_proximity_request(groups)
+            case 'neighborhood enrichment' | 'co-occurence' | 'ripley':
+                handled = self._handle_squidpy_request(request_class, groups)
+        if not handled:
+            self._send_error_response()
 
-    def _handle_proximity_request(self, data):
-        groups = self._get_groups(data)
-        if len(groups) != 6:
-            return False
-        specification = self._get_phenotype_pair_specification(groups)
-        study_name = specification[0]
-        if self._handle_missing_study(study_name):
-            return True
+    @staticmethod
+    def _get_request_class_and_groups(data) -> tuple[str, tuple[str, ...]]:
+        group_separator = chr(29)
+        components = data.decode('utf-8').split(group_separator)
+        return components[0], components[1:]
 
-        try:
-            metrics = self._get_proximity_metrics(*specification)
-        except Exception as exception:
-            message = "Error response." + self._get_end_of_transmission()
-            self.request.sendall(message.encode('utf-8'))
-            raise exception
-
-        message = dumps(metrics) + self._get_end_of_transmission()
-        self.request.sendall(message.encode('utf-8'))
-        return True
-
-    def _get_proximity_metrics(self, study, radius, signature):
-        positives1, negatives1, positives2, negatives2 = signature
-        phenotype1 = PhenotypeCriteria(positive_markers=positives1, negative_markers=negatives1)
-        phenotype2 = PhenotypeCriteria(positive_markers=positives2, negative_markers=negatives2)
-        return self.server.providers.proximity.get_metrics(
-            study,
-            phenotype1=phenotype1,
-            phenotype2=phenotype2,
-            radius=radius,
-        )
-
-    def _handle_single_phenotype_counts_request(self, data):
-        groups = self._get_groups(data)
+    def _handle_single_phenotype_counts_request(self, groups):
         if len(groups) != 3:
             return False
         specification = self._get_phenotype_spec(groups)
@@ -115,6 +94,36 @@ class OnDemandRequestHandler(BaseRequestHandler):
         logger.info('Negatives: %s', negative_channel_names)
         return study_name, positive_channel_names, negative_channel_names
 
+    def _handle_proximity_request(self, groups):
+        if len(groups) != 6:
+            return False
+        specification = self._get_phenotype_pair_specification(groups)
+        study_name = specification[0]
+        if self._handle_missing_study(study_name):
+            return True
+
+        try:
+            metrics = self._get_proximity_metrics(*specification)
+        except Exception as exception:
+            message = "Error response." + self._get_end_of_transmission()
+            self.request.sendall(message.encode('utf-8'))
+            raise exception
+
+        message = dumps(metrics) + self._get_end_of_transmission()
+        self.request.sendall(message.encode('utf-8'))
+        return True
+
+    def _get_proximity_metrics(self, study, radius, signature):
+        positives1, negatives1, positives2, negatives2 = signature
+        phenotype1 = PhenotypeCriteria(positive_markers=positives1, negative_markers=negatives1)
+        phenotype2 = PhenotypeCriteria(positive_markers=positives2, negative_markers=negatives2)
+        return self.server.providers.proximity.get_metrics(
+            study,
+            phenotype1=phenotype1,
+            phenotype2=phenotype2,
+            radius=radius,
+        )
+
     def _get_phenotype_pair_specification(self, groups):
         record_separator = chr(30)
         study_name = groups[0]
@@ -125,13 +134,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         ]
         return [study_name, radius, channel_lists]
 
-    @staticmethod
-    def _get_groups(data):
-        group_separator = chr(29)
-        return data.decode('utf-8').split(group_separator)
-
-    def _handle_squidpy_request(self, data):
-        groups = self._get_groups(data)
+    def _handle_squidpy_request(self, feature_class, groups):
         if (len(groups) < 3) or (len(groups) % 2 != 0):
             return False
         study = groups[0]
@@ -140,7 +143,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
         channel_lists = self._get_long_phenotype_spec(groups[1:])
         try:
-            metrics = self._get_squidpy_metrics(study, channel_lists)
+            metrics = self._get_squidpy_metrics(study, feature_class, channel_lists)
         except Exception as exception:
             message = "Error response." + self._get_end_of_transmission()
             self.request.sendall(message.encode('utf-8'))
@@ -160,6 +163,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
     def _get_squidpy_metrics(
         self,
         study: str,
+        feature_class: str,
         channel_lists: list[list[str]],
     ) -> dict[str, dict[str, float | None] | bool]:
         phenotypes: list[PhenotypeCriteria] = []
@@ -168,7 +172,11 @@ class OnDemandRequestHandler(BaseRequestHandler):
                 positive_markers=channel_lists[2*i],
                 negative_markers=channel_lists[2*i+1],
             ))
-        return self.server.providers.squidpy.get_metrics(study, phenotypes=phenotypes)
+        return self.server.providers.squidpy.get_metrics(
+            study,
+            feature_class=feature_class,
+            phenotypes=phenotypes,
+        )
 
     def _handle_empty_body(self, data):
         if data == '':
@@ -178,6 +186,12 @@ class OnDemandRequestHandler(BaseRequestHandler):
             self.request.sendall(message.encode('utf-8'))
             return True
         return False
+
+    def _send_error_response(self):
+        message = 'Query to on-demand computation service could not be handled.'
+        logger.info(message)
+        message = dumps({'error': message}) + self._get_end_of_transmission()
+        self.request.sendall(message.encode('utf-8'))
 
     def _wrap_up_transmission(self):
         self.request.sendall(self._get_end_of_transmission().encode('utf-8'))

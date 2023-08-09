@@ -8,6 +8,8 @@ from pandas import DataFrame
 
 from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
+from spatialprofilingtoolbox.workflow.common.export_features import \
+    ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -53,6 +55,17 @@ class PendingProvider(OnDemandProvider, ABC):
     ) -> str:
         """Return feature specification, creating one if necessary."""
         raise NotImplementedError("For subclasses to implement.")
+
+    @classmethod
+    def create_feature_specification(cls,
+        specifiers: tuple[str, ...],
+        study_name: str,
+        method: str,
+    ) -> str:
+        with DBCursor() as cursor:
+            Uploader = ADIFeatureSpecificationUploader
+            feature_specification = Uploader.add_new_feature(specifiers, method, study_name, cursor)
+        return feature_specification
 
     @staticmethod
     def _is_already_computed(feature_specification: str) -> bool:

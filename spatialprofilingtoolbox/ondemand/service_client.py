@@ -76,6 +76,7 @@ class OnDemandRequester:
         positives1, negatives1, positives2, negatives2 = signature
         separator = self._get_record_separator()
         groups = [
+            'proximity',
             self._sanitize_token(study),
             str(radius),
             separator.join([self._sanitize_token(c) for c in positives1]),
@@ -95,7 +96,7 @@ class OnDemandRequester:
         group1 = study_name
         group2 = self._get_record_separator().join(positive_signature_channels)
         group3 = self._get_record_separator().join(negative_signature_channels)
-        return self._get_group_separator().join([group1, group2, group3]).encode('utf-8')
+        return self._get_group_separator().join(['counts', group1, group2, group3]).encode('utf-8')
 
     def _parse_response(self):
         received = None
@@ -123,12 +124,13 @@ class OnDemandRequester:
     def get_squidpy_metrics(
         self,
         study: str,
-        signature: list[list[str]]
+        signature: list[list[str]],
+        feature_class: str,
     ) -> SquidpyMetricsComputationResult:
         """Get spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
         assert len(signature) % 2 == 0
         separator = self._get_record_separator()
-        groups = [self._sanitize_token(study)]
+        groups = [feature_class, self._sanitize_token(study)]
         groups.extend(separator.join([self._sanitize_token(c) for c in s]) for s in signature)
         query = self._get_group_separator().join(groups).encode('utf-8')
         self.tcp_client.sendall(query)

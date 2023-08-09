@@ -6,7 +6,6 @@ from fastapi import Depends
 
 from spatialprofilingtoolbox.db.querying import query
 
-
 def abbreviate_string(string: str) -> str:
     abbreviation = string[0:40]
     if len(string) > 40:
@@ -75,6 +74,16 @@ async def valid_channel_list_positives(positive_marker: ChannelList) -> list[str
 async def valid_channel_list_negatives(negative_marker: ChannelList) -> list[str]:
     return valid_channel_list(negative_marker)
 
+
+squidpy_feature_classnames = ('neighorhood enrichment', 'co-occurrence', 'ripley')
+
+async def valid_squidpy_feature_classname(feature_class: str) -> str:
+    if not feature_class in squidpy_feature_classnames:
+        abbreviation = feature_class[0:10]
+        raise ValueError(f'Feature class "{abbreviation}" does not exist.')
+    return feature_class
+
+
 ValidChannel = Annotated[str, Depends(valid_channel)]
 ValidStudy = Annotated[str, Depends(valid_study_name)]
 ValidPhenotypeSymbol = Annotated[str, Depends(valid_phenotype_symbol)]
@@ -83,3 +92,4 @@ ValidPhenotype1 = Annotated[str, Depends(valid_phenotype1)]
 ValidPhenotype2 = Annotated[str, Depends(valid_phenotype2)]
 ValidChannelListPositives = Annotated[list[str], Depends(valid_channel_list_positives)]
 ValidChannelListNegatives = Annotated[list[str], Depends(valid_channel_list_negatives)]
+ValidSquidpyFeatureClass = Annotated[str, Depends(valid_squidpy_feature_classname)]

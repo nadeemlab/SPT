@@ -11,10 +11,7 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (\
     phenotype_to_phenotype_str,
 )
 from spatialprofilingtoolbox.ondemand.providers import PendingProvider
-from spatialprofilingtoolbox.workflow.common.export_features import (\
-    ADIFeatureSpecificationUploader,
-    add_feature_value,
-)
+from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.workflow.common.proximity import (\
     describe_proximity_feature_derivation_method,
     compute_proximity_metric_for_signature_pair,
@@ -70,7 +67,7 @@ class ProximityProvider(PendingProvider):
             return specification
         message = 'Creating feature with specifiers: (%s) %s, %s, %s'
         logger.debug(message, *specifiers_arguments)
-        return ProximityProvider._create_feature_specification(*specifiers_arguments)
+        return cls._create_feature_specification(*specifiers_arguments)
 
     @classmethod
     def _get_feature_specification(cls,
@@ -111,19 +108,16 @@ class ProximityProvider(PendingProvider):
                 return key
         return None
 
-    @staticmethod
-    def _create_feature_specification(
+    @classmethod
+    def _create_feature_specification(cls,
         study_name: str,
         phenotype1: str,
         phenotype2: str,
         radius: str,
     ) -> str:
-        specifiers = [phenotype1, phenotype2, str(radius)]
+        specifiers = (phenotype1, phenotype2, str(radius))
         method = describe_proximity_feature_derivation_method()
-        with DBCursor() as cursor:
-            Uploader = ADIFeatureSpecificationUploader
-            feature_specification = Uploader.add_new_feature(specifiers, method, study_name, cursor)
-        return feature_specification
+        return cls.create_feature_specification(specifiers, study_name, method)
 
     def have_feature_computed(self, feature_specification: str) -> None:
         study_name, specifiers = ProximityProvider.retrieve_specifiers(feature_specification)

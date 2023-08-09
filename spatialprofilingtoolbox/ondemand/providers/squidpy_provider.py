@@ -5,8 +5,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCr
 from spatialprofilingtoolbox.ondemand.phenotype_str import \
     phenotype_str_to_phenotype, phenotype_to_phenotype_str
 from spatialprofilingtoolbox.ondemand.providers import PendingProvider
-from spatialprofilingtoolbox.workflow.common.export_features import \
-    ADIFeatureSpecificationUploader, add_feature_value
+from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.workflow.common.squidpy import \
     describe_squidpy_feature_derivation_method, compute_squidpy_metrics_for_one_sample
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -15,25 +14,34 @@ logger = colorized_logger(__name__)
 
 
 class SquidpyProvider(PendingProvider):
-    """Calculate select squidpy metrics."""
+    """Calculate selected squidpy metrics."""
 
     def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
-        """Load from a precomputed JSON artifact in the data directory.
+        """Load from binary expression files and JSON-formatted index in the data directory.
 
         Note: SquidpyProvider always loads centroids because it needs them.
         """
         super().__init__(data_directory, load_centroids=True)
 
     @classmethod
+    def _get_or_create_feature_specification(cls, study_name, specifiers) -> str:
+        pass
+
+    @classmethod
     def get_or_create_feature_specification(
         cls,
         study_name: str,
-        **kwargs: int | PhenotypeCriteria | list[PhenotypeCriteria]
+        feature_class: str | None = None,
+        phenotypes: list[PhenotypeCriteria] | None = None,
+        **kwargs,
     ) -> str:
-        """Create a feature specification for each phenotype."""
-        assert isinstance(kwargs['phenotypes'], list[PhenotypeCriteria])
-        phenotypes: list[str] = [
-            phenotype_to_phenotype_str(phenotype) for phenotype in kwargs['phenotypes']]
+        """Create and return the identifier of a feature specification defined by the specifiers,
+        if it does not exist. If it already exists, return the already-existing specification's
+        identifier.
+        """
+        phenotypes_strs: list[str] = [
+            phenotype_to_phenotype_str(phenotype) for phenotype in phenotypes
+        ]
         args: list[str] = [study_name]
         query = '''
             SELECT
@@ -73,18 +81,16 @@ class SquidpyProvider(PendingProvider):
         for _ in range(len(phenotypes)-1):
             message += ', %s'
         logger.debug(message, study_name, *phenotypes)
-        return SquidpyProvider._create_feature_specification(study_name, phenotypes)
+        return cls._create_feature_specification(study_name, phenotypes)
 
-    @staticmethod
-    def _create_feature_specification(study_name: str, phenotypes: list[str]) -> str:
-        # This is close enough to the ProximityProvider implementation that it can be abstracted
-        # into PendingProvider, but it's short enough that I don't want to bother.
+    @classmethod
+    def _create_feature_specification(cls,
+        study_name: str,
+        phenotypes: list[str],
+    ) -> str:
+        specifiers = tuple(phenotypes)
         method = describe_squidpy_feature_derivation_method()
-        with DBCursor() as cursor:
-            Uploader = ADIFeatureSpecificationUploader
-            feature_specification = Uploader.add_new_feature(
-                phenotypes, method, study_name, cursor)
-        return feature_specification
+        return cls.create_feature_specification(specifiers, study_name, method)
 
     def have_feature_computed(self, feature_specification: str) -> None:
         # Ditto for this one.
@@ -100,8 +106,7 @@ class SquidpyProvider(PendingProvider):
             logger.debug(message, feature_specification, sample_identifier, values)
             with DBCursor() as cursor:
                 for value in values:
-                    add_feature_value(feature_specification,
-                                      sample_identifier, value, cursor)
+                    add_feature_value(feature_specification, sample_identifier, value, cursor)
         SquidpyProvider.drop_pending_computation(feature_specification)
         logger.debug('Wrapped up squidpy metric calculation, feature "%s".', feature_specification)
         logger.debug('The samples considered were: %s', sample_identifiers)

@@ -32,6 +32,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidPhenotype2,
     ValidChannelListPositives,
     ValidChannelListNegatives,
+    ValidSquidpyFeatureClass,
 )
 VERSION = '0.9.1'
 
@@ -191,6 +192,7 @@ async def request_phenotype_proximity_computation(
 async def request_squidpy_computation(
     study: ValidStudy,
     phenotypes: list[ValidPhenotype],
+    feature_class: ValidSquidpyFeatureClass,
 ) -> SquidpyMetricsComputationResult:
     """Spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
     criteria: list[PhenotypeCriteria] = [
@@ -202,7 +204,9 @@ async def request_squidpy_computation(
         markers.append(criterion.negative_markers)
     with OnDemandRequester() as requester:
         metrics = requester.get_squidpy_metrics(
-            query().get_study_components(study).measurement, markers
+            query().get_study_components(study).measurement,
+            markers,
+            feature_class,
         )
     return metrics
 

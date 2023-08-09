@@ -5,7 +5,7 @@ from json import dumps
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
-from spatialprofilingtoolbox.apiserver.app.validation import squidpy_feature_classnames
+from spatialprofilingtoolbox.ondemand import squidpy_feature_classnames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('spt ondemand start')

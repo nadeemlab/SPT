@@ -218,7 +218,7 @@ class PendingProvider(OnDemandProvider, ABC):
     def retrieve_feature_derivation_method(cls, feature_specification: str) -> str:
         with DBCursor() as cursor:
             cursor.execute('''
-                SELECT derivation_method FROM feature_specificiation
+                SELECT derivation_method FROM feature_specification
                 WHERE identifier=%s ;
                 ''',
                 (feature_specification,),

@@ -83,12 +83,7 @@ class ProximityMetricsComputationResult(BaseModel):
 class SquidpyMetricsComputationResult(BaseModel):
     """Response to an on demand request for computation of Squidpy metrics."""
 
-    values: dict[
-        str,
-        dict[str, list[float] | list[int]] |
-        dict[str, list[float]] |
-        dict[str, list[list[float]] | list[float] | list[int]]
-    ]
+    values: dict[str, float | None]
     is_pending: bool
 
 

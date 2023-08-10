@@ -18,6 +18,15 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     def handle(self):
         """Handle an on demand request."""
+        try:
+            self._handle()
+        except Exception  as exception:
+            logger.error('Unhandled exception in on demand service.')
+            self._send_error_response()
+            raise exception
+
+    def _handle(self):
+        """Handle an on demand request."""
         data = self.request.recv(512).strip()
         logger.info('Request: %s', data)
         if self._handle_empty_body(data):
@@ -137,7 +146,8 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return [study_name, radius, channel_lists]
 
     def _handle_squidpy_request(self, feature_class, groups):
-        if (len(groups) < 3) or (len(groups) % 2 != 0):
+        logger.debug(groups)
+        if (len(groups) < 3) or (len(groups) % 2 != 1):
             return False
         study = groups[0]
         if self._handle_missing_study(study):
@@ -158,7 +168,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
     def _get_long_phenotype_spec(self, channel_lists_raw: list[str]) -> list[list[str]]:
         record_separator = chr(30)
         return [
-            self._trim_empty_entry(phenotype.split(record_separator[1:]))
+            self._trim_empty_entry(phenotype.split(record_separator))
             for phenotype in channel_lists_raw
         ]
 

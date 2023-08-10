@@ -49,6 +49,12 @@ async def valid_phenotype(phenotype: str = Query(min_length=1)) -> str:
     return valid_single_or_composite_identifier(phenotype)
 
 
+async def valid_phenotype_list(phenotype: list[str] = Query(min_length=1)) -> list[str]:
+    if not all(valid_single_or_composite_identifier(p) for p in phenotype):
+        raise ValueError(f'Phenotype list contains some invalid member. {phenotype}')
+    return phenotype
+
+
 async def valid_phenotype1(phenotype1: str = Query(min_length=1)) -> str:
     return valid_single_or_composite_identifier(phenotype1)
 
@@ -76,10 +82,11 @@ async def valid_channel_list_negatives(negative_marker: ChannelList) -> list[str
     return valid_channel_list(negative_marker)
 
 
-async def valid_squidpy_feature_classname(feature_class: str) -> str:
-    if not feature_class in squidpy_feature_classnames_descriptions:
-        abbreviation = feature_class[0:10]
-        raise ValueError(f'Feature class "{abbreviation}" does not exist.')
+async def valid_squidpy_feature_classname(
+    feature_class: str = Query(min_length=1, max_length=100),
+) -> str:
+    if feature_class not in squidpy_feature_classnames_descriptions:
+        raise ValueError(f'Feature class "{feature_class}" does not exist.')
     return feature_class
 
 
@@ -89,6 +96,7 @@ ValidPhenotypeSymbol = Annotated[str, Depends(valid_phenotype_symbol)]
 ValidPhenotype = Annotated[str, Depends(valid_phenotype)]
 ValidPhenotype1 = Annotated[str, Depends(valid_phenotype1)]
 ValidPhenotype2 = Annotated[str, Depends(valid_phenotype2)]
+ValidPhenotypeList = Annotated[list[str], Depends(valid_phenotype_list)]
 ValidChannelListPositives = Annotated[list[str], Depends(valid_channel_list_positives)]
 ValidChannelListNegatives = Annotated[list[str], Depends(valid_channel_list_negatives)]
 ValidSquidpyFeatureClass = Annotated[str, Depends(valid_squidpy_feature_classname)]

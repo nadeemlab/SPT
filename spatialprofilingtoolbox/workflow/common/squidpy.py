@@ -19,10 +19,9 @@ def describe_squidpy_feature_derivation_method(feature_class: str) -> str | None
 
 
 def lookup_squidpy_feature_class(method: str) -> str | None:
-    if method in squidpy_feature_classnames_descriptions.values():
-        for key, _method in squidpy_feature_classnames_descriptions.items():
-            if method == _method:
-                return key
+    for key, _method in squidpy_feature_classnames_descriptions.items():
+        if method == _method:
+            return key
     return None
 
 
@@ -32,6 +31,7 @@ def compute_squidpy_metric_for_one_sample(
     feature_class: str,
 ) -> float | None:
     """Compute Squidpy metrics for a tissue sample with a clustering of the given phenotypes."""
+    df_cell.sort_index(inplace=True)
     masks: list[NDArray[Any]] = [get_mask(df_cell, signature) for signature in phenotypes]
     adata = convert_df_to_anndata(df_cell, masks)
     match feature_class:
@@ -80,7 +80,7 @@ def convert_df_to_anndata(
                 cluster 0. 
     """
     locations: NDArray[Any] = df[['pixel x', 'pixel y']].to_numpy()
-    adata = AnnData(obsm={'spatial': locations})
+    adata = AnnData(df.to_numpy(), obsm={'spatial': locations})
     spatial_neighbors(adata)
     if (phenotypes_to_cluster_on is not None) and (len(phenotypes_to_cluster_on) > 0):
         clustering = phenotypes_to_cluster_on[0].astype(int)

@@ -27,7 +27,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannel,
     ValidStudy,
     ValidPhenotypeSymbol,
-    ValidPhenotype,
+    ValidPhenotypeList,
     ValidPhenotype1,
     ValidPhenotype2,
     ValidChannelListPositives,
@@ -191,10 +191,11 @@ async def request_phenotype_proximity_computation(
 @app.get("/request-squidpy-computation/")
 async def request_squidpy_computation(
     study: ValidStudy,
-    phenotypes: list[ValidPhenotype],
+    phenotype: ValidPhenotypeList,
     feature_class: ValidSquidpyFeatureClass,
 ) -> SquidpyMetricsComputationResult:
     """Spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
+    phenotypes = phenotype
     criteria: list[PhenotypeCriteria] = [
         query().retrieve_signature_of_phenotype(p, study) for p in phenotypes
     ]

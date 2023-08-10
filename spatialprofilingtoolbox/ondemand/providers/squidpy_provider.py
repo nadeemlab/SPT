@@ -1,6 +1,7 @@
 """Selected metrics from the squidpy library, adapted for use with SPT."""
 
 from typing import cast
+from itertools import chain
 
 from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
@@ -58,11 +59,15 @@ class SquidpyProvider(PendingProvider):
         feature_class:str,
         phenotypes_strs: list[str],
     ) -> str | None:
-        query = cls._form_query_for_feature_specifiers(phenotypes_strs)
+        query = cls._form_query_for_feature_specifiers(len(phenotypes_strs))
         method = cast(str, describe_squidpy_feature_derivation_method(feature_class))
-        args: tuple[str, str] = (study_name, method)
+        variable_portion_args = list(chain(*[
+            [phenotype, str(i+1)] for i, phenotype in enumerate(phenotypes_strs)
+        ]))
+        arguments_list = [study_name] + variable_portion_args + [method]
+        arguments = tuple(arguments_list)
         with DBCursor() as cursor:
-            cursor.execute(query, args)
+            cursor.execute(query, arguments)
             rows = cursor.fetchall()
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
         for row in rows:
@@ -73,7 +78,7 @@ class SquidpyProvider(PendingProvider):
         return None
 
     @classmethod
-    def _form_query_for_feature_specifiers(cls, specifiers: list[str]) -> str:
+    def _form_query_for_feature_specifiers(cls, number_specifiers: int) -> str:
         query_header = '''
         SELECT
             fsn.identifier,
@@ -87,10 +92,10 @@ class SquidpyProvider(PendingProvider):
                 ON sc2.primary_study=sc.primary_study
         WHERE sc2.component_study=%s AND
             ( '''
-        variable_portion_template = ' (fs.specifier=\'%s\' AND fs.ordinality=\'%s\') '
+        variable_portion_template = ' (fs.specifier=%s AND fs.ordinality=%s) '
         variable_portion = ' OR '.join([
-            variable_portion_template % (phenotype_str, str(i+1))
-            for i, phenotype_str in enumerate(specifiers)
+            variable_portion_template
+            for i in range(number_specifiers)
         ])
         query_footer = ''') AND
             fsn.derivation_method=%s

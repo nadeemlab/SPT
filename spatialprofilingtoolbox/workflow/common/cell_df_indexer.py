@@ -1,5 +1,7 @@
 """Convenience functions for working with cell DataFrames."""
 
+import warnings
+
 from numpy import asarray, ndarray
 from numpy.typing import NDArray
 from pandas import DataFrame
@@ -18,7 +20,9 @@ def get_mask(cells: DataFrame, signature: PhenotypeCriteria) -> NDArray[bool,]:
     """Transform phenotype signature into a boolean mask for a DataFrame."""
     value, multiindex = _get_value_and_multiindex(signature)
     try:
-        loc = cells.set_index(multiindex).index.get_loc(value)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="indexing past lexsort depth may impact performance")
+            loc = cells.set_index(multiindex).index.get_loc(value)
     except KeyError:
         return asarray([False,] * cells.shape[0])
     if isinstance(loc, ndarray):

@@ -2,7 +2,7 @@
 __version__ = '0.9.0'
 
 squidpy_feature_classnames_descriptions = {
-    'neighorhood enrichment': 'x',
+    'neighborhood enrichment': 'x',
     'co-occurrence': 'y',
     'ripley': 'z',
 }

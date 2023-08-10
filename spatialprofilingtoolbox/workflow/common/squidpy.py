@@ -2,6 +2,7 @@
 
 from typing import Any
 from typing import cast
+from json import dumps
 
 from numpy.typing import NDArray
 from pandas import DataFrame
@@ -95,21 +96,35 @@ def convert_df_to_anndata(
 
 def _nhood_enrichment(adata: AnnData) -> dict[str, list[float] | list[int]]:
     """Compute neighborhood enrichment by permutation test."""
-    result = nhood_enrichment(adata, 'cluster', copy=True)
+    result = nhood_enrichment(adata, 'cluster', copy=True, show_progress_bar=False)
     zscore, count = cast(tuple[NDArray[Any], NDArray[Any]], result)
+
+    print(dumps({'zscore': zscore.tolist(), 'count': count.tolist()}, indent=4))
+
     return {'zscore': zscore.tolist(), 'count': count.tolist()}
 
 
 def _co_occurrence(adata: AnnData) -> dict[str, list[float]]:
     """Compute co-occurrence probability of clusters."""
-    result = co_occurrence(adata, 'cluster', copy=True)
+    result = co_occurrence(adata, 'cluster', copy=True, show_progress_bar=False)
     occ, interval = cast(tuple[NDArray[Any], NDArray[Any]], result)
+
+    print(dumps({'occ': occ.tolist(), 'interval': interval.tolist()}, indent=4))
+
     return {'occ': occ.tolist(), 'interval': interval.tolist()}
 
 
 def _ripley(adata: AnnData) -> dict[str, list[list[float]] | list[float] | list[int]]:
     r"""Compute various Ripley\'s statistics for point processes."""
-    result = ripley(adata, 'cluster', copy=True)
+    result = ripley(adata, 'cluster', copy=True, show_progress_bar=False)
+
+    print(dumps({
+        'F_mode': result['F_mode'].to_numpy().to_list(),
+        'sims_stat': result['sims_stat'].to_numpy().to_list(),
+        'bins': result['bins'].to_list(),
+        'pvalues': result['pvalues'].to_list(),
+    }, indent=4))
+
     return {
         'F_mode': result['F_mode'].to_numpy().to_list(),
         'sims_stat': result['sims_stat'].to_numpy().to_list(),

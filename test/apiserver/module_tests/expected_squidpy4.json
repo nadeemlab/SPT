@@ -1,12 +1,12 @@
 {
     "values": {
-        "lesion 0_1": 1.0,
-        "lesion 0_2": 1.0,
-        "lesion 0_3": 1.0,
-        "lesion 6_1": 1.0,
-        "lesion 6_2": 1.0,
-        "lesion 6_3": 1.0,
-        "lesion 6_4": 1.0
+        "lesion 0_1": 2.0,
+        "lesion 0_2": 2.0,
+        "lesion 0_3": 2.0,
+        "lesion 6_1": 2.0,
+        "lesion 6_2": 2.0,
+        "lesion 6_3": 2.0,
+        "lesion 6_4": 2.0
     },
     "is_pending": false
 }

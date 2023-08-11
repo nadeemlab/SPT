@@ -97,7 +97,10 @@ def convert_df_to_anndata(
                 cluster 0. 
     """
     locations: NDArray[Any] = df[['pixel x', 'pixel y']].to_numpy()
-    adata = AnnData(df.to_numpy(), obsm={'spatial': locations})
+    adata = AnnData(
+        df.to_numpy(),
+        obsm={'spatial': locations},  # type: ignore
+    )
     spatial_neighbors(adata)
     if (phenotypes_to_cluster_on is not None) and (len(phenotypes_to_cluster_on) > 0):
         clustering = phenotypes_to_cluster_on[0].astype(int)

@@ -8,9 +8,7 @@ squidpy_feature_classnames_descriptions = {
     'co-occurrence': '''
         For two given cell phenotypes (first and second specifiers), and a given radius (third specifier), the ratio of the two probabilities of occurrence of the first phenotype within the given radius around some cell, calculated with and without conditioning on at least one occurrence of the second phenotype in the same radius.
     '''.lstrip().rstrip(),
-    'ripley': 'z',
+    'ripley': '''
+        For a given cell phenotype (first specifier), the p-value associated with the Ripley F-statistic for the point set of cell locations, at the radius scale for which this p-value is smallest.
+    '''.lstrip().rstrip(),
 }
-
-# Calculates nhood_enrichment, co_occurrence, and ripley from squidpy.gr using clusters derived
-# from the phenotypes provided. Reference db.squidpy_metrics.convert_df_to_anndata for the
-# clustering method.

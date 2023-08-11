@@ -48,13 +48,20 @@ class SquidpyProvider(PendingProvider):
         phenotypes_strs: list[str] = [
             phenotype_to_phenotype_str(phenotype) for phenotype in phenotypes
         ]
-        specification = cls._get_feature_specification(study_name, feature_class, phenotypes_strs, radius=radius)
+        specification = cls._get_feature_specification(
+            study_name,
+            feature_class,
+            phenotypes_strs,
+            radius=radius,
+        )
         if specification is not None:
             return specification
         if radius is not None:
-            logger.debug('Creating feature with specifiers: (%s) %s, %s', study_name, str(phenotypes_strs), radius)
+            message = 'Creating feature with specifiers: (%s) %s, %s'
+            logger.debug(message, study_name, str(phenotypes_strs), radius)
         else:
-            logger.debug('Creating feature with specifiers: (%s) %s', study_name, str(phenotypes_strs))
+            message = 'Creating feature with specifiers: (%s) %s'
+            logger.debug(message, study_name, str(phenotypes_strs))
         return cls._create_feature_specification(
             study_name,
             feature_class,

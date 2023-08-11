@@ -2,16 +2,21 @@
 
 from typing import Any
 from typing import cast
-from json import dumps
 
 from numpy.typing import NDArray
+from numpy import ndarray
 from pandas import DataFrame
 from squidpy.gr import spatial_neighbors, nhood_enrichment, co_occurrence, ripley  # type: ignore
 from anndata import AnnData  # type: ignore
+from scipy.stats import norm
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.workflow.common.cell_df_indexer import get_mask
 from spatialprofilingtoolbox.ondemand import squidpy_feature_classnames_descriptions
+
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 def describe_squidpy_feature_derivation_method(feature_class: str) -> str | None:
     if feature_class in squidpy_feature_classnames_descriptions:
@@ -30,6 +35,7 @@ def compute_squidpy_metric_for_one_sample(
     df_cell: DataFrame,
     phenotypes: list[PhenotypeCriteria],
     feature_class: str,
+    radius: float | None = None,
 ) -> float | None:
     """Compute Squidpy metrics for a tissue sample with a clustering of the given phenotypes."""
     df_cell.sort_index(inplace=True)
@@ -39,18 +45,22 @@ def compute_squidpy_metric_for_one_sample(
         case 'neighborhood enrichment':
             return summarize_neighborhood_enrichment(_nhood_enrichment(adata))
         case 'co-occurrence':
-            return summarize_co_occurrence(_co_occurrence(adata))
+            if radius is None:
+                raise ValueError('You must supply radius value for co-occurrence metric.')
+            return summarize_co_occurrence(_co_occurrence(adata, radius))
         case 'ripley':
             return summarize_ripley(_ripley(adata))
     return None
 
 
 def summarize_neighborhood_enrichment(unstructured_metrics) -> float | None:
-    return 1
+    zscore = float(unstructured_metrics['zscore'][0][1])
+    return float(norm.cdf(zscore))
 
 
 def summarize_co_occurrence(unstructured_metrics) -> float | None:
-    return 2
+    occurrence_ratios = unstructured_metrics['occ']
+    return float(occurrence_ratios[0][1][0])
 
 
 def summarize_ripley(unstructured_metrics) -> float | None:
@@ -96,34 +106,28 @@ def convert_df_to_anndata(
 
 def _nhood_enrichment(adata: AnnData) -> dict[str, list[float] | list[int]]:
     """Compute neighborhood enrichment by permutation test."""
-    result = nhood_enrichment(adata, 'cluster', copy=True, show_progress_bar=False)
+    result = nhood_enrichment(adata, 'cluster', copy=True, seed=128, show_progress_bar=False)
     zscore, count = cast(tuple[NDArray[Any], NDArray[Any]], result)
-
-    print(dumps({'zscore': zscore.tolist(), 'count': count.tolist()}, indent=4))
-
     return {'zscore': zscore.tolist(), 'count': count.tolist()}
 
 
-def _co_occurrence(adata: AnnData) -> dict[str, list[float]]:
+def _co_occurrence(adata: AnnData, radius: float) -> dict[str, list[float]]:
     """Compute co-occurrence probability of clusters."""
-    result = co_occurrence(adata, 'cluster', copy=True, show_progress_bar=False)
+    result = co_occurrence(adata, 'cluster', copy=True, interval=[0.0, radius], show_progress_bar=False)
     occ, interval = cast(tuple[NDArray[Any], NDArray[Any]], result)
-
-    print(dumps({'occ': occ.tolist(), 'interval': interval.tolist()}, indent=4))
-
     return {'occ': occ.tolist(), 'interval': interval.tolist()}
 
 
 def _ripley(adata: AnnData) -> dict[str, list[list[float]] | list[float] | list[int]]:
     r"""Compute various Ripley\'s statistics for point processes."""
-    result = ripley(adata, 'cluster', copy=True, show_progress_bar=False)
+    result = ripley(adata, 'cluster', copy=True)
 
-    print(dumps({
-        'F_mode': result['F_mode'].to_numpy().to_list(),
-        'sims_stat': result['sims_stat'].to_numpy().to_list(),
-        'bins': result['bins'].to_list(),
-        'pvalues': result['pvalues'].to_list(),
-    }, indent=4))
+    # print(dumps({
+    #     'F_mode': result['F_mode'].to_numpy().to_list(),
+    #     'sims_stat': result['sims_stat'].to_numpy().to_list(),
+    #     'bins': result['bins'].to_list(),
+    #     'pvalues': result['pvalues'].to_list(),
+    # }, indent=4))
 
     return {
         'F_mode': result['F_mode'].to_numpy().to_list(),

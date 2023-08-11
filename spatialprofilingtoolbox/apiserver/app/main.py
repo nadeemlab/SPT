@@ -193,6 +193,7 @@ async def request_squidpy_computation(
     study: ValidStudy,
     phenotype: ValidPhenotypeList,
     feature_class: ValidSquidpyFeatureClass,
+    radius: float | None = None,
 ) -> SquidpyMetricsComputationResult:
     """Spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
     phenotypes = phenotype
@@ -208,6 +209,7 @@ async def request_squidpy_computation(
             query().get_study_components(study).measurement,
             markers,
             feature_class,
+            radius=radius,
         )
     return metrics
 

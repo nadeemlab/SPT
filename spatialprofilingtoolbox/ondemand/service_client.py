@@ -126,12 +126,17 @@ class OnDemandRequester:
         study: str,
         signature: list[list[str]],
         feature_class: str,
+        radius: float | None = None,
     ) -> SquidpyMetricsComputationResult:
         """Get spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
         assert len(signature) % 2 == 0
         separator = self._get_record_separator()
         groups = [feature_class, self._sanitize_token(study)]
         groups.extend(separator.join([self._sanitize_token(c) for c in s]) for s in signature)
+        if feature_class == 'co-occurrence':
+            if radius is None:
+                raise ValueError('You must supply a radius value.')
+            groups = groups + [str(radius)]
         query = self._get_group_separator().join(groups).encode('utf-8')
         self.tcp_client.sendall(query)
         response = self._parse_response()

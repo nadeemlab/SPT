@@ -7,10 +7,27 @@ reset_code="\033[0m"
 
 function test_squidpy() {
     feature_class="$1"
-    p1="$2"
-    p2="$3"
-    filename="$4"
-    query="http://spt-apiserver-testing:8080/request-squidpy-computation/?study=Melanoma%20intralesional%20IL2&phenotype=$p1&phenotype=$p2&feature_class=$feature_class"
+    if [[ "$feature_class" == "neighborhood%20enrichment" ]];
+    then
+        p1="$2"
+        p2="$3"
+        filename="$4"
+        query="http://spt-apiserver-testing:8080/request-squidpy-computation/?study=Melanoma%20intralesional%20IL2&phenotype=$p1&phenotype=$p2&feature_class=$feature_class"
+    fi
+    if [[ "$feature_class" == "ripley" ]];
+    then
+        p="$2"
+        filename="$3"
+        query="http://spt-apiserver-testing:8080/request-squidpy-computation/?study=Melanoma%20intralesional%20IL2&phenotype=$p&feature_class=$feature_class"
+    fi
+    if [[ "$feature_class" == "co-occurrence" ]];
+    then
+        p1="$2"
+        p2="$3"
+        r="$4"
+        filename="$5"
+        query="http://spt-apiserver-testing:8080/request-squidpy-computation/?study=Melanoma%20intralesional%20IL2&phenotype=$p1&phenotype=$p2&radius=$r&feature_class=$feature_class"
+    fi
     start=$SECONDS
     while (( SECONDS - start < 10 )); do
         echo -en "Doing query $blue$query$reset_code ... "
@@ -56,6 +73,6 @@ function test_squidpy() {
 test_squidpy "neighborhood%20enrichment" 1 2 module_tests/expected_squidpy1.json
 test_squidpy "neighborhood%20enrichment" 2 CD20 module_tests/expected_squidpy2.json
 test_squidpy "neighborhood%20enrichment" CD3 CD20 module_tests/expected_squidpy3.json
-test_squidpy "co-occurrence" CD3 CD20 module_tests/expected_squidpy4.json
+test_squidpy "co-occurrence" CD3 CD20 50 module_tests/expected_squidpy4.json
 test_squidpy "ripley" CD3 module_tests/expected_squidpy5.json
 test_squidpy "ripley" CD3 module_tests/expected_squidpy6.json

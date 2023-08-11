@@ -36,6 +36,7 @@ class SquidpyProvider(PendingProvider):
         study_name: str,
         feature_class: str | None = None,
         phenotypes: list[PhenotypeCriteria] | None = None,
+        radius: float | None = None,
         **kwargs,
     ) -> str:
         """Create and return the identifier of a feature specification defined by the specifiers,
@@ -47,22 +48,34 @@ class SquidpyProvider(PendingProvider):
         phenotypes_strs: list[str] = [
             phenotype_to_phenotype_str(phenotype) for phenotype in phenotypes
         ]
-        specification = cls._get_feature_specification(study_name, feature_class, phenotypes_strs)
+        specification = cls._get_feature_specification(study_name, feature_class, phenotypes_strs, radius=radius)
         if specification is not None:
             return specification
-        logger.debug('Creating feature with specifiers: (%s) %s', study_name, str(phenotypes_strs))
-        return cls._create_feature_specification(study_name, feature_class, phenotypes_strs)
+        if radius is not None:
+            logger.debug('Creating feature with specifiers: (%s) %s, %s', study_name, str(phenotypes_strs), radius)
+        else:
+            logger.debug('Creating feature with specifiers: (%s) %s', study_name, str(phenotypes_strs))
+        return cls._create_feature_specification(
+            study_name,
+            feature_class,
+            phenotypes_strs,
+            radius=radius,
+        )
 
     @classmethod
     def _get_feature_specification(cls,
         study_name: str,
         feature_class:str,
         phenotypes_strs: list[str],
+        radius: float | None = None,
     ) -> str | None:
-        query = cls._form_query_for_feature_specifiers(len(phenotypes_strs))
+        specifiers = phenotypes_strs
+        if feature_class == 'co-occurrence':
+            specifiers = specifiers + [str(radius)]
+        query = cls._form_query_for_feature_specifiers(len(specifiers))
         method = cast(str, describe_squidpy_feature_derivation_method(feature_class))
         variable_portion_args = list(chain(*[
-            [phenotype, str(i+1)] for i, phenotype in enumerate(phenotypes_strs)
+            [specifier, str(i+1)] for i, specifier in enumerate(specifiers)
         ]))
         arguments_list = [study_name] + variable_portion_args + [method]
         arguments = tuple(arguments_list)
@@ -72,8 +85,8 @@ class SquidpyProvider(PendingProvider):
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
         for row in rows:
             feature_specifications[row[0]].append(row[1])
-        for key, specifiers in feature_specifications.items():
-            if len(specifiers) == len(phenotypes_strs):
+        for key, _specifiers in feature_specifications.items():
+            if len(_specifiers) == len(specifiers):
                 return key
         return None
 
@@ -108,22 +121,33 @@ class SquidpyProvider(PendingProvider):
         study_name: str,
         feature_class: str,
         phenotypes: list[str],
+        radius: float | None = None,
     ) -> str:
-        specifiers = tuple(phenotypes)
+        if feature_class == 'co-occurrence':
+            specifiers = tuple(phenotypes[0:2] + [str(radius)])
+        else:
+            specifiers = tuple(phenotypes)
         method = cast(str, describe_squidpy_feature_derivation_method(feature_class))
         return cls.create_feature_specification(specifiers, study_name, method)
 
     def have_feature_computed(self, feature_specification: str) -> None:
-        study_name, specifiers = SquidpyProvider.retrieve_specifiers(feature_specification)
-        phenotypes: list[PhenotypeCriteria] = [phenotype_str_to_phenotype(s) for s in specifiers]
         method = self.retrieve_feature_derivation_method(feature_specification)
         feature_class = cast(str, lookup_squidpy_feature_class(method))
+        study_name, specifiers = SquidpyProvider.retrieve_specifiers(feature_specification)
+        phenotypes: list[PhenotypeCriteria] = []
+        if feature_class == 'co-occurrence':
+            phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers[0:2]]
+            radius = float(specifiers[2])
+        else:
+            phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers]
+            radius = None
         sample_identifiers = SquidpyProvider.get_sample_identifiers(feature_specification)
         for sample_identifier in sample_identifiers:
             value = compute_squidpy_metric_for_one_sample(
                 self.get_cells(sample_identifier, study_name),
                 phenotypes,
                 feature_class,
+                radius=radius,
             )
             message = 'Computed feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)

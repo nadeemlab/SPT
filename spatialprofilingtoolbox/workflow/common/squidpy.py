@@ -63,7 +63,14 @@ def summarize_co_occurrence(unstructured_metrics) -> float | None:
 
 
 def summarize_ripley(unstructured_metrics) -> float | None:
-    return 3
+    bins = unstructured_metrics['bins']
+    pvalues = unstructured_metrics['pvalues']
+    pairs = list(zip(bins, pvalues))
+    filtered = [pair for pair in pairs if pair[1] > 0]
+    if len(filtered) == 0:
+        return 1.0
+    sorted_pairs = sorted(filtered, key=lambda pair: pair[1])
+    return float(sorted_pairs[0][1])
 
 
 def convert_df_to_anndata(
@@ -126,17 +133,7 @@ def _co_occurrence(adata: AnnData, radius: float) -> dict[str, list[float]]:
 def _ripley(adata: AnnData) -> dict[str, list[list[float]] | list[float] | list[int]]:
     r"""Compute various Ripley\'s statistics for point processes."""
     result = ripley(adata, 'cluster', copy=True)
-
-    # print(dumps({
-    #     'F_mode': result['F_mode'].to_numpy().to_list(),
-    #     'sims_stat': result['sims_stat'].to_numpy().to_list(),
-    #     'bins': result['bins'].to_list(),
-    #     'pvalues': result['pvalues'].to_list(),
-    # }, indent=4))
-
     return {
-        'F_mode': result['F_mode'].to_numpy().to_list(),
-        'sims_stat': result['sims_stat'].to_numpy().to_list(),
-        'bins': result['bins'].to_list(),
-        'pvalues': result['pvalues'].to_list(),
+        'bins': result['bins'].tolist(),
+        'pvalues': result['pvalues'].tolist()[0],
     }

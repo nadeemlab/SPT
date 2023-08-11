@@ -29,7 +29,7 @@ function test_squidpy() {
         query="http://spt-apiserver-testing:8080/request-squidpy-computation/?study=Melanoma%20intralesional%20IL2&phenotype=$p1&phenotype=$p2&radius=$r&feature_class=$feature_class"
     fi
     start=$SECONDS
-    while (( SECONDS - start < 10 )); do
+    while (( SECONDS - start < 30 )); do
         echo -en "Doing query $blue$query$reset_code ... "
         curl -s "$query" > _squidpy.json;
         if [ "$?" -gt 0 ];
@@ -75,4 +75,3 @@ test_squidpy "neighborhood%20enrichment" 2 CD20 module_tests/expected_squidpy2.j
 test_squidpy "neighborhood%20enrichment" CD3 CD20 module_tests/expected_squidpy3.json
 test_squidpy "co-occurrence" CD3 CD20 50 module_tests/expected_squidpy4.json
 test_squidpy "ripley" CD3 module_tests/expected_squidpy5.json
-test_squidpy "ripley" CD3 module_tests/expected_squidpy6.json

@@ -4,11 +4,10 @@ from typing import Any
 from typing import cast
 
 from numpy.typing import NDArray
-from numpy import ndarray
 from pandas import DataFrame
 from squidpy.gr import spatial_neighbors, nhood_enrichment, co_occurrence, ripley  # type: ignore
 from anndata import AnnData  # type: ignore
-from scipy.stats import norm
+from scipy.stats import norm  # type: ignore
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.workflow.common.cell_df_indexer import get_mask
@@ -113,7 +112,13 @@ def _nhood_enrichment(adata: AnnData) -> dict[str, list[float] | list[int]]:
 
 def _co_occurrence(adata: AnnData, radius: float) -> dict[str, list[float]]:
     """Compute co-occurrence probability of clusters."""
-    result = co_occurrence(adata, 'cluster', copy=True, interval=[0.0, radius], show_progress_bar=False)
+    result = co_occurrence(
+        adata,
+        'cluster',
+        copy=True,
+        interval=[0.0, radius],  # type: ignore
+        show_progress_bar=False,
+    )
     occ, interval = cast(tuple[NDArray[Any], NDArray[Any]], result)
     return {'occ': occ.tolist(), 'interval': interval.tolist()}
 

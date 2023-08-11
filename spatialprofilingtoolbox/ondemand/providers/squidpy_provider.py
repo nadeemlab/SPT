@@ -77,10 +77,8 @@ class SquidpyProvider(PendingProvider):
         variable_portion_args = list(chain(*[
             [specifier, str(i+1)] for i, specifier in enumerate(specifiers)
         ]))
-        arguments_list = [study_name] + variable_portion_args + [method]
-        arguments = tuple(arguments_list)
         with DBCursor() as cursor:
-            cursor.execute(query, arguments)
+            cursor.execute(query, tuple([study_name] + variable_portion_args + [method]))
             rows = cursor.fetchall()
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
         for row in rows:

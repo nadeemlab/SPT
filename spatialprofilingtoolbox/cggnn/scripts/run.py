@@ -117,11 +117,10 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def save_importance(dbname: str, host: str, user: str, password: str) -> None:
+def save_importance(spt_db_config_location: str) -> None:
     """Save cell importance scores as defined by cggnn to the database."""
     df = read_csv(join('out', 'importances.csv'), index_col=0)
-    credentials = DBCredentials(dbname, host, user, password)
-    connection = DatabaseConnectionMaker.make_connection(credentials)
+    connection = DatabaseConnectionMaker(spt_db_config_location).get_connection()
     transcribe_importance(df, connection)
     connection.close()
 
@@ -143,5 +142,4 @@ if __name__ == "__main__":
                  args.explainer,
                  args.merge_rois,
                  args.prune_misclassified)
-
-    save_importance(args.dbname, args.host, args.user, args.password)
+    save_importance(args.spt_db_config_location)

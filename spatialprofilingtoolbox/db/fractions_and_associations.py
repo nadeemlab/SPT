@@ -75,7 +75,8 @@ class FractionsAccess(SimpleReadOnlyProvider):
         for test in tests:
             if float(test.pvalue) <= float(pvalue):
                 if not test.feature in associations.keys():
-                    logger.warning('Tested feature "%s" not among expected features for the given study.', test.feature)
+                    message = 'Tested feature "%s" not among expected features for the given study.'
+                    logger.warning(message, test.feature)
                 else:
                     associations[test.feature][test.cohort1].add(test.cohort2)
                     associations[test.feature][test.cohort2].add(test.cohort1)

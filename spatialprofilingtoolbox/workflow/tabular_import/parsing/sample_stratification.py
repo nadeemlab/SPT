@@ -178,7 +178,7 @@ class SampleStratificationCreator:
             if all(SampleStratificationCreator.is_convertible(date, valuation) for date in dates):
                 return valuation
         logger.warning('No order could be determined among: %s', dates)
-        return lambda date: date
+        return lambda date: None
 
     @staticmethod
     def is_convertible(string, valuation):

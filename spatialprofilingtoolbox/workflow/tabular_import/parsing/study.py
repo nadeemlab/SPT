@@ -27,7 +27,7 @@ class StudyParser(SourceToADIParser):
             record = [study_name, substudy]
             self._cautious_insert('study_component', record, cursor)
 
-    def parse(self, connection, study_file) -> None:
+    def parse(self, connection, study_file) -> str:
         with open(study_file, 'rt', encoding='utf-8') as file:
             study = json.loads(file.read())
             study_name = study['Study name']

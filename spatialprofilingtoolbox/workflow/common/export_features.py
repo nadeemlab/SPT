@@ -1,8 +1,7 @@
+"""Convenience uploader of feature data into SPT database tables that comprise a sparse
+representation of the features. Abstracts (wraps) the actual SQL queries.
 """
-Convenience uploader of feature data into SPT database tables that comprise
-a sparse representation of the features. Abstracts (wraps) the actual SQL
-queries.
-"""
+
 from typing import cast
 from importlib.resources import as_file
 from importlib.resources import files
@@ -21,11 +20,13 @@ logger = colorized_logger(__name__)
 
 
 class ADIFeaturesUploader(SourceToADIParser):
-    """Upload sparse representation of feature values to tables
-    quantitative_feature_value, feature_specification, feature_specifier.
+    """Upload sparse representation of feature values to tables quantitative_feature_value,
+    feature_specification, feature_specifier.
     """
+
     feature_value_identifier: int
     connection_provider: ConnectionProvider
+    feature_values: list[tuple[tuple[str, ...],str , float | None]]
 
     def __init__(self,
         database_connection_maker: DatabaseConnectionMaker | None,
@@ -36,7 +37,6 @@ class ADIFeaturesUploader(SourceToADIParser):
         **kwargs
     ):
         derivation_method, specifier_number = derivation_and_number_specifiers
-        self.feature_values = None
         self.impute_zeros=impute_zeros
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
@@ -51,7 +51,7 @@ class ADIFeaturesUploader(SourceToADIParser):
     def record_feature_specification_template(self,
         data_analysis_study,
         derivation_method,
-        specifier_number
+        specifier_number,
     ):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
@@ -70,9 +70,9 @@ class ADIFeaturesUploader(SourceToADIParser):
         if self.connection_provider.is_connected():
             self.upload()
 
-    def stage_feature_value(self, specifiers, subject, value):
+    def stage_feature_value(self, specifiers: tuple[str, ...], subject: str, value: float | None):
         self.validate_specifiers(specifiers)
-        self.feature_values.append([specifiers, subject, value])
+        self.feature_values.append((specifiers, subject, value))
 
     def validate_specifiers(self, specifiers):
         if len(specifiers) != self.specifier_number:

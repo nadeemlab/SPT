@@ -1,6 +1,4 @@
-"""
-Create a convenience index column on the sparse expression data table.
-"""
+"""Create a convenience index column on the sparse expression data table."""
 import argparse
 from os.path import abspath
 from os.path import expanduser

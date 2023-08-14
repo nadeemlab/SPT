@@ -1,12 +1,14 @@
 """Provides proximity metric computation on demand across whole database."""
 
-# import datetime
 import re
+from typing import cast
 
-from sklearn.neighbors import BallTree
+from sklearn.neighbors import BallTree  # type: ignore
+from pandas import DataFrame
 
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
+from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
 from spatialprofilingtoolbox.workflow.common.proximity import \
     compute_proximity_metric_for_signature_pair
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -15,27 +17,28 @@ logger = colorized_logger(__name__)
 
 
 class ProximityCalculator:
-    """Provides functionality to request computation of proximity of specific
-    phenotypes, and to give back these features if already computed.
+    """Provides functionality to request computation of proximity of specific phenotypes, and to
+    give back these features if already computed.
     """
     def __init__(self, study, database_config_file):
-        logger.info(
-            'Start pulling feature matrix data for proximity on-demand calculator, study %s.',
-            study)
+        message = 'Start pulling feature matrix data for proximity on-demand calculator, study %s.'
+        logger.info(message, study)
         extractor = FeatureMatrixExtractor(database_config_file=database_config_file)
-        bundle: dict = extractor.extract(study=study)
+        bundle = cast(Bundle, extractor.extract(study=study))
         logger.info('Finished pulling data for %s.', study)
 
-        for identifier, sample in list(bundle[study]['feature matrices'].items()):
-            logger.info('Cells dataframe for %s has size %s', identifier, sample['dataframe'].shape)
-        study_bundle = bundle[study]
+        FeatureMatrices = dict[str, dict[str, DataFrame | str]]
+        feature_matrices = cast(FeatureMatrices, bundle[study]['feature matrices'])
+        for identifier, sample in list(feature_matrices.items()):
+            df = cast(DataFrame, sample['dataframe'])
+            logger.info('Cells dataframe for %s has size %s', identifier, df.shape)
         self.cells_by_sample = {
-            sample_identifier: sample['dataframe']
-            for sample_identifier, sample in study_bundle['feature matrices'].items()
+            sample_identifier: cast(DataFrame, sample['dataframe'])
+            for sample_identifier, sample in feature_matrices.items()
         }
 
         self.channel_symbols_by_column_name = bundle[study]['channel symbols by column name']
-        self.channels = sorted(self.channel_symbols_by_column_name.values())
+        self.channels = sorted(map(str, self.channel_symbols_by_column_name.values()))
 
         logger.info('Start creating ball trees.')
         self.create_ball_trees(bundle[study])
@@ -56,11 +59,13 @@ class ProximityCalculator:
         signature2 = self.retrieve_signature(phenotype2)
         metrics = {
             sample_identifier:
-            compute_proximity_metric_for_signature_pair(signature1,
-                                                        signature2,
-                                                        radius,
-                                                        self.get_cells(sample_identifier),
-                                                        self.get_tree(sample_identifier))
+            compute_proximity_metric_for_signature_pair(
+                signature1,
+                signature2,
+                radius,
+                self.get_cells(sample_identifier),
+                self.get_tree(sample_identifier),
+            )
             for sample_identifier in self.get_sample_identifiers()
         }
         self.cache_metrics(metrics)

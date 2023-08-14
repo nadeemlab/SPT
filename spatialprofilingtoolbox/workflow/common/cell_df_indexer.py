@@ -8,12 +8,17 @@ from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 
-def _get_value_and_multiindex(signature: PhenotypeCriteria) -> tuple[int | tuple[int, ...], list[str]]:
+ValueMultiIndex = tuple[int | tuple[int, ...], list[str]]
+
+def _get_value_and_multiindex(signature: PhenotypeCriteria) -> ValueMultiIndex:
     value = (1,) * len(signature.positive_markers) + (0,) * len(signature.negative_markers)
+    _value: int | tuple[int, ...]
     if len(value) == 1:
-        value = value[0]
+        _value = value[0]
+    else:
+        _value = value
     multiindex = [*signature.positive_markers, *signature.negative_markers]
-    return value, multiindex
+    return _value, multiindex
 
 
 def get_mask(cells: DataFrame, signature: PhenotypeCriteria) -> NDArray[bool,]:
@@ -21,7 +26,8 @@ def get_mask(cells: DataFrame, signature: PhenotypeCriteria) -> NDArray[bool,]:
     value, multiindex = _get_value_and_multiindex(signature)
     try:
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message="indexing past lexsort depth may impact performance")
+            message = "indexing past lexsort depth may impact performance"
+            warnings.filterwarnings("ignore", message=message)
             loc = cells.set_index(multiindex).index.get_loc(value)
     except KeyError:
         return asarray([False,] * cells.shape[0])

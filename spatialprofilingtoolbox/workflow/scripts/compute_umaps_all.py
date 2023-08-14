@@ -1,6 +1,4 @@
-"""
-Convenience utility to compute UMAPs for all studies in the database.
-"""
+"""Convenience utility to compute UMAPs for all studies in the database."""
 import subprocess
 import argparse
 from importlib.resources import as_file

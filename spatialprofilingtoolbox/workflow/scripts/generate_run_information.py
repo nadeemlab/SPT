@@ -1,15 +1,22 @@
+"""CLI entry point into the "job generator" component of a given Nextflow-managed workflow.
+This component creates a manifest of the parallelizable jobs for Nextflow to run.
 """
-CLI entry point into the "job generator" component of a given Nextflow-managed
-workflow. This component creates a manifest of the parallelizable jobs for
-Nextflow to run.
-"""
+
 import argparse
 from os.path import exists
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
-from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox import get_workflow
+
+try:
+    workflows = {name: get_workflow(name) for name in get_workflow_names()}
+except ModuleNotFoundError as e:
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
+    SuggestExtrasException(e, 'workflow')
+workflows = {name: get_workflow(name) for name in get_workflow_names()}
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -54,23 +61,20 @@ if __name__ == '__main__':
         action='store_true',
         help='If set, will rely on files as dataset input.',
     )
-
     args = parser.parse_args()
-
     if args.use_file_based_data_model:
         if not exists(args.file_manifest_file):
             raise FileNotFoundError(args.file_manifest_file)
 
-    try:
-        workflows = {name: get_workflow(name) for name in get_workflow_names()}
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
-
     Generator = workflows[args.workflow].generator
     if args.use_file_based_data_model:
-        job_generator = Generator(file_manifest_file=args.file_manifest_file,
-                                  input_path=args.input_path)
+        job_generator = Generator(
+            file_manifest_file=args.file_manifest_file,
+            input_path=args.input_path,
+        )
     else:
-        job_generator = Generator(study_name=args.study_name,
-                                  database_config_file=args.database_config_file)
+        job_generator = Generator(
+            study_name=args.study_name, 
+            database_config_file=args.database_config_file,
+        )
     job_generator.write_job_specification_table(args.job_specification_table)

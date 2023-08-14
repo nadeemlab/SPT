@@ -1,5 +1,7 @@
 """Source file parsing regarding sample-level cohort identification."""
 import re
+from typing import Callable
+from typing import Any
 
 import pandas as pd
 
@@ -9,9 +11,10 @@ logger = colorized_logger(__name__)
 
 
 class SampleStratificationCreator:
-    """Create a simplified sample stratification (cohort definition) for the
-    samples across all studies.
+    """Create a simplified sample stratification (cohort definition) for the samples across all
+    studies.
     """
+
     insert_assignment = '''
     INSERT INTO sample_strata
     ( stratum_identifier,
@@ -85,18 +88,22 @@ class SampleStratificationCreator:
         subject, extraction_date = SampleStratificationCreator.get_source_event(specimen, cursor)
         interventions = SampleStratificationCreator.get_interventions(subject, cursor)
         diagnoses = SampleStratificationCreator.get_diagnoses(subject, cursor)
-        return (SampleStratificationCreator.get_interventional_position(interventions,
-                                                                        extraction_date) +
-                SampleStratificationCreator.get_diagnostic_state(extraction_date, diagnoses))
+        position = SampleStratificationCreator.get_interventional_position(
+            interventions,
+            extraction_date,
+        )
+        state = SampleStratificationCreator.get_diagnostic_state(extraction_date, diagnoses)
+        return position + state
 
     @staticmethod
     def get_interventional_position(interventions, extraction_date):
         if len(interventions) > 0:
-            valuation_function = SampleStratificationCreator.get_date_valuation(
-                [i[1] for i in interventions] + [extraction_date])
+            parts = [i[1] for i in interventions] + [extraction_date]
+            valuation_function = SampleStratificationCreator.get_date_valuation(parts)
             sequence = sorted(
                 interventions + [('source extraction', extraction_date)],
-                key=lambda x: valuation_function(x[1]))
+                key=lambda x: valuation_function(x[1]),
+            )
             extraction_index = [
                 index for index, event in enumerate(sequence)
                 if event[0] == 'source extraction'
@@ -142,13 +149,12 @@ class SampleStratificationCreator:
         return ['', '']
 
     @staticmethod
-    def get_date_valuation(dates):
+    def get_date_valuation(dates) -> Callable[[str], Any]:
 
-        def iso_valuation(date):
+        def iso_valuation(date) -> tuple[int, ...]:
             parts = date.split('-')
             if len(parts) < 2:
-                raise ValueError(
-                    'Only one hyphen-delimited part, not an ISO 8601 date.')
+                raise ValueError('Only one hyphen-delimited part, not an ISO 8601 date.')
             numeric_parts = []
             for _, part in enumerate(parts):
                 stripped = part.lstrip('0')
@@ -158,10 +164,10 @@ class SampleStratificationCreator:
                     raise ValueError(f'Part {part} of date is not numeric.')
             return tuple(numeric_parts)
 
-        def numeric_valuation(date):
+        def numeric_valuation(date) -> float:
             return float(date)
 
-        def timepoint_extractor(date):
+        def timepoint_extractor(date) -> str:
             match = re.search(r'timepoint [\d]+$', date)
             if match:
                 return match.group()
@@ -171,7 +177,7 @@ class SampleStratificationCreator:
             if all(SampleStratificationCreator.is_convertible(date, valuation) for date in dates):
                 return valuation
         logger.warning('No order could be determined among: %s', dates)
-        return None
+        return lambda date: date
 
     @staticmethod
     def is_convertible(string, valuation):

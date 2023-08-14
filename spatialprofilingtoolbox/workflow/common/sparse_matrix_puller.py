@@ -1,5 +1,4 @@
-"""
-Retrieve the "feature matrix" for a given study from the database, and store it in a special
+"""Retrieve the "feature matrix" for a given study from the database, and store it in a special
 (in-memory) binary compressed format.
 """
 

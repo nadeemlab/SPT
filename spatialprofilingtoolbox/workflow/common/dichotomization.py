@@ -1,13 +1,11 @@
-"""
-A self-contained module for performing lightweight thresholding of continuous
-variables.
-"""
+"""A self-contained module for performing lightweight thresholding of continuous variables."""
+
 from math import log10
 import warnings
 
 import numpy as np
-from sklearn.mixture import GaussianMixture
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.mixture import GaussianMixture  # type: ignore
+from sklearn.exceptions import ConvergenceWarning  # type: ignore
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -50,7 +48,9 @@ def dichotomize(
     intensity = dataset_design.get_intensity_column_name(phenotype_name)
     if not intensity in table.columns:
         logger.error(
-            '%s intensity column not present; can not dichotomize.', phenotype_name)
+            '%s intensity column not present; can not dichotomize.',
+            phenotype_name,
+        )
         return
     x_vector = table[intensity]
     y_vector0 = [log10(x) if x > 0 else floor_value for x in x_vector]
@@ -79,6 +79,5 @@ def dichotomize(
 
     feature = dataset_design.get_feature_name(phenotype_name)
     if feature in table.columns and enable_overwrite_warning:
-        logger.warning(
-            'Input data table already has "%s"; overwriting it.', feature)
+        logger.warning('Input data table already has "%s"; overwriting it.', feature)
     table[dataset_design.get_feature_name(phenotype_name)] = thresholded

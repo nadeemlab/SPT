@@ -1,7 +1,4 @@
-"""
-Generate a list of parallelizable jobs for the proximity metric calculation
-pipeline.
-"""
+"""Generate a list of parallelizable jobs for the proximity metric calculation pipeline."""
 
 import pandas as pd
 
@@ -15,12 +12,6 @@ logger = colorized_logger(__name__)
 
 
 class ReductionVisualJobGenerator(JobGenerator):
-    """
-    todo: UMAP is requires all data points at once, hence not paralellizible
-    Generate a list of parallelizable jobs for the visualization
-    pipeline.
-    """
-
     def __init__(self, study_name, database_config_file):
         self.database_config_file = database_config_file
         self.study_name = self.validate_study_name(study_name)

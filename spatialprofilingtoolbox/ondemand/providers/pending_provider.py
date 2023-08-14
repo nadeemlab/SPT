@@ -80,13 +80,13 @@ class PendingProvider(OnDemandProvider, ABC):
 
     @staticmethod
     def _get_expected_number_of_computed_values(feature_specification: str) -> int:
-        domain = PendingProvider.get_expected_domain_for_computed_values(feature_specification)
+        domain = PendingProvider._get_expected_domain_for_computed_values(feature_specification)
         number = len(domain)
         logger.debug('Number of values possible to be computed: %s', number)
         return number
 
     @staticmethod
-    def get_expected_domain_for_computed_values(feature_specification: str) -> list[str]:
+    def _get_expected_domain_for_computed_values(feature_specification: str) -> list[str]:
         with DBCursor() as cursor:
             cursor.execute('''
             SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp
@@ -184,13 +184,6 @@ class PendingProvider(OnDemandProvider, ABC):
         return study, specifiers
 
     @classmethod
-    def get_sample_identifiers(cls, feature_specification: str) -> list[str]:
-        return cls.get_expected_domain_for_computed_values(feature_specification)
-
-    def get_cells(self, sample_identifier: str, study_name: str) -> DataFrame:
-        return self.data_arrays[study_name][sample_identifier]
-
-    @classmethod
     def _query_for_computed_feature_values(
         cls,
         feature_specification: str,
@@ -213,6 +206,13 @@ class PendingProvider(OnDemandProvider, ABC):
             'metrics': metrics,
             'pending': still_pending,
         }
+
+    @classmethod
+    def get_sample_identifiers(cls, feature_specification: str) -> list[str]:
+        return cls._get_expected_domain_for_computed_values(feature_specification)
+
+    def get_cells(self, sample_identifier: str, study_name: str) -> DataFrame:
+        return self.data_arrays[study_name][sample_identifier]
 
     @classmethod
     def retrieve_feature_derivation_method(cls, feature_specification: str) -> str:

@@ -1,4 +1,5 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
+
 from os import system
 from os import environ
 from os import remove
@@ -19,6 +20,7 @@ logger = colorized_logger(__name__)
 
 class FastCacheAssessor:
     """Assess "fast cache"."""
+
     source_data_location: str
     centroids: dict[str, dict[str, list]]
     expressions_index: list[dict]

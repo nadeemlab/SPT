@@ -1,7 +1,4 @@
-"""
-Utility for writing expression matrices in a specially-compressed binary
-format.
-"""
+"""Utility for writing expression matrices in a specially-compressed binary format."""
 import re
 import random
 import json
@@ -17,6 +14,7 @@ logger = colorized_logger(__name__)
 
 class CompressedMatrixWriter:
     """Write the compressed in-memory binary format matrices to file."""
+
     def write(self, data_arrays: CompressedDataArrays):
         self.write_data_arrays(data_arrays)
         self.write_index(data_arrays)
@@ -95,8 +93,8 @@ class CompressedMatrixWriter:
         size = 20
         logger.debug('%s randomly sampled vectors:', size)
         study_name = list(data_arrays.get_studies().keys())[0]
-        data_arrays = data_arrays.get_studies()[study_name]['data arrays by specimen']
-        data_array = list(data_arrays.values())[0]
+        _data_arrays = data_arrays.get_studies()[study_name]['data arrays by specimen']
+        data_array = list(_data_arrays.values())[0]
         for _ in range(size):
             value = data_array[random.choice(range(len(data_array)))]
             print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))

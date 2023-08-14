@@ -1,6 +1,5 @@
-"""
-Pull expression data from SPT database and store as compressed binary cache.
-Also pulls location data.
+"""Pull expression data from SPT database and store as compressed binary cache. Also pulls location
+data.
 """
 import argparse
 from os.path import abspath

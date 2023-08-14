@@ -36,7 +36,7 @@ def _spatial_autocorr(data: AnnData) -> DataFrame:
 
 def create_and_transcribe_squidpy_features(
     database_connection_maker: DatabaseConnectionMaker,
-    study: str
+    study: str,
 ) -> None:
     """Transcribe "off-demand" Squidpy feature(s) in features system."""
     connection = database_connection_maker.get_connection()
@@ -54,12 +54,15 @@ def create_and_transcribe_squidpy_features(
             for i_cluster, row in autocorr_stats.iterrows():
                 for metric_name, metric in zip(row.index, row.to_numpy()):
                     feature_uploader.stage_feature_value(
-                        (metric_name, str(i_cluster)), sample, metric)
+                        (metric_name, str(i_cluster)),
+                        sample,
+                        metric,
+                    )
 
 
 def _fetch_cells_and_phenotypes(
     cursor: Psycopg2Cursor,
-    study: str
+    study: str,
 ) -> dict[str, DataFrame]:
     extractor = FeatureMatrixExtractor(cursor)
     bundle = cast(Bundle, extractor.extract(study=study))

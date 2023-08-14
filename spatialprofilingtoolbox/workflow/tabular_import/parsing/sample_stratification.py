@@ -138,9 +138,10 @@ class SampleStratificationCreator:
         dates = [extraction_date] + [diagnosis[2] for diagnosis in diagnoses]
         logger.debug('Dates considered: %s', dates)
         valuation_function = SampleStratificationCreator.get_date_valuation(dates)
+        if valuation_function is None:
+            return ['', '']
         sequence = sorted(diagnoses, key=lambda x: valuation_function(x[2]))
         influenced_diagnoses = []
-
         for diagnosis in sequence:
             if valuation_function(diagnosis[2]) >= valuation_function(extraction_date):
                 influenced_diagnoses.append(diagnosis)
@@ -150,7 +151,7 @@ class SampleStratificationCreator:
         return ['', '']
 
     @staticmethod
-    def get_date_valuation(dates) -> Callable[[str], Any]:
+    def get_date_valuation(dates) -> Callable[[str], Any] | None:
 
         def iso_valuation(date) -> tuple[int, ...]:
             parts = date.split('-')
@@ -178,7 +179,7 @@ class SampleStratificationCreator:
             if all(SampleStratificationCreator.is_convertible(date, valuation) for date in dates):
                 return valuation
         logger.warning('No order could be determined among: %s', dates)
-        return lambda date: None
+        return None
 
     @staticmethod
     def is_convertible(string, valuation):

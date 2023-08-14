@@ -8,8 +8,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import SampleCohorts
 
 def _replace_stratum_identifiers(rows: list, study: str, column_index: int) -> list:
     replacer = StratumIdentifierReplacer(study)
-    return [
-        [
+    return [[
             replacer.replace(entry) if i==column_index else entry
             for i, entry in enumerate(row)
         ]
@@ -33,7 +32,7 @@ class StratumIdentifierReplacer:
         return str(int(identifier) - self.decrement_amount)
 
 
-def _get_sample_cohorts(cursor, study: str) -> SampleCohorts:
+def get_sample_cohorts(cursor, study: str) -> SampleCohorts:
     cohorts = _get_cohorts_list(cursor, study)
     assignments = _get_cohort_assignments(cursor, study)
     return SampleCohorts(assignments=assignments, cohorts=cohorts)
@@ -108,5 +107,5 @@ def _get_cohort_identifiers_by_sample_original(cursor, study: str) -> dict[str, 
     return {row[0]: row[1] for row in rows}
 
 
-def _get_cohort_identifiers(cursor, study: str) -> list[str]:
+def get_cohort_identifiers(cursor, study: str) -> list[str]:
     return list(_get_cohort_identifiers_by_sample(cursor, study).values())

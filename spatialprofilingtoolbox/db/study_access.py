@@ -17,7 +17,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     Products,
 )
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult
-from spatialprofilingtoolbox.db.cohorts import _get_sample_cohorts
+from spatialprofilingtoolbox.db.cohorts import get_sample_cohorts
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
 class StudyAccess(SimpleReadOnlyProvider):
@@ -30,7 +30,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         data_release = self._get_data_release(study)
         publication = self._get_publication(study)
         assay = self._get_assay(components.measurement)
-        sample_cohorts = _get_sample_cohorts(self.cursor, study)
+        sample_cohorts = get_sample_cohorts(self.cursor, study)
         return StudySummary(
             context=Context(institution=institution, assay=assay, contact=contact),
             products=Products(data_release=data_release, publication=publication),

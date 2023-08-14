@@ -1,6 +1,5 @@
-"""
-Utility to write the single-cell studies "ADI" SQL schema, plus performance- and SPT-related tweaks,
-into a Postgresql instance.
+""" Utility to write the single-cell studies "ADI" SQL schema, plus performance- and SPT-related
+tweaks, into a Postgresql instance.
 """
 from importlib.resources import as_file
 from importlib.resources import files

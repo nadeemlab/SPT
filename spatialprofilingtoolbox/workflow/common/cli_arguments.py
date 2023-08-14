@@ -11,7 +11,7 @@ from spatialprofilingtoolbox import get_workflow_names
 
 SettingArgumentName = Literal['workflow', 'source file identifier', 'source file name', 'sample',
                               'dichotomize', 'database config', 'file manifest', 'study name',
-                              'job_index']
+                              'job index']
 FileArgumentName = Literal['phenotypes file', 'channels file', 'study file', 'samples file',
                            'subjects file', 'diagnosis file', 'interventions file',
                            'performance report file', 'results file']

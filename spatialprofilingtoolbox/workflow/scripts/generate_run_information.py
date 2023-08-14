@@ -74,7 +74,7 @@ if __name__ == '__main__':
         )
     else:
         job_generator = Generator(
-            study_name=args.study_name, 
+            study_name=args.study_name,
             database_config_file=args.database_config_file,
         )
     job_generator.write_job_specification_table(args.job_specification_table)

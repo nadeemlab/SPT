@@ -1,6 +1,5 @@
-"""
-Provides proximity metric computation on demand across whole database.
-"""
+"""Provides proximity metric computation on demand across whole database."""
+
 # import datetime
 import re
 

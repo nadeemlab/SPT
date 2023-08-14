@@ -1,7 +1,7 @@
+"""A convenience reporter of time performance. Keeps track of time used by specific named processes
+and reports an aggregation as a text table.
 """
-A convenience reporter of time performance. Keeps track of time used by
-specific named processes and reports an aggregation as a text table.
-"""
+
 import time
 from typing import Literal
 from typing import get_args

@@ -1,6 +1,4 @@
-"""
-The integration phase of the proximity workflow. Performs statistical tests.
-"""
+"""The integration phase of the proximity workflow. Performs statistical tests."""
 from typing import Optional
 from typing import cast
 import datetime

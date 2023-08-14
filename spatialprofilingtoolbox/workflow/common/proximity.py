@@ -69,7 +69,7 @@ def stage_proximity_feature_values(
         specifiers = (
             _phenotype_identifier_lookup(row['Phenotype 1'], channel_symbols_by_column_name),
             _phenotype_identifier_lookup(row['Phenotype 2'], channel_symbols_by_column_name),
-            row['Pixel radius']
+            row['Pixel radius'],
         )
         value = row['Proximity']
         if _validate_value(value):

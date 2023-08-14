@@ -1,7 +1,4 @@
-"""
-Generate a list of parallelizable jobs for the proximity metric calculation
-pipeline.
-"""
+"""Generate a list of parallelizable jobs for the proximity metric calculation pipeline."""
 
 import pandas as pd
 
@@ -54,5 +51,5 @@ class ProximityJobGenerator(JobGenerator):
         ]
         df = pd.DataFrame(rows)
         columns = df.columns
-        df = df[sorted(columns)]
+        df = df[map(str, sorted(columns))]
         df.to_csv(job_specification_table_filename, index=False, header=True)

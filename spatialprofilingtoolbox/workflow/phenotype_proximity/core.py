@@ -1,6 +1,4 @@
-"""
-The core calculator for the proximity calculation on a single source file.
-"""
+"""The core calculator for the proximity calculation on a single source file."""
 import warnings
 import pickle
 from typing import cast

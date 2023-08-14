@@ -1,6 +1,4 @@
-"""
-CLI utility to run t-tests for each phenotype fractions feature.
-"""
+"""CLI utility to run t-tests for each phenotype fractions feature."""
 import argparse
 import re
 

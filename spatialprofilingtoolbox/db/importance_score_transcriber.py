@@ -1,4 +1,4 @@
-"""Ingest important scores and upload them to the local database."""
+"""Ingest importance scores and upload them to the local database."""
 from typing import cast
 
 from pandas import DataFrame

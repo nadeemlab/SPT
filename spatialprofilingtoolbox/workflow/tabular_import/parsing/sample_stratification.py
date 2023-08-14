@@ -38,9 +38,11 @@ class SampleStratificationCreator:
         assignment_count = 0
         for specimen in specimens:
             key = tuple(SampleStratificationCreator.get_interventional_diagnosis(specimen, cursor))
-            (local_temporal_position_indicator,
-             subject_diagnosed_condition,
-             subject_diagnosed_result) = key
+            (
+                local_temporal_position_indicator,
+                subject_diagnosed_condition,
+                subject_diagnosed_result,
+            ) = key
             if key == ('', '', ''):
                 continue
             if key not in identifiers:
@@ -133,10 +135,9 @@ class SampleStratificationCreator:
         logger.debug('Diagnoses:')
         for diagnosis in diagnoses:
             logger.debug(str(diagnosis))
-        logger.debug('Dates considered: %s', [
-                     extraction_date] + [diagnosis[2] for diagnosis in diagnoses])
-        valuation_function = SampleStratificationCreator.get_date_valuation(
-            [extraction_date] + [diagnosis[2] for diagnosis in diagnoses])
+        dates = [extraction_date] + [diagnosis[2] for diagnosis in diagnoses]
+        logger.debug('Dates considered: %s', dates)
+        valuation_function = SampleStratificationCreator.get_date_valuation(dates)
         sequence = sorted(diagnoses, key=lambda x: valuation_function(x[2]))
         influenced_diagnoses = []
 
@@ -198,8 +199,7 @@ class SampleStratificationCreator:
 
     @staticmethod
     def get_specimen_ids(cursor):
-        cursor.execute(
-            'SELECT specimen FROM specimen_collection_process ORDER BY specimen;')
+        cursor.execute('SELECT specimen FROM specimen_collection_process ORDER BY specimen;')
         rows = cursor.fetchall()
         return [row[0] for row in rows]
 
@@ -216,14 +216,17 @@ class SampleStratificationCreator:
     def get_source_event(specimen, cursor):
         cursor.execute(
             'SELECT source, extraction_date FROM specimen_collection_process WHERE specimen=%s ;',
-            (specimen,))
+            (specimen,),
+        )
         rows = cursor.fetchall()
         return rows[0]
 
     @staticmethod
     def get_interventions(subject, cursor):
         cursor.execute(
-            'SELECT specifier, date FROM intervention WHERE subject=%s ;', (subject,))
+            'SELECT specifier, date FROM intervention WHERE subject=%s ;',
+            (subject,),
+        )
         rows = cursor.fetchall()
         return rows
 
@@ -231,7 +234,8 @@ class SampleStratificationCreator:
     def get_diagnoses(subject, cursor):
         cursor.execute(
             'SELECT condition, result, date_of_evidence FROM diagnosis WHERE subject=%s ;',
-            (subject,))
+            (subject,),
+        )
         rows = cursor.fetchall()
         return [list(row) for row in rows]
 
@@ -247,7 +251,7 @@ class SampleStratificationCreator:
         sample_strata = sample_strata.drop_duplicates(columns)
         condition_parameters = zip(
             sample_strata.subject_diagnosed_condition,
-            sample_strata.local_temporal_position_indicator
+            sample_strata.local_temporal_position_indicator,
         )
         condition = [f'{x}_{y}' for x, y in condition_parameters]
         diagnostic_selection_criterion = pd.DataFrame({

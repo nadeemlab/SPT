@@ -12,6 +12,7 @@ logger = colorized_logger(__name__)
 
 
 class ReductionVisualJobGenerator(JobGenerator):
+    """Job generator for visualization workflow."""
     def __init__(self, study_name, database_config_file):
         self.database_config_file = database_config_file
         self.study_name = self.validate_study_name(study_name)

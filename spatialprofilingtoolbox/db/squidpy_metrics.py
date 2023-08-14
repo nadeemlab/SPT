@@ -42,7 +42,7 @@ def create_and_transcribe_squidpy_features(
     """Transcribe "off-demand" Squidpy feature(s) in features system."""
     connection = database_connection_maker.get_connection()
     das = DataAnalysisStudyFactory(connection, study, 'spatial autocorrelation').create()
-    features_by_specimen, channel_symbols_by_columns_name = _fetch_cells_and_phenotypes(
+    features_by_specimen, channel_symbols_by_column_name = _fetch_cells_and_phenotypes(
         connection.cursor(),
         study,
     )
@@ -54,15 +54,29 @@ def create_and_transcribe_squidpy_features(
         upload_anyway=True,
     ) as feature_uploader:
         for sample, df in features_by_specimen.items():
-            adata = convert_df_to_anndata(df)
-            autocorr_stats = _spatial_autocorr(adata)
-            df_index_to_channel = dict(enumerate(df.columns))
-            for df_index_value, row in autocorr_stats.iterrows():
-                channel = str(df_index_to_channel[int(df_index_value)])
-                if channel in {'pixel x', 'pixel y'}:
-                    continue
-                symbol = channel_symbols_by_columns_name[channel]
-                feature_uploader.stage_feature_value((symbol,), sample, row['pval_norm'])
+            create_and_transcribe_one_sample(
+                sample,
+                df,
+                channel_symbols_by_column_name,
+                feature_uploader,
+            )
+
+
+def create_and_transcribe_one_sample(
+    sample: str,
+    df: DataFrame,
+    channel_symbols_by_column_name: dict[str, str],
+    feature_uploader: ADIFeaturesUploader,
+) -> None:
+    adata = convert_df_to_anndata(df)
+    autocorr_stats = _spatial_autocorr(adata)
+    df_index_to_channel = dict(enumerate(df.columns))
+    for df_index_value, row in autocorr_stats.iterrows():
+        channel = str(df_index_to_channel[int(df_index_value)])
+        if channel in {'pixel x', 'pixel y'}:
+            continue
+        symbol = channel_symbols_by_column_name[channel]
+        feature_uploader.stage_feature_value((symbol,), sample, row['pval_norm'])
 
 
 def _fetch_cells_and_phenotypes(

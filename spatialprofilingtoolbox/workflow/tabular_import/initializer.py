@@ -9,6 +9,7 @@ logger = colorized_logger(__name__)
 
 class TabularImportInitializer(Initializer): #pylint: disable=too-few-public-methods
     """Initial process for main data import workflow; does most of the import."""
+
     def __init__(self, **kwargs):
         pass
 

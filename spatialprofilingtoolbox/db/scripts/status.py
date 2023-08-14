@@ -2,15 +2,18 @@
 import sys
 import argparse
 
-from spatialprofilingtoolbox.db.check_tables import check_tables
-from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
-from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
-from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     import pandas as pd
-    from spatialprofilingtoolbox import DatabaseConnectionMaker  # pylint: disable=ungrouped-imports
 except ModuleNotFoundError as e:
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
     SuggestExtrasException(e, 'db')
+import pandas as pd  # pylint: disable=ungrouped-imports
+
+from spatialprofilingtoolbox.db.check_tables import check_tables  # pylint: disable=ungrouped-imports
+from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

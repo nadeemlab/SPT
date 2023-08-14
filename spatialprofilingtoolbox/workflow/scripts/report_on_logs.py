@@ -1,6 +1,4 @@
-"""
-Create a report on the Nextflow logs. For debugging and archival purposes.
-"""
+"""Create a report on the Nextflow logs. For debugging and archival purposes."""
 import sys
 import os
 from os.path import exists

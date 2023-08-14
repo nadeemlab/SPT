@@ -1,4 +1,5 @@
 """Interface for the parallelizable jobs of a given workflow."""
+
 from abc import ABC
 from abc import abstractmethod
 

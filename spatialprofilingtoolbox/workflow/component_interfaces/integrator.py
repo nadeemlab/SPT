@@ -1,4 +1,5 @@
 """Interface for wrap-up task in Nextflow-managed workflow."""
+
 from abc import ABC
 from abc import abstractmethod
 

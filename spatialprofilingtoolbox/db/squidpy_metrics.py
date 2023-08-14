@@ -24,11 +24,11 @@ def _describe_spatial_autocorr_derivation_method() -> str:
         'squidpy.gr.spatial_autocorr for more information.'.lstrip().rstrip()
 
 
-def _spatial_autocorr(data: AnnData) -> DataFrame:
+def _spatial_autocorr(data: AnnData, channels: list[str]) -> DataFrame:
     return spatial_autocorr(
         data,
-        attr='obs',
-        genes=data.obs.drop('cluster', axis=1).columns.tolist(),
+        attr='X',
+        mode='moran',
         corr_method=None,
         copy=True,
     )
@@ -42,22 +42,23 @@ def create_and_transcribe_squidpy_features(
     connection = database_connection_maker.get_connection()
     das = DataAnalysisStudyFactory(connection, study, 'spatial autocorrelation').create()
     features_by_specimen = _fetch_cells_and_phenotypes(connection.cursor(), study)
-    for sample, df in features_by_specimen.items():
-        adata = convert_df_to_anndata(df)
-        autocorr_stats = _spatial_autocorr(adata)
-        with ADIFeaturesUploader(
-            database_connection_maker,
-            data_analysis_study=das,
-            derivation_and_number_specifiers=(_describe_spatial_autocorr_derivation_method(), 1),
-            impute_zeros=True,
-        ) as feature_uploader:
-            for i_cluster, row in autocorr_stats.iterrows():
-                for metric_name, metric in zip(row.index, row.to_numpy()):
-                    feature_uploader.stage_feature_value(
-                        (metric_name, str(i_cluster)),
-                        sample,
-                        metric,
-                    )
+    with ADIFeaturesUploader(
+        database_connection_maker,
+        data_analysis_study=das,
+        derivation_and_number_specifiers=(_describe_spatial_autocorr_derivation_method(), 1),
+        impute_zeros=True,
+        upload_anyway=True,
+    ) as feature_uploader:
+        for sample, df in features_by_specimen.items():
+            channels = list(set(df.columns).difference(['pixel x', 'pixel y']))
+            adata = convert_df_to_anndata(df)
+            autocorr_stats = _spatial_autocorr(adata, channels)
+            df_index_to_channel = dict(enumerate(df.columns))
+            for df_index_value, row in autocorr_stats.iterrows():
+                channel = str(df_index_to_channel[int(df_index_value)])
+                if channel in {'pixel x', 'pixel y'}:
+                    continue
+                feature_uploader.stage_feature_value((channel,), sample, row['pval_norm'])
 
 
 def _fetch_cells_and_phenotypes(
@@ -67,7 +68,7 @@ def _fetch_cells_and_phenotypes(
     extractor = FeatureMatrixExtractor(cursor)
     bundle = cast(Bundle, extractor.extract(study=study))
     FeatureMatrices = dict[str, dict[str, DataFrame | str]]
-    feature_matrices = cast(FeatureMatrices, bundle[study]['feature_matrices'])
+    feature_matrices = cast(FeatureMatrices, bundle[study]['feature matrices'])
     return {
         specimen: cast(DataFrame, packet['dataframe'])
         for specimen, packet in feature_matrices.items()

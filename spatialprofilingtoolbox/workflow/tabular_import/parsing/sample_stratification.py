@@ -102,6 +102,8 @@ class SampleStratificationCreator:
         if len(interventions) > 0:
             parts = [i[1] for i in interventions] + [extraction_date]
             valuation_function = SampleStratificationCreator.get_date_valuation(parts)
+            if valuation_function is None:
+                return ['']
             sequence = sorted(
                 interventions + [('source extraction', extraction_date)],
                 key=lambda x: valuation_function(x[1]),

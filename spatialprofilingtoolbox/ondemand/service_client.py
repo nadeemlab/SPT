@@ -129,7 +129,8 @@ class OnDemandRequester:
         radius: float | None = None,
     ) -> SquidpyMetricsComputationResult:
         """Get spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
-        assert len(signature) % 2 == 0
+        if not len(signature) in [1, 2]:
+            raise ValueError(f'Expected 1 or 2 signatures/phenotypes but got {len(signature)}.')
         separator = self._get_record_separator()
         groups = [feature_class, self._sanitize_token(study)]
         groups.extend(separator.join([self._sanitize_token(c) for c in s]) for s in signature)

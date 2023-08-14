@@ -1,8 +1,11 @@
 """Source file parsing for metadata at the level of a set of cell manifests."""
 from os.path import getsize
 import re
+from typing import cast
 
-import pandas as pd
+from pandas import Series
+from pandas import read_csv
+from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from \
     spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
@@ -18,7 +21,7 @@ def cell_manifest_data_type():
     return TabularCellMetadataDesign.get_cell_manifest_descriptor()
 
 
-def create_specimen_data_measurement_process_record(
+def _create_specimen_data_measurement_process_record(
     identifier,
     specimen,
     study,
@@ -28,6 +31,7 @@ def create_specimen_data_measurement_process_record(
 
 class CellManifestSetParser(SourceToADIParser):
     """Parse source files containing metadata at level of cell manifest set."""
+
     def parse(self, connection, file_manifest_file, study_name):
         """Retrieve the set of cell manifests (i.e. just the "metadata" for each source
         file), and parse records for:
@@ -35,7 +39,7 @@ class CellManifestSetParser(SourceToADIParser):
         - specimen data measurement process
         - data file
         """
-        file_metadata = pd.read_csv(file_manifest_file, sep='\t')
+        file_metadata = read_csv(file_manifest_file, sep='\t')
         cell_manifests = file_metadata[
             file_metadata['Data type'] == cell_manifest_data_type()
         ]
@@ -48,37 +52,45 @@ class CellManifestSetParser(SourceToADIParser):
         )
 
         for _, cell_manifest in cell_manifests.iterrows():
-            logger.debug('Considering "%s" file "%s" .', cell_manifest_data_type(),
-                         cell_manifest['File ID'])
-            sample_id = cell_manifest['Sample ID']
-            filename = cell_manifest['File name']
-            sha256_hash = compute_sha256(filename)
-
-            measurement_process_identifier = sha256_hash + ' measurement'
-            cursor.execute(
-                self.generate_basic_insert_query('specimen_data_measurement_process'),
-                create_specimen_data_measurement_process_record(
-                    measurement_process_identifier,
-                    sample_id,
-                    measurement_study,
-                ),
-            )
-            match = re.search(r'\.([a-zA-Z0-9]{1,8})$', cell_manifest['File name'])
-            if match:
-                file_format = match.groups(1)[0].upper()
-            else:
-                file_format = ''
-            cursor.execute(
-                self.generate_basic_insert_query('data_file'),
-                (
-                    sha256_hash,
-                    cell_manifest['File name'],
-                    file_format,
-                    cell_manifest_data_type(),
-                    getsize(filename),
-                    measurement_process_identifier,
-                ),
-            )
+            self._handle_cell_manifest(cell_manifest, measurement_study, cursor)
         logger.info('Parsed records for %s cell manifests.', cell_manifests.shape[0])
         connection.commit()
         cursor.close()
+
+    def _handle_cell_manifest(self,
+        cell_manifest: Series,
+        measurement_study: str,
+        cursor: Psycopg2Cursor,
+    ):
+        message = 'Considering "%s" file "%s" .'
+        logger.debug(message, cell_manifest_data_type(), cell_manifest['File ID'])
+        sample_id = cell_manifest['Sample ID']
+        filename = cell_manifest['File name']
+        sha256_hash = compute_sha256(filename)
+
+        measurement_process_identifier = sha256_hash + ' measurement'
+        cursor.execute(
+            self.generate_basic_insert_query('specimen_data_measurement_process'),
+            _create_specimen_data_measurement_process_record(
+                measurement_process_identifier,
+                sample_id,
+                measurement_study,
+            ),
+        )
+        match = re.search(r'\.([a-zA-Z0-9]{1,8})$', cell_manifest['File name'])
+        if match:
+            extension_string = cast(str, match.groups(1)[0])
+            file_format = extension_string.upper()
+        else:
+            file_format = ''
+        cursor.execute(
+            self.generate_basic_insert_query('data_file'),
+            (
+                sha256_hash,
+                cell_manifest['File name'],
+                file_format,
+                cell_manifest_data_type(),
+                getsize(filename),
+                measurement_process_identifier,
+            ),
+        )

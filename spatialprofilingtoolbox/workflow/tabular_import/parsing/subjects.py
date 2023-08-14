@@ -10,8 +10,7 @@ logger = colorized_logger(__name__)
 class SubjectsParser(SourceToADIParser):
     """Parse source files containing subject-level metadata."""
     def parse(self, connection, subjects_file):
-        """Retrieve SUBJECT data in the same way that the main workflows do, and parse
-        records for:
+        """Retrieve SUBJECT data in the same way that the main workflows do, and parse records for:
         - subject
         - diagnosis
         """
@@ -21,8 +20,7 @@ class SubjectsParser(SourceToADIParser):
             return (subject_id, '', sex, '', '', '')
 
         logger.debug('Considering %s', subjects_file)
-        subjects = pd.read_csv(subjects_file, sep='\t',
-                               na_filter=False, dtype=str)
+        subjects = pd.read_csv(subjects_file, sep='\t', na_filter=False, dtype=str)
         logger.info('Saving %s subject records.', subjects.shape[0])
         for _, row in subjects.iterrows():
             cursor.execute(

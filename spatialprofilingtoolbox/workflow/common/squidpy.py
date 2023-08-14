@@ -42,27 +42,27 @@ def compute_squidpy_metric_for_one_sample(
     adata = convert_df_to_anndata(df_cell, masks)
     match feature_class:
         case 'neighborhood enrichment':
-            return summarize_neighborhood_enrichment(_nhood_enrichment(adata))
+            return _summarize_neighborhood_enrichment(_nhood_enrichment(adata))
         case 'co-occurrence':
             if radius is None:
                 raise ValueError('You must supply radius value for co-occurrence metric.')
-            return summarize_co_occurrence(_co_occurrence(adata, radius))
+            return _summarize_co_occurrence(_co_occurrence(adata, radius))
         case 'ripley':
-            return summarize_ripley(_ripley(adata))
+            return _summarize_ripley(_ripley(adata))
     return None
 
 
-def summarize_neighborhood_enrichment(unstructured_metrics) -> float | None:
+def _summarize_neighborhood_enrichment(unstructured_metrics) -> float | None:
     zscore = float(unstructured_metrics['zscore'][0][1])
     return float(norm.cdf(zscore))
 
 
-def summarize_co_occurrence(unstructured_metrics) -> float | None:
+def _summarize_co_occurrence(unstructured_metrics) -> float | None:
     occurrence_ratios = unstructured_metrics['occ']
     return float(occurrence_ratios[0][1][0])
 
 
-def summarize_ripley(unstructured_metrics) -> float | None:
+def _summarize_ripley(unstructured_metrics) -> float | None:
     bins = unstructured_metrics['bins']
     pvalues = unstructured_metrics['pvalues']
     pairs = list(zip(bins, pvalues))

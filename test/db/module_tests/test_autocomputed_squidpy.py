@@ -36,6 +36,7 @@ def check_records(feature_values):
 def round6(value):
     return int(pow(10, 6) * value) / pow(10, 6)
 
+
 def retrieve_feature_values(connection):
     cursor = connection.cursor()
     cursor.execute(f'''

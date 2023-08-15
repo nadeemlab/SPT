@@ -4,6 +4,7 @@ from typing import cast
 
 from pandas import DataFrame
 from anndata import AnnData  # type: ignore
+from numpy import isnan
 from squidpy.gr import spatial_autocorr  # type: ignore
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
@@ -18,10 +19,10 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-def _describe_spatial_autocorr_derivation_method() -> str:
-    """Return a description of the spatial autocorrelation derivation method."""
-    return 'Global Autocorrelation Statistic (Moran\'s I). See Squidpy documentation for ' \
-        'squidpy.gr.spatial_autocorr for more information.'.lstrip().rstrip()
+def describe_spatial_autocorr_derivation_method() -> str:
+    return 'For a given cell phenotype (first specifier), i.e. cell set, the p-value associated ' \
+        'with the Moran I statistic value for this cell set, with respect to the standard null  ' \
+        'distribution for this statistic.'.lstrip().rstrip()
 
 
 def _spatial_autocorr(data: AnnData) -> DataFrame:
@@ -49,7 +50,7 @@ def create_and_transcribe_squidpy_features(
     with ADIFeaturesUploader(
         database_connection_maker,
         data_analysis_study=das,
-        derivation_and_number_specifiers=(_describe_spatial_autocorr_derivation_method(), 1),
+        derivation_and_number_specifiers=(describe_spatial_autocorr_derivation_method(), 1),
         impute_zeros=True,
         upload_anyway=True,
     ) as feature_uploader:
@@ -76,6 +77,9 @@ def create_and_transcribe_one_sample(
         if channel in {'pixel x', 'pixel y'}:
             continue
         symbol = channel_symbols_by_column_name[channel]
+        pvalue = row['pval_norm']
+        if isnan(pvalue):
+            continue
         feature_uploader.stage_feature_value((symbol,), sample, row['pval_norm'])
 
 

@@ -45,7 +45,7 @@ def extract_cggnn_data(
 ) -> tuple[DataFrame, DataFrame, dict[int, str]]:
     """Extract information cg-gnn needs from SPT."""
     extractor = FeatureMatrixExtractor(database_config_file=spt_db_config_location)
-    study_data: dict[str, Any] = extractor.extract(study=study)
+    study_data = extractor.extract(study=study)[study]
     df_cell = _create_cell_df(
         {slide: data['dataframe'] for slide, data in study_data['feature matrices'].items()},
         study_data['channel symbols by column name']

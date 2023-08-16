@@ -1,15 +1,17 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
+
 from os import system
 from os import environ
 from os import remove
 from os import listdir
 from os.path import isfile
 from os.path import join
+from os.path import isdir
 from pickle import load as load_pickle
 from json import loads as load_json_string
 import re
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -18,13 +20,16 @@ logger = colorized_logger(__name__)
 
 class FastCacheAssessor:
     """Assess "fast cache"."""
-    def __init__(self, source_data_location):
+
+    source_data_location: str
+    centroids: dict[str, dict[str, list]]
+    expressions_index: list[dict]
+
+    def __init__(self, source_data_location: str):
         self.source_data_location = source_data_location
-        self.centroids = None
-        self.expressions_index = None
 
     def assess_and_act(self):
-        up_to_date = self.cache_is_up_to_date()
+        up_to_date = self._cache_is_up_to_date()
         if not self.recreation_enabled():
             logger.info('Recreation not enabled, done assessing fast cache.')
             return
@@ -35,7 +40,7 @@ class FastCacheAssessor:
         else:
             logger.info('Cache is basically as expected, not recreating.')
 
-    def cache_is_up_to_date(self) -> bool:
+    def _cache_is_up_to_date(self) -> bool:
         if not self._check_files_present():
             return False
         self._retrieve_files()
@@ -61,6 +66,8 @@ class FastCacheAssessor:
     def _recreate(self):
         logger.info('Recreating fast cache files.')
         change_directory = f'cd {self.source_data_location}'
+        if not isdir(self.source_data_location):
+            raise RuntimeError(f'Directory does not exist: {self.source_data_location}')
         main_command = 'spt ondemand cache-expressions-data-array --database-config-file=none'
         commands = [change_directory, main_command]
         command = '; '.join(commands)
@@ -180,8 +187,7 @@ class FastCacheAssessor:
 
     @staticmethod
     def recreation_enabled() -> bool:
-        """
-        If environment variable DISABLE_FAST_CACHE_RECREATION=1, the fast cache assessor will not
+        """If environment variable DISABLE_FAST_CACHE_RECREATION=1, the fast cache assessor will not
         do cache recreation, and it will not delete old cache. It will do only read operations.
         If this environment variable does not exist or is not equal to 1, recreation will be
         considered and possibly attempted.
@@ -194,8 +200,7 @@ class FastCacheAssessor:
         return not disable_fast_cache_recreation
 
 def log_expected_found(set1, set2, message1, message2, context: str=''):
-    """
-    Logs error message1 (one formattable argument) for each element of set1 (expected) that is
+    """Logs error message1 (one formattable argument) for each element of set1 (expected) that is
     missing from set2 (found).
     Also logs warning message2 for each element of set2 (found) that is not present in set1
     (expected).

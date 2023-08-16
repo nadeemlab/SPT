@@ -11,8 +11,7 @@ class StudyComponents(BaseModel):
 
 
 class StudyHandle(BaseModel):
-    """
-    A study specifier (or handle), together with additional information to display in the context
+    """A study specifier (or handle), together with additional information to display in the context
     of an item header/label.
     """
     handle: str
@@ -51,8 +50,7 @@ class Publication(BaseModel):
 
 
 class CountsSummary(BaseModel):
-    """
-    Counts summary of samples, cells, etc. for quick availability without retrieval of
+    """Counts summary of samples, cells, etc. for quick availability without retrieval of
     objects/records themselves.
     """
     specimens: int

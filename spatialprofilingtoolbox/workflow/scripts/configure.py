@@ -11,9 +11,19 @@ import stat
 from importlib.resources import as_file
 from importlib.resources import files
 
-from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
+try:
+    import jinja2
+except ModuleNotFoundError as e:
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
+    SuggestExtrasException(e, 'workflow')
+import jinja2  # pylint: disable=ungrouped-imports
+
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument  # pylint: disable=ungrouped-imports
 from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
+from spatialprofilingtoolbox.workflow.common.\
+    file_identifier_schema import get_input_filename_by_identifier
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -223,15 +233,6 @@ if __name__ == '__main__':
     )
     add_argument(parser, 'database config')
     args = parser.parse_args()
-
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
-        SuggestExtrasException
-    try:
-        import jinja2
-        from spatialprofilingtoolbox.workflow.common.\
-            file_identifier_schema import get_input_filename_by_identifier # pylint: disable=ungrouped-imports
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
 
     jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader())
 

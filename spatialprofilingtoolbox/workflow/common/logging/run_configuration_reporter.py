@@ -1,7 +1,7 @@
+"""Convenience reporter of the run configuration for a given workflow, before it actually runs. For
+debugging and archival purposes.
 """
-Convenience reporter of the run configuration for a given workflow, before it
-actually runs. For debugging and archival purposes.
-"""
+
 from typing import cast
 from os.path import getsize
 import datetime
@@ -19,6 +19,7 @@ logger = colorized_logger(__name__)
 
 class RunConfigurationReporter:
     """Convenience reporter of run configuration."""
+
     def __init__(
         self,
         workflow: str = '',
@@ -62,7 +63,7 @@ class RunConfigurationReporter:
         logger.info('Number of outcome labels: %s', len(labels))
         logger.info('Number of channels: %s', channels_df.shape[0])
         logger.info('Number of phenotypes considered: %s', phenotypes.shape[0])
-        logger.info('Channels: %s', '; '.join(channels))
+        logger.info('Channels: %s', '; '.join(map(str, channels)))
 
     def get_frequencies(self, samples):
         column = samples[samples.columns[1]]
@@ -84,6 +85,6 @@ class RunConfigurationReporter:
         validate = TabularCellMetadataDesign.validate_cell_manifest_descriptor
         return [
             row['Sample ID']
-            for i, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()
+            for _, row in pd.read_csv(file_manifest_file, sep='\t').iterrows()
             if validate(row['Data type'])
         ]

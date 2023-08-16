@@ -1,9 +1,10 @@
 """Simple statistical significance testing of single features along pairs of cohorts."""
+
 from itertools import combinations
 from math import isnan
 
 import pandas as pd
-from scipy.stats import ttest_ind
+from scipy.stats import ttest_ind  # type: ignore
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -11,8 +12,7 @@ logger = colorized_logger(__name__)
 
 
 def perform_tests(data_analysis_study, connection):
-    """
-    For each of the given study's features, do tests for significant difference
+    """For each of the given study's features, do tests for significant difference
     between each pair of cohorts. Currently using t-test.
     """
     feature_values = retrieve_feature_values(data_analysis_study, connection)

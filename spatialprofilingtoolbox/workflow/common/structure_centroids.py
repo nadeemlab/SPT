@@ -1,6 +1,4 @@
-"""
-An object for in-memory storage of summarized-location data for all cells of each study.
-"""
+"""An object for in-memory storage of summarized-location data for all cells of each study."""
 from pickle import dump
 from pickle import load
 from os.path import join
@@ -10,8 +8,7 @@ from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
 
 
 class StructureCentroids:
-    """
-    An object for in-memory storage of summarized-location data for all cells of
+    """An object for in-memory storage of summarized-location data for all cells of
     each study.
 
     Member `studies` is a dictionary with keys the study names. The values are

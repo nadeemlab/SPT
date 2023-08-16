@@ -1,6 +1,4 @@
-"""
-The core calculator for the UMAP dimensional reduction.
-"""
+"""The core calculator for the UMAP dimensional reduction."""
 import warnings
 import pickle
 import random
@@ -10,16 +8,16 @@ from base64 import b64encode
 
 import pandas as pd
 
-from umap import UMAP
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import QuantileTransformer
-from matplotlib import pyplot as plt
-from  matplotlib.colors import LinearSegmentedColormap
+from umap import UMAP  # type: ignore
+from sklearn.impute import SimpleImputer  # type: ignore
+from sklearn.pipeline import make_pipeline  # type: ignore
+from sklearn.preprocessing import QuantileTransformer  # type: ignore
+from matplotlib import pyplot as plt  # type: ignore
+from matplotlib.colors import LinearSegmentedColormap  # type: ignore
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -170,9 +168,7 @@ class ReductionVisualCoreJob(CoreJob):
         logger.info('%s cells to be analyzed for study "%s".', number_cells, self.study_name)
 
     def wrap_up_timer(self):
-        """
-        Concludes low-level performance metric collection for this job.
-        """
+        """Concludes low-level performance metric collection for this job."""
         df = self.timer.report(organize_by='fraction')
         logger.info('Report to: %s', self.get_performance_report_filename())
         df.to_csv(self.get_performance_report_filename(), index=False)
@@ -182,9 +178,7 @@ class ReductionVisualCoreJob(CoreJob):
 
 
 class UMAPReducer:
-    """
-    From dataframe create UMAP-reduced plots in base64 format.
-    """
+    """From dataframe create UMAP-reduced plots in base64 format."""
     @staticmethod
     def create_plots_base64(dense_df):
         normalized = UMAPReducer.preprocess_univariate_adjustments(dense_df)
@@ -207,8 +201,7 @@ class UMAPReducer:
 
     @staticmethod
     def make_plots_base64(array, dense_df):
-        """
-        Make scatter plots with color-coded values
+        """Make scatter plots with color-coded values
 
         :param array: 2D UMAP output in numpy format to use as plot coordinates.
         :param cell_matrix: Original channel intensity values, pandas DataFrame.

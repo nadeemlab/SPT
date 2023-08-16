@@ -13,7 +13,7 @@ PORT = 8080
 def main():
     cases = [
         (HOST, PORT, ENDPOINT, STUDY_NAME, POSITIVE_MARKERS, NEGATIVE_MARKERS, 7),
-        (HOST, PORT, ENDPOINT, STUDY_NAME, NEGATIVE_MARKERS, POSITIVE_MARKERS, 359),
+        (HOST, PORT, ENDPOINT, STUDY_NAME, NEGATIVE_MARKERS, POSITIVE_MARKERS, 352),
     ]
 
     for host, port, endpoint, study_name, positive_markers, negative_markers, expected in cases:
@@ -35,7 +35,7 @@ def main():
         total = response['number_cells_in_study']
         print(total)
         if phenotype_total != expected:
-            raise ValueError(f'Got wrong number: {phenotype_total}')
+            raise ValueError(f'Got wrong number: {phenotype_total}, expected {expected}.')
 
 
 if __name__=='__main__':

@@ -1,11 +1,9 @@
-"""
-CLI utility to run t-tests for each phenotype fractions feature.
-"""
+"""CLI utility to run t-tests for each phenotype fractions feature."""
 import argparse
 import re
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
     perform_tests

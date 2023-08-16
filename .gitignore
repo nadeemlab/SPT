@@ -6,6 +6,7 @@ status_code
 # Generated files
 /check-for-docker-credentials
 /data-loaded-image-1
+/data-loaded-image-2
 /data-loaded-image-1small
 /data-loaded-image-1and2
 /development-image

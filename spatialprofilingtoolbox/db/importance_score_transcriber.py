@@ -1,4 +1,4 @@
-"""Ingest important scores and upload them to the local database."""
+"""Ingest importance scores and upload them to the local database."""
 from typing import cast
 
 from pandas import DataFrame
@@ -7,6 +7,7 @@ from psycopg2.extensions import connection as Connection
 
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -29,7 +30,7 @@ def transcribe_importance(
         connection: psycopg2.extensions.connection
         per_specimen_selection_number: int
             Grab this many of the most important cells from each specimen (or fewer if there
-            aren\'t enough cells in the specimen).
+            aren't enough cells in the specimen).
     """
     study = _get_referenced_study(connection, df)
     indicator: str = 'cell importance'
@@ -97,7 +98,7 @@ def _upload(
     with ADIFeaturesUploader(
         None,
         data_analysis_study=data_analysis_study,
-        derivation_and_number_specifiers=(describe_derivation_method(), 1),
+        derivation_and_number_specifiers=(get_feature_description("gnn importance score"), 1),
         impute_zeros=True,
         connection=connection,
     ) as feature_uploader:
@@ -107,9 +108,3 @@ def _upload(
                 row['histological_structure'],
                 row['importance_order'],
             )
-
-
-def describe_derivation_method() -> str:
-    return 'For a given cohort stratification variable (the specifier), the integer rank of each '\
-           'cell (the subjects of the feature) with respect to the importance scores derived '\
-           'from a GNN trained on this variable.'

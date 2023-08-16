@@ -1,4 +1,5 @@
 """Logs basic indicator of amount of progress, at a configurable interval."""
+
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 _logger = colorized_logger(__name__)

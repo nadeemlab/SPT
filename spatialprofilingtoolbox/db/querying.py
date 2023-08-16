@@ -2,15 +2,19 @@
 import re
 
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
-from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyComponents
-from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
-from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractionsSummary
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
-from spatialprofilingtoolbox.db.cohorts import _get_cohort_identifiers
+from spatialprofilingtoolbox.db.exchange_data_formats.study import (
+    StudyComponents,
+    StudyHandle,
+    StudySummary,
+)
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
+    CellFractionsSummary,
+    PhenotypeSymbol,
+    Channel,
+    PhenotypeCriteria,
+    UMAPChannel,
+)
+from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
 from spatialprofilingtoolbox.db.study_access import StudyAccess
 from spatialprofilingtoolbox.db.fractions_and_associations import FractionsAccess
 from spatialprofilingtoolbox.db.phenotypes import PhenotypesAccess
@@ -45,7 +49,7 @@ class QueryHandler:
         access = FractionsAccess(cursor)
         fractions = access.get_fractions_rows(study)
         tests = access.get_fractions_test_results(study)
-        cohort_identifiers = _get_cohort_identifiers(cursor, study)
+        cohort_identifiers = get_cohort_identifiers(cursor, study)
         features = [f.marker_symbol for f in fractions]
         associations = access.get_feature_associations(tests, pvalue, cohort_identifiers, features)
         return access.create_cell_fractions_summary(fractions, associations)

@@ -1,7 +1,4 @@
-"""
-CLI entry point into the wrap-up/integration phase of the Nextflow-managed
-workflows.
-"""
+"""CLI entry point into the wrap-up/integration phase of the Nextflow-managed workflows."""
 import argparse
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument

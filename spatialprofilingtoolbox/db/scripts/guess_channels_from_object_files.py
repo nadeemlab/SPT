@@ -1,7 +1,4 @@
-"""
-Utility to scan a bundle of CSV/TSV cell or structure files for possible
-channel names.
-"""
+"""Utility to scan a bundle of CSV/TSV cell or structure files for possible channel names."""
 import argparse
 import csv
 import re

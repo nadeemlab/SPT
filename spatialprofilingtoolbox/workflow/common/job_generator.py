@@ -1,6 +1,6 @@
 """Convenience functions for job generation."""
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 
 def retrieve_sample_identifiers_from_db(study_name, database_config_file):
     with DatabaseConnectionMaker(database_config_file=database_config_file) as maker:

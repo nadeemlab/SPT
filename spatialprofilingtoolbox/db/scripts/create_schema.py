@@ -1,7 +1,4 @@
-"""
-CLI utility to infuse the single-cell ADI schema into a given Postgresql
-instance.
-"""
+"""CLI utility to infuse the single-cell ADI schema into a given Postgresql instance."""
 import argparse
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
@@ -11,6 +8,7 @@ try:
     from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
+from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

@@ -9,6 +9,7 @@ logger = colorized_logger(__name__)
 
 class DiagnosisParser(SourceToADIParser):
     """Source file parsing for outcome/diagnosis metadata."""
+
     def parse(self, connection, diagnosis_file):
         cursor = connection.cursor()
 

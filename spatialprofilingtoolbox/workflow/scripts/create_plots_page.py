@@ -4,7 +4,7 @@ import argparse
 from os.path import expanduser
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 
 HTML_TEMPLATE = '''
 <!DOCTYPE html>

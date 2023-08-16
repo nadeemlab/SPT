@@ -1,11 +1,19 @@
-"""
-Convenience script for aggregating custom-logged time performance data.
-"""
+"""Convenience script for aggregating custom-logged time performance data."""
 import argparse
+
+try:
+    from pandas import read_csv
+    from pandas import concat
+except ModuleNotFoundError as e:
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
+    SuggestExtrasException(e, 'workflow')
+from pandas import read_csv  # pylint: disable=ungrouped-imports
+from pandas import concat
 
 
 def aggregate_performance_reports(reports):
-    df = pd.concat(reports).groupby(['from', 'to']).sum().reset_index()
+    df = concat(reports).groupby(['from', 'to']).sum().reset_index()
     df['average time spent'] = df['total time spent'] / df['frequency']
     df['fraction'] = df['total time spent'] / sum(df['total time spent'])
     df.sort_values(by='fraction', inplace=True, ascending=False)
@@ -32,15 +40,8 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
-        SuggestExtrasException
-    try:
-        import pandas as pd
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
-
     performance_reports = [
-        pd.read_csv(file).drop(columns=['average time spent', 'fraction'])
+        read_csv(file).drop(columns=['average time spent', 'fraction'])
         for file in args.performance_reports
     ]
     report = aggregate_performance_reports(performance_reports)

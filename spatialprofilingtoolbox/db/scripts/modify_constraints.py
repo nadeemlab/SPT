@@ -1,6 +1,6 @@
 """
-Utility to drop or recreate certain constraints in the single-cell ADI SQL
-schema. Used to boost performance of certain operations.
+Utility to drop or recreate certain constraints in the single-cell ADI SQL schema. Used to boost
+performance of certain operations.
 """
 import argparse
 from os.path import exists
@@ -11,6 +11,15 @@ from enum import auto
 from importlib.resources import as_file
 from importlib.resources import files
 import re
+
+try:
+    import pandas as pd
+except ModuleNotFoundError as e:
+    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
+        SuggestExtrasException
+    SuggestExtrasException(e, 'db')
+import pandas as pd  # pylint: disable=ungrouped-imports
+from spatialprofilingtoolbox import DatabaseConnectionMaker  # pylint: disable=ungrouped-imports
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('modify-constraints')
@@ -176,19 +185,11 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
-        SuggestExtrasException
-    try:
-        import pandas as pd
-        from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker # pylint: disable=ungrouped-imports
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'db')
-
     database_config_file_elevated = abspath(
         expanduser(args.database_config_file_elevated))
     if not exists(database_config_file_elevated):
-        raise FileNotFoundError(
-            f'Need to supply valid database config filename, not: {database_config_file_elevated}')
+        message = f'Need to supply valid database config filename: {database_config_file_elevated}'
+        raise FileNotFoundError(message)
 
     if args.recreate:
         db_state = DBConstraintsToggling.RECREATE

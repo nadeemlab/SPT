@@ -3,11 +3,22 @@ import re
 import pkgutil
 import warnings
 
-from numba.core.errors import NumbaDeprecationWarning
+from numba.core.errors import NumbaDeprecationWarning  # type: ignore
 
 from spatialprofilingtoolbox.standalone_utilities.configuration_settings import get_version
 from spatialprofilingtoolbox.workflow import get_workflow
 from spatialprofilingtoolbox.workflow import get_workflow_names as get_workflow_names  # pylint: disable=useless-import-alias
+
+from spatialprofilingtoolbox.db import (
+    DatabaseConnectionMaker,
+    DBCursor,
+    DBCredentials,
+    QueryCursor,
+)
+
+from spatialprofilingtoolbox.db import get_feature_description
+from spatialprofilingtoolbox.db import squidpy_feature_classnames
+
 
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 

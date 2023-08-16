@@ -4,7 +4,7 @@ CLI utility to drop a study from an ADI-formatted database.
 import argparse
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.study_dropper import StudyDropper
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 

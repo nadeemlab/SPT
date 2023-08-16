@@ -42,8 +42,7 @@ class CustomFormatter(logging.Formatter):
 
 
 def colorized_logger(name):
-    """
-    A lightweight customization of the Python standard library's ``logging`` module
+    """A lightweight customization of the Python standard library's ``logging`` module
     loggers, to provide colorized log messages.
 
     Args:

@@ -1,6 +1,5 @@
-"""
-Pull expression data from SPT database and store as compressed binary cache.
-Also pulls location data.
+"""Pull expression data from SPT database and store as compressed binary cache. Also pulls location
+data.
 """
 import argparse
 from os.path import abspath
@@ -8,7 +7,7 @@ from os.path import expanduser
 from os import getcwd
 import sys
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.structure_centroids import CENTROIDS_FILENAME

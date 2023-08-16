@@ -6,13 +6,14 @@ from os.path import join
 from pandas import read_csv
 
 from spatialprofilingtoolbox.cggnn import extract_cggnn_data
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker, DBCredentials
+from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
     from cggnn.run_all import run_with_dfs
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'cggnn')
+from cggnn.run_all import run_with_dfs
 
 
 def parse_arguments():
@@ -128,18 +129,20 @@ def save_importance(spt_db_config_location: str) -> None:
 if __name__ == "__main__":
     args = parse_arguments()
     df_cell, df_label, label_to_result = extract_cggnn_data(args.spt_db_config_location, args.study)
-    run_with_dfs(df_cell,
-                 df_label,
-                 label_to_result,
-                 args.validation_data_percent,
-                 args.test_data_percent,
-                 args.roi_side_length,
-                 args.target_column,
-                 args.batch_size,
-                 args.epochs,
-                 args.learning_rate,
-                 args.k_folds,
-                 args.explainer,
-                 args.merge_rois,
-                 args.prune_misclassified)
-    save_importance(args.spt_db_config_location)
+    run_with_dfs(
+        df_cell,
+        df_label,
+        label_to_result,
+        args.validation_data_percent,
+        args.test_data_percent,
+        args.roi_side_length,
+        args.target_column,
+        args.batch_size,
+        args.epochs,
+        args.learning_rate,
+        args.k_folds,
+        args.explainer,
+        args.merge_rois,
+        args.prune_misclassified
+    )
+    save_importance(args)

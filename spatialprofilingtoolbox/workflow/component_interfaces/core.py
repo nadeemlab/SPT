@@ -1,4 +1,5 @@
 """Interface for the parallelizable jobs of a given workflow."""
+
 from abc import ABC
 from abc import abstractmethod
 
@@ -15,9 +16,7 @@ class CoreJob(ABC): #pylint: disable=too-few-public-methods
         pass
 
     def calculate(self):
-        """
-        The main calculation of this job, to be called by pipeline orchestration.
-        """
+        """The main calculation of this job, to be called by pipeline orchestration."""
         logger.info('Started core calculator job.')
         self._calculate()
         logger.info('Completed core calculator job.')

@@ -107,7 +107,7 @@ class SourceToADIParser:
         SELECT {primary} FROM {tablename} WHERE {
             ' AND '.join(
                 [
-                    f'{field} = {self.get_placeholder()} '
+                    f'{field}={self.get_placeholder()} '
                     for field in identifying_fields
                 ]
         )

@@ -194,7 +194,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
     ) -> None:
         for polarity, chemical_species_identifier in signature:
             record = (
-                phenotype_identifier,
+                str(phenotype_identifier),
                 chemical_species_identifier,
                 polarity,
                 data_analysis_study,

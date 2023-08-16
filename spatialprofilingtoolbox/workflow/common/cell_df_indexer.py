@@ -7,6 +7,9 @@ from numpy.typing import NDArray
 from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 ValueMultiIndex = tuple[int | tuple[int, ...], list[str]]
 
@@ -29,7 +32,8 @@ def get_mask(cells: DataFrame, signature: PhenotypeCriteria) -> NDArray[bool,]:
             message = "indexing past lexsort depth may impact performance"
             warnings.filterwarnings("ignore", message=message)
             loc = cells.set_index(multiindex).index.get_loc(value)
-    except KeyError:
+    except KeyError as exception:
+        logger.debug('Some KeyError. %s', str(exception))
         return asarray([False,] * cells.shape[0])
     if isinstance(loc, ndarray):
         return loc

@@ -48,7 +48,10 @@ def retrieve_feature_values(connection):
     ''')
     rows = cursor.fetchall()
     cursor.close()
-    return [(row[0], row[1], float(row[2])) for row in rows if not isnan(row[2])]
+    return [
+        (row[0], row[1], float(row[2]))
+        for row in rows if row[2] is not None and not isnan(row[2])
+    ]
 
 
 def test_autocomputed_squidpy_features():

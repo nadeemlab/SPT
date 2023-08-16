@@ -54,7 +54,7 @@ def create_and_transcribe_one_sample(
     feature_uploader: ADIFeaturesUploader,
 ) -> None:
     for symbol in channel_symbols_by_column_name.values():
-        criteria = PhenotypeCriteria(positive_markers=[symbol], negative_markers=[])    
+        criteria = PhenotypeCriteria(positive_markers=[symbol], negative_markers=[])
         value = compute_squidpy_metric_for_one_sample(df, [criteria], 'spatial autocorrelation')
         feature_uploader.stage_feature_value((symbol,), sample, value)
 

@@ -11,21 +11,15 @@ from scipy.stats import norm  # type: ignore
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.workflow.common.cell_df_indexer import get_mask
-from spatialprofilingtoolbox.ondemand import squidpy_feature_classnames_descriptions
-
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-def describe_squidpy_feature_derivation_method(feature_class: str) -> str | None:
-    if feature_class in squidpy_feature_classnames_descriptions:
-        return squidpy_feature_classnames_descriptions[feature_class]
-    return None
-
 
 def lookup_squidpy_feature_class(method: str) -> str | None:
-    for key, _method in squidpy_feature_classnames_descriptions.items():
-        if method == _method:
+    for key in ('neighborhood enrichment', 'co-occurrence', 'ripley'):
+        if get_feature_description(key) == method:
             return key
     return None
 

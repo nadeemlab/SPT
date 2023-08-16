@@ -4,8 +4,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractio
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import FeatureAssociationTest
 from spatialprofilingtoolbox.db.study_access import StudyAccess
 from spatialprofilingtoolbox.db.cohorts import _replace_stratum_identifiers
-from spatialprofilingtoolbox.db.fractions_transcriber import \
-    describe_fractions_feature_derivation_method
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -37,7 +36,7 @@ class FractionsAccess(SimpleReadOnlyProvider):
         ]
 
     def get_fractions_test_results(self, study: str) -> list[FeatureAssociationTest]:
-        derivation_method = describe_fractions_feature_derivation_method()
+        derivation_method = get_feature_description('population fractions')
         self.cursor.execute('''
         SELECT
             t.selection_criterion_1,

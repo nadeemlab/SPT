@@ -74,9 +74,3 @@ def stage_proximity_feature_values(
         value = row['Proximity']
         if _validate_value(value):
             feature_uploader.stage_feature_value(specifiers, sample_identifier, value)
-
-
-def describe_proximity_feature_derivation_method() -> str:
-    return '''
-    For a given cell phenotype (first specifier), the average number of cells of a second phenotype (second specifier) within a specified radius (third specifier).
-    '''.lstrip().rstrip()

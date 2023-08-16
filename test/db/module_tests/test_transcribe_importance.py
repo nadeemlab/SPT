@@ -3,7 +3,7 @@ from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
-from spatialprofilingtoolbox.db.importance_score_transcriber import describe_derivation_method
+from spatialprofilingtoolbox import get_feature_description
 
 
 def get_test_importance_rows():
@@ -49,7 +49,7 @@ def retrieve_feature_values(connection):
     cursor.execute(f'''
     SELECT * FROM quantitative_feature_value qfv
     JOIN feature_specification fs ON fs.identifier=qfv.feature
-    WHERE fs.derivation_method='{describe_derivation_method()}'
+    WHERE fs.derivation_method='{get_feature_description("gnn importance score")}'
     ;
     ''')
     rows = cursor.fetchall()

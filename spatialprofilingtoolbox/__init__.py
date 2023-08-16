@@ -16,6 +16,8 @@ from spatialprofilingtoolbox.db import (
     QueryCursor,
 )
 
+from spatialprofilingtoolbox.db import get_feature_description
+
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 
 def get_subpackage_name(module_info):

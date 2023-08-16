@@ -6,12 +6,11 @@ import pickle
 
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
     perform_tests
 from spatialprofilingtoolbox.workflow.common.proximity import stage_proximity_feature_values
-from spatialprofilingtoolbox.workflow.common.proximity import \
-    describe_proximity_feature_derivation_method
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -56,7 +55,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         return name
 
     def export_feature_values(self, core_computation_results_files, data_analysis_study):
-        description = describe_proximity_feature_derivation_method()
+        description = get_feature_description('proximity')
         with DatabaseConnectionMaker(database_config_file=self.database_config_file) as dcm:
             with ADIFeaturesUploader(
                 dcm,

@@ -12,8 +12,8 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (\
 )
 from spatialprofilingtoolbox.ondemand.providers import PendingProvider
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.workflow.common.proximity import (\
-    describe_proximity_feature_derivation_method,
     compute_proximity_metric_for_signature_pair,
 )
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -81,7 +81,7 @@ class ProximityProvider(PendingProvider):
             phenotype1_str,
             phenotype2_str,
             radius_str,
-            describe_proximity_feature_derivation_method(),
+            get_feature_description('proximity'),
         )
         with DBCursor() as cursor:
             cursor.execute('''
@@ -116,7 +116,7 @@ class ProximityProvider(PendingProvider):
         radius: str,
     ) -> str:
         specifiers = (phenotype1, phenotype2, str(radius))
-        method = describe_proximity_feature_derivation_method()
+        method = get_feature_description('proximity')
         return cls.create_feature_specification(specifiers, study_name, method)
 
     def have_feature_computed(self, feature_specification: str) -> None:

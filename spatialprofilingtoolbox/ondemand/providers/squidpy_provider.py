@@ -11,8 +11,8 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (
 )
 from spatialprofilingtoolbox.ondemand.providers import PendingProvider
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.workflow.common.squidpy import (
-    describe_squidpy_feature_derivation_method,
     lookup_squidpy_feature_class,
     compute_squidpy_metric_for_one_sample,
 )
@@ -80,7 +80,7 @@ class SquidpyProvider(PendingProvider):
         if feature_class == 'co-occurrence':
             specifiers = specifiers + [str(radius)]
         query = cls._form_query_for_feature_specifiers(len(specifiers))
-        method = cast(str, describe_squidpy_feature_derivation_method(feature_class))
+        method = cast(str, get_feature_description(feature_class))
         variable_portion_args = list(chain(*[
             [specifier, str(i+1)] for i, specifier in enumerate(specifiers)
         ]))
@@ -132,7 +132,7 @@ class SquidpyProvider(PendingProvider):
             specifiers = tuple(phenotypes[0:2] + [str(radius)])
         else:
             specifiers = tuple(phenotypes)
-        method = cast(str, describe_squidpy_feature_derivation_method(feature_class))
+        method = cast(str, get_feature_description(feature_class))
         return cls.create_feature_specification(specifiers, study_name, method)
 
     def have_feature_computed(self, feature_specification: str) -> None:

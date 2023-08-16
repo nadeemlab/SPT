@@ -14,15 +14,10 @@ from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.squidpy import convert_df_to_anndata
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
-
-
-def describe_spatial_autocorr_derivation_method() -> str:
-    return 'For a given cell phenotype (first specifier), i.e. cell set, the p-value associated ' \
-        'with the Moran I statistic value for this cell set, with respect to the standard null  ' \
-        'distribution for this statistic.'.lstrip().rstrip()
 
 
 def _spatial_autocorr(data: AnnData) -> DataFrame:
@@ -50,7 +45,7 @@ def create_and_transcribe_squidpy_features(
     with ADIFeaturesUploader(
         database_connection_maker,
         data_analysis_study=das,
-        derivation_and_number_specifiers=(describe_spatial_autocorr_derivation_method(), 1),
+        derivation_and_number_specifiers=(get_feature_description("spatial autocorrelation"), 1),
         impute_zeros=True,
         upload_anyway=True,
     ) as feature_uploader:

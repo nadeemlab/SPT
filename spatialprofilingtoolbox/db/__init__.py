@@ -7,3 +7,5 @@ from spatialprofilingtoolbox.db.database_connection import (
     DBCredentials,
     QueryCursor,
 )
+
+from spatialprofilingtoolbox.db.describe_features import get_feature_description

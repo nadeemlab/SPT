@@ -7,7 +7,7 @@ from pandas import read_csv
 
 from spatialprofilingtoolbox.db.squidpy_metrics import create_and_transcribe_squidpy_features
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.db.squidpy_metrics import describe_spatial_autocorr_derivation_method
+from spatialprofilingtoolbox import get_feature_description
 
 
 def get_expected_records():
@@ -42,7 +42,7 @@ def retrieve_feature_values(connection):
     cursor.execute(f'''
     SELECT fs.identifier, qfv.subject, qfv.value FROM quantitative_feature_value qfv
     JOIN feature_specification fs ON fs.identifier=qfv.feature
-    WHERE fs.derivation_method='{describe_spatial_autocorr_derivation_method()}'
+    WHERE fs.derivation_method='{get_feature_description("spatial autocorrelation")}'
     ;
     ''')
     rows = cursor.fetchall()

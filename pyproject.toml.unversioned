@@ -174,7 +174,8 @@ packages = [
     "fields.tsv",
     "grant_on_tables.sql",
     "performance_tweaks.sql",
-    "refresh_views.sql"
+    "refresh_views.sql",
+    "feature_descriptions.tsv"
 ]
 "spatialprofilingtoolbox.cggnn.scripts" = [
     "run.py",

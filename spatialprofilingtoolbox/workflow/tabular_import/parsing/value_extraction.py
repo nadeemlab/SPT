@@ -1,6 +1,4 @@
-"""
-Convenience utility for retrieving a unique value from a dataframe column.
-"""
+"""Convenience utility for retrieving a unique value from a dataframe column."""
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -13,6 +11,6 @@ def get_unique_value(dataframe, column):
         logger.error(message)
         raise ValueError(message)
     if len(handles) > 1:
-        logger.warning(
-            'Multiple "%s" values were supplied for this run. Using "%s".', column, handles[0])
+        message = 'Multiple "%s" values were supplied for this run. Using "%s".'
+        logger.warning(message, column, handles[0])
     return handles[0]

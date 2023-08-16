@@ -11,17 +11,16 @@ logger = colorized_logger(__name__)
 
 class SamplesParser(SourceToADIParser):
     """Source file parsing for sample-level metadata."""
-    def parse(self, connection, samples_file, study_name):
-        """
-        Retrieve the samples information and parse records for:
+
+    def parse(self, connection, samples_file, study_name) -> None:
+        """Retrieve the samples information and parse records for:
         - specimen collection study
         - specimen collection process
         - histology assessment process
         """
         samples = pd.read_csv(samples_file, sep='\t', dtype=str)
 
-        collection_study = SourceToADIParser.get_collection_study_name(
-            study_name)
+        collection_study = SourceToADIParser.get_collection_study_name(study_name)
         extraction_method = get_unique_value(samples, 'Extraction method')
         preservation_method = get_unique_value(samples, 'Preservation method')
         storage_location = get_unique_value(samples, 'Storage location')
@@ -34,7 +33,7 @@ class SamplesParser(SourceToADIParser):
         )
 
         for _, sample in samples.iterrows():
-            record = self.create_specimen_collection_process_record(
+            record = self._create_specimen_collection_process_record(
                 sample,
                 collection_study,
             )
@@ -43,14 +42,14 @@ class SamplesParser(SourceToADIParser):
         for _, sample in samples.iterrows():
             if sample['Assay'] == '' or sample['Assessment'] == '':
                 continue
-            record = self.create_histology_assessment_process_record(sample)
+            record = self._create_histology_assessment_process_record(sample)
             cursor.execute(self.generate_basic_insert_query('histology_assessment_process'), record)
 
         logger.info('Parsed records for %s specimens.', samples.shape[0])
         connection.commit()
         cursor.close()
 
-    def create_specimen_collection_process_record(self, sample, collection_study):
+    def _create_specimen_collection_process_record(self, sample, collection_study):
         return (
             sample['Sample ID'],
             sample['Source subject'],
@@ -60,7 +59,7 @@ class SamplesParser(SourceToADIParser):
             collection_study,
         )
 
-    def create_histology_assessment_process_record(self, sample):
+    def _create_histology_assessment_process_record(self, sample):
         return (
             sample['Sample ID'],
             sample['Assay'],

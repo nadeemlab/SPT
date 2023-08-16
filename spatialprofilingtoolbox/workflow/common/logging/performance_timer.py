@@ -1,7 +1,7 @@
+"""A convenience reporter of time performance. Keeps track of time used by specific named processes
+and reports an aggregation as a text table.
 """
-A convenience reporter of time performance. Keeps track of time used by
-specific named processes and reports an aggregation as a text table.
-"""
+
 import time
 from typing import Literal
 from typing import get_args
@@ -13,8 +13,7 @@ ReportOrganization = Literal['average time spent', 'total time spent', 'frequenc
 
 
 class PerformanceTimer:
-    """
-    An object of this class makes it easy to track which part of complex
+    """An object of this class makes it easy to track which part of complex
     branching code is taking a long time, with only a few additional lines of
     monitoring code.
 
@@ -73,3 +72,22 @@ class PerformanceTimer:
     def report_string(self, organize_by: ReportOrganization):
         df = self.report(organize_by=organize_by)
         return df.to_markdown(index=False)
+
+
+class PerformanceTimerReporter:
+    """Logger/reporter of performance timer results."""
+    timer: PerformanceTimer
+
+    def __init__(self, performance_report_file: str, logger):
+        self.performance_report_file = performance_report_file
+        self.logger = logger
+        self.timer = PerformanceTimer()
+
+    def record_timepoint(self, moment_name: str):
+        self.timer.record_timepoint(moment_name)
+
+    def wrap_up_timer(self):
+        """Concludes low-level performance metric collection."""
+        df = self.timer.report(organize_by='fraction')
+        self.logger.info('Report to: %s', self.performance_report_file)
+        df.to_csv(self.performance_report_file, index=False)

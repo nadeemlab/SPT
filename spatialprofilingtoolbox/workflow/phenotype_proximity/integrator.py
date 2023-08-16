@@ -1,40 +1,35 @@
-"""
-The integration phase of the proximity workflow. Performs statistical tests.
-"""
+"""The integration phase of the proximity workflow. Performs statistical tests."""
 from typing import Optional
+from typing import cast
 import datetime
 import pickle
 
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
     perform_tests
 from spatialprofilingtoolbox.workflow.common.proximity import stage_proximity_feature_values
-from spatialprofilingtoolbox.workflow.common.proximity import \
-    describe_proximity_feature_derivation_method
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
 class PhenotypeProximityAnalysisIntegrator(Integrator):
-    """
-    The main class of the integration phase.
-    """
+    """The main class of the integration phase."""
     def __init__(self,
-                 study_name: str = '',
-                 database_config_file: Optional[str] = None,
-                 **kwargs # pylint: disable=unused-argument
-                 ):
+        study_name: str = '',
+        database_config_file: Optional[str] = None,
+        **kwargs  # pylint: disable=unused-argument
+    ):
         self.study_name = study_name
         self.database_config_file = database_config_file
 
-    def calculate(self, core_computation_results_files=None, **kwargs):
-        """
-        Performs statistical comparison tests and writes results to file.
-        """
+    def calculate(self, core_computation_results_files: list[str] | None=None, **kwargs):
+        """Performs statistical comparison tests and writes results to file."""
         logger.info('(Should do integration phase.)')
+        core_computation_results_files = cast(list[str], core_computation_results_files)
         for filename in core_computation_results_files:
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
@@ -60,7 +55,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         return name
 
     def export_feature_values(self, core_computation_results_files, data_analysis_study):
-        description = describe_proximity_feature_derivation_method()
+        description = get_feature_description('proximity')
         with DatabaseConnectionMaker(database_config_file=self.database_config_file) as dcm:
             with ADIFeaturesUploader(
                 dcm,
@@ -74,6 +69,8 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
         for results_file in core_computation_results_files:
             with open(results_file, 'rb') as file:
                 feature_values, channel_symbols_by_column_name, sample_identifier= pickle.load(file)
-
-            stage_proximity_feature_values(feature_uploader, feature_values,
-                                           channel_symbols_by_column_name, sample_identifier)
+            stage_proximity_feature_values(
+                feature_uploader,
+                feature_values,
+                channel_symbols_by_column_name, sample_identifier,
+            )

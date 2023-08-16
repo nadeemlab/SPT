@@ -3,19 +3,21 @@ from typing import cast
 import re
 
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
-from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyContact
-from spatialprofilingtoolbox.db.exchange_data_formats.study import DataRelease
-from spatialprofilingtoolbox.db.exchange_data_formats.study import Publication
-from spatialprofilingtoolbox.db.exchange_data_formats.study import Institution
-from spatialprofilingtoolbox.db.exchange_data_formats.study import Assay
-from spatialprofilingtoolbox.db.exchange_data_formats.study import CountsSummary
-from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyComponents
-from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
-from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
-from spatialprofilingtoolbox.db.exchange_data_formats.study import Context
-from spatialprofilingtoolbox.db.exchange_data_formats.study import Products
+from spatialprofilingtoolbox.db.exchange_data_formats.study import (
+    StudyContact,
+    DataRelease,
+    Publication,
+    Institution,
+    Assay,
+    CountsSummary,
+    StudyComponents,
+    StudyHandle,
+    StudySummary,
+    Context,
+    Products,
+)
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult
-from spatialprofilingtoolbox.db.cohorts import _get_sample_cohorts
+from spatialprofilingtoolbox.db.cohorts import get_sample_cohorts
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
 class StudyAccess(SimpleReadOnlyProvider):
@@ -28,7 +30,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         data_release = self._get_data_release(study)
         publication = self._get_publication(study)
         assay = self._get_assay(components.measurement)
-        sample_cohorts = _get_sample_cohorts(self.cursor, study)
+        sample_cohorts = get_sample_cohorts(self.cursor, study)
         return StudySummary(
             context=Context(institution=institution, assay=assay, contact=contact),
             products=Products(data_release=data_release, publication=publication),

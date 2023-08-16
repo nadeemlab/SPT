@@ -21,46 +21,46 @@ from spatialprofilingtoolbox.workflow.tabular_import.parsing.interventions impor
     InterventionsParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyParser
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
 class DataSkimmer(DatabaseConnectionMaker):
-    """
-    Orchestration of source file parsing into single cell ADI schema database
+    """Orchestration of source file parsing into single cell ADI schema database
     for a bundle of source files.
     """
+    record_counts: dict[str, int]
+
     def __init__(self, database_config_file: Optional[str] = None):
         super().__init__(database_config_file=database_config_file)
         self.record_counts = {}
 
-    def normalize(self, name):
+    def _normalize(self, name):
         return re.sub(r'[ \-]', '_', name).lower()
 
-    def retrieve_record_counts(self, cursor, fields):
-        record_counts = {}
+    def _retrieve_record_counts(self, cursor, fields) -> dict[str, int]:
+        record_counts: dict[str, int] = {}
         table_names = sorted(list(set(fields['Table'])))
-        table_names = [self.normalize(t) for t in table_names]
+        table_names = [self._normalize(t) for t in table_names]
         for table in table_names:
-            query = sql.SQL(
-                'SELECT COUNT(*) FROM {} ;').format(sql.Identifier(table))
+            query = sql.SQL('SELECT COUNT(*) FROM {} ;').format(sql.Identifier(table))
             cursor.execute(query)
             rows = cursor.fetchall()
             record_counts[table] = rows[0][0]
         return record_counts
 
-    def cache_all_record_counts(self, connection, fields):
+    def _cache_all_record_counts(self, connection, fields):
         cursor = connection.cursor()
-        self.record_counts = self.retrieve_record_counts(cursor, fields)
+        self.record_counts = self._retrieve_record_counts(cursor, fields)
         cursor.close()
 
-    def report_record_count_changes(self, connection, fields):
+    def _report_record_count_changes(self, connection, fields):
         cursor = connection.cursor()
-        current_counts = self.retrieve_record_counts(cursor, fields)
+        current_counts = self._retrieve_record_counts(cursor, fields)
         changes = {
-            table: current_counts[table] - self.record_counts[table]
+            table: current_counts[table] - self.record_counts[str(table)]
             for table in sorted(current_counts.keys())
         }
         cursor.close()
@@ -73,53 +73,33 @@ class DataSkimmer(DatabaseConnectionMaker):
             padded = f"{difference_str:<13}"
             logger.debug('%s %s', padded, table)
 
-    def parse(self, _files):
+    def parse(self, _files) -> None:
         if not self.is_connected():
-            logger.debug(
-                'No database connection was initialized. Skipping semantic parse.')
+            message = 'No database connection was initialized. Skipping semantic parse.'
+            logger.debug(message)
             return
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
-        self.cache_all_record_counts(self.get_connection(), fields)
+        self._cache_all_record_counts(self.get_connection(), fields)
 
-        study_name = StudyParser(fields).parse(
-            self.get_connection(),
-            _files['study'],
-        )
-        SubjectsParser(fields).parse(
-            self.get_connection(),
-            _files['subjects'],
-        )
-        DiagnosisParser(fields).parse(
-            self.get_connection(),
-            _files['diagnosis'],
-        )
-        InterventionsParser(fields).parse(
-            self.get_connection(),
-            _files['interventions'],
-        )
-        SamplesParser(fields).parse(
-            self.get_connection(),
-            _files['samples'],
-            study_name,
-        )
-        CellManifestSetParser(fields).parse(
-            self.get_connection(),
-            _files['file manifest'],
-            study_name,
-        )
+        study_name = StudyParser(fields).parse(self.get_connection(), _files['study'])
+        conn = self.get_connection()
+        SubjectsParser(fields).parse(conn, _files['subjects'])
+        DiagnosisParser(fields).parse(conn, _files['diagnosis'])
+        InterventionsParser(fields).parse(conn, _files['interventions'])
+        SamplesParser(fields).parse(conn, _files['samples'], study_name)
+        CellManifestSetParser(fields).parse(conn, _files['file manifest'], study_name)
         chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(fields).parse(
-            self.get_connection(),
+            conn,
             _files['channels'],
             _files['phenotypes'],
             study_name,
         )
         CellManifestsParser(fields, channels_file=_files['channels']).parse(
-            self.get_connection(),
+            conn,
             _files['file manifest'],
             chemical_species_identifiers_by_symbol,
         )
-        SampleStratificationCreator.create_sample_stratification(self.get_connection())
-
-        self.report_record_count_changes(self.get_connection(), fields)
+        SampleStratificationCreator.create_sample_stratification(conn)
+        self._report_record_count_changes(conn, fields)

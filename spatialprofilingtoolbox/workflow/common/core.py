@@ -1,6 +1,6 @@
 """Convenience functions for core jobs."""
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 
 def get_number_cells_to_be_processed(database_config_file, study_name, sample_identifier=None):
     query_parts = ['''

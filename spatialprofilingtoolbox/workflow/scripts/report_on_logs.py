@@ -1,6 +1,4 @@
-"""
-Create a report on the Nextflow logs. For debugging and archival purposes.
-"""
+"""Create a report on the Nextflow logs. For debugging and archival purposes."""
 import sys
 import os
 from os.path import exists
@@ -379,8 +377,7 @@ class LogParser:
 
 
 class LogReportAggregator:
-    """
-    Aggregate together many log files that are created by a Nextflow run of an
+    """Aggregate together many log files that are created by a Nextflow run of an
     SPT workflow.
     """
 

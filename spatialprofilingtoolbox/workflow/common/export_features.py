@@ -1,8 +1,7 @@
+"""Convenience uploader of feature data into SPT database tables that comprise a sparse
+representation of the features. Abstracts (wraps) the actual SQL queries.
 """
-Convenience uploader of feature data into SPT database tables that comprise
-a sparse representation of the features. Abstracts (wraps) the actual SQL
-queries.
-"""
+
 from typing import cast
 from importlib.resources import as_file
 from importlib.resources import files
@@ -13,7 +12,7 @@ import pandas as pd
 from psycopg2.extensions import connection as Connection
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -21,12 +20,14 @@ logger = colorized_logger(__name__)
 
 
 class ADIFeaturesUploader(SourceToADIParser):
+    """Upload sparse representation of feature values to tables quantitative_feature_value,
+    feature_specification, feature_specifier.
     """
-    Upload sparse representation of feature values to tables
-    quantitative_feature_value, feature_specification, feature_specifier.
-    """
+
     feature_value_identifier: int
     connection_provider: ConnectionProvider
+    feature_values: list[tuple[tuple[str, ...], str , float | None]]
+    upload_anyway: bool
 
     def __init__(self,
         database_connection_maker: DatabaseConnectionMaker | None,
@@ -34,11 +35,12 @@ class ADIFeaturesUploader(SourceToADIParser):
         derivation_and_number_specifiers,
         impute_zeros=False,
         connection: Connection | None=None,
+        upload_anyway: bool = False,
         **kwargs
     ):
         derivation_method, specifier_number = derivation_and_number_specifiers
-        self.feature_values = None
         self.impute_zeros=impute_zeros
+        self.upload_anyway = upload_anyway
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         SourceToADIParser.__init__(self, fields)
@@ -52,7 +54,7 @@ class ADIFeaturesUploader(SourceToADIParser):
     def record_feature_specification_template(self,
         data_analysis_study,
         derivation_method,
-        specifier_number
+        specifier_number,
     ):
         self.data_analysis_study = data_analysis_study
         self.derivation_method = derivation_method
@@ -69,11 +71,11 @@ class ADIFeaturesUploader(SourceToADIParser):
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection_provider.is_connected():
-            self.upload()
+            self.upload(upload_anyway=self.upload_anyway)
 
-    def stage_feature_value(self, specifiers, subject, value):
+    def stage_feature_value(self, specifiers: tuple[str, ...], subject: str, value: float | None):
         self.validate_specifiers(specifiers)
-        self.feature_values.append([specifiers, subject, value])
+        self.feature_values.append((specifiers, subject, value))
 
     def validate_specifiers(self, specifiers):
         if len(specifiers) != self.specifier_number:
@@ -86,10 +88,10 @@ class ADIFeaturesUploader(SourceToADIParser):
     def get_connection(self):
         return self.connection_provider.get_connection()
 
-    def upload(self):
+    def upload(self, upload_anyway: bool = False) -> None:
         if self.check_nothing_to_upload():
             return
-        if self.check_exact_feature_values_already_present():
+        if self.check_exact_feature_values_already_present() and not upload_anyway:
             return
         self.test_subject_existence()
         self.test_study_existence()
@@ -138,20 +140,24 @@ class ADIFeaturesUploader(SourceToADIParser):
             logger.info(
                 'Exactly %s feature values already associated with study "%s" of '
                 'description "%s". This is the correct number; skipping upload '
-                'without error.',
-                count, self.data_analysis_study, self.derivation_method)
+                'without error, unless "upload_anyway" is set.',
+                count,
+                self.data_analysis_study,
+                self.derivation_method,
+            )
             return True
         if count > 0:
             message = f'Already have {count} features associated with study ' \
                 f'"{self.data_analysis_study}" of description "{self.derivation_method}". ' \
-                'Skipping upload with error.'
-            logger.error(message)
-            raise ValueError(message)
+                'May be an error.'
+            logger.warning(message)
         if count == 0:
             logger.info(
                 'No feature values yet associated with study "%s" of description "%s". '
                 'Proceeding with upload.',
-                self.data_analysis_study, self.derivation_method)
+                self.data_analysis_study,
+                self.derivation_method,
+            )
             return False
         return None
 
@@ -166,7 +172,9 @@ class ADIFeaturesUploader(SourceToADIParser):
         ;
         '''
         cursor.execute(
-            count_query, (self.data_analysis_study, self.derivation_method))
+            count_query,
+            (self.data_analysis_study, self.derivation_method),
+        )
         rows = cursor.fetchall()
         count = rows[0][0]
         cursor.close()

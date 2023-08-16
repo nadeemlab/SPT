@@ -1,21 +1,21 @@
 "Run through the entire SPT CG-GNN pipeline using a local db config."
 from argparse import ArgumentParser
 from os.path import join
+from typing import cast
 
 from pandas import DataFrame
 from pandas import read_csv
 from pandas import concat, merge
 from numpy import sort
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
-from spatialprofilingtoolbox.db.database_connection import DBCredentials
+from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DBCredentials
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
-from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
-try:
-    from cggnn.run_all import run_with_dfs
-except ModuleNotFoundError as e:
-    SuggestExtrasException(e, 'cggnn')
+from spatialprofilingtoolbox.db.feature_matrix_extractor import (
+    FeatureMatrixExtractor,
+    Bundle,
+)
+from cggnn.run_all import run_with_dfs
 
 
 def parse_arguments():
@@ -122,13 +122,18 @@ def parse_arguments():
 
 def _create_cell_df(cell_dfs: dict[str, DataFrame], feature_names: dict[str, str]) -> DataFrame:
     "Find chemical species, phenotypes, and locations and merge into a DataFrame."
-
     for specimen, df_specimen in cell_dfs.items():
-        df_specimen.rename({ft_id: 'FT_' + ft_name for ft_id, ft_name in feature_names.items()},
-                           axis=1, inplace=True)
+        df_specimen.rename(
+            {ft_id: 'FT_' + ft_name for ft_id, ft_name in feature_names.items()},
+            axis=1,
+            inplace=True,
+        )
         # TODO: Create phenotype columns
-        df_specimen.rename({'pixel x': 'center_x', 'pixel y': 'center_y'},
-                           axis=1, inplace=True)
+        df_specimen.rename(
+            {'pixel x': 'center_x', 'pixel y': 'center_y'},
+            axis=1,
+            inplace=True,
+        )
         df_specimen['specimen'] = specimen
 
     # TODO: Reorder so that it's feature, specimen, phenotype, xy
@@ -138,12 +143,17 @@ def _create_cell_df(cell_dfs: dict[str, DataFrame], feature_names: dict[str, str
     return df
 
 
-def _create_label_df(df_assignments: DataFrame,
-                     df_strata: DataFrame) -> tuple[DataFrame, dict[int, str]]:
+def _create_label_df(
+    df_assignments: DataFrame,
+    df_strata: DataFrame,
+) -> tuple[DataFrame, dict[int, str]]:
     """Get slide-level results."""
     df = merge(df_assignments, df_strata, on='stratum identifier', how='left')[
-        ['specimen', 'subject diagnosed result']].rename(
-        {'specimen': 'slide', 'subject diagnosed result': 'result'}, axis=1)
+        ['specimen', 'subject diagnosed result']
+    ].rename(
+        {'specimen': 'slide', 'subject diagnosed result': 'result'},
+        axis=1,
+    )
     label_to_result = dict(enumerate(sort(df['result'].unique())))
     return df.replace({res: i for i, res in label_to_result.items()}), label_to_result
 
@@ -164,29 +174,33 @@ def save_importances(_args):
 if __name__ == "__main__":
     args = parse_arguments()
     extractor = FeatureMatrixExtractor(database_config_file=args.spt_db_config_location)
-    study_data: dict[str, dict] = extractor.extract(study=args.study)
-
+    study_data = cast(Bundle, extractor.extract(study=args.study))
     df_cell = _create_cell_df(
-        {slide: data['dataframe']
-            for slide, data in study_data['feature matrices'].items()},
-        study_data['channel symbols by column name'])
+        {
+            slide: cast(DataFrame, data['dataframe'])
+            for slide, data in study_data['feature matrices'].items()
+        },
+        cast(dict[str, str], study_data['channel symbols by column name']),
+    )
     df_label, label_to_result_text = _create_label_df(
-        study_data['sample cohorts']['assignments'],
-        study_data['sample cohorts']['strata'])
+        cast(DataFrame, study_data['sample cohorts']['assignments']),
+        cast(DataFrame, study_data['sample cohorts']['strata']),
+    )
 
-    run_with_dfs(df_cell,
-                 df_label,
-                 label_to_result_text,
-                 args.validation_data_percent,
-                 args.test_data_percent,
-                 args.roi_side_length,
-                 args.target_column,
-                 args.batch_size,
-                 args.epochs,
-                 args.learning_rate,
-                 args.k_folds,
-                 args.explainer,
-                 args.merge_rois,
-                 args.prune_misclassified)
-
+    run_with_dfs(
+        df_cell,
+        df_label,
+        label_to_result_text,
+        args.validation_data_percent,
+        args.test_data_percent,
+        args.roi_side_length,
+        args.target_column,
+        args.batch_size,
+        args.epochs,
+        args.learning_rate,
+        args.k_folds,
+        args.explainer,
+        args.merge_rois,
+        args.prune_misclassified,
+    )
     save_importances(args)

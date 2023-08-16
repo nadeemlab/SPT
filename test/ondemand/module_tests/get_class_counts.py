@@ -2,14 +2,14 @@
 import sys
 import json
 
-from spatialprofilingtoolbox.ondemand.counts_service_client import CountRequester
+from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 
 HOST = 'spt-ondemand-testing'
 PORT = 8016
 
 
 def get_counts(study_name, positives, negatives):
-    with CountRequester(HOST, PORT) as requester:
+    with OnDemandRequester(HOST, PORT) as requester:
         counts_by_specimen = requester.get_counts_by_specimen(positives, negatives, study_name, 0)
     return counts_by_specimen
 

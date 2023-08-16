@@ -18,12 +18,13 @@ test: teardown-testing
 
 setup-testing:
 >@${MESSAGE} start "apiserver"
->@docker compose up -d && \
+>@docker compose up -d && (bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh &) && sleep 0.2 && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-apiserver-testing \
      spt-db-testing \
      spt-ondemand-testing ; \
     echo "$$?" > status_code
+>@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "Setup env." "Env not setup."
 >@rm -f status_code
 
@@ -63,18 +64,21 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/apiserver/; $$executor $$test_script" ; \
-    docker compose logs -f & \
+    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh & \
+    sleep 0.2; \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" ; \
-    echo "$$?" > status_code ;
->@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;
+    echo "$$?" > status_code ; \
+    kill %1
+>@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
+>@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;

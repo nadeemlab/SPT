@@ -1,4 +1,10 @@
 
+blue="\033[36;2m"
+green="\033[32m"
+yellow="\033[33m"
+red="\033[31m"
+reset_code="\033[0m"
+
 function test_proximity() {
     p1="$1"
     p2="$2"
@@ -6,12 +12,12 @@ function test_proximity() {
     filename="$4"
     query="http://spt-apiserver-testing:8080/request-phenotype-proximity-computation/?study=Melanoma%20intralesional%20IL2&phenotype1=$p1&phenotype2=$p2&radius=$r"
     start=$SECONDS
-    while [[ $((SECONDS - start)) < 15 ]]; do
-        echo "Doing query $query ..."
+    while (( SECONDS - start < 15 )); do
+        echo -en "Doing query $blue$query$reset_code ... "
         curl -s "$query" > _proximity.json;
         if [ "$?" -gt 0 ];
         then
-            echo "Error with apiserver query."
+            echo -e "${red}Error with apiserver query.$reset_code"
             cat _proximity.json
             rm _proximity.json
             exit 1
@@ -19,15 +25,15 @@ function test_proximity() {
         pending=$(python -c 'import json; o=json.loads(open("_proximity.json").read()); print(o["is_pending"])')
         if [[ "$pending" == "False" ]];
         then
-            echo "Metrics available."
+            echo
+            echo -en "${yellow}Metrics available.$reset_code "
             cat _proximity.json | python -m json.tool > proximity.json
             rm _proximity.json
             break
         else
-            waitperiod=0.5
-            echo "Waiting ${waitperiod} seconds to poll for metrics availability."
+            waitperiod=1
+            echo "Still pending. Waiting ${waitperiod} seconds to poll for metrics availability... "
             sleep $waitperiod
-            echo "Done waiting. Will poll again."
         fi
     done
 
@@ -37,7 +43,10 @@ function test_proximity() {
     if [ $status -eq 0 ];
     then
         rm proximity.json
+        echo -e "${green}Artifact matches.$reset_code"
+        echo
     else
+        echo -e "${red}Some error with the diff command.$reset_code"
         cat proximity.json
         rm proximity.json
         exit 1

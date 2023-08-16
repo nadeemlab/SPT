@@ -1,7 +1,6 @@
 """Do execution of a SQL statement and log the activity."""
 from importlib.resources import as_file
 from importlib.resources import files
-from typing import Optional
 from typing import Literal
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -15,12 +14,14 @@ def verbose_sql_execute(
     connection,
     contents=None,
     verbosity: VerbosityOptions = None,
-    source_package: Optional[str] = None,
+    source_package: str | None = None,
 ):
     filename, description = filename_description
     if description is None:
         description = filename
     if not contents:
+        if source_package is None:
+            raise ValueError('Must supply package for source SQL file.')
         logger.info('Executing %s.', description)
         with as_file(files(source_package).joinpath(filename)) as path:
             with open(path, encoding='utf-8') as file:

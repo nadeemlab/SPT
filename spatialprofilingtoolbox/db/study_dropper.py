@@ -1,6 +1,9 @@
 """Drop a single study."""
 import re
 
+from psycopg2.extensions import connection as Pyscopg2Connection
+from psycopg2.extensions import cursor as Pyscopg2Cursor
+
 from spatialprofilingtoolbox.db.check_tables import check_tables
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -9,10 +12,14 @@ logger = colorized_logger(__name__)
 
 class StudyDropper:
     """Drop a single study."""
-    def __init__(self, connection, study):
+
+    connection: Pyscopg2Connection
+    cursor: Pyscopg2Cursor
+    study: str
+
+    def __init__(self, connection: Pyscopg2Connection, study: str):
         self.connection = connection
         self.study = study
-        self.cursor = None
         self.cached_counts = None
 
     def __enter__(self):

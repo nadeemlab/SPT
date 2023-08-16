@@ -42,8 +42,7 @@ class ConnectionProvider:
 
 
 class DatabaseConnectionMaker(ConnectionProvider):
-    """
-    Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
+    """Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
     """
     connection: Connection
     autocommit: bool
@@ -56,9 +55,6 @@ class DatabaseConnectionMaker(ConnectionProvider):
         try:
             super().__init__(self.make_connection(credentials))
         except Psycopg2Error:
-            message = 'Failed to connect to database: %s %s'
-            logger.warning(message, credentials.endpoint, credentials.database)
-            logger.info('Trying with alternative database name.')
             credentials = DBCredentials(
                 credentials.endpoint,
                 'postgres',
@@ -68,6 +64,7 @@ class DatabaseConnectionMaker(ConnectionProvider):
             try:
                 super().__init__(self.make_connection(credentials))
             except Psycopg2Error as exception:
+                message = 'Failed to connect to database: %s %s'
                 logger.error(message, credentials.endpoint, credentials.database)
                 raise exception
         self.autocommit = autocommit
@@ -148,8 +145,7 @@ class SimpleReadOnlyProvider:
 
 
 class QueryCursor:
-    """
-    Dispatches calls to a provided handler class (most likely QueryHandler).
+    """Dispatches calls to a provided handler class (most likely QueryHandler).
     The provided class' class methods require a cursor as first argument, which this dispatcher
     class (QueryCursor) newly provides on each invocation.
     This allows the user of QueryCursor to omit mention of the cursor.

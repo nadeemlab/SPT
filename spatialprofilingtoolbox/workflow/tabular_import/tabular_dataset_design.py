@@ -1,7 +1,8 @@
-"""
-Design parameters for a tabular dataset to be imported by the main import workflow.
-"""
-import pandas as pd
+"""Design parameters for a tabular dataset to be imported by the main import workflow."""
+
+from typing import cast
+
+from pandas import read_csv
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -13,15 +14,13 @@ class MissingPositivityColumnError(ValueError):
 
 
 class TabularCellMetadataDesign:
-    """
-    This class provides the schema necessary to interpret cell metadata manifests.
-    """
+    """This class provides the schema necessary to interpret cell metadata manifests."""
 
     def __init__(self,
-                 channels_file: str = '',
-                 **kwargs,  # pylint: disable=unused-argument
-                 ):
-        self.channels = pd.read_csv(
+        channels_file: str = '',
+        **kwargs,  # pylint: disable=unused-argument
+    ):
+        self.channels = read_csv(
             channels_file,
             keep_default_na=False,
         )
@@ -32,9 +31,7 @@ class TabularCellMetadataDesign:
 
     @staticmethod
     def validate_cell_manifest_descriptor(descriptor):
-        return descriptor in [
-            TabularCellMetadataDesign.get_cell_manifest_descriptor(),
-        ]
+        return descriptor in [TabularCellMetadataDesign.get_cell_manifest_descriptor(),]
 
     def get_channel_names(self):
         return list(self.channels['Name'])
@@ -47,10 +44,10 @@ class TabularCellMetadataDesign:
         return [xmin, xmax, ymin, ymax]
 
     def _get_indicator_prefix(self,
-                              phenotype_name,
-                              metadata_file_column='Column header fragment prefix'):
-        """
-        Args:
+        phenotype_name,
+        metadata_file_column='Column header fragment prefix',
+    ):
+        """Args:
             phenotype_name (str):
                 One of the elementary phenotype names.
             metadata_file_column (str):
@@ -67,8 +64,7 @@ class TabularCellMetadataDesign:
         return str(value)
 
     def munge_name(self, signature):
-        """
-        Args:
+        """Args:
             signature (dict):
                 The keys are typically phenotype names and the values are "+" or "-". If
                 a key is not a phenotype name, it is presumed to be the exact name of
@@ -86,8 +82,7 @@ class TabularCellMetadataDesign:
         return name
 
     def get_feature_name(self, key, separator=' '):
-        """
-        Args:
+        """Args:
             key (str):
                 A phenotype/channel name (usually).
 
@@ -102,8 +97,7 @@ class TabularCellMetadataDesign:
         return key
 
     def get_intensity_feature_name(self, key, separator=' '):
-        """
-        Args:
+        """Args:
             key (str):
                 A phenotype/channel name (usually).
 
@@ -121,25 +115,34 @@ class TabularCellMetadataDesign:
         specific_columns = None
         missing = []
         for separator in [' ', '_']:
-            _specific_columns = [column_getter(symbol, separator=separator) for symbol in symbols]
+            _specific_columns = [
+                cast(str, column_getter(symbol, separator=separator))
+                for symbol in symbols
+            ]
             _missing = [c for c in _specific_columns if not c in columns]
             if len(_missing) == 0:
                 specific_columns = _specific_columns
                 break
             missing = missing + _missing
             continue
-        return specific_columns is not None, specific_columns, missing
+        return specific_columns is not None, cast(list[str], specific_columns), missing
 
     def get_dichotomized_columns(self, symbols, columns):
         all_found, dichotomized_columns, missing = self.get_specific_columns(
-            symbols, columns, self.get_feature_name)
+            symbols,
+            columns,
+            self.get_feature_name,
+        )
         if not all_found:
             raise MissingPositivityColumnError(f'Missing positivity columns: {missing}')
         return dichotomized_columns
 
     def get_intensity_columns(self, symbols, columns):
         all_found, intensity_columns, missing = self.get_specific_columns(
-            symbols, columns, self.get_intensity_feature_name)
+            symbols,
+            columns,
+            self.get_intensity_feature_name,
+        )
         if not all_found:
             logger.warning('Did not find all "intensity" features: %s', missing)
         return intensity_columns

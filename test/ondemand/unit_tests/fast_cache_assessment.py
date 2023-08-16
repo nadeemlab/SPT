@@ -12,9 +12,9 @@ def test_behavior(source_data_location, message):
     print('')
     print(message)
     assessor = FastCacheAssessor(source_data_location)
-    assert not assessor.cache_is_up_to_date()
+    assert not assessor._cache_is_up_to_date()
     assessor.assess_and_act()
-    assert assessor.cache_is_up_to_date()
+    assert assessor._cache_is_up_to_date()
 
 def test_behavior_inert(source_data_location, message):
     print('')
@@ -23,9 +23,9 @@ def test_behavior_inert(source_data_location, message):
     environ['DISABLE_FAST_CACHE_RECREATION'] = '1'
 
     assessor = FastCacheAssessor(source_data_location)
-    assert not assessor.cache_is_up_to_date()
+    assert not assessor._cache_is_up_to_date()
     assessor.assess_and_act()
-    assert not assessor.cache_is_up_to_date()
+    assert not assessor._cache_is_up_to_date()
 
     environ.pop('DISABLE_FAST_CACHE_RECREATION')
 

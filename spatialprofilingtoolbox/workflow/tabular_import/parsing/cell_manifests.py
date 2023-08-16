@@ -1,9 +1,10 @@
 """Source file parsing for cell-level data."""
+
 from io import BytesIO as StringIO
 import base64
 import mmap
 
-import shapefile
+import shapefile  # type: ignore
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
@@ -19,18 +20,22 @@ logger = colorized_logger(__name__)
 
 
 class CellManifestsParser(SourceToADIParser):
-    """
-    Source file parsing for metadata at the level of the cell manifest set.
-    """
+    """Source file parsing for metadata at the level of the cell manifest set."""
 
     def __init__(self, fields, **kwargs):
         super().__init__(fields, **kwargs)
         self.dataset_design = TabularCellMetadataDesign(**kwargs)
 
-    def insert_chunks(self, cursor, cells, timer, sha256_hash, channel_symbols,
-                      chemical_species_identifiers_by_symbol,
-                      histological_structure_identifier_index,
-                      shape_file_identifier_index):
+    def insert_chunks(self,
+        cursor,
+        cells,
+        timer,
+        sha256_hash,
+        channel_symbols,
+        chemical_species_identifiers_by_symbol,
+        histological_structure_identifier_index,
+        shape_file_identifier_index,
+    ):
         timer.record_timepoint('Retrieved and hashed a cell manifest')
         chunk_size = 100000
         for start in range(0, cells.shape[0], chunk_size):
@@ -44,9 +49,8 @@ class CellManifestsParser(SourceToADIParser):
                 'expression_quantification': [],
             }
             timer.record_timepoint('Subset cells dataframe on chunk')
-
-            feature_names, intensities_available = self.dataset_design.get_exact_column_names(
-                channel_symbols, batch_cells.columns)
+            get_columns = self.dataset_design.get_exact_column_names
+            feature_names, intensities_available = get_columns(channel_symbols, batch_cells.columns)
             values = {
                 symbol: batch_cells[feature_names[symbol]]
                 for symbol in channel_symbols
@@ -117,11 +121,19 @@ class CellManifestsParser(SourceToADIParser):
                     timer.record_timepoint('Started copy from command for bulk insertion')
                     cursor.copy_from(memmap, tablename)
                 timer.record_timepoint('Finished inserting one chunk')
-        return {'structure' : histological_structure_identifier_index,
-                'shape file' : shape_file_identifier_index}
+        return {
+            'structure' : histological_structure_identifier_index,
+            'shape file' : shape_file_identifier_index,
+        }
 
-    def parse_cell_manifest(self, cursor, filename, channel_symbols,
-                            initial_indices, timer, chemical_species_identifiers_by_symbol):
+    def parse_cell_manifest(self,
+        cursor,
+        filename,
+        channel_symbols,
+        initial_indices,
+        timer,
+        chemical_species_identifiers_by_symbol,
+    ):
         histological_structure_identifier_index = initial_indices['structure']
         shape_file_identifier_index = initial_indices['shape file']
         sha256_hash = compute_sha256(filename)
@@ -137,25 +149,31 @@ class CellManifestsParser(SourceToADIParser):
                 count,
                 sha256_hash,
             )
-            return {'structure' : histological_structure_identifier_index,
-                    'shape file' : shape_file_identifier_index}
+            return {
+                'structure' : histological_structure_identifier_index,
+                'shape file' : shape_file_identifier_index,
+            }
         if count == cells.shape[0]:
-            logger.debug(
-                ('Already found exactly %s cells recorded from data source '
-                    ' file "%s". Skipping this file.'
-                    ),
-                count,
-                sha256_hash,
-            )
-            return {'structure' : histological_structure_identifier_index,
-                    'shape file' : shape_file_identifier_index}
+            message = 'Found exactly %s cells recorded from data source file "%s". Skipping.'
+            logger.debug(message, count,  sha256_hash)
+            return {
+                'structure' : histological_structure_identifier_index,
+                'shape file' : shape_file_identifier_index,
+            }
         if count == 0:
-            indices = self.insert_chunks(cursor, cells, timer, sha256_hash, channel_symbols,
-                                         chemical_species_identifiers_by_symbol,
-                                         histological_structure_identifier_index,
-                                         shape_file_identifier_index)
-        logger.info('Parsed records for %s cells from "%s".', cells.shape[0], sha256_hash)
-        return indices
+            indices = self.insert_chunks(
+                cursor,
+                cells,
+                timer,
+                sha256_hash,
+                channel_symbols,
+                chemical_species_identifiers_by_symbol,
+                histological_structure_identifier_index,
+                shape_file_identifier_index,
+            )
+            logger.info('Parsed records for %s cells from "%s".', cells.shape[0], sha256_hash)
+            return indices
+        return None
 
     def get_cell_manifests(self, file_manifest_file):
         file_metadata = pd.read_csv(file_manifest_file, sep='\t')
@@ -165,18 +183,18 @@ class CellManifestsParser(SourceToADIParser):
 
     def get_channel_symbols(self, chemical_species_identifiers_by_symbol):
         recognized_channel_symbols = self.dataset_design.get_channel_names()
-        missing = set(chemical_species_identifiers_by_symbol.keys()
-                                      ).difference(recognized_channel_symbols)
+        symbols = set(chemical_species_identifiers_by_symbol.keys())
+        missing = symbols.difference(recognized_channel_symbols)
         if len(missing) > 0:
             logger.warning('Cannot find channel metadata for %s .', str(missing))
-        return set(chemical_species_identifiers_by_symbol.keys()).difference(missing)
+        return symbols.difference(missing)
 
     def parse(self,
-              connection,
-              file_manifest_file,
-              chemical_species_identifiers_by_symbol):
-        """
-        Retrieve each cell manifest, and parse records for:
+        connection,
+        file_manifest_file,
+        chemical_species_identifiers_by_symbol,
+    ):
+        """Retrieve each cell manifest, and parse records for:
         - histological structure identification
         - histological structure
         - shape file
@@ -206,16 +224,20 @@ class CellManifestsParser(SourceToADIParser):
                 input_file_identifier=cell_manifest['File ID'],
                 file_manifest_filename=file_manifest_file,
             )
-            final_indices = self.parse_cell_manifest(cursor, filename, channel_symbols,
-                                                     initial_indices, timer,
-                                                     chemical_species_identifiers_by_symbol)
+            final_indices = self.parse_cell_manifest(
+                cursor,
+                filename,
+                channel_symbols,
+                initial_indices,
+                timer,
+                chemical_species_identifiers_by_symbol,
+            )
             initial_indices = final_indices
             timer.record_timepoint('Completed cell manifest parsing')
-            logger.debug('Performance report %s:\n%s', file_count,
-                            timer.report_string(organize_by='total time spent'))
+            message = 'Performance report %s:\n%s'
+            logger.debug(message, file_count, timer.report_string(organize_by='total time spent'))
             file_count += 1
             connection.commit()
-
         cursor.close()
         self.wrap_up_timer(timer)
 

@@ -15,4 +15,4 @@ def get_feature_description(handle: str) -> str:
 
 
 def squidpy_feature_classnames() -> tuple[str, ...]:
-    return ('neighborhood enrichment', 'co-occurrence', 'ripley')
+    return ('neighborhood enrichment', 'co-occurrence', 'ripley', 'spatial autocorrelation')

@@ -4,8 +4,16 @@ from typing import Any
 from typing import cast
 
 from numpy.typing import NDArray
+from numpy import isnan
 from pandas import DataFrame
-from squidpy.gr import spatial_neighbors, nhood_enrichment, co_occurrence, ripley  # type: ignore
+from squidpy.gr import (  # type: ignore
+    spatial_neighbors,
+    nhood_enrichment,
+    co_occurrence,
+    ripley,
+    spatial_autocorr,
+)
+
 from anndata import AnnData  # type: ignore
 from scipy.stats import norm  # type: ignore
 
@@ -44,7 +52,29 @@ def compute_squidpy_metric_for_one_sample(
             return _summarize_co_occurrence(_co_occurrence(adata, radius))
         case 'ripley':
             return _summarize_ripley(_ripley(adata))
+        case 'spatial autocorrelation':
+            return _summarize_spatial_autocorrelation(_spatial_autocorr(adata))
     return None
+
+
+def compute_squidpy_metric_batch_for_one_sample(
+    df_cell: DataFrame,
+    feature_class: str,
+    df_index_to_channel: dict[int, str],
+    channel_symbols_by_column_name: dict[str, str],
+) -> dict[str, float | None]:
+    """Compute Squidpy metrics for a tissue sample with a clustering of the given phenotypes."""
+    df_cell.sort_index(inplace=True)
+    adata = convert_df_to_anndata(df_cell)
+    match feature_class:
+        case 'spatial autocorrelation':
+            return _summarize_spatial_autocorrelation_batch(
+                _spatial_autocorr_batch(adata),
+                df_index_to_channel,
+                channel_symbols_by_column_name,
+            )
+    message = 'feature_class must be "spatial autocorrelation" for batch-metrics computation.'
+    raise ValueError(message)
 
 
 def _summarize_neighborhood_enrichment(unstructured_metrics) -> float | None:
@@ -66,6 +96,36 @@ def _summarize_ripley(unstructured_metrics) -> float | None:
         return 1.0
     sorted_pairs = sorted(filtered, key=lambda pair: pair[1])
     return float(sorted_pairs[0][1])
+
+
+def _summarize_spatial_autocorrelation(unstructured_metrics) -> float | None:
+    row = unstructured_metrics.iloc[0]
+    pvalue = float(row['pval_norm'])
+    if isnan(pvalue):
+        return None
+    if pvalue == 0:
+        return None
+    return pvalue
+
+
+def _summarize_spatial_autocorrelation_batch(
+        unstructured_metrics: DataFrame,
+        df_index_to_channel: dict[int, str],
+        channel_symbols_by_column_name: dict[str, str],
+    ) -> dict[str, float | None]:
+    unstructured_metrics.index = unstructured_metrics.index.astype(int)
+    values: dict[str, float | None] = {}
+    for df_index_value, row in unstructured_metrics.iterrows():
+        index_int = cast(int, df_index_value)
+        channel = str(df_index_to_channel[index_int])
+        if channel in {'pixel x', 'pixel y'}:
+            continue
+        symbol = channel_symbols_by_column_name[channel]
+        pvalue = row['pval_norm']
+        if isnan(pvalue):
+            continue
+        values[symbol] = pvalue
+    return values
 
 
 def convert_df_to_anndata(
@@ -135,3 +195,27 @@ def _ripley(adata: AnnData) -> dict[str, list[list[float]] | list[float] | list[
         'bins': result['bins'].tolist(),
         'pvalues': result['pvalues'].tolist()[0],
     }
+
+
+def _spatial_autocorr(adata: AnnData) -> DataFrame:
+    result = spatial_autocorr(
+        adata,
+        attr='obs',
+        genes='cluster',
+        mode='moran',
+        corr_method=None,
+        seed=128,
+        copy=True,
+    )
+    return result
+
+
+def _spatial_autocorr_batch(adata: AnnData) -> DataFrame:
+    return spatial_autocorr(
+        adata,
+        attr='X',
+        mode='moran',
+        corr_method=None,
+        seed=128,
+        copy=True,
+    )

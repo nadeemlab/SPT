@@ -3,32 +3,19 @@
 from typing import cast
 
 from pandas import DataFrame
-from anndata import AnnData  # type: ignore
-from numpy import isnan
-from squidpy.gr import spatial_autocorr  # type: ignore
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
-from spatialprofilingtoolbox.workflow.common.squidpy import convert_df_to_anndata
+from spatialprofilingtoolbox.workflow.common.squidpy import \
+    compute_squidpy_metric_batch_for_one_sample
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
-
-
-def _spatial_autocorr(data: AnnData) -> DataFrame:
-    return spatial_autocorr(
-        data,
-        attr='X',
-        mode='moran',
-        corr_method=None,
-        seed=128,
-        copy=True,
-    )
 
 
 def create_and_transcribe_squidpy_features(
@@ -64,20 +51,14 @@ def create_and_transcribe_one_sample(
     channel_symbols_by_column_name: dict[str, str],
     feature_uploader: ADIFeaturesUploader,
 ) -> None:
-    adata = convert_df_to_anndata(df)
-    autocorr_stats = _spatial_autocorr(adata)
-    df_index_to_channel = dict(enumerate(df.columns))
-    autocorr_stats.index = autocorr_stats.index.astype(int)
-    for df_index_value, row in autocorr_stats.iterrows():
-        index_int = cast(int, df_index_value)
-        channel = str(df_index_to_channel[index_int])
-        if channel in {'pixel x', 'pixel y'}:
-            continue
-        symbol = channel_symbols_by_column_name[channel]
-        pvalue = row['pval_norm']
-        if isnan(pvalue):
-            continue
-        feature_uploader.stage_feature_value((symbol,), sample, row['pval_norm'])
+    batch = compute_squidpy_metric_batch_for_one_sample(
+        df,
+        'spatial autocorrelation',
+        dict(enumerate(df.columns)),
+        channel_symbols_by_column_name,
+    )
+    for symbol, value in batch.items():
+        feature_uploader.stage_feature_value((symbol,), sample, value)
 
 
 def _fetch_cells_and_phenotypes(

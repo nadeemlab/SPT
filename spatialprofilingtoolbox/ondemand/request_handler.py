@@ -5,7 +5,7 @@ from json import dumps
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
-from spatialprofilingtoolbox.ondemand import squidpy_feature_classnames_descriptions
+from spatialprofilingtoolbox import squidpy_feature_classnames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('spt ondemand start')
@@ -39,7 +39,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
             case 'proximity':
                 handled = self._handle_proximity_request(groups)
         if not handled:
-            if request_class in squidpy_feature_classnames_descriptions:
+            if request_class in squidpy_feature_classnames():
                 handled = self._handle_squidpy_request(request_class, groups)
         if not handled:
             self._send_error_response()

@@ -17,6 +17,8 @@ from spatialprofilingtoolbox.db import (
 )
 
 from spatialprofilingtoolbox.db import get_feature_description
+from spatialprofilingtoolbox.db import squidpy_feature_classnames
+
 
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 

@@ -67,8 +67,10 @@ def create_and_transcribe_one_sample(
     adata = convert_df_to_anndata(df)
     autocorr_stats = _spatial_autocorr(adata)
     df_index_to_channel = dict(enumerate(df.columns))
+    autocorr_stats.index = autocorr_stats.index.astype(int)
     for df_index_value, row in autocorr_stats.iterrows():
-        channel = str(df_index_to_channel[int(df_index_value)])
+        index_int = cast(int, df_index_value)
+        channel = str(df_index_to_channel[index_int])
         if channel in {'pixel x', 'pixel y'}:
             continue
         symbol = channel_symbols_by_column_name[channel]

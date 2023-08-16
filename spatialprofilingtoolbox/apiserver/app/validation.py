@@ -5,7 +5,7 @@ from fastapi import Query
 from fastapi import Depends
 
 from spatialprofilingtoolbox.db.querying import query
-from spatialprofilingtoolbox.ondemand import squidpy_feature_classnames_descriptions
+from spatialprofilingtoolbox import squidpy_feature_classnames
 
 def abbreviate_string(string: str) -> str:
     abbreviation = string[0:40]
@@ -85,7 +85,7 @@ async def valid_channel_list_negatives(negative_marker: ChannelList) -> list[str
 async def valid_squidpy_feature_classname(
     feature_class: str = Query(min_length=1, max_length=100),
 ) -> str:
-    if feature_class not in squidpy_feature_classnames_descriptions:
+    if feature_class not in squidpy_feature_classnames():
         raise ValueError(f'Feature class "{feature_class}" does not exist.')
     return feature_class
 

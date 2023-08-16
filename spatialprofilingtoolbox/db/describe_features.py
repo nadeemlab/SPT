@@ -12,3 +12,7 @@ def get_feature_description(handle: str) -> str:
             reader = csv_reader(file, delimiter='\t')
             descriptions = {row[0] : row[1] for row in reader}
     return descriptions[handle]
+
+
+def squidpy_feature_classnames() -> tuple[str, ...]:
+    return ('neighborhood enrichment', 'co-occurrence', 'ripley')

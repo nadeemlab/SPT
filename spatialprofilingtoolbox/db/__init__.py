@@ -9,3 +9,4 @@ from spatialprofilingtoolbox.db.database_connection import (
 )
 
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames

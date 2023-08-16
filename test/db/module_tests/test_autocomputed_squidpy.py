@@ -4,6 +4,7 @@ can be computed automatically after data import if desired.
 """
 
 from pandas import read_csv
+from numpy import isnan
 
 from spatialprofilingtoolbox.db.squidpy_metrics import create_and_transcribe_squidpy_features
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
@@ -47,7 +48,7 @@ def retrieve_feature_values(connection):
     ''')
     rows = cursor.fetchall()
     cursor.close()
-    return [(row[0], row[1], float(row[2])) for row in rows]
+    return [(row[0], row[1], float(row[2])) for row in rows if not isnan(row[2])]
 
 
 def test_autocomputed_squidpy_features():

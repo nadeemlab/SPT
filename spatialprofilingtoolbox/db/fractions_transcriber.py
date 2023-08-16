@@ -1,6 +1,7 @@
 """Make the phenotype fractions values available as general features."""
 
-import pandas as pd
+from pandas import read_sql
+from numpy import isnan
 
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
@@ -29,7 +30,7 @@ def transcribe_fraction_features(database_connection_maker: DatabaseConnectionMa
         f.specimen
     ;
     """
-    fraction_features = pd.read_sql(feature_extraction_query, connection)
+    fraction_features = read_sql(feature_extraction_query, connection)
     for study in fraction_features['study'].unique():
         fraction_features_study = fraction_features[fraction_features.study == study]
         das = DataAnalysisStudyFactory(connection, study, 'phenotype fractions').create()
@@ -44,5 +45,7 @@ def transcribe_fraction_features(database_connection_maker: DatabaseConnectionMa
             subjects = fraction_features_study['sample']
             specifiers = fraction_features_study['marker_symbol'].values
             for value, subject, specifier in zip(values, subjects, specifiers):
+                if value is None or isnan(value):
+                    continue
                 feature_uploader.stage_feature_value((specifier,), subject, value / 100)
         perform_tests(das, connection)

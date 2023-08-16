@@ -228,3 +228,18 @@ class StudyAccess(SimpleReadOnlyProvider):
             parameters=(study,),
         )
         return Institution(name=name)
+
+    def get_study_from_specimen(self, specimen: str) -> str:
+        query = '''
+        SELECT sc.primary_study
+        FROM specimen_collection_process scp
+        JOIN study_component sc ON sc.component_study=scp.study
+        WHERE scp.specimen=%s
+        ;
+        '''
+        study = GetSingleResult.string(
+            self.cursor,
+            query=query,
+            parameters=(specimen,),
+        )
+        return study

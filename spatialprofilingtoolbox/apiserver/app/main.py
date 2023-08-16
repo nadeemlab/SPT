@@ -34,7 +34,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListNegatives,
     ValidSquidpyFeatureClass,
 )
-VERSION = '0.9.1'
+VERSION = '0.10.0'
 
 TITLE = 'Single cell studies data API'
 

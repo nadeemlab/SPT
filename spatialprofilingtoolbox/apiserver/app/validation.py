@@ -78,8 +78,16 @@ async def valid_channel_list_positives(positive_marker: ChannelList) -> list[str
     return valid_channel_list(positive_marker)
 
 
+async def valid_channel_list_positives2(positive_marker2: ChannelList) -> list[str]:
+    return valid_channel_list(positive_marker2)
+
+
 async def valid_channel_list_negatives(negative_marker: ChannelList) -> list[str]:
     return valid_channel_list(negative_marker)
+
+
+async def valid_channel_list_negatives2(negative_marker2: ChannelList) -> list[str]:
+    return valid_channel_list(negative_marker2)
 
 
 async def valid_squidpy_feature_classname(
@@ -99,4 +107,6 @@ ValidPhenotype2 = Annotated[str, Depends(valid_phenotype2)]
 ValidPhenotypeList = Annotated[list[str], Depends(valid_phenotype_list)]
 ValidChannelListPositives = Annotated[list[str], Depends(valid_channel_list_positives)]
 ValidChannelListNegatives = Annotated[list[str], Depends(valid_channel_list_negatives)]
+ValidChannelListPositives2 = Annotated[list[str], Depends(valid_channel_list_positives2)]
+ValidChannelListNegatives2 = Annotated[list[str], Depends(valid_channel_list_negatives2)]
 ValidSquidpyFeatureClass = Annotated[str, Depends(valid_squidpy_feature_classname)]

@@ -32,6 +32,8 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidPhenotype2,
     ValidChannelListPositives,
     ValidChannelListNegatives,
+    ValidChannelListPositives2,
+    ValidChannelListNegatives2,
     ValidSquidpyFeatureClass,
 )
 VERSION = '0.10.0'
@@ -195,7 +197,7 @@ async def request_squidpy_computation(
     feature_class: ValidSquidpyFeatureClass,
     radius: float | None = None,
 ) -> SquidpyMetricsComputationResult:
-    """Spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
+    """Spatial proximity statistics between phenotype cell sets as calculated by Squidpy."""
     phenotypes = phenotype
     criteria: list[PhenotypeCriteria] = [
         query().retrieve_signature_of_phenotype(p, study) for p in phenotypes
@@ -204,6 +206,47 @@ async def request_squidpy_computation(
     for criterion in criteria:
         markers.append(criterion.positive_markers)
         markers.append(criterion.negative_markers)
+    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+
+
+@app.get("/request-squidpy-computation-custom-phenotype/")
+async def request_squidpy_computation_custom_phenotype(
+    study: ValidStudy,
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    feature_class: ValidSquidpyFeatureClass,
+    radius: float | None = None,
+) -> SquidpyMetricsComputationResult:
+    """Spatial proximity statistics for a single custom-defined phenotype (cell set) as calculated
+    by Squidpy.
+    """
+    markers = [positive_marker, negative_marker]
+    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+
+
+@app.get("/request-squidpy-computation-custom-phenotypes/")
+async def request_squidpy_computation_custom_phenotypes(  # pylint: disable=too-many-arguments
+    study: ValidStudy,
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    positive_marker2: ValidChannelListPositives2,
+    negative_marker2: ValidChannelListNegatives2,
+    feature_class: ValidSquidpyFeatureClass,
+    radius: float | None = None,
+) -> SquidpyMetricsComputationResult:
+    """Spatial proximity statistics for a pair of custom-defined phenotype (cell set) as calculated
+    by Squidpy.
+    """
+    markers = [positive_marker, negative_marker, positive_marker2, negative_marker2]
+    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+
+
+def get_squidpy_metrics(
+    study: str,
+    markers: list[list[str]],
+    feature_class: str,
+    radius: float | None = None,
+) -> SquidpyMetricsComputationResult:
     with OnDemandRequester() as requester:
         metrics = requester.get_squidpy_metrics(
             query().get_study_components(study).measurement,

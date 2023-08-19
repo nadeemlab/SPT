@@ -82,8 +82,11 @@ def _summarize_spatial_autocorrelation(unstructured_metrics) -> float | None:
         return None
     if pvalue == 0:
         return None
-    return pvalue
+    return round10(pvalue)
 
+
+def round10(value):
+    return int(pow(10, 10) * value) / pow(10, 10)
 
 def convert_df_to_anndata(
     df: DataFrame,

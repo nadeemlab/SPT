@@ -7,7 +7,7 @@ from numpy import sort  # type: ignore
 
 from spatialprofilingtoolbox.db.feature_matrix_extractor import (
     FeatureMatrixExtractor,
-    Bundle,
+    StudyBundle,
 )
 
 
@@ -54,7 +54,7 @@ def extract_cggnn_data(
 ) -> tuple[DataFrame, DataFrame, dict[int, str]]:
     """Extract information cg-gnn needs from SPT."""
     extractor = FeatureMatrixExtractor(database_config_file=spt_db_config_location)
-    study_data = cast(Bundle, extractor.extract(study=study))
+    study_data = cast(StudyBundle, extractor.extract(study=study))
     df_cell = _create_cell_df(
         {
             slide: cast(DataFrame, data['dataframe'])

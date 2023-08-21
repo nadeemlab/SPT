@@ -7,7 +7,7 @@ from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
+from spatialprofilingtoolbox.db.feature_matrix_extractor import StudyBundle
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.squidpy import (
@@ -66,7 +66,7 @@ def _fetch_cells_and_phenotypes(
     study: str,
 ) -> tuple[dict[str, DataFrame], dict[str, str]]:
     extractor = FeatureMatrixExtractor(cursor)
-    bundle = cast(Bundle, extractor.extract(study=study))
+    bundle = cast(StudyBundle, extractor.extract(study=study))
     FeatureMatrices = dict[str, dict[str, DataFrame | str]]
     feature_matrices = cast(FeatureMatrices, bundle[study]['feature matrices'])
     features_by_specimen = {

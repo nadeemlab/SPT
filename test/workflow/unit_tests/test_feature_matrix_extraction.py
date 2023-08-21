@@ -6,14 +6,6 @@ import pandas as pd
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 
 
-def get_study(bundle):
-    study_name = 'Melanoma intralesional IL2'
-    if not study_name in bundle.keys():
-        print(f'Missing study: {study_name}')
-        sys.exit(1)
-    return bundle[study_name]
-
-
 def test_sample_set(study):
     if study['feature matrices'].keys() != set(['lesion 0_1', 'lesion 6_1']):
         print(f'Wrong sample set: {list(study["feature matrices"].keys())}')
@@ -138,8 +130,7 @@ def test_stratification(study):
 
 if __name__ == '__main__':
     extractor = FeatureMatrixExtractor(database_config_file='../db/.spt_db.config.container')
-    matrix_bundle = extractor.extract()
-    test_study = get_study(matrix_bundle)
+    test_study = extractor.extract(study='Melanoma intralesional IL2')
     test_sample_set(test_study)
     test_feature_matrix_schemas(test_study)
     show_example_feature_matrix(test_study)
@@ -147,25 +138,23 @@ if __name__ == '__main__':
     test_expression_vectors(test_study)
     test_stratification(test_study)
 
-    one_sample_bundle = extractor.extract(specimen='lesion 6_1')
-    one_sample_study = get_study(one_sample_bundle)
+    one_sample_study = extractor.extract(specimen='lesion 6_1')
     test_one_sample_set(one_sample_study)
     test_feature_matrix_schemas(one_sample_study)
     test_channels(one_sample_study)
     test_expression_vectors(one_sample_study)
 
-    one_sample_bundle_continuous = extractor.extract(specimen='lesion 6_1', continuous_also=True)
-    one_sample_study_continuous = get_study(one_sample_bundle_continuous)
+    one_sample_study_continuous = extractor.extract(specimen='lesion 6_1', continuous_also=True)
     test_one_sample_set(one_sample_study_continuous)
     test_feature_matrix_schemas(one_sample_study_continuous)
     test_channels(one_sample_study_continuous)
     test_expression_vectors_continuous(one_sample_study_continuous)
 
-    FeatureMatrixExtractor.redact_dataframes(matrix_bundle)
+    FeatureMatrixExtractor.redact_dataframes(test_study)
     print('\nMetadata "bundle" with dataframes removed:')
-    print(json.dumps(matrix_bundle, indent=2))
+    print(json.dumps(test_study, indent=2))
 
     print('\n... and in the one-sample case:')
-    FeatureMatrixExtractor.redact_dataframes(one_sample_bundle)
+    FeatureMatrixExtractor.redact_dataframes(one_sample_study)
     print('\nMetadata "bundle" with dataframes removed:')
-    print(json.dumps(one_sample_bundle, indent=2))
+    print(json.dumps(one_sample_study, indent=2))

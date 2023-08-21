@@ -9,7 +9,7 @@ from sklearn.neighbors import BallTree  # type: ignore
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
+from spatialprofilingtoolbox.db.feature_matrix_extractor import StudyBundle
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import \
     PerformanceTimerReporter
 from spatialprofilingtoolbox import DatabaseConnectionMaker
@@ -33,12 +33,12 @@ class PhenotypeProximityCoreJob(CoreJob):
     tree: BallTree
 
     def __init__(self,
-        study_name: str='',
-        database_config_file: str='',
-        performance_report_file: str='',
-        results_file: str='',
+        study_name: str = '',
+        database_config_file: str = '',
+        performance_report_file: str = '',
+        results_file: str = '',
         **kwargs  # pylint: disable=unused-argument
-    ):
+    ) -> None:
         self.study_name = study_name
         self.database_config_file = database_config_file
         self.results_file = results_file
@@ -65,7 +65,7 @@ class PhenotypeProximityCoreJob(CoreJob):
     def calculate_proximity(self):
         self.reporter.record_timepoint('Start pulling data for one sample.')
         extractor = FeatureMatrixExtractor(database_config_file=self.database_config_file)
-        bundle = cast(Bundle, extractor.extract(specimen=self.sample_identifier))
+        bundle = cast(StudyBundle, extractor.extract(specimen=self.sample_identifier))
         self.reporter.record_timepoint('Finished pulling data for one sample.')
         study_name = list(bundle.keys())[0]
         identifier = list(bundle[study_name]['feature matrices'].keys())[0]
@@ -91,7 +91,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         ]
         all_signatures = singleton_signatures + signatures
         cases = self.get_cases(all_signatures)
-        proximity_metrics=[
+        proximity_metrics = [
             compute_proximity_metric_for_signature_pair(s1, s2, r, cells, self.tree)
             for s1, s2, r in cases
         ]
@@ -116,7 +116,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             ''', (self.study_name,))
             rows = cursor.fetchall()
             cursor.close()
-        lookup = {value : key for key, value in self.channel_symbols_by_column_name.items()}
+        lookup = {value: key for key, value in self.channel_symbols_by_column_name.items()}
         criteria = DataFrame(rows, columns=['phenotype', 'name', 'channel', 'polarity'])
         criteria = criteria[['phenotype', 'channel', 'polarity']]
 
@@ -125,8 +125,8 @@ class PhenotypeProximityCoreJob(CoreJob):
 
         def make_signature(df) -> PhenotypeCriteria:
             return PhenotypeCriteria(
-                positive_markers = list_channels(df, 1),
-                negative_markers = list_channels(df, 0),
+                positive_markers=list_channels(df, 1),
+                negative_markers=list_channels(df, 0),
             )
         by_identifier: dict[str, PhenotypeCriteria] = {}
         for key, criteria in criteria.groupby(['phenotype']):

@@ -20,14 +20,14 @@ class DataAccessor:
     def counts(self, phenotype_names):
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
-        criteria = self._phenotype_criteria(phenotype_names)
+        conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
         all_name = ' and '.join([self._name_phenotype(p) for p in phenotype_names])
-        criteria_tuple = (criteria['positive_markers'], criteria['negative_markers'])
-        counts = self.counts_by_signature(*criteria_tuple)
-        df = DataFrame(counts['counts'])
-        mapper = {'specimen': 'sample', 'count': all_name}
-        counts_series = df.rename(columns=mapper).set_index('sample')[all_name]
-        return concat([self.cohorts, self.all_cells, counts_series], axis=1)
+        conjunction_counts_series = self._get_counts_series(conjunction_criteria, all_name)
+        individual_counts_series = [
+            self._get_counts_series(self._phenotype_criteria(name), self._name_phenotype(name))
+            for name in phenotype_names
+        ]
+        return concat([self.cohorts, self.all_cells, conjunction_counts_series, *individual_counts_series], axis=1)
 
     def counts_by_signature(self, positives, negatives):
         parts = list(chain(*[
@@ -38,6 +38,16 @@ class DataAccessor:
         query = urlencode(parts)
         endpoint = 'anonymous-phenotype-counts-fast'
         return self._retrieve(endpoint, query)
+
+    def _get_counts_series(self, criteria, column_name):
+        criteria_tuple = (
+            criteria['positive_markers'],
+            criteria['negative_markers'],
+        )
+        counts = self.counts_by_signature(*criteria_tuple)
+        df = DataFrame(counts['counts'])
+        mapper = {'specimen': 'sample', 'count': column_name}
+        return df.rename(columns=mapper).set_index('sample')[column_name]
 
     def _retrieve_cohorts(self):
         summary = self._retrieve('study-summary', urlencode([('study', self.study)]))
@@ -64,14 +74,22 @@ class DataAccessor:
             content = response.read()
         return json.loads(content)
 
-    def _phenotype_criteria(self, names):
+    def _phenotype_criteria(self, name):
+        if isinstance(name, dict):
+            criteria = name
+            keys = ['positive_markers', 'negative_markers']
+            for key in keys:
+                if criteria[key] == []:
+                    criteria[key] = ['']
+            return criteria
+        query = urlencode([('study', self.study), ('phenotype_symbol', name)])
+        criteria = self._retrieve('phenotype-criteria', query)
+        return criteria
+
+    def _conjunction_phenotype_criteria(self, names):
         criteria_list = []
         for name in names:
-            if isinstance(name, dict):
-                criteria = name
-            else:
-                query = urlencode([('study', self.study), ('phenotype_symbol', name)])
-                criteria = self._retrieve('phenotype-criteria', query)
+            criteria = self._phenotype_criteria(name)
             criteria_list.append(criteria)
         return self._merge_criteria(criteria_list)
 
@@ -89,7 +107,7 @@ class DataAccessor:
     def _name_phenotype(self, phenotype):
         if isinstance(phenotype, dict):
             return ' '.join([
-                ' '.join([f'{p}{sign}' for p in phenotype[f'{keyword}_markers']])
+                ' '.join([f'{p}{sign}' for p in phenotype[f'{keyword}_markers'] if p != ''])
                 for keyword, sign in zip(['positive', 'negative'], ['+', '-'])
             ]).rstrip()
         return str(phenotype)

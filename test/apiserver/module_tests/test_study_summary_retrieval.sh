@@ -1,6 +1,7 @@
 
 query=http://spt-apiserver-testing:8080/study-summary/?study=Melanoma%20intralesional%20IL2
 
+echo "Querying first time."
 curl -s $query ;
 if [ "$?" -gt 0 ];
 then
@@ -9,6 +10,7 @@ then
     exit 1
 fi
 
+echo "Querying second time."
 curl -s $query | python -m json.tool > summary.json
 
 diff module_tests/expected_study_summary_structured.json summary.json

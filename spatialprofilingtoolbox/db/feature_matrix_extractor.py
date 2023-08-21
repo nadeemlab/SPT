@@ -88,7 +88,7 @@ class FeatureMatrixExtractor:
         study: str | None = None,
         continuous_also: bool = False,
     ) -> StudyBundle:
-        if (specimen is None) != (study is None):
+        if (specimen is None) == (study is None):
             raise ValueError('Must specify exactly one of specimen or study.')
         data_arrays = self._retrieve_expressions_from_database(
             specimen=specimen,

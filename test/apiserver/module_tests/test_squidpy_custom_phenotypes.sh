@@ -50,7 +50,7 @@ function test_squidpy_custom_phenotypes() {
         phenotype_query="$part1"
     fi
 
-    endpoint="request-squidpy-computation-custom-phenotype"
+    endpoint="request-spatial-metrics-computation-custom-phenotype"
     if [[ "$feature_class" == "neighborhood%20enrichment" || "$feature_class" == "co-occurrence" ]];
     then
         endpoint="${endpoint}s"

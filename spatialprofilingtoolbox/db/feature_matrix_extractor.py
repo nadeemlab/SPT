@@ -102,16 +102,23 @@ class FeatureMatrixExtractor:
         if study is None:
             assert specimen is not None
             study = StudyAccess(self.cursor).get_study_from_specimen(specimen)
-        channel_information = self._create_channel_information(data_arrays[study])
+        stratification = self._retrieve_derivative_stratification_from_database()
+        for substudy in self._retrieve_component_studies(study):
+            if substudy in stratification:
+                break
+        else:
+            raise RuntimeError('Stratification substudy not found for study.')
+
+        channel_information = self._create_channel_information(data_arrays)
         phenotypes, phenotype_information = self._retrieve_phenotypes(study, channel_information)
         return {
             'feature matrices': self._create_feature_matrices(
-                data_arrays[study],
-                centroid_coordinates[study],
+                data_arrays,
+                centroid_coordinates,
                 phenotypes
             ),
             'channel symbols by column name': channel_information,
-            'sample cohorts': self._retrieve_derivative_stratification_from_database()[study],
+            'sample cohorts': stratification[substudy],
             'phenotypes by column name': phenotype_information
         }
 
@@ -183,12 +190,16 @@ class FeatureMatrixExtractor:
         logger.info('Done retrieving stratification.')
         return stratification
 
-    def _retrieve_study_component_lookup(self) -> dict[str, str]:
-        self.cursor.execute('SELECT * FROM study_component ; ')
+    def _retrieve_component_studies(self, study: str) -> set[str]:
+        self.cursor.execute(f'''
+            SELECT component_study
+            FROM study_component
+            WHERE primary_study = '{study}';
+        ''')
         rows = self.cursor.fetchall()
-        lookup: dict[str, str] = {}
+        lookup: set[str] = set()
         for row in rows:
-            lookup[row[1]] = row[0]
+            lookup.add(row[0])
         return lookup
 
     def _create_feature_matrices(self,

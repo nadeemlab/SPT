@@ -119,7 +119,7 @@ class FeatureMatrixExtractor:
             ),
             'channel symbols by column name': channel_information,
             'sample cohorts': stratification[substudy],
-            'phenotypes by column name': phenotype_information
+            'phenotype symbols by column name': phenotype_information
         }
 
     @staticmethod

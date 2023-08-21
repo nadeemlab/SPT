@@ -2,7 +2,7 @@
 
 from typing import cast
 import re
-from functools import lru_cache
+from spatialprofilingtoolbox.db.weak_lru import weak_lru
 
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -163,7 +163,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         )
         return Assay(name=name)
 
-    @lru_cache(maxsize=1000)
+    @weak_lru(maxsize=1000)
     def get_number_cells(self, specimen_measurement_study: str) -> int:
         query = '''
         SELECT count(*)

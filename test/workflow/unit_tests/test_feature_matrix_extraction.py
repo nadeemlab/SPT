@@ -25,8 +25,8 @@ def test_feature_matrix_schemas(study):
             print(f'Missing some columns in dataframe (case "{specimen}"): ')
             print(df.to_string(index=False))
             sys.exit(1)
-        if df.shape != (100, 28):
-            print(f'Wrong number of rows or columns: {df.shape}')
+        if df.shape != (100, 32):
+            print(f'Wrong number of rows or columns: {df.shape} != (100, 32)')
             sys.exit(1)
 
 

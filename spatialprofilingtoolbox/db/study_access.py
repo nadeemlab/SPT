@@ -1,6 +1,8 @@
 """Convenience accessors of study-related small data / metadata."""
+
 from typing import cast
 import re
+from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -19,9 +21,14 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult
 from spatialprofilingtoolbox.db.cohorts import get_sample_cohorts
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
+
 
 class StudyAccess(SimpleReadOnlyProvider):
     """Provide study-related metadata."""
+
     def get_study_summary(self, study: str) -> StudySummary:
         components = self.get_study_components(study)
         counts_summary = self._get_counts_summary(components)
@@ -160,7 +167,9 @@ class StudyAccess(SimpleReadOnlyProvider):
         )
         return Assay(name=name)
 
+    @simple_instance_method_cache(maxsize=1000)
     def get_number_cells(self, specimen_measurement_study: str) -> int:
+        logger.debug('Querying for number of cells in "%s".', specimen_measurement_study)
         query = '''
         SELECT count(*)
         FROM histological_structure_identification hsi

@@ -138,7 +138,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
     def _get_phenotype_pair_specification(self, groups):
         record_separator = chr(30)
         study_name = groups[0]
-        radius = int(groups[1])
+        radius = float(groups[1])
         channel_lists = [
             self._trim_empty_entry(group.split(record_separator))
             for group in groups[2:6]

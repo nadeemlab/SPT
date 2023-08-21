@@ -18,8 +18,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     Channel,
     PhenotypeCriteria,
     PhenotypeCounts,
-    ProximityMetricsComputationResult,
-    SquidpyMetricsComputationResult,
+    UnivariateMetricsComputationResult,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -28,11 +27,11 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidStudy,
     ValidPhenotypeSymbol,
     ValidPhenotypeList,
-    ValidPhenotype1,
-    ValidPhenotype2,
     ValidChannelListPositives,
     ValidChannelListNegatives,
-    ValidSquidpyFeatureClass,
+    ValidChannelListPositives2,
+    ValidChannelListNegatives2,
+    ValidFeatureClass,
 )
 VERSION = '0.10.0'
 
@@ -161,41 +160,14 @@ async def get_anonymous_phenotype_counts_fast(
     return counts
 
 
-@app.get("/request-phenotype-proximity-computation/")
-async def request_phenotype_proximity_computation(
-    study: ValidStudy,
-    phenotype1: ValidPhenotype1,
-    phenotype2: ValidPhenotype2,
-    radius: int = Query(default=100),
-) -> ProximityMetricsComputationResult:
-    """Spatial proximity statistics between pairs of cell populations defined by phenotype criteria.
-    The metric is the average number of cells of a second phenotype within a fixed distance to a
-    given cell of a primary phenotype.
-    """
-    retrieve = query().retrieve_signature_of_phenotype
-    criteria1 = retrieve(phenotype1, study)
-    criteria2 = retrieve(phenotype2, study)
-    with OnDemandRequester() as requester:
-        metrics = requester.get_proximity_metrics(
-            query().get_study_components(study).measurement,
-            radius, (
-                criteria1.positive_markers,
-                criteria1.negative_markers,
-                criteria2.positive_markers,
-                criteria2.negative_markers,
-            ),
-        )
-    return metrics
-
-
-@app.get("/request-squidpy-computation/")
-async def request_squidpy_computation(
+@app.get("/request-spatial-metrics-computation/")
+async def request_spatial_metrics_computation(
     study: ValidStudy,
     phenotype: ValidPhenotypeList,
-    feature_class: ValidSquidpyFeatureClass,
+    feature_class: ValidFeatureClass,
     radius: float | None = None,
-) -> SquidpyMetricsComputationResult:
-    """Spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
+) -> UnivariateMetricsComputationResult:
+    """Spatial proximity statistics between phenotype cell sets, as calculated by Squidpy."""
     phenotypes = phenotype
     criteria: list[PhenotypeCriteria] = [
         query().retrieve_signature_of_phenotype(p, study) for p in phenotypes
@@ -204,6 +176,63 @@ async def request_squidpy_computation(
     for criterion in criteria:
         markers.append(criterion.positive_markers)
         markers.append(criterion.negative_markers)
+    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+
+
+@app.get("/request-spatial-metrics-computation-custom-phenotype/")
+async def request_spatial_metrics_computation_custom_phenotype(
+    study: ValidStudy,
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    feature_class: ValidFeatureClass,
+    radius: float | None = None,
+) -> UnivariateMetricsComputationResult:
+    """Spatial proximity statistics for a single custom-defined phenotype (cell set), as
+    calculated by Squidpy.
+    """
+    markers = [positive_marker, negative_marker]
+    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+
+
+@app.get("/request-spatial-metrics-computation-custom-phenotypes/")
+async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disable=too-many-arguments
+    study: ValidStudy,
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    positive_marker2: ValidChannelListPositives2,
+    negative_marker2: ValidChannelListNegatives2,
+    feature_class: ValidFeatureClass,
+    radius: float | None = None,
+) -> UnivariateMetricsComputationResult:
+    """Spatial proximity statistics for a pair of custom-defined phenotypes (cell sets), most
+    calculated by Squidpy.
+    """
+    markers = [positive_marker, negative_marker, positive_marker2, negative_marker2]
+    if feature_class == 'proximity':
+        return get_proximity_metrics(study, markers, radius=radius)
+    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+
+
+def get_proximity_metrics(
+    study: str,
+    markers: list[list[str]],
+    radius: float | None = None,
+) -> UnivariateMetricsComputationResult:
+    with OnDemandRequester() as requester:
+        metrics = requester.get_proximity_metrics(
+            query().get_study_components(study).measurement,
+            radius,
+            markers,
+        )
+    return metrics
+
+
+def get_squidpy_metrics(
+    study: str,
+    markers: list[list[str]],
+    feature_class: str,
+    radius: float | None = None,
+) -> UnivariateMetricsComputationResult:
     with OnDemandRequester() as requester:
         metrics = requester.get_squidpy_metrics(
             query().get_study_components(study).measurement,

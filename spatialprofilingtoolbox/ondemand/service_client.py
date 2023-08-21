@@ -10,8 +10,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCount,
     PhenotypeCounts,
     CompositePhenotype,
-    ProximityMetricsComputationResult,
-    SquidpyMetricsComputationResult,
+    UnivariateMetricsComputationResult,
 )
 
 
@@ -72,7 +71,7 @@ class OnDemandRequester:
         study: str,
         radius: int,
         signature: tuple[list[str], list[str], list[str], list[str]]
-    ) -> ProximityMetricsComputationResult:
+    ) -> UnivariateMetricsComputationResult:
         positives1, negatives1, positives2, negatives2 = signature
         separator = self._get_record_separator()
         groups = [
@@ -87,7 +86,7 @@ class OnDemandRequester:
         query = self._get_group_separator().join(groups).encode('utf-8')
         self.tcp_client.sendall(query)
         response = self._parse_response()
-        return ProximityMetricsComputationResult(
+        return UnivariateMetricsComputationResult(
             values=response['metrics'],
             is_pending=response['pending'],
         )
@@ -127,7 +126,7 @@ class OnDemandRequester:
         signature: list[list[str]],
         feature_class: str,
         radius: float | None = None,
-    ) -> SquidpyMetricsComputationResult:
+    ) -> UnivariateMetricsComputationResult:
         """Get spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
         if not len(signature) in {2, 4}:
             message = f'Expected 2 or 4 channel lists (1 or 2 phenotypes) but got {len(signature)}.'
@@ -142,7 +141,7 @@ class OnDemandRequester:
         query = self._get_group_separator().join(groups).encode('utf-8')
         self.tcp_client.sendall(query)
         response = self._parse_response()
-        return SquidpyMetricsComputationResult(
+        return UnivariateMetricsComputationResult(
             values=response['metrics'],
             is_pending=response['pending'],
         )

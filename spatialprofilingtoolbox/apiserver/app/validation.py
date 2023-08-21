@@ -78,14 +78,22 @@ async def valid_channel_list_positives(positive_marker: ChannelList) -> list[str
     return valid_channel_list(positive_marker)
 
 
+async def valid_channel_list_positives2(positive_marker2: ChannelList) -> list[str]:
+    return valid_channel_list(positive_marker2)
+
+
 async def valid_channel_list_negatives(negative_marker: ChannelList) -> list[str]:
     return valid_channel_list(negative_marker)
 
 
-async def valid_squidpy_feature_classname(
+async def valid_channel_list_negatives2(negative_marker2: ChannelList) -> list[str]:
+    return valid_channel_list(negative_marker2)
+
+
+async def valid_spatial_feature_classname(
     feature_class: str = Query(min_length=1, max_length=100),
 ) -> str:
-    if feature_class not in squidpy_feature_classnames():
+    if feature_class not in (list(squidpy_feature_classnames()) + ['proximity']):
         raise ValueError(f'Feature class "{feature_class}" does not exist.')
     return feature_class
 
@@ -94,9 +102,9 @@ ValidChannel = Annotated[str, Depends(valid_channel)]
 ValidStudy = Annotated[str, Depends(valid_study_name)]
 ValidPhenotypeSymbol = Annotated[str, Depends(valid_phenotype_symbol)]
 ValidPhenotype = Annotated[str, Depends(valid_phenotype)]
-ValidPhenotype1 = Annotated[str, Depends(valid_phenotype1)]
-ValidPhenotype2 = Annotated[str, Depends(valid_phenotype2)]
 ValidPhenotypeList = Annotated[list[str], Depends(valid_phenotype_list)]
 ValidChannelListPositives = Annotated[list[str], Depends(valid_channel_list_positives)]
 ValidChannelListNegatives = Annotated[list[str], Depends(valid_channel_list_negatives)]
-ValidSquidpyFeatureClass = Annotated[str, Depends(valid_squidpy_feature_classname)]
+ValidChannelListPositives2 = Annotated[list[str], Depends(valid_channel_list_positives2)]
+ValidChannelListNegatives2 = Annotated[list[str], Depends(valid_channel_list_negatives2)]
+ValidFeatureClass = Annotated[str, Depends(valid_spatial_feature_classname)]

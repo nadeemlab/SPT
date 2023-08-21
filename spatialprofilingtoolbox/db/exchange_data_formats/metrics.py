@@ -71,18 +71,10 @@ class PhenotypeCounts(BaseModel):
     number_cells_in_study: int
 
 
-class ProximityMetricsComputationResult(BaseModel):
-    """The response to a request for retrieval of proximity metrics in some specific case. This
-    request may also be a request for computation of these metrics in the background (which may be
-    pending).
+class UnivariateMetricsComputationResult(BaseModel):
+    """The response to a request for retrieval of derived/computed metrics (typically a spatially-
+    enrich feature), or a request for such metrics to be computed as a background job.
     """
-    values: dict[str, float | None]
-    is_pending: bool
-
-
-class SquidpyMetricsComputationResult(BaseModel):
-    """Response to an on demand request for computation of Squidpy metrics."""
-
     values: dict[str, float | None]
     is_pending: bool
 

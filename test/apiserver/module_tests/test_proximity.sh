@@ -10,7 +10,7 @@ function test_proximity() {
     p2="$2"
     r="$3"
     filename="$4"
-    query="http://spt-apiserver-testing:8080/request-phenotype-proximity-computation/?study=Melanoma%20intralesional%20IL2&phenotype1=$p1&phenotype2=$p2&radius=$r"
+    query="http://spt-apiserver-testing:8080/request-spatial-metrics-computation-custom-phenotypes/?study=Melanoma%20intralesional%20IL2&feature_class=proximity&$p1&$p2&radius=$r"
     start=$SECONDS
     while (( SECONDS - start < 15 )); do
         echo -en "Doing query $blue$query$reset_code ... "
@@ -53,7 +53,7 @@ function test_proximity() {
     fi
 }
 
-test_proximity B2M CD4 60 module_tests/expected_proximity.json
-test_proximity B7H3 2 60 module_tests/expected_proximity2.json
-test_proximity CD8 MHCI 125 module_tests/expected_proximity3.json
-test_proximity 3 PD1 125 module_tests/expected_proximity4.json
+test_proximity "positive_marker=B2M&negative_marker=" "positive_marker2=CD4&negative_marker2=" 60 module_tests/expected_proximity.json
+test_proximity "positive_marker=B7H3&negative_marker=" "positive_marker2=CD3&positive_marker2=CD4&negative_marker2=CD8&negative_marker2=FOXP3&negative_marker2=CD20&negative_marker2=CD56&negative_marker2=SOX10&" 60 module_tests/expected_proximity2.json
+test_proximity "positive_marker=CD8&negative_marker=" "positive_marker2=MHCI&negative_marker2=" 125 module_tests/expected_proximity3.json
+test_proximity "positive_marker=CD3&positive_marker=CD8&negative_marker=CD4&negative_marker=FOXP3&negative_marker=CD20&negative_marker=CD56&negative_marker=SOX10&" "positive_marker2=PD1&negative_marker2=" 125 module_tests/expected_proximity4.json

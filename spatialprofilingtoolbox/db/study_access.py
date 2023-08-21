@@ -1,6 +1,8 @@
 """Convenience accessors of study-related small data / metadata."""
+
 from typing import cast
 import re
+from spatialprofilingtoolbox.db.weak_lru import weak_lru
 
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -22,6 +24,7 @@ from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvide
 
 class StudyAccess(SimpleReadOnlyProvider):
     """Provide study-related metadata."""
+
     def get_study_summary(self, study: str) -> StudySummary:
         components = self.get_study_components(study)
         counts_summary = self._get_counts_summary(components)
@@ -160,6 +163,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         )
         return Assay(name=name)
 
+    @weak_lru(maxsize=1000)
     def get_number_cells(self, specimen_measurement_study: str) -> int:
         query = '''
         SELECT count(*)

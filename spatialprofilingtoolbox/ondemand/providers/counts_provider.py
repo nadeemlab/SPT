@@ -3,6 +3,7 @@
 from typing import Any
 from typing import Iterable
 from typing import cast
+from spatialprofilingtoolbox.db.weak_lru import weak_lru
 
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -20,6 +21,7 @@ class CountsProvider(OnDemandProvider):
         """
         super().__init__(data_directory, False)
 
+    @weak_lru(maxsize=10000)
     def count_structures_of_partial_signed_signature(
         self,
         positives_signature: int,

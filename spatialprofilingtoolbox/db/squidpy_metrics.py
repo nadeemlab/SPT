@@ -68,13 +68,13 @@ def _fetch_cells_and_phenotypes(
     extractor = FeatureMatrixExtractor(cursor)
     bundle = cast(StudyBundle, extractor.extract(study=study))
     FeatureMatrices = dict[str, dict[str, DataFrame | str]]
-    feature_matrices = cast(FeatureMatrices, bundle[study]['feature matrices'])
+    feature_matrices = cast(FeatureMatrices, bundle['feature matrices'])
     features_by_specimen = {
         specimen: cast(DataFrame, packet['dataframe'])
         for specimen, packet in feature_matrices.items()
     }
     channel_symbols_by_columns_name = cast(
         dict[str, str],
-        bundle[study]['channel symbols by column name'],
+        bundle['channel symbols by column name'],
     )
     return features_by_specimen, channel_symbols_by_columns_name

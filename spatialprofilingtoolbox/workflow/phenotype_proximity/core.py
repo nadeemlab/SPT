@@ -67,10 +67,9 @@ class PhenotypeProximityCoreJob(CoreJob):
         extractor = FeatureMatrixExtractor(database_config_file=self.database_config_file)
         bundle = cast(StudyBundle, extractor.extract(specimen=self.sample_identifier))
         self.reporter.record_timepoint('Finished pulling data for one sample.')
-        study_name = list(bundle.keys())[0]
-        identifier = list(bundle[study_name]['feature matrices'].keys())[0]
+        identifier = list(bundle['feature matrices'].keys())[0]
         Sample = dict[str, DataFrame | str]
-        sample = cast(Sample, bundle[study_name]['feature matrices'][identifier])
+        sample = cast(Sample, bundle['feature matrices'][identifier])
         cells = cast(DataFrame, sample['dataframe'])
         logger.info('Dataframe pulled: %s', cells.head())
 
@@ -78,7 +77,7 @@ class PhenotypeProximityCoreJob(CoreJob):
 
         self.channel_symbols_by_column_name = cast(
             dict[str, str],
-            bundle[study_name]['channel symbols by column name'],
+            bundle['channel symbols by column name'],
         )
         phenotype_identifiers, signatures = self.get_named_phenotype_signatures()
         logger.info('Named phenotypes:')

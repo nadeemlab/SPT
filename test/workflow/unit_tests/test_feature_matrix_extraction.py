@@ -54,6 +54,10 @@ def test_expression_vectors(study):
 
     for specimen in study['feature matrices'].keys():
         df = study['feature matrices'][specimen]['dataframe']
+
+        print('Dataframe: ' + str(specimen))
+        print(df)
+
         expression_vectors = sorted([
             tuple(row[f'F{i}'] for i in range(26))
             for _, row in df.iterrows()

@@ -225,8 +225,10 @@ class FeatureMatrixExtractor:
                 columns=['pixel x', 'pixel y'] + [f'F{i}' for i in range(number_channels)],
             )
             for column_name, criteria in phenotypes.items():
-                dataframe[column_name] = (dataframe[criteria.positive_markers].all(axis=1) & \
-                    dataframe[criteria.negative_markers].all(axis=1)).astype(int)
+                dataframe[column_name] = (
+                    dataframe[criteria.positive_markers].all(axis=1) &
+                    dataframe[criteria.negative_markers].all(axis=1)
+                ).astype(int)
             matrices[specimen] = {
                 'dataframe': dataframe,
                 'filename': f'{j}.tsv',
@@ -242,9 +244,6 @@ class FeatureMatrixExtractor:
                     expression_vectors,
                     columns=[f'F{i}' for i in range(number_channels)],
                 )
-                for column_name, criteria in phenotypes.items():
-                    dataframe[column_name] = (dataframe[criteria.positive_markers].all(axis=1) & \
-                        dataframe[criteria.negative_markers].all(axis=1)).astype(int)
                 matrices[specimen]['continuous dataframe'] = dataframe
 
         logger.info('Done creating feature matrices.')

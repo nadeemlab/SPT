@@ -8,12 +8,12 @@ from spatialprofilingtoolbox import DBCursor
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-logger = colorized_logger('spt db status')
+logger = colorized_logger('spt db drop-ondemand-computations')
 
 def main():
     parser = argparse.ArgumentParser(
         prog='spt db drop-ondemand-computations',
-        description='Report basic health status of the given scstudies database.'
+        description='Drop ondemand-computed features, including values, specifiers, etc.'
     )
     add_argument(parser, 'database config')
     group = parser.add_mutually_exclusive_group(required=True)

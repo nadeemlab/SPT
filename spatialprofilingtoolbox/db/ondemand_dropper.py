@@ -48,10 +48,10 @@ class OnDemandComputationsDropper:
     def drop_features(cursor: Psycopg2Cursor, specifications: list[str]):
         for specification in specifications:
             queries = [
+                'DELETE FROM pending_feature_computation WHERE feature_specification=%s ;',
                 'DELETE FROM quantitative_feature_value WHERE feature=%s ;',
                 'DELETE FROM feature_specifier WHERE feature_specification=%s ;',
                 'DELETE FROM feature_specification WHERE identifier=%s ;',
-                'DELETE FROM pending_feature_computation WHERE feature_specification=%s ;',
             ]
             for query in queries:
                 logger.debug(query, specification)

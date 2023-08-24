@@ -1,6 +1,6 @@
 """Data structures for ready exchange, related to computations or derived metrics."""
 
-from pydantic import BaseModel #pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field #pylint: disable=no-name-in-module
 
 class CellFractionsSummary(BaseModel):
     """
@@ -73,6 +73,12 @@ class PhenotypeCounts(BaseModel):
     counts: list[PhenotypeCount]
     phenotype: CompositePhenotype
     number_cells_in_study: int
+
+
+class FeatureMatrixExtract(BaseModel):
+    channels: dict[str, str]
+    feature_matrices: dict[str, list[list]]
+
 
 
 class ProximityMetricsComputationResult(BaseModel):

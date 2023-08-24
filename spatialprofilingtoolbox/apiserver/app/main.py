@@ -20,6 +20,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCo
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
     ProximityMetricsComputationResult
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import FeatureMatrixExtract
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannel,
@@ -188,6 +189,14 @@ async def request_phenotype_proximity_computation(
             ],
         )
     return metrics
+
+
+
+@app.get("/phenotypes-sample/")
+async def get_phenotypes_sample(
+    study: ValidStudy,
+) -> FeatureMatrixExtract:
+    return query().get_cells_sample(study)
 
 
 @app.get("/visualization-plots/")

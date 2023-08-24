@@ -1,6 +1,9 @@
 """Convenience accessors/manipulators for phenotype data."""
+import random
+
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.db.study_access import StudyAccess
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
@@ -108,6 +111,15 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
             (components.measurement,),
         )
         return [row[0] for row in self.cursor.fetchall()]
+
+    def get_cells_phenotypes_sample(self, study: str) -> list[list[str]]:
+        extractor = FeatureMatrixExtractor(cursor=self.cursor)
+        data = extractor.extract(study=study)[study]
+
+        return {
+            'channels': data['channel symbols by column name'],
+            'feature_matrices': {k: v['dataframe'].sample(min(len(v['dataframe']), 10000), random_state=0).values.tolist() for k, v in data['feature matrices'].items()}
+        }
 
     def get_channel_names_all_studies(self) -> list[str]:
         self.cursor.execute('''

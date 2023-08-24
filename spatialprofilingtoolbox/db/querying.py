@@ -95,6 +95,10 @@ class QueryHandler:
         return PhenotypesAccess(cursor).get_channel_names_all_studies()
 
     @classmethod
+    def get_cells_sample(cls, cursor, study) -> list[list[int]]:
+        return PhenotypesAccess(cursor).get_cells_phenotypes_sample(study)
+
+    @classmethod
     def get_umaps_low_resolution(cls, cursor, study: str) -> list[UMAPChannel]:
         access = UMAPAccess(cursor)
         umap_rows = access.get_umap_rows(study)

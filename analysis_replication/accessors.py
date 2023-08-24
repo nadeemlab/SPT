@@ -31,6 +31,14 @@ class DataAccessor:
         return concat([self.cohorts, self.all_cells, conjunction_counts_series, *individual_counts_series], axis=1)
 
     def neighborhood_enrichment(self, phenotype_names):
+        feature_class = 'neighborhood enrichment'
+        return self._two_phenotype_spatial_metric(phenotype_names, feature_class)
+
+    def co_occurrence(self, phenotype_names):
+        feature_class = 'co-occurrence'
+        return self._two_phenotype_spatial_metric(phenotype_names, feature_class)
+
+    def _two_phenotype_spatial_metric(self, phenotype_names, feature_class):
         criteria = [self._phenotype_criteria(p) for p in phenotype_names]
         names = [self._name_phenotype(p) for p in phenotype_names]
 
@@ -48,16 +56,18 @@ class DataAccessor:
             for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
         ]))
 
-        parts = parts1 + parts2 + [('study', self.study), ('feature_class', 'neighborhood enrichment')]
+        parts = parts1 + parts2 + [('study', self.study), ('feature_class', feature_class)]
+        if feature_class == 'co-occurrence':
+            parts.append(('radius', '100'))
         query = urlencode(parts)
         endpoint = 'request-spatial-metrics-computation-custom-phenotypes'
         response = self._retrieve(endpoint, query)
         if response['is_pending'] is True:
-            print('Computation is pending.')
+            print('Computation is pending. Try again soon!')
             sys.exit()
 
         rows = [
-            {'sample': key, 'neighborhood enrichment, %s' % ' and '.join(names): value}
+            {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
             for key, value in response['values'].items()
         ]
         df = DataFrame(rows).set_index('sample')

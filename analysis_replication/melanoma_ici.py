@@ -28,7 +28,10 @@ print((mean1, mean2, mean1 / mean2))
 
 print('')
 
-# antigen_experienced_cytotoxic = {'positive_markers': ['CD8A', 'CD3', 'CD45RO'], 'negative_markers': []}
-# df = access.counts([antigen_experienced_cytotoxic, 'Melanoma'])
-# print(df)
-
+df = access.neighborhood_enrichment([antigen_experienced_cytotoxic, 'Melanoma'])
+print(df)
+values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD8A+ CD3+ CD45RO+ and Melanoma']
+values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD8A+ CD3+ CD45RO+ and Melanoma']
+mean1 = mean(values1)
+mean2 = mean(values2)
+print((mean1, mean2, mean1 / mean2))

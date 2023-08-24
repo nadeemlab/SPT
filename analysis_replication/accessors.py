@@ -1,4 +1,5 @@
 """Convenience caller of HTTP methods for data access."""
+import sys
 
 import re
 from itertools import chain
@@ -28,6 +29,39 @@ class DataAccessor:
             for name in phenotype_names
         ]
         return concat([self.cohorts, self.all_cells, conjunction_counts_series, *individual_counts_series], axis=1)
+
+    def neighborhood_enrichment(self, phenotype_names):
+        criteria = [self._phenotype_criteria(p) for p in phenotype_names]
+        names = [self._name_phenotype(p) for p in phenotype_names]
+
+        positives = criteria[0]['positive_markers']
+        negatives = criteria[0]['negative_markers']
+        parts1 = list(chain(*[
+            [(f'{keyword}_marker', channel) for channel in argument]
+            for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
+        ]))
+
+        positives = criteria[1]['positive_markers']
+        negatives = criteria[1]['negative_markers']
+        parts2 = list(chain(*[
+            [(f'{keyword}_marker2', channel) for channel in argument]
+            for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
+        ]))
+
+        parts = parts1 + parts2 + [('study', self.study), ('feature_class', 'neighborhood enrichment')]
+        query = urlencode(parts)
+        endpoint = 'request-spatial-metrics-computation-custom-phenotypes'
+        response = self._retrieve(endpoint, query)
+        if response['is_pending'] is True:
+            print('Computation is pending.')
+            sys.exit()
+
+        rows = [
+            {'sample': key, 'neighborhood enrichment, %s' % ' and '.join(names): value}
+            for key, value in response['values'].items()
+        ]
+        df = DataFrame(rows).set_index('sample')
+        return concat([self.cohorts, self.all_cells, df], axis=1)
 
     def counts_by_signature(self, positives, negatives):
         parts = list(chain(*[

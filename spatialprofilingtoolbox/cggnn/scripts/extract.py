@@ -16,14 +16,24 @@ def parse_arguments():
     parser.add_argument(
         '--spt_db_config_location',
         type=str,
-        help='File location for SPT DB config file.',
+        help='Location of the SPT DB config file.',
         required=True
     )
     parser.add_argument(
         '--study',
         type=str,
-        help='Name of the study to query data for in SPT.',
+        help='Location of the SPT DB config file to use.',
         required=True
+    )
+    parser.add_argument(
+        '--strata',
+        nargs='+',
+        type=int,
+        help='Specimen strata to use as labels, identified according to the "stratum identifier" '
+             'in `explore_classes`. This should be given as space separated integers.\n'
+             'If not provided, all strata will be used.',
+        required=False,
+        default=None
     )
     parser.add_argument(
         '--output_location',
@@ -36,7 +46,11 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    df_cell, df_label, label_to_result = extract_cggnn_data(args.spt_db_config_location, args.study)
+    df_cell, df_label, label_to_result = extract_cggnn_data(
+        args.spt_db_config_location,
+        args.study,
+        args.strata,
+    )
 
     assert isinstance(args.output_location, str)
     dict_filename = join(args.output_location, 'label_to_results.json')
@@ -45,4 +59,5 @@ if __name__ == "__main__":
     if not (exists(dict_filename) and exists(cells_filename) and exists(labels_filename)):
         df_cell.to_hdf(cells_filename, 'cells')
         df_label.to_hdf(labels_filename, 'labels')
-        dump(label_to_result, open(dict_filename, 'w', encoding='utf-8'))
+        with open(dict_filename, 'w', encoding='utf-8') as f:
+            dump(label_to_result, f)

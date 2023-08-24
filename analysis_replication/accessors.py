@@ -9,6 +9,8 @@ import json
 
 from pandas import DataFrame
 from pandas import concat
+from numpy import inf
+from numpy import nan
 
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
@@ -28,7 +30,9 @@ class DataAccessor:
             self._get_counts_series(self._phenotype_criteria(name), self._name_phenotype(name))
             for name in phenotype_names
         ]
-        return concat([self.cohorts, self.all_cells, conjunction_counts_series, *individual_counts_series], axis=1)
+        df = concat([self.cohorts, self.all_cells, conjunction_counts_series, *individual_counts_series], axis=1)
+        df.replace([inf, -inf], nan, inplace=True)
+        return df
 
     def neighborhood_enrichment(self, phenotype_names):
         feature_class = 'neighborhood enrichment'
@@ -36,6 +40,10 @@ class DataAccessor:
 
     def co_occurrence(self, phenotype_names):
         feature_class = 'co-occurrence'
+        return self._two_phenotype_spatial_metric(phenotype_names, feature_class)
+
+    def proximity(self, phenotype_names):
+        feature_class = 'proximity'
         return self._two_phenotype_spatial_metric(phenotype_names, feature_class)
 
     def _two_phenotype_spatial_metric(self, phenotype_names, feature_class):
@@ -59,11 +67,15 @@ class DataAccessor:
         parts = parts1 + parts2 + [('study', self.study), ('feature_class', feature_class)]
         if feature_class == 'co-occurrence':
             parts.append(('radius', '100'))
+        if feature_class == 'proximity':
+            parts.append(('radius', '100'))
         query = urlencode(parts)
         endpoint = 'request-spatial-metrics-computation-custom-phenotypes'
-        response = self._retrieve(endpoint, query)
+        response, url = self._retrieve(endpoint, query)
         if response['is_pending'] is True:
             print('Computation is pending. Try again soon!')
+            print('URL:')
+            print(url)
             sys.exit()
 
         rows = [
@@ -81,7 +93,7 @@ class DataAccessor:
         parts.append(('study', self.study))
         query = urlencode(parts)
         endpoint = 'anonymous-phenotype-counts-fast'
-        return self._retrieve(endpoint, query)
+        return self._retrieve(endpoint, query)[0]
 
     def _get_counts_series(self, criteria, column_name):
         criteria_tuple = (
@@ -94,7 +106,7 @@ class DataAccessor:
         return df.rename(columns=mapper).set_index('sample')[column_name]
 
     def _retrieve_cohorts(self):
-        summary = self._retrieve('study-summary', urlencode([('study', self.study)]))
+        summary, _ = self._retrieve('study-summary', urlencode([('study', self.study)]))
         return DataFrame(summary['cohorts']['assignments']).set_index('sample')
 
     def _retrieve_all_cells_counts(self):
@@ -116,7 +128,7 @@ class DataAccessor:
         url = '/'.join([base, endpoint, '?' + query])
         with urlopen(url) as response:
             content = response.read()
-        return json.loads(content)
+        return json.loads(content), url
 
     def _phenotype_criteria(self, name):
         if isinstance(name, dict):
@@ -127,7 +139,7 @@ class DataAccessor:
                     criteria[key] = ['']
             return criteria
         query = urlencode([('study', self.study), ('phenotype_symbol', name)])
-        criteria = self._retrieve('phenotype-criteria', query)
+        criteria, _ = self._retrieve('phenotype-criteria', query)
         return criteria
 
     def _conjunction_phenotype_criteria(self, names):

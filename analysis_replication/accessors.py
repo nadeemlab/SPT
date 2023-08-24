@@ -5,6 +5,7 @@ import re
 from itertools import chain
 from urllib.request import urlopen
 from urllib.parse import urlencode
+from urllib.error import HTTPError
 import json
 
 from pandas import DataFrame
@@ -45,6 +46,38 @@ class DataAccessor:
     def proximity(self, phenotype_names):
         feature_class = 'proximity'
         return self._two_phenotype_spatial_metric(phenotype_names, feature_class)
+
+    def spatial_autocorrelation(self, phenotype_name):
+        feature_class = 'spatial autocorrelation'
+        return self._one_phenotype_spatial_metric([phenotype_name], feature_class)
+
+    def _one_phenotype_spatial_metric(self, phenotype_names, feature_class):
+        criteria = [self._phenotype_criteria(p) for p in phenotype_names]
+        names = [self._name_phenotype(p) for p in phenotype_names]
+
+        positives = criteria[0]['positive_markers']
+        negatives = criteria[0]['negative_markers']
+        parts1 = list(chain(*[
+            [(f'{keyword}_marker', channel) for channel in argument]
+            for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
+        ]))
+
+        parts = parts1 + [('study', self.study), ('feature_class', feature_class)]
+        query = urlencode(parts)
+        endpoint = 'request-spatial-metrics-computation-custom-phenotype'
+        response, url = self._retrieve(endpoint, query)
+        if response['is_pending'] is True:
+            print('Computation is pending. Try again soon!')
+            print('URL:')
+            print(url)
+            sys.exit()
+
+        rows = [
+            {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
+            for key, value in response['values'].items()
+        ]
+        df = DataFrame(rows).set_index('sample')
+        return concat([self.cohorts, self.all_cells, df], axis=1)
 
     def _two_phenotype_spatial_metric(self, phenotype_names, feature_class):
         criteria = [self._phenotype_criteria(p) for p in phenotype_names]
@@ -126,8 +159,12 @@ class DataAccessor:
     def _retrieve(self, endpoint, query):
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
-        with urlopen(url) as response:
-            content = response.read()
+        try:
+            with urlopen(url) as response:
+                content = response.read()
+        except HTTPError as exception:
+            print(url)
+            raise exception
         return json.loads(content), url
 
     def _phenotype_criteria(self, name):

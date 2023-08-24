@@ -28,6 +28,8 @@ print((mean1, mean2, mean1 / mean2))
 
 print('')
 
+# The average value of the neighborhood enrichment score for phenotype(s) CD3+ CD45RO+ CD8A+ and
+# Melanoma is 1.39 times higher in cohort 1 than in cohort 2.
 df = access.neighborhood_enrichment([antigen_experienced_cytotoxic, 'Melanoma'])
 print(df)
 values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD8A+ CD3+ CD45RO+ and Melanoma']

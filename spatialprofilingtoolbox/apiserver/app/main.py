@@ -9,6 +9,8 @@ from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
+import secure
+
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
@@ -76,6 +78,13 @@ def custom_openapi():
 
 setattr(app, 'openapi', custom_openapi)
 
+secure_headers = secure.Secure()
+
+@app.middleware("http")
+async def set_secure_headers(request, call_next):
+    response = await call_next(request)
+    secure_headers.framework.fastapi(response)
+    return response
 
 @app.get("/")
 async def get_root():

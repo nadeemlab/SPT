@@ -40,6 +40,7 @@ apiserver = [
     "scikit-learn==1.2.2",
     "Pillow==9.5.0",
     "pydantic==2.0.2"
+    "secure==0.3.0"
 ]
 db = [
     "pandas==2.0.2",

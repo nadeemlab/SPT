@@ -23,12 +23,14 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
+
 @dataclass
 class MatrixBundle:
     """Bundle of information for a specimen matrix."""
     dataframe: DataFrame
     filename: str
     continuous_dataframe: DataFrame | None = None
+
 
 class _DBSource(Enum):
     """Indicator of intended database source."""
@@ -71,7 +73,7 @@ class FeatureMatrixExtractor:
         continuous_also: bool = False,
     ) -> dict[str, MatrixBundle]:
         """Extract feature matrices for a specimen or every specimen in a study.
-        
+
         Parameters
         ----------
         specimen: str | None = None

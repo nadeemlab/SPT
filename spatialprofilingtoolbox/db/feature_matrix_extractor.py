@@ -227,7 +227,7 @@ class FeatureMatrixExtractor:
             for column_name, criteria in phenotypes.items():
                 dataframe[column_name] = (
                     dataframe[criteria.positive_markers].all(axis=1) &
-                    dataframe[criteria.negative_markers].all(axis=1)
+                    ~dataframe[criteria.negative_markers].any(axis=1)
                 ).astype(int)
             matrices[specimen] = {
                 'dataframe': dataframe,

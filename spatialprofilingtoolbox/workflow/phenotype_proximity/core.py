@@ -1,7 +1,8 @@
 """The core calculator for the proximity calculation on a single source file."""
+
 import warnings
 import pickle
-from typing import cast
+
 
 import pandas as pd
 from pandas import DataFrame
@@ -9,7 +10,6 @@ from sklearn.neighbors import BallTree  # type: ignore
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-from spatialprofilingtoolbox.db.feature_matrix_extractor import StudyBundle
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import \
     PerformanceTimerReporter
 from spatialprofilingtoolbox import DatabaseConnectionMaker
@@ -64,21 +64,18 @@ class PhenotypeProximityCoreJob(CoreJob):
 
     def calculate_proximity(self):
         self.reporter.record_timepoint('Start pulling data for one sample.')
-        extractor = FeatureMatrixExtractor(database_config_file=self.database_config_file)
-        bundle = cast(StudyBundle, extractor.extract(specimen=self.sample_identifier))
+        bundle = FeatureMatrixExtractor(database_config_file=self.database_config_file).extract(
+            specimen=self.sample_identifier)
         self.reporter.record_timepoint('Finished pulling data for one sample.')
-        identifier = list(bundle['feature matrices'].keys())[0]
-        Sample = dict[str, DataFrame | str]
-        sample = cast(Sample, bundle['feature matrices'][identifier])
-        cells = cast(DataFrame, sample['dataframe'])
+        identifier = list(bundle.keys())[0]
+        cells = bundle[identifier].dataframe
         logger.info('Dataframe pulled: %s', cells.head())
 
         self.create_ball_tree(cells)
 
-        self.channel_symbols_by_column_name = cast(
-            dict[str, str],
-            bundle['channel symbols by column name'],
-        )
+        self.channel_symbols_by_column_name = {
+            col_name: col_name[2:] for col_name in cells.columns
+        }
         phenotype_identifiers, signatures = self.get_named_phenotype_signatures()
         logger.info('Named phenotypes:')
         logger.info(signatures)

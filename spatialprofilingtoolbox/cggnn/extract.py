@@ -1,36 +1,23 @@
 """Extract information cg-gnn needs from SPT."""
 
-from typing import cast
-
 from pandas import DataFrame, concat, merge  # type: ignore
 from numpy import sort  # type: ignore
 
-from spatialprofilingtoolbox.db.feature_matrix_extractor import (
-    FeatureMatrixExtractor,
-    StudyBundle,
-)
+from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 
 
-def _create_cell_df(
-    dfs_by_specimen: dict[str, DataFrame],
-    feature_names: dict[str, str],
-) -> DataFrame:
+def _create_cell_df(dfs_by_specimen: dict[str, DataFrame]) -> DataFrame:
     """Find simple and complex phenotypes, and locations and merge into a DataFrame."""
-    feature_ids_to_names = {ft_id: 'FT_' + ft_name for ft_id, ft_name in feature_names.items()}
     for specimen, df_specimen in dfs_by_specimen.items():
-        df_specimen.rename(feature_ids_to_names, axis=1, inplace=True)
-        # TODO: Create phenotype columns
-        df_specimen.rename(
-            {'pixel x': 'center_x', 'pixel y': 'center_y'},
-            axis=1,
-            inplace=True,
-        )
         df_specimen['specimen'] = specimen
 
-    # TODO: Reorder so that it's simple phenotype, specimen, complex phenotype, x, y
     df = concat(dfs_by_specimen.values(), axis=0)
     df.index.name = 'histological_structure'
-    return df
+    # Reorder columns so it's specimen, xy, channels, and phenotypes
+    column_order = ['specimen', 'pixel x', 'pixel y']
+    column_order.extend(df.columns[df.columns.str.startswith('C ')])
+    column_order.extend(df.columns[df.columns.str.startswith('P ')])
+    return df[column_order]
 
 
 def _create_label_df(
@@ -54,16 +41,9 @@ def extract_cggnn_data(
 ) -> tuple[DataFrame, DataFrame, dict[int, str]]:
     """Extract information cg-gnn needs from SPT."""
     extractor = FeatureMatrixExtractor(database_config_file=spt_db_config_location)
-    study_data = cast(StudyBundle, extractor.extract(study=study))
-    df_cell = _create_cell_df(
-        {
-            slide: cast(DataFrame, data['dataframe'])
-            for slide, data in study_data['feature matrices'].items()
-        },
-        cast(dict[str, str], study_data['channel symbols by column name']),
-    )
-    df_label, label_to_result_text = _create_label_df(
-        cast(DataFrame, study_data['sample cohorts']['assignments']),
-        cast(DataFrame, study_data['sample cohorts']['strata']),
-    )
+    df_cell = _create_cell_df({
+        slide: data.dataframe for slide, data in extractor.extract(study=study).items()
+    })
+    cohorts = extractor.extract_cohorts(study)
+    df_label, label_to_result_text = _create_label_df(cohorts['assignments'], cohorts['strata'])
     return df_cell, df_label, label_to_result_text

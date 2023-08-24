@@ -1,71 +1,69 @@
-import json
 import sys
 
-import pandas as pd
+from pandas import read_csv, DataFrame
 
-from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
+from spatialprofilingtoolbox.db.feature_matrix_extractor import (
+    FeatureMatrixExtractor,
+    MatrixBundle,
+)
 
 
-def test_sample_set(study):
-    if study['feature matrices'].keys() != set(['lesion 0_1', 'lesion 6_1']):
-        print(f'Wrong sample set: {list(study["feature matrices"].keys())}')
+def test_sample_set(study: dict[str, MatrixBundle]):
+    if study.keys() != set(['lesion 0_1', 'lesion 6_1']):
+        print(f'Wrong sample set: {list(study.keys())}')
         sys.exit(1)
 
 
-def test_one_sample_set(study):
-    if study['feature matrices'].keys() != set(['lesion 6_1']):
-        print(f'Wrong sample set: {list(study["feature matrices"].keys())}')
+def test_one_sample_set(study: dict[str, MatrixBundle]):
+    if study.keys() != set(['lesion 6_1']):
+        print(f'Wrong sample set: {list(study.keys())}')
         sys.exit(1)
 
 
-def test_feature_matrix_schemas(study):
-    for specimen, sample in study['feature matrices'].items():
-        df = sample['dataframe']
-        if not all(f'F{i}' in df.columns for i in range(26)):
-            print(f'Missing some columns in dataframe (case "{specimen}"): ')
-            print(df.to_string(index=False))
-            sys.exit(1)
+def test_feature_matrix_schemas(study: dict[str, MatrixBundle]):
+    for specimen, sample in study.items():
+        df = sample.dataframe
         if df.shape != (100, 32):
             print(f'Wrong number of rows or columns: {df.shape} != (100, 32)')
             sys.exit(1)
 
 
-def show_example_feature_matrix(study):
+def show_example_feature_matrix(study: dict[str, MatrixBundle]):
     specimen = 'lesion 0_1'
-    df = study['feature matrices'][specimen]['dataframe']
+    df = study[specimen].dataframe
     print(f'Example feature matrix, for specimen {specimen}:')
     print(df.to_string(index=False))
     print('')
 
 
-def test_channels(study):
-    channels = study['channel symbols by column name']
+def test_channels(study: dict[str, MatrixBundle]):
+    channels = list(study.values())[0].dataframe.columns
     known = ['B2M', 'B7H3', 'CD14', 'CD163', 'CD20', 'CD25', 'CD27', 'CD3', 'CD4', 'CD56', 'CD68',
              'CD8', 'DAPI', 'FOXP3', 'IDO1', 'KI67', 'LAG3', 'MHCI', 'MHCII', 'MRC1', 'PD1',
              'PDL1', 'S100B', 'SOX10', 'TGM2', 'TIM3']
-    if set(channels.values()) != set(known):
-        print(f'Wrong channel set: {list(channels.values())}')
+    if set(channels) != set(known):
+        print(f'Wrong channel set: {channels.tolist()}')
         sys.exit(1)
 
 
-def test_expression_vectors(study):
+def test_expression_vectors(study: dict[str, MatrixBundle]):
     def create_column_name(channels, channel_num):
         return channels[channel_num] + '_Positive'
 
-    for specimen in study['feature matrices'].keys():
-        df = study['feature matrices'][specimen]['dataframe']
+    for specimen in study.keys():
+        df = study[specimen].dataframe
 
         print('Dataframe: ' + str(specimen))
         print(df)
 
         expression_vectors = sorted([
-            tuple(row[f'F{i}'] for i in range(26))
+            tuple(row[row.index.str.startswith('C ')].tolist())
             for _, row in df.iterrows()
         ])
 
         filenames = {'lesion 0_1': '0.csv', 'lesion 6_1': '3.csv'}
         cells_filename = filenames[specimen]
-        reference = pd.read_csv(
+        reference = read_csv(
             f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')
         channels = study['channel symbols by column name']
 
@@ -85,21 +83,21 @@ def test_expression_vectors(study):
     print('Expression vector sets are as expected.')
 
 
-def test_expression_vectors_continuous(study):
+def test_expression_vectors_continuous(study: dict[str, MatrixBundle]):
     def create_column_name(channels, channel_num):
         return channels[channel_num] + '_Intensity'
 
-    for specimen in study['feature matrices'].keys():
-        df = study['feature matrices'][specimen]['continuous dataframe']
+    for specimen in study.keys():
+        df = study[specimen].continuous_dataframe
         print(df.head())
         expression_vectors = sorted([
-            tuple(row[f'F{i}'] for i in range(26))
+            tuple(row[row.index.str.startswith('C ')].tolist())
             for _, row in df.iterrows()
         ])
 
         filenames = {'lesion 0_1': '0.csv', 'lesion 6_1': '3.csv'}
         cells_filename = filenames[specimen]
-        reference = pd.read_csv(
+        reference = read_csv(
             f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')
         channels = study['channel symbols by column name']
 
@@ -119,9 +117,9 @@ def test_expression_vectors_continuous(study):
     print('Expression vector sets are as expected.')
 
 
-def test_stratification(study):
-    df = study['sample cohorts']['assignments']
-    strata = study['sample cohorts']['strata']
+def test_stratification(study: dict[str, DataFrame]):
+    df = study['assignments']
+    strata = study['strata']
     print('Sample cohorts:')
     print(df.to_string(index=False))
     print(strata.to_string(index=False))
@@ -134,13 +132,14 @@ def test_stratification(study):
 
 if __name__ == '__main__':
     extractor = FeatureMatrixExtractor(database_config_file='../db/.spt_db.config.container')
-    test_study = extractor.extract(study='Melanoma intralesional IL2')
+    study_name = 'Melanoma intralesional IL2'
+    test_study = extractor.extract(study=study_name)
     test_sample_set(test_study)
     test_feature_matrix_schemas(test_study)
     show_example_feature_matrix(test_study)
     test_channels(test_study)
     test_expression_vectors(test_study)
-    test_stratification(test_study)
+    test_stratification(extractor.extract_cohorts(study_name))
 
     one_sample_study = extractor.extract(specimen='lesion 6_1')
     test_one_sample_set(one_sample_study)
@@ -153,12 +152,3 @@ if __name__ == '__main__':
     test_feature_matrix_schemas(one_sample_study_continuous)
     test_channels(one_sample_study_continuous)
     test_expression_vectors_continuous(one_sample_study_continuous)
-
-    FeatureMatrixExtractor.redact_dataframes(test_study)
-    print('\nMetadata "bundle" with dataframes removed:')
-    print(json.dumps(test_study, indent=2))
-
-    print('\n... and in the one-sample case:')
-    FeatureMatrixExtractor.redact_dataframes(one_sample_study)
-    print('\nMetadata "bundle" with dataframes removed:')
-    print(json.dumps(one_sample_study, indent=2))

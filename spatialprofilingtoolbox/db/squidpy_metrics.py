@@ -1,13 +1,10 @@
 """Make squidpy metrics that don't require specific phenotype selection available."""
 
-from typing import cast
-
 from pandas import DataFrame
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-from spatialprofilingtoolbox.db.feature_matrix_extractor import StudyBundle
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.squidpy import (
@@ -65,16 +62,11 @@ def _fetch_cells_and_phenotypes(
     cursor: Psycopg2Cursor,
     study: str,
 ) -> tuple[dict[str, DataFrame], dict[str, str]]:
-    extractor = FeatureMatrixExtractor(cursor)
-    bundle = cast(StudyBundle, extractor.extract(study=study))
-    FeatureMatrices = dict[str, dict[str, DataFrame | str]]
-    feature_matrices = cast(FeatureMatrices, bundle['feature matrices'])
+    feature_matrices = FeatureMatrixExtractor(cursor).extract(study=study)
     features_by_specimen = {
-        specimen: cast(DataFrame, packet['dataframe'])
-        for specimen, packet in feature_matrices.items()
+        specimen: bundle.dataframe for specimen, bundle in feature_matrices.items()
     }
-    channel_symbols_by_columns_name = cast(
-        dict[str, str],
-        bundle['channel symbols by column name'],
-    )
-    return features_by_specimen, channel_symbols_by_columns_name
+    channel_symbols_by_column_name = {
+        col_name: col_name[2:] for col_name in list(feature_matrices.values())[0].dataframe.columns
+    }
+    return features_by_specimen, channel_symbols_by_column_name

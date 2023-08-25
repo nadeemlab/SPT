@@ -37,19 +37,17 @@ def show_example_feature_matrix(study: dict[str, MatrixBundle]):
 
 
 def test_channels(study: dict[str, MatrixBundle]):
-    channels = list(study.values())[0].dataframe.columns
-    known = ['B2M', 'B7H3', 'CD14', 'CD163', 'CD20', 'CD25', 'CD27', 'CD3', 'CD4', 'CD56', 'CD68',
+    columns = list(study.values())[0].dataframe.columns
+    channels = set(name[2:] for name in columns[columns.str.startswith('C ')])
+    known = {'B2M', 'B7H3', 'CD14', 'CD163', 'CD20', 'CD25', 'CD27', 'CD3', 'CD4', 'CD56', 'CD68',
              'CD8', 'DAPI', 'FOXP3', 'IDO1', 'KI67', 'LAG3', 'MHCI', 'MHCII', 'MRC1', 'PD1',
-             'PDL1', 'S100B', 'SOX10', 'TGM2', 'TIM3']
-    if set(channels) != set(known):
+             'PDL1', 'S100B', 'SOX10', 'TGM2', 'TIM3'}
+    if channels != known:
         print(f'Wrong channel set: {channels.tolist()}')
         sys.exit(1)
 
 
 def test_expression_vectors(study: dict[str, MatrixBundle]):
-    def create_column_name(channels, channel_num):
-        return channels[channel_num] + '_Positive'
-
     for specimen in study.keys():
         df = study[specimen].dataframe
 
@@ -65,10 +63,11 @@ def test_expression_vectors(study: dict[str, MatrixBundle]):
         cells_filename = filenames[specimen]
         reference = read_csv(
             f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')
-        channels = study['channel symbols by column name']
+        columns = list(study.values())[0].dataframe.columns
+        channels = [name[2:] for name in columns[columns.str.startswith('C ')]]
 
         expected_expression_vectors = sorted([
-            tuple(row[create_column_name(channels, f'F{i}')] for i in range(26))
+            tuple(row[f'{channel}_Positive'] for channel in channels)
             for _, row in reference.iterrows()
         ])
 
@@ -84,9 +83,6 @@ def test_expression_vectors(study: dict[str, MatrixBundle]):
 
 
 def test_expression_vectors_continuous(study: dict[str, MatrixBundle]):
-    def create_column_name(channels, channel_num):
-        return channels[channel_num] + '_Intensity'
-
     for specimen in study.keys():
         df = study[specimen].continuous_dataframe
         print(df.head())
@@ -99,10 +95,11 @@ def test_expression_vectors_continuous(study: dict[str, MatrixBundle]):
         cells_filename = filenames[specimen]
         reference = read_csv(
             f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')
-        channels = study['channel symbols by column name']
+        columns = list(study.values())[0].dataframe.columns
+        channels = [name[2:] for name in columns[columns.str.startswith('C ')]]
 
         expected_expression_vectors = sorted([
-            tuple(row[create_column_name(channels, f'F{i}')] for i in range(26))
+            tuple(row[f'{channel}_Intensity'] for channel in channels)
             for _, row in reference.iterrows()
         ])
 

@@ -58,3 +58,13 @@ values3 = df[df['cohort'] == '3']['proximity, B cell and B cell']
 mean1 = mean(values1)
 mean3 = mean(values3)
 print((mean3, mean1, mean3 / mean1))
+
+# The average value of the neighborhood enrichment score for phenotype(s) B cells is 80.45 times
+# higher in cohort 1 than in cohort 3.
+df = access.neighborhood_enrichment(['B cell', 'B cell'])
+print(df)
+values1 = df[df['cohort'] == '1']['neighborhood enrichment, B cell and B cell']
+values3 = df[df['cohort'] == '3']['neighborhood enrichment, B cell and B cell']
+mean1 = mean(values1)
+mean3 = mean(values3)
+print((mean1, mean3, mean1 / mean3))

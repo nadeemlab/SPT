@@ -48,3 +48,13 @@ fractions3 = fractions[df['cohort'] == '3']
 mean1 = mean(fractions1)
 mean3 = mean(fractions3)
 print((mean3, mean1, mean3 / mean1))
+
+# The average value of the proximity score for phenotype(s) B cells is 3.59 times higher in
+# cohort 3 than in cohort 1.
+df = access.proximity(['B cell', 'B cell'])
+print(df)
+values1 = df[df['cohort'] == '1']['proximity, B cell and B cell']
+values3 = df[df['cohort'] == '3']['proximity, B cell and B cell']
+mean1 = mean(values1)
+mean3 = mean(values3)
+print((mean3, mean1, mean3 / mean1))

@@ -28,26 +28,40 @@ def _create_label_df(
     """Get slide-level results."""
     df_assignments = df_assignments.set_index('specimen')
     df_strata = df_strata.set_index('stratum identifier')
+    df_strata = _filter_for_strata(strata_to_use, df_strata)
+    df_strata = _drop_unneeded_columns(df_strata)
+    df_strata = _compress_df(df_strata)
+    return _label(df_assignments, df_strata)
 
-    # Filter for strata to use
+
+def _filter_for_strata(strata_to_use: list[int] | None, df_strata: DataFrame) -> DataFrame:
     if strata_to_use is not None:
         df_strata = df_strata.loc[sorted(strata_to_use)]
     if df_strata.shape[0] < 2:
         raise ValueError(f'Need at least 2 strata to classify, there are {df_strata.shape[0]}.')
+    return df_strata
 
-    # Drop columns that're the same for all kept strata
+
+def _drop_unneeded_columns(df_strata: DataFrame) -> DataFrame:
+    """Drop columns that have internally same contents."""
     for col in df_strata.columns.tolist():
-        if df_strata[col].unique().size == 1:
+        if df_strata[col].nunique() == 1:
             df_strata = df_strata.drop(col, axis=1)
+    return df_strata
 
-    # Compress remaining columns into a single string
+
+def _compress_df(df_strata: DataFrame) -> DataFrame:
+    """Compress remaining columns into a single string"""
     df_strata['label'] = '(' + df_strata.iloc[:, 0].astype(str)
     for i in range(1, df_strata.shape[1]):
         df_strata['label'] += df_strata.iloc[:, i].astype(str)
     df_strata['label'] += ')'
     df_strata = df_strata[['label']]
+    return df_strata
 
-    # Merge with specimen assignments, keeping only selected strata
+
+def _label(df_assignments: DataFrame, df_strata: DataFrame) -> tuple[DataFrame, dict[int, str]]:
+    """Merge with specimen assignments, keeping only selected strata."""
     df = merge(df_assignments, df_strata, on='stratum identifier', how='inner')[['label']]
     label_to_result = dict(enumerate(sort(df['label'].unique())))
     return df.replace({res: i for i, res in label_to_result.items()}), label_to_result

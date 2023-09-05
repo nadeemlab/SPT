@@ -22,7 +22,7 @@ def parse_arguments():
     parser.add_argument(
         '--study',
         type=str,
-        help='Location of the SPT DB config file to use.',
+        help='Name of the study to query data for.',
         required=True
     )
     parser.add_argument(

@@ -5,7 +5,7 @@ from typing import cast
 
 from numpy.typing import NDArray
 from numpy import isnan
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from squidpy.gr import (  # type: ignore
     spatial_neighbors,
     nhood_enrichment,
@@ -18,7 +18,6 @@ from anndata import AnnData  # type: ignore
 from scipy.stats import norm  # type: ignore
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.workflow.common.cell_df_indexer import get_mask
 from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox import squidpy_feature_classnames
 
@@ -37,8 +36,15 @@ def compute_squidpy_metric_for_one_sample(
     radius: float | None = None,
 ) -> float | None:
     """Compute Squidpy metrics for a tissue sample with a clustering of the given phenotypes."""
-    df_cell.sort_index(inplace=True)
-    masks: list[NDArray[Any]] = [get_mask(df_cell, signature) for signature in phenotypes]
+    df_cell = df_cell.rename({
+        column: (column[2:] if (column.startswith('C ') or column.startswith('P ')) else column)
+        for column in cells.columns
+    }, axis=1)
+    masks: list[Series[bool]] = [
+        (df_cell[signature.positive_markers].all(axis=1) & 
+        (~df_cell[signature.negative_markers]).all(axis=1))
+        for signature in phenotypes
+    ]
     adata = convert_df_to_anndata(df_cell, masks)
     match feature_class:
         case 'neighborhood enrichment':
@@ -90,7 +96,7 @@ def round10(value):
 
 def convert_df_to_anndata(
     df: DataFrame,
-    phenotypes_to_cluster_on: list[NDArray[Any]] | None = None,
+    phenotypes_to_cluster_on: list[Series[bool]] | None = None,
 ) -> AnnData:
     """Convert SPT DataFrame to AnnData object for use with Squidpy metrics.
 
@@ -99,7 +105,7 @@ def convert_df_to_anndata(
             A dataframe with an arbitrary index, x and y locations of histological structures with
             column names 'pixel x' and 'pixel y', and several columns with arbitrary names each
             indicating the expression of a phenotype.
-        phenotypes_to_cluster_on: list[NDArray[Any]] | None
+        phenotypes_to_cluster_on: list[Series[bool]] | None
             Used to create a 'cluster' column in the AnnData object if provided. Each list is a
             mask of positive or negative features that indicate the phenotype.
             * If only one phenotype is provided, two clusters will be created mirroring the
@@ -113,7 +119,7 @@ def convert_df_to_anndata(
     """
     locations: NDArray[Any] = df[['pixel x', 'pixel y']].to_numpy()
     adata = AnnData(
-        df.to_numpy(),
+        df.drop(['pixel x', 'pixel y'], axis=1).to_numpy(),
         obsm={'spatial': locations},  # type: ignore
     )
     spatial_neighbors(adata)

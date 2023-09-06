@@ -24,10 +24,7 @@ def create_and_transcribe_squidpy_features(
     """Transcribe "off-demand" Squidpy feature(s) in features system."""
     connection = database_connection_maker.get_connection()
     das = DataAnalysisStudyFactory(connection, study, 'spatial autocorrelation').create()
-    features_by_specimen, channel_symbols_by_column_name = _fetch_cells_and_phenotypes(
-        connection.cursor(),
-        study,
-    )
+    features_by_specimen = _fetch_cells(connection.cursor(), study)
     with ADIFeaturesUploader(
         database_connection_maker,
         data_analysis_study=das,
@@ -39,7 +36,6 @@ def create_and_transcribe_squidpy_features(
             create_and_transcribe_one_sample(
                 sample,
                 df,
-                channel_symbols_by_column_name,
                 feature_uploader,
             )
 
@@ -47,26 +43,24 @@ def create_and_transcribe_squidpy_features(
 def create_and_transcribe_one_sample(
     sample: str,
     df: DataFrame,
-    channel_symbols_by_column_name: dict[str, str],
     feature_uploader: ADIFeaturesUploader,
 ) -> None:
-    for column, symbol in channel_symbols_by_column_name.items():
-        criteria = PhenotypeCriteria(positive_markers=[column], negative_markers=[])
-        value = compute_squidpy_metric_for_one_sample(df, [criteria], 'spatial autocorrelation')
-        if value is None:
-            continue
-        feature_uploader.stage_feature_value((symbol,), sample, value)
+    for column in df.columns:
+        if column.startswith('C '):
+            symbol = column[2:]
+            criteria = PhenotypeCriteria(positive_markers=[symbol], negative_markers=[])
+            value = compute_squidpy_metric_for_one_sample(df, [criteria], 'spatial autocorrelation')
+            if value is None:
+                continue
+            feature_uploader.stage_feature_value((symbol,), sample, value)
 
 
-def _fetch_cells_and_phenotypes(
+def _fetch_cells(
     cursor: Psycopg2Cursor,
     study: str,
-) -> tuple[dict[str, DataFrame], dict[str, str]]:
+) -> dict[str, DataFrame]:
     feature_matrices = FeatureMatrixExtractor(cursor).extract(study=study)
     features_by_specimen = {
         specimen: bundle.dataframe for specimen, bundle in feature_matrices.items()
     }
-    channel_symbols_by_column_name = {
-        col_name: col_name[2:] for col_name in list(feature_matrices.values())[0].dataframe.columns
-    }
-    return features_by_specimen, channel_symbols_by_column_name
+    return features_by_specimen

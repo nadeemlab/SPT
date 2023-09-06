@@ -40,9 +40,9 @@ def compute_squidpy_metric_for_one_sample(
         column: (column[2:] if (column.startswith('C ') or column.startswith('P ')) else column)
         for column in cells.columns
     }, axis=1)
-    masks: list[Series[bool]] = [
-        (df_cell[signature.positive_markers].all(axis=1) & 
-        (~df_cell[signature.negative_markers]).all(axis=1))
+    masks: list[Series] = [
+        (df_cell[signature.positive_markers].all(axis=1) &
+         (~df_cell[signature.negative_markers]).all(axis=1))
         for signature in phenotypes
     ]
     adata = convert_df_to_anndata(df_cell, masks)
@@ -94,9 +94,10 @@ def _summarize_spatial_autocorrelation(unstructured_metrics) -> float | None:
 def round10(value):
     return int(pow(10, 10) * value) / pow(10, 10)
 
+
 def convert_df_to_anndata(
     df: DataFrame,
-    phenotypes_to_cluster_on: list[Series[bool]] | None = None,
+    phenotypes_to_cluster_on: list[Series] | None = None,
 ) -> AnnData:
     """Convert SPT DataFrame to AnnData object for use with Squidpy metrics.
 
@@ -105,7 +106,7 @@ def convert_df_to_anndata(
             A dataframe with an arbitrary index, x and y locations of histological structures with
             column names 'pixel x' and 'pixel y', and several columns with arbitrary names each
             indicating the expression of a phenotype.
-        phenotypes_to_cluster_on: list[Series[bool]] | None
+        phenotypes_to_cluster_on: list[Series] | None
             Used to create a 'cluster' column in the AnnData object if provided. Each list is a
             mask of positive or negative features that indicate the phenotype.
             * If only one phenotype is provided, two clusters will be created mirroring the

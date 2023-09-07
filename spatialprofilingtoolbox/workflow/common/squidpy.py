@@ -158,7 +158,7 @@ def _co_occurrence(adata: AnnData, radius: float) -> dict[str, NDArray[Any]] | N
         interval=[0.0, radius],  # type: ignore
         show_progress_bar=False,
     )
-    occ, interval = cast(tuple[NDArray[Anyy], NDArray[Any]], result)
+    occ, interval = cast(tuple[NDArray[Any], NDArray[Any]], result)
     return {'occ': occ, 'interval': interval}
 
 

@@ -61,7 +61,11 @@ def compute_squidpy_metric_for_one_sample(
     return None
 
 
-def _summarize_neighborhood_enrichment(unstructured_metrics) -> float | None:
+def _summarize_neighborhood_enrichment(
+    unstructured_metrics: dict[str, NDArray[Any]]
+) -> float | None:
+    if len(unstructured_metrics['zscore'].shape) != 2:
+        return None
     zscore = float(unstructured_metrics['zscore'][0][1])
     return float(norm.cdf(zscore))
 
@@ -70,13 +74,17 @@ def _summarize_co_occurrence(unstructured_metrics: dict[str, NDArray[Any]] | Non
     if unstructured_metrics is None:
         return None
     occurrence_ratios = unstructured_metrics['occ']
+    if len(occurrence_ratios.shape) != 3:
+        return None
     return float(occurrence_ratios[0][1][0])
 
 
-def _summarize_ripley(unstructured_metrics) -> float | None:
+def _summarize_ripley(unstructured_metrics: dict[str, NDArray[Any]]) -> float | None:
     bins = unstructured_metrics['bins']
     pvalues = unstructured_metrics['pvalues']
-    pairs = list(zip(bins, pvalues))
+    pairs = list(zip(bins.tolist(), pvalues.tolist()))
+    if len(bins) != len(pvalues) or len(pairs) == 0:
+        return None
     filtered = [pair for pair in pairs if pair[1] > 0]
     if len(filtered) == 0:
         return 1.0
@@ -84,7 +92,7 @@ def _summarize_ripley(unstructured_metrics) -> float | None:
     return float(sorted_pairs[0][1])
 
 
-def _summarize_spatial_autocorrelation(unstructured_metrics) -> float | None:
+def _summarize_spatial_autocorrelation(unstructured_metrics: DataFrame) -> float | None:
     row = unstructured_metrics.iloc[0]
     pvalue = float(row['pval_norm'])
     if isnan(pvalue):
@@ -140,11 +148,11 @@ def convert_df_to_anndata(
     return adata
 
 
-def _nhood_enrichment(adata: AnnData) -> dict[str, list[float] | list[int]]:
+def _nhood_enrichment(adata: AnnData) -> dict[str, NDArray[Any]]:
     """Compute neighborhood enrichment by permutation test."""
     result = nhood_enrichment(adata, 'cluster', copy=True, seed=128, show_progress_bar=False)
     zscore, count = cast(tuple[NDArray[Any], NDArray[Any]], result)
-    return {'zscore': zscore.tolist(), 'count': count.tolist()}
+    return {'zscore': zscore, 'count': count}
 
 
 def _co_occurrence(adata: AnnData, radius: float) -> dict[str, NDArray[Any]] | None:
@@ -162,12 +170,14 @@ def _co_occurrence(adata: AnnData, radius: float) -> dict[str, NDArray[Any]] | N
     return {'occ': occ, 'interval': interval}
 
 
-def _ripley(adata: AnnData) -> dict[str, list[list[float]] | list[float] | list[int]]:
+def _ripley(adata: AnnData) -> dict[str, NDArray[Any]]:
     r"""Compute various Ripley\'s statistics for point processes."""
     result = ripley(adata, 'cluster', copy=True)
+    bins = cast(NDArray[Any], result['bins'])
+    pvalues = cast(NDArray[Any], result['pvalues'])
     return {
-        'bins': result['bins'].tolist(),
-        'pvalues': result['pvalues'].tolist()[0],
+        'bins': bins,
+        'pvalues': pvalues[0,],
     }
 
 

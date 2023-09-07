@@ -149,17 +149,15 @@ def _nhood_enrichment(adata: AnnData) -> dict[str, list[float] | list[int]]:
 
 def _co_occurrence(adata: AnnData, radius: float) -> dict[str, NDArray[Any]] | None:
     """Compute co-occurrence probability of clusters."""
-    try:
-        result = co_occurrence(
-            adata,
-            'cluster',
-            copy=True,
-            interval=[0.0, radius],  # type: ignore
-            show_progress_bar=False,
-        )
-    except ValueError:
-        warn('Not enough clusters.')
+    if adata.obs['cluster'].nunique() < 2:
         return None
+    result = co_occurrence(
+        adata,
+        'cluster',
+        copy=True,
+        interval=[0.0, radius],  # type: ignore
+        show_progress_bar=False,
+    )
     occ, interval = cast(tuple[NDArray[Anyy], NDArray[Any]], result)
     return {'occ': occ, 'interval': interval}
 

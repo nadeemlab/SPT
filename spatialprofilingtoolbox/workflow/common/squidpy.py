@@ -2,6 +2,7 @@
 
 from typing import Any
 from typing import cast
+from warnings import warn
 
 from numpy.typing import NDArray
 from numpy import isnan
@@ -38,7 +39,7 @@ def compute_squidpy_metric_for_one_sample(
     """Compute Squidpy metrics for a tissue sample with a clustering of the given phenotypes."""
     df_cell = df_cell.rename({
         column: (column[2:] if (column.startswith('C ') or column.startswith('P ')) else column)
-        for column in cells.columns
+        for column in df_cell.columns
     }, axis=1)
     masks: list[Series] = [
         (df_cell[signature.positive_markers].all(axis=1) &
@@ -65,7 +66,9 @@ def _summarize_neighborhood_enrichment(unstructured_metrics) -> float | None:
     return float(norm.cdf(zscore))
 
 
-def _summarize_co_occurrence(unstructured_metrics) -> float | None:
+def _summarize_co_occurrence(unstructured_metrics: dict[str, NDArray[Any]] | None) -> float | None:
+    if unstructured_metrics is None:
+        return None
     occurrence_ratios = unstructured_metrics['occ']
     return float(occurrence_ratios[0][1][0])
 
@@ -130,8 +133,10 @@ def convert_df_to_anndata(
         for phenotype in phenotypes_to_cluster_on[1:]:
             clustering[(clustering == 0) & phenotype] = i_cluster
             i_cluster += 1
-        adata.obs['cluster'] = clustering
+        adata.obs['cluster'] = clustering.to_numpy()
         adata.obs['cluster'] = adata.obs['cluster'].astype('category')
+        if adata.obs['cluster'].nunique() == 1:
+            warn('All phenotypes provided had identical values. Only one cluster could be made.')
     return adata
 
 
@@ -142,17 +147,21 @@ def _nhood_enrichment(adata: AnnData) -> dict[str, list[float] | list[int]]:
     return {'zscore': zscore.tolist(), 'count': count.tolist()}
 
 
-def _co_occurrence(adata: AnnData, radius: float) -> dict[str, list[float]]:
+def _co_occurrence(adata: AnnData, radius: float) -> dict[str, NDArray[Any]] | None:
     """Compute co-occurrence probability of clusters."""
-    result = co_occurrence(
-        adata,
-        'cluster',
-        copy=True,
-        interval=[0.0, radius],  # type: ignore
-        show_progress_bar=False,
-    )
-    occ, interval = cast(tuple[NDArray[Any], NDArray[Any]], result)
-    return {'occ': occ.tolist(), 'interval': interval.tolist()}
+    try:
+        result = co_occurrence(
+            adata,
+            'cluster',
+            copy=True,
+            interval=[0.0, radius],  # type: ignore
+            show_progress_bar=False,
+        )
+    except ValueError:
+        warn('Not enough clusters.')
+        return None
+    occ, interval = cast(tuple[NDArray[Anyy], NDArray[Any]], result)
+    return {'occ': occ, 'interval': interval}
 
 
 def _ripley(adata: AnnData) -> dict[str, list[list[float]] | list[float] | list[int]]:

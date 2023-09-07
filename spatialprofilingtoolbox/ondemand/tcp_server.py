@@ -14,9 +14,9 @@ from spatialprofilingtoolbox.ondemand.providers import (
 @define
 class OnDemandProviderSet:
     """Gather together the set/collection of ondemand providers."""
-    counts: CountsProvider
-    proximity: ProximityProvider
-    squidpy: SquidpyProvider
+    counts: CountsProvider | None
+    proximity: ProximityProvider | None
+    squidpy: SquidpyProvider | None
 
 
 class OnDemandTCPServer(TCPServer):

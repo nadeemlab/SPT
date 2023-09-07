@@ -82,7 +82,3 @@ class CountsProvider(OnDemandProvider):
             }
             for study_name, targets in self.studies.items()
         ]
-
-    def has_study(self, study_name: str) -> bool:
-        """Check if this study is available in this provider."""
-        return study_name in self.studies

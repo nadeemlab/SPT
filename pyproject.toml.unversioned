@@ -166,7 +166,8 @@ packages = [
     "status.py",
     "retrieve_feature_matrices.py",
     "drop.py",
-    "index_expressions_table.py"
+    "index_expressions_table.py",
+    "drop_ondemand_computations.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "create_roles.sql",

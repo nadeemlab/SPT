@@ -72,7 +72,33 @@ def extract_cggnn_data(
     study: str,
     strata_to_use: list[int] | None,
 ) -> tuple[DataFrame, DataFrame, dict[int, str]]:
-    """Extract information cg-gnn needs from SPT."""
+    """Extract information cg-gnn needs from SPT.
+    
+    Parameters
+    ----------
+    spt_db_config_location : str
+        Location of the SPT DB config file.
+    study : str
+        Name of the study to query data for.
+    strata_to_use : list[int] | None
+        Specimen strata to use as labels, identified according to the "stratum identifier" in
+        `explore_classes`. This should be given as space separated integers.
+        If not provided, all strata will be used.
+    
+    Returns
+    -------
+    df_cell: DataFrame
+        Rows are individual cells, indexed by an integer ID.
+        Column or column groups are, named and in order:
+            1. The 'specimen' the cell is from
+            2. Cell centroid positions 'pixel x' and 'pixel y'
+            3. Channel expressions starting with 'C ' and followed by human-readable symbol text
+            4. Phenotype expressions starting with 'P ' followed by human-readable symbol text
+    df_label: DataFrame
+        Rows are specimens, the sole column 'label' is its class label as an integer.
+    label_to_result_text: dict[int, str]
+        Mapping from class integer label to human-interpretable result text.
+    """
     extractor = FeatureMatrixExtractor(database_config_file=spt_db_config_location)
     df_cell = _create_cell_df({
         slide: data.dataframe for slide, data in extractor.extract(study=study).items()

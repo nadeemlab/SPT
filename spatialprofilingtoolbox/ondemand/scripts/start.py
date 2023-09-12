@@ -45,7 +45,10 @@ def start_services(source_data_location: str, host: str, port: int, service: str
         OnDemandRequestHandler,
         OnDemandProviderSet(counts=counts, proximity=proximity, squidpy=squidpy),
     )
-    logger.info('ondemand is ready to accept connections.')
+    if service is not None:
+        logger.info('Service "%s" is ready to accept connections.', service)
+    else:
+        logger.info('Ondemand services are ready to accept connections.')
     tcp_server.serve_forever(poll_interval=0.2)
 
 

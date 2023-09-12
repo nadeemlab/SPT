@@ -9,9 +9,9 @@ then
     exit 1
 fi
 
-curl -s --verbose $query 2>&1 | grep -v 'date: ' | tr -d '\b\r' > response.txt
+curl -s --verbose $query 2>&1 | tail -n +9 | grep -v 'date: ' | tr -d '\b\r' > response.txt
 
-diff unit_tests/expected_headers_example.txt response.txt | cat -t
+diff unit_tests/expected_headers_example.txt response.txt
 status=$?
 [ $status -eq 0 ] || (echo "API query for headers inspection failed."; )
 

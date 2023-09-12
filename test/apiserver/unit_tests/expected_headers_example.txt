@@ -1,0 +1,14 @@
+< HTTP/1.1 200 OK
+< server: uvicorn
+< content-length: 97
+< content-type: application/json
+< strict-transport-security: max-age=63072000; includeSubdomains
+< x-frame-options: SAMEORIGIN
+< x-xss-protection: 0
+< x-content-type-options: nosniff
+< referrer-policy: no-referrer, strict-origin-when-cross-origin
+< cache-control: no-store
+< 
+{ [97 bytes data]
+* Connection #0 to host spt-apiserver-testing left intact
+[{"handle":"Melanoma intralesional IL2","display_name_detail":"Cancer Immunology Research 2022"}]

@@ -23,11 +23,12 @@ def compute_proximity_metric_for_signature_pair(
         column: (column[2:] if (column.startswith('C ') or column.startswith('P ')) else column)
         for column in cells.columns
     }, axis=1)
-    mask1 = cells[signature1.positive_markers].all(axis=1) & \
-        (~cells[signature1.negative_markers]).all(axis=1)
-    mask2 = cells[signature1.positive_markers].all(axis=1) & \
-        (~cells[signature2.negative_markers]).all(axis=1)
+    mask1 = cells.astype(bool)[signature1.positive_markers].all(axis=1) & \
+        (~(cells.astype(bool))[signature1.negative_markers]).all(axis=1)
+    mask2 = cells.astype(bool)[signature2.positive_markers].all(axis=1) & \
+        (~(cells.astype(bool))[signature2.negative_markers]).all(axis=1)
     source_count = sum(mask1)
+
     if source_count == 0:
         return None
     source_cell_locations = cells.loc[mask1, ['pixel x', 'pixel y']]

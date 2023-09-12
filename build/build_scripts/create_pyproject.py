@@ -2,7 +2,7 @@
 import toml
 
 def validate_dependencies_all(project):
-    modules = ['apiserver', 'db', 'ondemand', 'workflow']
+    modules = ['apiserver', 'cggnn', 'db', 'ondemand', 'workflow']
     dependencies = set()
     for module in modules:
         dependencies = dependencies.union(set(project['project']['optional-dependencies'][module]))

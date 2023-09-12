@@ -42,8 +42,8 @@ def compute_squidpy_metric_for_one_sample(
         for column in df_cell.columns
     }, axis=1)
     masks: list[Series] = [
-        (df_cell[signature.positive_markers].all(axis=1) &
-         (~df_cell[signature.negative_markers]).all(axis=1))
+        (df_cell.astype(bool)[signature.positive_markers].all(axis=1) &
+         (~(df_cell.astype(bool))[signature.negative_markers]).all(axis=1))
         for signature in phenotypes
     ]
     adata = convert_df_to_anndata(df_cell, masks)

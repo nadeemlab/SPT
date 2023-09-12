@@ -100,13 +100,13 @@ def extract_cggnn_data(
         Mapping from class integer label to human-interpretable result text.
     """
     extractor = FeatureMatrixExtractor(database_config_file=spt_db_config_location)
-    df_cell = _create_cell_df({
-        slide: data.dataframe for slide, data in extractor.extract(study=study).items()
-    })
     cohorts = extractor.extract_cohorts(study)
     df_label, label_to_result_text = _create_label_df(
         cohorts['assignments'],
         cohorts['strata'],
         strata_to_use,
     )
+    df_cell = _create_cell_df({
+        slide: extractor.extract(study=study)[slide].dataframe for slide in df_label.index
+    })
     return df_cell, df_label, label_to_result_text

@@ -1,7 +1,8 @@
 """The core calculator for the proximity calculation on a single source file."""
+
 import warnings
 import pickle
-from typing import cast
+
 
 import pandas as pd
 from pandas import DataFrame
@@ -9,7 +10,6 @@ from sklearn.neighbors import BallTree  # type: ignore
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import \
     PerformanceTimerReporter
 from spatialprofilingtoolbox import DatabaseConnectionMaker
@@ -29,16 +29,15 @@ logger = colorized_logger(__name__)
 class PhenotypeProximityCoreJob(CoreJob):
     """Core/parallelizable functionality for the phenotype proximity workflow."""
     radii = [60, 120]
-    channel_symbols_by_column_name: dict[str, str]
     tree: BallTree
 
     def __init__(self,
-        study_name: str='',
-        database_config_file: str='',
-        performance_report_file: str='',
-        results_file: str='',
+        study_name: str = '',
+        database_config_file: str = '',
+        performance_report_file: str = '',
+        results_file: str = '',
         **kwargs  # pylint: disable=unused-argument
-    ):
+    ) -> None:
         self.study_name = study_name
         self.database_config_file = database_config_file
         self.results_file = results_file
@@ -64,48 +63,55 @@ class PhenotypeProximityCoreJob(CoreJob):
 
     def calculate_proximity(self):
         self.reporter.record_timepoint('Start pulling data for one sample.')
-        extractor = FeatureMatrixExtractor(database_config_file=self.database_config_file)
-        bundle = cast(Bundle, extractor.extract(specimen=self.sample_identifier))
+        bundle = FeatureMatrixExtractor(database_config_file=self.database_config_file).extract(
+            specimen=self.sample_identifier)
         self.reporter.record_timepoint('Finished pulling data for one sample.')
-        study_name = list(bundle.keys())[0]
-        identifier = list(bundle[study_name]['feature matrices'].keys())[0]
-        Sample = dict[str, DataFrame | str]
-        sample = cast(Sample, bundle[study_name]['feature matrices'][identifier])
-        cells = cast(DataFrame, sample['dataframe'])
+        identifier = list(bundle.keys())[0]
+        cells = bundle[identifier].dataframe
         logger.info('Dataframe pulled: %s', cells.head())
 
         self.create_ball_tree(cells)
 
-        self.channel_symbols_by_column_name = cast(
-            dict[str, str],
-            bundle[study_name]['channel symbols by column name'],
+        # Assemble phenotype signatures for every channel and phenotype
+        channels = sorted(
+            [col_name[2:] for col_name in cells.columns if col_name.startswith('C ')]
         )
-        phenotype_identifiers, signatures = self.get_named_phenotype_signatures()
+        phenotypes = sorted(
+            [col_name[2:] for col_name in cells.columns if col_name.startswith('P ')]
+        )
+        signatures = self.get_named_phenotype_signatures()
+        assert set(phenotypes) == signatures.keys()
         logger.info('Named phenotypes:')
-        logger.info(signatures)
+        logger.info(phenotypes)
+        all_features = channels + phenotypes
+        signatures.update({
+            column_name: PhenotypeCriteria(
+                positive_markers=[column_name],
+                negative_markers=[],
+            ) for column_name in channels
+        })
 
-        channels = sorted(self.channel_symbols_by_column_name.keys())
-        singleton_signatures = [
-            PhenotypeCriteria(positive_markers=[column_name], negative_markers=[])
-            for column_name in channels
-        ]
-        all_signatures = singleton_signatures + signatures
-        cases = self.get_cases(all_signatures)
-        proximity_metrics=[
-            compute_proximity_metric_for_signature_pair(s1, s2, r, cells, self.tree)
-            for s1, s2, r in cases
-        ]
-        self.write_table(proximity_metrics, self.get_cases(channels + phenotype_identifiers))
+        # Calculate proximity metrics for every phenotype pair and write
+        proximity_metrics = {
+            (f1, f2, r): compute_proximity_metric_for_signature_pair(
+                signatures[f1],
+                signatures[f2],
+                r,
+                cells,
+                self.tree,
+            ) for f1, f2, r in self.get_cases(all_features)
+        }
+        self.write_table(proximity_metrics)
 
     def create_ball_tree(self, cells):
         self.tree = BallTree(cells[['pixel x', 'pixel y']].to_numpy())
 
-    def get_named_phenotype_signatures(self) -> tuple[list[str], list[PhenotypeCriteria]]:
+    def get_named_phenotype_signatures(self) -> dict[str, PhenotypeCriteria]:
         with DatabaseConnectionMaker(self.database_config_file) as dcm:
             connection = dcm.get_connection()
             cursor = connection.cursor()
             cursor.execute('''
-            SELECT cp.identifier, cp.symbol, cs.symbol, CASE cpc.polarity WHEN 'positive' THEN 1 WHEN 'negative' THEN 0 END coded_value
+            SELECT cp.symbol, cs.symbol, CASE cpc.polarity WHEN 'positive' THEN 1 WHEN 'negative' THEN 0 END coded_value
             FROM cell_phenotype cp
             JOIN cell_phenotype_criterion cpc ON cpc.cell_phenotype=cp.identifier
             JOIN chemical_species cs ON cs.identifier=cpc.marker
@@ -116,44 +122,34 @@ class PhenotypeProximityCoreJob(CoreJob):
             ''', (self.study_name,))
             rows = cursor.fetchall()
             cursor.close()
-        lookup = {value : key for key, value in self.channel_symbols_by_column_name.items()}
-        criteria = DataFrame(rows, columns=['phenotype', 'name', 'channel', 'polarity'])
-        criteria = criteria[['phenotype', 'channel', 'polarity']]
+        criteria = DataFrame(rows, columns=['phenotype', 'channel', 'polarity'])
 
         def list_channels(df: DataFrame, polarity: int) -> list[str]:
-            return [lookup[r['channel']] for _, r in df.iterrows() if r['polarity'] == polarity]
+            return [r['channel'] for _, r in df.iterrows() if r['polarity'] == polarity]
 
         def make_signature(df) -> PhenotypeCriteria:
             return PhenotypeCriteria(
-                positive_markers = list_channels(df, 1),
-                negative_markers = list_channels(df, 0),
+                positive_markers=list_channels(df, 1),
+                negative_markers=list_channels(df, 0),
             )
         by_identifier: dict[str, PhenotypeCriteria] = {}
-        for key, criteria in criteria.groupby(['phenotype']):
-            by_identifier[str(key[0])] = make_signature(criteria)
-        identifiers = sorted(by_identifier.keys())
-        return identifiers, [by_identifier[i] for i in identifiers]
+        for phenotype, criteria in criteria.groupby('phenotype'):
+            by_identifier[phenotype] = make_signature(criteria)
+        return by_identifier
 
-    def get_cases(self, items):
+    def get_cases(self, items: list[str]) -> list[tuple[str, str, float]]:
         return [
-            (s1, s2, radius)
-            for s1 in items
-            for s2 in items
+            (f1, f2, radius)
+            for f1 in items
+            for f2 in items
             for radius in PhenotypeProximityCoreJob.radii
         ]
 
-    def write_table(self, proximity_metrics, cases):
-        if len(proximity_metrics) != len(cases):
-            raise ValueError('Number of computed features not equal to number of cases.')
-        rows = list(zip(
-            [case[0] for case in cases],
-            [case[1] for case in cases],
-            [case[2] for case in cases],
-            proximity_metrics,
-        ))
+    def write_table(self, proximity_metrics: dict[tuple[str, str, float], float | None]) -> None:
+        rows = [(f1, f2, r, m) for (f1, f2, r), m in proximity_metrics.items()]
         columns = ['Phenotype 1', 'Phenotype 2', 'Pixel radius', 'Proximity']
         df = DataFrame(rows, columns=columns)
-        bundle = [df, self.channel_symbols_by_column_name, self.sample_identifier]
+        bundle = [df, self.sample_identifier]
         with open(self.results_file, 'wb') as file:
             pickle.dump(bundle, file)
         logger.info('Computed metrics: %s', df.head())

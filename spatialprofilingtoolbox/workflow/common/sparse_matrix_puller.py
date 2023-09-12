@@ -2,7 +2,7 @@
 (in-memory) binary compressed format.
 """
 
-from typing import cast
+from typing import cast, Any
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
@@ -36,9 +36,9 @@ class CompressedDataArrays:
     """
 
     def __init__(self):
-        self.studies = {}
+        self.studies: dict[str, dict[str, dict[str, Any]]] = {}
 
-    def get_studies(self):
+    def get_studies(self) -> dict[str, dict[str, dict[str, Any]]]:
         return self.studies
 
     def add_study_data(

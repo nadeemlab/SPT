@@ -10,7 +10,7 @@ def load_dockerfile(submodule):
 
 def check_exists(dependency, dockerfile):
     for line in dockerfile.split('\n'):
-        if re.search(f'RUN python3? -m pip install "?{dependency}"?$', line):
+        if re.search(f'RUN python3?(.11)? -m pip install "?{dependency}"?$', line):
             return True
         if re.search(dependency, line):
             print(f'Dependency "{dependency}" is mentioned in Dockerfile, but something isn\'t quite right with installation command.')

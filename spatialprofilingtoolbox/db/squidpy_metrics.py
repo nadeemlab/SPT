@@ -1,13 +1,10 @@
 """Make squidpy metrics that don't require specific phenotype selection available."""
 
-from typing import cast
-
 from pandas import DataFrame
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-from spatialprofilingtoolbox.db.feature_matrix_extractor import Bundle
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.squidpy import (
@@ -27,10 +24,7 @@ def create_and_transcribe_squidpy_features(
     """Transcribe "off-demand" Squidpy feature(s) in features system."""
     connection = database_connection_maker.get_connection()
     das = DataAnalysisStudyFactory(connection, study, 'spatial autocorrelation').create()
-    features_by_specimen, channel_symbols_by_column_name = _fetch_cells_and_phenotypes(
-        connection.cursor(),
-        study,
-    )
+    features_by_specimen = _fetch_cells(connection.cursor(), study)
     with ADIFeaturesUploader(
         database_connection_maker,
         data_analysis_study=das,
@@ -42,7 +36,6 @@ def create_and_transcribe_squidpy_features(
             create_and_transcribe_one_sample(
                 sample,
                 df,
-                channel_symbols_by_column_name,
                 feature_uploader,
             )
 
@@ -50,31 +43,24 @@ def create_and_transcribe_squidpy_features(
 def create_and_transcribe_one_sample(
     sample: str,
     df: DataFrame,
-    channel_symbols_by_column_name: dict[str, str],
     feature_uploader: ADIFeaturesUploader,
 ) -> None:
-    for column, symbol in channel_symbols_by_column_name.items():
-        criteria = PhenotypeCriteria(positive_markers=[column], negative_markers=[])
-        value = compute_squidpy_metric_for_one_sample(df, [criteria], 'spatial autocorrelation')
-        if value is None:
-            continue
-        feature_uploader.stage_feature_value((symbol,), sample, value)
+    for column in df.columns:
+        if column.startswith('C '):
+            symbol = column[2:]
+            criteria = PhenotypeCriteria(positive_markers=[symbol], negative_markers=[])
+            value = compute_squidpy_metric_for_one_sample(df, [criteria], 'spatial autocorrelation')
+            if value is None:
+                continue
+            feature_uploader.stage_feature_value((symbol,), sample, value)
 
 
-def _fetch_cells_and_phenotypes(
+def _fetch_cells(
     cursor: Psycopg2Cursor,
     study: str,
-) -> tuple[dict[str, DataFrame], dict[str, str]]:
-    extractor = FeatureMatrixExtractor(cursor)
-    bundle = cast(Bundle, extractor.extract(study=study))
-    FeatureMatrices = dict[str, dict[str, DataFrame | str]]
-    feature_matrices = cast(FeatureMatrices, bundle[study]['feature matrices'])
+) -> dict[str, DataFrame]:
+    feature_matrices = FeatureMatrixExtractor(cursor).extract(study=study)
     features_by_specimen = {
-        specimen: cast(DataFrame, packet['dataframe'])
-        for specimen, packet in feature_matrices.items()
+        specimen: bundle.dataframe for specimen, bundle in feature_matrices.items()
     }
-    channel_symbols_by_columns_name = cast(
-        dict[str, str],
-        bundle[study]['channel symbols by column name'],
-    )
-    return features_by_specimen, channel_symbols_by_columns_name
+    return features_by_specimen

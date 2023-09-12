@@ -5,39 +5,47 @@ import pandas as pd
 
 from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 
-def lookup_all_cell_phenotype_signatures(database_config_file):
+def lookup_all_cell_phenotype_signatures(database_config_file) -> dict[str, set[tuple[str, str]]]:
     with DatabaseConnectionMaker(database_config_file) as dcm:
         connection = dcm.get_connection()
         cursor = connection.cursor()
         cursor.execute('''
         SELECT
-        cpc.cell_phenotype, cs.symbol, cpc.polarity
+            cp.symbol AS phenotype,
+            cs.symbol AS channel,
+            cpc.polarity
         FROM cell_phenotype_criterion cpc
-        JOIN chemical_species cs ON cs.identifier=cpc.marker
-        ORDER BY cpc.cell_phenotype
+            JOIN cell_phenotype cp
+                ON cp.identifier=cpc.cell_phenotype
+            JOIN chemical_species cs
+                ON cs.identifier=cpc.marker
+        ORDER BY phenotype
         ;
         ''')
         rows = cursor.fetchall()
         cursor.close()
-    df = pd.DataFrame(rows, columns=['cell phenotype', 'symbol', 'polarity'])
-    def extract_signature(group):
+    df = pd.DataFrame(rows, columns=['phenotype', 'channel', 'polarity'])
+    def extract_signature(group: pd.DataFrame) -> set[tuple[str, str]]:
         return set(
-            (row['symbol'], '+' if row['polarity'] == 'positive' else '-')
-            for i, row in group.iterrows()
+            (row['channel'], '+' if row['polarity'] == 'positive' else '-')
+            for _, row in group.iterrows()
         )
     return {
-        str(cell_phenotype) : extract_signature(group)
-        for cell_phenotype, group in df.groupby('cell phenotype')
+        phenotype : extract_signature(group)
+        for phenotype, group in df.groupby('phenotype')
     }
 
-def retrieve_cell_phenotype_identifier(description_string, lookup):
+def retrieve_cell_phenotype_identifier(
+    description_string: str,
+    lookup: dict[str, set[tuple[str, str]]],
+) -> str:
     signature = set((re.sub(r'[\+\-]', '', token), re.search(r'[\+\-]', token).group(0))
                     for token in description_string.split(' '))
     if len(signature) == 1:
         return list(signature)[0][0]
-    for key, value in lookup.items():
+    for phenotype, value in lookup.items():
         if value == signature:
-            return f'cell_phenotype {key}'
+            return phenotype
     raise KeyError(f'Could not figure out {description_string}. '
                     f'Looked for {signature} in values of: {lookup}')
 

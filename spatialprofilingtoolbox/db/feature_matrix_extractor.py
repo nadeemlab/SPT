@@ -10,12 +10,14 @@ from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.db.phenotypes import PhenotypesAccess
+from spatialprofilingtoolbox.db.accessors import (
+    StudyAccess,
+    PhenotypesAccess,
+)
 from spatialprofilingtoolbox.db.stratification_puller import (
     StratificationPuller,
     Stratification,
 )
-from spatialprofilingtoolbox.db.study_access import StudyAccess
 from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
     StructureCentroidsPuller
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller

@@ -26,7 +26,8 @@ def check_records(feature_values):
     rows = [(row[0], row[1], round6(row[2])) for row in feature_values]
     missing = set(get_expected_records()).difference(rows)
     if len(missing) > 0:
-        raise ValueError(f'Expected to find records: {missing}')
+        raise ValueError(f'Expected to find records: {sorted(missing)}\nGot: {sorted(rows)}')
+
     print('All expected records found.')
     unexpected = set(rows).difference(get_expected_records())
     if len(unexpected) > 0:

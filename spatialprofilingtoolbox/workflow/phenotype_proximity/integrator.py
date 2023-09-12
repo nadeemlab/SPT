@@ -68,9 +68,9 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
     def send_features_to_uploader(self, feature_uploader, core_computation_results_files):
         for results_file in core_computation_results_files:
             with open(results_file, 'rb') as file:
-                feature_values, channel_symbols_by_column_name, sample_identifier= pickle.load(file)
+                feature_values, sample_identifier= pickle.load(file)
             stage_proximity_feature_values(
                 feature_uploader,
                 feature_values,
-                channel_symbols_by_column_name, sample_identifier,
+                sample_identifier,
             )

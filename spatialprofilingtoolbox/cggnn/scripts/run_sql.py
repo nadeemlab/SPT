@@ -1,4 +1,5 @@
 "Run through the entire SPT CG-GNN pipeline, starting from a SPT SQL database."
+
 from argparse import ArgumentParser
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
@@ -8,7 +9,7 @@ except ModuleNotFoundError as e:
 
 
 def parse_arguments():
-    "Process command line arguments."
+    """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt cggnn run_sql',
         description='Create cell graphs from SPT SQL tables, train a graph neural network on '

@@ -13,10 +13,17 @@ def _create_cell_df(dfs_by_specimen: dict[str, DataFrame]) -> DataFrame:
 
     df = concat(dfs_by_specimen.values(), axis=0)
     df.index.name = 'histological_structure'
+
+    # Convert binary int columns to boolean
+    channels = df.columns[df.columns.str.startswith('C ')]
+    phenotypes = df.columns[df.columns.str.startswith('P ')]
+    df[channels] = df[channels].astype(bool)
+    df[phenotypes] = df[phenotypes].astype(bool)
+
     # Reorder columns so it's specimen, xy, channels, and phenotypes
     column_order = ['specimen', 'pixel x', 'pixel y']
-    column_order.extend(df.columns[df.columns.str.startswith('C ')])
-    column_order.extend(df.columns[df.columns.str.startswith('P ')])
+    column_order.extend(channels)
+    column_order.extend(phenotypes)
     return df[column_order]
 
 

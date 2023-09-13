@@ -159,7 +159,7 @@ async def get_anonymous_phenotype_counts_fast(
     negative_markers = [m for m in negative_marker if m != '']
     measurement_study = query().get_study_components(study).measurement
     number_cells = query().get_number_cells(study)
-    with OnDemandRequester() as requester:
+    with OnDemandRequester(service='counts') as requester:
         counts = requester.get_counts_by_specimen(
             positive_markers,
             negative_markers,
@@ -227,7 +227,7 @@ def get_proximity_metrics(
     markers: list[list[str]],
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester() as requester:
+    with OnDemandRequester(service='proximity') as requester:
         metrics = requester.get_proximity_metrics(
             query().get_study_components(study).measurement,
             radius,
@@ -242,7 +242,7 @@ def get_squidpy_metrics(
     feature_class: str,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester() as requester:
+    with OnDemandRequester(service='squidpy') as requester:
         metrics = requester.get_squidpy_metrics(
             query().get_study_components(study).measurement,
             markers,

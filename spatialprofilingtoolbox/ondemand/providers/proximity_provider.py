@@ -35,6 +35,10 @@ class ProximityProvider(PendingProvider):
         self._create_ball_trees()
         logger.info('Finished creating ball trees.')
 
+    @classmethod
+    def service_specifier(cls) -> str:
+        return 'proximity'
+
     def _create_ball_trees(self) -> None:
         self.trees = {
             study_name: {

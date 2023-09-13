@@ -18,10 +18,6 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger('spt ondemand start')
 
-COUNTS = 'counts'
-PROXIMITY = 'proximity'
-SQUIDPY = 'squidpy'
-
 
 def start() -> None:
     source_data_location, host, port, service = get_cli_arguments()
@@ -36,14 +32,16 @@ def setup_data_sources(source_data_location: str) -> None:
 
 
 def start_services(source_data_location: str, host: str, port: int, service: str | None) -> None:
-    counts = CountsProvider(source_data_location) if (service in {'counts', None}) else None
-    proximity = ProximityProvider(source_data_location) if (service in {'proximity', None}) else \
-        None
-    squidpy = SquidpyProvider(source_data_location) if (service in {'squidpy', None}) else None
+    service_classes = (CountsProvider, ProximityProvider, SquidpyProvider)
+    specifiers_classes = {c.service_specifier(): c for c in service_classes}
+    providers_initialized = {
+        specifier: service_class(source_data_location) if service in (specifier, None) else None
+        for specifier, service_class in specifiers_classes.items()
+    }
     tcp_server = OnDemandTCPServer(
         (host, port),
         OnDemandRequestHandler,
-        OnDemandProviderSet(counts=counts, proximity=proximity, squidpy=squidpy),
+        OnDemandProviderSet(**providers_initialized),
     )
     if service is not None:
         logger.info('Service "%s" is ready to accept connections.', service)
@@ -81,10 +79,11 @@ def get_cli_arguments() -> tuple[str, str, int, str | None]:
         'the JSON index file. If they are not found, this program will attempt to create them '
         'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
     )
+    service_classes = [CountsProvider, ProximityProvider, SquidpyProvider]
     parser.add_argument(
         '--service',
         dest='service',
-        choices=(COUNTS, PROXIMITY, SQUIDPY),
+        choices=tuple(c.service_specifier() for c in service_classes),
         type=str,
         default=None,
         help='Choose which service to start. If not provided, all services will be started.',

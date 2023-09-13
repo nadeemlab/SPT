@@ -24,6 +24,10 @@ class OnDemandProvider(ABC):
     """Base class for OnDemandProvider instances, since they share data ingestion methods."""
     data_arrays: dict[str, dict[str, DataFrame]]
 
+    @classmethod
+    def service_specifier(cls) -> str:
+        raise NotImplementedError
+
     def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
         self.load_expressions_indices(data_directory)

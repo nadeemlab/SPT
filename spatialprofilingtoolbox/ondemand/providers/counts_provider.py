@@ -21,6 +21,10 @@ class CountsProvider(OnDemandProvider):
         """
         super().__init__(data_directory, False)
 
+    @classmethod
+    def service_specifier(cls) -> str:
+        return 'counts'
+
     @simple_instance_method_cache(maxsize=50000)
     def count_structures_of_partial_signed_signature(
         self,

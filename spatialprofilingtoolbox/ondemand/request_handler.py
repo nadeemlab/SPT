@@ -4,6 +4,7 @@ from socketserver import BaseRequestHandler
 from json import dumps
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
 from spatialprofilingtoolbox import squidpy_feature_classnames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -20,12 +21,12 @@ class OnDemandRequestHandler(BaseRequestHandler):
         """Handle an on demand request."""
         try:
             self._handle()
-        except Exception  as exception:
+        except Exception as exception:
             logger.error('Unhandled exception in on demand service.')
             self._send_error_response()
             raise exception
 
-    def _handle(self):
+    def _handle(self) -> None:
         """Handle an on demand request."""
         data = self.request.recv(512).strip()
         logger.info('Request: %s', data)
@@ -35,11 +36,20 @@ class OnDemandRequestHandler(BaseRequestHandler):
         handled = False
         match request_class:
             case 'counts':
+                if self.server.providers.counts is None:
+                    self._send_error_response()
+                    return
                 handled = self._handle_single_phenotype_counts_request(groups)
             case 'proximity':
+                if self.server.providers.proximity is None:
+                    self._send_error_response()
+                    return
                 handled = self._handle_proximity_request(groups)
         if not handled:
             if request_class in squidpy_feature_classnames():
+                if self.server.providers.squidpy is None:
+                    self._send_error_response()
+                    return
                 handled = self._handle_squidpy_request(request_class, groups)
         if not handled:
             self._send_error_response()
@@ -70,6 +80,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return True
 
     def _get_counts(self, study, positives_signature, negatives_signature):
+        assert self.server.providers.counts is not None
         arguments = [positives_signature, negatives_signature, study]
         return self.server.providers.counts.count_structures_of_partial_signed_signature(*arguments)
 
@@ -81,13 +92,14 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return False
 
     def _get_signatures(self, study_name, positives, negatives):
+        assert self.server.providers.counts is not None
         signature1 = self.server.providers.counts.compute_signature(positives, study_name)
         signature2 = self.server.providers.counts.compute_signature(negatives, study_name)
         logger.info('Signature: %s, %s', signature1, signature2)
         return signature1, signature2
 
-    def _handle_missing_study(self, study_name):
-        if self.server.providers.counts.has_study(study_name):
+    def _handle_missing_study(self, study_name: str) -> bool:
+        if self._get_default_provider().has_study(study_name):
             return False
         logger.error('Study not known to counts server: %s', study_name)
         self._wrap_up_transmission()
@@ -125,6 +137,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return True
 
     def _get_proximity_metrics(self, study, radius, signature):
+        assert self.server.providers.proximity is not None
         positives1, negatives1, positives2, negatives2 = signature
         phenotype1 = PhenotypeCriteria(positive_markers=positives1, negative_markers=negatives1)
         phenotype2 = PhenotypeCriteria(positive_markers=positives2, negative_markers=negatives2)
@@ -191,6 +204,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         channel_lists: list[list[str]],
         radius: float | None = None,
     ) -> dict[str, dict[str, float | None] | bool]:
+        assert self.server.providers.squidpy is not None
         phenotypes: list[PhenotypeCriteria] = []
         for i in range(len(channel_lists)//2):
             phenotypes.append(PhenotypeCriteria(
@@ -207,7 +221,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
     def _handle_empty_body(self, data):
         if data == '':
             logger.info('Empty body. Serving status.')
-            status = dumps(self.server.providers.counts.get_status(), indent=4)
+            status = dumps(self._get_default_provider().get_status(), indent=4)
             message = status + self._get_end_of_transmission()
             self.request.sendall(message.encode('utf-8'))
             return True
@@ -231,3 +245,12 @@ class OnDemandRequestHandler(BaseRequestHandler):
         if element == ['']:
             return []
         return element
+
+    def _get_default_provider(self) -> OnDemandProvider:
+        if self.server.providers.counts is not None:
+            return self.server.providers.counts
+        if self.server.providers.proximity is not None:
+            return self.server.providers.proximity
+        if self.server.providers.squidpy is not None:
+            return self.server.providers.squidpy
+        raise RuntimeError('No provider available.')

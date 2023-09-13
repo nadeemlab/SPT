@@ -19,32 +19,38 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger('spt ondemand start')
 
 
-def start():
-    source_data_location, host, port = get_cli_arguments()
+def start() -> None:
+    source_data_location, host, port, service = get_cli_arguments()
     setup_data_sources(source_data_location)
-    start_services(source_data_location, host, port)
+    start_services(source_data_location, host, port, service)
 
 
-def setup_data_sources(source_data_location):
+def setup_data_sources(source_data_location: str) -> None:
     wait_for_database_ready()
     assessor = FastCacheAssessor(source_data_location)
     assessor.assess_and_act()
 
 
-def start_services(source_data_location: str, host: str, port: int) -> None:
-    counts = CountsProvider(source_data_location)
-    proximity = ProximityProvider(source_data_location)
-    squidpy = SquidpyProvider(source_data_location)
+def start_services(source_data_location: str, host: str, port: int, service: str | None) -> None:
+    service_classes = (CountsProvider, ProximityProvider, SquidpyProvider)
+    specifiers_classes = {c.service_specifier(): c for c in service_classes}
+    providers_initialized = {
+        specifier: service_class(source_data_location) if service in (specifier, None) else None
+        for specifier, service_class in specifiers_classes.items()
+    }
     tcp_server = OnDemandTCPServer(
         (host, port),
         OnDemandRequestHandler,
-        OnDemandProviderSet(counts = counts, proximity = proximity, squidpy = squidpy),
+        OnDemandProviderSet(**providers_initialized),
     )
-    logger.info('ondemand is ready to accept connections.')
+    if service is not None:
+        logger.info('Service "%s" is ready to accept connections.', service)
+    else:
+        logger.info('Ondemand services are ready to accept connections.')
     tcp_server.serve_forever(poll_interval=0.2)
 
 
-def get_cli_arguments():
+def get_cli_arguments() -> tuple[str, str, int, str | None]:
     parser = argparse.ArgumentParser(
         prog='spt ondemand start',
         description='Server providing counts of samples satisfying given partial signatures.',
@@ -73,8 +79,17 @@ def get_cli_arguments():
         'the JSON index file. If they are not found, this program will attempt to create them '
         'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
     )
+    service_classes = [CountsProvider, ProximityProvider, SquidpyProvider]
+    parser.add_argument(
+        '--service',
+        dest='service',
+        choices=tuple(c.service_specifier() for c in service_classes),
+        type=str,
+        default=None,
+        help='Choose which service to start. If not provided, all services will be started.',
+    )
     args = parser.parse_args()
-    return args.source_data_location, args.host, args.port
+    return args.source_data_location, args.host, args.port, args.service
 
 
 if __name__ == '__main__':

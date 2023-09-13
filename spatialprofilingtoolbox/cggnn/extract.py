@@ -25,8 +25,9 @@ def _create_label_df(
     df_strata: DataFrame,
     strata_to_use: list[int] | None,
 ) -> tuple[DataFrame, dict[int, str]]:
-    """Get slide-level results."""
-    df_assignments = df_assignments.set_index('specimen')
+    """Get specimen-level results."""
+    df_assignments['stratum identifier'] = df_assignments['stratum identifier'].astype(int)
+    df_strata['stratum identifier'] = df_strata['stratum identifier'].astype(int)
     df_strata = df_strata.set_index('stratum identifier')
     df_strata = _filter_for_strata(strata_to_use, df_strata)
     df_strata = _drop_unneeded_columns(df_strata)
@@ -52,17 +53,22 @@ def _drop_unneeded_columns(df_strata: DataFrame) -> DataFrame:
 
 def _compress_df(df_strata: DataFrame) -> DataFrame:
     """Compress remaining columns into a single string"""
-    df_strata['label'] = '(' + df_strata.iloc[:, 0].astype(str)
-    for i in range(1, df_strata.shape[1]):
-        df_strata['label'] += df_strata.iloc[:, i].astype(str)
-    df_strata['label'] += ')'
-    df_strata = df_strata[['label']]
+    n_columns = df_strata.shape[1]
+    if n_columns == 1:
+        df_strata = df_strata.rename(columns={df_strata.columns[0]: 'label'})
+    else:
+        df_strata['label'] = '(' + df_strata.iloc[:, 0].astype(str)
+        for i in range(1, n_columns):
+            df_strata['label'] += ', ' + df_strata.iloc[:, i].astype(str)
+        df_strata['label'] += ')'
+        df_strata = df_strata[['label']]
     return df_strata
 
 
 def _label(df_assignments: DataFrame, df_strata: DataFrame) -> tuple[DataFrame, dict[int, str]]:
     """Merge with specimen assignments, keeping only selected strata."""
-    df = merge(df_assignments, df_strata, on='stratum identifier', how='inner')[['label']]
+    df = merge(df_assignments, df_strata, on='stratum identifier', how='inner'
+               ).set_index('specimen')[['label']]
     label_to_result = dict(enumerate(sort(df['label'].unique())))
     return df.replace({res: i for i, res in label_to_result.items()}), label_to_result
 
@@ -73,7 +79,7 @@ def extract_cggnn_data(
     strata_to_use: list[int] | None,
 ) -> tuple[DataFrame, DataFrame, dict[int, str]]:
     """Extract information cg-gnn needs from SPT.
-    
+
     Parameters
     ----------
     spt_db_config_location : str
@@ -84,7 +90,7 @@ def extract_cggnn_data(
         Specimen strata to use as labels, identified according to the "stratum identifier" in
         `explore_classes`. This should be given as space separated integers.
         If not provided, all strata will be used.
-    
+
     Returns
     -------
     df_cell: DataFrame
@@ -107,6 +113,9 @@ def extract_cggnn_data(
         strata_to_use,
     )
     df_cell = _create_cell_df({
-        slide: extractor.extract(study=study)[slide].dataframe for slide in df_label.index
+        specimen: extractor.extract(specimen=specimen)[specimen].dataframe
+        for specimen in df_label.index
+    } if (strata_to_use is not None) else {
+        specimen: data.dataframe for specimen, data in extractor.extract(study=study).items()
     })
     return df_cell, df_label, label_to_result_text

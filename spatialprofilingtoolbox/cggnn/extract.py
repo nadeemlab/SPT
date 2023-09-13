@@ -113,9 +113,10 @@ def extract_cggnn_data(
         strata_to_use,
     )
     df_cell = _create_cell_df({
-        specimen: extractor.extract(specimen=specimen)[specimen].dataframe
+        specimen: extractor.extract(specimen=specimen, retain_structure_id=True)[specimen].dataframe
         for specimen in df_label.index
     } if (strata_to_use is not None) else {
-        specimen: data.dataframe for specimen, data in extractor.extract(study=study).items()
+        specimen: data.dataframe
+        for specimen, data in extractor.extract(study=study, retain_structure_id=True).items()
     })
     return df_cell, df_label, label_to_result_text

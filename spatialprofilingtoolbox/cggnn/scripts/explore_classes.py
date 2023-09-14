@@ -28,6 +28,6 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    extractor = FeatureMatrixExtractor(args.spt_db_config_location)
+    extractor = FeatureMatrixExtractor(database_config_file=args.spt_db_config_location)
     strata = extractor.extract_cohorts(study=args.study)['strata']
     print(strata.to_string())

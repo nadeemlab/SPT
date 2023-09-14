@@ -2,18 +2,16 @@ spt cggnn extract \
     --spt_db_config_location ../db/.spt_db.config.container \
     --study "Melanoma intralesional IL2" \
     --output_location .
-$([ $? -eq 0 ] && [ -e "label_to_results.json" ] && [ -e "cells.h5" ] && [ -e "labels.h5" ])
+$([ $? -eq 0 ] && [ -e "Melanoma intralesional IL2/label_to_results.json" ] && [ -e "Melanoma intralesional IL2/cells.h5" ] && [ -e "Melanoma intralesional IL2/labels.h5" ])
 status="$?"
 echo "Status: $status"
 [ $status -eq 0 ] || echo "cggnn extract failed."
 
-cat label_to_results.json
-python3.11 -c 'import pandas as pd; print(pd.read_hdf("cells.h5"))'
-python3.11 -c 'import pandas as pd; print(pd.read_hdf("labels.h5"))'
+cat "Melanoma intralesional IL2/label_to_results.json"
+python3.11 -c 'import pandas as pd; print(pd.read_hdf("Melanoma intralesional IL2/cells.h5"))'
+python3.11 -c 'import pandas as pd; print(pd.read_hdf("Melanoma intralesional IL2/labels.h5"))'
 
-rm label_to_results.json
-rm cells.h5
-rm labels.h5
+rm -r "Melanoma intralesional IL2/"
 
 if [ $status -eq 0 ];
 then

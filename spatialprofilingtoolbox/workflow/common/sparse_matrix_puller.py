@@ -7,6 +7,7 @@ from typing import cast, Any
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
+from spatialprofilingtoolbox.db.study_access import StudyAccess
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
     import FractionalProgressReporter
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -107,7 +108,14 @@ class SparseMatrixPuller:
     def __init__(self, cursor: Psycopg2Cursor):
         self.cursor = cursor
 
-    def pull(self, specimen: str | None=None, study: str | None=None, continuous_also: bool=False):
+    def pull(self,
+        specimen: str | None = None,
+        study: str | None = None,
+        continuous_also: bool = False,
+    ) -> None:
+        """Pull sparse matrices into self.data_arrays."""
+        if (specimen is not None) and (study is not None):
+            raise ValueError('Must specify exactly one of specimen or study, or neither.')
         self.data_arrays = self._retrieve_data_arrays(
             specimen=specimen,
             study=study,
@@ -118,10 +126,12 @@ class SparseMatrixPuller:
         return self.data_arrays
 
     def _retrieve_data_arrays(self,
-            specimen: str | None=None,
-            study: str | None=None,
-            continuous_also: bool=False,
-        ) -> CompressedDataArrays:
+        specimen: str | None = None,
+        study: str | None = None,
+        continuous_also: bool = False,
+    ) -> CompressedDataArrays:
+        if specimen is not None:
+            study = StudyAccess(self.cursor).get_study_from_specimen(specimen)
         study_names = self._get_study_names(study=study)
         data_arrays = CompressedDataArrays()
         for study_name in study_names:
@@ -136,9 +146,9 @@ class SparseMatrixPuller:
     def _fill_data_arrays_for_study(self,
         data_arrays: CompressedDataArrays,
         study_name: str,
-        specimen: str | None=None,
-        continuous_also: bool=False,
-    ):
+        specimen: str | None = None,
+        continuous_also: bool = False,
+    ) -> None:
         specimens = self._get_pertinent_specimens(study_name, specimen=specimen)
         target_by_symbol = self._get_target_by_symbol(study_name)
         logger.debug('Pulling sparse entries for study "%s".', study_name)
@@ -158,8 +168,8 @@ class SparseMatrixPuller:
                 continue
             parsed = parse(sparse_entries, continuous_also=continuous_also)
             data_arrays_by_specimen, \
-            target_index_lookup, \
-            continuous_data_arrays_by_specimen = parsed
+                target_index_lookup, \
+                continuous_data_arrays_by_specimen = parsed
             data_arrays.add_study_data(
                 study_name,
                 data_arrays_by_specimen,
@@ -172,9 +182,18 @@ class SparseMatrixPuller:
 
     def _get_pertinent_specimens(self,
         study_name: str,
-        specimen: str | None=None,
+        specimen: str | None = None,
     ) -> tuple[str, ...]:
         if specimen is not None:
+            self.cursor.execute('''
+            SELECT sdmp.specimen
+            FROM specimen_data_measurement_process sdmp
+            WHERE sdmp.study=%s
+                AND sdmp.specimen=%s
+            ;
+            ''', (study_name, specimen))
+            if len(self.cursor.fetchall()) == 0:
+                raise ValueError(f'Specimen "{specimen}" not found in study "{study_name}".')
             return (specimen,)
         self.cursor.execute('''
         SELECT sdmp.specimen
@@ -186,7 +205,7 @@ class SparseMatrixPuller:
         rows = self.cursor.fetchall()
         return tuple(cast(str, row[0]) for row in rows)
 
-    def _get_study_names(self, study: str | None=None) -> tuple[str, ...]:
+    def _get_study_names(self, study: str | None = None) -> tuple[str, ...]:
         if study is None:
             self.cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = self.cursor.fetchall()
@@ -204,8 +223,8 @@ class SparseMatrixPuller:
             logger.info('    %s', name)
         return names
 
-    def _get_sparse_entries(self, study_name:str , specimen: str) -> list[tuple]:
-        sparse_entries: list[tuple] = []
+    def _get_sparse_entries(self, study_name: str, specimen: str) -> list[tuple[Any, ...]]:
+        sparse_entries: list[tuple[Any, ...]] = []
         number_log_messages = 0
         self.cursor.execute(
             self._get_sparse_matrix_query_specimen_specific(),
@@ -265,7 +284,7 @@ class SparseMatrixPuller:
 
     def _parse_data_arrays_by_specimen(self,
         sparse_entries: list[tuple],
-        continuous_also: bool=False,
+        continuous_also: bool = False,
     ):
         target_index_lookup = self._get_target_index_lookup(sparse_entries)
         sparse_entries.sort(key=lambda x: (x[3], x[0]))
@@ -291,7 +310,7 @@ class SparseMatrixPuller:
                     data_arrays_by_specimen[specimen],
                     buffer,
                     target_index_lookup,
-                    continuous_data_array = continuous_data_arrays_by_specimen[specimen],
+                    continuous_data_array=continuous_data_arrays_by_specimen[specimen],
                 )
                 done_message = 'Done parsing %s feature vectors from %s.'
                 logger.debug(done_message, len(data_arrays_by_specimen[specimen]), specimen)

@@ -1,6 +1,7 @@
 """Extract information cg-gnn needs from SPT and save to file."""
 
 from argparse import ArgumentParser
+from os import makedirs
 from os.path import join, exists
 from json import dump
 
@@ -46,17 +47,18 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    df_cell, df_label, label_to_result = extract_cggnn_data(
-        args.spt_db_config_location,
-        args.study,
-        args.strata,
-    )
-
-    assert isinstance(args.output_location, str)
-    dict_filename = join(args.output_location, 'label_to_results.json')
-    cells_filename = join(args.output_location, 'cells.h5')
-    labels_filename = join(args.output_location, 'labels.h5')
+    output_location: str = join(args.output_location, args.study)
+    assert isinstance(output_location, str)
+    makedirs(output_location, exist_ok=True)
+    dict_filename = join(output_location, 'label_to_results.json')
+    cells_filename = join(output_location, 'cells.h5')
+    labels_filename = join(output_location, 'labels.h5')
     if not (exists(dict_filename) and exists(cells_filename) and exists(labels_filename)):
+        df_cell, df_label, label_to_result = extract_cggnn_data(
+            args.spt_db_config_location,
+            args.study,
+            args.strata,
+        )
         df_cell.to_hdf(cells_filename, 'cells')
         df_label.to_hdf(labels_filename, 'labels')
         with open(dict_filename, 'w', encoding='utf-8') as f:

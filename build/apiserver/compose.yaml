@@ -46,8 +46,8 @@ services:
       SINGLE_CELL_DATABASE_USER: postgres
       SINGLE_CELL_DATABASE_PASSWORD: postgres
       USE_ALTERNATIVE_TESTING_DATABASE: 1
-      COUNTS_SERVER_HOST: spt-ondemand-testing
-      COUNTS_SERVER_PORT: 8016
+      ONDEMAND_HOST: spt-ondemand-testing
+      ONDEMAND_PORT: 8016
     pull_policy: never
 
 networks:

@@ -15,6 +15,7 @@ RUN python3.11 -m pip install psycopg2==2.9.6
 RUN python3.11 -m pip install adiscstudies==0.11.0
 RUN python3.11 -m pip install numba==0.57.0
 RUN python3.11 -m pip install attrs==23.1.0
+RUN python3.11 -m pip install tables
 RUN python3.11 -m pip install cg-gnn
 ARG version
 ARG service_name

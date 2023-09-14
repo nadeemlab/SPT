@@ -32,6 +32,10 @@ class SquidpyProvider(PendingProvider):
         super().__init__(data_directory, load_centroids=True)
 
     @classmethod
+    def service_specifier(cls) -> str:
+        return 'squidpy'
+
+    @classmethod
     def get_or_create_feature_specification(cls,
         study_name: str,
         feature_class: str | None = None,

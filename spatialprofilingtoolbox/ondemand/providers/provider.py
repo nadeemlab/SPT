@@ -1,12 +1,16 @@
 """Base class for on-demand calculation providers."""
 
-from typing import cast
+from typing import (
+    cast,
+    Any,
+)
 from abc import ABC
 from re import search
 from os import listdir
 from os.path import join
 from os.path import isfile
 from json import loads
+from warnings import warn
 
 from pandas import DataFrame
 
@@ -19,6 +23,10 @@ logger = colorized_logger(__name__)
 class OnDemandProvider(ABC):
     """Base class for OnDemandProvider instances, since they share data ingestion methods."""
     data_arrays: dict[str, dict[str, DataFrame]]
+
+    @classmethod
+    def service_specifier(cls) -> str:
+        raise NotImplementedError
 
     def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
@@ -85,7 +93,7 @@ class OnDemandProvider(ABC):
         rows = []
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
-        feature_columns =  cls.list_columns(target_index_lookup, target_by_symbol)
+        feature_columns = cls.list_columns(target_index_lookup, target_by_symbol)
         size = len(feature_columns)
         with open(filename, 'rb') as file:
             while True:
@@ -131,3 +139,12 @@ class OnDemandProvider(ABC):
             symbol_by_target[target_by_index[i]]
             for i in range(len(target_by_index))
         ]
+
+    def get_status(self) -> list[dict[str, Any]]:
+        """Get the status of all studies."""
+        warn(f'{type(self).__name__}.get_status() not implemented. Returning empty response.')
+        return []
+
+    def has_study(self, study_name: str) -> bool:
+        """Check if this study is available in this provider."""
+        return study_name in self.studies

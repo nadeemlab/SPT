@@ -15,12 +15,16 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
 
 
 class OnDemandRequester:
-    """TCP client for requesting from the on demand service."""
+    """TCP client for requesting from the on-demand service."""
 
-    def __init__(self, host: str | None = None, port: int | None = None):
+    def __init__(self,
+        host: str | None = None,
+        port: int | None = None,
+        service: str | None = None,
+    ):
         _host, _port = None, None
         if host is None and port is None:
-            _host, _port = self._get_ondemand_host_port()
+            _host, _port = self._get_ondemand_host_port(service=service)
         if host is not None:
             _host = host
         if port is not None:
@@ -153,7 +157,22 @@ class OnDemandRequester:
         self.tcp_client.close()
 
     @staticmethod
-    def _get_ondemand_host_port():
-        host = os.environ['COUNTS_SERVER_HOST']
-        port = int(os.environ['COUNTS_SERVER_PORT'])
+    def _get_ondemand_host_port(service: str | None = None):
+        host = None
+        port = None
+        if service is not None:
+            host_variable = f'{service.upper()}_HOST'
+            port_variable = f'{service.upper()}_PORT'
+            if host_variable in os.environ and port_variable in os.environ:
+                host = os.environ[host_variable]
+                port = int(os.environ[port_variable])
+        if host is None or port is None:
+            host_variable = f'ONDEMAND_HOST'
+            port_variable = f'ONDEMAND_PORT'
+            if host_variable in os.environ and port_variable in os.environ:
+                host = os.environ[host_variable]
+                port = int(os.environ[port_variable])
+        if host is None or port is None:
+            message = 'Specify ONDEMAND_HOST and ONDEMAND_PORT or else a specific service variant.'
+            raise EnvironmentError(message)
         return (host, port)

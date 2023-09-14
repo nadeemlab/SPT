@@ -73,6 +73,7 @@ class FeatureMatrixExtractor:
         specimen: str | None = None,
         study: str | None = None,
         continuous_also: bool = False,
+        retain_structure_id: bool = False,
     ) -> dict[str, MatrixBundle]:
         """Extract feature matrices for a specimen or every specimen in a study.
 
@@ -86,6 +87,8 @@ class FeatureMatrixExtractor:
             Whether to also calculate and return a DataFrame for each specimen with continuous
             channel information in addition to the default DataFrame which provides binary cast
             channel information.
+        retain_structure_id: bool = False
+            Whether to index cells by their histological structure ID rather than arbitrary indices.
 
         Returns
         -------
@@ -103,6 +106,7 @@ class FeatureMatrixExtractor:
                     specimen=specimen,
                     study=study,
                     continuous_also=continuous_also,
+                    retain_structure_id=retain_structure_id,
                 )
             case _DBSource.CONFIG_FILE:
                 with DatabaseConnectionMaker(self.database_config_file) as dcm:
@@ -112,6 +116,7 @@ class FeatureMatrixExtractor:
                             specimen=specimen,
                             study=study,
                             continuous_also=continuous_also,
+                            retain_structure_id=retain_structure_id,
                         )
             case _DBSource.UNKNOWN:
                 raise RuntimeError('The database source can not be determined.')
@@ -121,6 +126,7 @@ class FeatureMatrixExtractor:
         specimen: str | None = None,
         study: str | None = None,
         continuous_also: bool = False,
+        retain_structure_id: bool = False,
     ) -> dict[str, MatrixBundle]:
         if (specimen is None) == (study is None):
             raise ValueError('Must specify exactly one of specimen or study.')
@@ -142,6 +148,7 @@ class FeatureMatrixExtractor:
             centroid_coordinates,
             self._retrieve_phenotypes(study),
             self._create_channel_information(data_arrays),
+            retain_structure_id,
         )
 
     def _retrieve_expressions_from_database(self,
@@ -182,6 +189,7 @@ class FeatureMatrixExtractor:
         centroid_coordinates: dict[str, Any],
         phenotypes: dict[str, PhenotypeCriteria],
         channel_information: list[str],
+        retain_structure_id: bool,
     ) -> dict[str, MatrixBundle]:
         logger.info('Creating feature matrices from binary data arrays and centroids.')
         matrices: dict[str, MatrixBundle] = {}
@@ -198,6 +206,7 @@ class FeatureMatrixExtractor:
             dataframe = DataFrame(
                 rows,
                 columns=['pixel x', 'pixel y'] + [f'C {cs}' for cs in channel_information],
+                index=self._extract_cell_ids(specimen) if retain_structure_id else None,
             )
             for symbol, criteria in phenotypes.items():
                 dataframe[f'P {symbol}'] = (
@@ -214,6 +223,7 @@ class FeatureMatrixExtractor:
                 dataframe = DataFrame(
                     expression_vectors,
                     columns=[f'C {cs}' for cs in channel_information],
+                    index=self._extract_cell_ids(specimen) if retain_structure_id else None,
                 )
                 matrices[specimen].continuous_dataframe = dataframe
 
@@ -229,6 +239,24 @@ class FeatureMatrixExtractor:
         template = '{0:0%sb}' % number_channels   # pylint: disable=consider-using-f-string
         feature_vector: list[int] = [int(value) for value in list(template.format(binary)[::-1])]
         return [centroid[0], centroid[1]] + feature_vector
+
+    def _extract_cell_ids(self, specimen: str) -> list[int]:
+        self.cursor.execute(f'''
+            SELECT hsi.histological_structure
+            FROM histological_structure_identification hsi
+                JOIN histological_structure hs
+                    ON hsi.histological_structure=hs.identifier
+                JOIN data_file df
+                    ON hsi.data_source=df.sha256_hash
+                JOIN specimen_data_measurement_process sdmp
+                    ON df.source_generation_process=sdmp.identifier
+            WHERE
+                hs.anatomical_entity='cell' AND
+                sdmp.specimen='{specimen}'
+            ORDER BY hsi.histological_structure
+            ;
+        ''')
+        return [int(entry[0]) for entry in self.cursor.fetchall()]
 
     def _create_channel_information(self,
         study_information: dict[str, dict[str, Any]]

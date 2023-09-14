@@ -9,6 +9,8 @@ from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
+import secure
+
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
@@ -77,6 +79,13 @@ def custom_openapi():
 
 setattr(app, 'openapi', custom_openapi)
 
+secure_headers = secure.Secure()
+
+@app.middleware("http")
+async def set_secure_headers(request, call_next):
+    response = await call_next(request)
+    secure_headers.framework.fastapi(response)
+    return response
 
 @app.get("/")
 async def get_root():
@@ -151,7 +160,7 @@ async def get_anonymous_phenotype_counts_fast(
     negative_markers = [m for m in negative_marker if m != '']
     measurement_study = query().get_study_components(study).measurement
     number_cells = query().get_number_cells(study)
-    with OnDemandRequester() as requester:
+    with OnDemandRequester(service='counts') as requester:
         counts = requester.get_counts_by_specimen(
             positive_markers,
             negative_markers,
@@ -227,7 +236,7 @@ def get_proximity_metrics(
     markers: list[list[str]],
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester() as requester:
+    with OnDemandRequester(service='proximity') as requester:
         metrics = requester.get_proximity_metrics(
             query().get_study_components(study).measurement,
             radius,
@@ -242,7 +251,7 @@ def get_squidpy_metrics(
     feature_class: str,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester() as requester:
+    with OnDemandRequester(service='squidpy') as requester:
         metrics = requester.get_squidpy_metrics(
             query().get_study_components(study).measurement,
             markers,

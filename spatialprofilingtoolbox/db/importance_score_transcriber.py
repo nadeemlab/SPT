@@ -17,20 +17,20 @@ def transcribe_importance(
     df: DataFrame,
     connection: Connection,
     per_specimen_selection_number: int = 1000,
-    cohort_stratifier: str='default sample stratification',
+    cohort_stratifier: str = '',
 ) -> None:
     r"""Upload importance score output from a cg-gnn instance to the local db.
 
     Parameters:
         df: DataFrame
             One column, `importance_score`, indexed by `histological_structure`.
-        cohort_stratifier: str
-            Name of the classification cohort variable the GNN was trained on to produce
-                the importance score.
         connection: psycopg2.extensions.connection
         per_specimen_selection_number: int
             Grab this many of the most important cells from each specimen (or fewer if there
             aren't enough cells in the specimen).
+        cohort_stratifier: str = ''
+            Name of the classification cohort variable the GNN was trained on to produce
+                the importance score.
     """
     study = _get_referenced_study(connection, df)
     indicator: str = 'cell importance'

@@ -21,6 +21,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
+    CGGNNImportanceRank,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -220,6 +221,14 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
     if feature_class == 'proximity':
         return get_proximity_metrics(study, markers, radius=radius)
     return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+
+
+@app.get("/request-cggnn-metrics/")
+async def request_cggnn_metrics(
+    study: ValidStudy,
+) -> list[CGGNNImportanceRank]:
+    """Importance scores as calculated by cggnn."""
+    return query().get_cggnn_metrics(study)
 
 
 def get_proximity_metrics(

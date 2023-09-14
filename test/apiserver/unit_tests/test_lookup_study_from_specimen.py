@@ -3,7 +3,7 @@
 import os
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.db.study_access import StudyAccess
+from spatialprofilingtoolbox.db.accessors import StudyAccess
 
 def test_lookup():
     environment = {

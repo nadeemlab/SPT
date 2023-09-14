@@ -13,12 +13,17 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     Channel,
     PhenotypeCriteria,
     UMAPChannel,
+    CGGNNImportanceRank,
 )
 from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
-from spatialprofilingtoolbox.db.study_access import StudyAccess
-from spatialprofilingtoolbox.db.fractions_and_associations import FractionsAccess
-from spatialprofilingtoolbox.db.phenotypes import PhenotypesAccess
-from spatialprofilingtoolbox.db.umap import UMAPAccess
+from spatialprofilingtoolbox.db.accessors import (
+    CGGNNAccess,
+    StudyAccess,
+    FractionsAccess,
+    PhenotypesAccess,
+    UMAPAccess,
+)
+
 
 class QueryHandler:
     """Handle simple queries to the database."""
@@ -107,6 +112,10 @@ class QueryHandler:
     @classmethod
     def get_umap(cls, cursor, study: str, channel: str) -> UMAPChannel:
         return UMAPAccess(cursor).get_umap_row_for_channel(study, channel)
+
+    @classmethod
+    def get_cggnn_metrics(cls, cursor, study: str) -> list[CGGNNImportanceRank]:
+        return CGGNNAccess(cursor).get_metrics(study)
 
 
 def query() -> QueryCursor:

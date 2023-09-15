@@ -1,7 +1,7 @@
 """Convenience access of cg-gnn metrics."""
 
 from spatialprofilingtoolbox import get_feature_description
-from spatialprofilingtoolbox.db.accessors.study import StudyAccess
+from spatialprofilingtoolbox.db.accessors import StudyAccess
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CGGNNImportanceRank
 

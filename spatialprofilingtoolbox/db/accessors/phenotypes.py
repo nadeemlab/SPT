@@ -1,7 +1,7 @@
 """Convenience accessors/manipulators for phenotype data."""
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.db.accessors.study import StudyAccess
+from spatialprofilingtoolbox.db.accessors import StudyAccess
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
 

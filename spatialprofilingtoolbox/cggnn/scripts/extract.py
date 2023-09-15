@@ -50,7 +50,7 @@ if __name__ == "__main__":
     output_location: str = join(args.output_location, args.study)
     assert isinstance(output_location, str)
     makedirs(output_location, exist_ok=True)
-    dict_filename = join(output_location, 'label_to_results.json')
+    dict_filename = join(output_location, 'label_to_result.json')
     cells_filename = join(output_location, 'cells.h5')
     labels_filename = join(output_location, 'labels.h5')
     if not (exists(dict_filename) and exists(cells_filename) and exists(labels_filename)):

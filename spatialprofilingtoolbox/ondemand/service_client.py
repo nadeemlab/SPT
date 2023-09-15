@@ -12,7 +12,9 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     CompositePhenotype,
     UnivariateMetricsComputationResult,
 )
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
+logger = colorized_logger(__name__)
 
 class OnDemandRequester:
     """TCP client for requesting from the on-demand service."""
@@ -175,4 +177,5 @@ class OnDemandRequester:
         if host is None or port is None:
             message = 'Specify ONDEMAND_HOST and ONDEMAND_PORT or else a specific service variant.'
             raise EnvironmentError(message)
+        logger.debug('Host and port (with service "%s"): %s', service, (host, port))
         return (host, port)

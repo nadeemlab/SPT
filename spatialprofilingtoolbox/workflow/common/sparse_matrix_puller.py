@@ -7,7 +7,7 @@ from typing import cast, Any
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
-from spatialprofilingtoolbox.db.accessors import StudyAccess
+from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
     import FractionalProgressReporter
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

@@ -14,6 +14,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     UMAPChannel,
     CGGNNImportanceRank,
+    UnivariateMetricsComputationResult,
 )
 from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
 from spatialprofilingtoolbox.db.accessors import (
@@ -116,6 +117,21 @@ class QueryHandler:
     @classmethod
     def get_cggnn_metrics(cls, cursor, study: str) -> list[CGGNNImportanceRank]:
         return CGGNNAccess(cursor).get_metrics(study)
+
+    @classmethod
+    def get_cggnn_importance_composition(cls,
+        cursor,
+        study: str,
+        positive_markers: set[str],
+        negative_markers: set[str],
+        cell_limit: int,
+    ) -> UnivariateMetricsComputationResult:
+        return CGGNNAccess(cursor).get_importance_composition(
+            study,
+            positive_markers,
+            negative_markers,
+            cell_limit,
+        )
 
 
 def query() -> QueryCursor:

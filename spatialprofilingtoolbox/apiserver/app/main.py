@@ -81,11 +81,13 @@ setattr(app, 'openapi', custom_openapi)
 
 secure_headers = secure.Secure()
 
+
 @app.middleware("http")
 async def set_secure_headers(request, call_next):
     response = await call_next(request)
     secure_headers.framework.fastapi(response)
     return response
+
 
 @app.get("/")
 async def get_root():
@@ -229,6 +231,24 @@ async def request_cggnn_metrics(
 ) -> list[CGGNNImportanceRank]:
     """Importance scores as calculated by cggnn."""
     return query().get_cggnn_metrics(study)
+
+
+@app.get("/get-cggnn-importance-composition/")
+async def get_cggnn_importance_composition(
+    study: ValidStudy,
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    cell_limit: int = 100,
+) -> UnivariateMetricsComputationResult:
+    """For each specimen, return the fraction of important cells expressing a given phenotype."""
+    positive_markers = {m for m in positive_marker if m != ''}
+    negative_markers = {m for m in negative_marker if m != ''}
+    return query().get_cggnn_importance_composition(
+        study,
+        positive_markers,
+        negative_markers,
+        cell_limit,
+    )
 
 
 def get_proximity_metrics(

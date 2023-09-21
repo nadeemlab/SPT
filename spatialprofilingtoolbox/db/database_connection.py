@@ -167,6 +167,7 @@ class QueryCursor:
     get_umaps_low_resolution: Callable
     get_umap: Callable
     get_cggnn_metrics: Callable
+    get_cggnn_importance_composition: Callable
 
     def __init__(self, query_handler: Type):
         self.query_handler = query_handler

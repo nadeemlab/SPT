@@ -222,7 +222,12 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         if len(mechanisms) == 1:
             mechanism = mechanisms[0]
         else:
-            mechanism = ''
-            logger.warning('Failed to infer marking mechanism.')
+            mechanism = ChannelsPhenotypesParser._get_most_common_marking_mechanism(channels)
         logger.info('Inferred marking mechanism: %s', mechanism)
         return mechanism
+
+    @classmethod
+    def _get_most_common_marking_mechanism(cls, channels: DataFrame) -> str:
+        frequencies = list(channels.value_counts('Marking mechanism').items())
+        frequencies = sorted(frequencies, key=lambda row: row[1], reverse=True)
+        return str(frequencies[0][0])

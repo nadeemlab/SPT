@@ -14,7 +14,10 @@ from warnings import warn
 
 from pandas import DataFrame
 
-from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
+from spatialprofilingtoolbox.workflow.common.structure_centroids import (
+    StructureCentroids,
+    StudyStructureCentroids,
+)
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -57,7 +60,11 @@ class OnDemandProvider(ABC):
             for entry in entries:
                 self.studies[entry['specimen measurement study name']] = entry
 
-    def load_data_matrices(self, data_directory: str, centroids: dict | None = None) -> None:
+    def load_data_matrices(
+        self,
+        data_directory: str,
+        centroids: StudyStructureCentroids | None = None,
+    ) -> None:
         """Load data matrices in reference to a JSON-formatted index file."""
         self.data_arrays = {}
         for study_name in self.get_study_names():
@@ -119,7 +126,7 @@ class OnDemandProvider(ABC):
     @staticmethod
     def add_centroids(
         df: DataFrame,
-        centroids: dict[str, dict[str, list[tuple[float, float]]]],
+        centroids: StudyStructureCentroids,
         study_name: str,
         sample: str,
     ):

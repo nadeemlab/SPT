@@ -1,10 +1,15 @@
 """Retrieves positional information for all cells in the SPT database."""
-import statistics
+
+from statistics import mean
+from typing import Any
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
-from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
+from spatialprofilingtoolbox.workflow.common.structure_centroids import (
+    StructureCentroids,
+    StudyStructureCentroids,
+)
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
     import FractionalProgressReporter
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -16,74 +21,112 @@ class StructureCentroidsPuller:
     """Retrieve positional information for all cells in single cell database."""
 
     cursor: Psycopg2Cursor
-    structure_centroids: StructureCentroids
+    _structure_centroids: StructureCentroids
 
     def __init__(self, cursor: Psycopg2Cursor):
         self.cursor = cursor
-        self.structure_centroids = StructureCentroids()
+        self._structure_centroids = StructureCentroids()
 
-    def pull(self, specimen: str | None=None, study: str | None=None):
+    def pull(
+        self,
+        specimen: str | None = None,
+        study: str | None = None,
+        histological_structures: set[int] | None = None,
+    ) -> None:
+        """Pull centroids into self.structure_centroids.
+
+        Parameters
+        ----------
+        specimen: str | None = None
+        study: str | None = None
+            Which specimen to extract features for or study to extract features for all specimens
+            for. Exactly one of specimen or study must be provided.
+        histological_structures: set[int] | None = None
+            Which histological structures to extract features for from the given study or specimen,
+            by their histological structure ID. Structures not found in either the provided
+            specimen or study are ignored.
+            If None, all structures are fetched.
+        """
         study_names = self._get_study_names(study=study)
+        hs_condition = self._get_histological_structures_condition(histological_structures)
         for study_name in study_names:
             if specimen is None:
                 specimen_count = self._get_specimen_count(study_name, self.cursor)
-                self.cursor.execute(self._get_shapefiles_query(), (study_name,))
+                self.cursor.execute(self._get_shapefiles_query(), (study_name, hs_condition))
             else:
                 specimen_count = 1
                 self.cursor.execute(
                     self._get_shapefiles_query_specimen_specific(),
-                    (study_name, specimen),
+                    (study_name, specimen, hs_condition),
                 )
             rows = self.cursor.fetchall()
             if len(rows) == 0:
                 continue
-            self.structure_centroids.add_study_data(
+            self._structure_centroids.add_study_data(
                 study_name,
                 self._create_study_data(rows, specimen_count, study_name)
             )
 
-    def _get_specimen_count(self, study_name, cursor):
+    def _get_specimen_count(self, study_name: str, cursor: Psycopg2Cursor) -> int:
         cursor.execute('''
         SELECT COUNT(*) FROM specimen_data_measurement_process sdmp
         WHERE sdmp.study=%s ;
         ''', (study_name,))
         return cursor.fetchall()[0][0]
 
-    def _get_shapefiles_query(self):
+    @staticmethod
+    def _get_shapefiles_query() -> str:
         return '''
         SELECT
-        hsi.histological_structure,
-        sdmp.specimen,
-        sf.base64_contents
+            hsi.histological_structure,
+            sdmp.specimen,
+            sf.base64_contents
         FROM histological_structure_identification hsi
-        JOIN shape_file sf ON sf.identifier=hsi.shape_file
-        JOIN data_file df ON hsi.data_source=df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON sdmp.identifier=df.source_generation_process
+            JOIN shape_file sf
+                ON sf.identifier=hsi.shape_file
+            JOIN data_file df
+                ON hsi.data_source=df.sha256_hash
+            JOIN specimen_data_measurement_process sdmp
+                ON sdmp.identifier=df.source_generation_process
         WHERE sdmp.study=%s
+            %s
         ORDER BY
-        sdmp.specimen,
-        hsi.histological_structure
+            sdmp.specimen,
+            hsi.histological_structure
         ;
         '''
 
-    def _get_shapefiles_query_specimen_specific(self):
+    @staticmethod
+    def _get_shapefiles_query_specimen_specific() -> str:
         return '''
         SELECT
-        hsi.histological_structure,
-        sdmp.specimen,
-        sf.base64_contents
+            hsi.histological_structure,
+            sdmp.specimen,
+            sf.base64_contents
         FROM histological_structure_identification hsi
-        JOIN shape_file sf ON sf.identifier=hsi.shape_file
-        JOIN data_file df ON hsi.data_source=df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON sdmp.identifier=df.source_generation_process
-        WHERE sdmp.study=%s AND sdmp.specimen=%s
+            JOIN shape_file sf
+                ON sf.identifier=hsi.shape_file
+            JOIN data_file df
+                ON hsi.data_source=df.sha256_hash
+            JOIN specimen_data_measurement_process sdmp
+                ON sdmp.identifier=df.source_generation_process
+        WHERE sdmp.study=%s
+            AND sdmp.specimen=%s
+            %s
         ORDER BY
-        sdmp.specimen,
-        hsi.histological_structure
+            sdmp.specimen,
+            hsi.histological_structure
         ;
         '''
 
-    def _get_study_names(self, study: str | None=None):
+    @staticmethod
+    def _get_histological_structures_condition(
+        histological_structures: set[int] | None,
+    ) -> str:
+        return f'AND hsi.histological_structure IN {tuple(histological_structures)}' \
+            if (histological_structures is not None) else ''
+
+    def _get_study_names(self, study: str | None = None) -> list[str]:
         if study is None:
             self.cursor.execute('SELECT name FROM specimen_measurement_study ;')
             rows = self.cursor.fetchall()
@@ -97,11 +140,16 @@ class StructureCentroidsPuller:
             rows = self.cursor.fetchall()
         return sorted([row[0] for row in rows])
 
-    def _create_study_data(self, rows, specimen_count, study):
-        study_data = {}
+    def _create_study_data(
+        self,
+        rows: list[tuple[Any, ...]],
+        specimen_count: int,
+        study: str,
+    ) -> StudyStructureCentroids:
+        study_data: StudyStructureCentroids = {}
         field = {'structure': 0, 'specimen': 1, 'base64_contents': 2}
         current_specimen = rows[0][field['specimen']]
-        specimen_centroids = []
+        specimen_centroids: dict[int, tuple[float, float]] = {}
         progress_reporter = FractionalProgressReporter(
             specimen_count,
             parts=6,
@@ -113,20 +161,20 @@ class StructureCentroidsPuller:
                 study_data[current_specimen] = specimen_centroids
                 progress_reporter.increment(iteration_details=current_specimen)
                 current_specimen = row[field['specimen']]
-                specimen_centroids = []
-            specimen_centroids.append(self._compute_centroid(
+                specimen_centroids = {}
+            specimen_centroids[int(row[field['structure']])] = self._compute_centroid(
                 extract_points(row[field['base64_contents']])
-            ))
+            )
         progress_reporter.done()
         study_data[current_specimen] = specimen_centroids
         return study_data
 
-    def _compute_centroid(self, points):
+    def _compute_centroid(self, points: list[tuple[float, float]]) -> tuple[float, float]:
         nonrepeating_points = points[0:(len(points)-1)]
         return (
-            statistics.mean([point[0] for point in nonrepeating_points]),
-            statistics.mean([point[1] for point in nonrepeating_points]),
+            mean([point[0] for point in nonrepeating_points]),
+            mean([point[1] for point in nonrepeating_points]),
         )
 
     def get_structure_centroids(self) -> StructureCentroids:
-        return self.structure_centroids
+        return self._structure_centroids

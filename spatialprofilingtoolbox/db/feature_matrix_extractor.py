@@ -18,9 +18,13 @@ from spatialprofilingtoolbox.db.stratification_puller import (
     StratificationPuller,
     Stratification,
 )
+from spatialprofilingtoolbox.workflow.common.structure_centroids import StudyStructureCentroids
 from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
     StructureCentroidsPuller
-from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import (
+    SparseMatrixPuller,
+    StudyDataArrays,
+)
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -72,6 +76,7 @@ class FeatureMatrixExtractor:
     def extract(self,
         specimen: str | None = None,
         study: str | None = None,
+        histological_structures: set[int] | None = None,
         continuous_also: bool = False,
         retain_structure_id: bool = False,
     ) -> dict[str, MatrixBundle]:
@@ -82,7 +87,12 @@ class FeatureMatrixExtractor:
         specimen: str | None = None
         study: str | None = None
             Which specimen to extract features for or study to extract features for all specimens
-            specimens for. Exactly one of specimen or study must be provided.
+            for. Exactly one of specimen or study must be provided.
+        histological_structures: set[int] | None = None
+            Which histological structures to extract features for from the given study or specimen,
+            by their histological structure ID. Structures not found in either the provided
+            specimen or study are ignored.
+            If None, all structures are fetched.
         continuous_also: bool = False
             Whether to also calculate and return a DataFrame for each specimen with continuous
             channel information in addition to the default DataFrame which provides binary cast
@@ -105,6 +115,7 @@ class FeatureMatrixExtractor:
                 extraction = self._extract(
                     specimen=specimen,
                     study=study,
+                    histological_structures=histological_structures,
                     continuous_also=continuous_also,
                     retain_structure_id=retain_structure_id,
                 )
@@ -115,6 +126,7 @@ class FeatureMatrixExtractor:
                         extraction = self._extract(
                             specimen=specimen,
                             study=study,
+                            histological_structures=histological_structures,
                             continuous_also=continuous_also,
                             retain_structure_id=retain_structure_id,
                         )
@@ -125,6 +137,7 @@ class FeatureMatrixExtractor:
     def _extract(self,
         specimen: str | None = None,
         study: str | None = None,
+        histological_structures: set[int] | None = None,
         continuous_also: bool = False,
         retain_structure_id: bool = False,
     ) -> dict[str, MatrixBundle]:
@@ -133,11 +146,13 @@ class FeatureMatrixExtractor:
         data_arrays = self._retrieve_expressions_from_database(
             specimen=specimen,
             study=study,
+            histological_structures=histological_structures,
             continuous_also=continuous_also,
         )
         centroid_coordinates = self._retrieve_structure_centroids_from_database(
             specimen=specimen,
             study=study,
+            histological_structures=histological_structures,
         )
         if study is None:
             assert specimen is not None
@@ -154,11 +169,17 @@ class FeatureMatrixExtractor:
     def _retrieve_expressions_from_database(self,
         specimen: str | None = None,
         study: str | None = None,
+        histological_structures: set[int] | None = None,
         continuous_also: bool = False,
-    ) -> dict[str, dict[str, Any]]:
+    ) -> StudyDataArrays:
         logger.info('Retrieving expression data from database.')
         puller = SparseMatrixPuller(self.cursor)
-        puller.pull(specimen=specimen, study=study, continuous_also=continuous_also)
+        puller.pull(
+            specimen=specimen,
+            study=study,
+            histological_structures=histological_structures,
+            continuous_also=continuous_also,
+        )
         data_arrays = puller.get_data_arrays()
         logger.info('Done retrieving expression data from database.')
         return list(data_arrays.get_studies().values())[0]
@@ -166,10 +187,15 @@ class FeatureMatrixExtractor:
     def _retrieve_structure_centroids_from_database(self,
         specimen: str | None = None,
         study: str | None = None,
-    ) -> dict[str, Any]:
+        histological_structures: set[int] | None = None,
+    ) -> StudyStructureCentroids:
         logger.info('Retrieving polygon centroids from shapefiles in database.')
         puller = StructureCentroidsPuller(self.cursor)
-        puller.pull(specimen=specimen, study=study)
+        puller.pull(
+            specimen=specimen,
+            study=study,
+            histological_structures=histological_structures,
+        )
         structure_centroids = puller.get_structure_centroids()
         logger.info('Done retrieving centroids.')
         return list(structure_centroids.get_studies().values())[0]
@@ -185,29 +211,38 @@ class FeatureMatrixExtractor:
         return phenotypes
 
     def _create_feature_matrices(self,
-        study: dict[str, dict[str, Any]],
-        centroid_coordinates: dict[str, Any],
+        data_arrays: StudyDataArrays,
+        centroid_coordinates: StudyStructureCentroids,
         phenotypes: dict[str, PhenotypeCriteria],
         channel_information: list[str],
         retain_structure_id: bool,
     ) -> dict[str, MatrixBundle]:
         logger.info('Creating feature matrices from binary data arrays and centroids.')
         matrices: dict[str, MatrixBundle] = {}
-        for j, specimen in enumerate(sorted(list(study['data arrays by specimen'].keys()))):
+        data_arrays_by_specimen = cast(
+            dict[str, dict[int, int]],
+            data_arrays['data arrays by specimen'],
+        )
+        for j, specimen in enumerate(sorted(list(data_arrays_by_specimen.keys()))):
             logger.debug('Specimen %s .', specimen)
-            expressions = study['data arrays by specimen'][specimen]
+            expressions = data_arrays_by_specimen[specimen]
+            coordinates = centroid_coordinates[specimen]
+            assert expressions.keys() == coordinates.keys(), \
+                f'Mismatched cells in expressions and coordinates ({len(expressions)} long vs. '\
+                    f'({len(coordinates)}).'
             rows = [
                 self._create_feature_matrix_row(
-                    centroid_coordinates[specimen][i],
-                    expressions[i],
-                    len(study['target index lookup']),
-                ) for i in range(len(expressions))
+                    coordinates[hs_id],
+                    expression,
+                    len(data_arrays['target index lookup']),
+                ) for hs_id, expression in expressions.items()
             ]
             dataframe = DataFrame(
                 rows,
                 columns=['pixel x', 'pixel y'] + [f'C {cs}' for cs in channel_information],
-                index=self._extract_cell_ids(specimen) if retain_structure_id else None,
+                index=tuple(expressions.keys()) if retain_structure_id else None,
             )
+            # TODO: Convert C and P to MultiIndex
             for symbol, criteria in phenotypes.items():
                 dataframe[f'P {symbol}'] = (
                     dataframe[[f'C {m}' for m in criteria.positive_markers]].all(axis=1) &
@@ -215,15 +250,19 @@ class FeatureMatrixExtractor:
                 ).astype(int)
             matrices[specimen] = MatrixBundle(dataframe, f'{j}.tsv')
 
-        if 'continuous data arrays by specimen' in study:
-            specimens = list(study['continuous data arrays by specimen'].keys())
-            for j, specimen in enumerate(sorted(specimens)):
+        if 'continuous data arrays by specimen' in data_arrays:
+            continuous_data_arrays_by_specimen = cast(
+                dict[str, dict[int, list[float]]],
+                data_arrays['continuous data arrays by specimen'],
+            )
+            specimens = list(continuous_data_arrays_by_specimen.keys())
+            for specimen in sorted(specimens):
                 logger.debug('Specimen %s .', specimen)
-                expression_vectors = study['continuous data arrays by specimen'][specimen]
+                expression_vectors = continuous_data_arrays_by_specimen[specimen]
                 dataframe = DataFrame(
-                    expression_vectors,
+                    expression_vectors.values(),
                     columns=[f'C {cs}' for cs in channel_information],
-                    index=self._extract_cell_ids(specimen) if retain_structure_id else None,
+                    index=tuple(expression_vectors.keys()) if retain_structure_id else None,
                 )
                 matrices[specimen].continuous_dataframe = dataframe
 
@@ -233,11 +272,11 @@ class FeatureMatrixExtractor:
     @staticmethod
     def _create_feature_matrix_row(
         centroid: tuple[float, float],
-        binary: list[str],
+        binary: int,
         number_channels: int,
     ) -> list[float | int]:
         template = '{0:0%sb}' % number_channels   # pylint: disable=consider-using-f-string
-        feature_vector: list[int] = [int(value) for value in list(template.format(binary)[::-1])]
+        feature_vector = [int(value) for value in list(template.format(binary)[::-1])]
         return [centroid[0], centroid[1]] + feature_vector
 
     def _extract_cell_ids(self, specimen: str) -> list[int]:

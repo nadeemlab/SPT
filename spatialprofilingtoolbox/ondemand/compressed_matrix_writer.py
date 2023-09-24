@@ -1,6 +1,8 @@
 """Utility for writing expression matrices in a specially-compressed binary format."""
+
+from typing import cast
 import re
-import random
+from random import choice
 import json
 from os.path import isfile
 from os.path import join
@@ -15,12 +17,12 @@ logger = colorized_logger(__name__)
 class CompressedMatrixWriter:
     """Write the compressed in-memory binary format matrices to file."""
 
-    def write(self, data_arrays: CompressedDataArrays):
+    def write(self, data_arrays: CompressedDataArrays) -> None:
         self._write_data_arrays(data_arrays)
         self._write_index(data_arrays)
         self._report_subsample_for_inspection(data_arrays)
 
-    def _write_data_arrays(self, data_arrays: CompressedDataArrays):
+    def _write_data_arrays(self, data_arrays: CompressedDataArrays) -> None:
         _, study_indices = self._get_study_names_and_indices(data_arrays)
         for study_name, study in data_arrays.get_studies().items():
             study_index = study_indices[study_name]
@@ -36,7 +38,7 @@ class CompressedMatrixWriter:
                 ])
                 self._write_data_array_to_file(data_array, filename)
 
-    def _write_index(self, data_arrays: CompressedDataArrays):
+    def _write_index(self, data_arrays: CompressedDataArrays) -> None:
         index = []
         _, study_indices = self._get_study_names_and_indices(data_arrays)
         for study_name in sorted(list(data_arrays.get_studies().keys())):
@@ -65,19 +67,23 @@ class CompressedMatrixWriter:
             index_file.write(json.dumps({'': index}, indent=4))
         logger.debug('Wrote expression index file %s .', EXPRESSIONS_INDEX_FILENAME)
 
-    def _get_study_names_and_indices(self, data_arrays: CompressedDataArrays):
+    def _get_study_names_and_indices(
+        self,
+        data_arrays: CompressedDataArrays,
+    ) -> tuple[list[str], dict[str, int]]:
         study_names = sorted(list(data_arrays.get_studies().keys()))
         return study_names, {s: i for i, s in enumerate(study_names)}
 
-    def _get_specimens_and_indices(self, study_name, data_arrays: CompressedDataArrays):
-        study = data_arrays.get_studies()[study_name]
-        specimens = sorted(list(study['data arrays by specimen'].keys()))
-        return [
-            specimens,
-            {s: i for i, s in enumerate(specimens)},
-        ]
+    def _get_specimens_and_indices(
+        self,
+        study_name: str,
+        data_arrays: CompressedDataArrays,
+    ) -> tuple[list[str], dict[str, int]]:
+        study_data_array = data_arrays.get_studies()[study_name]
+        specimens = sorted(list(study_data_array['data arrays by specimen'].keys()))
+        return specimens, {s: i for i, s in enumerate(specimens)}
 
-    def _write_data_array_to_file(self, data_array, filename):
+    def _write_data_array_to_file(self, data_array: dict[int, int], filename: str) -> None:
         with open(filename, 'wb') as file:
             for entry in data_array:
                 file.write(entry.to_bytes(8, 'little'))
@@ -87,13 +93,13 @@ class CompressedMatrixWriter:
         logger.debug('%s randomly sampled vectors:', size)
         study_name = list(data_arrays.get_studies().keys())[0]
         _data_arrays = data_arrays.get_studies()[study_name]['data arrays by specimen']
-        data_array = list(_data_arrays.values())[0]
+        data_array = cast(dict[int, int], list(_data_arrays.values())[0])
         for _ in range(size):
-            value = data_array[random.choice(range(len(data_array)))]
+            value = data_array[choice(data_array.keys())]
             print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))
 
     @staticmethod
-    def already_exists(data_directory):
+    def already_exists(data_directory: str):
         return isfile(join(data_directory, EXPRESSIONS_INDEX_FILENAME))
 
     @staticmethod

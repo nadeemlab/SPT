@@ -279,24 +279,6 @@ class FeatureMatrixExtractor:
         feature_vector = [int(value) for value in list(template.format(binary)[::-1])]
         return [centroid[0], centroid[1]] + feature_vector
 
-    def _extract_cell_ids(self, specimen: str) -> list[int]:
-        self.cursor.execute(f'''
-            SELECT hsi.histological_structure
-            FROM histological_structure_identification hsi
-                JOIN histological_structure hs
-                    ON hsi.histological_structure=hs.identifier
-                JOIN data_file df
-                    ON hsi.data_source=df.sha256_hash
-                JOIN specimen_data_measurement_process sdmp
-                    ON df.source_generation_process=sdmp.identifier
-            WHERE
-                hs.anatomical_entity='cell' AND
-                sdmp.specimen='{specimen}'
-            ORDER BY hsi.histological_structure
-            ;
-        ''')
-        return [int(entry[0]) for entry in self.cursor.fetchall()]
-
     def _create_channel_information(self,
         study_information: dict[str, dict[str, Any]]
     ) -> list[str]:

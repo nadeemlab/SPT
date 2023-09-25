@@ -123,9 +123,9 @@ class OnDemandProvider(ABC):
             for ii in buffer2
         ])
         truncated_to_channels = binary_expression_64_string[0:size]
-        integer_phenotypes = int.from_bytes(buffer2, 'little')
-        integer_id = int.from_bytes(buffer1, 'little')
-        return tuple([int(b) for b in list(truncated_to_channels)] + [integer_phenotypes] + [integer_id])
+        int_phenotypes = int.from_bytes(buffer2, 'little')
+        int_id = int.from_bytes(buffer1, 'little')
+        return tuple([int(b) for b in list(truncated_to_channels)] + [int_phenotypes] + [int_id])
 
     @staticmethod
     def _add_centroids(

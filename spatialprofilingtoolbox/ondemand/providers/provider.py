@@ -134,8 +134,8 @@ class OnDemandProvider(ABC):
         study_name: str,
         sample: str,
     ) -> None:
-        df[['pixel x', 'pixel y']] = \
-            DataFrame.from_dict(centroids[study_name][sample], orient='index')
+        coordinates = ['pixel x', 'pixel y']
+        df[coordinates] = DataFrame.from_dict(centroids[study_name][sample], orient='index')
 
     @staticmethod
     def _list_columns(target_index_lookup: dict, target_by_symbol: dict) -> list[str]:

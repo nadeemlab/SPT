@@ -47,13 +47,6 @@ class ProximityProvider(PendingProvider):
             }
             for study_name, _data_arrays in self.data_arrays.items()
         }
-        self.index_lookups = {
-            study_name: {
-                sample_identifier: tuple(df.index.to_list())
-                for sample_identifier, df in _data_arrays.items()
-            }
-            for study_name, _data_arrays in self.data_arrays.items()
-        }
 
     @classmethod
     def get_or_create_feature_specification(

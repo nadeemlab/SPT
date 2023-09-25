@@ -4,6 +4,8 @@ from typing import cast, Any
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 from pandas import DataFrame
+from numpy import ndarray
+from numpy import dtype
 from numpy import arange  # type: ignore
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
@@ -367,7 +369,6 @@ class SparseMatrixPuller:
         continuous_data_arrays_by_specimen: dict[str, dict[int, list[float]]] | None = {} \
             if continuous_also else None
 
-        # Sparse entries are already sorted by specimen, histological_structure, target
         df = DataFrame(
             sparse_entries,
             columns=['histological_structure', 'target', 'coded_value', 'specimen', 'quantity'],
@@ -377,12 +378,11 @@ class SparseMatrixPuller:
             df_group.sort_values(by=['target'], inplace=True)
             hs_id = int(histological_structure)
 
-            # Compress binary coded value information into a single integer using bitwise shifts
             binary = df_group['coded_value'].astype(int).to_numpy()
-            compressed = binary.dot(1 << arange(binary.size))
+            compressed = SparseMatrixPuller._compress_bitwise_to_int(binary)
             if specimen not in data_arrays_by_specimen:
                 data_arrays_by_specimen[specimen] = {}
-            data_arrays_by_specimen[specimen][hs_id] = int(compressed)
+            data_arrays_by_specimen[specimen][hs_id] = compressed
 
             if continuous_data_arrays_by_specimen is not None:
                 if specimen not in continuous_data_arrays_by_specimen:
@@ -391,6 +391,10 @@ class SparseMatrixPuller:
                     df_group['quantity'].astype(float).to_list()
 
         return data_arrays_by_specimen, target_index_lookup, continuous_data_arrays_by_specimen
+
+    @classmethod
+    def _compress_bitwise_to_int(cls, feature_vector: ndarray) -> int:
+        return int(feature_vector.dot(1 << arange(feature_vector.size)))
 
     def _get_target_index_lookup(self,
         sparse_entries: list[tuple[str, str, int, str, str]],

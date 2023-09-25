@@ -96,7 +96,7 @@ class OnDemandProvider(ABC):
         target_index_lookup: dict,
         target_by_symbol: dict,
     ) -> DataFrame:
-        """Load data arrays from a precomputed JSON artifact."""
+        """Load data arrays from a precomputed binary artifact."""
         rows = []
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
@@ -104,24 +104,28 @@ class OnDemandProvider(ABC):
         size = len(feature_columns)
         with open(filename, 'rb') as file:
             while True:
-                buffer = file.read(8)
-                row = cls._parse_cell_row(buffer, size)
+                buffer1 = file.read(8)
+                buffer2 = file.read(8)
+                row = cls._parse_cell_row(buffer1, buffer2, size)
                 if row is None:
                     break
                 rows.append(row)
-        return DataFrame(rows, columns=feature_columns + ['integer'])
+        df = DataFrame(rows, columns=feature_columns + ['integer', 'histological_structure_id'])
+        df.set_index('histological_structure_id', inplace=True)
+        return df
 
     @staticmethod
-    def _parse_cell_row(buffer: bytes, size: int) -> tuple[int, ...] | None:
-        if buffer == b'':
+    def _parse_cell_row(buffer1: bytes, buffer2: bytes, size: int) -> tuple[int, ...] | None:
+        if buffer1 == b'':
             return None
         binary_expression_64_string = ''.join([
             ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
-            for ii in buffer
+            for ii in buffer2
         ])
         truncated_to_channels = binary_expression_64_string[0:size]
-        integer = int.from_bytes(buffer, 'little')
-        return tuple([int(b) for b in list(truncated_to_channels)] + [integer])
+        integer_phenotypes = int.from_bytes(buffer2, 'little')
+        integer_id = int.from_bytes(buffer1, 'little')
+        return tuple([int(b) for b in list(truncated_to_channels)] + [integer_phenotypes] + [integer_id])
 
     @staticmethod
     def _add_centroids(

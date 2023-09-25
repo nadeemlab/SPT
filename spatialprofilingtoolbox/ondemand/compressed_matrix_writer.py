@@ -95,7 +95,7 @@ class CompressedMatrixWriter:
         _data_arrays = data_arrays.get_studies()[study_name]['data arrays by specimen']
         data_array = cast(dict[int, int], list(_data_arrays.values())[0])
         for _ in range(size):
-            value = data_array[choice(data_array.keys())]
+            value = data_array[choice(list(data_array.keys()))]
             print(''.join(list(reversed(re.sub('0', ' ', f'{value:064b}')))))
 
     @staticmethod

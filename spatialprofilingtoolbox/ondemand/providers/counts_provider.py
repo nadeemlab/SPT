@@ -31,18 +31,24 @@ class CountsProvider(OnDemandProvider):
         positives_signature: int,
         negatives_signature: int,
         study_name: str,
+        cells_selected: set[int] | None = None,
     ) -> dict[str, list[int]]:
-        """Count the number of structures that part of this signature, in signs."""
-        counts = {}
+        """Count the number of structures per specimen that match this signature."""
+        counts: dict[str, list[int]] = {}
         for specimen, data_array in self.data_arrays[study_name].items():
             count = 0
             if len(data_array) == 0:
                 raise ValueError(f'Data array for specimen "{specimen}" is empty.')
-            count = self.get_count(data_array['integer'], positives_signature, negatives_signature)
-            counts[specimen] = [count, len(data_array)]
+            integers = cast(
+                Iterable[int],
+                data_array['integer'] if (cells_selected is None) else
+                data_array.loc[cells_selected, 'integer'],
+            )
+            count = self.get_count(integers, positives_signature, negatives_signature)
+            counts[specimen] = [count, len(integers)]
         return counts
 
-    def get_count(self, integers: Iterable, positives_mask: int, negatives_mask: int) -> int:
+    def get_count(self, integers: Iterable[int], positives_mask: int, negatives_mask: int) -> int:
         """Counts the number of elements of the list of integer-represented binary numbers which
         equal to 1 along the bits indicated by the positives mask, and equal to 0 along the bits
         indicated by the negatives mask.

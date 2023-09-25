@@ -1,4 +1,6 @@
 """The API service's endpoint handlers."""
+
+from typing import cast
 import json
 from io import BytesIO
 from base64 import b64decode
@@ -158,18 +160,8 @@ async def get_anonymous_phenotype_counts_fast(
     """Computes the number of cells satisfying the given positive and negative criteria, in the
     context of a given study.
     """
-    positive_markers = [m for m in positive_marker if m != '']
-    negative_markers = [m for m in negative_marker if m != '']
-    measurement_study = query().get_study_components(study).measurement
-    number_cells = query().get_number_cells(study)
-    with OnDemandRequester(service='counts') as requester:
-        counts = requester.get_counts_by_specimen(
-            positive_markers,
-            negative_markers,
-            measurement_study,
-            number_cells,
-        )
-    return counts
+    number_cells = cast(int, query().get_number_cells(study))
+    return get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
 
 
 @app.get("/request-spatial-metrics-computation/")
@@ -233,22 +225,44 @@ async def request_cggnn_metrics(
     return query().get_cggnn_metrics(study)
 
 
-@app.get("/get-cggnn-importance-composition/")
-async def get_cggnn_importance_composition(
+@app.get("/cggnn-importance-composition/")
+async def cggnn_importance_composition(
     study: ValidStudy,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     cell_limit: int = 100,
-) -> UnivariateMetricsComputationResult:
+) -> PhenotypeCounts:
     """For each specimen, return the fraction of important cells expressing a given phenotype."""
-    positive_markers = {m for m in positive_marker if m != ''}
-    negative_markers = {m for m in negative_marker if m != ''}
-    return query().get_cggnn_importance_composition(
+    cells_selected = cast(set[int], query().get_important_cells(study, cell_limit))
+    return get_phenotype_counts(
+        positive_marker,
+        negative_marker,
         study,
-        positive_markers,
-        negative_markers,
-        cell_limit,
+        len(cells_selected),
+        cells_selected,
     )
+
+
+def get_phenotype_counts(
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    study: ValidStudy,
+    number_cells: int,
+    cells_selected: set[int] | None = None,
+) -> PhenotypeCounts:
+    """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
+    positive_markers = [m for m in positive_marker if m != '']
+    negative_markers = [m for m in negative_marker if m != '']
+    measurement_study = cast(str, query().get_study_components(study).measurement)
+    with OnDemandRequester(service='counts') as requester:
+        counts = requester.get_counts_by_specimen(
+            positive_markers,
+            negative_markers,
+            measurement_study,
+            number_cells,
+            cells_selected,
+        )
+    return counts
 
 
 def get_proximity_metrics(

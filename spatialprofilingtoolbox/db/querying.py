@@ -119,19 +119,8 @@ class QueryHandler:
         return CGGNNAccess(cursor).get_metrics(study)
 
     @classmethod
-    def get_cggnn_importance_composition(cls,
-        cursor,
-        study: str,
-        positive_markers: set[str],
-        negative_markers: set[str],
-        cell_limit: int,
-    ) -> UnivariateMetricsComputationResult:
-        return CGGNNAccess(cursor).get_importance_composition(
-            study,
-            positive_markers,
-            negative_markers,
-            cell_limit,
-        )
+    def get_important_cells(cls, cursor, study: str, cell_limit: int) -> set[int]:
+        return CGGNNAccess(cursor).get_important_cells(study, cell_limit)
 
 
 def query() -> QueryCursor:

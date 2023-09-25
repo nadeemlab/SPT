@@ -18,7 +18,6 @@ def compute_proximity_metric_for_signature_pair(
     radius: float,
     cells: DataFrame,
     tree: BallTree,
-    index_lookup: tuple[int, ...],
 ) -> float | None:
     cells = cells.rename({
         column: (column[2:] if (column.startswith('C ') or column.startswith('P ')) else column)
@@ -39,7 +38,7 @@ def compute_proximity_metric_for_signature_pair(
         return_distance=False,
     )
     counts = [
-        sum(mask2[index_lookup[integer_index]] for integer_index in list(integer_indices))
+        sum(mask2.iloc[integer_index] for integer_index in list(integer_indices))
         for integer_indices in within_radius_indices_list
     ]
     count = sum(counts) - sum(logical_and(mask1, mask2))

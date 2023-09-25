@@ -143,7 +143,6 @@ class ProximityProvider(PendingProvider):
                 radius,
                 self.get_cells(sample_identifier, study_name),
                 self._get_tree(sample_identifier, study_name),
-                self._get_index_lookup(sample_identifier, study_name),
             )
             message = 'Computed one feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)
@@ -156,6 +155,3 @@ class ProximityProvider(PendingProvider):
 
     def _get_tree(self, sample_identifier: str, study_name: str) -> BallTree:
         return self.trees[study_name][sample_identifier]
-
-    def _get_index_lookup(self, sample_identifier: str, study_name: str) -> tuple[int, ...]:
-        return self.index_lookups[study_name][sample_identifier]

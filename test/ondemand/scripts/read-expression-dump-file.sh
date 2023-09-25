@@ -1,12 +1,12 @@
 
 if [[ "$1" == "--help"  || "$1" == "" ]]; then
-	echo "Supply the (binary format) file created by the expression matrix caching command, to parse it."
-	exit
+    echo "Supply the (binary format) file created by the expression matrix caching command, to parse it."
+    exit
 fi
 
 if ! command -v ggrep &> /dev/null
 then
-	ggrep=grep
+    ggrep=grep
 else
     ggrep=ggrep
 fi

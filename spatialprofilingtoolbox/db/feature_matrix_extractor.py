@@ -242,7 +242,6 @@ class FeatureMatrixExtractor:
                 columns=['pixel x', 'pixel y'] + [f'C {cs}' for cs in channel_information],
                 index=tuple(expressions.keys()) if retain_structure_id else None,
             )
-            # TODO: Convert C and P to MultiIndex
             for symbol, criteria in phenotypes.items():
                 dataframe[f'P {symbol}'] = (
                     dataframe[[f'C {m}' for m in criteria.positive_markers]].all(axis=1) &

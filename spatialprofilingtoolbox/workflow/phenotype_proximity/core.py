@@ -99,6 +99,7 @@ class PhenotypeProximityCoreJob(CoreJob):
                 r,
                 cells,
                 self.tree,
+                tuple(cells.index.to_list()),
             ) for f1, f2, r in self.get_cases(all_features)
         }
         self.write_table(proximity_metrics)

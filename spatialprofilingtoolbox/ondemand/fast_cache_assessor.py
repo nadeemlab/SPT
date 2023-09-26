@@ -10,6 +10,7 @@ from os.path import isdir
 from pickle import load as load_pickle
 from json import loads as load_json_string
 import re
+from time import sleep
 
 from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
@@ -39,6 +40,16 @@ class FastCacheAssessor:
             self._recreate()
         else:
             logger.info('Cache is basically as expected, not recreating.')
+
+    def block_until_available(self):
+        check_count = 0
+        up_to_date = False
+        while up_to_date is False:
+            check_count += 1
+            up_to_date = self._cache_is_up_to_date()
+            if check_count % 12 == 0:
+                logger.debug('Waiting for cache to be available.')
+            sleep(5)
 
     def _cache_is_up_to_date(self) -> bool:
         if not self._check_files_present():

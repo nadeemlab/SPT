@@ -21,14 +21,17 @@ logger = colorized_logger('spt ondemand start')
 
 def start() -> None:
     source_data_location, host, port, service = get_cli_arguments()
-    setup_data_sources(source_data_location)
+    setup_data_sources(source_data_location, service)
     start_services(source_data_location, host, port, service)
 
 
-def setup_data_sources(source_data_location: str) -> None:
+def setup_data_sources(source_data_location: str, service: str | None) -> None:
     wait_for_database_ready()
     assessor = FastCacheAssessor(source_data_location)
-    assessor.assess_and_act()
+    if service is None or service == CountsProvider.service_specifier():
+        assessor.assess_and_act()
+    else:
+        assessor.block_until_available()
 
 
 def start_services(source_data_location: str, host: str, port: int, service: str | None) -> None:

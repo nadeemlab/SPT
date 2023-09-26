@@ -5,7 +5,6 @@ from typing import cast, Any
 from psycopg2.extensions import cursor as Psycopg2Cursor
 from pandas import DataFrame
 from numpy import ndarray
-from numpy import dtype
 from numpy import arange  # type: ignore
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer

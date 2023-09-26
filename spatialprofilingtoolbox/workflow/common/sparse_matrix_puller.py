@@ -347,11 +347,11 @@ class SparseMatrixPuller:
         '''
 
     @staticmethod
-    def _get_histological_structures_condition(
-        histological_structures: set[int] | None,
-    ) -> str:
-        return f'AND eq.histological_structure IN {tuple(histological_structures)}' \
-            if (histological_structures is not None) else ''
+    def _get_histological_structures_condition(histological_structures: set[int] | None) -> str:
+        if histological_structures is None:
+            return ''
+        hsi_strs = tuple(str(hsi) for hsi in histological_structures)
+        return f'AND eq.histological_structure IN {hsi_strs}'
 
     def _get_batch_size(self) -> int:
         return 10000000

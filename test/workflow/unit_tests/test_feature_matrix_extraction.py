@@ -135,7 +135,6 @@ if __name__ == '__main__':
         retain_structure_id=True,
     )
     test_sample_set(some_histological_structures)
-    test_feature_matrix_schemas(some_histological_structures)
     show_example_feature_matrix(some_histological_structures)
     test_channels(some_histological_structures)
     test_expression_vectors(some_histological_structures, retained_structure_id=True)

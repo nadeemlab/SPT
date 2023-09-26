@@ -279,13 +279,12 @@ class SparseMatrixPuller:
     ) -> list[tuple[str, str, int, str, str]]:
         sparse_entries: list[tuple[str, str, int, str, str]] = []
         number_log_messages = 0
+        parameters: list[str | tuple[str, ...]]  = [study_name, specimen]
+        if histological_structures is not None:
+            parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
         self.cursor.execute(
-            self._get_sparse_matrix_query_specimen_specific(),
-            (
-                study_name,
-                specimen,
-                self._get_histological_structures_condition(histological_structures),
-            ),
+            self._get_sparse_matrix_query_specimen_specific(histological_structures is not None),
+            parameters,
         )
         total = self.cursor.rowcount
         while self.cursor.rownumber < total - 1:
@@ -298,14 +297,16 @@ class SparseMatrixPuller:
             logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
         return sparse_entries
 
-    def _get_sparse_matrix_query_specimen_specific(self) -> str:
+    def _get_sparse_matrix_query_specimen_specific(self,
+        histological_structures_condition: bool = False,
+    ) -> str:
         if ExpressionsTableIndexer.expressions_table_is_indexed_cursor(self.cursor):
-            return self._sparse_entries_query_optimized()
-        return self._sparse_entries_query_unoptimized()
+            return self._sparse_entries_query_optimized(histological_structures_condition)
+        return self._sparse_entries_query_unoptimized(histological_structures_condition)
 
     @staticmethod
-    def _sparse_entries_query_optimized() -> str:
-        return '''
+    def _sparse_entries_query_optimized(histological_structures_condition: bool = False) -> str:
+        return f'''
         -- absorb/ignore first string formatting argument: %s
         SELECT
             eq.histological_structure,
@@ -315,14 +316,14 @@ class SparseMatrixPuller:
             eq.quantity as quantity
         FROM expression_quantification eq
         WHERE eq.source_specimen=%s
-            %s
+            {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY eq.source_specimen, eq.histological_structure, eq.target
         ;
         '''
 
     @staticmethod
-    def _sparse_entries_query_unoptimized() -> str:
-        return '''
+    def _sparse_entries_query_unoptimized(histological_structures_condition: bool = False) -> str:
+        return f'''
         SELECT
             eq.histological_structure,
             eq.target,
@@ -341,17 +342,10 @@ class SparseMatrixPuller:
         WHERE sdmp.study=%s
             AND hs.anatomical_entity='cell'
             AND sdmp.specimen=%s
-            %s
+            {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY sdmp.specimen, eq.histological_structure, eq.target
         ;
         '''
-
-    @staticmethod
-    def _get_histological_structures_condition(histological_structures: set[int] | None) -> str:
-        if histological_structures is None:
-            return ''
-        hsi_strs = tuple(str(hsi) for hsi in histological_structures)
-        return f'AND eq.histological_structure IN {hsi_strs}'
 
     def _get_batch_size(self) -> int:
         return 10000000

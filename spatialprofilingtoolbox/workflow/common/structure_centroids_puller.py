@@ -48,17 +48,21 @@ class StructureCentroidsPuller:
             If None, all structures are fetched.
         """
         study_names = self._get_study_names(study=study)
-        hs_condition = self._get_histological_structures_condition(histological_structures)
         for study_name in study_names:
-            if specimen is None:
-                specimen_count = self._get_specimen_count(study_name, self.cursor)
-                self.cursor.execute(self._get_shapefiles_query(), (study_name, hs_condition))
-            else:
+            parameters: list[str | tuple[str, ...]] = [study_name]
+            if specimen is not None:
+                parameters.append(specimen)
                 specimen_count = 1
-                self.cursor.execute(
-                    self._get_shapefiles_query_specimen_specific(),
-                    (study_name, specimen, hs_condition),
-                )
+            else:
+                specimen_count = self._get_specimen_count(study_name, self.cursor)
+            if histological_structures is not None:
+                parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
+
+            self.cursor.execute(self._get_shapefiles_query(
+                specimen is not None,
+                histological_structures is not None,
+            ), parameters)
+
             rows = self.cursor.fetchall()
             if len(rows) == 0:
                 continue
@@ -75,56 +79,30 @@ class StructureCentroidsPuller:
         return cursor.fetchall()[0][0]
 
     @staticmethod
-    def _get_shapefiles_query() -> str:
-        return '''
-        SELECT
-            hsi.histological_structure,
-            sdmp.specimen,
-            sf.base64_contents
-        FROM histological_structure_identification hsi
-            JOIN shape_file sf
-                ON sf.identifier=hsi.shape_file
-            JOIN data_file df
-                ON hsi.data_source=df.sha256_hash
-            JOIN specimen_data_measurement_process sdmp
-                ON sdmp.identifier=df.source_generation_process
-        WHERE sdmp.study=%s
-            %s
-        ORDER BY
-            sdmp.specimen,
-            hsi.histological_structure
-        ;
-        '''
-
-    @staticmethod
-    def _get_shapefiles_query_specimen_specific() -> str:
-        return '''
-        SELECT
-            hsi.histological_structure,
-            sdmp.specimen,
-            sf.base64_contents
-        FROM histological_structure_identification hsi
-            JOIN shape_file sf
-                ON sf.identifier=hsi.shape_file
-            JOIN data_file df
-                ON hsi.data_source=df.sha256_hash
-            JOIN specimen_data_measurement_process sdmp
-                ON sdmp.identifier=df.source_generation_process
-        WHERE sdmp.study=%s
-            AND sdmp.specimen=%s
-            %s
-        ORDER BY
-            sdmp.specimen,
-            hsi.histological_structure
-        ;
-        '''
-
-    @staticmethod
-    def _get_histological_structures_condition(
-        histological_structures: set[int] | None,
+    def _get_shapefiles_query(
+        specimen_specific: bool = False,
+        histological_structures_condition: bool = False,
     ) -> str:
-        return f'AND hsi.histological_structure IN {tuple(histological_structures)}' \
-            if (histological_structures is not None) else ''
+        return f'''
+        SELECT
+            hsi.histological_structure,
+            sdmp.specimen,
+            sf.base64_contents
+        FROM histological_structure_identification hsi
+            JOIN shape_file sf
+                ON sf.identifier=hsi.shape_file
+            JOIN data_file df
+                ON hsi.data_source=df.sha256_hash
+            JOIN specimen_data_measurement_process sdmp
+                ON sdmp.identifier=df.source_generation_process
+        WHERE sdmp.study=%s
+            {'AND sdmp.specimen=%s' if specimen_specific else ''}
+            {'AND hsi.histological_structure IN %s' if histological_structures_condition else ''}
+        ORDER BY
+            sdmp.specimen,
+            hsi.histological_structure
+        ;
+        '''
 
     def _get_study_names(self, study: str | None = None) -> list[str]:
         if study is None:

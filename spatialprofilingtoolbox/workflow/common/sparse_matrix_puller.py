@@ -1,10 +1,11 @@
-"""Retrieve the "feature matrix" for a given study from the database, and store it in a special
-(in-memory) binary compressed format.
-"""
+"""Retrieve the "feature matrix" for a given study and store it in a binary compressed format."""
 
 from typing import cast, Any
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
+from pandas import DataFrame
+from numpy import ndarray
+from numpy import arange  # type: ignore
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
@@ -14,84 +15,112 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
+StudyDataArrays = dict[
+    str,
+    dict[str, str] |
+    dict[str, int] |
+    dict[str, dict[int, int]] |
+    dict[str, dict[int, list[float]]]
+]
+
 
 class CompressedDataArrays:
-    """An object for in-memory storage of all expression data for each study, in a
-    compressed binary format. It assumes that there are 64 or fewer channels for a
-    given study.
-
-    Member `studies` is a dictionary with keys the study names. The values are
-    dictionaries, with items:
-
-    - "target by symbol". A dictionary, providing for each channel symbol (e.g.
-      "CD3") the string which is the (typically decimal integer) identifier of the
-      target "chemical species" labelled by the given symbol in the context of the
-      given study.
-    - "target index lookup". A dictionary, providing for each target "chemical
-      species" in the above, the integer index (from 0 to 63) of the bit in the
-      binary format corresponding to the given channel.
-    - "data arrays by specimen". A dictionary, providing for each specimen name
-      (for specimens collected as part of this study) the list of 64-bit integers
-      representing the cells. The order is ascending lexicographical order of the
-      corresponding "histological structure" identifier strings.
+    """An object for in-memory storage of all expression data for each study.
+    
+    Where possible, channel information is stored in a compressed binary format. This necessarily
+    assumes that there are 64 or fewer channels for a given study.
     """
 
     def __init__(self):
-        self.studies: dict[str, dict[str, dict[str, Any]]] = {}
+        self._studies: dict[str, StudyDataArrays] = {}
 
-    def get_studies(self) -> dict[str, dict[str, dict[str, Any]]]:
-        return self.studies
+    def get_studies(self) -> dict[str, StudyDataArrays]:
+        """Returns data dictionaries, indexed by study.
+        
+        Returns
+        -------
+        A dictionary, indexed by study name. For each study, the value is a dictionary with keys:
+            "target by symbol": dict[str, str]
+                A dictionary, providing for each channel symbol (e.g. "CD3") the string which is
+                the (typically decimal integer) identifier of the target "chemical species"
+                labelled by the given symbol in the context of the given study.
+            "target index lookup": dict[str, int]
+                A dictionary, providing for each target "chemical species" in the above, the
+                integer index (from 0 to 63) of the bit in the binary format corresponding to the
+                given channel.
+            "data arrays by specimen": dict[str, dict[int, int]]
+                A dictionary, providing for each specimen name (for specimens collected as part of
+                this study) a dictionary mapping the histological structure ID of each cell to a
+                64-bit integer representing the cell's channels when converted to binary.
+            "continuous data arrays by specimen": dict[str, dict[int, list[float]]]
+                (Optional) A dictionary, providing for each specimen name a dictionary mapping the
+                histological structure ID of each cell to a list of floats representing the value
+                of each the cell's channels.
+        """
+        return self._studies
 
     def add_study_data(
         self,
-        study_name,
-        data_arrays_by_specimen,
-        target_index_lookup,
-        target_by_symbol,
-        continuous_data_arrays_by_specimen=None,
-    ):
-        self.check_target_index_lookup(study_name, target_index_lookup)
-        self.check_target_by_symbol(study_name, target_by_symbol)
-        if not study_name in self.studies:
-            self.studies[study_name] = {
+        study_name: str,
+        data_arrays_by_specimen: dict[str, dict[int, int]],
+        target_index_lookup: dict[str, int],
+        target_by_symbol: dict[str, str],
+        continuous_data_arrays_by_specimen: dict[str, dict[int, list[float]]] | None = None,
+    ) -> None:
+        """Add a study's data to the in-memory data structure."""
+        self._check_target_index_lookup(study_name, target_index_lookup)
+        self._check_target_by_symbol(study_name, target_by_symbol)
+        if not study_name in self._studies:
+            self._studies[study_name] = {
                 'data arrays by specimen': data_arrays_by_specimen,
                 'target index lookup': target_index_lookup,
                 'target by symbol': target_by_symbol,
             }
             if continuous_data_arrays_by_specimen is not None:
                 key = 'continuous data arrays by specimen'
-                self.studies[study_name][key] = continuous_data_arrays_by_specimen
+                self._studies[study_name][key] = continuous_data_arrays_by_specimen
         else:
-            self.add_more_data_arrays(
+            self._add_more_data_arrays(
                 study_name,
                 data_arrays_by_specimen,
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
 
-    def add_more_data_arrays(
+    def _add_more_data_arrays(
         self,
-        study_name,
-        data_arrays_by_specimen,
-        continuous_data_arrays_by_specimen=None,
+        study_name: str,
+        data_arrays_by_specimen: dict[str, dict[int, int]],
+        continuous_data_arrays_by_specimen: dict[str, dict[int, list[float]]] | None = None,
     ):
-        for key, integers_list in data_arrays_by_specimen.items():
-            self.studies[study_name]['data arrays by specimen'][key] = integers_list
+        for key, integers_by_hsi in data_arrays_by_specimen.items():
+            self._studies[study_name]['data arrays by specimen'][key] = integers_by_hsi
         if continuous_data_arrays_by_specimen is not None:
             for key, vectors_list in continuous_data_arrays_by_specimen.items():
-                self.studies[study_name]['continuous data arrays by specimen'][key] = vectors_list
+                self._studies[study_name]['continuous data arrays by specimen'][key] = vectors_list
 
-    def check_target_index_lookup(self, study_name, target_index_lookup):
-        if study_name in self.studies:
-            check = CompressedDataArrays.check_dicts_equal
-            check(self.studies[study_name]['target index lookup'], target_index_lookup)
+    def _check_target_index_lookup(
+        self,
+        study_name: str,
+        target_index_lookup: dict[str, int],
+    ) -> None:
+        if study_name in self._studies:
+            check = CompressedDataArrays._check_dicts_equal
+            check(self._studies[study_name]['target index lookup'], target_index_lookup)
 
-    def check_target_by_symbol(self, study_name, target_by_symbol):
-        if study_name in self.studies:
-            check = CompressedDataArrays.check_dicts_equal
-            check(self.studies[study_name]['target by symbol'], target_by_symbol)
+    def _check_target_by_symbol(
+        self,
+        study_name: str,
+        target_by_symbol: dict[str, str],
+    ) -> None:
+        if study_name in self._studies:
+            check = CompressedDataArrays._check_dicts_equal
+            check(self._studies[study_name]['target by symbol'], target_by_symbol)
 
     @staticmethod
-    def check_dicts_equal(dict1, dict2):
+    def _check_dicts_equal(
+        dict1: dict[str, dict[str, dict[str, Any]]],
+        dict2: dict[str, Any],
+    ) -> None:
         if sorted(list(dict1.keys())) != sorted(list(dict2.keys())):
             raise ValueError(f'Dictionary key sets not equal: {dict1.keys()}, {dict2.keys()}')
         for key, value in dict1.items():
@@ -103,7 +132,7 @@ class SparseMatrixPuller:
     """"Get sparse matrix representation of cell x channel data in database."""
 
     cursor: Psycopg2Cursor
-    data_arrays: CompressedDataArrays
+    _data_arrays: CompressedDataArrays
 
     def __init__(self, cursor: Psycopg2Cursor):
         self.cursor = cursor
@@ -111,23 +140,39 @@ class SparseMatrixPuller:
     def pull(self,
         specimen: str | None = None,
         study: str | None = None,
+        histological_structures: set[int] | None = None,
         continuous_also: bool = False,
     ) -> None:
-        """Pull sparse matrices into self.data_arrays."""
+        """Pull sparse matrices into self.data_arrays.
+
+        Parameters
+        ----------
+        specimen: str | None = None
+        study: str | None = None
+            Which specimen to extract features for or study to extract features for all specimens
+            for. Exactly one of specimen or study must be provided.
+        histological_structures: set[int] | None = None
+            Which histological structures to extract features for from the given study or specimen,
+            by their histological structure ID. Structures not found in either the provided
+            specimen or study are ignored.
+            If None, all structures are fetched.
+        """
         if (specimen is not None) and (study is not None):
             raise ValueError('Must specify exactly one of specimen or study, or neither.')
-        self.data_arrays = self._retrieve_data_arrays(
+        self._data_arrays = self._retrieve_data_arrays(
             specimen=specimen,
             study=study,
+            histological_structures=histological_structures,
             continuous_also=continuous_also,
         )
 
     def get_data_arrays(self):
-        return self.data_arrays
+        return self._data_arrays
 
     def _retrieve_data_arrays(self,
         specimen: str | None = None,
         study: str | None = None,
+        histological_structures: set[int] | None = None,
         continuous_also: bool = False,
     ) -> CompressedDataArrays:
         if specimen is not None:
@@ -139,6 +184,7 @@ class SparseMatrixPuller:
                 data_arrays,
                 study_name,
                 specimen=specimen,
+                histological_structures=histological_structures,
                 continuous_also=continuous_also,
             )
         return data_arrays
@@ -147,6 +193,7 @@ class SparseMatrixPuller:
         data_arrays: CompressedDataArrays,
         study_name: str,
         specimen: str | None = None,
+        histological_structures: set[int] | None = None,
         continuous_also: bool = False,
     ) -> None:
         specimens = self._get_pertinent_specimens(study_name, specimen=specimen)
@@ -163,6 +210,7 @@ class SparseMatrixPuller:
             sparse_entries = self._get_sparse_entries(
                 study_name,
                 specimen=_specimen,
+                histological_structures=histological_structures,
             )
             if len(sparse_entries) == 0:
                 continue
@@ -223,12 +271,19 @@ class SparseMatrixPuller:
             logger.info('    %s', name)
         return names
 
-    def _get_sparse_entries(self, study_name: str, specimen: str) -> list[tuple[Any, ...]]:
-        sparse_entries: list[tuple[Any, ...]] = []
+    def _get_sparse_entries(self,
+        study_name: str,
+        specimen: str,
+        histological_structures: set[int] | None = None,
+    ) -> list[tuple[str, str, int, str, str]]:
+        sparse_entries: list[tuple[str, str, int, str, str]] = []
         number_log_messages = 0
+        parameters: list[str | tuple[str, ...]]  = [study_name, specimen]
+        if histological_structures is not None:
+            parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
         self.cursor.execute(
-            self._get_sparse_matrix_query_specimen_specific(),
-            (study_name, specimen),
+            self._get_sparse_matrix_query_specimen_specific(histological_structures is not None),
+            parameters,
         )
         total = self.cursor.rowcount
         while self.cursor.rownumber < total - 1:
@@ -241,40 +296,52 @@ class SparseMatrixPuller:
             logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
         return sparse_entries
 
-    def _get_sparse_matrix_query_specimen_specific(self) -> str:
+    def _get_sparse_matrix_query_specimen_specific(self,
+        histological_structures_condition: bool = False,
+    ) -> str:
         if ExpressionsTableIndexer.expressions_table_is_indexed_cursor(self.cursor):
-            return self.sparse_entries_query_optimized()
-        return self.sparse_entries_query_unoptimized()
+            return self._sparse_entries_query_optimized(histological_structures_condition)
+        return self._sparse_entries_query_unoptimized(histological_structures_condition)
 
-    def sparse_entries_query_optimized(self) -> str:
-        return '''
+    @staticmethod
+    def _sparse_entries_query_optimized(histological_structures_condition: bool = False) -> str:
+        return f'''
         -- absorb/ignore first string formatting argument: %s
         SELECT
-        eq.histological_structure,
-        eq.target,
-        CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-        eq.source_specimen as specimen,
-        eq.quantity as quantity
+            eq.histological_structure,
+            eq.target,
+            CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
+            eq.source_specimen as specimen,
+            eq.quantity as quantity
         FROM expression_quantification eq
         WHERE eq.source_specimen=%s
+            {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY eq.source_specimen, eq.histological_structure, eq.target
         ;
         '''
 
-    def sparse_entries_query_unoptimized(self) -> str:
-        return '''
+    @staticmethod
+    def _sparse_entries_query_unoptimized(histological_structures_condition: bool = False) -> str:
+        return f'''
         SELECT
-        eq.histological_structure,
-        eq.target,
-        CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-        sdmp.specimen as specimen,
-        eq.quantity as quantity
+            eq.histological_structure,
+            eq.target,
+            CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
+            sdmp.specimen as specimen,
+            eq.quantity as quantity
         FROM expression_quantification eq
-        JOIN histological_structure hs ON eq.histological_structure=hs.identifier
-        JOIN histological_structure_identification hsi ON hs.identifier=hsi.histological_structure
-        JOIN data_file df ON hsi.data_source=df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process=sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell' AND sdmp.specimen=%s
+            JOIN histological_structure hs
+                ON eq.histological_structure=hs.identifier
+            JOIN histological_structure_identification hsi
+                ON hs.identifier=hsi.histological_structure
+            JOIN data_file df
+                ON hsi.data_source=df.sha256_hash
+            JOIN specimen_data_measurement_process sdmp
+                ON df.source_generation_process=sdmp.identifier
+        WHERE sdmp.study=%s
+            AND hs.anatomical_entity='cell'
+            AND sdmp.specimen=%s
+            {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY sdmp.specimen, eq.histological_structure, eq.target
         ;
         '''
@@ -283,44 +350,48 @@ class SparseMatrixPuller:
         return 10000000
 
     def _parse_data_arrays_by_specimen(self,
-        sparse_entries: list[tuple],
+        sparse_entries: list[tuple[str, str, int, str, str]],
         continuous_also: bool = False,
-    ):
+    ) -> tuple[
+        dict[str, dict[int, int]],
+        dict[str, int],
+        dict[str, dict[int, list[float]]] | None,
+    ]:
         target_index_lookup = self._get_target_index_lookup(sparse_entries)
-        sparse_entries.sort(key=lambda x: (x[3], x[0]))
-        data_arrays_by_specimen = {}
-        continuous_data_arrays_by_specimen = {}
-        last_index = len(sparse_entries) - 1
-        specimen = sparse_entries[0][3]
-        buffer = []
-        cell_count = 1
-        for i, entry in enumerate(sparse_entries):
-            buffer.append(entry)
-            if (i != last_index) and (specimen == sparse_entries[i + 1][3]):
-                if sparse_entries[i][0] != sparse_entries[i + 1][0]:
-                    cell_count = cell_count + 1
-            else:
-                data_arrays_by_specimen[specimen] = [0] * cell_count
-                if continuous_also:
-                    zerovector = [[0]*len(target_index_lookup) for i in range(cell_count)]
-                    continuous_data_arrays_by_specimen[specimen] = zerovector
-                else:
-                    continuous_data_arrays_by_specimen[specimen] = None
-                self._fill_data_array(
-                    data_arrays_by_specimen[specimen],
-                    buffer,
-                    target_index_lookup,
-                    continuous_data_array=continuous_data_arrays_by_specimen[specimen],
-                )
-                done_message = 'Done parsing %s feature vectors from %s.'
-                logger.debug(done_message, len(data_arrays_by_specimen[specimen]), specimen)
-                if i != last_index:
-                    specimen = sparse_entries[i + 1][3]
-                    buffer = []
-                    cell_count = 1
+        data_arrays_by_specimen: dict[str, dict[int, int]] = {}
+        continuous_data_arrays_by_specimen: dict[str, dict[int, list[float]]] | None = {} \
+            if continuous_also else None
+
+        df = DataFrame(
+            sparse_entries,
+            columns=['histological_structure', 'target', 'coded_value', 'specimen', 'quantity'],
+        )
+        grouped = df.groupby(['specimen', 'histological_structure'])
+        for (specimen, histological_structure), df_group in grouped:
+            df_group.sort_values(by=['target'], inplace=True)
+            hs_id = int(histological_structure)
+
+            binary = df_group['coded_value'].astype(int).to_numpy()
+            compressed = SparseMatrixPuller._compress_bitwise_to_int(binary)
+            if specimen not in data_arrays_by_specimen:
+                data_arrays_by_specimen[specimen] = {}
+            data_arrays_by_specimen[specimen][hs_id] = compressed
+
+            if continuous_data_arrays_by_specimen is not None:
+                if specimen not in continuous_data_arrays_by_specimen:
+                    continuous_data_arrays_by_specimen[specimen] = {}
+                continuous_data_arrays_by_specimen[specimen][hs_id] = \
+                    df_group['quantity'].astype(float).to_list()
+
         return data_arrays_by_specimen, target_index_lookup, continuous_data_arrays_by_specimen
 
-    def _get_target_index_lookup(self, sparse_entries: list[tuple]) -> dict[str, int]:
+    @classmethod
+    def _compress_bitwise_to_int(cls, feature_vector: ndarray) -> int:
+        return int(feature_vector.dot(1 << arange(feature_vector.size)))
+
+    def _get_target_index_lookup(self,
+        sparse_entries: list[tuple[str, str, int, str, str]],
+    ) -> dict[str, int]:
         target_set = set(entry[1] for entry in sparse_entries)
         targets = sorted(list(target_set))
         lookup = {
@@ -345,26 +416,3 @@ class SparseMatrixPuller:
         target_by_symbol = {row[1]: row[0] for row in rows}
         logger.debug('Target by symbol: %s', target_by_symbol)
         return target_by_symbol
-
-    def _fill_data_array(self,
-        data_array,
-        entries,
-        target_index_lookup: dict[str, int],
-        continuous_data_array=None,
-    ) -> None:
-        structure_index = 0
-        for i, entry in enumerate(entries):
-            if i > 0:
-                if entries[i][0] != entries[i-1][0]:
-                    structure_index = structure_index + 1
-            if entry[2] == 1:
-                data_array[structure_index] = data_array[structure_index] + \
-                    (1 << target_index_lookup[entry[1]])
-        if continuous_data_array is None:
-            return
-        structure_index = 0
-        for i, entry in enumerate(entries):
-            if i > 0:
-                if entries[i][0] != entries[i-1][0]:
-                    structure_index = structure_index + 1
-            continuous_data_array[structure_index][target_index_lookup[entry[1]]] = float(entry[4])

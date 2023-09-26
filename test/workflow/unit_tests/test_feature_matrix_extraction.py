@@ -47,9 +47,14 @@ def test_channels(study: dict[str, MatrixBundle]):
         sys.exit(1)
 
 
-def test_expression_vectors(study: dict[str, MatrixBundle]):
+def test_expression_vectors(
+    study: dict[str, MatrixBundle],
+    continuous: bool = False,
+    retained_structure_id: bool = False,
+):
+    n_cells_so_far: int = 0
     for specimen in study.keys():
-        df = study[specimen].dataframe
+        df = study[specimen].continuous_dataframe if continuous else study[specimen].dataframe
 
         print('Dataframe: ' + str(specimen))
         print(df)
@@ -63,43 +68,17 @@ def test_expression_vectors(study: dict[str, MatrixBundle]):
         cells_filename = filenames[specimen]
         reference = read_csv(
             f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')
+        if retained_structure_id:
+            n_cells_added = reference.shape[0]
+            reference = reference.iloc[(df.index.astype(int) - n_cells_so_far).tolist(),]
+            n_cells_so_far += n_cells_added
         columns = list(study.values())[0].dataframe.columns
         channels = [name[2:] for name in columns[columns.str.startswith('C ')]]
 
         expected_expression_vectors = sorted([
-            tuple(row[f'{channel}_Positive'] for channel in channels)
-            for _, row in reference.iterrows()
-        ])
-
-        if expected_expression_vectors != expression_vectors:
-            print('Expression vector sets not equal.')
-            for i, expected_vector in enumerate(expected_expression_vectors):
-                if expected_vector != expression_vectors[i]:
-                    print(f'At sorted value {i}:')
-                    print(expected_vector)
-                    print(expression_vectors[i])
-            sys.exit(1)
-    print('Expression vector sets are as expected.')
-
-
-def test_expression_vectors_continuous(study: dict[str, MatrixBundle]):
-    for specimen in study.keys():
-        df = study[specimen].continuous_dataframe
-        print(df.head())
-        expression_vectors = sorted([
-            tuple(row[row.index.str.startswith('C ')].tolist())
-            for _, row in df.iterrows()
-        ])
-
-        filenames = {'lesion 0_1': '0.csv', 'lesion 6_1': '3.csv'}
-        cells_filename = filenames[specimen]
-        reference = read_csv(
-            f'../test_data/adi_preprocessed_tables/dataset1/{cells_filename}', sep=',')
-        columns = list(study.values())[0].dataframe.columns
-        channels = [name[2:] for name in columns[columns.str.startswith('C ')]]
-
-        expected_expression_vectors = sorted([
-            tuple(row[f'{channel}_Intensity'] for channel in channels)
+            tuple(
+                row[f'{channel}_Intensity' if continuous else f'{channel}_Positive']
+                for channel in channels)
             for _, row in reference.iterrows()
         ])
 
@@ -148,4 +127,14 @@ if __name__ == '__main__':
     test_one_sample_set(one_sample_study_continuous)
     test_feature_matrix_schemas(one_sample_study_continuous)
     test_channels(one_sample_study_continuous)
-    test_expression_vectors_continuous(one_sample_study_continuous)
+    test_expression_vectors(one_sample_study_continuous, continuous=True)
+
+    some_histological_structures = extractor.extract(
+        study=study_name,
+        histological_structures={1, 5, 7, 15, 16, 17, 150, 151, 340, 341, 2000},  # 2000 is OOB but should skip, not fail
+        retain_structure_id=True,
+    )
+    test_sample_set(some_histological_structures)
+    show_example_feature_matrix(some_histological_structures)
+    test_channels(some_histological_structures)
+    test_expression_vectors(some_histological_structures, retained_structure_id=True)

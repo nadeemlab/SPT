@@ -17,7 +17,7 @@ def compute_proximity_metric_for_signature_pair(
     signature2: PhenotypeCriteria,
     radius: float,
     cells: DataFrame,
-    tree: BallTree
+    tree: BallTree,
 ) -> float | None:
     cells = cells.rename({
         column: (column[2:] if (column.startswith('C ') or column.startswith('P ')) else column)
@@ -38,8 +38,8 @@ def compute_proximity_metric_for_signature_pair(
         return_distance=False,
     )
     counts = [
-        sum(mask2[index] for index in list(indices))
-        for indices in within_radius_indices_list
+        sum(mask2.iloc[integer_index] for integer_index in list(integer_indices))
+        for integer_indices in within_radius_indices_list
     ]
     count = sum(counts) - sum(logical_and(mask1, mask2))
     return count / source_count

@@ -22,6 +22,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
     CGGNNImportanceRank,
+    FeatureMatrixExtract,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -259,6 +260,13 @@ def get_squidpy_metrics(
             radius=radius,
         )
     return metrics
+
+
+@app.get("/phenotypes-sample/")
+async def get_phenotypes_sample(
+    study: ValidStudy,
+) -> FeatureMatrixExtract:
+    return query().get_cells_sample(study)
 
 
 @app.get("/visualization-plots/")

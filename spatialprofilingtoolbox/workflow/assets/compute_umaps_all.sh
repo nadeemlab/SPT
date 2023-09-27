@@ -64,11 +64,6 @@ function run_all_umaps() {
     while read -r run_directory
     do
         run_umaps_one_dataset "$run_directory"
-        if [[ "$?" != "0" ]];
-        then
-            echo "UMAPs workflow in '$run_directory' failed."
-            exit 1
-        fi
     done < <(fetch_run_directories "$runs_directory")
 }
 
@@ -88,7 +83,7 @@ function run_umaps_one_dataset() {
     cd "$noted_pwd"
     if [[ "$status" != "0" ]];
     then
-        exit "$status"
+        echo "UMAPs workflow in '$run_directory' failed."
     fi
 }
 

@@ -77,8 +77,9 @@ def _add_slide_column(connection: Connection, df: DataFrame) -> None:
                 ON df.source_generation_process=sdmp.identifier
         ;
     """, connection)
+    lookup['histological_structure'] = lookup['histological_structure'].astype(int)
     reindexed = lookup.set_index('histological_structure')
-    df['specimen'] = reindexed.loc[df.index, 'specimen']
+    df['specimen'] = reindexed.loc[df.index]['specimen']
 
 
 def _group_and_filter(df: DataFrame, filter_number) -> DataFrame:

@@ -9,7 +9,7 @@
                             diagnosis        2
        diagnostic_selection_criterion        4
             expression_quantification    18200
-                feature_specification       30
+                feature_specification      730
                     feature_specifier       30
                histological_structure      700
 histological_structure_identification      700

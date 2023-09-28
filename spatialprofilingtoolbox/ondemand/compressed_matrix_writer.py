@@ -26,8 +26,7 @@ class CompressedMatrixWriter:
         _, study_indices = self._get_study_names_and_indices(data_arrays)
         for study_name, study in data_arrays.get_studies().items():
             study_index = study_indices[study_name]
-            specimen, specimen_indices = self._get_specimens_and_indices(
-                study_name, data_arrays)
+            _, specimen_indices = self._get_specimens_and_indices(study_name, data_arrays)
             for specimen, data_array in study['data arrays by specimen'].items():
                 specimen_index = specimen_indices[specimen]
                 filename = '.'.join([

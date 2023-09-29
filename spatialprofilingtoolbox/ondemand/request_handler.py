@@ -103,7 +103,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
             positives_signature,
             negatives_signature,
             study,
-            tuple(sorted(list(cells_selected))),
+            tuple(sorted(list(cells_selected))) if cells_selected else None,
         )
 
     def _handle_unparseable_signature(self, signature: int | None, names: list[str]) -> bool:

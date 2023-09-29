@@ -145,7 +145,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         logger.info('Study: %s', study_name)
         logger.info('Positives: %s', positive_channel_names)
         logger.info('Negatives: %s', negative_channel_names)
-        if len(groups) == 4:
+        if len(groups) == 4 and groups[3] != '':
             cells_selected = {int(s) for s in groups[3].split(record_separator)}
             logger.info('Cells selected: %s', cells_selected)
         else:

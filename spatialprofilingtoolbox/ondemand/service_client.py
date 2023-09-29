@@ -114,7 +114,7 @@ class OnDemandRequester:
         return self._get_group_separator().join(
             ['counts', group1, group2, group3] + (
                 [] if (cells_selected is None) else
-                [self._get_record_separator().join(negative_signature_channels)]
+                [self._get_record_separator().join(cells_selected)]
             )
         ).encode('utf-8')
 

@@ -1,10 +1,9 @@
 """Test that the API server can handle retrieving cells by importance and phenotype."""
 
 from json import loads
+from json import dumps
 from urllib.parse import quote
 from subprocess import run
-
-import json
 
 STUDY_NAME = quote('Melanoma intralesional IL2')
 ENDPOINT = 'cggnn-importance-composition'
@@ -35,7 +34,7 @@ def main():
             check=True,
         ).stdout
         response = loads(result)
-        print(json.dumps(response, indent=4))
+        print(dumps(response, indent=4))
         phenotype_total = sum(
             phenotype_count['count'] for phenotype_count in response['counts']
         )

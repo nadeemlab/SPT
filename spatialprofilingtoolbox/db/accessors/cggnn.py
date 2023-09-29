@@ -16,7 +16,7 @@ class CGGNNAccess(SimpleReadOnlyProvider):
         list[CGGNNImportanceRank]
             List of (histological structure ID, importance rank) tuples.
         """
-        parameters = [get_feature_description("gnn importance score"), study]
+        parameters: list[str | int] = [get_feature_description("gnn importance score"), study]
         if cell_limit is not None:
             parameters.append(cell_limit)
         self.cursor.execute(f'''

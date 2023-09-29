@@ -63,7 +63,7 @@ def _recover_study_from_histological_structure(
         WHERE hsi.histological_structure='{histological_structure}'
         LIMIT 1
         ;
-    """, connection)['study'][0]
+    """, connection)['primary_study'][0]
     return cast(str, value)
 
 

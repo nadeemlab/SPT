@@ -3,8 +3,10 @@
 from typing import Any
 from typing import Collection
 from typing import cast
-from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 
+from pandas import Index
+
+from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -31,18 +33,19 @@ class CountsProvider(OnDemandProvider):
         positives_signature: int,
         negatives_signature: int,
         study_name: str,
-        cells_selected: tuple[str, ...] | None = None,
+        cells_selected: tuple[int, ...] | None = None,
     ) -> dict[str, list[int]]:
         """Count the number of structures per specimen that match this signature."""
         counts: dict[str, list[int]] = {}
+        selection = Index(list(cells_selected)) if cells_selected else None
         for specimen, data_array in self.data_arrays[study_name].items():
             count = 0
             if len(data_array) == 0:
                 raise ValueError(f'Data array for specimen "{specimen}" is empty.')
             integers = cast(
                 Collection[int],
-                data_array['integer'] if (cells_selected is None) else
-                data_array.loc[cells_selected, 'integer'],
+                data_array['integer'] if (selection is None) else
+                data_array.loc[data_array.index.intersection(selection), 'integer'],
             )
             count = self.get_count(integers, positives_signature, negatives_signature)
             counts[specimen] = [count, len(integers)]

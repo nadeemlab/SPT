@@ -17,8 +17,8 @@ CELL_LIMIT = 50
 
 def main():
     cases = [
-        (POSITIVE_MARKERS, NEGATIVE_MARKERS, 7),
-        (NEGATIVE_MARKERS, POSITIVE_MARKERS, 352),
+        (POSITIVE_MARKERS, NEGATIVE_MARKERS, 3),
+        (NEGATIVE_MARKERS, POSITIVE_MARKERS, 168),
     ]
 
     for positive_markers, negative_markers, expected in cases:

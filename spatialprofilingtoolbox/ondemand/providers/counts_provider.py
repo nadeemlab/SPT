@@ -1,7 +1,7 @@
 """Count cells for a specific signature, over the specially-created binary-format index."""
 
 from typing import Any
-from typing import Iterable
+from typing import Collection
 from typing import cast
 from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 
@@ -31,7 +31,7 @@ class CountsProvider(OnDemandProvider):
         positives_signature: int,
         negatives_signature: int,
         study_name: str,
-        cells_selected: set[int] | None = None,
+        cells_selected: tuple[int, ...] | None = None,
     ) -> dict[str, list[int]]:
         """Count the number of structures per specimen that match this signature."""
         counts: dict[str, list[int]] = {}
@@ -40,7 +40,7 @@ class CountsProvider(OnDemandProvider):
             if len(data_array) == 0:
                 raise ValueError(f'Data array for specimen "{specimen}" is empty.')
             integers = cast(
-                Iterable[int],
+                Collection[int],
                 data_array['integer'] if (cells_selected is None) else
                 data_array.loc[cells_selected, 'integer'],
             )
@@ -48,7 +48,7 @@ class CountsProvider(OnDemandProvider):
             counts[specimen] = [count, len(integers)]
         return counts
 
-    def get_count(self, integers: Iterable[int], positives_mask: int, negatives_mask: int) -> int:
+    def get_count(self, integers: Collection[int], positives_mask: int, negatives_mask: int) -> int:
         """Counts the number of elements of the list of integer-represented binary numbers which
         equal to 1 along the bits indicated by the positives mask, and equal to 0 along the bits
         indicated by the negatives mask.

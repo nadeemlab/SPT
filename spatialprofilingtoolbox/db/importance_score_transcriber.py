@@ -52,12 +52,14 @@ def _recover_study_from_histological_structure(
     value = read_sql(f"""
         SELECT
             hsi.histological_structure,
-            sdmp.study
+            sc.primary_study
         FROM histological_structure_identification hsi
             JOIN data_file df
                 ON hsi.data_source=df.sha256_hash
             JOIN specimen_data_measurement_process sdmp
                 ON df.source_generation_process=sdmp.identifier
+            JOIN study_component sc
+                ON sdmp.study=sc.component_study
         WHERE hsi.histological_structure='{histological_structure}'
         LIMIT 1
         ;

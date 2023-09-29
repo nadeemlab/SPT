@@ -8,27 +8,27 @@ from spatialprofilingtoolbox import get_feature_description
 
 def get_test_importance_rows():
     return [
-        ('119', 0.80),
-        ('120', 0.81),
-        ('121', 0.82),
-        ('122', 0.83),
-        ('123', 0.84),
-        ('124', 0.85),
-        ('125', 0.86),
-        ('126', 0.10),
+        (119, 0.80),
+        (120, 0.81),
+        (121, 0.82),
+        (122, 0.83),
+        (123, 0.84),
+        (124, 0.85),
+        (125, 0.86),
+        (126, 0.10),
     ]
 
 
 def get_expected_records():
     return [
-        ('119', 1),
-        ('120', 2),
-        ('121', 3),
-        ('122', 4),
-        ('123', 5),
-        ('124', 6),
-        ('125', 7),
-        ('126', 0),
+        (119, 1),
+        (120, 2),
+        (121, 3),
+        (122, 4),
+        (123, 5),
+        (124, 6),
+        (125, 7),
+        (126, 0),
     ]
 
 
@@ -54,13 +54,12 @@ def retrieve_feature_values(connection):
     ''')
     rows = cursor.fetchall()
     cursor.close()
-    return [(row[2], int(row[3])) for row in rows]
+    return [(int(row[2]), int(row[3])) for row in rows]
 
 
 def test_transcribe_importances():
     columns = ['histological_structure', 'importance_score']
-    df = DataFrame(get_test_importance_rows(), columns = columns)
-    df['histological_structure'] = df['histological_structure'].astype(str)
+    df = DataFrame(get_test_importance_rows(), columns=columns)
     df = df.set_index('histological_structure')
     with DatabaseConnectionMaker(database_config_file='../db/.spt_db.config.container') as dcm:
         connection = dcm.get_connection()
@@ -69,5 +68,5 @@ def test_transcribe_importances():
     check_records(feature_values)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     test_transcribe_importances()

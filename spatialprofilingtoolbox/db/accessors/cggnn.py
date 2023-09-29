@@ -18,6 +18,9 @@ class CGGNNAccess(SimpleReadOnlyProvider):
             List of (histological structure ID, importance rank) tuples.
         """
         components = StudyAccess(self.cursor).get_study_components(study)
+        parameters = [get_feature_description("gnn importance score"), components.analysis]
+        if cell_limit is not None:
+            parameters.append(cell_limit)
         self.cursor.execute(f'''
             SELECT
                 qfv.subject,
@@ -25,11 +28,11 @@ class CGGNNAccess(SimpleReadOnlyProvider):
             FROM quantitative_feature_value qfv
                 JOIN feature_specification fs
                     ON fs.identifier=qfv.feature
-            WHERE fs.derivation_method='{get_feature_description("gnn importance score")}'
-                AND fs.study='{components.analysis}'
-                {'AND qfv.value < ' + str(cell_limit) if (cell_limit is not None) else ''}
+            WHERE fs.derivation_method=%s
+                AND fs.study=%s
+                {'AND qfv.value < %s' if (cell_limit is not None) else ''}
             ;
-        ''')
+        ''', parameters)
         rows = self.cursor.fetchall()
         return [CGGNNImportanceRank(
             histological_structure_id=int(row[0]),
@@ -39,16 +42,16 @@ class CGGNNAccess(SimpleReadOnlyProvider):
     def get_important_cells(self, study: str, cell_limit: int) -> set[int]:
         """Get the cell_limit most important cell IDs for each specimen in this study."""
         components = StudyAccess(self.cursor).get_study_components(study)
-        self.cursor.execute(f'''
+        self.cursor.execute('''
             SELECT
                 qfv.subject
             FROM quantitative_feature_value qfv
                 JOIN feature_specification fs
                     ON fs.identifier=qfv.feature
-            WHERE fs.derivation_method='{get_feature_description("gnn importance score")}'
-                AND fs.study='{components.analysis}'
-                AND qfv.value < {cell_limit}  -- Importance is 0-indexed
+            WHERE fs.derivation_method=%s
+                AND fs.study=%s
+                AND qfv.value < %s  -- Importance is 0-indexed
             ;
-        ''')
+        ''', (get_feature_description("gnn importance score"), components.analysis, cell_limit))
         rows = self.cursor.fetchall()
         return set(int(row[0]) for row in rows)

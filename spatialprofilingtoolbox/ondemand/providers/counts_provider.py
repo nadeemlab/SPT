@@ -31,7 +31,7 @@ class CountsProvider(OnDemandProvider):
         positives_signature: int,
         negatives_signature: int,
         study_name: str,
-        cells_selected: tuple[int, ...] | None = None,
+        cells_selected: tuple[str, ...] | None = None,
     ) -> dict[str, list[int]]:
         """Count the number of structures per specimen that match this signature."""
         counts: dict[str, list[int]] = {}

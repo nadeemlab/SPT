@@ -14,7 +14,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     UMAPChannel,
     CGGNNImportanceRank,
-    UnivariateMetricsComputationResult,
 )
 from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
 from spatialprofilingtoolbox.db.accessors import (

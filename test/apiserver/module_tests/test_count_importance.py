@@ -4,6 +4,8 @@ from json import loads
 from urllib.parse import quote
 from subprocess import run
 
+import json
+
 STUDY_NAME = quote('Melanoma intralesional IL2')
 ENDPOINT = 'cggnn-importance-composition'
 HOST = 'spt-apiserver-testing'
@@ -16,8 +18,8 @@ CELL_LIMIT = 50
 
 def main():
     cases = [
-        (POSITIVE_MARKERS, NEGATIVE_MARKERS, 3),
-        (NEGATIVE_MARKERS, POSITIVE_MARKERS, 168),
+        (POSITIVE_MARKERS, NEGATIVE_MARKERS, 7),
+        (NEGATIVE_MARKERS, POSITIVE_MARKERS, 352),
     ]
 
     for positive_markers, negative_markers, expected in cases:
@@ -33,6 +35,7 @@ def main():
             check=True,
         ).stdout
         response = loads(result)
+        print(json.dumps(response, indent=4))
         phenotype_total = sum(
             phenotype_count['count'] for phenotype_count in response['counts']
         )

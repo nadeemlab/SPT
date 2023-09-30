@@ -84,11 +84,13 @@ def _add_slide_column(connection: Connection, df: DataFrame) -> None:
     df['specimen'] = reindexed.loc[df.index, 'specimen']
 
 
-def _group_and_filter(df: DataFrame, filter_number) -> DataFrame:
-    ordered = df.sort_values(by='importance_score')
-    df_most_important = ordered.groupby('specimen').head(filter_number)
-    df_most_important = df_most_important.reset_index(drop=False)
-    df_most_important['importance_order'] = df_most_important.index
+def _group_and_filter(df: DataFrame, filter_number: int) -> DataFrame:
+    ordered = df.sort_values(by='importance_score', ascending=False)
+    ordered['importance_order'] = 1
+    grouped = ordered.groupby('specimen')
+    ranks = grouped['importance_order'].cumsum()
+    df_most_important = \
+        grouped.head(filter_number).drop('importance_order', axis=1).join(ranks, how='left')
     return df_most_important
 
 

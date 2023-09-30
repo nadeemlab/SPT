@@ -9,7 +9,7 @@ from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
 from spatialprofilingtoolbox import squidpy_feature_classnames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-logger = colorized_logger('spt ondemand start')
+logger = colorized_logger(__name__)
 
 
 class OnDemandRequestHandler(BaseRequestHandler):
@@ -28,7 +28,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     def _handle(self) -> None:
         """Handle an on demand request."""
-        data: bytes = self.request.recv(512).strip()
+        data: bytes = self.request.recv(100000).strip()
         logger.info('Request: %s', data)
         if self._handle_empty_body(data):
             return

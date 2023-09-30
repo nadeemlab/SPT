@@ -1,4 +1,6 @@
 """Convenience access of cg-gnn metrics."""
+from typing import cast
+from pandas import DataFrame
 
 from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
@@ -43,16 +45,24 @@ class CGGNNAccess(SimpleReadOnlyProvider):
         """Get the cell_limit most important cell IDs for each specimen in this study."""
         self.cursor.execute('''
             SELECT
-                qfv.subject
+                qfv.subject, sdmp.specimen
             FROM quantitative_feature_value qfv
                 JOIN feature_specification fs
                     ON fs.identifier=qfv.feature
+                JOIN histological_structure_identification hsi
+                    ON hsi.histological_structure=qfv.subject
+                JOIN data_file df
+                    ON df.sha256_hash=hsi.data_source
+                JOIN specimen_data_measurement_process sdmp
+                    ON df.source_generation_process=sdmp.identifier
                 JOIN study_component sc
                     ON sc.component_study=fs.study
             WHERE fs.derivation_method=%s
                 AND sc.primary_study=%s
-                AND qfv.value < %s  -- Importance is 0-indexed
+            ORDER BY sdmp.specimen, qfv.value
             ;
-        ''', (get_feature_description("gnn importance score"), study, cell_limit))
+        ''', (get_feature_description("gnn importance score"), study))
         rows = self.cursor.fetchall()
-        return set(int(row[0]) for row in rows)
+        df = DataFrame(rows, columns=['subject', 'sample'])
+        truncated = df.groupby('sample').head(cell_limit)
+        return set(map(int, truncated['subject']))

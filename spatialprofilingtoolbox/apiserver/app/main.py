@@ -233,7 +233,10 @@ async def cggnn_importance_composition(
     cell_limit: int = 100,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of important cells expressing a given phenotype."""
-    cells_selected = cast(set[int], query().get_important_cells(study, cell_limit))
+    cells_selected = query().get_important_cells(study, cell_limit)
+
+    print(cells_selected)
+
     return get_phenotype_counts(
         positive_marker,
         negative_marker,

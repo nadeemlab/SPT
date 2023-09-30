@@ -43,15 +43,18 @@ class CountsProvider(OnDemandProvider):
             if len(data_array) == 0:
                 raise ValueError(f'Data array for specimen "{specimen}" is empty.')
             integers = cast(
-                Collection[int],
+                list[int],
                 data_array['integer'] if (selection is None) else
                 data_array.loc[data_array.index.intersection(selection), 'integer'],
             )
+            if len(integers) == 0:
+                message = 'Cell subselection %s resulted in no cells for specimen %s'
+                raise ValueError(message, cells_selected, specimen)
             count = self.get_count(integers, positives_signature, negatives_signature)
             counts[specimen] = [count, len(integers)]
         return counts
 
-    def get_count(self, integers: Collection[int], positives_mask: int, negatives_mask: int) -> int:
+    def get_count(self, integers: list[int], positives_mask: int, negatives_mask: int) -> int:
         """Counts the number of elements of the list of integer-represented binary numbers which
         equal to 1 along the bits indicated by the positives mask, and equal to 0 along the bits
         indicated by the negatives mask.

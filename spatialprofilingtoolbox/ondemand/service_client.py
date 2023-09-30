@@ -51,6 +51,7 @@ class OnDemandRequester:
             None if (cells_selected is None) else [str(c) for c in cells_selected],
         )
         self.tcp_client.sendall(query)
+        logger.debug('Query to counts service: %s', query)
         response = self._parse_response()
         return PhenotypeCounts(
             counts=[
@@ -121,7 +122,7 @@ class OnDemandRequester:
     def _parse_response(self):
         received = None
         buffer = bytearray()
-        bytelimit = 1000000
+        bytelimit = 10000000
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)

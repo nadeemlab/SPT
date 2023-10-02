@@ -69,7 +69,7 @@ DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(
 
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
 _PUSHABLE_SUBMODULES := $(filter-out cggnn,$(DOCKERIZED_SUBMODULES))
-PUSHABLE_SUBMODULES := $(filter-out db,$(PUSHABLE_SUBMODULES))
+PUSHABLE_SUBMODULES := $(filter-out db,$(_PUSHABLE_SUBMODULES))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(PUSHABLE_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))

@@ -1,6 +1,7 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
 
-import subprocess
+from subprocess import run as subprocess_run
+from subprocess import CalledProcessError
 from os import environ
 from os import remove
 from os import listdir
@@ -46,13 +47,13 @@ class FastCacheAssessor:
         up_to_date = False
         while up_to_date is False:
             check_count += 1
-            up_to_date = self._cache_is_up_to_date()
+            up_to_date = self._cache_is_up_to_date(verbose=False)
             if check_count % 12 == 0:
                 logger.debug('Waiting for cache to be available.')
             sleep(5)
 
-    def _cache_is_up_to_date(self) -> bool:
-        if not self._check_files_present():
+    def _cache_is_up_to_date(self, verbose: bool = True) -> bool:
+        if not self._check_files_present(verbose=verbose):
             return False
         self._retrieve_files()
         checkers = [
@@ -84,16 +85,27 @@ class FastCacheAssessor:
         command = '; '.join(commands)
         logger.debug('Command is:')
         logger.debug(command)
-        subprocess.run(command, shell=True, check=True)
+        try:
+            subprocess_run(command, shell=True, check=True)
+        except CalledProcessError as exception:
+            err = 'CalledProcessError'
+            message = f'Received {err} during cache creation, probably insufficient available RAM.'
+            logger.error(message)
+            logger.info(str(exception))
+            logger.info('Entering 2 hour indefinite sleep loop.')
+            hour = 60 * 60
+            while True:
+                sleep(2 * hour)
 
-    def _check_files_present(self) -> bool:
+    def _check_files_present(self, verbose: bool = True) -> bool:
         files_present = {
             filename: isfile(join(self.source_data_location, filename))
             for filename in [CENTROIDS_FILENAME, EXPRESSIONS_INDEX_FILENAME]
         }
-        for filename, present in files_present.items():
-            indicator = 'present' if present else 'not present'
-            logger.info('File %s is %s.', filename, indicator)
+        if verbose:
+            for filename, present in files_present.items():
+                indicator = 'present' if present else 'not present'
+                logger.info('File %s is %s.', filename, indicator)
         return all(files_present.values())
 
     def _check_study_sets(self) -> bool:

@@ -42,10 +42,10 @@ def get_expression_dfs():
         df = expression_dfs[filename]
         df['histological_structure'] = [str(offset + i) for i in range(100)]
         df.set_index('histological_structure', inplace=True)
-        offset = offset + 1
+        offset = offset + df.shape[0]
 
         joined = df.join(importances, on='histological_structure')
-        joined = joined.sort_values(by='importance_score', ascending=True)
+        joined = joined.sort_values(by='importance_score', ascending=False)
         rank = Series([i+1 for i in range(joined.shape[0])], joined.index)
         df['rank'] = rank
     return expression_dfs

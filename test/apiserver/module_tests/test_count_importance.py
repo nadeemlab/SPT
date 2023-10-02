@@ -1,5 +1,6 @@
 """Test that the API server can handle retrieving cells by importance and phenotype."""
 
+from os.path import join
 from json import loads
 from json import dumps
 from urllib.parse import quote
@@ -15,13 +16,20 @@ NEGATIVE_MARKERS: list[str] = ['']
 CELL_LIMIT = 50
 
 
+def get_expected():
+    filename = join('module_tests', 'expected_importance_fractions.json')
+    with open(filename, 'rt', encoding='utf-8') as file:
+        expected = loads(file.read())
+    return expected
+
+
 def main():
     cases = [
-        (POSITIVE_MARKERS, NEGATIVE_MARKERS, 3),
-        (NEGATIVE_MARKERS, POSITIVE_MARKERS, 172),
+        (POSITIVE_MARKERS, NEGATIVE_MARKERS),
+        (NEGATIVE_MARKERS, POSITIVE_MARKERS),
     ]
 
-    for positive_markers, negative_markers, expected in cases:
+    for expected, (positive_markers, negative_markers) in zip(get_expected(), cases):
         clause0 = f'study={STUDY_NAME}'
         clause1 = '&'.join([f'positive_marker={m}' for m in positive_markers])
         clause2 = '&'.join([f'negative_marker={m}' for m in negative_markers])
@@ -38,8 +46,14 @@ def main():
         phenotype_total = sum(
             phenotype_count['count'] for phenotype_count in response['counts']
         )
-        if phenotype_total != expected:
-            raise ValueError(f'Got wrong number: {phenotype_total}, expected {expected}.')
+        expected_total = sum(count for _, count in expected.items())
+        for item in response['counts']:
+            sample = item["specimen"]
+            if item['count'] != expected[sample]:
+                raise ValueError(f'Expected {expected[sample]}, got {item["count"]}, for {sample}.')
+            print(f'Got expected {item["count"]} for {sample}.')
+        if phenotype_total != expected_total:
+            raise ValueError(f'Got wrong number: {phenotype_total}, expected {expected_total}.')
 
 
 if __name__ == '__main__':

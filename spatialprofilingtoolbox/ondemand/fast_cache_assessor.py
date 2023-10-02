@@ -46,10 +46,10 @@ class FastCacheAssessor:
         check_count = 0
         up_to_date = False
         while up_to_date is False:
-            check_count += 1
             up_to_date = self._cache_is_up_to_date(verbose=False)
-            if check_count % 12 == 0:
+            if check_count % 60 == 0:
                 logger.debug('Waiting for cache to be available.')
+            check_count += 1
             sleep(5)
 
     def _cache_is_up_to_date(self, verbose: bool = True) -> bool:

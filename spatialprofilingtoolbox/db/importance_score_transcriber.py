@@ -107,9 +107,9 @@ def _upload(
         impute_zeros=True,
         connection=connection,
     ) as feature_uploader:
-        for _, row in df.iterrows():
+        for histological_structure, row in df.iterrows():
             feature_uploader.stage_feature_value(
                 (cohort_stratifier,),
-                row['histological_structure'],
+                str(histological_structure),
                 row['importance_order'],
             )

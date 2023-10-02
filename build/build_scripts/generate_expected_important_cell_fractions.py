@@ -18,7 +18,7 @@ def get_file_by_sample():
     }
 
 def get_importances():
-    importances_filename = 'test/test_data/adi_preprocessed_tables/dataset1/importances.csv'
+    importances_filename = 'test/test_data/gnn_importances/1.csv'
     importances = read_csv(importances_filename, sep=',')
     importances['histological_structure'] = importances['histological_structure'].astype(str)
     importances.set_index('histological_structure', inplace=True)

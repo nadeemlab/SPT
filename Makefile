@@ -68,7 +68,8 @@ DOCKERIZED_SUBMODULES := apiserver cggnn ondemand db workflow
 DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
-DOCKER_PUSH_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
+PUSHABLE_SUBMODULES := $(filter-out cggnn,$(DOCKERIZED_SUBMODULES))
+DOCKER_PUSH_TARGETS := $(foreach submodule,$(PUSHABLE_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
 MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))

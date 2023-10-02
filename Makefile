@@ -301,7 +301,7 @@ ${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1small data-loade
 # The below explicitly checks whether the docker image already exists locally.
 # If so, not rebuilt. To trigger rebuild, use "make clean-docker-images" first,
 # or directly force-rebuild-data-loaded-images .
-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
+data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh development-image
 >@${MESSAGE} start "Building test-data-loaded spt-db image ($*)"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_image_exists.sh; \

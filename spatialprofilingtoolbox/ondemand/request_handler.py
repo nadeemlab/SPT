@@ -9,7 +9,7 @@ from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
 from spatialprofilingtoolbox import squidpy_feature_classnames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-logger = colorized_logger('spt ondemand start')
+logger = colorized_logger(__name__)
 
 
 class OnDemandRequestHandler(BaseRequestHandler):
@@ -28,7 +28,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     def _handle(self) -> None:
         """Handle an on demand request."""
-        data = self.request.recv(512).strip()
+        data: bytes = self.request.recv(1000000).strip()
         logger.info('Request: %s', data)
         if self._handle_empty_body(data):
             return
@@ -45,6 +45,8 @@ class OnDemandRequestHandler(BaseRequestHandler):
                     self._send_error_response()
                     return
                 handled = self._handle_proximity_request(groups)
+            case _:
+                pass
         if not handled:
             if request_class in squidpy_feature_classnames():
                 if self.server.providers.squidpy is None:
@@ -55,43 +57,68 @@ class OnDemandRequestHandler(BaseRequestHandler):
             self._send_error_response()
 
     @staticmethod
-    def _get_request_class_and_groups(data) -> tuple[str, tuple[str, ...]]:
+    def _get_request_class_and_groups(data: bytes) -> tuple[str, list[str]]:
         group_separator = chr(29)
         components = data.decode('utf-8').split(group_separator)
         return components[0], components[1:]
 
-    def _handle_single_phenotype_counts_request(self, groups):
-        if len(groups) != 3:
+    def _handle_single_phenotype_counts_request(self, groups: list[str]) -> bool:
+        if len(groups) not in {3, 4}:
             return False
-        specification = self._get_phenotype_spec(groups)
+        specification = self._get_phenotype_counts_spec(groups)
         study_name = specification[0]
         if self._handle_missing_study(study_name):
             return True
 
-        positives_signature, negatives_signature = self._get_signatures(*specification)
+        positives_signature, negatives_signature = self._get_signatures(
+            study_name,
+            specification[1],
+            specification[2],
+        )
         if self._handle_unparseable_signature(positives_signature, specification[1]):
             return True
         if self._handle_unparseable_signature(negatives_signature, specification[2]):
             return True
+        assert (positives_signature is not None) and (negatives_signature is not None)
 
-        counts = self._get_counts(study_name, positives_signature, negatives_signature)
+        counts = self._get_counts(
+            study_name,
+            positives_signature,
+            negatives_signature,
+            specification[3],
+        )
         message = dumps(counts) + self._get_end_of_transmission()
         self.request.sendall(message.encode('utf-8'))
         return True
 
-    def _get_counts(self, study, positives_signature, negatives_signature):
+    def _get_counts(
+        self,
+        study: str,
+        positives_signature: int,
+        negatives_signature: int,
+        cells_selected: set[int] | None = None,
+    ) -> dict[str, list[int]]:
         assert self.server.providers.counts is not None
-        arguments = [positives_signature, negatives_signature, study]
-        return self.server.providers.counts.count_structures_of_partial_signed_signature(*arguments)
+        return self.server.providers.counts.count_structures_of_partial_signed_signature(
+            positives_signature,
+            negatives_signature,
+            study,
+            tuple(sorted(list(cells_selected))) if cells_selected else None,
+        )
 
-    def _handle_unparseable_signature(self, signature, names):
+    def _handle_unparseable_signature(self, signature: int | None, names: list[str]) -> bool:
         if signature is None:
             logger.error('Could not understand channel names as defining a signature: %s', names)
             self._wrap_up_transmission()
             return True
         return False
 
-    def _get_signatures(self, study_name, positives, negatives):
+    def _get_signatures(
+        self,
+        study_name: str,
+        positives: list[str],
+        negatives: list[str],
+    ) -> tuple[int | None, int | None]:
         assert self.server.providers.counts is not None
         signature1 = self.server.providers.counts.compute_signature(positives, study_name)
         signature2 = self.server.providers.counts.compute_signature(negatives, study_name)
@@ -105,7 +132,10 @@ class OnDemandRequestHandler(BaseRequestHandler):
         self._wrap_up_transmission()
         return True
 
-    def _get_phenotype_spec(self, groups):
+    def _get_phenotype_counts_spec(
+        self,
+        groups: list[str],
+    ) -> tuple[str, list[str], list[str], set[int] | None]:
         record_separator = chr(30)
         study_name = groups[0]
         positive_channel_names = groups[1].split(record_separator)
@@ -115,7 +145,12 @@ class OnDemandRequestHandler(BaseRequestHandler):
         logger.info('Study: %s', study_name)
         logger.info('Positives: %s', positive_channel_names)
         logger.info('Negatives: %s', negative_channel_names)
-        return study_name, positive_channel_names, negative_channel_names
+        if len(groups) == 4 and groups[3] != '':
+            cells_selected = {int(s) for s in groups[3].split(record_separator)}
+            logger.info('Cells selected: %s', cells_selected)
+        else:
+            cells_selected = None
+        return study_name, positive_channel_names, negative_channel_names, cells_selected
 
     def _handle_proximity_request(self, groups):
         if len(groups) != 6:
@@ -218,8 +253,8 @@ class OnDemandRequestHandler(BaseRequestHandler):
             radius=radius,
         )
 
-    def _handle_empty_body(self, data):
-        if data == '':
+    def _handle_empty_body(self, data: bytes) -> bool:
+        if data == b'':
             logger.info('Empty body. Serving status.')
             status = dumps(self._get_default_provider().get_status(), indent=4)
             message = status + self._get_end_of_transmission()
@@ -241,7 +276,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return chr(4)
 
     @staticmethod
-    def _trim_empty_entry(element):
+    def _trim_empty_entry(element: list[str]) -> list[str]:
         if element == ['']:
             return []
         return element

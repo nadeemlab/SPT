@@ -16,10 +16,12 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
+
 class OnDemandRequester:
     """TCP client for requesting from the on-demand service."""
 
-    def __init__(self,
+    def __init__(
+        self,
         host: str | None = None,
         port: int | None = None,
         service: str | None = None,
@@ -40,13 +42,16 @@ class OnDemandRequester:
         negative_signature_channels: list[str],
         study_name: str,
         number_cells: int,
+        cells_selected: set[int] | None = None,
     ) -> PhenotypeCounts:
-        query = self._form_query(
+        query = self._form_counts_query(
             [self._sanitize_token(c) for c in positive_signature_channels],
             [self._sanitize_token(c) for c in negative_signature_channels],
             self._sanitize_token(study_name),
+            None if (cells_selected is None) else [str(c) for c in cells_selected],
         )
         self.tcp_client.sendall(query)
+        logger.debug('Query to counts service: %s', query)
         response = self._parse_response()
         return PhenotypeCounts(
             counts=[
@@ -69,7 +74,7 @@ class OnDemandRequester:
         )
 
     @staticmethod
-    def _fancy_round(ratio):
+    def _fancy_round(ratio: float) -> float:
         return 100 * round(ratio * 10000)/10000
 
     def get_proximity_metrics(
@@ -97,23 +102,34 @@ class OnDemandRequester:
             is_pending=response['pending'],
         )
 
-    def _form_query(self, positive_signature_channels, negative_signature_channels, study_name):
+    def _form_counts_query(
+        self,
+        positive_signature_channels: list[str],
+        negative_signature_channels: list[str],
+        study_name: str,
+        cells_selected: list[str] | None = None,
+    ) -> bytes:
         group1 = study_name
         group2 = self._get_record_separator().join(positive_signature_channels)
         group3 = self._get_record_separator().join(negative_signature_channels)
-        return self._get_group_separator().join(['counts', group1, group2, group3]).encode('utf-8')
+        return self._get_group_separator().join(
+            ['counts', group1, group2, group3] + (
+                [] if (cells_selected is None) else
+                [self._get_record_separator().join(cells_selected)]
+            )
+        ).encode('utf-8')
 
     def _parse_response(self):
         received = None
         buffer = bytearray()
-        bytelimit = 1000000
+        bytelimit = 10000000
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)
             received = self.tcp_client.recv(1)
         return json.loads(buffer.decode('utf-8'))
 
-    def _sanitize_token(self, text):
+    def _sanitize_token(self, text: str) -> str:
         return re.sub(
             '[' + self._get_record_separator() + self._get_group_separator() + ']', ' ', text)
 

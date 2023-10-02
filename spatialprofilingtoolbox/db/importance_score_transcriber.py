@@ -52,16 +52,18 @@ def _recover_study_from_histological_structure(
     value = read_sql(f"""
         SELECT
             hsi.histological_structure,
-            sdmp.study
+            sc.primary_study
         FROM histological_structure_identification hsi
             JOIN data_file df
                 ON hsi.data_source=df.sha256_hash
             JOIN specimen_data_measurement_process sdmp
                 ON df.source_generation_process=sdmp.identifier
+            JOIN study_component sc
+                ON sdmp.study=sc.component_study
         WHERE hsi.histological_structure='{histological_structure}'
         LIMIT 1
         ;
-    """, connection)['study'][0]
+    """, connection)['primary_study'][0]
     return cast(str, value)
 
 
@@ -77,15 +79,18 @@ def _add_slide_column(connection: Connection, df: DataFrame) -> None:
                 ON df.source_generation_process=sdmp.identifier
         ;
     """, connection)
+    lookup['histological_structure'] = lookup['histological_structure'].astype(int)
     reindexed = lookup.set_index('histological_structure')
     df['specimen'] = reindexed.loc[df.index, 'specimen']
 
 
-def _group_and_filter(df: DataFrame, filter_number) -> DataFrame:
-    ordered = df.sort_values(by='importance_score')
-    df_most_important = ordered.groupby('specimen').head(filter_number)
-    df_most_important = df_most_important.reset_index(drop=False)
-    df_most_important['importance_order'] = df_most_important.index
+def _group_and_filter(df: DataFrame, filter_number: int) -> DataFrame:
+    ordered = df.sort_values(by='importance_score', ascending=False)
+    ordered['importance_order'] = 1
+    grouped = ordered.groupby('specimen')
+    ranks = grouped['importance_order'].cumsum()
+    df_most_important = \
+        grouped.head(filter_number).drop('importance_order', axis=1).join(ranks, how='left')
     return df_most_important
 
 
@@ -102,9 +107,9 @@ def _upload(
         impute_zeros=True,
         connection=connection,
     ) as feature_uploader:
-        for _, row in df.iterrows():
+        for histological_structure, row in df.iterrows():
             feature_uploader.stage_feature_value(
                 (cohort_stratifier,),
-                row['histological_structure'],
+                str(histological_structure),
                 row['importance_order'],
             )

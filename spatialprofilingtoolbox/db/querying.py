@@ -117,6 +117,10 @@ class QueryHandler:
     def get_cggnn_metrics(cls, cursor, study: str) -> list[CGGNNImportanceRank]:
         return CGGNNAccess(cursor).get_metrics(study)
 
+    @classmethod
+    def get_important_cells(cls, cursor, study: str, cell_limit: int) -> set[int]:
+        return CGGNNAccess(cursor).get_important_cells(study, cell_limit)
+
 
 def query() -> QueryCursor:
     return QueryCursor(QueryHandler)

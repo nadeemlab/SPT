@@ -1,6 +1,6 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
 
-from os import system
+import subprocess
 from os import environ
 from os import remove
 from os import listdir
@@ -84,7 +84,7 @@ class FastCacheAssessor:
         command = '; '.join(commands)
         logger.debug('Command is:')
         logger.debug(command)
-        system(command)
+        subprocess.run(command, shell=True, check=True)
 
     def _check_files_present(self) -> bool:
         files_present = {

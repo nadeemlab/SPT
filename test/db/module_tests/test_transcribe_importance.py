@@ -21,14 +21,14 @@ def get_test_importance_rows():
 
 def get_expected_records():
     return [
-        (119, 1),
-        (120, 2),
-        (121, 3),
+        (119, 7),
+        (120, 6),
+        (121, 5),
         (122, 4),
-        (123, 5),
-        (124, 6),
-        (125, 7),
-        (126, 0),
+        (123, 3),
+        (124, 2),
+        (125, 1),
+        (126, 8),
     ]
 
 
@@ -36,7 +36,7 @@ def check_records(feature_values):
     rows = [(row[0], row[1]) for row in feature_values]
     missing = set(get_expected_records()).difference(rows)
     if len(missing) > 0:
-        raise ValueError(f'Expected to find records: {missing}')
+        raise ValueError(f'Expected to find records: {missing}\nGot only: {rows}')
     print('All expected records found.')
     unexpected = set(rows).difference(get_expected_records())
     if len(unexpected) > 0:

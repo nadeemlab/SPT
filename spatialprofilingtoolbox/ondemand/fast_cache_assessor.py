@@ -96,6 +96,7 @@ class FastCacheAssessor:
             hour = 60 * 60
             while True:
                 sleep(2 * hour)
+                logger.info('Still sleeping.')
 
     def _check_files_present(self, verbose: bool = True) -> bool:
         files_present = {

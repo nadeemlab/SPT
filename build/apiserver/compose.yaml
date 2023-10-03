@@ -26,6 +26,7 @@ services:
       SINGLE_CELL_DATABASE_USER: postgres
       SINGLE_CELL_DATABASE_PASSWORD: postgres
       USE_ALTERNATIVE_TESTING_DATABASE: 1
+      DISABLE_FAST_CACHE_RECREATION: 1
     volumes:
       - type: bind
         source: ../../test/ondemand/test_expression_data

@@ -9,19 +9,13 @@ from numpy import arange  # type: ignore
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
+from spatialprofilingtoolbox.workflow.common.study_data_arrays import StudyDataArrays
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
     import FractionalProgressReporter
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
-
-StudyDataArrays = dict[
-    str,
-    dict[str, str] |
-    dict[str, int] |
-    dict[str, dict[int, int]] |
-    dict[str, dict[int, list[float]]]
-]
 
 
 class CompressedDataArrays:
@@ -30,9 +24,24 @@ class CompressedDataArrays:
     Where possible, channel information is stored in a compressed binary format. This necessarily
     assumes that there are 64 or fewer channels for a given study.
     """
+    _studies: dict[str, StudyDataArrays]
+    _store_inmemory: bool
+    _specimens_by_measurement_study: dict
+    _target_index_lookups: dict
+    _target_by_symbols: dict
 
     def __init__(self):
-        self._studies: dict[str, StudyDataArrays] = {}
+        self._studies = {}
+        self._store_inmemory = True
+        self._specimens_by_measurement_study = {}
+        self._target_index_lookups = {}
+        self._target_by_symbols = {}
+
+    def set_store_inmemory(self, flag: bool) -> None:
+        self._store_inmemory = flag
+
+    def storing_locally(self) -> bool:
+        return self._store_inmemory
 
     def get_studies(self) -> dict[str, StudyDataArrays]:
         """Returns data dictionaries, indexed by study.
@@ -86,6 +95,26 @@ class CompressedDataArrays:
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
 
+    def wrap_up_study(self, study_index: int) -> None:
+        if not self.storing_locally():
+            assert len(self._studies) == 1
+            study_name, study = list(self._studies.items())[0]
+            CompressedMatrixWriter.write_study(study, study_index)
+            specimens = sorted(list(study['data arrays by specimen'].keys()))
+            self._specimens_by_measurement_study[study_name] = specimens
+            message = 'Deleting study data "%s" from internal memory, since it is saved to file.'
+            logger.debug(message, study_name)
+            del self._studies[study_name]
+            assert len(self._studies) == 0
+
+    def wrap_up_writing(self) -> None:
+        if not self.storing_locally():
+            CompressedMatrixWriter.write_index(
+                self._specimens_by_measurement_study,
+                self._target_index_lookups,
+                self._target_by_symbols,
+            )
+
     def _add_more_data_arrays(
         self,
         study_name: str,
@@ -106,6 +135,8 @@ class CompressedDataArrays:
         if study_name in self._studies:
             check = CompressedDataArrays._check_dicts_equal
             check(self._studies[study_name]['target index lookup'], target_index_lookup)
+        else:
+            self._target_index_lookups[study_name] = target_index_lookup
 
     def _check_target_by_symbol(
         self,
@@ -115,6 +146,8 @@ class CompressedDataArrays:
         if study_name in self._studies:
             check = CompressedDataArrays._check_dicts_equal
             check(self._studies[study_name]['target by symbol'], target_by_symbol)
+        else:
+            self._target_by_symbols[study_name] = target_by_symbol
 
     @staticmethod
     def _check_dicts_equal(
@@ -136,6 +169,11 @@ class SparseMatrixPuller:
 
     def __init__(self, cursor: Psycopg2Cursor):
         self.cursor = cursor
+        self._data_arrays = CompressedDataArrays()
+
+    def pull_and_write_to_files(self) -> None:
+        self._data_arrays.set_store_inmemory(False)
+        self.pull()
 
     def pull(self,
         specimen: str | None = None,
@@ -159,7 +197,7 @@ class SparseMatrixPuller:
         """
         if (specimen is not None) and (study is not None):
             raise ValueError('Must specify exactly one of specimen or study, or neither.')
-        self._data_arrays = self._retrieve_data_arrays(
+        self._retrieve_data_arrays(
             specimen=specimen,
             study=study,
             histological_structures=histological_structures,
@@ -174,24 +212,25 @@ class SparseMatrixPuller:
         study: str | None = None,
         histological_structures: set[int] | None = None,
         continuous_also: bool = False,
-    ) -> CompressedDataArrays:
+    ):
         if specimen is not None:
             study = StudyAccess(self.cursor).get_study_from_specimen(specimen)
         study_names = self._get_study_names(study=study)
-        data_arrays = CompressedDataArrays()
-        for study_name in study_names:
+        for study_index, study_name in enumerate(sorted(study_names)):
             self._fill_data_arrays_for_study(
-                data_arrays,
+                self._data_arrays,
                 study_name,
+                study_index,
                 specimen=specimen,
                 histological_structures=histological_structures,
                 continuous_also=continuous_also,
             )
-        return data_arrays
+        self._data_arrays.wrap_up_writing()
 
     def _fill_data_arrays_for_study(self,
         data_arrays: CompressedDataArrays,
         study_name: str,
+        study_index: int,
         specimen: str | None = None,
         histological_structures: set[int] | None = None,
         continuous_also: bool = False,
@@ -226,6 +265,7 @@ class SparseMatrixPuller:
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
             progress_reporter.increment(iteration_details=_specimen)
+        data_arrays.wrap_up_study(study_index)
         progress_reporter.done()
 
     def _get_pertinent_specimens(self,

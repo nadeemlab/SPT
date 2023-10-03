@@ -55,13 +55,7 @@ def main():
         ExpressionsTableIndexer.ensure_indexed_expressions_table(connection)
         with connection.cursor() as cursor:
             puller = SparseMatrixPuller(cursor)
-            puller.pull()
-            data_arrays = puller.get_data_arrays()
-            # writer = CompressedMatrixWriter()
-            # puller.pull_data_arrays_and_write(writer)
-
-    writer = CompressedMatrixWriter()
-    writer.write(data_arrays)
+            puller.pull_and_write_to_files()
 
 if __name__ == '__main__':
     from spatialprofilingtoolbox.standalone_utilities.module_load_error \

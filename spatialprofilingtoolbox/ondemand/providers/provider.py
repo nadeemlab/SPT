@@ -37,7 +37,8 @@ class OnDemandProvider(ABC):
         centroids = None
         if load_centroids:
             loader = StructureCentroids()
-            loader.load_from_file(data_directory)
+            loader.set_data_directory(data_directory)
+            loader.load_from_file()
             centroids = loader.get_studies()
         self._load_data_matrices(data_directory, centroids)
         logger.info('%s is finished loading source data.', type(self).__name__)

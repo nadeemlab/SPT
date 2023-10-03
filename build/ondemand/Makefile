@@ -86,7 +86,7 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
->@rm -rf expression_data/
+>@rm -rf ../../test/ondemand/expression_data/
 >@rm -f ../../test/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
 >@rm -rf ../../test/test_data/fast_cache_testing
 >@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;

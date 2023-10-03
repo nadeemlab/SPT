@@ -8,13 +8,13 @@ from os import listdir
 from os.path import isfile
 from os.path import join
 from os.path import isdir
-from pickle import load as load_pickle
+from typing import cast
 from json import loads as load_json_string
 import re
 from time import sleep
 
 from spatialprofilingtoolbox import DBCursor
-from spatialprofilingtoolbox.ondemand.defaults import CENTROIDS_FILENAME
+from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -47,7 +47,7 @@ class FastCacheAssessor:
         up_to_date = False
         while up_to_date is False:
             up_to_date = self._cache_is_up_to_date(verbose=False)
-            if check_count % 60 == 0:
+            if check_count % 120 == 0:
                 logger.debug('Waiting for cache to be available.')
             check_count += 1
             sleep(5)
@@ -68,7 +68,10 @@ class FastCacheAssessor:
             f for f in listdir(self.source_data_location)
             if re.match(r'^expression_data_array\.[\d]+\.[\d]+\.bin$', f)
         ]
-        for filename in [CENTROIDS_FILENAME, EXPRESSIONS_INDEX_FILENAME] + expressions_files:
+        scs = StructureCentroids()
+        scs.set_data_directory(self.source_data_location)
+        centroids_files = list(scs.get_all_centroids_pickle_files())
+        for filename in centroids_files + [EXPRESSIONS_INDEX_FILENAME] + expressions_files:
             try:
                 remove(join(self.source_data_location, filename))
                 logger.info('Deleted %s .', filename)
@@ -101,21 +104,23 @@ class FastCacheAssessor:
     def _check_files_present(self, verbose: bool = True) -> bool:
         files_present = {
             filename: isfile(join(self.source_data_location, filename))
-            for filename in [CENTROIDS_FILENAME, EXPRESSIONS_INDEX_FILENAME]
+            for filename in [EXPRESSIONS_INDEX_FILENAME]
         }
         if verbose:
             for filename, present in files_present.items():
                 indicator = 'present' if present else 'not present'
                 logger.info('File %s is %s.', filename, indicator)
-        return all(files_present.values())
+        centroids_present = StructureCentroids.already_exists(self.source_data_location)
+        return all(files_present.values()) and centroids_present
 
     def _check_study_sets(self) -> bool:
         return self._check_centroids_bundle_studies() and self._check_expressions_index_studies()
 
     def _retrieve_files(self):
-        filename = join(self.source_data_location, CENTROIDS_FILENAME)
-        with open(filename, 'rb') as file:
-            self.centroids = load_pickle(file)
+        scs = StructureCentroids()
+        scs.set_data_directory(self.source_data_location)
+        scs.load_from_file()
+        self.centroids = cast(dict[str, dict[str, list]], scs.get_studies())
 
         filename = join(self.source_data_location, EXPRESSIONS_INDEX_FILENAME)
         with open(filename, 'rt', encoding='utf-8') as file:

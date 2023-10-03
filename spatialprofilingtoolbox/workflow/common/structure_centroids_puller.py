@@ -27,6 +27,10 @@ class StructureCentroidsPuller:
         self.cursor = cursor
         self._structure_centroids = StructureCentroids()
 
+    def pull_and_write_to_files(self, data_directory: str):
+        self._structure_centroids.set_data_directory(data_directory)
+        self.pull()
+
     def pull(
         self,
         specimen: str | None = None,

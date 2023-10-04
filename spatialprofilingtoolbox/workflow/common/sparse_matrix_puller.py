@@ -387,7 +387,7 @@ class SparseMatrixPuller:
         '''
 
     def _get_batch_size(self) -> int:
-        return 10000000
+        return 1000000
 
     def _parse_data_arrays_by_specimen(self,
         sparse_entries: list[tuple[str, str, int, str, str]],

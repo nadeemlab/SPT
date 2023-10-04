@@ -62,18 +62,31 @@ class StructureCentroidsPuller:
             if histological_structures is not None:
                 parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
 
-            self.cursor.execute(self._get_shapefiles_query(
-                specimen is not None,
-                histological_structures is not None,
-            ), parameters)
+            self.cursor.execute(
+                self._get_shapefiles_query(
+                    specimen is not None,
+                    histological_structures is not None,
+                ),
+                parameters,
+            )
 
-            rows = self.cursor.fetchall()
+            rows: list = []
+            total = self.cursor.rowcount
+            while self.cursor.rownumber < total - 1:
+                current_number_stored = len(rows)
+                rows.extend(self.cursor.fetchmany(size=self._get_batch_size()))
+                received = len(rows) - current_number_stored
+                logger.debug('Received %s shapefiles entries from DB.', received)
             if len(rows) == 0:
                 continue
+
             self._structure_centroids.add_study_data(
                 study_name,
                 self._create_study_data(rows, specimen_count, study_name)
             )
+
+    def _get_batch_size(self) -> int:
+        return pow(10, 5)
 
     def _get_specimen_count(self, study_name: str, cursor: Psycopg2Cursor) -> int:
         cursor.execute('''

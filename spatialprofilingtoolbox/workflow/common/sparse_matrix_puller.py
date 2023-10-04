@@ -316,7 +316,7 @@ class SparseMatrixPuller:
         specimen: str,
         histological_structures: set[int] | None = None,
     ) -> list[tuple[str, str, int, str, str]]:
-        sparse_entries: list[tuple[str, str, int, str, str]] = []
+        sparse_entries: list = []
         number_log_messages = 0
         parameters: list[str | tuple[str, ...]]  = [study_name, specimen]
         if histological_structures is not None:
@@ -387,7 +387,7 @@ class SparseMatrixPuller:
         '''
 
     def _get_batch_size(self) -> int:
-        return 1000000
+        return pow(10, 6)
 
     def _parse_data_arrays_by_specimen(self,
         sparse_entries: list[tuple[str, str, int, str, str]],

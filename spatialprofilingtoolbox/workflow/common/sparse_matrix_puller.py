@@ -326,7 +326,7 @@ class SparseMatrixPuller:
             ;
             ''', (study,))
             rows = self.cursor.fetchall()
-        return names
+        return tuple(sorted([cast(str, row[0]) for row in rows]))
 
     def _get_sparse_entries(self,
         study_name: str,

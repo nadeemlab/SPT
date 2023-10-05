@@ -95,19 +95,34 @@ class CompressedDataArrays:
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
 
-    def wrap_up_study(self, study_index: int) -> None:
+    def wrap_up_specimen(self, study_index: int, specimen_index: int) -> None:
         if not self.storing_locally():
-            assert len(self._studies) == 1
-            study_name, study = list(self._studies.items())[0]
-            CompressedMatrixWriter.write_study(study, study_index)
-            specimens = sorted(list(study['data arrays by specimen'].keys()))
-            self._specimens_by_measurement_study[study_name] = specimens
-            message = 'Deleting study data "%s" from internal memory, since it is saved to file.'
-            logger.debug(message, study_name)
+            if len(self._studies) != 1:
+                message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
+                raise ValueError(message % list(self._studies.keys()))
+            study_name, data = list(self._studies.items())[0]
+            specimens = sorted(list(data['data arrays by specimen'].keys()))
+            if len(specimens) != 1:
+                message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
+                raise ValueError(message % specimens)
+            specimen = specimens[0]
+            data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
+            CompressedMatrixWriter.write_specimen(data_specimen, study_index, specimen_index)
+            if study_name not in self._specimens_by_measurement_study:
+                self._specimens_by_measurement_study[study_name] = []
+            self._specimens_by_measurement_study[study_name].append(specimen)
+            message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
+            logger.debug(message, specimen)
             del self._studies[study_name]
             assert len(self._studies) == 0
 
+    def _sort_specimens(self) -> None:
+        for study_name in self._specimens_by_measurement_study:  # pylint: disable=consider-using-dict-items
+            specimens = self._specimens_by_measurement_study[study_name]
+            self._specimens_by_measurement_study[study_name] = sorted(specimens)
+
     def wrap_up_writing(self) -> None:
+        self._sort_specimens()
         if not self.storing_locally():
             CompressedMatrixWriter.write_index(
                 self._specimens_by_measurement_study,
@@ -173,7 +188,21 @@ class SparseMatrixPuller:
 
     def pull_and_write_to_files(self) -> None:
         self._data_arrays.set_store_inmemory(False)
-        self.pull()
+        study_names = self._get_study_names()
+        for study_index, study_name in enumerate(study_names):
+            specimens = self._get_pertinent_specimens(study_name=study_name)
+            progress_reporter = FractionalProgressReporter(
+                len(specimens),
+                parts=8,
+                task_and_done_message=(f'pulling sparse entries for study "{study_name}"', None),
+                logger=logger,
+            )
+            for specimen in specimens:
+                self.pull(specimen=specimen)
+                self.get_data_arrays().wrap_up_specimen(study_index, specimen)
+                progress_reporter.increment(iteration_details=specimen)
+            progress_reporter.done()
+        self.get_data_arrays().wrap_up_writing()
 
     def pull(self,
         specimen: str | None = None,
@@ -216,34 +245,28 @@ class SparseMatrixPuller:
         if specimen is not None:
             study = StudyAccess(self.cursor).get_study_from_specimen(specimen)
         study_names = self._get_study_names(study=study)
-        for study_index, study_name in enumerate(sorted(study_names)):
+        for study_name in sorted(study_names):
             self._fill_data_arrays_for_study(
                 self._data_arrays,
                 study_name,
-                study_index,
                 specimen=specimen,
                 histological_structures=histological_structures,
                 continuous_also=continuous_also,
             )
-        self._data_arrays.wrap_up_writing()
 
     def _fill_data_arrays_for_study(self,
         data_arrays: CompressedDataArrays,
         study_name: str,
-        study_index: int,
         specimen: str | None = None,
         histological_structures: set[int] | None = None,
         continuous_also: bool = False,
     ) -> None:
         specimens = self._get_pertinent_specimens(study_name, specimen=specimen)
         target_by_symbol = self._get_target_by_symbol(study_name)
-        logger.debug('Pulling sparse entries for study "%s".', study_name)
-        progress_reporter = FractionalProgressReporter(
-            len(specimens),
-            parts=8,
-            task_and_done_message=('pulling sparse entries from the study', None),
-            logger=logger,
-        )
+        if specimen is not None:
+            logger.debug('Pulling sparse entries for specimen "%s".', specimen)
+        if study_name is not None:
+            logger.debug('Pulling sparse entries for study "%s".', study_name)
         parse = self._parse_data_arrays_by_specimen
         for _specimen in specimens:
             sparse_entries = self._get_sparse_entries(
@@ -264,9 +287,6 @@ class SparseMatrixPuller:
                 target_by_symbol,
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
-            progress_reporter.increment(iteration_details=_specimen)
-        data_arrays.wrap_up_study(study_index)
-        progress_reporter.done()
 
     def _get_pertinent_specimens(self,
         study_name: str,

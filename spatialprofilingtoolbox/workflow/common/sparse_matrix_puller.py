@@ -189,6 +189,9 @@ class SparseMatrixPuller:
     def pull_and_write_to_files(self) -> None:
         self._data_arrays.set_store_inmemory(False)
         study_names = self._get_study_names()
+        logger.info('Will pull feature matrices for studies:')
+        for name in study_names:
+            logger.info('    %s', name)
         for study_index, study_name in enumerate(study_names):
             specimens = self._get_pertinent_specimens(study_name=study_name)
             progress_reporter = FractionalProgressReporter(
@@ -197,9 +200,9 @@ class SparseMatrixPuller:
                 task_and_done_message=(f'pulling sparse entries for study "{study_name}"', None),
                 logger=logger,
             )
-            for specimen in specimens:
+            for specimen_index, specimen in enumerate(specimens):
                 self.pull(specimen=specimen)
-                self.get_data_arrays().wrap_up_specimen(study_index, specimen)
+                self.get_data_arrays().wrap_up_specimen(study_index, specimen_index)
                 progress_reporter.increment(iteration_details=specimen)
             progress_reporter.done()
         self.get_data_arrays().wrap_up_writing()
@@ -265,8 +268,6 @@ class SparseMatrixPuller:
         target_by_symbol = self._get_target_by_symbol(study_name)
         if specimen is not None:
             logger.debug('Pulling sparse entries for specimen "%s".', specimen)
-        if study_name is not None:
-            logger.debug('Pulling sparse entries for study "%s".', study_name)
         parse = self._parse_data_arrays_by_specimen
         for _specimen in specimens:
             sparse_entries = self._get_sparse_entries(
@@ -325,10 +326,6 @@ class SparseMatrixPuller:
             ;
             ''', (study,))
             rows = self.cursor.fetchall()
-        logger.info('Will pull feature matrices for studies:')
-        names = tuple(sorted([row[0] for row in rows]))
-        for name in names:
-            logger.info('    %s', name)
         return names
 
     def _get_sparse_entries(self,
@@ -474,5 +471,4 @@ class SparseMatrixPuller:
             message = 'The symbols are not unique identifiers of the targets. The symbols are: %s'
             logger.error(message, [row[1] for row in rows])
         target_by_symbol = {row[1]: row[0] for row in rows}
-        logger.debug('Target by symbol: %s', target_by_symbol)
         return target_by_symbol

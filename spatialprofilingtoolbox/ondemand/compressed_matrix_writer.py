@@ -5,7 +5,6 @@ import json
 from os.path import isfile
 from os.path import join
 
-from spatialprofilingtoolbox.workflow.common.study_data_arrays import StudyDataArrays
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -16,21 +15,26 @@ class CompressedMatrixWriter:
     """Write the compressed in-memory binary format matrices to file."""
 
     @classmethod
-    def write_study(cls, data_array: StudyDataArrays, study_index: int) -> None:
-        cls._write_data_array(data_array, study_index)
+    def write_specimen(cls, data: dict[int, int], study_index: int, specimen_index: int) -> None:
+        cls._write_data_array(data, study_index, specimen_index)
 
     @classmethod
-    def _write_data_array(cls, study: StudyDataArrays, study_index: int) -> None:
-        specimens = sorted(list(study['data arrays by specimen'].keys()))
-        for specimen_index, specimen in enumerate(specimens):
-            data_array = study['data arrays by specimen'][specimen]
-            filename = '.'.join([
-                cls.get_data_array_filename_base(),
-                str(study_index),
-                str(specimen_index),
-                'bin',
-            ])
-            cls._write_data_array_to_file(cast(dict[int, int], data_array), filename)
+    def _write_data_array(cls,
+        data_array: dict[int, int],
+        study_index: int,
+        specimen_index: int,
+    ) -> None:
+        filename = cls._format_filename(study_index, specimen_index)
+        cls._write_data_array_to_file(cast(dict[int, int], data_array), filename)
+
+    @classmethod
+    def _format_filename(cls, study_index: int, specimen_index: int) -> str:
+        return '.'.join([
+            cls.get_data_array_filename_base(),
+            str(study_index),
+            str(specimen_index),
+            'bin',
+        ])
 
     @classmethod
     def write_index(cls,

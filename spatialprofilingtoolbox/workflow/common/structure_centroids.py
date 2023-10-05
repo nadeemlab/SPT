@@ -7,7 +7,12 @@ from os.path import join
 from os import listdir
 from re import search
 
-StudyStructureCentroids = dict[str, dict[int, tuple[float, float]]]
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
+
+SpecimenStructureCentroids = dict[int, tuple[float, float]]
+StudyStructureCentroids = dict[str, SpecimenStructureCentroids]
 
 
 class StructureCentroids:
@@ -24,6 +29,9 @@ class StructureCentroids:
 
     def get_data_directory(self) -> str:
         return cast(str, self.data_directory)
+
+    def data_directory_available(self) -> bool:
+        return self.data_directory is not None
 
     def get_studies(self) -> dict[str, StudyStructureCentroids]:
         """Retrieve the dictionary of studies.
@@ -45,42 +53,50 @@ class StructureCentroids:
     ) -> None:
         """
         Add the study with these structure centroids indexed by specimen to the collection.
-        If a non-trivial data_directory is available, these will be written to file and not stored
-        in program memory.
         """
-        if self.get_data_directory() is None:
-            self._studies[study_name] = structure_centroids_by_specimen
-        else:
-            filename = self._get_next_centroids_pickle()
-            with open(join(self.get_data_directory(), filename), 'wb') as file:
-                dump({study_name: structure_centroids_by_specimen}, file)
+        self._studies[study_name] = structure_centroids_by_specimen
 
-    def _get_all_centroids_pickle_indices(self) -> tuple[int, ...]:
-        def extract_index(filename) -> int:
-            pattern = r'^centroids_pickle_(\d+)\.pickle$'
+    def _get_all_centroids_pickle_indices(self) -> tuple[tuple[int, int], ...]:
+        def extract_index(filename) -> tuple[int, int]:
+            pattern = r'^centroids.(\d+)\.(\d+)\.pickle$'
             match = search(pattern, filename)
             if match is not None:
-                return int(match.groups()[0])
-            return cast(int, None)
+                return (int(match.groups()[0]), int(match.groups()[1]))
+            return cast(tuple[int, int], None)
         filenames = listdir(self.get_data_directory())
         return tuple(set(map(extract_index, filenames)).difference([None]))
 
-    def _get_next_centroids_pickle(self) -> str:
-        indices = self._get_all_centroids_pickle_indices()
-        if len(indices) == 0:
-            index = 0
-        else:
-            index = max(indices) + 1
-        return self._form_filename(index)
-
-    def _form_filename(self, index: int) -> str:
-        return f'centroids_pickle_{index}.pickle'
+    def _form_filename(self, study_index: int, specimen_index: int) -> str:
+        return f'centroids.{study_index}.{specimen_index}.pickle'
 
     def get_all_centroids_pickle_files(self) -> tuple[str, ...]:
         return tuple(
-            self._form_filename(index)
-            for index in self._get_all_centroids_pickle_indices()
+            self._form_filename(study_index, specimen_index)
+            for study_index, specimen_index in self._get_all_centroids_pickle_indices()
         )
+
+    def wrap_up_specimen(self, study_index: int, specimen_index: int) -> None:
+        if not self.data_directory_available():
+            return
+        if len(self._studies) != 1:
+            message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
+            raise ValueError(message % list(self._studies.keys()))
+        study_name, data = list(self._studies.items())[0]
+        specimens = sorted(list(data.keys()))
+        if len(specimens) != 1:
+            message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
+            raise ValueError(message % specimens)
+        specimen = specimens[0]
+        filename = self._form_filename(study_index, specimen_index)
+        self._write_centroids(self._studies, filename)
+        message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
+        logger.debug(message, specimen)
+        del self._studies[study_name]
+        assert len(self._studies) == 0
+
+    def _write_centroids(self, data: dict[str, StudyStructureCentroids], filename: str) -> None:
+        with open(join(self.get_data_directory(), filename), 'wb') as file:
+            dump(data, file)
 
     def load_from_file(self) -> None:
         """
@@ -90,7 +106,9 @@ class StructureCentroids:
         for filename in self.get_all_centroids_pickle_files():
             with open(join(self.get_data_directory(), filename), 'rb') as file:
                 for key, value in load(file).items():
-                    self._studies[key] = value
+                    if not key in self._studies:
+                        self._studies[key] = {}
+                    self._studies[key].update(value)
 
     @staticmethod
     def already_exists(data_directory: str) -> bool:

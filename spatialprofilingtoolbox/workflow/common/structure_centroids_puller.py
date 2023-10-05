@@ -2,6 +2,7 @@
 
 from statistics import mean
 from typing import Any
+from typing import cast
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
@@ -28,8 +29,21 @@ class StructureCentroidsPuller:
         self._structure_centroids = StructureCentroids()
 
     def pull_and_write_to_files(self, data_directory: str):
-        self._structure_centroids.set_data_directory(data_directory)
-        self.pull()
+        self.get_structure_centroids().set_data_directory(data_directory)
+        study_names = self._get_study_names()
+        for study_index, study_name in enumerate(study_names):
+            specimens = self._get_specimens(study_name)
+            progress_reporter = FractionalProgressReporter(
+                len(specimens),
+                parts=8,
+                task_and_done_message=(f'pulling centroids for study "{study_name}"', None),
+                logger=logger,
+            )
+            for specimen_index, specimen in enumerate(specimens):
+                self.pull(specimen=specimen)
+                self.get_structure_centroids().wrap_up_specimen(study_index, specimen_index)
+                progress_reporter.increment(iteration_details=specimen)
+            progress_reporter.done()
 
     def pull(
         self,
@@ -145,24 +159,27 @@ class StructureCentroidsPuller:
         field = {'structure': 0, 'specimen': 1, 'base64_contents': 2}
         current_specimen = rows[0][field['specimen']]
         specimen_centroids: dict[int, tuple[float, float]] = {}
-        progress_reporter = FractionalProgressReporter(
-            specimen_count,
-            parts=6,
-            task_and_done_message=(f'parsing shapefiles for {study}', None),
-            logger=logger,
-        )
         for row in rows:
             if current_specimen != row[field['specimen']]:
                 study_data[current_specimen] = specimen_centroids
-                progress_reporter.increment(iteration_details=current_specimen)
                 current_specimen = row[field['specimen']]
                 specimen_centroids = {}
             specimen_centroids[int(row[field['structure']])] = self._compute_centroid(
                 extract_points(row[field['base64_contents']])
             )
-        progress_reporter.done()
         study_data[current_specimen] = specimen_centroids
         return study_data
+
+    def _get_specimens(self, study_name: str) -> tuple[str, ...]:
+        self.cursor.execute('''
+        SELECT sdmp.specimen
+        FROM specimen_data_measurement_process sdmp
+        WHERE sdmp.study=%s
+        ORDER BY sdmp.specimen
+        ;
+        ''', (study_name,))
+        rows = self.cursor.fetchall()
+        return tuple(sorted([cast(str, row[0]) for row in rows]))
 
     def _compute_centroid(self, points: list[tuple[float, float]]) -> tuple[float, float]:
         nonrepeating_points = points[0:(len(points)-1)]

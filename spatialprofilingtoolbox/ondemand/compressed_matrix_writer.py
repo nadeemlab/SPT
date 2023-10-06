@@ -4,6 +4,7 @@ from typing import cast
 import json
 from os.path import isfile
 from os.path import join
+from os import getcwd
 
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -63,9 +64,14 @@ class CompressedMatrixWriter:
             index_item['target index lookup'] = target_index_lookups[study_name]
             index_item['target by symbol'] = target_by_symbols[study_name]
             index.append(index_item)
-        with open(EXPRESSIONS_INDEX_FILENAME, 'wt', encoding='utf-8') as index_file:
+        filename = join(cls.get_data_directory(), EXPRESSIONS_INDEX_FILENAME)
+        with open(filename, 'wt', encoding='utf-8') as index_file:
             index_file.write(json.dumps({'': index}, indent=4))
-        logger.debug('Wrote expression index file %s .', EXPRESSIONS_INDEX_FILENAME)
+        logger.debug('Wrote expression index file %s .', filename)
+
+    @classmethod
+    def get_data_directory(cls) -> str:
+        return getcwd()
 
     @classmethod
     def _write_data_array_to_file(cls, data_array: dict[int, int], filename: str) -> None:

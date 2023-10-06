@@ -69,7 +69,9 @@ class StructureCentroids:
     def _form_filename(self, study_index: int, specimen_index: int) -> str:
         return f'centroids.{study_index}.{specimen_index}.pickle'
 
-    def get_all_centroids_pickle_files(self) -> tuple[str, ...]:
+    def get_all_centroids_pickle_files(self, verbose: bool = False) -> tuple[str, ...]:
+        if verbose:
+            logger.debug('Checking among files: %s', listdir(self.get_data_directory()))
         return tuple(
             self._form_filename(study_index, specimen_index)
             for study_index, specimen_index in self._get_all_centroids_pickle_indices()
@@ -111,10 +113,13 @@ class StructureCentroids:
                     self._studies[key].update(value)
 
     @staticmethod
-    def already_exists(data_directory: str) -> bool:
-        """Checks whether the structure centroids files already exists in the given directory."""
+    def already_exists(data_directory: str, verbose: bool = False) -> bool:
+        """Checks whether the structure centroids files already exist in the given directory."""
         obj = StructureCentroids()
         obj.set_data_directory(data_directory)
-        if not obj.get_all_centroids_pickle_files():
+        files = obj.get_all_centroids_pickle_files(verbose=verbose)
+        if verbose:
+            logger.info('Centroids files found: %s', files)
+        if not files:
             return False
         return True

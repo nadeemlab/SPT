@@ -46,8 +46,12 @@ class FastCacheAssessor:
         check_count = 0
         up_to_date = False
         while up_to_date is False:
-            up_to_date = self._cache_is_up_to_date(verbose=False)
             if check_count % 120 == 0:
+                verbose=True
+            else:
+                verbose=False
+            up_to_date = self._cache_is_up_to_date(verbose=verbose)
+            if verbose:
                 logger.debug('Waiting for cache to be available.')
             check_count += 1
             sleep(5)
@@ -106,11 +110,15 @@ class FastCacheAssessor:
             filename: isfile(join(self.source_data_location, filename))
             for filename in [EXPRESSIONS_INDEX_FILENAME]
         }
+        centroids_present = StructureCentroids.already_exists(self.source_data_location, verbose=verbose)
         if verbose:
             for filename, present in files_present.items():
                 indicator = 'present' if present else 'not present'
                 logger.info('File %s is %s.', filename, indicator)
-        centroids_present = StructureCentroids.already_exists(self.source_data_location)
+            if not centroids_present:
+                logger.info('Centroids files not present.')
+            else:
+                logger.info('Centroids files are present.')
         return all(files_present.values()) and centroids_present
 
     def _check_study_sets(self) -> bool:

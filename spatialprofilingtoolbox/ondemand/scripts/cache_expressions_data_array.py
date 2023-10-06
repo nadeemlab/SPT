@@ -10,12 +10,11 @@ import sys
 from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
-from spatialprofilingtoolbox.workflow.common.structure_centroids import CENTROIDS_FILENAME
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-logger = colorized_logger('cache-expressions-data-array')
+logger = colorized_logger('spt ondemand cache-expressions-data-array')
 
 def main():
     parser = argparse.ArgumentParser(
@@ -37,10 +36,9 @@ def main():
         with DatabaseConnectionMaker(database_config_file) as dcm:
             with dcm.get_connection().cursor() as cursor:
                 puller = StructureCentroidsPuller(cursor)
-                puller.pull()
-                puller.get_structure_centroids().write_to_file(getcwd())
+                puller.pull_and_write_to_files(getcwd())
     else:
-        logger.info('%s already exists, skipping shapefile pull.', CENTROIDS_FILENAME)
+        logger.info('At least one centroids file already exists, skipping shapefile pull.')
 
     if args.centroids_only:
         sys.exit()
@@ -57,11 +55,7 @@ def main():
         ExpressionsTableIndexer.ensure_indexed_expressions_table(connection)
         with connection.cursor() as cursor:
             puller = SparseMatrixPuller(cursor)
-            puller.pull()
-            data_arrays = puller.get_data_arrays()
-
-    writer = CompressedMatrixWriter()
-    writer.write(data_arrays)
+            puller.pull_and_write_to_files()
 
 if __name__ == '__main__':
     from spatialprofilingtoolbox.standalone_utilities.module_load_error \

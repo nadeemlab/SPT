@@ -16,17 +16,17 @@ then
     exit 1
 fi
 
-expressions_dir=../module_tests/expected_binary_expression_data_cohoused
+reference_expressions_dir=../module_tests/expected_binary_expression_data_cohoused
 for f in *;
 do
-    if [ ! -f "$expressions_dir/$f" ];
+    if [ ! -f "$reference_expressions_dir/$f" ];
     then
         echo "Test script created unexpected file: $f"
         exit 1
     fi
 done
 
-cd $expressions_dir
+cd $reference_expressions_dir
 for f in *;
 do
     if [ ! -f "../../expression_data/$f" ];

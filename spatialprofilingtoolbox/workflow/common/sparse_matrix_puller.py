@@ -9,19 +9,13 @@ from numpy import arange  # type: ignore
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
+from spatialprofilingtoolbox.workflow.common.study_data_arrays import StudyDataArrays
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
     import FractionalProgressReporter
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
-
-StudyDataArrays = dict[
-    str,
-    dict[str, str] |
-    dict[str, int] |
-    dict[str, dict[int, int]] |
-    dict[str, dict[int, list[float]]]
-]
 
 
 class CompressedDataArrays:
@@ -30,9 +24,24 @@ class CompressedDataArrays:
     Where possible, channel information is stored in a compressed binary format. This necessarily
     assumes that there are 64 or fewer channels for a given study.
     """
+    _studies: dict[str, StudyDataArrays]
+    _store_inmemory: bool
+    _specimens_by_measurement_study: dict
+    _target_index_lookups: dict
+    _target_by_symbols: dict
 
     def __init__(self):
-        self._studies: dict[str, StudyDataArrays] = {}
+        self._studies = {}
+        self._store_inmemory = True
+        self._specimens_by_measurement_study = {}
+        self._target_index_lookups = {}
+        self._target_by_symbols = {}
+
+    def set_store_inmemory(self, flag: bool) -> None:
+        self._store_inmemory = flag
+
+    def storing_locally(self) -> bool:
+        return self._store_inmemory
 
     def get_studies(self) -> dict[str, StudyDataArrays]:
         """Returns data dictionaries, indexed by study.
@@ -86,6 +95,41 @@ class CompressedDataArrays:
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
 
+    def wrap_up_specimen(self, study_index: int, specimen_index: int) -> None:
+        if not self.storing_locally():
+            if len(self._studies) != 1:
+                message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
+                raise ValueError(message % list(self._studies.keys()))
+            study_name, data = list(self._studies.items())[0]
+            specimens = sorted(list(data['data arrays by specimen'].keys()))
+            if len(specimens) != 1:
+                message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
+                raise ValueError(message % specimens)
+            specimen = specimens[0]
+            data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
+            CompressedMatrixWriter.write_specimen(data_specimen, study_index, specimen_index)
+            if study_name not in self._specimens_by_measurement_study:
+                self._specimens_by_measurement_study[study_name] = []
+            self._specimens_by_measurement_study[study_name].append(specimen)
+            message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
+            logger.debug(message, specimen)
+            del self._studies[study_name]
+            assert len(self._studies) == 0
+
+    def _sort_specimens(self) -> None:
+        for study_name in self._specimens_by_measurement_study:  # pylint: disable=consider-using-dict-items
+            specimens = self._specimens_by_measurement_study[study_name]
+            self._specimens_by_measurement_study[study_name] = sorted(specimens)
+
+    def wrap_up_writing(self) -> None:
+        self._sort_specimens()
+        if not self.storing_locally():
+            CompressedMatrixWriter.write_index(
+                self._specimens_by_measurement_study,
+                self._target_index_lookups,
+                self._target_by_symbols,
+            )
+
     def _add_more_data_arrays(
         self,
         study_name: str,
@@ -106,6 +150,8 @@ class CompressedDataArrays:
         if study_name in self._studies:
             check = CompressedDataArrays._check_dicts_equal
             check(self._studies[study_name]['target index lookup'], target_index_lookup)
+        else:
+            self._target_index_lookups[study_name] = target_index_lookup
 
     def _check_target_by_symbol(
         self,
@@ -115,6 +161,8 @@ class CompressedDataArrays:
         if study_name in self._studies:
             check = CompressedDataArrays._check_dicts_equal
             check(self._studies[study_name]['target by symbol'], target_by_symbol)
+        else:
+            self._target_by_symbols[study_name] = target_by_symbol
 
     @staticmethod
     def _check_dicts_equal(
@@ -136,6 +184,28 @@ class SparseMatrixPuller:
 
     def __init__(self, cursor: Psycopg2Cursor):
         self.cursor = cursor
+        self._data_arrays = CompressedDataArrays()
+
+    def pull_and_write_to_files(self) -> None:
+        self._data_arrays.set_store_inmemory(False)
+        study_names = self._get_study_names()
+        logger.info('Will pull feature matrices for studies:')
+        for name in study_names:
+            logger.info('    %s', name)
+        for study_index, study_name in enumerate(study_names):
+            specimens = self._get_pertinent_specimens(study_name=study_name)
+            progress_reporter = FractionalProgressReporter(
+                len(specimens),
+                parts=8,
+                task_and_done_message=(f'pulling sparse entries for study "{study_name}"', None),
+                logger=logger,
+            )
+            for specimen_index, specimen in enumerate(specimens):
+                self.pull(specimen=specimen)
+                self.get_data_arrays().wrap_up_specimen(study_index, specimen_index)
+                progress_reporter.increment(iteration_details=specimen)
+            progress_reporter.done()
+        self.get_data_arrays().wrap_up_writing()
 
     def pull(self,
         specimen: str | None = None,
@@ -159,7 +229,7 @@ class SparseMatrixPuller:
         """
         if (specimen is not None) and (study is not None):
             raise ValueError('Must specify exactly one of specimen or study, or neither.')
-        self._data_arrays = self._retrieve_data_arrays(
+        self._retrieve_data_arrays(
             specimen=specimen,
             study=study,
             histological_structures=histological_structures,
@@ -174,20 +244,18 @@ class SparseMatrixPuller:
         study: str | None = None,
         histological_structures: set[int] | None = None,
         continuous_also: bool = False,
-    ) -> CompressedDataArrays:
+    ):
         if specimen is not None:
             study = StudyAccess(self.cursor).get_study_from_specimen(specimen)
         study_names = self._get_study_names(study=study)
-        data_arrays = CompressedDataArrays()
-        for study_name in study_names:
+        for study_name in sorted(study_names):
             self._fill_data_arrays_for_study(
-                data_arrays,
+                self._data_arrays,
                 study_name,
                 specimen=specimen,
                 histological_structures=histological_structures,
                 continuous_also=continuous_also,
             )
-        return data_arrays
 
     def _fill_data_arrays_for_study(self,
         data_arrays: CompressedDataArrays,
@@ -198,13 +266,8 @@ class SparseMatrixPuller:
     ) -> None:
         specimens = self._get_pertinent_specimens(study_name, specimen=specimen)
         target_by_symbol = self._get_target_by_symbol(study_name)
-        logger.debug('Pulling sparse entries for study "%s".', study_name)
-        progress_reporter = FractionalProgressReporter(
-            len(specimens),
-            parts=8,
-            task_and_done_message=('pulling sparse entries from the study', None),
-            logger=logger,
-        )
+        if specimen is not None:
+            logger.debug('Pulling sparse entries for specimen "%s".', specimen)
         parse = self._parse_data_arrays_by_specimen
         for _specimen in specimens:
             sparse_entries = self._get_sparse_entries(
@@ -214,7 +277,7 @@ class SparseMatrixPuller:
             )
             if len(sparse_entries) == 0:
                 continue
-            parsed = parse(sparse_entries, continuous_also=continuous_also)
+            parsed = parse(sparse_entries, _specimen, continuous_also=continuous_also)
             data_arrays_by_specimen, \
                 target_index_lookup, \
                 continuous_data_arrays_by_specimen = parsed
@@ -225,8 +288,6 @@ class SparseMatrixPuller:
                 target_by_symbol,
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
-            progress_reporter.increment(iteration_details=_specimen)
-        progress_reporter.done()
 
     def _get_pertinent_specimens(self,
         study_name: str,
@@ -265,18 +326,14 @@ class SparseMatrixPuller:
             ;
             ''', (study,))
             rows = self.cursor.fetchall()
-        logger.info('Will pull feature matrices for studies:')
-        names = tuple(sorted([row[0] for row in rows]))
-        for name in names:
-            logger.info('    %s', name)
-        return names
+        return tuple(sorted([cast(str, row[0]) for row in rows]))
 
     def _get_sparse_entries(self,
         study_name: str,
         specimen: str,
         histological_structures: set[int] | None = None,
     ) -> list[tuple[str, str, int, str, str]]:
-        sparse_entries: list[tuple[str, str, int, str, str]] = []
+        sparse_entries: list = []
         number_log_messages = 0
         parameters: list[str | tuple[str, ...]]  = [study_name, specimen]
         if histological_structures is not None:
@@ -311,12 +368,11 @@ class SparseMatrixPuller:
             eq.histological_structure,
             eq.target,
             CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-            eq.source_specimen as specimen,
             eq.quantity as quantity
         FROM expression_quantification eq
         WHERE eq.source_specimen=%s
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
-        ORDER BY eq.source_specimen, eq.histological_structure, eq.target
+        ORDER BY eq.histological_structure, eq.target
         ;
         '''
 
@@ -327,7 +383,6 @@ class SparseMatrixPuller:
             eq.histological_structure,
             eq.target,
             CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-            sdmp.specimen as specimen,
             eq.quantity as quantity
         FROM expression_quantification eq
             JOIN histological_structure hs
@@ -342,15 +397,16 @@ class SparseMatrixPuller:
             AND hs.anatomical_entity='cell'
             AND sdmp.specimen=%s
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
-        ORDER BY sdmp.specimen, eq.histological_structure, eq.target
+        ORDER BY eq.histological_structure, eq.target
         ;
         '''
 
     def _get_batch_size(self) -> int:
-        return 10000000
+        return pow(10, 6)
 
     def _parse_data_arrays_by_specimen(self,
         sparse_entries: list[tuple[str, str, int, str, str]],
+        specimen: str,
         continuous_also: bool = False,
     ) -> tuple[
         dict[str, dict[int, int]],
@@ -364,17 +420,17 @@ class SparseMatrixPuller:
 
         df = DataFrame(
             sparse_entries,
-            columns=['histological_structure', 'target', 'coded_value', 'specimen', 'quantity'],
+            columns=['histological_structure', 'target', 'coded_value', 'quantity'],
         )
-        grouped = df.groupby(['specimen', 'histological_structure'])
-        for (specimen, histological_structure), df_group in grouped:
+        grouped = df.groupby('histological_structure')
+        if specimen not in data_arrays_by_specimen:
+            data_arrays_by_specimen[specimen] = {}
+        for histological_structure, df_group in grouped:
             df_group.sort_values(by=['target'], inplace=True)
             hs_id = int(histological_structure)
 
             binary = df_group['coded_value'].astype(int).to_numpy()
             compressed = SparseMatrixPuller._compress_bitwise_to_int(binary)
-            if specimen not in data_arrays_by_specimen:
-                data_arrays_by_specimen[specimen] = {}
             data_arrays_by_specimen[specimen][hs_id] = compressed
 
             if continuous_data_arrays_by_specimen is not None:
@@ -414,5 +470,4 @@ class SparseMatrixPuller:
             message = 'The symbols are not unique identifiers of the targets. The symbols are: %s'
             logger.error(message, [row[1] for row in rows])
         target_by_symbol = {row[1]: row[0] for row in rows}
-        logger.debug('Target by symbol: %s', target_by_symbol)
         return target_by_symbol

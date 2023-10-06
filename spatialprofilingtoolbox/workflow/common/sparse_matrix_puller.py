@@ -277,7 +277,7 @@ class SparseMatrixPuller:
             )
             if len(sparse_entries) == 0:
                 continue
-            parsed = parse(sparse_entries, continuous_also=continuous_also)
+            parsed = parse(sparse_entries, _specimen, continuous_also=continuous_also)
             data_arrays_by_specimen, \
                 target_index_lookup, \
                 continuous_data_arrays_by_specimen = parsed
@@ -368,12 +368,11 @@ class SparseMatrixPuller:
             eq.histological_structure,
             eq.target,
             CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-            eq.source_specimen as specimen,
             eq.quantity as quantity
         FROM expression_quantification eq
         WHERE eq.source_specimen=%s
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
-        ORDER BY eq.source_specimen, eq.histological_structure, eq.target
+        ORDER BY eq.histological_structure, eq.target
         ;
         '''
 
@@ -384,7 +383,6 @@ class SparseMatrixPuller:
             eq.histological_structure,
             eq.target,
             CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-            sdmp.specimen as specimen,
             eq.quantity as quantity
         FROM expression_quantification eq
             JOIN histological_structure hs
@@ -399,7 +397,7 @@ class SparseMatrixPuller:
             AND hs.anatomical_entity='cell'
             AND sdmp.specimen=%s
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
-        ORDER BY sdmp.specimen, eq.histological_structure, eq.target
+        ORDER BY eq.histological_structure, eq.target
         ;
         '''
 
@@ -408,6 +406,7 @@ class SparseMatrixPuller:
 
     def _parse_data_arrays_by_specimen(self,
         sparse_entries: list[tuple[str, str, int, str, str]],
+        specimen: str,
         continuous_also: bool = False,
     ) -> tuple[
         dict[str, dict[int, int]],
@@ -421,17 +420,17 @@ class SparseMatrixPuller:
 
         df = DataFrame(
             sparse_entries,
-            columns=['histological_structure', 'target', 'coded_value', 'specimen', 'quantity'],
+            columns=['histological_structure', 'target', 'coded_value', 'quantity'],
         )
-        grouped = df.groupby(['specimen', 'histological_structure'])
-        for (specimen, histological_structure), df_group in grouped:
+        grouped = df.groupby('histological_structure')
+        if specimen not in data_arrays_by_specimen:
+            data_arrays_by_specimen[specimen] = {}
+        for histological_structure, df_group in grouped:
             df_group.sort_values(by=['target'], inplace=True)
             hs_id = int(histological_structure)
 
             binary = df_group['coded_value'].astype(int).to_numpy()
             compressed = SparseMatrixPuller._compress_bitwise_to_int(binary)
-            if specimen not in data_arrays_by_specimen:
-                data_arrays_by_specimen[specimen] = {}
             data_arrays_by_specimen[specimen][hs_id] = compressed
 
             if continuous_data_arrays_by_specimen is not None:

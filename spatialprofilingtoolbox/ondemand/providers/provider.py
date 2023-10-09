@@ -136,7 +136,11 @@ class OnDemandProvider(ABC):
         sample: str,
     ) -> None:
         coordinates = ['pixel x', 'pixel y']
-        df[coordinates] = DataFrame.from_dict(centroids[study_name][sample], orient='index')
+        location_data = DataFrame.from_dict(centroids[study_name][sample], orient='index')
+        if location_data.shape[0] != df.shape[0]:
+            message = f'Can not add location data for {location_data.shape[0]} to feature matrix with {df.shape[0]} rows.'
+            logger.error(message)
+        df[coordinates] = location_data
 
     @staticmethod
     def _list_columns(target_index_lookup: dict, target_by_symbol: dict) -> list[str]:

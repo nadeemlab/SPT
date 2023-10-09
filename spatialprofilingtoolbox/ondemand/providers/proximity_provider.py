@@ -2,6 +2,7 @@
 
 from typing import cast
 
+from pandas import DataFrame
 from sklearn.neighbors import BallTree  # type: ignore
 
 from spatialprofilingtoolbox import DBCursor
@@ -32,12 +33,28 @@ class ProximityProvider(PendingProvider):
         super().__init__(data_directory, load_centroids=True)
 
         logger.info('Start loading location data and creating ball trees.')
+        self._dropna_in_data_arrays()
         self._create_ball_trees()
         logger.info('Finished creating ball trees.')
 
     @classmethod
     def service_specifier(cls) -> str:
         return 'proximity'
+
+    def _dropna_in_data_arrays(self) -> None:
+        for _, _data_arrays in self.data_arrays.items():
+            for sample_identifier, df in _data_arrays.items():
+                former = df.shape
+                df.dropna(inplace=True)
+                current = df.shape
+                if current[0] != former[0]:
+                    defect0 = former[0] - current[0]
+                    message = f'Dropped {defect0} rows due to to NAs, for {sample_identifier}.'
+                    logger.info(message)
+                if current[1] != former[1]:
+                    defect1 = former[1] - current[1]
+                    message = f'Dropped {defect1} columns due to to NAs, for {sample_identifier}.'
+                    logger.warning(message)
 
     def _create_ball_trees(self) -> None:
         self.trees = {

@@ -312,7 +312,9 @@ class SparseMatrixPuller:
         ;
         ''', (study_name,))
         rows = self.cursor.fetchall()
-        return tuple(cast(str, row[0]) for row in rows)
+        strings = [cast(str, row[0]) for row in rows]
+        strings = sorted(strings)
+        return tuple(strings)
 
     def _get_study_names(self, study: str | None = None) -> tuple[str, ...]:
         if study is None:

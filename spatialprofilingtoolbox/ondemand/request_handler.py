@@ -128,7 +128,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
     def _handle_missing_study(self, study_name: str) -> bool:
         if self._get_default_provider().has_study(study_name):
             return False
-        logger.error('Study not known to counts server: %s', study_name)
+        logger.error('Study not known to ondemand service: %s', study_name)
         self._wrap_up_transmission()
         return True
 

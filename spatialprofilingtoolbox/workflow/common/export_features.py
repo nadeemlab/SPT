@@ -289,13 +289,18 @@ class ADIFeatureSpecificationUploader:
         names = sorted([row[0] for row in rows if re.search(f'{ondemand}', row[0])])
         if len(names) >= 1:
             return names[0]
-        data_analysis_study = f'{study} - {ondemand}'
+        data_analysis_study = ADIFeatureSpecificationUploader.form_ondemand_study_name(study)
         cursor.execute('''
         INSERT INTO data_analysis_study (name) VALUES (%s) ;
         INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ;
         ''', (data_analysis_study, study, data_analysis_study))
         # cursor.commit()
         return data_analysis_study
+
+    @staticmethod
+    def form_ondemand_study_name(study: str) -> str:
+        ondemand = ADIFeatureSpecificationUploader.ondemand_descriptor()
+        return f'{study} - {ondemand}'
 
     @staticmethod
     def insert_specification(specification, derivation_method, data_analysis_study, cursor):

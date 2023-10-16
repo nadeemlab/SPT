@@ -20,12 +20,15 @@ class PendingProvider(OnDemandProvider, ABC):
 
     def get_metrics(
         self,
-        study_name: str,
+        measurement_study_name: str,
         **kwargs,
     ) -> dict[str, dict[str, float | None] | bool]:
         """Get requested metrics or signal that it's not done calculating yet."""
         logger.debug('Requesting computation.')
-        feature_specification = self.get_or_create_feature_specification(study_name, **kwargs)
+        with DBCursor() as cursor:
+            get = ADIFeatureSpecificationUploader.get_data_analysis_study
+            data_analysis_study = get(measurement_study_name, cursor)
+        feature_specification = self.get_or_create_feature_specification(data_analysis_study, **kwargs)
         if self._is_already_computed(feature_specification):
             is_pending = False
             logger.debug('Already computed.')

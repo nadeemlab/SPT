@@ -14,6 +14,7 @@ from warnings import warn
 
 from pandas import DataFrame
 
+from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
     StudyStructureCentroids,

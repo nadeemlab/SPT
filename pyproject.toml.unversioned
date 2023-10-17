@@ -43,7 +43,7 @@ apiserver = [
     "secure==0.3.0"
 ]
 cggnn = [
-    "cg-gnn",
+    "cg-gnn>=0.1.8",
     "tables"
 ]
 db = [

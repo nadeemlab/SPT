@@ -111,6 +111,7 @@ packages = [
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
     "spatialprofilingtoolbox.cggnn",
+    "spatialprofilingtoolbox.cggnn.run",
     "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.ondemand",
     "spatialprofilingtoolbox.ondemand.providers",

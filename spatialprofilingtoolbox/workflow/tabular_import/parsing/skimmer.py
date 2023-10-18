@@ -5,6 +5,7 @@ import re
 import json
 
 from psycopg2 import sql
+from psycopg2 import connect
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.cell_manifests import \
@@ -21,6 +22,7 @@ from spatialprofilingtoolbox.workflow.tabular_import.parsing.interventions impor
     InterventionsParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyParser
+from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
@@ -94,8 +96,27 @@ class DataSkimmer:
         self._create_schema(study_name)
 
     def _create_database(self, database_name: str) -> None:
+        if self.database_config_file is None:
+            message = 'Data import requires a database configuration file.'
+            logger.error(message)
+            raise ValueError(message)
+        credentials = retrieve_credentials_from_file(self.database_config_file)
+        create_statement = 'CREATE DATABASE %s;' % database_name
+        connection = connect(
+            dbname='postgres',
+            host=credentials.endpoint,
+            user=credentials.user,
+            password=credentials.password,
+        )
+        try:
+            connection.autocommit = True
+            with connection.cursor() as cursor:
+                cursor.execute(create_statement)
+        finally:
+            connection.close()
+
         with DBCursor(database_config_file=self.database_config_file) as cursor:
-            cursor.execute('CREATE DATABASE %s;' % database_name)
+            cursor.execute(create_statement)
 
     def _register_study_database_name(self, study_name: str, database_name: str) -> None:
         with DBCursor(database_config_file=self.database_config_file) as cursor:

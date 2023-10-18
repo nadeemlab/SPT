@@ -117,7 +117,7 @@ class DataSkimmer:
 
     def _register_study_database_name(self, study_name: str, database_name: str) -> None:
         with DBCursor(database_config_file=self.database_config_file) as cursor:
-            cursor.execute('INSERT VALUES (%s, %s) INTO study_lookup;', (study_name, database_name))
+            cursor.execute('INSERT INTO study_lookup VALUES (%s, %s) ;', (study_name, database_name))
 
     def _create_schema(self, study: str) -> None:
         infuser = SchemaInfuser(database_config_file=self.database_config_file, study=study)

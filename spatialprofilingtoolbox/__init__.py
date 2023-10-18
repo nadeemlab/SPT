@@ -10,7 +10,7 @@ from spatialprofilingtoolbox.workflow import get_workflow
 from spatialprofilingtoolbox.workflow import get_workflow_names as get_workflow_names  # pylint: disable=useless-import-alias
 
 from spatialprofilingtoolbox.db import (
-    DatabaseConnectionMaker,
+    DBConnection,
     DBCursor,
     DBCredentials,
     QueryCursor,

@@ -19,7 +19,8 @@ except ModuleNotFoundError as e:
         SuggestExtrasException
     SuggestExtrasException(e, 'db')
 import pandas as pd  # pylint: disable=ungrouped-imports
-from spatialprofilingtoolbox import DatabaseConnectionMaker  # pylint: disable=ungrouped-imports
+from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('modify-constraints')
@@ -107,46 +108,45 @@ def toggle_constraints(
     state: DBConstraintsToggling = DBConstraintsToggling.RECREATE,
     all_tables=False,
 ):
-    with DatabaseConnectionMaker(database_config_file) as dcm:
-        cursor = dcm.get_connection().cursor()
-        try:
-            if state == DBConstraintsToggling.RECREATE:
-                pattern = '''
-                ALTER TABLE %s 
-                ADD CONSTRAINT %s 
-                FOREIGN KEY (%s) 
-                REFERENCES %s (%s)
-                ON DELETE CASCADE ;'''
-                for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
-                        in get_constraint_design(all_tables=all_tables):
-                    statement = pattern % (
-                        tablename,
-                        f'{tablename}{ordinality}',
-                        field_name,
-                        foreign_tablename,
-                        foreign_field_name,
-                    )
-                    logger.debug('Executing: %s', statement)
-                    cursor.execute(statement)
-                status = get_constraint_status(cursor, all_tables=all_tables)
-                print_constraint_status(*status)
+    studies = retrieve_study_names(database_config_file)
+    for study in studies:
+        logger.info('Looking in "%s" database.', study)
+        with DBCursor(database_config_file=database_config_file, stud=study) as cursor:
+            try:
+                if state == DBConstraintsToggling.RECREATE:
+                    pattern = '''
+                    ALTER TABLE %s 
+                    ADD CONSTRAINT %s 
+                    FOREIGN KEY (%s) 
+                    REFERENCES %s (%s)
+                    ON DELETE CASCADE ;'''
+                    for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
+                            in get_constraint_design(all_tables=all_tables):
+                        statement = pattern % (
+                            tablename,
+                            f'{tablename}{ordinality}',
+                            field_name,
+                            foreign_tablename,
+                            foreign_field_name,
+                        )
+                        logger.debug('Executing: %s', statement)
+                        cursor.execute(statement)
+                    status = get_constraint_status(cursor, all_tables=all_tables)
+                    print_constraint_status(*status)
 
-            if state == DBConstraintsToggling.DROP:
-                pattern = '''
-                ALTER TABLE %s
-                DROP CONSTRAINT IF EXISTS %s;'''
-                status = get_constraint_status(cursor, all_tables=all_tables)
-                print_constraint_status(*status)
-                for _, constraint_name, tablename in status[1]:
-                    statement = pattern % (tablename, constraint_name)
-                    logger.debug('Executing: %s', statement)
-                    cursor.execute(statement)
-        except Exception as exception:
-            cursor.close()
-            raise exception
-
-        cursor.close()
-        dcm.get_connection().commit()
+                if state == DBConstraintsToggling.DROP:
+                    pattern = '''
+                    ALTER TABLE %s
+                    DROP CONSTRAINT IF EXISTS %s;'''
+                    status = get_constraint_status(cursor, all_tables=all_tables)
+                    print_constraint_status(*status)
+                    for _, constraint_name, tablename in status[1]:
+                        statement = pattern % (tablename, constraint_name)
+                        logger.debug('Executing: %s', statement)
+                        cursor.execute(statement)
+            except Exception as exception:
+                cursor.close()
+                raise exception
 
 
 if __name__ == '__main__':

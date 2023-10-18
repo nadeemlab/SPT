@@ -5,7 +5,8 @@ import datetime
 import pickle
 
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DBConnection
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
@@ -34,31 +35,26 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
         self.export_feature_values(core_computation_results_files, data_analysis_study)
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
+        with DBConnection(database_config_file=self.database_config_file, study=self.study_name) as connection:
             perform_tests(data_analysis_study, connection)
 
     def insert_new_data_analysis_study(self):
         timestring = str(datetime.datetime.now())
         name = f'{self.study_name} : proximity calculation : {timestring}'
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
+        with DBCursor(database_config_file=self.database_config_file, study=self.study_name) as cursor:
             cursor.execute('''
             INSERT INTO data_analysis_study(name)
             VALUES (%s) ;
             INSERT INTO study_component(primary_study, component_study)
             VALUES (%s, %s) ;
             ''', (name, self.study_name, name))
-            cursor.close()
-            connection.commit()
         return name
 
     def export_feature_values(self, core_computation_results_files, data_analysis_study):
         description = get_feature_description('proximity')
-        with DatabaseConnectionMaker(database_config_file=self.database_config_file) as dcm:
+        with DBConnection(database_config_file=self.database_config_file, study=self.study_name) as connection:
             with ADIFeaturesUploader(
-                dcm,
+                connection,
                 data_analysis_study=data_analysis_study,
                 derivation_and_number_specifiers=(description, 3),
                 impute_zeros=True,

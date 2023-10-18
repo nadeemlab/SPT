@@ -18,16 +18,16 @@ class TabularImportInitializer(Initializer): #pylint: disable=too-few-public-met
             message = 'Need to supply database configuration file.'
             logger.error(message)
             raise ValueError(message)
-        with DataSkimmer(database_config_file=database_config_file) as skimmer:
-            skimmer.parse(
-                {
-                    'file manifest': kwargs['file_manifest_file'],
-                    'channels': kwargs['channels_file'],
-                    'phenotypes': kwargs['phenotypes_file'],
-                    'samples': kwargs['samples_file'],
-                    'subjects': kwargs['subjects_file'],
-                    'study': kwargs['study_file'],
-                    'diagnosis': kwargs['diagnosis_file'],
-                    'interventions': kwargs['interventions_file'],
-                },
-            )
+        skimmer = DataSkimmer(database_config_file=database_config_file):
+        skimmer.parse(
+            {
+                'file manifest': kwargs['file_manifest_file'],
+                'channels': kwargs['channels_file'],
+                'phenotypes': kwargs['phenotypes_file'],
+                'samples': kwargs['samples_file'],
+                'subjects': kwargs['subjects_file'],
+                'study': kwargs['study_file'],
+                'diagnosis': kwargs['diagnosis_file'],
+                'interventions': kwargs['interventions_file'],
+            },
+        )

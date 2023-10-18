@@ -3,7 +3,7 @@
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.component_interfaces.job_generator import JobGenerator
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.workflow.common.job_generator import \
     retrieve_sample_identifiers_from_db
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -18,15 +18,12 @@ class ReductionVisualJobGenerator(JobGenerator):
         self.study_name = self.validate_study_name(study_name)
 
     def validate_study_name(self, study_name):
-        with DatabaseConnectionMaker(database_config_file=self.database_config_file) as maker:
-            connection = maker.get_connection()
-            cursor = connection.cursor()
-            query = 'SELECT DISTINCT primary_study FROM study_component ;'
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            query = 'SELECT DISTINCT study FROM study_lookup WHERE study=%s;'
             cursor.execute(query, (study_name,))
             rows = cursor.fetchall()
-            cursor.close()
-        if study_name in [row[0] for row in rows]:
-            return study_name
+        if len(rows) == 1:
+            return rows[0][0]
         raise ValueError(f'Could not locate study named: {study_name}')
 
     def retrieve_sample_identifiers(self):

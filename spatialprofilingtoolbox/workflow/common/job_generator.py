@@ -1,11 +1,9 @@
 """Convenience functions for job generation."""
 
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DBCursor
 
 def retrieve_sample_identifiers_from_db(study_name, database_config_file):
-    with DatabaseConnectionMaker(database_config_file=database_config_file) as maker:
-        connection = maker.get_connection()
-        cursor = connection.cursor()
+    with DBCursor(database_config_file=database_config_file, study=study_name) as cursor:
         query = '''
         SELECT scp.specimen
         FROM specimen_collection_process scp
@@ -16,5 +14,4 @@ def retrieve_sample_identifiers_from_db(study_name, database_config_file):
         ;            '''
         cursor.execute(query, (study_name,))
         rows = cursor.fetchall()
-        cursor.close()
     return [row[0] for row in rows]

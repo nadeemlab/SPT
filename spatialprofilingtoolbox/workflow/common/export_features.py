@@ -9,10 +9,9 @@ from itertools import product
 import re
 
 import pandas as pd
-from psycopg2.extensions import connection as Connection
+from psycopg2.extensions import connection as Psycopg2Connection
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
-from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -30,11 +29,10 @@ class ADIFeaturesUploader(SourceToADIParser):
     upload_anyway: bool
 
     def __init__(self,
-        database_connection_maker: DatabaseConnectionMaker | None,
+        connection: Psycopg2Connection,
         data_analysis_study,
         derivation_and_number_specifiers,
         impute_zeros=False,
-        connection: Connection | None=None,
         upload_anyway: bool = False,
         **kwargs
     ):
@@ -46,10 +44,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         SourceToADIParser.__init__(self, fields)
         args = (data_analysis_study, derivation_method, specifier_number)
         self.record_feature_specification_template(*args)
-        if connection is not None:
-            self.connection_provider = ConnectionProvider(connection)
-        else:
-            self.connection_provider = cast(ConnectionProvider, database_connection_maker)
+        self.connection_provider = ConnectionProvider(connection)
 
     def record_feature_specification_template(self,
         data_analysis_study,

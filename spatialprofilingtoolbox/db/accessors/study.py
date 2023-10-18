@@ -252,3 +252,9 @@ class StudyAccess(SimpleReadOnlyProvider):
             parameters=(specimen,),
         )
         return study
+
+    def get_specimen_names(self) -> list[str]:
+        query = 'SELECT specimen FROM specimen_collection_process;'
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        return sorted([row[0] for row in rows])

@@ -6,7 +6,6 @@ from os.path import join
 from pandas import read_csv
 
 from spatialprofilingtoolbox.cggnn import extract_cggnn_data
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
@@ -121,14 +120,12 @@ def parse_arguments():
 def save_importance(spt_db_config_location: str) -> None:
     """Save cell importance scores as defined by cggnn to the database."""
     df = read_csv(join('out', 'importances.csv'), index_col=0)
-    connection = DatabaseConnectionMaker(spt_db_config_location).get_connection()
-    transcribe_importance(df, connection)
-    connection.close()
+    transcribe_importance(df, spt_db_config_location)
 
 
 if __name__ == "__main__":
     args = parse_arguments()
-    df_cell, df_label, label_to_result = extract_cggnn_data(args.spt_db_config_location, args.study)
+    df_cell, df_label, label_to_result = extract_cggnn_data(args.spt_db_config_location, args.study)  # TODO: missing strata
     run_with_dfs(
         df_cell,
         df_label,
@@ -145,4 +142,4 @@ if __name__ == "__main__":
         args.merge_rois,
         args.prune_misclassified
     )
-    save_importance(args)
+    save_importance(args.spt_db_config_location)

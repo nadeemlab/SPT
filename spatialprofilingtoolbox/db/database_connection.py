@@ -27,6 +27,7 @@ logger = colorized_logger(__name__)
 class ConnectionProvider:
     """Simple wrapper of a database connection."""
     connection: Connection
+
     def __init__(self, connection: Connection):
         self.connection = connection
 
@@ -41,33 +42,54 @@ class ConnectionProvider:
             return False
 
 
-class DatabaseConnectionMaker(ConnectionProvider):
+class DBConnection(ConnectionProvider):
     """Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
     """
-    connection: Connection
     autocommit: bool
 
-    def __init__(self, database_config_file: str | None=None, autocommit: bool=True):
+    def __init__(self,
+        database_config_file: str | None = None,
+        autocommit: bool=True,
+        study: str | None = None,
+    ):
         if database_config_file is not None:
             credentials = retrieve_credentials_from_file(database_config_file)
         else:
             credentials = get_credentials_from_environment()
+
         try:
-            super().__init__(self.make_connection(credentials))
+            self.make_connection(credentials)
         except Psycopg2Error:
-            credentials = DBCredentials(
-                credentials.endpoint,
-                'postgres',
-                credentials.user,
-                credentials.password,
-            )
+            credentials = credentials.update_database('postgres')
             try:
-                super().__init__(self.make_connection(credentials))
-            except Psycopg2Error as exception:
-                message = 'Failed to connect to database: %s %s'
-                logger.error(message, credentials.endpoint, credentials.database)
-                raise exception
+                self.make_connection(credentials)
+            except Psycopg2Error:
+                raise ValueError('Could not connect to database "postgres".')
+
+        try:
+            if study is not None:
+                study_database = self._retrieve_study_database(credentials, study)
+                credentials.update_database(study_database)
+            super().__init__(self.make_connection(credentials))
+        except Psycopg2Error as exception:
+            message = 'Failed to connect to database: %s, %s'
+            logger.error(message, credentials.endpoint, credentials.database)
+            raise exception
         self.autocommit = autocommit
+
+    def _retrieve_study_database(self, credentials: DBCredentials, study: str) -> str:
+        with connect(
+            dbname=credentials.database,
+            host=credentials.endpoint,
+            user=credentials.user,
+            password=credentials.password,
+        ) as connection:
+            cursor = connection.cursor()
+            cursor.execute('SELECT database_name FROM study_lookup WHERE study=%s', (study,))
+            rows = cursor.fetchall()
+            if len(rows) == 0:
+                raise ValueError('Did not find database for study "%s"', study)
+            return str(rows[0][0])
 
     @staticmethod
     def make_connection(credentials: DBCredentials) -> Connection:
@@ -79,16 +101,19 @@ class DatabaseConnectionMaker(ConnectionProvider):
         )
 
     def __enter__(self):
-        return self
+        return self.get_connection()
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def wrap_up_connection(self):
         if self.is_connected():
             if self.autocommit:
-                self.connection.commit()
-            self.connection.close()
+                self.get_connection().commit()
+            self.get_connection().close()        
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.wrap_up_connection()
 
 
-class DBCursor(DatabaseConnectionMaker):
+class DBCursor(DBConnection):
     """Context manager for shortcutting right to provision of a cursor."""
     cursor: Psycopg2Cursor
 
@@ -98,16 +123,17 @@ class DBCursor(DatabaseConnectionMaker):
     def get_cursor(self) -> Psycopg2Cursor:
         return self.cursor
 
+    def set_cursor(self, cursor: Psycopg2Cursor) -> None:
+        self.cursor = cursor
+
     def __enter__(self):
-        self.cursor = self.get_connection().cursor()
+        self.set_cursor(self.get_connection().cursor())
         return self.get_cursor()
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.is_connected():
-            if self.autocommit:
-                self.connection.commit()
-            self.cursor.close()
-            self.connection.close()
+            self.get_cursor().close()
+        self.wrap_up_connection()
 
 
 def get_and_validate_database_config(args):
@@ -132,10 +158,43 @@ def wait_for_database_ready():
 
 
 def _check_database_is_ready() -> bool:
-    with DatabaseConnectionMaker() as dcm:
-        if dcm.is_connected():
+    try:
+        with DBCursor() as cursor:
+            cursor.execute('SELECT * FROM study_lookup;')
+            _ = cursor.fetchall()
             return True
-    return False
+    except Psycopg2Error as _:
+        return False
+
+
+def retrieve_study_names(database_config_file: str | None) -> list[str]:
+    with DBCursor(database_config_file=database_config_file) as cursor:
+        cursor.execute('SELECT study FROM study_lookup;')
+        rows = cursor.fetchall()
+    return sorted([row[0] for row in rows])
+
+
+def get_specimen_names(cursor) -> list[str]:
+    query = 'SELECT specimen FROM specimen_collection_process;'
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    return sorted([row[0] for row in rows])
+
+
+def retrieve_study_from_specimen(database_config_file: str | None, specimen: str) -> str:
+    studies = retrieve_study_names(database_config_file)
+    study = None
+    for _study in studies:
+        with DBCursor(database_config_file=database_config_file, study=_study) as cursor:
+            specimens = get_specimen_names(cursor)
+            if specimen in specimens:
+                study = _study
+                break
+    if study is None:
+        message = 'Could not retrieve study from specimen "%s".'
+        logger.error(message, specimen)
+        raise ValueError(message, specimen)
+    return study
 
 
 @define

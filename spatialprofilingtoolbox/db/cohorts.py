@@ -24,7 +24,7 @@ class StratumIdentifierReplacer:
         self.decrement_amount = self._get_decrement(study)
 
     def _get_decrement(self, study: str) -> int:
-        with DBCursor() as cursor:
+        with DBCursor(study=study) as cursor:
             cohort_identifiers = _get_cohort_identifiers_by_sample_original(cursor, study).values()
         return min((int(entry) for entry in cohort_identifiers)) - 1
 

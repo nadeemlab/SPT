@@ -1,6 +1,6 @@
 """Convenience functions for core jobs."""
 
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DBCursor
 
 def get_number_cells_to_be_processed(database_config_file, study_name, sample_identifier=None):
     query_parts = ['''
@@ -20,10 +20,7 @@ def get_number_cells_to_be_processed(database_config_file, study_name, sample_id
         fill_ins = (study_name,)
     query_parts.append(';')
     query = ' '.join(query_parts)
-    with DatabaseConnectionMaker(database_config_file) as dcm:
-        connection = dcm.get_connection()
-        cursor = connection.cursor()
+    with DBCursor(database_config_file=database_config_file, study=study_name) as cursor:
         cursor.execute(query, fill_ins)
         rows = cursor.fetchall()
-        cursor.close()
     return rows[0][0]

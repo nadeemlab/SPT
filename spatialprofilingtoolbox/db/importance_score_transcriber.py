@@ -5,6 +5,8 @@ from pandas import DataFrame
 from pandas import read_sql
 from psycopg2.extensions import connection as Connection
 
+from spatialprofilingtoolbox.db.database_connection import DBConnection
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox import get_feature_description
@@ -15,7 +17,7 @@ logger = colorized_logger(__name__)
 
 def transcribe_importance(
     df: DataFrame,
-    connection: Connection,
+    database_config_file: str,
     per_specimen_selection_number: int = 1000,
     cohort_stratifier: str = '',
 ) -> None:
@@ -32,24 +34,36 @@ def transcribe_importance(
             Name of the classification cohort variable the GNN was trained on to produce
                 the importance score.
     """
-    study = _get_referenced_study(connection, df)
+    study = _get_referenced_study(database_config_file, df)
+    if study is None:
+        message = 'Could not determine study referenced by dataframe contents.'
+        logger.error(message)
+        logger.error(df.head())
+        logger.error('...')
+        raise ValueError(message)
     indicator: str = 'cell importance'
-    data_analysis_study = DataAnalysisStudyFactory(connection, study, indicator).create()
-    _add_slide_column(connection, df)
-    df_most_important = _group_and_filter(df, per_specimen_selection_number)
-    _upload(df_most_important, connection, data_analysis_study, cohort_stratifier)
+    with DBConnection(database_config_file=database_config_file, study=study) as connection:
+        data_analysis_study = DataAnalysisStudyFactory(connection, study, indicator).create()
+        _add_slide_column(connection, df)
+        df_most_important = _group_and_filter(df, per_specimen_selection_number)
+        _upload(df_most_important, connection, data_analysis_study, cohort_stratifier)
 
 
-def _get_referenced_study(connection, df: DataFrame) -> str:
+def _get_referenced_study(database_config_file, df: DataFrame) -> str | None:
     first_index = str(df.index[0])
-    return _recover_study_from_histological_structure(connection, first_index)
-
+    studies = retrieve_study_names(database_config_file)
+    for study in studies:
+        with DBConnection(database_config_file=database_config_file, study=study) as connection:
+            _referenced = _recover_study_from_histological_structure(connection, first_index)
+            if _referenced is not None:
+                return _referenced
+    return None
 
 def _recover_study_from_histological_structure(
     connection: Connection,
     histological_structure,
-) -> str:
-    value = read_sql(f"""
+) -> str | None:
+    values = read_sql(f"""
         SELECT
             hsi.histological_structure,
             sc.primary_study
@@ -63,8 +77,10 @@ def _recover_study_from_histological_structure(
         WHERE hsi.histological_structure='{histological_structure}'
         LIMIT 1
         ;
-    """, connection)['primary_study'][0]
-    return cast(str, value)
+    """, connection)['primary_study']
+    if len(values) == 0:
+        return None
+    return cast(str, values[0])
 
 
 def _add_slide_column(connection: Connection, df: DataFrame) -> None:
@@ -101,11 +117,10 @@ def _upload(
     cohort_stratifier: str,
 ) -> None:
     with ADIFeaturesUploader(
-        None,
+        connection,
         data_analysis_study=data_analysis_study,
         derivation_and_number_specifiers=(get_feature_description("gnn importance score"), 1),
         impute_zeros=True,
-        connection=connection,
     ) as feature_uploader:
         for histological_structure, row in df.iterrows():
             feature_uploader.stage_feature_value(

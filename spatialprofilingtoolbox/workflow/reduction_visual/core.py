@@ -17,7 +17,7 @@ from matplotlib.colors import LinearSegmentedColormap  # type: ignore
 
 from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import PerformanceTimer
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox import DBCursor
 from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -63,9 +63,7 @@ class ReductionVisualCoreJob(CoreJob):
         if cell_limit is None:
             raise ValueError('Need to choose a cell_limit.')
         self.timer.record_timepoint(f'Start pulling data for the study: {self.study_name}')
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
             cursor.execute('''
             SELECT eq.histological_structure, cs.symbol, eq.quantity
             FROM expression_quantification eq
@@ -87,7 +85,6 @@ class ReductionVisualCoreJob(CoreJob):
             ;
             ''', (self.study_name, self.study_name, cell_limit))
             rows = cursor.fetchall()
-            cursor.close()
         self.timer.record_timepoint('Finished pulling data.')
         sparse_df = pd.DataFrame(rows, columns=['structure', 'channel', 'quantity'])
         sparse_df = sparse_df.astype({'structure': str, 'channel': str, 'quantity': float})
@@ -127,9 +124,7 @@ class ReductionVisualCoreJob(CoreJob):
         logger.info('Saved job output to file: %s', self.results_file)
 
     def probably_already_uploaded(self, plots_base64):
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
+        with DBCursor(database_config_file=self.database_config_file, study=self.study_name) as cursor:
             cursor.execute('''
             SELECT COUNT(*) FROM umap_plots WHERE study=%s ;
             ''', (self.study_name,))
@@ -143,16 +138,13 @@ class ReductionVisualCoreJob(CoreJob):
         raise ValueError(message, count, len(plots_base64))
 
     def upload_to_database(self, plots_base64):
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
+        with DBCursor(database_config_file=self.database_config_file, study=self.study_name) as cursor:
             self.drop_existing_umap_plots(cursor)
             for channel, plot_base64 in plots_base64.items():
                 cursor.execute('''
                 INSERT INTO umap_plots (study, channel, png_base64)
                 VALUES (%s, %s, %s) ;
                 ''', (self.study_name, channel, plot_base64))
-            connection.commit()
         logger.info('Saved %s plots to table umap_plots.', len(plots_base64))
 
     def drop_existing_umap_plots(self, cursor):

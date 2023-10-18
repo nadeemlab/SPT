@@ -1,31 +1,38 @@
 """Structures and accessors for database credentials."""
 from os import environ
-import re
 import configparser
-from typing import NamedTuple
+
+from attr import define
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-class DBCredentials(NamedTuple):
+@define
+class DBCredentials:
     """Data structure for database credentials."""
     endpoint: str
     database: str
     user: str
     password: str
 
+    def update_database(self, database: str):
+        self.database = database
+        return self
 
-def get_credentials_from_environment(database_name: str='scstudies') -> DBCredentials:
+def metaschema_database() -> str:
+    return 'default_study_lookup'
+
+def get_credentials_from_environment() -> DBCredentials:
     _handle_unavailability()
     return DBCredentials(
         environ['SINGLE_CELL_DATABASE_HOST'],
-        database_name,
+        metaschema_database(),
         environ['SINGLE_CELL_DATABASE_USER'],
         environ['SINGLE_CELL_DATABASE_PASSWORD'],
     )
 
-def retrieve_credentials_from_file(database_config_file) -> DBCredentials:
+def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
     parser = configparser.ConfigParser()
     credentials = {}
     parser.read(database_config_file)
@@ -35,10 +42,6 @@ def retrieve_credentials_from_file(database_config_file) -> DBCredentials:
     missing = set(_get_credential_keys()).difference(credentials.keys())
     if len(missing) > 0:
         raise ValueError(f'Database configuration file is missing keys: {missing}')
-    if not re.match('^[a-z][a-z0-9_]+[a-z0-9]$', credentials['database']):
-        message = 'The database name "%s" is too complex. Reverting to "postgres".'
-        logger.warning(message, credentials['database'])
-        credentials['database'] = 'postgres'
     return DBCredentials(*[credentials[k] for k in _get_credential_keys()])
 
 def _handle_unavailability():

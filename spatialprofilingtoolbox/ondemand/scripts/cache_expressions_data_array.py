@@ -1,13 +1,13 @@
 """Pull expression data from SPT database and store as compressed binary cache. Also pulls location
 data.
 """
+from typing import cast
 import argparse
 from os.path import abspath
 from os.path import expanduser
 from os import getcwd
 import sys
 
-from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
@@ -26,17 +26,15 @@ def main():
     parser.add_argument('--centroids-only', dest='centroids_only', action='store_true')
     args = parser.parse_args()
 
-    database_config_file = args.database_config_file
-    if database_config_file == 'none':
+    database_config_file = cast(str, args.database_config_file)
+    if database_config_file in ['none', 'None']:
         database_config_file = None
     if database_config_file is not None:
         database_config_file = abspath(expanduser(database_config_file))
 
     if not StructureCentroids.already_exists(getcwd()):
-        with DatabaseConnectionMaker(database_config_file) as dcm:
-            with dcm.get_connection().cursor() as cursor:
-                puller = StructureCentroidsPuller(cursor)
-                puller.pull_and_write_to_files(getcwd())
+        puller = StructureCentroidsPuller(database_config_file)
+        puller.pull_and_write_to_files(getcwd())
     else:
         logger.info('At least one centroids file already exists, skipping shapefile pull.')
 
@@ -50,12 +48,9 @@ def main():
         message = '%s was not found, will do feature matrix pull after all.'
         logger.info(message, EXPRESSIONS_INDEX_FILENAME)
 
-    with DatabaseConnectionMaker(database_config_file) as dcm:
-        connection = dcm.get_connection()
-        ExpressionsTableIndexer.ensure_indexed_expressions_table(connection)
-        with connection.cursor() as cursor:
-            puller = SparseMatrixPuller(cursor)
-            puller.pull_and_write_to_files()
+    ExpressionsTableIndexer.ensure_indexed_expressions_tables(database_config_file)
+    puller = SparseMatrixPuller(database_config_file)
+    puller.pull_and_write_to_files()
 
 if __name__ == '__main__':
     from spatialprofilingtoolbox.standalone_utilities.module_load_error \

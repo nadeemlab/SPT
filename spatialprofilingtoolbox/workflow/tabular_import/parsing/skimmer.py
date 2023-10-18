@@ -95,7 +95,7 @@ class DataSkimmer:
 
     def _create_database(self, database_name: str) -> None:
         with DBCursor(database_config_file=self.database_config_file) as cursor:
-            cursor.execute('CREATE DATABASE %s;', (database_name,))
+            cursor.execute('CREATE DATABASE %s;' % database_name)
 
     def _register_study_database_name(self, study_name: str, database_name: str) -> None:
         with DBCursor(database_config_file=self.database_config_file) as cursor:

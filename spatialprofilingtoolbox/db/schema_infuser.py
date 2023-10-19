@@ -6,6 +6,7 @@ from importlib.resources import files
 import re
 
 import pandas as pd
+from psycopg2 import Error as Psycopg2Error
 
 from spatialprofilingtoolbox.db.database_connection import create_database
 from spatialprofilingtoolbox.db.credentials import metaschema_database
@@ -32,7 +33,11 @@ class SchemaInfuser:
         self._verbose_sql_execute(
             ('metaschema.sql', 'create tables from lightweight metaschema'),
         )
-        # self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        try:
+            self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        except Psycopg2Error as exception:
+            logger.warning('Could not run grant privileges script. Possibly users are not set up.')
+            logger.warning(exception)
 
     def setup_schema(self, force=False):
         message = 'This creation tool assumes that the database itself and users are already setup.'
@@ -49,7 +54,11 @@ class SchemaInfuser:
         )
         self._verbose_sql_execute(('performance_tweaks.sql', 'tweak main schema'))
         self._verbose_sql_execute(('create_views.sql', 'create views of main schema'))
-        # self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        try:
+            self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        except Psycopg2Error as exception:
+            logger.warning('Could not run grant privileges script. Possibly users are not set up.')
+            logger.warning(exception)
 
     def normalize(self, name):
         return re.sub(r'[ \-]', '_', name).lower()

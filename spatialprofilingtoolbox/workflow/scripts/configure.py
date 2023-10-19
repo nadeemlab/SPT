@@ -1,4 +1,5 @@
 """CLI utility to configure an SPT workflow run."""
+
 import argparse
 import os
 from os import getcwd
@@ -8,6 +9,7 @@ from os.path import join
 from os.path import abspath
 from os.path import expanduser
 import stat
+from configparser import ConfigParser
 from importlib.resources import as_file
 from importlib.resources import files
 
@@ -34,6 +36,7 @@ workflows = {name: get_workflow(name) for name in get_workflow_names()}
 NF_CONFIG_FILE = 'nextflow.config'
 NF_PIPELINE_FILE = 'main.nf'
 NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
+NF_PIPELINE_FILE_CGGNN = 'cggnn.nf'
 
 
 def retrieve_from_library(subpackage, filename):
@@ -56,8 +59,12 @@ def write_config_file(variables):
 
 
 def write_pipeline_script(variables):
-    if workflows[variables['workflow']].is_database_visitor:
-        pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
+    workflow = workflows[variables['workflow']]
+    if workflow.is_database_visitor:
+        if workflows.is_cggnn:
+            pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_CGGNN)
+        else:
+            pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
     else:
         pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE)
     with open(join(os.getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
@@ -232,11 +239,22 @@ if __name__ == '__main__':
         help='If a machine must not have LSF jobs scheduled on it, supply its hostname here.'
     )
     add_argument(parser, 'database config')
+    parser.add_argument(
+        '--workflow-config-file',
+        help='Path to a workflow configuration YAML file. This file will be used to populate the '
+        'configuration file for the workflow.',
+        required=False,
+        default=None,
+    )
     args = parser.parse_args()
 
     jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader())
 
     config_variables = {}
+    if args.workflow_config_file is not None:
+        parser = ConfigParser()
+        parser.read(args.workflow_config_file)
+        config_variables = parser.items()
 
     config_variables['workflow'] = args.workflow
 

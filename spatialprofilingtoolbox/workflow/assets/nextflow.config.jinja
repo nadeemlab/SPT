@@ -41,3 +41,57 @@ env.channels_file_ = '{{ channels_file }}'{% endif %}
 
 {%- if phenotypes_file is defined and phenotypes_file|length %}
 env.phenotypes_file_ = '{{ phenotypes_file }}'{% endif %}
+
+{%- if strata is defined}
+env.strata = '{{ strata }}'{% endif %}
+
+{%- if validation_data_percent is defined}
+env.validation_data_percent = '{{ validation_data_percent }}'{% endif %}
+
+{%- if test_data_percent is defined}
+env.test_data_percent = '{{ test_data_percent }}'{% endif %}
+
+{%- if disable_channels is defined}
+env.disable_channels = '{{ disable_channels }}'{% endif %}
+
+{%- if disable_phenotypes is defined}
+env.disable_phenotypes = '{{ disable_phenotypes }}'{% endif %}
+
+{%- if roi_side_length is defined}
+env.roi_side_length = '{{ roi_side_length }}'{% endif %}
+
+{%- if cells_per_slide_target is defined}
+env.cells_per_slide_target = '{{ cells_per_slide_target }}'{% endif %}
+
+{%- if target_name is defined}
+env.target_name = '{{ target_name }}'{% endif %}
+
+{%- if in_ram is defined}
+env.in_ram = '{{ in_ram }}'{% endif %}
+
+{%- if batch_size is defined}
+env.batch_size = '{{ batch_size }}'{% endif %}
+
+{%- if epochs is defined}
+env.epochs = '{{ epochs }}'{% endif %}
+
+{%- if learning_rate is defined}
+env.learning_rate = '{{ learning_rate }}'{% endif %}
+
+{%- if k_folds is defined}
+env.k_folds = '{{ k_folds }}'{% endif %}
+
+{%- if explainer_model is defined}
+env.explainer_model = '{{ explainer_model }}'{% endif %}
+
+{%- if merge_rois is defined}
+env.merge_rois = '{{ merge_rois }}'{% endif %}
+
+{%- if prune_misclassified is defined}
+env.prune_misclassified = '{{ prune_misclassified }}'{% endif %}
+
+{%- if output_prefix is defined}
+env.output_prefix = '{{ output_prefix }}'{% endif %}
+
+{%- if upload_importances is defined}
+env.upload_importances = '{{ upload_importances }}'{% endif %}

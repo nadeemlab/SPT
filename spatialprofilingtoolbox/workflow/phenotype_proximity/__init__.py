@@ -25,4 +25,5 @@ components = WorkflowModules(
     initializer=PhenotypeProximityInitializer,
     core_job=PhenotypeProximityCoreJob,
     integrator=PhenotypeProximityAnalysisIntegrator,
+    is_cggnn=False,
 )

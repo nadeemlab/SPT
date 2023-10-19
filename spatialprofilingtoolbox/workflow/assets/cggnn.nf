@@ -8,7 +8,6 @@ process echo_environment_variables {
     path 'strata',                          emit: strata
     path 'validation_data_percent',         emit: validation_data_percent
     path 'test_data_percent',               emit: test_data_percent
-    // how to bool? why are these paths?
     path 'disable_channels',                emit: disable_channels
     path 'disable_phenotypes',              emit: disable_phenotypes
     path 'roi_side_length',                 emit: roi_side_length
@@ -94,21 +93,21 @@ process run {
         --strata=${strata} \
         --validation-data-percent=${validation_data_percent} \
         --test-data-percent=${test_data_percent} \
-        --disable-channels=${disable_channels} \
-        --disable-phenotypes=${disable_phenotypes} \
+        $(if [[ "${disable_channels}" = true ]]; then echo "--disable-channels"; fi) \
+        $(if [[ "${disable_phenotypes}" = true ]]; then echo "--disable_phenotypes"; fi) \
         --roi-side-length=${roi_side_length} \
         --cells-per-slide-target=${cells_per_slide_target} \
-        --target-name=${target_name} \
-        --in-ram=${in_ram} \
+        --target-name="${target_name}" \
+        $(if [[ "${in_ram}" = true ]]; then echo "--in_ram"; fi) \
         --batch-size=${batch_size} \
         --epochs=${epochs} \
         --learning-rate=${learning_rate} \
         --k-folds=${k_folds} \
-        --explainer-model=${explainer_model} \
-        --merge-rois=${merge_rois} \
-        --prune-misclassified=${prune_misclassified} \
-        --output-prefix=${output_prefix} \
-        --upload-importances=${upload_importances}
+        --explainer-model="${explainer_model}" \
+        $(if [[ "${merge_rois}" = true ]]; then echo "--merge_rois"; fi) \
+        $(if [[ "${prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
+        --output-prefix="${output_prefix}" \
+        $(if [[ "${upload_importances}" = true ]]; then echo "--upload_importances"; fi)
     """
 }
 

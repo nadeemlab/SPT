@@ -19,5 +19,4 @@ components = WorkflowModules(
     initializer=CGGNNIntegrator,
     core_job=CGGNNInitializer,
     integrator=CGGNNJobGenerator,
-    is_cggnn=True,
 )

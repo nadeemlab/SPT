@@ -61,7 +61,7 @@ def write_config_file(variables):
 def write_pipeline_script(variables):
     workflow = workflows[variables['workflow']]
     if workflow.is_database_visitor:
-        if workflows.is_cggnn:
+        if workflow is 'cggnn':
             pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_CGGNN)
         else:
             pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
@@ -250,11 +250,11 @@ if __name__ == '__main__':
 
     jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader())
 
-    config_variables = {}
+    config_variables: dict[str, str | bool] = {}
     if args.workflow_config_file is not None:
         parser = ConfigParser()
         parser.read(args.workflow_config_file)
-        config_variables = parser.items()
+        config_variables = dict(parser.items('settings'))
 
     config_variables['workflow'] = args.workflow
 

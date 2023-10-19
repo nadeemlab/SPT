@@ -24,5 +24,4 @@ components = WorkflowModules(
     initializer=ReductionVisualInitializer,
     core_job=ReductionVisualCoreJob,
     integrator=ReductionVisualAnalysisIntegrator,
-    is_cggnn=False,
 )

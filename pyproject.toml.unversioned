@@ -175,6 +175,8 @@ packages = [
     "drop_ondemand_computations.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
+    "metaschema.sql",
+    "drop_metaschema.sql",
     "create_roles.sql",
     "create_views.sql",
     "drop_views.sql",

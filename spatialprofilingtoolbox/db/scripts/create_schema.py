@@ -45,12 +45,11 @@ if __name__ == '__main__':
 
     config_file = get_and_validate_database_config(args)
     infuser = SchemaInfuser(database_config_file=config_file)
-    infuser.setup_lightweight_metaschema(force=args.force)
 
-        # if not args.refresh_views_only and not args.recreate_views_only:
-        #     infuser.setup_schema(force=args.force)
-        # else:
-        #     if args.refresh_views_only:
-        #         infuser.refresh_views()
-        #     if args.recreate_views_only:
-        #         infuser.recreate_views()
+    if not args.refresh_views_only and not args.recreate_views_only:
+        infuser.setup_lightweight_metaschema(force=args.force)
+    else:
+        if args.refresh_views_only:
+            infuser.refresh_views()
+        if args.recreate_views_only:
+            infuser.recreate_views()

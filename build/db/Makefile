@@ -16,7 +16,8 @@ TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
 DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
 
 initialize_schema.sql: schema.sql ${DATA_MODEL_SOURCE_LOCATION}/performance_tweaks.sql ${DATA_MODEL_SOURCE_LOCATION}/create_views.sql
->@echo "CREATE DATABASE default_study_lookup; " > initialize_schema.sql; cat ${DATA_MODEL_SOURCE_LOCATION}/metaschema.sql >> initialize_schema.sql
+>@echo "" > initialize_schema.sql
+# >@echo "CREATE DATABASE default_study_lookup; " > initialize_schema.sql; cat ${DATA_MODEL_SOURCE_LOCATION}/metaschema.sql >> initialize_schema.sql
 # >@cat \
 #     schema.sql \
 #     ${DATA_MODEL_SOURCE_LOCATION}/performance_tweaks.sql \

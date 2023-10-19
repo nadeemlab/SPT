@@ -22,9 +22,9 @@ from spatialprofilingtoolbox.workflow.tabular_import.parsing.interventions impor
     InterventionsParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyParser
-from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import create_database
 from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -82,7 +82,7 @@ class DataSkimmer:
     def _sanitize_token(token: str) -> str:
         return re.sub(r'[ \-]', '_', token).lower()
 
-    def _register_study(self, study_file: str):
+    def _register_study(self, study_file: str) -> str:
         with open(study_file, 'rt', encoding='utf-8') as file:
             study = json.loads(file.read())
             study_name = study['Study name']
@@ -94,26 +94,10 @@ class DataSkimmer:
         self._create_database(database_name)
         self._register_study_database_name(study_name, database_name)
         self._create_schema(study_name)
+        return study_name
 
     def _create_database(self, database_name: str) -> None:
-        if self.database_config_file is None:
-            message = 'Data import requires a database configuration file.'
-            logger.error(message)
-            raise ValueError(message)
-        credentials = retrieve_credentials_from_file(self.database_config_file)
-        create_statement = 'CREATE DATABASE %s;' % database_name
-        connection = connect(
-            dbname='postgres',
-            host=credentials.endpoint,
-            user=credentials.user,
-            password=credentials.password,
-        )
-        try:
-            connection.autocommit = True
-            with connection.cursor() as cursor:
-                cursor.execute(create_statement)
-        finally:
-            connection.close()
+        create_database(self.database_config_file, database_name)
 
     def _register_study_database_name(self, study_name: str, database_name: str) -> None:
         with DBCursor(database_config_file=self.database_config_file) as cursor:

@@ -27,6 +27,6 @@ def check_tables(cursor):
     for tablename in table_names:
         cursor.execute(f'SELECT COUNT(*) FROM public.{tablename}')
         rows = cursor.fetchall()
-        count = rows[0][0]
+        count = int(rows[0][0])
         counts.append([tablename, count])
     return tables_present, counts

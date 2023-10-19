@@ -57,14 +57,15 @@ class DBConnection(ConnectionProvider):
         else:
             credentials = get_credentials_from_environment()
 
-        try:
-            self.make_connection(credentials)
-        except Psycopg2Error:
-            credentials = credentials.update_database('postgres')
-            try:
-                self.make_connection(credentials)
-            except Psycopg2Error:
-                raise ValueError('Could not connect to database "postgres".')
+        # try:
+        #     self.make_connection(credentials)
+        # except Psycopg2Error:
+        #     logger.warning('Using "postgres" database as backup.')
+        #     credentials = credentials.update_database('postgres')
+        #     try:
+        #         self.make_connection(credentials)
+        #     except Psycopg2Error:
+        #         raise ValueError('Could not connect to database "postgres".')
 
         try:
             if study is not None:
@@ -93,6 +94,7 @@ class DBConnection(ConnectionProvider):
 
     @staticmethod
     def make_connection(credentials: DBCredentials) -> Connection:
+        logger.debug('Using credentials: host=%s database=%s user=%s', credentials.endpoint, credentials.database, credentials.user)
         return connect(
             dbname=credentials.database,
             host=credentials.endpoint,
@@ -107,7 +109,7 @@ class DBConnection(ConnectionProvider):
         if self.is_connected():
             if self.autocommit:
                 self.get_connection().commit()
-            self.get_connection().close()        
+            self.get_connection().close()
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.wrap_up_connection()
@@ -195,6 +197,27 @@ def retrieve_study_from_specimen(database_config_file: str | None, specimen: str
         logger.error(message, specimen)
         raise ValueError(message, specimen)
     return study
+
+
+def create_database(database_config_file: str | None, database_name: str) -> None:
+    if database_config_file is None:
+        message = 'Data import requires a database configuration file.'
+        logger.error(message)
+        raise ValueError(message)
+    credentials = retrieve_credentials_from_file(database_config_file)
+    create_statement = 'CREATE DATABASE %s;' % database_name
+    connection = connect(
+        dbname='postgres',
+        host=credentials.endpoint,
+        user=credentials.user,
+        password=credentials.password,
+    )
+    try:
+        connection.autocommit = True
+        with connection.cursor() as cursor:
+            cursor.execute(create_statement)
+    finally:
+        connection.close()
 
 
 @define

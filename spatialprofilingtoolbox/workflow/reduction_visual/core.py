@@ -63,7 +63,7 @@ class ReductionVisualCoreJob(CoreJob):
         if cell_limit is None:
             raise ValueError('Need to choose a cell_limit.')
         self.timer.record_timepoint(f'Start pulling data for the study: {self.study_name}')
-        with DBCursor(database_config_file=self.database_config_file) as cursor:
+        with DBCursor(database_config_file=self.database_config_file, study=self.study_name) as cursor:
             cursor.execute('''
             SELECT eq.histological_structure, cs.symbol, eq.quantity
             FROM expression_quantification eq

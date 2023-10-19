@@ -28,12 +28,15 @@ def report_counts(aggregated):
 
 
 def aggregate_counts(all_counts):
-    rows = list(chain(all_counts))
+    rows = list(chain(*all_counts))
     df = pd.DataFrame({
         'Table': [row[0] for row in rows],
-        'Records': [row[1] for row in rows],
+        'Records': [int(row[1]) for row in rows],
     })
-    return df.groupby('Table').sum()
+    aggregated = df.groupby('Table').sum()
+    aggregated.reset_index(inplace=True)
+    return aggregated
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -51,7 +54,6 @@ if __name__ == '__main__':
             present, counted = check_tables(cursor)
             if not present:
                 logger.error('Some tables are missing in "%s" database.', study)
-                sys.exit(1)
             all_counts.append(counted)
     aggregated = aggregate_counts(all_counts)
     report_counts(aggregated)

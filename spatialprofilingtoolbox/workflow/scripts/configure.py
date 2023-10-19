@@ -61,7 +61,7 @@ def write_config_file(variables):
 def write_pipeline_script(variables):
     workflow = workflows[variables['workflow']]
     if workflow.is_database_visitor:
-        if workflow is 'cggnn':
+        if workflow == 'cggnn':
             pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_CGGNN)
         else:
             pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)

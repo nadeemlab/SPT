@@ -111,7 +111,6 @@ packages = [
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
     "spatialprofilingtoolbox.cggnn",
-    "spatialprofilingtoolbox.cggnn.run",
     "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.ondemand",
     "spatialprofilingtoolbox.ondemand.providers",
@@ -124,6 +123,7 @@ packages = [
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.component_interfaces",
+    "spatialprofilingtoolbox.workflow.cggnn",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.reduction_visual",
     "spatialprofilingtoolbox.workflow.tabular_import",
@@ -151,6 +151,8 @@ packages = [
     "compute_umaps_all.py"
 ]
 "spatialprofilingtoolbox.workflow.assets" = [
+    ".workflow.config.template",
+    "cggnn.nf",
     "nextflow.config.jinja",
     "log_table.tex.jinja",
     "log_table.html.jinja",

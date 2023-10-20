@@ -71,6 +71,11 @@ class PhenotypeCounts(BaseModel):
     number_cells_in_study: int
 
 
+class FeatureMatrixExtract(BaseModel):
+    channels: list[str]
+    features: dict[str, list[list[float]]]
+
+
 class UnivariateMetricsComputationResult(BaseModel):
     """The response to a request for retrieval of derived/computed metrics (typically a spatially-
     enrich feature), or a request for such metrics to be computed as a background job.

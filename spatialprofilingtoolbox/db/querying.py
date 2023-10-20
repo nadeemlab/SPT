@@ -14,6 +14,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     UMAPChannel,
     CGGNNImportanceRank,
+    FeatureMatrixExtract,
 )
 from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
 from spatialprofilingtoolbox.db.accessors import (
@@ -102,6 +103,10 @@ class QueryHandler:
     @classmethod
     def get_channel_names_all_studies(cls, cursor) -> list[str]:
         return PhenotypesAccess(cursor).get_channel_names_all_studies()
+
+    @classmethod
+    def get_cells_sample(cls, cursor, study) -> FeatureMatrixExtract:
+        return PhenotypesAccess(cursor).get_cells_phenotypes_sample(study)
 
     @classmethod
     def get_umaps_low_resolution(cls, cursor, study: str) -> list[UMAPChannel]:

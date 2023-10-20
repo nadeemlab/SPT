@@ -25,3 +25,4 @@ LABEL service_name=$service_name
 ENV service_name $service_name
 COPY $WHEEL_FILENAME ./
 RUN python3.11 -m pip install "$WHEEL_FILENAME"
+RUN echo "cggnn container is ready to work"

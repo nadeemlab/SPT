@@ -10,7 +10,7 @@ process echo_environment_variables {
     path 'test_data_percent',               emit: test_data_percent
     path 'disable_channels',                emit: disable_channels
     path 'disable_phenotypes',              emit: disable_phenotypes
-    path 'roi_side_length',                 emit: roi_side_length
+    // path 'roi_side_length',                 emit: roi_side_length
     path 'cells_per_slide_target',          emit: cells_per_slide_target
     path 'target_name',                     emit: target_name
     path 'in_ram',                          emit: in_ram
@@ -34,7 +34,6 @@ process echo_environment_variables {
     echo -n "${test_data_percent_}" > test_data_percent
     echo -n "${disable_channels_}" > disable_channels
     echo -n "${disable_phenotypes_}" > disable_phenotypes
-    echo -n "${roi_side_length_}" > roi_side_length
     echo -n "${cells_per_slide_target_}" > cells_per_slide_target
     echo -n "${target_name_}" > target_name
     echo -n "${in_ram_}" > in_ram
@@ -44,12 +43,13 @@ process echo_environment_variables {
     echo -n "${k_folds_}" > k_folds
     echo -n "${explainer_model_}" > explainer_model
     echo -n "${merge_rois_}" > merge_rois
-    echo -n "${output_prefix}" > output_prefix
     echo -n "${prune_misclassified_}" > prune_misclassified
+    echo -n "${output_prefix_}" > output_prefix
+    echo -n "${upload_importances_}" > upload_importances
     """
 }
 
-process run {
+process run_cggnn {
     publishDir 'results'
 
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
@@ -63,7 +63,7 @@ process run {
     val test_data_percent
     val disable_channels
     val disable_phenotypes
-    val roi_side_length
+    // val roi_side_length
     val cells_per_slide_target
     val target_name
     val in_ram
@@ -85,30 +85,29 @@ process run {
     path "${output_prefix}_model.pt"
 
 
-    script:
-    """
+    shell:
+    '''
     spt cggnn run \
-        --spt_db_config_location="${db_config_file}" \
-        --study="${study_name}" \
-        --strata=${strata} \
-        --validation-data-percent=${validation_data_percent} \
-        --test-data-percent=${test_data_percent} \
-        $(if [[ "${disable_channels}" = true ]]; then echo "--disable-channels"; fi) \
-        $(if [[ "${disable_phenotypes}" = true ]]; then echo "--disable_phenotypes"; fi) \
-        --roi-side-length=${roi_side_length} \
-        --cells-per-slide-target=${cells_per_slide_target} \
-        --target-name="${target_name}" \
-        $(if [[ "${in_ram}" = true ]]; then echo "--in_ram"; fi) \
-        --batch-size=${batch_size} \
-        --epochs=${epochs} \
-        --learning-rate=${learning_rate} \
-        --k-folds=${k_folds} \
-        --explainer-model="${explainer_model}" \
-        $(if [[ "${merge_rois}" = true ]]; then echo "--merge_rois"; fi) \
-        $(if [[ "${prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
-        --output-prefix="${output_prefix}" \
-        $(if [[ "${upload_importances}" = true ]]; then echo "--upload_importances"; fi)
-    """
+        --spt_db_config_location="!{db_config_file}" \
+        --study="!{study_name}" \
+        --strata=!{strata} \
+        --validation-data-percent=!{validation_data_percent} \
+        --test-data-percent=!{test_data_percent} \
+        $(if [[ "!{disable_channels}" = true ]]; then echo "--disable-channels"; fi) \
+        $(if [[ "!{disable_phenotypes}" = true ]]; then echo "--disable_phenotypes"; fi) \
+        --cells-per-slide-target=!{cells_per_slide_target} \
+        --target-name="!{target_name}" \
+        $(if [[ "!{in_ram}" = true ]]; then echo "--in_ram"; fi) \
+        --batch-size=!{batch_size} \
+        --epochs=!{epochs} \
+        --learning-rate=!{learning_rate} \
+        --k-folds=!{k_folds} \
+        --explainer-model="!{explainer_model}" \
+        $(if [[ "!{merge_rois}" = true ]]; then echo "--merge_rois"; fi) \
+        $(if [[ "!{prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
+        --output-prefix="!{output_prefix}" \
+        $(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances"; fi)
+    '''
 }
 
 workflow {
@@ -136,8 +135,8 @@ workflow {
     environment_ch.disable_phenotypes.map{ it.text }
         .set{ disable_phenotypes_ch }
     
-    environment_ch.roi_side_length.map{ it.text }
-        .set{ roi_side_length_ch }
+    // environment_ch.roi_side_length.map{ it.text }
+    //     .set{ roi_side_length_ch }
     
     environment_ch.cells_per_slide_target.map{ it.text }
         .set{ cells_per_slide_target_ch }
@@ -175,7 +174,7 @@ workflow {
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
     
-    run(
+    run_cggnn(
         db_config_file_ch,
         study_name_ch,
         strata_ch,
@@ -183,7 +182,7 @@ workflow {
         test_data_percent_ch,
         disable_channels_ch,
         disable_phenotypes_ch,
-        roi_side_length_ch,
+        // roi_side_length_ch,
         cells_per_slide_target_ch,
         target_name_ch,
         in_ram_ch,

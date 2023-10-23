@@ -104,49 +104,52 @@ def print_constraint_status(column_names, info_rows):
 
 
 def toggle_constraints(
-    database_config_file,
+    database_config_file: str,
+    study: str,
     state: DBConstraintsToggling = DBConstraintsToggling.RECREATE,
-    all_tables=False,
+    all_tables: bool = False,
 ):
     studies = retrieve_study_names(database_config_file)
-    for study in studies:
-        logger.info('Looking in "%s" database.', study)
-        with DBCursor(database_config_file=database_config_file, stud=study) as cursor:
-            try:
-                if state == DBConstraintsToggling.RECREATE:
-                    pattern = '''
-                    ALTER TABLE %s 
-                    ADD CONSTRAINT %s 
-                    FOREIGN KEY (%s) 
-                    REFERENCES %s (%s)
-                    ON DELETE CASCADE ;'''
-                    for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
-                            in get_constraint_design(all_tables=all_tables):
-                        statement = pattern % (
-                            tablename,
-                            f'{tablename}{ordinality}',
-                            field_name,
-                            foreign_tablename,
-                            foreign_field_name,
-                        )
-                        logger.debug('Executing: %s', statement)
-                        cursor.execute(statement)
-                    status = get_constraint_status(cursor, all_tables=all_tables)
-                    print_constraint_status(*status)
+    if not study in studies:
+        logger.warning('Study named "%s" not in database.', study)
+        return
 
-                if state == DBConstraintsToggling.DROP:
-                    pattern = '''
-                    ALTER TABLE %s
-                    DROP CONSTRAINT IF EXISTS %s;'''
-                    status = get_constraint_status(cursor, all_tables=all_tables)
-                    print_constraint_status(*status)
-                    for _, constraint_name, tablename in status[1]:
-                        statement = pattern % (tablename, constraint_name)
-                        logger.debug('Executing: %s', statement)
-                        cursor.execute(statement)
-            except Exception as exception:
-                cursor.close()
-                raise exception
+    with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+        try:
+            if state == DBConstraintsToggling.RECREATE:
+                pattern = '''
+                ALTER TABLE %s 
+                ADD CONSTRAINT %s 
+                FOREIGN KEY (%s) 
+                REFERENCES %s (%s)
+                ON DELETE CASCADE ;'''
+                for tablename, field_name, foreign_tablename, foreign_field_name, ordinality \
+                        in get_constraint_design(all_tables=all_tables):
+                    statement = pattern % (
+                        tablename,
+                        f'{tablename}{ordinality}',
+                        field_name,
+                        foreign_tablename,
+                        foreign_field_name,
+                    )
+                    logger.debug('Executing: %s', statement)
+                    cursor.execute(statement)
+                status = get_constraint_status(cursor, all_tables=all_tables)
+                print_constraint_status(*status)
+
+            if state == DBConstraintsToggling.DROP:
+                pattern = '''
+                ALTER TABLE %s
+                DROP CONSTRAINT IF EXISTS %s;'''
+                status = get_constraint_status(cursor, all_tables=all_tables)
+                print_constraint_status(*status)
+                for _, constraint_name, tablename in status[1]:
+                    statement = pattern % (tablename, constraint_name)
+                    logger.debug('Executing: %s', statement)
+                    cursor.execute(statement)
+        except Exception as exception:
+            cursor.close()
+            raise exception
 
 
 if __name__ == '__main__':
@@ -166,6 +169,13 @@ if __name__ == '__main__':
         type=str,
         required=True,
         help='The file for database configuration. The user specified must have elevated privilege.'
+    )
+    parser.add_argument(
+        '--study',
+        dest='study',
+        type=str,
+        required=True,
+        help='Specifier of the study (short name).'
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -198,4 +208,4 @@ if __name__ == '__main__':
     else:
         raise ValueError('--recreate or --drop must be flagged.')
 
-    toggle_constraints(database_config_file_elevated, state=db_state, all_tables=args.all_tables)
+    toggle_constraints(database_config_file_elevated, args.study, state=db_state, all_tables=args.all_tables)

@@ -1,5 +1,6 @@
 """Strict query parameter validation."""
 from typing import Annotated
+from itertools import chain
 
 from fastapi import Query
 from fastapi import Depends
@@ -15,19 +16,23 @@ def abbreviate_string(string: str) -> str:
 
 
 async def valid_study_name(study: str = Query(min_length=3)) -> str:
-    if study in [item.handle for item in query().retrieve_study_handles()]:
+    if study in query().retrieve_study_specifiers():
         return study
     raise ValueError(f'Study name invalid: "{abbreviate_string(study)}"')
 
 
 async def valid_channel(channel: str = Query(min_length=1)) -> str:
-    if channel in query().get_channel_names_all_studies():
+    study_names = query().retrieve_study_specifiers()
+    names = list(chain(*[query().get_channel_names(study) for study in study_names]))
+    if channel in names:
         return channel
     raise ValueError(f'Channel name invalid: {abbreviate_string(channel)}')
 
 
 def valid_composite_phenotype_name(identifier: str) -> str:
-    if identifier in query().get_phenotype_symbols_all_studies():
+    study_names = query().retrieve_study_specifiers()
+    symbols = list(chain(*[query().get_phenotype_symbols(study) for study in study_names]))
+    if identifier in symbols:
         return identifier
     raise ValueError(f'Composite phenotype identifier invalid: {abbreviate_string(identifier)}')
 
@@ -37,9 +42,12 @@ async def valid_phenotype_symbol(phenotype_symbol: str = Query(min_length=1)) ->
 
 
 def valid_single_or_composite_identifier(identifier) -> str:
-    if identifier in query().get_composite_phenotype_identifiers():
+    study_names = query().retrieve_study_specifiers()
+    names = list(chain(*[query().get_channel_names(study) for study in study_names]))
+    symbols = list(chain(*[query().get_phenotype_symbols(study) for study in study_names]))
+    if identifier in names:
         return identifier
-    if identifier in query().get_channel_names_all_studies():
+    if identifier in symbols:
         return identifier
     abbreviation = abbreviate_string(identifier)
     raise ValueError(f'Channel name or phenotype identifier invalid: {abbreviation}')
@@ -64,7 +72,9 @@ async def valid_phenotype2(phenotype2: str = Query(min_length=1)) -> str:
 
 
 def valid_channel_list(markers: list[str]) -> list[str]:
-    channels = query().get_channel_names_all_studies() + ['']
+    study_names = query().retrieve_study_specifiers()
+    names = list(chain(*[query().get_channel_names(study) for study in study_names]))
+    channels = names + ['']
     if all(marker in channels for marker in markers):
         return markers
     missing = [marker for marker in markers if not marker in channels]

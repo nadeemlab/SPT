@@ -14,6 +14,7 @@ import re
 from time import sleep
 
 from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -137,8 +138,9 @@ class FastCacheAssessor:
     def _check_centroids_bundle_studies(self):
         indexed_studies = self.centroids.keys()
         known_studies = self._retrieve_measurement_studies()
+        known_measurement_studies = [row[1] for row in known_studies]
         log_expected_found(
-            known_studies,
+            known_measurement_studies,
             indexed_studies,
             'Study "%s" not mentioned in centroids file.',
             '"%s" is mentioned in centroids file but not actually in database.',
@@ -151,7 +153,8 @@ class FastCacheAssessor:
             row['specimen measurement study name']
             for row in self.expressions_index
         ]
-        known_measurement_studies = self._retrieve_measurement_studies()
+        known_studies = self._retrieve_measurement_studies()
+        known_measurement_studies = [row[1] for row in known_studies]
         log_expected_found(
             known_measurement_studies,
             indexed_measurement_studies,
@@ -161,24 +164,28 @@ class FastCacheAssessor:
         )
         return set(known_measurement_studies).issubset(set(indexed_measurement_studies))
 
-    def _retrieve_measurement_studies(self):
-        with DBCursor() as cursor:
-            cursor.execute('SELECT name FROM specimen_measurement_study ;')
-            rows = cursor.fetchall()
-        return [row[0] for row in rows]
+    def _retrieve_measurement_studies(self) -> list[tuple[str, str]]:
+        study_names = retrieve_study_names(None)
+        studies = []
+        for study in study_names:
+            with DBCursor(study=study) as cursor:
+                cursor.execute('SELECT name FROM specimen_measurement_study ;')
+                rows = cursor.fetchall()
+                studies.extend([(study, row[0]) for row in rows])
+        return studies
 
     def _check_sample_sets(self) -> bool:
         return self._check_sample_sets_centroids() and self._check_sample_sets_expressions_index()
 
     def _check_sample_sets_centroids(self):
         return all(
-            self._check_centroids_samples(study)
-            for study in self._retrieve_measurement_studies()
+            self._check_centroids_samples(study, measurement_study)
+            for study, measurement_study in self._retrieve_measurement_studies()
         )
 
-    def _check_centroids_samples(self, study):
+    def _check_centroids_samples(self, study: str, measurement_study: str) -> bool:
         indexed_samples = self.centroids[study].keys()
-        known_samples = self._retrieve_known_samples_measurement(study)
+        known_samples = self._retrieve_known_samples_measurement(study, measurement_study)
         log_expected_found(
             known_samples,
             indexed_samples,
@@ -190,11 +197,11 @@ class FastCacheAssessor:
 
     def _check_sample_sets_expressions_index(self):
         return all(
-            self._check_expressions_index_samples(study)
-            for study in self._retrieve_measurement_studies()
+            self._check_expressions_index_samples(study, measurement_study)
+            for study, measurement_study in self._retrieve_measurement_studies()
         )
 
-    def _check_expressions_index_samples(self, measurement_study):
+    def _check_expressions_index_samples(self, study: str, measurement_study: str) -> bool:
         index = [
             row for row in self.expressions_index
             if row['specimen measurement study name'] == measurement_study
@@ -203,7 +210,7 @@ class FastCacheAssessor:
             entry['specimen']
             for entry in index['expressions files']
         ]
-        known_samples = self._retrieve_known_samples_measurement(measurement_study)
+        known_samples = self._retrieve_known_samples_measurement(study, measurement_study)
         log_expected_found(
             known_samples,
             indexed_samples,
@@ -213,8 +220,8 @@ class FastCacheAssessor:
         )
         return set(known_samples).issubset(set(indexed_samples))
 
-    def _retrieve_known_samples_measurement(self, measurement_study):
-        with DBCursor() as cursor:
+    def _retrieve_known_samples_measurement(self, study: str, measurement_study: str) -> list[str]:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
             SELECT specimen FROM specimen_data_measurement_process sdmp
             WHERE sdmp.study=%s

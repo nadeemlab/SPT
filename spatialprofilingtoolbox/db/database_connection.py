@@ -8,12 +8,14 @@ from os.path import abspath
 from os.path import expanduser
 from typing import Type
 from typing import Callable
+from inspect import getfullargspec
 
 from psycopg2 import connect
 from psycopg2.extensions import connection as Connection
 from psycopg2.extensions import cursor as Psycopg2Cursor
 from psycopg2 import Error as Psycopg2Error
 from psycopg2 import OperationalError
+from psycopg2.errors import DuplicateDatabase
 from attr import define
 
 from spatialprofilingtoolbox.db.credentials import DBCredentials
@@ -56,17 +58,6 @@ class DBConnection(ConnectionProvider):
             credentials = retrieve_credentials_from_file(database_config_file)
         else:
             credentials = get_credentials_from_environment()
-
-        # try:
-        #     self.make_connection(credentials)
-        # except Psycopg2Error:
-        #     logger.warning('Using "postgres" database as backup.')
-        #     credentials = credentials.update_database('postgres')
-        #     try:
-        #         self.make_connection(credentials)
-        #     except Psycopg2Error:
-        #         raise ValueError('Could not connect to database "postgres".')
-
         try:
             if study is not None:
                 study_database = self._retrieve_study_database(credentials, study)
@@ -214,8 +205,11 @@ def create_database(database_config_file: str | None, database_name: str) -> Non
     )
     try:
         connection.autocommit = True
-        with connection.cursor() as cursor:
-            cursor.execute(create_statement)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(create_statement)
+        except DuplicateDatabase:
+            logger.warning('Attempt to recreate existing database "%s".', database_name)
     finally:
         connection.close()
 
@@ -235,16 +229,15 @@ class QueryCursor:
     query_handler: Type
 
     get_study_components: Callable
-    retrieve_study_handles: Callable
+    retrieve_study_specifiers: Callable
+    retrieve_study_handle: Callable
     get_channel_names: Callable
     get_number_cells: Callable
     get_study_summary: Callable
     get_cell_fractions_summary: Callable
     get_phenotype_symbols: Callable
-    get_phenotype_symbols_all_studies: Callable
     get_composite_phenotype_identifiers: Callable
     get_phenotype_criteria: Callable
-    get_channel_names_all_studies: Callable
     retrieve_signature_of_phenotype: Callable
     get_umaps_low_resolution: Callable
     get_umap: Callable
@@ -255,11 +248,20 @@ class QueryCursor:
         self.query_handler = query_handler
         methods = [method for method in dir(query_handler) if not method.startswith('__')]
         for method_name in methods:
-            def dispatched(*args, _method_name=method_name, **kwargs):
-                return self._query(*args, _method_name=_method_name, **kwargs)
+            argument_names = getfullargspec(getattr(query_handler, method_name)).args
+            if 'study' in argument_names:
+                study_parameter_index = argument_names.index('study') - 2
+            else:
+                study_parameter_index = None
+            def dispatched(*args, _method_name=method_name, _study_parameter_index=study_parameter_index, **kwargs):
+                return self._query(*args, _method_name=_method_name, _study_parameter_index=_study_parameter_index, **kwargs)
             setattr(self, method_name, dispatched)
 
-    def _query(self, *args, _method_name: str='', **kwargs):
+    def _query(self, *args, _method_name: str = '', _study_parameter_index: int | None = None, **kwargs):
         method_function = getattr(self.query_handler, _method_name)
-        with DBCursor() as cursor:
-            return method_function(cursor, *args, **kwargs)
+        if _study_parameter_index is None:
+            with DBCursor() as cursor:
+                return method_function(cursor, *args, **kwargs)
+        else:
+            with DBCursor(study=args[_study_parameter_index]) as cursor:
+                return method_function(cursor, *args, **kwargs)

@@ -104,7 +104,9 @@ async def get_root():
 @app.get("/study-names/")
 async def get_study_names() -> list[StudyHandle]:
     """The names of studies/datasets, with display names."""
-    return query().retrieve_study_handles()
+    specifiers = query().retrieve_study_specifiers()
+    handles = [query().retrieve_study_handle(study) for study in specifiers]
+    return handles
 
 
 @app.get("/study-summary/")

@@ -72,7 +72,8 @@ ${TESTS}: setup-testing
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
-     /bin/bash -c "$$test_cmd"; \
+     /bin/bash -c "$$test_cmd" \
+      --gpus all ; \
       echo "$$?" > status_code; \
     kill %1
 >@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh

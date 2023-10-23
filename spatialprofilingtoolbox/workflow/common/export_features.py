@@ -181,7 +181,8 @@ class ADIFeaturesUploader(SourceToADIParser):
         number_unknown = len(unknown_subjects)
         if number_unknown > 0:
             unknowns_message = 'Feature values refer to %s unknown subjects: %s'
-            logger.warning(unknowns_message, number_unknown, unknown_subjects)
+            subset = list(unknown_subjects)[0:min(10, len(unknown_subjects))]
+            logger.warning(unknowns_message, number_unknown, subset)
         else:
             logger.info('All feature value subjects were known "subjects" or "specimens".')
 

@@ -48,12 +48,15 @@ class SchemaInfuser:
                 (None, 'drop tables from main schema'),
                 contents=self.create_drop_tables(),
             )
+        logger.info('Executing schema.sql contents.')
         self._verbose_sql_execute(
             ('schema.sql', 'create tables from main schema'),
             source_package='adiscstudies',
+            verbosity='silent',
         )
         self._verbose_sql_execute(('performance_tweaks.sql', 'tweak main schema'))
-        self._verbose_sql_execute(('create_views.sql', 'create views of main schema'))
+        logger.info('Executing create_views.sql contents.')
+        self._verbose_sql_execute(('create_views.sql', 'create views of main schema'), verbosity='silent')
         try:
             self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
         except Psycopg2Error as exception:

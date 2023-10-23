@@ -32,8 +32,8 @@ class StructureCentroidsPuller:
     def pull_and_write_to_files(self, data_directory: str):
         self.get_structure_centroids().set_data_directory(data_directory)
         study_names = self._get_study_names()
-        for study_index, study_name in enumerate(study_names):
-            specimens = self._get_specimens(study_name)
+        for study_index, (study_name, measurement_study) in enumerate(study_names):
+            specimens = self._get_specimens(study_name, measurement_study)
             progress_reporter = FractionalProgressReporter(
                 len(specimens),
                 parts=8,
@@ -67,15 +67,15 @@ class StructureCentroidsPuller:
             If None, all structures are fetched.
         """
         study_names = self._get_study_names(study=study)
-        for study_name in study_names:
-            parameters: list[str | tuple[str, ...]] = [study_name]
+        for study_name, measurement_study in study_names:
+            parameters: list[str | tuple[str, ...]] = [measurement_study]
 
             with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
                 if specimen is not None:
                     parameters.append(specimen)
                     specimen_count = 1
                 else:
-                    specimen_count = self._get_specimen_count(study_name, cursor)
+                    specimen_count = self._get_specimen_count(measurement_study, cursor)
                 if histological_structures is not None:
                     parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
 
@@ -105,11 +105,14 @@ class StructureCentroidsPuller:
     def _get_batch_size(self) -> int:
         return pow(10, 5)
 
-    def _get_specimen_count(self, study_name: str, cursor: Psycopg2Cursor) -> int:
+    def _get_specimen_count(self,
+        measurement_study: str,
+        cursor: Psycopg2Cursor,
+    ) -> int:
         cursor.execute('''
         SELECT COUNT(*) FROM specimen_data_measurement_process sdmp
         WHERE sdmp.study=%s ;
-        ''', (study_name,))
+        ''', (measurement_study,))
         return cursor.fetchall()[0][0]
 
     @staticmethod
@@ -149,15 +152,15 @@ class StructureCentroidsPuller:
             rows = cursor.fetchall()
         return rows[0][0]
 
-    def _get_study_names(self, study: str | None = None) -> list[str]:
+    def _get_study_names(self, study: str | None = None) -> list[tuple[str, str]]:
         if study is None:
             with DBCursor(database_config_file=self.database_config_file) as cursor:
                 cursor.execute('SELECT study FROM study_lookup ;')
                 rows = cursor.fetchall()
-            measurement_studies = [self._get_specimen_measurement_study(study) for (study,) in rows]
+            studies = [(study, self._get_specimen_measurement_study(study)) for (study,) in rows]
         else:
-            measurement_studies = [self._get_specimen_measurement_study(study)]
-        return sorted(measurement_studies)
+            studies = [(study, self._get_specimen_measurement_study(study))]
+        return sorted(studies, key=lambda x: x[1])
 
     def _create_study_data(
         self,
@@ -180,7 +183,7 @@ class StructureCentroidsPuller:
         study_data[current_specimen] = specimen_centroids
         return study_data
 
-    def _get_specimens(self, study_name: str) -> tuple[str, ...]:
+    def _get_specimens(self, study_name: str, measurement_study: str) -> tuple[str, ...]:
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
             cursor.execute('''
             SELECT sdmp.specimen
@@ -188,7 +191,7 @@ class StructureCentroidsPuller:
             WHERE sdmp.study=%s
             ORDER BY sdmp.specimen
             ;
-            ''', (study_name,))
+            ''', (measurement_study,))
             rows = cursor.fetchall()
         return tuple(sorted([cast(str, row[0]) for row in rows]))
 

@@ -18,6 +18,7 @@ logger = colorized_logger(__name__)
 def transcribe_importance(
     df: DataFrame,
     database_config_file: str,
+    study: str,
     per_specimen_selection_number: int = 1000,
     cohort_stratifier: str = '',
 ) -> None:
@@ -34,12 +35,9 @@ def transcribe_importance(
             Name of the classification cohort variable the GNN was trained on to produce
                 the importance score.
     """
-    study = _get_referenced_study(database_config_file, df)
     if study is None:
-        message = 'Could not determine study referenced by dataframe contents.'
+        message = 'Study specifier not supplied.'
         logger.error(message)
-        logger.error(df.head())
-        logger.error('...')
         raise ValueError(message)
     indicator: str = 'cell importance'
     with DBConnection(database_config_file=database_config_file, study=study) as connection:
@@ -47,40 +45,6 @@ def transcribe_importance(
         _add_slide_column(connection, df)
         df_most_important = _group_and_filter(df, per_specimen_selection_number)
         _upload(df_most_important, connection, data_analysis_study, cohort_stratifier)
-
-
-def _get_referenced_study(database_config_file, df: DataFrame) -> str | None:
-    first_index = str(df.index[0])
-    studies = retrieve_study_names(database_config_file)
-    for study in studies:
-        with DBConnection(database_config_file=database_config_file, study=study) as connection:
-            _referenced = _recover_study_from_histological_structure(connection, first_index)
-            if _referenced is not None:
-                return _referenced
-    return None
-
-def _recover_study_from_histological_structure(
-    connection: Connection,
-    histological_structure,
-) -> str | None:
-    values = read_sql(f"""
-        SELECT
-            hsi.histological_structure,
-            sc.primary_study
-        FROM histological_structure_identification hsi
-            JOIN data_file df
-                ON hsi.data_source=df.sha256_hash
-            JOIN specimen_data_measurement_process sdmp
-                ON df.source_generation_process=sdmp.identifier
-            JOIN study_component sc
-                ON sdmp.study=sc.component_study
-        WHERE hsi.histological_structure='{histological_structure}'
-        LIMIT 1
-        ;
-    """, connection)['primary_study']
-    if len(values) == 0:
-        return None
-    return cast(str, values[0])
 
 
 def _add_slide_column(connection: Connection, df: DataFrame) -> None:

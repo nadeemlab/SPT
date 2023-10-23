@@ -117,10 +117,10 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def save_importance(spt_db_config_location: str) -> None:
+def save_importance(spt_db_config_location: str, study: str) -> None:
     """Save cell importance scores as defined by cggnn to the database."""
     df = read_csv(join('out', 'importances.csv'), index_col=0)
-    transcribe_importance(df, spt_db_config_location)
+    transcribe_importance(df, spt_db_config_location, study)
 
 
 if __name__ == "__main__":
@@ -142,4 +142,4 @@ if __name__ == "__main__":
         args.merge_rois,
         args.prune_misclassified
     )
-    save_importance(args.spt_db_config_location)
+    save_importance(args.spt_db_config_location, args.study)

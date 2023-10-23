@@ -6,7 +6,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 def retrieve_known_cases():
     df = read_csv('module_tests/expected_fractions.tsv', sep='\t')
-    df['Value'] = df['Value'].apply(round6)
+    df['Fraction'] = df['Fraction'].apply(round6)
     return [tuple(row) for _, row in df.iterrows()]
 
 def round6(value):

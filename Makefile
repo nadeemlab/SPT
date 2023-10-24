@@ -61,20 +61,21 @@ help:
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
-DOCKERIZED_SUBMODULES := apiserver cggnn ondemand db workflow
+SUBMODULES := apiserver cggnn ondemand db workflow
+DOCKERIZED_SUBMODULES := apiserver db ondemand
 
 # DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
-# DOCKERFILE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
+# DOCKERFILE_TARGETS := $(foreach submodule,$(SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
-_UNPUSHABLES := cggnn db workflow
+_UNPUSHABLES := db
 PUSHABLE_SUBMODULES := $(filter-out ${_UNPUSHABLES},$(DOCKERIZED_SUBMODULES))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(PUSHABLE_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
-MODULE_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),module-test-$(submodule))
-UNIT_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),unit-test-$(submodule))
-SINGLETON_TEST_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),singleton-test-$(submodule))
+MODULE_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),module-test-$(submodule))
+UNIT_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),unit-test-$(submodule))
+SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 
 # Define PHONY targets
@@ -371,7 +372,7 @@ clean-files:
 >@rm -f .initial_time.txt
 >@rm -f ${BUILD_LOCATION}/*/.initiation_message_size
 >@rm -f ${BUILD_LOCATION}/*/.current_time.txt
->@for submodule in ${DOCKERIZED_SUBMODULES} ; do \
+>@for submodule in ${SUBMODULES} ; do \
         submodule_directory=${BUILD_LOCATION}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
         rm -rf $$submodule_directory/docker.built ; \
@@ -400,10 +401,8 @@ clean-files:
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "Running docker compose rm (remove)"
 >@docker compose --project-directory ./build/apiserver/ rm --force --stop ; status_code1="$$?" ; \
-    docker compose --project-directory ./build/cggnn/ rm --force --stop ; status_code5="$$?" ; \
     docker compose --project-directory ./build/ondemand/ rm --force --stop ; status_code2="$$?" ; \
     docker compose --project-directory ./build/db/ rm --force --stop ; status_code3="$$?" ; \
-    docker compose --project-directory ./build/workflow/ rm --force --stop ; status_code4="$$?" ; \
     status_code=$$(( status_code1 + status_code2 + status_code3 + status_code4 + status_code5 )) ; echo $$status_code > status_code
 >@docker container rm --force temporary-spt-db-preloading
 >@${MESSAGE} end "Down." "Error."

@@ -88,24 +88,24 @@ process run_cggnn {
     shell:
     '''
     spt cggnn run \
-        --spt_db_config_location="!{db_config_file}" \
-        --study="!{study_name}" \
-        --strata=!{strata} \
-        --validation-data-percent=!{validation_data_percent} \
-        --test-data-percent=!{test_data_percent} \
-        $(if [[ "!{disable_channels}" = true ]]; then echo "--disable-channels"; fi) \
+        --spt_db_config_location "!{db_config_file}" \
+        --study "!{study_name}" \
+        $(if [[ "!{strata}" != all ]]; then echo "--strata !{strata}"; fi) \
+        --validation_data_percent !{validation_data_percent} \
+        --test_data_percent !{test_data_percent} \
+        $(if [[ "!{disable_channels}" = true ]]; then echo "--disable_channels"; fi) \
         $(if [[ "!{disable_phenotypes}" = true ]]; then echo "--disable_phenotypes"; fi) \
-        --cells-per-slide-target=!{cells_per_slide_target} \
-        --target-name="!{target_name}" \
+        --cells_per_slide_target !{cells_per_slide_target} \
+        --target_name "!{target_name}" \
         $(if [[ "!{in_ram}" = true ]]; then echo "--in_ram"; fi) \
-        --batch-size=!{batch_size} \
-        --epochs=!{epochs} \
-        --learning-rate=!{learning_rate} \
-        --k-folds=!{k_folds} \
-        --explainer-model="!{explainer_model}" \
+        --batch_size !{batch_size} \
+        --epochs !{epochs} \
+        --learning_rate !{learning_rate} \
+        --k_folds !{k_folds} \
+        --explainer_model "!{explainer_model}" \
         $(if [[ "!{merge_rois}" = true ]]; then echo "--merge_rois"; fi) \
         $(if [[ "!{prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
-        --output-prefix="!{output_prefix}" \
+        --output_prefix "!{output_prefix}" \
         $(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances"; fi)
     '''
 }

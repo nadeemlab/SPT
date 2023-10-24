@@ -7,20 +7,20 @@
                   data_analysis_study        3
                             data_file        2
                             diagnosis        2
-       diagnostic_selection_criterion        4
+       diagnostic_selection_criterion        2
             expression_quantification     5200
                 feature_specification       30
                     feature_specifier       30
                histological_structure      200
 histological_structure_identification      200
-         histology_assessment_process        7
+         histology_assessment_process        2
                          intervention        2
    plane_coordinates_reference_system        0
                           publication        2
            quantitative_feature_value      258
                 research_professional       32
                            shape_file      200
-          specimen_collection_process        7
+          specimen_collection_process        2
             specimen_collection_study        1
     specimen_data_measurement_process        2
            specimen_measurement_study        1

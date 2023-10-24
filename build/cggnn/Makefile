@@ -65,7 +65,7 @@ ${TESTS}: setup-testing
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
-     -t ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-cggnn:latest \
+     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" \
       --gpus all ; \
     echo "$$?" > status_code

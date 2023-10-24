@@ -54,6 +54,11 @@ def valid_single_or_composite_identifier(identifier) -> str:
     if identifier in symbols:
         return identifier
     abbreviation = abbreviate_string(identifier)
+
+    print(study_names)
+    print(names)
+    print(symbols)
+
     raise ValueError(f'Channel name or phenotype identifier invalid: {abbreviation}')
 
 

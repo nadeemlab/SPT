@@ -122,14 +122,18 @@ class OnDemandRequestHandler(BaseRequestHandler):
         negatives: list[str],
     ) -> tuple[int | None, int | None]:
         assert self.server.providers.counts is not None
-        signature1 = self.server.providers.counts.compute_signature(positives, study_name)
-        signature2 = self.server.providers.counts.compute_signature(negatives, study_name)
+        measurement_study_name = self._get_measurement_study(study_name)
+        signature1 = self.server.providers.counts.compute_signature(positives, measurement_study_name)
+        signature2 = self.server.providers.counts.compute_signature(negatives, measurement_study_name)
         logger.info('Signature: %s, %s', signature1, signature2)
         return signature1, signature2
 
+    def _get_measurement_study(self, study: str) -> str:
+        with DBCursor(study=study) as cursor:
+            return StudyAccess(cursor).get_study_components(study).measurement
+
     def _handle_missing_study(self, study_name: str) -> bool:
-        with DBCursor(study=study_name) as cursor:
-            measurement_study_name = StudyAccess(cursor).get_study_components(study_name).measurement
+        measurement_study_name = self._get_measurement_study(study_name)
         if self._get_default_provider().has_study(measurement_study_name):
             return False
         logger.error('Study not known to ondemand service: %s', study_name)

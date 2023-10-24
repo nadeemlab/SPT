@@ -243,21 +243,6 @@ class StudyAccess(SimpleReadOnlyProvider):
         )
         return Institution(name=name)
 
-    def get_study_from_specimen(self, specimen: str) -> str:
-        query = '''
-        SELECT sc.primary_study
-        FROM specimen_collection_process scp
-        JOIN study_component sc ON sc.component_study=scp.study
-        WHERE scp.specimen=%s
-        ;
-        '''
-        study = GetSingleResult.string(
-            self.cursor,
-            query=query,
-            parameters=(specimen,),
-        )
-        return study
-
     def get_specimen_names(self) -> list[str]:
         query = 'SELECT specimen FROM specimen_collection_process;'
         self.cursor.execute(query)

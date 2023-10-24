@@ -81,4 +81,4 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
->@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt ../../${TEST_LOCATION}\/${MODULE_NAME}/_proximity.json ../../${TEST_LOCATION}\/${MODULE_NAME}/apiserver/_squidpy.json; do rm -f $$f; done;
+>@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt ../../${TEST_LOCATION}\/${MODULE_NAME}/_proximity.json ../../${TEST_LOCATION}\/${MODULE_NAME}/_squidpy.json; do rm -f $$f; done;

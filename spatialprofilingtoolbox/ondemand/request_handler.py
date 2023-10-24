@@ -3,6 +3,8 @@
 from socketserver import BaseRequestHandler
 from json import dumps
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
@@ -126,7 +128,9 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return signature1, signature2
 
     def _handle_missing_study(self, study_name: str) -> bool:
-        if self._get_default_provider().has_study(study_name):
+        with DBCursor(study=study_name) as cursor:
+            measurement_study_name = StudyAccess(cursor).get_study_components(study_name).measurement
+        if self._get_default_provider().has_study(measurement_study_name):
             return False
         logger.error('Study not known to ondemand service: %s', study_name)
         self._wrap_up_transmission()

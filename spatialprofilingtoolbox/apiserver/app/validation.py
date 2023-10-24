@@ -48,17 +48,12 @@ def valid_single_or_composite_identifier(identifier) -> str:
     names = list(chain(*[query().get_channel_names(study) for study in study_names]))
     names = [n.symbol for n in names]
     symbols = list(chain(*[query().get_phenotype_symbols(study) for study in study_names]))
-    symbols = [s.handle_string for s in symbols]
+    symbols = [s.identifier for s in symbols]
     if identifier in names:
         return identifier
     if identifier in symbols:
         return identifier
     abbreviation = abbreviate_string(identifier)
-
-    print(study_names)
-    print(names)
-    print(symbols)
-
     raise ValueError(f'Channel name or phenotype identifier invalid: {abbreviation}')
 
 

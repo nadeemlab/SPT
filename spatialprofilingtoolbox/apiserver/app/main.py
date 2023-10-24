@@ -255,12 +255,11 @@ def get_phenotype_counts(
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    measurement_study = cast(str, query().get_study_components(study).measurement)
     with OnDemandRequester(service='counts') as requester:
         counts = requester.get_counts_by_specimen(
             positive_markers,
             negative_markers,
-            measurement_study,
+            study,
             number_cells,
             cells_selected,
         )
@@ -274,7 +273,7 @@ def get_proximity_metrics(
 ) -> UnivariateMetricsComputationResult:
     with OnDemandRequester(service='proximity') as requester:
         metrics = requester.get_proximity_metrics(
-            query().get_study_components(study).measurement,
+            study,
             radius,
             markers,
         )
@@ -289,7 +288,7 @@ def get_squidpy_metrics(
 ) -> UnivariateMetricsComputationResult:
     with OnDemandRequester(service='squidpy') as requester:
         metrics = requester.get_squidpy_metrics(
-            query().get_study_components(study).measurement,
+            study,
             markers,
             feature_class,
             radius=radius,

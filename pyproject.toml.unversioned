@@ -190,5 +190,8 @@ packages = [
     "feature_descriptions.tsv"
 ]
 "spatialprofilingtoolbox.cggnn.scripts" = [
+    "explore_classes.py",
+    "extract.py",
     "run.py",
+    "upload_importances.py"
 ]

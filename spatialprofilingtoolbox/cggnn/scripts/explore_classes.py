@@ -8,7 +8,7 @@ from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExt
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn explore_classes',
+        prog='spt cggnn explore-classes',
         description='See the strata available to classify on.'
     )
     parser.add_argument(

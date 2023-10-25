@@ -4,13 +4,13 @@
 
 When working with a new dataset, start by running
 
-```
+```bash
 spt cggnn explore-classes --spt_db_config_location <config_file_location> --study <study_name>
 ```
 
 Given a configuration file of this format, where `...` is replaced with the relevant information to connect to your database instance,
 
-```
+```yaml
 [database-credentials]
 database = ...
 endpoint =  ...
@@ -20,7 +20,7 @@ password = ...
 
 this will pull up a list of classes or that the tissue specimens associated with this study can be stratified into. For example, for the "Breast cancer IMC" study, this would look like
 
-```
+```bash
 % spt cggnn explore-classes --spt_db_config_location 'spt_db.config' --study 'Breast cancer IMC'
    stratum identifier local temporal position indicator  subject diagnosed condition subject diagnosed result
 0                   1               Before intervention  Response to hormone therapy               Refractory
@@ -35,7 +35,7 @@ Note the stratum identifiers for strata you want to use, if it's not all of them
 
 Once you know what strata you want to keep, we'll run this command.
 
-```
+```bash
 spt cggnn extract --spt_db_config_location <config_file_location> --study <study_name> --strata <strata_to_keep> --output_location <output_folder>
 ```
 
@@ -50,6 +50,7 @@ These files can be used with the standalone `cg-gnn` pip package to create cell 
 ## 3. `run`
 
 `spt cggnn run` allows you to run the `cg-gnn` pip package directly from SPT. It combines `spt cggnn extract` with the entire `cggnn.run` process into a single command. As a result, it has many input parameters that need explaining.
+
 
 ### Required parameters
 
@@ -155,7 +156,7 @@ When `cggnn` is run as an SPT workflow, a few parameters are made unavailable in
 
 Unlike other SPT workflows, these parameters are provided to the software primarily by a workflow configuration file, which has the following parameters:
 
-```
+```yaml
 [settings]
 strata = ...
 validation_data_percent = ...

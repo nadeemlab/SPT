@@ -31,7 +31,7 @@ def parse_arguments():
         nargs='+',
         type=int,
         help='Specimen strata to use as labels, identified according to the "stratum identifier" '
-             'in `explore_classes`. This should be given as space separated integers.\n'
+             'in `explore-classes`. This should be given as space separated integers.\n'
              'If not provided, all strata will be used.',
         required=False,
         default=None

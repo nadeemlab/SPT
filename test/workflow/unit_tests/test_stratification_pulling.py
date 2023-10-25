@@ -5,20 +5,21 @@ from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMak
 from spatialprofilingtoolbox.db.stratification_puller import StratificationPuller
 
 
-if __name__ == '__main__':
+def test_stratification_puller(measured_only: bool):
     with DatabaseConnectionMaker(database_config_file='../db/.spt_db.config.container') as dcm:
         with dcm.get_connection().cursor() as cursor:
             puller = StratificationPuller(cursor)
-            puller.pull()
+            puller.pull(measured_only=measured_only)
             stratification = puller.get_stratification()
 
-    filename = 'unit_tests/expected_stratification_assignments.tsv'
+    prefix = 'measured' if measured_only else 'all'
+    filename = f'unit_tests/strata {prefix}/expected_stratification_assignments.tsv'
     expected_assignments = pd.read_csv(filename, sep='\t', dtype=object)
     assignment_rows = set(tuple(list(row)) for _, row in expected_assignments.iterrows())
-    expected_strata = pd.read_csv('unit_tests/expected_strata.tsv', sep='\t', dtype=object)
+    expected_strata = pd.read_csv(f'unit_tests/strata {prefix}/expected_strata.tsv', sep='\t', dtype=object)
     stratum_rows = set(tuple(list(row)) for _, row in expected_strata.iterrows())
 
-    for study_name, stratification_study in stratification.items():
+    for _, stratification_study in stratification.items():
         df = stratification_study['assignments']
         rows2 = set(tuple(list(row)) for _, row in df.iterrows())
         if assignment_rows != rows2:
@@ -32,3 +33,10 @@ if __name__ == '__main__':
             print(f'Wrong stratum set: {rows3}')
             print(f'Expected: {stratum_rows}')
             raise ValueError('Wrong stratum set.')
+
+
+if __name__ == '__main__':
+    print('Selecting all specimens')
+    test_stratification_puller(measured_only=False)
+    print('Selecting measured specimens only')
+    test_stratification_puller(measured_only=True)

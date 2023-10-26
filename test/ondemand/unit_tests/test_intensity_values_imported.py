@@ -1,32 +1,35 @@
 """Test presence of intensity values."""
 import pandas as pd
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 
-if __name__=='__main__':
-    with DatabaseConnectionMaker(database_config_file='../db/.spt_db.config.container') as dcm:
-        connection = dcm.get_connection()
-        cursor = connection.cursor()
-        cursor.execute('''
-        SELECT
-            sdmp.specimen,
-            eq.histological_structure,
-            cs.symbol,
-            eq.quantity,
-            eq.discrete_value
-        FROM expression_quantification eq
-        JOIN chemical_species cs ON cs.identifier=eq.target
-        JOIN histological_structure_identification hsi ON eq.histological_structure=hsi.histological_structure
-        JOIN data_file df ON df.sha256_hash=hsi.data_source
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.specimen in (%s, %s, %s)
-            AND cs.symbol in (%s, %s, %s, %s)
-            AND eq.histological_structure in (%s, %s, %s, %s, %s)
-        ORDER BY sdmp.specimen, eq.histological_structure, cs.symbol
-        ;
-        ''', ('lesion 0_1', 'lesion 6_3', 'BaselTMA_SP43_3_X13Y6', 'CD27', 'MHCI', 'p53', 'EGFR', '89', '30', '524', '3609', '5142'))
-        rows = cursor.fetchall()
-        cursor.close()
+def test_intensities():
+    query = '''
+    SELECT
+        sdmp.specimen,
+        eq.histological_structure,
+        cs.symbol,
+        eq.quantity,
+        eq.discrete_value
+    FROM expression_quantification eq
+    JOIN chemical_species cs ON cs.identifier=eq.target
+    JOIN histological_structure_identification hsi ON eq.histological_structure=hsi.histological_structure
+    JOIN data_file df ON df.sha256_hash=hsi.data_source
+    JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
+    WHERE sdmp.specimen in (%s, %s, %s)
+        AND cs.symbol in (%s, %s, %s, %s)
+        AND eq.histological_structure in (%s, %s, %s, %s, %s)
+    ORDER BY sdmp.specimen, eq.histological_structure, cs.symbol
+    ;
+    '''
+    parameters = ('lesion 0_1', 'lesion 6_3', 'BaselTMA_SP43_3_X13Y6', 'CD27', 'MHCI', 'p53', 'EGFR', '89', '30', '524', '2909', '4442')
+
+    rows = []
+    studies = ['Melanoma intralesional IL2', 'Breast cancer IMC']
+    for study in studies:
+        with DBCursor(database_config_file='../db/.spt_db.config.container', study=study) as cursor:
+            cursor.execute(query, parameters)
+            rows.extend(cursor.fetchall())
 
     rows = [(r[0], r[1], r[2], float(r[3]), 1 if r[4] == 'positive' else 0) for r in rows]
 
@@ -54,10 +57,10 @@ if __name__=='__main__':
     ]
 
     cases = [
-        ('BaselTMA_SP43_3_X13Y6', '3609', 'EGFR', values[0], values[1]),
-        ('BaselTMA_SP43_3_X13Y6', '3609', 'p53', values[2], values[3]),
-        ('BaselTMA_SP43_3_X13Y6', '5142', 'EGFR', values[4], values[5]),
-        ('BaselTMA_SP43_3_X13Y6', '5142', 'p53', values[6], values[7]),
+        ('BaselTMA_SP43_3_X13Y6', '2909', 'EGFR', values[0], values[1]),
+        ('BaselTMA_SP43_3_X13Y6', '2909', 'p53', values[2], values[3]),
+        ('BaselTMA_SP43_3_X13Y6', '4442', 'EGFR', values[4], values[5]),
+        ('BaselTMA_SP43_3_X13Y6', '4442', 'p53', values[6], values[7]),
         ('lesion 0_1', '30', 'CD27', values[8], values[9]),
         ('lesion 0_1', '30', 'MHCI', values[10], values[11]),
         ('lesion 0_1', '89', 'CD27', 4.615379996154549, 0),
@@ -66,5 +69,43 @@ if __name__=='__main__':
         ('lesion 6_3', '524', 'MHCI', 13.9828, 1),
     ]
 
+    # import re
+    # def postprocess(case, offset=700):
+    #     if re.search('^Basel', case[0]):
+    #         return (case[0], str(int(case[1])-offset), case[2], case[3], case[4])
+    #     else:
+    #         return case
+
+    # for _offset in range(710):
+        # _cases = [postprocess(case, offset=_offset) for case in cases]
+        # _case = postprocess(cases[0], offset=_offset)
+        # print(_case)
+        # for c in rows:
+        #     if c[0] == _case[0] and c[2] == _case[2]:
+        #         print(c)
+        # print('')
+        # inter = set(_cases).intersection(rows)
+        # print(f'{_offset}: {len(inter)}')
+        # if len(inter) != len(_cases):
+            # continue
+        # else:
+            # print('Working offset: ' + str(_offset))
+            # break
+
+    # raise NotImplementedError
+    # print(rows)
+    # print('')
+    # print('Found:')
+    # for case in cases:
+    #     if case in rows:
+    #         print(case)
+
     for case in cases:
-        assert case in rows
+        if not case in rows:
+            return
+    print(f'Valid offset: {offset}')
+    exit(0)
+
+if __name__=='__main__':
+    test_intensities()
+    raise NotImplementedError

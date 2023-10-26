@@ -1,16 +1,14 @@
 """Test pulling out of stratification for cohorts from database."""
 import pandas as pd
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.stratification_puller import StratificationPuller
 
 
 if __name__ == '__main__':
-    with DatabaseConnectionMaker(database_config_file='../db/.spt_db.config.container') as dcm:
-        with dcm.get_connection().cursor() as cursor:
-            puller = StratificationPuller(cursor)
-            puller.pull()
-            stratification = puller.get_stratification()
+    database_config_file='../db/.spt_db.config.container'
+    puller = StratificationPuller(database_config_file)
+    puller.pull()
+    stratification = puller.get_stratification()
 
     filename = 'unit_tests/expected_stratification_assignments.tsv'
     expected_assignments = pd.read_csv(filename, sep='\t', dtype=object)

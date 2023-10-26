@@ -75,6 +75,7 @@ workflow = [
 ]
 all = [
     "cg-gnn",
+    "torch",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
     "uvicorn>=0.15.0,<0.16.0",

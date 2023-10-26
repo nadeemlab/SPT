@@ -17,6 +17,7 @@ RUN python3.11 -m pip install numba==0.57.0
 RUN python3.11 -m pip install attrs==23.1.0
 RUN python3.11 -m pip install tables
 RUN python3.11 -m pip install cg-gnn
+RUN python3.11 -m pip install pydantic 2.0.2
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

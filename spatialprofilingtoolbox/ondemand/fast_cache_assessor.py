@@ -146,7 +146,7 @@ class FastCacheAssessor:
             '"%s" is mentioned in centroids file but not actually in database.',
             context='centroids',
         )
-        return set(known_studies).issubset(set(indexed_studies))
+        return set(known_measurement_studies).issubset(set(indexed_studies))
 
     def _check_expressions_index_studies(self):
         indexed_measurement_studies = [
@@ -184,7 +184,7 @@ class FastCacheAssessor:
         )
 
     def _check_centroids_samples(self, study: str, measurement_study: str) -> bool:
-        indexed_samples = self.centroids[study].keys()
+        indexed_samples = self.centroids[measurement_study].keys()
         known_samples = self._retrieve_known_samples_measurement(study, measurement_study)
         log_expected_found(
             known_samples,

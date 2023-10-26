@@ -44,7 +44,8 @@ apiserver = [
 ]
 cggnn = [
     "cg-gnn",
-    "tables"
+    "tables",
+    "torch"
 ]
 db = [
     "pandas==2.0.2",

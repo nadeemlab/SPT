@@ -27,7 +27,7 @@ COPY pyproject.toml.unversioned .
 RUN python -m pip install toml
 RUN python -c 'import toml; c = toml.load("pyproject.toml.unversioned"); print("\n".join(c["project"]["dependencies"]))' | python -m pip install -r /dev/stdin
 RUN python -c 'import toml; c = toml.load("pyproject.toml.unversioned"); print("\n".join(c["project"]["optional-dependencies"]["all"]))' | python -m pip install -r /dev/stdin
-RUN python -m pip install dgl-cu117 dglgo -f https://data.dgl.ai/wheels/repo.html
+RUN python -m pip install dgl -f https://data.dgl.ai/wheels/repo.html
 ENV DGLBACKEND=pytorch
 RUN python -m pip install build
 RUN python -m pip install twine

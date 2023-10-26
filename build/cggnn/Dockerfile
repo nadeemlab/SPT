@@ -10,7 +10,7 @@ RUN apt install python3.11-dev -y
 RUN apt install python3.11-venv -y
 RUN apt install python3.11-distutils -y
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && python3.11 -m ensurepip
-RUN python3.11 -m pip install dgl-cu117 dglgo -f https://data.dgl.ai/wheels/repo.html
+RUN python3.11 -m pip install dgl -f https://data.dgl.ai/wheels/repo.html
 RUN python3.11 -m pip install psycopg2==2.9.6
 RUN python3.11 -m pip install adiscstudies==0.11.0
 RUN python3.11 -m pip install numba==0.57.0

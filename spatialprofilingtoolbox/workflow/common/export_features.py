@@ -27,6 +27,7 @@ class ADIFeaturesUploader(SourceToADIParser):
     connection_provider: ConnectionProvider
     feature_values: list[tuple[tuple[str, ...], str , float | None]]
     upload_anyway: bool
+    quiet: bool
 
     def __init__(self,
         connection: Psycopg2Connection,
@@ -34,11 +35,13 @@ class ADIFeaturesUploader(SourceToADIParser):
         derivation_and_number_specifiers,
         impute_zeros=False,
         upload_anyway: bool = False,
+        quiet: bool = False,
         **kwargs
     ):
         derivation_method, specifier_number = derivation_and_number_specifiers
         self.impute_zeros=impute_zeros
         self.upload_anyway = upload_anyway
+        self.quiet = quiet
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         SourceToADIParser.__init__(self, fields)
@@ -112,13 +115,15 @@ class ADIFeaturesUploader(SourceToADIParser):
                 (feature_identifier, self.derivation_method, self.data_analysis_study),
             )
             self.insert_specifiers(cursor, specifiers, feature_identifier)
-            logger.debug('Inserted feature specification, "%s".', specifiers)
+            if not self.quiet:
+                logger.debug('Inserted feature specification, "%s".', specifiers)
             feature_values = [
                 [row[1], row[2]] for row in self.feature_values
                 if row[0] == specifiers
             ]
             self.insert_feature_values(cursor, feature_identifier, feature_values)
-            logger.debug('Inserted %s feature values.', len(feature_values))
+            if not self.quiet:
+                logger.debug('Inserted %s feature values.', len(feature_values))
 
         self.get_connection().commit()
         cursor.close()

@@ -58,6 +58,7 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
                 data_analysis_study=data_analysis_study,
                 derivation_and_number_specifiers=(description, 3),
                 impute_zeros=True,
+                quiet=True,
             ) as feature_uploader:
                 self.send_features_to_uploader(feature_uploader, core_computation_results_files)
 

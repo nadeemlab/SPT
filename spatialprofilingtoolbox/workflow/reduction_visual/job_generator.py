@@ -18,7 +18,7 @@ class ReductionVisualJobGenerator(JobGenerator):
         self.study_name = self.validate_study_name(study_name)
 
     def validate_study_name(self, study_name):
-        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
             query = 'SELECT DISTINCT study FROM study_lookup WHERE study=%s;'
             cursor.execute(query, (study_name,))
             rows = cursor.fetchall()

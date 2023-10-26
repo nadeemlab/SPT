@@ -85,7 +85,6 @@ class DBConnection(ConnectionProvider):
 
     @staticmethod
     def make_connection(credentials: DBCredentials) -> Connection:
-        logger.debug('Using credentials: host=%s database=%s user=%s', credentials.endpoint, credentials.database, credentials.user)
         return connect(
             dbname=credentials.database,
             host=credentials.endpoint,

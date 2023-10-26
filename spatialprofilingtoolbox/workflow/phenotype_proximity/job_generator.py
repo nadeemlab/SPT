@@ -21,7 +21,7 @@ class ProximityJobGenerator(JobGenerator):
         self.study_name = self.validate_study_name(study_name)
 
     def validate_study_name(self, study_name):
-        with DBCursor(database_config_file=self.database_config_file) as cursor:
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
             query = 'SELECT DISTINCT primary_study FROM study_component ;'
             cursor.execute(query, (study_name,))
             rows = cursor.fetchall()

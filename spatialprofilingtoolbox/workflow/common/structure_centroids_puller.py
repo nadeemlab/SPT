@@ -98,7 +98,7 @@ class StructureCentroidsPuller:
                 continue
 
             self._structure_centroids.add_study_data(
-                study_name,
+                measurement_study,
                 self._create_study_data(rows, specimen_count, study_name)
             )
 

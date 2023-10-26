@@ -288,9 +288,6 @@ class SparseMatrixPuller:
             data_arrays_by_specimen, \
                 target_index_lookup, \
                 continuous_data_arrays_by_specimen = parsed
-
-            logger.debug('add_study_data with measurement_study: ' + measurement_study)
-
             data_arrays.add_study_data(
                 measurement_study,
                 data_arrays_by_specimen,

@@ -69,42 +69,11 @@ def test_intensities():
         ('lesion 6_3', '524', 'MHCI', 13.9828, 1),
     ]
 
-    # import re
-    # def postprocess(case, offset=700):
-    #     if re.search('^Basel', case[0]):
-    #         return (case[0], str(int(case[1])-offset), case[2], case[3], case[4])
-    #     else:
-    #         return case
-
-    # for _offset in range(710):
-        # _cases = [postprocess(case, offset=_offset) for case in cases]
-        # _case = postprocess(cases[0], offset=_offset)
-        # print(_case)
-        # for c in rows:
-        #     if c[0] == _case[0] and c[2] == _case[2]:
-        #         print(c)
-        # print('')
-        # inter = set(_cases).intersection(rows)
-        # print(f'{_offset}: {len(inter)}')
-        # if len(inter) != len(_cases):
-            # continue
-        # else:
-            # print('Working offset: ' + str(_offset))
-            # break
-
-    # raise NotImplementedError
-    # print(rows)
-    # print('')
-    # print('Found:')
-    # for case in cases:
-    #     if case in rows:
-    #         print(case)
-
     for case in cases:
         if not case in rows:
-            return
-    print(f'Valid offset: {offset}')
-    exit(0)
+            message = f'Case not found: {case}'
+            print(message)
+            raise ValueError(message)
 
 if __name__=='__main__':
     test_intensities()

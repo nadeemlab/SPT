@@ -191,7 +191,7 @@ class SparseMatrixPuller:
 
     def pull_and_write_to_files(self) -> None:
         self._data_arrays.set_store_inmemory(False)
-        study_names = sorted(retrieve_study_names(self.database_config_file), reverse=True)
+        study_names = retrieve_study_names(self.database_config_file)
         logger.info('Will pull feature matrices for studies:')
         for name in study_names:
             logger.info('    %s', name)

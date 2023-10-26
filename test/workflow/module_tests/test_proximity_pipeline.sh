@@ -21,5 +21,14 @@ status=$?
 rm current_status.txt
 
 python module_tests/check_proximity_metric_values.py ../db/.spt_db.config.container
+status2=$?
 
-exit $status
+if [[ $status != "0" ]];
+then
+    exit $status
+fi
+
+if [[ $status2 != "0" ]];
+then
+    exit $status2
+fi

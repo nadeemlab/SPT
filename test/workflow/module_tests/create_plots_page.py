@@ -1,7 +1,7 @@
 """Create HTML page out of UMAP plots in database."""
 import sys
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
@@ -26,9 +26,7 @@ def create_page_from_plots(plots_base64):
 def create_page():
     study = sys.argv[1]
     database_config_file = sys.argv[2]
-    with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
-        connection = dcm.get_connection()
-        cursor=connection.cursor()
+    with DBCursor(database_config_file=database_config_file, study=study) as cursor:
         cursor.execute('SELECT channel, png_base64 FROM umap_plots WHERE study=%s', (study,))
         rows = cursor.fetchall()
         plots_base64 = sorted([(row[0], row[1]) for row in rows], key=lambda x: x[0])

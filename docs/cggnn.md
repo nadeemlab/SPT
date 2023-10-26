@@ -177,4 +177,8 @@ output_prefix = ...
 upload_importances = ...
 ```
 
-Note that, unlike with the CLI, parameters can't be eliminated from the config file. If you want to use the default value for a parameter, you must explicitly set it to that value, and boolean values must be set to `true` or `false` instead of simply omitting the parameter.
+Note that, unlike with the CLI, parameters can't be eliminated from the config file. If you want to use the default value for a parameter, you must explicitly set it to that value,  and boolean values must be set to `true` or `false` instead of simply omitting the parameter.
+
+Other special cases:
+* `strata` can be set to `all` to use all strata (equivalent to not providing the parameter when using the CLI).
+* `target_name` can be set to `none` to use all cells in the tissue sample (equivalent to not providing the parameter when using the CLI).

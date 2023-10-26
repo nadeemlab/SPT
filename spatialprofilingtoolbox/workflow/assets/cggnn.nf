@@ -96,7 +96,7 @@ process run_cggnn {
         $(if [[ "!{disable_channels}" = true ]]; then echo "--disable_channels"; fi) \
         $(if [[ "!{disable_phenotypes}" = true ]]; then echo "--disable_phenotypes"; fi) \
         --cells_per_slide_target !{cells_per_slide_target} \
-        --target_name "!{target_name}" \
+        $(if [[ "!{target_name}" != none ]]; then echo "--target_name "!{target_name}""; fi) \
         $(if [[ "!{in_ram}" = true ]]; then echo "--in_ram"; fi) \
         --batch_size !{batch_size} \
         --epochs !{epochs} \

@@ -77,4 +77,3 @@ def test_intensities():
 
 if __name__=='__main__':
     test_intensities()
-    raise NotImplementedError

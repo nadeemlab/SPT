@@ -23,7 +23,6 @@ LABEL service_name=$service_name
 ENV service_name $service_name
 COPY $WHEEL_FILENAME ./
 RUN python3 -m pip install --break-system-packages "$WHEEL_FILENAME"
-COPY initialize_schema.sql /docker-entrypoint-initdb.d/
 COPY .spt_db.config.container ./
 HEALTHCHECK CMD spt db status --database-config-file .spt_db.config.container || exit 1
 CMD ["postgres", "-h", "0.0.0.0"]

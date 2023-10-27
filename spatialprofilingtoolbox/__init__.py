@@ -9,12 +9,6 @@ from spatialprofilingtoolbox.standalone_utilities.configuration_settings import 
 from spatialprofilingtoolbox.workflow import get_workflow
 from spatialprofilingtoolbox.workflow import get_workflow_names as get_workflow_names  # pylint: disable=useless-import-alias
 
-from spatialprofilingtoolbox.db import (
-    DBConnection,
-    DBCredentials,
-    QueryCursor,
-)
-
 from spatialprofilingtoolbox.db import get_feature_description
 from spatialprofilingtoolbox.db import squidpy_feature_classnames
 

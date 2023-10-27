@@ -211,9 +211,6 @@ check-dockerfiles-consistency:
 >@status_code=$$(cat status_code); if [[ "$$status_code" == "0" && ( ! -f check-dockerfiles-consistency ) ]]; then touch check-dockerfiles-consistency; fi;
 >@${MESSAGE} end "Consistent." "Something missing."
 
-${BUILD_LOCATION}/db/initialize_schema.sql:
->@${MAKE} SHELL=$(SHELL) --no-print-directory -C ${BUILD_LOCATION}/db/ initialize_schema.sql ;
-
 build-docker-images: ${DOCKER_BUILD_TARGETS}
 
 # Build the Docker container for each submodule by doing the following:
@@ -222,7 +219,7 @@ build-docker-images: ${DOCKER_BUILD_TARGETS}
 #   3. Copy relevant files to the build folder
 #   4. docker build the container
 #   5. Remove copied files
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ${BUILD_LOCATION}/db/initialize_schema.sql
+${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \

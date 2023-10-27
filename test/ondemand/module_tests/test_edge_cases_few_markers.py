@@ -3,7 +3,7 @@ from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 
 
 def retrieve_case(case):
-    study_name = 'Melanoma intralesional IL2 - measurement'
+    study_name = 'Melanoma intralesional IL2'
     host = 'spt-ondemand-testing'
     port = 8016
     with OnDemandRequester(host, port) as requester:

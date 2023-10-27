@@ -48,13 +48,13 @@ class StructureCentroids:
 
     def add_study_data(
         self,
-        study_name: str,
+        measurement_study: str,
         structure_centroids_by_specimen: StudyStructureCentroids,
     ) -> None:
         """
         Add the study with these structure centroids indexed by specimen to the collection.
         """
-        self._studies[study_name] = structure_centroids_by_specimen
+        self._studies[measurement_study] = structure_centroids_by_specimen
 
     def _get_all_centroids_pickle_indices(self) -> tuple[tuple[int, int], ...]:
         def extract_index(filename) -> tuple[int, int]:

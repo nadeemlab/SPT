@@ -32,8 +32,12 @@ class QueryHandler:
         return StudyAccess(cursor).get_study_components(study)
 
     @classmethod
-    def retrieve_study_handles(cls, cursor) -> list[StudyHandle]:
-        return StudyAccess(cursor).get_study_handles()
+    def retrieve_study_specifiers(cls, cursor) -> list[str]:
+        return StudyAccess(cursor).get_study_specifiers()
+
+    @classmethod
+    def retrieve_study_handle(cls, cursor, study: str) -> StudyHandle:
+        return StudyAccess(cursor).get_study_handle(study)
 
     @classmethod
     def get_number_cells(cls, cursor, study: str) -> int:
@@ -68,10 +72,6 @@ class QueryHandler:
         return PhenotypesAccess(cursor).get_phenotype_symbols(study)
 
     @classmethod
-    def get_phenotype_symbols_all_studies(cls, cursor) -> list[str]:
-        return PhenotypesAccess(cursor).get_phenotype_symbols_all_studies()
-
-    @classmethod
     def get_phenotype_criteria(cls, cursor, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
         return PhenotypesAccess(cursor).get_phenotype_criteria(study, phenotype_symbol)
 
@@ -98,10 +98,6 @@ class QueryHandler:
             Channel(symbol=name)
             for name in PhenotypesAccess(cursor).get_channel_names(study)
         ]
-
-    @classmethod
-    def get_channel_names_all_studies(cls, cursor) -> list[str]:
-        return PhenotypesAccess(cursor).get_channel_names_all_studies()
 
     @classmethod
     def get_umaps_low_resolution(cls, cursor, study: str) -> list[UMAPChannel]:

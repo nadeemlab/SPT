@@ -2,9 +2,10 @@
 from importlib.resources import as_file
 from importlib.resources import files
 import re
-from typing import Optional
+import json
 
 from psycopg2 import sql
+from psycopg2 import connect
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.cell_manifests import \
@@ -21,20 +22,24 @@ from spatialprofilingtoolbox.workflow.tabular_import.parsing.interventions impor
     InterventionsParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.diagnosis import DiagnosisParser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyParser
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBConnection
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import create_database
+from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class DataSkimmer(DatabaseConnectionMaker):
+class DataSkimmer:
     """Orchestration of source file parsing into single cell ADI schema database
     for a bundle of source files.
     """
+    database_config_file: str | None
     record_counts: dict[str, int]
 
-    def __init__(self, database_config_file: Optional[str] = None):
-        super().__init__(database_config_file=database_config_file)
+    def __init__(self, database_config_file: str | None = None):
+        self.database_config_file = database_config_file
         self.record_counts = {}
 
     def _normalize(self, name):
@@ -73,33 +78,66 @@ class DataSkimmer(DatabaseConnectionMaker):
             padded = f"{difference_str:<13}"
             logger.debug('%s %s', padded, table)
 
+    @staticmethod
+    def _sanitize_token(token: str) -> str:
+        return re.sub(r'[ \-]', '_', token).lower()
+
+    def _register_study(self, study_file: str) -> str:
+        with open(study_file, 'rt', encoding='utf-8') as file:
+            study = json.loads(file.read())
+            study_name = study['Study name']
+
+        if self._study_is_registered(study_name):
+            raise ValueError('The study "%s" is already registered.', study_name)
+
+        database_name = self._sanitize_token(study_name)
+        self._create_database(database_name)
+        self._register_study_database_name(study_name, database_name)
+        self._create_schema(study_name)
+        return study_name
+
+    def _create_database(self, database_name: str) -> None:
+        create_database(self.database_config_file, database_name)
+
+    def _register_study_database_name(self, study_name: str, database_name: str) -> None:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('INSERT INTO study_lookup VALUES (%s, %s) ;', (study_name, database_name))
+
+    def _create_schema(self, study: str) -> None:
+        infuser = SchemaInfuser(database_config_file=self.database_config_file, study=study)
+        infuser.setup_schema()
+
+    def _study_is_registered(self, study_name: str) -> bool:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT * FROM study_lookup WHERE study=%s;', (study_name,))
+            rows = cursor.fetchall()
+            if len(rows) > 0:
+                return True
+            return False
+
     def parse(self, _files) -> None:
-        if not self.is_connected():
-            message = 'No database connection was initialized. Skipping semantic parse.'
-            logger.debug(message)
-            return
+        study_name = self._register_study(_files['study'])
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
-        self._cache_all_record_counts(self.get_connection(), fields)
-
-        study_name = StudyParser(fields).parse(self.get_connection(), _files['study'])
-        conn = self.get_connection()
-        SubjectsParser(fields).parse(conn, _files['subjects'])
-        DiagnosisParser(fields).parse(conn, _files['diagnosis'])
-        InterventionsParser(fields).parse(conn, _files['interventions'])
-        SamplesParser(fields).parse(conn, _files['samples'], study_name)
-        CellManifestSetParser(fields).parse(conn, _files['file manifest'], study_name)
-        chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(fields).parse(
-            conn,
-            _files['channels'],
-            _files['phenotypes'],
-            study_name,
-        )
-        CellManifestsParser(fields, channels_file=_files['channels']).parse(
-            conn,
-            _files['file manifest'],
-            chemical_species_identifiers_by_symbol,
-        )
-        SampleStratificationCreator.create_sample_stratification(conn)
-        self._report_record_count_changes(conn, fields)
+        with DBConnection(database_config_file=self.database_config_file, study=study_name) as connection:
+            self._cache_all_record_counts(connection, fields)
+            StudyParser(fields).parse(connection, _files['study'])
+            SubjectsParser(fields).parse(connection, _files['subjects'])
+            DiagnosisParser(fields).parse(connection, _files['diagnosis'])
+            InterventionsParser(fields).parse(connection, _files['interventions'])
+            SamplesParser(fields).parse(connection, _files['samples'], study_name)
+            CellManifestSetParser(fields).parse(connection, _files['file manifest'], study_name)
+            chemical_species_identifiers_by_symbol = ChannelsPhenotypesParser(fields).parse(
+                connection,
+                _files['channels'],
+                _files['phenotypes'],
+                study_name,
+            )
+            CellManifestsParser(fields, channels_file=_files['channels']).parse(
+                connection,
+                _files['file manifest'],
+                chemical_species_identifiers_by_symbol,
+            )
+            SampleStratificationCreator.create_sample_stratification(connection)
+            self._report_record_count_changes(connection, fields)

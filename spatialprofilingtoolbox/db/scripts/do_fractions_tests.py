@@ -3,14 +3,15 @@ import argparse
 import re
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
     perform_tests
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-logger = colorized_logger('spt db create-schema')
+logger = colorized_logger('spt db do-fractions-tests')
 
 def get_fractions_studies(connection):
     cursor = connection.cursor()
@@ -20,11 +21,12 @@ def get_fractions_studies(connection):
     return [row[0] for row in rows if re.search('phenotype fractions', row[0])]
 
 def do_tests(database_config_file):
-    with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
-        connection = dcm.get_connection()
-        fractions_studies = get_fractions_studies(connection)
-        for data_analysis_study in fractions_studies:
-            perform_tests(data_analysis_study, connection)
+    studies = retrieve_study_names(database_config_file)
+    for study in studies:
+        with DBConnection(database_config_file=database_config_file, study=study) as connection:
+            fractions_studies = get_fractions_studies(connection)
+            for data_analysis_study in fractions_studies:
+                perform_tests(data_analysis_study, connection)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

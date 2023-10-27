@@ -15,7 +15,8 @@ if __name__ == '__main__':
     for key, value in environment.items():
         os.environ[key] = value
 
-    with DBCursor() as cursor:
+    study = 'Melanoma intralesional IL2'
+    with DBCursor(study=study) as cursor:
         cursor.execute('SELECT COUNT(*) FROM specimen_measurement_study;')
         rows = cursor.fetchall()
         count = rows[0][0]

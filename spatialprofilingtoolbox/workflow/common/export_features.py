@@ -9,10 +9,9 @@ from itertools import product
 import re
 
 import pandas as pd
-from psycopg2.extensions import connection as Connection
+from psycopg2.extensions import connection as Psycopg2Connection
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
-from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -28,28 +27,27 @@ class ADIFeaturesUploader(SourceToADIParser):
     connection_provider: ConnectionProvider
     feature_values: list[tuple[tuple[str, ...], str , float | None]]
     upload_anyway: bool
+    quiet: bool
 
     def __init__(self,
-        database_connection_maker: DatabaseConnectionMaker | None,
+        connection: Psycopg2Connection,
         data_analysis_study,
         derivation_and_number_specifiers,
         impute_zeros=False,
-        connection: Connection | None=None,
         upload_anyway: bool = False,
+        quiet: bool = False,
         **kwargs
     ):
         derivation_method, specifier_number = derivation_and_number_specifiers
         self.impute_zeros=impute_zeros
         self.upload_anyway = upload_anyway
+        self.quiet = quiet
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         SourceToADIParser.__init__(self, fields)
         args = (data_analysis_study, derivation_method, specifier_number)
         self.record_feature_specification_template(*args)
-        if connection is not None:
-            self.connection_provider = ConnectionProvider(connection)
-        else:
-            self.connection_provider = cast(ConnectionProvider, database_connection_maker)
+        self.connection_provider = ConnectionProvider(connection)
 
     def record_feature_specification_template(self,
         data_analysis_study,
@@ -117,13 +115,15 @@ class ADIFeaturesUploader(SourceToADIParser):
                 (feature_identifier, self.derivation_method, self.data_analysis_study),
             )
             self.insert_specifiers(cursor, specifiers, feature_identifier)
-            logger.debug('Inserted feature specification, "%s".', specifiers)
+            if not self.quiet:
+                logger.debug('Inserted feature specification, "%s".', specifiers)
             feature_values = [
                 [row[1], row[2]] for row in self.feature_values
                 if row[0] == specifiers
             ]
             self.insert_feature_values(cursor, feature_identifier, feature_values)
-            logger.debug('Inserted %s feature values.', len(feature_values))
+            if not self.quiet:
+                logger.debug('Inserted %s feature values.', len(feature_values))
 
         self.get_connection().commit()
         cursor.close()
@@ -186,7 +186,8 @@ class ADIFeaturesUploader(SourceToADIParser):
         number_unknown = len(unknown_subjects)
         if number_unknown > 0:
             unknowns_message = 'Feature values refer to %s unknown subjects: %s'
-            logger.warning(unknowns_message, number_unknown, unknown_subjects)
+            subset = list(unknown_subjects)[0:min(10, len(unknown_subjects))]
+            logger.warning(unknowns_message, number_unknown, subset)
         else:
             logger.info('All feature value subjects were known "subjects" or "specimens".')
 

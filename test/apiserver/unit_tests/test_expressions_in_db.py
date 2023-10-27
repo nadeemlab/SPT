@@ -15,7 +15,8 @@ def test_one_expression_vector():
     for key, value in environment.items():
         os.environ[key] = value
 
-    with DBCursor() as cursor:
+    study = 'Melanoma intralesional IL2'
+    with DBCursor(study=study) as cursor:
         cursor.execute('''
         SELECT
         hsi.histological_structure,

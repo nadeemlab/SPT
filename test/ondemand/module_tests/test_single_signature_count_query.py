@@ -5,7 +5,7 @@ import sys
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 
 if __name__ == '__main__':
-    STUDY_NAME = 'Melanoma intralesional IL2 - measurement'
+    STUDY_NAME = 'Melanoma intralesional IL2'
     HOST = 'spt-ondemand-testing'
     PORT = 8016
     with OnDemandRequester(HOST, PORT) as requester:

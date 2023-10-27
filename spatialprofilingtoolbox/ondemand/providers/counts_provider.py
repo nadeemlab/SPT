@@ -32,13 +32,13 @@ class CountsProvider(OnDemandProvider):
         self,
         positives_signature: int,
         negatives_signature: int,
-        study_name: str,
+        measurement_study: str,
         cells_selected: tuple[int, ...] | None = None,
     ) -> dict[str, list[int]]:
         """Count the number of structures per specimen that match this signature."""
         counts: dict[str, list[int]] = {}
         selection = Index(list(cells_selected)) if cells_selected else None
-        for specimen, data_array in self.data_arrays[study_name].items():
+        for specimen, data_array in self.data_arrays[measurement_study].items():
             count = 0
             if len(data_array) == 0:
                 raise ValueError(f'Data array for specimen "{specimen}" is empty.')
@@ -65,10 +65,10 @@ class CountsProvider(OnDemandProvider):
                 count = count + 1
         return count
 
-    def compute_signature(self, channel_names: list[str], study_name: str) -> int | None:
+    def compute_signature(self, channel_names: list[str], measurement_study: str) -> int | None:
         """Compute int signature of this channel name combination."""
-        target_by_symbol = self.studies[study_name]['target by symbol']
-        target_index_lookup = self.studies[study_name]['target index lookup']
+        target_by_symbol = self.studies[measurement_study]['target by symbol']
+        target_index_lookup = self.studies[measurement_study]['target index lookup']
         if not all(name in target_by_symbol.keys() for name in channel_names):
             return None
         identifiers = [target_by_symbol[name] for name in channel_names]

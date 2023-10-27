@@ -3,7 +3,7 @@
 from pandas import read_sql
 from numpy import isnan
 
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox import get_feature_description
@@ -14,28 +14,25 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-def transcribe_fraction_features(database_connection_maker: DatabaseConnectionMaker) -> None:
-    connection = database_connection_maker.get_connection()
-    feature_extraction_query = """
+def transcribe_fraction_features(database_config_file: str | None, study: str) -> None:
+    feature_extraction_query = f'''
     SELECT
-        sc.primary_study as study,
         f.specimen as sample,
         f.marker_symbol,
         f.percent_positive
     FROM fraction_by_marker_study_specimen f
     JOIN study_component sc ON sc.component_study=f.measurement_study
+    WHERE sc.primary_study='{study}'
     ORDER BY
-        sc.primary_study,
         f.data_analysis_study,
         f.specimen
     ;
-    """
-    fraction_features = read_sql(feature_extraction_query, connection)
-    for study in fraction_features['study'].unique():
-        fraction_features_study = fraction_features[fraction_features.study == study]
+    '''
+    with DBConnection(database_config_file=database_config_file, study=study) as connection:
+        fraction_features_study = read_sql(feature_extraction_query, connection)
         das = DataAnalysisStudyFactory(connection, study, 'phenotype fractions').create()
         with ADIFeaturesUploader(
-            database_connection_maker,
+            connection,
             data_analysis_study=das,
             derivation_and_number_specifiers=(
                 get_feature_description('population fractions'), 1),

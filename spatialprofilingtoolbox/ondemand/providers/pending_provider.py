@@ -6,7 +6,8 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
@@ -20,31 +21,33 @@ class PendingProvider(OnDemandProvider, ABC):
 
     def get_metrics(
         self,
-        measurement_study_name: str,
+        study: str,
         **kwargs,
     ) -> dict[str, dict[str, float | None] | bool]:
         """Get requested metrics or signal that it's not done calculating yet."""
         logger.debug('Requesting computation.')
-        with DBCursor() as cursor:
+        with DBCursor(study=study) as cursor:
             get = ADIFeatureSpecificationUploader.get_data_analysis_study
+            measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
             data_analysis_study = get(measurement_study_name, cursor)
-        feature_specification = self.get_or_create_feature_specification(data_analysis_study, **kwargs)
-        if self._is_already_computed(feature_specification):
+        feature_specification = self.get_or_create_feature_specification(study, data_analysis_study, **kwargs)
+        if self._is_already_computed(study, feature_specification):
             is_pending = False
             logger.debug('Already computed.')
         else:
-            is_pending = self._is_already_pending(feature_specification)
+            is_pending = self._is_already_pending(study, feature_specification)
             if is_pending:
                 logger.debug('Already pending.')
             else:
                 logger.debug('Not already pending.')
             if not is_pending:
                 logger.debug('Starting background task.')
-                self._fork_computation_task(feature_specification)
-                self._set_pending_computation(feature_specification)
+                self._fork_computation_task(study, feature_specification)
+                self._set_pending_computation(study, feature_specification)
                 logger.debug('Background task just started, is pending.')
                 is_pending = True
         return self._query_for_computed_feature_values(
+            study,
             feature_specification,
             still_pending=is_pending,
         )
@@ -53,7 +56,8 @@ class PendingProvider(OnDemandProvider, ABC):
     @abstractmethod
     def get_or_create_feature_specification(
         cls,
-        study_name: str,
+        study: str,
+        data_analysis_study: str,
         **kwargs,
     ) -> str:
         """Return feature specification, creating one if necessary."""
@@ -61,19 +65,20 @@ class PendingProvider(OnDemandProvider, ABC):
 
     @classmethod
     def create_feature_specification(cls,
+        study: str,
         specifiers: tuple[str, ...],
-        study_name: str,
+        data_analysis_study: str,
         method: str,
     ) -> str:
-        with DBCursor() as cursor:
+        with DBCursor(study=study) as cursor:
             Uploader = ADIFeatureSpecificationUploader
-            feature_specification = Uploader.add_new_feature(specifiers, method, study_name, cursor)
+            feature_specification = Uploader.add_new_feature(specifiers, method, data_analysis_study, cursor)
         return feature_specification
 
     @staticmethod
-    def _is_already_computed(feature_specification: str) -> bool:
-        expected = PendingProvider._get_expected_number_of_computed_values(feature_specification)
-        actual = PendingProvider._get_actual_number_of_computed_values(feature_specification)
+    def _is_already_computed(study: str, feature_specification: str) -> bool:
+        expected = PendingProvider._get_expected_number_of_computed_values(study, feature_specification)
+        actual = PendingProvider._get_actual_number_of_computed_values(study, feature_specification)
         if actual < expected:
             return False
         if actual == expected:
@@ -82,15 +87,15 @@ class PendingProvider(OnDemandProvider, ABC):
         raise ValueError(f'{message} Feature "{feature_specification}"')
 
     @staticmethod
-    def _get_expected_number_of_computed_values(feature_specification: str) -> int:
-        domain = PendingProvider._get_expected_domain_for_computed_values(feature_specification)
+    def _get_expected_number_of_computed_values(study: str, feature_specification: str) -> int:
+        domain = PendingProvider._get_expected_domain_for_computed_values(study, feature_specification)
         number = len(domain)
         logger.debug('Number of values possible to be computed: %s', number)
         return number
 
     @staticmethod
-    def _get_expected_domain_for_computed_values(feature_specification: str) -> list[str]:
-        with DBCursor() as cursor:
+    def _get_expected_domain_for_computed_values(study: str, feature_specification: str) -> list[str]:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
             SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp
             JOIN study_component sc1 ON sc1.component_study=sdmp.study
@@ -103,8 +108,8 @@ class PendingProvider(OnDemandProvider, ABC):
         return [row[0] for row in rows]
 
     @staticmethod
-    def _get_actual_number_of_computed_values(feature_specification: str) -> int:
-        with DBCursor() as cursor:
+    def _get_actual_number_of_computed_values(study: str, feature_specification: str) -> int:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
             SELECT COUNT(*) FROM quantitative_feature_value qfv
             WHERE qfv.feature=%s
@@ -115,8 +120,8 @@ class PendingProvider(OnDemandProvider, ABC):
             return rows[0][0]
 
     @classmethod
-    def _is_already_pending(cls, feature_specification: str) -> bool:
-        with DBCursor() as cursor:
+    def _is_already_pending(cls, study: str, feature_specification: str) -> bool:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
             SELECT * FROM pending_feature_computation pfc
             WHERE pfc.feature_specification=%s
@@ -126,17 +131,17 @@ class PendingProvider(OnDemandProvider, ABC):
             return True
         return False
 
-    def _fork_computation_task(self, feature_specification: str) -> None:
+    def _fork_computation_task(self, study:str, feature_specification: str) -> None:
         background_thread = Thread(
             target=self.have_feature_computed,
-            args=(feature_specification,)
+            args=(study, feature_specification,)
         )
         background_thread.start()
 
     @classmethod
-    def _set_pending_computation(cls, feature_specification: str) -> None:
+    def _set_pending_computation(cls, study: str, feature_specification: str) -> None:
         time_str = datetime.now().ctime()
-        with DBCursor() as cursor:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
                 INSERT INTO pending_feature_computation (feature_specification, time_initiated)
                 VALUES (%s, %s) ;
@@ -145,9 +150,9 @@ class PendingProvider(OnDemandProvider, ABC):
             )
 
     @classmethod
-    def drop_pending_computation(cls, feature_specification: str) -> None:
+    def drop_pending_computation(cls, study: str, feature_specification: str) -> None:
         """Drop note that the computation is still pending."""
-        with DBCursor() as cursor:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
                 DELETE FROM pending_feature_computation pfc
                 WHERE pfc.feature_specification=%s ;
@@ -156,14 +161,14 @@ class PendingProvider(OnDemandProvider, ABC):
             )
 
     @abstractmethod
-    def have_feature_computed(self, feature_specification: str) -> None:
+    def have_feature_computed(self, study: str, feature_specification: str) -> None:
         """Compute the feature and add it to the database."""
         raise NotImplementedError("For subclasses to implement.")
 
     @staticmethod
-    def retrieve_specifiers(feature_specification: str) -> tuple[str, list[str]]:
+    def retrieve_specifiers(study: str, feature_specification: str) -> tuple[str, list[str]]:
         """Get specifiers for this feature specification."""
-        with DBCursor() as cursor:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
                 SELECT fs.specifier, fs.ordinality
                 FROM feature_specifier fs
@@ -189,10 +194,11 @@ class PendingProvider(OnDemandProvider, ABC):
     @classmethod
     def _query_for_computed_feature_values(
         cls,
+        study: str,
         feature_specification: str,
         still_pending: bool = False
     ) -> dict[str, dict[str, float | None] | bool]:
-        with DBCursor() as cursor:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
                 SELECT qfv.subject, qfv.value
                 FROM quantitative_feature_value qfv
@@ -211,15 +217,15 @@ class PendingProvider(OnDemandProvider, ABC):
         }
 
     @classmethod
-    def get_sample_identifiers(cls, feature_specification: str) -> list[str]:
-        return cls._get_expected_domain_for_computed_values(feature_specification)
+    def get_sample_identifiers(cls, study: str, feature_specification: str) -> list[str]:
+        return cls._get_expected_domain_for_computed_values(study, feature_specification)
 
-    def get_cells(self, sample_identifier: str, study_name: str) -> DataFrame:
-        return self.data_arrays[study_name][sample_identifier]
+    def get_cells(self, sample_identifier: str, data_analysis_study: str) -> DataFrame:
+        return self.data_arrays[data_analysis_study][sample_identifier]
 
     @classmethod
-    def retrieve_feature_derivation_method(cls, feature_specification: str) -> str:
-        with DBCursor() as cursor:
+    def retrieve_feature_derivation_method(cls, study: str, feature_specification: str) -> str:
+        with DBCursor(study=study) as cursor:
             cursor.execute('''
                 SELECT derivation_method FROM feature_specification
                 WHERE identifier=%s ;

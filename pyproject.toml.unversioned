@@ -44,7 +44,8 @@ apiserver = [
 ]
 cggnn = [
     "cg-gnn",
-    "tables"
+    "tables",
+    "torch"
 ]
 db = [
     "pandas==2.0.2",
@@ -74,6 +75,7 @@ workflow = [
 ]
 all = [
     "cg-gnn",
+    "torch",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
     "uvicorn>=0.15.0,<0.16.0",
@@ -175,6 +177,8 @@ packages = [
     "drop_ondemand_computations.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
+    "metaschema.sql",
+    "drop_metaschema.sql",
     "create_roles.sql",
     "create_views.sql",
     "drop_views.sql",

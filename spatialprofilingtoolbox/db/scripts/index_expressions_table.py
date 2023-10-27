@@ -2,10 +2,8 @@
 import argparse
 from os.path import abspath
 from os.path import expanduser
-import sys
 
 from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
-from spatialprofilingtoolbox import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -26,12 +24,7 @@ if __name__ == '__main__':
     logger.info('spt db index-expressions-table called.')
 
     database_config_file = abspath(expanduser(args.database_config_file))
-    with DatabaseConnectionMaker(database_config_file) as dcm:
-        connection = dcm.get_connection()
-        if args.drop_index:
-            STATUS = ExpressionsTableIndexer.drop_index(connection)
-            if STATUS is False:
-                logger.debug('Can not drop index, does not exists.')
-                sys.exit(1)
-        else:
-            ExpressionsTableIndexer.ensure_indexed_expressions_table(connection)
+    if args.drop_index:
+        ExpressionsTableIndexer.drop_index(database_config_file)
+    else:
+        ExpressionsTableIndexer.ensure_indexed_expressions_tables(database_config_file)

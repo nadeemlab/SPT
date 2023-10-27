@@ -4,11 +4,12 @@ tweaks, into a Postgresql instance.
 from importlib.resources import as_file
 from importlib.resources import files
 import re
-from typing import Optional
 
 import pandas as pd
+from psycopg2 import Error as Psycopg2Error
 
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import create_database
+from spatialprofilingtoolbox.db.credentials import metaschema_database
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
 from spatialprofilingtoolbox.db.fractions_transcriber import transcribe_fraction_features
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -16,27 +17,51 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class SchemaInfuser(DatabaseConnectionMaker):
+class SchemaInfuser:
     """Create single cell database schema in a given database."""
-    def __init__(self, database_config_file: Optional[str] = None):
-        super().__init__(database_config_file=database_config_file)
+    database_config_file: str | None
+    study: str | None
+
+    def __init__(self, database_config_file: str | None = None, study: str | None = None):
+        self.database_config_file = database_config_file
+        self.study = study
+
+    def setup_lightweight_metaschema(self, force=False):
+        create_database(self.database_config_file, metaschema_database())
+        if force:
+            self._verbose_sql_execute(('drop_metaschema.sql', 'drop metaschema tables'))
+        self._verbose_sql_execute(
+            ('metaschema.sql', 'create tables from lightweight metaschema'),
+        )
+        try:
+            self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        except Psycopg2Error as exception:
+            logger.warning('Could not run grant privileges script. Possibly users are not set up.')
+            logger.warning(exception)
 
     def setup_schema(self, force=False):
         message = 'This creation tool assumes that the database itself and users are already setup.'
         logger.info(message)
         if force:
-            self.verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
-            self.verbose_sql_execute(
+            self._verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
+            self._verbose_sql_execute(
                 (None, 'drop tables from main schema'),
                 contents=self.create_drop_tables(),
             )
-        self.verbose_sql_execute(
+        logger.info('Executing schema.sql contents.')
+        self._verbose_sql_execute(
             ('schema.sql', 'create tables from main schema'),
             source_package='adiscstudies',
+            verbosity='silent',
         )
-        self.verbose_sql_execute(('performance_tweaks.sql', 'tweak main schema'))
-        self.verbose_sql_execute(('create_views.sql', 'create views of main schema'))
-        self.verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        self._verbose_sql_execute(('performance_tweaks.sql', 'tweak main schema'))
+        logger.info('Executing create_views.sql contents.')
+        self._verbose_sql_execute(('create_views.sql', 'create views of main schema'), verbosity='silent')
+        try:
+            self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        except Psycopg2Error as exception:
+            logger.warning('Could not run grant privileges script. Possibly users are not set up.')
+            logger.warning(exception)
 
     def normalize(self, name):
         return re.sub(r'[ \-]', '_', name).lower()
@@ -58,28 +83,32 @@ class SchemaInfuser(DatabaseConnectionMaker):
         ])
 
     def refresh_views(self):
-        self.verbose_sql_execute(
-            ('refresh_views.sql', 'refresh views of main schema'),
-            verbosity='itemize',
-        )
-        transcribe_fraction_features(self)
+        if self.study is not None:
+            self._verbose_sql_execute(
+                ('refresh_views.sql', 'refresh views of main schema'),
+                verbosity='itemize',
+            )
+            transcribe_fraction_features(self.database_config_file, self.study)
 
     def recreate_views(self):
-        self.verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
-        self.verbose_sql_execute(
+        self._verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
+        self._verbose_sql_execute(
             ('create_views.sql', 'create views of main schema'),
             verbosity='itemize',
         )
-        self.verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
+        self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
 
-    def verbose_sql_execute(self,
+    def _verbose_sql_execute(self,
         filename_description,
         source_package='spatialprofilingtoolbox.db.data_model',
+        contents: str | None = None,
         **kwargs,
     ):
         verbose_sql_execute(
             filename_description,
-            self.get_connection(),
+            self.database_config_file,
             source_package=source_package,
+            contents=contents,
+            study=self.study,
             **kwargs,
         )

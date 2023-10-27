@@ -10,13 +10,14 @@ RUN apt install python3.11-dev -y
 RUN apt install python3.11-venv -y
 RUN apt install python3.11-distutils -y
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && python3.11 -m ensurepip
-RUN python3.11 -m pip install dgl-cu117 dglgo -f https://data.dgl.ai/wheels/repo.html
+RUN python3.11 -m pip install dgl -f https://data.dgl.ai/wheels/repo.html
 RUN python3.11 -m pip install psycopg2==2.9.6
 RUN python3.11 -m pip install adiscstudies==0.11.0
 RUN python3.11 -m pip install numba==0.57.0
 RUN python3.11 -m pip install attrs==23.1.0
 RUN python3.11 -m pip install tables
 RUN python3.11 -m pip install cg-gnn
+RUN python3.11 -m pip install pydantic==2.0.2
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

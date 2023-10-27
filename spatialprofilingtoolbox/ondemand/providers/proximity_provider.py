@@ -5,7 +5,7 @@ from typing import cast
 from pandas import DataFrame
 from sklearn.neighbors import BallTree  # type: ignore
 
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import (\
     phenotype_str_to_phenotype,

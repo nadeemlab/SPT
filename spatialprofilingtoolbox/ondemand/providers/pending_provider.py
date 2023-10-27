@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.workflow.common.export_features import \

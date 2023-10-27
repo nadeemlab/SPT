@@ -6,7 +6,7 @@ from typing import cast
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,

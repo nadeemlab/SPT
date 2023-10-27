@@ -1,6 +1,6 @@
 """Convenience functions for job generation."""
 
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 def retrieve_sample_identifiers_from_db(study_name, database_config_file):
     with DBCursor(database_config_file=database_config_file, study=study_name) as cursor:

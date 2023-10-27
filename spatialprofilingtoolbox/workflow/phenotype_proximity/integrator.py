@@ -6,7 +6,7 @@ import pickle
 
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox import DBConnection
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \

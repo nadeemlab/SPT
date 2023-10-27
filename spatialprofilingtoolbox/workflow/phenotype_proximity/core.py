@@ -12,7 +12,7 @@ from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import \
     PerformanceTimerReporter
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
     ProximityJobGenerator
 from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed

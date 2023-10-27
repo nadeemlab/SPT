@@ -16,7 +16,7 @@ from spatialprofilingtoolbox.db.database_connection import get_and_validate_data
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

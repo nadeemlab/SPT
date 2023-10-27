@@ -19,7 +19,7 @@ except ModuleNotFoundError as e:
         SuggestExtrasException
     SuggestExtrasException(e, 'db')
 import pandas as pd  # pylint: disable=ungrouped-imports
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

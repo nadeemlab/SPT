@@ -3,7 +3,7 @@
 from typing import cast
 from itertools import chain
 
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import (
     phenotype_str_to_phenotype,

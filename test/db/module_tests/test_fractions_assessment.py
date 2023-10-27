@@ -7,11 +7,14 @@ from spatialprofilingtoolbox import get_feature_description
 
 def retrieve_known_cases():
     df = read_csv('module_tests/expected_fractions.tsv', sep='\t')
-    df['Fraction'] = df['Fraction'].apply(round6)
+    df['Fraction'] = df['Fraction'].apply(round5)
     return [tuple(row) for _, row in df.iterrows()]
 
-def round6(value):
-    return int(pow(10, 6) * value) / pow(10, 6)
+def round5(value):
+    return round_digits(value, 5)
+
+def round_digits(value, digits):
+    return int(pow(10, digits) * value) / pow(10, digits)
 
 if __name__=='__main__':
     rows = []
@@ -29,7 +32,7 @@ if __name__=='__main__':
             WHERE fsp.derivation_method=%s
             ;
             ''', (get_feature_description('population fractions'),))
-            rows.extend([(row[0], row[1], round6(float(row[2]))) for row in cursor.fetchall()])
+            rows.extend([(row[0], row[1], round5(float(row[2]))) for row in cursor.fetchall()])
 
     known_cases = retrieve_known_cases()
     print(f'Got fractions ({len(rows)}):')

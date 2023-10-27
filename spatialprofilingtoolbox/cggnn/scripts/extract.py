@@ -2,10 +2,11 @@
 
 from argparse import ArgumentParser
 from os import makedirs
-from os.path import join, exists
+from os.path import join
+from os.path import exists
 from json import dump
 
-from spatialprofilingtoolbox.cggnn import extract_cggnn_data
+from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 
 
 def parse_arguments():

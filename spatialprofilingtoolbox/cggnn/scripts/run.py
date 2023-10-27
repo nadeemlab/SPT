@@ -5,7 +5,7 @@ from os.path import join
 
 from pandas import read_csv
 
-from spatialprofilingtoolbox.cggnn import extract_cggnn_data
+from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:

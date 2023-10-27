@@ -20,9 +20,12 @@ def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt cggnn run',
-        description='Create cell graphs from SPT tables saved locally, train a graph neural '
-        'network on them, and save resultant model, metrics, and visualizations (if requested) '
-        'to file.'
+        description="""Create cell graphs from SPT tables saved locally, train a graph neural
+network on them, and save resultant model, metrics, and visualizations (if requested) to file.
+
+`spt cggnn run` allows you to run the `cg-gnn` pip package directly from SPT. It combines `spt cggnn
+extract` with the entire `cggnn.run` process into a single command.
+"""
     )
     parser.add_argument(
         '--spt_db_config_location',

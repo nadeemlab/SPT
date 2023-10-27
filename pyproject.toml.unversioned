@@ -43,7 +43,7 @@ apiserver = [
     "secure==0.3.0"
 ]
 cggnn = [
-    "cg-gnn>=0.1.8",
+    "cg-gnn==0.1.8",
     "tables",
     "torch"
 ]
@@ -72,12 +72,16 @@ workflow = [
     "Jinja2==3.1.2",
     "tabulate==0.8.10",
     "Pillow==9.5.0",
-    "cg-gnn>=0.1.8",
+    "cg-gnn==0.1.8",
     "tables"
 ]
 all = [
+<<<<<<< HEAD
     "cg-gnn>=0.1.8",
     "torch",
+=======
+    "cg-gnn==0.1.8",
+>>>>>>> 6b624225241219994b6b362717b3ed8ca5c2c47d
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
     "uvicorn>=0.15.0,<0.16.0",

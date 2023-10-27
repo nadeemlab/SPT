@@ -196,28 +196,4 @@ workflow {
         output_prefix_ch,
         upload_importances_ch
     )
-    
-    // extract_data(
-
-    // ).set { data_ch }
-
-    // generate_graphs(
-
-    // ).set { graphs_ch }
-
-    // train_gnn(
-
-    // ).set { gnn_ch }
-
-    // find_importance(
-
-    // )
-
-    // merge_importance(
-
-    // ).set { importance_ch }
-
-    // make_interactives(
-
-    // ).set { interactives_ch }
 }

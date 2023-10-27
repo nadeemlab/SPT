@@ -13,7 +13,29 @@ def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt cggnn extract',
-        description='Extract information cg-gnn needs from SPT and save to file.'
+        description="""Extract information cg-gnn needs from SPT and save to file.
+
+This command is intended to be used after you've identified which strata you want to keep using `spt
+cggnn explore-classes`.
+
+```bash
+spt cggnn extract --spt_db_config_location <config_file_location> --study <study_name>
+    --strata <strata_to_keep> --output_location <output_folder>
+```
+
+Given the strata you want to keep as an unadorned list of integers, e.g., `--strata 9 10` (this
+parameter can be skipped if you simply want all strata), this extracts single-cell data and
+strata/class information to three files in the output location/folder/directory you provide:
+    * `cells.h5`, a binary HDF5 file containing cell information at the individual cell level, such
+      as its xy position, channel, and phenotype expressions, as a pandas DataFrame.
+    * `labels.h5`, a binary HDF file of a pandas DataFrame containing the class label of each tissue
+      specimen as an integer ID, which is automatically derived from the strata information.
+    * `label_to_result.json` is a simple JSON that translates each label ID to a human-interpretable
+      description, for use in visualizations after training.
+
+These files can be used with the standalone `cg-gnn` pip package to create cell graphs, train a
+model on them, and generate summary statistics and graphs from the model.
+"""
     )
     parser.add_argument(
         '--spt_db_config_location',

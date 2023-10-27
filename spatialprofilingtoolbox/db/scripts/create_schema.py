@@ -2,6 +2,7 @@
 import argparse
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
@@ -44,10 +45,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config_file = get_and_validate_database_config(args)
-    with SchemaInfuser(database_config_file=config_file) as infuser:
-        if not args.refresh_views_only and not args.recreate_views_only:
-            infuser.setup_schema(force=args.force)
-        else:
+
+    if not args.refresh_views_only and not args.recreate_views_only:
+        infuser = SchemaInfuser(database_config_file=config_file)
+        infuser.setup_lightweight_metaschema(force=args.force)
+    else:
+        studies = retrieve_study_names(config_file)
+        for study in studies:
+            infuser = SchemaInfuser(database_config_file=config_file, study=study)
             if args.refresh_views_only:
                 infuser.refresh_views()
             if args.recreate_views_only:

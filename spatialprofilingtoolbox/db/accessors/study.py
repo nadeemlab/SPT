@@ -45,7 +45,7 @@ class StudyAccess(SimpleReadOnlyProvider):
             cohorts=sample_cohorts,
         )
 
-    def get_study_components(self, study_name: str) -> StudyComponents:
+    def get_study_components(self, study: str) -> StudyComponents:
         substudy_tables = {
             'collection': 'specimen_collection_study',
             'measurement': 'specimen_measurement_study',
@@ -58,7 +58,7 @@ class StudyAccess(SimpleReadOnlyProvider):
             JOIN study_component sc ON sc.component_study=ss.name
             WHERE sc.primary_study=%s
             ;
-            ''', (study_name,))
+            ''', (study,))
             name = [
                 row[0] for row in self.cursor.fetchall()
                 if not self._is_secondary_substudy(row[0])
@@ -74,15 +74,20 @@ class StudyAccess(SimpleReadOnlyProvider):
         is_ondemand_calculation = bool(re.search(descriptor, substudy))
         return is_fractions or is_proximity_calculation or is_ondemand_calculation
 
-    def get_study_handles(self) -> list[StudyHandle]:
+    def get_study_specifiers(self) -> list[str]:
+        self.cursor.execute('SELECT study FROM study_lookup;')
+        rows = self.cursor.fetchall()
+        return [str(row[0]) for row in rows]
+
+    def get_study_handle(self, study: str) -> StudyHandle:
         handles: list[StudyHandle] = []
-        self.cursor.execute('SELECT study_specifier FROM study;')
+        self.cursor.execute('SELECT DISTINCT primary_study FROM study_component;')
         rows = self.cursor.fetchall()
         for row in rows:
             handle = str(row[0])
             display_name_detail = self._get_publication_summary_text(handle)
             handles.append(StudyHandle(handle=handle, display_name_detail=display_name_detail))
-        return handles
+        return handles[0]
 
     def _get_publication_summary_text(self, study: str) -> str:
         query = '''
@@ -238,17 +243,8 @@ class StudyAccess(SimpleReadOnlyProvider):
         )
         return Institution(name=name)
 
-    def get_study_from_specimen(self, specimen: str) -> str:
-        query = '''
-        SELECT sc.primary_study
-        FROM specimen_collection_process scp
-        JOIN study_component sc ON sc.component_study=scp.study
-        WHERE scp.specimen=%s
-        ;
-        '''
-        study = GetSingleResult.string(
-            self.cursor,
-            query=query,
-            parameters=(specimen,),
-        )
-        return study
+    def get_specimen_names(self) -> list[str]:
+        query = 'SELECT specimen FROM specimen_collection_process;'
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        return sorted([row[0] for row in rows])

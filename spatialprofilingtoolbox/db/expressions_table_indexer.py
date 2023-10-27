@@ -1,28 +1,28 @@
 """Set up source specimen index on big sparse expression values table."""
+
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 class ExpressionsTableIndexer:
     """Set up source specimen index on big sparse expression values table."""
-    @staticmethod
-    def ensure_indexed_expressions_table(connection):
-        if ExpressionsTableIndexer.expressions_table_is_indexed(connection):
-            logger.debug('Expression table is already indexed.')
-            return
-        with connection.cursor() as cursor:
-            ExpressionsTableIndexer.create_index(cursor)
-        connection.commit()
 
     @staticmethod
-    def expressions_table_is_indexed_cursor(cursor):
+    def ensure_indexed_expressions_tables(database_config_file: str | None):
+        studies = retrieve_study_names(database_config_file)
+        for study in studies:
+            with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+                if not ExpressionsTableIndexer.expressions_table_is_indexed(cursor):
+                    ExpressionsTableIndexer.create_index(cursor)
+                else:
+                    logger.debug('Expression table for "%s" is already indexed.', study)
+
+    @staticmethod
+    def expressions_table_is_indexed(cursor):
         columns = ExpressionsTableIndexer.get_expression_quantification_columns(cursor)
         return 'source_specimen' in columns
-
-    @staticmethod
-    def expressions_table_is_indexed(connection):
-        with connection.cursor() as cursor:
-            return ExpressionsTableIndexer.expressions_table_is_indexed_cursor(cursor)
 
     @staticmethod
     def get_expression_quantification_columns(cursor):
@@ -35,8 +35,8 @@ class ExpressionsTableIndexer:
 
     @staticmethod
     def create_index(cursor):
-        ETI = ExpressionsTableIndexer() #pylint: disable=invalid-name
-        ExpressionsTableIndexer.log_current_indexes(cursor)
+        ETI = ExpressionsTableIndexer #pylint: disable=invalid-name
+        ETI.log_current_indexes(cursor)
         logger.debug('Will create extra index column "source_specimen".')
         ETI.create_extra_column(cursor)
         ETI.copy_in_source_specimen_values(cursor)
@@ -118,21 +118,21 @@ class ExpressionsTableIndexer:
                 logger.debug('    %s', row)
 
     @staticmethod
-    def drop_index(connection):
-        is_indexed = ExpressionsTableIndexer.expressions_table_is_indexed(connection)
-        if not is_indexed:
-            logger.debug('There is no index to drop.')
-            return False
-        logger.debug('Will drop "source_specimen" column and index.')
-        with connection.cursor() as cursor:
-            cursor.execute('''
-            DROP INDEX IF EXISTS expression_source_specimen ;            
-            ''')
-            cursor.execute('''
-            ALTER TABLE expression_quantification
-            DROP COLUMN IF EXISTS source_specimen ;
-            ''')
-        connection.commit()
-        with connection.cursor() as cursor:
-            ExpressionsTableIndexer.log_current_indexes(cursor)
-        return True
+    def drop_index(database_config_file: str | None):
+        studies = retrieve_study_names(database_config_file)
+        for study in studies:
+            with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+                is_indexed = ExpressionsTableIndexer.expressions_table_is_indexed(cursor)
+                if not is_indexed:
+                    logger.debug('There is no index to drop for "%s" database.', study)
+                    continue
+                logger.debug('Will drop "source_specimen" column and index in "%s" database.', study)
+                cursor.execute('''
+                DROP INDEX IF EXISTS expression_source_specimen ;            
+                ''')
+                cursor.execute('''
+                ALTER TABLE expression_quantification
+                DROP COLUMN IF EXISTS source_specimen ;
+                ''')
+            with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+                ExpressionsTableIndexer.log_current_indexes(cursor)

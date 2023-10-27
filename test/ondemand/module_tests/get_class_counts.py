@@ -17,12 +17,12 @@ def get_counts(study_name, positives, negatives):
 if __name__ == '__main__':
     if sys.argv[1] == '1':
         counts = get_counts(
-            'Melanoma intralesional IL2 - measurement',
+            'Melanoma intralesional IL2',
             ['CD3'], ['CD8', 'CD20'],
         )
     elif sys.argv[1] == '2':
         counts = get_counts(
-            'Breast cancer IMC - measurement',
+            'Breast cancer IMC',
             ['CD3 epsilon'], ['CD20'],
         )
     else:

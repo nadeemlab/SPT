@@ -3,7 +3,7 @@
 from typing import cast
 from itertools import chain
 
-from spatialprofilingtoolbox import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import (
     phenotype_str_to_phenotype,
@@ -37,7 +37,8 @@ class SquidpyProvider(PendingProvider):
 
     @classmethod
     def get_or_create_feature_specification(cls,
-        study_name: str,
+        study: str,
+        data_analysis_study: str,
         feature_class: str | None = None,
         phenotypes: list[PhenotypeCriteria] | None = None,
         radius: float | None = None,
@@ -53,7 +54,8 @@ class SquidpyProvider(PendingProvider):
             phenotype_to_phenotype_str(phenotype) for phenotype in phenotypes
         ]
         specification = cls._get_feature_specification(
-            study_name,
+            study,
+            data_analysis_study,
             feature_class,
             phenotypes_strs,
             radius=radius,
@@ -62,12 +64,13 @@ class SquidpyProvider(PendingProvider):
             return specification
         if radius is not None:
             message = 'Creating feature with specifiers: (%s) %s, %s'
-            logger.debug(message, study_name, str(phenotypes_strs), radius)
+            logger.debug(message, data_analysis_study, str(phenotypes_strs), radius)
         else:
             message = 'Creating feature with specifiers: (%s) %s'
-            logger.debug(message, study_name, str(phenotypes_strs))
+            logger.debug(message, data_analysis_study, str(phenotypes_strs))
         return cls._create_feature_specification(
-            study_name,
+            study,
+            data_analysis_study,
             feature_class,
             phenotypes_strs,
             radius=radius,
@@ -75,7 +78,8 @@ class SquidpyProvider(PendingProvider):
 
     @classmethod
     def _get_feature_specification(cls,
-        study_name: str,
+        study: str,
+        data_analysis_study: str,
         feature_class:str,
         phenotypes_strs: list[str],
         radius: float | None = None,
@@ -88,8 +92,8 @@ class SquidpyProvider(PendingProvider):
         variable_portion_args = list(chain(*[
             [specifier, str(i+1)] for i, specifier in enumerate(specifiers)
         ]))
-        with DBCursor() as cursor:
-            cursor.execute(query, tuple([study_name] + variable_portion_args + [method]))
+        with DBCursor(study=study) as cursor:
+            cursor.execute(query, tuple([data_analysis_study] + variable_portion_args + [method]))
             rows = cursor.fetchall()
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
         for row in rows:
@@ -127,7 +131,8 @@ class SquidpyProvider(PendingProvider):
 
     @classmethod
     def _create_feature_specification(cls,
-        study_name: str,
+        study: str,
+        data_analysis_study: str,
         feature_class: str,
         phenotypes: list[str],
         radius: float | None = None,
@@ -137,12 +142,12 @@ class SquidpyProvider(PendingProvider):
         else:
             specifiers = tuple(phenotypes)
         method = cast(str, get_feature_description(feature_class))
-        return cls.create_feature_specification(specifiers, study_name, method)
+        return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
 
-    def have_feature_computed(self, feature_specification: str) -> None:
-        method = self.retrieve_feature_derivation_method(feature_specification)
+    def have_feature_computed(self, study: str, feature_specification: str) -> None:
+        method = self.retrieve_feature_derivation_method(study, feature_specification)
         feature_class = cast(str, lookup_squidpy_feature_class(method))
-        study_name, specifiers = SquidpyProvider.retrieve_specifiers(feature_specification)
+        data_analysis_study, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
         phenotypes: list[PhenotypeCriteria] = []
         if feature_class == 'co-occurrence':
             phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers[0:2]]
@@ -150,19 +155,19 @@ class SquidpyProvider(PendingProvider):
         else:
             phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers]
             radius = None
-        sample_identifiers = SquidpyProvider.get_sample_identifiers(feature_specification)
+        sample_identifiers = SquidpyProvider.get_sample_identifiers(study, feature_specification)
         for sample_identifier in sample_identifiers:
             value = compute_squidpy_metric_for_one_sample(
-                self.get_cells(sample_identifier, study_name),
+                self.get_cells(sample_identifier, data_analysis_study),
                 phenotypes,
                 feature_class,
                 radius=radius,
             )
             message = 'Computed feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)
-            with DBCursor() as cursor:
+            with DBCursor(study=study) as cursor:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
-        SquidpyProvider.drop_pending_computation(feature_specification)
+        SquidpyProvider.drop_pending_computation(study, feature_specification)
         logger.debug('Wrapped up squidpy metric calculation, feature "%s".', feature_specification)
         logger.debug(
             'The samples considered were: %s',

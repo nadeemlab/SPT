@@ -3,6 +3,8 @@
 from socketserver import BaseRequestHandler
 from json import dumps
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
@@ -99,10 +101,11 @@ class OnDemandRequestHandler(BaseRequestHandler):
         cells_selected: set[int] | None = None,
     ) -> dict[str, list[int]]:
         assert self.server.providers.counts is not None
+        measurement_study = self._get_measurement_study(study)
         return self.server.providers.counts.count_structures_of_partial_signed_signature(
             positives_signature,
             negatives_signature,
-            study,
+            measurement_study,
             tuple(sorted(list(cells_selected))) if cells_selected else None,
         )
 
@@ -120,13 +123,19 @@ class OnDemandRequestHandler(BaseRequestHandler):
         negatives: list[str],
     ) -> tuple[int | None, int | None]:
         assert self.server.providers.counts is not None
-        signature1 = self.server.providers.counts.compute_signature(positives, study_name)
-        signature2 = self.server.providers.counts.compute_signature(negatives, study_name)
+        measurement_study_name = self._get_measurement_study(study_name)
+        signature1 = self.server.providers.counts.compute_signature(positives, measurement_study_name)
+        signature2 = self.server.providers.counts.compute_signature(negatives, measurement_study_name)
         logger.info('Signature: %s, %s', signature1, signature2)
         return signature1, signature2
 
+    def _get_measurement_study(self, study: str) -> str:
+        with DBCursor(study=study) as cursor:
+            return StudyAccess(cursor).get_study_components(study).measurement
+
     def _handle_missing_study(self, study_name: str) -> bool:
-        if self._get_default_provider().has_study(study_name):
+        measurement_study_name = self._get_measurement_study(study_name)
+        if self._get_default_provider().has_study(measurement_study_name):
             return False
         logger.error('Study not known to ondemand service: %s', study_name)
         self._wrap_up_transmission()

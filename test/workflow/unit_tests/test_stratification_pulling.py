@@ -1,16 +1,14 @@
 """Test pulling out of stratification for cohorts from database."""
 import pandas as pd
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.stratification_puller import StratificationPuller
 
 
 def test_stratification_puller(measured_only: bool):
-    with DatabaseConnectionMaker(database_config_file='../db/.spt_db.config.container') as dcm:
-        with dcm.get_connection().cursor() as cursor:
-            puller = StratificationPuller(cursor)
-            puller.pull(measured_only=measured_only)
-            stratification = puller.get_stratification()
+    database_config_file='../db/.spt_db.config.container'
+    puller = StratificationPuller(database_config_file)
+    puller.pull(measured_only=measured_only)
+    stratification = puller.get_stratification()
 
     prefix = 'measured' if measured_only else 'all'
     filename = f'unit_tests/strata {prefix}/expected_stratification_assignments.tsv'

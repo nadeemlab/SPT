@@ -2,7 +2,7 @@
 __version__ = '0.10.0'
 
 from spatialprofilingtoolbox.db.database_connection import (
-    DatabaseConnectionMaker,
+    DBConnection,
     DBCursor,
     DBCredentials,
     QueryCursor,

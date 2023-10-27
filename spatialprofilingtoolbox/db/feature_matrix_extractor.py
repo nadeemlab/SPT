@@ -1,19 +1,14 @@
 """Convenience provision of a feature matrix for each study, retrieved from the SPT database."""
 
-from enum import Enum
-from enum import auto
 from typing import cast, Any
 from dataclasses import dataclass
 
 from pandas import DataFrame
-from psycopg2.extensions import cursor as Psycopg2Cursor
 
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_from_specimen
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.db.accessors import (
-    StudyAccess,
-    PhenotypesAccess,
-)
+from spatialprofilingtoolbox.db.accessors import PhenotypesAccess
 from spatialprofilingtoolbox.db.stratification_puller import (
     StratificationPuller,
     Stratification,
@@ -38,40 +33,12 @@ class MatrixBundle:
     continuous_dataframe: DataFrame | None = None
 
 
-class _DBSource(Enum):
-    """Indicator of intended database source."""
-    CURSOR = auto()
-    CONFIG_FILE = auto()
-    UNKNOWN = auto()
-
-
 class FeatureMatrixExtractor:
     """Pull from the database and create convenience bundle of feature matrices and metadata."""
-    cursor: Psycopg2Cursor
     database_config_file: str | None
-    db_source: _DBSource
 
-    def __init__(self,
-        cursor: Psycopg2Cursor | None = None,
-        database_config_file: str | None = None,
-    ) -> None:
-        self.cursor = cast(Psycopg2Cursor, cursor)
+    def __init__(self, database_config_file: str | None) -> None:
         self.database_config_file = database_config_file
-        if cursor is not None:
-            self.db_source = _DBSource.CURSOR
-        elif database_config_file is not None:
-            self.db_source = _DBSource.CONFIG_FILE
-        else:
-            self.db_source = _DBSource.UNKNOWN
-        self._report_on_arguments()
-
-    def _report_on_arguments(self):
-        if self.cursor is None and self.database_config_file is None:
-            logger.error('Must supply either cursor or database_config_file.')
-        if self.cursor is not None and self.database_config_file is not None:
-            message = 'A cursor and database configuration file were both specified. Using the '\
-                'cursor.'
-            logger.warning(message)
 
     def extract(self,
         specimen: str | None = None,
@@ -110,28 +77,13 @@ class FeatureMatrixExtractor:
                 3. `continuous_dataframe`, a DataFrame with continuous channel information if
                    continuous_also is true, otherwise this property is None.
         """
-        match self.db_source:
-            case _DBSource.CURSOR:
-                extraction = self._extract(
-                    specimen=specimen,
-                    study=study,
-                    histological_structures=histological_structures,
-                    continuous_also=continuous_also,
-                    retain_structure_id=retain_structure_id,
-                )
-            case _DBSource.CONFIG_FILE:
-                with DatabaseConnectionMaker(self.database_config_file) as dcm:
-                    with dcm.get_connection().cursor() as cursor:
-                        self.cursor = cursor
-                        extraction = self._extract(
-                            specimen=specimen,
-                            study=study,
-                            histological_structures=histological_structures,
-                            continuous_also=continuous_also,
-                            retain_structure_id=retain_structure_id,
-                        )
-            case _DBSource.UNKNOWN:
-                raise RuntimeError('The database source can not be determined.')
+        extraction = self._extract(
+            specimen=specimen,
+            study=study,
+            histological_structures=histological_structures,
+            continuous_also=continuous_also,
+            retain_structure_id=retain_structure_id,
+        )
         return extraction
 
     def _extract(self,
@@ -156,7 +108,7 @@ class FeatureMatrixExtractor:
         )
         if study is None:
             assert specimen is not None
-            study = StudyAccess(self.cursor).get_study_from_specimen(specimen)
+            study = retrieve_study_from_specimen(self.database_config_file, specimen)
 
         return self._create_feature_matrices(
             data_arrays,
@@ -173,7 +125,7 @@ class FeatureMatrixExtractor:
         continuous_also: bool = False,
     ) -> StudyDataArrays:
         logger.info('Retrieving expression data from database.')
-        puller = SparseMatrixPuller(self.cursor)
+        puller = SparseMatrixPuller(self.database_config_file)
         puller.pull(
             specimen=specimen,
             study=study,
@@ -190,7 +142,7 @@ class FeatureMatrixExtractor:
         histological_structures: set[int] | None = None,
     ) -> StudyStructureCentroids:
         logger.info('Retrieving polygon centroids from shapefiles in database.')
-        puller = StructureCentroidsPuller(self.cursor)
+        puller = StructureCentroidsPuller(self.database_config_file)
         puller.pull(
             specimen=specimen,
             study=study,
@@ -203,10 +155,11 @@ class FeatureMatrixExtractor:
     def _retrieve_phenotypes(self, study_name: str) -> dict[str, PhenotypeCriteria]:
         logger.info('Retrieving phenotypes from database.')
         phenotypes: dict[str, PhenotypeCriteria] = {}
-        phenotype_access = PhenotypesAccess(self.cursor)
-        for symbol_data in phenotype_access.get_phenotype_symbols(study_name):
-            symbol = symbol_data.handle_string
-            phenotypes[symbol] = phenotype_access.get_phenotype_criteria(study_name, symbol)
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            phenotype_access = PhenotypesAccess(cursor)
+            for symbol_data in phenotype_access.get_phenotype_symbols(study_name):
+                symbol = symbol_data.handle_string
+                phenotypes[symbol] = phenotype_access.get_phenotype_criteria(study_name, symbol)
         logger.info('Done retrieving phenotypes.')
         return phenotypes
 
@@ -275,8 +228,8 @@ class FeatureMatrixExtractor:
         number_channels: int,
     ) -> list[float | int]:
         template = '{0:0%sb}' % number_channels   # pylint: disable=consider-using-f-string
-        feature_vector = [int(value) for value in list(template.format(binary)[::-1])]
-        return [centroid[0], centroid[1]] + feature_vector
+        feature_vector = cast(list[float | int], [int(value) for value in list(template.format(binary)[::-1])])
+        return cast(list[float | int], list(centroid)) + feature_vector
 
     def _create_channel_information(self,
         study_information: dict[str, dict[str, Any]]
@@ -297,17 +250,7 @@ class FeatureMatrixExtractor:
 
     def extract_cohorts(self, study: str) -> dict[str, DataFrame]:
         """Extract specimen cohort information for every specimen in a study."""
-        match self.db_source:
-            case _DBSource.CURSOR:
-                extraction = self._extract_cohorts(study)
-            case _DBSource.CONFIG_FILE:
-                with DatabaseConnectionMaker(self.database_config_file) as dcm:
-                    with dcm.get_connection().cursor() as cursor:
-                        self.cursor = cursor
-                        extraction = self._extract_cohorts(study)
-            case _DBSource.UNKNOWN:
-                raise RuntimeError('The database source can not be determined.')
-        return extraction
+        return self._extract_cohorts(study)
 
     def _extract_cohorts(self, study: str) -> dict[str, DataFrame]:
         stratification = self._retrieve_derivative_stratification_from_database()
@@ -320,19 +263,20 @@ class FeatureMatrixExtractor:
 
     def _retrieve_derivative_stratification_from_database(self) -> Stratification:
         logger.info('Retrieving stratification from database.')
-        puller = StratificationPuller(self.cursor)
+        puller = StratificationPuller(self.database_config_file)
         puller.pull(measured_only=True)
         stratification = puller.get_stratification()
         logger.info('Done retrieving stratification.')
         return stratification
 
     def _retrieve_component_studies(self, study: str) -> set[str]:
-        self.cursor.execute(f'''
-            SELECT component_study
-            FROM study_component
-            WHERE primary_study = '{study}';
-        ''')
-        rows = self.cursor.fetchall()
+        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+            cursor.execute(f'''
+                SELECT component_study
+                FROM study_component
+                WHERE primary_study = '{study}';
+            ''')
+            rows = cursor.fetchall()
         lookup: set[str] = set()
         for row in rows:
             lookup.add(row[0])

@@ -4,8 +4,7 @@ from argparse import ArgumentParser
 
 from pandas import DataFrame
 
-from spatialprofilingtoolbox.cggnn import extract_cggnn_data
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
@@ -163,6 +162,11 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def save_importance(df: DataFrame, spt_db_config_location: str, study: str) -> None:
+    """Save cell importance scores as defined by cggnn to the database."""
+    transcribe_importance(df, spt_db_config_location, study)
+
+
 if __name__ == "__main__":
     args = parse_arguments()
     df_cell, df_label, label_to_result = extract_cggnn_data(
@@ -200,5 +204,5 @@ if __name__ == "__main__":
         df.to_csv(f'{args.output_prefix}_importances.csv')
         save(model.state_dict(), f'{args.output_prefix}_model.pt')
     if args.upload_importances:
-        connection = DatabaseConnectionMaker(args.spt_db_config_location).get_connection()
-        transcribe_importance(df, connection)
+        save_importance(df, args.spt_db_config_location, args.study)
+

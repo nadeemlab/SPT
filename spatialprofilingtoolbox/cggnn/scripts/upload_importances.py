@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 
 from pandas import read_csv
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 
 
@@ -27,6 +26,12 @@ def parse_arguments():
         required=True
     )
     parser.add_argument(
+        '--study',
+        type=str,
+        help='Specifier for the study (short name).',
+        required=True
+    )
+    parser.add_argument(
         '--cohort_stratifier',
         type=str,
         help='Name of the classification cohort variable the GNN was trained on.',
@@ -39,6 +44,4 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     df = read_csv(args.importances_csv_path, index_col=0)
-    connection = DatabaseConnectionMaker(args.spt_db_config_location).get_connection()
-    transcribe_importance(df, connection, cohort_stratifier=args.cohort_stratifier)
-    connection.close()
+    transcribe_importance(df, args.spt_db_config_location, args.study, cohort_stratifier=args.cohort_stratifier)

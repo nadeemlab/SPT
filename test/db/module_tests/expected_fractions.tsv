@@ -1,0 +1,347 @@
+Channel	Sample	Fraction
+B2M	lesion 0_1	1.0
+B2M	lesion 0_2	1.0
+B2M	lesion 0_3	0.93
+B2M	lesion 6_1	0.83
+B2M	lesion 6_2	0.78
+B2M	lesion 6_3	0.88
+B2M	lesion 6_4	1.0
+B7H3	lesion 0_1	0.85
+B7H3	lesion 0_2	0.06
+B7H3	lesion 0_3	0.04
+B7H3	lesion 6_1	0.99
+B7H3	lesion 6_2	0.85
+B7H3	lesion 6_3	0.62
+B7H3	lesion 6_4	0.91
+CD14	lesion 0_1	0.07
+CD14	lesion 0_2	0.81
+CD14	lesion 0_3	0.06
+CD14	lesion 6_1	0.34
+CD14	lesion 6_2	0.35
+CD14	lesion 6_3	0.4
+CD14	lesion 6_4	0.23
+CD163	lesion 0_1	0.25
+CD163	lesion 0_2	0.02
+CD163	lesion 0_3	0.06
+CD163	lesion 6_1	0.29
+CD163	lesion 6_2	0.21
+CD163	lesion 6_3	0.06
+CD163	lesion 6_4	0.19
+CD20	lesion 0_1	0.25
+CD20	lesion 0_2	0.03
+CD20	lesion 0_3	0.05
+CD20	lesion 6_1	0.03
+CD20	lesion 6_2	0.03
+CD20	lesion 6_3	0.01
+CD20	lesion 6_4	0.13
+CD25	lesion 0_2	0.16
+CD25	lesion 6_1	0.12
+CD25	lesion 6_2	0.01
+CD25	lesion 6_3	0.03
+CD25	lesion 6_4	0.01
+CD25	lesion 0_1	0.0
+CD25	lesion 0_3	0.0
+CD27	lesion 0_1	0.01
+CD27	lesion 0_2	0.21
+CD27	lesion 0_3	0.03
+CD27	lesion 6_1	0.43
+CD27	lesion 6_2	0.1
+CD27	lesion 6_3	0.11
+CD27	lesion 6_4	0.1
+CD3	lesion 0_1	0.27
+CD3	lesion 0_2	0.58
+CD3	lesion 0_3	0.53
+CD3	lesion 6_1	0.41
+CD3	lesion 6_2	0.38
+CD3	lesion 6_3	0.56
+CD3	lesion 6_4	0.45
+CD4	lesion 0_1	0.31
+CD4	lesion 0_2	0.32
+CD4	lesion 0_3	0.23
+CD4	lesion 6_1	0.36
+CD4	lesion 6_2	0.18
+CD4	lesion 6_3	0.27
+CD4	lesion 6_4	0.29
+CD4+ T cell	lesion 0_1	0.09
+CD4+ T cell	lesion 0_2	0.25
+CD4+ T cell	lesion 0_3	0.22
+CD4+ T cell	lesion 6_1	0.16
+CD4+ T cell	lesion 6_2	0.14
+CD4+ T cell	lesion 6_3	0.2
+CD4+ T cell	lesion 6_4	0.2
+CD56	lesion 0_3	0.02
+CD56	lesion 6_1	0.11
+CD56	lesion 6_2	0.14
+CD56	lesion 6_3	0.04
+CD56	lesion 6_4	0.25
+CD56	lesion 0_1	0.0
+CD56	lesion 0_2	0.0
+CD68	lesion 0_2	1.0
+CD68	lesion 0_3	0.03
+CD68	lesion 6_1	0.05
+CD68	lesion 6_2	0.12
+CD68	lesion 6_3	0.11
+CD68	lesion 6_4	0.02
+CD68	lesion 0_1	0.0
+CD8	lesion 0_1	0.13
+CD8	lesion 0_2	0.31
+CD8	lesion 0_3	0.31
+CD8	lesion 6_1	0.08
+CD8	lesion 6_2	0.2
+CD8	lesion 6_3	0.28
+CD8	lesion 6_4	0.17
+CD8+ T cell	lesion 0_1	0.05
+CD8+ T cell	lesion 0_2	0.25
+CD8+ T cell	lesion 0_3	0.28
+CD8+ T cell	lesion 6_1	0.07
+CD8+ T cell	lesion 6_2	0.2
+CD8+ T cell	lesion 6_3	0.28
+CD8+ T cell	lesion 6_4	0.13
+DAPI	lesion 0_1	1.0
+DAPI	lesion 0_2	1.0
+DAPI	lesion 0_3	1.0
+DAPI	lesion 6_1	1.0
+DAPI	lesion 6_2	1.0
+DAPI	lesion 6_3	1.0
+DAPI	lesion 6_4	1.0
+FOXP3	lesion 0_1	0.02
+FOXP3	lesion 0_2	0.02
+FOXP3	lesion 6_1	0.19
+FOXP3	lesion 6_2	0.03
+FOXP3	lesion 6_3	0.05
+FOXP3	lesion 6_4	0.08
+FOXP3	lesion 0_3	0.0
+IDO1	lesion 0_2	0.01
+IDO1	lesion 6_1	0.03
+IDO1	lesion 6_3	0.01
+IDO1	lesion 0_1	0.0
+IDO1	lesion 0_3	0.0
+IDO1	lesion 6_2	0.0
+IDO1	lesion 6_4	0.0
+KI67	lesion 0_1	0.28
+KI67	lesion 0_2	0.02
+KI67	lesion 6_1	0.01
+KI67	lesion 6_2	0.03
+KI67	lesion 6_3	0.04
+KI67	lesion 6_4	0.07
+KI67	lesion 0_3	0.0
+LAG3	lesion 0_2	0.04
+LAG3	lesion 0_3	0.03
+LAG3	lesion 6_1	0.02
+LAG3	lesion 6_3	0.08
+LAG3	lesion 6_4	0.03
+LAG3	lesion 0_1	0.0
+LAG3	lesion 6_2	0.0
+MHCI	lesion 0_1	1.0
+MHCI	lesion 0_2	0.72
+MHCI	lesion 0_3	0.41
+MHCI	lesion 6_1	0.89
+MHCI	lesion 6_2	0.42
+MHCI	lesion 6_3	0.8
+MHCI	lesion 6_4	0.85
+MHCII	lesion 0_1	0.08
+MHCII	lesion 0_2	0.67
+MHCII	lesion 0_3	0.07
+MHCII	lesion 6_1	0.51
+MHCII	lesion 6_2	0.16
+MHCII	lesion 6_3	0.4
+MHCII	lesion 6_4	0.16
+MRC1	lesion 0_1	0.56
+MRC1	lesion 0_2	0.18
+MRC1	lesion 0_3	0.14
+MRC1	lesion 6_1	0.12
+MRC1	lesion 6_2	0.18
+MRC1	lesion 6_3	0.25
+MRC1	lesion 6_4	0.08
+PD1	lesion 0_1	0.04
+PD1	lesion 0_2	0.08
+PD1	lesion 6_1	0.15
+PD1	lesion 6_2	0.06
+PD1	lesion 6_3	0.11
+PD1	lesion 6_4	0.05
+PD1	lesion 0_3	0.0
+PDL1	lesion 0_2	0.08
+PDL1	lesion 0_3	0.02
+PDL1	lesion 6_2	0.02
+PDL1	lesion 6_3	0.37
+PDL1	lesion 6_4	0.01
+PDL1	lesion 0_1	0.0
+PDL1	lesion 6_1	0.0
+S100B	lesion 0_1	0.28
+S100B	lesion 0_3	0.01
+S100B	lesion 6_1	0.01
+S100B	lesion 6_3	0.01
+S100B	lesion 0_2	0.0
+S100B	lesion 6_2	0.0
+S100B	lesion 6_4	0.0
+SOX10	lesion 0_1	0.36
+SOX10	lesion 6_1	0.01
+SOX10	lesion 0_2	0.0
+SOX10	lesion 0_3	0.0
+SOX10	lesion 6_2	0.0
+SOX10	lesion 6_3	0.0
+SOX10	lesion 6_4	0.0
+T cell/null phenotype	lesion 0_2	0.02
+T cell/null phenotype	lesion 0_3	0.01
+T cell/null phenotype	lesion 6_1	0.02
+T cell/null phenotype	lesion 6_2	0.01
+T cell/null phenotype	lesion 6_3	0.01
+T cell/null phenotype	lesion 0_1	0.0
+T cell/null phenotype	lesion 6_4	0.0
+TGM2	lesion 0_1	0.04
+TGM2	lesion 0_2	0.24
+TGM2	lesion 6_2	0.01
+TGM2	lesion 6_3	0.35
+TGM2	lesion 6_4	0.02
+TGM2	lesion 0_3	0.0
+TGM2	lesion 6_1	0.0
+TIM3	lesion 0_1	0.28
+TIM3	lesion 0_2	0.79
+TIM3	lesion 0_3	0.09
+TIM3	lesion 6_1	0.91
+TIM3	lesion 6_2	0.72
+TIM3	lesion 6_3	0.55
+TIM3	lesion 6_4	0.66
+Tumor	lesion 0_1	0.34
+Tumor	lesion 6_1	0.01
+Tumor	lesion 0_2	0.0
+Tumor	lesion 0_3	0.0
+Tumor	lesion 6_2	0.0
+Tumor	lesion 6_3	0.0
+Tumor	lesion 6_4	0.0
+CD20	BaselTMA_SP42_5_X8Y7	0.013439
+CD20	BaselTMA_SP43_1_X1Y8	0.007911
+CD20	BaselTMA_SP43_3_X13Y6	0.015355
+CD20	BaselTMA_SP43_4_X15Y3	0.004226
+CD3 epsilon	BaselTMA_SP42_5_X8Y7	0.105417
+CD3 epsilon	BaselTMA_SP43_1_X1Y8	0.006535
+CD3 epsilon	BaselTMA_SP43_3_X13Y6	0.013435
+CD3 epsilon	BaselTMA_SP43_4_X15Y3	0.012028
+CD31	BaselTMA_SP42_5_X8Y7	0.336413
+CD31	BaselTMA_SP43_1_X1Y8	0.567939
+CD31	BaselTMA_SP43_3_X13Y6	0.59309
+CD31	BaselTMA_SP43_4_X15Y3	0.407672
+CD44	BaselTMA_SP42_5_X8Y7	0.049979
+CD44	BaselTMA_SP43_1_X1Y8	0.018575
+CD44	BaselTMA_SP43_3_X13Y6	0.02943
+CD44	BaselTMA_SP43_4_X15Y3	0.123862
+CD45	BaselTMA_SP42_5_X8Y7	0.348173
+CD45	BaselTMA_SP43_1_X1Y8	0.007567
+CD45	BaselTMA_SP43_3_X13Y6	0.094049
+CD45	BaselTMA_SP43_4_X15Y3	0.03381
+CD68	BaselTMA_SP42_5_X8Y7	0.050398
+CD68	BaselTMA_SP43_1_X1Y8	0.023391
+CD68	BaselTMA_SP43_3_X13Y6	0.175943
+CD68	BaselTMA_SP43_4_X15Y3	0.058842
+Carbonic Anhydrase IX	BaselTMA_SP42_5_X8Y7	0.000839
+Carbonic Anhydrase IX	BaselTMA_SP43_1_X1Y8	0.132438
+Carbonic Anhydrase IX	BaselTMA_SP43_3_X13Y6	0.033269
+Carbonic Anhydrase IX	BaselTMA_SP43_4_X15Y3	0.014304
+Cleaved Caspase3	BaselTMA_SP42_5_X8Y7	0.312893
+Cleaved Caspase3	BaselTMA_SP43_1_X1Y8	0.95872
+Cleaved Caspase3	BaselTMA_SP43_3_X13Y6	0.979526
+Cleaved Caspase3	BaselTMA_SP43_4_X15Y3	0.163524
+Cytokeratin 5	BaselTMA_SP42_5_X8Y7	0.009659
+Cytokeratin 5	BaselTMA_SP43_1_X1Y8	0.006191
+Cytokeratin 5	BaselTMA_SP43_3_X13Y6	0.101087
+Cytokeratin 5	BaselTMA_SP43_4_X15Y3	0.023081
+Cytokeratin 7	BaselTMA_SP42_5_X8Y7	0.007139
+Cytokeratin 7	BaselTMA_SP43_1_X1Y8	0.230478
+Cytokeratin 7	BaselTMA_SP43_3_X13Y6	0.261036
+Cytokeratin 7	BaselTMA_SP43_4_X15Y3	0.412873
+Cytokeratin 8/18	BaselTMA_SP42_5_X8Y7	0.099118
+Cytokeratin 8/18	BaselTMA_SP43_1_X1Y8	0.828689
+Cytokeratin 8/18	BaselTMA_SP43_3_X13Y6	0.27959
+Cytokeratin 8/18	BaselTMA_SP43_4_X15Y3	0.511053
+Cytokeratin19	BaselTMA_SP42_5_X8Y7	0.010079
+Cytokeratin19	BaselTMA_SP43_1_X1Y8	0.728242
+Cytokeratin19	BaselTMA_SP43_3_X13Y6	0.228406
+Cytokeratin19	BaselTMA_SP43_4_X15Y3	0.001625
+E-Cadherin / P-Cadherin	BaselTMA_SP42_5_X8Y7	0.142797
+E-Cadherin / P-Cadherin	BaselTMA_SP43_1_X1Y8	0.504987
+E-Cadherin / P-Cadherin	BaselTMA_SP43_3_X13Y6	0.09213
+E-Cadherin / P-Cadherin	BaselTMA_SP43_4_X15Y3	0.43433
+EGFR	BaselTMA_SP42_5_X8Y7	0.123477
+EGFR	BaselTMA_SP43_1_X1Y8	0.736154
+EGFR	BaselTMA_SP43_3_X13Y6	0.834293
+EGFR	BaselTMA_SP43_4_X15Y3	0.344278
+Estrogen Receptor Alpha	BaselTMA_SP42_5_X8Y7	0.020159
+Estrogen Receptor Alpha	BaselTMA_SP43_1_X1Y8	0.532163
+Estrogen Receptor Alpha	BaselTMA_SP43_3_X13Y6	0.131158
+Estrogen Receptor Alpha	BaselTMA_SP43_4_X15Y3	0.075747
+Fibronectin	BaselTMA_SP42_5_X8Y7	0.270474
+Fibronectin	BaselTMA_SP43_1_X1Y8	0.466804
+Fibronectin	BaselTMA_SP43_3_X13Y6	0.735124
+Fibronectin	BaselTMA_SP43_4_X15Y3	0.960988
+GATA3	BaselTMA_SP42_5_X8Y7	0.162116
+GATA3	BaselTMA_SP43_1_X1Y8	0.802545
+GATA3	BaselTMA_SP43_3_X13Y6	0.326295
+GATA3	BaselTMA_SP43_4_X15Y3	0.409947
+H3 (Lys28) trimethylate	BaselTMA_SP42_5_X8Y7	0.271314
+H3 (Lys28) trimethylate	BaselTMA_SP43_1_X1Y8	0.91916
+H3 (Lys28) trimethylate	BaselTMA_SP43_3_X13Y6	0.751119
+H3 (Lys28) trimethylate	BaselTMA_SP43_4_X15Y3	0.674577
+Histone H3	BaselTMA_SP42_5_X8Y7	0.070978
+Histone H3	BaselTMA_SP43_1_X1Y8	0.462332
+Histone H3	BaselTMA_SP43_3_X13Y6	0.658349
+Histone H3	BaselTMA_SP43_4_X15Y3	0.011053
+Keratin 14 (KRT14)	BaselTMA_SP42_5_X8Y7	0.016799
+Keratin 14 (KRT14)	BaselTMA_SP43_1_X1Y8	0.002751
+Keratin 14 (KRT14)	BaselTMA_SP43_3_X13Y6	0.090211
+Keratin 14 (KRT14)	BaselTMA_SP43_4_X15Y3	0.021456
+Ki-67	BaselTMA_SP42_5_X8Y7	0.029399
+Ki-67	BaselTMA_SP43_1_X1Y8	0.106983
+Ki-67	BaselTMA_SP43_3_X13Y6	0.044145
+Ki-67	BaselTMA_SP43_4_X15Y3	0.131339
+Luminal	BaselTMA_SP42_5_X8Y7	0.000419
+Luminal	BaselTMA_SP43_1_X1Y8	0.114207
+Luminal	BaselTMA_SP43_3_X13Y6	0.012795
+Luminal	BaselTMA_SP43_4_X15Y3	0.070546
+Progesterone Receptor A/B	BaselTMA_SP42_5_X8Y7	0.001679
+Progesterone Receptor A/B	BaselTMA_SP43_1_X1Y8	0.120055
+Progesterone Receptor A/B	BaselTMA_SP43_3_X13Y6	0.024952
+Progesterone Receptor A/B	BaselTMA_SP43_4_X15Y3	0.293237
+Proliferative	BaselTMA_SP42_5_X8Y7	0.029399
+Proliferative	BaselTMA_SP43_1_X1Y8	0.106983
+Proliferative	BaselTMA_SP43_3_X13Y6	0.044145
+Proliferative	BaselTMA_SP43_4_X15Y3	0.131339
+Rabbit IgG (H+L)	BaselTMA_SP42_5_X8Y7	0.020159
+Rabbit IgG (H+L)	BaselTMA_SP43_1_X1Y8	0.532163
+Rabbit IgG (H+L)	BaselTMA_SP43_3_X13Y6	0.131158
+Rabbit IgG (H+L)	BaselTMA_SP43_4_X15Y3	0.075747
+SMA	BaselTMA_SP42_5_X8Y7	0.275094
+SMA	BaselTMA_SP43_1_X1Y8	0.488132
+SMA	BaselTMA_SP43_3_X13Y6	0.318618
+SMA	BaselTMA_SP43_4_X15Y3	0.80299
+Slug	BaselTMA_SP42_5_X8Y7	0.000839
+Slug	BaselTMA_SP43_1_X1Y8	0.045407
+Slug	BaselTMA_SP43_3_X13Y6	0.001919
+Slug	BaselTMA_SP43_4_X15Y3	0.179778
+Twist	BaselTMA_SP42_5_X8Y7	0.149937
+Twist	BaselTMA_SP43_1_X1Y8	0.747506
+Twist	BaselTMA_SP43_3_X13Y6	0.695457
+Twist	BaselTMA_SP43_4_X15Y3	0.56827
+c-Myc	BaselTMA_SP42_5_X8Y7	0.000839
+c-Myc	BaselTMA_SP43_1_X1Y8	0.006535
+c-Myc	BaselTMA_SP43_3_X13Y6	0.003198
+c-Myc	BaselTMA_SP43_4_X15Y3	0.0
+c-erbB-2 - Her2	BaselTMA_SP42_5_X8Y7	0.060898
+c-erbB-2 - Her2	BaselTMA_SP43_1_X1Y8	0.719986
+c-erbB-2 - Her2	BaselTMA_SP43_3_X13Y6	0.256557
+c-erbB-2 - Her2	BaselTMA_SP43_4_X15Y3	0.010728
+cleaved PARP	BaselTMA_SP42_5_X8Y7	0.312893
+cleaved PARP	BaselTMA_SP43_1_X1Y8	0.95872
+cleaved PARP	BaselTMA_SP43_3_X13Y6	0.979526
+cleaved PARP	BaselTMA_SP43_4_X15Y3	0.163524
+p53	BaselTMA_SP42_5_X8Y7	0.226375
+p53	BaselTMA_SP43_1_X1Y8	0.639834
+p53	BaselTMA_SP43_3_X13Y6	0.764555
+p53	BaselTMA_SP43_4_X15Y3	0.35143
+pan Cytokeratin	BaselTMA_SP42_5_X8Y7	0.111297
+pan Cytokeratin	BaselTMA_SP43_1_X1Y8	0.828689
+pan Cytokeratin	BaselTMA_SP43_3_X13Y6	0.337811
+pan Cytokeratin	BaselTMA_SP43_4_X15Y3	0.4171
+vWF	BaselTMA_SP42_5_X8Y7	0.336413
+vWF	BaselTMA_SP43_1_X1Y8	0.567939
+vWF	BaselTMA_SP43_3_X13Y6	0.59309
+vWF	BaselTMA_SP43_4_X15Y3	0.407672

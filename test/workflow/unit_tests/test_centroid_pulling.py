@@ -1,16 +1,14 @@
 """Test pulling out of centroids of each structure (cell) in the database"""
 import sys
 
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
 from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
     StructureCentroidsPuller
 
 if __name__ == '__main__':
-    with DatabaseConnectionMaker(database_config_file='../db/.spt_db.config.container') as dcm:
-        with dcm.get_connection().cursor() as cursor:
-            puller = StructureCentroidsPuller(cursor)
-            puller.pull()
-            structure_centroids = puller.get_structure_centroids()
+    database_config_file='../db/.spt_db.config.container'
+    puller = StructureCentroidsPuller(database_config_file)
+    puller.pull()
+    structure_centroids = puller.get_structure_centroids()
 
     for study_name, study in structure_centroids.get_studies().items():
         if study.keys() != set(['lesion 0_1', 'lesion 6_1']):

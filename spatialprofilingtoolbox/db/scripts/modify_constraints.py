@@ -19,7 +19,8 @@ except ModuleNotFoundError as e:
         SuggestExtrasException
     SuggestExtrasException(e, 'db')
 import pandas as pd  # pylint: disable=ungrouped-imports
-from spatialprofilingtoolbox import DatabaseConnectionMaker  # pylint: disable=ungrouped-imports
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('modify-constraints')
@@ -103,12 +104,17 @@ def print_constraint_status(column_names, info_rows):
 
 
 def toggle_constraints(
-    database_config_file,
+    database_config_file: str,
+    study: str,
     state: DBConstraintsToggling = DBConstraintsToggling.RECREATE,
-    all_tables=False,
+    all_tables: bool = False,
 ):
-    with DatabaseConnectionMaker(database_config_file) as dcm:
-        cursor = dcm.get_connection().cursor()
+    studies = retrieve_study_names(database_config_file)
+    if not study in studies:
+        logger.warning('Study named "%s" not in database.', study)
+        return
+
+    with DBCursor(database_config_file=database_config_file, study=study) as cursor:
         try:
             if state == DBConstraintsToggling.RECREATE:
                 pattern = '''
@@ -145,9 +151,6 @@ def toggle_constraints(
             cursor.close()
             raise exception
 
-        cursor.close()
-        dcm.get_connection().commit()
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -166,6 +169,13 @@ if __name__ == '__main__':
         type=str,
         required=True,
         help='The file for database configuration. The user specified must have elevated privilege.'
+    )
+    parser.add_argument(
+        '--study',
+        dest='study',
+        type=str,
+        required=True,
+        help='Specifier of the study (short name).'
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -198,4 +208,4 @@ if __name__ == '__main__':
     else:
         raise ValueError('--recreate or --drop must be flagged.')
 
-    toggle_constraints(database_config_file_elevated, state=db_state, all_tables=args.all_tables)
+    toggle_constraints(database_config_file_elevated, args.study, state=db_state, all_tables=args.all_tables)

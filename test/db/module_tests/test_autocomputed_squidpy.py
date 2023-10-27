@@ -4,12 +4,14 @@ can be computed automatically after data import if desired.
 """
 
 from pandas import read_csv
+from pandas import DataFrame
 from numpy import isnan
 
 from spatialprofilingtoolbox.db.squidpy_metrics import create_and_transcribe_squidpy_features
-from spatialprofilingtoolbox.db.database_connection import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox import get_feature_description
 
+FeatureVector = tuple[tuple[str, float], ...]
 
 def get_expected_records():
     filename = 'module_tests/expected_auto_correlations.tsv'
@@ -19,17 +21,31 @@ def get_expected_records():
     df['sample'] = df['sample'].astype(str)
     df['value'] = df['value'].astype(float)
     df['value'] = df['value'].apply(round6)
-    return [tuple(row) for _, row in df.iterrows()]
+    return extract_feature_vectors(df)
+
+
+def extract_feature_vectors(df: DataFrame) -> list[FeatureVector]:
+    return [
+        create_feature_vector(_df)
+        for _, _df in df.groupby('feature')
+    ]
+    
+
+def create_feature_vector(df: DataFrame) -> FeatureVector:
+    rows = [(row['sample'], row['value']) for i, row in df.iterrows()]
+    return tuple(sorted(rows, key=lambda x: x[0]))
 
 
 def check_records(feature_values):
     rows = [(row[0], row[1], round6(row[2])) for row in feature_values]
-    missing = set(get_expected_records()).difference(rows)
+    df = DataFrame(rows, columns=['feature', 'sample', 'value'])
+    feature_vectors = extract_feature_vectors(df)
+    missing = set(get_expected_records()).difference(feature_vectors)
     if len(missing) > 0:
         raise ValueError(f'Expected to find records: {sorted(missing)}\nGot: {sorted(rows)}')
 
     print('All expected records found.')
-    unexpected = set(rows).difference(get_expected_records())
+    unexpected = set(feature_vectors).difference(get_expected_records())
     if len(unexpected) > 0:
         raise ValueError(f'Got some unexpected records: {unexpected}')
     print('No unexpected records encountered.')
@@ -58,9 +74,9 @@ def retrieve_feature_values(connection):
 def test_autocomputed_squidpy_features():
     database_config_file='.spt_db.config.container'
     study = 'Melanoma intralesional IL2'
-    with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
-        create_and_transcribe_squidpy_features(dcm, study)
-        feature_values = retrieve_feature_values(dcm.get_connection())
+    create_and_transcribe_squidpy_features(database_config_file, study)
+    with DBConnection(database_config_file=database_config_file, study=study) as connection:
+        feature_values = retrieve_feature_values(connection)
     print('\n'.join([str(r) for r in feature_values[0:10]] + ['...']))
     check_records(feature_values)
 

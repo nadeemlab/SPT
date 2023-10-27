@@ -4,7 +4,7 @@ CLI utility to drop a study from an ADI-formatted database.
 import argparse
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_dropper import StudyDropper
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 
@@ -26,6 +26,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     database_config_file = get_and_validate_database_config(args)
-    with DatabaseConnectionMaker(database_config_file=database_config_file) as dcm:
-        connection = dcm.get_connection()
-        StudyDropper.drop(connection, study=args.study_name)
+    StudyDropper.drop(database_config_file, study=args.study_name)

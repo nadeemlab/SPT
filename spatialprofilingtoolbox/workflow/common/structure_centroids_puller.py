@@ -6,6 +6,7 @@ from typing import cast
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
@@ -21,18 +22,18 @@ logger = colorized_logger(__name__)
 class StructureCentroidsPuller:
     """Retrieve positional information for all cells in single cell database."""
 
-    cursor: Psycopg2Cursor
+    database_config_file: str | None
     _structure_centroids: StructureCentroids
 
-    def __init__(self, cursor: Psycopg2Cursor):
-        self.cursor = cursor
+    def __init__(self, database_config_file: str | None):
+        self.database_config_file = database_config_file
         self._structure_centroids = StructureCentroids()
 
     def pull_and_write_to_files(self, data_directory: str):
         self.get_structure_centroids().set_data_directory(data_directory)
         study_names = self._get_study_names()
-        for study_index, study_name in enumerate(study_names):
-            specimens = self._get_specimens(study_name)
+        for study_index, (study_name, measurement_study) in enumerate(study_names):
+            specimens = self._get_specimens(study_name, measurement_study)
             progress_reporter = FractionalProgressReporter(
                 len(specimens),
                 parts=8,
@@ -66,47 +67,52 @@ class StructureCentroidsPuller:
             If None, all structures are fetched.
         """
         study_names = self._get_study_names(study=study)
-        for study_name in study_names:
-            parameters: list[str | tuple[str, ...]] = [study_name]
-            if specimen is not None:
-                parameters.append(specimen)
-                specimen_count = 1
-            else:
-                specimen_count = self._get_specimen_count(study_name, self.cursor)
-            if histological_structures is not None:
-                parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
+        for study_name, measurement_study in study_names:
+            parameters: list[str | tuple[str, ...]] = [measurement_study]
 
-            self.cursor.execute(
-                self._get_shapefiles_query(
-                    specimen is not None,
-                    histological_structures is not None,
-                ),
-                parameters,
-            )
+            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+                if specimen is not None:
+                    parameters.append(specimen)
+                    specimen_count = 1
+                else:
+                    specimen_count = self._get_specimen_count(measurement_study, cursor)
+                if histological_structures is not None:
+                    parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
 
-            rows: list = []
-            total = self.cursor.rowcount
-            while self.cursor.rownumber < total - 1:
-                current_number_stored = len(rows)
-                rows.extend(self.cursor.fetchmany(size=self._get_batch_size()))
-                received = len(rows) - current_number_stored
-                logger.debug('Received %s shapefiles entries from DB.', received)
+                cursor.execute(
+                    self._get_shapefiles_query(
+                        specimen is not None,
+                        histological_structures is not None,
+                    ),
+                    parameters,
+                )
+
+                rows: list = []
+                total = cursor.rowcount
+                while cursor.rownumber < total - 1:
+                    current_number_stored = len(rows)
+                    rows.extend(cursor.fetchmany(size=self._get_batch_size()))
+                    received = len(rows) - current_number_stored
+                    logger.debug('Received %s shapefiles entries from DB.', received)
             if len(rows) == 0:
                 continue
 
             self._structure_centroids.add_study_data(
-                study_name,
+                measurement_study,
                 self._create_study_data(rows, specimen_count, study_name)
             )
 
     def _get_batch_size(self) -> int:
         return pow(10, 5)
 
-    def _get_specimen_count(self, study_name: str, cursor: Psycopg2Cursor) -> int:
+    def _get_specimen_count(self,
+        measurement_study: str,
+        cursor: Psycopg2Cursor,
+    ) -> int:
         cursor.execute('''
         SELECT COUNT(*) FROM specimen_data_measurement_process sdmp
         WHERE sdmp.study=%s ;
-        ''', (study_name,))
+        ''', (measurement_study,))
         return cursor.fetchall()[0][0]
 
     @staticmethod
@@ -135,19 +141,26 @@ class StructureCentroidsPuller:
         ;
         '''
 
-    def _get_study_names(self, study: str | None = None) -> list[str]:
-        if study is None:
-            self.cursor.execute('SELECT name FROM specimen_measurement_study ;')
-            rows = self.cursor.fetchall()
-        else:
-            self.cursor.execute('''
+    def _get_specimen_measurement_study(self, study: str) -> str:
+        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+            cursor.execute('''
             SELECT sms.name FROM specimen_measurement_study sms
             JOIN study_component sc ON sc.component_study=sms.name
             WHERE sc.primary_study=%s
             ;
             ''', (study,))
-            rows = self.cursor.fetchall()
-        return sorted([row[0] for row in rows])
+            rows = cursor.fetchall()
+        return rows[0][0]
+
+    def _get_study_names(self, study: str | None = None) -> list[tuple[str, str]]:
+        if study is None:
+            with DBCursor(database_config_file=self.database_config_file) as cursor:
+                cursor.execute('SELECT study FROM study_lookup ;')
+                rows = cursor.fetchall()
+            studies = [(study, self._get_specimen_measurement_study(study)) for (study,) in rows]
+        else:
+            studies = [(study, self._get_specimen_measurement_study(study))]
+        return sorted(studies, key=lambda x: x[1])
 
     def _create_study_data(
         self,
@@ -170,15 +183,16 @@ class StructureCentroidsPuller:
         study_data[current_specimen] = specimen_centroids
         return study_data
 
-    def _get_specimens(self, study_name: str) -> tuple[str, ...]:
-        self.cursor.execute('''
-        SELECT sdmp.specimen
-        FROM specimen_data_measurement_process sdmp
-        WHERE sdmp.study=%s
-        ORDER BY sdmp.specimen
-        ;
-        ''', (study_name,))
-        rows = self.cursor.fetchall()
+    def _get_specimens(self, study_name: str, measurement_study: str) -> tuple[str, ...]:
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            cursor.execute('''
+            SELECT sdmp.specimen
+            FROM specimen_data_measurement_process sdmp
+            WHERE sdmp.study=%s
+            ORDER BY sdmp.specimen
+            ;
+            ''', (measurement_study,))
+            rows = cursor.fetchall()
         return tuple(sorted([cast(str, row[0]) for row in rows]))
 
     def _compute_centroid(self, points: list[tuple[float, float]]) -> tuple[float, float]:

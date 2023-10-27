@@ -4,6 +4,7 @@ import re
 from psycopg2.extensions import connection as Pyscopg2Connection
 from psycopg2.extensions import cursor as Pyscopg2Cursor
 
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.check_tables import check_tables
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -56,12 +57,12 @@ class StudyDropper:
         self.cache_record_counts(cacheable)
 
     @staticmethod
-    def drop(connection, study):
+    def drop(database_config_file: str | None, study: str) -> None:
         """ Use this method as the entrypoint into this class' functionality."""
-        with StudyDropper(connection, study) as dropper:
-            dropper.check_existence_of_study()
-            dropper.drop_records()
-        connection.commit()
+        with DBConnection(database_config_file=database_config_file, study=study) as connection:
+            with StudyDropper(connection, study) as dropper:
+                dropper.check_existence_of_study()
+                dropper.drop_records()
 
     def check_existence_of_study(self):
         self.get_cursor().execute('SELECT * FROM study WHERE study_specifier=%s', (self.study,))

@@ -12,7 +12,7 @@ from spatialprofilingtoolbox.workflow.component_interfaces.core import CoreJob
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.workflow.common.logging.performance_timer import \
     PerformanceTimerReporter
-from spatialprofilingtoolbox import DatabaseConnectionMaker
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.workflow.phenotype_proximity.job_generator import \
     ProximityJobGenerator
 from spatialprofilingtoolbox.workflow.common.core import get_number_cells_to_be_processed
@@ -107,9 +107,7 @@ class PhenotypeProximityCoreJob(CoreJob):
         self.tree = BallTree(cells[['pixel x', 'pixel y']].to_numpy())
 
     def get_named_phenotype_signatures(self) -> dict[str, PhenotypeCriteria]:
-        with DatabaseConnectionMaker(self.database_config_file) as dcm:
-            connection = dcm.get_connection()
-            cursor = connection.cursor()
+        with DBCursor(database_config_file=self.database_config_file, study=self.study_name) as cursor:
             cursor.execute('''
             SELECT cp.symbol, cs.symbol, CASE cpc.polarity WHEN 'positive' THEN 1 WHEN 'negative' THEN 0 END coded_value
             FROM cell_phenotype cp
@@ -121,7 +119,6 @@ class PhenotypeProximityCoreJob(CoreJob):
             ;
             ''', (self.study_name,))
             rows = cursor.fetchall()
-            cursor.close()
         criteria = DataFrame(rows, columns=['phenotype', 'channel', 'polarity'])
 
         def list_channels(df: DataFrame, polarity: int) -> list[str]:

@@ -3,7 +3,7 @@
 from pandas import DataFrame
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
-from spatialprofilingtoolbox import DBConnection
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory

@@ -11,7 +11,6 @@ from spatialprofilingtoolbox.workflow import get_workflow_names as get_workflow_
 
 from spatialprofilingtoolbox.db import (
     DBConnection,
-    DBCursor,
     DBCredentials,
     QueryCursor,
 )

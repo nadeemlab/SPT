@@ -1,6 +1,8 @@
 
 process.executor = '{{ executor }}'
 
+process.debug = true
+
 {% if executor == 'lsf' and excluded_host is defined -%}
 process.clusterOptions = '-R select[hname!={{ excluded_host }}]'{% endif %}
 

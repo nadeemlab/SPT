@@ -6,22 +6,24 @@ $([ $? -eq 0 ] && [ -e "results/mi2_model.pt" ] && [ -e "results/mi2_importances
 status="$?"
 
 model_size=$(wc -c <"results/mi2_model.pt")
-canon_model_size=1370000  # TODO: Fix according to test output
-if [[ $model_size < $(( .95 * $canon_model_size )) || $model_size > $(( 1.05 * $canon_model_size )) ]];
+canon_model_size=1362921
+if [[ $model_size < $(( .99 * $canon_model_size )) || $model_size > $(( 1.01 * $canon_model_size )) ]];
 then
-    echo "Output model is not within 10% of expected size."
+    echo "Output model is not within 1% of expected size ($canon_model_size): $model_size"
     exit 1
 fi
 
 head "results/mi2_importances.csv"
 
 importance_length=$(wc -l <"results/mi2_importances.csv")
-canon_importance_length=200  # TODO: Fix according to test output
+canon_importance_length=180
 if [[ $importance_length != $canon_importance_length ]];
 then
-    echo "Output importance file is not the expected length."
+    echo "Output importance file ($importance_length) is not the expected length ($canon_importance_length)."
     exit 1
 fi
+
+cut -f2 -d, mi2_importances.csv  | sort | head | grep -o '[0-9]\.[0-9]\{0,4\}'
 
 rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf results/
 

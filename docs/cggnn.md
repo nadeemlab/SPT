@@ -1,7 +1,7 @@
 # Using `spt cggnn`
 
-The intended procedure for using `spt cggnn` is
-1. Explore the data available for the study of your choice and train the model
+The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n**eural **n**etwork) is:
+1. Explore the data available for the study of your choice and train the model.
    1. Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
    2. Now that you know which specimen cohorts ("strata") you want to use, fetch the relevant data artifacts from SPT using `spt cggnn extract`.
    3. Artifacts in hand, use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
@@ -18,9 +18,9 @@ spt workflow configure --local --workflow='cggnn' --study-name=... --database-co
 nextflow run .
 ```
 
-`study-name` is the name of your study as known by your SPT database instance, and `database-config-file` is the location of your database configuration file, in the format of `spatialprofilingtoolbox/workflow/assets/.workflow.config.template`.
+`study-name` is the name of your study as known by your SPT database instance, and `database-config-file` is the location of your database configuration file, in the format of [`.spt_db.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
 
-`workflow-config-file` is more involved. Unused by other workflows (so far), it should be a YAML file following this template, as in `spatialprofilingtoolbox/workflow/assets/.workflow.config.template`:
+`workflow-config-file` is more involved. Unused by other workflows (so far), it should be a YAML file following this template, as in [`spatialprofilingtoolbox/workflow/assets/.workflow.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.workflow.config.template):
 
 ```yaml
 [settings]

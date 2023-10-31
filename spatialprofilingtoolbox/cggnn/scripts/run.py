@@ -53,7 +53,7 @@ extract` with the entire `cggnn.run` process into a single command.
         '--validation_data_percent',
         type=int,
         help='Percentage of data to use as validation data. Set to 0 if you want to do k-fold '
-        'cross-validation later. (Training percentage is implicit.) Default 15%.',
+        'cross-validation later. (Training percentage is implicit.) Default 15%%.',
         default=15,
         required=False
     )

@@ -88,7 +88,7 @@ options:
   --upload_importances  Whether to upload importance scores to the database.
 ```
 
-The main difference between the command line interface provided by [`cg-gnn`](https://pypi.org/project/cg-gnn/) and the SPT workflow interface is that parameters can't be eliminated from the config file. Instead,
+The main difference between the command line interface provided by [`cg-gnn`](https://pypi.org/project/cg-gnn/) and the SPT workflow interface is that parameters can't be eliminated from the config file for the latter. Instead,
 * If you want to use the default value for a parameter, you must explicitly set it to that value.
 * Boolean values must explicitly be set to `true` or `false` instead of simply including or omitting the parameter.
 * `strata` can be set to `all` to use all strata (equivalent to not providing the parameter when using the CLI).

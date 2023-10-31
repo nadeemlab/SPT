@@ -182,7 +182,7 @@ class FeatureMatrixExtractor:
             coordinates = centroid_coordinates[specimen]
             assert expressions.keys() == coordinates.keys(), \
                 f'Mismatched cells in expressions and coordinates ({len(expressions)} long vs. '\
-                    f'({len(coordinates)}).'
+                f'({len(coordinates)}).'
             rows = [
                 self._create_feature_matrix_row(
                     coordinates[hs_id],
@@ -264,7 +264,7 @@ class FeatureMatrixExtractor:
     def _retrieve_derivative_stratification_from_database(self) -> Stratification:
         logger.info('Retrieving stratification from database.')
         puller = StratificationPuller(self.database_config_file)
-        puller.pull()
+        puller.pull(measured_only=True)
         stratification = puller.get_stratification()
         logger.info('Done retrieving stratification.')
         return stratification

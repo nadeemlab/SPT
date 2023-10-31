@@ -43,7 +43,7 @@ apiserver = [
     "secure==0.3.0"
 ]
 cggnn = [
-    "cg-gnn",
+    "cg-gnn==0.1.8",
     "tables",
     "torch"
 ]
@@ -71,10 +71,12 @@ workflow = [
     "pandas==2.0.2",
     "Jinja2==3.1.2",
     "tabulate==0.8.10",
-    "Pillow==9.5.0"
+    "Pillow==9.5.0",
+    "cg-gnn==0.1.8",
+    "tables"
 ]
 all = [
-    "cg-gnn",
+    "cg-gnn==0.1.8",
     "torch",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
@@ -125,6 +127,7 @@ packages = [
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.component_interfaces",
+    "spatialprofilingtoolbox.workflow.cggnn",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.reduction_visual",
     "spatialprofilingtoolbox.workflow.tabular_import",
@@ -152,6 +155,8 @@ packages = [
     "compute_umaps_all.py"
 ]
 "spatialprofilingtoolbox.workflow.assets" = [
+    ".workflow.config.template",
+    "cggnn.nf",
     "nextflow.config.jinja",
     "log_table.tex.jinja",
     "log_table.html.jinja",
@@ -189,5 +194,8 @@ packages = [
     "feature_descriptions.tsv"
 ]
 "spatialprofilingtoolbox.cggnn.scripts" = [
+    "explore_classes.py",
+    "extract.py",
     "run.py",
+    "upload_importances.py"
 ]

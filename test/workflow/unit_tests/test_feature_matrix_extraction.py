@@ -100,7 +100,7 @@ def test_stratification(study: dict[str, DataFrame]):
     print(df.to_string(index=False))
     print(strata.to_string(index=False))
     print('')
-    if df.shape != (7, 2):
+    if df.shape != (2, 2):
         print('Wrong number of sample cohort/stratum assignments. '
               f'Dataframe shape: {df.shape}')
         sys.exit(1)
@@ -131,7 +131,8 @@ if __name__ == '__main__':
 
     some_histological_structures = extractor.extract(
         study=study_name,
-        histological_structures={1, 5, 7, 15, 16, 17, 150, 151, 340, 341, 2000},  # 2000 is OOB but should skip, not fail
+        histological_structures={1, 5, 7, 15, 16, 17, 150, 151, 340, 341, 2000},
+        # 2000 is OOB but should skip, not fail
         retain_structure_id=True,
     )
     test_sample_set(some_histological_structures)

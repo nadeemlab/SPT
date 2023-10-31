@@ -95,7 +95,7 @@ def extract_cggnn_data(
         Name of the study to query data for.
     strata_to_use : list[int] | None
         Specimen strata to use as labels, identified according to the "stratum identifier" in
-        `explore_classes`. This should be given as space separated integers.
+        `explore-classes`. This should be given as space separated integers.
         If not provided, all strata will be used.
 
     Returns

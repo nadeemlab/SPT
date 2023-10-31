@@ -12,6 +12,7 @@ logger = colorized_logger(__name__)
 
 Stratification = dict[str, dict[str, DataFrame]]
 
+
 class StratificationPuller:
     """Retrieve sample cohort data for all studies."""
 
@@ -22,18 +23,26 @@ class StratificationPuller:
         self.database_config_file = database_config_file
         self.stratification = None
 
-    def pull(self) -> None:
-        self.stratification = self._retrieve_stratification()
+    def pull(self, measured_only: bool = False) -> None:
+        """Pull specimens and their strata (sample cohort) from the database.
+
+        Parameters
+        ----------
+        measured_only : bool = False
+            Whether to select only for specimens that were measured. If False, all collected
+            specimens, even those that didn't have measurements taken, are collected.
+        """
+        self.stratification = self._retrieve_stratification(measured_only=measured_only)
 
     def get_stratification(self) -> Stratification:
         return cast(dict, self.stratification)
 
-    def _retrieve_stratification(self) -> Stratification:
+    def _retrieve_stratification(self, measured_only: bool = False) -> Stratification:
         stratification: Stratification = {}
         study_names = retrieve_study_names(self.database_config_file)
         for study_name in study_names:
             with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-                cursor.execute('''
+                cursor.execute(f'''
                 SELECT
                     scp.study,
                     sample,
@@ -46,7 +55,9 @@ class StratificationPuller:
                 JOIN
                     specimen_collection_process scp ON sample=scp.specimen
                 JOIN
-                    study_component sc ON sc.component_study=scp.study
+                    study_component sc ON sc.component_study=scp.study {"""
+                JOIN specimen_data_measurement_process sdmp
+                    ON sdmp.specimen=scp.specimen""" if measured_only else ""}
                 WHERE
                     sc.primary_study=%s
                 ;
@@ -54,6 +65,7 @@ class StratificationPuller:
                 rows = cursor.fetchall()
                 if len(rows) == 0:
                     continue
+
             columns = [
                 'specimen collection study',
                 'specimen',

@@ -61,7 +61,7 @@ extract` with the entire `cggnn.run` process into a single command.
         '--test_data_percent',
         type=int,
         help='Percentage of data to use as the test set. (Training percentage is implicit.) '
-        'Default 15%.',
+        'Default 15%%.',
         default=15,
         required=False
     )

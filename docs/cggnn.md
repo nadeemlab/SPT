@@ -9,13 +9,12 @@ The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n
 
 This document will go into more detail on the second step.
 
-## Running `spt workflow configure` for `cggnn`
+## Configuring the cggnn workflow with `spt workflow configure`
 
 To configure the `cggnn` SPT workflow, you must provide the following parameters as follows:
 
 ```
 spt workflow configure --local --workflow='cggnn' --study-name=... --database-config-file=... --workflow-config-file=...
-nextflow run .
 ```
 
 `study-name` is the name of your study as known by your SPT database instance, and `database-config-file` is the location of your database configuration file, in the format of [`.spt_db.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
@@ -93,3 +92,9 @@ The main difference between the command line interface provided by [`cg-gnn`](ht
 * Boolean values must explicitly be set to `true` or `false` instead of simply including or omitting the parameter.
 * `strata` can be set to `all` to use all strata (equivalent to not providing the parameter when using the CLI).
 * `target_name` can be set to `none` to use all cells in the tissue sample (equivalent to not providing the parameter when using the CLI).
+
+## Running the workflow
+
+```sh
+nextflow run .
+```

@@ -20,7 +20,7 @@ nextflow run .
 
 `study-name` is the name of your study as known by your SPT database instance, and `database-config-file` is the location of your database configuration file, in the format of [`.spt_db.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
 
-`workflow-config-file` is more involved. Unused by other workflows (so far), it should be a YAML file following this template, as in [`spatialprofilingtoolbox/workflow/assets/.workflow.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.workflow.config.template):
+`workflow-config-file` is more involved. Unused by other workflows (so far), it should be a YAML file following this template, as in [`.workflow.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.workflow.config.template):
 
 ```yaml
 [settings]

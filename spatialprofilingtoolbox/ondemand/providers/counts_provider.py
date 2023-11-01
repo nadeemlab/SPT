@@ -7,7 +7,7 @@ from typing import cast
 from pandas import Index
 
 from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
-from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
+from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

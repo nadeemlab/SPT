@@ -147,51 +147,56 @@ def process_filename_inputs(options, parsed_args):
         input_file_identifier='Study file',
         file_manifest_filename=file_manifest_path,
     )
-    study_file_abs = join(parsed_args.input_path, study_file)
-    if not exists(study_file_abs):
-        raise FileNotFoundError(f'Did not find study file ({study_file}).')
-    options['study_file'] = study_file_abs
-    options['study'] = True
+    if not study_file is None:
+        study_file_abs = join(parsed_args.input_path, study_file)
+        if not exists(study_file_abs):
+            raise FileNotFoundError(f'Did not find study file ({study_file}).')
+        options['study_file'] = study_file_abs
+        options['study'] = True
 
     diagnosis_file = get_input_filename_by_identifier(
         input_file_identifier='Diagnosis file',
         file_manifest_filename=file_manifest_path,
     )
-    diagnosis_file_abs = join(parsed_args.input_path, diagnosis_file)
-    if not exists(diagnosis_file_abs):
-        raise FileNotFoundError(f'Did not find diagnosis file ({diagnosis_file}).')
-    options['diagnosis_file'] = diagnosis_file_abs
-    options['diagnosis'] = True
+    if not diagnosis_file is None:
+        diagnosis_file_abs = join(parsed_args.input_path, diagnosis_file)
+        if not exists(diagnosis_file_abs):
+            raise FileNotFoundError(f'Did not find diagnosis file ({diagnosis_file}).')
+        options['diagnosis_file'] = diagnosis_file_abs
+        options['diagnosis'] = True
 
     interventions_file = get_input_filename_by_identifier(
         input_file_identifier='Interventions file',
         file_manifest_filename=file_manifest_path,
     )
-    interventions_file_abs = join(parsed_args.input_path, interventions_file)
-    if not exists(interventions_file_abs):
-        raise FileNotFoundError(f'Did not find interventions file ({interventions_file}).')
-    options['interventions_file'] = interventions_file_abs
-    options['interventions'] = True
+    if not interventions_file is None:
+        interventions_file_abs = join(parsed_args.input_path, interventions_file)
+        if not exists(interventions_file_abs):
+            raise FileNotFoundError(f'Did not find interventions file ({interventions_file}).')
+        options['interventions_file'] = interventions_file_abs
+        options['interventions'] = True
 
     channels_file = get_input_filename_by_identifier(
         input_file_identifier='Channels file',
         file_manifest_filename=file_manifest_path,
     )
-    channels_file_abs = join(parsed_args.input_path, channels_file)
-    if not exists(channels_file_abs):
-        raise FileNotFoundError(f'Did not find channels file ({channels_file}).')
-    options['channels_file'] = channels_file_abs
-    options['channels'] = True
+    if not channels_file is None:
+        channels_file_abs = join(parsed_args.input_path, channels_file)
+        if not exists(channels_file_abs):
+            raise FileNotFoundError(f'Did not find channels file ({channels_file}).')
+        options['channels_file'] = channels_file_abs
+        options['channels'] = True
 
     phenotypes_file = get_input_filename_by_identifier(
         input_file_identifier='Phenotypes file',
         file_manifest_filename=file_manifest_path,
     )
-    phenotypes_file_abs = join(parsed_args.input_path, phenotypes_file)
-    if not exists(phenotypes_file_abs):
-        raise FileNotFoundError(f'Did not find phenotypes file ({phenotypes_file}).')
-    options['phenotypes_file'] = phenotypes_file_abs
-    options['phenotypes'] = True
+    if not phenotypes_file is None:
+        phenotypes_file_abs = join(parsed_args.input_path, phenotypes_file)
+        if not exists(phenotypes_file_abs):
+            raise FileNotFoundError(f'Did not find phenotypes file ({phenotypes_file}).')
+        options['phenotypes_file'] = phenotypes_file_abs
+        options['phenotypes'] = True
 
 
 if __name__ == '__main__':
@@ -252,9 +257,9 @@ if __name__ == '__main__':
 
     config_variables: dict[str, str | bool] = {}
     if args.workflow_config_file is not None:
-        parser = ConfigParser()
-        parser.read(args.workflow_config_file)
-        config_variables = dict(parser.items('settings'))
+        config_parser = ConfigParser()
+        config_parser.read(args.workflow_config_file)
+        config_variables = dict(config_parser.items('settings'))
 
     config_variables['workflow'] = args.workflow
 

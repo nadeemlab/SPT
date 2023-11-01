@@ -195,8 +195,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    database_config_file_elevated = abspath(
-        expanduser(args.database_config_file_elevated))
+    database_config_file_elevated = abspath(expanduser(args.database_config_file_elevated))
     if not exists(database_config_file_elevated):
         message = f'Need to supply valid database config filename: {database_config_file_elevated}'
         raise FileNotFoundError(message)
@@ -208,4 +207,9 @@ if __name__ == '__main__':
     else:
         raise ValueError('--recreate or --drop must be flagged.')
 
-    toggle_constraints(database_config_file_elevated, args.study, state=db_state, all_tables=args.all_tables)
+    toggle_constraints(
+        database_config_file_elevated,
+        args.study,
+        state=db_state,
+        all_tables=args.all_tables,
+    )

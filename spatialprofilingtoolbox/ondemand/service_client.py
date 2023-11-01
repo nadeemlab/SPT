@@ -80,7 +80,7 @@ class OnDemandRequester:
     def get_proximity_metrics(
         self,
         study: str,
-        radius: int,
+        radius: float,
         signature: tuple[list[str], list[str], list[str], list[str]]
     ) -> UnivariateMetricsComputationResult:
         positives1, negatives1, positives2, negatives2 = signature
@@ -185,8 +185,8 @@ class OnDemandRequester:
                 host = os.environ[host_variable]
                 port = int(os.environ[port_variable])
         if host is None or port is None:
-            host_variable = f'ONDEMAND_HOST'
-            port_variable = f'ONDEMAND_PORT'
+            host_variable = 'ONDEMAND_HOST'
+            port_variable = 'ONDEMAND_PORT'
             if host_variable in os.environ and port_variable in os.environ:
                 host = os.environ[host_variable]
                 port = int(os.environ[port_variable])

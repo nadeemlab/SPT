@@ -252,11 +252,26 @@ class QueryCursor:
                 study_parameter_index = argument_names.index('study') - 2
             else:
                 study_parameter_index = None
-            def dispatched(*args, _method_name=method_name, _study_parameter_index=study_parameter_index, **kwargs):
-                return self._query(*args, _method_name=_method_name, _study_parameter_index=_study_parameter_index, **kwargs)
+            def dispatched(
+                *args,
+                _method_name=method_name,
+                _study_parameter_index=study_parameter_index,
+                **kwargs,
+            ):
+                return self._query(
+                    *args,
+                    _method_name=_method_name,
+                    _study_parameter_index=_study_parameter_index,
+                    **kwargs,
+                )
             setattr(self, method_name, dispatched)
 
-    def _query(self, *args, _method_name: str = '', _study_parameter_index: int | None = None, **kwargs):
+    def _query(self,
+        *args,
+        _method_name: str = '',
+        _study_parameter_index: int | None = None,
+        **kwargs,
+    ):
         method_function = getattr(self.query_handler, _method_name)
         if _study_parameter_index is None:
             with DBCursor() as cursor:

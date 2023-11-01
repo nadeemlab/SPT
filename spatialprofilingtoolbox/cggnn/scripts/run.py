@@ -8,7 +8,7 @@ from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
-    from cggnn.run import run
+    from cggnn.run import run  # type: ignore
     from torch import save
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'cggnn')
@@ -203,9 +203,8 @@ if __name__ == "__main__":
             orient='index',
             columns=['importance_score'],
         )
-    if args.output_prefix is not None:
-        df.to_csv(f'{args.output_prefix}_importances.csv')
-        save(model.state_dict(), f'{args.output_prefix}_model.pt')
-    if args.upload_importances:
-        save_importance(df, args.spt_db_config_location, args.study)
-
+        if args.output_prefix is not None:
+            df.to_csv(f'{args.output_prefix}_importances.csv')
+            save(model.state_dict(), f'{args.output_prefix}_model.pt')
+        if args.upload_importances:
+            save_importance(df, args.spt_db_config_location, args.study)

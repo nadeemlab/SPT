@@ -11,7 +11,7 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (\
     phenotype_str_to_phenotype,
     phenotype_to_phenotype_str,
 )
-from spatialprofilingtoolbox.ondemand.providers import PendingProvider
+from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox import get_feature_description
 from spatialprofilingtoolbox.workflow.common.proximity import (\

@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
-from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
+from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -30,7 +30,8 @@ class PendingProvider(OnDemandProvider, ABC):
             get = ADIFeatureSpecificationUploader.get_data_analysis_study
             measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
             data_analysis_study = get(measurement_study_name, cursor)
-        feature_specification = self.get_or_create_feature_specification(study, data_analysis_study, **kwargs)
+        get_or_create = self.get_or_create_feature_specification
+        feature_specification = get_or_create(study, data_analysis_study, **kwargs)
         if self._is_already_computed(study, feature_specification):
             is_pending = False
             logger.debug('Already computed.')
@@ -72,13 +73,16 @@ class PendingProvider(OnDemandProvider, ABC):
     ) -> str:
         with DBCursor(study=study) as cursor:
             Uploader = ADIFeatureSpecificationUploader
-            feature_specification = Uploader.add_new_feature(specifiers, method, data_analysis_study, cursor)
+            add = Uploader.add_new_feature
+            feature_specification = add(specifiers, method, data_analysis_study, cursor)
         return feature_specification
 
     @staticmethod
     def _is_already_computed(study: str, feature_specification: str) -> bool:
-        expected = PendingProvider._get_expected_number_of_computed_values(study, feature_specification)
-        actual = PendingProvider._get_actual_number_of_computed_values(study, feature_specification)
+        get_expected = PendingProvider._get_expected_number_of_computed_values
+        expected = get_expected(study, feature_specification)
+        get_actual = PendingProvider._get_actual_number_of_computed_values
+        actual = get_actual(study, feature_specification)
         if actual < expected:
             return False
         if actual == expected:
@@ -88,13 +92,17 @@ class PendingProvider(OnDemandProvider, ABC):
 
     @staticmethod
     def _get_expected_number_of_computed_values(study: str, feature_specification: str) -> int:
-        domain = PendingProvider._get_expected_domain_for_computed_values(study, feature_specification)
+        get_domain = PendingProvider._get_expected_domain_for_computed_values
+        domain = get_domain(study, feature_specification)
         number = len(domain)
         logger.debug('Number of values possible to be computed: %s', number)
         return number
 
     @staticmethod
-    def _get_expected_domain_for_computed_values(study: str, feature_specification: str) -> list[str]:
+    def _get_expected_domain_for_computed_values(
+        study: str,
+        feature_specification: str,
+    ) -> list[str]:
         with DBCursor(study=study) as cursor:
             cursor.execute('''
             SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp

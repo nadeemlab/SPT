@@ -213,10 +213,12 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
     """Spatial proximity statistics for a pair of custom-defined phenotypes (cell sets), most
     calculated by Squidpy.
     """
-    markers = [positive_marker, negative_marker, positive_marker2, negative_marker2]
+    markers = (positive_marker, negative_marker, positive_marker2, negative_marker2)
     if feature_class == 'proximity':
+        if radius is None:
+            radius = 30.0
         return get_proximity_metrics(study, markers, radius=radius)
-    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+    return get_squidpy_metrics(study, list(markers), feature_class, radius=radius)
 
 
 @app.get("/request-cggnn-metrics/")
@@ -268,8 +270,8 @@ def get_phenotype_counts(
 
 def get_proximity_metrics(
     study: str,
-    markers: list[list[str]],
-    radius: float | None = None,
+    markers: tuple[list[str], list[str], list[str], list[str]],
+    radius: float,
 ) -> UnivariateMetricsComputationResult:
     with OnDemandRequester(service='proximity') as requester:
         metrics = requester.get_proximity_metrics(

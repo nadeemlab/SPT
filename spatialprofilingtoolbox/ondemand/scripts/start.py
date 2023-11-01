@@ -8,11 +8,10 @@ from spatialprofilingtoolbox.ondemand.tcp_server import (
     OnDemandTCPServer,
     OnDemandProviderSet,
 )
-from spatialprofilingtoolbox.ondemand.providers import (
-    CountsProvider,
-    ProximityProvider,
-    SquidpyProvider,
-)
+from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
+from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
+from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
+
 from spatialprofilingtoolbox.ondemand.request_handler import OnDemandRequestHandler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -44,7 +43,7 @@ def start_services(source_data_location: str, host: str, port: int, service: str
     tcp_server = OnDemandTCPServer(
         (host, port),
         OnDemandRequestHandler,
-        OnDemandProviderSet(**providers_initialized),
+        OnDemandProviderSet(**providers_initialized), # type: ignore
     )
     if service is not None:
         logger.info('Service "%s" is ready to accept connections.', service)

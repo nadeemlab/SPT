@@ -25,6 +25,7 @@ warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 logger = colorized_logger(__name__)
 
+ProximityComputed = dict[tuple[str, str, float], float | None]
 
 class PhenotypeProximityCoreJob(CoreJob):
     """Core/parallelizable functionality for the phenotype proximity workflow."""
@@ -107,9 +108,13 @@ class PhenotypeProximityCoreJob(CoreJob):
         self.tree = BallTree(cells[['pixel x', 'pixel y']].to_numpy())
 
     def get_named_phenotype_signatures(self) -> dict[str, PhenotypeCriteria]:
-        with DBCursor(database_config_file=self.database_config_file, study=self.study_name) as cursor:
+        kwargs = {'database_config_file': self.database_config_file, 'study': self.study_name}
+        with DBCursor(**kwargs) as cursor:
             cursor.execute('''
-            SELECT cp.symbol, cs.symbol, CASE cpc.polarity WHEN 'positive' THEN 1 WHEN 'negative' THEN 0 END coded_value
+            SELECT
+                cp.symbol,
+                cs.symbol,
+                CASE cpc.polarity WHEN 'positive' THEN 1 WHEN 'negative' THEN 0 END coded_value
             FROM cell_phenotype cp
             JOIN cell_phenotype_criterion cpc ON cpc.cell_phenotype=cp.identifier
             JOIN chemical_species cs ON cs.identifier=cpc.marker
@@ -131,7 +136,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             )
         by_identifier: dict[str, PhenotypeCriteria] = {}
         for phenotype, criteria in criteria.groupby('phenotype'):
-            by_identifier[phenotype] = make_signature(criteria)
+            by_identifier[str(phenotype)] = make_signature(criteria)
         return by_identifier
 
     def get_cases(self, items: list[str]) -> list[tuple[str, str, float]]:
@@ -142,7 +147,7 @@ class PhenotypeProximityCoreJob(CoreJob):
             for radius in PhenotypeProximityCoreJob.radii
         ]
 
-    def write_table(self, proximity_metrics: dict[tuple[str, str, float], float | None]) -> None:
+    def write_table(self, proximity_metrics: ProximityComputed) -> None:
         rows = [(f1, f2, r, m) for (f1, f2, r), m in proximity_metrics.items()]
         columns = ['Phenotype 1', 'Phenotype 2', 'Pixel radius', 'Proximity']
         df = DataFrame(rows, columns=columns)

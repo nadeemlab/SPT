@@ -23,7 +23,10 @@ logger = colorized_logger('spt db status')
 
 
 def report_counts(aggregated):
-    print(aggregated.sort_values(by='Table').to_string(index=False))
+    if aggregated.shape[0] != 0:
+        print(aggregated.sort_values(by='Table').to_string(index=False))
+    else:
+        print('No datasets present.')
 
 
 def aggregate_counts(all_counts):

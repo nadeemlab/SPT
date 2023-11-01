@@ -94,6 +94,7 @@ The main difference between the command line interface provided by [`cg-gnn`](ht
 * Boolean values must explicitly be set to `true` or `false` instead of simply including or omitting the parameter.
 * `strata` can be set to `all` to use all strata (equivalent to not providing the parameter when using the CLI).
 * `target_name` can be set to `none` to use all cells in the tissue sample (equivalent to not providing the parameter when using the CLI).
+* `random_seed` can be set to `none` if you don't with to use a random seed (again, equivalent to not providing the parameter in the CLI).
 
 ## Running the workflow
 

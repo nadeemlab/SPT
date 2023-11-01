@@ -110,7 +110,7 @@ process run_cggnn {
         $(if [[ "!{prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
         --output_prefix "!{output_prefix}" \
         $(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances"; fi) \
-        --random_seed !{random_seed}
+        $(if [[ "!{random_seed}" != none ]]; then echo "--random_seed "!{random_seed}""; fi)
     '''
 }
 

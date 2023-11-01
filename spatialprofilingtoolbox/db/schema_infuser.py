@@ -7,6 +7,7 @@ import re
 
 import pandas as pd
 from psycopg2 import Error as Psycopg2Error
+from psycopg2.errors import UndefinedTable
 
 from spatialprofilingtoolbox.db.database_connection import create_database
 from spatialprofilingtoolbox.db.credentials import metaschema_database
@@ -29,7 +30,10 @@ class SchemaInfuser:
     def setup_lightweight_metaschema(self, force=False):
         create_database(self.database_config_file, metaschema_database())
         if force:
-            self._verbose_sql_execute(('drop_metaschema.sql', 'drop metaschema tables'))
+            try:
+                self._verbose_sql_execute(('drop_metaschema.sql', 'drop metaschema tables'))
+            except UndefinedTable:
+                pass
         self._verbose_sql_execute(
             ('metaschema.sql', 'create tables from lightweight metaschema'),
         )

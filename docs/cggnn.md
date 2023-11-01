@@ -46,7 +46,7 @@ For detailed explanations of each parameter, please refer to the docstring for `
 
 ```txt
 usage: spt cggnn run [-h] --spt_db_config_location SPT_DB_CONFIG_LOCATION --study STUDY [--strata STRATA [STRATA ...]] [--validation_data_percent VALIDATION_DATA_PERCENT] [--test_data_percent TEST_DATA_PERCENT] [--disable_channels] [--disable_phenotypes] [--roi_side_length ROI_SIDE_LENGTH] [--cells_per_slide_target CELLS_PER_SLIDE_TARGET] [--target_name TARGET_NAME]
-                     [--in_ram] [-b BATCH_SIZE] [--epochs EPOCHS] [-l LEARNING_RATE] [-k K_FOLDS] [--explainer_model EXPLAINER_MODEL] [--merge_rois] [--prune_misclassified] [--output_prefix OUTPUT_PREFIX] [--upload_importances]
+                     [--in_ram] [-b BATCH_SIZE] [--epochs EPOCHS] [-l LEARNING_RATE] [-k K_FOLDS] [--explainer_model EXPLAINER_MODEL] [--merge_rois] [--prune_misclassified] [--output_prefix OUTPUT_PREFIX] [--upload_importances] [--random_seed RANDOM_SEED]
 
 Create cell graphs from SPT tables saved locally, train a graph neural network on them, and save resultant model, metrics, and visualizations (if requested) to file. `spt cggnn run` allows you to run the `cg-gnn` pip package directly from SPT. It combines `spt cggnn extract` with the entire `cggnn.run` process into a single command.
 
@@ -85,6 +85,8 @@ options:
   --output_prefix OUTPUT_PREFIX
                         Saves output files with this prefix, if provided.
   --upload_importances  Whether to upload importance scores to the database.
+  --random_seed RANDOM_SEED
+                        Random seed to use for reproducibility.
 ```
 
 The main difference between the command line interface provided by [`cg-gnn`](https://pypi.org/project/cg-gnn/) and the SPT workflow interface is that parameters can't be eliminated from the config file for the latter. Instead,

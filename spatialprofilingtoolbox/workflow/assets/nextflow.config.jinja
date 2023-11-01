@@ -95,3 +95,6 @@ env.output_prefix_ = '{{ output_prefix }}'{% endif %}
 
 {%- if upload_importances is defined %}
 env.upload_importances_ = '{{ upload_importances }}'{% endif %}
+
+{%- if random_seed is defined %}
+env.random_seed_ = '{{ random_seed }}'{% endif %}

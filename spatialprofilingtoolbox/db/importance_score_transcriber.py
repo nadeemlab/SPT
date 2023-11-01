@@ -25,7 +25,7 @@ def transcribe_importance(
 
     Parameters:
         df: DataFrame
-            One column, `importance_score`, indexed by `histological_structure`.
+            One column, `importance`, indexed by `histological_structure`.
         connection: psycopg2.extensions.connection
         per_specimen_selection_number: int
             Grab this many of the most important cells from each specimen (or fewer if there
@@ -64,7 +64,7 @@ def _add_slide_column(connection: Connection, df: DataFrame) -> None:
 
 
 def _group_and_filter(df: DataFrame, filter_number: int) -> DataFrame:
-    ordered = df.sort_values(by='importance_score', ascending=False)
+    ordered = df.sort_values(by='importance', ascending=False)
     ordered['importance_order'] = 1
     grouped = ordered.groupby('specimen')
     ranks = grouped['importance_order'].cumsum()

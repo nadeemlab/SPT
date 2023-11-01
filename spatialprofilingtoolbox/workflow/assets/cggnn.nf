@@ -23,6 +23,7 @@ process echo_environment_variables {
     path 'prune_misclassified',             emit: prune_misclassified
     path 'output_prefix',                   emit: output_prefix
     path 'upload_importances',              emit: upload_importances
+    path 'random_seed',                     emit: random_seed
 
     script:
     """
@@ -46,6 +47,7 @@ process echo_environment_variables {
     echo -n "${prune_misclassified_}" > prune_misclassified
     echo -n "${output_prefix_}" > output_prefix
     echo -n "${upload_importances_}" > upload_importances
+    echo -n "${random_seed_}" > random_seed
     """
 }
 
@@ -76,6 +78,7 @@ process run_cggnn {
     val prune_misclassified
     val output_prefix
     val upload_importances
+    val random_seed
 
     output:
     // path "${output_prefix}_cells.h5",                emit: cells
@@ -106,7 +109,8 @@ process run_cggnn {
         $(if [[ "!{merge_rois}" = true ]]; then echo "--merge_rois"; fi) \
         $(if [[ "!{prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
         --output_prefix "!{output_prefix}" \
-        $(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances"; fi)
+        $(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances"; fi) \
+        --random_seed !{random_seed}
     '''
 }
 
@@ -174,6 +178,9 @@ workflow {
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
     
+    environment_ch.random_seed.map{ it.text }
+        .set{ random_seed_ch }
+    
     run_cggnn(
         db_config_file_ch,
         study_name_ch,
@@ -194,6 +201,7 @@ workflow {
         merge_rois_ch,
         prune_misclassified_ch,
         output_prefix_ch,
-        upload_importances_ch
+        upload_importances_ch,
+        random_seed_ch
     )
 }

@@ -14,6 +14,7 @@ class ExpressionsTableIndexer:
         studies = retrieve_study_names(database_config_file)
         for study in studies:
             with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+                logger.info('Will create custom index for study %s.', study)
                 if not ExpressionsTableIndexer.expressions_table_is_indexed(cursor):
                     ExpressionsTableIndexer.create_index(cursor)
                 else:

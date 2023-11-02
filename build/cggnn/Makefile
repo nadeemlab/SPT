@@ -20,7 +20,7 @@ setup-testing:
 >@${MESSAGE} start "cggnn"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-db-testing ; \
+     spt-db-testing-only ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Setup env." "Env not setup."
 >@rm -f status_code

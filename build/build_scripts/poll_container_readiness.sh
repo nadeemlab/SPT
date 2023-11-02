@@ -2,7 +2,7 @@
 declare -A expectedmessages
 expectedmessages[spt-apiserver-testing]="Uvicorn running on"
 expectedmessages[spt-ondemand-testing]="Ondemand services are ready to accept connections"
-expectedmessages[spt-db-testing]="database system is ready to accept connections"
+expectedmessages[spt-db-testing-only]="database system is ready to accept connections"
 expectedmessages[spt-workflow-testing]="workflow container is ready to work"
 
 counter=0

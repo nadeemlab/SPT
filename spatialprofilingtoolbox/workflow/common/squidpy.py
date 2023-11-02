@@ -20,7 +20,7 @@ from scipy.stats import norm  # type: ignore
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
-from spatialprofilingtoolbox import squidpy_feature_classnames
+from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames
 
 
 def lookup_squidpy_feature_class(method: str) -> str | None:

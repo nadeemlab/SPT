@@ -25,6 +25,8 @@ from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyP
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import create_database
+from spatialprofilingtoolbox.db.modify_constraints import DBConstraintsToggling
+from spatialprofilingtoolbox.db.modify_constraints import toggle_constraints
 from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -120,6 +122,12 @@ class DataSkimmer:
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
 
+        toggle_constraints(
+            self.database_config_file,
+            study_name,
+            state=DBConstraintsToggling.DROP,
+        )
+
         with DBConnection(database_config_file=self.database_config_file, study=study_name) as connection:
             self._cache_all_record_counts(connection, fields)
             StudyParser(fields).parse(connection, _files['study'])
@@ -141,3 +149,9 @@ class DataSkimmer:
             )
             SampleStratificationCreator.create_sample_stratification(connection)
             self._report_record_count_changes(connection, fields)
+
+        toggle_constraints(
+            self.database_config_file,
+            study_name,
+            state=DBConstraintsToggling.RECREATE,
+        )

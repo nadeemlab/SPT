@@ -1,0 +1,18 @@
+name: spt_cggnn
+channels:
+  - defaults
+  - bioconda
+  - pytorch
+  - nvidia  # remove if your machine doesn't have a CUDA-compatible GPU
+  - dglteam/label/cu118  # remove /label/cu118 if your machine doesn't have a CUDA-compatible GPU
+dependencies:
+  - python==3.11
+  - pip
+  - postgresql
+  - nextflow
+  - cudatoolkit=11.8  # change to a CUDA version supported by your GPU or remove if none are
+  - pytorch
+  - pytorch-cuda=11.8  # change to a CUDA version supported by your GPU or remove if none are
+  - dgl
+  - pip:
+    - spatialprofilingtoolbox[all]

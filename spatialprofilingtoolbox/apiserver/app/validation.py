@@ -6,7 +6,7 @@ from fastapi import Query
 from fastapi import Depends
 
 from spatialprofilingtoolbox.db.querying import query
-from spatialprofilingtoolbox import squidpy_feature_classnames
+from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames
 
 def abbreviate_string(string: str) -> str:
     abbreviation = string[0:40]

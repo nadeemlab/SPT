@@ -2,7 +2,7 @@
 from typing import cast
 from pandas import DataFrame
 
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CGGNNImportanceRank
 

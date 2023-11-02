@@ -9,7 +9,7 @@ from numpy import isnan
 
 from spatialprofilingtoolbox.db.squidpy_metrics import create_and_transcribe_squidpy_features
 from spatialprofilingtoolbox.db.database_connection import DBConnection
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 
 FeatureVector = tuple[tuple[str, float], ...]
 

@@ -11,7 +11,7 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (
 )
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.squidpy import (
     lookup_squidpy_feature_class,
     compute_squidpy_metric_for_one_sample,

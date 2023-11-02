@@ -19,7 +19,7 @@ from anndata import AnnData  # type: ignore
 from scipy.stats import norm  # type: ignore
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox import squidpy_feature_classnames
 
 

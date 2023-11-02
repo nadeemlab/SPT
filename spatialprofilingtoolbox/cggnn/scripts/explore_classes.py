@@ -2,8 +2,6 @@
 
 from argparse import ArgumentParser
 
-from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-
 
 def parse_arguments():
     """Process command line arguments."""
@@ -51,6 +49,8 @@ clear delineation to train a model on.
 
 if __name__ == "__main__":
     args = parse_arguments()
+
+    from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
     extractor = FeatureMatrixExtractor(database_config_file=args.spt_db_config_location)
     strata = extractor.extract_cohorts(study=args.study)['strata']
     print(strata.to_string())

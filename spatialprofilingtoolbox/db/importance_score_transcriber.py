@@ -8,7 +8,7 @@ from psycopg2.extensions import connection as Connection
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

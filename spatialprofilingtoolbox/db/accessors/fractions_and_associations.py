@@ -4,7 +4,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CellFractio
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import FeatureAssociationTest
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.cohorts import _replace_stratum_identifiers
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

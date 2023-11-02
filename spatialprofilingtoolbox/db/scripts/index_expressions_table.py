@@ -18,6 +18,7 @@ if __name__ == '__main__':
     )
     add_argument(parser, 'database config')
     parser.add_argument('--drop-index', dest='drop_index', action='store_true')
+    parser.add_argument('--study', dest='study', default=None, type=str)
     args = parser.parse_args()
 
     logger.info('')
@@ -25,6 +26,6 @@ if __name__ == '__main__':
 
     database_config_file = abspath(expanduser(args.database_config_file))
     if args.drop_index:
-        ExpressionsTableIndexer.drop_index(database_config_file)
+        ExpressionsTableIndexer.drop_index(database_config_file, study=args.study)
     else:
-        ExpressionsTableIndexer.ensure_indexed_expressions_tables(database_config_file)
+        ExpressionsTableIndexer.ensure_indexed_expressions_tables(database_config_file, study=args.study)

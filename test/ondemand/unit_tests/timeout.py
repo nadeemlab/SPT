@@ -7,7 +7,7 @@ from spatialprofilingtoolbox.ondemand.providers.proximity_provider import Proxim
 
 def do_test():
     data_directory = 'test_expression_data'
-    timeout = 0.1
+    timeout = 0.05
     proximity = ProximityProvider(data_directory, timeout)
 
     study = 'Melanoma intralesional IL2'

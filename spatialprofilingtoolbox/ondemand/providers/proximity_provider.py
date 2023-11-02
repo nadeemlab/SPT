@@ -150,20 +150,24 @@ class ProximityProvider(PendingProvider):
         phenotype2 = phenotype_str_to_phenotype(specifiers[1])
         radius = float(specifiers[2])
         sample_identifiers = ProximityProvider.get_sample_identifiers(study, feature_specification)
+        use_nulls = False
         for sample_identifier in sample_identifiers:
-            value = compute_proximity_metric_for_signature_pair(
-                phenotype1,
-                phenotype2,
-                radius,
-                self.get_cells(sample_identifier, data_analysis_study),
-                self._get_tree(sample_identifier, data_analysis_study),
-            )
+            if not use_nulls:
+                value = compute_proximity_metric_for_signature_pair(
+                    phenotype1,
+                    phenotype2,
+                    radius,
+                    self.get_cells(sample_identifier, data_analysis_study),
+                    self._get_tree(sample_identifier, data_analysis_study),
+                )
+            else:
+                value = None
             message = 'Computed one feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)
             with DBCursor(study=study) as cursor:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
             if self.check_timeout(*args):
-                break
+                use_nulls = True
         ProximityProvider.drop_pending_computation(study, feature_specification)
         message = 'Wrapped up proximity metric calculation, feature "%s".'
         logger.debug(message, feature_specification)

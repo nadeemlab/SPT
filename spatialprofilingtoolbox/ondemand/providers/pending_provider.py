@@ -180,6 +180,7 @@ class PendingProvider(OnDemandProvider, ABC):
             difference = now_seconds - self.timeouts[args]
             if difference > self.timeout:
                 logger.debug('Ondemand timeout %s exceeded.', self.timeout)
+                del self.timeouts[args]
                 return True
         else:
             self.timeouts[args] = now_seconds

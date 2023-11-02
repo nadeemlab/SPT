@@ -157,19 +157,23 @@ class SquidpyProvider(PendingProvider):
             phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers]
             radius = None
         sample_identifiers = SquidpyProvider.get_sample_identifiers(study, feature_specification)
+        use_nulls = False
         for sample_identifier in sample_identifiers:
-            value = compute_squidpy_metric_for_one_sample(
-                self.get_cells(sample_identifier, data_analysis_study),
-                phenotypes,
-                feature_class,
-                radius=radius,
-            )
+            if not use_nulls:
+                value = compute_squidpy_metric_for_one_sample(
+                    self.get_cells(sample_identifier, data_analysis_study),
+                    phenotypes,
+                    feature_class,
+                    radius=radius,
+                )
+            else:
+                value = None
             message = 'Computed feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)
             with DBCursor(study=study) as cursor:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
             if self.check_timeout(*args):
-                break
+                use_nulls = True
         SquidpyProvider.drop_pending_computation(study, feature_specification)
         logger.debug('Wrapped up squidpy metric calculation, feature "%s".', feature_specification)
         logger.debug(

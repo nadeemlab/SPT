@@ -25,12 +25,12 @@ logger = colorized_logger(__name__)
 class ProximityProvider(PendingProvider):
     """Do proximity calculation from pair of signatures."""
 
-    def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
+    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
         """Load from a precomputed JSON artifact in the data directory.
 
         Note: ProximityProvider always loads centroids because it needs them.
         """
-        super().__init__(data_directory, load_centroids=True)
+        super().__init__(data_directory, timeout, load_centroids=True)
 
         logger.info('Start loading location data and creating ball trees.')
         self._dropna_in_data_arrays()
@@ -144,23 +144,30 @@ class ProximityProvider(PendingProvider):
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
 
     def have_feature_computed(self, study: str, feature_specification: str) -> None:
+        args = (study, feature_specification)
         data_analysis_study, specifiers = ProximityProvider.retrieve_specifiers(study, feature_specification)
         phenotype1 = phenotype_str_to_phenotype(specifiers[0])
         phenotype2 = phenotype_str_to_phenotype(specifiers[1])
         radius = float(specifiers[2])
         sample_identifiers = ProximityProvider.get_sample_identifiers(study, feature_specification)
+        use_nulls = False
         for sample_identifier in sample_identifiers:
-            value = compute_proximity_metric_for_signature_pair(
-                phenotype1,
-                phenotype2,
-                radius,
-                self.get_cells(sample_identifier, data_analysis_study),
-                self._get_tree(sample_identifier, data_analysis_study),
-            )
+            if not use_nulls:
+                value = compute_proximity_metric_for_signature_pair(
+                    phenotype1,
+                    phenotype2,
+                    radius,
+                    self.get_cells(sample_identifier, data_analysis_study),
+                    self._get_tree(sample_identifier, data_analysis_study),
+                )
+            else:
+                value = None
             message = 'Computed one feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)
             with DBCursor(study=study) as cursor:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
+            if self.check_timeout(*args):
+                use_nulls = True
         ProximityProvider.drop_pending_computation(study, feature_specification)
         message = 'Wrapped up proximity metric calculation, feature "%s".'
         logger.debug(message, feature_specification)

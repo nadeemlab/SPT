@@ -168,6 +168,24 @@ class PendingProvider(OnDemandProvider, ABC):
                 (feature_specification, ),
             )
 
+    def reset_timeout(self, study: str, feature_specification: str) -> None:
+        now_seconds = datetime.now().timestamp()
+        args = (study, feature_specification)
+        self.timeouts[args] = now_seconds
+
+    def check_timeout(self, study: str, feature_specification: str) -> bool:
+        now_seconds = datetime.now().timestamp()
+        args = (study, feature_specification)
+        if args in self.timeouts:
+            difference = now_seconds - self.timeouts[args]
+            if difference > self.timeout:
+                logger.debug('Ondemand timeout %s exceeded.', self.timeout)
+                del self.timeouts[args]
+                return True
+        else:
+            self.timeouts[args] = now_seconds
+        return False
+
     @abstractmethod
     def have_feature_computed(self, study: str, feature_specification: str) -> None:
         """Compute the feature and add it to the database."""

@@ -24,12 +24,12 @@ logger = colorized_logger(__name__)
 class SquidpyProvider(PendingProvider):
     """Calculate selected squidpy metrics."""
 
-    def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
+    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
         """Load from binary expression files and JSON-formatted index in the data directory.
 
         Note: SquidpyProvider always loads centroids because it needs them.
         """
-        super().__init__(data_directory, load_centroids=True)
+        super().__init__(data_directory, timeout, load_centroids=True)
 
     @classmethod
     def service_specifier(cls) -> str:
@@ -145,6 +145,7 @@ class SquidpyProvider(PendingProvider):
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
 
     def have_feature_computed(self, study: str, feature_specification: str) -> None:
+        args = (study, feature_specification)
         method = self.retrieve_feature_derivation_method(study, feature_specification)
         feature_class = cast(str, lookup_squidpy_feature_class(method))
         data_analysis_study, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
@@ -156,17 +157,23 @@ class SquidpyProvider(PendingProvider):
             phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers]
             radius = None
         sample_identifiers = SquidpyProvider.get_sample_identifiers(study, feature_specification)
+        use_nulls = False
         for sample_identifier in sample_identifiers:
-            value = compute_squidpy_metric_for_one_sample(
-                self.get_cells(sample_identifier, data_analysis_study),
-                phenotypes,
-                feature_class,
-                radius=radius,
-            )
+            if not use_nulls:
+                value = compute_squidpy_metric_for_one_sample(
+                    self.get_cells(sample_identifier, data_analysis_study),
+                    phenotypes,
+                    feature_class,
+                    radius=radius,
+                )
+            else:
+                value = None
             message = 'Computed feature value of %s: %s, %s'
             logger.debug(message, feature_specification, sample_identifier, value)
             with DBCursor(study=study) as cursor:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
+            if self.check_timeout(*args):
+                use_nulls = True
         SquidpyProvider.drop_pending_computation(study, feature_specification)
         logger.debug('Wrapped up squidpy metric calculation, feature "%s".', feature_specification)
         logger.debug(

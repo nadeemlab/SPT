@@ -5,9 +5,11 @@ The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n
    1. Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
    2. Now that you know which specimen cohorts ("strata") you want to use, fetch the relevant data artifacts from SPT using `spt cggnn extract`.
    3. Artifacts in hand, use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
-2. Given that you now know the parameters you used to arrive at your fine-tuned CG-GNN model, use `spt workflow configure` to create artifacts that will reproducibly run through the entire process of gathering the data for, training, and reporting with your trained model. Then, your workflow can be run in one line using Nextflow to approximately reproduce your model and results.
+2. Given that you now know the parameters you used to arrive at your fine-tuned CG-GNN model, use `spt workflow configure` to create artifacts that will reproducibly* run through the entire process of gathering the data for, training, and reporting with your trained model. Then, your workflow can be run in one line using Nextflow to approximately reproduce your model and results.
 
 This document will go into more detail on the second step.
+
+\* _Because the GNN uses non-deterministic algorithms, workflows will not be exactly reproducible._
 
 ## Configuring the cggnn workflow with `spt workflow configure`
 
@@ -94,7 +96,7 @@ The main difference between the command line interface provided by [`cg-gnn`](ht
 * Boolean values must explicitly be set to `true` or `false` instead of simply including or omitting the parameter.
 * `strata` can be set to `all` to use all strata (equivalent to not providing the parameter when using the CLI).
 * `target_name` can be set to `none` to use all cells in the tissue sample (equivalent to not providing the parameter when using the CLI).
-* `random_seed` can be set to `none` if you don't with to use a random seed (again, equivalent to not providing the parameter in the CLI).
+* `random_seed` can be set to `none` if you don't wish to use a random seed (again, equivalent to not providing the parameter in the CLI).
 
 ## Running the workflow
 

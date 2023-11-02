@@ -24,12 +24,12 @@ logger = colorized_logger(__name__)
 class SquidpyProvider(PendingProvider):
     """Calculate selected squidpy metrics."""
 
-    def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
+    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
         """Load from binary expression files and JSON-formatted index in the data directory.
 
         Note: SquidpyProvider always loads centroids because it needs them.
         """
-        super().__init__(data_directory, load_centroids=True)
+        super().__init__(data_directory, timeout, load_centroids=True)
 
     @classmethod
     def service_specifier(cls) -> str:
@@ -145,6 +145,7 @@ class SquidpyProvider(PendingProvider):
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
 
     def have_feature_computed(self, study: str, feature_specification: str) -> None:
+        args = (study, feature_specification)
         method = self.retrieve_feature_derivation_method(study, feature_specification)
         feature_class = cast(str, lookup_squidpy_feature_class(method))
         data_analysis_study, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
@@ -167,6 +168,8 @@ class SquidpyProvider(PendingProvider):
             logger.debug(message, feature_specification, sample_identifier, value)
             with DBCursor(study=study) as cursor:
                 add_feature_value(feature_specification, sample_identifier, value, cursor)
+            if self.check_timeout(*args):
+                break
         SquidpyProvider.drop_pending_computation(study, feature_specification)
         logger.debug('Wrapped up squidpy metric calculation, feature "%s".', feature_specification)
         logger.debug(

@@ -26,14 +26,18 @@ logger = colorized_logger(__name__)
 class OnDemandProvider(ABC):
     """Base class for OnDemandProvider instances, since they share data ingestion methods."""
     data_arrays: dict[str, dict[str, DataFrame]]
+    timeout: int
+    timeouts: dict[tuple[str, str], float]
 
     @classmethod
     def service_specifier(cls) -> str:
         raise NotImplementedError
 
-    def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
+    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
         self._load_expressions_indices(data_directory)
+        self.timeout = timeout
+        self.timeouts = {}
         centroids = None
         if load_centroids:
             loader = StructureCentroids()

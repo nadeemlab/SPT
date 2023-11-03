@@ -1,7 +1,7 @@
 """Extract the sequences of points of a polygon from a Shapefile."""
 import base64
 import mmap
-import shapefile
+import shapefile  # type: ignore
 
 
 def extract_points(shapefile_base64_ascii):

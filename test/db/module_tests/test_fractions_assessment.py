@@ -3,7 +3,7 @@
 from pandas import read_csv
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 
 def retrieve_known_cases():
     df = read_csv('module_tests/expected_fractions.tsv', sep='\t')

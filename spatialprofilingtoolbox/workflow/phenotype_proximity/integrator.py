@@ -7,7 +7,7 @@ import pickle
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
 from spatialprofilingtoolbox.workflow.common.two_cohort_feature_association_testing import \
     perform_tests
@@ -35,13 +35,15 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             logger.info('Will consider file %s', filename)
         data_analysis_study = self.insert_new_data_analysis_study()
         self.export_feature_values(core_computation_results_files, data_analysis_study)
-        with DBConnection(database_config_file=self.database_config_file, study=self.study_name) as connection:
+        kwargs = {'database_config_file': self.database_config_file, 'study': self.study_name}
+        with DBConnection(**kwargs) as connection:
             perform_tests(data_analysis_study, connection)
 
     def insert_new_data_analysis_study(self):
         timestring = str(datetime.datetime.now())
         name = f'{self.study_name} : proximity calculation : {timestring}'
-        with DBCursor(database_config_file=self.database_config_file, study=self.study_name) as cursor:
+        kwargs = {'database_config_file': self.database_config_file, 'study': self.study_name}
+        with DBCursor(**kwargs) as cursor:
             cursor.execute('''
             INSERT INTO data_analysis_study(name)
             VALUES (%s) ;
@@ -52,7 +54,8 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
 
     def export_feature_values(self, core_computation_results_files, data_analysis_study):
         description = get_feature_description('proximity')
-        with DBConnection(database_config_file=self.database_config_file, study=self.study_name) as connection:
+        kwargs = {'database_config_file': self.database_config_file, 'study': self.study_name}
+        with DBConnection(**kwargs) as connection:
             with ADIFeaturesUploader(
                 connection,
                 data_analysis_study=data_analysis_study,

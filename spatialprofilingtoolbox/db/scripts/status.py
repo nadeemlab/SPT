@@ -16,7 +16,6 @@ from spatialprofilingtoolbox.db.database_connection import get_and_validate_data
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -24,7 +23,10 @@ logger = colorized_logger('spt db status')
 
 
 def report_counts(aggregated):
-    print(aggregated.sort_values(by='Table').to_string(index=False))
+    if aggregated.shape[0] != 0:
+        print(aggregated.sort_values(by='Table').to_string(index=False))
+    else:
+        print('No datasets present.')
 
 
 def aggregate_counts(all_counts):
@@ -37,8 +39,7 @@ def aggregate_counts(all_counts):
     aggregated.reset_index(inplace=True)
     return aggregated
 
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         prog='spt db status',
         description='Report basic health status of the given scstudies database.'
@@ -57,3 +58,6 @@ if __name__ == '__main__':
             all_counts.append(counted)
     aggregated = aggregate_counts(all_counts)
     report_counts(aggregated)
+
+if __name__ == '__main__':
+    main()

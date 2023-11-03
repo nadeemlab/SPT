@@ -60,10 +60,12 @@ def get_executable_and_script(submodule_name, script_name_hyphenated):
 
 def print_version_and_all_commands():
     submodules_with_commands = [
-        name for name in submodule_names if len(get_commands(name)) > 0]
+        name for name in submodule_names if len(get_commands(name)) > 0
+    ]
     commands_description = '\n\n'.join([
         '\n'.join(
-            [f'spt {submodule} {command}' for command in get_commands(submodule)])
+            [f'spt {submodule} {command}' for command in get_commands(submodule)]
+        )
         for submodule in submodules_with_commands
     ])
     print(f'Version {spatialprofilingtoolbox.__version__}')
@@ -74,7 +76,8 @@ def print_version_and_all_commands():
 
 def main_program():
     submodules_with_commands = [
-        name for name in submodule_names if len(get_commands(name)) > 0]
+        name for name in submodule_names if len(get_commands(name)) > 0
+    ]
     parser = argparse.ArgumentParser(
         prog='spt',
         description='spatialprofilingtoolbox commands',
@@ -121,10 +124,10 @@ def main_program():
     if len(sys.argv) >= 3:
         executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
+        TERM = signal.SIGTERM
+        INTER = signal.SIGINT
         with subprocess.Popen([executable, script_path,] + unparsed_arguments) as running_process:
-            signal.signal(signal.SIGTERM, lambda signum,
-                        frame: running_process.send_signal(signal.SIGTERM))
-            signal.signal(signal.SIGINT, lambda signum,
-                        frame: running_process.send_signal(signal.SIGINT))
+            signal.signal(TERM, lambda signum, frame: running_process.send_signal(TERM))
+            signal.signal(INTER, lambda signum, frame: running_process.send_signal(INTER))
             exit_code = running_process.wait()
         sys.exit(exit_code)

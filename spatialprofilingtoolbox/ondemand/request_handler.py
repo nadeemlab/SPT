@@ -6,9 +6,9 @@ from json import dumps
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.ondemand.providers import OnDemandProvider
+from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
-from spatialprofilingtoolbox import squidpy_feature_classnames
+from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

@@ -42,7 +42,13 @@ def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
     missing = set(_get_credential_keys()).difference(credentials.keys())
     if len(missing) > 0:
         raise ValueError(f'Database configuration file is missing keys: {missing}')
-    return DBCredentials(*[credentials[k] for k in _get_credential_keys()])
+    
+    return DBCredentials(
+        credentials['endpoint'],
+        metaschema_database(),
+        credentials['user'],
+        credentials['password'],
+    )
 
 def _handle_unavailability():
     variables = [
@@ -55,4 +61,4 @@ def _handle_unavailability():
         raise EnvironmentError(f'Did not find in environment: {str(unfound)}')
 
 def _get_credential_keys():
-    return ['endpoint', 'database', 'user', 'password']
+    return ['endpoint', 'user', 'password']

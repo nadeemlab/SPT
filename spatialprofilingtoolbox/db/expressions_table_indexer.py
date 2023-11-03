@@ -10,14 +10,18 @@ class ExpressionsTableIndexer:
     """Set up source specimen index on big sparse expression values table."""
 
     @staticmethod
-    def ensure_indexed_expressions_tables(database_config_file: str | None):
-        studies = retrieve_study_names(database_config_file)
-        for study in studies:
-            with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+    def ensure_indexed_expressions_tables(database_config_file: str | None, study: str | None = None):
+        if study is None:
+            studies = retrieve_study_names(database_config_file)
+        else:
+            studies = [study]
+        for _study in studies:
+            with DBCursor(database_config_file=database_config_file, study=_study) as cursor:
+                logger.info('Will create custom index for study %s.', _study)
                 if not ExpressionsTableIndexer.expressions_table_is_indexed(cursor):
                     ExpressionsTableIndexer.create_index(cursor)
                 else:
-                    logger.debug('Expression table for "%s" is already indexed.', study)
+                    logger.debug('Expression table for "%s" is already indexed.', _study)
 
     @staticmethod
     def expressions_table_is_indexed(cursor):
@@ -118,15 +122,18 @@ class ExpressionsTableIndexer:
                 logger.debug('    %s', row)
 
     @staticmethod
-    def drop_index(database_config_file: str | None):
-        studies = retrieve_study_names(database_config_file)
-        for study in studies:
-            with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+    def drop_index(database_config_file: str | None, study: str | None = None):
+        if study is None:
+            studies = retrieve_study_names(database_config_file)
+        else:
+            studies = [study]
+        for _study in studies:
+            with DBCursor(database_config_file=database_config_file, study=_study) as cursor:
                 is_indexed = ExpressionsTableIndexer.expressions_table_is_indexed(cursor)
                 if not is_indexed:
-                    logger.debug('There is no index to drop for "%s" database.', study)
+                    logger.debug('There is no index to drop for "%s" database.', _study)
                     continue
-                logger.debug('Will drop "source_specimen" column and index in "%s" database.', study)
+                logger.debug('Will drop "source_specimen" column and index in "%s" database.', _study)
                 cursor.execute('''
                 DROP INDEX IF EXISTS expression_source_specimen ;            
                 ''')
@@ -134,5 +141,5 @@ class ExpressionsTableIndexer:
                 ALTER TABLE expression_quantification
                 DROP COLUMN IF EXISTS source_specimen ;
                 ''')
-            with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+            with DBCursor(database_config_file=database_config_file, study=_study) as cursor:
                 ExpressionsTableIndexer.log_current_indexes(cursor)

@@ -14,7 +14,6 @@ from warnings import warn
 
 from pandas import DataFrame
 
-from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
     StudyStructureCentroids,
@@ -27,14 +26,18 @@ logger = colorized_logger(__name__)
 class OnDemandProvider(ABC):
     """Base class for OnDemandProvider instances, since they share data ingestion methods."""
     data_arrays: dict[str, dict[str, DataFrame]]
+    timeout: int
+    timeouts: dict[tuple[str, str], float]
 
     @classmethod
     def service_specifier(cls) -> str:
         raise NotImplementedError
 
-    def __init__(self, data_directory: str, load_centroids: bool = False) -> None:
+    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
         self._load_expressions_indices(data_directory)
+        self.timeout = timeout
+        self.timeouts = {}
         centroids = None
         if load_centroids:
             loader = StructureCentroids()
@@ -139,7 +142,9 @@ class OnDemandProvider(ABC):
         coordinates = ['pixel x', 'pixel y']
         location_data = DataFrame.from_dict(centroids[study_name][sample], orient='index')
         if location_data.shape[0] != df.shape[0]:
-            message = f'Can not add location data for {location_data.shape[0]} to feature matrix with {df.shape[0]} rows.'
+            present = location_data.shape[0]
+            before = df.shape[0]
+            message = f'Can not add location data {present} to feature matrix with {before} rows.'
             logger.error(message)
         df[coordinates] = location_data
 

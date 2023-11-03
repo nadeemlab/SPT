@@ -4,11 +4,9 @@ from socketserver import TCPServer, BaseRequestHandler
 
 from attr import define
 
-from spatialprofilingtoolbox.ondemand.providers import (
-    CountsProvider,
-    ProximityProvider,
-    SquidpyProvider,
-)
+from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
+from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
+from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
 
 
 @define

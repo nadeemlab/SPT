@@ -11,7 +11,7 @@ from spatialprofilingtoolbox.workflow.common.squidpy import (
     compute_squidpy_metric_for_one_sample,
 )
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

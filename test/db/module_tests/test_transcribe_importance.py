@@ -3,7 +3,7 @@ from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
-from spatialprofilingtoolbox import get_feature_description
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 
 
 def get_test_importance_rows():

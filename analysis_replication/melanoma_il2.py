@@ -10,7 +10,8 @@ study = 'Melanoma intralesional IL2'
 if len(sys.argv) == 1:
     access = DataAccessor(study)
 else:
-    access = DataAccessor(study, host=sys.argv[1])
+    host = sys.argv[1]
+    access = DataAccessor(study, host=host)
 
 exhausted = {'positive_markers': ['KI67', 'PD1', 'LAG3', 'TIM3'], 'negative_markers': []}
 df = access.counts(['CD8+ T cell', exhausted])

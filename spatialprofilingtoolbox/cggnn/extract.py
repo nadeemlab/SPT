@@ -70,7 +70,7 @@ def _compress_df(df_strata: DataFrame) -> DataFrame:
         for i in range(1, n_columns):
             df_strata['label'] += ', ' + df_strata.iloc[:, i].astype(str)
         df_strata['label'] += ')'
-        df_strata = df_strata[['label']]
+        df_strata = df_strata.loc[:, ['label']]
         df_strata[empty_rows] = None
     return df_strata
 
@@ -78,7 +78,7 @@ def _compress_df(df_strata: DataFrame) -> DataFrame:
 def _label(
         df_assignments: DataFrame,
         df_strata: DataFrame,
-        ) -> tuple[list[str], DataFrame, dict[int, str]]:
+) -> tuple[list[str], DataFrame, dict[int, str]]:
     """Merge with specimen assignments, keeping only selected strata."""
     df = merge(df_assignments, df_strata, on='stratum identifier', how='inner'
                ).set_index('specimen')[['label']]

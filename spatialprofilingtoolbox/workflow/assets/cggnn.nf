@@ -90,27 +90,27 @@ process run_cggnn {
 
     shell:
     '''
-    spt cggnn run \
-        --spt_db_config_location "!{db_config_file}" \
-        --study "!{study_name}" \
-        $(if [[ "!{strata}" != all ]]; then echo "--strata !{strata}"; fi) \
-        --validation_data_percent !{validation_data_percent} \
-        --test_data_percent !{test_data_percent} \
-        $(if [[ "!{disable_channels}" = true ]]; then echo "--disable_channels"; fi) \
-        $(if [[ "!{disable_phenotypes}" = true ]]; then echo "--disable_phenotypes"; fi) \
-        --cells_per_slide_target !{cells_per_slide_target} \
-        $(if [[ "!{target_name}" != none ]]; then echo "--target_name "!{target_name}""; fi) \
-        $(if [[ "!{in_ram}" = true ]]; then echo "--in_ram"; fi) \
-        --batch_size !{batch_size} \
-        --epochs !{epochs} \
-        --learning_rate !{learning_rate} \
-        --k_folds !{k_folds} \
-        --explainer_model "!{explainer_model}" \
-        $(if [[ "!{merge_rois}" = true ]]; then echo "--merge_rois"; fi) \
-        $(if [[ "!{prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
-        --output_prefix "!{output_prefix}" \
-        $(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances"; fi) \
-        $(if [[ "!{random_seed}" != none ]]; then echo "--random_seed "!{random_seed}""; fi)
+    run="spt cggnn run "
+    run+="--spt_db_config_location '!{db_config_file}' "
+    run+="--study '!{study_name}' "
+    run+=$(if [[ "!{strata}" != all ]]; then echo "--strata !{strata} "; fi)
+    run+="--validation_data_percent !{validation_data_percent} "
+    run+="--test_data_percent !{test_data_percent} "
+    run+=$(if [[ "!{disable_channels}" = true ]]; then echo "--disable_channels "; fi)
+    run+=$(if [[ "!{disable_phenotypes}" = true ]]; then echo "--disable_phenotypes "; fi)
+    run+="--cells_per_slide_target !{cells_per_slide_target} "
+    run+=$(if [[ "!{target_name}" != none ]]; then echo '--target_name "!{target_name}" ' ; fi)
+    run+=$(if [[ "!{in_ram}" = true ]]; then echo "--in_ram "; fi) \
+    run+="--batch_size !{batch_size} "
+    run+="--epochs !{epochs} "
+    run+="--learning_rate !{learning_rate} "
+    run+="--k_folds !{k_folds} "
+    run+="--explainer_model "!{explainer_model}" "
+    run+=$(if [[ "!{merge_rois}" = true ]]; then echo "--merge_rois "; fi)
+    run+=$(if [[ "!{prune_misclassified}" = true ]]; then echo "--prune_misclassified "; fi)
+    run+="--output_prefix "!{output_prefix}" "
+    run+=$(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances "; fi)
+    eval $run
     '''
 }
 

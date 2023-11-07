@@ -4,10 +4,19 @@ from os import makedirs
 from os.path import join, exists
 from random import shuffle, randint
 from warnings import warn
-from typing import Optional, Tuple, List, Dict, DefaultDict
+from typing import DefaultDict
 
 from torch import FloatTensor, IntTensor  # pylint: disable=no-name-in-module
-from numpy import rint, median, prod, percentile, argmin, nonzero, savetxt, int_
+from numpy import (
+    rint,
+    median,
+    prod,  # type: ignore
+    percentile,  # type: ignore
+    argmin,
+    nonzero,
+    savetxt,
+    int_,
+)
 from numpy.typing import NDArray
 from dgl import DGLGraph, graph  # type: ignore
 from sklearn.neighbors import kneighbors_graph  # type: ignore
@@ -37,14 +46,14 @@ def generate_graphs(
     test_data_percent: int,
     use_channels: bool = True,
     use_phenotypes: bool = True,
-    roi_side_length: Optional[int] = None,
-    cells_per_slide_target: Optional[int] = 10_000,
+    roi_side_length: int | None = None,
+    cells_per_slide_target: int | None = 10_000,
     max_cells_to_consider: int = 100_000,
-    target_name: Optional[str] = None,
-    output_directory: Optional[str] = None,
-    random_seed: Optional[int] = None,
+    target_name: str | None = None,
+    output_directory: str | None = None,
+    random_seed: int | None = None,
     include_unlabeled: bool = False,
-) -> Tuple[List[GraphData], List[str]]:
+) -> tuple[list[GraphData], list[str]]:
     """Generate cell graphs from SPT server extracts and save to disk if requested.
 
     Parameters
@@ -70,8 +79,8 @@ def generate_graphs(
     use_phenotypes: bool = True
         Whether to include channel or phenotype features (columns in df_cell beginning with 'C ' and
         'P ', respectively) in the graph.
-    roi_side_length: Optional[int] = None
-    cells_per_slide_target: Optional[int] = 10_000
+    roi_side_length: int | None = None
+    cells_per_slide_target: int | None = 10_000
         One of these must be provided in order to determine the ROI size. roi_side_length specifies
         how long to make the side length of each square ROI, in pixels. If this isn't provided, the
         median cell density across all slides is used with cells_per_slide_target to determine the
@@ -81,20 +90,20 @@ def generate_graphs(
         boundary region will be included in the graph, but the ROI's center will be based on the
         cell with the most and closest cells within the specified ROI size.
         Empirically 350,000 works but 400,000 gives a 1.75 TB square and an out of memory error.
-    target_name: Optional[str] = None
+    target_name: str | None = None
         If provided, decide ROI placement based on only cells with this channel or phenotype. (All
         cells will be included in the ROI, but the density of cells with this channel or phenotype
         will decide where each cell is placed.) Should be a column name in df_feat_all_specimens.
         If not provided, simply orient ROIs where all cells are densest.
-    output_directory: Optional[str] = None
+    output_directory: str | None = None
         If provided, save the graphs to disk in the specified directory.
-    random_seed: Optional[int] = None
+    random_seed: int | None = None
         If provided, set the random seed to make the train/test/validation split deterministic.
 
     Returns
     -------
-    graphs_data: List[GraphData]
-    feature_names: List[str]
+    graphs_data: list[GraphData]
+    feature_names: list[str]
         The names of the features in graph.ndata['features'] in the order they appear in the array.
     """
     if not 0 <= validation_data_percent < 100:
@@ -140,7 +149,7 @@ def generate_graphs(
         include_unlabeled=include_unlabeled,
     )
     specimen_to_set = _split_rois(graphs_by_label_and_specimen, p_validation, p_test)
-    graphs_data: List[GraphData] = _assemble_graph_data(
+    graphs_data: list[GraphData] = _assemble_graph_data(
         graphs_by_label_and_specimen,
         graph_names,
         specimen_to_set,
@@ -157,21 +166,21 @@ def _create_graphs_from_spt(
     df_label: DataFrame,
     use_channels: bool = True,
     use_phenotypes: bool = True,
-    roi_size: Optional[Tuple[int, int]] = None,
-    cells_per_slide_target: Optional[int] = 5_000,
+    roi_size: tuple[int, int] | None = None,
+    cells_per_slide_target: int | None = 5_000,
     max_cells_to_consider: int = 100_000,
-    target_name: Optional[str] = None,
+    target_name: str | None = None,
     n_neighbors: int = 5,
-    threshold: Optional[int] = None,
+    threshold: int | None = None,
     include_unlabeled: bool = False,
-) -> Tuple[Dict[Optional[int], Dict[str, List[DGLGraph]]], Dict[DGLGraph, str], List[str]]:
+) -> tuple[dict[int | None, dict[str, list[DGLGraph]]], dict[DGLGraph, str], list[str]]:
     """Create graphs from cell and label files created from SPT."""
     if df_label['label'].nunique() < 2:
         raise ValueError('Less than two unique labels. No point to training.')
     if (not use_channels) and (not use_phenotypes):
         raise ValueError('Must use at least one of channels or phenotypes.')
 
-    features_to_use: List[str] = []
+    features_to_use: list[str] = []
     channels = df_cell.columns[df_cell.columns.str.startswith('C ')]
     phenotypes = df_cell.columns[df_cell.columns.str.startswith('P ')]
     if use_channels:
@@ -187,8 +196,8 @@ def _create_graphs_from_spt(
 
     # Split the data by specimen (slide) and derive the roi_size from the average cell density if
     # not provided
-    graphs_by_specimen: Dict[str, List[DGLGraph]] = DefaultDict(list)
-    roi_names: Dict[DGLGraph, str] = {}
+    graphs_by_specimen: dict[str, list[DGLGraph]] = DefaultDict(list)
+    roi_names: dict[DGLGraph, str] = {}
     grouped = df_cell.groupby('specimen')
     if roi_size is not None:
         roi_area = prod(roi_size)
@@ -213,7 +222,7 @@ def _create_graphs_from_spt(
         df_specimen[['pixel x', 'pixel y']] -= df_specimen[['pixel x', 'pixel y']].min()
 
         # Initialize data structures
-        bounding_boxes: List[Tuple[int, int, int, int, int, int]] = []
+        bounding_boxes: list[tuple[int, int, int, int, int, int]] = []
         slide_size = df_specimen[['pixel x', 'pixel y']].max() + 100
         if target_name is not None:
             proportion_of_target = df_specimen[target_name].sum()/df_specimen.shape[0]
@@ -238,8 +247,10 @@ def _create_graphs_from_spt(
             y_max = y + roi_size[1]//2
 
             # Check that this bounding box contains enough cells to do nearest neighbors on
-            if (df_specimen['pixel x'].between(x_min, x_max) &
-                    df_specimen['pixel y'].between(y_min, y_max)).sum() < n_neighbors + 1:
+            if (
+                df_specimen['pixel x'].between(x_min, x_max) &
+                df_specimen['pixel y'].between(y_min, y_max)
+            ).sum() < n_neighbors + 1:
                 # If not, terminate the ROI creation process early
                 break
 
@@ -271,9 +282,9 @@ def _create_graphs_from_spt(
         print(f'Created {len(bounding_boxes)} ROI(s) from specimen {specimen}.')
 
     # Split the graphs by specimen and label
-    graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List[DGLGraph]]] = DefaultDict(dict)
+    graphs_by_label_and_specimen: dict[int | None, dict[str, list[DGLGraph]]] = DefaultDict(dict)
     for specimen, graphs in graphs_by_specimen.items():
-        label: Optional[int]
+        label: int | None
         if include_unlabeled:
             label = df_label.loc[specimen, 'label'] if (specimen in df_label.index) else None
         else:
@@ -287,17 +298,22 @@ def _create_graph(
     centroids: NDArray[int_],
     features: NDArray[int_],
     n_neighbors: int = 5,
-    threshold: Optional[int] = None,
+    threshold: int | None = None,
 ) -> DGLGraph:
     """Generate the graph topology from the provided instance_map using (thresholded) kNN.
 
-    Args:
-        node_indices (array): Indices for each node.
-        centroids (array): Node centroids
-        features (array): Features of each node based on chemical channels.
-        n_neighbors (int, optional): Number of neighbors. Defaults to 5.
-        threshold (int, optional): Maximum allowed distance between 2 nodes.
-                                    Defaults to None (no thresholding).
+    Parameters
+    ----------
+    node_indices: NDArray[int_]
+        Indices for each node.
+    centroids: NDArray[int_]
+        Node centroids
+    features: NDArray[int_]
+        Features of each node based on chemical channels.
+    n_neighbors: int
+        Number of neighbors. Defaults to 5.
+    threshold: int | None
+        Maximum allowed distance between 2 nodes. Defaults to None (no thresholding).
     Returns:
         DGLGraph: The constructed graph
     """
@@ -330,12 +346,13 @@ def _create_graph(
 
 
 def _split_rois(
-    graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List[DGLGraph]]],
-    p_validation: float, p_test: float,
-) -> Dict[str, Optional[SETS_type]]:
+    graphs_by_label_and_specimen: dict[int | None, dict[str, list[DGLGraph]]],
+    p_validation: float,
+    p_test: float,
+) -> dict[str, SETS_type | None]:
     """Randomly allocate graphs to train, validation, and test sets."""
     p_train = 1 - p_validation - p_test
-    specimen_to_set: Dict[str, Optional[str]] = {}
+    specimen_to_set: dict[str, SETS_type | None] = {}
 
     # Shuffle the order of the specimens in each class and divvy them up.
     for label, graphs_by_specimen in graphs_by_label_and_specimen.items():
@@ -399,7 +416,7 @@ def _split_rois(
             n_validation_target = n_graphs*p_validation - n_allocated_val
             n_test_target = n_graphs*p_test - n_allocated_test
             if (n_train_target < 0) or (n_validation_target < 0) or (n_test_target < 0):
-                which_sets: List[str] = []
+                which_sets: list[str] = []
                 if n_train_target < 0:
                     which_sets.append('train')
                 if n_validation_target < 0:
@@ -429,11 +446,11 @@ def _split_rois(
 
 
 def _assemble_graph_data(
-    graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List[DGLGraph]]],
-    graph_names: Dict[DGLGraph, str],
-    specimen_to_set: Dict[str, Optional[SETS_type]],
-) -> List[GraphData]:
-    graph_data: List[GraphData] = []
+    graphs_by_label_and_specimen: dict[int | None, dict[str, list[DGLGraph]]],
+    graph_names: dict[DGLGraph, str],
+    specimen_to_set: dict[str, SETS_type | None],
+) -> list[GraphData]:
+    graph_data: list[GraphData] = []
     for label, graphs_by_specimen in graphs_by_label_and_specimen.items():
         for specimen, graph_list in graphs_by_specimen.items():
             set_name = specimen_to_set[specimen]
@@ -448,7 +465,7 @@ def _assemble_graph_data(
     return graph_data
 
 
-def _report_dataset_statistics(graphs_data: List[GraphData]) -> DataFrame:
+def _report_dataset_statistics(graphs_data: list[GraphData]) -> DataFrame:
     df = DataFrame(columns=['label', 'set', 'count'])
     for graph_instance in graphs_data:
         if graph_instance.specimen in df.index:

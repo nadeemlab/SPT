@@ -3,7 +3,7 @@
 from os.path import join
 from json import load as json_load
 from random import seed
-from typing import NamedTuple
+from typing import NamedTuple, Callable
 
 from numpy import loadtxt
 from numpy.random import seed as np_seed
@@ -11,15 +11,15 @@ from torch import (
     Tensor,  # type: ignore
     LongTensor,  # type: ignore
     IntTensor,  # type: ignore
-    manual_seed,
-    use_deterministic_algorithms,  # type: ignore
+    manual_seed,  # type: ignore
+    use_deterministic_algorithms,
 )
 from torch.cuda import is_available, manual_seed_all
 from torch.cuda import manual_seed as cuda_manual_seed  # type: ignore
 from torch.backends import cudnn  # type: ignore
 from dgl import batch, DGLGraph  # type: ignore
 from dgl import seed as dgl_seed  # type: ignore
-from dgl.data.utils import (
+from dgl.data.utils import (  # type: ignore
     save_graphs,  # type: ignore
     save_info,  # type: ignore
     load_graphs,  # type: ignore
@@ -31,7 +31,7 @@ from spatialprofilingtoolbox.cggnn.util.constants import SETS_type
 
 IS_CUDA = is_available()
 DEVICE = 'cuda:0' if IS_CUDA else 'cpu'
-COLLATE_USING = {
+COLLATE_USING: dict[str, Callable] = {
     'DGLGraph': batch,
     'DGLHeteroGraph': batch,
     'Tensor': lambda x: x,

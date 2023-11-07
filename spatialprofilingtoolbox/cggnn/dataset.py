@@ -4,11 +4,15 @@ from typing import Sequence
 
 from torch.utils.data import ConcatDataset, DataLoader, SubsetRandomSampler
 from torch.utils.data import Dataset
-from dgl import DGLGraph
+from torch.cuda import is_available
+from dgl import DGLGraph  # type: ignore
 from sklearn.model_selection import KFold
 
-from spatialprofilingtoolbox.cggnn.util import GraphData, split_graph_sets, collate
+from spatialprofilingtoolbox.cggnn.util import GraphData, split_graph_sets, collate  # type: ignore
 
+# cuda support
+IS_CUDA = is_available()
+DEVICE = 'cuda:0' if IS_CUDA else 'cpu'
 
 class CGDataset(Dataset):
     """Cell graph dataset."""

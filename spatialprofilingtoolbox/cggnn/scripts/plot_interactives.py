@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser
 
-from spatialprofilingtoolbox.cggnn.plot_interactives import generate_interactives
+from spatialprofilingtoolbox.cggnn import plot_interactives
 from spatialprofilingtoolbox.cggnn.util import load_cell_graphs
 
 
@@ -42,4 +42,4 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     graphs_data, feature_names = load_cell_graphs(args.cg_path)
-    generate_interactives(graphs_data, feature_names, args.output_directory)
+    plot_interactives(graphs_data, feature_names, args.output_directory)

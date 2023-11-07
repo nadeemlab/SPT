@@ -8,8 +8,8 @@ In addition to the dependencies listed in `pyproject.yml`, you'll also need to i
 
 ## Credits
 
-This module is a heavily modified version of [the histocartography project](https://github.com/BiomedSciAI/histocartography) and two of its applications: [hact-net](https://github.com/histocartography/hact-net) and [patho-quant-explainer](https://github.com/histocartography/patho-quant-explainer). Specifically,
+This module is a heavily modified version of [the histocartography project](https://github.com/BiomedSciAI/histocartography) and one of its applications: [hact-net](https://github.com/histocartography/hact-net). Specifically,
 
 * Cell graph formatting, saving, and loading using DGL is patterned on how they were implemented in hact-net
-* Importance score and separability calculations are sourced from patho-quant-explainer
+* A few data utility functions, including `CGDataset` and `collate`, have only minor modifications from their source in hact-net
 * The dependence on histocartography is indirect, through the functionality used by the above features

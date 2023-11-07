@@ -15,24 +15,36 @@ from pandas import DataFrame
 from scipy.spatial.distance import pdist, squareform
 from tqdm import tqdm
 
-from spatialprofilingtoolbox.cggnn.util import GraphData, save_cell_graphs, load_cell_graphs, set_seeds
-from spatialprofilingtoolbox.cggnn.util.constants import CENTROIDS, FEATURES, INDICES, SETS, SETS_type
+from spatialprofilingtoolbox.cggnn.util import (
+    GraphData,
+    save_cell_graphs,
+    load_cell_graphs,
+    set_seeds,
+)
+from spatialprofilingtoolbox.cggnn.util.constants import (
+    CENTROIDS,
+    FEATURES,
+    INDICES,
+    SETS,
+    SETS_type,
+)
 
 
-def generate_graphs(df_cell: DataFrame,
-                    df_label: DataFrame,
-                    validation_data_percent: int,
-                    test_data_percent: int,
-                    use_channels: bool = True,
-                    use_phenotypes: bool = True,
-                    roi_side_length: Optional[int] = None,
-                    cells_per_slide_target: Optional[int] = 10_000,
-                    max_cells_to_consider: int = 100_000,
-                    target_name: Optional[str] = None,
-                    output_directory: Optional[str] = None,
-                    random_seed: Optional[int] = None,
-                    include_unlabeled: bool = False
-                    ) -> Tuple[List[GraphData], List[str]]:
+def generate_graphs(
+    df_cell: DataFrame,
+    df_label: DataFrame,
+    validation_data_percent: int,
+    test_data_percent: int,
+    use_channels: bool = True,
+    use_phenotypes: bool = True,
+    roi_side_length: Optional[int] = None,
+    cells_per_slide_target: Optional[int] = 10_000,
+    max_cells_to_consider: int = 100_000,
+    target_name: Optional[str] = None,
+    output_directory: Optional[str] = None,
+    random_seed: Optional[int] = None,
+    include_unlabeled: bool = False,
+) -> Tuple[List[GraphData], List[str]]:
     """Generate cell graphs from SPT server extracts and save to disk if requested.
 
     Parameters
@@ -87,15 +99,18 @@ def generate_graphs(df_cell: DataFrame,
     """
     if not 0 <= validation_data_percent < 100:
         raise ValueError(
-            f"Validation set percentage must be between 0 and 100, not {validation_data_percent}%.")
+            f"Validation set percentage must be between 0 and 100, not {validation_data_percent}%."
+        )
     if not 0 <= test_data_percent < 100:
         raise ValueError(
-            f"Test set percentage must be between 0 and 100, not {test_data_percent}%.")
+            f"Test set percentage must be between 0 and 100, not {test_data_percent}%."
+        )
     train_data_percent = validation_data_percent + test_data_percent
     if not 0 <= train_data_percent < 100:
         raise ValueError(
             "Remaining data set percentage for training use must be between 0 and 100, not "
-            f"{train_data_percent}%.")
+            f"{train_data_percent}%."
+        )
     p_validation: float = validation_data_percent/100
     p_test: float = test_data_percent/100
     roi_size = None if roi_side_length is None else (roi_side_length, roi_side_length)
@@ -122,11 +137,14 @@ def generate_graphs(df_cell: DataFrame,
         cells_per_slide_target=cells_per_slide_target,
         max_cells_to_consider=max_cells_to_consider,
         target_name=target_name,
-        include_unlabeled=include_unlabeled)
+        include_unlabeled=include_unlabeled,
+    )
     specimen_to_set = _split_rois(graphs_by_label_and_specimen, p_validation, p_test)
-    graphs_data: List[GraphData] = _assemble_graph_data(graphs_by_label_and_specimen,
-                                                        graph_names,
-                                                        specimen_to_set)
+    graphs_data: List[GraphData] = _assemble_graph_data(
+        graphs_by_label_and_specimen,
+        graph_names,
+        specimen_to_set,
+    )
     print(_report_dataset_statistics(graphs_data))
     if output_directory is not None:
         save_cell_graphs(graphs_data, output_directory)
@@ -134,20 +152,19 @@ def generate_graphs(df_cell: DataFrame,
     return graphs_data, feature_names
 
 
-def _create_graphs_from_spt(df_cell: DataFrame,
-                            df_label: DataFrame,
-                            use_channels: bool = True,
-                            use_phenotypes: bool = True,
-                            roi_size: Optional[Tuple[int, int]] = None,
-                            cells_per_slide_target: Optional[int] = 5_000,
-                            max_cells_to_consider: int = 100_000,
-                            target_name: Optional[str] = None,
-                            n_neighbors: int = 5,
-                            threshold: Optional[int] = None,
-                            include_unlabeled: bool = False
-                            ) -> Tuple[Dict[Optional[int], Dict[str, List[DGLGraph]]],
-                                       Dict[DGLGraph, str],
-                                       List[str]]:
+def _create_graphs_from_spt(
+    df_cell: DataFrame,
+    df_label: DataFrame,
+    use_channels: bool = True,
+    use_phenotypes: bool = True,
+    roi_size: Optional[Tuple[int, int]] = None,
+    cells_per_slide_target: Optional[int] = 5_000,
+    max_cells_to_consider: int = 100_000,
+    target_name: Optional[str] = None,
+    n_neighbors: int = 5,
+    threshold: Optional[int] = None,
+    include_unlabeled: bool = False,
+) -> Tuple[Dict[Optional[int], Dict[str, List[DGLGraph]]], Dict[DGLGraph, str], List[str]]:
     """Create graphs from cell and label files created from SPT."""
     if df_label['label'].nunique() < 2:
         raise ValueError('Less than two unique labels. No point to training.')
@@ -177,10 +194,10 @@ def _create_graphs_from_spt(df_cell: DataFrame,
         roi_area = prod(roi_size)
     elif cells_per_slide_target is not None:
         roi_area: float = cells_per_slide_target / median([
-            (df_specimen.shape[0] /
-             prod(df_specimen[['pixel x', 'pixel y']].max() -
-                  df_specimen[['pixel x', 'pixel y']].min()))
-            for _, df_specimen in grouped
+            (df_specimen.shape[0] / prod(
+                df_specimen[['pixel x', 'pixel y']].max() -
+                df_specimen[['pixel x', 'pixel y']].min()
+            )) for _, df_specimen in grouped
         ])
         roi_size = (rint(roi_area**0.5), rint(roi_area**0.5))
     else:
@@ -229,15 +246,19 @@ def _create_graphs_from_spt(df_cell: DataFrame,
             # Log the new bounding box and track which and how many cells haven't been captured yet
             bounding_boxes.append((x_min, x_max, y_min, y_max, x, y))
             proportion_of_target -= roi_area / slide_area
-            cells_not_yet_captured = ~(df_target['pixel x'].between(x_min, x_max) &
-                                       df_target['pixel y'].between(y_min, y_max))
+            cells_not_yet_captured = ~(
+                df_target['pixel x'].between(x_min, x_max) &
+                df_target['pixel y'].between(y_min, y_max)
+            )
             df_target = df_target.loc[cells_not_yet_captured, :]
             distance_square = distance_square[cells_not_yet_captured, :][:, cells_not_yet_captured]
 
         # Create features, centroid, and label arrays and then the graph
         for i, (x_min, x_max, y_min, y_max, x, y) in enumerate(bounding_boxes):
-            df_roi: DataFrame = df_specimen.loc[df_specimen['pixel x'].between(x_min, x_max) &
-                                                df_specimen['pixel y'].between(y_min, y_max), ]
+            df_roi: DataFrame = df_specimen.loc[
+                df_specimen['pixel x'].between(x_min, x_max) &
+                df_specimen['pixel y'].between(y_min, y_max),
+            ]
             centroids = df_roi[['pixel x', 'pixel y']].values
             features = df_roi[features_to_use].astype(int).values
             graph_instance = _create_graph(
@@ -261,12 +282,13 @@ def _create_graphs_from_spt(df_cell: DataFrame,
     return graphs_by_label_and_specimen, roi_names, features_to_use
 
 
-def _create_graph(node_indices: NDArray[int_],
-                  centroids: NDArray[int_],
-                  features: NDArray[int_],
-                  n_neighbors: int = 5,
-                  threshold: Optional[int] = None
-                  ) -> DGLGraph:
+def _create_graph(
+    node_indices: NDArray[int_],
+    centroids: NDArray[int_],
+    features: NDArray[int_],
+    n_neighbors: int = 5,
+    threshold: Optional[int] = None,
+) -> DGLGraph:
     """Generate the graph topology from the provided instance_map using (thresholded) kNN.
 
     Args:
@@ -294,7 +316,8 @@ def _create_graph(node_indices: NDArray[int_],
         n_neighbors,
         mode="distance",
         include_self=False,
-        metric="euclidean").toarray()
+        metric="euclidean",
+    ).toarray()
 
     # filter edges that are too far (i.e., larger than the threshold)
     if threshold is not None:
@@ -306,9 +329,10 @@ def _create_graph(node_indices: NDArray[int_],
     return graph_instance
 
 
-def _split_rois(graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List[DGLGraph]]],
-                p_validation: float, p_test: float
-                ) -> Dict[str, Optional[SETS_type]]:
+def _split_rois(
+    graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List[DGLGraph]]],
+    p_validation: float, p_test: float,
+) -> Dict[str, Optional[SETS_type]]:
     """Randomly allocate graphs to train, validation, and test sets."""
     p_train = 1 - p_validation - p_test
     specimen_to_set: Dict[str, Optional[str]] = {}
@@ -382,9 +406,11 @@ def _split_rois(graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List
                     which_sets.append('validation')
                 if n_test_target < 0:
                     which_sets.append('test')
-                warn(f'Class {label} doesn\'t have enough specimens to maintain the specified '
-                     f'{"/".join(which_sets)} proportion. Consider adding more specimens of this '
-                     'class and/or increasing their allocation percentage.')
+                warn(
+                    f'Class {label} doesn\'t have enough specimens to maintain the specified '
+                    f'{"/".join(which_sets)} proportion. Consider adding more specimens of this '
+                    'class and/or increasing their allocation percentage.'
+                )
 
             # Finish the allocation.
             # This method prioritizes bolstering the training and validation sets in that order.
@@ -402,21 +428,23 @@ def _split_rois(graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List
     return specimen_to_set
 
 
-def _assemble_graph_data(graphs_by_label_and_specimen: Dict[Optional[int],
-                                                            Dict[str, List[DGLGraph]]],
-                         graph_names: Dict[DGLGraph, str],
-                         specimen_to_set: Dict[str, Optional[SETS_type]]
-                         ) -> List[GraphData]:
+def _assemble_graph_data(
+    graphs_by_label_and_specimen: Dict[Optional[int], Dict[str, List[DGLGraph]]],
+    graph_names: Dict[DGLGraph, str],
+    specimen_to_set: Dict[str, Optional[SETS_type]],
+) -> List[GraphData]:
     graph_data: List[GraphData] = []
     for label, graphs_by_specimen in graphs_by_label_and_specimen.items():
         for specimen, graph_list in graphs_by_specimen.items():
             set_name = specimen_to_set[specimen]
             for graph_instance in graph_list:
-                graph_data.append(GraphData(graph_instance,
-                                            label,
-                                            graph_names[graph_instance],
-                                            specimen,
-                                            set_name))
+                graph_data.append(GraphData(
+                    graph_instance,
+                    label,
+                    graph_names[graph_instance],
+                    specimen,
+                    set_name,
+                ))
     return graph_data
 
 

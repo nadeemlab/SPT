@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 
 from pandas import read_hdf  # type: ignore
 
-from spatialprofilingtoolbox.cggnn.generate_graphs import generate_graphs
+from spatialprofilingtoolbox.cggnn import generate_graphs
 
 
 def parse_arguments():
@@ -91,14 +91,16 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    generate_graphs(read_hdf(args.spt_hdf_cell_filename),  # type: ignore
-                    read_hdf(args.spt_hdf_label_filename),  # type: ignore
-                    args.validation_data_percent,
-                    args.test_data_percent,
-                    use_channels=not args.disable_channels,
-                    use_phenotypes=not args.disable_phenotypes,
-                    roi_side_length=args.roi_side_length,
-                    cells_per_slide_target=args.cells_per_slide_target,
-                    target_name=args.target_name,
-                    output_directory=args.output_directory,
-                    random_seed=args.random_seed)
+    generate_graphs(
+        read_hdf(args.spt_hdf_cell_filename),  # type: ignore
+        read_hdf(args.spt_hdf_label_filename),  # type: ignore
+        args.validation_data_percent,
+        args.test_data_percent,
+        use_channels=not args.disable_channels,
+        use_phenotypes=not args.disable_phenotypes,
+        roi_side_length=args.roi_side_length,
+        cells_per_slide_target=args.cells_per_slide_target,
+        target_name=args.target_name,
+        output_directory=args.output_directory,
+        random_seed=args.random_seed,
+    )

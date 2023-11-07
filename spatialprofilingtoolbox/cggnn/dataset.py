@@ -1,22 +1,66 @@
 """PyTorch Dataset and DataLoader objects for cell graphs."""
 
-from typing import List, Optional, Sequence, Tuple, Callable
+from typing import Sequence
 
 from torch.utils.data import ConcatDataset, DataLoader, SubsetRandomSampler
+from torch.utils.data import Dataset
 from dgl import DGLGraph
 from sklearn.model_selection import KFold
 
-from spatialprofilingtoolbox.cggnn.util import CGDataset, GraphData, split_graph_sets, collate
+from spatialprofilingtoolbox.cggnn.util import GraphData, split_graph_sets, collate
+
+
+class CGDataset(Dataset):
+    """Cell graph dataset."""
+
+    def __init__(
+        self,
+        cell_graphs: list[DGLGraph],
+        cell_graph_labels: list[int] | None = None,
+        load_in_ram: bool = False,
+    ):
+        """Cell graph dataset constructor.
+
+        Args:
+            cell_graphs: list[DGLGraph]
+                Cell graphs for a given split (e.g., test).
+            cell_graph_labels: list[int] | None
+                Labels for the cell graphs. Optional.
+            load_in_ram: bool = False
+                Whether to load the graphs in RAM. Defaults to False.
+        """
+        super(CGDataset, self).__init__()
+
+        self.cell_graphs = cell_graphs
+        self.cell_graph_labels = cell_graph_labels
+        self.n_cell_graphs = len(self.cell_graphs)
+        self.load_in_ram = load_in_ram
+
+    def __getitem__(self, index: int) -> DGLGraph | tuple[DGLGraph, float]:
+        """Get an example.
+
+        Args:
+            index (int): index of the example.
+        """
+        cell_graph = self.cell_graphs[index]
+        if IS_CUDA:
+            cell_graph = cell_graph.to('cuda:0')
+        return cell_graph if (self.cell_graph_labels is None) \
+            else (cell_graph, float(self.cell_graph_labels[index]))
+
+    def __len__(self):
+        """Return the number of samples in the dataset."""
+        return self.n_cell_graphs
 
 
 def create_datasets(
-    graphs_data: List[GraphData],
+    graphs_data: list[GraphData],
     in_ram: bool = True,
-    k_folds: int = 3
-) -> Tuple[CGDataset, Optional[CGDataset], Optional[CGDataset], Optional[KFold]]:
+    k_folds: int = 3,
+) -> tuple[CGDataset, CGDataset | None, CGDataset | None, KFold | None]:
     """Make the cell and/or tissue graph datasets and the k-fold if necessary."""
     cell_graph_sets = split_graph_sets(graphs_data)
-    train_dataset: Optional[CGDataset] = \
+    train_dataset: CGDataset | None = \
         _create_dataset(cell_graph_sets[0][0], cell_graph_sets[0][1], in_ram)
     assert train_dataset is not None
     validation_dataset = _create_dataset(cell_graph_sets[1][0], cell_graph_sets[1][1], in_ram)
@@ -34,21 +78,23 @@ def create_datasets(
     return train_dataset, validation_dataset, test_dataset, kfold
 
 
-def _create_dataset(cell_graphs: List[DGLGraph],
-                    cell_graph_labels: Optional[List[int]] = None,
-                    in_ram: bool = True
-                    ) -> Optional[CGDataset]:
+def _create_dataset(
+    cell_graphs: list[DGLGraph],
+    cell_graph_labels: list[int] | None = None,
+    in_ram: bool = True,
+) -> CGDataset | None:
     """Make a cell graph dataset."""
     return CGDataset(cell_graphs, cell_graph_labels, load_in_ram=in_ram) \
         if (len(cell_graphs) > 0) else None
 
 
-def create_training_dataloaders(train_ids: Optional[Sequence[int]],
-                                test_ids: Optional[Sequence[int]],
-                                train_dataset: CGDataset,
-                                validation_dataset: Optional[CGDataset],
-                                batch_size: int
-                                ) -> Tuple[DataLoader, DataLoader]:
+def create_training_dataloaders(
+    train_ids: Sequence[int] | None,
+    test_ids: Sequence[int] | None,
+    train_dataset: CGDataset,
+    validation_dataset: CGDataset | None,
+    batch_size: int,
+) -> tuple[DataLoader, DataLoader]:
     """Determine whether to k-fold and then create dataloaders."""
     if (train_ids is None) or (test_ids is None):
         if validation_dataset is None:
@@ -57,31 +103,32 @@ def create_training_dataloaders(train_ids: Optional[Sequence[int]],
             train_dataset,
             batch_size=batch_size,
             shuffle=True,
-            collate_fn=collate
+            collate_fn=collate,
         )
         validation_dataloader = DataLoader(
             validation_dataset,
             batch_size=batch_size,
             shuffle=True,
-            collate_fn=collate
+            collate_fn=collate,
         )
     else:
         if validation_dataset is not None:
             raise ValueError(
-                "validation_dataset provided but k-folding of training dataset requested.")
+                "validation_dataset provided but k-folding of training dataset requested."
+            )
         train_subsampler = SubsetRandomSampler(train_ids)
         test_subsampler = SubsetRandomSampler(test_ids)
         train_dataloader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             sampler=train_subsampler,
-            collate_fn=collate
+            collate_fn=collate,
         )
         validation_dataloader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             sampler=test_subsampler,
-            collate_fn=collate
+            collate_fn=collate,
         )
 
     return train_dataloader, validation_dataloader

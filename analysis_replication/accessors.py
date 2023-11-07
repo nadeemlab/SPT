@@ -16,8 +16,13 @@ from numpy import nan
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
     def __init__(self, study, host='data.oncopathtk.org'):
+        use_http = False
+        if re.search('^http://', host):
+            use_http = True
+            host = re.sub(r'^http://', '', host)
         self.host = host
         self.study = study
+        self.use_http = use_http
         self.cohorts = self._retrieve_cohorts()
         self.all_cells = self._retrieve_all_cells_counts()
 
@@ -123,6 +128,7 @@ class DataAccessor:
             [(f'{keyword}_marker', channel) for channel in argument]
             for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
         ]))
+        parts = sorted(list(set(parts)))
         parts.append(('study', self.study))
         query = urlencode(parts)
         endpoint = 'anonymous-phenotype-counts-fast'
@@ -152,7 +158,7 @@ class DataAccessor:
 
     def _get_base(self):
         protocol = 'https'
-        if self.host == 'localhost' or re.search('127.0.0.1', self.host):
+        if self.host == 'localhost' or re.search('127.0.0.1', self.host) or self.use_http:
             protocol = 'http'
         return '://'.join((protocol, self.host))
 

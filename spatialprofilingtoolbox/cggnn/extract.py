@@ -31,7 +31,7 @@ def _create_label_df(
     df_assignments: DataFrame,
     df_strata: DataFrame,
     strata_to_use: list[int] | None,
-) -> tuple[DataFrame, dict[int, str]]:
+) -> tuple[list[str], DataFrame, dict[int, str]]:
     """Get specimen-level results."""
     df_assignments['stratum identifier'] = df_assignments['stratum identifier'].astype(int)
     df_strata['stratum identifier'] = df_strata['stratum identifier'].astype(int)
@@ -59,25 +59,33 @@ def _drop_unneeded_columns(df_strata: DataFrame) -> DataFrame:
 
 
 def _compress_df(df_strata: DataFrame) -> DataFrame:
-    """Compress remaining columns into a single string"""
+    """Compress remaining columns into a single string or None if all columns are empty."""
     n_columns = df_strata.shape[1]
     if n_columns == 1:
         df_strata = df_strata.rename(columns={df_strata.columns[0]: 'label'})
+        df_strata.replace({'label': {'': None}}, inplace=True)
     else:
+        empty_rows = (df_strata == '').all(axis=1)
         df_strata['label'] = '(' + df_strata.iloc[:, 0].astype(str)
         for i in range(1, n_columns):
             df_strata['label'] += ', ' + df_strata.iloc[:, i].astype(str)
         df_strata['label'] += ')'
-        df_strata = df_strata[['label']]
+        df_strata = df_strata.loc[:, ['label']]
+        df_strata[empty_rows] = None
     return df_strata
 
 
-def _label(df_assignments: DataFrame, df_strata: DataFrame) -> tuple[DataFrame, dict[int, str]]:
+def _label(
+        df_assignments: DataFrame,
+        df_strata: DataFrame,
+) -> tuple[list[str], DataFrame, dict[int, str]]:
     """Merge with specimen assignments, keeping only selected strata."""
     df = merge(df_assignments, df_strata, on='stratum identifier', how='inner'
                ).set_index('specimen')[['label']]
+    specimens: list[str] = df.index.tolist()
+    df.dropna(inplace=True)
     label_to_result = dict(enumerate(sort(df['label'].unique())))
-    return df.replace({res: i for i, res in label_to_result.items()}), label_to_result
+    return specimens, df.replace({res: i for i, res in label_to_result.items()}), label_to_result
 
 
 def extract_cggnn_data(
@@ -114,14 +122,14 @@ def extract_cggnn_data(
     """
     extractor = FeatureMatrixExtractor(database_config_file=spt_db_config_location)
     cohorts = extractor.extract_cohorts(study)
-    df_label, label_to_result_text = _create_label_df(
+    specimens, df_label, label_to_result_text = _create_label_df(
         cohorts['assignments'],
         cohorts['strata'],
         strata_to_use,
     )
     df_cell = _create_cell_df({
         specimen: extractor.extract(specimen=specimen, retain_structure_id=True)[specimen].dataframe
-        for specimen in df_label.index
+        for specimen in specimens
     } if (strata_to_use is not None) else {
         specimen: data.dataframe
         for specimen, data in extractor.extract(study=study, retain_structure_id=True).items()

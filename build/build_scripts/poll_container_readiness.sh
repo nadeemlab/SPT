@@ -4,8 +4,10 @@ expectedmessages[spt-apiserver-testing]="Uvicorn running on"
 expectedmessages[spt-ondemand-testing]="Ondemand services are ready to accept connections"
 expectedmessages[spt-db-testing-only]="database system is ready to accept connections"
 expectedmessages[spt-workflow-testing]="workflow container is ready to work"
+expectedmessages[temporary-spt-db-preloading]="database system is ready to accept connections"
 
-counter=0
+container_wait_time=20 #seconds
+counter=1
 while :
 do
     echo "Attempt $counter to check readiness of containers."
@@ -24,12 +26,12 @@ do
         exit
     fi
     counter=$(( counter + 1 ))
-    if [[ $counter -gt 30 ]];
+    if [[ $counter -gt $container_wait_time ]];
     then
-        echo "Container readiness checking timed out after 15 seconds"
+        echo "Container readiness checking timed out after $container_wait_time seconds"
         exit 1
     fi
-    sleep 0.5
+    sleep 1
 done
 
 echo "Containers may not be ready"

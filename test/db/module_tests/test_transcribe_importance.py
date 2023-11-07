@@ -58,7 +58,7 @@ def retrieve_feature_values(connection):
 
 
 def test_transcribe_importances():
-    columns = ['histological_structure', 'importance_score']
+    columns = ['histological_structure', 'importance']
     df = DataFrame(get_test_importance_rows(), columns=columns)
     df = df.set_index('histological_structure')
     database_config_file = '../db/.spt_db.config.container'

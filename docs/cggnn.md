@@ -5,9 +5,11 @@ The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n
    1. Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
    2. Now that you know which specimen cohorts ("strata") you want to use, fetch the relevant data artifacts from SPT using `spt cggnn extract`.
    3. Artifacts in hand, use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
-2. Given that you now know the parameters you used to arrive at your fine-tuned CG-GNN model, use `spt workflow configure` to create artifacts that will reproducibly run through the entire process of gathering the data for, training, and reporting with your trained model. Then, your workflow can be run in one line using Nextflow to approximately reproduce your model and results.
+2. Given that you now know the parameters you used to arrive at your fine-tuned CG-GNN model, use `spt workflow configure` to create artifacts that will reproducibly* run through the entire process of gathering the data for, training, and reporting with your trained model. Then, your workflow can be run in one line using Nextflow to approximately reproduce your model and results.
 
 This document will go into more detail on the second step.
+
+\* _Because the GNN uses non-deterministic algorithms, workflows will not be exactly reproducible._
 
 ## Configuring the cggnn workflow with `spt workflow configure`
 
@@ -46,7 +48,7 @@ For detailed explanations of each parameter, please refer to the docstring for `
 
 ```txt
 usage: spt cggnn run [-h] --spt_db_config_location SPT_DB_CONFIG_LOCATION --study STUDY [--strata STRATA [STRATA ...]] [--validation_data_percent VALIDATION_DATA_PERCENT] [--test_data_percent TEST_DATA_PERCENT] [--disable_channels] [--disable_phenotypes] [--roi_side_length ROI_SIDE_LENGTH] [--cells_per_slide_target CELLS_PER_SLIDE_TARGET] [--target_name TARGET_NAME]
-                     [--in_ram] [-b BATCH_SIZE] [--epochs EPOCHS] [-l LEARNING_RATE] [-k K_FOLDS] [--explainer_model EXPLAINER_MODEL] [--merge_rois] [--prune_misclassified] [--output_prefix OUTPUT_PREFIX] [--upload_importances]
+                     [--in_ram] [-b BATCH_SIZE] [--epochs EPOCHS] [-l LEARNING_RATE] [-k K_FOLDS] [--explainer_model EXPLAINER_MODEL] [--merge_rois] [--prune_misclassified] [--output_prefix OUTPUT_PREFIX] [--upload_importances] [--random_seed RANDOM_SEED]
 
 Create cell graphs from SPT tables saved locally, train a graph neural network on them, and save resultant model, metrics, and visualizations (if requested) to file. `spt cggnn run` allows you to run the `cg-gnn` pip package directly from SPT. It combines `spt cggnn extract` with the entire `cggnn.run` process into a single command.
 
@@ -85,6 +87,8 @@ options:
   --output_prefix OUTPUT_PREFIX
                         Saves output files with this prefix, if provided.
   --upload_importances  Whether to upload importance scores to the database.
+  --random_seed RANDOM_SEED
+                        Random seed to use for reproducibility.
 ```
 
 The main difference between the command line interface provided by [`cg-gnn`](https://pypi.org/project/cg-gnn/) and the SPT workflow interface is that parameters can't be eliminated from the config file for the latter. Instead,
@@ -92,9 +96,19 @@ The main difference between the command line interface provided by [`cg-gnn`](ht
 * Boolean values must explicitly be set to `true` or `false` instead of simply including or omitting the parameter.
 * `strata` can be set to `all` to use all strata (equivalent to not providing the parameter when using the CLI).
 * `target_name` can be set to `none` to use all cells in the tissue sample (equivalent to not providing the parameter when using the CLI).
+* `random_seed` can be set to `none` if you don't wish to use a random seed (again, equivalent to not providing the parameter in the CLI).
 
 ## Running the workflow
 
 ```sh
 nextflow run .
+```
+
+In the event that you'd like to run the cggnn workflow on different hardware than where you created it, the [`cggnn_environment.yml`](cggnn_environment.yml) file in this directory installs the minimum dependencies required to run the workflow fluidly. The environment assumes the machine you're running the workflow on has a CUDA-compatible GPU. We don't recommend running the cggnn workflow without it, but if you choose to do so, you will need to remove mentions of CUDA from the environment file. If your machine does support CUDA but not CUDA 11.8, you will need to change the version used by CUDA, pytorch, and DGL to a version your GPU supports.
+
+Assuming you have conda installed [(instructions here)](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), create the environment and activate it with the following commands:
+
+```sh
+conda env create -f docs/cggnn_environment.yml
+conda activate spt_cggnn
 ```

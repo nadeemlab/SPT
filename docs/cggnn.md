@@ -104,7 +104,7 @@ The main difference between the command line interface provided by [`cg-gnn`](ht
 nextflow run .
 ```
 
-In the even that you'd like to run the cggnn workflow on different hardware than where you created it, the [`cggnn_environment.yml`](cggnn_environment.yml) file in this directory installs the minimum dependencies required to run the workflow fluidly. The environment assumes the machine you're running the workflow on has a CUDA-compatible GPU. We don't recommend running the cggnn workflow without it, but if you choose to do so, you will need to remove mentions of CUDA from the environment file. If your machine does support CUDA but not CUDA 11.8, you will need to change the version used by CUDA, pytorch, and DGL to a version your GPU supports.
+In the event that you'd like to run the cggnn workflow on different hardware than where you created it, the [`cggnn_environment.yml`](cggnn_environment.yml) file in this directory installs the minimum dependencies required to run the workflow fluidly. The environment assumes the machine you're running the workflow on has a CUDA-compatible GPU. We don't recommend running the cggnn workflow without it, but if you choose to do so, you will need to remove mentions of CUDA from the environment file. If your machine does support CUDA but not CUDA 11.8, you will need to change the version used by CUDA, pytorch, and DGL to a version your GPU supports.
 
 Assuming you have conda installed [(instructions here)](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), create the environment and activate it with the following commands:
 

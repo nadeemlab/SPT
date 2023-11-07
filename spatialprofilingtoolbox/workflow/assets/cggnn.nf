@@ -93,7 +93,7 @@ process run_cggnn {
     #!/bin/bash
 
     strata_option=\$( if [[ "${strata}" != "all" ]]; then echo "--strata ${strata}"; fi)
-    disable_channels_option=\$( if [[ "${disable_channels}" == "true" ]]; then echo "--disable_channels "; fi)
+    disable_channels_option=\$( if [[ "${disable_channels}" == "true" ]]; then echo "--disable_channels"; fi)
     disable_phenotypes_option=\$( if [[ "${disable_phenotypes}" = "true" ]]; then echo "--disable_phenotypes"; fi)
     target_name_option=\$( if [[ "${target_name}" != "none" ]]; then echo "--target_name '${target_name}'"; fi)
     in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)

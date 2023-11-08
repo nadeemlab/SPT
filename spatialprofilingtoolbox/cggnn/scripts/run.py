@@ -171,6 +171,13 @@ extract` with the entire `cggnn.run` process into a single command.
         default=None,
         required=False
     )
+    parser.add_argument(
+        '--arbitrary',
+        type=str,
+        help='An unused argument, if necessary for command line call syntax.',
+        default='',
+        required=False,
+    )
     return parser.parse_args()
 
 

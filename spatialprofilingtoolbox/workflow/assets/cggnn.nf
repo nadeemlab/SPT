@@ -95,8 +95,6 @@ process run_cggnn {
     strata_option=\$( if [[ "${strata}" != "all" ]]; then echo "--strata ${strata}"; fi)
     disable_channels_option=\$( if [[ "${disable_channels}" == "true" ]]; then echo "--disable_channels"; fi)
     disable_phenotypes_option=\$( if [[ "${disable_phenotypes}" = "true" ]]; then echo "--disable_phenotypes"; fi)
-    target_name_option1=\$( if [[ "${target_name}" != "none" ]]; then echo "--target_name"; else echo "--arbitrary"; fi)
-    target_name_option2=\$( if [[ "${target_name}" != "none" ]]; then echo "${target_name}"; fi)
     in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
     merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
     prune_misclassified_option=\$( if [[ "${prune_misclassified}" == "true" ]]; then echo "--prune_misclassified"; fi)
@@ -111,8 +109,7 @@ process run_cggnn {
      \${disable_channels_option} \
      \${disable_phenotypes_option} \
      --cells_per_slide_target ${cells_per_slide_target} \
-     \${target_name_option1} \
-     \\'\${target_name_option2}\\' \
+     --target-name \\'${target_name}\\' \
      \${in_ram_option} \
      --batch_size ${batch_size} \
      --epochs ${epochs} \

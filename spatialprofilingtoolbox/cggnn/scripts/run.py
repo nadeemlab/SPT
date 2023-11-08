@@ -171,13 +171,6 @@ extract` with the entire `cggnn.run` process into a single command.
         default=None,
         required=False
     )
-    parser.add_argument(
-        '--arbitrary',
-        type=str,
-        help='An unused argument, if necessary for command line call syntax.',
-        default='',
-        required=False,
-    )
     return parser.parse_args()
 
 
@@ -203,7 +196,7 @@ if __name__ == "__main__":
         use_phenotypes=not args.disable_phenotypes,
         roi_side_length=args.roi_side_length,
         cells_per_slide_target=args.cells_per_slide_target,
-        target_name=args.target_name,
+        target_name=args.target_name if args.target_name is not 'none' else None,
         in_ram=args.in_ram,
         epochs=args.epochs,
         learning_rate=args.learning_rate,

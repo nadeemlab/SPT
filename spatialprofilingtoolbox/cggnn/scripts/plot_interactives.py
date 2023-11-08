@@ -19,12 +19,6 @@ def parse_arguments():
         required=True
     )
     parser.add_argument(
-        '--feature_names_path',
-        type=str,
-        help='Path to the list of feature names.',
-        required=True
-    )
-    parser.add_argument(
         '--merge_rois',
         help='Merge ROIs together by specimen.',
         action='store_true'
@@ -42,4 +36,4 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     graphs_data, feature_names = load_cell_graphs(args.cg_path)
-    plot_interactives(graphs_data, feature_names, args.output_directory)
+    plot_interactives(graphs_data, feature_names, args.output_directory, args.merge_rois)

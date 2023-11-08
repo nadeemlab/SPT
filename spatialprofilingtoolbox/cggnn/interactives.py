@@ -33,9 +33,9 @@ from spatialprofilingtoolbox.cggnn.util.constants import (
 
 def plot_interactives(
     graphs_data: list[GraphData],
-        feature_names: list[str],
-        out_directory: str,
-        merge_rois: bool = False,
+    feature_names: list[str],
+    out_directory: str,
+    merge_rois: bool = False,
 ) -> None:
     """Create bokeh interactive plots for all graphs in the out_directory."""
     out_directory = join(out_directory, 'interactives')

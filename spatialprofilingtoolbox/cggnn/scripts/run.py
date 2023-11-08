@@ -186,6 +186,10 @@ if __name__ == "__main__":
         args.study,
         args.strata,
     )
+    if args.target_name in ['none', None]:
+        target_name = None
+    else:
+        target_name = args.target_name
     model, importances = run(
         df_cell,
         df_label,
@@ -196,7 +200,7 @@ if __name__ == "__main__":
         use_phenotypes=not args.disable_phenotypes,
         roi_side_length=args.roi_side_length,
         cells_per_slide_target=args.cells_per_slide_target,
-        target_name=args.target_name if args.target_name is not 'none' else None,
+        target_name=target_name,
         in_ram=args.in_ram,
         epochs=args.epochs,
         learning_rate=args.learning_rate,

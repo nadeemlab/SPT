@@ -102,7 +102,7 @@ process run_cggnn {
 
     echo \
      --spt_db_config_location \\'${db_config_file}\\' \
-     --study=\\'${study_name}\\' \
+     --study \\'${study_name}\\' \
      \${strata_option} \
      --validation_data_percent ${validation_data_percent} \
      --test_data_percent ${test_data_percent} \

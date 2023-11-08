@@ -109,7 +109,7 @@ process run_cggnn {
      \${disable_channels_option} \
      \${disable_phenotypes_option} \
      --cells_per_slide_target ${cells_per_slide_target} \
-     --target-name \\'${target_name}\\' \
+     --target_name \\'${target_name}\\' \
      \${in_ram_option} \
      --batch_size ${batch_size} \
      --epochs ${epochs} \

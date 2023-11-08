@@ -23,6 +23,7 @@ process echo_environment_variables {
     path 'prune_misclassified',             emit: prune_misclassified
     path 'output_prefix',                   emit: output_prefix
     path 'upload_importances',              emit: upload_importances
+    path 'random_seed',                     emit: random_seed
 
     script:
     """
@@ -46,6 +47,7 @@ process echo_environment_variables {
     echo -n "${prune_misclassified_}" > prune_misclassified
     echo -n "${output_prefix_}" > output_prefix
     echo -n "${upload_importances_}" > upload_importances
+    echo -n "${random_seed_}" > random_seed
     """
 }
 
@@ -76,6 +78,7 @@ process run_cggnn {
     val prune_misclassified
     val output_prefix
     val upload_importances
+    val random_seed
 
     output:
     // path "${output_prefix}_cells.h5",                emit: cells
@@ -85,29 +88,40 @@ process run_cggnn {
     path "${output_prefix}_model.pt"
 
 
-    shell:
-    '''
+    script:
+    """
+    #!/bin/bash
+
+    strata_option=\$( if [[ "${strata}" != "all" ]]; then echo "--strata ${strata}"; fi)
+    disable_channels_option=\$( if [[ "${disable_channels}" == "true" ]]; then echo "--disable_channels"; fi)
+    disable_phenotypes_option=\$( if [[ "${disable_phenotypes}" = "true" ]]; then echo "--disable_phenotypes"; fi)
+    target_name_option=\$( if [[ "${target_name}" != "none" ]]; then echo "--target_name '${target_name}'"; fi)
+    in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
+    merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
+    prune_misclassified_option=\$( if [[ "${prune_misclassified}" == "true" ]]; then echo "--prune_misclassified"; fi)
+    upload_importances_option=\$( if [[ "${upload_importances}" == "true" ]]; then echo "--upload_importances"; fi)
+
     spt cggnn run \
-        --spt_db_config_location "!{db_config_file}" \
-        --study "!{study_name}" \
-        $(if [[ "!{strata}" != all ]]; then echo "--strata !{strata}"; fi) \
-        --validation_data_percent !{validation_data_percent} \
-        --test_data_percent !{test_data_percent} \
-        $(if [[ "!{disable_channels}" = true ]]; then echo "--disable_channels"; fi) \
-        $(if [[ "!{disable_phenotypes}" = true ]]; then echo "--disable_phenotypes"; fi) \
-        --cells_per_slide_target !{cells_per_slide_target} \
-        $(if [[ "!{target_name}" != none ]]; then echo "--target_name "!{target_name}""; fi) \
-        $(if [[ "!{in_ram}" = true ]]; then echo "--in_ram"; fi) \
-        --batch_size !{batch_size} \
-        --epochs !{epochs} \
-        --learning_rate !{learning_rate} \
-        --k_folds !{k_folds} \
-        --explainer_model "!{explainer_model}" \
-        $(if [[ "!{merge_rois}" = true ]]; then echo "--merge_rois"; fi) \
-        $(if [[ "!{prune_misclassified}" = true ]]; then echo "--prune_misclassified"; fi) \
-        --output_prefix "!{output_prefix}" \
-        $(if [[ "!{upload_importances}" = true ]]; then echo "--upload_importances"; fi)
-    '''
+     --spt_db_config_location '${db_config_file}' \
+     --study '${study_name}' \
+     \${strata_option} \
+     --validation_data_percent ${validation_data_percent} \
+     --test_data_percent ${test_data_percent} \
+     \${disable_channels_option} \
+     \${disable_phenotypes_option} \
+     --cells_per_slide_target ${cells_per_slide_target} \
+     \${target_name_option} \
+     \${in_ram_option} \
+     --batch_size ${batch_size} \
+     --epochs ${epochs} \
+     --learning_rate '${learning_rate}' \
+     --k_folds ${k_folds} \
+     --explainer_model '${explainer_model}' \
+     \${merge_rois_option} \
+     \${prune_misclassified_option} \
+     --output_prefix '${output_prefix}' \
+     \${upload_importances_option}
+    """
 }
 
 workflow {
@@ -174,6 +188,9 @@ workflow {
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
     
+    environment_ch.random_seed.map{ it.text }
+        .set{ random_seed_ch }
+    
     run_cggnn(
         db_config_file_ch,
         study_name_ch,
@@ -194,6 +211,7 @@ workflow {
         merge_rois_ch,
         prune_misclassified_ch,
         output_prefix_ch,
-        upload_importances_ch
+        upload_importances_ch,
+        random_seed_ch
     )
 }

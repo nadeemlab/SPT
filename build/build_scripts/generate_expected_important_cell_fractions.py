@@ -8,6 +8,7 @@ from json import dumps
 from pandas import read_csv
 from pandas import Series
 
+
 def get_file_by_sample():
     filename = 'test/test_data/adi_preprocessed_tables/dataset1/file_manifest.tsv'
     manifest = read_csv(filename, sep='\t')
@@ -17,12 +18,14 @@ def get_file_by_sample():
         for row in rows
     }
 
+
 def get_importances():
     importances_filename = 'test/test_data/gnn_importances/1.csv'
     importances = read_csv(importances_filename, sep=',')
     importances['histological_structure'] = importances['histological_structure'].astype(str)
     importances.set_index('histological_structure', inplace=True)
     return importances
+
 
 def get_expression_dfs():
     importances = get_importances()
@@ -45,10 +48,11 @@ def get_expression_dfs():
         offset = offset + df.shape[0]
 
         joined = df.join(importances, on='histological_structure')
-        joined = joined.sort_values(by='importance_score', ascending=False)
+        joined = joined.sort_values(by='importance', ascending=False)
         rank = Series([i+1 for i in range(joined.shape[0])], joined.index)
         df['rank'] = rank
     return expression_dfs
+
 
 def get_counts(signature, expression_dfs):
     counts = {}
@@ -66,6 +70,7 @@ def get_counts(signature, expression_dfs):
     }
     return counts_by_sample
 
+
 def generate():
     expression_dfs = get_expression_dfs()
 
@@ -81,5 +86,6 @@ def generate():
     print(dumps(counts_by_sample, indent=4))
     print(sum(count for _, count in counts_by_sample.items()))
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     generate()

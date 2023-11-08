@@ -8,11 +8,13 @@ from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
 try:
-    from cggnn.run import run  # type: ignore
+    from cggnn.run import run
+    from cggnn.explain import save_importances
     from torch import save
 except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'cggnn')
 from cggnn.run import run
+from cggnn.explain import save_importances
 from torch import save
 
 
@@ -162,10 +164,17 @@ extract` with the entire `cggnn.run` process into a single command.
         help='Whether to upload importance scores to the database.',
         action='store_true'
     )
+    parser.add_argument(
+        '--random_seed',
+        type=int,
+        help='Random seed to use for reproducibility.',
+        default=None,
+        required=False
+    )
     return parser.parse_args()
 
 
-def save_importance(df: DataFrame, spt_db_config_location: str, study: str) -> None:
+def upload_importance(df: DataFrame, spt_db_config_location: str, study: str) -> None:
     """Save cell importance scores as defined by cggnn to the database."""
     transcribe_importance(df, spt_db_config_location, study)
 
@@ -196,15 +205,14 @@ if __name__ == "__main__":
         explainer_model=args.explainer_model,
         merge_rois=args.merge_rois,
         prune_misclassified=args.prune_misclassified,
+        random_seed=args.random_seed,
     )
-    if (args.output_prefix is not None) or args.upload_importances:
-        df = DataFrame.from_dict(
+    if args.output_prefix is not None:
+        save_importances(importances, f'{args.output_prefix}_importances.csv')
+        save(model.state_dict(), f'{args.output_prefix}_model.pt')
+    if args.upload_importances:
+        upload_importance(DataFrame.from_dict(
             importances,
             orient='index',
-            columns=['importance_score'],
-        )
-        if args.output_prefix is not None:
-            df.to_csv(f'{args.output_prefix}_importances.csv')
-            save(model.state_dict(), f'{args.output_prefix}_model.pt')
-        if args.upload_importances:
-            save_importance(df, args.spt_db_config_location, args.study)
+            columns=['importance'],
+        ), args.spt_db_config_location, args.study)

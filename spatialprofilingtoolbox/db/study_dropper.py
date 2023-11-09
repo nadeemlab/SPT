@@ -21,7 +21,7 @@ class StudyDropper:
             database_name = rows[0][0]
 
         with DBCursor(database_config_file=database_config_file) as cursor:
-            cursor.execute('DROP DATABASE %s ;' % database_name)
+            cursor.execute('DROP DATABASE %s' % database_name)
 
         with DBCursor(database_config_file=database_config_file) as cursor:
             cursor.execute('DELETE FROM study_lookup WHERE study=%s ;', (study,))

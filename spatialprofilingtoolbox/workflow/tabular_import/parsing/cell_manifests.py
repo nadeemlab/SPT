@@ -26,6 +26,58 @@ class CellManifestsParser(SourceToADIParser):
         super().__init__(fields, **kwargs)
         self.dataset_design = TabularCellMetadataDesign(**kwargs)
 
+    def parse(self,
+        connection,
+        file_manifest_file,
+        chemical_species_identifiers_by_symbol,
+    ):
+        """Retrieve each cell manifest, and parse records for:
+        - histological structure identification
+        - histological structure
+        - shape file
+        - expression quantification
+        """
+        timer = PerformanceTimer()
+        timer.record_timepoint('Initial')
+        cursor = connection.cursor()
+        timer.record_timepoint('Cursor opened')
+        get_next = SourceToADIParser.get_next_integer_identifier
+        histological_structure_identifier_index = get_next('histological_structure', cursor)
+        shape_file_identifier_index = get_next('shape_file', cursor)
+        timer.record_timepoint('Retrieved next integer identifiers')
+        initial_indices = {
+            'structure' : histological_structure_identifier_index,
+            'shape file' : shape_file_identifier_index,
+        }
+        channel_symbols = self.get_channel_symbols(chemical_species_identifiers_by_symbol)
+        final_indices = {}
+        file_count = 1
+        for _, cell_manifest in self.get_cell_manifests(file_manifest_file).iterrows():
+            logger.debug(
+                'Considering contents of file "%s".',
+                cell_manifest['File ID'],
+            )
+            filename = get_input_filename_by_identifier(
+                input_file_identifier=cell_manifest['File ID'],
+                file_manifest_filename=file_manifest_file,
+            )
+            final_indices = self.parse_cell_manifest(
+                cursor,
+                filename,
+                channel_symbols,
+                initial_indices,
+                timer,
+                chemical_species_identifiers_by_symbol,
+            )
+            initial_indices = final_indices
+            timer.record_timepoint('Completed cell manifest parsing')
+            message = 'Performance report %s:\n%s'
+            logger.debug(message, file_count, timer.report_string(organize_by='total time spent'))
+            file_count += 1
+            connection.commit()
+        cursor.close()
+        self.wrap_up_timer(timer)
+
     def insert_chunks(self,
         cursor,
         cells,
@@ -188,58 +240,6 @@ class CellManifestsParser(SourceToADIParser):
         if len(missing) > 0:
             logger.warning('Cannot find channel metadata for %s .', str(missing))
         return symbols.difference(missing)
-
-    def parse(self,
-        connection,
-        file_manifest_file,
-        chemical_species_identifiers_by_symbol,
-    ):
-        """Retrieve each cell manifest, and parse records for:
-        - histological structure identification
-        - histological structure
-        - shape file
-        - expression quantification
-        """
-        timer = PerformanceTimer()
-        timer.record_timepoint('Initial')
-        cursor = connection.cursor()
-        timer.record_timepoint('Cursor opened')
-        get_next = SourceToADIParser.get_next_integer_identifier
-        histological_structure_identifier_index = get_next('histological_structure', cursor)
-        shape_file_identifier_index = get_next('shape_file', cursor)
-        timer.record_timepoint('Retrieved next integer identifiers')
-        initial_indices = {
-            'structure' : histological_structure_identifier_index,
-            'shape file' : shape_file_identifier_index,
-        }
-        channel_symbols = self.get_channel_symbols(chemical_species_identifiers_by_symbol)
-        final_indices = {}
-        file_count = 1
-        for _, cell_manifest in self.get_cell_manifests(file_manifest_file).iterrows():
-            logger.debug(
-                'Considering contents of file "%s".',
-                cell_manifest['File ID'],
-            )
-            filename = get_input_filename_by_identifier(
-                input_file_identifier=cell_manifest['File ID'],
-                file_manifest_filename=file_manifest_file,
-            )
-            final_indices = self.parse_cell_manifest(
-                cursor,
-                filename,
-                channel_symbols,
-                initial_indices,
-                timer,
-                chemical_species_identifiers_by_symbol,
-            )
-            initial_indices = final_indices
-            timer.record_timepoint('Completed cell manifest parsing')
-            message = 'Performance report %s:\n%s'
-            logger.debug(message, file_count, timer.report_string(organize_by='total time spent'))
-            file_count += 1
-            connection.commit()
-        cursor.close()
-        self.wrap_up_timer(timer)
 
     def get_number_known_cells(self, sha256_hash, cursor):
         query = (

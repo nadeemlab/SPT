@@ -13,12 +13,12 @@ class StudyDropper:
     def drop(database_config_file: str | None, study: str) -> None:
         """ Use this method as the entrypoint into this class' functionality."""
         with DBCursor(database_config_file=database_config_file) as cursor:
-            cursor.query('SELECT database_name FROM study_lookup WHERE study=%s ;', (study,))
+            cursor.execute('SELECT database_name FROM study_lookup WHERE study=%s ;', (study,))
             rows = cursor.fetchall()
             if len(rows) != 1:
                 logger.warning('No database found for study "%s".', study)
                 return
             database_name = rows[0][0]
-            cursor.execute('DROP DATABASE %s ;', (database_name,))
+            cursor.execute('DROP DATABASE %s ;' % database_name)
             cursor.execute('DELETE FROM study_lookup WHERE study=%s ;', (study,))
             logger.info('Dropped database %s.', (database_name,))

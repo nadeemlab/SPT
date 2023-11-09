@@ -2,16 +2,13 @@
 
 from typing import cast, Any
 
-from psycopg2.extensions import cursor as Psycopg2Cursor
 from pandas import DataFrame
 from numpy import ndarray
 from numpy import arange  # type: ignore
 
-from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_from_specimen
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.workflow.common.study_data_arrays import StudyDataArrays
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
@@ -382,11 +379,9 @@ class SparseMatrixPuller:
     def _get_sparse_matrix_query_specimen_specific(self,
         study: str,
         histological_structures_condition: bool = False,
+        optimized: bool = True,
     ) -> str:
-        is_indexed = False
-        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
-            is_indexed = ExpressionsTableIndexer.expressions_table_is_indexed(cursor)
-        if is_indexed:
+        if optimized:
             return self._sparse_entries_query_optimized(histological_structures_condition)
         return self._sparse_entries_query_unoptimized(histological_structures_condition)
 

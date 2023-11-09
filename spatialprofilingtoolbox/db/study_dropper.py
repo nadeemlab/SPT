@@ -29,4 +29,4 @@ class StudyDropper:
         with DBCursor(database_config_file=database_config_file) as cursor:
             cursor.execute('DELETE FROM study_lookup WHERE study=%s ;', (study,))
 
-        logger.info('Dropped database %s.', (database_name,))
+        logger.info('Dropped database %s.', database_name)

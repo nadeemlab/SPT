@@ -1,15 +1,15 @@
 spt cggnn plot-interactives \
-    --cg_path . \
+    --cg_path unit_tests/ \
     --output_directory . \
     --merge_rois
-$([ $? -eq 0 ] && [ $(ls "interactives/"* 2> /dev/null | wc -l) -eq 30 ])
-status="$?"
-echo "Status: $status"
-[ $status -eq 0 ] || echo "cggnn plot-interactives failed."
+plotting_ran="$?"
 
-rm -r "."
+[ $? -eq 0 ] && [ $(ls "interactives/"* 2> /dev/null | wc -l) -eq 30 ]
+thirty_created="$?"
 
-if [ $status -eq 0 ];
+rm -r "interactives/"
+
+if [ $plotting_ran -eq 0 ] && [ $thirty_created -eq 0 ];
 then
     exit 0
 else

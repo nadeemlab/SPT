@@ -98,8 +98,10 @@ class StudyDropper:
             self.report_record_count_change()
 
     def drop_diagnostic_selection_criterion(self):
-        logger.info('Dropping from diagnostic_selection_criterion, with cascade to '
-                    'two_cohort_feature_association_test.')
+        logger.info(
+            'Dropping from diagnostic_selection_criterion, with cascade to '
+            'two_cohort_feature_association_test.'
+        )
         self.get_cursor().execute('''
         DELETE FROM diagnostic_selection_criterion dsc
         WHERE dsc.identifier IN (
@@ -116,8 +118,10 @@ class StudyDropper:
         ''', (self.study, self.study,))
 
     def cache_shape_file_identifiers(self):
-        logger.info('Caching the shape_file identifiers for records to be deleted, '
-                    'to avoid orphaning them.')
+        logger.info(
+            'Caching the shape_file identifiers for records to be deleted, '
+            'to avoid orphaning them.'
+        )
         self.get_cursor().execute('''
         CREATE MATERIALIZED VIEW temporary_shape_files_to_be_deleted
         AS
@@ -131,8 +135,10 @@ class StudyDropper:
         ''', (self.study,))
 
     def drop_histological_structure(self):
-        logger.info('Dropping histological_structure records. Should cascade upon '
-                    'expression_quantification and histological_structure_identification.')
+        logger.info(
+            'Dropping histological_structure records. Should cascade upon '
+            'expression_quantification and histological_structure_identification.'
+        )
         self.get_cursor().execute('''
         DELETE FROM histological_structure hs
         WHERE hs.identifier IN (
@@ -157,9 +163,11 @@ class StudyDropper:
         ''')
 
     def drop_data_analysis_study(self):
-        logger.info('Dropping data_analysis_study, with cascading to cell_phenotype_criterion, '
-                   'feature_specification, feature_specifier, quantitative_feature_value, and '
-                   'two_cohort_feature_association_test.')
+        logger.info(
+            'Dropping data_analysis_study, with cascading to cell_phenotype_criterion, '
+            'feature_specification, feature_specifier, quantitative_feature_value, and '
+            'two_cohort_feature_association_test.'
+        )
         self.get_cursor().execute('''
         DELETE FROM data_analysis_study das
         WHERE das.name IN (
@@ -169,8 +177,10 @@ class StudyDropper:
         ''', (self.study,))
 
     def drop_measurement_study(self):
-        logger.info('Dropping specimen_measurement_study, with cascading to '
-                    'biological_marking_system, specimen_data_measurement_process, and data_file.')
+        logger.info(
+            'Dropping specimen_measurement_study, with cascading to '
+            'biological_marking_system, specimen_data_measurement_process, and data_file.'
+        )
         self.get_cursor().execute('''
         DELETE FROM specimen_measurement_study sms
         WHERE sms.name IN (
@@ -180,8 +190,10 @@ class StudyDropper:
         ''', (self.study,))
 
     def drop_study(self):
-        logger.info('Dropping "study" record, with cascading to publication, author, and '
-                    'study_contact_person.')
+        logger.info(
+            'Dropping "study" record, with cascading to publication, author, and '
+            'study_contact_person.'
+        )
         self.get_cursor().execute('''
         DELETE FROM study st
         WHERE st.study_specifier=%s
@@ -211,8 +223,10 @@ class StudyDropper:
         ''', (self.study,))
 
     def drop_specimen_collection_study(self):
-        logger.info('Dropping specimen_collection_study, with cascading to '
-                    'specimen_collection_process and histology_assessment_process.')
+        logger.info(
+            'Dropping specimen_collection_study, with cascading to '
+            'specimen_collection_process and histology_assessment_process.'
+        )
         self.get_cursor().execute('''
         DELETE FROM specimen_collection_study scp
         WHERE scp.name IN (

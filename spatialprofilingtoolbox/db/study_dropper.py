@@ -20,7 +20,7 @@ class StudyDropper:
                 return
             database_name = rows[0][0]
 
-        with DBCursor(database_config_file=database_config_file) as cursor:
+        with DBCursor(database_config_file=database_config_file, autocommit = False) as cursor:
             cursor.execute('DROP DATABASE %s' % database_name)
 
         with DBCursor(database_config_file=database_config_file) as cursor:

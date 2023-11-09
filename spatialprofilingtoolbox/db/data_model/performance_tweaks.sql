@@ -15,7 +15,7 @@ ALTER TABLE two_cohort_feature_association_test
 ADD UNIQUE (selection_criterion_1, selection_criterion_2, test, p_value, feature_tested) ;
 
 ALTER TABLE expression_quantification
-ADD scope_identifier_integer INT ;
+ADD range_identifier_integer SERIAL ;
 
 CREATE TABLE range_definitions (
     scope_identifier VARCHAR(512),

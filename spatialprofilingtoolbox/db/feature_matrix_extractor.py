@@ -190,6 +190,14 @@ class FeatureMatrixExtractor:
                     len(data_arrays['target index lookup']),
                 ) for hs_id, expression in expressions.items()
             ]
+
+            expected_length = len(rows[0])
+            for row in rows:
+                if expected_length != len(row):
+                    lengths = (expected_length, len(row))
+                    message = 'Expression vectors not all the same lengths (%s, %s).'
+                    raise ValueError(message % lengths)
+
             dataframe = DataFrame(
                 rows,
                 columns=['pixel x', 'pixel y'] + [f'C {cs}' for cs in channel_information],

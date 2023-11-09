@@ -14,6 +14,17 @@ ADD UNIQUE (feature_specification, specifier, ordinality) ;
 ALTER TABLE two_cohort_feature_association_test
 ADD UNIQUE (selection_criterion_1, selection_criterion_2, test, p_value, feature_tested) ;
 
+ALTER TABLE expression_quantification
+ADD scope_identifier_integer INT ;
+
+CREATE TABLE range_definitions (
+    scope_identifier VARCHAR(512),
+    scope_identifier_integer INT,
+    tablename VARCHAR(512),
+    lowest_value INT,
+    highest_value INT
+) ;
+
 CREATE EXTENSION IF NOT EXISTS tablefunc;
 
 CREATE TABLE sample_strata (

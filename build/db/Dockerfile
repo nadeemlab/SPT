@@ -6,7 +6,8 @@ RUN apt install python3 -y
 RUN apt install python3-dev -y
 RUN apt install python3-venv -y
 RUN apt install python3-pip -y
-RUN apt install -y libpq-dev -y
+RUN apt install -y libpq-dev
+RUN apt install -y libgdal-dev
 RUN python3 -m pip install --break-system-packages psycopg2==2.9.6
 RUN python3 -m pip install --break-system-packages adiscstudies==0.11.0
 RUN python3 -m pip install --break-system-packages numba==0.57.0

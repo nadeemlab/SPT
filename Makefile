@@ -310,7 +310,7 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_
     then \
         docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=.postgres/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
         docker container start temporary-spt-db-preloading && \
-        bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh temporary-spt-db-preloading && \
+        bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
         pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \
         docker run \
         --rm \
@@ -390,6 +390,7 @@ clean-files:
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@rm -f status_code
 >@rm -f check-docker-daemon-running
+>@rm -f check-dockerfiles-consistency
 >@rm -f check-for-docker-credentials
 >@rm -rf ${BUILD_LOCATION}/lib
 >@rm -f build/*/log_of_build.log

@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from threading import Thread
 from datetime import datetime
+from math import isnan, isinf
 
 from pandas import DataFrame
 
@@ -234,8 +235,8 @@ class PendingProvider(OnDemandProvider, ABC):
             )
             rows = cursor.fetchall()
             metrics = {
-                row[0]: float(row[1])
-                if row[1] else None for row in rows
+                row[0]: _json_compliant_float(row[1])
+                for row in rows
             }
         return {
             'metrics': metrics,
@@ -260,3 +261,11 @@ class PendingProvider(OnDemandProvider, ABC):
             )
             rows = cursor.fetchall()
         return rows[0][0]
+
+
+def _json_compliant_float(value: str) -> float | None:
+    if value:
+        floated = float(value)
+        if not (isnan(floated) or isinf(floated)):
+            return floated
+    return None

@@ -91,9 +91,9 @@ def get_cli_arguments() -> tuple[str, str, int, str | None, int]:
         '--timeout-seconds',
         dest='timeout_seconds',
         type=int,
-        default=90,
+        default=300,
         help='Maximum runtime that will be tolerated by a single feature value computation, after '
-        'which a null is presumed. Default 90 (seconds).'
+        'which a null is presumed. Default 300 (seconds).'
     )
     service_classes = [CountsProvider, ProximityProvider, SquidpyProvider]
     parser.add_argument(

@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 
 from pandas import read_hdf  # type: ignore
 
-from spatialprofilingtoolbox.cggnn import generate_graphs
+from spatialprofilingtoolbox.cggnn.generate_graphs import generate_graphs
 
 
 def parse_arguments():

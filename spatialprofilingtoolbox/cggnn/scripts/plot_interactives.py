@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser
 
-from spatialprofilingtoolbox.cggnn import plot_interactives
+from spatialprofilingtoolbox.cggnn.interactives import plot_interactives
 from spatialprofilingtoolbox.cggnn.util import load_cell_graphs
 
 

@@ -77,6 +77,7 @@ class CompressedMatrixWriter:
     def _write_data_array_to_file(cls, data_array: dict[int, int], filename: str) -> None:
         with open(filename, 'wb') as file:
             for histological_structure_id, entry in data_array.items():
+                #change to db uploading
                 file.write(histological_structure_id.to_bytes(8, 'little'))
                 file.write(entry.to_bytes(8, 'little'))
 

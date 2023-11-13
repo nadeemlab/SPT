@@ -110,6 +110,7 @@ class CompressedDataArrays:
                 raise ValueError(message % specimens)
             specimen = specimens[0]
             data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
+            #write to the DB instead
             CompressedMatrixWriter.write_specimen(data_specimen, study_index, specimen_index)
             if study_name not in self._specimens_by_measurement_study:
                 self._specimens_by_measurement_study[study_name] = []

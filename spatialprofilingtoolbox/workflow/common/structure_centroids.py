@@ -90,6 +90,7 @@ class StructureCentroids:
             raise ValueError(message % specimens)
         specimen = specimens[0]
         filename = self._form_filename(study_index, specimen_index)
+        #write to the database instead of file
         self._write_centroids(self._studies, filename)
         message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
         logger.debug(message, specimen)

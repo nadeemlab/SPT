@@ -59,7 +59,7 @@ class OnDemandProvider(ABC):
             logger.error(message)
             raise FileNotFoundError(message)
         with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
-            root = loads(file.read())
+            root = loads(file.read()) # result of index table query
             entries = root[list(root.keys())[0]]
             self.studies = {}
             for entry in entries:
@@ -75,7 +75,7 @@ class OnDemandProvider(ABC):
         for study_name in self._get_study_names():
             self.data_arrays[study_name] = {
                 item['specimen']: OnDemandProvider._get_data_array_from_file(
-                    join(data_directory, item['filename']),
+                    join(data_directory, item['filename']), #replace with specimen index name
                     self.studies[study_name]['target index lookup'],
                     self.studies[study_name]['target by symbol'],
                 )
@@ -94,6 +94,8 @@ class OnDemandProvider(ABC):
         """Retrieve names of the studies held in memory."""
         return list(self.studies.keys())
 
+    def _get_data_array_from_db():
+        return
     @classmethod
     def _get_data_array_from_file(
         cls,

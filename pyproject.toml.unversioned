@@ -115,6 +115,7 @@ packages = [
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
     "spatialprofilingtoolbox.cggnn",
+    "spatialprofilingtoolbox.cggnn.util",
     "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.ondemand",
     "spatialprofilingtoolbox.ondemand.providers",
@@ -196,6 +197,8 @@ packages = [
 "spatialprofilingtoolbox.cggnn.scripts" = [
     "explore_classes.py",
     "extract.py",
+    "generate_graphs.py",
+    "plot_interactives.py",
     "run.py",
     "upload_importances.py"
 ]

@@ -4,7 +4,6 @@ spt cggnn extract \
     --output_location .
 $([ $? -eq 0 ] && [ -e "Melanoma intralesional IL2/label_to_result.json" ] && [ -e "Melanoma intralesional IL2/cells.h5" ] && [ -e "Melanoma intralesional IL2/labels.h5" ])
 status="$?"
-echo "Status: $status"
 [ $status -eq 0 ] || echo "cggnn extract failed."
 
 cat "Melanoma intralesional IL2/label_to_result.json"

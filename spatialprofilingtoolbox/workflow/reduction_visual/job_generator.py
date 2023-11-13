@@ -1,4 +1,4 @@
-"""Generate a list of parallelizable jobs for the proximity metric calculation pipeline."""
+"""Generate a list of parallelizable jobs for the visualization pipeline."""
 
 import pandas as pd
 

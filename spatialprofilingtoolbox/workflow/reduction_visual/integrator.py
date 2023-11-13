@@ -1,4 +1,4 @@
-"""The integration phase of the proximity workflow. Performs statistical tests."""
+"""The integration phase of the reduction visualization workflow."""
 
 from spatialprofilingtoolbox.workflow.component_interfaces.integrator import Integrator
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -6,8 +6,9 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-class ReductionVisualAnalysisIntegrator(Integrator): #pylint: disable=too-few-public-methods
+class ReductionVisualAnalysisIntegrator(Integrator):  # pylint: disable=too-few-public-methods
     """The main class of the integration phase."""
+    
     def __init__(self,
         study_name: str='',
         database_config_file: str | None = None,

@@ -352,18 +352,16 @@ class SparseMatrixPuller:
     ) -> list[tuple[str, str, int, str, str]]:
         sparse_entries: list = []
         number_log_messages = 0
-        parameters: list[str | tuple[str, ...]]  = [measurement_study, specimen]
-        if histological_structures is not None:
-            parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
 
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-            cursor.execute(
-                self._get_sparse_matrix_query_specimen_specific(
-                    study_name,
-                    histological_structures is not None,
-                ),
-                parameters,
+            query, parameters = self._get_sparse_matrix_query_specimen_specific(
+                cursor,
+                measurement_study,
+                specimen,
+                histological_structures,
+                optimized=True,
             )
+            cursor.execute(query, parameters)
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
@@ -377,26 +375,45 @@ class SparseMatrixPuller:
         return sparse_entries
 
     def _get_sparse_matrix_query_specimen_specific(self,
-        study: str,
-        histological_structures_condition: bool = False,
+        cursor,
+        measurement_study: str,
+        specimen: str,
+        histological_structures: set[int] | None,
         optimized: bool = True,
-    ) -> str:
+    ) -> tuple[str, tuple]:
+        structures_present = histological_structures is not None
+        parameters: list[str | tuple[str, ...] | int] = []
         if optimized:
-            return self._sparse_entries_query_optimized(histological_structures_condition)
-        return self._sparse_entries_query_unoptimized(histological_structures_condition)
+            range_definition = SparseMatrixPuller._retrieve_expressions_range(cursor, specimen)
+            query = self._sparse_entries_query_optimized(structures_present)
+            parameters = [range_definition[0], range_definition[1]]
+        else:
+            query = self._sparse_entries_query_unoptimized(structures_present)
+            parameters = [measurement_study, specimen]
+        if histological_structures is not None:
+            parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
+        return (query, tuple(parameters))
+
+    @staticmethod
+    def _retrieve_expressions_range(cursor, scope: str) -> tuple[int, int]:
+        query = '''
+        SELECT lowest_value, highest_value
+        FROM range_definitions
+        WHERE scope_identifier=%s AND tablename='expression_quantification' ;
+        '''
+        cursor.execute(query, (scope,))
+        return cursor.fetchall()[0]
 
     @staticmethod
     def _sparse_entries_query_optimized(histological_structures_condition: bool = False) -> str:
         return f'''
-        -- absorb/ignore first string formatting argument: %s
         SELECT
             eq.histological_structure,
             eq.target,
             CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
             eq.quantity as quantity
         FROM expression_quantification eq
-        JOIN range_definitions rd ON rd.scope_identifier=%s
-        WHERE eq.range_identifier_integer BETWEEN rd.lowest_value AND rd.highest_value
+        WHERE eq.range_identifier_integer BETWEEN %s AND %s
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY eq.histological_structure, eq.target
         ;

@@ -275,7 +275,6 @@ class SparseMatrixPuller:
         for _specimen in specimens:
             sparse_entries = self._get_sparse_entries(
                 study_name,
-                measurement_study,
                 specimen=_specimen,
                 histological_structures=histological_structures,
             )
@@ -346,7 +345,6 @@ class SparseMatrixPuller:
 
     def _get_sparse_entries(self,
         study_name: str,
-        measurement_study: str,
         specimen: str,
         histological_structures: set[int] | None = None,
     ) -> list[tuple[str, str, int, str, str]]:
@@ -356,10 +354,8 @@ class SparseMatrixPuller:
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
             query, parameters = self._get_sparse_matrix_query_specimen_specific(
                 cursor,
-                measurement_study,
                 specimen,
                 histological_structures,
-                optimized=True,
             )
             cursor.execute(query, parameters)
             total = cursor.rowcount
@@ -376,20 +372,15 @@ class SparseMatrixPuller:
 
     def _get_sparse_matrix_query_specimen_specific(self,
         cursor,
-        measurement_study: str,
         specimen: str,
         histological_structures: set[int] | None,
-        optimized: bool = True,
     ) -> tuple[str, tuple]:
         structures_present = histological_structures is not None
         parameters: list[str | tuple[str, ...] | int] = []
-        if optimized:
-            range_definition = SparseMatrixPuller._retrieve_expressions_range(cursor, specimen)
-            query = self._sparse_entries_query_optimized(structures_present)
-            parameters = [range_definition[0], range_definition[1]]
-        else:
-            query = self._sparse_entries_query_unoptimized(structures_present)
-            parameters = [measurement_study, specimen]
+
+        range_definition = SparseMatrixPuller._retrieve_expressions_range(cursor, specimen)
+        query = self._sparse_entries_query(structures_present)
+        parameters = [range_definition[0], range_definition[1]]
         if histological_structures is not None:
             parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
         return (query, tuple(parameters))
@@ -405,7 +396,7 @@ class SparseMatrixPuller:
         return cursor.fetchall()[0]
 
     @staticmethod
-    def _sparse_entries_query_optimized(histological_structures_condition: bool = False) -> str:
+    def _sparse_entries_query(histological_structures_condition: bool = False) -> str:
         return f'''
         SELECT
             eq.histological_structure,
@@ -414,31 +405,6 @@ class SparseMatrixPuller:
             eq.quantity as quantity
         FROM expression_quantification eq
         WHERE eq.range_identifier_integer BETWEEN %s AND %s
-            {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
-        ORDER BY eq.histological_structure, eq.target
-        ;
-        '''
-
-    @staticmethod
-    def _sparse_entries_query_unoptimized(histological_structures_condition: bool = False) -> str:
-        return f'''
-        SELECT
-            eq.histological_structure,
-            eq.target,
-            CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-            eq.quantity as quantity
-        FROM expression_quantification eq
-            JOIN histological_structure hs
-                ON eq.histological_structure=hs.identifier
-            JOIN histological_structure_identification hsi
-                ON hs.identifier=hsi.histological_structure
-            JOIN data_file df
-                ON hsi.data_source=df.sha256_hash
-            JOIN specimen_data_measurement_process sdmp
-                ON df.source_generation_process=sdmp.identifier
-        WHERE sdmp.study=%s
-            AND hs.anatomical_entity='cell'
-            AND sdmp.specimen=%s
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY eq.histological_structure, eq.target
         ;

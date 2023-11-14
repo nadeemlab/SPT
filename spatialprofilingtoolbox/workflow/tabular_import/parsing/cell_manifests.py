@@ -98,7 +98,8 @@ class CellManifestsParser(SourceToADIParser):
         RangeDefinitionFactory.finalize(cast(RangeDefinition, self.scope), last_value)
 
     def get_expression_quantification_last_index(self, cursor) -> int:
-        return
+        cursor.execute('SELECT MAX(range_identifier_integer) FROM expression_quantification ;')
+        return cursor.fetchall()[0][0]
 
     def insert_chunks(self,
         cursor,
@@ -134,8 +135,7 @@ class CellManifestsParser(SourceToADIParser):
             logger.debug('Starting batch of cells that begins at index %s.', start)
             timer.record_timepoint('Started per-cell iteration')
             for j, cell in batch_cells.iterrows():
-                histological_structure_identifier = str(
-                    histological_structure_identifier_index)
+                histological_structure_identifier = str(histological_structure_identifier_index)
                 histological_structure_identifier_index += 1
                 shape_file_identifier = str(shape_file_identifier_index)
                 shape_file_identifier_index += 1
@@ -193,11 +193,16 @@ class CellManifestsParser(SourceToADIParser):
                     memmap.write(values_file_contents)
                     memmap.seek(0)
                     timer.record_timepoint('Started copy from command for bulk insertion')
-                    cursor.copy_from(memmap, tablename)
+                    if tablename == 'expression_quantification':
+                        cursor.copy_from(memmap, tablename, columns=['histological_structure', 'target', 'quantity', 'unit', 'quantification_method', 'discrete_value', 'discretization_method'])
+                    else:
+                        cursor.copy_from(memmap, tablename)
                 timer.record_timepoint('Finished inserting one chunk')
+        expression_quantification_index = self.get_expression_quantification_last_index(cursor)
         return {
             'structure' : histological_structure_identifier_index,
             'shape file' : shape_file_identifier_index,
+            'expression quantification' : expression_quantification_index,
         }
 
     def parse_cell_manifest(self,

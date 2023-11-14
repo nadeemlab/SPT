@@ -19,7 +19,6 @@ ADD range_identifier_integer SERIAL ;
 
 CREATE TABLE range_definitions (
     scope_identifier VARCHAR(512),
-    scope_identifier_integer INT,
     tablename VARCHAR(512),
     lowest_value INT,
     highest_value INT

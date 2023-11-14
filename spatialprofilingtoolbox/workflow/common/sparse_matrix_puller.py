@@ -395,7 +395,8 @@ class SparseMatrixPuller:
             CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
             eq.quantity as quantity
         FROM expression_quantification eq
-        WHERE eq.source_specimen=%s
+        JOIN range_definitions rd ON rd.scope_identifier=%s
+        WHERE eq.range_identifier_integer BETWEEN rd.lowest_value AND rd.highest_value
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY eq.histological_structure, eq.target
         ;

@@ -49,7 +49,7 @@ class CellManifestsParser(SourceToADIParser):
         get_next = SourceToADIParser.get_next_integer_identifier
         histological_structure_identifier_index = get_next('histological_structure', cursor)
         shape_file_identifier_index = get_next('shape_file', cursor)
-        expression_quantification_index = self.get_expression_quantification_last_index(cursor)
+        expression_quantification_index = self.get_expression_quantification_last_index(cursor) + 1
         timer.record_timepoint('Retrieved next integer identifiers')
         initial_indices: dict[str, int] = {   # type: ignore
             'structure': histological_structure_identifier_index,
@@ -77,7 +77,7 @@ class CellManifestsParser(SourceToADIParser):
                 timer,
                 chemical_species_identifiers_by_symbol,
             )
-            self.finalize_expression_quantification_scope(final_indices['expression quantification'] + 1)
+            self.finalize_expression_quantification_scope(final_indices['expression quantification'] - 1, cursor)
             initial_indices = final_indices
             timer.record_timepoint('Completed cell manifest parsing')
             message = 'Performance report %s:\n%s'
@@ -88,18 +88,32 @@ class CellManifestsParser(SourceToADIParser):
         self.wrap_up_timer(timer)
 
     def open_expression_quantification_scope(self, scope_identifier: str, initial_index: int) -> None:        
+        logger.debug('Opening range scope with %s.', initial_index)
         self.scope = RangeDefinitionFactory.create(
             scope_identifier,
             initial_index,
             'expression_quantification',
         )
 
-    def finalize_expression_quantification_scope(self, last_value: int):
+    def finalize_expression_quantification_scope(self, last_value: int, cursor):
+        logger.debug('Finalizing range scope with %s.', last_value)
         RangeDefinitionFactory.finalize(cast(RangeDefinition, self.scope), last_value)
+        scope = cast(RangeDefinition, self.scope)
+        cursor.execute('''
+        INSERT INTO range_definitions(
+            scope_identifier,
+            tablename,
+            lowest_value,
+            highest_value
+        ) VALUES (%s, %s, %s, %s) ;
+        ''', (scope.scope_identifier, scope.tablename, scope.lowest_value, scope.highest_value))
 
     def get_expression_quantification_last_index(self, cursor) -> int:
         cursor.execute('SELECT MAX(range_identifier_integer) FROM expression_quantification ;')
-        return cursor.fetchall()[0][0]
+        last = cursor.fetchall()[0][0]
+        if last is None:
+            last = 0
+        return last
 
     def insert_chunks(self,
         cursor,
@@ -198,7 +212,7 @@ class CellManifestsParser(SourceToADIParser):
                     else:
                         cursor.copy_from(memmap, tablename)
                 timer.record_timepoint('Finished inserting one chunk')
-        expression_quantification_index = self.get_expression_quantification_last_index(cursor)
+        expression_quantification_index = self.get_expression_quantification_last_index(cursor) + 1
         return {
             'structure' : histological_structure_identifier_index,
             'shape file' : shape_file_identifier_index,

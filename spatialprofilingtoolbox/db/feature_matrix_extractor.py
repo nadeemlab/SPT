@@ -190,6 +190,14 @@ class FeatureMatrixExtractor:
                     len(data_arrays['target index lookup']),
                 ) for hs_id, expression in expressions.items()
             ]
+
+            expected_length = len(rows[0])
+            for row in rows:
+                if expected_length != len(row):
+                    lengths = (expected_length, len(row))
+                    message = 'Expression vectors not all the same lengths (%s, %s).'
+                    raise ValueError(message % lengths)
+
             dataframe = DataFrame(
                 rows,
                 columns=['pixel x', 'pixel y'] + [f'C {cs}' for cs in channel_information],
@@ -229,6 +237,9 @@ class FeatureMatrixExtractor:
     ) -> list[float | int]:
         template = '{0:0%sb}' % number_channels   # pylint: disable=consider-using-f-string
         feature_vector = cast(list[float | int], [int(value) for value in list(template.format(binary)[::-1])])
+        if number_channels != len(feature_vector):
+            message = f'Expected binary-encoded integer {binary} to represent {number_channels} channels.'
+            raise ValueError(message)
         return cast(list[float | int], list(centroid)) + feature_vector
 
     def _create_channel_information(self,

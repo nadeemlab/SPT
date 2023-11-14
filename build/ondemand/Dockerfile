@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt install -y gcc libpq-dev
+RUN apt update && apt install -y gcc g++ libpq-dev
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev
 RUN python -m pip install psycopg2==2.9.6

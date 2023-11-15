@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 
 from pandas import DataFrame
 
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_importance
 from spatialprofilingtoolbox.standalone_utilities.module_load_error import SuggestExtrasException
@@ -29,18 +30,8 @@ network on them, and save resultant model, metrics, and visualizations (if reque
 extract` with the entire `cggnn.run` process into a single command.
 """
     )
-    parser.add_argument(
-        '--spt_db_config_location',
-        type=str,
-        help='File location for SPT DB config file.',
-        required=True
-    )
-    parser.add_argument(
-        '--study',
-        type=str,
-        help='Name of the study to query data for in SPT.',
-        required=True
-    )
+    add_argument(parser, 'database config')
+    add_argument(parser, 'study name')
     parser.add_argument(
         '--strata',
         nargs='+',
@@ -174,16 +165,16 @@ extract` with the entire `cggnn.run` process into a single command.
     return parser.parse_args()
 
 
-def upload_importance(df: DataFrame, spt_db_config_location: str, study: str) -> None:
+def upload_importance(df: DataFrame, database_config_file: str, study: str) -> None:
     """Save cell importance scores as defined by cggnn to the database."""
-    transcribe_importance(df, spt_db_config_location, study)
+    transcribe_importance(df, database_config_file, study)
 
 
 if __name__ == "__main__":
     args = parse_arguments()
     df_cell, df_label, label_to_result = extract_cggnn_data(
-        args.spt_db_config_location,
-        args.study,
+        args.database_config_file,
+        args.study_name,
         args.strata,
     )
     if args.target_name in ['none', None]:
@@ -219,4 +210,4 @@ if __name__ == "__main__":
             importances,
             orient='index',
             columns=['importance'],
-        ), args.spt_db_config_location, args.study)
+        ), args.database_config_file, args.study_name)

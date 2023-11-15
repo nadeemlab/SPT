@@ -1,6 +1,6 @@
 spt cggnn run \
-    --study "Melanoma intralesional IL2" \
-    --spt_db_config_location ../db/.spt_db.config.container \
+    --study-name "Melanoma intralesional IL2" \
+    --database_config_file ../db/.spt_db.config.container \
     --b 8 \
     --epochs 10 \
     --k 3 \

@@ -89,7 +89,7 @@ def _label(
 
 
 def extract_cggnn_data(
-    spt_db_config_location: str,
+    database_config_file: str,
     study: str,
     strata_to_use: list[int] | None,
 ) -> tuple[DataFrame, DataFrame, dict[int, str]]:
@@ -97,7 +97,7 @@ def extract_cggnn_data(
 
     Parameters
     ----------
-    spt_db_config_location : str
+    database_config_file : str
         Location of the SPT DB config file.
     study : str
         Name of the study to query data for.
@@ -120,7 +120,7 @@ def extract_cggnn_data(
     label_to_result_text: dict[int, str]
         Mapping from class integer label to human-interpretable result text.
     """
-    extractor = FeatureMatrixExtractor(database_config_file=spt_db_config_location)
+    extractor = FeatureMatrixExtractor(database_config_file=database_config_file)
     cohorts = extractor.extract_cohorts(study)
     specimens, df_label, label_to_result_text = _create_label_df(
         cohorts['assignments'],

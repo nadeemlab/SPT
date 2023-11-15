@@ -2,6 +2,8 @@
 
 from argparse import ArgumentParser
 
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
+
 
 def parse_arguments():
     """Process command line arguments."""
@@ -12,7 +14,7 @@ def parse_arguments():
 When working with a new dataset, start by running
 
 ```bash
-spt cggnn explore-classes --spt_db_config_location <config_file_location> --study <study_name>
+spt cggnn explore-classes --database_config_file <config_file_location> --study-name <study_name>
 ```
 
 Given a configuration file of this format, where `...` is replaced with the relevant information to
@@ -32,18 +34,8 @@ They'll be used in the data extraction process. Typically, you want to select cl
 clear delineation to train a model on.
 """
     )
-    parser.add_argument(
-        '--spt_db_config_location',
-        type=str,
-        help='Location of the SPT DB config file.',
-        required=True
-    )
-    parser.add_argument(
-        '--study',
-        type=str,
-        help='Name of the study to query data for.',
-        required=True
-    )
+    add_argument(parser, 'database config')
+    add_argument(parser, 'study name')
     return parser.parse_args()
 
 
@@ -51,6 +43,6 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
-    extractor = FeatureMatrixExtractor(database_config_file=args.spt_db_config_location)
-    strata = extractor.extract_cohorts(study=args.study)['strata']
+    extractor = FeatureMatrixExtractor(database_config_file=args.database_config_file)
+    strata = extractor.extract_cohorts(study=args.study_name)['strata']
     print(strata.to_string())

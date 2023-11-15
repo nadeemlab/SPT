@@ -12,7 +12,7 @@ spt workflow configure --local --workflow='reduction visual' --study-name='Melan
 nextflow run .
 rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
-spt cggnn upload-importances --study "Melanoma intralesional IL2" --spt_db_config_location build/db/.spt_db.config.local --importances_csv_path test/test_data/gnn_importances/1.csv
+spt cggnn upload-importances --study-name "Melanoma intralesional IL2" --database_config_file build/db/.spt_db.config.local --importances_csv_path test/test_data/gnn_importances/1.csv
 
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt
 diff build/build_scripts/expected_table_counts.txt table_counts.txt

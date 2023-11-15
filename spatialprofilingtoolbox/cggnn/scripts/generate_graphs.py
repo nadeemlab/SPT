@@ -14,13 +14,13 @@ def parse_arguments():
         description="Generate graphs from saved SPT files."
     )
     parser.add_argument(
-        '--spt_hdf_cell_filename',
+        '--spt_hdf_cell_path',
         type=str,
         help='Path to the SPT cell attributes HDF.',
         required=True
     )
     parser.add_argument(
-        '--spt_hdf_label_filename',
+        '--spt_hdf_label_path',
         type=str,
         help='Path to the SPT labels HDF.',
         required=True
@@ -92,8 +92,8 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     generate_graphs(
-        read_hdf(args.spt_hdf_cell_filename),  # type: ignore
-        read_hdf(args.spt_hdf_label_filename),  # type: ignore
+        read_hdf(args.spt_hdf_cell_path),  # type: ignore
+        read_hdf(args.spt_hdf_label_path),  # type: ignore
         args.validation_data_percent,
         args.test_data_percent,
         use_channels=not args.disable_channels,

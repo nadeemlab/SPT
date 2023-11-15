@@ -1,5 +1,5 @@
 spt cggnn explore-classes \
-    --database_config_file ../db/.spt_db.config.container \
+    --database-config-file ../db/.spt_db.config.container \
     --study-name "Melanoma intralesional IL2"
 status=$?
 [ $status -eq 0 ] || echo "cggnn explore-classes failed."

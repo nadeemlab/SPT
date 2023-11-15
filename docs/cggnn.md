@@ -47,14 +47,14 @@ upload_importances = ...
 For detailed explanations of each parameter, please refer to the docstring for `spt cggnn run` (shown below, for most up-to-date version run the command with `--help`), or the [`cg-gnn`](https://pypi.org/project/cg-gnn/) documentation for even finer detail.
 
 ```txt
-usage: spt cggnn run [-h] --database_config_file SPT_DB_CONFIG_LOCATION --study-name STUDY [--strata STRATA [STRATA ...]] [--validation_data_percent VALIDATION_DATA_PERCENT] [--test_data_percent TEST_DATA_PERCENT] [--disable_channels] [--disable_phenotypes] [--roi_side_length ROI_SIDE_LENGTH] [--cells_per_slide_target CELLS_PER_SLIDE_TARGET] [--target_name TARGET_NAME]
+usage: spt cggnn run [-h] --database-config-file SPT_DB_CONFIG_LOCATION --study-name STUDY [--strata STRATA [STRATA ...]] [--validation_data_percent VALIDATION_DATA_PERCENT] [--test_data_percent TEST_DATA_PERCENT] [--disable_channels] [--disable_phenotypes] [--roi_side_length ROI_SIDE_LENGTH] [--cells_per_slide_target CELLS_PER_SLIDE_TARGET] [--target_name TARGET_NAME]
                      [--in_ram] [-b BATCH_SIZE] [--epochs EPOCHS] [-l LEARNING_RATE] [-k K_FOLDS] [--explainer_model EXPLAINER_MODEL] [--merge_rois] [--prune_misclassified] [--output_prefix OUTPUT_PREFIX] [--upload_importances] [--random_seed RANDOM_SEED]
 
 Create cell graphs from SPT tables saved locally, train a graph neural network on them, and save resultant model, metrics, and visualizations (if requested) to file. `spt cggnn run` allows you to run the `cg-gnn` pip package directly from SPT. It combines `spt cggnn extract` with the entire `cggnn.run` process into a single command.
 
 options:
   -h, --help            show this help message and exit
-  --database_config_file SPT_DB_CONFIG_LOCATION
+  --database-config-file SPT_DB_CONFIG_LOCATION
                         File location for SPT DB config file.
   --study-name STUDY         Name of the study to query data for in SPT.
   --strata STRATA [STRATA ...]

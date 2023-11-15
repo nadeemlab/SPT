@@ -14,7 +14,7 @@ def parse_arguments():
 When working with a new dataset, start by running
 
 ```bash
-spt cggnn explore-classes --database_config_file <config_file_location> --study-name <study_name>
+spt cggnn explore-classes --database-config-file <config_file_location> --study-name <study_name>
 ```
 
 Given a configuration file of this format, where `...` is replaced with the relevant information to

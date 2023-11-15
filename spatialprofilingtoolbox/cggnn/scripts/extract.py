@@ -20,7 +20,7 @@ This command is intended to be used after you've identified which strata you wan
 cggnn explore-classes`.
 
 ```bash
-spt cggnn extract --database_config_file <config_file_location> --study-name <study_name>
+spt cggnn extract --database-config-file <config_file_location> --study-name <study_name>
     --strata <strata_to_keep> --output_directory <output_folder>
 ```
 

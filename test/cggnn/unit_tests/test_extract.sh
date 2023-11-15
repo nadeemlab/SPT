@@ -1,5 +1,5 @@
 spt cggnn extract \
-    --database_config_file ../db/.spt_db.config.container \
+    --database-config-file ../db/.spt_db.config.container \
     --study-name "Melanoma intralesional IL2" \
     --output_directory .
 $([ $? -eq 0 ] && [ -e "Melanoma intralesional IL2/label_to_result.json" ] && [ -e "Melanoma intralesional IL2/cells.h5" ] && [ -e "Melanoma intralesional IL2/labels.h5" ])

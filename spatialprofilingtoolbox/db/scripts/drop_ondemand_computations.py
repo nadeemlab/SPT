@@ -16,6 +16,7 @@ def main():
         description='Drop ondemand-computed features, including values, specifiers, etc.'
     )
     add_argument(parser, 'database config')
+    add_argument(parser, 'study name')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         '--pending-only',
@@ -30,7 +31,7 @@ def main():
     args = parser.parse_args()
 
     config_file = get_and_validate_database_config(args)
-    with DBCursor(database_config_file=config_file) as cursor:
+    with DBCursor(database_config_file=config_file, study=args.study_name) as cursor:
         if args.pending_only:
             OnDemandComputationsDropper.drop(cursor, pending_only=True)
         if args.all:

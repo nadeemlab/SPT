@@ -3,6 +3,7 @@
 from io import BytesIO as StringIO
 import base64
 import mmap
+from typing import cast
 
 import shapefile  # type: ignore
 import pandas as pd
@@ -14,6 +15,8 @@ from spatialprofilingtoolbox.workflow.common.logging.performance_timer import Pe
 from spatialprofilingtoolbox.workflow.common.file_identifier_schema \
     import get_input_filename_by_identifier
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.range_definition import RangeDefinition
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.range_definition import RangeDefinitionFactory
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -21,10 +24,96 @@ logger = colorized_logger(__name__)
 
 class CellManifestsParser(SourceToADIParser):
     """Source file parsing for metadata at the level of the cell manifest set."""
+    scope: RangeDefinition | None
 
     def __init__(self, fields, **kwargs):
         super().__init__(fields, **kwargs)
         self.dataset_design = TabularCellMetadataDesign(**kwargs)
+        self.scope = None
+
+    def parse(self,
+        connection,
+        file_manifest_file,
+        chemical_species_identifiers_by_symbol,
+    ):
+        """Retrieve each cell manifest, and parse records for:
+        - histological structure identification
+        - histological structure
+        - shape file
+        - expression quantification
+        """
+        timer = PerformanceTimer()
+        timer.record_timepoint('Initial')
+        cursor = connection.cursor()
+        timer.record_timepoint('Cursor opened')
+        get_next = SourceToADIParser.get_next_integer_identifier
+        histological_structure_identifier_index = get_next('histological_structure', cursor)
+        shape_file_identifier_index = get_next('shape_file', cursor)
+        expression_quantification_index = self.get_expression_quantification_last_index(cursor) + 1
+        timer.record_timepoint('Retrieved next integer identifiers')
+        initial_indices: dict[str, int] = {   # type: ignore
+            'structure': histological_structure_identifier_index,
+            'shape file': shape_file_identifier_index,
+            'expression quantification': expression_quantification_index,
+        }
+        channel_symbols = self.get_channel_symbols(chemical_species_identifiers_by_symbol)
+        final_indices = {}
+        file_count = 1
+        for _, cell_manifest in self.get_cell_manifests(file_manifest_file).iterrows():
+            logger.debug(
+                'Considering contents of file "%s".',
+                cell_manifest['File ID'],
+            )
+            filename = get_input_filename_by_identifier(
+                input_file_identifier=cell_manifest['File ID'],
+                file_manifest_filename=file_manifest_file,
+            )
+            self.open_expression_quantification_scope(cell_manifest['Sample ID'], initial_indices['expression quantification'])
+            final_indices: dict[str, int] = self.parse_cell_manifest(  # type: ignore
+                cursor,
+                filename,
+                channel_symbols,
+                initial_indices,
+                timer,
+                chemical_species_identifiers_by_symbol,
+            )
+            self.finalize_expression_quantification_scope(final_indices['expression quantification'] - 1, cursor)
+            initial_indices = final_indices
+            timer.record_timepoint('Completed cell manifest parsing')
+            message = 'Performance report %s:\n%s'
+            logger.debug(message, file_count, timer.report_string(organize_by='total time spent'))
+            file_count += 1
+            connection.commit()
+        cursor.close()
+        self.wrap_up_timer(timer)
+
+    def open_expression_quantification_scope(self, scope_identifier: str, initial_index: int) -> None:        
+        logger.debug('Opening range scope with %s.', initial_index)
+        self.scope = RangeDefinitionFactory.create(
+            scope_identifier,
+            initial_index,
+            'expression_quantification',
+        )
+
+    def finalize_expression_quantification_scope(self, last_value: int, cursor):
+        logger.debug('Finalizing range scope with %s.', last_value)
+        RangeDefinitionFactory.finalize(cast(RangeDefinition, self.scope), last_value)
+        scope = cast(RangeDefinition, self.scope)
+        cursor.execute('''
+        INSERT INTO range_definitions(
+            scope_identifier,
+            tablename,
+            lowest_value,
+            highest_value
+        ) VALUES (%s, %s, %s, %s) ;
+        ''', (scope.scope_identifier, scope.tablename, scope.lowest_value, scope.highest_value))
+
+    def get_expression_quantification_last_index(self, cursor) -> int:
+        cursor.execute('SELECT MAX(range_identifier_integer) FROM expression_quantification ;')
+        last = cursor.fetchall()[0][0]
+        if last is None:
+            last = 0
+        return last
 
     def insert_chunks(self,
         cursor,
@@ -60,8 +149,7 @@ class CellManifestsParser(SourceToADIParser):
             logger.debug('Starting batch of cells that begins at index %s.', start)
             timer.record_timepoint('Started per-cell iteration')
             for j, cell in batch_cells.iterrows():
-                histological_structure_identifier = str(
-                    histological_structure_identifier_index)
+                histological_structure_identifier = str(histological_structure_identifier_index)
                 histological_structure_identifier_index += 1
                 shape_file_identifier = str(shape_file_identifier_index)
                 shape_file_identifier_index += 1
@@ -119,11 +207,16 @@ class CellManifestsParser(SourceToADIParser):
                     memmap.write(values_file_contents)
                     memmap.seek(0)
                     timer.record_timepoint('Started copy from command for bulk insertion')
-                    cursor.copy_from(memmap, tablename)
+                    if tablename == 'expression_quantification':
+                        cursor.copy_from(memmap, tablename, columns=['histological_structure', 'target', 'quantity', 'unit', 'quantification_method', 'discrete_value', 'discretization_method'])
+                    else:
+                        cursor.copy_from(memmap, tablename)
                 timer.record_timepoint('Finished inserting one chunk')
+        expression_quantification_index = self.get_expression_quantification_last_index(cursor) + 1
         return {
             'structure' : histological_structure_identifier_index,
             'shape file' : shape_file_identifier_index,
+            'expression quantification' : expression_quantification_index,
         }
 
     def parse_cell_manifest(self,
@@ -188,58 +281,6 @@ class CellManifestsParser(SourceToADIParser):
         if len(missing) > 0:
             logger.warning('Cannot find channel metadata for %s .', str(missing))
         return symbols.difference(missing)
-
-    def parse(self,
-        connection,
-        file_manifest_file,
-        chemical_species_identifiers_by_symbol,
-    ):
-        """Retrieve each cell manifest, and parse records for:
-        - histological structure identification
-        - histological structure
-        - shape file
-        - expression quantification
-        """
-        timer = PerformanceTimer()
-        timer.record_timepoint('Initial')
-        cursor = connection.cursor()
-        timer.record_timepoint('Cursor opened')
-        get_next = SourceToADIParser.get_next_integer_identifier
-        histological_structure_identifier_index = get_next('histological_structure', cursor)
-        shape_file_identifier_index = get_next('shape_file', cursor)
-        timer.record_timepoint('Retrieved next integer identifiers')
-        initial_indices = {
-            'structure' : histological_structure_identifier_index,
-            'shape file' : shape_file_identifier_index,
-        }
-        channel_symbols = self.get_channel_symbols(chemical_species_identifiers_by_symbol)
-        final_indices = {}
-        file_count = 1
-        for _, cell_manifest in self.get_cell_manifests(file_manifest_file).iterrows():
-            logger.debug(
-                'Considering contents of file "%s".',
-                cell_manifest['File ID'],
-            )
-            filename = get_input_filename_by_identifier(
-                input_file_identifier=cell_manifest['File ID'],
-                file_manifest_filename=file_manifest_file,
-            )
-            final_indices = self.parse_cell_manifest(
-                cursor,
-                filename,
-                channel_symbols,
-                initial_indices,
-                timer,
-                chemical_species_identifiers_by_symbol,
-            )
-            initial_indices = final_indices
-            timer.record_timepoint('Completed cell manifest parsing')
-            message = 'Performance report %s:\n%s'
-            logger.debug(message, file_count, timer.report_string(organize_by='total time spent'))
-            file_count += 1
-            connection.commit()
-        cursor.close()
-        self.wrap_up_timer(timer)
 
     def get_number_known_cells(self, sha256_hash, cursor):
         query = (

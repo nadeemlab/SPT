@@ -1,4 +1,6 @@
 name: spt_cggnn
+# Remove lines with cuda in them if you don't have a CUDA GPU
+# CUDA version chosen by the latest version supported by DGL
 channels:
   - defaults
   - nvidia/label/cuda-11.8.0
@@ -14,5 +16,8 @@ dependencies:
   - dgl
   - pip:
     - spatialprofilingtoolbox[all]
-# Remove lines with cuda in them if you don't have a CUDA GPU
-# CUDA version is chosen by the latest version supported by DGL
+    - cg-gnn
+  # Development dependencies
+  - autopep8
+  - pylint
+  - isort

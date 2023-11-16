@@ -1,3 +1,12 @@
+# v0.16.2
+- Deprecates heavy index on large tables:
+  - Adds a new table for tracking scope ranges.
+  - Converts the former `source_specimen` column on `expression_quantification` to a `SERIAL`` integer.
+  - Makes tabular import keep track of ranges per-specimen in the new range_definitions table.
+  - Updates the "optimized" sparse matrix query to use the ranges rather than the former huge index.
+  - Deprecates the modify-constraints CLI entrypoint (only used internally now).
+  - Deprecates the expression indexing module, CLI entrypoint, etc.
+
 # v0.16.0
 - Separates datasets into own databases:
   - `DBCursor` and `DBConnection` usage streamlined, typically requires study-scoping (dataset-scoping).

@@ -174,12 +174,10 @@ packages = [
 ]
 "spatialprofilingtoolbox.db.scripts" = [
     "create_schema.py",
-    "modify_constraints.py",
     "guess_channels_from_object_files.py",
     "status.py",
     "retrieve_feature_matrices.py",
     "drop.py",
-    "index_expressions_table.py",
     "drop_ondemand_computations.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [

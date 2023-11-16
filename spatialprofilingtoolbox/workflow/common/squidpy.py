@@ -21,6 +21,9 @@ from scipy.stats import norm  # type: ignore
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
 
 
 def lookup_squidpy_feature_class(method: str) -> str | None:
@@ -49,10 +52,18 @@ def compute_squidpy_metric_for_one_sample(
     adata = convert_df_to_anndata(df_cell, masks)
     match feature_class:
         case 'neighborhood enrichment':
+            if adata.obs['cluster'].nunique() == 1:
+                message = 'Got 1 cluster, need 2 to compute neighborhood enrichment. Presuming null.'
+                logger.error(message)
+                return None
             return _summarize_neighborhood_enrichment(_nhood_enrichment(adata))
         case 'co-occurrence':
             if radius is None:
                 raise ValueError('You must supply radius value for co-occurrence metric.')
+            if adata.obs['cluster'].nunique() == 1:
+                message = 'Got 1 cluster, need 2 to compute co-occurrence. Presuming null.'
+                logger.error(message)
+                return None
             return _summarize_co_occurrence(_co_occurrence(adata, radius))
         case 'ripley':
             return _summarize_ripley(_ripley(adata))

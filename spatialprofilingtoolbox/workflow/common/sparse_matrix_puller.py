@@ -2,12 +2,10 @@
 
 from typing import cast, Any
 
-from psycopg2.extensions import cursor as Psycopg2Cursor
 from pandas import DataFrame
 from numpy import ndarray
 from numpy import arange  # type: ignore
 
-from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_from_specimen
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -277,7 +275,6 @@ class SparseMatrixPuller:
         for _specimen in specimens:
             sparse_entries = self._get_sparse_entries(
                 study_name,
-                measurement_study,
                 specimen=_specimen,
                 histological_structures=histological_structures,
             )
@@ -348,24 +345,19 @@ class SparseMatrixPuller:
 
     def _get_sparse_entries(self,
         study_name: str,
-        measurement_study: str,
         specimen: str,
         histological_structures: set[int] | None = None,
     ) -> list[tuple[str, str, int, str, str]]:
         sparse_entries: list = []
         number_log_messages = 0
-        parameters: list[str | tuple[str, ...]]  = [measurement_study, specimen]
-        if histological_structures is not None:
-            parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
 
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-            cursor.execute(
-                self._get_sparse_matrix_query_specimen_specific(
-                    study_name,
-                    histological_structures is not None,
-                ),
-                parameters,
+            query, parameters = self._get_sparse_matrix_query_specimen_specific(
+                cursor,
+                specimen,
+                histological_structures,
             )
+            cursor.execute(query, parameters)
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
@@ -379,34 +371,32 @@ class SparseMatrixPuller:
         return sparse_entries
 
     def _get_sparse_matrix_query_specimen_specific(self,
-        study: str,
-        histological_structures_condition: bool = False,
-    ) -> str:
-        is_indexed = False
-        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
-            is_indexed = ExpressionsTableIndexer.expressions_table_is_indexed(cursor)
-        if is_indexed:
-            return self._sparse_entries_query_optimized(histological_structures_condition)
-        return self._sparse_entries_query_unoptimized(histological_structures_condition)
+        cursor,
+        specimen: str,
+        histological_structures: set[int] | None,
+    ) -> tuple[str, tuple]:
+        structures_present = histological_structures is not None
+        parameters: list[str | tuple[str, ...] | int] = []
+
+        range_definition = SparseMatrixPuller._retrieve_expressions_range(cursor, specimen)
+        query = self._sparse_entries_query(structures_present)
+        parameters = [range_definition[0], range_definition[1]]
+        if histological_structures is not None:
+            parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
+        return (query, tuple(parameters))
 
     @staticmethod
-    def _sparse_entries_query_optimized(histological_structures_condition: bool = False) -> str:
-        return f'''
-        -- absorb/ignore first string formatting argument: %s
-        SELECT
-            eq.histological_structure,
-            eq.target,
-            CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
-            eq.quantity as quantity
-        FROM expression_quantification eq
-        WHERE eq.source_specimen=%s
-            {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
-        ORDER BY eq.histological_structure, eq.target
-        ;
+    def _retrieve_expressions_range(cursor, scope: str) -> tuple[int, int]:
+        query = '''
+        SELECT lowest_value, highest_value
+        FROM range_definitions
+        WHERE scope_identifier=%s AND tablename='expression_quantification' ;
         '''
+        cursor.execute(query, (scope,))
+        return cursor.fetchall()[0]
 
     @staticmethod
-    def _sparse_entries_query_unoptimized(histological_structures_condition: bool = False) -> str:
+    def _sparse_entries_query(histological_structures_condition: bool = False) -> str:
         return f'''
         SELECT
             eq.histological_structure,
@@ -414,17 +404,7 @@ class SparseMatrixPuller:
             CASE WHEN discrete_value='positive' THEN 1 ELSE 0 END AS coded_value,
             eq.quantity as quantity
         FROM expression_quantification eq
-            JOIN histological_structure hs
-                ON eq.histological_structure=hs.identifier
-            JOIN histological_structure_identification hsi
-                ON hs.identifier=hsi.histological_structure
-            JOIN data_file df
-                ON hsi.data_source=df.sha256_hash
-            JOIN specimen_data_measurement_process sdmp
-                ON df.source_generation_process=sdmp.identifier
-        WHERE sdmp.study=%s
-            AND hs.anatomical_entity='cell'
-            AND sdmp.specimen=%s
+        WHERE eq.range_identifier_integer BETWEEN %s AND %s
             {'AND eq.histological_structure IN %s' if histological_structures_condition else ''}
         ORDER BY eq.histological_structure, eq.target
         ;

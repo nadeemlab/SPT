@@ -15,9 +15,9 @@ dependencies:
   - pytorch::pytorch-cuda=11.8
   - dgl
   - pip:
-    - spatialprofilingtoolbox[cggnn]
+    - spatialprofilingtoolbox[all]
     - cg-gnn
   # Development dependencies
-  - conda-forge::autopep8
-  - conda-forge::pylint
-  - conda-forge::isort
+  - autopep8
+  - pylint
+  - isort

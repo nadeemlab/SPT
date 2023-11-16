@@ -115,34 +115,25 @@ def generate_graphs(
     feature_names: list[str]
         The names of the features in graph.ndata['features'] in the order they appear in the array.
     """
-    p_validation, p_test, roi_size = validate_inputs(
-        df_label,
-        validation_data_percent,
-        test_data_percent,
-        use_channels,
-        use_phenotypes,
-        roi_side_length,
-    )
-
-    if random_seed is not None:
-        set_seeds(random_seed)
-
-    # Ensure output directory is created and check if graphs have already been generated
-    if output_directory is not None:
-        makedirs(output_directory, exist_ok=True)
-        if exists(join(output_directory, 'graphs.bin')) and \
+    if (output_directory is not None) and \
+        exists(join(output_directory, 'graphs.bin')) and \
             exists(join(output_directory, 'graph_info.pkl')) and \
-                exists(join(output_directory, 'feature_names.txt')):
-            warn('Graphs already exist in output directory. Loading from file.')
-            return load_cell_graphs(output_directory)
-
-    grouped, roi_size, roi_area, features_to_use = prepare_graph_generation_by_specimen(
-        df_cell,
-        cells_per_slide_target,
-        roi_size,
-        use_channels,
-        use_phenotypes,
-    )
+    exists(join(output_directory, 'feature_names.txt')):
+        warn('Graphs already exist in output directory. Loading from file.')
+        return load_cell_graphs(output_directory)
+    p_validation, p_test, roi_size, roi_area, features_to_use, grouped = \
+        prepare_graph_generation_by_specimen(
+            df_cell,
+            df_label,
+            validation_data_percent,
+            test_data_percent,
+            use_channels,
+            use_phenotypes,
+            roi_side_length,
+            cells_per_slide_target,
+            output_directory,
+            random_seed,
+        )
     graphs_by_specimen: dict[str, list[DGLGraph]] = {}
     print('Creating graphs for identified regions in each specimen...')
     for specimen, df_specimen in tqdm(grouped):
@@ -167,12 +158,56 @@ def generate_graphs(
         p_validation,
         p_test,
         roi_size,
-        include_unlabeled,
+        features_to_use=features_to_use,
+        output_directory=output_directory,
     )
-    print(report_dataset_statistics(graphs_data))
-    if output_directory is not None:
-        save_graph_data(graphs_data, features_to_use, output_directory)
     return graphs_data, features_to_use
+
+
+def prepare_graph_generation_by_specimen(
+    df_cell: DataFrame,
+    df_label: DataFrame,
+    validation_data_percent: int,
+    test_data_percent: int,
+    use_channels: bool = True,
+    use_phenotypes: bool = True,
+    roi_side_length: int | None = None,
+    cells_per_slide_target: int | None = 5_000,
+    output_directory: str | None = None,
+    random_seed: int | None = None,
+) -> tuple[
+    float,
+    float,
+    tuple[int, int],
+    float,
+    list[str],
+    DataFrameGroupBy,
+]:
+    """Prepare for graph generation by splitting the data by specimen and determining the ROI size."""
+    p_validation, p_test, roi_size = validate_inputs(
+        df_label,
+        validation_data_percent,
+        test_data_percent,
+        use_channels,
+        use_phenotypes,
+        roi_side_length,
+    )
+
+    if random_seed is not None:
+        set_seeds(random_seed)
+
+    # Ensure output directory is created and check if graphs have already been generated
+    if output_directory is not None:
+        makedirs(output_directory, exist_ok=True)
+
+    grouped, roi_size, roi_area, features_to_use = _group_by_specimen(
+        df_cell,
+        cells_per_slide_target,
+        roi_size,
+        use_channels,
+        use_phenotypes,
+    )
+    return p_validation, p_test, roi_size, roi_area, features_to_use, grouped
 
 
 def validate_inputs(
@@ -208,14 +243,13 @@ def validate_inputs(
     return p_validation, p_test, roi_size
 
 
-def prepare_graph_generation_by_specimen(
+def _group_by_specimen(
     df_cell: DataFrame,
     cells_per_slide_target: int | None = 5_000,
     roi_size: tuple[int, int] | None = None,
     use_channels: bool = True,
     use_phenotypes: bool = True,
 ) -> tuple[DataFrameGroupBy, tuple[int, int], float, list[str]]:
-    """Prepare for graph generation by splitting the data by specimen and determining the ROI size."""
     df_cell, features_to_use = _prepare_df_cell(df_cell, use_channels, use_phenotypes)
     grouped, roi_size, roi_area = _split_df_by_specimen(
         df_cell,
@@ -277,8 +311,8 @@ def create_graphs_from_specimen(
     features_to_use: list[str],
     roi_size: tuple[int, int],
     roi_area: float,
-    max_cells_to_consider: int,
-    target_name: str | None,
+    max_cells_to_consider: int = 100_000,
+    target_name: str | None = None,
     n_neighbors: int = 5,
     threshold: int | None = None,
     random_seed: int | None = None,
@@ -406,30 +440,33 @@ def finalize_graph_metadata(
     p_validation: float,
     p_test: float,
     roi_size: tuple[int, int],
-    include_unlabeled: bool = False,
+    features_to_use: list[str] | None,
+    output_directory: str | None = None,
 ) -> list[GraphData]:
     """Split into train/validation/test sets and associate other metadata with the graphs."""
     graphs_by_label_and_specimen = _split_graphs_by_label_and_specimen(
-        graphs_by_specimen, df_label, include_unlabeled)
+        graphs_by_specimen, df_label)
     specimen_to_set = _split_rois(graphs_by_label_and_specimen, p_validation, p_test)
-    return _assemble_graph_data(
+    graphs_data = _assemble_graph_data(
         graphs_by_label_and_specimen,
         specimen_to_set,
         roi_size,
     )
+    print(report_dataset_statistics(graphs_data))
+    if output_directory is not None:
+        assert features_to_use is not None
+        save_graph_data(graphs_data, features_to_use, output_directory)
+    return graphs_data
 
 
 def _split_graphs_by_label_and_specimen(
     graphs_by_specimen: dict[str, list[DGLGraph]],
     df_label: DataFrame,
-    include_unlabeled: bool,
 ) -> dict[int | None, dict[str, list[DGLGraph]]]:
     graphs_by_label_and_specimen: dict[int | None, dict[str, list[DGLGraph]]] = DefaultDict(dict)
     for specimen, graphs in graphs_by_specimen.items():
         label: int | None = df_label.loc[specimen, 'label'] if (specimen in df_label.index) \
             else None
-        if not include_unlabeled and (label is None):
-            continue
         graphs_by_label_and_specimen[label][specimen] = graphs
     return graphs_by_label_and_specimen
 

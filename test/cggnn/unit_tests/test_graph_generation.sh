@@ -1,6 +1,6 @@
 spt cggnn generate-graphs \
-    --spt_hdf_cell_filename unit_tests/cells.h5 \
-    --spt_hdf_label_filename unit_tests/labels.h5 \
+    --spt_hdf_cell_path unit_tests/cells.h5 \
+    --spt_hdf_label_path unit_tests/labels.h5 \
     --validation_data_percent 15 \
     --test_data_percent 15 \
     --output_directory graphs/ \

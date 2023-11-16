@@ -20,8 +20,6 @@ process echo_environment_variables {
     path 'k_folds',                         emit: k_folds
     path 'explainer_model',                 emit: explainer_model
     path 'merge_rois',                      emit: merge_rois
-    path 'prune_misclassified',             emit: prune_misclassified
-    path 'output_prefix',                   emit: output_prefix
     path 'upload_importances',              emit: upload_importances
     path 'random_seed',                     emit: random_seed
 
@@ -44,8 +42,6 @@ process echo_environment_variables {
     echo -n "${k_folds_}" > k_folds
     echo -n "${explainer_model_}" > explainer_model
     echo -n "${merge_rois_}" > merge_rois
-    echo -n "${prune_misclassified_}" > prune_misclassified
-    echo -n "${output_prefix_}" > output_prefix
     echo -n "${upload_importances_}" > upload_importances
     echo -n "${random_seed_}" > random_seed
     """
@@ -173,6 +169,7 @@ process train {
     #!/bin/bash
 
     in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
+    explainer_option=\$( if [[ "${explainer_model}" != "none" ]]; then echo "--explainer ${explainer_model}"; fi)
     merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
 
     echo \
@@ -182,13 +179,13 @@ process train {
      --epochs ${epochs} \
      --learning_rate \\'${learning_rate}\\' \
      --k_folds ${k_folds} \
-     --explainer \\'${explainer_model}\\' \
+     \${explainer_option} \
      \${merge_rois_option} \
      | xargs cg-gnn-train
     """
 }
 
-process upload_importances {
+process upload_importance_scores {
     input:
     val upload_importances
     path importances_csv_path
@@ -224,10 +221,7 @@ process upload_importances {
 //     """
 //     #!/bin/bash
 
-//     prune_misclassified_option=\$( if [[ "${prune_misclassified}" == "true" ]]; then echo "--prune_misclassified"; fi)
-
 //     spt cggnn prepare-plotting \
-//         \${prune_misclassified_option} \
 //         --importances_path \\'${importances_file}\\' \
 //         --graph_info_path \\'${graph_metadata_file}\\' \
 //         --feature_names_path \\'${feature_names_file}\\'
@@ -289,12 +283,6 @@ workflow {
     
     environment_ch.merge_rois.map{ it.text }
         .set{ merge_rois_ch }
-    
-    environment_ch.prune_misclassified.map{ it.text }
-        .set{ prune_misclassified_ch }
-    
-    environment_ch.output_prefix.map{ it.text }
-        .set{ output_prefix_ch }
     
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
@@ -366,7 +354,7 @@ workflow {
     train_out.model_directory
         .set{ model_directory_ch }
     
-    upload_importances(
+    upload_importance_scores(
         upload_importances_ch,
         importances_csv_path_ch
     )

@@ -43,6 +43,7 @@ apiserver = [
     "secure==0.3.0"
 ]
 cggnn = [
+    "bokeh",
     "cg-gnn==0.3",
     "tables",
     "torch"
@@ -76,6 +77,7 @@ workflow = [
     "tables"
 ]
 all = [
+    "bokeh",
     "cg-gnn==0.3",
     "torch",
     "matplotlib==3.7.1",

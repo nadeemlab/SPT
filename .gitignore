@@ -2,7 +2,6 @@
 /check-docker-daemon-running
 status_code
 
-
 # Generated files
 /check-for-docker-credentials
 /data-loaded-image-1
@@ -38,6 +37,7 @@ data-loaded-image-1smallnointensity
 development-image-prerequisites-installed
 log_of_build.log
 pyproject.toml
+spatialprofilingtoolbox.egg-info/
 
 # Development files
 .vscode/

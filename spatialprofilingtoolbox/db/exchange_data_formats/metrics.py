@@ -61,7 +61,7 @@ class PhenotypeCount(BaseModel):
     """
     specimen: str
     count: int | None
-    percentage: float
+    percentage: float | None
 
 
 class PhenotypeCounts(BaseModel):

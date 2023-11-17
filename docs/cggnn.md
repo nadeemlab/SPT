@@ -6,9 +6,9 @@ The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n
 
 # Explore the data available for a study and train the model
 
-i. Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
-ii. Select sample strata to use and fetch the relevant data artifacts from the database using `spt cggnn extract`.
-iii. Use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
+- Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
+- Select sample strata to use and fetch the relevant data artifacts from the database using `spt cggnn extract`.
+- Use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
 
 # Configure a reproducible cggnn workflow
 

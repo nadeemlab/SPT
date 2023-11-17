@@ -2,7 +2,7 @@ The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n
 
 1. [Explore the data available for a study and train the model](#explore-the-data-available-for-a-study-and-train-the-model)
 2. [Configure a reproducible cggnn workflow](#configure-a-reproducible-cggnn-workflow)
-3. [Running the workflow](#runnning-the-workflow)
+3. [Running the workflow](#running-the-workflow)
 
 # Explore the data available for a study and train the model
 

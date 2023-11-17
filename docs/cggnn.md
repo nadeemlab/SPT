@@ -1,25 +1,30 @@
-# Using `spt cggnn`
-
 The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n**eural **n**etwork) is:
-1. Explore the data available for the study of your choice and train the model.
-   1. Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
-   2. Now that you know which specimen cohorts ("strata") you want to use, fetch the relevant data artifacts from SPT using `spt cggnn extract`.
-   3. Artifacts in hand, use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
-2. Given that you now know the parameters you used to arrive at your fine-tuned CG-GNN model, use `spt workflow configure` to create artifacts that will reproducibly* run through the entire process of gathering the data for, training, and reporting with your trained model. Then, your workflow can be run in one line using Nextflow to approximately reproduce your model and results.
 
-This document will go into more detail on the second step.
+1. [Explore the data available for a study and train the model](#explore-the-data-available-for-a-study-and-train-the-model)
+2. [Configure a reproducible cggnn workflow](#configure-a-reproducible-cggnn-workflow)
+3. [Running the workflow](#running-the-workflow)
 
-\* _Because the GNN uses non-deterministic algorithms, workflows will not be exactly reproducible._
+# Explore the data available for a study and train the model
 
-## Configuring the cggnn workflow with `spt workflow configure`
+- Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
+- Select sample strata to use and fetch the relevant data artifacts from the database using `spt cggnn extract`.
+- Use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
 
-To configure the `cggnn` SPT workflow, you must provide the following parameters as follows:
+# Configure a reproducible cggnn workflow
+
+Use `spt workflow configure`, with the parameters obtained as above, to create artifacts that will reproducibly run through the entire process of gathering the data, training, and reporting with your trained model. Then your workflow can be run in one line using Nextflow to approximately reproduce your model and results.
+
+Note that because the GNN uses non-deterministic algorithms, workflows will not be exactly reproducible.
+
+You must provide the following parameters:
 
 ```
 spt workflow configure --local --workflow='cggnn' --study-name=... --database-config-file=... --workflow-config-file=...
 ```
 
-`study-name` is the name of your study as known by your SPT database instance, and `database-config-file` is the location of your database configuration file, in the format of [`.spt_db.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
+For canonical explanations of each parameter, please refer to the docstrings of the scripts being called by `spt workflow configure`, as shown by [the Nextflow file used for cggnn](spatialprofilingtoolbox/workflow/assets/cggnn.nf), and the [`cg-gnn` pip package](https://pypi.org/project/cg-gnn/) documentation. The definitions are provided for quick reference only and may not be up to date.
+
+`study-name` is the name of your study as it appears in your scstudies database instance, and `database-config-file` is the location of your database configuration file, in the format of [`.spt_db.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
 
 `workflow-config-file` is more involved. Unused by other workflows (so far), it should be a YAML file following this template, as in [`.workflow.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.workflow.config.template):
 
@@ -39,76 +44,40 @@ learning_rate = ...
 k_folds = ...
 explainer_model = ...
 merge_rois = ...
-prune_misclassified = ...
-output_prefix = ...
 upload_importances = ...
 ```
 
-For detailed explanations of each parameter, please refer to the docstring for `spt cggnn run` (shown below, for most up-to-date version run the command with `--help`), or the [`cg-gnn`](https://pypi.org/project/cg-gnn/) documentation for even finer detail.
+Note that with this configuration file, parameters can't be eliminated to use the default value as is possible with CLI arguments.
 
-```txt
-usage: spt cggnn run [-h] --spt_db_config_location SPT_DB_CONFIG_LOCATION --study STUDY [--strata STRATA [STRATA ...]] [--validation_data_percent VALIDATION_DATA_PERCENT] [--test_data_percent TEST_DATA_PERCENT] [--disable_channels] [--disable_phenotypes] [--roi_side_length ROI_SIDE_LENGTH] [--cells_per_slide_target CELLS_PER_SLIDE_TARGET] [--target_name TARGET_NAME]
-                     [--in_ram] [-b BATCH_SIZE] [--epochs EPOCHS] [-l LEARNING_RATE] [-k K_FOLDS] [--explainer_model EXPLAINER_MODEL] [--merge_rois] [--prune_misclassified] [--output_prefix OUTPUT_PREFIX] [--upload_importances] [--random_seed RANDOM_SEED]
+* `strata`: Specimen strata to use as labels, identified according to the "stratum identifier" in `explore-classes`. This should be given as space separated integers. Can be set to `all` to use all strata.
+* `validation_data_percent`: Percentage of data to use as validation data. Set to 0 if you want to do k-fold cross-validation. (Training percentage is implicit.)
+* `test_data_percent`: Percentage of data to use as the test set. (Training percentage is implicit.)
+* `disable_channels`: If true, disable the use of individual channel information in the graph. (Only named phenotypes, a.k.a. ``composite phenotypes", would appear.)
+* `disable_phenotypes`: If true, disable the use of phenotype information in the graph. (Only individual channels would appear.)
+* `cells_per_slide_target`: An intended target number of cells per slide, used with the median cell density across all slides during determination of the ROI size.
+* `target_name`: The name of a column in the dataframe whose true values indicate cells to be used when building ROIs. Can be set to `none` to use all cells in the sample.
+* `in_ram`: If true, store the data in RAM.
+* `batch_size`: Batch size to use during training.
+* `epochs`: Number of training epochs to do.
+* `learning_rate`: Learning rate to use during training.
+* `k_folds`: Number of folds to use in cross validation. 0 means don't use k-fold cross validation unless no validation dataset is provided, in which case k defaults to 3.
+* `explainer_model`: The explainer type to use. If not `none`, importance scores will be calculated using the model archetype chosen. `pp` is recommended.
+* `merge_rois`: If true, return a CSV of importance scores merged together by sample.
+* `upload_importances`: If true, importance scores will be uploaded to the database.
+* `random_seed`: An integer random seed to use for reproducibility. Can be set to `none` to omit a random seed.
 
-Create cell graphs from SPT tables saved locally, train a graph neural network on them, and save resultant model, metrics, and visualizations (if requested) to file. `spt cggnn run` allows you to run the `cg-gnn` pip package directly from SPT. It combines `spt cggnn extract` with the entire `cggnn.run` process into a single command.
+# Running the workflow
 
-options:
-  -h, --help            show this help message and exit
-  --spt_db_config_location SPT_DB_CONFIG_LOCATION
-                        File location for SPT DB config file.
-  --study STUDY         Name of the study to query data for in SPT.
-  --strata STRATA [STRATA ...]
-                        Specimen strata to use as labels, identified according to the "stratum identifier" in `explore-classes`. This should be given as space separated integers. If not provided, all strata will be used.
-  --validation_data_percent VALIDATION_DATA_PERCENT
-                        Percentage of data to use as validation data. Set to 0 if you want to do k-fold cross-validation later. (Training percentage is implicit.) Default 15%.
-  --test_data_percent TEST_DATA_PERCENT
-                        Percentage of data to use as the test set. (Training percentage is implicit.) Default 15%.
-  --disable_channels    Disable the use of channel information in the graph.
-  --disable_phenotypes  Disable the use of phenotype information in the graph.
-  --roi_side_length ROI_SIDE_LENGTH
-                        Side length in pixels of the ROI areas we wish to generate.
-  --cells_per_slide_target CELLS_PER_SLIDE_TARGET
-                        Used with the median cell density across all slides to determine the ROI size.
-  --target_name TARGET_NAME
-                        If given, build ROIs based only on cells with true values in this DataFrame column.
-  --in_ram              If the data should be stored in RAM.
-  -b BATCH_SIZE, --batch_size BATCH_SIZE
-                        Batch size to use during training.
-  --epochs EPOCHS       Number of training epochs to do.
-  -l LEARNING_RATE, --learning_rate LEARNING_RATE
-                        Learning rate to use during training.
-  -k K_FOLDS, --k_folds K_FOLDS
-                        Folds to use in k-fold cross validation. 0 means don't use k-fold cross validation unless no validation dataset is provided, in which case k defaults to 3.
-  --explainer_model EXPLAINER_MODEL
-                        Which explainer type to use.
-  --merge_rois          Merge ROIs together by specimen.
-  --prune_misclassified
-                        Remove entries for misclassified cell graphs when calculating separability scores.
-  --output_prefix OUTPUT_PREFIX
-                        Saves output files with this prefix, if provided.
-  --upload_importances  Whether to upload importance scores to the database.
-  --random_seed RANDOM_SEED
-                        Random seed to use for reproducibility.
-```
-
-The main difference between the command line interface provided by [`cg-gnn`](https://pypi.org/project/cg-gnn/) and the SPT workflow interface is that parameters can't be eliminated from the config file for the latter. Instead,
-* If you want to use the default value for a parameter, you must explicitly set it to that value.
-* Boolean values must explicitly be set to `true` or `false` instead of simply including or omitting the parameter.
-* `strata` can be set to `all` to use all strata (equivalent to not providing the parameter when using the CLI).
-* `target_name` can be set to `none` to use all cells in the tissue sample (equivalent to not providing the parameter when using the CLI).
-* `random_seed` can be set to `none` if you don't wish to use a random seed (again, equivalent to not providing the parameter in the CLI).
-
-## Running the workflow
-
-```sh
-nextflow run .
-```
-
-In the event that you'd like to run the cggnn workflow on different hardware than where you created it, the [`cggnn_environment.yml`](cggnn_environment.yml) file in this directory installs the minimum dependencies required to run the workflow fluidly. The environment assumes the machine you're running the workflow on has a CUDA-compatible GPU. We don't recommend running the cggnn workflow without it, but if you choose to do so, you will need to remove mentions of CUDA from the environment file. If your machine does support CUDA but not CUDA 11.8, you will need to change the version used by CUDA, pytorch, and DGL to a version your GPU supports.
+The conda environment file [`cggnn_environment.yml`](cggnn_environment.yml) specifies the installation of the minimum dependencies required to run the workflow fluidly. The environment assumes the machine you are running the workflow on has a CUDA-compatible GPU. Running the cggnn workflow without CUDA is not recommended, but if you choose to do so use [`cggnn_environment_no_cuda.yml`](cggnn_environment_no_cuda.yml). If your machine does support CUDA but not CUDA 11.8, you will need to change the version used by CUDA, pytorch, and DGL to a version your GPU supports.
 
 Assuming you have conda installed [(instructions here)](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), create the environment and activate it with the following commands:
 
 ```sh
 conda env create -f docs/cggnn_environment.yml
 conda activate spt_cggnn
+```
+
+Then run with:
+```sh
+nextflow run .
 ```

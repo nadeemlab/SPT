@@ -14,6 +14,7 @@ from spatialprofilingtoolbox.cggnn.util import GraphData, split_graph_sets, coll
 IS_CUDA = is_available()
 DEVICE = 'cuda:0' if IS_CUDA else 'cpu'
 
+
 class CGDataset(Dataset):
     """Cell graph dataset."""
 
@@ -65,10 +66,10 @@ def create_datasets(
     """Make the cell and/or tissue graph datasets and the k-fold if necessary."""
     cell_graph_sets = split_graph_sets(graphs_data)
     train_dataset: CGDataset | None = \
-        _create_dataset(cell_graph_sets[0][0], cell_graph_sets[0][1], in_ram)
+        create_dataset(cell_graph_sets[0][0], cell_graph_sets[0][1], in_ram)
     assert train_dataset is not None
-    validation_dataset = _create_dataset(cell_graph_sets[1][0], cell_graph_sets[1][1], in_ram)
-    test_dataset = _create_dataset(cell_graph_sets[2][0], cell_graph_sets[2][1], in_ram)
+    validation_dataset = create_dataset(cell_graph_sets[1][0], cell_graph_sets[1][1], in_ram)
+    test_dataset = create_dataset(cell_graph_sets[2][0], cell_graph_sets[2][1], in_ram)
 
     if (k_folds > 0) and (validation_dataset is not None):
         # stack train and validation datasets if both exist and k-fold cross validation is on
@@ -82,7 +83,7 @@ def create_datasets(
     return train_dataset, validation_dataset, test_dataset, kfold
 
 
-def _create_dataset(
+def create_dataset(
     cell_graphs: list[DGLGraph],
     cell_graph_labels: list[int] | None = None,
     in_ram: bool = True,

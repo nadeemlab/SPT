@@ -43,7 +43,8 @@ apiserver = [
     "secure==0.3.0"
 ]
 cggnn = [
-    "cg-gnn==0.2.1",
+    "bokeh",
+    "cg-gnn==0.3",
     "tables",
     "torch"
 ]
@@ -72,11 +73,12 @@ workflow = [
     "Jinja2==3.1.2",
     "tabulate==0.8.10",
     "Pillow==9.5.0",
-    "cg-gnn==0.2.1",
+    "cg-gnn==0.3",
     "tables"
 ]
 all = [
-    "cg-gnn==0.2.1",
+    "bokeh",
+    "cg-gnn==0.3",
     "torch",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
@@ -193,10 +195,13 @@ packages = [
     "feature_descriptions.tsv"
 ]
 "spatialprofilingtoolbox.cggnn.scripts" = [
+    "create_specimen_graphs.py",
     "explore_classes.py",
     "extract.py",
+    "finalize_graphs.py",
     "generate_graphs.py",
     "plot_interactives.py",
+    "prepare_graph_creation.py",
     "run.py",
     "upload_importances.py"
 ]

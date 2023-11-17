@@ -87,12 +87,6 @@ env.explainer_model_ = '{{ explainer_model }}'{% endif %}
 {%- if merge_rois is defined %}
 env.merge_rois_ = '{{ merge_rois }}'{% endif %}
 
-{%- if prune_misclassified is defined %}
-env.prune_misclassified_ = '{{ prune_misclassified }}'{% endif %}
-
-{%- if output_prefix is defined %}
-env.output_prefix_ = '{{ output_prefix }}'{% endif %}
-
 {%- if upload_importances is defined %}
 env.upload_importances_ = '{{ upload_importances }}'{% endif %}
 

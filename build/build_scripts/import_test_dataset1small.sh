@@ -11,7 +11,7 @@ nextflow run .
 cp file_manifest.tsv.bak $FM
 rm file_manifest.tsv.bak
 
-spt cggnn upload-importances --study "Melanoma intralesional IL2" --spt_db_config_location build/db/.spt_db.config.local --importances_csv_path test/test_data/gnn_importances/3.csv
+spt cggnn upload-importances --study-name "Melanoma intralesional IL2" --database-config-file build/db/.spt_db.config.local --importances_csv_path test/test_data/gnn_importances/3.csv
 
 cat work/*/*/.command.log
 spt db create-schema --refresh-views-only --database-config-file build/db/.spt_db.config.local

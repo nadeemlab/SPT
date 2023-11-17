@@ -2,12 +2,12 @@
 spt workflow configure --local --workflow='cggnn' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container --workflow-config-file=module_tests/.workflow.config
 nextflow run .
 
-$([ $? -eq 0 ] && [ -e "results/mi2_model.pt" ] && [ -e "results/mi2_importances.csv" ])
+$([ $? -eq 0 ] && [ -e "results/model/model_best_validation_accuracy.pt" ] && [ -e "results/model/model_best_validation_loss.pt" ] && [ -e "results/model/model_best_validation_weighted_f1_score.pt" ] && [ -e "results/importances.csv" ] && [ -e "results/feature_names.txt" ] && [ -e "results/graphs.bin" ] && [ -e "results/graph_info.pkl" ])
 status="$?"
 
 cat work/*/*/.command.log
 
-model_size=$(wc -c <"results/mi2_model.pt")
+model_size=$(wc -c <"results/model/model_best_validation_accuracy.pt")
 canon_model_size=1362921
 if (( (100 * $model_size < $(( 99 * $canon_model_size ))) || (100 * $model_size > $(( 101 * $canon_model_size ))) ));
 then
@@ -17,7 +17,7 @@ else
     echo "Output model size is within 1% of expected size."
 fi
 
-importance_length=$(wc -l <"results/mi2_importances.csv")
+importance_length=$(wc -l <"results/importances.csv")
 canon_importance_length=180
 if [[ $importance_length != $canon_importance_length ]];
 then
@@ -33,7 +33,7 @@ function approximate_average() {
     echo "($vals)%"$(($(wc -l < $1 | sed 's/ //g') -1 )) | bc | head -c4
 }
 
-_average=$(approximate_average results/mi2_importances.csv)
+_average=$(approximate_average results/importances.csv)
 expected_average=39
 
 if [ ! $(echo "100*${_average} == $expected_average" | bc) == "0" ];

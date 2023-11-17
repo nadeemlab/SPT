@@ -59,6 +59,7 @@ class OnDemandRequester:
                     specimen=specimen,
                     count=count,
                     percentage=self._fancy_round(count / count_all_in_specimen)
+                    if ((count is not None) and (count_all_in_specimen not in {0, None})) else None,
                 )
                 for specimen, (count, count_all_in_specimen) in response.items()
             ],

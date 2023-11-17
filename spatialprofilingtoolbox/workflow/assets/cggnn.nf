@@ -10,7 +10,6 @@ process echo_environment_variables {
     path 'test_data_percent',               emit: test_data_percent
     path 'disable_channels',                emit: disable_channels
     path 'disable_phenotypes',              emit: disable_phenotypes
-    // path 'roi_side_length',                 emit: roi_side_length
     path 'cells_per_slide_target',          emit: cells_per_slide_target
     path 'target_name',                     emit: target_name
     path 'in_ram',                          emit: in_ram
@@ -59,7 +58,6 @@ process prep_graph_creation {
     val test_data_percent
     val disable_channels
     val disable_phenotypes
-    // val roi_side_length
     val cells_per_slide_target
     val target_name
 
@@ -193,7 +191,7 @@ process upload_importance_scores {
     script:
     """
     #!/bin/bash
-    
+
     if [[ "${upload_importances}" == "true" ]]
     then
         spt cggnn upload-importances \
@@ -201,33 +199,6 @@ process upload_importance_scores {
     fi
     """
 }
-
-// process prepare_plotting {
-//     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-//     maxRetries 4
-
-//     input:
-//     path importances_file
-//     path graph_metadata_file
-//     path feature_names_file
-//     val merge_rois
-
-//     output:
-//     path "tmp/feature_importances.pkl",    emit: feature_importances_file
-//     path "tmp/feature_names.pkl",          emit: feature_names_file
-//     path "tmp/feature_importances.csv",    emit: feature_importances_csv_file
-
-//     script:
-//     """
-//     #!/bin/bash
-
-//     spt cggnn prepare-plotting \
-//         --importances_path \\'${importances_file}\\' \
-//         --graph_info_path \\'${graph_metadata_file}\\' \
-//         --feature_names_path \\'${feature_names_file}\\'
-//     """
-
-// }
 
 workflow {
     echo_environment_variables()
@@ -238,58 +209,55 @@ workflow {
 
     environment_ch.study_name.map{ it.text }
         .set{ study_name_ch }
-    
+
     environment_ch.strata.map{ it.text }
         .set{ strata_ch }
-    
+
     environment_ch.validation_data_percent.map{ it.text }
         .set{ validation_data_percent_ch }
-    
+
     environment_ch.test_data_percent.map{ it.text }
         .set{ test_data_percent_ch }
-    
+
     environment_ch.disable_channels.map{ it.text }
         .set{ disable_channels_ch }
 
     environment_ch.disable_phenotypes.map{ it.text }
         .set{ disable_phenotypes_ch }
-    
-    // environment_ch.roi_side_length.map{ it.text }
-    //     .set{ roi_side_length_ch }
-    
+
     environment_ch.cells_per_slide_target.map{ it.text }
         .set{ cells_per_slide_target_ch }
-    
+
     environment_ch.target_name.map{ it.text }
         .set{ target_name_ch }
-    
+
     environment_ch.in_ram.map{ it.text }
         .set{ in_ram_ch }
-    
+
     environment_ch.batch_size.map{ it.text }
         .set{ batch_size_ch }
-    
+
     environment_ch.epochs.map{ it.text }
         .set{ epochs_ch }
-    
+
     environment_ch.learning_rate.map{ it.text }
         .set{ learning_rate_ch }
-    
+
     environment_ch.k_folds.map{ it.text }
         .set{ k_folds_ch }
 
     environment_ch.explainer_model.map{ it.text }
         .set{ explainer_model_ch }
-    
+
     environment_ch.merge_rois.map{ it.text }
         .set{ merge_rois_ch }
-    
+
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
-    
+
     environment_ch.random_seed.map{ it.text }
         .set{ random_seed_ch }
-    
+
     prep_graph_creation(
         db_config_file_ch,
         study_name_ch,
@@ -298,7 +266,6 @@ workflow {
         test_data_percent_ch,
         disable_channels_ch,
         disable_phenotypes_ch,
-        // roi_side_length_ch,
         cells_per_slide_target_ch,
         target_name_ch
     ).set{ prep_out }
@@ -309,7 +276,7 @@ workflow {
     prep_out.specimen_files
         .flatten()
         .set{ specimens_ch }
-    
+
     create_specimen_graphs(
         parameters_ch,
         specimens_ch
@@ -329,13 +296,13 @@ workflow {
 
     finalize_out.feature_names_file
         .set{ feature_names_ch }
-    
+
     finalize_out.graphs_file
         .set{ graphs_file_ch }
-    
+
     finalize_out.graph_metadata_file
         .set{ graph_metadata_ch }
-    
+
     train(
         working_directory_ch,
         in_ram_ch,
@@ -350,10 +317,10 @@ workflow {
 
     train_out.importances_csv_path
         .set{ importances_csv_path_ch }
-    
+
     train_out.model_directory
         .set{ model_directory_ch }
-    
+
     upload_importance_scores(
         upload_importances_ch,
         importances_csv_path_ch

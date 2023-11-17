@@ -444,8 +444,7 @@ def finalize_graph_metadata(
     output_directory: str | None = None,
 ) -> list[GraphData]:
     """Split into train/validation/test sets and associate other metadata with the graphs."""
-    graphs_by_label_and_specimen = _split_graphs_by_label_and_specimen(
-        graphs_by_specimen, df_label)
+    graphs_by_label_and_specimen = _split_graphs_by_label_and_specimen(graphs_by_specimen, df_label)
     specimen_to_set = _split_rois(graphs_by_label_and_specimen, p_validation, p_test)
     graphs_data = _assemble_graph_data(
         graphs_by_label_and_specimen,

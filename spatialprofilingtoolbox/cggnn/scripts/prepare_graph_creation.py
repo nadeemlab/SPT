@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from os.path import join
 from pickle import dump
 
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 
 from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 from spatialprofilingtoolbox.cggnn.generate_graphs import prepare_graph_generation_by_specimen

@@ -4,8 +4,7 @@ from argparse import ArgumentParser
 from os.path import basename, splitext
 from pickle import load
 
-from pandas import read_hdf  # type: ignore
-from dgl import DGLGraph, load_graphs
+from dgl import DGLGraph, load_graphs  # type: ignore
 
 from spatialprofilingtoolbox.cggnn.generate_graphs import finalize_graph_metadata
 
@@ -16,7 +15,8 @@ def parse_arguments():
         prog='spt cggnn finalize-graphs',
         description="""Finalize created graphs.
 
-Intended to be used with prepare-graph-creation and parallel create-specimen-graphs call.
+Splits graphs into train/validation/test sets. This command is intended to be used with
+prepare-graph-creation and parallel create-specimen-graphs calls.
 """
     )
     parser.add_argument(

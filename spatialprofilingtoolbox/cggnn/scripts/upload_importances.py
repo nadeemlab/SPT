@@ -12,7 +12,7 @@ def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt cggnn upload-importances',
-        description='Save cell importance scores as defined by cggnn to the database.'
+        description='Save cell importance scores as defined by cggnn to the database.',
     )
     add_argument(parser, 'database config')
     add_argument(parser, 'study name')
@@ -20,14 +20,14 @@ def parse_arguments():
         '--importances_csv_path',
         type=str,
         help='File location for the importances CSV.',
-        required=True
+        required=True,
     )
     parser.add_argument(
         '--cohort_stratifier',
         type=str,
         help='Name of the classification cohort variable the GNN was trained on.',
         default='',
-        required=False
+        required=False,
     )
     return parser.parse_args()
 
@@ -35,5 +35,9 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     df = read_csv(args.importances_csv_path, index_col=0)
-    transcribe_importance(df, args.database_config_file, args.study_name,
-                          cohort_stratifier=args.cohort_stratifier)
+    transcribe_importance(
+        df,
+        args.database_config_file,
+        args.study_name,
+        cohort_stratifier=args.cohort_stratifier,
+    )

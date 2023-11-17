@@ -1,12 +1,14 @@
 """Creates graphs from a single specimen."""
 
+from typing import cast
 from argparse import ArgumentParser
 from os import makedirs
 from os.path import join, basename, splitext
 from pickle import load
 
-from pandas import read_hdf  # type: ignore
-from dgl import save_graphs
+from pandas import read_hdf
+from pandas import DataFrame
+from dgl import save_graphs  # type: ignore
 
 from spatialprofilingtoolbox.cggnn.generate_graphs import create_graphs_from_specimen
 
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     with open(args.parameters_path, 'rb') as f:
         (target_name, roi_size, roi_area, features_to_use, _, _, _, random_seed) = load(f)
     graphs = create_graphs_from_specimen(
-        read_hdf(args.specimen_hdf_path),
+        cast(DataFrame, read_hdf(args.specimen_hdf_path)),
         features_to_use,
         roi_size,
         roi_area,

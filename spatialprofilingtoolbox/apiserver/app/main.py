@@ -60,6 +60,7 @@ app = FastAPI(
         'url': 'https://nadeemlab.org',
         'email': 'mathewj2@mskcc.org"',
     },
+    openapi_url="/api/openapi.json",
 )
 
 

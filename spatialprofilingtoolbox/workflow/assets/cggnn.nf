@@ -95,32 +95,32 @@ process run_cggnn {
     strata_option=\$( if [[ "${strata}" != "all" ]]; then echo "--strata ${strata}"; fi)
     disable_channels_option=\$( if [[ "${disable_channels}" == "true" ]]; then echo "--disable_channels"; fi)
     disable_phenotypes_option=\$( if [[ "${disable_phenotypes}" = "true" ]]; then echo "--disable_phenotypes"; fi)
-    target_name_option=\$( if [[ "${target_name}" != "none" ]]; then echo "--target_name '${target_name}'"; fi)
     in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
     merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
     prune_misclassified_option=\$( if [[ "${prune_misclassified}" == "true" ]]; then echo "--prune_misclassified"; fi)
     upload_importances_option=\$( if [[ "${upload_importances}" == "true" ]]; then echo "--upload_importances"; fi)
 
-    spt cggnn run \
-     --spt_db_config_location '${db_config_file}' \
-     --study '${study_name}' \
+    echo \
+     --spt_db_config_location \\'${db_config_file}\\' \
+     --study \\'${study_name}\\' \
      \${strata_option} \
      --validation_data_percent ${validation_data_percent} \
      --test_data_percent ${test_data_percent} \
      \${disable_channels_option} \
      \${disable_phenotypes_option} \
      --cells_per_slide_target ${cells_per_slide_target} \
-     \${target_name_option} \
+     --target_name \\'${target_name}\\' \
      \${in_ram_option} \
      --batch_size ${batch_size} \
      --epochs ${epochs} \
-     --learning_rate '${learning_rate}' \
+     --learning_rate \\'${learning_rate}\\' \
      --k_folds ${k_folds} \
-     --explainer_model '${explainer_model}' \
+     --explainer_model \\'${explainer_model}\\' \
      \${merge_rois_option} \
      \${prune_misclassified_option} \
-     --output_prefix '${output_prefix}' \
-     \${upload_importances_option}
+     --output_prefix \\'${output_prefix}\\' \
+     \${upload_importances_option} \
+     | xargs spt cggnn run
     """
 }
 

@@ -11,7 +11,6 @@ from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTabl
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_from_specimen
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.workflow.common.study_data_arrays import StudyDataArrays
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.workflow.common.logging.fractional_progress_reporter \
@@ -461,6 +460,7 @@ class SparseMatrixPuller:
             hs_id = int(histological_structure)
 
             binary = df_group['coded_value'].astype(int).to_numpy()
+            self._check_targets(list(df_group['target']), target_index_lookup)
             compressed = SparseMatrixPuller._compress_bitwise_to_int(binary)
             data_arrays_by_specimen[specimen][hs_id] = compressed
 
@@ -471,6 +471,13 @@ class SparseMatrixPuller:
                     df_group['quantity'].astype(float).to_list()
 
         return data_arrays_by_specimen, target_index_lookup, continuous_data_arrays_by_specimen
+
+    def _check_targets(self, targets: list[str], target_index_lookup: dict) -> None:
+        if len(targets) > len(target_index_lookup):
+            raise ValueError(f'Got {len(targets)} expression values for some cell, expected {len(target_index_lookup)} or fewer.')
+        for target, i in target_index_lookup.items():
+            if targets[i] != target:
+                raise ValueError(f'Some cell had wrong target "{targets[i]}" at position {i}, expected {target}.')
 
     @classmethod
     def _compress_bitwise_to_int(cls, feature_vector: ndarray) -> int:

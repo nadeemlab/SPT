@@ -44,7 +44,6 @@ apiserver = [
 ]
 cggnn = [
     "bokeh",
-    "cg-gnn==0.3",
     "tables",
     "torch"
 ]
@@ -73,12 +72,10 @@ workflow = [
     "Jinja2==3.1.2",
     "tabulate==0.8.10",
     "Pillow==9.5.0",
-    "cg-gnn==0.3",
     "tables"
 ]
 all = [
     "bokeh",
-    "cg-gnn==0.3",
     "torch",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",

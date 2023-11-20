@@ -99,7 +99,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         positives_signature: int,
         negatives_signature: int,
         cells_selected: set[int] | None = None,
-    ) -> dict[str, list[int]]:
+    ) -> dict[str, tuple[int, int] | tuple[None, None]]:
         assert self.server.providers.counts is not None
         measurement_study = self._get_measurement_study(study)
         return self.server.providers.counts.count_structures_of_partial_signed_signature(

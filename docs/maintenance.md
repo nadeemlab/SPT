@@ -161,29 +161,6 @@ After installation of the Python package, an entry point `spt` is created. (Use 
 - `spt <module name> [TAB]` yields the commands provided by the given module.
 - `spt <module name> <command name> [TAB]` yields the `--help` text for the command.
 
-For example:
-
-```
-$ spt [TAB]
-apiserver ondemand  db  workflow
-
-$ spt db [TAB]
-create-schema  guess-channels-from-object-files  modify-constraints  status
-
-$ spt db create-schema [TAB]
-usage: spt db create-schema [-h] [--database-config-file DATABASE_CONFIG_FILE] [--force] [--refresh-views-only | --recreate-views-only]
-
-Create scstudies database with defined schema.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --database-config-file DATABASE_CONFIG_FILE
-                        Provide the file for database configuration.
-  --force               By default, tables are created only if they don't already exist. If "force" is set, all tables from the schema are dropped first. Obviously, use
-                        with care; all data in existing tables will be deleted.
-  --refresh-views-only  Only refresh materialized views, do not touch main table schema.
-  --recreate-views-only Only recreate views, do not touch main table schema.
-```
 
 ## <a id="throwaway-testing"></a> 6. Throwaway testing
 

@@ -179,7 +179,7 @@ process train {
      --k_folds ${k_folds} \
      \${explainer_option} \
      \${merge_rois_option} \
-     | xargs spt cggnn train
+     | xargs cg-gnn-train
     """
 }
 

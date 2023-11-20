@@ -60,8 +60,8 @@ class PhenotypeCount(BaseModel):
     belonging to some specific class.
     """
     specimen: str
-    count: int
-    percentage: float
+    count: int | None
+    percentage: float | None
 
 
 class PhenotypeCounts(BaseModel):

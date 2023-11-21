@@ -329,7 +329,6 @@ def create_graphs_from_specimen(
         df_target = df
     if df_target.shape[0] > max_cells_to_consider:
         df_target = df_target.sample(max_cells_to_consider)
-    tree = KDTree(df_target[['pixel x', 'pixel y']].values)
 
     # Create as many ROIs such that the total area of the ROIs will equal the area of the source
     # image times the proportion of cells on that image that have the target phenotype
@@ -337,6 +336,7 @@ def create_graphs_from_specimen(
     n_rois = rint(proportion_of_target * slide_area / roi_area)
     while (len(bounding_boxes) < n_rois) and (df_target.shape[0] > 0):
         # Find the cell with the most target cells in its vicinity
+        tree = KDTree(df_target[['pixel x', 'pixel y']].values)
         counts = tree.query_radius(
             df_target[['pixel x', 'pixel y']].values,
             r=roi_size[0]//2,
@@ -361,7 +361,6 @@ def create_graphs_from_specimen(
         df_target = df_target.loc[~(
             df_target['pixel x'].between(x_min, x_max) & df_target['pixel y'].between(y_min, y_max)
         ), :]
-        tree = KDTree(df_target[['pixel x', 'pixel y']].values)
 
     # Create features, centroid, and label arrays and then the graph
     graphs: list[DGLGraph] = []

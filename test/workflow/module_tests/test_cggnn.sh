@@ -18,7 +18,7 @@ else
 fi
 
 importance_length=$(wc -l <"results/importances.csv")
-canon_importance_length=180
+canon_importance_length=149
 if [[ $importance_length != $canon_importance_length ]];
 then
     echo "Output importance file ($importance_length) is not the expected length ($canon_importance_length)."

@@ -8,7 +8,7 @@ The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n
 
 - Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
 - Select sample strata to use and fetch the relevant data artifacts from the database using `spt cggnn extract`.
-- Use `spt cggnn run` or the `cg-gnn` pip package directly to train and fine-tune your CG-GNN model.
+- Use `spt cggnn train` to train and fine-tune your CG-GNN model.
 
 # Configure a reproducible cggnn workflow
 
@@ -22,7 +22,7 @@ You must provide the following parameters:
 spt workflow configure --local --workflow='cggnn' --study-name=... --database-config-file=... --workflow-config-file=...
 ```
 
-For canonical explanations of each parameter, please refer to the docstrings of the scripts being called by `spt workflow configure`, as shown by [the Nextflow file used for cggnn](spatialprofilingtoolbox/workflow/assets/cggnn.nf), and the [`cg-gnn` pip package](https://pypi.org/project/cg-gnn/) documentation. The definitions are provided for quick reference only and may not be up to date.
+For canonical explanations of each parameter, please refer to the docstrings of the scripts being called by `spt workflow configure`, as shown by [the Nextflow file used for cggnn](spatialprofilingtoolbox/workflow/assets/cggnn.nf). The definitions are provided for quick reference only and may not be up to date.
 
 `study-name` is the name of your study as it appears in your scstudies database instance, and `database-config-file` is the location of your database configuration file, in the format of [`.spt_db.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
 

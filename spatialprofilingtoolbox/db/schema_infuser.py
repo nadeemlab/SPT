@@ -47,7 +47,6 @@ class SchemaInfuser:
         message = 'This creation tool assumes that the database itself and users are already setup.'
         logger.info(message)
         if force:
-            self._verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
             self._verbose_sql_execute(
                 (None, 'drop tables from main schema'),
                 contents=self.create_drop_tables(),
@@ -59,8 +58,6 @@ class SchemaInfuser:
             verbosity='silent',
         )
         self._verbose_sql_execute(('performance_tweaks.sql', 'tweak main schema'))
-        logger.info('Executing create_views.sql contents.')
-        self._verbose_sql_execute(('create_views.sql', 'create views of main schema'), verbosity='silent')
         try:
             self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
         except Psycopg2Error as exception:
@@ -85,22 +82,6 @@ class SchemaInfuser:
         return '\n'.join([
             f'DROP TABLE IF EXISTS {t} CASCADE ; ' for t in table_names
         ])
-
-    def refresh_views(self):
-        if self.study is not None:
-            self._verbose_sql_execute(
-                ('refresh_views.sql', 'refresh views of main schema'),
-                verbosity='itemize',
-            )
-            transcribe_fraction_features(self.database_config_file, self.study)
-
-    def recreate_views(self):
-        self._verbose_sql_execute(('drop_views.sql', 'drop views of main schema'))
-        self._verbose_sql_execute(
-            ('create_views.sql', 'create views of main schema'),
-            verbosity='itemize',
-        )
-        self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
 
     def _verbose_sql_execute(self,
         filename_description,

@@ -1,12 +1,7 @@
 
-spt db create-schema --database-config-file=build/db/.spt_db.config.local
-
 spt workflow configure --local --input-path test/test_data/adi_preprocessed_tables/dataset1/ --workflow='tabular import' --database-config-file build/db/.spt_db.config.local
 nextflow run .
 cat work/*/*/.command.log
-
-echo "Refreshing views..."
-spt db create-schema --refresh-views-only --database-config-file build/db/.spt_db.config.local
 
 spt workflow configure --local --workflow='reduction visual' --study-name='Melanoma intralesional IL2' --database-config-file=build/db/.spt_db.config.local
 nextflow run .

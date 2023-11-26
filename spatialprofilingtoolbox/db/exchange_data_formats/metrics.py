@@ -3,24 +3,6 @@
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 
-class CellFractionsSummary(BaseModel):
-    """Summary of a cell fractions feature of the sample set, including "report" of significantly
-    associated cohorts.
-    """
-    phenotype: str
-    sample_cohort: str
-    significantly_different_cohorts: list[str]
-    average_percent: float
-
-
-class CellFractionsAverage(BaseModel):
-    """Average cell fractions for a feature."""
-    marker_symbol: str
-    multiplicity: str
-    stratum_identifier: str
-    average_percent: float
-
-
 class FeatureAssociationTest(BaseModel):
     """One test for association between two cohorts along a feature."""
     feature: str

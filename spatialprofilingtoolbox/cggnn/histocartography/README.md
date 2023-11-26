@@ -18,7 +18,7 @@ This module includes two scripts that you can call from the command line, or you
 
 ## Credits
 
-As mentioned above, this submodule is a heavily modified version of [the histocartography project](https://github.com/BiomedSciAI/histocartography) and two of its applications: [hact-net](https://github.com/histocartography/hact-net) and [patho-quant-explainer](https://github.com/histocartography/patho-quant-explainer). Specifically:
+This submodule is a heavily modified version of [the histocartography project](https://github.com/BiomedSciAI/histocartography) and two of its applications: [hact-net](https://github.com/histocartography/hact-net) and [patho-quant-explainer](https://github.com/histocartography/patho-quant-explainer). Specifically:
 
 * Cell graph formatting, saving, and loading using DGL is patterned on how they were implemented in hact-net.
 * The neural network training and inference module is modified from the hact-net implementation for cell graphs.

@@ -12,7 +12,6 @@ from psycopg2.errors import UndefinedTable
 from spatialprofilingtoolbox.db.database_connection import create_database
 from spatialprofilingtoolbox.db.credentials import metaschema_database
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
-from spatialprofilingtoolbox.db.fractions_transcriber import transcribe_fraction_features
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

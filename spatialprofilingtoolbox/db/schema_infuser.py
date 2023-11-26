@@ -8,6 +8,7 @@ import re
 import pandas as pd
 from psycopg2 import Error as Psycopg2Error
 from psycopg2.errors import UndefinedTable
+from psycopg2.errors import DuplicateTable
 
 from spatialprofilingtoolbox.db.database_connection import create_database
 from spatialprofilingtoolbox.db.credentials import metaschema_database
@@ -33,9 +34,13 @@ class SchemaInfuser:
                 self._verbose_sql_execute(('drop_metaschema.sql', 'drop metaschema tables'))
             except UndefinedTable:
                 pass
-        self._verbose_sql_execute(
-            ('metaschema.sql', 'create tables from lightweight metaschema'),
-        )
+        try:
+            self._verbose_sql_execute(
+                ('metaschema.sql', 'create tables from lightweight metaschema'),
+            )
+        except DuplicateTable:
+            logger.warning('Metaschema table already exists.')
+
         try:
             self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
         except Psycopg2Error as exception:

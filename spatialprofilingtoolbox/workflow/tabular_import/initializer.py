@@ -1,10 +1,18 @@
 """The initializer of the main data import workflow."""
 
+from json import loads
+
 from spatialprofilingtoolbox.workflow.component_interfaces.initializer import Initializer
+from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.skimmer import DataSkimmer
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
+
+def skim_study(filename: str) -> str:
+    with open(filename, 'rt', encoding='utf-8') as file:
+        study = loads(file.read())
+    return study['Study name']
 
 
 class TabularImportInitializer(Initializer): #pylint: disable=too-few-public-methods
@@ -18,6 +26,10 @@ class TabularImportInitializer(Initializer): #pylint: disable=too-few-public-met
             message = 'Need to supply database configuration file.'
             logger.error(message)
             raise ValueError(message)
+
+        infuser = SchemaInfuser(database_config_file=database_config_file)
+        infuser.setup_lightweight_metaschema()
+
         skimmer = DataSkimmer(database_config_file=database_config_file)
         skimmer.parse(
             {

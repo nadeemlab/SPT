@@ -14,7 +14,6 @@ dependencies:
   - dgl
   - pip:
     - spatialprofilingtoolbox[all]
-    - cg-gnn
   # Development dependencies
   - autopep8
   - pylint

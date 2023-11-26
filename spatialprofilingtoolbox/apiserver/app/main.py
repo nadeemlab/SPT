@@ -17,7 +17,6 @@ from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
-    CellFractionsSummary,
     PhenotypeSymbol,
     Channel,
     PhenotypeCriteria,
@@ -123,15 +122,6 @@ async def get_channels(
 ) -> list[Channel]:
     """The short symbolic names of the channels imaged or measured in a given study."""
     return query().get_channel_names(study)
-
-
-@app.get("/phenotype-summary/")
-async def get_phenotype_summary(
-    study: ValidStudy,
-    pvalue: float = Query(default=0.05),
-) -> list[CellFractionsSummary]:
-    """Averaging summary of cell fractions per phenotype."""
-    return query().get_cell_fractions_summary(study, pvalue)
 
 
 @app.get("/phenotype-symbols/")

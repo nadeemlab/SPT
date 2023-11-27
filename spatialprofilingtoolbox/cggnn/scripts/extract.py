@@ -6,6 +6,7 @@ from os.path import join
 from os.path import exists
 from json import dump
 
+from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.cggnn.extract import extract_cggnn_data
 
 
@@ -13,19 +14,21 @@ def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt cggnn extract',
-        description="""Extract information cg-gnn needs from SPT and save to file.
+        description="""Extract information cg-gnn needs from a single-cell dataset in scstudies database format,
+and save to file.
 
-This command is intended to be used after you've identified which strata you want to keep using `spt
+This command is intended to be used after you have identified which strata you want to use with `spt
 cggnn explore-classes`.
 
 ```bash
-spt cggnn extract --spt_db_config_location <config_file_location> --study <study_name>
-    --strata <strata_to_keep> --output_location <output_folder>
+spt cggnn extract --database-config-file <config_file_location> --study-name <study_name>
+    --strata <strata_to_keep> --output_directory <output_folder>
 ```
 
-Given the strata you want to keep as an unadorned list of integers, e.g., `--strata 9 10` (this
-parameter can be skipped if you simply want all strata), this extracts single-cell data and
-strata/class information to three files in the output location/folder/directory you provide:
+Use an unadorned list of integers, e.g. `--strata 9 10`. This parameter can be skipped to use all
+strata.
+
+This extracts single-cell data and strata/class information to three files in the output directory:
     * `cells.h5`, a binary HDF5 file containing cell information at the individual cell level, such
       as its xy position, channel, and phenotype expressions, as a pandas DataFrame.
     * `labels.h5`, a binary HDF file of a pandas DataFrame containing the class label of each tissue
@@ -34,21 +37,11 @@ strata/class information to three files in the output location/folder/directory 
       description, for use in visualizations after training.
 
 These files can be used with the standalone `cg-gnn` pip package to create cell graphs, train a
-model on them, and generate summary statistics and graphs from the model.
+model, and generate summary statistics and graphs from the model.
 """
     )
-    parser.add_argument(
-        '--spt_db_config_location',
-        type=str,
-        help='Location of the SPT DB config file.',
-        required=True
-    )
-    parser.add_argument(
-        '--study',
-        type=str,
-        help='Name of the study to query data for.',
-        required=True
-    )
+    add_argument(parser, 'database config')
+    add_argument(parser, 'study name')
     parser.add_argument(
         '--strata',
         nargs='+',
@@ -60,7 +53,7 @@ model on them, and generate summary statistics and graphs from the model.
         default=None
     )
     parser.add_argument(
-        '--output_location',
+        '--output_directory',
         type=str,
         help='Directory to save extracted data to.',
         required=True
@@ -70,16 +63,16 @@ model on them, and generate summary statistics and graphs from the model.
 
 if __name__ == "__main__":
     args = parse_arguments()
-    output_location: str = join(args.output_location, args.study)
-    assert isinstance(output_location, str)
-    makedirs(output_location, exist_ok=True)
-    dict_filename = join(output_location, 'label_to_result.json')
-    cells_filename = join(output_location, 'cells.h5')
-    labels_filename = join(output_location, 'labels.h5')
+    output_directory: str = join(args.output_directory, args.study_name)
+    assert isinstance(output_directory, str)
+    makedirs(output_directory, exist_ok=True)
+    dict_filename = join(output_directory, 'label_to_result.json')
+    cells_filename = join(output_directory, 'cells.h5')
+    labels_filename = join(output_directory, 'labels.h5')
     if not (exists(dict_filename) and exists(cells_filename) and exists(labels_filename)):
         df_cell, df_label, label_to_result = extract_cggnn_data(
-            args.spt_db_config_location,
-            args.study,
+            args.database_config_file,
+            args.study_name,
             args.strata,
         )
         df_cell.to_hdf(cells_filename, 'cells')

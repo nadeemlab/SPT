@@ -8,7 +8,6 @@ from os.path import expanduser
 from os import getcwd
 import sys
 
-from spatialprofilingtoolbox.db.expressions_table_indexer import ExpressionsTableIndexer
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
@@ -48,7 +47,6 @@ def main():
         message = '%s was not found, will do feature matrix pull after all.'
         logger.info(message, EXPRESSIONS_INDEX_FILENAME)
 
-    # ExpressionsTableIndexer.ensure_indexed_expressions_tables(database_config_file)
     puller = SparseMatrixPuller(database_config_file)
     puller.pull_and_write_to_files()
 

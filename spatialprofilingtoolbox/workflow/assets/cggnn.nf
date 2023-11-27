@@ -10,7 +10,6 @@ process echo_environment_variables {
     path 'test_data_percent',               emit: test_data_percent
     path 'disable_channels',                emit: disable_channels
     path 'disable_phenotypes',              emit: disable_phenotypes
-    // path 'roi_side_length',                 emit: roi_side_length
     path 'cells_per_slide_target',          emit: cells_per_slide_target
     path 'target_name',                     emit: target_name
     path 'in_ram',                          emit: in_ram
@@ -20,8 +19,6 @@ process echo_environment_variables {
     path 'k_folds',                         emit: k_folds
     path 'explainer_model',                 emit: explainer_model
     path 'merge_rois',                      emit: merge_rois
-    path 'prune_misclassified',             emit: prune_misclassified
-    path 'output_prefix',                   emit: output_prefix
     path 'upload_importances',              emit: upload_importances
     path 'random_seed',                     emit: random_seed
 
@@ -44,16 +41,12 @@ process echo_environment_variables {
     echo -n "${k_folds_}" > k_folds
     echo -n "${explainer_model_}" > explainer_model
     echo -n "${merge_rois_}" > merge_rois
-    echo -n "${prune_misclassified_}" > prune_misclassified
-    echo -n "${output_prefix_}" > output_prefix
     echo -n "${upload_importances_}" > upload_importances
     echo -n "${random_seed_}" > random_seed
     """
 }
 
-process run_cggnn {
-    publishDir 'results'
-
+process prep_graph_creation {
     errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
     maxRetries 4
 
@@ -65,27 +58,12 @@ process run_cggnn {
     val test_data_percent
     val disable_channels
     val disable_phenotypes
-    // val roi_side_length
     val cells_per_slide_target
     val target_name
-    val in_ram
-    val batch_size
-    val epochs
-    val learning_rate
-    val k_folds
-    val explainer_model
-    val merge_rois
-    val prune_misclassified
-    val output_prefix
-    val upload_importances
-    val random_seed
 
     output:
-    // path "${output_prefix}_cells.h5",                emit: cells
-    // path "${output_prefix}_lables.h5",               emit: labels
-    // path "${output_prefix}_label_to_result.json",    emit: label_to_result
-    path "${output_prefix}_importances.csv"
-    path "${output_prefix}_model.pt"
+    path 'parameters.pkl',                      emit: parameter_file
+    path 'specimens/*',                         emit: specimen_files
 
 
     script:
@@ -95,14 +73,10 @@ process run_cggnn {
     strata_option=\$( if [[ "${strata}" != "all" ]]; then echo "--strata ${strata}"; fi)
     disable_channels_option=\$( if [[ "${disable_channels}" == "true" ]]; then echo "--disable_channels"; fi)
     disable_phenotypes_option=\$( if [[ "${disable_phenotypes}" = "true" ]]; then echo "--disable_phenotypes"; fi)
-    in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
-    merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
-    prune_misclassified_option=\$( if [[ "${prune_misclassified}" == "true" ]]; then echo "--prune_misclassified"; fi)
-    upload_importances_option=\$( if [[ "${upload_importances}" == "true" ]]; then echo "--upload_importances"; fi)
 
     echo \
-     --spt_db_config_location \\'${db_config_file}\\' \
-     --study \\'${study_name}\\' \
+     --database-config-file \\'${db_config_file}\\' \
+     --study-name \\'${study_name}\\' \
      \${strata_option} \
      --validation_data_percent ${validation_data_percent} \
      --test_data_percent ${test_data_percent} \
@@ -110,17 +84,119 @@ process run_cggnn {
      \${disable_phenotypes_option} \
      --cells_per_slide_target ${cells_per_slide_target} \
      --target_name \\'${target_name}\\' \
+     --output_directory . \
+     | xargs spt cggnn prepare-graph-creation
+    """
+}
+
+process create_specimen_graphs {
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 4
+
+    input:
+    path parameters_file
+    path specimen_file
+
+    output:
+    path "${specimen_file.baseName}.bin",    emit: specimen_graph
+
+    script:
+    """
+    #!/bin/bash
+
+    spt cggnn create-specimen-graphs \
+        --specimen_hdf_path ${specimen_file} \
+        --parameters_path ${parameters_file} \
+        --output_directory .
+    """
+}
+
+process finalize_graphs {
+    publishDir '.', mode: 'copy'
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 4
+
+    input:
+    path parameters_file
+    path graph_files
+
+    output:
+    path "results/",                     emit: working_directory
+    path "results/feature_names.txt",    emit: feature_names_file
+    path "results/graphs.bin",           emit: graphs_file
+    path "results/graph_info.pkl",       emit: graph_metadata_file
+
+    script:
+    """
+    #!/bin/bash
+
+    graph_files_array=(${graph_files})
+
+    spt cggnn finalize-graphs \
+        --graph_files "\${graph_files_array[@]}" \
+        --parameters_path ${parameters_file} \
+        --output_directory results
+    """
+}
+
+process train {
+    publishDir '.', mode: 'copy'
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 4
+
+    input:
+    path working_directory
+    val in_ram
+    val batch_size
+    val epochs
+    val learning_rate
+    val k_folds
+    val explainer_model
+    val merge_rois
+    val random_seed
+
+    output:
+    path "${working_directory}/importances.csv",     emit: importances_csv_path
+    path "${working_directory}/model/",              emit: model_directory
+    path "${working_directory}/graphs.bin",          optional: true
+
+    script:
+    """
+    #!/bin/bash
+
+    in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
+    explainer_option=\$( if [[ "${explainer_model}" != "none" ]]; then echo "--explainer ${explainer_model}"; fi)
+    merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
+
+    echo \
+     --cg_directory ${working_directory} \
      \${in_ram_option} \
      --batch_size ${batch_size} \
      --epochs ${epochs} \
      --learning_rate \\'${learning_rate}\\' \
      --k_folds ${k_folds} \
-     --explainer_model \\'${explainer_model}\\' \
+     \${explainer_option} \
      \${merge_rois_option} \
-     \${prune_misclassified_option} \
-     --output_prefix \\'${output_prefix}\\' \
-     \${upload_importances_option} \
-     | xargs spt cggnn run
+     | xargs spt cggnn train
+    """
+}
+
+process upload_importance_scores {
+    input:
+    val upload_importances
+    path importances_csv_path
+
+    script:
+    """
+    #!/bin/bash
+
+    if [[ "${upload_importances}" == "true" ]]
+    then
+        spt cggnn upload-importances \
+            --importances_csv_path ${importances_csv_path}
+    fi
     """
 }
 
@@ -133,65 +209,56 @@ workflow {
 
     environment_ch.study_name.map{ it.text }
         .set{ study_name_ch }
-    
+
     environment_ch.strata.map{ it.text }
         .set{ strata_ch }
-    
+
     environment_ch.validation_data_percent.map{ it.text }
         .set{ validation_data_percent_ch }
-    
+
     environment_ch.test_data_percent.map{ it.text }
         .set{ test_data_percent_ch }
-    
+
     environment_ch.disable_channels.map{ it.text }
         .set{ disable_channels_ch }
 
     environment_ch.disable_phenotypes.map{ it.text }
         .set{ disable_phenotypes_ch }
-    
-    // environment_ch.roi_side_length.map{ it.text }
-    //     .set{ roi_side_length_ch }
-    
+
     environment_ch.cells_per_slide_target.map{ it.text }
         .set{ cells_per_slide_target_ch }
-    
+
     environment_ch.target_name.map{ it.text }
         .set{ target_name_ch }
-    
+
     environment_ch.in_ram.map{ it.text }
         .set{ in_ram_ch }
-    
+
     environment_ch.batch_size.map{ it.text }
         .set{ batch_size_ch }
-    
+
     environment_ch.epochs.map{ it.text }
         .set{ epochs_ch }
-    
+
     environment_ch.learning_rate.map{ it.text }
         .set{ learning_rate_ch }
-    
+
     environment_ch.k_folds.map{ it.text }
         .set{ k_folds_ch }
 
     environment_ch.explainer_model.map{ it.text }
         .set{ explainer_model_ch }
-    
+
     environment_ch.merge_rois.map{ it.text }
         .set{ merge_rois_ch }
-    
-    environment_ch.prune_misclassified.map{ it.text }
-        .set{ prune_misclassified_ch }
-    
-    environment_ch.output_prefix.map{ it.text }
-        .set{ output_prefix_ch }
-    
+
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
-    
+
     environment_ch.random_seed.map{ it.text }
         .set{ random_seed_ch }
-    
-    run_cggnn(
+
+    prep_graph_creation(
         db_config_file_ch,
         study_name_ch,
         strata_ch,
@@ -199,9 +266,45 @@ workflow {
         test_data_percent_ch,
         disable_channels_ch,
         disable_phenotypes_ch,
-        // roi_side_length_ch,
         cells_per_slide_target_ch,
-        target_name_ch,
+        target_name_ch
+    ).set{ prep_out }
+
+    prep_out.parameter_file
+        .set{ parameters_ch }
+
+    prep_out.specimen_files
+        .flatten()
+        .set{ specimens_ch }
+
+    create_specimen_graphs(
+        parameters_ch,
+        specimens_ch
+    ).set{ specimen_graphs_ch }
+
+    specimen_graphs_ch
+        .collect()
+        .set{ all_specimen_graphs_ch }
+
+    finalize_graphs(
+        parameters_ch,
+        all_specimen_graphs_ch
+    ).set{ finalize_out }
+
+    finalize_out.working_directory
+        .set{ working_directory_ch }
+
+    finalize_out.feature_names_file
+        .set{ feature_names_ch }
+
+    finalize_out.graphs_file
+        .set{ graphs_file_ch }
+
+    finalize_out.graph_metadata_file
+        .set{ graph_metadata_ch }
+
+    train(
+        working_directory_ch,
         in_ram_ch,
         batch_size_ch,
         epochs_ch,
@@ -209,9 +312,17 @@ workflow {
         k_folds_ch,
         explainer_model_ch,
         merge_rois_ch,
-        prune_misclassified_ch,
-        output_prefix_ch,
-        upload_importances_ch,
         random_seed_ch
+    ).set{ train_out }
+
+    train_out.importances_csv_path
+        .set{ importances_csv_path_ch }
+
+    train_out.model_directory
+        .set{ model_directory_ch }
+
+    upload_importance_scores(
+        upload_importances_ch,
+        importances_csv_path_ch
     )
 }

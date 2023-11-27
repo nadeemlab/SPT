@@ -34,9 +34,9 @@ class CountsProvider(OnDemandProvider):
         negatives_signature: int,
         measurement_study: str,
         cells_selected: tuple[int, ...] | None = None,
-    ) -> dict[str, list[int]]:
+    ) -> dict[str, tuple[int, int] | tuple[None, None]]:
         """Count the number of structures per specimen that match this signature."""
-        counts: dict[str, list[int]] = {}
+        counts: dict[str, tuple[int, int] | tuple[None, None]] = {}
         selection = Index(list(cells_selected)) if cells_selected else None
         for specimen, data_array in self.data_arrays[measurement_study].items():
             count = 0
@@ -48,10 +48,10 @@ class CountsProvider(OnDemandProvider):
                 data_array.loc[data_array.index.intersection(selection), 'integer'],
             )
             if len(integers) == 0:
-                message = 'Cell subselection %s resulted in no cells for specimen %s'
-                raise ValueError(message, cells_selected, specimen)
+                counts[specimen] = (None, None)
+                continue
             count = self.get_count(integers, positives_signature, negatives_signature)
-            counts[specimen] = [count, len(integers)]
+            counts[specimen] = (count, len(integers))
         return counts
 
     def get_count(self, integers: list[int], positives_mask: int, negatives_mask: int) -> int:

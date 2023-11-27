@@ -2,7 +2,7 @@ name: spt_cggnn
 channels:
   - defaults
   - nvidia/label/cuda-11.8.0
-  - dglteam/label/cu118  # remove /label/cu118 if you don't have a CUDA GPU
+  - dglteam/label/cu118
 dependencies:
   - python==3.11
   - pip
@@ -14,5 +14,7 @@ dependencies:
   - dgl
   - pip:
     - spatialprofilingtoolbox[all]
-# Remove lines with cuda in them if you don't have a CUDA GPU
-# CUDA version is chosen by the latest version supported by DGL
+  # Development dependencies
+  - autopep8
+  - pylint
+  - isort

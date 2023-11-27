@@ -8,7 +8,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     StudySummary,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
-    CellFractionsSummary,
     PhenotypeSymbol,
     Channel,
     PhenotypeCriteria,
@@ -19,7 +18,6 @@ from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
 from spatialprofilingtoolbox.db.accessors import (
     CGGNNAccess,
     StudyAccess,
-    FractionsAccess,
     PhenotypesAccess,
     UMAPAccess,
 )
@@ -48,20 +46,6 @@ class QueryHandler:
     @classmethod
     def get_study_summary(cls, cursor, study: str) -> StudySummary:
         return StudyAccess(cursor).get_study_summary(study)
-
-    @classmethod
-    def get_cell_fractions_summary(cls,
-            cursor,
-            study: str,
-            pvalue: float,
-        ) -> list[CellFractionsSummary]:
-        access = FractionsAccess(cursor)
-        fractions = access.get_fractions_rows(study)
-        tests = access.get_fractions_test_results(study)
-        cohort_identifiers = get_cohort_identifiers(cursor, study)
-        features = [f.marker_symbol for f in fractions]
-        associations = access.get_feature_associations(tests, pvalue, cohort_identifiers, features)
-        return access.create_cell_fractions_summary(fractions, associations)
 
     @classmethod
     def get_composite_phenotype_identifiers(cls, cursor) -> list[str]:

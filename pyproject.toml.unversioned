@@ -43,9 +43,10 @@ apiserver = [
     "secure==0.3.0"
 ]
 cggnn = [
-    "cg-gnn==0.2.1",
-    "tables",
-    "torch"
+    "bokeh==3.3.1",
+    "tables==3.9.1",
+    "torch==2.1.1",
+    "tqdm==4.66.1"
 ]
 db = [
     "pandas==2.0.2",
@@ -72,12 +73,11 @@ workflow = [
     "Jinja2==3.1.2",
     "tabulate==0.8.10",
     "Pillow==9.5.0",
-    "cg-gnn==0.2.1",
-    "tables"
+    "tables==3.9.1"
 ]
 all = [
-    "cg-gnn==0.2.1",
-    "torch",
+    "bokeh==3.3.1",
+    "torch==2.1.1",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
     "uvicorn>=0.15.0,<0.16.0",
@@ -93,7 +93,8 @@ all = [
     "Pillow==9.5.0",
     "squidpy==1.3.0",
     "secure==0.3.0",
-    "tables"
+    "tables==3.9.1",
+    "tqdm==4.66.1"
 ]
 dev = [
     "autopep8",
@@ -115,6 +116,12 @@ packages = [
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
     "spatialprofilingtoolbox.cggnn",
+    "spatialprofilingtoolbox.cggnn.histocartography",
+    "spatialprofilingtoolbox.cggnn.histocartography.util",
+    "spatialprofilingtoolbox.cggnn.histocartography.util.interpretability",
+    "spatialprofilingtoolbox.cggnn.histocartography.util.ml",
+    "spatialprofilingtoolbox.cggnn.histocartography.util.ml.layers",
+    "spatialprofilingtoolbox.cggnn.util",
     "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.ondemand",
     "spatialprofilingtoolbox.ondemand.providers",
@@ -173,12 +180,10 @@ packages = [
 ]
 "spatialprofilingtoolbox.db.scripts" = [
     "create_schema.py",
-    "modify_constraints.py",
     "guess_channels_from_object_files.py",
     "status.py",
     "retrieve_feature_matrices.py",
     "drop.py",
-    "index_expressions_table.py",
     "drop_ondemand_computations.py"
 ]
 "spatialprofilingtoolbox.db.data_model" = [
@@ -194,8 +199,14 @@ packages = [
     "feature_descriptions.tsv"
 ]
 "spatialprofilingtoolbox.cggnn.scripts" = [
+    "create_specimen_graphs.py",
     "explore_classes.py",
     "extract.py",
-    "run.py",
+    "finalize_graphs.py",
+    "generate_graphs.py",
+    "plot_interactives.py",
+    "prepare_graph_creation.py",
+    "seperability.py",
+    "train.py",
     "upload_importances.py"
 ]

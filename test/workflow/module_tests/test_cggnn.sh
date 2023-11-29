@@ -50,13 +50,16 @@ fi
 # Check that at least half of the top 100 most important histological structures are the same as the reference
 top_100_structures=$(tail -n +2 results/importances.csv | sort -t, -k2 -nr | awk -F, 'NR <= 100 {print $1}')
 echo "$top_100_structures" > top_100_structures.txt
-overlap=$(grep -Fxf module_tests/reference_importance.txt top_100_structures.txt)
+top_100_reference=$(tail -n +2 module_tests/reference_importance.csv | sort -t, -k2 -nr | awk -F, 'NR <= 100 {print $1}')
+echo "$top_100_reference" > top_100_reference.txt
+overlap=$(grep -Fxf top_100_reference.txt top_100_structures.txt)
 overlap_count=$(echo "$overlap" | wc -l)
-overlap_percentage=$(echo "$overlap_count / 100 * 100" | bc)
-if [ $overlap_percentage -lt 50 ]; then
-    echo "Overlap is less than 50%" >&2
+if [ $overlap_count -lt 50 ]; then
+    echo "$overlap_count% of the most important histological structures match the reference, which is less than 50%" >&2
     exit 1
+else
+    echo "$overlap_count% of the most important histological structures match the reference."
 fi
 
 # Clean up
-rm top_100_structures.txt; rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf results/
+rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm top_100_structures.txt; rm top_100_reference.txt; rm -rf results/

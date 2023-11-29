@@ -1,3 +1,6 @@
+# v0.17.1
+Add KDTree optimization to GNN ROI creation.
+
 # v0.16.2
 - Deprecates heavy index on large tables:
   - Adds a new table for tracking scope ranges.

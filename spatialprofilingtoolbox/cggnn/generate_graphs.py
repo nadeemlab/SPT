@@ -11,18 +11,16 @@ from numpy import (
     rint,
     median,
     prod,  # type: ignore
-    percentile,  # type: ignore
-    argmin,
+    argmax,
     nonzero,
     savetxt,
     int_,
 )
 from numpy.typing import NDArray
 from dgl import DGLGraph, graph  # type: ignore
-from sklearn.neighbors import kneighbors_graph  # type: ignore
+from sklearn.neighbors import KDTree, kneighbors_graph  # type: ignore
 from pandas import DataFrame
 from pandas.core.groupby.generic import DataFrameGroupBy
-from scipy.spatial.distance import pdist, squareform
 from tqdm import tqdm
 
 from spatialprofilingtoolbox.cggnn.util import (
@@ -116,9 +114,9 @@ def generate_graphs(
         The names of the features in graph.ndata['features'] in the order they appear in the array.
     """
     if (output_directory is not None) and \
-        exists(join(output_directory, 'graphs.bin')) and \
+            exists(join(output_directory, 'graphs.bin')) and \
             exists(join(output_directory, 'graph_info.pkl')) and \
-    exists(join(output_directory, 'feature_names.txt')):
+            exists(join(output_directory, 'feature_names.txt')):
         warn('Graphs already exist in output directory. Loading from file.')
         return load_cell_graphs(output_directory)
     p_validation, p_test, roi_size, roi_area, features_to_use, grouped = \
@@ -322,9 +320,7 @@ def create_graphs_from_specimen(
         set_seeds(random_seed)
 
     # Initialize data structures
-    bounding_boxes: list[tuple[int, int, int, int, int, int]] = []
-    df[['pixel x', 'pixel y']] -= df[['pixel x', 'pixel y']].min()
-    slide_size = df[['pixel x', 'pixel y']].max() + 100
+    bounding_boxes: list[tuple[int, int, int, int]] = []
     if target_name is not None:
         proportion_of_target = df[target_name].sum()/df.shape[0]
         df_target = df.loc[df[target_name], :]
@@ -333,15 +329,22 @@ def create_graphs_from_specimen(
         df_target = df
     if df_target.shape[0] > max_cells_to_consider:
         df_target = df_target.sample(max_cells_to_consider)
-    distance_square = squareform(pdist(df_target[['pixel x', 'pixel y']]))
-    slide_area = prod(slide_size)
 
     # Create as many ROIs such that the total area of the ROIs will equal the area of the source
     # image times the proportion of cells on that image that have the target phenotype
+    slide_area = prod(df[['pixel x', 'pixel y']].max() - df[['pixel x', 'pixel y']].min())
     n_rois = rint(proportion_of_target * slide_area / roi_area)
     while (len(bounding_boxes) < n_rois) and (df_target.shape[0] > 0):
-        p_dist = percentile(distance_square, proportion_of_target, axis=0)
-        x, y = df_target.iloc[argmin(p_dist), :][['pixel x', 'pixel y']].tolist()
+        # Find the cell with the most target cells in its vicinity
+        tree = KDTree(df_target[['pixel x', 'pixel y']].values)
+        counts = tree.query_radius(
+            df_target[['pixel x', 'pixel y']].values,
+            r=roi_size[0]//2,
+            count_only=True,
+        )
+        x, y = df_target.iloc[argmax(counts), :][['pixel x', 'pixel y']].values
+
+        # Add a bounding box around the cell
         x_min = x - roi_size[0]//2
         x_max = x + roi_size[0]//2
         y_min = y - roi_size[1]//2
@@ -352,20 +355,16 @@ def create_graphs_from_specimen(
                 < n_neighbors + 1:
             # If not, terminate the ROI creation process early
             break
+        bounding_boxes.append((x_min, x_max, y_min, y_max))
 
-        # Log the new bounding box and track which and how many cells haven't been captured yet
-        bounding_boxes.append((x_min, x_max, y_min, y_max, x, y))
-        proportion_of_target -= roi_area / slide_area
-        cells_not_yet_captured = ~(
-            df_target['pixel x'].between(x_min, x_max) &
-            df_target['pixel y'].between(y_min, y_max)
-        )
-        df_target = df_target.loc[cells_not_yet_captured, :]
-        distance_square = distance_square[cells_not_yet_captured, :][:, cells_not_yet_captured]
+        # Remove the cells in the bounding box from the KD-tree
+        df_target = df_target.loc[~(
+            df_target['pixel x'].between(x_min, x_max) & df_target['pixel y'].between(y_min, y_max)
+        ), :]
 
     # Create features, centroid, and label arrays and then the graph
     graphs: list[DGLGraph] = []
-    for (x_min, x_max, y_min, y_max, x, y) in bounding_boxes:
+    for (x_min, x_max, y_min, y_max) in bounding_boxes:
         df_roi: DataFrame = df.loc[
             df['pixel x'].between(x_min, x_max) &
             df['pixel y'].between(y_min, y_max),

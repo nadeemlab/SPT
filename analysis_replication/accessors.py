@@ -12,6 +12,7 @@ from pandas import DataFrame
 from pandas import concat
 from numpy import inf
 from numpy import nan
+from numpy import mean
 
 def get_default_host(given: str | None) -> str | None:
     if given is not None:
@@ -29,6 +30,14 @@ class StillPendingException(Exception):
     """Raised when a computation is still pending."""
 
 
+class Colors:
+    bold_green = '\u001b[32;1m'
+    blue = '\u001b[34m'
+    bold_magenta = '\u001b[35;1m'
+    bold_red = '\u001b[31;1m'
+    reset = '\u001b[0m'
+
+
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
     def __init__(self, study, host=None):
@@ -43,6 +52,7 @@ class DataAccessor:
         self.host = host
         self.study = study
         self.use_http = use_http
+        print('\n' + Colors.bold_magenta + study + Colors.reset + '\n')
         self.cohorts = self._retrieve_cohorts()
         self.all_cells = self._retrieve_all_cells_counts()
 
@@ -230,14 +240,13 @@ class ExpectedQuantitativeValueError(ValueError):
     """
     Raised when an expected quantitative result is significantly different from the expected value.
     """
+
     def __init__(self, expected: float, actual: float):
         error_percent = self.error_percent(expected, actual)
         if error_percent is not None:
             error_percent = round(100 * error_percent) / 100
-        bold_red = '\u001b[31;1m'
-        reset = '\u001b[0m'
         message = f'''
-        Expected {expected} but got {bold_red}{actual}{reset}. Error is {error_percent}%.
+        Expected {expected} but got {Colors.bold_red}{actual}{Colors.reset}. Error is {error_percent}%.
         '''
         super().__init__(message)
 
@@ -263,7 +272,15 @@ def handle_expected_actual(expected: float, actual: float | None):
     _actual = cast(float, actual)
     if ExpectedQuantitativeValueError.is_error(expected, _actual):
         raise ExpectedQuantitativeValueError(expected, _actual)
-    else:
-        bold_green = '\u001b[32;1m'
-        reset = '\u001b[0m'
-        print(bold_green + f'{_actual}' + reset)
+    string = str(_actual)
+    padded = string + ' '*(21 - len(string))
+    print(Colors.bold_green + padded + Colors.reset, end='')
+
+
+def univariate_pair_compare(list1, list2, expected_fold=None):
+    mean1 = float(mean(list1))
+    mean2 = float(mean(list2))
+    actual = mean2 / mean1
+    if expected_fold is not None:
+        handle_expected_actual(expected_fold, actual)
+    print((mean2, mean1, actual))

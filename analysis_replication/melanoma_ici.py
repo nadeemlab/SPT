@@ -5,14 +5,11 @@ from numpy import mean
 
 from accessors import DataAccessor
 from accessors import get_default_host
-from accessors import handle_expected_actual
+from accessors import univariate_pair_compare as compare
 
 def test(host):
     study = 'Melanoma CyTOF ICI'
     access = DataAccessor(study, host=host)
-
-    print('')
-    print(study)
 
     antigen_experienced_cytotoxic = {'positive_markers': ['CD8A', 'CD3', 'CD45RO'], 'negative_markers': []}
 
@@ -22,26 +19,9 @@ def test(host):
     print(df)
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD8A+ CD3+ CD45RO+ and Melanoma']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD8A+ CD3+ CD45RO+ and Melanoma']
-    mean1 = float(mean(values1))
-    mean2 = float(mean(values2))
-    print((mean1, mean2, mean1 / mean2))
-
-    handle_expected_actual(1.234, mean1 / mean2)
-    # handle_expected_actual(1.39, mean1 / mean2)
-
-    print('')
-
-    # # The average value of the co-occurrence score for phenotype(s) CD3+ CD45RO+ CD8A+ and Melanoma
-    # # is 1.13 times higher in cohort 1 than in cohort 2.
-    # df = access.co_occurrence([antigen_experienced_cytotoxic, 'Melanoma'])
-    # print(df)
-    # values1 = df[df['cohort'] == '1']['co-occurrence, CD8A+ CD3+ CD45RO+ and Melanoma']
-    # values2 = df[df['cohort'] == '2']['co-occurrence, CD8A+ CD3+ CD45RO+ and Melanoma']
-    # mean1 = float(mean(values1))
-    # mean2 = float(mean(values2))
-    # print((mean1, mean2, mean1 / mean2))
-
-    # handle_expected_actual(1.13, mean1 / mean2)
+    # handle_expected_actual(1.234, mean1 / mean2)
+    # # handle_expected_actual(1.39, mean1 / mean2)
+    compare(values2, values1, expected_fold=1.234)
 
     print('')
 
@@ -53,11 +33,7 @@ def test(host):
     fractions = df['CD8A+ CD3+ CD45RO+ and MKI67+'] / df['all cells']
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
-    mean1 = float(mean(fractions1))
-    mean2 = float(mean(fractions2))
-    print((mean1, mean2, mean1 / mean2))
-
-    handle_expected_actual(1.41, mean1 / mean2)
+    compare(fractions2, fractions1, expected_fold=1.41)
 
 
 if __name__=='__main__':

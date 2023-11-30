@@ -1,46 +1,30 @@
 """Data analysis script for one dataset."""
 import sys
 
-from numpy import mean
 from numpy import inf
 
 from accessors import DataAccessor
 from accessors import get_default_host
-from accessors import handle_expected_actual
+from accessors import univariate_pair_compare as compare
 
 def test(host):
     study = 'LUAD progression'
     access = DataAccessor(study, host=host)
 
-    print('')
-    print(study)
-
     df = access.spatial_autocorrelation('B cell')
     values1 = df[df['cohort'] == '1']['spatial autocorrelation, B cell']
     values2 = df[df['cohort'] == '2']['spatial autocorrelation, B cell']
-    mean1 = float(mean(values1))
-    mean2 = float(mean(values2))
-    print((mean2, mean1, mean2 / mean1))
-
-    handle_expected_actual(1.571, mean2 / mean1)
+    compare(values1, values2, expected_fold=1.571)
 
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Regulatory T cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
-    mean1 = float(mean(values1.dropna()))
-    mean2 = float(mean(values2.dropna()))
-    print((mean2, mean1, mean2 / mean1))
-
-    handle_expected_actual(797.46, mean2 / mean1)
+    compare(values1, values2, expected_fold=797.46)
 
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Endothelial cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
-    mean1 = float(mean(values1.dropna()))
-    mean2 = float(mean(values2.dropna()))
-    print((mean2, mean1, mean2 / mean1))
-
-    handle_expected_actual(9.858, mean2 / mean1)
+    compare(values1, values2, expected_fold=9.858)
 
     klrd1 = {'positive_markers': ['KLRD1'], 'negative_markers': []}
     cd14 = {'positive_markers': ['CD14'], 'negative_markers': []}
@@ -51,21 +35,13 @@ def test(host):
     fractions = fractions[fractions != inf]
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
-    mean1 = float(mean(fractions1))
-    mean2 = float(mean(fractions2))
-    print((mean2, mean1, mean2 / mean1))
-
-    handle_expected_actual(4.56, mean2 / mean1)
+    compare(fractions1, fractions2, expected_fold=4.56)
 
     fractions = df['KLRD1+'] / df['CD14+']
     fractions = fractions[fractions != inf]
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
-    mean1 = float(mean(fractions1))
-    mean2 = float(mean(fractions2))
-    print((mean2, mean1, mean2 / mean1))
-
-    handle_expected_actual(3.78, mean2 / mean1)
+    compare(fractions1, fractions2, expected_fold=3.78)
 
 if __name__=='__main__':
     host: str | None

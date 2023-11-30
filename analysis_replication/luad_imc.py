@@ -30,23 +30,20 @@ def test():
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Regulatory T cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
-    mean1 = float(mean(values1))
-    mean2 = float(mean(values2))
+    mean1 = float(mean(values1.dropna()))
+    mean2 = float(mean(values2.dropna()))
     print((mean2, mean1, mean2 / mean1))
 
-    print(df)
-    print(values1)
-    print(values2)
-    # handle_expected_actual(2.22, mean2 / mean1)
+    handle_expected_actual(797.46, mean2 / mean1)
 
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Endothelial cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
-    mean1 = float(mean(values1))
-    mean2 = float(mean(values2))
+    mean1 = float(mean(values1.dropna()))
+    mean2 = float(mean(values2.dropna()))
     print((mean2, mean1, mean2 / mean1))
 
-    handle_expected_actual(1.68, mean2 / mean1)
+    handle_expected_actual(9.858, mean2 / mean1)
 
     klrd1 = {'positive_markers': ['KLRD1'], 'negative_markers': []}
     cd14 = {'positive_markers': ['CD14'], 'negative_markers': []}

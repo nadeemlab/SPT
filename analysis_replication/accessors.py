@@ -7,12 +7,17 @@ from urllib.parse import urlencode
 from urllib.error import HTTPError
 import json
 from os.path import exists
+from time import sleep
 
 from pandas import DataFrame
 from pandas import concat
 from numpy import inf
 from numpy import nan
+from numpy import isnan
 from numpy import mean
+from numpy import log
+from scipy.stats import ttest_ind  # type: ignore
+
 
 def get_default_host(given: str | None) -> str | None:
     if given is not None:
@@ -26,16 +31,19 @@ def get_default_host(given: str | None) -> str | None:
     return host
 
 
-class StillPendingException(Exception):
-    """Raised when a computation is still pending."""
-
-
 class Colors:
     bold_green = '\u001b[32;1m'
     blue = '\u001b[34m'
     bold_magenta = '\u001b[35;1m'
     bold_red = '\u001b[31;1m'
+    yellow = '\u001b[33m'
     reset = '\u001b[0m'
+
+
+def sleep_poll():
+    seconds = 10
+    print(f'Waiting {seconds} seconds to poll.')
+    sleep(seconds)
 
 
 class DataAccessor:
@@ -100,9 +108,13 @@ class DataAccessor:
         parts = parts1 + [('study', self.study), ('feature_class', feature_class)]
         query = urlencode(parts)
         endpoint = 'request-spatial-metrics-computation-custom-phenotype'
-        response, url = self._retrieve(endpoint, query)
-        if response['is_pending'] is True:
-            raise StillPendingException()
+
+        while True:
+            response, url = self._retrieve(endpoint, query)
+            if response['is_pending'] is True:
+                sleep_poll()
+            else:
+                break
 
         rows = [
             {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
@@ -136,9 +148,13 @@ class DataAccessor:
             parts.append(('radius', '100'))
         query = urlencode(parts)
         endpoint = 'request-spatial-metrics-computation-custom-phenotypes'
-        response, url = self._retrieve(endpoint, query)
-        if response['is_pending'] is True:
-            raise StillPendingException()
+
+        while True:
+            response, url = self._retrieve(endpoint, query)
+            if response['is_pending'] is True:
+                sleep_poll()
+            else:
+                break
 
         rows = [
             {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
@@ -277,10 +293,32 @@ def handle_expected_actual(expected: float, actual: float | None):
     print(Colors.bold_green + padded + Colors.reset, end='')
 
 
-def univariate_pair_compare(list1, list2, expected_fold=None):
+def univariate_pair_compare(list1, list2, expected_fold = None, do_log_fold: bool = False, show_pvalue = False):
+    list1 = list(filter(lambda element: not isnan(element), list1.values))
+    list2 = list(filter(lambda element: not isnan(element), list2.values))
     mean1 = float(mean(list1))
     mean2 = float(mean(list2))
     actual = mean2 / mean1
     if expected_fold is not None:
         handle_expected_actual(expected_fold, actual)
-    print((mean2, mean1, actual))
+    print((mean2, mean1, actual), end = '')
+
+    if do_log_fold:
+        _list1 = [log(e) for e in list(filter(lambda element: element != 0, list1))]
+        _list2 = [log(e) for e in list(filter(lambda element: element != 0, list2))]
+        _mean1 = float(mean(_list1))
+        _mean2 = float(mean(_list2))
+        log_fold = _mean2 / _mean1
+        print('  log fold: ' + Colors.yellow + str(log_fold) + Colors.reset, end='')
+
+    if show_pvalue:
+        if do_log_fold:
+            result = ttest_ind(_list1, _list2)
+            print('  p-value (after log): ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
+        else:
+            result = ttest_ind(list1, list2)
+            print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
+
+    print('')
+
+

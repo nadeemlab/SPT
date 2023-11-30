@@ -14,17 +14,17 @@ def test(host):
     df = access.spatial_autocorrelation('B cell')
     values1 = df[df['cohort'] == '1']['spatial autocorrelation, B cell']
     values2 = df[df['cohort'] == '2']['spatial autocorrelation, B cell']
-    compare(values1, values2, expected_fold=1.571)
+    compare(values1, values2, expected_fold=1.571, show_pvalue=True)
 
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Regulatory T cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
-    compare(values1, values2, expected_fold=797.46)
+    compare(values1, values2, expected_fold=797.46, do_log_fold=True, show_pvalue=True)
 
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Endothelial cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
-    compare(values1, values2, expected_fold=9.858)
+    compare(values1, values2, expected_fold=9.858, do_log_fold=True, show_pvalue=True)
 
     klrd1 = {'positive_markers': ['KLRD1'], 'negative_markers': []}
     cd14 = {'positive_markers': ['CD14'], 'negative_markers': []}
@@ -35,13 +35,13 @@ def test(host):
     fractions = fractions[fractions != inf]
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
-    compare(fractions1, fractions2, expected_fold=4.56)
+    compare(fractions1, fractions2, expected_fold=4.56, show_pvalue=True)
 
     fractions = df['KLRD1+'] / df['CD14+']
     fractions = fractions[fractions != inf]
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
-    compare(fractions1, fractions2, expected_fold=3.78)
+    compare(fractions1, fractions2, expected_fold=3.78, show_pvalue=True)
 
 if __name__=='__main__':
     host: str | None

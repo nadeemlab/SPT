@@ -16,20 +16,16 @@ def test(host):
     # The average value of the neighborhood enrichment score for phenotype(s) CD3+ CD45RO+ CD8A+ and
     # Melanoma is 1.39 times higher in cohort 1 than in cohort 2.
     df = access.neighborhood_enrichment([antigen_experienced_cytotoxic, 'Melanoma'])
-    print(df)
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD8A+ CD3+ CD45RO+ and Melanoma']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD8A+ CD3+ CD45RO+ and Melanoma']
     # handle_expected_actual(1.234, mean1 / mean2)
     # # handle_expected_actual(1.39, mean1 / mean2)
-    compare(values2, values1, expected_fold=1.234)
-
-    print('')
+    compare(values2, values1, expected_fold=1.234, do_log_fold=True)
 
     # On average, the fraction of cells that are CD8A+ CD3+ CD45RO+ and MKI67+ is 1.41 times higher
     # in cohort 1 than in cohort 2.
     proliferative = {'positive_markers': ['MKI67'], 'negative_markers': []}
     df = access.counts([antigen_experienced_cytotoxic, proliferative])
-    print(df)
     fractions = df['CD8A+ CD3+ CD45RO+ and MKI67+'] / df['all cells']
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']

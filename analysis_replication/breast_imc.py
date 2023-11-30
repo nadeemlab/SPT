@@ -24,7 +24,7 @@ def test(host):
     values2 = df[df['cohort'] == '2']['proximity, KRT14+ CK+ and KRT7+ CK+']
     # handle_expected_actual(1.6216, mean2 / mean1)
     # # handle_expected_actual(1.69, mean2 / mean1)
-    compare(values1, values2, expected_fold=1.6216)
+    compare(values1, values2, expected_fold=1.6216, show_pvalue=True)
 
     df = access.proximity([KRT['14'], KRT['5']])
     values2 = df[df['cohort'] == '2']['proximity, KRT14+ CK+ and KRT5+ CK+']

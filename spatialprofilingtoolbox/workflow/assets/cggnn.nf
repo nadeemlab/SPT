@@ -10,7 +10,7 @@ process echo_environment_variables {
     path 'test_data_percent',               emit: test_data_percent
     path 'disable_channels',                emit: disable_channels
     path 'disable_phenotypes',              emit: disable_phenotypes
-    path 'cells_per_slide_target',          emit: cells_per_slide_target
+    path 'cells_per_roi_target',            emit: cells_per_roi_target
     path 'target_name',                     emit: target_name
     path 'in_ram',                          emit: in_ram
     path 'batch_size',                      emit: batch_size
@@ -32,7 +32,7 @@ process echo_environment_variables {
     echo -n "${test_data_percent_}" > test_data_percent
     echo -n "${disable_channels_}" > disable_channels
     echo -n "${disable_phenotypes_}" > disable_phenotypes
-    echo -n "${cells_per_slide_target_}" > cells_per_slide_target
+    echo -n "${cells_per_roi_target_}" > cells_per_roi_target
     echo -n "${target_name_}" > target_name
     echo -n "${in_ram_}" > in_ram
     echo -n "${batch_size_}" > batch_size
@@ -47,9 +47,6 @@ process echo_environment_variables {
 }
 
 process prep_graph_creation {
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 4
-
     input:
     path db_config_file
     val study_name
@@ -58,7 +55,7 @@ process prep_graph_creation {
     val test_data_percent
     val disable_channels
     val disable_phenotypes
-    val cells_per_slide_target
+    val cells_per_roi_target
     val target_name
 
     output:
@@ -82,7 +79,7 @@ process prep_graph_creation {
      --test_data_percent ${test_data_percent} \
      \${disable_channels_option} \
      \${disable_phenotypes_option} \
-     --cells_per_slide_target ${cells_per_slide_target} \
+     --cells_per_roi_target ${cells_per_roi_target} \
      --target_name \\'${target_name}\\' \
      --output_directory . \
      | xargs spt cggnn prepare-graph-creation
@@ -90,15 +87,12 @@ process prep_graph_creation {
 }
 
 process create_specimen_graphs {
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 4
-
     input:
     path parameters_file
     path specimen_file
 
     output:
-    path "${specimen_file.baseName}.bin",    emit: specimen_graph
+    path "${specimen_file.baseName}.bin",   optional: true, emit: specimen_graph
 
     script:
     """
@@ -113,9 +107,6 @@ process create_specimen_graphs {
 
 process finalize_graphs {
     publishDir '.', mode: 'copy'
-
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 4
 
     input:
     path parameters_file
@@ -142,9 +133,6 @@ process finalize_graphs {
 
 process train {
     publishDir '.', mode: 'copy'
-
-    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
-    maxRetries 4
 
     input:
     path working_directory
@@ -225,8 +213,8 @@ workflow {
     environment_ch.disable_phenotypes.map{ it.text }
         .set{ disable_phenotypes_ch }
 
-    environment_ch.cells_per_slide_target.map{ it.text }
-        .set{ cells_per_slide_target_ch }
+    environment_ch.cells_per_roi_target.map{ it.text }
+        .set{ cells_per_roi_target_ch }
 
     environment_ch.target_name.map{ it.text }
         .set{ target_name_ch }
@@ -266,7 +254,7 @@ workflow {
         test_data_percent_ch,
         disable_channels_ch,
         disable_phenotypes_ch,
-        cells_per_slide_target_ch,
+        cells_per_roi_target_ch,
         target_name_ch
     ).set{ prep_out }
 
@@ -283,6 +271,7 @@ workflow {
     ).set{ specimen_graphs_ch }
 
     specimen_graphs_ch
+        .filter { it != null }
         .collect()
         .set{ all_specimen_graphs_ch }
 

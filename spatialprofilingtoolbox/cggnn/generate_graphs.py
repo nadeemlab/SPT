@@ -46,7 +46,7 @@ def generate_graphs(
     use_channels: bool = True,
     use_phenotypes: bool = True,
     roi_side_length: int | None = None,
-    cells_per_slide_target: int | None = 10_000,
+    cells_per_roi_target: int | None = 10_000,
     max_cells_to_consider: int = 100_000,
     target_name: str | None = None,
     output_directory: str | None = None,
@@ -81,10 +81,10 @@ def generate_graphs(
         Whether to include channel or phenotype features (columns in df_cell beginning with 'C ' and
         'P ', respectively) in the graph.
     roi_side_length: int | None = None
-    cells_per_slide_target: int | None = 10_000
+    cells_per_roi_target: int | None = 10_000
         One of these must be provided in order to determine the ROI size. roi_side_length specifies
         how long to make the side length of each square ROI, in pixels. If this isn't provided, the
-        median cell density across all slides is used with cells_per_slide_target to determine the
+        median cell density across all slides is used with cells_per_roi_target to determine the
         square ROI sizing.
     max_cells_to_consider: int = 100_000
         The maximum number of cells to consider when placing ROI bounds. All cells within each
@@ -128,7 +128,7 @@ def generate_graphs(
             use_channels,
             use_phenotypes,
             roi_side_length,
-            cells_per_slide_target,
+            cells_per_roi_target,
             output_directory,
             random_seed,
         )
@@ -170,7 +170,7 @@ def prepare_graph_generation_by_specimen(
     use_channels: bool = True,
     use_phenotypes: bool = True,
     roi_side_length: int | None = None,
-    cells_per_slide_target: int | None = 5_000,
+    cells_per_roi_target: int | None = 5_000,
     output_directory: str | None = None,
     random_seed: int | None = None,
 ) -> tuple[
@@ -200,7 +200,7 @@ def prepare_graph_generation_by_specimen(
 
     grouped, roi_size, roi_area, features_to_use = _group_by_specimen(
         df_cell,
-        cells_per_slide_target,
+        cells_per_roi_target,
         roi_size,
         use_channels,
         use_phenotypes,
@@ -243,7 +243,7 @@ def validate_inputs(
 
 def _group_by_specimen(
     df_cell: DataFrame,
-    cells_per_slide_target: int | None = 5_000,
+    cells_per_roi_target: int | None = 5_000,
     roi_size: tuple[int, int] | None = None,
     use_channels: bool = True,
     use_phenotypes: bool = True,
@@ -251,7 +251,7 @@ def _group_by_specimen(
     df_cell, features_to_use = _prepare_df_cell(df_cell, use_channels, use_phenotypes)
     grouped, roi_size, roi_area = _split_df_by_specimen(
         df_cell,
-        cells_per_slide_target,
+        cells_per_roi_target,
         roi_size,
     )
     return grouped, roi_size, roi_area, features_to_use
@@ -280,7 +280,7 @@ def _prepare_df_cell(
 
 def _split_df_by_specimen(
     df_cell: DataFrame,
-    cells_per_slide_target: int | None = 5_000,
+    cells_per_roi_target: int | None = 5_000,
     roi_size: tuple[int, int] | None = None,
 ) -> tuple[
     DataFrameGroupBy,
@@ -291,8 +291,8 @@ def _split_df_by_specimen(
     grouped = df_cell.groupby('specimen')
     if roi_size is not None:
         roi_area = prod(roi_size)
-    elif cells_per_slide_target is not None:
-        roi_area: float = cells_per_slide_target / median([
+    elif cells_per_roi_target is not None:
+        roi_area: float = cells_per_roi_target / median([
             (df_specimen.shape[0] / prod(
                 df_specimen[['pixel x', 'pixel y']].max() -
                 df_specimen[['pixel x', 'pixel y']].min()
@@ -300,7 +300,7 @@ def _split_df_by_specimen(
         ])
         roi_size = (rint(roi_area**0.5), rint(roi_area**0.5))
     else:
-        raise ValueError('Must specify either roi_size or cells_per_slide_target.')
+        raise ValueError('Must specify either roi_size or cells_per_roi_target.')
     return grouped, roi_size, roi_area
 
 

@@ -1,21 +1,39 @@
 """Convenience caller of HTTP methods for data access."""
 import sys
-
+from typing import cast
 import re
 from itertools import chain
 from urllib.request import urlopen
 from urllib.parse import urlencode
 from urllib.error import HTTPError
 import json
+from os.path import exists
 
 from pandas import DataFrame
 from pandas import concat
 from numpy import inf
 from numpy import nan
 
+def get_default_host() -> str | None:
+    filename = 'api_host.txt'
+    if exists(filename):
+        with open(filename, 'rt', encoding='utf-8') as file:
+            host = file.read().rstrip()
+    else:
+        host = None
+    return host
+
+
+class StillPendingException(Exception):
+    """Raised when a computation is still pending."""
+
+
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
-    def __init__(self, study, host='data.oncopathtk.org'):
+    def __init__(self, study, host=None):
+        host = get_default_host()
+        if host is None:
+            raise RuntimeError('Expected host name in api_host.txt .')
         use_http = False
         if re.search('^http://', host):
             use_http = True
@@ -72,10 +90,7 @@ class DataAccessor:
         endpoint = 'request-spatial-metrics-computation-custom-phenotype'
         response, url = self._retrieve(endpoint, query)
         if response['is_pending'] is True:
-            print('Computation is pending. Try again soon!')
-            print('URL:')
-            print(url)
-            sys.exit()
+            raise StillPendingException()
 
         rows = [
             {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
@@ -111,10 +126,7 @@ class DataAccessor:
         endpoint = 'request-spatial-metrics-computation-custom-phenotypes'
         response, url = self._retrieve(endpoint, query)
         if response['is_pending'] is True:
-            print('Computation is pending. Try again soon!')
-            print('URL:')
-            print(url)
-            sys.exit()
+            raise StillPendingException()
 
         rows = [
             {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
@@ -210,3 +222,46 @@ class DataAccessor:
                 for keyword, sign in zip(['positive', 'negative'], ['+', '-'])
             ]).rstrip()
         return str(phenotype)
+
+
+class ExpectedQuantitativeValueError(ValueError):
+    """
+    Raised when an expected quantitative result is significantly different from the expected value.
+    """
+    def __init__(self, expected: float, actual: float):
+        error_percent = self.error_percent(expected, actual)
+        if error_percent is not None:
+            error_percent = round(100 * error_percent) / 100
+        bold_red = '\u001b[31;1m'
+        reset = '\u001b[0m'
+        message = f'''
+        Expected {expected} but got {bold_red}{actual}{reset}. Error is {error_percent}%.
+        '''
+        super().__init__(message)
+
+    @staticmethod
+    def is_error(expected: float, actual: float) -> bool:
+        error_percent = ExpectedQuantitativeValueError.error_percent(expected, actual)
+        if error_percent is None:
+            return True
+        if error_percent < 1.0:
+            return False
+        return True
+
+    @staticmethod
+    def error_percent(expected: float, actual: float) -> float | None:
+        if actual != 0:
+            error_percent = abs(100 * (1 - (expected / actual)))
+        else:
+            error_percent = None
+        return error_percent
+
+
+def handle_expected_actual(expected: float, actual: float | None):
+    _actual = cast(float, actual)
+    if ExpectedQuantitativeValueError.is_error(expected, _actual):
+        raise ExpectedQuantitativeValueError(expected, _actual)
+    else:
+        bold_green = '\u001b[32;1m'
+        reset = '\u001b[0m'
+        print(bold_green + f'{_actual}' + reset)

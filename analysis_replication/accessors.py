@@ -251,7 +251,7 @@ class ExpectedQuantitativeValueError(ValueError):
     @staticmethod
     def error_percent(expected: float, actual: float) -> float | None:
         if actual != 0:
-            error_percent = abs(100 * (1 - (expected / actual)))
+            error_percent = abs(100 * (1 - (actual / expected)))
         else:
             error_percent = None
         return error_percent

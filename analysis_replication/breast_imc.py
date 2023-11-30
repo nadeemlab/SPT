@@ -49,8 +49,8 @@ def test(host):
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
     fractions3 = fractions[df['cohort'] == '3']
-    compare(fractions3, fractions2, expected_fold=111.32)
-    compare(fractions1, fractions2, expected_fold=11.39)
+    compare(fractions3, fractions2, expected_fold=111.32, show_pvalue=True)
+    compare(fractions1, fractions2, expected_fold=11.39, show_pvalue=True)
 
 
 if __name__=='__main__':

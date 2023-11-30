@@ -296,6 +296,7 @@ def handle_expected_actual(expected: float, actual: float | None):
 def univariate_pair_compare(list1, list2, expected_fold = None, do_log_fold: bool = False, show_pvalue = False):
     list1 = list(filter(lambda element: not isnan(element), list1.values))
     list2 = list(filter(lambda element: not isnan(element), list2.values))
+
     mean1 = float(mean(list1))
     mean2 = float(mean(list2))
     actual = mean2 / mean1

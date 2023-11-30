@@ -18,4 +18,4 @@ python run_all.py "http://127.0.0.1:8080"
 substituting the argument with the address of your local API server. (See *Setting up a local application instance*).
 
 - These scripts just call the web API, and so they do not require Python package `spatialprofilingtoolbox`.
-- You can store alternatively the API host in `api_host.txt` and omit the command-line argument above.
+- You can alternatively store the API host in `api_host.txt` and omit the command-line argument above.

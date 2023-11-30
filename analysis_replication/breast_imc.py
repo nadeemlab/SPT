@@ -32,12 +32,16 @@ def test():
     mean2 = float(mean(values2))
     print((mean2, mean1, mean2 / mean1))
 
+    handle_expected_actual(1.69, mean2 / mean1)
+
     df = access.proximity([KRT['14'], KRT['5']])
     values2 = df[df['cohort'] == '2']['proximity, KRT14+ CK+ and KRT5+ CK+']
     values3 = df[df['cohort'] == '3']['proximity, KRT14+ CK+ and KRT5+ CK+']
     mean2 = float(mean(values2))
     mean3 = float(mean(values3))
     print((mean2, mean3, mean2 / mean3))
+
+    handle_expected_actual(0.65, mean2 / mean1)
 
     df = access.counts([KRT['14'], KRT['7']])
     fractions = df['KRT14+ CK+ and KRT7+ CK+'] / df['all cells']
@@ -61,6 +65,9 @@ def test():
     mean3 = float(mean(fractions3))
     print((mean2, mean3, mean2 / mean3))
     print((mean2, mean1, mean2 / mean1))
+
+    handle_expected_actual(112.7, mean2 / mean3)
+    handle_expected_actual(11.5, mean2 / mean1)
 
 
 if __name__=='__main__':

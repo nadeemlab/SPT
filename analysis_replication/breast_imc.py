@@ -1,19 +1,16 @@
 """Data analysis script for one dataset."""
-
 import sys
 
 from numpy import mean
 from numpy import inf
 
 from accessors import DataAccessor
+from accessors import get_default_host
 from accessors import handle_expected_actual
 
-def test():
+def test(host):
     study = 'Breast cancer IMC'
-    if len(sys.argv) == 1:
-        access = DataAccessor(study)
-    else:
-        access = DataAccessor(study, host=sys.argv[1])
+    access = DataAccessor(study, host=host)
 
     print('')
     print(study)
@@ -73,4 +70,11 @@ def test():
 
 
 if __name__=='__main__':
-    test()
+    host: str | None
+    if len(sys.argv) == 2:
+        host = sys.argv[1]
+    else:
+        host = get_default_host(None)
+    if host is None:
+        raise RuntimeError('Could not determine API server.')
+    test(get_default_host(None))

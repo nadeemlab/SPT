@@ -1,5 +1,4 @@
 """Convenience caller of HTTP methods for data access."""
-import sys
 from typing import cast
 import re
 from itertools import chain
@@ -14,7 +13,9 @@ from pandas import concat
 from numpy import inf
 from numpy import nan
 
-def get_default_host() -> str | None:
+def get_default_host(given: str | None) -> str | None:
+    if given is not None:
+        return given
     filename = 'api_host.txt'
     if exists(filename):
         with open(filename, 'rt', encoding='utf-8') as file:
@@ -31,9 +32,10 @@ class StillPendingException(Exception):
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
     def __init__(self, study, host=None):
-        host = get_default_host()
-        if host is None:
+        _host = get_default_host(host)
+        if _host is None:
             raise RuntimeError('Expected host name in api_host.txt .')
+        host = _host
         use_http = False
         if re.search('^http://', host):
             use_http = True

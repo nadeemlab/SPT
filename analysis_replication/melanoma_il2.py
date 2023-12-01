@@ -1,71 +1,61 @@
 """Data analysis script for one dataset."""
-
 import sys
 
-from numpy import mean
-
 from accessors import DataAccessor
+from accessors import get_default_host
+from accessors import univariate_pair_compare as compare
 
-study = 'Melanoma intralesional IL2'
-if len(sys.argv) == 1:
-    access = DataAccessor(study)
-else:
-    host = sys.argv[1]
+def test(host):
+    study = 'Melanoma intralesional IL2'
     access = DataAccessor(study, host=host)
 
-exhausted = {'positive_markers': ['KI67', 'PD1', 'LAG3', 'TIM3'], 'negative_markers': []}
-df = access.counts(['CD8+ T cell', exhausted])
-print(df)
+    exhausted = {'positive_markers': ['KI67', 'PD1', 'LAG3', 'TIM3'], 'negative_markers': []}
+    df = access.counts(['CD8+ T cell', exhausted])
 
-# On average, the fraction of cells that are CD8+ T cells and KI67+ LAG3+ PD1+ TIM3+ is 24.51
-# times higher in cohort 3 than in cohort 1.
-fractions = df['CD8+ T cell and KI67+ PD1+ LAG3+ TIM3+'] / df['all cells']
-fractions1 = fractions[df['cohort'] == '1']
-fractions3 = fractions[df['cohort'] == '3']
-mean1 = mean(fractions1)
-mean3 = mean(fractions3)
-print((mean3, mean1, mean3 / mean1))
+    # On average, the fraction of cells that are CD8+ T cells and KI67+ LAG3+ PD1+ TIM3+ is 24.51
+    # times higher in cohort 3 than in cohort 1.
+    fractions = df['CD8+ T cell and KI67+ PD1+ LAG3+ TIM3+'] / df['all cells']
+    fractions1 = fractions[df['cohort'] == '1']
+    fractions3 = fractions[df['cohort'] == '3']
+    compare(fractions1, fractions3, expected_fold=24.51, show_pvalue=True)
 
-# On average, the ratio of the number of cells that are CD8+ T cells and KI67+ LAG3+ PD1+ TIM3+
-# to those that are CD8+ T cells is 6.29 times higher in cohort 3 than in cohort 1.
-fractions = df['CD8+ T cell and KI67+ PD1+ LAG3+ TIM3+'] / df['CD8+ T cell']
-fractions1 = fractions[df['cohort'] == '1']
-fractions3 = fractions[df['cohort'] == '3']
-mean1 = mean(fractions1)
-mean3 = mean(fractions3)
-print((mean3, mean1, mean3 / mean1))
+    # On average, the ratio of the number of cells that are CD8+ T cells and KI67+ LAG3+ PD1+ TIM3+
+    # to those that are CD8+ T cells is 6.29 times higher in cohort 3 than in cohort 1.
+    fractions = df['CD8+ T cell and KI67+ PD1+ LAG3+ TIM3+'] / df['CD8+ T cell']
+    fractions1 = fractions[df['cohort'] == '1']
+    fractions3 = fractions[df['cohort'] == '3']
+    compare(fractions1, fractions3, expected_fold=6.29, show_pvalue=True)
 
-print('')
+    mhci = {'positive_markers': ['MHCI'], 'negative_markers': []}
+    df = access.counts(['Tumor', mhci])
 
-mhci = {'positive_markers': ['MHCI'], 'negative_markers': []}
-df = access.counts(['Tumor', mhci])
-print(df)
+    # On average, the ratio of the number of cells that are MHCI+ and Tumor to those that are Tumor
+    # is 1.86 times higher in cohort 3 than in cohort 1.
+    fractions = df['Tumor and MHCI+'] / df['Tumor']
+    fractions1 = fractions[df['cohort'] == '1']
+    fractions3 = fractions[df['cohort'] == '3']
+    compare(fractions1, fractions3, expected_fold=1.86)
 
-# On average, the ratio of the number of cells that are MHCI+ and Tumor to those that are Tumor
-# is 1.86 times higher in cohort 3 than in cohort 1.
-fractions = df['Tumor and MHCI+'] / df['Tumor']
-fractions1 = fractions[df['cohort'] == '1']
-fractions3 = fractions[df['cohort'] == '3']
-mean1 = mean(fractions1)
-mean3 = mean(fractions3)
-print((mean3, mean1, mean3 / mean1))
+    # The average value of the proximity score for phenotype(s) B cells is 3.59 times higher in
+    # cohort 3 than in cohort 1.
+    df = access.proximity(['B cell', 'B cell'])
+    values1 = df[df['cohort'] == '1']['proximity, B cell and B cell']
+    values3 = df[df['cohort'] == '3']['proximity, B cell and B cell']
+    compare(values1, values3, expected_fold=3.59)
 
-# The average value of the proximity score for phenotype(s) B cells is 3.59 times higher in
-# cohort 3 than in cohort 1.
-df = access.proximity(['B cell', 'B cell'])
-print(df)
-values1 = df[df['cohort'] == '1']['proximity, B cell and B cell']
-values3 = df[df['cohort'] == '3']['proximity, B cell and B cell']
-mean1 = mean(values1)
-mean3 = mean(values3)
-print((mean3, mean1, mean3 / mean1))
+    # The average value of the neighborhood enrichment score for phenotype(s) B cells is 80.45 times
+    # higher in cohort 1 than in cohort 3.
+    df = access.neighborhood_enrichment(['B cell', 'B cell'])
+    values1 = df[df['cohort'] == '1']['neighborhood enrichment, B cell and B cell']
+    values3 = df[df['cohort'] == '3']['neighborhood enrichment, B cell and B cell']
+    compare(values3, values1, expected_fold=80.45, do_log_fold=True)
 
-# The average value of the neighborhood enrichment score for phenotype(s) B cells is 80.45 times
-# higher in cohort 1 than in cohort 3.
-df = access.neighborhood_enrichment(['B cell', 'B cell'])
-print(df)
-values1 = df[df['cohort'] == '1']['neighborhood enrichment, B cell and B cell']
-values3 = df[df['cohort'] == '3']['neighborhood enrichment, B cell and B cell']
-mean1 = mean(values1)
-mean3 = mean(values3)
-print((mean1, mean3, mean1 / mean3))
+if __name__=='__main__':
+    host: str | None
+    if len(sys.argv) == 2:
+        host = sys.argv[1]
+    else:
+        host = get_default_host(None)
+    if host is None:
+        raise RuntimeError('Could not determine API server.')
+    test(host)

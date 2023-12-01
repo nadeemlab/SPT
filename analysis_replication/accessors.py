@@ -1,21 +1,58 @@
 """Convenience caller of HTTP methods for data access."""
-import sys
-
+from typing import cast
 import re
 from itertools import chain
 from urllib.request import urlopen
 from urllib.parse import urlencode
 from urllib.error import HTTPError
 import json
+from os.path import exists
+from time import sleep
 
 from pandas import DataFrame
 from pandas import concat
 from numpy import inf
 from numpy import nan
+from numpy import isnan
+from numpy import mean
+from numpy import log
+from scipy.stats import ttest_ind  # type: ignore
+
+
+def get_default_host(given: str | None) -> str | None:
+    if given is not None:
+        return given
+    filename = 'api_host.txt'
+    if exists(filename):
+        with open(filename, 'rt', encoding='utf-8') as file:
+            host = file.read().rstrip()
+    else:
+        host = None
+    return host
+
+
+class Colors:
+    bold_green = '\u001b[32;1m'
+    blue = '\u001b[34m'
+    bold_magenta = '\u001b[35;1m'
+    bold_red = '\u001b[31;1m'
+    yellow = '\u001b[33m'
+    reset = '\u001b[0m'
+
+
+def sleep_poll():
+    seconds = 10
+    print(f'Waiting {seconds} seconds to poll.')
+    sleep(seconds)
+
 
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
-    def __init__(self, study, host='data.oncopathtk.org'):
+    def __init__(self, study, host=None):
+        _host = get_default_host(host)
+        if _host is None:
+            raise RuntimeError('Expected host name in api_host.txt .')
+        host = _host
         use_http = False
         if re.search('^http://', host):
             use_http = True
@@ -23,6 +60,7 @@ class DataAccessor:
         self.host = host
         self.study = study
         self.use_http = use_http
+        print('\n' + Colors.bold_magenta + study + Colors.reset + '\n')
         self.cohorts = self._retrieve_cohorts()
         self.all_cells = self._retrieve_all_cells_counts()
 
@@ -70,12 +108,13 @@ class DataAccessor:
         parts = parts1 + [('study', self.study), ('feature_class', feature_class)]
         query = urlencode(parts)
         endpoint = 'request-spatial-metrics-computation-custom-phenotype'
-        response, url = self._retrieve(endpoint, query)
-        if response['is_pending'] is True:
-            print('Computation is pending. Try again soon!')
-            print('URL:')
-            print(url)
-            sys.exit()
+
+        while True:
+            response, url = self._retrieve(endpoint, query)
+            if response['is_pending'] is True:
+                sleep_poll()
+            else:
+                break
 
         rows = [
             {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
@@ -109,12 +148,13 @@ class DataAccessor:
             parts.append(('radius', '100'))
         query = urlencode(parts)
         endpoint = 'request-spatial-metrics-computation-custom-phenotypes'
-        response, url = self._retrieve(endpoint, query)
-        if response['is_pending'] is True:
-            print('Computation is pending. Try again soon!')
-            print('URL:')
-            print(url)
-            sys.exit()
+
+        while True:
+            response, url = self._retrieve(endpoint, query)
+            if response['is_pending'] is True:
+                sleep_poll()
+            else:
+                break
 
         rows = [
             {'sample': key, '%s, %s' % (feature_class, ' and '.join(names)): value}
@@ -210,3 +250,76 @@ class DataAccessor:
                 for keyword, sign in zip(['positive', 'negative'], ['+', '-'])
             ]).rstrip()
         return str(phenotype)
+
+
+class ExpectedQuantitativeValueError(ValueError):
+    """
+    Raised when an expected quantitative result is significantly different from the expected value.
+    """
+
+    def __init__(self, expected: float, actual: float):
+        error_percent = self.error_percent(expected, actual)
+        if error_percent is not None:
+            error_percent = round(100 * error_percent) / 100
+        message = f'''
+        Expected {expected} but got {Colors.bold_red}{actual}{Colors.reset}. Error is {error_percent}%.
+        '''
+        super().__init__(message)
+
+    @staticmethod
+    def is_error(expected: float, actual: float) -> bool:
+        error_percent = ExpectedQuantitativeValueError.error_percent(expected, actual)
+        if error_percent is None:
+            return True
+        if error_percent < 1.0:
+            return False
+        return True
+
+    @staticmethod
+    def error_percent(expected: float, actual: float) -> float | None:
+        if actual != 0:
+            error_percent = abs(100 * (1 - (actual / expected)))
+        else:
+            error_percent = None
+        return error_percent
+
+
+def handle_expected_actual(expected: float, actual: float | None):
+    _actual = cast(float, actual)
+    if ExpectedQuantitativeValueError.is_error(expected, _actual):
+        raise ExpectedQuantitativeValueError(expected, _actual)
+    string = str(_actual)
+    padded = string + ' '*(21 - len(string))
+    print(Colors.bold_green + padded + Colors.reset, end='')
+
+
+def univariate_pair_compare(list1, list2, expected_fold = None, do_log_fold: bool = False, show_pvalue = False):
+    list1 = list(filter(lambda element: not isnan(element), list1.values))
+    list2 = list(filter(lambda element: not isnan(element), list2.values))
+
+    mean1 = float(mean(list1))
+    mean2 = float(mean(list2))
+    actual = mean2 / mean1
+    if expected_fold is not None:
+        handle_expected_actual(expected_fold, actual)
+    print((mean2, mean1, actual), end = '')
+
+    if do_log_fold:
+        _list1 = [log(e) for e in list(filter(lambda element: element != 0, list1))]
+        _list2 = [log(e) for e in list(filter(lambda element: element != 0, list2))]
+        _mean1 = float(mean(_list1))
+        _mean2 = float(mean(_list2))
+        log_fold = _mean2 / _mean1
+        print('  log fold: ' + Colors.yellow + str(log_fold) + Colors.reset, end='')
+
+    if show_pvalue:
+        if do_log_fold:
+            result = ttest_ind(_list1, _list2)
+            print('  p-value (after log): ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
+        else:
+            result = ttest_ind(list1, list2)
+            print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
+
+    print('')
+
+

@@ -22,4 +22,4 @@ ENV service_name $service_name
 COPY $WHEEL_FILENAME ./
 RUN python -m pip install "$WHEEL_FILENAME"
 ENV API_SERVER_PORT=8016
-ENTRYPOINT ["spt", "ondemand", "start", "--host", "0.0.0.0", "--port", "8016", "--timeout-seconds", "120"]
+ENTRYPOINT ["spt", "ondemand", "start", "--host", "0.0.0.0", "--port", "8016", "--timeout-seconds", "360"]

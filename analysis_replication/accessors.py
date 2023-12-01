@@ -48,6 +48,7 @@ def sleep_poll():
 
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
+
     def __init__(self, study, host=None):
         _host = get_default_host(host)
         if _host is None:
@@ -68,15 +69,21 @@ class DataAccessor:
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
         conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
-        all_name = ' and '.join([self._name_phenotype(p) for p in phenotype_names])
+        all_name = self.name_for_all_phenotypes(phenotype_names)
         conjunction_counts_series = self._get_counts_series(conjunction_criteria, all_name)
         individual_counts_series = [
             self._get_counts_series(self._phenotype_criteria(name), self._name_phenotype(name))
             for name in phenotype_names
         ]
-        df = concat([self.cohorts, self.all_cells, conjunction_counts_series, *individual_counts_series], axis=1)
+        df = concat(
+            [self.cohorts, self.all_cells, conjunction_counts_series, *individual_counts_series],
+            axis=1,
+        )
         df.replace([inf, -inf], nan, inplace=True)
         return df
+    
+    def name_for_all_phenotypes(self, phenotype_names):
+        return ' and '.join([self._name_phenotype(p) for p in phenotype_names])
 
     def neighborhood_enrichment(self, phenotype_names):
         feature_class = 'neighborhood enrichment'
@@ -251,6 +258,24 @@ class DataAccessor:
             ]).rstrip()
         return str(phenotype)
 
+    def important(self, phenotype_names: str | list[str]) -> dict[str, float]:
+        if isinstance(phenotype_names, str):
+            phenotype_names = [phenotype_names]
+        conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
+        parts = list(chain(*[
+            [(f'{keyword}_marker', channel) for channel in argument]
+            for keyword, argument in zip(
+                ['positive', 'negative'], [
+                    conjunction_criteria['positive_markers'],
+                    conjunction_criteria['negative_markers'],
+                ])
+        ]))
+        parts = sorted(list(set(parts)))
+        parts.append(('study', self.study))
+        query = urlencode(parts)
+        phenotype_counts, _ = self._retrieve('cggnn-importance-composition', query)
+        return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
+
 
 class ExpectedQuantitativeValueError(ValueError):
     """
@@ -293,7 +318,13 @@ def handle_expected_actual(expected: float, actual: float | None):
     print(Colors.bold_green + padded + Colors.reset, end='')
 
 
-def univariate_pair_compare(list1, list2, expected_fold = None, do_log_fold: bool = False, show_pvalue = False):
+def univariate_pair_compare(
+        list1,
+        list2,
+        expected_fold=None,
+        do_log_fold: bool = False,
+        show_pvalue=False,
+):
     list1 = list(filter(lambda element: not isnan(element), list1.values))
     list2 = list(filter(lambda element: not isnan(element), list2.values))
 
@@ -302,7 +333,7 @@ def univariate_pair_compare(list1, list2, expected_fold = None, do_log_fold: boo
     actual = mean2 / mean1
     if expected_fold is not None:
         handle_expected_actual(expected_fold, actual)
-    print((mean2, mean1, actual), end = '')
+    print((mean2, mean1, actual), end='')
 
     if do_log_fold:
         _list1 = [log(e) for e in list(filter(lambda element: element != 0, list1))]
@@ -315,11 +346,14 @@ def univariate_pair_compare(list1, list2, expected_fold = None, do_log_fold: boo
     if show_pvalue:
         if do_log_fold:
             result = ttest_ind(_list1, _list2)
-            print('  p-value (after log): ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
+            print(
+                '  p-value (after log): ' + Colors.blue + str(result.pvalue) + Colors.reset, end=''
+            )
         else:
             result = ttest_ind(list1, list2)
             print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
 
     print('')
 
-
+def print_comparison() -> None:
+    pass

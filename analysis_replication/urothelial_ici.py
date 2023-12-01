@@ -25,6 +25,7 @@ def test(host):
 
     cd3lag3 = {'positive_markers': ['CD3', 'LAG3'], 'negative_markers': []}
     cd8ki67 = {'positive_markers': ['CD8', 'KI67'], 'negative_markers': []}
+    cd8ki67tumoral = {'positive_markers': ['CD8', 'KI67', 'intratumoral'], 'negative_markers': []}
     cd8pd1lag3 = {'positive_markers': ['CD8', 'PD1', 'LAG3'], 'negative_markers': []}
     cd3pd1lag3 = {'positive_markers': ['CD3', 'PD1', 'LAG3'], 'negative_markers': []}
     cd3pd1lag3stromal = {'positive_markers': ['CD3', 'PD1', 'LAG3', 'stromal'], 'negative_markers': []}
@@ -37,6 +38,12 @@ def test(host):
     fractions1 = fractions[df['cohort'] == '1']
     fractions3 = fractions[df['cohort'] == '3']
     compare(fractions1, fractions3, expected_fold=0.076, show_pvalue=True)
+
+    df = access.counts([cd8ki67tumoral, 'Tumor'])
+    fractions = df['CD8+ KI67+ intratumoral+'] / df['Tumor']
+    fractions1 = fractions[df['cohort'] == '1']
+    fractions3 = fractions[df['cohort'] == '3']
+    compare(fractions1, fractions3, expected_fold=0.1, show_pvalue=True)
 
     df = access.counts([cd8pd1lag3, tumoral])
     fractions = df['CD8+ PD1+ LAG3+ and intratumoral+'] / df['all cells']

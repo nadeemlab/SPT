@@ -1,9 +1,15 @@
-"""Data analysis script for one dataset."""
+"""Data analysis script for one the "Melanoma intralesional IL2" study."""
+
 import sys
+from pandas import DataFrame, Series
+
+from scipy.stats import fisher_exact
 
 from accessors import DataAccessor
 from accessors import get_default_host
 from accessors import univariate_pair_compare as compare
+from accessors import handle_expected_actual
+
 
 def test(host):
     study = 'Melanoma intralesional IL2'
@@ -50,7 +56,36 @@ def test(host):
     values3 = df[df['cohort'] == '3']['neighborhood enrichment, B cell and B cell']
     compare(values3, values1, expected_fold=80.45, do_log_fold=True)
 
-if __name__=='__main__':
+    for phenotype, expected_baseline, expected_percentage, expected_p in [
+        ('Adipocyte or Langerhans cell', 3.593e-2, 80, 6e-34),
+        ([{'positive_markers': ['S100B'], 'negative_markers': ['SOX10']}], 6.710e-2, 82, 2.783e-21)
+    ]:
+        result_df = DataFrame(columns=['odd ratio', 'p-value'])
+        result_df.index.name = 'specimen'
+        df = access.counts(phenotype)
+        df = df[df['cohort'].isin({'1', '3'})]
+        important_proportion = access.important(phenotype)
+        if (type(phenotype) is list):
+            phenotype = access.name_for_all_phenotypes(phenotype)
+        for specimen, row in df.iterrows():
+            n_cells_of_this_phenotype = row[phenotype][0]
+            n_cells_total = row['all cells']
+            p_important = important_proportion[specimen]
+            odd_ratio, p_value = fisher_exact([
+                [n_cells_of_this_phenotype, p_important],
+                [n_cells_total, 100],
+            ])
+            result_df.loc[specimen] = [odd_ratio, p_value]
+        print(f'\nBaseline presence of {phenotype}')
+        handle_expected_actual(expected_baseline, (df[phenotype].iloc[:, 0]/df['all cells']).mean())
+        print(f'\nPercentage of top 100 most important cells')
+        handle_expected_actual(expected_percentage, Series(important_proportion).mean())
+        print(f'\nLargest p-value from fisher exact test across all specimens')
+        handle_expected_actual(expected_p, result_df['p-value'].max())
+        print('')
+
+
+if __name__ == '__main__':
     host: str | None
     if len(sys.argv) == 2:
         host = sys.argv[1]

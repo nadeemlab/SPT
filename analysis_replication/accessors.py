@@ -259,13 +259,19 @@ class DataAccessor:
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
         conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
-        query = urlencode([
-            ('study', self.study),
-            ('positive_marker', conjunction_criteria['positive_markers']),
-            ('negative_marker', conjunction_criteria['negative_markers']),
-        ])
-        phenotype_counts = self._retrieve('cggnn-importance-composition', query)
-        return {c.specimen: c.percentage for c in phenotype_counts.counts}
+        parts = list(chain(*[
+            [(f'{keyword}_marker', channel) for channel in argument]
+            for keyword, argument in zip(
+                ['positive', 'negative'], [
+                    conjunction_criteria['positive_markers'],
+                    conjunction_criteria['negative_markers'],
+                ])
+        ]))
+        parts = sorted(list(set(parts)))
+        parts.append(('study', self.study))
+        query = urlencode(parts)
+        phenotype_counts, _ = self._retrieve('cggnn-importance-composition', query)
+        return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
 
 
 class ExpectedQuantitativeValueError(ValueError):

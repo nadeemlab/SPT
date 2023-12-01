@@ -1,6 +1,7 @@
 """Data analysis script for one the "Melanoma intralesional IL2" study."""
 
 import sys
+from pandas import DataFrame
 
 from scipy.stats import fisher_exact
 
@@ -60,24 +61,27 @@ def test(host):
         'CD68+MHCII- macrophage',
         'CD8+ T cell',
         'Other macrophage/monocyte CD4+',
-        ['Tumor', 'MHCI'],
+        # ['Tumor', 'MHCI'],
     ]
     for phenotype in notable_phenotypes:
         print(f'\n{phenotype}')
-        print('\tSpecimen\tOdd ratio\tP-value')
-        df = access.counts(phenotype).isin({'cohort': ['1', '3']}).set_index('sample')
+        result_df = DataFrame(columns=['odd ratio', 'p-value'])
+        result_df.index.name = 'specimen'
+        df = access.counts(phenotype)
+        df = df[df['cohort'].isin({'1', '3'})]
         important_proportion = access.important(phenotype)
         if type(phenotype) is list:
             phenotype = ' and '.join(phenotype)
         for specimen, row in df.iterrows():
-            n_cells_of_this_phenotype = row[phenotype]
+            n_cells_of_this_phenotype = row[phenotype][0]
             n_cells_total = row['all cells']
             p_important = important_proportion[specimen]
             odd_ratio, p_value = fisher_exact([
                 [n_cells_of_this_phenotype, p_important],
-                [n_cells_total, 1],
+                [n_cells_total, 100],
             ])
-            print(f'\t{specimen}\t{odd_ratio}\t{p_value}')
+            result_df.loc[specimen] = [odd_ratio, p_value]
+        print(result_df)
 
 
 if __name__ == '__main__':

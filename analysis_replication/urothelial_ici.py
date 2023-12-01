@@ -30,7 +30,9 @@ def test(host):
     cd8pd1lag3 = {'positive_markers': ['CD8', 'PD1', 'LAG3'], 'negative_markers': []}
     cd3pd1lag3 = {'positive_markers': ['CD3', 'PD1', 'LAG3'], 'negative_markers': []}
     cd3pd1lag3stromal = {'positive_markers': ['CD3', 'PD1', 'LAG3', 'stromal'], 'negative_markers': []}
+    cd8pd1lag3stromal = {'positive_markers': ['CD8', 'PD1', 'LAG3', 'stromal'], 'negative_markers': []}
     cd3stromal = {'positive_markers': ['CD3', 'stromal'], 'negative_markers': []}
+    cd8stromal = {'positive_markers': ['CD8', 'stromal'], 'negative_markers': []}
     tumor = {'positive_markers': ['PanCK-SOX10'], 'negative_markers': []}
     tumoral = {'positive_markers': ['intratumoral'], 'negative_markers': []}
     stromal = {'positive_markers': ['stromal'], 'negative_markers': []}
@@ -82,6 +84,12 @@ def test(host):
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
     compare(fractions2, fractions1, expected_fold=2.921, show_pvalue=True)
+
+    # df = access.counts([cd8pd1lag3stromal, cd8stromal])
+    # fractions = df['CD8+ PD1+ LAG3+ stromal+'] / df['CD8+ stromal+']
+    # fractions1 = fractions[df['cohort'] == '1']
+    # fractions2 = fractions[df['cohort'] == '2']
+    # compare(fractions2, fractions1, expected_fold=1.4999, show_pvalue=True)
 
 if __name__=='__main__':
     host: str | None

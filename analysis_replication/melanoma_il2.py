@@ -1,9 +1,13 @@
-"""Data analysis script for one dataset."""
+"""Data analysis script for one the "Melanoma intralesional IL2" study."""
+
 import sys
+
+from scipy.stats import fisher_exact
 
 from accessors import DataAccessor
 from accessors import get_default_host
 from accessors import univariate_pair_compare as compare
+
 
 def test(host):
     study = 'Melanoma intralesional IL2'
@@ -50,7 +54,33 @@ def test(host):
     values3 = df[df['cohort'] == '3']['neighborhood enrichment, B cell and B cell']
     compare(values3, values1, expected_fold=80.45, do_log_fold=True)
 
-if __name__=='__main__':
+    notable_phenotypes = [
+        'Adipocyte or Langerhans cell',
+        'CD4+ T cell',
+        'CD68+MHCII- macrophage',
+        'CD8+ T cell',
+        'Other macrophage/monocyte CD4+',
+        ['Tumor', 'MHCI'],
+    ]
+    for phenotype in notable_phenotypes:
+        print(f'\n{phenotype}')
+        print('\tSpecimen\tOdd ratio\tP-value')
+        df = access.counts(phenotype).isin({'cohort': ['1', '3']}).set_index('sample')
+        important_proportion = access.important(phenotype)
+        if type(phenotype) is list:
+            phenotype = ' and '.join(phenotype)
+        for specimen, row in df.iterrows():
+            n_cells_of_this_phenotype = row[phenotype]
+            n_cells_total = row['all cells']
+            p_important = important_proportion[specimen]
+            odd_ratio, p_value = fisher_exact([
+                [n_cells_of_this_phenotype, p_important],
+                [n_cells_total, 1],
+            ])
+            print(f'\t{specimen}\t{odd_ratio}\t{p_value}')
+
+
+if __name__ == '__main__':
     host: str | None
     if len(sys.argv) == 2:
         host = sys.argv[1]

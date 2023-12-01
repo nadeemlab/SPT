@@ -37,6 +37,10 @@ from spatialprofilingtoolbox.cggnn.util.constants import (
     SETS_type,
 )
 
+# Set the minimum threshold for creating an ROI from a "small" slide to be if the slide is at least
+# 10% of the size of the desired ROI size.
+MIN_THRESHOLD_TO_CREATE_ROI = 0.1
+
 
 def generate_graphs(
     df_cell: DataFrame,
@@ -333,7 +337,10 @@ def create_graphs_from_specimen(
     # Create as many ROIs such that the total area of the ROIs will equal the area of the source
     # image times the proportion of cells on that image that have the target phenotype
     slide_area = prod(df[['pixel x', 'pixel y']].max() - df[['pixel x', 'pixel y']].min())
-    n_rois = rint(proportion_of_target * slide_area / roi_area)
+    rois_in_slide = proportion_of_target * slide_area / roi_area
+    n_rois: int = rint(rois_in_slide)
+    if (n_rois == 0) and (rois_in_slide > MIN_THRESHOLD_TO_CREATE_ROI):
+        n_rois = 1
     while (len(bounding_boxes) < n_rois) and (df_target.shape[0] > 0):
         # Find the cell with the most target cells in its vicinity
         tree = KDTree(df_target[['pixel x', 'pixel y']].values)

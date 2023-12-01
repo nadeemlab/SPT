@@ -10,6 +10,7 @@ def test(host):
     access = DataAccessor(study, host=host)
 
     cd3tumoral = {'positive_markers': ['CD3', 'intratumoral'], 'negative_markers': []}
+    cd4tumoral = {'positive_markers': ['CD4', 'intratumoral'], 'negative_markers': []}
     lag3 = {'positive_markers': ['LAG3'], 'negative_markers': []}
     df = access.counts([cd3tumoral, lag3])
 
@@ -54,6 +55,18 @@ def test(host):
     fractions1 = fractions[df['cohort'] == '1']
     fractions2 = fractions[df['cohort'] == '2']
     compare(fractions2, fractions1, expected_fold=3.113, show_pvalue=True)
+
+    # df = access.counts([cd4tumoral, tumor])
+    # fractions = df['CD4+ intratumoral+'] / df['PanCK-SOX10+']
+    # fractions1 = fractions[df['cohort'] == '1']
+    # fractions2 = fractions[df['cohort'] == '2']
+    # compare(fractions2, fractions1, expected_fold=1.336, show_pvalue=True)
+
+    df = access.counts([cd3tumoral, tumor])
+    fractions = df['CD3+ intratumoral+'] / df['PanCK-SOX10+']
+    fractions1 = fractions[df['cohort'] == '1']
+    fractions2 = fractions[df['cohort'] == '2']
+    compare(fractions2, fractions1, expected_fold=2.718, show_pvalue=True)
 
     df = access.counts([cd8pd1lag3, tumoral])
     fractions = df['CD8+ PD1+ LAG3+ and intratumoral+'] / df['all cells']

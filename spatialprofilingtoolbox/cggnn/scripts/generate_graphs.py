@@ -59,7 +59,7 @@ def parse_arguments():
         required=False
     )
     parser.add_argument(
-        '--cells_per_slide_target',
+        '--cells_per_roi_target',
         type=int,
         help='Used with the median cell density across all slides to determine the ROI size.',
         default=5_000,
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         use_channels=not args.disable_channels,
         use_phenotypes=not args.disable_phenotypes,
         roi_side_length=args.roi_side_length,
-        cells_per_slide_target=args.cells_per_slide_target,
+        cells_per_roi_target=args.cells_per_roi_target,
         target_name=args.target_name,
         output_directory=args.output_directory,
         random_seed=args.random_seed,

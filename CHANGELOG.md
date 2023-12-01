@@ -1,3 +1,6 @@
+# v0.17.2
+Add support for small specimens (small cell set) in GNN workflow.
+
 # v0.17.1
 Add KDTree optimization to GNN ROI creation.
 

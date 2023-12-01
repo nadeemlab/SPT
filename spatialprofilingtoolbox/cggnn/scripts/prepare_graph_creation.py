@@ -66,7 +66,7 @@ Intended to be used with parallel calls to create-specimen-graphs, followed by f
         required=False
     )
     parser.add_argument(
-        '--cells_per_slide_target',
+        '--cells_per_roi_target',
         type=int,
         help='Used with the median cell density across all slides to determine the ROI size.',
         default=5_000,
@@ -118,7 +118,7 @@ if __name__ == "__main__":
             not args.disable_channels,
             not args.disable_phenotypes,
             args.roi_side_length,
-            args.cells_per_slide_target,
+            args.cells_per_roi_target,
             specimens_directory,
             args.random_seed,
         )

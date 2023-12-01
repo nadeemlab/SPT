@@ -27,14 +27,10 @@ def test(host):
     cd8ki67 = {'positive_markers': ['CD8', 'KI67'], 'negative_markers': []}
     cd8pd1lag3 = {'positive_markers': ['CD8', 'PD1', 'LAG3'], 'negative_markers': []}
     cd3pd1lag3 = {'positive_markers': ['CD3', 'PD1', 'LAG3'], 'negative_markers': []}
+    cd3pd1lag3stromal = {'positive_markers': ['CD3', 'PD1', 'LAG3', 'stromal'], 'negative_markers': []}
+    cd3stromal = {'positive_markers': ['CD3', 'stromal'], 'negative_markers': []}
     tumoral = {'positive_markers': ['intratumoral'], 'negative_markers': []}
     stromal = {'positive_markers': ['stromal'], 'negative_markers': []}
-
-    # df = access.counts([cd3lag3, tumoral])
-    # fractions = df['CD3+ LAG3+ and intratumoral+'] / df['all cells']
-    # fractions1 = fractions[df['cohort'] == '1']
-    # fractions3 = fractions[df['cohort'] == '3']
-    # compare(fractions1, fractions3, expected_fold=1.0, show_pvalue=True)
 
     df = access.counts([cd8ki67, tumoral])
     fractions = df['CD8+ KI67+ and intratumoral+'] / df['all cells']
@@ -46,25 +42,31 @@ def test(host):
     fractions = df['CD8+ PD1+ LAG3+ and intratumoral+'] / df['all cells']
     fractions1 = fractions[df['cohort'] == '1']
     fractions3 = fractions[df['cohort'] == '3']
-    compare(fractions1, fractions3, expected_fold=1.0, show_pvalue=True)
+    compare(fractions1, fractions3, expected_fold=0.061, show_pvalue=True)
 
     df = access.counts([cd8pd1lag3, stromal])
     fractions = df['CD8+ PD1+ LAG3+ and stromal+'] / df['all cells']
     fractions1 = fractions[df['cohort'] == '1']
     fractions3 = fractions[df['cohort'] == '3']
-    compare(fractions1, fractions3, expected_fold=1.0, show_pvalue=True)
+    compare(fractions1, fractions3, expected_fold=0.074, show_pvalue=True)
 
     df = access.counts([cd3pd1lag3, tumoral])
     fractions = df['CD3+ PD1+ LAG3+ and intratumoral+'] / df['all cells']
     fractions1 = fractions[df['cohort'] == '1']
     fractions3 = fractions[df['cohort'] == '3']
-    compare(fractions1, fractions3, expected_fold=1.0, show_pvalue=True)
+    compare(fractions1, fractions3, expected_fold=0.063, show_pvalue=True)
 
     df = access.counts([cd3pd1lag3, stromal])
     fractions = df['CD3+ PD1+ LAG3+ and stromal+'] / df['all cells']
     fractions1 = fractions[df['cohort'] == '1']
     fractions3 = fractions[df['cohort'] == '3']
-    compare(fractions1, fractions3, expected_fold=1.0, show_pvalue=True)
+    compare(fractions1, fractions3, expected_fold=0.081, show_pvalue=True)
+
+    df = access.counts([cd3pd1lag3stromal, cd3stromal])
+    fractions = df['CD3+ PD1+ LAG3+ stromal+'] / df['CD3+ stromal+']
+    fractions1 = fractions[df['cohort'] == '1']
+    fractions3 = fractions[df['cohort'] == '3']
+    compare(fractions1, fractions3, expected_fold=0.144, show_pvalue=True)
 
 if __name__=='__main__':
     host: str | None

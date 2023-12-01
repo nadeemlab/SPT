@@ -19,3 +19,4 @@ substituting the argument with the address of your local API server. (See *Setti
 
 - These scripts just call the web API, and so they do not require Python package `spatialprofilingtoolbox`.
 - You can alternatively store the API host in `api_host.txt` and omit the command-line argument above.
+- The run result is here in [results.txt](results.txt).

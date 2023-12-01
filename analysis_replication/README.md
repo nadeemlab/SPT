@@ -1,7 +1,9 @@
 
 # Reproducible analyses
 
-The scripts in this directory reproduce the analyses of the curated datasets. They were written as a record of usage of the dashboard web application, which provides the same results.
+The scripts in this directory reproduce the analyses of the curated datasets, in the order they are mentioned in the article.
+
+These scripts were written as a record of usage of the dashboard web application, which provides the same results.
 
 You can run them on the public demo API:
 

@@ -69,7 +69,7 @@ class DataAccessor:
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
         conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
-        all_name = ' and '.join([self._name_phenotype(p) for p in phenotype_names])
+        all_name = self.name_for_all_phenotypes(phenotype_names)
         conjunction_counts_series = self._get_counts_series(conjunction_criteria, all_name)
         individual_counts_series = [
             self._get_counts_series(self._phenotype_criteria(name), self._name_phenotype(name))
@@ -81,6 +81,9 @@ class DataAccessor:
         )
         df.replace([inf, -inf], nan, inplace=True)
         return df
+    
+    def name_for_all_phenotypes(self, phenotype_names):
+        return ' and '.join([self._name_phenotype(p) for p in phenotype_names])
 
     def neighborhood_enrichment(self, phenotype_names):
         feature_class = 'neighborhood enrichment'
@@ -351,3 +354,6 @@ def univariate_pair_compare(
             print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
 
     print('')
+
+def print_comparison() -> None:
+    pass

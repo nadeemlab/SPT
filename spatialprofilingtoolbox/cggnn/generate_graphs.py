@@ -41,6 +41,10 @@ from spatialprofilingtoolbox.cggnn.util.constants import (
 # 10% of the size of the desired ROI size.
 MIN_THRESHOLD_TO_CREATE_ROI = 0.1
 
+# Set the factor for a specimen to be considered "big" relative to the median number of ROIs
+# generated per specimen, e.g., if a study has both whole slide images and tissue microarrays.
+BIG_SPECIMEN_FACTOR = 10
+
 
 def generate_graphs(
     df_cell: DataFrame,
@@ -449,7 +453,11 @@ def finalize_graph_metadata(
     features_to_use: list[str] | None,
     output_directory: str | None = None,
 ) -> list[GraphData]:
-    """Split into train/validation/test sets and associate other metadata with the graphs."""
+    """Split into train/validation/test sets and associate other metadata with the graphs.
+
+    If there's a mix of whole slide images (WSIs) and tissue microarrays (TMAs), this method
+    allocates WSIs first, identified by how many ROIs are created from each image.
+    """
     graphs_by_label_and_specimen = _split_graphs_by_label_and_specimen(graphs_by_specimen, df_label)
     specimen_to_set = _split_rois(graphs_by_label_and_specimen, p_validation, p_test)
     graphs_data = _assemble_graph_data(
@@ -494,13 +502,30 @@ def _split_rois(
                 specimen_to_set[specimen] = None
             continue
 
-        # Stuff
+        # Check if there are any graphs for this class
         n_graphs = sum(len(l) for l in graphs_by_specimen.values())
         if n_graphs == 0:
             warn(f'Class {label} doesn\'t have any examples.')
             continue
-        specimens = list(graphs_by_specimen.keys())
-        shuffle(specimens)
+
+        # Shuffle the specimen order, but give large specimens priority
+        specimens_with_counts = [
+            (specimen, len(graphs)) for specimen, graphs in graphs_by_specimen.items()
+        ]
+        shuffle(specimens_with_counts)
+        median_count = median([count for _, count in specimens_with_counts])
+        big_threshold = BIG_SPECIMEN_FACTOR * median_count
+        specimens_with_many_graphs: list[str] = []
+        rest_of_specimens: list[str] = []
+        for specimen, count in specimens_with_counts:
+            if count >= big_threshold:
+                warn(f'Large specimen detected. {specimen} has {count/median_count:.2g}x more ROIs '
+                     f'({count}) than the median specimen ({median_count}). Prioritizing its '
+                     'allocation.')
+                specimens_with_many_graphs.append(specimen)
+            else:
+                rest_of_specimens.append(specimen)
+        specimens = specimens_with_many_graphs + rest_of_specimens
 
         # If there's at least one specimen of this class, add it to the training set.
         specimen = specimens[0]

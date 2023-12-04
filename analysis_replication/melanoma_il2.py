@@ -49,6 +49,29 @@ def test(host):
     values3 = df[df['cohort'] == '3']['proximity, B cell and B cell']
     compare(values1, values3, expected_fold=3.59)
 
+    # Some not-so-statistically significant results
+    s100b = 'Adipocyte or Langerhans cell'
+    df = access.counts([s100b, 'B cell'])
+    fractions = df[s100b] / df['all cells']
+    fractions1 = fractions[df['cohort'] == '1']
+    fractions3 = fractions[df['cohort'] == '3']
+    compare(fractions1, fractions3, expected_fold=0.226, show_pvalue=True)
+
+    df = access.spatial_autocorrelation(s100b)
+    values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']
+    values3 = df[df['cohort'] == '3'][f'spatial autocorrelation, {s100b}']
+    compare(values1, values3, expected_fold=0.109, show_pvalue=True)
+
+    df = access.proximity([s100b, s100b])
+    values1 = df[df['cohort'] == '1'][f'proximity, {s100b} and {s100b}']
+    values3 = df[df['cohort'] == '3'][f'proximity, {s100b} and {s100b}']
+    compare(values1, values3, expected_fold=0.146, show_pvalue=True)
+
+    df = access.neighborhood_enrichment([s100b, s100b])
+    values1 = df[df['cohort'] == '1'][f'neighborhood enrichment, {s100b} and {s100b}']
+    values3 = df[df['cohort'] == '3'][f'neighborhood enrichment, {s100b} and {s100b}']
+    compare(values3, values1, expected_fold=14.9, show_pvalue=True, do_log_fold=True)
+
     # The average value of the neighborhood enrichment score for phenotype(s) B cells is 80.45 times
     # higher in cohort 1 than in cohort 3.
     df = access.neighborhood_enrichment(['B cell', 'B cell'])

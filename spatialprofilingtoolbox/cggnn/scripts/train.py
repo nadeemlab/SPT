@@ -7,7 +7,7 @@ from typing import Dict, List, DefaultDict
 from dgl import DGLGraph  # type: ignore
 from spatialprofilingtoolbox.cggnn.util import load_cell_graphs, save_cell_graphs
 
-from spatialprofilingtoolbox.cggnn.histocartography import train, calculate_importance, \
+from spatialprofilingtoolbox.cggnn.models.cg_gnn.cggnn import train, calculate_importance, \
     unify_importance_across, save_importances
 
 

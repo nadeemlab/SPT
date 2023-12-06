@@ -4,8 +4,8 @@ from argparse import ArgumentParser
 
 from spatialprofilingtoolbox.cggnn.util import load_cell_graphs, load_label_to_result
 
-from spatialprofilingtoolbox.cggnn.histocartography import calculate_separability
-from spatialprofilingtoolbox.cggnn.histocartography.util import instantiate_model
+from spatialprofilingtoolbox.cggnn.models.cg_gnn.cggnn import calculate_separability
+from spatialprofilingtoolbox.cggnn.models.cg_gnn.cggnn.util import instantiate_model
 
 
 def parse_arguments():

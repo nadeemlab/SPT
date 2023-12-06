@@ -1,0 +1,3 @@
+[submodule "spatialprofilingtoolbox/cggnn/cg_gnn"]
+	path = spatialprofilingtoolbox/cggnn/cg_gnn
+	url = git@github.com:CarlinLiao/cg-gnn.git

@@ -17,6 +17,7 @@ from numpy import isnan
 from numpy import mean
 from numpy import log
 from scipy.stats import ttest_ind  # type: ignore
+from sklearn.metrics import auc
 
 
 def get_default_host(given: str | None) -> str | None:
@@ -318,6 +319,25 @@ def handle_expected_actual(expected: float, actual: float | None):
     print(Colors.bold_green + padded + Colors.reset, end='')
 
 
+def compute_auc(list1: list[float], list2: list[float]) -> float:
+    pairs = [(value, 0) for value in list1] + [(value, 1) for value in list2]
+    pairs.sort(key=lambda pair: pair[0])
+    total_labelled = sum([pair[1] for pair in pairs])
+    total_unlabelled = len(pairs) - total_labelled
+    graph_points = [(0, 1)]
+    true_positives = 0
+    true_negatives = total_unlabelled
+    for _, label in pairs:
+        if label == 1:
+            true_positives = true_positives + 1
+        else:
+            true_negatives = true_negatives - 1
+        graph_points.append([true_positives / total_labelled, true_negatives / total_unlabelled])
+    _auc = auc([p[0] for p in graph_points], [p[1] for p in graph_points])
+    _auc = max(_auc, 1 - _auc)
+    return _auc
+
+
 def univariate_pair_compare(
         list1,
         list2,
@@ -353,7 +373,8 @@ def univariate_pair_compare(
             result = ttest_ind(list1, list2)
             print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
 
+        _auc = compute_auc(list1, list2)
+        print('  AUC: ' + Colors.blue + str(_auc) + Colors.reset, end='')
+
     print('')
 
-def print_comparison() -> None:
-    pass

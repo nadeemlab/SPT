@@ -17,7 +17,7 @@ from numpy import isnan
 from numpy import mean
 from numpy import log
 from scipy.stats import ttest_ind  # type: ignore
-from sklearn.metrics import auc
+from sklearn.metrics import auc  # type:ignore
 
 
 def get_default_host(given: str | None) -> str | None:
@@ -380,3 +380,19 @@ def univariate_pair_compare(
 
     print('')
 
+
+def get_fractions(df, column_numerator, column_denominator, cohort1, cohort2, omit_zeros=True):
+    fractions = df[column_numerator] / df[column_denominator]
+    if omit_zeros:
+        mask = ~ ( (df[column_numerator] == 0) | (df[column_denominator] == 0) )
+        total1 = sum((df['cohort'] == cohort1))
+        omit1 = total1 - sum((df['cohort'] == cohort1) & mask)
+        total2 = sum((df['cohort'] == cohort2))
+        omit2 = total2 - sum((df['cohort'] == cohort2) & mask)
+        if omit1 !=0 or omit2 !=0:
+            print(f'(Omitting {omit1}/{total1} from {cohort1} and {omit2}/{total2} from {cohort2}.)')
+    else:
+        mask = True
+    fractions1 = fractions[(df['cohort'] == cohort1) & mask]
+    fractions2 = fractions[(df['cohort'] == cohort2) & mask]
+    return fractions1, fractions2

@@ -346,8 +346,8 @@ def univariate_pair_compare(
     show_pvalue=False,
     show_auc=False,
 ):
-    list1 = list(filter(lambda element: not isnan(element), list1.values))
-    list2 = list(filter(lambda element: not isnan(element), list2.values))
+    list1 = list(filter(lambda element: not isnan(element) and not element==inf, list1.values))
+    list2 = list(filter(lambda element: not isnan(element) and not element==inf, list2.values))
 
     mean1 = float(mean(list1))
     mean2 = float(mean(list2))

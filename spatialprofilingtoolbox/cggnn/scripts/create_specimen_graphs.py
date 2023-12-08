@@ -63,8 +63,9 @@ if __name__ == "__main__":
         target_name=target_name,
         random_seed=random_seed,
     )
-    makedirs(args.output_directory, exist_ok=True)
-    save_graphs(join(
-        args.output_directory,
-        f'{splitext(basename(args.specimen_hdf_path))[0]}.bin',
-    ), graphs)
+    if len(graphs) > 0:
+        makedirs(args.output_directory, exist_ok=True)
+        save_graphs(join(
+            args.output_directory,
+            f'{splitext(basename(args.specimen_hdf_path))[0]}.bin',
+        ), graphs)

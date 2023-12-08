@@ -37,6 +37,9 @@ from spatialprofilingtoolbox.cggnn.util.constants import (
     SETS_type,
 )
 
+MIN_THRESHOLD_TO_CREATE_ROI = 0.1
+BIG_SPECIMEN_FACTOR = 10
+
 
 def generate_graphs(
     df_cell: DataFrame,
@@ -46,7 +49,7 @@ def generate_graphs(
     use_channels: bool = True,
     use_phenotypes: bool = True,
     roi_side_length: int | None = None,
-    cells_per_slide_target: int | None = 10_000,
+    cells_per_roi_target: int | None = 10_000,
     max_cells_to_consider: int = 100_000,
     target_name: str | None = None,
     output_directory: str | None = None,
@@ -81,10 +84,10 @@ def generate_graphs(
         Whether to include channel or phenotype features (columns in df_cell beginning with 'C ' and
         'P ', respectively) in the graph.
     roi_side_length: int | None = None
-    cells_per_slide_target: int | None = 10_000
+    cells_per_roi_target: int | None = 10_000
         One of these must be provided in order to determine the ROI size. roi_side_length specifies
         how long to make the side length of each square ROI, in pixels. If this isn't provided, the
-        median cell density across all slides is used with cells_per_slide_target to determine the
+        median cell density across all slides is used with cells_per_roi_target to determine the
         square ROI sizing.
     max_cells_to_consider: int = 100_000
         The maximum number of cells to consider when placing ROI bounds. All cells within each
@@ -128,7 +131,7 @@ def generate_graphs(
             use_channels,
             use_phenotypes,
             roi_side_length,
-            cells_per_slide_target,
+            cells_per_roi_target,
             output_directory,
             random_seed,
         )
@@ -170,7 +173,7 @@ def prepare_graph_generation_by_specimen(
     use_channels: bool = True,
     use_phenotypes: bool = True,
     roi_side_length: int | None = None,
-    cells_per_slide_target: int | None = 5_000,
+    cells_per_roi_target: int | None = 5_000,
     output_directory: str | None = None,
     random_seed: int | None = None,
 ) -> tuple[
@@ -181,7 +184,7 @@ def prepare_graph_generation_by_specimen(
     list[str],
     DataFrameGroupBy,
 ]:
-    """Prepare for graph generation by splitting the data by specimen and determining the ROI size."""
+    """Prepare for graph generation by splitting the data by specimen and determining ROI size."""
     p_validation, p_test, roi_size = validate_inputs(
         df_label,
         validation_data_percent,
@@ -194,13 +197,12 @@ def prepare_graph_generation_by_specimen(
     if random_seed is not None:
         set_seeds(random_seed)
 
-    # Ensure output directory is created and check if graphs have already been generated
     if output_directory is not None:
         makedirs(output_directory, exist_ok=True)
 
     grouped, roi_size, roi_area, features_to_use = _group_by_specimen(
         df_cell,
-        cells_per_slide_target,
+        cells_per_roi_target,
         roi_size,
         use_channels,
         use_phenotypes,
@@ -243,7 +245,7 @@ def validate_inputs(
 
 def _group_by_specimen(
     df_cell: DataFrame,
-    cells_per_slide_target: int | None = 5_000,
+    cells_per_roi_target: int | None = 5_000,
     roi_size: tuple[int, int] | None = None,
     use_channels: bool = True,
     use_phenotypes: bool = True,
@@ -251,7 +253,7 @@ def _group_by_specimen(
     df_cell, features_to_use = _prepare_df_cell(df_cell, use_channels, use_phenotypes)
     grouped, roi_size, roi_area = _split_df_by_specimen(
         df_cell,
-        cells_per_slide_target,
+        cells_per_roi_target,
         roi_size,
     )
     return grouped, roi_size, roi_area, features_to_use
@@ -280,7 +282,7 @@ def _prepare_df_cell(
 
 def _split_df_by_specimen(
     df_cell: DataFrame,
-    cells_per_slide_target: int | None = 5_000,
+    cells_per_roi_target: int | None = 5_000,
     roi_size: tuple[int, int] | None = None,
 ) -> tuple[
     DataFrameGroupBy,
@@ -291,8 +293,8 @@ def _split_df_by_specimen(
     grouped = df_cell.groupby('specimen')
     if roi_size is not None:
         roi_area = prod(roi_size)
-    elif cells_per_slide_target is not None:
-        roi_area: float = cells_per_slide_target / median([
+    elif cells_per_roi_target is not None:
+        roi_area: float = cells_per_roi_target / median([
             (df_specimen.shape[0] / prod(
                 df_specimen[['pixel x', 'pixel y']].max() -
                 df_specimen[['pixel x', 'pixel y']].min()
@@ -300,7 +302,7 @@ def _split_df_by_specimen(
         ])
         roi_size = (rint(roi_area**0.5), rint(roi_area**0.5))
     else:
-        raise ValueError('Must specify either roi_size or cells_per_slide_target.')
+        raise ValueError('Must specify either roi_size or cells_per_roi_target.')
     return grouped, roi_size, roi_area
 
 
@@ -319,8 +321,23 @@ def create_graphs_from_specimen(
     if random_seed is not None:
         set_seeds(random_seed)
 
-    # Initialize data structures
-    bounding_boxes: list[tuple[int, int, int, int]] = []
+    proportion_of_target, df_target = _assemble_target_df(df, target_name, max_cells_to_consider)
+    bounding_boxes = _create_roi_bounding_boxes(
+        df,
+        roi_area,
+        proportion_of_target,
+        df_target,
+        roi_size,
+        n_neighbors,
+    )
+    return _create_graphs(df, features_to_use, bounding_boxes, n_neighbors, threshold)
+
+
+def _assemble_target_df(
+    df: DataFrame,
+    target_name: str | None,
+    max_cells_to_consider: int,
+) -> tuple[float, DataFrame]:
     if target_name is not None:
         proportion_of_target = df[target_name].sum()/df.shape[0]
         df_target = df.loc[df[target_name], :]
@@ -329,40 +346,94 @@ def create_graphs_from_specimen(
         df_target = df
     if df_target.shape[0] > max_cells_to_consider:
         df_target = df_target.sample(max_cells_to_consider)
+    return proportion_of_target, df_target
 
-    # Create as many ROIs such that the total area of the ROIs will equal the area of the source
-    # image times the proportion of cells on that image that have the target phenotype
+
+def _create_roi_bounding_boxes(
+    df: DataFrame,
+    roi_area: float,
+    proportion_of_target: float,
+    df_target: DataFrame,
+    roi_size: tuple[int, int],
+    n_neighbors: int,
+) -> list[tuple[int, int, int, int]]:
+    """Create ROIs based on the proportion of cells on the source have the target phenotype.
+
+    The total area of the ROIs will approximately equal the area of the source image times the
+    proportion of cells on that image that have the target phenotype.
+    """
+    bounding_boxes: list[tuple[int, int, int, int]] = []
     slide_area = prod(df[['pixel x', 'pixel y']].max() - df[['pixel x', 'pixel y']].min())
-    n_rois = rint(proportion_of_target * slide_area / roi_area)
+    rois_in_slide = proportion_of_target * slide_area / roi_area
+    n_rois: int = rint(rois_in_slide)
+    if (n_rois == 0) and (rois_in_slide > MIN_THRESHOLD_TO_CREATE_ROI):
+        n_rois = 1
     while (len(bounding_boxes) < n_rois) and (df_target.shape[0] > 0):
-        # Find the cell with the most target cells in its vicinity
-        tree = KDTree(df_target[['pixel x', 'pixel y']].values)
-        counts = tree.query_radius(
-            df_target[['pixel x', 'pixel y']].values,
-            r=roi_size[0]//2,
-            count_only=True,
-        )
-        x, y = df_target.iloc[argmax(counts), :][['pixel x', 'pixel y']].values
-
-        # Add a bounding box around the cell
-        x_min = x - roi_size[0]//2
-        x_max = x + roi_size[0]//2
-        y_min = y - roi_size[1]//2
-        y_max = y + roi_size[1]//2
-
-        # Check that this bounding box contains enough cells to do nearest neighbors on
-        if (df['pixel x'].between(x_min, x_max) & df['pixel y'].between(y_min, y_max)).sum() \
-                < n_neighbors + 1:
-            # If not, terminate the ROI creation process early
+        x, y = _find_cell_with_most_targets_nearby(df_target, roi_size)
+        x_min, x_max, y_min, y_max = _bounding_box_around(x, y, roi_size)
+        if _not_enough_cells(df, x_min, x_max, y_min, y_max, n_neighbors):
             break
         bounding_boxes.append((x_min, x_max, y_min, y_max))
+        df_target = _remove_cells_in_bounding_box(df_target, x_min, x_max, y_min, y_max)
+    return bounding_boxes
 
-        # Remove the cells in the bounding box from the KD-tree
-        df_target = df_target.loc[~(
-            df_target['pixel x'].between(x_min, x_max) & df_target['pixel y'].between(y_min, y_max)
-        ), :]
 
-    # Create features, centroid, and label arrays and then the graph
+def _find_cell_with_most_targets_nearby(
+    df_target: DataFrame,
+    roi_size: tuple[int, int],
+) -> tuple[int, int]:
+    tree = KDTree(df_target[['pixel x', 'pixel y']].values)
+    counts = tree.query_radius(
+        df_target[['pixel x', 'pixel y']].values,
+        r=roi_size[0]//2,
+        count_only=True,
+    )
+    x, y = df_target.iloc[argmax(counts), :][['pixel x', 'pixel y']].values
+    return x, y
+
+
+def _bounding_box_around(x: int, y: int, roi_size: tuple[int, int]) -> tuple[int, int, int, int]:
+    x_min = x - roi_size[0]//2
+    x_max = x + roi_size[0]//2
+    y_min = y - roi_size[1]//2
+    y_max = y + roi_size[1]//2
+    return x_min, x_max, y_min, y_max
+
+
+def _not_enough_cells(
+    df: DataFrame,
+    x_min: int,
+    x_max: int,
+    y_min: int,
+    y_max: int,
+    n_neighbors: int,
+) -> bool:
+    """Check if the bounding box contains enough cells to perform nearest neighbors on."""
+    return (df['pixel x'].between(x_min, x_max) & df['pixel y'].between(y_min, y_max)).sum() < \
+        n_neighbors + 1
+
+
+def _remove_cells_in_bounding_box(
+    df_target: DataFrame,
+    x_min: int,
+    x_max: int,
+    y_min: int,
+    y_max: int,
+) -> DataFrame:
+    """Remove the cells in the bounding box from the eligible target DataFrame."""
+    return df_target.loc[~(
+        df_target['pixel x'].between(x_min, x_max) & df_target['pixel y'].between(y_min, y_max)
+    ), :]
+
+
+def _create_graphs(
+    df: DataFrame,
+    features_to_use: list[str],
+    bounding_boxes: list[tuple[int, int, int, int]],
+    n_neighbors: int,
+    threshold: int | None,
+) -> list[DGLGraph]:
+    """Create features, centroid, and label arrays and then the graph."""
     graphs: list[DGLGraph] = []
     for (x_min, x_max, y_min, y_max) in bounding_boxes:
         df_roi: DataFrame = df.loc[
@@ -402,10 +473,11 @@ def _create_graph(
         Number of neighbors. Defaults to 5.
     threshold: int | None
         Maximum allowed distance between 2 nodes. Defaults to None (no thresholding).
-    Returns:
-        DGLGraph: The constructed graph
+
+    Returns
+    -------
+    DGLGraph: The constructed graph
     """
-    # add nodes
     num_nodes = features.shape[0]
     graph_instance = graph([])
     graph_instance.add_nodes(num_nodes)
@@ -413,8 +485,6 @@ def _create_graph(
     graph_instance.ndata[CENTROIDS] = FloatTensor(centroids)
     graph_instance.ndata[FEATURES] = FloatTensor(features)
     # Note: channels and phenotypes are binary variables, but DGL only supports FloatTensors
-
-    # build kNN adjacency
     adj = kneighbors_graph(
         centroids,
         n_neighbors,
@@ -422,14 +492,10 @@ def _create_graph(
         include_self=False,
         metric="euclidean",
     ).toarray()
-
-    # filter edges that are too far (i.e., larger than the threshold)
     if threshold is not None:
         adj[adj > threshold] = 0
-
     edge_list = nonzero(adj)
     graph_instance.add_edges(list(edge_list[0]), list(edge_list[1]))
-
     return graph_instance
 
 
@@ -442,7 +508,11 @@ def finalize_graph_metadata(
     features_to_use: list[str] | None,
     output_directory: str | None = None,
 ) -> list[GraphData]:
-    """Split into train/validation/test sets and associate other metadata with the graphs."""
+    """Split into train/validation/test sets and associate other metadata with the graphs.
+
+    If there's a mix of whole slide images (WSIs) and tissue microarrays (TMAs), this method
+    allocates WSIs first, identified by how many ROIs are created from each image.
+    """
     graphs_by_label_and_specimen = _split_graphs_by_label_and_specimen(graphs_by_specimen, df_label)
     specimen_to_set = _split_rois(graphs_by_label_and_specimen, p_validation, p_test)
     graphs_data = _assemble_graph_data(
@@ -477,95 +547,174 @@ def _split_rois(
     """Randomly allocate graphs to train, validation, and test sets."""
     p_train = 1 - p_validation - p_test
     specimen_to_set: dict[str, SETS_type | None] = {}
-
-    # Shuffle the order of the specimens in each class and divvy them up.
     for label, graphs_by_specimen in graphs_by_label_and_specimen.items():
-
-        # Separate out unlabeled specimens
         if label is None:
             for specimen in graphs_by_specimen:
                 specimen_to_set[specimen] = None
             continue
-
-        # Stuff
         n_graphs = sum(len(l) for l in graphs_by_specimen.values())
         if n_graphs == 0:
             warn(f'Class {label} doesn\'t have any examples.')
             continue
-        specimens = list(graphs_by_specimen.keys())
-        shuffle(specimens)
 
-        # If there's at least one specimen of this class, add it to the training set.
+        specimens = _shuffle_specimens(graphs_by_specimen)
         specimen = specimens[0]
         specimen_to_set[specimen] = SETS[0]
         n_specimens = len(specimens)
         if n_specimens == 1:
             warn(f'Class {label} only has one specimen. Allocating to training set.')
         elif n_specimens == 2:
-            specimen = specimens[1]
-            if (p_validation == 0) and (p_test == 0):
-                specimen_to_set[specimen] = SETS[0]
-            elif p_test == 0:
-                specimen_to_set[specimen] = SETS[1]
-            elif p_validation == 0:
-                specimen_to_set[specimen] = SETS[2]
-            else:
-                warn(f'Class {label} only has two specimens. '
-                     'Allocating one for training and the other randomly to validation or test.')
-                if randint(0, 1) == 0:
-                    specimen_to_set[specimen] = SETS[1]
-                else:
-                    specimen_to_set[specimen] = SETS[2]
+            specimen_to_set[specimens[1]] = _set_for_second_of_2_specimens(
+                p_validation, p_test, label)
         else:
-            # Prepare to iterate through the remaining specimens.
-            i_specimen: int = 1
-            specimen = specimens[i_specimen]
-
-            # Allocate at least one specimen to each of the validation and test sets if necessary.
-            n_allocated_val = 0
-            n_allocated_test = 0
-            if p_validation > 0:
-                specimen_to_set[specimen] = SETS[1]
-                n_allocated_val = len(graphs_by_specimen[specimen])
-                i_specimen += 1
-                specimen = specimens[i_specimen]
-            if p_test > 0:
-                specimen_to_set[specimen] = SETS[2]
-                n_allocated_test = len(graphs_by_specimen[specimen])
-                i_specimen += 1
-
-            # Calculate the number of ROIs we want in the train/test/validation sets, correcting
-            # for how there's already one specimen allocated to each.
-            n_train_target = n_graphs*p_train - len(graphs_by_specimen[specimens[0]])
-            n_validation_target = n_graphs*p_validation - n_allocated_val
-            n_test_target = n_graphs*p_test - n_allocated_test
-            if (n_train_target < 0) or (n_validation_target < 0) or (n_test_target < 0):
-                which_sets: list[str] = []
-                if n_train_target < 0:
-                    which_sets.append('train')
-                if n_validation_target < 0:
-                    which_sets.append('validation')
-                if n_test_target < 0:
-                    which_sets.append('test')
-                warn(
-                    f'Class {label} doesn\'t have enough specimens to maintain the specified '
-                    f'{"/".join(which_sets)} proportion. Consider adding more specimens of this '
-                    'class and/or increasing their allocation percentage.'
+            specimen_to_set, n_allocated_val, n_allocated_test, i_specimen = \
+                _allocate_second_of_many(
+                    graphs_by_specimen,
+                    specimen_to_set,
+                    specimens,
+                    p_validation,
+                    p_test,
                 )
+            n_train_target, n_validation_target = _calculate_set_targets(
+                n_graphs,
+                p_train,
+                p_validation,
+                p_test,
+                len(graphs_by_specimen[specimens[0]]),
+                n_allocated_val,
+                n_allocated_test,
+                label,
+            )
+            specimen_to_set = _allocate_remaining_specimens(
+                specimen_to_set,
+                graphs_by_specimen,
+                specimens[i_specimen:],
+                n_train_target,
+                n_validation_target,
+            )
 
-            # Finish the allocation.
-            # This method prioritizes bolstering the training and validation sets in that order.
-            n_used_of_remainder = 0
-            for specimen in specimens[i_specimen:]:
-                specimen_files = graphs_by_specimen[specimen]
-                if n_used_of_remainder < n_train_target:
-                    specimen_to_set[specimen] = SETS[0]
-                elif n_used_of_remainder < n_train_target + n_validation_target:
-                    specimen_to_set[specimen] = SETS[1]
-                else:
-                    specimen_to_set[specimen] = SETS[2]
-                n_used_of_remainder += len(specimen_files)
+    return specimen_to_set
 
+
+def _shuffle_specimens(graphs_by_specimen: dict[str, list[DGLGraph]]) -> list[str]:
+    """Shuffle the specimen order, giving priority to "big" specimens."""
+    specimens_with_counts = [
+        (specimen, len(graphs)) for specimen, graphs in graphs_by_specimen.items()
+    ]
+    shuffle(specimens_with_counts)
+    median_count = median([count for _, count in specimens_with_counts])
+    big_threshold = BIG_SPECIMEN_FACTOR * median_count
+    specimens_with_many_graphs: list[str] = []
+    rest_of_specimens: list[str] = []
+    for specimen, count in specimens_with_counts:
+        if count >= big_threshold:
+            warn(f'Large specimen detected. {specimen} has {count/median_count:.2g}x more ROIs '
+                 f'({count}) than the median specimen ({median_count}). Prioritizing its '
+                 'allocation.')
+            specimens_with_many_graphs.append(specimen)
+        else:
+            rest_of_specimens.append(specimen)
+    specimens = specimens_with_many_graphs + rest_of_specimens
+    return specimens
+
+
+def _set_for_second_of_2_specimens(
+    p_validation: float,
+    p_test: float,
+    label: int,
+) -> SETS_type:
+    """Decide which of train, validation, or test to allocate the second of two specimens to."""
+    if (p_validation == 0) and (p_test == 0):
+        return SETS[0]
+    elif p_test == 0:
+        return SETS[1]
+    elif p_validation == 0:
+        return SETS[2]
+    else:
+        warn(f'Class {label} only has two specimens. '
+             'Allocating one for training and the other randomly to validation or test.')
+        if randint(0, 1) == 0:
+            return SETS[1]
+        else:
+            return SETS[2]
+
+
+def _allocate_second_of_many(
+    graphs_by_specimen: dict[str, list[DGLGraph]],
+    specimen_to_set: dict[str, SETS_type | None],
+    specimens: list[str],
+    p_validation: float,
+    p_test: float,
+) -> tuple[dict[str, SETS_type | None], int, int, int]:
+    """Allocate at least one specimen to each of the validation and test sets if necessary."""
+    i_specimen: int = 1
+    specimen = specimens[i_specimen]
+    n_allocated_val = 0
+    n_allocated_test = 0
+    if p_validation > 0:
+        specimen_to_set[specimen] = SETS[1]
+        n_allocated_val = len(graphs_by_specimen[specimen])
+        i_specimen += 1
+        specimen = specimens[i_specimen]
+    if p_test > 0:
+        specimen_to_set[specimen] = SETS[2]
+        n_allocated_test = len(graphs_by_specimen[specimen])
+        i_specimen += 1
+    return specimen_to_set, n_allocated_val, n_allocated_test, i_specimen
+
+
+def _calculate_set_targets(
+    n_graphs: int,
+    p_train: float,
+    p_validation: float,
+    p_test: float,
+    n_allocated_train: int,
+    n_allocated_val: int,
+    n_allocated_test: int,
+    label: int,
+) -> tuple[float, float]:
+    """Calculate the number of ROIs still to allocate to train, validation, and test sets."""
+    n_train_target = n_graphs * p_train - n_allocated_train
+    n_validation_target = n_graphs * p_validation - n_allocated_val
+    n_test_target = n_graphs * p_test - n_allocated_test
+    if (n_train_target < 0) or (n_validation_target < 0) or (n_test_target < 0):
+        which_sets: list[str] = []
+        if n_train_target < 0:
+            which_sets.append('train')
+        if n_validation_target < 0:
+            which_sets.append('validation')
+        if n_test_target < 0:
+            which_sets.append('test')
+        warn(
+            f'Class {label} doesn\'t have enough specimens to maintain the specified '
+            f'{"/".join(which_sets)} proportion. Consider adding more specimens of this '
+            'class and/or increasing their allocation percentage.'
+        )
+    return n_train_target, n_validation_target
+
+
+def _allocate_remaining_specimens(
+    specimen_to_set: dict[str, SETS_type | None],
+    graphs_by_specimen: dict[str, list[DGLGraph]],
+    specimens: list[str],
+    n_train_target: float,
+    n_validation_target: float,
+) -> dict[str, SETS_type | None]:
+    """Allocate the remaining specimens to the train, validation, and test sets.
+
+    Prioritizes bolstering the training and validation sets in that order.
+    """
+    n_used_of_remainder = 0
+    n_train_and_validation_target = n_train_target + n_validation_target
+    for specimen in specimens:
+        specimen_files = graphs_by_specimen[specimen]
+        if n_used_of_remainder < n_train_target:
+            specimen_to_set[specimen] = SETS[0]
+        elif n_used_of_remainder < n_train_and_validation_target:
+            specimen_to_set[specimen] = SETS[1]
+        else:
+            specimen_to_set[specimen] = SETS[2]
+        n_used_of_remainder += len(specimen_files)
     return specimen_to_set
 
 

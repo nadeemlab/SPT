@@ -339,11 +339,12 @@ def compute_auc(list1: list[float], list2: list[float]) -> float:
 
 
 def univariate_pair_compare(
-        list1,
-        list2,
-        expected_fold=None,
-        do_log_fold: bool = False,
-        show_pvalue=False,
+    list1,
+    list2,
+    expected_fold=None,
+    do_log_fold: bool = False,
+    show_pvalue=False,
+    show_auc=False,
 ):
     list1 = list(filter(lambda element: not isnan(element), list1.values))
     list2 = list(filter(lambda element: not isnan(element), list2.values))
@@ -373,6 +374,7 @@ def univariate_pair_compare(
             result = ttest_ind(list1, list2)
             print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
 
+    if show_auc:
         _auc = compute_auc(list1, list2)
         print('  AUC: ' + Colors.blue + str(_auc) + Colors.reset, end='')
 

@@ -12,9 +12,9 @@ from torch.cuda import manual_seed as cuda_manual_seed  # type: ignore
 from torch.backends import cudnn  # type: ignore
 from dgl import batch  # type: ignore
 from dgl import seed as dgl_seed  # type: ignore
-from spatialprofilingtoolbox.cggnn.util.constants import FEATURES
-from spatialprofilingtoolbox.cggnn.util import GraphData
 
+from spatialprofilingtoolbox.cggnn.cg_gnn_helper import FEATURES
+from spatialprofilingtoolbox.cggnn.util import GraphData
 from spatialprofilingtoolbox.cggnn.histocartography.util.ml.cell_graph_model import CellGraphModel
 from spatialprofilingtoolbox.cggnn.histocartography.util.constants import DEFAULT_GNN_PARAMETERS, DEFAULT_CLASSIFICATION_PARAMETERS
 

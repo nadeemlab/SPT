@@ -15,9 +15,8 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, classification_report  # type: ignore
 from dgl import DGLGraph
 from tqdm import tqdm
-from spatialprofilingtoolbox.cggnn.dataset import CGDataset, create_datasets, create_dataset, create_training_dataloaders
-from spatialprofilingtoolbox.cggnn.util import GraphData, collate
 
+from spatialprofilingtoolbox.cggnn.cg_gnn_helper import DGLGraphData, CGDataset, create_datasets, create_dataset, create_training_dataloaders, collate
 from spatialprofilingtoolbox.cggnn.histocartography.util import CellGraphModel, set_seeds, instantiate_model
 from spatialprofilingtoolbox.cggnn.histocartography.util.constants import DEFAULT_GNN_PARAMETERS, DEFAULT_CLASSIFICATION_PARAMETERS
 
@@ -26,7 +25,7 @@ IS_CUDA = is_available()
 DEVICE = 'cuda:0' if IS_CUDA else 'cpu'
 
 
-def train(graphs_data: List[GraphData],
+def train(graphs_data: List[DGLGraphData],
           output_directory: str,
           in_ram: bool = True,
           epochs: int = 10,
@@ -290,7 +289,7 @@ def infer_with_model(model: CellGraphModel,
                              dim=1).detach().numpy()
 
 
-def infer(cell_graphs: List[GraphData],
+def infer(cell_graphs: List[DGLGraphData],
           model_checkpoint_path: str,
           in_ram: bool = True,
           batch_size: int = 1,

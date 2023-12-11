@@ -5,8 +5,7 @@ from os.path import join
 from typing import DefaultDict
 
 from tqdm import tqdm
-from dgl import DGLGraph
-from networkx import DiGraph, compose, get_node_attributes
+from networkx import Graph, from_scipy_sparse_matrix, compose, get_node_attributes  # type: ignore
 from bokeh.models import (
     Circle,
     MultiLine,
@@ -22,13 +21,7 @@ from bokeh.palettes import YlOrRd8
 from bokeh.layouts import row
 from bokeh.io import output_file, save
 
-from spatialprofilingtoolbox.cggnn.util import GraphData
-from spatialprofilingtoolbox.cggnn.util.constants import (
-    INDICES,
-    FEATURES,
-    CENTROIDS,
-    IMPORTANCES,
-)
+from spatialprofilingtoolbox.cggnn.util import GraphData, HSGraph
 
 
 def plot_interactives(
@@ -40,16 +33,16 @@ def plot_interactives(
     """Create bokeh interactive plots for all graphs in the out_directory."""
     out_directory = join(out_directory, 'interactives')
     makedirs(out_directory, exist_ok=True)
-    graphs_to_plot: dict[str, list[DGLGraph]] = DefaultDict(list)
+    graphs_to_plot: dict[str, list[HSGraph]] = DefaultDict(list)
     for g in graphs_data:
         graphs_to_plot[g.specimen if merge_rois else g.name].append(g.graph)
-    for name, dgl_graphs in tqdm(graphs_to_plot.items()):
-        graphs = [_convert_dgl_to_networkx(graph, feature_names) for graph in dgl_graphs]
+    for name, hs_graphs in tqdm(graphs_to_plot.items()):
+        graphs = [_convert_hs_graph_to_networkx(graph, feature_names) for graph in hs_graphs]
         _make_bokeh_graph_plot(_stich_specimen_graphs(graphs), feature_names, name, out_directory)
 
 
 def _make_bokeh_graph_plot(
-    graph: DiGraph,
+    graph: Graph,
     feature_names: list[str],
     graph_name: str,
     out_directory: str,
@@ -116,28 +109,25 @@ def _make_bokeh_graph_plot(
     save(layout)
 
 
-def _convert_dgl_to_networkx(graph: DGLGraph, feature_names: list[str]) -> DiGraph:
-    """Convert DGL graph to networkx graph for plotting interactive."""
-    if IMPORTANCES not in graph.ndata:
+def _convert_hs_graph_to_networkx(hs_graph: HSGraph, feature_names: list[str]) -> Graph:
+    """Convert HSGraph to networkx graph for plotting interactive."""
+    if hs_graph.importances is None:
         raise ValueError(
-            'Importance scores not yet found. Calculate them and place them in '
-            f'graph.ndata[{IMPORTANCES}] first.'
+            'Importance scores not yet found. Calculate them and place them in hs_graph.importances.'
         )
-    graph_networkx = DiGraph()
-    for i_g in range(graph.num_nodes()):
-        i_gx = graph.ndata[INDICES][i_g].detach().numpy().astype(int).item()
-        graph_networkx.add_node(i_gx)
-        feats = graph.ndata[FEATURES][i_g].detach().numpy()
+    graph_networkx = from_scipy_sparse_matrix(hs_graph.adj)
+    for i_g in range(hs_graph.node_features.shape[0]):
+        feats = hs_graph.node_features[i_g, :]
         for j, feat in enumerate(feature_names):
-            graph_networkx.nodes[i_gx][feat] = feats[j]
-        graph_networkx.nodes[i_gx]['importance'] = graph.ndata[IMPORTANCES][i_g].detach().numpy()
-        graph_networkx.nodes[i_gx]['radius'] = graph_networkx.nodes[i_gx][IMPORTANCES]*10
-        graph_networkx.nodes[i_gx]['centroid'] = graph.ndata[CENTROIDS][i_g].detach().numpy()
+            graph_networkx.nodes[i_g][feat] = feats[j]
+        graph_networkx.nodes[i_g]['importance'] = hs_graph.importances[i_g]
+        graph_networkx.nodes[i_g]['radius'] = hs_graph.importances[i_g]*10
+        graph_networkx.nodes[i_g]['centroid'] = tuple(hs_graph.centroids[i_g, :])
     return graph_networkx
 
 
-def _stich_specimen_graphs(graphs: list[DiGraph]) -> DiGraph:
-    """Stitch DGL graphs together into a single networkx graph."""
+def _stich_specimen_graphs(graphs: list[Graph]) -> Graph:
+    """Stitch graphs together."""
     if len(graphs) == 0:
         raise ValueError("Must have at least one graph to stitch.")
     if len(graphs) == 1:

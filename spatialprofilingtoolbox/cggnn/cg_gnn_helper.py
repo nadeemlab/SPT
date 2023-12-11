@@ -1,18 +1,109 @@
-"""PyTorch Dataset and DataLoader objects for cell graphs."""
+"""Helper functions to translate SPT HSGraphs and prepare them for CG-GNN training."""
 
-from typing import Sequence
+from typing import Callable, Sequence
 
+from numpy import nonzero
+from torch import (
+    Tensor,  # type: ignore
+    LongTensor,  # type: ignore
+    IntTensor,  # type: ignore
+    manual_seed,  # type: ignore
+    use_deterministic_algorithms,
+)
+from torch.backends import cudnn  # type: ignore
+from torch.cuda import is_available, manual_seed_all
+from torch.cuda import manual_seed as cuda_manual_seed  # type: ignore
 from torch.utils.data import ConcatDataset, DataLoader, SubsetRandomSampler
 from torch.utils.data import Dataset
-from torch.cuda import is_available
-from dgl import DGLGraph  # type: ignore
+from dgl import DGLGraph, graph, batch  # type: ignore
+from dgl import seed as dgl_seed  # type: ignore
 from sklearn.model_selection import KFold
 
-from spatialprofilingtoolbox.cggnn.util import GraphData, split_graph_sets, collate  # type: ignore
+from spatialprofilingtoolbox.cggnn.util import GraphData as SPTGraphData
+from spatialprofilingtoolbox.cggnn.util import HSGraph, split_graph_sets, SETS_type
+
+
+INDICES = 'histological_structure'
+FEATURES = 'features'
+CENTROIDS = 'centroid'
+IMPORTANCES = 'importance'
 
 # cuda support
 IS_CUDA = is_available()
 DEVICE = 'cuda:0' if IS_CUDA else 'cpu'
+COLLATE_USING: dict[str, Callable] = {
+    'DGLGraph': batch,
+    'DGLHeteroGraph': batch,
+    'Tensor': lambda x: x,
+    'int': lambda x: IntTensor(x).to(DEVICE),
+    'int64': lambda x: IntTensor(x).to(DEVICE),
+    'float': lambda x: LongTensor(x).to(DEVICE),
+}
+
+
+class DGLGraphData(NamedTuple):
+    """Data relevant to a cell graph instance."""
+    graph: DGLGraph
+    label: int | None
+    name: str
+    specimen: str
+    set: SETS_type | None
+
+
+def convert_spt_graph(g_spt: HSGraph) -> DGLGraph:
+    """Convert a SPT HSGraph to a CG-GNN cell graph."""
+    num_nodes = g_spt.node_features.shape[0]
+    g_dgl = graph([])
+    g_dgl.add_nodes(num_nodes)
+    g_dgl.ndata[INDICES] = IntTensor(g_spt.histological_structure_ids)
+    g_dgl.ndata[CENTROIDS] = FloatTensor(g_spt.centroids)
+    g_dgl.ndata[FEATURES] = FloatTensor(g_spt.node_features)
+    # Note: channels and phenotypes are binary variables, but DGL only supports FloatTensors
+    edge_list = nonzero(g_spt.adj.toarray())
+    g_dgl.add_edges(list(edge_list[0]), list(edge_list[1]))
+    return g_dgl
+
+
+def convert_spt_graph_data(g_spt: SPTGraphData) -> DGLGraphData:
+    """Convert a SPT GraphData object to a CG-GNN/DGL GraphData object."""
+    return DGLGraphData(
+        graph=convert_spt_graph(g_spt.graph),
+        label=g_spt.label,
+        name=g_spt.name,
+        specimen=g_spt.specimen,
+        set=g_spt.set,
+    )
+
+
+def convert_spt_graphs_data(graphs_data: list[SPTGraphData]) -> list[DGLGraphData]:
+    """Convert a list of SPT HSGraphs to CG-GNN cell graphs."""
+    return [convert_spt_graph_data(g_spt) for g_spt in graphs_data]
+
+
+def convert_dgl_graph(g_dgl: DGLGraph) -> HSGraph:
+    """Convert a DGLGraph to a CG-GNN cell graph."""
+    return HSGraph(
+        adj=g_dgl.adj(),
+        node_features=g_dgl.ndata[FEATURES],
+        centroids=g_dgl.ndata[CENTROIDS],
+        histological_structure_ids=g_dgl.ndata[INDICES],
+        importances=g_dgl.ndata[IMPORTANCES] if (IMPORTANCES in g_dgl.ndata) else None,
+    )
+
+
+def convert_dgl_graph_data(g_dgl: DGLGraphData) -> SPTGraphData:
+    return SPTGraphData(
+        graph=convert_spt_graph(g_dgl.graph),
+        label=g_dgl.label,
+        name=g_dgl.name,
+        specimen=g_dgl.specimen,
+        set=g_dgl.set,
+    )
+
+
+def convert_dgl_graphs_data(graphs_data: list[DGLGraphData]) -> list[SPTGraphData]:
+    """Convert a list of DGLGraphs to CG-GNN cell graphs."""
+    return [convert_dgl_graph_data(g_dgl) for g_dgl in graphs_data]
 
 
 class CGDataset(Dataset):
@@ -59,7 +150,7 @@ class CGDataset(Dataset):
 
 
 def create_datasets(
-    graphs_data: list[GraphData],
+    graphs_data: list[DGLGraphData],
     in_ram: bool = True,
     k_folds: int = 3,
 ) -> tuple[CGDataset, CGDataset | None, CGDataset | None, KFold | None]:
@@ -137,3 +228,36 @@ def create_training_dataloaders(
         )
 
     return train_dataloader, validation_dataloader
+
+
+def collate(example_batch: Tensor) -> tuple[tuple, LongTensor]:
+    """Collate a batch.
+
+    Args:
+        example_batch (torch.tensor): a batch of examples.
+    Returns:
+        data: (tuple)
+        labels: (torch.LongTensor)
+    """
+    if isinstance(example_batch[0], tuple):  # graph and label
+        def collate_fn(batch, id, type):
+            return COLLATE_USING[type]([example[id] for example in batch])
+        num_modalities = len(example_batch[0])
+        return tuple([
+            collate_fn(example_batch, mod_id, type(example_batch[0][mod_id]).__name__)
+            for mod_id in range(num_modalities)
+        ])
+    else:  # graph only
+        return tuple([COLLATE_USING[type(example_batch[0]).__name__](example_batch)])
+
+
+def set_seeds(random_seed: int) -> None:
+    """Set random seeds for all libraries."""
+    manual_seed(random_seed)
+    dgl_seed(random_seed)
+    cuda_manual_seed(random_seed)
+    manual_seed_all(random_seed)  # multi-GPU
+    # use_deterministic_algorithms(True)
+    # # multi_layer_gnn uses nondeterministic algorithm when on GPU
+    # cudnn.deterministic = True
+    cudnn.benchmark = False

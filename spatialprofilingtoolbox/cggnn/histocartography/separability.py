@@ -23,9 +23,8 @@ from scipy.stats import wasserstein_distance
 from scipy.ndimage.filters import uniform_filter1d
 from pandas import DataFrame, Index
 from matplotlib.pyplot import plot, title, savefig, legend, clf
-from spatialprofilingtoolbox.cggnn.util import GraphData
-from spatialprofilingtoolbox.cggnn.util.constants import FEATURES, IMPORTANCES
 
+from spatialprofilingtoolbox.cggnn.cg_gnn_helper import DGLGraphData, FEATURES, IMPORTANCES
 from spatialprofilingtoolbox.cggnn.histocartography.util import CellGraphModel
 from spatialprofilingtoolbox.cggnn.histocartography.train import infer_with_model
 
@@ -34,7 +33,7 @@ IS_CUDA = is_available()
 DEVICE = 'cuda:0' if IS_CUDA else 'cpu'
 
 
-def calculate_separability(graphs_data: List[GraphData],
+def calculate_separability(graphs_data: List[DGLGraphData],
                            model: CellGraphModel,
                            feature_names: List[str],
                            label_to_result: Optional[Dict[int, str]] = None,

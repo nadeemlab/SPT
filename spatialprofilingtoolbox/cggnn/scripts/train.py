@@ -4,11 +4,15 @@ from argparse import ArgumentParser
 from os.path import join
 from typing import Dict, List, DefaultDict
 
-from dgl import DGLGraph  # type: ignore
-from spatialprofilingtoolbox.cggnn.util import load_cell_graphs, save_cell_graphs
-
 from spatialprofilingtoolbox.cggnn.histocartography import train, calculate_importance, \
     unify_importance_across, save_importances
+from spatialprofilingtoolbox.cggnn.cg_gnn_helper import (
+    convert_spt_graphs_data,
+    convert_dgl_graphs_data,
+    convert_spt_graph,
+)
+
+from spatialprofilingtoolbox.cggnn.util import HSGraph, load_hs_graphs, save_hs_graphs
 
 
 def parse_arguments():
@@ -85,9 +89,9 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    graphs_data = load_cell_graphs(args.cg_directory)[0]
+    dgl_graphs_data = convert_spt_graphs_data(load_hs_graphs(args.cg_directory)[0])
     model = train(
-        graphs_data,
+        dgl_graphs_data,
         args.cg_directory,
         in_ram=args.in_ram,
         epochs=args.epochs,
@@ -97,20 +101,25 @@ def main():
         random_seed=args.random_seed,
     )
     if args.explainer is not None:
-        cell_graphs = calculate_importance(
-            [d.graph for d in graphs_data],
+        dgl_graphs = calculate_importance(
+            [d.graph for d in dgl_graphs_data],
             model,
             args.explainer,
             random_seed=args.random_seed,
         )
-        graphs_data = [d._replace(graph=graph) for d, graph in zip(graphs_data, cell_graphs)]
-        save_cell_graphs(graphs_data, args.cg_directory)
+        spt_graphs_data = convert_dgl_graphs_data(
+            [d._replace(graph=g_dgl) for d, g_dgl in zip(dgl_graphs_data, dgl_graphs)]
+        )
+        save_hs_graphs(spt_graphs_data, args.cg_directory)
         if args.merge_rois:
-            cell_graphs_by_specimen: Dict[str, List[DGLGraph]] = DefaultDict(list)
-            for cg in graphs_data:
-                cell_graphs_by_specimen[cg.specimen].append(cg.graph)
+            hs_graph_by_specimen: Dict[str, List[HSGraph]] = DefaultDict(list)
+            for gd_spt in spt_graphs_data:
+                hs_graph_by_specimen[gd_spt.specimen].append(gd_spt.graph)
             hs_id_to_importance = unify_importance_across(
-                list(cell_graphs_by_specimen.values()),
+                [
+                    [convert_spt_graph(g_spt) for g_spt in specimen_graphs]
+                    for specimen_graphs in hs_graph_by_specimen.values()
+                ],
                 model,
                 random_seed=args.random_seed,
             )

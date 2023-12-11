@@ -14,8 +14,8 @@ from torch import FloatTensor
 from torch.cuda import is_available
 from dgl import DGLGraph
 from pandas import Series
-from spatialprofilingtoolbox.cggnn.util.constants import IMPORTANCES, INDICES
 
+from spatialprofilingtoolbox.cggnn.cg_gnn_helper import IMPORTANCES, INDICES
 from spatialprofilingtoolbox.cggnn.histocartography.util import CellGraphModel, set_seeds
 from spatialprofilingtoolbox.cggnn.histocartography.util.interpretability import (BaseExplainer, GraphLRPExplainer, GraphGradCAMExplainer,
                                                                                   GraphGradCAMPPExplainer, GraphPruningExplainer)

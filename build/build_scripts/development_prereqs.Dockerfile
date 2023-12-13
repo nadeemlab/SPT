@@ -8,6 +8,7 @@ RUN apt-get install -y libpq-dev
 RUN apt install openjdk-11-jdk -y
 RUN apt install xxd -y
 RUN apt install file -y
+RUN apt-get install -y docker.io
 WORKDIR /usr/src/app
 ENV PATH="/usr/src/app:$PATH"
 RUN apt install curl -y
@@ -28,11 +29,8 @@ RUN python -m pip install toml
 RUN apt install libgdal-dev -y
 RUN python -c 'import toml; c = toml.load("pyproject.toml.unversioned"); print("\n".join(c["project"]["dependencies"]))' | python -m pip install -r /dev/stdin
 RUN python -c 'import toml; c = toml.load("pyproject.toml.unversioned"); print("\n".join(c["project"]["optional-dependencies"]["all"]))' | python -m pip install -r /dev/stdin
-RUN python -m pip install dgl -f https://data.dgl.ai/wheels/repo.html
-ENV DGLBACKEND=pytorch
 RUN python -m pip install build
 RUN python -m pip install twine
-RUN python -m pip install torch
 RUN apt install -y bc
 RUN rm pyproject.toml.unversioned
 CMD bash -c "echo 'available for commands'; while [ 0 -le 1 ]; do sleep 3600; echo 'sleep 3600... keep alive the container for availability for ongoing commands.'; done"

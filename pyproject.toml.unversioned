@@ -121,7 +121,6 @@ packages = [
     "spatialprofilingtoolbox.cggnn.histocartography.util.interpretability",
     "spatialprofilingtoolbox.cggnn.histocartography.util.ml",
     "spatialprofilingtoolbox.cggnn.histocartography.util.ml.layers",
-    "spatialprofilingtoolbox.cggnn.util",
     "spatialprofilingtoolbox.cggnn.scripts",
     "spatialprofilingtoolbox.ondemand",
     "spatialprofilingtoolbox.ondemand.providers",

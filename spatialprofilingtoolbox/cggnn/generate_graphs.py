@@ -111,7 +111,6 @@ def generate_graphs(
     """
     if (output_directory is not None) and \
             exists(join(output_directory, 'graphs.bin')) and \
-            exists(join(output_directory, 'graph_info.pkl')) and \
             exists(join(output_directory, 'feature_names.txt')):
         warn('Graphs already exist in output directory. Loading from file.')
         return load_hs_graphs(output_directory)
@@ -732,7 +731,7 @@ def report_dataset_statistics(graphs_data: list[GraphData]) -> DataFrame:
         if graph_instance.specimen in df.index:
             df.loc[graph_instance.specimen, 'count'] += 1
         else:
-            df.loc[graph_instance, :] = [graph_instance.label, graph_instance.set, 1]
+            df.loc[graph_instance.specimen, :] = [graph_instance.label, graph_instance.set, 1]
     return df.groupby(['set', 'label']).sum()
 
 

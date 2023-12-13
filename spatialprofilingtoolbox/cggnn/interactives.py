@@ -5,7 +5,7 @@ from os.path import join
 from typing import DefaultDict
 
 from tqdm import tqdm
-from networkx import Graph, from_scipy_sparse_matrix, compose, get_node_attributes  # type: ignore
+from networkx import Graph, from_scipy_sparse_array, compose, get_node_attributes  # type: ignore
 from bokeh.models import (
     Circle,
     MultiLine,
@@ -115,7 +115,7 @@ def _convert_hs_graph_to_networkx(hs_graph: HSGraph, feature_names: list[str]) -
         raise ValueError(
             'Importance scores not yet found. Calculate them and place them in hs_graph.importances.'
         )
-    graph_networkx = from_scipy_sparse_matrix(hs_graph.adj)
+    graph_networkx = from_scipy_sparse_array(hs_graph.adj)
     for i_g in range(hs_graph.node_features.shape[0]):
         feats = hs_graph.node_features[i_g, :]
         for j, feat in enumerate(feature_names):

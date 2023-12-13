@@ -1,5 +1,6 @@
 """Histological structure graph dataset utility functions."""
 
+from os import makedirs
 from os.path import join
 from pickle import dump, load
 from json import load as json_load
@@ -33,7 +34,7 @@ class HSGraph:
     node_features: NDArray[float_]
     centroids: NDArray[float_]
     histological_structure_ids: NDArray[int_]
-    importances: NDArray[float_] | None = field(default=None, init=False),
+    importances: NDArray[float_] | None = field(default=None)
 
 
 class GraphData(NamedTuple):
@@ -47,6 +48,7 @@ class GraphData(NamedTuple):
 
 def save_hs_graphs(graphs_data: list[GraphData], output_directory: str) -> None:
     """Save histological structure graphs to a directory."""
+    makedirs(output_directory, exist_ok=True)
     with open(join(output_directory, 'graphs.pkl'), 'wb') as f:
         dump(graphs_data, f)
 

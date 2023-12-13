@@ -107,19 +107,14 @@ def main():
             args.explainer,
             random_seed=args.random_seed,
         )
-        spt_graphs_data = convert_dgl_graphs_data(
-            [d._replace(graph=g_dgl) for d, g_dgl in zip(dgl_graphs_data, dgl_graphs)]
-        )
-        save_hs_graphs(spt_graphs_data, args.cg_directory)
+        dgl_graphs_data = [d._replace(graph=g_dgl) for d, g_dgl in zip(dgl_graphs_data, dgl_graphs)]
+        save_hs_graphs(convert_dgl_graphs_data(dgl_graphs_data), args.cg_directory)
         if args.merge_rois:
-            hs_graph_by_specimen: Dict[str, List[HSGraph]] = DefaultDict(list)
-            for gd_spt in spt_graphs_data:
-                hs_graph_by_specimen[gd_spt.specimen].append(gd_spt.graph)
+            dgl_graphs_by_specimen = DefaultDict(list)
+            for gd_dgl in dgl_graphs_data:
+                dgl_graphs_by_specimen[gd_dgl.specimen].append(gd_dgl.graph)
             hs_id_to_importance = unify_importance_across(
-                [
-                    [convert_spt_graph(g_spt) for g_spt in specimen_graphs]
-                    for specimen_graphs in hs_graph_by_specimen.values()
-                ],
+                list(dgl_graphs_by_specimen.values()),
                 model,
                 random_seed=args.random_seed,
             )

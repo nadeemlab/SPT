@@ -1,10 +1,13 @@
 """Helper functions to translate SPT HSGraphs and prepare them for CG-GNN training."""
 
-from typing import Callable, Sequence
+from typing import Callable, Sequence, NamedTuple
 
-from numpy import nonzero
+from numpy import nonzero  # type: ignore
+from scipy.sparse import csr_matrix  # type: ignore
+from networkx import to_scipy_sparse_array  # type: ignore
 from torch import (
     Tensor,  # type: ignore
+    FloatTensor,
     LongTensor,  # type: ignore
     IntTensor,  # type: ignore
     manual_seed,  # type: ignore
@@ -83,7 +86,7 @@ def convert_spt_graphs_data(graphs_data: list[SPTGraphData]) -> list[DGLGraphDat
 def convert_dgl_graph(g_dgl: DGLGraph) -> HSGraph:
     """Convert a DGLGraph to a CG-GNN cell graph."""
     return HSGraph(
-        adj=g_dgl.adj(),
+        adj=to_scipy_sparse_array(g_dgl.to_networkx()),
         node_features=g_dgl.ndata[FEATURES],
         centroids=g_dgl.ndata[CENTROIDS],
         histological_structure_ids=g_dgl.ndata[INDICES],
@@ -93,7 +96,7 @@ def convert_dgl_graph(g_dgl: DGLGraph) -> HSGraph:
 
 def convert_dgl_graph_data(g_dgl: DGLGraphData) -> SPTGraphData:
     return SPTGraphData(
-        graph=convert_spt_graph(g_dgl.graph),
+        graph=convert_dgl_graph(g_dgl.graph),
         label=g_dgl.label,
         name=g_dgl.name,
         specimen=g_dgl.specimen,

@@ -2,17 +2,16 @@
 
 from argparse import ArgumentParser
 from os.path import join
-from typing import Dict, List, DefaultDict
+from typing import DefaultDict
 
 from spatialprofilingtoolbox.cggnn.histocartography import train, calculate_importance, \
     unify_importance_across, save_importances
 from spatialprofilingtoolbox.cggnn.cg_gnn_helper import (
     convert_spt_graphs_data,
     convert_dgl_graphs_data,
-    convert_spt_graph,
 )
 
-from spatialprofilingtoolbox.cggnn.util import HSGraph, load_hs_graphs, save_hs_graphs
+from spatialprofilingtoolbox.cggnn.util import load_hs_graphs, save_hs_graphs
 
 
 def parse_arguments():

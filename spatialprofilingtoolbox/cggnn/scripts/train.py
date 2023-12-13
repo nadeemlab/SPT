@@ -1,17 +1,8 @@
 """Train a CG-GNN on pre-split sets of cell graphs."""
 
+import sys
+from os import getcwd, system
 from argparse import ArgumentParser
-from os.path import join
-from typing import DefaultDict
-
-from spatialprofilingtoolbox.cggnn.histocartography import train, calculate_importance, \
-    unify_importance_across, save_importances
-from spatialprofilingtoolbox.cggnn.cg_gnn_helper import (
-    convert_spt_graphs_data,
-    convert_dgl_graphs_data,
-)
-
-from spatialprofilingtoolbox.cggnn.util import load_hs_graphs, save_hs_graphs
 
 
 def parse_arguments():
@@ -83,42 +74,20 @@ def parse_arguments():
         default=None,
         required=False
     )
+    parser.add_argument(
+        '--cuda',
+        help='Train a CUDA-enabled CG-GNN. Defaults to CPU if not provided.',
+        action='store_true'
+    )
     return parser.parse_args()
 
 
-def main():
-    args = parse_arguments()
-    dgl_graphs_data = convert_spt_graphs_data(load_hs_graphs(args.cg_directory)[0])
-    model = train(
-        dgl_graphs_data,
-        args.cg_directory,
-        in_ram=args.in_ram,
-        epochs=args.epochs,
-        learning_rate=args.learning_rate,
-        batch_size=args.batch_size,
-        k_folds=args.k_folds,
-        random_seed=args.random_seed,
-    )
-    if args.explainer is not None:
-        dgl_graphs = calculate_importance(
-            [d.graph for d in dgl_graphs_data],
-            model,
-            args.explainer,
-            random_seed=args.random_seed,
-        )
-        dgl_graphs_data = [d._replace(graph=g_dgl) for d, g_dgl in zip(dgl_graphs_data, dgl_graphs)]
-        save_hs_graphs(convert_dgl_graphs_data(dgl_graphs_data), args.cg_directory)
-        if args.merge_rois:
-            dgl_graphs_by_specimen = DefaultDict(list)
-            for gd_dgl in dgl_graphs_data:
-                dgl_graphs_by_specimen[gd_dgl.specimen].append(gd_dgl.graph)
-            hs_id_to_importance = unify_importance_across(
-                list(dgl_graphs_by_specimen.values()),
-                model,
-                random_seed=args.random_seed,
-            )
-            save_importances(hs_id_to_importance, join(args.cg_directory, 'importances.csv'))
-
-
 if __name__ == "__main__":
-    main()
+    args = parse_arguments()
+    args_to_pass = [f'"{arg}"' for arg in sys.argv[1:]]
+    if args.cuda:
+        container = 'cg-gnn-cuda'
+        args_to_pass.remove('--cuda')
+    else:
+        container = 'cg-gnn'
+    system(f'docker run -v "{getcwd()}:/app" {container} {" ".join(args_to_pass)}')

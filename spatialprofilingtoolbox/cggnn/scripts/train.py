@@ -86,8 +86,11 @@ if __name__ == "__main__":
     args = parse_arguments()
     args_to_pass = [f'"{arg}"' for arg in sys.argv[1:]]
     if args.cuda:
-        container = 'cg-gnn-cuda'
+        container = '-cuda'
         args_to_pass.remove('--cuda')
     else:
-        container = 'cg-gnn'
-    system(f'docker run -v "{getcwd()}:/app" {container} {" ".join(args_to_pass)}')
+        container = ''
+    system(
+        f'docker run -v "{getcwd()}:/app" nadeemlab/spt-cg-gnn:latest{container} '
+        ' '.join(args_to_pass)
+    )

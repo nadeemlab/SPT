@@ -1,8 +1,6 @@
 """Data analysis script for one dataset."""
 import sys
 
-from numpy import mean
-
 from accessors import DataAccessor
 from accessors import get_default_host
 from accessors import univariate_pair_compare as compare

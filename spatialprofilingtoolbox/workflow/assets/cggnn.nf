@@ -20,6 +20,7 @@ process echo_environment_variables {
     path 'explainer_model',                 emit: explainer_model
     path 'merge_rois',                      emit: merge_rois
     path 'upload_importances',              emit: upload_importances
+    path 'cuda',                            emit: cuda
     path 'random_seed',                     emit: random_seed
 
     script:
@@ -42,6 +43,7 @@ process echo_environment_variables {
     echo -n "${explainer_model_}" > explainer_model
     echo -n "${merge_rois_}" > merge_rois
     echo -n "${upload_importances_}" > upload_importances
+    echo -n "${cuda_}" > cuda
     echo -n "${random_seed_}" > random_seed
     """
 }
@@ -142,6 +144,7 @@ process train {
     val k_folds
     val explainer_model
     val merge_rois
+    val cuda
     val random_seed
 
     output:
@@ -156,6 +159,7 @@ process train {
     in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
     explainer_option=\$( if [[ "${explainer_model}" != "none" ]]; then echo "--explainer ${explainer_model}"; fi)
     merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
+    cuda_option=\$( if [[ "${cuda}" == "true" ]]; then echo "--cuda"; fi)
 
     echo \
      --cg_directory ${working_directory} \
@@ -166,6 +170,8 @@ process train {
      --k_folds ${k_folds} \
      \${explainer_option} \
      \${merge_rois_option} \
+     \${cuda_option} \
+     --random_seed ${random_seed} \
      | xargs spt cggnn train
     """
 }
@@ -241,6 +247,9 @@ workflow {
 
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
+    
+    environment_ch.cuda.map{ it.text }
+        .set{ cuda_ch }
 
     environment_ch.random_seed.map{ it.text }
         .set{ random_seed_ch }
@@ -297,6 +306,7 @@ workflow {
         k_folds_ch,
         explainer_model_ch,
         merge_rois_ch,
+        cuda_ch,
         random_seed_ch
     ).set{ train_out }
 

@@ -45,6 +45,8 @@ k_folds = ...
 explainer_model = ...
 merge_rois = ...
 upload_importances = ...
+cuda = ...
+random_seed = ...
 ```
 
 Note that with this configuration file, parameters can't be eliminated to use the default value as is possible with CLI arguments.
@@ -64,20 +66,13 @@ Note that with this configuration file, parameters can't be eliminated to use th
 * `explainer_model`: The explainer type to use. If not `none`, importance scores will be calculated using the model archetype chosen. `pp` is recommended.
 * `merge_rois`: If true, return a CSV of importance scores merged together by sample.
 * `upload_importances`: If true, importance scores will be uploaded to the database.
+* `cuda`: If true, use CUDA to accelerate training.
 * `random_seed`: An integer random seed to use for reproducibility. Can be set to `none` to omit a random seed.
 
 # Running the workflow
 
-The conda environment file [`cggnn_environment.yml`](cggnn_environment.yml) specifies the installation of the minimum dependencies required to run the workflow fluidly. The environment assumes the machine you are running the workflow on has a CUDA-compatible GPU. Running the cggnn workflow without CUDA is not recommended, but if you choose to do so use [`cggnn_environment_no_cuda.yml`](cggnn_environment_no_cuda.yml). If your machine does support CUDA but not CUDA 11.8, you will need to change the version used by CUDA, pytorch, and DGL to a version your GPU supports.
+The workflow spins up a Docker container with the necessary dependencies to run the workflow, so we recommend installing it before trying to run it. This workflow is accelerated if you have a CUDA-compatible GPU, and we recommend using a machine with CUDA support if at all possible. Once your configuration is ready, run the workflow with:
 
-Assuming you have conda installed [(instructions here)](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), create the environment and activate it with the following commands:
-
-```sh
-conda env create -f docs/cggnn_environment.yml
-conda activate spt_cggnn
-```
-
-Then run with:
 ```sh
 nextflow run .
 ```

@@ -92,7 +92,7 @@ process create_specimen_graphs {
     path specimen_file
 
     output:
-    path "${specimen_file.baseName}.bin",   optional: true, emit: specimen_graph
+    path "${specimen_file.baseName}.pkl",   optional: true, emit: specimen_graph
 
     script:
     """
@@ -115,8 +115,7 @@ process finalize_graphs {
     output:
     path "results/",                     emit: working_directory
     path "results/feature_names.txt",    emit: feature_names_file
-    path "results/graphs.bin",           emit: graphs_file
-    path "results/graph_info.pkl",       emit: graph_metadata_file
+    path "results/graphs.pkl",           emit: graphs_file
 
     script:
     """
@@ -148,7 +147,7 @@ process train {
     output:
     path "${working_directory}/importances.csv",     emit: importances_csv_path
     path "${working_directory}/model/",              emit: model_directory
-    path "${working_directory}/graphs.bin",          optional: true
+    path "${working_directory}/graphs.pkl",          optional: true
 
     script:
     """
@@ -288,9 +287,6 @@ workflow {
 
     finalize_out.graphs_file
         .set{ graphs_file_ch }
-
-    finalize_out.graph_metadata_file
-        .set{ graph_metadata_ch }
 
     train(
         working_directory_ch,

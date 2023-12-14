@@ -2,10 +2,11 @@
 
 from argparse import ArgumentParser
 
-from spatialprofilingtoolbox.cggnn.util import load_cell_graphs, load_label_to_result
-
 from spatialprofilingtoolbox.cggnn.histocartography import calculate_separability
 from spatialprofilingtoolbox.cggnn.histocartography.util import instantiate_model
+from spatialprofilingtoolbox.cggnn.cg_gnn_helper import convert_spt_graphs_data
+
+from spatialprofilingtoolbox.cggnn.util import load_hs_graphs, load_label_to_result
 
 
 def parse_arguments():
@@ -62,9 +63,9 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    graphs_data, feature_names = load_cell_graphs(args.cg_path)
+    graphs_data, feature_names = load_hs_graphs(args.cg_path)
     df_concept, df_aggregated, dfs_k_dist = calculate_separability(
-        graphs_data,
+        convert_spt_graphs_data(graphs_data),
         instantiate_model(graphs_data, model_checkpoint_path=args.model_checkpoint_path),
         feature_names,
         label_to_result=load_label_to_result(args.label_to_result_path),

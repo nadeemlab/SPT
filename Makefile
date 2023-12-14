@@ -55,6 +55,7 @@ help:
 >@${MESSAGE} print '    Show this text.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print 'Use VERBOSE=1 to send command outputs to STDOUT rather than log files.'
+>@${MESSAGE} print 'Use NOCACHE=1 to cause docker build commands to rebuild each cached layer.'
 >@${MESSAGE} print ' '
 
 # Docker and test variables
@@ -99,6 +100,12 @@ else
 export .SHELLFLAGS := -c -not-super-verbose
 endif
 
+ifdef NOCACHE
+export NO_CACHE_FLAG := --no-cache
+else
+export NO_CACHE_FLAG := 
+endif
+
 release-package: development-image check-for-pypi-credentials
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
 >@cp ~/.pypirc .
@@ -115,6 +122,7 @@ development-image-prerequisites-installed: pyproject.toml.unversioned ${BUILD_SC
 >@${MESSAGE} start "Building development image precursor"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker build \
+     ${NO_CACHE_FLAG} \
      --rm \
      -f ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development-prereqs:latest \
@@ -131,6 +139,7 @@ development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/de
 >@${MESSAGE} start "Building development image"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker build \
+     ${NO_CACHE_FLAG} \
      --rm \
      --no-cache \
      --pull=false \
@@ -237,6 +246,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-ru
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
     docker build \
+     ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
      -t $$repository_name:$$submodule_version \
      -t $$repository_name:latest \

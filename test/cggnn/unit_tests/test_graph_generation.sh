@@ -7,7 +7,7 @@ spt cggnn generate-graphs \
     --random_seed 0
 generation_ran="$?"
 
-[ -e "graphs/feature_names.txt" ] && [ -e "graphs/graphs.bin" ] && [ -e "graphs/graph_info.pkl" ]
+[ -e "graphs/feature_names.txt" ] && [ -e "graphs/graphs.pkl" ]
 files_exist="$?"
 
 if [ $generation_ran -ne 0 ] && [ $files_exist -ne 0 ];
@@ -16,7 +16,7 @@ then
 fi
 
 cat "graphs/feature_names.txt"
-python3.11 -c 'from spatialprofilingtoolbox.cggnn.util import load_cell_graphs; graphs, _ = load_cell_graphs("graphs/"); assert len(graphs) == 30, f"Graph count ({len(graphs)}) doesn\t match true value (30).";'
+python3.11 -c 'from spatialprofilingtoolbox.cggnn.util import load_hs_graphs; graphs, _ = load_hs_graphs("graphs/"); assert len(graphs) == 30, f"Graph count ({len(graphs)}) doesn\t match true value (30).";'
 lengths_ok="$?"
 
 rm -r "graphs/"

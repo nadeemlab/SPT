@@ -4,11 +4,10 @@ from typing import cast
 from argparse import ArgumentParser
 from os import makedirs
 from os.path import join, basename, splitext
-from pickle import load
+from pickle import load, dump
 
 from pandas import read_hdf
 from pandas import DataFrame
-from dgl import save_graphs  # type: ignore
 
 from spatialprofilingtoolbox.cggnn.generate_graphs import create_graphs_from_specimen
 
@@ -65,7 +64,8 @@ if __name__ == "__main__":
     )
     if len(graphs) > 0:
         makedirs(args.output_directory, exist_ok=True)
-        save_graphs(join(
+        with open(join(
             args.output_directory,
-            f'{splitext(basename(args.specimen_hdf_path))[0]}.bin',
-        ), graphs)
+            f'{splitext(basename(args.specimen_hdf_path))[0]}.pkl',
+        ), 'wb') as f:
+            dump(graphs, f)

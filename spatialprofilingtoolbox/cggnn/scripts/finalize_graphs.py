@@ -4,9 +4,8 @@ from argparse import ArgumentParser
 from os.path import basename, splitext
 from pickle import load
 
-from dgl import DGLGraph, load_graphs  # type: ignore
-
 from spatialprofilingtoolbox.cggnn.generate_graphs import finalize_graph_metadata
+from spatialprofilingtoolbox.cggnn.util import HSGraph
 
 
 def parse_arguments():
@@ -53,11 +52,10 @@ if __name__ == "__main__":
     args = parse_arguments()
     with open(args.parameters_path, 'rb') as f:
         (_, roi_size, _, features_to_use, df_label, p_validation, p_test, random_seed) = load(f)
-    graphs_by_specimen: dict[str, list[DGLGraph]] = {}
+    graphs_by_specimen: dict[str, list[HSGraph]] = {}
     for specimen_graphs_path in args.graph_files:
-        graphs_by_specimen[
-            splitext(basename(specimen_graphs_path))[0]
-        ] = load_graphs(specimen_graphs_path)[0]
+        with open(specimen_graphs_path, 'rb') as f:
+            graphs_by_specimen[splitext(basename(specimen_graphs_path))[0]] = load(f)
     finalize_graph_metadata(
         graphs_by_specimen,
         df_label,

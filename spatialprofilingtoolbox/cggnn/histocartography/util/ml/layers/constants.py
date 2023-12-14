@@ -5,7 +5,7 @@ from torch.nn import ReLU, Tanh, Sigmoid, ELU, LeakyReLU, PReLU
 import dgl
 import numpy as np
 
-from spatialprofilingtoolbox.cggnn.util.constants import FEATURES, CENTROIDS
+from spatialprofilingtoolbox.cggnn.cg_gnn_helper import FEATURES, CENTROIDS
 
 
 ACTIVATIONS = {

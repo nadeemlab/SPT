@@ -1,44 +1,30 @@
-C SMN1
-C MKI67
-C HAVCR2
-C FOXP3
-C CD4
-C CCR7
+C B2M
+C B7H3
 C CD68
-C VSIR
-C MS4A1
-C CD8A
-C SOX10
-C CTNNB1
-C CD14
-C CD45RA
-C IGLL5
-C CD40
-C COL1
-C CD3
-C p-ERK1/2
-C cleav-Casp3
-C CD45RO
-C HLA-DR
-C S100
-C PECAM1
-C HDAC
-C ICOS
-C ITGB1
-C CD274
-C TNFRSF4
-C PTPRC
+C CD8
+C DAPI
+C FOXP3
+C IDO1
+C KI67
 C LAG3
-P B cells
-P Cytotoxic T cell antigen-experienced
-P Endothelial stroma
-P Lineage including macrophage
-P Lineage including monocyte
-P Melanocyte
-P Melanoma
-P Naive cytotoxic T cell
-P Naive T helper cell
-P T cells
-P T helper cell
-P T helper cell antigen-experienced
-P T regulatory cells
+C MHCI
+C MHCII
+C MRC1
+C CD14
+C PD1
+C PDL1
+C S100B
+C SOX10
+C TGM2
+C TIM3
+C CD163
+C CD20
+C CD25
+C CD27
+C CD3
+C CD4
+C CD56
+P CD4+ T cell
+P CD8+ T cell
+P T cell/null phenotype
+P Tumor

@@ -6,33 +6,26 @@ from random import shuffle, randint
 from warnings import warn
 from typing import DefaultDict
 
-from torch import FloatTensor, IntTensor  # pylint: disable=no-name-in-module
 from numpy import (
     rint,
     median,
     prod,  # type: ignore
     argmax,
-    nonzero,
     savetxt,
     int_,
 )
 from numpy.typing import NDArray
-from dgl import DGLGraph, graph  # type: ignore
 from sklearn.neighbors import KDTree, kneighbors_graph  # type: ignore
 from pandas import DataFrame
 from pandas.core.groupby.generic import DataFrameGroupBy
 from tqdm import tqdm
 
 from spatialprofilingtoolbox.cggnn.util import (
+    HSGraph,
     GraphData,
-    save_cell_graphs,
-    load_cell_graphs,
+    save_hs_graphs,
+    load_hs_graphs,
     set_seeds,
-)
-from spatialprofilingtoolbox.cggnn.util.constants import (
-    CENTROIDS,
-    FEATURES,
-    INDICES,
     SETS,
     SETS_type,
 )
@@ -118,10 +111,9 @@ def generate_graphs(
     """
     if (output_directory is not None) and \
             exists(join(output_directory, 'graphs.bin')) and \
-            exists(join(output_directory, 'graph_info.pkl')) and \
             exists(join(output_directory, 'feature_names.txt')):
         warn('Graphs already exist in output directory. Loading from file.')
-        return load_cell_graphs(output_directory)
+        return load_hs_graphs(output_directory)
     p_validation, p_test, roi_size, roi_area, features_to_use, grouped = \
         prepare_graph_generation_by_specimen(
             df_cell,
@@ -135,7 +127,7 @@ def generate_graphs(
             output_directory,
             random_seed,
         )
-    graphs_by_specimen: dict[str, list[DGLGraph]] = {}
+    graphs_by_specimen: dict[str, list[HSGraph]] = {}
     print('Creating graphs for identified regions in each specimen...')
     for specimen, df_specimen in tqdm(grouped):
         # Skip specimens without labels
@@ -316,7 +308,7 @@ def create_graphs_from_specimen(
     n_neighbors: int = 5,
     threshold: int | None = None,
     random_seed: int | None = None,
-) -> list[DGLGraph]:
+) -> list[HSGraph]:
     """Create graphs from a single specimen."""
     if random_seed is not None:
         set_seeds(random_seed)
@@ -432,20 +424,18 @@ def _create_graphs(
     bounding_boxes: list[tuple[int, int, int, int]],
     n_neighbors: int,
     threshold: int | None,
-) -> list[DGLGraph]:
+) -> list[HSGraph]:
     """Create features, centroid, and label arrays and then the graph."""
-    graphs: list[DGLGraph] = []
+    graphs: list[HSGraph] = []
     for (x_min, x_max, y_min, y_max) in bounding_boxes:
         df_roi: DataFrame = df.loc[
             df['pixel x'].between(x_min, x_max) &
             df['pixel y'].between(y_min, y_max),
         ]
-        centroids = df_roi[['pixel x', 'pixel y']].values
-        features = df_roi[features_to_use].astype(int).values
         graphs.append(_create_graph(
             df_roi.index.to_numpy(),
-            centroids,
-            features,
+            df_roi[['pixel x', 'pixel y']].values,
+            df_roi[features_to_use].astype(int).values,
             n_neighbors=n_neighbors,
             threshold=threshold,
         ))
@@ -458,7 +448,7 @@ def _create_graph(
     features: NDArray[int_],
     n_neighbors: int = 5,
     threshold: int | None = None,
-) -> DGLGraph:
+) -> HSGraph:
     """Generate the graph topology from the provided instance_map using (thresholded) kNN.
 
     Parameters
@@ -476,31 +466,28 @@ def _create_graph(
 
     Returns
     -------
-    DGLGraph: The constructed graph
+    HSGraph: The constructed graph
     """
-    num_nodes = features.shape[0]
-    graph_instance = graph([])
-    graph_instance.add_nodes(num_nodes)
-    graph_instance.ndata[INDICES] = IntTensor(node_indices)
-    graph_instance.ndata[CENTROIDS] = FloatTensor(centroids)
-    graph_instance.ndata[FEATURES] = FloatTensor(features)
-    # Note: channels and phenotypes are binary variables, but DGL only supports FloatTensors
     adj = kneighbors_graph(
         centroids,
         n_neighbors,
         mode="distance",
         include_self=False,
         metric="euclidean",
-    ).toarray()
-    if threshold is not None:
-        adj[adj > threshold] = 0
-    edge_list = nonzero(adj)
-    graph_instance.add_edges(list(edge_list[0]), list(edge_list[1]))
-    return graph_instance
+    )
+    if threshold is None:
+        threshold = float('inf')
+    adj.data = (adj.data <= threshold).astype(bool)
+    return HSGraph(
+        adj,
+        features.astype(float),
+        centroids,
+        node_indices,
+    )
 
 
 def finalize_graph_metadata(
-    graphs_by_specimen: dict[str, list[DGLGraph]],
+    graphs_by_specimen: dict[str, list[HSGraph]],
     df_label: DataFrame,
     p_validation: float,
     p_test: float,
@@ -528,10 +515,10 @@ def finalize_graph_metadata(
 
 
 def _split_graphs_by_label_and_specimen(
-    graphs_by_specimen: dict[str, list[DGLGraph]],
+    graphs_by_specimen: dict[str, list[HSGraph]],
     df_label: DataFrame,
-) -> dict[int | None, dict[str, list[DGLGraph]]]:
-    graphs_by_label_and_specimen: dict[int | None, dict[str, list[DGLGraph]]] = DefaultDict(dict)
+) -> dict[int | None, dict[str, list[HSGraph]]]:
+    graphs_by_label_and_specimen: dict[int | None, dict[str, list[HSGraph]]] = DefaultDict(dict)
     for specimen, graphs in graphs_by_specimen.items():
         label: int | None = df_label.loc[specimen, 'label'] if (specimen in df_label.index) \
             else None
@@ -540,7 +527,7 @@ def _split_graphs_by_label_and_specimen(
 
 
 def _split_rois(
-    graphs_by_label_and_specimen: dict[int | None, dict[str, list[DGLGraph]]],
+    graphs_by_label_and_specimen: dict[int | None, dict[str, list[HSGraph]]],
     p_validation: float,
     p_test: float,
 ) -> dict[str, SETS_type | None]:
@@ -596,7 +583,7 @@ def _split_rois(
     return specimen_to_set
 
 
-def _shuffle_specimens(graphs_by_specimen: dict[str, list[DGLGraph]]) -> list[str]:
+def _shuffle_specimens(graphs_by_specimen: dict[str, list[HSGraph]]) -> list[str]:
     """Shuffle the specimen order, giving priority to "big" specimens."""
     specimens_with_counts = [
         (specimen, len(graphs)) for specimen, graphs in graphs_by_specimen.items()
@@ -640,7 +627,7 @@ def _set_for_second_of_2_specimens(
 
 
 def _allocate_second_of_many(
-    graphs_by_specimen: dict[str, list[DGLGraph]],
+    graphs_by_specimen: dict[str, list[HSGraph]],
     specimen_to_set: dict[str, SETS_type | None],
     specimens: list[str],
     p_validation: float,
@@ -695,7 +682,7 @@ def _calculate_set_targets(
 
 def _allocate_remaining_specimens(
     specimen_to_set: dict[str, SETS_type | None],
-    graphs_by_specimen: dict[str, list[DGLGraph]],
+    graphs_by_specimen: dict[str, list[HSGraph]],
     specimens: list[str],
     n_train_target: float,
     n_validation_target: float,
@@ -719,7 +706,7 @@ def _allocate_remaining_specimens(
 
 
 def _assemble_graph_data(
-    graphs_by_label_and_specimen: dict[int | None, dict[str, list[DGLGraph]]],
+    graphs_by_label_and_specimen: dict[int | None, dict[str, list[HSGraph]]],
     specimen_to_set: dict[str, SETS_type | None],
     roi_size: tuple[int, int],
 ) -> list[GraphData]:
@@ -744,7 +731,7 @@ def report_dataset_statistics(graphs_data: list[GraphData]) -> DataFrame:
         if graph_instance.specimen in df.index:
             df.loc[graph_instance.specimen, 'count'] += 1
         else:
-            df.loc[graph_instance, :] = [graph_instance.label, graph_instance.set, 1]
+            df.loc[graph_instance.specimen, :] = [graph_instance.label, graph_instance.set, 1]
     return df.groupby(['set', 'label']).sum()
 
 
@@ -754,5 +741,5 @@ def save_graph_data(
     output_directory: str,
 ) -> None:
     """Save graph data to disk."""
-    save_cell_graphs(graphs_data, output_directory)
+    save_hs_graphs(graphs_data, output_directory)
     savetxt(join(output_directory, 'feature_names.txt'), features_to_use, fmt='%s', delimiter=',')

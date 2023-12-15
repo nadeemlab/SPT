@@ -8,7 +8,6 @@ RUN apt-get install -y libpq-dev
 RUN apt install openjdk-11-jdk -y
 RUN apt install xxd -y
 RUN apt install file -y
-RUN apt-get install -y docker.io
 WORKDIR /usr/src/app
 ENV PATH="/usr/src/app:$PATH"
 RUN apt install curl -y

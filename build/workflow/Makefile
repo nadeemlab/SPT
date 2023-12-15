@@ -9,6 +9,8 @@ MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tes
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
+STANDALONE_MODULE_TEST := ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/no_docker_test_cggnn.sh
+
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
 
@@ -34,7 +36,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
-teardown-module-testing: ${MODULE_TESTS}
+teardown-module-testing: ${MODULE_TESTS} ${STANDALONE_MODULE_TEST}
 >@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
@@ -78,6 +80,27 @@ ${TESTS}: setup-testing
     echo "Got status code "$$(cat status_code)"." ;\
     kill %1
 >@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
+>@${MESSAGE} end "Passed." "Failed."
+>@rm -f status_code
+
+${STANDALONE_MODULE_TEST}: ${MODULE_TESTS}
+>@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
+    test_script=$${test_target/test-/} ; \
+    test_name=$${test_script/module_tests\/no_docker_test_/} ; \
+    test_name=$${test_name/unit_tests\/no_docker_test_/} ; \
+    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
+    test_name=$${test_name/$$extension/} ; \
+    test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
+    ${MESSAGE} start "\u2503 $$test_name"
+>@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
+    test_script=$${test_target/test-/} ; \
+    test_name=$${test_script/module_tests\/no_docker_test_/} ; \
+    executor=none-cmd ; \
+    if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
+    if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
+    test_cmd="cd ${TEST_LOCATION}/${MODULE_NAME}/ && $$executor $$test_script"; \
+    $$test_cmd ; \
+    echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 

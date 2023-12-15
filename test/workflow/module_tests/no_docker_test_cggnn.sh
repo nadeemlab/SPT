@@ -1,3 +1,7 @@
+# Set up a virtual environment to run this test and install SPT in it.
+# TODO
+
+# Run the workflow
 spt workflow configure --local --workflow='cggnn' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container --workflow-config-file=module_tests/.workflow.config
 nextflow run .
 
@@ -62,4 +66,5 @@ else
 fi
 
 # Clean up
-rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm top_100_structures.txt; rm top_100_reference.txt; rm -rf results/
+rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm top_100_structures.txt; rm top_100_reference.txt; # rm -rf results/
+# TODO: Delete the virtual environment this test ran in

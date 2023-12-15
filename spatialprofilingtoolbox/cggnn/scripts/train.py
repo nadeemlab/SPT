@@ -91,6 +91,6 @@ if __name__ == "__main__":
     else:
         container = ''
     system(
-        f'docker run -v "{getcwd()}:/app" nadeemlab/spt-cg-gnn:latest{container} '
+        f'docker run --rm -v "{getcwd()}:/app" nadeemlab/spt-cg-gnn:latest{container} '
         ' '.join(args_to_pass)
     )

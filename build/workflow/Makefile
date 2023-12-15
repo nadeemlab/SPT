@@ -71,6 +71,7 @@ ${TESTS}: setup-testing
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
+     -v /var/run/docker.sock:/var/run/docker.sock \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd && exit $$?" ; \
     echo "$$?" > status_code; \

@@ -101,7 +101,7 @@ ${STANDALONE_MODULE_TEST}: ${MODULE_TESTS}
     if [[ "$$extension" == "py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == "sh" ]]; then executor=bash; fi ; \
     cd ../../${TEST_LOCATION}/${MODULE_NAME}/ ; \
-    $$executor $$filename; \
+    $$executor $$filename ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code

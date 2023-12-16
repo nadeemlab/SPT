@@ -4,8 +4,8 @@ source env/bin/activate
 pip install ../..[workflow]
 
 # Run the workflow
-spt workflow configure --local --workflow='cggnn' --study-name='Melanoma intralesional IL2' --database-config-file=module_tests/.spt_db.config.container --workflow-config-file=module_tests/.workflow.config
-nextflow run . -with-docker
+spt workflow configure --local --workflow='cggnn' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container --workflow-config-file=module_tests/.workflow.config
+nextflow run . -with-docker $1
 
 # Check if the workflow ran successfully and if the expected output files exist
 if [ $? -ne 0 ] || [ ! -e "results/model/model_best_validation_accuracy.pt" ] || [ ! -e "results/model/model_best_validation_loss.pt" ] || [ ! -e "results/model/model_best_validation_weighted_f1_score.pt" ] || [ ! -e "results/importances.csv" ] || [ ! -e "results/feature_names.txt" ] || [ ! -e "results/graphs.pkl" ]; then
@@ -68,6 +68,6 @@ else
 fi
 
 # Clean up
-rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -f top_100_structures.txt; rm -f top_100_reference.txt; rm -rf results/
+rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -f top_100_structures.txt; rm -f top_100_reference.txt; # rm -rf results/
 deactivate
 rm -rf env/

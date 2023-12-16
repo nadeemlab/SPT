@@ -68,6 +68,6 @@ else
 fi
 
 # Clean up
-rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -f top_100_structures.txt; rm -f top_100_reference.txt; # rm -rf results/
+rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -f top_100_structures.txt; rm -f top_100_reference.txt; rm -rf results/
 deactivate
 rm -rf env/

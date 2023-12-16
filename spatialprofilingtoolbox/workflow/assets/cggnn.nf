@@ -174,7 +174,7 @@ process train {
      \${explainer_option} \
      \${merge_rois_option} \
      --random_seed ${random_seed} \
-     | xargs python /app/main.py
+     | xargs spt-plugin-train-on-graphs
     """
 }
 

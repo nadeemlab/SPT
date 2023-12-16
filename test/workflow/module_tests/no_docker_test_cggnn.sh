@@ -1,11 +1,11 @@
 # Set up a virtual environment to run this test
 python -m venv env
 source env/bin/activate
-pip install ../../..
+pip install ../..[workflow]
 
 # Run the workflow
-spt workflow configure --local --workflow='cggnn' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container --workflow-config-file=module_tests/.workflow.config
-nextflow run .
+spt workflow configure --local --workflow='cggnn' --study-name='Melanoma intralesional IL2' --database-config-file=module_tests/.spt_db.config.container --workflow-config-file=module_tests/.workflow.config
+nextflow run . -with-docker
 
 # Check if the workflow ran successfully and if the expected output files exist
 if [ $? -ne 0 ] || [ ! -e "results/model/model_best_validation_accuracy.pt" ] || [ ! -e "results/model/model_best_validation_loss.pt" ] || [ ! -e "results/model/model_best_validation_weighted_f1_score.pt" ] || [ ! -e "results/importances.csv" ] || [ ! -e "results/feature_names.txt" ] || [ ! -e "results/graphs.pkl" ]; then

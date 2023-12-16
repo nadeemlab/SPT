@@ -135,9 +135,9 @@ process finalize_graphs {
 process train {
     publishDir '.', mode: 'copy'
 
-    // beforeScript 'export DOCKER_IMAGE=$(if [[ "${cuda}" == "true" ]]; then echo "nadeemlab/spt-cg-gnn:cuda-latest"; else echo "nadeemlab/spt-cg-gnn:latest"; fi)'
+    beforeScript 'export DOCKER_IMAGE="nadeemlab/spt-cg-gnn:\$(if [[ "${cuda}" == "true" ]]; then echo "cuda-"; fi)latest"'
 
-    // container "\${DOCKER_IMAGE}"
+    container "\${DOCKER_IMAGE}"
 
     input:
     path working_directory
@@ -159,29 +159,13 @@ process train {
     script:
     """
     #!/bin/bash
-
-    ls ${working_directory}
-
-    mkdir -p data
-    cp -r ${working_directory}/* data
-    ls data
     
     in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
     explainer_option=\$( if [[ "${explainer_model}" != "none" ]]; then echo "--explainer ${explainer_model}"; fi)
     merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
-    volume="\$PWD/data:/data"
-    docker_image=\$(if [[ "${cuda}" == "true" ]]; then echo "nadeemlab/spt-cg-gnn:cuda-latest"; else echo "nadeemlab/spt-cg-gnn:latest"; fi)
-
-    echo \$PWD
-    echo \$volume
-
-    set -x
 
     echo \
-     --rm \
-     -v \${volume} \
-     \${docker_image} \
-     --cg_directory /data \
+     --cg_directory ${working_directory} \
      \${in_ram_option} \
      --batch_size ${batch_size} \
      --epochs ${epochs} \
@@ -190,12 +174,7 @@ process train {
      \${explainer_option} \
      \${merge_rois_option} \
      --random_seed ${random_seed} \
-     | xargs docker run
-    
-    set +x
-    
-    cp -r data/* ${working_directory}/
-    rm -r data
+     | xargs python /app/main.py
     """
 }
 

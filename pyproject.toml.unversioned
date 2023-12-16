@@ -68,6 +68,7 @@ workflow = [
     "scipy==1.10.1",
     "scikit-learn==1.2.2",
     "pyshp==2.2.0",
+    "pydantic==2.0.2",
     "pandas==2.0.2",
     "Jinja2==3.1.2",
     "tabulate==0.8.10",

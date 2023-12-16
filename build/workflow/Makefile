@@ -95,11 +95,13 @@ ${STANDALONE_MODULE_TEST}: ${MODULE_TESTS}
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/no_docker_test_/} ; \
+    filename="module_tests/$$(basename $$test_script)" \
+    extension=$${filename##*.} ; \
     executor=none-cmd ; \
-    if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
-    if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    test_cmd="cd ${TEST_LOCATION}/${MODULE_NAME}/ && $$executor $$test_script"; \
-    $$test_cmd ; \
+    if [[ "$$extension" == "py" ]]; then executor=python; fi ; \
+    if [[ "$$extension" == "sh" ]]; then executor=bash; fi ; \
+    cd ../../${TEST_LOCATION}/${MODULE_NAME}/ ; \
+    $$executor $$filename; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code

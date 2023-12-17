@@ -116,8 +116,6 @@ process finalize_graphs {
 
     output:
     path "results/",                     emit: working_directory
-    path "results/feature_names.txt",    emit: feature_names_file
-    path "results/graphs.pkl",           emit: graphs_file
 
     script:
     """
@@ -153,8 +151,7 @@ process train {
 
     output:
     path "${working_directory}/importances.csv",     emit: importances_csv_path
-    path "${working_directory}/model/",              emit: model_directory
-    path "${working_directory}/graphs.pkl",          optional: true
+    path "${working_directory}/",                    emit: working_directory
 
     script:
     """
@@ -293,12 +290,6 @@ workflow {
     finalize_out.working_directory
         .set{ working_directory_ch }
 
-    finalize_out.feature_names_file
-        .set{ feature_names_ch }
-
-    finalize_out.graphs_file
-        .set{ graphs_file_ch }
-
     train(
         working_directory_ch,
         in_ram_ch,
@@ -315,8 +306,8 @@ workflow {
     train_out.importances_csv_path
         .set{ importances_csv_path_ch }
 
-    train_out.model_directory
-        .set{ model_directory_ch }
+    train_out.working_directory
+        .set{ working_directory_ch }
 
     upload_importance_scores(
         upload_importances_ch,

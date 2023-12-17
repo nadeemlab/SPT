@@ -15,7 +15,7 @@ from numpy import (
 )
 from numpy.random import seed as np_seed
 from numpy.typing import NDArray
-from scipy.sparse import spmatrix
+from scipy.sparse import spmatrix, save_npz, load_npz  # type: ignore
 
 SETS = ('train', 'validation', 'test')
 SETS_type = Literal['train', 'validation', 'test']
@@ -47,19 +47,29 @@ class GraphData(NamedTuple):
 
 
 def save_hs_graphs(graphs_data: list[GraphData], output_directory: str) -> None:
-    """Save histological structure graphs to a directory."""
+    """Save histological structure graphs to a directory.
+
+    Saves the adjacency graph separately from the rest of the graph data for compatibility.
+    """
     makedirs(output_directory, exist_ok=True)
+    for i, gd in enumerate(graphs_data):
+        save_npz(join(output_directory, f'graph_{i}_adj.npz'), gd.graph.adj)
     with open(join(output_directory, 'graphs.pkl'), 'wb') as f:
+        for gd in graphs_data:
+            gd.graph.adj = None  # type: ignore
         dump(graphs_data, f)
 
 
 def load_hs_graphs(graph_directory: str) -> tuple[list[GraphData], list[str]]:
     """Load histological structure graphs from a directory.
 
-    Assumes directory contains the files `graphs.pkl` and `feature_names.txt`.
+    Assumes directory contains the files `graphs.pkl`, `feature_names.txt`, and a sparse array for
+    every graph in `graphs.pkl`.
     """
     with open(join(graph_directory, 'graphs.pkl'), 'rb') as f:
         graphs_data: list[GraphData] = load(f)
+    for i, gd in enumerate(graphs_data):
+        gd.graph.adj = load_npz(join(graph_directory, f'graph_{i}_adj.npz'))
     feature_names: list[str] = loadtxt(
         join(graph_directory, 'feature_names.txt'),
         dtype=str,

@@ -9,7 +9,8 @@ MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tes
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-STANDALONE_MODULE_TEST_FILE := module_tests/no_docker_test_cggnn.sh
+STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT := ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/configure_cggnn_test.sh
+STANDALONE_MODULE_TEST_FILE := ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/no_docker_test_cggnn.sh
 STANDALONE_MODULE_TEST_TARGET := test-${STANDALONE_MODULE_TEST_FILE}
 STANDALONE_MODULE_TEST_NAME := 'no docker test cggnn'
 
@@ -87,6 +88,7 @@ ${TESTS}: setup-testing
 
 ${STANDALONE_MODULE_TEST_TARGET}:
 >@${MESSAGE} start "\u2503 ${STANDALONE_MODULE_TEST_NAME}"
+>@docker run --rm --network ${MODULE_NAME}_isolated_temporary_test --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c "${STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT}"
 >@bash ${STANDALONE_MODULE_TEST_FILE} ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."

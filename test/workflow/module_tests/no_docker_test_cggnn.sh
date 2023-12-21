@@ -1,3 +1,5 @@
+# Starts in build, needs to run in test
+cd ../../test/workflow/
 
 docker_image="$1"
 
@@ -74,7 +76,6 @@ nextflow run . -with-docker ${docker_image}
 check_for_successful_run_with_outputs
 check_output_model_size
 check_importances_size
-approximate_average
 check_importance_scores_average
 check_importance_cells_overlap
 clean

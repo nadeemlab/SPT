@@ -9,7 +9,9 @@ MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tes
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-STANDALONE_MODULE_TEST := ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/no_docker_test_cggnn.sh
+STANDALONE_MODULE_TEST_FILE := module_tests/no_docker_test_cggnn.sh
+STANDALONE_MODULE_TEST_TARGET := test-${STANDALONE_MODULE_TEST_FILE}
+STANDALONE_MODULE_TEST_NAME := 'no docker test cggnn'
 
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
@@ -36,7 +38,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
-teardown-module-testing: ${MODULE_TESTS} ${STANDALONE_MODULE_TEST}
+teardown-module-testing: ${MODULE_TESTS} ${STANDALONE_MODULE_TEST_TARGET}
 >@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
@@ -83,25 +85,9 @@ ${TESTS}: setup-testing
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 
-${STANDALONE_MODULE_TEST}: ${MODULE_TESTS}
->@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/module_tests\/no_docker_test_/} ; \
-    test_name=$${test_name/unit_tests\/no_docker_test_/} ; \
-    extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
-    test_name=$${test_name/$$extension/} ; \
-    test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "\u2503 $$test_name"
->@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
-    test_script=$${test_target/test-/} ; \
-    test_name=$${test_script/module_tests\/no_docker_test_/} ; \
-    filename="module_tests/$$(basename $$test_script)" \
-    extension=$${filename##*.} ; \
-    executor=none-cmd ; \
-    if [[ "$$extension" == "py" ]]; then executor=python; fi ; \
-    if [[ "$$extension" == "sh" ]]; then executor=bash; fi ; \
-    cd ../../${TEST_LOCATION}/${MODULE_NAME}/ ; \
-    $$executor $$filename ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest ; \
+${STANDALONE_MODULE_TEST_TARGET}:
+>@${MESSAGE} start "\u2503 ${STANDALONE_MODULE_TEST_NAME}"
+>@bash ${STANDALONE_MODULE_TEST_FILE} ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code

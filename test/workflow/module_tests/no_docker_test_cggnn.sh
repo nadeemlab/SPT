@@ -27,7 +27,7 @@ else
 fi
 
 # Check if the length of the output importance file is as expected
-importance_length=$(wc -l <"results/importances.csv")
+importance_length=$(wc -l <"results/importances.csv" | sed 's/ //g')
 canon_importance_length=149
 if [[ $importance_length != $canon_importance_length ]];
 then

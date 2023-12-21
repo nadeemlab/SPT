@@ -44,6 +44,8 @@ apiserver = [
 ]
 cggnn = [
     "bokeh==3.3.1",
+    "numpy==1.24.3",
+    "scipy==1.10.1",
     "tables==3.9.1",
     "tqdm==4.66.1"
 ]

@@ -42,62 +42,15 @@ env.channels_file_ = '{{ channels_file }}'{% endif %}
 {%- if phenotypes_file is defined and phenotypes_file|length %}
 env.phenotypes_file_ = '{{ phenotypes_file }}'{% endif %}
 
-{%- if strata is defined %}
-env.strata_ = '{{ strata }}'{% endif %}
-
-{%- if validation_data_percent is defined %}
-env.validation_data_percent_ = '{{ validation_data_percent }}'{% endif %}
-
-{%- if test_data_percent is defined %}
-env.test_data_percent_ = '{{ test_data_percent }}'{% endif %}
-
-{%- if disable_channels is defined %}
-env.disable_channels_ = '{{ disable_channels }}'{% endif %}
-
-{%- if disable_phenotypes is defined %}
-env.disable_phenotypes_ = '{{ disable_phenotypes }}'{% endif %}
-
-{%- if roi_side_length is defined %}
-env.roi_side_length_ = '{{ roi_side_length }}'{% endif %}
-
-{%- if cells_per_roi_target is defined %}
-env.cells_per_roi_target_ = '{{ cells_per_roi_target }}'{% endif %}
-
-{%- if target_name is defined %}
-env.target_name_ = '{{ target_name }}'{% endif %}
-
-{%- if in_ram is defined %}
-env.in_ram_ = '{{ in_ram }}'{% endif %}
-
-{%- if batch_size is defined %}
-env.batch_size_ = '{{ batch_size }}'{% endif %}
-
-{%- if epochs is defined %}
-env.epochs_ = '{{ epochs }}'{% endif %}
-
-{%- if learning_rate is defined %}
-env.learning_rate_ = '{{ learning_rate }}'{% endif %}
-
-{%- if k_folds is defined %}
-env.k_folds_ = '{{ k_folds }}'{% endif %}
-
-{%- if explainer_model is defined %}
-env.explainer_model_ = '{{ explainer_model }}'{% endif %}
-
-{%- if merge_rois is defined %}
-env.merge_rois_ = '{{ merge_rois }}'{% endif %}
-
-{%- if upload_importances is defined %}
-env.upload_importances_ = '{{ upload_importances }}'{% endif %}
-
-{%- if cuda is defined %}
-env.cuda_ = '{{ cuda }}'{% endif %}
-
-{%- if random_seed is defined %}
-env.random_seed_ = '{{ random_seed }}'{% endif %}
-
-{%- if workflow == 'cggnn' and network is not none %}
+{%- if workflow == 'cg-gnn' %}
+process {
+    container = '{{ default_docker_image }}'
+}
 docker {
+    enabled = true
     runOptions = '--network {{ network }}'
 }
+env.graph_config_file_ = '{{ graph_config_file }}'
+env.cuda_ = '{{ cuda }}'
+env.upload_importances_ = '{{ upload_importances }}'
 {%- endif %}

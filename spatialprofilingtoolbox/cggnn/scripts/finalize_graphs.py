@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from os.path import basename, splitext
 from pickle import load
 
-from spatialprofilingtoolbox.cggnn.generate_graphs import finalize_graph_metadata
+from spatialprofilingtoolbox.cggnn.generate_graphs import finalize_graph_metadata, save_graph_data
 from spatialprofilingtoolbox.cggnn.util import HSGraph
 
 
@@ -35,15 +35,7 @@ prepare-graph-creation and parallel create-specimen-graphs calls.
         '--output_directory',
         type=str,
         help='Save files to this directory.',
-        default='tmp',
-        required=False
-    )
-    parser.add_argument(
-        '--random_seed',
-        type=int,
-        help='Random seed to use for reproducibility.',
-        default=None,
-        required=False
+        required=True
     )
     return parser.parse_args()
 
@@ -51,17 +43,29 @@ prepare-graph-creation and parallel create-specimen-graphs calls.
 if __name__ == "__main__":
     args = parse_arguments()
     with open(args.parameters_path, 'rb') as f:
-        (_, roi_size, _, features_to_use, df_label, p_validation, p_test, random_seed) = load(f)
+        (
+            _,
+            _,
+            _,
+            _,
+            roi_size,
+            _,
+            features_to_use,
+            df_label,
+            p_validation,
+            p_test,
+            random_seed,
+        ) = load(f)
     graphs_by_specimen: dict[str, list[HSGraph]] = {}
     for specimen_graphs_path in args.graph_files:
         with open(specimen_graphs_path, 'rb') as f:
             graphs_by_specimen[splitext(basename(specimen_graphs_path))[0]] = load(f)
-    finalize_graph_metadata(
+    graphs_data = finalize_graph_metadata(
         graphs_by_specimen,
         df_label,
         p_validation,
         p_test,
         roi_size,
-        features_to_use=features_to_use,
-        output_directory=args.output_directory,
+        random_seed=random_seed,
     )
+    save_graph_data(graphs_data, features_to_use, args.output_directory)

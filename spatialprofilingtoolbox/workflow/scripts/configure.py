@@ -61,7 +61,7 @@ def write_config_file(variables):
 def write_pipeline_script(variables):
     workflow_name: str = variables['workflow']
     if workflows[workflow_name].is_database_visitor:
-        if workflow_name == 'cggnn':
+        if workflow_name == 'cg-gnn':
             pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_CGGNN)
         else:
             pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     add_argument(parser, 'database config')
     parser.add_argument(
         '--workflow-config-file',
-        help='Path to a workflow configuration YAML file. This file will be used to populate the '
+        help='Path to a workflow configuration file. This file will be used to populate the '
         'configuration file for the workflow.',
         required=False,
         default=None,
@@ -257,9 +257,10 @@ if __name__ == '__main__':
 
     config_variables: dict[str, str | bool] = {}
     if args.workflow_config_file is not None:
-        config_parser = ConfigParser()
-        config_parser.read(args.workflow_config_file)
-        config_variables = dict(config_parser.items('settings'))
+        config = ConfigParser()
+        config.read(args.workflow_config_file)
+        config_variables = dict(config.items('general')) if config.has_section('general') else {}
+        config_variables.update(config.items(args.workflow))
 
     config_variables['workflow'] = args.workflow
 

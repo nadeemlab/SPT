@@ -43,13 +43,13 @@ def generate_graphs(
     use_phenotypes: bool = True,
     roi_side_length: int | None = None,
     cells_per_roi_target: int | None = 10_000,
-    max_cells_to_consider: int = 100_000,
+    exclude_unlabeled: bool = False,
     target_name: str | None = None,
-    output_directory: str | None = None,
-    random_seed: int | None = None,
-    include_unlabeled: bool = False,
+    max_cells_to_consider: int = 100_000,
     n_neighbors: int = 5,
     threshold: int | None = None,
+    random_seed: int | None = None,
+    output_directory: str | None = None,
 ) -> tuple[list[GraphData], list[str]]:
     """Generate cell graphs from SPT server extracts and save to disk if requested.
 
@@ -82,26 +82,26 @@ def generate_graphs(
         how long to make the side length of each square ROI, in pixels. If this isn't provided, the
         median cell density across all slides is used with cells_per_roi_target to determine the
         square ROI sizing.
-    max_cells_to_consider: int = 100_000
-        The maximum number of cells to consider when placing ROI bounds. All cells within each
-        boundary region will be included in the graph, but the ROI's center will be based on the
-        cell with the most and closest cells within the specified ROI size.
-        Empirically 350,000 works but 400,000 gives a 1.75 TB square and an out of memory error.
+    exclude_unlabeled: bool = False
+        If True, exclude specimens without labels from the training set.
     target_name: str | None = None
         If provided, decide ROI placement based on only cells with this channel or phenotype. (All
         cells will be included in the ROI, but the density of cells with this channel or phenotype
         will decide where each cell is placed.) Should be a column name in df_feat_all_specimens.
         If not provided, simply orient ROIs where all cells are densest.
-    output_directory: str | None = None
-        If provided, save the graphs to disk in the specified directory.
-    random_seed: int | None = None
-        If provided, set the random seed to make the train/test/validation split deterministic.
-    include_unlabeled: bool = False
-        If True, include specimens without labels in the training set.
+    max_cells_to_consider: int = 100_000
+        The maximum number of cells to consider when placing ROI bounds. All cells within each
+        boundary region will be included in the graph, but the ROI's center will be based on the
+        cell with the most and closest cells within the specified ROI size.
+        Empirically 350,000 works but 400,000 gives a 1.75 TB square and an out of memory error.
     n_neighbors: int = 5
         Number of nearest neighbors to use when constructing the graph.
     threshold: int | None = None
         Maximum allowed distance between 2 nodes. Defaults to None (no thresholding).
+    random_seed: int | None = None
+        If provided, set the random seed to make the train/test/validation split deterministic.
+    output_directory: str | None = None
+        If provided, save the graphs to disk in the specified directory.
 
     Returns
     -------
@@ -109,39 +109,41 @@ def generate_graphs(
     feature_names: list[str]
         The names of the features in graph.ndata['features'] in the order they appear in the array.
     """
-    if (output_directory is not None) and \
-            exists(join(output_directory, 'graphs.bin')) and \
-            exists(join(output_directory, 'feature_names.txt')):
-        warn('Graphs already exist in output directory. Loading from file.')
-        return load_hs_graphs(output_directory)
+    if output_directory is not None:
+        if exists(join(output_directory, 'graphs.bin')) and \
+                exists(join(output_directory, 'feature_names.txt')):
+            warn('Graphs already exist in output directory. Loading from file.')
+            return load_hs_graphs(output_directory)
+        else:
+            makedirs(output_directory, exist_ok=True)
     p_validation, p_test, roi_size, roi_area, features_to_use, grouped = \
         prepare_graph_generation_by_specimen(
             df_cell,
             df_label,
             validation_data_percent,
             test_data_percent,
-            use_channels,
-            use_phenotypes,
-            roi_side_length,
-            cells_per_roi_target,
-            output_directory,
-            random_seed,
+            use_channels=use_channels,
+            use_phenotypes=use_phenotypes,
+            roi_side_length=roi_side_length,
+            cells_per_roi_target=cells_per_roi_target,
+            random_seed=random_seed,
         )
     graphs_by_specimen: dict[str, list[HSGraph]] = {}
     print('Creating graphs for identified regions in each specimen...')
     for specimen, df_specimen in tqdm(grouped):
         # Skip specimens without labels
-        if (not include_unlabeled) and (specimen not in df_label.index):
+        if exclude_unlabeled and (specimen not in df_label.index):
             continue
         graphs = create_graphs_from_specimen(
             df_specimen,
             features_to_use,
             roi_size,
             roi_area,
-            max_cells_to_consider,
-            target_name,
+            target_name=target_name,
+            max_cells_to_consider=max_cells_to_consider,
             n_neighbors=n_neighbors,
             threshold=threshold,
+            random_seed=random_seed,
         )
         graphs_by_specimen[specimen] = graphs
         print(f'Created {len(graphs)} ROI(s) from specimen {specimen}.')
@@ -151,9 +153,10 @@ def generate_graphs(
         p_validation,
         p_test,
         roi_size,
-        features_to_use=features_to_use,
-        output_directory=output_directory,
+        random_seed=random_seed,
     )
+    if output_directory is not None:
+        save_graph_data(graphs_data, features_to_use, output_directory)
     return graphs_data, features_to_use
 
 
@@ -166,7 +169,6 @@ def prepare_graph_generation_by_specimen(
     use_phenotypes: bool = True,
     roi_side_length: int | None = None,
     cells_per_roi_target: int | None = 5_000,
-    output_directory: str | None = None,
     random_seed: int | None = None,
 ) -> tuple[
     float,
@@ -177,7 +179,7 @@ def prepare_graph_generation_by_specimen(
     DataFrameGroupBy,
 ]:
     """Prepare for graph generation by splitting the data by specimen and determining ROI size."""
-    p_validation, p_test, roi_size = validate_inputs(
+    p_validation, p_test, roi_size = _validate_inputs(
         df_label,
         validation_data_percent,
         test_data_percent,
@@ -189,9 +191,6 @@ def prepare_graph_generation_by_specimen(
     if random_seed is not None:
         set_seeds(random_seed)
 
-    if output_directory is not None:
-        makedirs(output_directory, exist_ok=True)
-
     grouped, roi_size, roi_area, features_to_use = _group_by_specimen(
         df_cell,
         cells_per_roi_target,
@@ -202,7 +201,7 @@ def prepare_graph_generation_by_specimen(
     return p_validation, p_test, roi_size, roi_area, features_to_use, grouped
 
 
-def validate_inputs(
+def _validate_inputs(
     df_label: DataFrame,
     validation_data_percent: int,
     test_data_percent: int,
@@ -303,8 +302,8 @@ def create_graphs_from_specimen(
     features_to_use: list[str],
     roi_size: tuple[int, int],
     roi_area: float,
-    max_cells_to_consider: int = 100_000,
     target_name: str | None = None,
+    max_cells_to_consider: int = 100_000,
     n_neighbors: int = 5,
     threshold: int | None = None,
     random_seed: int | None = None,
@@ -492,14 +491,15 @@ def finalize_graph_metadata(
     p_validation: float,
     p_test: float,
     roi_size: tuple[int, int],
-    features_to_use: list[str] | None,
-    output_directory: str | None = None,
+    random_seed: int | None = None,
 ) -> list[GraphData]:
     """Split into train/validation/test sets and associate other metadata with the graphs.
 
     If there's a mix of whole slide images (WSIs) and tissue microarrays (TMAs), this method
     allocates WSIs first, identified by how many ROIs are created from each image.
     """
+    if random_seed is not None:
+        set_seeds(random_seed)
     graphs_by_label_and_specimen = _split_graphs_by_label_and_specimen(graphs_by_specimen, df_label)
     specimen_to_set = _split_rois(graphs_by_label_and_specimen, p_validation, p_test)
     graphs_data = _assemble_graph_data(
@@ -508,9 +508,6 @@ def finalize_graph_metadata(
         roi_size,
     )
     print(report_dataset_statistics(graphs_data))
-    if output_directory is not None:
-        assert features_to_use is not None
-        save_graph_data(graphs_data, features_to_use, output_directory)
     return graphs_data
 
 
@@ -740,6 +737,6 @@ def save_graph_data(
     features_to_use: list[str],
     output_directory: str,
 ) -> None:
-    """Save graph data to disk."""
+    """Save graph data and feature names to disk."""
     save_hs_graphs(graphs_data, output_directory)
     savetxt(join(output_directory, 'feature_names.txt'), features_to_use, fmt='%s', delimiter=',')

@@ -23,7 +23,7 @@ def add_argument(parser: ArgumentParser, name: Union[SettingArgumentName, FileAr
 
     if name == 'workflow':
         parser.add_argument('--workflow', dest='workflow', choices=get_workflow_names(),
-                            required=False)
+                            required=True)
     if name == 'source file identifier':
         parser.add_argument('--input-file-identifier', dest='input_file_identifier', type=str,
                             required=False,

@@ -1,10 +1,7 @@
 spt cggnn generate-graphs \
     --spt_hdf_cell_path unit_tests/cells.h5 \
     --spt_hdf_label_path unit_tests/labels.h5 \
-    --validation_data_percent 15 \
-    --test_data_percent 15 \
-    --output_directory graphs/ \
-    --random_seed 0
+    --config_path unit_tests/spt-test.config
 generation_ran="$?"
 
 [ -e "graphs/feature_names.txt" ] && [ -e "graphs/graphs.pkl" ]
@@ -16,7 +13,7 @@ then
 fi
 
 cat "graphs/feature_names.txt"
-python3.11 -c 'from spatialprofilingtoolbox.cggnn.util import load_hs_graphs; graphs, _ = load_hs_graphs("graphs/"); assert len(graphs) == 30, f"Graph count ({len(graphs)}) doesn\t match true value (30).";'
+python3.11 -c 'from spatialprofilingtoolbox.cggnn.util import load_hs_graphs; graphs, _ = load_hs_graphs("graphs/"); assert len(graphs) == 30, f"Graph count ({len(graphs)}) does not match true value (30).";'
 lengths_ok="$?"
 
 rm -r "graphs/"

@@ -6,6 +6,55 @@ from numpy import sort  # type: ignore
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 
 
+def extract(
+    database_config_file: str,
+    study: str,
+    strata_to_use: list[int] | None,
+) -> tuple[DataFrame, DataFrame, dict[int, str]]:
+    """Extract information cg-gnn needs from SPT.
+
+    Parameters
+    ----------
+    database_config_file : str
+        Location of the SPT DB config file.
+    study : str
+        Name of the study to query data for.
+    strata_to_use : list[int] | None
+        Specimen strata to use as labels, identified according to the "stratum identifier" in
+        `explore-classes`. This should be given as space separated integers.
+        If not provided, all strata will be used.
+
+    Returns
+    -------
+    df_cell: DataFrame
+        Rows are individual cells, indexed by an integer ID.
+        Column or column groups are, named and in order:
+            1. The 'specimen' the cell is from
+            2. Cell centroid positions 'pixel x' and 'pixel y'
+            3. Channel expressions starting with 'C ' and followed by human-readable symbol text
+            4. Phenotype expressions starting with 'P ' followed by human-readable symbol text
+    df_label: DataFrame
+        Rows are specimens, the sole column 'label' is its class label as an integer.
+    label_to_result_text: dict[int, str]
+        Mapping from class integer label to human-interpretable result text.
+    """
+    extractor = FeatureMatrixExtractor(database_config_file=database_config_file)
+    cohorts = extractor.extract_cohorts(study)
+    specimens, df_label, label_to_result_text = _create_label_df(
+        cohorts['assignments'],
+        cohorts['strata'],
+        strata_to_use,
+    )
+    df_cell = _create_cell_df({
+        specimen: extractor.extract(specimen=specimen, retain_structure_id=True)[specimen].dataframe
+        for specimen in specimens
+    } if (strata_to_use is not None) else {
+        specimen: data.dataframe
+        for specimen, data in extractor.extract(study=study, retain_structure_id=True).items()
+    })
+    return df_cell, df_label, label_to_result_text
+
+
 def _create_cell_df(dfs_by_specimen: dict[str, DataFrame]) -> DataFrame:
     """Find simple and complex phenotypes, and locations and merge into a DataFrame."""
     for specimen, df_specimen in dfs_by_specimen.items():
@@ -76,8 +125,8 @@ def _compress_df(df_strata: DataFrame) -> DataFrame:
 
 
 def _label(
-        df_assignments: DataFrame,
-        df_strata: DataFrame,
+    df_assignments: DataFrame,
+    df_strata: DataFrame,
 ) -> tuple[list[str], DataFrame, dict[int, str]]:
     """Merge with specimen assignments, keeping only selected strata."""
     df = merge(df_assignments, df_strata, on='stratum identifier', how='inner'
@@ -86,52 +135,3 @@ def _label(
     df.dropna(inplace=True)
     label_to_result = dict(enumerate(sort(df['label'].unique())))
     return specimens, df.replace({res: i for i, res in label_to_result.items()}), label_to_result
-
-
-def extract_cggnn_data(
-    database_config_file: str,
-    study: str,
-    strata_to_use: list[int] | None,
-) -> tuple[DataFrame, DataFrame, dict[int, str]]:
-    """Extract information cg-gnn needs from SPT.
-
-    Parameters
-    ----------
-    database_config_file : str
-        Location of the SPT DB config file.
-    study : str
-        Name of the study to query data for.
-    strata_to_use : list[int] | None
-        Specimen strata to use as labels, identified according to the "stratum identifier" in
-        `explore-classes`. This should be given as space separated integers.
-        If not provided, all strata will be used.
-
-    Returns
-    -------
-    df_cell: DataFrame
-        Rows are individual cells, indexed by an integer ID.
-        Column or column groups are, named and in order:
-            1. The 'specimen' the cell is from
-            2. Cell centroid positions 'pixel x' and 'pixel y'
-            3. Channel expressions starting with 'C ' and followed by human-readable symbol text
-            4. Phenotype expressions starting with 'P ' followed by human-readable symbol text
-    df_label: DataFrame
-        Rows are specimens, the sole column 'label' is its class label as an integer.
-    label_to_result_text: dict[int, str]
-        Mapping from class integer label to human-interpretable result text.
-    """
-    extractor = FeatureMatrixExtractor(database_config_file=database_config_file)
-    cohorts = extractor.extract_cohorts(study)
-    specimens, df_label, label_to_result_text = _create_label_df(
-        cohorts['assignments'],
-        cohorts['strata'],
-        strata_to_use,
-    )
-    df_cell = _create_cell_df({
-        specimen: extractor.extract(specimen=specimen, retain_structure_id=True)[specimen].dataframe
-        for specimen in specimens
-    } if (strata_to_use is not None) else {
-        specimen: data.dataframe
-        for specimen, data in extractor.extract(study=study, retain_structure_id=True).items()
-    })
-    return df_cell, df_label, label_to_result_text

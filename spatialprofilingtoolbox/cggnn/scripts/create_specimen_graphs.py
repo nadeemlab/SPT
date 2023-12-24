@@ -37,15 +37,7 @@ Intended to be used with prepare-graph-creation and finalize-graphs.
         '--output_directory',
         type=str,
         help='Save files to this directory.',
-        default='tmp/graphs',
-        required=False
-    )
-    parser.add_argument(
-        '--random_seed',
-        type=int,
-        help='Random seed to use for reproducibility.',
-        default=None,
-        required=False
+        required=True
     )
     return parser.parse_args()
 
@@ -53,13 +45,28 @@ Intended to be used with prepare-graph-creation and finalize-graphs.
 if __name__ == "__main__":
     args = parse_arguments()
     with open(args.parameters_path, 'rb') as f:
-        (target_name, roi_size, roi_area, features_to_use, _, _, _, random_seed) = load(f)
+        (
+            target_name,
+            max_cells_to_consider,
+            n_neighbors,
+            threshold,
+            roi_size,
+            roi_area,
+            features_to_use,
+            _,
+            _,
+            _,
+            random_seed,
+        ) = load(f)
     graphs = create_graphs_from_specimen(
         cast(DataFrame, read_hdf(args.specimen_hdf_path)),
         features_to_use,
         roi_size,
         roi_area,
         target_name=target_name,
+        max_cells_to_consider=max_cells_to_consider,
+        n_neighbors=n_neighbors,
+        threshold=threshold,
         random_seed=random_seed,
     )
     if len(graphs) > 0:

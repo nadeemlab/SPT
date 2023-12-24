@@ -4,14 +4,14 @@ from argparse import ArgumentParser
 
 from pandas import read_hdf  # type: ignore
 
-from spatialprofilingtoolbox.cggnn.config_reader import read_generation_config
-from spatialprofilingtoolbox.cggnn.generate_graphs import generate_graphs
+from spatialprofilingtoolbox.graphs.config_reader import read_generation_config
+from spatialprofilingtoolbox.graphs.generate_graphs import generate_graphs
 
 
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn generate-graphs',
+        prog='spt graphs generate-graphs',
         description="Generate graphs from saved SPT files."
     )
     parser.add_argument(

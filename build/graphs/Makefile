@@ -17,7 +17,7 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "cggnn"
+>@${MESSAGE} start "graphs"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-db-testing-only ; \

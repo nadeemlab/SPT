@@ -7,15 +7,15 @@ from pickle import dump
 
 from tqdm import tqdm  # type: ignore
 
-from spatialprofilingtoolbox.cggnn.config_reader import read_extract_config, read_generation_config
-from spatialprofilingtoolbox.cggnn.extract import extract
-from spatialprofilingtoolbox.cggnn.generate_graphs import prepare_graph_generation_by_specimen
+from spatialprofilingtoolbox.graphs.config_reader import read_extract_config, read_generation_config
+from spatialprofilingtoolbox.graphs.extract import extract
+from spatialprofilingtoolbox.graphs.generate_graphs import prepare_graph_generation_by_specimen
 
 
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn prepare-graph-creation',
+        prog='spt graphs prepare-graph-creation',
         description="""Create files necessary for parallelized graph creation.
 
 Intended to be used with parallel calls to create-specimen-graphs, followed by finalize-graphs.

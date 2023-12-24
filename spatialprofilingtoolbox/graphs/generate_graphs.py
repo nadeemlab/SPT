@@ -20,7 +20,7 @@ from pandas import DataFrame
 from pandas.core.groupby.generic import DataFrameGroupBy
 from tqdm import tqdm
 
-from spatialprofilingtoolbox.cggnn.util import (
+from spatialprofilingtoolbox.graphs.util import (
     HSGraph,
     GraphData,
     save_hs_graphs,

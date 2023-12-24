@@ -11,8 +11,8 @@ from spatialprofilingtoolbox.db.importance_score_transcriber import transcribe_i
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn upload-importances',
-        description='Save cell importance scores as defined by cggnn to the database.',
+        prog='spt graphs upload-importances',
+        description='Save cell importance scores to the database.',
     )
     add_argument(parser, 'database config')
     add_argument(parser, 'study name')

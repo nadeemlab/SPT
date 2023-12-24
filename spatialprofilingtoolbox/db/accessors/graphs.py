@@ -7,11 +7,11 @@ from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvide
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import CGGNNImportanceRank
 
 
-class CGGNNAccess(SimpleReadOnlyProvider):
-    """Access to cg-gnn features from database."""
+class GraphsAccess(SimpleReadOnlyProvider):
+    """Access to graph features from database."""
 
     def get_metrics(self, study: str, cell_limit: int | None = None) -> list[CGGNNImportanceRank]:
-        """Get cg-gnn metrics for this study.
+        """Get graph metrics for this study.
 
         Returns
         -------

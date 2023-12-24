@@ -4,14 +4,14 @@ from argparse import ArgumentParser
 from os.path import basename, splitext
 from pickle import load
 
-from spatialprofilingtoolbox.cggnn.generate_graphs import finalize_graph_metadata, save_graph_data
-from spatialprofilingtoolbox.cggnn.util import HSGraph
+from spatialprofilingtoolbox.graphs.generate_graphs import finalize_graph_metadata, save_graph_data
+from spatialprofilingtoolbox.graphs.util import HSGraph
 
 
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn finalize-graphs',
+        prog='spt graphs finalize-graphs',
         description="""Finalize created graphs.
 
 Splits graphs into train/validation/test sets. This command is intended to be used with

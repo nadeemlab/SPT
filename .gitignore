@@ -28,7 +28,7 @@ build/db/initialize_schema.sql
 build/*.whl
 build/lib/
 build/apiserver/log_of_build.log
-build/cggnn/log_of_build.log
+build/graphs/log_of_build.log
 build/db/log_of_build.log
 build/ondemand/log_of_build.log
 build/workflow/log_of_build.log

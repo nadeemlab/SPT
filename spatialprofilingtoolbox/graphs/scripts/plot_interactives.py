@@ -2,14 +2,14 @@
 
 from argparse import ArgumentParser
 
-from spatialprofilingtoolbox.cggnn.interactives import plot_interactives
-from spatialprofilingtoolbox.cggnn.util import load_hs_graphs
+from spatialprofilingtoolbox.graphs.interactives import plot_interactives
+from spatialprofilingtoolbox.graphs.util import load_hs_graphs
 
 
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn plot-interactives',
+        prog='spt graphs plot-interactives',
         description="Plot HTML interactives from classified cell graphs."
     )
     parser.add_argument(

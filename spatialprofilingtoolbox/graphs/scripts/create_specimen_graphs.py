@@ -9,13 +9,13 @@ from pickle import load, dump
 from pandas import read_hdf
 from pandas import DataFrame
 
-from spatialprofilingtoolbox.cggnn.generate_graphs import create_graphs_from_specimen
+from spatialprofilingtoolbox.graphs.generate_graphs import create_graphs_from_specimen
 
 
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn create-specimen-graphs',
+        prog='spt graphs create-specimen-graphs',
         description="""Generate graphs from a single specimen.
 
 Intended to be used with prepare-graph-creation and finalize-graphs.

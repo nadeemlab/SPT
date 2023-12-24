@@ -2,7 +2,7 @@
 spt workflow configure --local --input-path test/test_data/adi_preprocessed_tables/dataset3/ --workflow='tabular import' --database-config-file build/db/.spt_db.config.local
 nextflow run .
 
-spt cggnn upload-importances --study-name "Melanoma intralesional IL2" --database-config-file build/db/.spt_db.config.local --importances_csv_path test/test_data/gnn_importances/3.csv
+spt graphs upload-importances --study-name "Melanoma intralesional IL2" --database-config-file build/db/.spt_db.config.local --importances_csv_path test/test_data/gnn_importances/3.csv
 
 cat work/*/*/.command.log
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt

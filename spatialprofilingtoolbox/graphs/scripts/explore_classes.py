@@ -8,13 +8,13 @@ from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn explore-classes',
+        prog='spt graphs explore-classes',
         description="""See the strata available to classify on.
 
 When preparing to perform graph neural network training on a new dataset, use:
 
 ```bash
-spt cggnn explore-classes --database-config-file <config_file_location> --study-name <study_name>
+spt graphs explore-classes --database-config-file <config_file_location> --study-name <study_name>
 ```
 
 This will print a list of classes that stratify the samples associated with this study. Note the

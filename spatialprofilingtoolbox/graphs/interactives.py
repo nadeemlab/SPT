@@ -21,7 +21,7 @@ from bokeh.palettes import YlOrRd8
 from bokeh.layouts import row
 from bokeh.io import output_file, save
 
-from spatialprofilingtoolbox.cggnn.util import GraphData, HSGraph
+from spatialprofilingtoolbox.graphs.util import GraphData, HSGraph
 
 
 def plot_interactives(

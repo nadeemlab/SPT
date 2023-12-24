@@ -6,21 +6,21 @@ from os.path import join
 from os.path import exists
 from json import dump
 
-from spatialprofilingtoolbox.cggnn.config_reader import read_extract_config
-from spatialprofilingtoolbox.cggnn.extract import extract
+from spatialprofilingtoolbox.graphs.config_reader import read_extract_config
+from spatialprofilingtoolbox.graphs.extract import extract
 
 
 def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
-        prog='spt cggnn extract',
+        prog='spt graphs extract',
         description="""Extract information needed to create graphs from a single-cell dataset.
 
 This command is intended to be used after you have identified which strata you want to use with `spt
-cggnn explore-classes`.
+graphs explore-classes`.
 
 ```bash
-spt cggnn extract --config_path path/to/config/file.toml --output_directory path/to/output/directory
+spt graphs extract --config_path path/to/extract.config --output_directory path/to/output/directory
 ```
 
 This extracts single-cell data and strata/class information to three files in the output directory:
@@ -31,7 +31,7 @@ This extracts single-cell data and strata/class information to three files in th
     * `label_to_result.json` is a simple JSON that translates each label ID to a human-interpretable
       description, for use in visualizations after training.
 
-These files can be used with the standalone `spt cggnn generate-graphs` to create cell graphs.
+These files can be used with the standalone `spt graphs generate-graphs` to create cell graphs.
 """
     )
     parser.add_argument(

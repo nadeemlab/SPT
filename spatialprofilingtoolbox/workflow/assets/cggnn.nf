@@ -32,7 +32,7 @@ process prep_graph_creation {
     """
     #!/bin/bash
     cp ${db_config_file} db_config_file
-    spt cggnn prepare-graph-creation \
+    spt graphs prepare-graph-creation \
         --config_path ${graph_config_file} \
         --output_directory .
     """
@@ -50,7 +50,7 @@ process create_specimen_graphs {
     """
     #!/bin/bash
 
-    spt cggnn create-specimen-graphs \
+    spt graphs create-specimen-graphs \
         --specimen_hdf_path ${specimen_file} \
         --parameters_path ${parameters_file} \
         --output_directory .
@@ -73,7 +73,7 @@ process finalize_graphs {
 
     graph_files_array=(${graph_files})
 
-    spt cggnn finalize-graphs \
+    spt graphs finalize-graphs \
         --graph_files "\${graph_files_array[@]}" \
         --parameters_path ${parameters_file} \
         --output_directory results
@@ -121,7 +121,7 @@ process upload_importance_scores {
 
     if [[ "${upload_importances}" == "true" ]]
     then
-        spt cggnn upload-importances \
+        spt graphs upload-importances \
             --importances_csv_path ${importances_csv_path}
     fi
     """

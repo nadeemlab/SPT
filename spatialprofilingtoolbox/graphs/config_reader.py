@@ -29,7 +29,7 @@ def read_extract_config(config_file_path: str) -> tuple[
     f"""Read the TOML config file and return the '{EXTRACT_SECTION_NAME}' section.
 
     For a detailed explanation of the return values, refer to the docstring of
-    `spatialprofilingtoolbox.cggnn.extract.extract()`.
+    `spatialprofilingtoolbox.graphs.extract.extract()`.
     """
     config = _read_config_file(config_file_path, EXTRACT_SECTION_NAME)
     db_config_file_path: str = config["db_config_file_path"]
@@ -61,7 +61,7 @@ def read_generation_config(config_file_path: str) -> tuple[
     f"""Read the TOML config file and return the '{GENERATION_SECTION_NAME}' section.
 
     For a detailed explanation of the return values, refer to the docstring of
-    `spatialprofilingtoolbox.cggnn.generate_graphs.generate_graphs()`.
+    `spatialprofilingtoolbox.graphs.generate_graphs.generate_graphs()`.
     """
     config = _read_config_file(config_file_path, GENERATION_SECTION_NAME)
 

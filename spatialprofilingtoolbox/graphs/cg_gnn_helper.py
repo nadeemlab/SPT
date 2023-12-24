@@ -22,8 +22,8 @@ from dgl import DGLGraph, graph, batch  # type: ignore
 from dgl import seed as dgl_seed  # type: ignore
 from sklearn.model_selection import KFold
 
-from spatialprofilingtoolbox.cggnn.util import GraphData as SPTGraphData
-from spatialprofilingtoolbox.cggnn.util import HSGraph, split_graph_sets, SETS_type
+from spatialprofilingtoolbox.graphs.util import GraphData as SPTGraphData
+from spatialprofilingtoolbox.graphs.util import HSGraph, split_graph_sets, SETS_type
 
 
 INDICES = 'histological_structure'

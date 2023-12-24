@@ -1,4 +1,4 @@
-spt cggnn plot-interactives \
+spt graphs plot-interactives \
     --cg_path unit_tests/graphs/ \
     --output_directory . \
     --merge_rois

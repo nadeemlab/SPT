@@ -1,14 +1,14 @@
-The intended procedure for using `spt cggnn` (**c**ell **g**raph - **g**raph **n**eural **n**etwork) is:
+The intended procedure for using `spt graphs`  is:
 
 1. [Explore the data available for a study and train the model](#explore-the-data-available-for-a-study-and-train-the-model)
-2. [Configure a reproducible cggnn workflow](#configure-a-reproducible-cggnn-workflow)
+2. [Configure a reproducible deep learning workflow](#configure-a-reproducible-cggnn-workflow)
 3. [Running the workflow](#running-the-workflow)
 
 # Explore the data available for a study and train the model
 
-- Evaluate the specimen cohorts at your disposal with `spt cggnn explore-classes`.
-- Select sample strata to use and fetch the relevant data artifacts from the database using `spt cggnn extract`.
-- Use `spt cggnn train` to train and fine-tune your CG-GNN model.
+- Evaluate the specimen cohorts at your disposal with `spt graphs explore-classes`.
+- Select sample strata to use and fetch the relevant data artifacts from the database using `spt graphs extract`.
+- Use `spt graphs train` to train and fine-tune your CG-GNN model.
 
 # Configure a reproducible cggnn workflow
 

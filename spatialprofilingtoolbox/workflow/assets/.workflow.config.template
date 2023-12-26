@@ -1,5 +1,14 @@
 [general]
 db_config_file = path/to/db.config
+executor = local
+sif_file = path/to/sif/file
+excluded_host = None
+
+[database-visitor]
+study_name = name_of_study
+
+[tabular_import]
+input_path = path/to/input/directory
 
 [cg-gnn]
 default_docker_image = tag/of-docker:image

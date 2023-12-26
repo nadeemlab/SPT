@@ -1,25 +1,31 @@
 """CLI utility to configure an SPT workflow run."""
 
-import argparse
-import os
-from os import getcwd
-from os.path import isdir
-from os.path import exists
-from os.path import join
-from os.path import abspath
-from os.path import expanduser
-import stat
+from argparse import ArgumentParser
+from os import (
+    getcwd,
+    stat,
+    chmod,
+)
+from os.path import (
+    isdir,
+    exists,
+    join,
+    abspath,
+    expanduser,
+)
+from stat import S_IEXEC
 from configparser import ConfigParser
 from importlib.resources import as_file
 from importlib.resources import files
+from typing import cast
 
 try:
-    import jinja2
+    from jinja2 import Environment, BaseLoader
 except ModuleNotFoundError as e:
     from spatialprofilingtoolbox.standalone_utilities.module_load_error import \
         SuggestExtrasException
     SuggestExtrasException(e, 'workflow')
-import jinja2  # pylint: disable=ungrouped-imports
+from jinja2 import Environment, BaseLoader  # pylint: disable=ungrouped-imports
 
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument  # pylint: disable=ungrouped-imports
 from spatialprofilingtoolbox import get_workflow
@@ -39,60 +45,42 @@ NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
 NF_PIPELINE_FILE_CGGNN = 'cggnn.nf'
 
 
-def retrieve_from_library(subpackage, filename):
-    contents = None
+def _retrieve_from_library(subpackage: str, filename: str) -> str:
     filepath = files('.'.join(['spatialprofilingtoolbox', subpackage])).joinpath(filename)
     with as_file(filepath) as path:
         with open(path, 'rt', encoding='utf-8') as file:
             contents = file.read()
-    if contents is None:
-        raise FileNotFoundError(f'Could not locate library file {filename}')
     return contents
 
 
-def write_config_file(variables):
-    contents = retrieve_from_library('workflow.assets', NF_CONFIG_FILE + '.jinja')
+def _write_config_file(variables: dict[str, str]) -> None:
+    contents = _retrieve_from_library('workflow.assets', NF_CONFIG_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
     file_to_write = template.render(**variables)
     with open(join(getcwd(), NF_CONFIG_FILE), 'wt', encoding='utf-8') as file:
         file.write(file_to_write)
 
 
-def write_pipeline_script(variables):
-    workflow_name: str = variables['workflow']
+def _write_pipeline_script(variables: dict[str, str]) -> None:
+    workflow_name = variables['workflow']
     if workflows[workflow_name].is_database_visitor:
         if workflow_name == 'cg-gnn':
-            pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_CGGNN)
+            pipeline_file = _retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_CGGNN)
         else:
-            pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
+            pipeline_file = _retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
     else:
-        pipeline_file = retrieve_from_library('workflow.assets', NF_PIPELINE_FILE)
-    with open(join(os.getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
+        pipeline_file = _retrieve_from_library('workflow.assets', NF_PIPELINE_FILE)
+    with open(join(getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
         file.write(pipeline_file)
 
 
-def record_configuration_command(variables):
+def _record_configuration_command(variables: dict[str, str], configuration_file: str) -> None:
     tokens = ['spt workflow configure']
     tokens.append(f"--workflow=\"{variables['workflow']}\"")
-    if variables['executor'] == 'local':
-        tokens.append('--local')
-    if variables['executor'] == 'lsf':
-        tokens.append('--lsf')
-    if 'input_path' in variables:
-        input_path = abspath(variables['input_path'])
-        if ' ' in input_path:
-            input_path = f"'{input_path}'"
-        tokens.append(f'--input-path={input_path}')
-    if 'sif_file' in variables:
-        sif_file = abspath(variables['sif_file'])
-        if ' ' in sif_file:
-            sif_file = f"'{sif_file}'"
-        tokens.append(f'--sif-file={sif_file}')
-    if 'excluded_host' in variables:
-        tokens.append(f'--excluded-host={variables["excluded_host"]}')
-    if 'db_config_file' in variables:
-        tokens.append(f'--database-config-file={variables["db_config_file"]}')
-
+    configuration_file = abspath(configuration_file)
+    if ' ' in configuration_file:
+        configuration_file = f'"{configuration_file}"'
+    tokens.append(f"--config-file=\"{configuration_file}\"")
     command = ' \\\n '.join(tokens)
 
     with open('configure.sh', 'wt', encoding='utf-8') as file:
@@ -104,22 +92,24 @@ def record_configuration_command(variables):
         file.write('#!/bin/sh\n\n')
         file.write('nextflow run .\n')
 
-    file_stat = os.stat('configure.sh')
-    os.chmod('configure.sh', file_stat.st_mode | stat.S_IEXEC)
-    file_stat = os.stat('run.sh')
-    os.chmod('run.sh', file_stat.st_mode | stat.S_IEXEC)
+    file_stat = stat('configure.sh')
+    chmod('configure.sh', file_stat.st_mode | S_IEXEC)
+    file_stat = stat('run.sh')
+    chmod('run.sh', file_stat.st_mode | S_IEXEC)
 
 
-def process_filename_inputs(options, parsed_args):
-    if isdir(parsed_args.input_path):
-        file_manifest_path = join(parsed_args.input_path, 'file_manifest.tsv')
+def _process_filename_inputs(options: dict[str, str | bool]) -> None:
+    input_path = cast(str, options['input_path'])
+    del options['input_path']
+    if isdir(input_path):
+        file_manifest_path = join(input_path, 'file_manifest.tsv')
         if exists(file_manifest_path):
-            options['input_path'] = parsed_args.input_path
+            options['input_path'] = input_path
             options['file_manifest_filename'] = file_manifest_path
         else:
             raise FileNotFoundError(file_manifest_path)
     else:
-        raise FileNotFoundError(parsed_args.input_path)
+        raise FileNotFoundError(input_path)
 
     samples_file = get_input_filename_by_identifier(
         input_file_identifier='Samples file',
@@ -127,7 +117,7 @@ def process_filename_inputs(options, parsed_args):
     )
     options['samples'] = False
     if not samples_file is None:
-        samples_file_abs = join(parsed_args.input_path, samples_file)
+        samples_file_abs = join(input_path, samples_file)
         if exists(samples_file_abs):
             options['samples_file'] = samples_file_abs
             options['samples'] = True
@@ -138,7 +128,7 @@ def process_filename_inputs(options, parsed_args):
     )
     options['subjects'] = False
     if not subjects_file is None:
-        subjects_file_abs = join(parsed_args.input_path, subjects_file)
+        subjects_file_abs = join(input_path, subjects_file)
         if exists(subjects_file_abs):
             options['subjects_file'] = subjects_file_abs
             options['subjects'] = True
@@ -148,7 +138,7 @@ def process_filename_inputs(options, parsed_args):
         file_manifest_filename=file_manifest_path,
     )
     if not study_file is None:
-        study_file_abs = join(parsed_args.input_path, study_file)
+        study_file_abs = join(input_path, study_file)
         if not exists(study_file_abs):
             raise FileNotFoundError(f'Did not find study file ({study_file}).')
         options['study_file'] = study_file_abs
@@ -159,7 +149,7 @@ def process_filename_inputs(options, parsed_args):
         file_manifest_filename=file_manifest_path,
     )
     if not diagnosis_file is None:
-        diagnosis_file_abs = join(parsed_args.input_path, diagnosis_file)
+        diagnosis_file_abs = join(input_path, diagnosis_file)
         if not exists(diagnosis_file_abs):
             raise FileNotFoundError(f'Did not find diagnosis file ({diagnosis_file}).')
         options['diagnosis_file'] = diagnosis_file_abs
@@ -170,7 +160,7 @@ def process_filename_inputs(options, parsed_args):
         file_manifest_filename=file_manifest_path,
     )
     if not interventions_file is None:
-        interventions_file_abs = join(parsed_args.input_path, interventions_file)
+        interventions_file_abs = join(input_path, interventions_file)
         if not exists(interventions_file_abs):
             raise FileNotFoundError(f'Did not find interventions file ({interventions_file}).')
         options['interventions_file'] = interventions_file_abs
@@ -181,7 +171,7 @@ def process_filename_inputs(options, parsed_args):
         file_manifest_filename=file_manifest_path,
     )
     if not channels_file is None:
-        channels_file_abs = join(parsed_args.input_path, channels_file)
+        channels_file_abs = join(input_path, channels_file)
         if not exists(channels_file_abs):
             raise FileNotFoundError(f'Did not find channels file ({channels_file}).')
         options['channels_file'] = channels_file_abs
@@ -192,110 +182,124 @@ def process_filename_inputs(options, parsed_args):
         file_manifest_filename=file_manifest_path,
     )
     if not phenotypes_file is None:
-        phenotypes_file_abs = join(parsed_args.input_path, phenotypes_file)
+        phenotypes_file_abs = join(input_path, phenotypes_file)
         if not exists(phenotypes_file_abs):
             raise FileNotFoundError(f'Did not find phenotypes file ({phenotypes_file}).')
         options['phenotypes_file'] = phenotypes_file_abs
         options['phenotypes'] = True
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
+def parse_arguments():
+    """Process command line arguments."""
+    parser = ArgumentParser(
         prog='spt workflow configure',
-        description='Configure an SPT (spatialprofilingtoolbox) run in the current directory.'
+        description="""Configure an SPT (spatialprofilingtoolbox) run in the current directory.
+
+Here are instructions for the configuration file.
+
+General variables should be included under the `[general]` section. These variables are:
+    db_config_file: <path>
+        Path to a database configuration file.
+    executor: {local, lsf} (default: local)
+        Determines if processes are run locally or as Platform LSF jobs on an HPC cluster.
+    excluded_host: <hostname> (default: None)
+        If specified, LSF jobs will not be scheduled on the indicated host.
+    sif-file: <path> (default: None)
+        Path to SPT Singularity container. Can be obtained with singularity pull
+        docker://nadeemlab/spt:latest
+
+
+Some workflows require additional variables that are defined in their own section.
+
+`[tabular_import]`:
+    input_path: <path>
+        Path to the directory containing the input data files, e.g., `file_manifest.tsv`.
+
+`[cg-gnn]`:
+    default_docker_image: <docker image name>
+        Name of the Docker image to use for the CG-GNN workflow (outside of the training step, which
+        uses a specific container).
+    network:
+        Name of the Docker network to use for the CG-GNN workflow.
+    graph_config_file: <path>
+        Path to the graph configuration file. See spatialprofilingtoolbox.cggnn for more details.
+    cuda: {true, false} (default: false)
+        Whether to use a CUDA-enabled container for the CG-GNN workflow training step.
+    upload_importances: {true, false} (default: false)
+        Whether to upload feature importances to the database after training.
+"""
     )
     add_argument(parser, 'workflow')
-    add_argument(parser, 'study name')
     parser.add_argument(
-        '--input-path',
-        dest='input_path',
-        type=str,
-        required=False,
-        help='Path to directory containing input data files. (For example, containing '
-        'file_manifest.tsv).'
-    )
-    parser.add_argument(
-        '--sif-file',
-        dest='sif_file',
-        type=str,
-        required=False,
-        help='Path to SPT Singularity container. Can be obtained with singularity pull '
-        'docker://nadeemlab/spt:latest'
-    )
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        '--local',
-        action='store_true',
-        default=False,
-        help='Use this flag to get Nextflow to deploy processes locally on a given machine.'
-    )
-    group.add_argument(
-        '--lsf',
-        action='store_true',
-        default=False,
-        help='Use this flag to get Nextflow to attempt to deploy processes as Platform LSF jobs on'
-        ' an HPC cluster.'
-    )
-    parser.add_argument(
-        '--excluded-host',
-        dest='excluded_host',
-        type=str,
-        required=False,
-        help='If a machine must not have LSF jobs scheduled on it, supply its hostname here.'
-    )
-    add_argument(parser, 'database config')
-    parser.add_argument(
-        '--workflow-config-file',
+        '--config-file',
         help='Path to a workflow configuration file. This file will be used to populate the '
         'configuration file for the workflow.',
-        required=False,
-        default=None,
+        required=True,
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    jinja_environment = jinja2.Environment(loader=jinja2.BaseLoader())
+
+if __name__ == '__main__':
+    args = parse_arguments()
+    jinja_environment = Environment(loader=BaseLoader())
 
     config_variables: dict[str, str | bool] = {}
-    if args.workflow_config_file is not None:
-        config = ConfigParser()
-        config.read(args.workflow_config_file)
-        config_variables = dict(config.items('general')) if config.has_section('general') else {}
-        config_variables.update(config.items(args.workflow))
-
+    config_file = ConfigParser()
+    config_file.read(args.config_file)
+    config_variables = dict(config_file.items('general')) if config_file.has_section('general') \
+        else {}
+    workflow: str = args.workflow
+    workflow_configuration = workflows[workflow]
     config_variables['workflow'] = args.workflow
 
-    if args.database_config_file:
-        config_file = expanduser(args.database_config_file)
-        if exists(config_file):
-            config_variables['db_config_file'] = config_file
-            config_variables['db_config'] = True
-        else:
-            logger.warning('Database configuration file was not located at indicated location.')
-            logger.debug('args.database_config_file: %s', args.database_config_file)
-            logger.debug('config_file: %s', config_file)
+    if 'db_config_file' not in config_variables:
+        raise ValueError('db_config_file must be specified in the workflow configuration file.')
+    db_config_file = expanduser(cast(str, config_variables['db_config_file']))
+    if exists(db_config_file):
+        config_variables['db_config_file'] = db_config_file
+        config_variables['db_config'] = True
+    else:
+        logger.warning('Database configuration file was not found at the indicated location.')
+        logger.debug('database_config_file: %s', config_variables['db_config_file'])
+        logger.debug('db_config_file: %s', db_config_file)
 
-    if args.local:
+    if 'executor' not in config_variables:
         config_variables['executor'] = 'local'
-    if args.lsf:
-        config_variables['executor'] = 'lsf'
+    if config_variables['executor'] not in {'local', 'lsf'}:
+        raise ValueError('executor must be either "local" or "lsf". '
+                         f'Got {config_variables["executor"]}')
+    if 'excluded_host' in config_variables:
+        if cast(str, config_variables['excluded_host']).lower().strip() == 'none':
+            del config_variables['excluded_host']
+    if ('excluded_host' in config_variables) and (config_variables['executor'] == 'local'):
+        logger.warning('excluded_host specified despite executor being "local".')
+        del config_variables['excluded_host']
 
-    if args.study_name:
-        config_variables['study_name'] = args.study_name
-
-    if not args.sif_file is None:
-        if exists(args.sif_file):
-            config_variables['sif_file'] = args.sif_file
-        else:
-            raise FileNotFoundError(args.sif_file)
-
-    if not args.excluded_host is None:
-        config_variables['excluded_host'] = args.excluded_host
+    if 'sif_file' in config_variables:
+        if cast(str, config_variables['sif_file']).lower().strip() == 'none':
+            del config_variables['sif_file']
+        if not exists(config_variables['sif_file']):
+            raise FileNotFoundError(config_variables['sif_file'])
 
     config_variables['current_working_directory'] = getcwd()
 
-    if not workflows[config_variables['workflow']].is_database_visitor:
-        process_filename_inputs(config_variables, args)
+    if workflow_configuration.is_database_visitor:
+        db_visitor_config = dict(config_file.items('database-visitor'))
+        if 'study_name' not in db_visitor_config:
+            raise ValueError('study_name must be specified in the `database-visitor` section.')
+        config_variables.update(db_visitor_config)
+    else:
+        _process_filename_inputs(config_variables)
 
-    write_config_file(config_variables)
-    write_pipeline_script(config_variables)
-    record_configuration_command(config_variables)
+    if config_file.has_section(workflow):
+        config_section = dict(config_file.items(workflow))
+        workflow_configuration.process_inputs(config_section)
+        config_variables.update(config_section)
+    elif workflow_configuration.config_section_required:
+        raise ValueError(f'Workflow {workflow} requires a configuration section.')
+
+    _write_config_file(config_variables)
+    _write_pipeline_script(config_variables)
+    _record_configuration_command(config_variables, args.config_file)
+    if workflow == 'phenotype proximity':
+        print(config_variables)

@@ -9,8 +9,8 @@ Taken as a whole the phenotype proximity analysis pipeline provides statistical
 test results and figures that assess the efficacy of proximity-related metrics
 as discriminators of selected correlates.
 """
-from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 
+from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 from spatialprofilingtoolbox.workflow.reduction_visual.job_generator import \
     ReductionVisualJobGenerator
 from spatialprofilingtoolbox.workflow.reduction_visual.initializer import ReductionVisualInitializer

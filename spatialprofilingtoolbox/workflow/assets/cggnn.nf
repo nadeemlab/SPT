@@ -105,8 +105,9 @@ process train {
     merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
 
     spt-plugin-train-on-graphs
-        --cg_directory ${working_directory} \
-        --config_path ${graph_config_file}
+        --input_directory ${working_directory} \
+        --config_path ${graph_config_file} \
+        --output_directory ${working_directory}
     """
 }
 

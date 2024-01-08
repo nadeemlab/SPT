@@ -65,8 +65,6 @@ export DOCKER_SCAN_SUGGEST:=false
 SUBMODULES := apiserver graphs ondemand db workflow
 DOCKERIZED_SUBMODULES := apiserver db ondemand
 
-# DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
-# DOCKERFILE_TARGETS := $(foreach submodule,$(SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)

@@ -17,11 +17,10 @@ STANDALONE_MODULE_TEST_NAME := "cggnn-dockerized"
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
 
-.PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
+.PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
-test: teardown-testing
 
 setup-testing:
 >@${MESSAGE} start "workflow"
@@ -40,13 +39,6 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@rm -f status_code
 
 teardown-module-testing: ${MODULE_TESTS} ${STANDALONE_MODULE_TEST_TARGET}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
-
-teardown-testing: ${TESTS}
 >@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/

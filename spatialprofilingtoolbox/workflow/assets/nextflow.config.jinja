@@ -90,5 +90,14 @@ env.merge_rois_ = '{{ merge_rois }}'{% endif %}
 {%- if upload_importances is defined %}
 env.upload_importances_ = '{{ upload_importances }}'{% endif %}
 
+{%- if cuda is defined %}
+env.cuda_ = '{{ cuda }}'{% endif %}
+
 {%- if random_seed is defined %}
 env.random_seed_ = '{{ random_seed }}'{% endif %}
+
+{%- if workflow == 'cggnn' and network is not none %}
+docker {
+    runOptions = '--network {{ network }}'
+}
+{%- endif %}

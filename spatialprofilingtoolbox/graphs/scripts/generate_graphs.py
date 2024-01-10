@@ -1,4 +1,4 @@
-"""Generate graphs from SPT data extracts."""
+"""Generate graphs from SPT database extracts."""
 
 from argparse import ArgumentParser
 

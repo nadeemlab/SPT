@@ -1,4 +1,4 @@
-"""Reads the data extraction and graph generation configuration TOML file and all parameters."""
+"""Reads the data extraction and graph generation configuration files and all parameters."""
 
 from configparser import ConfigParser
 from typing import Any

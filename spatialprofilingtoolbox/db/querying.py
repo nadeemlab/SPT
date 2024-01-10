@@ -61,10 +61,10 @@ class QueryHandler:
 
     @classmethod
     def retrieve_signature_of_phenotype(cls,
-                                        cursor,
-                                        phenotype_handle: str,
-                                        study: str
-                                        ) -> PhenotypeCriteria:
+        cursor,
+        phenotype_handle: str,
+        study: str
+    ) -> PhenotypeCriteria:
         channel_names = PhenotypesAccess(cursor).get_channel_names(study)
         components = StudyAccess(cursor).get_study_components(study)
         if phenotype_handle in channel_names:

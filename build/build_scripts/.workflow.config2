@@ -1,0 +1,9 @@
+[general]
+db_config_file = build/db/.spt_db.config.local
+executor = local
+
+[tabular import]
+input_path = test/test_data/adi_preprocessed_tables/datasetYYY
+
+[database visitor]
+study_name = Breast cancer IMC

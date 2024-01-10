@@ -1,5 +1,6 @@
 """CLI utility to configure an SPT workflow run."""
 
+import re
 from argparse import ArgumentParser
 from os import (
     getcwd,
@@ -57,6 +58,7 @@ def _write_config_file(variables: dict[str, str]) -> None:
     contents = _retrieve_from_library('workflow.assets', NF_CONFIG_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
     file_to_write = template.render(**variables)
+    file_to_write = re.sub(r'\n\n+', '\n', file_to_write)
     with open(join(getcwd(), NF_CONFIG_FILE), 'wt', encoding='utf-8') as file:
         file.write(file_to_write)
 
@@ -99,6 +101,8 @@ def _record_configuration_command(variables: dict[str, str], configuration_file:
 
 
 def _process_filename_inputs(options: dict[str, str | bool]) -> None:
+    if not 'input_path' in options:
+        return
     input_path = cast(str, options['input_path'])
     del options['input_path']
     if isdir(input_path):
@@ -195,9 +199,10 @@ def parse_arguments():
         prog='spt workflow configure',
         description="""Configure an SPT (spatialprofilingtoolbox) run in the current directory.
 
-Here are instructions for the configuration file.
+Below the format of the workflow configuration file is described.
 
-General variables should be included under the `[general]` section. These variables are:
+General variables should be included under:
+`[general]`:
     db_config_file: <path>
         Path to a database configuration file.
     executor: {local, lsf} (default: local)
@@ -207,7 +212,6 @@ General variables should be included under the `[general]` section. These variab
     sif-file: <path> (default: None)
         Path to SPT Singularity container. Can be obtained with singularity pull
         docker://nadeemlab/spt:latest
-
 
 Some workflows require additional variables that are defined in their own section.
 
@@ -284,12 +288,10 @@ if __name__ == '__main__':
     config_variables['current_working_directory'] = getcwd()
 
     if workflow_configuration.is_database_visitor:
-        db_visitor_config = dict(config_file.items('database-visitor'))
+        db_visitor_config = dict(config_file.items('database visitor'))
         if 'study_name' not in db_visitor_config:
-            raise ValueError('study_name must be specified in the `database-visitor` section.')
+            raise ValueError('study_name must be specified in the `database visitor` section.')
         config_variables.update(db_visitor_config)
-    else:
-        _process_filename_inputs(config_variables)
 
     if config_file.has_section(workflow):
         config_section = dict(config_file.items(workflow))
@@ -297,6 +299,9 @@ if __name__ == '__main__':
         config_variables.update(config_section)
     elif workflow_configuration.config_section_required:
         raise ValueError(f'Workflow {workflow} requires a configuration section.')
+
+    if not workflow_configuration.is_database_visitor:
+        _process_filename_inputs(config_variables)
 
     _write_config_file(config_variables)
     _write_pipeline_script(config_variables)

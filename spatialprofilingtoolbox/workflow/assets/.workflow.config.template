@@ -4,10 +4,10 @@ executor = local
 sif_file = path/to/sif/file
 excluded_host = None
 
-[database-visitor]
+[database visitor]
 study_name = name_of_study
 
-[tabular_import]
+[tabular import]
 input_path = path/to/input/directory
 
 [cg-gnn]

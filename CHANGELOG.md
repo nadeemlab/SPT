@@ -1,3 +1,7 @@
+# v0.17.5
+Introduce a little order to the workflow configuration options. Many of these are now passed inside
+a workflow configuration file. This breaks the API for tabular import and similar, however.
+
 # v0.17.2
 Add support for small specimens (small cell set) in GNN workflow.
 

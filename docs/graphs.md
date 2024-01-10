@@ -2,7 +2,7 @@ The intended procedure for using `spt graphs`  is:
 
 1. [Explore the data available for a study and train the model](#explore-the-data-available-for-a-study-and-train-the-model)
 2. [Configure a reproducible deep learning workflow](#configure-a-reproducible-cggnn-workflow)
-3. [Running the workflow](#running-the-workflow)
+3. [Run the workflow](#run-the-workflow)
 
 # Explore the data available for a study and train the model
 
@@ -69,7 +69,7 @@ Note that with this configuration file, parameters can't be eliminated to use th
 * `cuda`: If true, use CUDA to accelerate training.
 * `random_seed`: An integer random seed to use for reproducibility. Can be set to `none` to omit a random seed.
 
-# Running the workflow
+# Run the workflow
 
 The workflow spins up a Docker container with the necessary dependencies to run the workflow, so we recommend installing it before trying to run it. This workflow is accelerated if you have a CUDA-compatible GPU, and we recommend using a machine with CUDA support if at all possible. Once your configuration is ready, run the workflow with:
 

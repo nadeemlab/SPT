@@ -60,7 +60,7 @@ ${TESTS}: setup-testing
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    test_cmd="cd /mount_sources/cggnn/; $$executor $$test_script" ; \
+    test_cmd="cd /mount_sources/graphs/; $$executor $$test_script" ; \
     docker run \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \

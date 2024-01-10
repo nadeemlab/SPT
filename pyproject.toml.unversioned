@@ -44,6 +44,7 @@ apiserver = [
 ]
 graphs = [
     "bokeh==3.3.1",
+    "h5py==3.10.0",
     "numpy==1.24.3",
     "scipy==1.10.1",
     "tables==3.9.1",
@@ -79,6 +80,7 @@ workflow = [
 ]
 all = [
     "bokeh==3.3.1",
+    "h5py==3.10.0",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
     "uvicorn>=0.15.0,<0.16.0",

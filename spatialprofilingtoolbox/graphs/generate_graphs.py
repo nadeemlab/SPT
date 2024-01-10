@@ -11,7 +11,6 @@ from numpy import (
     median,
     prod,  # type: ignore
     argmax,
-    savetxt,
     int_,
 )
 from numpy.typing import NDArray
@@ -21,13 +20,13 @@ from pandas.core.groupby.generic import DataFrameGroupBy
 from tqdm import tqdm
 
 from spatialprofilingtoolbox.graphs.util import (
-    HSGraph,
-    GraphData,
-    save_hs_graphs,
-    load_hs_graphs,
-    set_seeds,
     SETS,
     SETS_type,
+    HSGraph,
+    GraphData,
+    load_hs_graphs,
+    save_graph_data_and_feature_names,
+    set_seeds,
 )
 
 MIN_THRESHOLD_TO_CREATE_ROI = 0.1
@@ -156,7 +155,7 @@ def generate_graphs(
         random_seed=random_seed,
     )
     if output_directory is not None:
-        save_graph_data(graphs_data, features_to_use, output_directory)
+        save_graph_data_and_feature_names(graphs_data, features_to_use, output_directory)
     return graphs_data, features_to_use
 
 
@@ -730,13 +729,3 @@ def report_dataset_statistics(graphs_data: list[GraphData]) -> DataFrame:
         else:
             df.loc[graph_instance.specimen, :] = [graph_instance.label, graph_instance.set, 1]
     return df.groupby(['set', 'label']).sum()
-
-
-def save_graph_data(
-    graphs_data: list[GraphData],
-    features_to_use: list[str],
-    output_directory: str,
-) -> None:
-    """Save graph data and feature names to disk."""
-    save_hs_graphs(graphs_data, output_directory)
-    savetxt(join(output_directory, 'feature_names.txt'), features_to_use, fmt='%s', delimiter=',')

@@ -4,8 +4,8 @@ from argparse import ArgumentParser
 from os.path import basename, splitext
 from pickle import load
 
-from spatialprofilingtoolbox.graphs.generate_graphs import finalize_graph_metadata, save_graph_data
-from spatialprofilingtoolbox.graphs.util import HSGraph
+from spatialprofilingtoolbox.graphs.generate_graphs import finalize_graph_metadata
+from spatialprofilingtoolbox.graphs.util import HSGraph, save_graph_data_and_feature_names
 
 
 def parse_arguments():
@@ -68,4 +68,4 @@ if __name__ == "__main__":
         roi_size,
         random_seed=random_seed,
     )
-    save_graph_data(graphs_data, features_to_use, args.output_directory)
+    save_graph_data_and_feature_names(graphs_data, features_to_use, args.output_directory)

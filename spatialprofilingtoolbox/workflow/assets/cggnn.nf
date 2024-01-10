@@ -83,13 +83,13 @@ process finalize_graphs {
 process train {
     publishDir '.', mode: 'copy'
 
-    beforeScript 'export DOCKER_IMAGE="nadeemlab/spt-cg-gnn:\$(if [[ "${cuda}" == "true" ]]; then echo "cuda-"; fi)latest"'
+    beforeScript 'export DOCKER_IMAGE="nadeemlab/spt-cg-gnn:\$(if [[ "${cuda}" == "True" ]]; then echo "cuda-"; fi)0.0.2"'
 
     container "\${DOCKER_IMAGE}"
 
     input:
-    path working_directory
     val cuda
+    path working_directory
     path graph_config_file
 
     output:
@@ -99,14 +99,10 @@ process train {
     script:
     """
     #!/bin/bash
-    
-    in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
-    explainer_option=\$( if [[ "${explainer_model}" != "none" ]]; then echo "--explainer ${explainer_model}"; fi)
-    merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
 
-    spt-plugin-train-on-graphs
+    spt-plugin-train-on-graphs \
         --input_directory ${working_directory} \
-        --config_path ${graph_config_file} \
+        --config_file ${graph_config_file} \
         --output_directory ${working_directory}
     """
 }
@@ -115,15 +111,19 @@ process upload_importance_scores {
     input:
     val upload_importances
     path importances_csv_path
+    path db_config_file
+    path graph_config_file
 
     script:
     """
     #!/bin/bash
 
-    if [[ "${upload_importances}" == "true" ]]
+    if [[ "${upload_importances}" == "True" ]]
     then
+        cp ${db_config_file} db_config_file
         spt graphs upload-importances \
-            --importances_csv_path ${importances_csv_path}
+            --importances_csv_path ${importances_csv_path} \
+            --config_path ${graph_config_file}
     fi
     """
 }
@@ -175,9 +175,9 @@ workflow {
         .set{ working_directory_ch }
 
     train(
+        cuda_ch,
         working_directory_ch,
         graph_config_file_ch,
-        cuda_ch,
     ).set{ train_out }
 
     train_out.importances_csv_path
@@ -188,6 +188,8 @@ workflow {
 
     upload_importance_scores(
         upload_importances_ch,
-        importances_csv_path_ch
+        importances_csv_path_ch,
+        db_config_file_ch,
+        graph_config_file_ch,
     )
 }

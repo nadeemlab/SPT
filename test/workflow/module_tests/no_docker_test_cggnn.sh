@@ -4,7 +4,15 @@ cd ../../test/workflow/
 docker_image="$1"
 
 function check_for_successful_run_with_outputs() {
-    if [ $? -ne 0 ] || [ ! -e "results/model/model_best_validation_accuracy.pt" ] || [ ! -e "results/model/model_best_validation_loss.pt" ] || [ ! -e "results/model/model_best_validation_weighted_f1_score.pt" ] || [ ! -e "results/importances.csv" ] || [ ! -e "results/feature_names.txt" ] || [ ! -e "results/graphs.pkl" ]; then
+    h5_files_count=$(ls results/*.h5 2> /dev/null | wc -l)
+    if [ $? -ne 0 ] || \
+       [ ! -e "results/model/model_best_validation_accuracy.pt" ] || \
+       [ ! -e "results/model/model_best_validation_loss.pt" ] || \
+       [ ! -e "results/model/model_best_validation_weighted_f1_score.pt" ] || \
+       [ ! -e "results/importances.csv" ] || \
+       [ ! -e "results/feature_names.txt" ] || \
+       [ $h5_files_count -ne 4 ];
+    then
         echo "Error during nextflow run or expected output files do not exist" >&2
         exit 1
     fi
@@ -68,7 +76,15 @@ function check_importance_cells_overlap() {
 }
 
 function clean() {
-    rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -f top_100_structures.txt; rm -f top_100_reference.txt; rm -rf results/
+    rm -f .nextflow.log*
+    rm -rf .nextflow/
+    rm -f configure.sh
+    rm -f run.sh
+    rm -f main.nf
+    rm -f nextflow.config
+    rm -f top_100_structures.txt
+    rm -f top_100_reference.txt
+    rm -rf results/
 }
 
 nextflow run . -with-docker ${docker_image}

@@ -4,10 +4,15 @@ process.executor = '{{ executor }}'
 {% if executor == 'lsf' and excluded_host is defined -%}
 process.clusterOptions = '-R select[hname!={{ excluded_host }}]'{% endif %}
 
-{% if sif_file is defined and sif_file|length -%}
+{% if orchestrator == 'docker' %}
+docker.enabled = true
+{% elseif orchestrator == 'singularity' %}
 singularity.enabled = true
 singularity.runOptions = '-B {{ input_path }} -B {{ current_working_directory }}'
-process.container = '{{ sif_file }}'{% endif %}
+{% endif %}
+{% if orchestrator != 'local' %}
+process.container = '{{ image }}'
+{% endif %}
 
 env.workflow_ = '{{ workflow }}'
 {% if input_path is defined %}
@@ -43,13 +48,6 @@ env.channels_file_ = '{{ channels_file }}'{% endif %}
 env.phenotypes_file_ = '{{ phenotypes_file }}'{% endif %}
 
 {%- if workflow == 'cg-gnn' %}
-process {
-    container = '{{ default_docker_image }}'
-}
-docker {
-    enabled = true
-    runOptions = '--network {{ network }}'
-}
 env.graph_config_file_ = '{{ graph_config_file }}'
 env.cuda_ = '{{ cuda }}'
 env.upload_importances_ = '{{ upload_importances }}'

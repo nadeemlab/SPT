@@ -209,9 +209,11 @@ General variables should be included under:
         Determines if processes are run locally or as Platform LSF jobs on an HPC cluster.
     excluded_host: <hostname> (default: None)
         If specified, LSF jobs will not be scheduled on the indicated host.
-    sif-file: <path> (default: None)
-        Path to SPT Singularity container. Can be obtained with singularity pull
-        docker://nadeemlab/spt:latest
+    orchestrator: {local, docker, singularity} (default: local)
+        Determines if processes are run locally or in a container.
+    image: <docker/singularity image name> (default: None)
+        Name of or path to the Docker or Singularity image to use for the workflow. Required if
+        orchestrator is not "local".
 
 Some workflows require additional variables that are defined in their own section.
 
@@ -220,11 +222,6 @@ Some workflows require additional variables that are defined in their own sectio
         Path to the directory containing the input data files, e.g., `file_manifest.tsv`.
 
 `[cg-gnn]`:
-    default_docker_image: <docker image name>
-        Name of the Docker image to use for the CG-GNN workflow (outside of the training step, which
-        uses a specific container).
-    network:
-        Name of the Docker network to use for the CG-GNN workflow.
     graph_config_file: <path>
         Path to the graph configuration file. See spatialprofilingtoolbox.cggnn for more details.
     cuda: {true, false} (default: false)
@@ -278,12 +275,14 @@ if __name__ == '__main__':
     if ('excluded_host' in config_variables) and (config_variables['executor'] == 'local'):
         logger.warning('excluded_host specified despite executor being "local".')
         del config_variables['excluded_host']
-
-    if 'sif_file' in config_variables:
-        if cast(str, config_variables['sif_file']).lower().strip() == 'none':
-            del config_variables['sif_file']
-        if not exists(config_variables['sif_file']):
-            raise FileNotFoundError(config_variables['sif_file'])
+    
+    if 'orchestrator' not in config_variables:
+        config_variables['orchestrator'] = 'local'
+    elif config_variables['orchestrator'] not in {'local', 'docker', 'singularity'}:
+        raise ValueError('orchestrator must be either "local", "docker", or "singularity". '
+                         f'Got {config_variables["orchestrator"]}')
+    if (config_variables['orchestrator'] != 'local') and ('image' not in config_variables):
+        raise ValueError('image must be specified in the workflow configuration file.')
 
     config_variables['current_working_directory'] = getcwd()
 
@@ -294,9 +293,10 @@ if __name__ == '__main__':
         config_variables.update(db_visitor_config)
 
     if config_file.has_section(workflow):
-        config_section = dict(config_file.items(workflow))
-        workflow_configuration.process_inputs(config_section)
-        config_variables.update(config_section)
+        config_state = config_variables.copy()
+        config_state.update(dict(config_file.items(workflow)))
+        workflow_configuration.process_inputs(config_state)
+        config_variables.update(config_state)
     elif workflow_configuration.config_section_required:
         raise ValueError(f'Workflow {workflow} requires a configuration section.')
 

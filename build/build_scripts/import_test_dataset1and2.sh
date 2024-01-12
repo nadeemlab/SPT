@@ -16,13 +16,15 @@ function consider_exit() {
     fi
 }
 
-spt workflow configure --local --input-path test/test_data/adi_preprocessed_tables/dataset1/ --workflow='tabular import' --database-config-file build/db/.spt_db.config.local
+cat build/build_scripts/.workflow.config | sed 's/YYY/1/g' > .workflow.config
+spt workflow configure --workflow='tabular import' --config-file=.workflow.config
 nextflow run .
 cat work/*/*/.command.log
 
 nf_clean
 
-spt workflow configure --local --input-path test/test_data/adi_preprocessed_tables/dataset2/ --workflow='tabular import' --database-config-file build/db/.spt_db.config.local
+cat build/build_scripts/.workflow.config | sed 's/YYY/2/g' > .workflow.config
+spt workflow configure --workflow='tabular import' --config-file=.workflow.config
 nextflow run .
 cat work/*/*/.command.log
 

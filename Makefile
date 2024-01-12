@@ -39,7 +39,7 @@ help:
 >@${MESSAGE} print '  make test'
 >@${MESSAGE} print '    Do unit and module tests.'
 >@${MESSAGE} print ' '
->@${MESSAGE} print '  make [unit | module]-test-[apiserver | cggnn | ondemand | db | workflow]'
+>@${MESSAGE} print '  make [unit | module]-test-[apiserver | graphs | ondemand | db | workflow]'
 >@${MESSAGE} print '    Do only the unit or module tests for the indicated module.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print '  make clean'
@@ -62,7 +62,7 @@ help:
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
-SUBMODULES := apiserver cggnn ondemand db workflow
+SUBMODULES := apiserver graphs ondemand db workflow
 DOCKERIZED_SUBMODULES := apiserver db ondemand
 
 DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)

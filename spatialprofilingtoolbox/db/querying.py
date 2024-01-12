@@ -16,7 +16,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
 )
 from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
 from spatialprofilingtoolbox.db.accessors import (
-    CGGNNAccess,
+    GraphsAccess,
     StudyAccess,
     PhenotypesAccess,
     UMAPAccess,
@@ -61,10 +61,10 @@ class QueryHandler:
 
     @classmethod
     def retrieve_signature_of_phenotype(cls,
-            cursor,
-            phenotype_handle: str,
-            study: str
-        ) -> PhenotypeCriteria:
+        cursor,
+        phenotype_handle: str,
+        study: str
+    ) -> PhenotypeCriteria:
         channel_names = PhenotypesAccess(cursor).get_channel_names(study)
         components = StudyAccess(cursor).get_study_components(study)
         if phenotype_handle in channel_names:
@@ -95,11 +95,11 @@ class QueryHandler:
 
     @classmethod
     def get_cggnn_metrics(cls, cursor, study: str) -> list[CGGNNImportanceRank]:
-        return CGGNNAccess(cursor).get_metrics(study)
+        return GraphsAccess(cursor).get_metrics(study)
 
     @classmethod
     def get_important_cells(cls, cursor, study: str, cell_limit: int) -> set[int]:
-        return CGGNNAccess(cursor).get_important_cells(study, cell_limit)
+        return GraphsAccess(cursor).get_important_cells(study, cell_limit)
 
 
 def query() -> QueryCursor:

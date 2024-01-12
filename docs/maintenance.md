@@ -37,7 +37,7 @@ Creating pyproject.toml ........................................................
 Building development image precursor ........................................... Built.         (0s)
 Building development image ..................................................... Built.         (1s)
 Building apiserver Dockerfile .................................................. Built.         (0s)
-Building cggnn Dockerfile ...................................................... Built.         (0s)
+Building graphs Dockerfile ..................................................... Built.         (0s)
 Building ondemand Dockerfile ................................................... Built.         (0s)
 Building db Dockerfile ......................................................... Built.         (0s)
 Building workflow Dockerfile ................................................... Built.         (0s)
@@ -47,7 +47,7 @@ Building test-data-loaded spt-db image (1small) ................................
 Building test-data-loaded spt-db image (1) ..................................... Built.         (0s)
 Building test-data-loaded spt-db image (1and2) ................................. Built.         (1s)
 Building Docker image nadeemlab/spt-apiserver .................................. Built.         (5s)
-Building Docker image nadeemlab/spt-cggnn ...................................... Built.         (6s)
+Building Docker image nadeemlab/spt-graphs ..................................... Built.         (6s)
 Building Docker image nadeemlab/spt-ondemand ................................... Built.         (6s)
 Building Docker image nadeemlab/spt-workflow ................................... Built.         (6s)
 Running docker compose rm (remove) ............................................. Down.          (1s)
@@ -57,9 +57,9 @@ apiserver (setup testing environment) ..........................................
   API internal basic database accessor ......................................... Passed.        (1s)
   expressions in db ............................................................ Passed.        (1s)
 apiserver (teardown testing environment) ....................................... Down.          (1s)
-cggnn (setup testing environment) .............................................. Setup.         (2s)
+graphs (setup testing environment) ............................................. Setup.         (2s)
   image runs properly .......................................................... Passed.        (1s)
-cggnn (teardown testing environment) ........................................... Down.          (1s)
+graphs (teardown testing environment) .......................................... Down.          (1s)
 ondemand (setup testing environment) ........................................... Setup.         (4s)
   binary expression viewer ..................................................... Passed.        (1s)
   intensity values imported .................................................... Passed.        (4s)
@@ -86,7 +86,7 @@ apiserver (setup testing environment) ..........................................
   study summary retrieval ...................................................... Passed.        (0s)
   counts query delegation edge cases ........................................... Passed.        (1s)
 apiserver (teardown testing environment) ....................................... Down.          (1s)
-cggnn (teardown testing environment) ........................................... Down.          (0s)
+graphs (teardown testing environment) .......................................... Down.          (0s)
 ondemand (setup testing environment) ........................................... Setup.         (4s)
   expression data caching ...................................................... Passed.        (13s)
   class counts cohoused datasets ............................................... Passed.        (1s)
@@ -135,7 +135,7 @@ The main functionality is provided by 4 modules designed to operate as services.
 | Module name     | Description |
 | --------------- | ----------- |
 | `apiserver`     | FastAPI application supporting queries over cell data. |
-| `cggnn`         | Command line tool to apply cell graph neural network models to data stored in an SPT framework. |
+| `graphs`        | Command line tool to apply cell graph neural network models to data stored in an SPT framework. |
 | `ondemand`      | An optimized class-counting and other metrics-calculation program served by a custom TCP server. |
 | `db`            | Data model/interface and PostgresQL database management SQL fragments. |
 | `workflow`      | [Nextflow](https://www.nextflow.io)-orchestrated computation workflows. |

@@ -42,8 +42,9 @@ apiserver = [
     "pydantic==2.0.2",
     "secure==0.3.0"
 ]
-cggnn = [
+graphs = [
     "bokeh==3.3.1",
+    "h5py==3.10.0",
     "numpy==1.24.3",
     "scipy==1.10.1",
     "tables==3.9.1",
@@ -79,6 +80,7 @@ workflow = [
 ]
 all = [
     "bokeh==3.3.1",
+    "h5py==3.10.0",
     "matplotlib==3.7.1",
     "umap-learn==0.5.3",
     "uvicorn>=0.15.0,<0.16.0",
@@ -116,8 +118,8 @@ packages = [
     "spatialprofilingtoolbox.apiserver",
     "spatialprofilingtoolbox.apiserver.app",
     "spatialprofilingtoolbox.apiserver.scripts",
-    "spatialprofilingtoolbox.cggnn",
-    "spatialprofilingtoolbox.cggnn.scripts",
+    "spatialprofilingtoolbox.graphs",
+    "spatialprofilingtoolbox.graphs.scripts",
     "spatialprofilingtoolbox.ondemand",
     "spatialprofilingtoolbox.ondemand.providers",
     "spatialprofilingtoolbox.ondemand.scripts",
@@ -193,7 +195,7 @@ packages = [
     "refresh_views.sql",
     "feature_descriptions.tsv"
 ]
-"spatialprofilingtoolbox.cggnn.scripts" = [
+"spatialprofilingtoolbox.graphs.scripts" = [
     "create_specimen_graphs.py",
     "explore_classes.py",
     "extract.py",

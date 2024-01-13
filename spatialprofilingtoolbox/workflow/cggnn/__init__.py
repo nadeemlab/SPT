@@ -23,7 +23,7 @@ def process_inputs(params: dict[str, str | bool]) -> None:
                 raise ValueError(f'{param} must be true or false if provided.')
     if params['orchestrator'] not in {'docker', 'singularity'}:
         raise ValueError('For the cg-gnn workflow, the orchestrator must be either `docker` or '
-                         f'`singularity`, not `{params['orchestrator']}`.')
+                         f'`singularity`, not `{params["orchestrator"]}`.')
 
 
 components = WorkflowModules(

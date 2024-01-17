@@ -1,16 +1,10 @@
-
-process.executor = '{{ executor }}'
-
-{% if executor == 'lsf' and excluded_host is defined -%}
-process.clusterOptions = '-R select[hname!={{ excluded_host }}]'{% endif %}
-
-{% if orchestrator == 'docker' %}
+{% if container_platform == 'docker' %}
 docker.enabled = true
-{% elif orchestrator == 'singularity' %}
+{% elif container_platform == 'singularity' %}
 singularity.enabled = true
 singularity.runOptions = '-B {{ input_path }} -B {{ current_working_directory }}'
 {% endif %}
-{% if orchestrator != 'local' %}
+{% if container_platform is not None %}
 process.container = '{{ image }}'
 {% endif %}
 

@@ -205,15 +205,11 @@ General variables should be included under:
 `[general]`:
     db_config_file: <path>
         Path to a database configuration file.
-    executor: {local, lsf} (default: local)
-        Determines if processes are run locally or as Platform LSF jobs on an HPC cluster.
-    excluded_host: <hostname> (default: None)
-        If specified, LSF jobs will not be scheduled on the indicated host.
-    orchestrator: {local, docker, singularity} (default: local)
-        Determines if processes are run locally or in a container.
+    container_platform: {None, docker, singularity} (default: None)
+        Determines if processes are run locally or in a container and if so how.
     image: <docker/singularity image name> (default: None)
         Name of or path to the Docker or Singularity image to use for the workflow. Required if
-        orchestrator is not "local".
+        container_platform is not "local".
 
 Some workflows require additional variables that are defined in their own section.
 
@@ -244,12 +240,13 @@ if __name__ == '__main__':
     args = parse_arguments()
     jinja_environment = Environment(loader=BaseLoader())
 
-    config_variables: dict[str, str | bool] = {}
+    config_variables: dict[str, str | bool | None] = {}
     config_file = ConfigParser()
     config_file.read(args.config_file)
     config_variables = dict(config_file.items('general')) if config_file.has_section('general') \
         else {}
-    workflow: str = args.workflow
+    config_variables = {k: v.lower() for k, v in config_variables.items()}
+    workflow: str = args.workflow.lower()
     workflow_configuration = workflows[workflow]
     config_variables['workflow'] = args.workflow
 
@@ -263,25 +260,14 @@ if __name__ == '__main__':
         logger.warning('Database configuration file was not found at the indicated location.')
         logger.debug('database_config_file: %s', config_variables['db_config_file'])
         logger.debug('db_config_file: %s', db_config_file)
-
-    if 'executor' not in config_variables:
-        config_variables['executor'] = 'local'
-    if config_variables['executor'] not in {'local', 'lsf'}:
-        raise ValueError('executor must be either "local" or "lsf". '
-                         f'Got {config_variables["executor"]}')
-    if 'excluded_host' in config_variables:
-        if cast(str, config_variables['excluded_host']).lower().strip() == 'none':
-            del config_variables['excluded_host']
-    if ('excluded_host' in config_variables) and (config_variables['executor'] == 'local'):
-        logger.warning('excluded_host specified despite executor being "local".')
-        del config_variables['excluded_host']
     
-    if 'orchestrator' not in config_variables:
-        config_variables['orchestrator'] = 'local'
-    elif config_variables['orchestrator'] not in {'local', 'docker', 'singularity'}:
-        raise ValueError('orchestrator must be either "local", "docker", or "singularity". '
-                         f'Got {config_variables["orchestrator"]}')
-    if (config_variables['orchestrator'] != 'local') and ('image' not in config_variables):
+    if ('container_platform' not in config_variables) or \
+        (config_variables['container_platform'] == 'none'):
+        config_variables['container_platform'] = None
+    elif config_variables['container_platform'] not in {'docker', 'singularity'}:
+        raise ValueError('container_platform must be one of "none", "docker", or "singularity". '
+                         f'Got {config_variables["container_platform"]}')
+    if (config_variables['container_platform'] is not None) and ('image' not in config_variables):
         raise ValueError('image must be specified in the workflow configuration file.')
 
     config_variables['current_working_directory'] = getcwd()
@@ -294,7 +280,9 @@ if __name__ == '__main__':
 
     if config_file.has_section(workflow):
         config_state = config_variables.copy()
-        config_state.update(dict(config_file.items(workflow)))
+        workflow_config_variables = dict(config_file.items(workflow))
+        workflow_config_variables = {k: v.lower() for k, v in workflow_config_variables.items()}
+        config_state.update(workflow_config_variables)
         workflow_configuration.process_inputs(config_state)
         config_variables.update(config_state)
     elif workflow_configuration.config_section_required:

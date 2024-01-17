@@ -1,9 +1,7 @@
 [general]
 db_config_file = path/to/db.config
-executor = local
-excluded_host = None
-orchestrator = local
-image = name/of/or/path/to/docker/or/singularity/image/if/not/local
+container_platform = None
+image = name/of/image/on/docker/hub/if/not/local:including_tag
 
 [database visitor]
 study_name = name_of_study

@@ -2,7 +2,6 @@
 docker.enabled = true
 {% elif container_platform == 'singularity' %}
 singularity.enabled = true
-singularity.runOptions = '-B {{ input_path }} -B {{ current_working_directory }}'
 {% endif %}
 {% if container_platform is not none %}
 process.container = '{{ image }}'

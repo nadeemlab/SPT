@@ -207,9 +207,8 @@ General variables should be included under:
         Path to a database configuration file.
     container_platform: {None, docker, singularity} (default: None)
         Determines if processes are run locally or in a container and if so how.
-    image: <docker/singularity image name> (default: None)
-        Name of or path to the Docker or Singularity image to use for the workflow. Required if
-        container_platform is not "local".
+    image_tag: <docker/singularity image name> (default: latest)
+        Tag of the Docker Hub image associated with the workflow to use.
 
 Some workflows require additional variables that are defined in their own section.
 
@@ -267,8 +266,10 @@ if __name__ == '__main__':
     elif config_variables['container_platform'] not in {'docker', 'singularity'}:
         raise ValueError('container_platform must be one of "none", "docker", or "singularity". '
                          f'Got {config_variables["container_platform"]}')
-    if (config_variables['container_platform'] is not None) and ('image' not in config_variables):
-        raise ValueError('image must be specified in the workflow configuration file.')
+    
+    if ('image_tag' not in config_variables) or (config_variables['image_tag'] == ''):
+        config_variables['image_tag'] = 'latest'
+    config_variables['image'] = f'{workflow_configuration.image}:{config_variables["image_tag"]}'
 
     config_variables['current_working_directory'] = getcwd()
 

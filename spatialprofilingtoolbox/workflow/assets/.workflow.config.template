@@ -1,7 +1,7 @@
 [general]
 db_config_file = path/to/db.config
 container_platform = None
-image = name/of/image/on/docker/hub/if/not/local:including_tag
+image_tag = latest
 
 [database visitor]
 study_name = name_of_study

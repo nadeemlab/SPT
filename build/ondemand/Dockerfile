@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt install -y gcc g++ libpq-dev
+ARG PIP_NO_CACHE_DIR=1
+RUN apt update && apt install -y gcc g++ libpq-dev && apt-get clean
 WORKDIR /usr/src/app
-RUN apt install -y libgdal-dev
+RUN apt install -y libgdal-dev && apt-get clean
 RUN python -m pip install psycopg2==2.9.6
 RUN python -m pip install adiscstudies==0.11.0
 RUN python -m pip install numba==0.57.0

@@ -1,5 +1,6 @@
 FROM python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
+ARG PIP_NO_CACHE_DIR=1
 RUN apt update && apt install -y gcc g++ libpq-dev
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev

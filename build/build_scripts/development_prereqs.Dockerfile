@@ -16,6 +16,7 @@ RUN apt install python3.11 -y
 RUN apt install python3.11-dev -y
 RUN apt install python3.11-venv -y
 RUN apt install python3.11-distutils
+ARG PIP_NO_CACHE_DIR=1
 RUN ln -s /usr/bin/python3.11 /usr/bin/python
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
 RUN apt install gcc -y

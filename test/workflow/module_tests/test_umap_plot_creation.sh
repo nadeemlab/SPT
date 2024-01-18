@@ -1,5 +1,5 @@
 
-spt workflow configure --local --workflow='reduction visual' --study-name='Melanoma intralesional IL2' --database-config-file=../db/.spt_db.config.container
+spt workflow configure --workflow='reduction visual' --config-file=module_tests/.workflow.config
 nextflow run .
 
 status=$?

@@ -13,22 +13,26 @@ They are:
 4. The **computational design**. This is where idiosyncratic configuration parameters specific to
 this pipeline are stored and managed.
 """
-import importlib
+
+from importlib import import_module
+
+from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
+
 __version__ = '0.8.0'
 
 workflow_names_and_subpackages = {
     'tabular import': 'tabular_import',
     'phenotype proximity': 'phenotype_proximity',
     'reduction visual': 'reduction_visual',
-    'cggnn': 'cggnn',
+    'cg-gnn': 'cggnn',
 }
 
 
-def get_workflow_names():
+def get_workflow_names() -> list[str]:
     return list(workflow_names_and_subpackages.keys())
 
 
-def get_workflow(workflow_name):
+def get_workflow(workflow_name: str) -> WorkflowModules:
     subpackage_name = workflow_names_and_subpackages[workflow_name]
-    subpackage = importlib.import_module(f'.{subpackage_name}', __name__)
+    subpackage = import_module(f'.{subpackage_name}', __name__)
     return subpackage.components

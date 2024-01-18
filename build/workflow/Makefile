@@ -9,14 +9,18 @@ MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tes
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
+STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT := ${MODULE_NAME}/module_tests/configure_cggnn_test.sh
+STANDALONE_MODULE_TEST_FILE := ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/no_docker_test_cggnn.sh
+STANDALONE_MODULE_TEST_TARGET := test-${STANDALONE_MODULE_TEST_FILE}
+STANDALONE_MODULE_TEST_NAME := "cggnn-dockerized"
+
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
 
-.PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
+.PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
-test: teardown-testing
 
 setup-testing:
 >@${MESSAGE} start "workflow"
@@ -34,14 +38,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
-teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
-
-teardown-testing: ${TESTS}
+teardown-module-testing: ${MODULE_TESTS} ${STANDALONE_MODULE_TEST_TARGET}
 >@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
@@ -78,6 +75,14 @@ ${TESTS}: setup-testing
     echo "Got status code "$$(cat status_code)"." ;\
     kill %1
 >@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
+>@${MESSAGE} end "Passed." "Failed."
+>@rm -f status_code
+
+${STANDALONE_MODULE_TEST_TARGET}: setup-testing
+>@${MESSAGE} start "\u2503 ${STANDALONE_MODULE_TEST_NAME}"
+>@docker run --rm --network ${MODULE_NAME}_isolated_temporary_test --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c "cd /mount_sources && bash ${STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT}"
+>@bash ${STANDALONE_MODULE_TEST_FILE} ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest ; \
+    echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."
 >@rm -f status_code
 

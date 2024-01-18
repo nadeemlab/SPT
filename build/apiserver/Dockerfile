@@ -1,6 +1,7 @@
 FROM python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt install -y gcc libpq-dev curl
+RUN apt update && apt install -y gcc libpq-dev curl && apt-get clean
+ARG PIP_NO_CACHE_DIR=1
 RUN python -m pip install psycopg2==2.9.6
 RUN python -m pip install adiscstudies==0.11.0
 RUN python -m pip install numba==0.57.0
@@ -25,4 +26,4 @@ COPY $WHEEL_FILENAME ./
 RUN pip3 install "$WHEEL_FILENAME"
 ENV API_SERVER_PORT=8080
 HEALTHCHECK CMD curl --fail http://localhost:${API_SERVER_PORT}/ || exit 1
-CMD ["uvicorn", "app.main:app", "--app-dir", "/usr/local/lib/python3.11/site-packages/spatialprofilingtoolbox/apiserver/", "--host", "0.0.0.0", "--port", "8080", "--log-level", "debug"]
+CMD uvicorn app.main:app --app-dir /usr/local/lib/python3.11/site-packages/spatialprofilingtoolbox/apiserver/ --host 0.0.0.0 --port ${API_SERVER_PORT} --log-level debug

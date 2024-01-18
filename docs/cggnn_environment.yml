@@ -17,4 +17,3 @@ dependencies:
   # Development dependencies
   - autopep8
   - pylint
-  - isort

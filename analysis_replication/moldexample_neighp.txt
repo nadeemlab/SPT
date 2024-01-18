@@ -1,0 +1,213 @@
+Mold_5_0	2	1924	1.548755e-53 
+Mold_12_0	1	2626	0.996449
+
+
+(Melanoma CyTOF ICI -- after re-curation):
+
+
+Singles
+-------
+On average, the fraction of cells that are Naive cytotoxic T cells is 2.29 times higher in cohort 1 than in cohort 2.
+On average, the fraction of cells that are T regulatory cellss is 1.54 times higher in cohort 1 than in cohort 2.
+
+Doubles
+-------
+# Based on B cell
+
+On average, the ratio of the number of cells that are B cellss to those that are Endothelial stroma is 8.61 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are B cellss is 24.25 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are B cellss to those that are Lineage including macrophage is 3.14 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are B cellss is 23.04 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are B cellss to those that are Lineage including monocyte is 3.04 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including monocyte to those that are B cellss is 17.63 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are B cellss to those that are Melanoma is 4.25 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Melanoma to those that are B cellss is 12.11 times higher in cohort 2 than in cohort 1.
+
+## Consistent...
+On average, the ratio of the number of cells that are B cellss to those that are Naive cytotoxic T cells is 2.99 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are B cellss is 1.84 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are B cellss to those that are Naive T helper cells is 1.81 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Naive T helper cells to those that are B cellss is 8.58 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are B cellss to those that are T regulatory cellss is 30.47 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are T regulatory cellss to those that are B cellss is 2.08 times higher in cohort 1 than in cohort 2.
+
+
+# Based on Cytotoxic T cell antigen-experienced
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are Endothelial stroma is 6.47 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are Cytotoxic T cells antigen-experienced is 3.15 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are Lineage including macrophage is 22.88 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are Cytotoxic T cells antigen-experienced is 3.36 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are Lineage including monocyte is 41.24 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including monocyte to those that are Cytotoxic T cells antigen-experienced is 2.35 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are Naive T helper cells is 9.78 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Naive T helper cells to those that are Cytotoxic T cells antigen-experienced is 1.32 times higher in cohort 2 than in cohort 1.
+
+## Consistent but weak...
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are Melanoma is 2.92 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Melanoma to those that are Cytotoxic T cells antigen-experienced is 1.09 times higher in cohort 2 than in cohort 1.
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are T regulatory cellss is 2.15 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are T regulatory cellss to those that are Cytotoxic T cells antigen-experienced is 1.02 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are T cellss is 1.33 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are T cellss to those that are Cytotoxic T cells antigen-experienced is 1.32 times higher in cohort 1 than in cohort 2.
+
+## Consistent and stronger
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are Naive cytotoxic T cells is 3.21 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Cytotoxic T cells antigen-experienced is 1.81 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are T helper cells antigen-experienced is 4.54 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are T helper cells antigen-experienced to those that are Cytotoxic T cells antigen-experienced is 1.18 times higher in cohort 1 than in cohort 2.
+
+
+# Based on Endothelial stroma
+
+On average, the ratio of the number of cells that are T cellss to those that are Endothelial stroma is 9.16 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are T cellss is 1.46 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are T helper cells to those that are Endothelial stroma is 8.21 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are T helper cells is 1.65 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are T helper cells antigen-experienced to those that are Endothelial stroma is 11.41 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are T helper cells antigen-experienced is 1.06 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are T regulatory cellss to those that are Endothelial stroma is 23.60 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are T regulatory cellss is 4.85 times higher in cohort 1 than in cohort 2.
+
+## Consistent and strong but imbalanced...
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Endothelial stroma is 58.63 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are Naive cytotoxic T cells is 1.21 times higher in cohort 2 than in cohort 1.
+
+On average, the ratio of the number of cells that are Naive T helper cells to those that are Endothelial stroma is 11.54 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Endothelial stroma to those that are Naive T helper cells is 1.62 times higher in cohort 2 than in cohort 1.
+
+## Consistent and strong
+On average, the ratio of the number of cells that are Endothelial stroma to those that are Melanoma is 6.70 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Melanoma to those that are Endothelial stroma is 8.09 times higher in cohort 2 than in cohort 1.
+
+
+# Based on Lineage including macrophage
+
+## Consistent but weak
+On average, the ratio of the number of cells that are Naive T helper cells to those that are Lineage including macrophage is 4.73 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are Naive T helper cells is 1.88 times higher in cohort 2 than in cohort 1.
+
+On average, the ratio of the number of cells that are T helper cells antigen-experienced to those that are Lineage including macrophage is 5.91 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are T helper cells antigen-experienced is 1.49 times higher in cohort 2 than in cohort 1.
+
+## Consistent and strong
+On average, the ratio of the number of cells that are Melanoma to those that are Lineage including macrophage is 6.78 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are Melanoma is 2.69 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Lineage including macrophage is 338.32 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are Naive cytotoxic T cells is 2.04 times higher in cohort 2 than in cohort 1.
+
+On average, the ratio of the number of cells that are T cellss to those that are Lineage including macrophage is 30.49 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are T cellss is 1.75 times higher in cohort 2 than in cohort 1.
+
+
+# Based on Lineage including monocyte
+
+## Consistent and strong but imbalanced
+On average, the ratio of the number of cells that are T cellss to those that are Lineage including monocyte is 49.31 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including monocyte to those that are T cellss is 1.81 times higher in cohort 2 than in cohort 1.
+
+On average, the ratio of the number of cells that are T helper cells antigen-experienced to those that are Lineage including monocyte is 6.99 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including monocyte to those that are T helper cells antigen-experienced is 1.61 times higher in cohort 2 than in cohort 1.
+
+## Consistent and strong
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Lineage including monocyte is 201.59 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including monocyte to those that are Naive cytotoxic T cells is 2.14 times higher in cohort 2 than in cohort 1.
+
+On average, the ratio of the number of cells that are Melanoma to those that are Lineage including monocyte is 6.70 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Lineage including monocyte to those that are Melanoma is 2.96 times higher in cohort 1 than in cohort 2.
+
+
+# Based on Melanoma
+
+## Consistent but weaker
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Melanoma is 2.23 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Melanoma to those that are Naive cytotoxic T cells is 6.67 times higher in cohort 2 than in cohort 1.
+
+## Consistent but imbalanced
+On average, the ratio of the number of cells that are T regulatory cellss to those that are Melanoma is 1.53 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Melanoma to those that are T regulatory cellss is 33.19 times higher in cohort 2 than in cohort 1.
+
+## Consistent and strong
+On average, the ratio of the number of cells that are Naive T helper cells to those that are Melanoma is 2.32 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Melanoma to those that are Naive T helper cells is 77.84 times higher in cohort 2 than in cohort 1.
+
+On average, the ratio of the number of cells that are T helper cells antigen-experienced to those that are Melanoma is 3.81 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Melanoma to those that are T helper cells antigen-experienced is 25.20 times higher in cohort 2 than in cohort 1.
+
+
+# Based on Naive cytotoxic T Cell
+weak
+
+
+# Based on Naive T helper cell
+
+## Consistent but weak
+On average, the ratio of the number of cells that are T regulatory cellss to those that are Naive T helper cells is 1.25 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Naive T helper cells to those that are T regulatory cellss is 6.62 times higher in cohort 2 than in cohort 1.
+
+
+# Based on T cells
+weak
+
+
+# Based on T helper cell
+weak
+
+
+# Based on T helper experienced
+## Consistent but weak
+On average, the ratio of the number of cells that are T regulatory cellss to those that are T helper cells antigen-experienced is 1.52 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are T helper cells antigen-experienced to those that are T regulatory cellss is 3.66 times higher in cohort 2 than in cohort 1.
+
+
+
+Strongest (ratios):
+
+## Interplay of cytotoxic vs helper and experienced vs not
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are Naive cytotoxic T cells is 3.21 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Cytotoxic T cells antigen-experienced is 1.81 times higher in cohort 1 than in cohort 2.
+(Sort of poor p-value)
+
+On average, the ratio of the number of cells that are Cytotoxic T cells antigen-experienced to those that are T helper cells antigen-experienced is 4.54 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are T helper cells antigen-experienced to those that are Cytotoxic T cells antigen-experienced is 1.18 times higher in cohort 1 than in cohort 2.
+(Poor p-values)
+
+## Involving monocytes or macrophages compared with some kind of T cells
+
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Lineage including macrophage is 338.32 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are Naive cytotoxic T cells is 2.04 times higher in cohort 2 than in cohort 1.
+(Poor p-values)
+
+On average, the ratio of the number of cells that are T cellss to those that are Lineage including macrophage is 30.49 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including macrophage to those that are T cellss is 1.75 times higher in cohort 2 than in cohort 1.
+(Poor p-values)
+
+On average, the ratio of the number of cells that are Naive cytotoxic T cells to those that are Lineage including monocyte is 201.59 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Lineage including monocyte to those that are Naive cytotoxic T cells is 2.14 times higher in cohort 2 than in cohort 1.
+(Poor p-values)
+
+## Isolated type
+On average, the ratio of the number of cells that are B cellss to those that are T regulatory cellss is 30.47 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are T regulatory cellss to those that are B cellss is 2.08 times higher in cohort 1 than in cohort 2.
+(Poor p-values)
+
+## Isolated explanation ... more vascularization probably
+On average, the ratio of the number of cells that are Endothelial stroma to those that are Melanoma is 6.70 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Melanoma to those that are Endothelial stroma is 8.09 times higher in cohort 2 than in cohort 1.
+(Poor p-values)

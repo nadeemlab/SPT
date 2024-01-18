@@ -24,6 +24,8 @@ def process_inputs(params: dict[str, str | bool]) -> None:
     if params['container_platform'] not in {'docker', 'singularity'}:
         raise ValueError('For the cg-gnn workflow, the container_platform must be either `docker` '
                          f'or `singularity`, not `{params["container_platform"]}`.')
+    params['cg_gnn_training_image'] = \
+        f'nadeemlab/spt-cg-gnn:{"cuda-" if params["cuda"] else ""}0.0.2'
 
 
 components = WorkflowModules(

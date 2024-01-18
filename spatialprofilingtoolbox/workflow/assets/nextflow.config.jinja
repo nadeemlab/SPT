@@ -42,6 +42,6 @@ env.phenotypes_file_ = '{{ phenotypes_file }}'{% endif %}
 
 {%- if workflow == 'cg-gnn' %}
 env.graph_config_file_ = '{{ graph_config_file }}'
-env.cuda_ = '{{ cuda }}'
+env.cg_gnn_training_image_ = '{{ cg_gnn_training_image }}'
 env.upload_importances_ = '{{ upload_importances }}'
 {%- endif %}

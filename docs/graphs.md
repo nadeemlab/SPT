@@ -1,12 +1,13 @@
 # How to train graph transformation models using SPT
 
-The intended procedure for using `spt graphs`  is:
+The intended procedure for using `spt graphs` and graph workflows is:
 
-1. [Explore the data available for a study and train the model](#explore-the-data-available-for-a-study-and-train-the-model)
-2. [Configure a reproducible graph transformation workflow](#configure-a-reproducible-cggnn-workflow)
-3. [Run the workflow](#run-the-workflow)
+1. [Prerequisites](#install-prerequisites)
+2. [Explore the data available for a study and train the model](#explore-the-data-available-for-a-study-and-train-the-model)
+3. [Configure a reproducible graph transformation workflow](#configure-a-reproducible-graph-transformation-workflow)
+4. [Run the workflow](#run-the-workflow)
 
-## Prerequisites
+## Install prerequisites
 
 Our graph transformation workflows are powered by [Nextflow](https://www.nextflow.io/docs/latest/getstarted.html) and [Docker](https://docs.docker.com/engine/install/) or [Singularity](https://docs.sylabs.io/guides/3.0/user-guide/installation.html), in addition to the SPT Python package. Please ensure all three are installed before proceeding.
 ```sh
@@ -18,12 +19,12 @@ pip install spatialprofilingtoolbox[workflow]
 ## Explore the data available for a study and train the model
 
 - Evaluate the specimen cohorts at your disposal with `spt graphs explore-classes`.
-- Select sample strata to use and fetch the relevant data artifacts from the database using `spt graphs extract`.
-- Use `spt graphs train` to train and fine-tune your CG-GNN model.
+- Select sample strata to use and fetch graph data artifacts from the database using `spt graphs extract`.
+- Use an [SPT plugin](https://github.com/nadeemlab/spt-plugin) to transform your graph data into results, including cell-level importance scores.
 
 ## Configure a (mostly) reproducible graph transformation workflow
 
-Use `spt workflow configure`, with the parameters obtained as above, to create artifacts that will reproducibly run through the entire process of gathering the data, transforming it, and reporting results. Then your workflow can be run in one line using Nextflow to approximately reproduce your transformation and results.
+To create artifacts that will reproducibly run through the entire process of gathering the data, transforming it, and reporting results in one line using Nextflow, we provide the `spt workflow configure` utility. It uses the parameters obtained from the last step to create this reproducible workflow.
 
 Currently, we have one graph transformation workflow available in SPT, `cg-gnn`, which trains a cell graph neural network (CG-GNN) model and returns importance scores for cells used to train and test the model. We plan to add more workflows in the future. If you'd like to develop your own, please refer to the [spt-plugin repository](https://github.com/nadeemlab/spt-plugin) for more information.
 

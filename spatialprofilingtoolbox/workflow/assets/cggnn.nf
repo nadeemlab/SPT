@@ -33,7 +33,7 @@ process prep_graph_creation {
     script:
     """
     #!/bin/bash
-    cp ${db_config_file} db_config_file
+    cp ${db_config_file} spt_db.config
     spt graphs prepare-graph-creation \
         --config_path ${graph_config_file} \
         --output_directory .

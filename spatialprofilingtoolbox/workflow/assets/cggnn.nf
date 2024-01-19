@@ -6,6 +6,7 @@ process echo_environment_variables {
     path 'db_config_file',                  emit: db_config_file
     path 'graph_config_file',               emit: graph_config_file
     path 'cg_gnn_training_image',           emit: cg_gnn_training_image
+    path 'cg_gnn_singularity_run_options',         emit: cg_gnn_singularity_run_options
     path 'upload_importances',              emit: upload_importances
 
     script:
@@ -14,6 +15,7 @@ process echo_environment_variables {
     echo -n "${db_config_file_}" > db_config_file
     echo -n "${graph_config_file_}" > graph_config_file
     echo -n "${cg_gnn_training_image_}" > cg_gnn_training_image
+    echo -n "${cg_gnn_singularity_run_options_}" > cg_gnn_singularity_run_options
     echo -n "${upload_importances_}" > upload_importances
     """
 }
@@ -84,9 +86,11 @@ process train {
     publishDir '.', mode: 'copy'
 
     container "${cg_gnn_training_image}"
+    containerOptions "${cg_gnn_singularity_run_options}"
 
     input:
     val cg_gnn_training_image
+    val cg_gnn_singularity_run_options
     path working_directory
     path graph_config_file
 
@@ -138,6 +142,9 @@ workflow {
     
     environment_ch.cg_gnn_training_image.map{ it.text }
         .set{ cg_gnn_training_image_ch }
+    
+    environment_ch.cg_gnn_singularity_run_options.map{ it.text }
+        .set{ cg_gnn_singularity_run_options_ch }
 
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
@@ -174,6 +181,7 @@ workflow {
 
     train(
         cg_gnn_training_image_ch,
+        cg_gnn_singularity_run_options_ch,
         working_directory_ch,
         graph_config_file_ch,
     ).set{ train_out }

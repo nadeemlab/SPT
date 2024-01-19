@@ -26,6 +26,8 @@ def process_inputs(params: dict[str, str | bool]) -> None:
                          f'or `singularity`, not `{params["container_platform"]}`.')
     params['cg_gnn_training_image'] = \
         f'nadeemlab/spt-cg-gnn:{"cuda-" if params["cuda"] else ""}0.0.2'
+    params['cg_gnn_singularity_run_options'] = '--nv' if \
+        ((params['container_platform'] == 'singularity') and params['cuda']) else ''
 
 
 components = WorkflowModules(

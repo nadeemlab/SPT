@@ -139,3 +139,5 @@ The workflow spins up a Docker container with the necessary dependencies to run 
 ```sh
 nextflow run .
 ```
+
+If you're using Singularity, note that the Docker image to Singularity image conversion process can consume a lot of disk space. If you run into space issues, consider setting the [`SINGULARITY_TMPDIR`](https://docs.sylabs.io/guides/3.5/user-guide/appendix.html) environment variable to a directory on a drive with more space before running nextflow. We observed on our HPC that by default temporary files were stored in a `/tmp/` directory in a 12GB partition, which was insufficient for converting the Docker image. You can also set [`NXF_SINGULARITY_CACHEDIR`](https://github.com/nextflow-io/nextflow/issues/2685) to a directory with more space to store the converted Singularity images.

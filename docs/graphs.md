@@ -28,7 +28,7 @@ To create artifacts that will reproducibly run through the entire process of gat
 
 Currently, we have one graph transformation workflow available in SPT, `cg-gnn`, which trains a cell graph neural network (CG-GNN) model and returns importance scores for cells used to train and test the model. We plan to add more workflows in the future. If you'd like to develop your own, please refer to the [spt-plugin repository](https://github.com/nadeemlab/spt-plugin) for more information.
 
-(Note that because most deep learning models like CG-GNN uses non-deterministic algorithms, workflows will not be exactly reproducible.)
+(Note that because most deep learning models like CG-GNN use non-deterministic algorithms, workflows may not be exactly reproducible.)
 
 To configure graph transformation workflows like `cg-gnn`, use the following command:
 ```

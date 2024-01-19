@@ -69,11 +69,11 @@ CG-GNN. These parameters are specific to the CG-GNN workflow. If you define your
 
 ### The graph configuration file
 
-[The template from the graphs submodule](spatialprofilingtoolbox/graphs/template.config) is reproduced here for quick reference, but again please refer to the source code for the most up to date information. The values supplied here generally correspond to the default arguments (`db_config_file_path`, `study_name`, and `strata` excepted) so you can omit them if you want to use the defaults.
+[The template from the graphs submodule](spatialprofilingtoolbox/graphs/template.config) is reproduced here for quick reference, but again please refer to the source code for the most up to date information. The values supplied here generally correspond to the default arguments (`study_name` and `strata` excepted) so you can omit them if you want to use the defaults.
 
 ```ini
 [general]
-db_config_file_path = path/to/db.config
+db_config_file_path = spt_db.config
 study_name = Study name in SPT database
 random_seed = None
 
@@ -100,8 +100,8 @@ cohort_stratifier = None
 Note that with this configuration file, parameters can't be eliminated to use the default value as is possible with CLI arguments.
 
 General
-* `db_config_file_path`: same as `database-config-file` in the workflow configuration file
-* `study_name`: same as `study-name` in the workflow configuration file
+* `db_config_file_path`: Do not change this. Inside the workflow, the database file in the workflow config's `db_config_file` is copied to the location specified in `db_config_file_path` and the workflow uses the copy internally, so any changes should be made upstream there.
+* `study_name`: Same as `study-name` in the workflow configuration file.
 * `random_seed`: Whether to use a random seed for reproducibility. If `None`, no random seed will be used.
 
 Extract

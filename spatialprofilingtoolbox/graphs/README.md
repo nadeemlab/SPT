@@ -1,9 +1,12 @@
 # graphs
 
-This module constructs cell graphs and uses neural networks on the created graphs to predict outcomes of your choice. It is dependent on the [cg-gnn on pip](https://github.com/CarlinLiao/cg-gnn).
+This module constructs cell graphs from an SPT database and interprets the importance scores produced by graph transformation and learning models. See [docs/graphs.md](docs/graphs.md) and the [spt-plugin repository](https://github.com/nadeemlab/spt-plugin) for more information.
 
-## Installation
-
-In addition to the dependencies listed in `pyproject.toml`, you'll also need to install platform-specific versions of [PyTorch](https://pytorch.org/get-started/locally/) and [DGL](https://www.dgl.ai/pages/start.html) separately, and ideally [cudatoolkit](https://anaconda.org/nvidia/cudatoolkit) if your system supports it.
-
-## [Credits](histocartography/README.md)
+To see all the commands available to you in the CLI, simply type
+```
+spt graphs
+```
+in your terminal. For more information on a specific command, type
+```
+spt graphs <command> -h
+```

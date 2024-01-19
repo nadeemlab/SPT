@@ -8,7 +8,7 @@ FALSY = ('false', 'f', 'no', 'n', '0')
 
 def process_inputs(params: dict[str, str | bool]) -> None:
     """Ensure that the necessary input parameters are specified."""
-    for param in ('default_docker_image', 'network', 'graph_config_file'):
+    for param in ('graph_config_file', ):
         if param not in params:
             raise ValueError(f'Must specify {param}.')
     for param in ('cuda', 'upload_importances'):
@@ -21,6 +21,13 @@ def process_inputs(params: dict[str, str | bool]) -> None:
                 params[param] = False
             else:
                 raise ValueError(f'{param} must be true or false if provided.')
+    if params['container_platform'] not in {'docker', 'singularity'}:
+        raise ValueError('For the cg-gnn workflow, the container_platform must be either `docker` '
+                         f'or `singularity`, not `{params["container_platform"]}`.')
+    params['cg_gnn_training_image'] = \
+        f'nadeemlab/spt-cg-gnn:{"cuda-" if params["cuda"] else ""}0.0.2'
+    params['cg_gnn_singularity_run_options'] = '--nv' if \
+        ((params['container_platform'] == 'singularity') and params['cuda']) else ''
 
 
 components = WorkflowModules(

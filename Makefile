@@ -167,7 +167,7 @@ pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/cr
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
 
-build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
+build-and-push-docker-images: ${DOCKER_PUSH_TARGETS} generic-spt-push-target
 
 build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_TARGETS}
 
@@ -207,6 +207,19 @@ ${DOCKER_PUSH_DEV_TARGETS}: build-docker-images check-for-docker-credentials
     docker push $$repository_name:dev ; \
     exit_code1=$$?; \
     echo "$$exit_code1" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+generic-spt-push-target: build-docker-images check-for-docker-credentials
+>@repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX} ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name"
+>@repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX} ; \
+    docker tag ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest $$repository_name:${VERSION} ; \
+    docker push $$repository_name:${VERSION} ; \
+    exit_code1=$$?; \
+    docker tag ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest $$repository_name:latest ; \
+    docker push $$repository_name:latest ; \
+    exit_code2=$$?; \
+    exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
 >@${MESSAGE} end "Pushed." "Not pushed."
 
 check-for-docker-credentials:

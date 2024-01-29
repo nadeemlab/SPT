@@ -4,59 +4,26 @@ nextflow.enable.dsl = 2
 process echo_environment_variables {
     output:
     path 'db_config_file',                  emit: db_config_file
-    path 'study_name',                      emit: study_name
-    path 'strata',                          emit: strata
-    path 'validation_data_percent',         emit: validation_data_percent
-    path 'test_data_percent',               emit: test_data_percent
-    path 'disable_channels',                emit: disable_channels
-    path 'disable_phenotypes',              emit: disable_phenotypes
-    path 'cells_per_roi_target',            emit: cells_per_roi_target
-    path 'target_name',                     emit: target_name
-    path 'in_ram',                          emit: in_ram
-    path 'batch_size',                      emit: batch_size
-    path 'epochs',                          emit: epochs
-    path 'learning_rate',                   emit: learning_rate
-    path 'k_folds',                         emit: k_folds
-    path 'explainer_model',                 emit: explainer_model
-    path 'merge_rois',                      emit: merge_rois
+    path 'graph_config_file',               emit: graph_config_file
+    path 'cg_gnn_training_image',           emit: cg_gnn_training_image
+    path 'cg_gnn_singularity_run_options',         emit: cg_gnn_singularity_run_options
     path 'upload_importances',              emit: upload_importances
-    path 'random_seed',                     emit: random_seed
 
     script:
     """
     #!/bin/bash
     echo -n "${db_config_file_}" > db_config_file
-    echo -n "${study_name_}" > study_name
-    echo -n "${strata_}" > strata
-    echo -n "${validation_data_percent_}" > validation_data_percent
-    echo -n "${test_data_percent_}" > test_data_percent
-    echo -n "${disable_channels_}" > disable_channels
-    echo -n "${disable_phenotypes_}" > disable_phenotypes
-    echo -n "${cells_per_roi_target_}" > cells_per_roi_target
-    echo -n "${target_name_}" > target_name
-    echo -n "${in_ram_}" > in_ram
-    echo -n "${batch_size_}" > batch_size
-    echo -n "${epochs_}" > epochs
-    echo -n "${learning_rate_}" > learning_rate
-    echo -n "${k_folds_}" > k_folds
-    echo -n "${explainer_model_}" > explainer_model
-    echo -n "${merge_rois_}" > merge_rois
+    echo -n "${graph_config_file_}" > graph_config_file
+    echo -n "${cg_gnn_training_image_}" > cg_gnn_training_image
+    echo -n "${cg_gnn_singularity_run_options_}" > cg_gnn_singularity_run_options
     echo -n "${upload_importances_}" > upload_importances
-    echo -n "${random_seed_}" > random_seed
     """
 }
 
 process prep_graph_creation {
     input:
     path db_config_file
-    val study_name
-    val strata
-    val validation_data_percent
-    val test_data_percent
-    val disable_channels
-    val disable_phenotypes
-    val cells_per_roi_target
-    val target_name
+    path graph_config_file
 
     output:
     path 'parameters.pkl',                      emit: parameter_file
@@ -66,23 +33,10 @@ process prep_graph_creation {
     script:
     """
     #!/bin/bash
-
-    strata_option=\$( if [[ "${strata}" != "all" ]]; then echo "--strata ${strata}"; fi)
-    disable_channels_option=\$( if [[ "${disable_channels}" == "true" ]]; then echo "--disable_channels"; fi)
-    disable_phenotypes_option=\$( if [[ "${disable_phenotypes}" = "true" ]]; then echo "--disable_phenotypes"; fi)
-
-    echo \
-     --database-config-file \\'${db_config_file}\\' \
-     --study-name \\'${study_name}\\' \
-     \${strata_option} \
-     --validation_data_percent ${validation_data_percent} \
-     --test_data_percent ${test_data_percent} \
-     \${disable_channels_option} \
-     \${disable_phenotypes_option} \
-     --cells_per_roi_target ${cells_per_roi_target} \
-     --target_name \\'${target_name}\\' \
-     --output_directory . \
-     | xargs spt cggnn prepare-graph-creation
+    cp ${db_config_file} spt_db.config
+    spt graphs prepare-graph-creation \
+        --config_path ${graph_config_file} \
+        --output_directory .
     """
 }
 
@@ -92,13 +46,13 @@ process create_specimen_graphs {
     path specimen_file
 
     output:
-    path "${specimen_file.baseName}.bin",   optional: true, emit: specimen_graph
+    path "${specimen_file.baseName}.pkl",   optional: true, emit: specimen_graph
 
     script:
     """
     #!/bin/bash
 
-    spt cggnn create-specimen-graphs \
+    spt graphs create-specimen-graphs \
         --specimen_hdf_path ${specimen_file} \
         --parameters_path ${parameters_file} \
         --output_directory .
@@ -114,9 +68,6 @@ process finalize_graphs {
 
     output:
     path "results/",                     emit: working_directory
-    path "results/feature_names.txt",    emit: feature_names_file
-    path "results/graphs.bin",           emit: graphs_file
-    path "results/graph_info.pkl",       emit: graph_metadata_file
 
     script:
     """
@@ -124,7 +75,7 @@ process finalize_graphs {
 
     graph_files_array=(${graph_files})
 
-    spt cggnn finalize-graphs \
+    spt graphs finalize-graphs \
         --graph_files "\${graph_files_array[@]}" \
         --parameters_path ${parameters_file} \
         --output_directory results
@@ -134,40 +85,27 @@ process finalize_graphs {
 process train {
     publishDir '.', mode: 'copy'
 
+    container "${cg_gnn_training_image}"
+    containerOptions "${cg_gnn_singularity_run_options}"
+
     input:
+    val cg_gnn_training_image
+    val cg_gnn_singularity_run_options
     path working_directory
-    val in_ram
-    val batch_size
-    val epochs
-    val learning_rate
-    val k_folds
-    val explainer_model
-    val merge_rois
-    val random_seed
+    path graph_config_file
 
     output:
     path "${working_directory}/importances.csv",     emit: importances_csv_path
-    path "${working_directory}/model/",              emit: model_directory
-    path "${working_directory}/graphs.bin",          optional: true
+    path "${working_directory}/",                    emit: working_directory
 
     script:
     """
     #!/bin/bash
 
-    in_ram_option=\$( if [[ "${in_ram}" == "true" ]]; then echo "--in_ram"; fi)
-    explainer_option=\$( if [[ "${explainer_model}" != "none" ]]; then echo "--explainer ${explainer_model}"; fi)
-    merge_rois_option=\$( if [[ "${merge_rois}" == "true" ]]; then echo "--merge_rois"; fi)
-
-    echo \
-     --cg_directory ${working_directory} \
-     \${in_ram_option} \
-     --batch_size ${batch_size} \
-     --epochs ${epochs} \
-     --learning_rate \\'${learning_rate}\\' \
-     --k_folds ${k_folds} \
-     \${explainer_option} \
-     \${merge_rois_option} \
-     | xargs spt cggnn train
+    spt-plugin-train-on-graphs \
+        --input_directory ${working_directory} \
+        --config_file ${graph_config_file} \
+        --output_directory ${working_directory}
     """
 }
 
@@ -175,15 +113,19 @@ process upload_importance_scores {
     input:
     val upload_importances
     path importances_csv_path
+    path db_config_file
+    path graph_config_file
 
     script:
     """
     #!/bin/bash
 
-    if [[ "${upload_importances}" == "true" ]]
+    if [[ "${upload_importances}" == "True" ]]
     then
-        spt cggnn upload-importances \
-            --importances_csv_path ${importances_csv_path}
+        cp ${db_config_file} db_config_file
+        spt graphs upload-importances \
+            --importances_csv_path ${importances_csv_path} \
+            --config_path ${graph_config_file}
     fi
     """
 }
@@ -191,71 +133,25 @@ process upload_importance_scores {
 workflow {
     echo_environment_variables()
         .set{ environment_ch }
-
+    
     environment_ch.db_config_file.map{ file(it.text) }
         .set{ db_config_file_ch }
-
-    environment_ch.study_name.map{ it.text }
-        .set{ study_name_ch }
-
-    environment_ch.strata.map{ it.text }
-        .set{ strata_ch }
-
-    environment_ch.validation_data_percent.map{ it.text }
-        .set{ validation_data_percent_ch }
-
-    environment_ch.test_data_percent.map{ it.text }
-        .set{ test_data_percent_ch }
-
-    environment_ch.disable_channels.map{ it.text }
-        .set{ disable_channels_ch }
-
-    environment_ch.disable_phenotypes.map{ it.text }
-        .set{ disable_phenotypes_ch }
-
-    environment_ch.cells_per_roi_target.map{ it.text }
-        .set{ cells_per_roi_target_ch }
-
-    environment_ch.target_name.map{ it.text }
-        .set{ target_name_ch }
-
-    environment_ch.in_ram.map{ it.text }
-        .set{ in_ram_ch }
-
-    environment_ch.batch_size.map{ it.text }
-        .set{ batch_size_ch }
-
-    environment_ch.epochs.map{ it.text }
-        .set{ epochs_ch }
-
-    environment_ch.learning_rate.map{ it.text }
-        .set{ learning_rate_ch }
-
-    environment_ch.k_folds.map{ it.text }
-        .set{ k_folds_ch }
-
-    environment_ch.explainer_model.map{ it.text }
-        .set{ explainer_model_ch }
-
-    environment_ch.merge_rois.map{ it.text }
-        .set{ merge_rois_ch }
+    
+    environment_ch.graph_config_file.map{ file(it.text) }
+        .set{ graph_config_file_ch }
+    
+    environment_ch.cg_gnn_training_image.map{ it.text }
+        .set{ cg_gnn_training_image_ch }
+    
+    environment_ch.cg_gnn_singularity_run_options.map{ it.text }
+        .set{ cg_gnn_singularity_run_options_ch }
 
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
 
-    environment_ch.random_seed.map{ it.text }
-        .set{ random_seed_ch }
-
     prep_graph_creation(
         db_config_file_ch,
-        study_name_ch,
-        strata_ch,
-        validation_data_percent_ch,
-        test_data_percent_ch,
-        disable_channels_ch,
-        disable_phenotypes_ch,
-        cells_per_roi_target_ch,
-        target_name_ch
+        graph_config_file_ch,
     ).set{ prep_out }
 
     prep_out.parameter_file
@@ -283,35 +179,23 @@ workflow {
     finalize_out.working_directory
         .set{ working_directory_ch }
 
-    finalize_out.feature_names_file
-        .set{ feature_names_ch }
-
-    finalize_out.graphs_file
-        .set{ graphs_file_ch }
-
-    finalize_out.graph_metadata_file
-        .set{ graph_metadata_ch }
-
     train(
+        cg_gnn_training_image_ch,
+        cg_gnn_singularity_run_options_ch,
         working_directory_ch,
-        in_ram_ch,
-        batch_size_ch,
-        epochs_ch,
-        learning_rate_ch,
-        k_folds_ch,
-        explainer_model_ch,
-        merge_rois_ch,
-        random_seed_ch
+        graph_config_file_ch,
     ).set{ train_out }
 
     train_out.importances_csv_path
         .set{ importances_csv_path_ch }
 
-    train_out.model_directory
-        .set{ model_directory_ch }
+    train_out.working_directory
+        .set{ working_directory_ch }
 
     upload_importance_scores(
         upload_importances_ch,
-        importances_csv_path_ch
+        importances_csv_path_ch,
+        db_config_file_ch,
+        graph_config_file_ch,
     )
 }

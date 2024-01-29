@@ -1,13 +1,15 @@
 
-spt workflow configure --local --input-path test/test_data/adi_preprocessed_tables/dataset1/ --workflow='tabular import' --database-config-file build/db/.spt_db.config.local
+cat build/build_scripts/.workflow.config | sed 's/YYY/1/g' > .workflow.config
+spt workflow configure --workflow='tabular import' --config-file=.workflow.config
 nextflow run .
 cat work/*/*/.command.log
 
-spt workflow configure --local --workflow='reduction visual' --study-name='Melanoma intralesional IL2' --database-config-file=build/db/.spt_db.config.local
+cat build/build_scripts/.workflow.config > .workflow.config
+spt workflow configure --workflow='reduction visual' --config-file=.workflow.config
 nextflow run .
 rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
-spt cggnn upload-importances --study-name "Melanoma intralesional IL2" --database-config-file build/db/.spt_db.config.local --importances_csv_path test/test_data/gnn_importances/1.csv
+spt graphs upload-importances --config_path=build/build_scripts/.graph.config --importances_csv_path=test/test_data/gnn_importances/1.csv
 
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt
 diff build/build_scripts/expected_table_counts.txt table_counts.txt

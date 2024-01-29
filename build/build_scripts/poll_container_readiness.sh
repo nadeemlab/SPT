@@ -6,7 +6,7 @@ expectedmessages[spt-db-testing-only]="database system is ready to accept connec
 expectedmessages[spt-workflow-testing]="workflow container is ready to work"
 expectedmessages[temporary-spt-db-preloading]="database system is ready to accept connections"
 
-container_wait_time=20 #seconds
+container_wait_time=60 #seconds
 counter=1
 while :
 do

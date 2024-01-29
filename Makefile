@@ -39,7 +39,7 @@ help:
 >@${MESSAGE} print '  make test'
 >@${MESSAGE} print '    Do unit and module tests.'
 >@${MESSAGE} print ' '
->@${MESSAGE} print '  make [unit | module]-test-[apiserver | cggnn | ondemand | db | workflow]'
+>@${MESSAGE} print '  make [unit | module]-test-[apiserver | graphs | ondemand | db | workflow]'
 >@${MESSAGE} print '    Do only the unit or module tests for the indicated module.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print '  make clean'
@@ -55,17 +55,16 @@ help:
 >@${MESSAGE} print '    Show this text.'
 >@${MESSAGE} print ' '
 >@${MESSAGE} print 'Use VERBOSE=1 to send command outputs to STDOUT rather than log files.'
+>@${MESSAGE} print 'Use NOCACHE=1 to cause docker build commands to rebuild each cached layer.'
 >@${MESSAGE} print ' '
 
 # Docker and test variables
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
-SUBMODULES := apiserver cggnn ondemand db workflow
+SUBMODULES := apiserver graphs ondemand db workflow
 DOCKERIZED_SUBMODULES := apiserver db ondemand
 
-# DOCKERFILE_SOURCES := $(wildcard ${BUILD_LOCATION}/*/Dockerfile.*)
-# DOCKERFILE_TARGETS := $(foreach submodule,$(SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 
 DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
@@ -99,6 +98,12 @@ else
 export .SHELLFLAGS := -c -not-super-verbose
 endif
 
+ifdef NOCACHE
+export NO_CACHE_FLAG := --no-cache
+else
+export NO_CACHE_FLAG := 
+endif
+
 release-package: development-image check-for-pypi-credentials
 >@${MESSAGE} start "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
 >@cp ~/.pypirc .
@@ -115,6 +120,7 @@ development-image-prerequisites-installed: pyproject.toml.unversioned ${BUILD_SC
 >@${MESSAGE} start "Building development image precursor"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker build \
+     ${NO_CACHE_FLAG} \
      --rm \
      -f ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development-prereqs:latest \
@@ -131,6 +137,7 @@ development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/de
 >@${MESSAGE} start "Building development image"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker build \
+     ${NO_CACHE_FLAG} \
      --rm \
      --no-cache \
      --pull=false \
@@ -160,7 +167,7 @@ pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/cr
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
 
-build-and-push-docker-images: ${DOCKER_PUSH_TARGETS}
+build-and-push-docker-images: ${DOCKER_PUSH_TARGETS} generic-spt-push-target
 
 build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_TARGETS}
 
@@ -202,6 +209,19 @@ ${DOCKER_PUSH_DEV_TARGETS}: build-docker-images check-for-docker-credentials
     echo "$$exit_code1" > status_code
 >@${MESSAGE} end "Pushed." "Not pushed."
 
+generic-spt-push-target: build-docker-images check-for-docker-credentials
+>@repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX} ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name"
+>@repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX} ; \
+    docker tag ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest $$repository_name:${VERSION} ; \
+    docker push $$repository_name:${VERSION} ; \
+    exit_code1=$$?; \
+    docker tag ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest $$repository_name:latest ; \
+    docker push $$repository_name:latest ; \
+    exit_code2=$$?; \
+    exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
 check-for-docker-credentials:
 >@${MESSAGE} start "Checking for Docker credentials in ~/.docker/config.json"
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py docker ; status="$$?"; echo "$$status" > status_code; if [[ "$$status" == "0" ]]; then touch check-for-docker-credentials; fi;
@@ -237,6 +257,7 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-ru
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
     docker build \
+     ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
      -t $$repository_name:$$submodule_version \
      -t $$repository_name:latest \

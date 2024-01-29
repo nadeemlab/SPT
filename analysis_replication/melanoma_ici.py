@@ -74,7 +74,7 @@ def test(host):
 
     CD3CD45RO = {'positive_markers': ['CD3', 'CD45RO'], 'negative_markers': []}
     name = 'CD3+ CD45RO+'
-    fold = 0.0008
+    fold = 0.000878
     df = access.neighborhood_enrichment([CD3CD45RO, CD3CD45RO])
     ne = f'neighborhood enrichment, {name} and {name}'
     values1 = df[df['cohort'] == '1'][ne].dropna()

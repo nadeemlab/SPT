@@ -106,7 +106,7 @@ def test(host):
         values1 = df[df['cohort'] == '1'][ne].dropna()
         values2 = df[df['cohort'] == '2'][ne].dropna()
         print(f'Neighborhood enrichment for {phenotype} and itself')
-        compare(values1, values2, expected_fold=fold, show_pvalue=True, do_log_fold=True, show_auc=True)
+        compare(values1, values2, expected_fold=fold, show_pvalue=True, show_auc=True)
 
 
 if __name__=='__main__':

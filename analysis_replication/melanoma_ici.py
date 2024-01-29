@@ -1,8 +1,6 @@
 """Data analysis script for one dataset."""
 import sys
 
-from numpy import mean
-
 from accessors import DataAccessor
 from accessors import get_default_host
 from accessors import univariate_pair_compare as compare
@@ -10,9 +8,6 @@ from accessors import univariate_pair_compare as compare
 def test(host):
     study = 'Melanoma CyTOF ICI'
     access = DataAccessor(study, host=host)
-
-    # antigen_experienced_cytotoxic = {'positive_markers': ['CD8A', 'CD3', 'CD45RO'], 'negative_markers': []}
-    # antigen_experienced_cytotoxic_min = {'positive_markers': ['CD8A', 'CD45RO'], 'negative_markers': []}
 
     name1 = 'Cytotoxic T cell antigen-experienced'
     name2 = 'Melanoma'
@@ -37,14 +32,14 @@ def test(host):
     print(f'Neighborhood enrichment for {name1} w.r.t. {name2}.')
     values1 = df[df['cohort'] == '1'][ne]
     values2 = df[df['cohort'] == '2'][ne]
-    compare(values2, values1, expected_fold=1.33, show_pvalue=True)
+    compare(values1, values2, expected_fold=0.75, show_pvalue=True)
 
     df = access.neighborhood_enrichment([name2, name1])
     ne = f'neighborhood enrichment, {name2} and {name1}'
     print(f'Neighborhood enrichment for {name2} w.r.t. {name1}.')
     values1 = df[df['cohort'] == '1'][ne]
     values2 = df[df['cohort'] == '2'][ne]
-    compare(values2, values1, expected_fold=2.465, show_pvalue=True)
+    compare(values1, values2, expected_fold=0.405, show_pvalue=True)
 
     # Two phenotypes spatial
     print('\nResults involving spatial metrics for 2 phenotypes (shown in both orders for reference)')
@@ -79,13 +74,13 @@ def test(host):
 
     CD3CD45RO = {'positive_markers': ['CD3', 'CD45RO'], 'negative_markers': []}
     name = 'CD3+ CD45RO+'
-    fold = 1138.8
+    fold = 0.0008
     df = access.neighborhood_enrichment([CD3CD45RO, CD3CD45RO])
     ne = f'neighborhood enrichment, {name} and {name}'
     values1 = df[df['cohort'] == '1'][ne].dropna()
     values2 = df[df['cohort'] == '2'][ne].dropna()
     print(f'Neighborhood enrichment for {name} and itself')
-    compare(values2, values1, expected_fold=fold, show_pvalue=True, do_log_fold=True, show_auc=True)
+    compare(values1, values2, expected_fold=fold, show_pvalue=True, do_log_fold=True, show_auc=True)
 
     ### Channel
     for channel, fold in zip(['ICOS'], [0.791]):
@@ -105,13 +100,13 @@ def test(host):
         print(f'Spatial autocorrelation for {phenotype}')
         compare(values1, values2, expected_fold=fold, show_pvalue=True, show_auc=True)
 
-    for phenotype, fold in zip(['T helper cell antigen-experienced', 'Cytotoxic T cell antigen-experienced'], [0.0805, 3.6]):
+    for phenotype, fold in zip(['T helper cell antigen-experienced', 'Cytotoxic T cell antigen-experienced'], [12.42, 0.278]):
         df = access.neighborhood_enrichment([phenotype, phenotype])
         ne = f'neighborhood enrichment, {phenotype} and {phenotype}'
         values1 = df[df['cohort'] == '1'][ne].dropna()
         values2 = df[df['cohort'] == '2'][ne].dropna()
         print(f'Neighborhood enrichment for {phenotype} and itself')
-        compare(values2, values1, expected_fold=fold, show_pvalue=True, do_log_fold=True, show_auc=True)
+        compare(values1, values2, expected_fold=fold, show_pvalue=True, do_log_fold=True, show_auc=True)
 
 
 if __name__=='__main__':

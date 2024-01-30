@@ -1,18 +1,5 @@
 nextflow.enable.dsl = 2
 
-process echo_environment_variables {
-    output:
-    path 'db_config_file',                  emit: db_config_file
-    path 'graph_config_file',               emit: graph_config_file
-
-    script:
-    """
-    #!/bin/bash
-    echo -n "${db_config_file_}" > db_config_file
-    echo -n "${graph_config_file_}" > graph_config_file
-    """
-}
-
 process prep_graph_creation {
     input:
     path db_config_file
@@ -77,39 +64,40 @@ process finalize_graphs {
 
 workflow generate_graphs {
     take:
-    db_config_file_ch
-    graph_config_file_ch
+        db_config_file_ch
+        graph_config_file_ch
 
-    prep_graph_creation(
-        db_config_file_ch,
-        graph_config_file_ch,
-    ).set{ prep_out }
+    main:
+        prep_graph_creation(
+            db_config_file_ch,
+            graph_config_file_ch,
+        ).set{ prep_out }
 
-    prep_out.parameter_file
-        .set{ parameters_ch }
+        prep_out.parameter_file
+            .set{ parameters_ch }
 
-    prep_out.specimen_files
-        .flatten()
-        .set{ specimens_ch }
+        prep_out.specimen_files
+            .flatten()
+            .set{ specimens_ch }
 
-    create_specimen_graphs(
-        parameters_ch,
-        specimens_ch
-    ).set{ specimen_graphs_ch }
+        create_specimen_graphs(
+            parameters_ch,
+            specimens_ch
+        ).set{ specimen_graphs_ch }
 
-    specimen_graphs_ch
-        .filter { it != null }
-        .collect()
-        .set{ all_specimen_graphs_ch }
+        specimen_graphs_ch
+            .filter { it != null }
+            .collect()
+            .set{ all_specimen_graphs_ch }
 
-    finalize_graphs(
-        parameters_ch,
-        all_specimen_graphs_ch
-    ).set{ finalize_out }
+        finalize_graphs(
+            parameters_ch,
+            all_specimen_graphs_ch
+        ).set{ finalize_out }
 
-    finalize_out.working_directory
-        .set{ working_directory_ch }
+        finalize_out.working_directory
+            .set{ working_directory_ch }
 
     emit:
-    working_directory_ch
+        working_directory_ch
 }

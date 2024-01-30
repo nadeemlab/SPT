@@ -132,7 +132,7 @@ packages = [
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.component_interfaces",
     "spatialprofilingtoolbox.workflow.cggnn",
-    "spatialprofilingtoolbox.workflow.generate_graphs",
+    "spatialprofilingtoolbox.workflow.graph_generation",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.reduction_visual",
     "spatialprofilingtoolbox.workflow.tabular_import",
@@ -170,15 +170,15 @@ packages = [
     "compute_umaps_all.sh",
     "upload_importance_scores.nf",
 ]
-"spatialprofilingtoolbox.workflow.assets.cggnn" = [
+"spatialprofilingtoolbox.workflow.cggnn" = [
     "main.nf",
     "train.nf",
 ]
-"spatialprofilingtoolbox.workflow.assets.generate_graphs" = [
+"spatialprofilingtoolbox.workflow.graph_generation" = [
     "graph_generation.nf",
     "main.nf",
 ]
-"spatialprofilingtoolbox.workflow.assets.tabular_import" = [
+"spatialprofilingtoolbox.workflow.tabular_import" = [
     "main.nf",
 ]
 "spatialprofilingtoolbox.ondemand.scripts" = [

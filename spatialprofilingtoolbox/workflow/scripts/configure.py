@@ -6,6 +6,7 @@ from os import (
     getcwd,
     stat,
     chmod,
+    makedirs,
 )
 from os.path import (
     isdir,
@@ -42,9 +43,6 @@ logger = colorized_logger('spt db configure')
 workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
 NF_CONFIG_FILE = 'nextflow.config'
-NF_PIPELINE_FILE = 'main.nf'
-NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
-NF_PIPELINE_FILE_CGGNN = 'cggnn.nf'
 
 
 def _retrieve_from_library(subpackage: str, filename: str) -> str:
@@ -74,6 +72,7 @@ def _write_pipeline_script(workflow: WorkflowModules) -> None:
             main_seen = True
             copy_location = join(getcwd(), filename)
         else:
+            makedirs(join(getcwd(), 'nf_files'), exist_ok=True)
             copy_location = join(getcwd(), 'nf_files', filename)
         with open(copy_location, 'wt', encoding='utf-8') as file:
             file.write(pipeline_file)

@@ -1,12 +1,14 @@
 nextflow.enable.dsl = 2
 
-include 'nf_files/graph_generation' as gg
-include 'nf_files/train'
-include 'nf_files/upload_importance_scores'
+include { generate_graphs } from './nf_files/graph_generation'
+include { train } from './nf_files/train'
+include { upload_importance_scores } from './nf_files/upload_importance_scores'
 
 
-process echo_environment_variables extends gg.echo_environment_variables {
+process echo_environment_variables {
     output:
+    path 'db_config_file',                  emit: db_config_file
+    path 'graph_config_file',               emit: graph_config_file
     path 'cg_gnn_training_image',           emit: cg_gnn_training_image
     path 'cg_gnn_singularity_run_options',  emit: cg_gnn_singularity_run_options
     path 'upload_importances',              emit: upload_importances
@@ -41,7 +43,7 @@ workflow {
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
 
-    gg.generate_graphs(
+    generate_graphs(
         db_config_file_ch,
         graph_config_file_ch,
     ).set{ working_directory_ch }

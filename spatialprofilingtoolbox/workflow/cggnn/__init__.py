@@ -32,6 +32,12 @@ def process_inputs(params: dict[str, str | bool]) -> None:
 
 components = WorkflowModules(
     is_database_visitor=True,
+    assets_needed=[
+        ('generate_graphs', 'graph_generation.nf'),
+        ('cggnn', 'train.nf'),
+        ('assets', 'upload_importance_scores.nf'),
+        ('cggnn', 'main.nf'),
+    ],
     config_section_required=True,
     process_inputs=process_inputs,
 )

@@ -4,40 +4,23 @@ nextflow.enable.dsl = 2
 process echo_environment_variables {
     output:
     path 'workflow',                        emit: workflow
-    path 'file_manifest_filename',          emit: file_manifest_filename
-    path 'input_path',                      emit: input_path
-    path 'study_file',                      emit: study_file
-    path 'diagnosis_file',                  emit: diagnosis_file
-    path 'interventions_file',              emit: interventions_file
-    path 'samples_file',                    emit: samples_file
     path 'db_config_file',                  emit: db_config_file
-    path 'subjects_file',                   emit: subjects_file
-    path 'channels_file',                   emit: channels_file
-    path 'phenotypes_file',                 emit: phenotypes_file
+    path 'study_name',                      emit: study_name
 
     script:
     """
     #!/bin/bash
     echo -n "${workflow_}" > workflow
-    echo -n "${file_manifest_filename_}" > file_manifest_filename
-    echo -n "${input_path_}" > input_path
-    echo -n "${study_file_}" > study_file
-    echo -n "${diagnosis_file_}" > diagnosis_file
-    echo -n "${interventions_file_}" > interventions_file
-    echo -n "${samples_file_}" > samples_file
     echo -n "${db_config_file_}" > db_config_file
-    echo -n "${subjects_file_}" > subjects_file
-    echo -n "${channels_file_}" > channels_file
-    echo -n "${phenotypes_file_}" > phenotypes_file
+    echo -n "${study_name_}" > study_name
     """
 }
 
 process generate_run_information {
     input:
     val workflow
-    path file_manifest_file
-    val input_path
-    path samples_file
+    val study_name
+    val db_config_file
 
     output:
     path 'job_specification_table.csv',     emit: job_specification_table
@@ -45,67 +28,98 @@ process generate_run_information {
     script:
     """
     spt workflow generate-run-information \
-     --use-file-based-data-model \
-     --workflow='${workflow}' \
-     --file-manifest-file=${file_manifest_file} \
-     --input-path='${input_path}' \
-     --samples-file=${samples_file} \
-     --job-specification-table=job_specification_table.csv
+     --workflow="${workflow}" \
+     --study-name="${study_name}" \
+     --database-config-file="${db_config_file}" \
+     --job-specification-table=job_specification_table.csv ;
     """
 }
 
-process workflow_main {
+process workflow_initialize {
     input:
     val workflow
-    path file_manifest_file
-    path channels_file
-    path phenotypes_file
-    path samples_file
+    val study_name
     path db_config_file
-    path subjects_file
-    path cell_manifest_files
-    path study
-    path diagnosis
-    path interventions
+
+    output:
+    stdout                                  emit: initialization_flag
 
     script:
     """
     spt workflow initialize \
-     --workflow='${workflow}' \
-     --file-manifest-file=${file_manifest_file} \
-     --samples-file=${samples_file} \
-     --database-config-file=${db_config_file} \
-     --subjects-file=${subjects_file} \
-     --study-file=${study} \
-     --diagnosis-file=${diagnosis} \
-     --interventions-file=${interventions} \
-     --channels-file=${channels_file} \
-     --phenotypes-file=${phenotypes_file}
+     --workflow="${workflow}" \
+     --study-name="${study_name}" \
+     --database-config-file=${db_config_file}
+    echo "Success"
     """
 }
 
-process report_run_configuration {
-    publishDir 'results'
+process core_job {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 4
 
     input:
-    path all_cell_manifests
+    val initialization_flag
     val workflow
-    path file_manifest_file
-    path samples_file
-    path channels
-    path phenotypes
+    val study_name
+    val job_index
+    path db_config_file
 
     output:
-    path "run_configuration.log"
+    path "performance_report${job_index}.csv",         emit: performance_report
+    path "core_computation_results${job_index}.file",  emit: core_computation_results
 
     script:
     """
-    spt workflow report-run-configuration \
-     --workflow='${workflow}' \
-     --file-manifest-file=${file_manifest_file} \
-     --samples-file=${samples_file} \
-     --channels-file=${channels} \
-     --phenotypes-file=${phenotypes} | tee run_configuration.log
+    spt workflow core-job \
+     --workflow="${workflow}" \
+     --study-name="${study_name}" \
+     --job-index="${job_index}" \
+     --performance-report-file=performance_report${job_index}.csv \
+     --database-config-file=${db_config_file} \
+     --results-file=core_computation_results${job_index}.file
+    """
+}
+
+process merge_performance_reports {
+    publishDir 'results'
+
+    input:
+    path all_performance_reports
+
+    output:
+    path 'performance_report.md'
+
+    script:
+    """
+    spt workflow merge-performance-reports ${all_performance_reports} --output=performance_report.md
+    """
+}
+
+process aggregate_results {
+    memory { 2.GB * task.attempt }
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 6
+
+    publishDir 'results'
+
+    input:
+    path db_config_file
+    val workflow
+    val study_name
+    path 'performance_report.md'
+    path all_core_computation_results
+
+    script:
+    """
+    spt workflow aggregate-core-results \
+     ${all_core_computation_results} \
+     --workflow="${workflow}" \
+     --study-name="${study_name}" \
+     --database-config-file=${db_config_file}
     """
 }
 
@@ -113,77 +127,59 @@ workflow {
     echo_environment_variables()
         .set{ environment_ch }
 
-    environment_ch.file_manifest_filename.map{ file(it.text) }
-        .set{ file_manifest_ch }
+    environment_ch.study_name.map{ it.text }
+        .set{ study_name_ch }
 
     environment_ch.workflow.map{ it.text }
         .set{ workflow_ch }
 
-    environment_ch.input_path.map{ it.text }
-        .set{ input_path_ch }
-
-    environment_ch.study_file.map{ file(it.text) }
-        .set{ study_ch }
-
-    environment_ch.diagnosis_file.map{ file(it.text) }
-        .set{ diagnosis_ch }
-
-    environment_ch.interventions_file.map{ file(it.text) }
-        .set{ interventions_ch }
-
-    environment_ch.channels_file.map{ file(it.text) }
-        .set{ channels_ch }
-
-    environment_ch.phenotypes_file.map{ file(it.text) }
-        .set{ phenotypes_ch }
-
     environment_ch.db_config_file.map{ file(it.text) }
         .set{ db_config_file_ch }
 
-    environment_ch.subjects_file.map{ file(it.text) }
-        .set{ subjects_file_ch }
-
-    environment_ch.samples_file.map{ file(it.text) }
-        .set{ samples_file_ch }
-
     generate_run_information(
         workflow_ch,
-        file_manifest_ch,
-        input_path_ch,
-        samples_file_ch,
+        study_name_ch,
+        db_config_file_ch,
     ).set { run_information_ch }
 
     run_information_ch
         .job_specification_table
         .splitCsv(header: true)
-        .map{ row -> tuple(row.input_file_identifier, file(row.input_filename)) }
+        .map{ row -> tuple(row.job_index, row.sample_identifier) }
         .set{ job_specifications_ch }
 
-    job_specifications_ch
-        .map{ row -> row[1] }
-        .collect()
-        .set{ cell_manifest_files_ch }
-
-    report_run_configuration(
-        cell_manifest_files_ch,
+    workflow_initialize(
         workflow_ch,
-        file_manifest_ch,
-        samples_file_ch,
-        channels_ch,
-        phenotypes_ch,
-    )
-
-    workflow_main(
-        workflow_ch,
-        file_manifest_ch,
-        channels_ch,
-        phenotypes_ch,
-        samples_file_ch,
+        study_name_ch,
         db_config_file_ch,
-        subjects_file_ch,
-        cell_manifest_files_ch,
-        study_ch,
-        diagnosis_ch,
-        interventions_ch,
+    )
+        .initialization_flag
+        .set{ initialization_flag_ch }
+
+
+    job_specifications_ch
+        .map{ row -> row[0] }
+        .set{job_indices_ch}
+
+    core_job(
+        initialization_flag_ch,
+        workflow_ch,
+        study_name_ch,
+        job_indices_ch,
+        db_config_file_ch,
+    )
+        .set { core_job_results_ch }
+
+    merge_performance_reports(
+        core_job_results_ch.performance_report.collect()
+    )
+        .set{final_performance_report_ch}
+
+    aggregate_results(
+        db_config_file_ch,
+        workflow_ch,
+        study_name_ch,
+        final_performance_report_ch,
+        core_job_results_ch.core_computation_results.collect(),
     )
 }

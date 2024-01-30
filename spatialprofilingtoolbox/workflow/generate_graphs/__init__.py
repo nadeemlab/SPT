@@ -1,0 +1,21 @@
+"""Initialize graph generation workflow components."""
+
+from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
+
+
+def process_inputs(params: dict[str, str | bool]) -> None:
+    """Ensure that the necessary input parameters are specified."""
+    for param in ('graph_config_file', ):
+        if param not in params:
+            raise ValueError(f'Must specify {param}.')
+
+
+components = WorkflowModules(
+    is_database_visitor=True,
+    assets_needed=[
+        ('generate_graphs', 'graph_generation.nf'),
+        ('generate_graphs', 'main.nf'),
+    ],
+    config_section_required=True,
+    process_inputs=process_inputs,
+)

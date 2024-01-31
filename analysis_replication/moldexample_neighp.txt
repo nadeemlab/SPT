@@ -404,3 +404,44 @@ The average value of the proximity score for phenotype(s) Lineage including mono
 The average value of the neighborhood enrichment score for phenotype(s) Lineage including monocyte, B cells is 3.69 times higher in cohort 1 than in cohort 2.
 The average value of the neighborhood enrichment score for phenotype(s) Lineage including macrophage, B cells is 10.03 times higher in cohort 1 than in cohort 2.
 
+Tc.ae, patterned:
+2 04RD
+1 08BL
+1 12RD
+2 25RD
+1 26BL
+2 16BL
+2 34RD
+1 40RD nondense yet patterned
+2 42RD nondense yet patterned *
+
+Not:
+2 24RD
+1 22RD
+1 39RD
+1 41BL dense yet not patterned *
+
+Ambiguous (separation of regions):
+21RD
+19BL
+
+
+spatial proteomics, head and neck squamous cell carcinoma, 2023
+https://academic.oup.com/bioinformatics/article/39/Supplement_1/i140/7210468
+
+imc, brain tumors, 2023
+https://www.nature.com/articles/s41586-022-05680-3
+
+mpif, bone marrows, 2023
+https://www.sciencedirect.com/science/article/pii/S0006497123024084
+
+imc, non-small cell lung cancer, 2024
+https://www.cell.com/cancer-cell/pdf/S1535-6108(23)00449-X.pdf
+
+O
+O
+
+spatial proteomics, head and neck squamous cell carcinoma, 2023
+imc, brain tumors, 2023
+mpif, bone marrows, 2023
+imc, non-small cell lung cancer, 2024

@@ -64,20 +64,24 @@ def _write_config_file(variables: dict[str, str]) -> None:
 
 def _write_pipeline_script(workflow: WorkflowModules) -> None:
     main_seen: bool = False
-    for subpackage, filename in workflow.assets_needed:
+    for subpackage, filename, is_main in workflow.assets_needed:
         pipeline_file = _retrieve_from_library(subpackage, filename)
-        if filename == 'main.nf':
+        if is_main:
             if main_seen:
-                raise ValueError('Workflow can only one main.nf file.')
+                raise ValueError(
+                    f'Workflow can only have one main Nextflow file. If it\'s {subpackage}.'
+                    f'{filename}, check assets_needed to ensure that it\'s the only file with a '
+                    'True value for the third element of the tuple.'
+                )
             main_seen = True
-            copy_location = join(getcwd(), filename)
+            copy_location = join(getcwd(), 'main.nf')
         else:
             makedirs(join(getcwd(), 'nf_files'), exist_ok=True)
             copy_location = join(getcwd(), 'nf_files', filename)
         with open(copy_location, 'wt', encoding='utf-8') as file:
             file.write(pipeline_file)
     if not main_seen:
-        raise ValueError('Workflow must have a main.nf file.')
+        raise ValueError('Workflow must have a main Nextflow file.')
 
 
 def _record_configuration_command(variables: dict[str, str], configuration_file: str) -> None:

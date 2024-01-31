@@ -9,7 +9,14 @@ study_name = name_of_study
 [tabular import]
 input_path = path/to/input/directory
 
+[graph generation]
+graph_config_file = path/to/graph.config
+
 [cg-gnn]
 graph_config_file = path/to/graph.config
 cuda = true
+upload_importances = false
+
+[graph-transformer]
+graph_config_file = path/to/graph.config
 upload_importances = false

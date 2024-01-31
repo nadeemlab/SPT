@@ -1,4 +1,4 @@
-"""Initialize the CG-GNN workflow components."""
+"""Initialize the graph-transformer workflow components."""
 
 from spatialprofilingtoolbox.workflow.common.graph_plugin_training_init import (
     create_process_inputs,
@@ -7,7 +7,10 @@ from spatialprofilingtoolbox.workflow.common.graph_plugin_training_init import (
 from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 
 
-process_inputs = create_process_inputs('nadeemlab/spt-cg-gnn:{cuda}0.0.3')
+process_inputs = create_process_inputs(
+    'nadeemlab/spt-graph-transformer:0.0.1',
+    cuda_required=True,
+)
 
 
 components = WorkflowModules(

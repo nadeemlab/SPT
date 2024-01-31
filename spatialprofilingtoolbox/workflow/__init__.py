@@ -24,8 +24,9 @@ workflow_names_and_subpackages = {
     'tabular import': 'tabular_import',
     'phenotype proximity': 'phenotype_proximity',
     'reduction visual': 'reduction_visual',
-    'cg-gnn': 'cggnn',
     'graph generation': 'graph_generation',
+    'cg-gnn': 'cggnn',
+    'graph-transformer': 'graph_transformer',
 }
 
 

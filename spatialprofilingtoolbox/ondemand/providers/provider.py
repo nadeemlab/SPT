@@ -127,9 +127,11 @@ class OnDemandProvider(ABC):
         size = len(feature_columns)
 
         if result_blob is not None:
+            increment = 0
             while True:
-                buffer1 = result_blob.read(8)
-                buffer2 = result_blob.read(8)
+                buffer1 = result_blob[increment: increment + 8]
+                buffer2 = result_blob[increment + 8: increment + 16]
+                increment += 16
                 row = self._parse_cell_row(buffer1, buffer2, size)
                 if row is None:
                     break

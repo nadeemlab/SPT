@@ -16,6 +16,7 @@ from pandas import DataFrame
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
     StudyStructureCentroids,
@@ -35,7 +36,7 @@ class OnDemandProvider(ABC):
     def service_specifier(cls) -> str:
         raise NotImplementedError
 
-    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
+    def __init__(self, data_directory: str, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
         self._load_expressions_indices(data_directory)
         self.timeout = timeout
@@ -47,39 +48,47 @@ class OnDemandProvider(ABC):
             loader.load_from_file()
             centroids = loader.get_studies()
         self._load_data_matrices(data_directory, centroids)
+        self.database_config_file = database_config_file
         logger.info('%s is finished loading source data.', type(self).__name__)
 
-    def _load_expressions_indices(self, data_directory: str) -> None:
+    def _load_expressions_indices(self, study_name: str) -> None:
         """Load expressions metadata from a JSON-formatted index file."""
-        logger.debug('Searching for source data in: %s', data_directory)
-        json_files = [
-            f for f in listdir(data_directory)
-            if isfile(join(data_directory, f)) and search(r'\.json$', f)
-        ]
-        if len(json_files) != 1:
-            message = 'Did not find index JSON file.'
-            logger.error(message)
-            raise FileNotFoundError(message)
-        with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
-            root = loads(file.read()) # result of index table query
-            entries = root[list(root.keys())[0]]
-            self.studies = {}
-            for entry in entries:
-                self.studies[entry['specimen measurement study name']] = entry
+        logger.debug('Searching for source data in database')
+        # json_files = [
+        #     f for f in listdir(data_directory)
+        #     if isfile(join(data_directory, f)) and search(r'\.json$', f)
+        # ]
+        # if len(json_files) != 1:
+        #     message = 'Did not find index JSON file.'
+        #     logger.error(message)
+        #     raise FileNotFoundError(message)
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            cursor.execute('''
+                    SELECT blob_contents FROM ondemand_studies_index osi
+                    WHERE osi.blob_type='expressions_index';
+                    ''')
+            result_blob = bytearray(cursor.fetchone())
+
+        decoded_blob = result_blob.decode(encoding='utf-8')
+        root = loads(decoded_blob) # result of index table query
+        entries = root[list(root.keys())[0]]
+        self.studies = {}
+        for entry in entries:
+            self.studies[entry['specimen measurement study name']] = entry
 
     def _load_data_matrices(
         self,
-        data_directory: str,
         centroids: dict[str, StudyStructureCentroids] | None = None,
     ) -> None:
         """Load data matrices in reference to a JSON-formatted index file."""
         self.data_arrays = {}
         for study_name in self._get_study_names():
             self.data_arrays[study_name] = {
-                item['specimen']: OnDemandProvider._get_data_array_from_file(
-                    join(data_directory, item['filename']), #replace with specimen index name
+                item['specimen']: self._get_data_array_from_db(
+                    item['specimen'],
                     self.studies[study_name]['target index lookup'],
                     self.studies[study_name]['target by symbol'],
+                    study_name
                 )
                 for item in self.studies[study_name]['expressions files']
             }
@@ -97,30 +106,31 @@ class OnDemandProvider(ABC):
         return list(self.studies.keys())
 
     def _get_data_array_from_db(
-        cls,
-        cursor: Psycopg2Cursor,
-        specimen: str,
-        target_index_lookup: dict,
-        target_by_symbol: dict,
+        self,
+            specimen: str,
+            target_index_lookup: dict,
+            target_by_symbol: dict,
+            study_name: str,
     ) -> DataFrame:
         """Load data arrays from a precomputed blob from database."""
-        cursor.execute('''
-                SELECT blob_contents FROM ondemand_studies_index osi
-                WHERE osi.specimen=%s AND osi.blob_type='feature_matrix';
-                ''', (specimen,))
-        result_blob = bytearray(cursor.fetchone())
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            cursor.execute('''
+                    SELECT blob_contents FROM ondemand_studies_index osi
+                    WHERE osi.specimen=%s AND osi.blob_type='feature_matrix';
+                    ''', (specimen,))
+            result_blob = bytearray(cursor.fetchone())
 
         rows = []
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
-        feature_columns = cls._list_columns(target_index_lookup, target_by_symbol)
+        feature_columns = self._list_columns(target_index_lookup, target_by_symbol)
         size = len(feature_columns)
 
         if result_blob is not None:
             while True:
                 buffer1 = result_blob.read(8)
                 buffer2 = result_blob.read(8)
-                row = cls._parse_cell_row(buffer1, buffer2, size)
+                row = self._parse_cell_row(buffer1, buffer2, size)
                 if row is None:
                     break
                 rows.append(row)
@@ -129,9 +139,9 @@ class OnDemandProvider(ABC):
         df.set_index('histological_structure_id', inplace=True)
         return df
 
-    @classmethod
+
     def _get_data_array_from_file(
-        cls,
+        self,
         filename: str,
         target_index_lookup: dict,
         target_by_symbol: dict,
@@ -140,10 +150,17 @@ class OnDemandProvider(ABC):
         rows = []
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
-        feature_columns = cls._list_columns(target_index_lookup, target_by_symbol)
+        feature_columns = self._list_columns(target_index_lookup, target_by_symbol)
         size = len(feature_columns)
 
         with open(filename, 'rb') as file:
+            while True:
+                buffer1 = file.read(8)
+                buffer2 = file.read(8)
+                row = self._parse_cell_row(buffer1, buffer2, size)
+                if row is None:
+                    break
+                rows.append(row)
             df = DataFrame(rows, columns=feature_columns + ['integer', 'histological_structure_id'])
             df.set_index('histological_structure_id', inplace=True)
         return df

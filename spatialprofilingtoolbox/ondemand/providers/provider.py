@@ -14,6 +14,8 @@ from warnings import warn
 
 from pandas import DataFrame
 
+from psycopg2.extensions import cursor as Psycopg2Cursor
+
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
     StudyStructureCentroids,
@@ -94,8 +96,39 @@ class OnDemandProvider(ABC):
         """Retrieve names of the studies held in memory."""
         return list(self.studies.keys())
 
-    def _get_data_array_from_db():
-        return
+    def _get_data_array_from_db(
+        cls,
+        cursor: Psycopg2Cursor,
+        specimen: str,
+        target_index_lookup: dict,
+        target_by_symbol: dict,
+    ) -> DataFrame:
+        """Load data arrays from a precomputed blob from database."""
+        cursor.execute('''
+                SELECT blob_contents FROM ondemand_studies_index osi
+                WHERE osi.specimen=%s AND osi.blob_type='feature_matrix';
+                ''', (specimen,))
+        result_blob = bytearray(cursor.fetchone())
+
+        rows = []
+        target_index_lookup = cast(dict, target_index_lookup)
+        target_by_symbol = cast(dict, target_by_symbol)
+        feature_columns = cls._list_columns(target_index_lookup, target_by_symbol)
+        size = len(feature_columns)
+
+        if result_blob is not None:
+            while True:
+                buffer1 = result_blob.read(8)
+                buffer2 = result_blob.read(8)
+                row = cls._parse_cell_row(buffer1, buffer2, size)
+                if row is None:
+                    break
+                rows.append(row)
+
+        df = DataFrame(rows, columns=feature_columns + ['integer', 'histological_structure_id'])
+        df.set_index('histological_structure_id', inplace=True)
+        return df
+
     @classmethod
     def _get_data_array_from_file(
         cls,
@@ -109,16 +142,10 @@ class OnDemandProvider(ABC):
         target_by_symbol = cast(dict, target_by_symbol)
         feature_columns = cls._list_columns(target_index_lookup, target_by_symbol)
         size = len(feature_columns)
+
         with open(filename, 'rb') as file:
-            while True:
-                buffer1 = file.read(8)
-                buffer2 = file.read(8)
-                row = cls._parse_cell_row(buffer1, buffer2, size)
-                if row is None:
-                    break
-                rows.append(row)
-        df = DataFrame(rows, columns=feature_columns + ['integer', 'histological_structure_id'])
-        df.set_index('histological_structure_id', inplace=True)
+            df = DataFrame(rows, columns=feature_columns + ['integer', 'histological_structure_id'])
+            df.set_index('histological_structure_id', inplace=True)
         return df
 
     @staticmethod

@@ -5,6 +5,7 @@ from typing import cast, Any
 from pandas import DataFrame
 from numpy import ndarray
 from numpy import arange  # type: ignore
+import psycopg2
 
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_from_specimen
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
@@ -107,7 +108,21 @@ class CompressedDataArrays:
                 raise ValueError(message % specimens)
             specimen = specimens[0]
             data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
-            #write to the DB instead
+
+
+            cursor = connection.cursor()
+            insert_query = '''
+                INSERT INTO
+                ondemand_studies_index (
+                    specimen,
+                    blob_type,
+                    blob_contents)
+                VALUES (%s, %s, psycopg2.Binary(%s)) ;
+                '''
+            cursor.executemany(insert_query, (specimen,'type', data_specimen)) #refactor blob type
+            cursor.close()
+            connection.commit()
+
             CompressedMatrixWriter.write_specimen(data_specimen, study_index, specimen_index)
             if study_name not in self._specimens_by_measurement_study:
                 self._specimens_by_measurement_study[study_name] = []

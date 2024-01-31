@@ -74,10 +74,32 @@ class CompressedMatrixWriter:
         return getcwd()
 
     @classmethod
+    def _write_data_array_to_db(cls, data_array: dict[int, int]) -> None:
+
+            blob=bytearray('')
+            for histological_structure_id, entry in data_array.items():
+                blob.append(histological_structure_id.to_bytes(8, 'little'))
+                blob.append(entry.to_bytes(8, 'little'))
+
+            # connection?
+            cursor = connection.cursor()
+            insert_query = '''
+                INSERT INTO
+                ondemand_studies_index (
+                    specimen,
+                    blob_type,
+                    blob_contents)
+                VALUES (%s, %s, %s) ;
+                '''
+            cursor.execute(insert_query, histological_structure_id, 'feature_matrix', psycopg2.Binary(blob))  # refactor blob type
+            cursor.close()
+            connection.commit()
+
+
+    @classmethod
     def _write_data_array_to_file(cls, data_array: dict[int, int], filename: str) -> None:
         with open(filename, 'wb') as file:
             for histological_structure_id, entry in data_array.items():
-                #change to db uploading
                 file.write(histological_structure_id.to_bytes(8, 'little'))
                 file.write(entry.to_bytes(8, 'little'))
 

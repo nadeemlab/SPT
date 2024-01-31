@@ -48,5 +48,5 @@ CREATE TABLE pending_feature_computation (
 CREATE TABLE ondemand_studies_index (
     specimen VARCHAR(512),
     blob_type VARCHAR(512),
-    blob_contents bytea --check type
+    blob_contents bytea
 );

@@ -89,10 +89,22 @@ class StructureCentroids:
             message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
             raise ValueError(message % specimens)
         specimen = specimens[0]
-        filename = self._form_filename(study_index, specimen_index)
-        #write to the database instead of file
-        self._write_centroids(self._studies, filename)
-        message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
+        #filename = self._form_filename(study_index, specimen_index)
+
+        cursor = connection.cursor()
+        insert_query = '''
+            INSERT INTO
+            ondemand_studies_index (
+                specimen,
+                blob_type,
+                blob_contents)
+            VALUES (%s, %s, %s) ;
+            '''
+        cursor.execute(insert_query, specimen_index, 'feature_matrix', psycopg2.Binary(self._studies))  # refactor blob type
+        cursor.close()
+        connection.commit()
+
+        message = 'Deleting specimen data "%s" from internal memory, since it is saved to database.'
         logger.debug(message, specimen)
         del self._studies[study_name]
         assert len(self._studies) == 0

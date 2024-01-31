@@ -15,6 +15,7 @@ def check_input_parameters(params: dict[str, str | bool]) -> None:
 
 components = WorkflowModules(
     is_database_visitor=False,
+    assets_needed=[('tabular_import', 'main.nf')],
     generator=TabularImportJobGenerator,
     initializer=TabularImportInitializer,
     core_job=TabularImportCoreJob,

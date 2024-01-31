@@ -43,6 +43,7 @@ test/workflow/.nextflow/
 test/workflow/results/
 test/workflow/work/
 test/workflow/plots.html
+test/workflow/nf_files/
 
 # Development files
 .vscode/

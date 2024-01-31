@@ -20,6 +20,7 @@ from spatialprofilingtoolbox.workflow.phenotype_proximity.integrator import \
 
 components = WorkflowModules(
     is_database_visitor=True,
+    assets_needed=[('assets', 'main.nf')],
     generator=ProximityJobGenerator,
     initializer=PhenotypeProximityInitializer,
     core_job=PhenotypeProximityCoreJob,

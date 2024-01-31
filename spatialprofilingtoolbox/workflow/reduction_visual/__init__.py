@@ -20,6 +20,7 @@ from spatialprofilingtoolbox.workflow.reduction_visual.integrator import \
 
 components = WorkflowModules(
     is_database_visitor=True,
+    assets_needed=[('assets', 'main.nf')],
     generator=ReductionVisualJobGenerator,
     initializer=ReductionVisualInitializer,
     core_job=ReductionVisualCoreJob,

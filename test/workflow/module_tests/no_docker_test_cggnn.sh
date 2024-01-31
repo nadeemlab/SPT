@@ -85,7 +85,7 @@ function clean() {
     rm -f top_100_structures.txt
     rm -f top_100_reference.txt
     rm -rf results/
-    rm -r nf_files/
+    rm -rf nf_files/
 }
 
 nextflow run . -with-docker ${docker_image}

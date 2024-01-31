@@ -11,5 +11,15 @@ graphs, _ = load_hs_graphs("results/")
 assert len(graphs) == 4, f"Error: Graph count ({len(graphs)}) does not match true value (4)."
 '
 
-rm -r "results/"
-rm -r "nf_files/"
+function clean() {
+    rm -f .nextflow.log*
+    rm -rf .nextflow/
+    rm -f configure.sh
+    rm -f run.sh
+    rm -f main.nf
+    rm -f nextflow.config
+    rm -rf results/
+    rm -rf nf_files/
+}
+
+clean

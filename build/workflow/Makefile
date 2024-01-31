@@ -80,7 +80,11 @@ ${TESTS}: setup-testing
 
 ${STANDALONE_MODULE_TEST_TARGET}: setup-testing
 >@${MESSAGE} start "\u2503 ${STANDALONE_MODULE_TEST_NAME}"
->@docker run --rm --network ${MODULE_NAME}_isolated_temporary_test --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c "cd /mount_sources && bash ${STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT}"
+>@docker run \
+    --rm \
+    --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
+    -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+    /bin/bash -c "cd /mount_sources && bash ${STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT}"
 >@bash ${STANDALONE_MODULE_TEST_FILE} ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest ; \
     echo "$$?" > status_code
 >@${MESSAGE} end "Passed." "Failed."

@@ -5,7 +5,8 @@ process echo_environment_variables {
     output:
     path 'db_config_file',                  emit: db_config_file
     path 'graph_config_file',               emit: graph_config_file
-    path 'cuda',                            emit: cuda
+    path 'cg_gnn_training_image',           emit: cg_gnn_training_image
+    path 'cg_gnn_singularity_run_options',         emit: cg_gnn_singularity_run_options
     path 'upload_importances',              emit: upload_importances
 
     script:
@@ -13,7 +14,8 @@ process echo_environment_variables {
     #!/bin/bash
     echo -n "${db_config_file_}" > db_config_file
     echo -n "${graph_config_file_}" > graph_config_file
-    echo -n "${cuda_}" > cuda
+    echo -n "${cg_gnn_training_image_}" > cg_gnn_training_image
+    echo -n "${cg_gnn_singularity_run_options_}" > cg_gnn_singularity_run_options
     echo -n "${upload_importances_}" > upload_importances
     """
 }
@@ -31,7 +33,7 @@ process prep_graph_creation {
     script:
     """
     #!/bin/bash
-    cp ${db_config_file} db_config_file
+    cp ${db_config_file} spt_db.config
     spt graphs prepare-graph-creation \
         --config_path ${graph_config_file} \
         --output_directory .
@@ -83,12 +85,12 @@ process finalize_graphs {
 process train {
     publishDir '.', mode: 'copy'
 
-    beforeScript 'export DOCKER_IMAGE="nadeemlab/spt-cg-gnn:\$(if [[ "${cuda}" == "True" ]]; then echo "cuda-"; fi)0.0.2"'
-
-    container "\${DOCKER_IMAGE}"
+    container "${cg_gnn_training_image}"
+    containerOptions "${cg_gnn_singularity_run_options}"
 
     input:
-    val cuda
+    val cg_gnn_training_image
+    val cg_gnn_singularity_run_options
     path working_directory
     path graph_config_file
 
@@ -138,8 +140,11 @@ workflow {
     environment_ch.graph_config_file.map{ file(it.text) }
         .set{ graph_config_file_ch }
     
-    environment_ch.cuda.map{ it.text }
-        .set{ cuda_ch }
+    environment_ch.cg_gnn_training_image.map{ it.text }
+        .set{ cg_gnn_training_image_ch }
+    
+    environment_ch.cg_gnn_singularity_run_options.map{ it.text }
+        .set{ cg_gnn_singularity_run_options_ch }
 
     environment_ch.upload_importances.map{ it.text }
         .set{ upload_importances_ch }
@@ -175,7 +180,8 @@ workflow {
         .set{ working_directory_ch }
 
     train(
-        cuda_ch,
+        cg_gnn_training_image_ch,
+        cg_gnn_singularity_run_options_ch,
         working_directory_ch,
         graph_config_file_ch,
     ).set{ train_out }

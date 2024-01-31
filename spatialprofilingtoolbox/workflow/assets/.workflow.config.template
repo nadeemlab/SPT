@@ -1,8 +1,7 @@
 [general]
 db_config_file = path/to/db.config
-executor = local
-sif_file = path/to/sif/file
-excluded_host = None
+container_platform = None
+image_tag = latest
 
 [database visitor]
 study_name = name_of_study
@@ -11,8 +10,6 @@ study_name = name_of_study
 input_path = path/to/input/directory
 
 [cg-gnn]
-default_docker_image = tag/of-docker:image
-network = name_of_db_docker_network
 graph_config_file = path/to/graph.config
 cuda = true
 upload_importances = false

@@ -5,7 +5,7 @@ from typing import cast, Any
 from pandas import DataFrame
 from numpy import ndarray
 from numpy import arange  # type: ignore
-import psycopg2
+
 
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_from_specimen
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
@@ -31,12 +31,13 @@ class CompressedDataArrays:
     _target_index_lookups: dict
     _target_by_symbols: dict
 
-    def __init__(self):
+    def __init__(self, database_config_file: str | None):
         self._studies = {}
         self._store_inmemory = True
         self._specimens_by_measurement_study = {}
         self._target_index_lookups = {}
         self._target_by_symbols = {}
+        self.database_config_file = database_config_file
 
     def set_store_inmemory(self, flag: bool) -> None:
         self._store_inmemory = flag
@@ -108,20 +109,18 @@ class CompressedDataArrays:
                 raise ValueError(message % specimens)
             specimen = specimens[0]
             data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
+            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+                insert_query = '''
+                    INSERT INTO
+                    ondemand_studies_index (
+                        specimen,
+                        blob_type,
+                        blob_contents)
+                    VALUES (%s, %s, psycopg2.Binary(%s)) ;
+                    '''
+                cursor.executemany(insert_query, (specimen,'type', data_specimen)) #refactor blob type?
+                cursor.close()
 
-
-            cursor = connection.cursor()
-            insert_query = '''
-                INSERT INTO
-                ondemand_studies_index (
-                    specimen,
-                    blob_type,
-                    blob_contents)
-                VALUES (%s, %s, psycopg2.Binary(%s)) ;
-                '''
-            cursor.executemany(insert_query, (specimen,'type', data_specimen)) #refactor blob type
-            cursor.close()
-            connection.commit()
 
             CompressedMatrixWriter.write_specimen(data_specimen, study_index, specimen_index)
             if study_name not in self._specimens_by_measurement_study:

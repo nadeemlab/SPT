@@ -6,6 +6,7 @@ from os.path import isfile
 from os.path import join
 from os import getcwd
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -81,20 +82,17 @@ class CompressedMatrixWriter:
                 blob.append(histological_structure_id.to_bytes(8, 'little'))
                 blob.append(entry.to_bytes(8, 'little'))
 
-            # connection?
-            cursor = connection.cursor()
-            insert_query = '''
-                INSERT INTO
-                ondemand_studies_index (
-                    specimen,
-                    blob_type,
-                    blob_contents)
-                VALUES (%s, %s, %s) ;
-                '''
-            cursor.execute(insert_query, histological_structure_id, 'feature_matrix', psycopg2.Binary(blob))  # refactor blob type
-            cursor.close()
-            connection.commit()
-
+            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+                insert_query = '''
+                    INSERT INTO
+                    ondemand_studies_index (
+                        specimen,
+                        blob_type,
+                        blob_contents)
+                    VALUES (%s, %s, %s) ;
+                    '''
+                cursor.execute(insert_query, histological_structure_id, 'feature_matrix', psycopg2.Binary(blob))  # refactor blob type
+                cursor.close()
 
     @classmethod
     def _write_data_array_to_file(cls, data_array: dict[int, int], filename: str) -> None:

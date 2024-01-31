@@ -9,7 +9,6 @@ from os import getcwd
 import sys
 
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
-from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -40,12 +39,12 @@ def main():
     if args.centroids_only:
         sys.exit()
 
-    if CompressedMatrixWriter.already_exists(getcwd()):
-        logger.info('%s already exists, skipping feature matrix pull.', EXPRESSIONS_INDEX_FILENAME)
+    if CompressedMatrixWriter.already_exists(): # change implementation to database check
+        logger.info('%s already exists, skipping feature matrix pull.')
         sys.exit(1)
     else:
         message = '%s was not found, will do feature matrix pull after all.'
-        logger.info(message, EXPRESSIONS_INDEX_FILENAME)
+        logger.info(message)
 
     puller = SparseMatrixPuller(database_config_file)
     puller.pull_and_write_to_files()

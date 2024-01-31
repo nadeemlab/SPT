@@ -5,17 +5,9 @@ from typing import (
     Any,
 )
 from abc import ABC
-from re import search
-from os import listdir
-from os.path import join
-from os.path import isfile
 from json import loads
 from warnings import warn
-
 from pandas import DataFrame
-
-from psycopg2.extensions import cursor as Psycopg2Cursor
-
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
@@ -54,14 +46,7 @@ class OnDemandProvider(ABC):
     def _load_expressions_indices(self, study_name: str) -> None:
         """Load expressions metadata from a JSON-formatted index file."""
         logger.debug('Searching for source data in database')
-        # json_files = [
-        #     f for f in listdir(data_directory)
-        #     if isfile(join(data_directory, f)) and search(r'\.json$', f)
-        # ]
-        # if len(json_files) != 1:
-        #     message = 'Did not find index JSON file.'
-        #     logger.error(message)
-        #     raise FileNotFoundError(message)
+
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
             cursor.execute('''
                     SELECT blob_contents FROM ondemand_studies_index osi

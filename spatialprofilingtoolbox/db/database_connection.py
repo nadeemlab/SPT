@@ -13,10 +13,14 @@ from inspect import getfullargspec
 from psycopg2 import connect
 from psycopg2.extensions import connection as Connection
 from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg2.extensions import register_type
+from psycopg2.extensions import BYTES, BYTESARRAY
 from psycopg2 import Error as Psycopg2Error
 from psycopg2 import OperationalError
 from psycopg2.errors import DuplicateDatabase
 from attr import define
+
+
 
 from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import get_credentials_from_environment
@@ -63,6 +67,8 @@ class DBConnection(ConnectionProvider):
                 study_database = self._retrieve_study_database(credentials, study)
                 credentials.update_database(study_database)
             super().__init__(self.make_connection(credentials))
+            register_type(BYTES, self.connection)
+            register_type(BYTESARRAY, self.connection)
         except Psycopg2Error as exception:
             message = 'Failed to connect to database: %s, %s'
             logger.error(message, credentials.endpoint, credentials.database)

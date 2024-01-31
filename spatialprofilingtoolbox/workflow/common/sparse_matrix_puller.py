@@ -109,20 +109,8 @@ class CompressedDataArrays:
                 raise ValueError(message % specimens)
             specimen = specimens[0]
             data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
-            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-                insert_query = '''
-                    INSERT INTO
-                    ondemand_studies_index (
-                        specimen,
-                        blob_type,
-                        blob_contents)
-                    VALUES (%s, %s, psycopg2.Binary(%s)) ;
-                    '''
-                cursor.executemany(insert_query, (specimen,'type', data_specimen)) #refactor blob type?
-                cursor.close()
 
-
-            CompressedMatrixWriter.write_specimen(data_specimen, study_index, specimen_index)
+            CompressedMatrixWriter.write_specimen(data_specimen, study_name, specimen)
             if study_name not in self._specimens_by_measurement_study:
                 self._specimens_by_measurement_study[study_name] = []
             self._specimens_by_measurement_study[study_name].append(specimen)

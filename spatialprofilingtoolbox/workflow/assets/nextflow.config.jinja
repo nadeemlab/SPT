@@ -40,11 +40,10 @@ env.channels_file_ = '{{ channels_file }}'{% endif %}
 {%- if phenotypes_file is defined and phenotypes_file|length %}
 env.phenotypes_file_ = '{{ phenotypes_file }}'{% endif %}
 
-{%- if workflow in ['graph generation', 'cg-gnn', 'graph-transformer'] %}
+{%- if workflow in ['graph generation', 'graph plugin'] %}
 env.graph_config_file_ = '{{ graph_config_file }}'
 {%- endif %}
-
-{%- if workflow in ['cg-gnn', 'graph-transformer'] %}
+{%- if workflow == 'graph plugin' %}
 env.graph_plugin_image_ = '{{ graph_plugin_image }}'
 env.graph_plugin_singularity_run_options_ = '{{ graph_plugin_singularity_run_options }}'
 env.upload_importances_ = '{{ upload_importances }}'

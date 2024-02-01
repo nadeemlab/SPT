@@ -12,11 +12,8 @@ input_path = path/to/input/directory
 [graph generation]
 graph_config_file = path/to/graph.config
 
-[cg-gnn]
+[graph plugin]
+plugin = cg-gnn or graph-transformer
 graph_config_file = path/to/graph.config
-cuda = true
-upload_importances = false
-
-[graph-transformer]
-graph_config_file = path/to/graph.config
+cuda = true  # Must be blank or true for graph-transformer
 upload_importances = false

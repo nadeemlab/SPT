@@ -1,7 +1,6 @@
 nextflow.enable.dsl = 2
 
 include { generate_graphs } from './nf_files/graph_generation'
-include { upload_importance_scores } from './nf_files/upload_importance_scores'
 
 
 process echo_environment_variables {
@@ -47,6 +46,27 @@ process train {
         --input_directory ${working_directory} \
         --config_file ${graph_config_file} \
         --output_directory ${working_directory}
+    """
+}
+
+process upload_importance_scores {
+    input:
+    val upload_importances
+    path importances_csv_path
+    path db_config_file
+    path graph_config_file
+
+    script:
+    """
+    #!/bin/bash
+
+    if [[ "${upload_importances}" == "True" ]]
+    then
+        cp ${db_config_file} spt_db.config
+        spt graphs upload-importances \
+            --importances_csv_path ${importances_csv_path} \
+            --config_path ${graph_config_file}
+    fi
     """
 }
 

@@ -210,7 +210,7 @@ def parse_arguments():
 Below the format of the workflow configuration file is described.
 
 General variables should be included under:
-`[general]`:
+    [general]:
     db_config_file: <path>
         Path to a database configuration file.
     container_platform: {None, docker, singularity} (default: None)
@@ -218,17 +218,28 @@ General variables should be included under:
     image_tag: <docker/singularity image name> (default: latest)
         Tag of the Docker Hub image associated with the workflow to use.
 
-Some workflows require additional variables that are defined in their own section.
+Some workflows query an existing database. If so, the following variables are required:
+    [database visitor]
+    study_name: <name of the study to query>
 
-`[tabular_import]`:
+Some workflows require additional variables that are defined in their own section.
+    [tabular import]:
     input_path: <path>
         Path to the directory containing the input data files, e.g., `file_manifest.tsv`.
 
-`[cg-gnn]`:
+    [graph generation]:
     graph_config_file: <path>
-        Path to the graph configuration file. See spatialprofilingtoolbox.cggnn for more details.
-    cuda: {true, false} (default: false)
-        Whether to use a CUDA-enabled container for the CG-GNN workflow training step.
+        Path to the graph configuration file. See spatialprofilingtoolbox.graphs.config_reader for
+        more details.
+
+    [graph plugin]:
+    plugin: {cg-gnn, graph-transformer}
+        Which graph plugin to use.
+    graph_config_file: <path>
+        As above.
+    cuda: {true, false} (default: false for cg-gnn, true for graph-transformer)
+        Whether to use a CUDA-enabled container for the training step.
+        Graph-transformer requires CUDA.
     upload_importances: {true, false} (default: false)
         Whether to upload feature importances to the database after training.
 """

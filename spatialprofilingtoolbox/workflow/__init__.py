@@ -25,8 +25,7 @@ workflow_names_and_subpackages = {
     'phenotype proximity': 'phenotype_proximity',
     'reduction visual': 'reduction_visual',
     'graph generation': 'graph_generation',
-    'cg-gnn': 'cggnn',
-    'graph-transformer': 'graph_transformer',
+    'graph plugin': 'graph_plugin',
 }
 
 

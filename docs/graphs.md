@@ -22,50 +22,21 @@ pip install spatialprofilingtoolbox[workflow]
 - Select sample strata to use and fetch graph data artifacts from the database using `spt graphs extract`.
 - Use an [SPT plugin](https://github.com/nadeemlab/spt-plugin) to transform your graph data into results, including cell-level importance scores.
 
-## Configure a (mostly) reproducible graph transformation workflow
+## Configure a reproducible graph transformation workflow
 
 To create artifacts that will reproducibly run through the entire process of gathering the data, transforming it, and reporting results in one line using Nextflow, we provide the `spt workflow configure` utility. It uses the parameters obtained from the last step to create this reproducible workflow.
 
-Currently, we have one graph transformation workflow available in SPT, `cg-gnn`, which trains a cell graph neural network (CG-GNN) model and returns importance scores for cells used to train and test the model. We plan to add more workflows in the future. If you'd like to develop your own, please refer to the [spt-plugin repository](https://github.com/nadeemlab/spt-plugin) for more information.
+Currently, we a `graph plugin` workflow available in SPT that makes available two first-class plugins supported by us SPT developers, [`cg-gnn`](https://github.com/nadeemlab/spt-cg-gnn) and [`graph-transformer`](https://github.com/nadeemlab/spt-graph-transformer), with plans to add more in the future. Both train a deep learning model and return importance scores for cells used to train and test the model. If you'd like to develop your own, please refer to the [spt-plugin repository](https://github.com/nadeemlab/spt-plugin) for more information.
 
-(Note that because most deep learning models like CG-GNN use non-deterministic algorithms, workflows may not be exactly reproducible.)
+(Note that because most deep learning models like cg-gnn use non-deterministic algorithms, workflows may not be exactly reproducible.)
 
-To configure graph transformation workflows like `cg-gnn`, use the following command:
+To set up a workflow, use the following command:
 ```
 spt workflow configure --workflow=<YOUR WORKFLOW> --config-file=<YOUR CONFIG FILE LOCATION>
 ```
-
-### The workflow configuration file
-
-For a template of the workflow configuration file, see [`.workflow.config.template`](spatialprofilingtoolbox/workflow/assets/.workflow.config.template). It's reproduced here with definitions for quick reference, but this doc may not be as up to date as the source code. For canonical explanations of each parameter, please refer to the docstrings of the scripts being called by `spt workflow configure`, as shown by [the Nextflow file used for cggnn](spatialprofilingtoolbox/workflow/assets/cggnn.nf).
-
-```ini
-[general]
-db_config_file = path/to/db.config
-container_platform = None
-image_tag = latest
-
-[database visitor]
-study_name = name_of_study
-
-[cg-gnn]
-graph_config_file = path/to/graph.config
-cuda = true
-upload_importances = false
-```
-
-General
-* `database-config-file` is the location of your database configuration file, in the format of [`.spt_db.config.template`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
-* `container-platform` is the container platform to use. Can be `None`, `docker`, or `singularity`. If `None`, no container platform will be used, but a container platform is required to run graph transformation workflows.
-* `image-tag` is the tag of the container image associated with each workflow to use. If `None`, the latest image will be used.
-
-Database visitor. These parameters apply to any workflow that queries the database.
-* `study-name` is the name of your study as it appears in your scstudies database instance
-
-CG-GNN. These parameters are specific to the CG-GNN workflow. If you define your own workflow or plugin, we recommend creating a new section but using a similar format.
-* `graph_config_file` is the location of your graph configuration file, in [`this format`](spatialprofilingtoolbox/graphs/template.config). See below for more information.
-* `cuda` is whether to use CUDA to accelerate training. If `false`, the CPU will be used instead.
-* `upload_importances` is whether to upload importance scores calculated by your graph transformation workflow to the database.
+For more information about how `spt workflow configure` works, see
+* [`spt workflow configure -h`](spatialprofilingtoolbox/workflow/scripts/configure.py)
+* the template of the workflow configuration file, see [`.workflow.config.template`](spatialprofilingtoolbox/workflow/assets/.workflow.config.template)
 
 ### The graph configuration file
 
@@ -92,6 +63,20 @@ target_name = None
 exclude_unlabeled = false
 n_neighbors = 5
 threshold = None
+
+[cg-gnn]
+in_ram = true
+batch_size = 1
+epochs = 5
+learning_rate = 1e-3
+k_folds = 0
+explainer_model = pp
+merge_rois = true
+
+[graph-transformer]
+task_name = GraphCAM
+batch_size = 8
+log_interval_local = 6
 
 [upload-importances]
 cohort_stratifier = None
@@ -120,7 +105,7 @@ Graph generation
 * `n_neighbors`: Number of nearest neighboring cells to use when building the cell graph.
 * `threshold`: Distance threshold to use when considering if two cells are neighbors. If `None`, no threshold will be used.
 
-CG-GNN
+cg-gnn
 * `in_ram`: If true, store the data in RAM.
 * `batch_size`: Batch size to use during training.
 * `epochs`: Number of training epochs to do.
@@ -128,6 +113,11 @@ CG-GNN
 * `k_folds`: Number of folds to use in cross validation. 0 means don't use k-fold cross validation unless no validation dataset is provided, in which case k defaults to 3.
 * `explainer_model`: The explainer type to use. If not `none`, importance scores will be calculated using the model archetype chosen. `pp` is recommended.
 * `merge_rois`: If true, return a CSV of importance scores merged together by sample.
+
+graph-transformer
+* `task_name`: The name of the task to use.
+* `batch_size`: Batch size to use during training.
+* `log_interval_local`: Interval at which to log local results.
 
 Upload importances
 * `upload_importances`: If true, importance scores will be uploaded to the database.

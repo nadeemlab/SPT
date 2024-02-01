@@ -1,4 +1,4 @@
-"""Upload importance score output from a cg-gnn instance to the local db."""
+"""Upload importance score output from a graph plugin instance to the local db."""
 
 from argparse import ArgumentParser
 

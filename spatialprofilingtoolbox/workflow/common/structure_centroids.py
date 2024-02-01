@@ -1,5 +1,5 @@
 """An object for storage of summarized-location data for all cells of each study."""
-
+import pickle
 from typing import cast
 from pickle import dump
 from pickle import load
@@ -7,6 +7,7 @@ from os.path import join
 from os import listdir
 from re import search
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -18,20 +19,10 @@ StudyStructureCentroids = dict[str, SpecimenStructureCentroids]
 class StructureCentroids:
     """An object for storage of summarized-location data for all cells of each study."""
     _studies: dict[str, StudyStructureCentroids]
-    data_directory: str | None
 
-    def __init__(self):
+    def __init__(self, database_config_file: str | None ):
         self._studies = {}
-        self.data_directory = None
-
-    def set_data_directory(self, data_directory: str):
-        self.data_directory = data_directory
-
-    def get_data_directory(self) -> str:
-        return cast(str, self.data_directory)
-
-    def data_directory_available(self) -> bool:
-        return self.data_directory is not None
+        self.database_config_file = database_config_file
 
     def get_studies(self) -> dict[str, StudyStructureCentroids]:
         """Retrieve the dictionary of studies.
@@ -56,30 +47,8 @@ class StructureCentroids:
         """
         self._studies[measurement_study] = structure_centroids_by_specimen
 
-    def _get_all_centroids_pickle_indices(self) -> tuple[tuple[int, int], ...]:
-        def extract_index(filename) -> tuple[int, int]:
-            pattern = r'^centroids.(\d+)\.(\d+)\.pickle$'
-            match = search(pattern, filename)
-            if match is not None:
-                return (int(match.groups()[0]), int(match.groups()[1]))
-            return cast(tuple[int, int], None)
-        filenames = listdir(self.get_data_directory())
-        return tuple(set(map(extract_index, filenames)).difference([None]))
 
-    def _form_filename(self, study_index: int, specimen_index: int) -> str:
-        return f'centroids.{study_index}.{specimen_index}.pickle'
-
-    def get_all_centroids_pickle_files(self, verbose: bool = False) -> tuple[str, ...]:
-        if verbose:
-            logger.debug('Checking among files: %s', listdir(self.get_data_directory()))
-        return tuple(
-            self._form_filename(study_index, specimen_index)
-            for study_index, specimen_index in self._get_all_centroids_pickle_indices()
-        )
-
-    def wrap_up_specimen(self, study_index: int, specimen_index: int) -> None:
-        if not self.data_directory_available():
-            return
+    def wrap_up_specimen(self) -> None:
         if len(self._studies) != 1:
             message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
             raise ValueError(message % list(self._studies.keys()))
@@ -89,50 +58,62 @@ class StructureCentroids:
             message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
             raise ValueError(message % specimens)
         specimen = specimens[0]
-        #filename = self._form_filename(study_index, specimen_index)
 
-        cursor = connection.cursor()
-        insert_query = '''
-            INSERT INTO
-            ondemand_studies_index (
-                specimen,
-                blob_type,
-                blob_contents)
-            VALUES (%s, %s, %s) ;
-            '''
-        cursor.execute(insert_query, specimen_index, 'feature_matrix', psycopg2.Binary(self._studies))  # refactor blob type
-        cursor.close()
-        connection.commit()
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            insert_query = '''
+                INSERT INTO
+                ondemand_studies_index (
+                    specimen,
+                    blob_type,
+                    blob_contents)
+                VALUES (%s, %s, %s) ;
+                '''
+            cursor.execute(insert_query, (specimen, 'centroids', pickle.dumps(data)))
 
         message = 'Deleting specimen data "%s" from internal memory, since it is saved to database.'
         logger.debug(message, specimen)
         del self._studies[study_name]
         assert len(self._studies) == 0
 
-    def _write_centroids(self, data: dict[str, StudyStructureCentroids], filename: str) -> None:
-        with open(join(self.get_data_directory(), filename), 'wb') as file:
-            dump(data, file)
 
-    def load_from_file(self) -> None:
+    def load_from_db(self) -> None:
         """
-        Reads the structure centroids from files in the data directory supplied during
-        initialization.
+        Reads the structure centroids from database
         """
-        for filename in self.get_all_centroids_pickle_files():
-            with open(join(self.get_data_directory(), filename), 'rb') as file:
-                for key, value in load(file).items():
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('''
+                    SELECT study_name FROM study_lookup
+                    ''')
+            studies = tuple(cursor.fetchall())
+
+        for study in studies:
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                cursor.execute('''
+                        SELECT specimen, blob_contents FROM ondemand_studies_index osi
+                        WHERE osi.study_name=%s AND osi.blob_type='centroids';
+                        ''', (study, ))
+                specimens_to_blobs = tuple(cursor.fetchall())
+
+                self._studies[study] = {}
+                for key, value in specimens_to_blobs:
                     if not key in self._studies:
-                        self._studies[key] = {}
-                    self._studies[key].update(value)
+                        self._studies[study][key] = {}
+                    self._studies[study][key].update(value)
 
-    @staticmethod
-    def already_exists(data_directory: str, verbose: bool = False) -> bool:
-        """Checks whether the structure centroids files already exist in the given directory."""
-        obj = StructureCentroids()
-        obj.set_data_directory(data_directory)
-        files = obj.get_all_centroids_pickle_files(verbose=verbose)
-        if verbose:
-            logger.info('Centroids files found: %s', files)
-        if not files:
-            return False
-        return True
+
+    def already_exists(self) -> bool:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('''
+                    SELECT study_name FROM study_lookup
+                    ''')
+            studies = tuple(cursor.fetchall())
+
+        for study in studies:
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                cursor.execute('''
+                        SELECT COUNT(*) FROM ondemand_studies_index osi
+                        WHERE osi.blob_type='centroids';
+                        ''')
+                count = tuple(cursor.fetchall())[0][0]
+                logger.info('Centroids %s found in db ', count)
+                return count > 0

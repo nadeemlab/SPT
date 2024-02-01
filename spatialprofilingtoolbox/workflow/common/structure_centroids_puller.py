@@ -29,8 +29,8 @@ class StructureCentroidsPuller:
         self.database_config_file = database_config_file
         self._structure_centroids = StructureCentroids()
 
-    def pull_and_write_to_files(self, data_directory: str):
-        self.get_structure_centroids().set_data_directory(data_directory)
+    def pull_and_write_to_files(self):
+
         study_names = self._get_study_names()
         for study_index, (study_name, measurement_study) in enumerate(study_names):
             specimens = self._get_specimens(study_name, measurement_study)
@@ -42,7 +42,7 @@ class StructureCentroidsPuller:
             )
             for specimen_index, specimen in enumerate(specimens):
                 self.pull(specimen=specimen)
-                self.get_structure_centroids().wrap_up_specimen(study_index, specimen_index)
+                self.get_structure_centroids().wrap_up_specimen()
                 progress_reporter.increment(iteration_details=specimen)
             progress_reporter.done()
 

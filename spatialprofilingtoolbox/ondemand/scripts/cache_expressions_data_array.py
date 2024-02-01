@@ -5,7 +5,6 @@ from typing import cast
 import argparse
 from os.path import abspath
 from os.path import expanduser
-from os import getcwd
 import sys
 
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
@@ -30,16 +29,18 @@ def main():
     if database_config_file is not None:
         database_config_file = abspath(expanduser(database_config_file))
 
-    if not StructureCentroids.already_exists(getcwd()):
+    centroids = StructureCentroids(database_config_file)
+    if not centroids.already_exists():
         puller = StructureCentroidsPuller(database_config_file)
-        puller.pull_and_write_to_files(getcwd())
+        puller.pull_and_write_to_files()
     else:
         logger.info('At least one centroids file already exists, skipping shapefile pull.')
 
     if args.centroids_only:
         sys.exit()
 
-    if CompressedMatrixWriter.already_exists(): # change implementation to database check
+    matrices = CompressedMatrixWriter(database_config_file)
+    if matrices.already_exists():
         logger.info('%s already exists, skipping feature matrix pull.')
         sys.exit(1)
     else:

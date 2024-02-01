@@ -98,7 +98,7 @@ class StructureCentroids:
                 for key, value in specimens_to_blobs:
                     if not key in self._studies:
                         self._studies[study][key] = {}
-                    self._studies[study][key].update(value)
+                    self._studies[study][key].update(pickle.loads(value))
 
 
     def already_exists(self) -> bool:

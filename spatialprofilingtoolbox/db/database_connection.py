@@ -67,8 +67,8 @@ class DBConnection(ConnectionProvider):
                 study_database = self._retrieve_study_database(credentials, study)
                 credentials.update_database(study_database)
             super().__init__(self.make_connection(credentials))
-            register_type(BYTES, self.connection)
-            register_type(BYTESARRAY, self.connection)
+            # register_type(BYTES, self.connection)
+            # register_type(BYTESARRAY, self.connection)
         except Psycopg2Error as exception:
             message = 'Failed to connect to database: %s, %s'
             logger.error(message, credentials.endpoint, credentials.database)
@@ -169,7 +169,7 @@ def retrieve_study_names(database_config_file: str | None) -> list[str]:
     with DBCursor(database_config_file=database_config_file) as cursor:
         cursor.execute('SELECT study FROM study_lookup;')
         rows = cursor.fetchall()
-    return sorted([row[0] for row in rows])
+    return sorted([str(row[0]) for row in rows])
 
 
 def get_specimen_names(cursor) -> list[str]:

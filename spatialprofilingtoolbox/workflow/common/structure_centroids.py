@@ -1,11 +1,5 @@
 """An object for storage of summarized-location data for all cells of each study."""
 import pickle
-from typing import cast
-from pickle import dump
-from pickle import load
-from os.path import join
-from os import listdir
-from re import search
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

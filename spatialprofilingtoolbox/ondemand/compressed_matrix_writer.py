@@ -46,17 +46,17 @@ class CompressedMatrixWriter:
             index_str = json.dumps({'': index}, indent=4)
             index_str_as_bytes = index_str.encode('utf-8')
 
-        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-            insert_query = '''
-                INSERT INTO
-                ondemand_studies_index (
-                    specimen,
-                    blob_type,
-                    blob_contents)
-                VALUES (%s, %s, %s) ;
-                '''
-            cursor.execute(insert_query, (specimen, 'expressions_index', index_str_as_bytes))  # check tuple
-            cursor.close()
+            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+                insert_query = '''
+                    INSERT INTO
+                    ondemand_studies_index (
+                        specimen,
+                        blob_type,
+                        blob_contents)
+                    VALUES (%s, %s, %s) ;
+                    '''
+                cursor.execute(insert_query, (specimen, 'expressions_index', index_str_as_bytes))  # check tuple
+                cursor.close()
 
         logger.debug('Wrote expression index to DB %s .')
 

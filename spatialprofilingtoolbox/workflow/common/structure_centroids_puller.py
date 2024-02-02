@@ -27,7 +27,7 @@ class StructureCentroidsPuller:
 
     def __init__(self, database_config_file: str | None):
         self.database_config_file = database_config_file
-        self._structure_centroids = StructureCentroids()
+        self._structure_centroids = StructureCentroids(database_config_file)
 
     def pull_and_write_to_files(self):
 

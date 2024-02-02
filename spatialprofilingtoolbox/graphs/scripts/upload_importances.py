@@ -32,14 +32,20 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     (
-        database_config_file,
+        db_config_file_path,
         study_name,
+        plugin_used,
+        datetime_of_run,
+        plugin_version,
         cohort_stratifier,
     ) = read_upload_config(args.config_path)
     df = read_csv(args.importances_csv_path, index_col=0)
     transcribe_importance(
         df,
-        database_config_file,
+        db_config_file_path,
         study_name,
-        cohort_stratifier=cohort_stratifier,
+        plugin_used,
+        datetime_of_run,
+        plugin_version,
+        cohort_stratifier,
     )

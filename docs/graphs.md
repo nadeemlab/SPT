@@ -79,6 +79,9 @@ batch_size = 8
 log_interval_local = 6
 
 [upload-importances]
+plugin_used = {cg-gnn or graph-transformer}
+plugin_version = None
+datetime_of_run = 2024-01-01 12:00:00
 cohort_stratifier = None
 ```
 
@@ -120,7 +123,10 @@ graph-transformer
 * `log_interval_local`: Interval at which to log local results.
 
 Upload importances
-* `upload_importances`: If true, importance scores will be uploaded to the database.
+* `plugin_used`: The plugin used to generate the importance scores. Must be `cg-gnn` or `graph-transformer`.
+* `plugin_version`: The version of the plugin used to generate the importance scores, if available.
+* `datetime_of_run`: The date (and time, if available) the plugin was run.
+* `cohort_stratifier`: Name of the classification cohort variable the data was split on to create the data used to generate the importance scores, if available.
 
 # Run the workflow
 

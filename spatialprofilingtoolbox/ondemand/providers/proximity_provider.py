@@ -25,12 +25,12 @@ logger = colorized_logger(__name__)
 class ProximityProvider(PendingProvider):
     """Do proximity calculation from pair of signatures."""
 
-    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
+    def __init__(self, timeout: int, load_centroids: bool = False) -> None:
         """Load from a precomputed JSON artifact in the data directory.
 
         Note: ProximityProvider always loads centroids because it needs them.
         """
-        super().__init__(data_directory, timeout, load_centroids=True)
+        super().__init__(timeout, load_centroids=True)
 
         logger.info('Start loading location data and creating ball trees.')
         self._dropna_in_data_arrays()

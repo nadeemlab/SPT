@@ -28,38 +28,43 @@ class OnDemandProvider(ABC):
     def service_specifier(cls) -> str:
         raise NotImplementedError
 
-    def __init__(self, data_directory: str, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
+    def __init__(self, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
-        self._load_expressions_indices(data_directory)
+        self._load_expressions_indices()
         self.timeout = timeout
         self.timeouts = {}
         centroids = None
         if load_centroids:
-            loader = StructureCentroids()
-            loader.set_data_directory(data_directory)
-            loader.load_from_file()
+            loader = StructureCentroids(database_config_file)
+            loader.load_from_db()
             centroids = loader.get_studies()
-        self._load_data_matrices(data_directory, centroids)
+        self._load_data_matrices(centroids=centroids)
         self.database_config_file = database_config_file
         logger.info('%s is finished loading source data.', type(self).__name__)
 
-    def _load_expressions_indices(self, study_name: str) -> None:
+    def _load_expressions_indices(self) -> None:
         """Load expressions metadata from a JSON-formatted index file."""
         logger.debug('Searching for source data in database')
-
-        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
             cursor.execute('''
-                    SELECT blob_contents FROM ondemand_studies_index osi
-                    WHERE osi.blob_type='expressions_index';
+                    SELECT study_name FROM study_lookup
                     ''')
-            result_blob = bytearray(cursor.fetchone())
+            study_names = tuple(row[0] for row in cursor.fetchall())
 
-        decoded_blob = result_blob.decode(encoding='utf-8')
-        root = loads(decoded_blob) # result of index table query
-        entries = root[list(root.keys())[0]]
-        self.studies = {}
-        for entry in entries:
-            self.studies[entry['specimen measurement study name']] = entry
+        for study_name in study_names:
+            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+                cursor.execute('''
+                        SELECT blob_contents FROM ondemand_studies_index osi
+                        WHERE osi.blob_type='expressions_index';
+                        ''')
+                result_blob = bytearray(cursor.fetchone())
+
+            decoded_blob = result_blob.decode(encoding='utf-8')
+            root = loads(decoded_blob)
+            entries = root[list(root.keys())[0]]
+            self.studies = {}
+            for entry in entries:
+                self.studies[entry['specimen measurement study name']] = entry
 
     def _load_data_matrices(
         self,

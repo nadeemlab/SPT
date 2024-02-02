@@ -24,12 +24,12 @@ logger = colorized_logger(__name__)
 class FastCacheAssessor:
     """Assess "fast cache"."""
 
-    source_data_location: str
+    database_config_file: str
     centroids: dict[str, dict[str, list]]
     expressions_index: list[dict]
 
-    def __init__(self, source_data_location: str):
-        self.source_data_location = source_data_location
+    def __init__(self, database_config_file: str):
+        self.database_config_file = database_config_file
 
     def assess_and_act(self):
         up_to_date = self._cache_is_up_to_date()
@@ -111,7 +111,8 @@ class FastCacheAssessor:
             filename: isfile(join(self.source_data_location, filename))
             for filename in [EXPRESSIONS_INDEX_FILENAME]
         }
-        centroids_present = StructureCentroids.already_exists(self.source_data_location, verbose=verbose)
+        structure_centroids = StructureCentroids(database_config_file=da)
+        centroids_present = structure_centroids.already_exists()
         if verbose:
             for filename, present in files_present.items():
                 indicator = 'present' if present else 'not present'

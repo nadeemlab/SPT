@@ -18,7 +18,7 @@ from numpy import array
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor
 
 PICKLED_FILENAME = 'dfs.pickle'
-samples = ('Mold_sample_22RD', 'Mold_sample_39RD', 'Mold_sample_41BL', 'Mold_sample_42RD')
+samples = ('Mold_sample_14RD', 'Mold_sample_22RD', 'Mold_sample_39RD', 'Mold_sample_41BL', 'Mold_sample_42RD')
 
 def retrieve_dfs(database_config_file: str):
     cached = _retrieve_cached_dfs()
@@ -70,6 +70,7 @@ def get_tiff_filenames():
         raise FileNotFoundError(f'Base directory you supplied {base} does not exist.')
     intermediate = 'CP_output_tiff'
     subdirectories = {
+        'Mold_sample_14RD': '20190123_ICB_s1_p1_r1_a1_ac_14RD',
         'Mold_sample_22RD': '20190124_ICB_s1_p1_r11_a11_ac_22RD',
         'Mold_sample_39RD': '20190124_ICB_s1_p1_r1_a1_ac_39RD',
         'Mold_sample_41BL': '20190121_ICB_s1_p2_r4_a4_ac_41BL',
@@ -96,7 +97,7 @@ def get_colors():
     blue = (170, 150, 255)
     yellow = (235, 255, 17)
     green = (0, 225, 0)
-    red = (150, 0, 0)
+    red = (170, 0, 0)
     colors_assigned = {'CD3': blue, 'CD8': yellow, 'CD45RO': green, 'SOX10': red}
     return {
         sample: colors_assigned
@@ -105,7 +106,8 @@ def get_colors():
 
 def point_transform(value: float, channel: str | None = None, sample: str | None=None):
     m = 1.0
-    # return min(power(m * value/50, 1.3), 255)
+    if sample == 'Mold_sample_39RD' and channel=='SOX10':
+        m = 0.6
     return min(power(m * value/30, 1.2), 255)
 
 def create_composite(dfs, tiff_filenames):
@@ -125,7 +127,6 @@ def create_composite(dfs, tiff_filenames):
             b = b.point(lambda i: point_transform(i * B * m, channel=channel, sample=sample))
             out = Image.merge('RGB', (r, g, b))
             print(f'{sample} {channel}')
-            # out.show()
             images.append(out)
         image0 = array(images[0])
         for image in images[1:]:

@@ -1,6 +1,5 @@
 """The API service's endpoint handlers."""
 
-from turtle import st
 from typing import cast
 import json
 from io import BytesIO

@@ -27,8 +27,8 @@ def get_expected():
 
 def main():
     cases = [
-        (NEGATIVE_MARKERS, POSITIVE_MARKERS, None, None),
         (POSITIVE_MARKERS, NEGATIVE_MARKERS, PLUGIN, DATETIME_OF_RUN),
+        (NEGATIVE_MARKERS, POSITIVE_MARKERS, None, None),
     ]
 
     for expected, (

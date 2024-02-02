@@ -36,7 +36,7 @@ class GraphsAccess(SimpleReadOnlyProvider):
                         ON sc.component_study=fs.study
                 WHERE fs.derivation_method=%s
                     AND sc.primary_study=%s
-                    AND fsr.ordinality=2
+                    AND fsr.ordinality='2'
                 ORDER BY fsr.specifier DESC
                 LIMIT 1
                 ;
@@ -54,13 +54,13 @@ class GraphsAccess(SimpleReadOnlyProvider):
                 JOIN (
                     SELECT feature_specification
                     FROM feature_specifier
-                    WHERE ordinality=1 AND specifier=%s
+                    WHERE ordinality='1' AND specifier=%s
                 ) AS fsr1
                     ON fs.identifier = fsr1.feature_specification
                 JOIN (
                     SELECT feature_specification
                     FROM feature_specifier
-                    WHERE ordinality=2 AND specifier=%s
+                    WHERE ordinality='2' AND specifier=%s
                 ) AS fsr2
                     ON fs.identifier = fsr2.feature_specification
         '''
@@ -69,7 +69,7 @@ class GraphsAccess(SimpleReadOnlyProvider):
                 JOIN (
                     SELECT feature_specification
                     FROM feature_specifier
-                    WHERE ordinality=3 AND specifier=%s
+                    WHERE ordinality='3' AND specifier=%s
                 ) AS fsr3
                     ON fs.identifier = fsr3.feature_specification
             '''
@@ -79,7 +79,7 @@ class GraphsAccess(SimpleReadOnlyProvider):
                 JOIN (
                     SELECT feature_specification
                     FROM feature_specifier
-                    WHERE ordinality=4 AND specifier=%s
+                    WHERE ordinality='4' AND specifier=%s
                 ) AS fsr4
                     ON fs.identifier = fsr4.feature_specification
             '''

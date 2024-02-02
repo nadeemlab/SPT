@@ -49,7 +49,7 @@ def save_svg_circles(selectedcells, filename):
             context.set_line_width(0.6)
             x = row['pixel x']
             y = row['pixel y']
-            context.arc(x, y, 8, 0., 2 * 3.1415)
+            context.arc(x, y, 9, 0., 2 * 3.1415)
             context.stroke()
 
 def create_svgs(dfs: dict[str, DataFrame]):
@@ -76,6 +76,7 @@ def get_tiff_filenames():
         'Mold_sample_42RD': '20190122_ICB_s1_p3_r3_a3_ac_42RD',
     }
     channel_filenames = {
+        'CD3': 'CD3_Er170.tiff',
         'CD8': 'CD8a_Dy162.tiff',
         'CD45RO': 'CD45RO_Yb173.tiff',
         'SOX10': 'SOX10_Dy164.tiff',
@@ -92,10 +93,11 @@ def get_tiff_filenames():
     return tiff_files
 
 def get_colors():
+    blue = (170, 150, 255)
     yellow = (235, 255, 17)
     green = (0, 225, 0)
     red = (150, 0, 0)
-    colors_assigned = {'CD8': yellow, 'CD45RO': green, 'SOX10': red}
+    colors_assigned = {'CD3': blue, 'CD8': yellow, 'CD45RO': green, 'SOX10': red}
     return {
         sample: colors_assigned
         for sample in samples
@@ -103,7 +105,8 @@ def get_colors():
 
 def point_transform(value: float, channel: str | None = None, sample: str | None=None):
     m = 1.0
-    return min(power(m * value/50, 1.3), 255)
+    # return min(power(m * value/50, 1.3), 255)
+    return min(power(m * value/30, 1.2), 255)
 
 def create_composite(dfs, tiff_filenames):
     create_svgs(dfs)
@@ -111,7 +114,7 @@ def create_composite(dfs, tiff_filenames):
 
     for sample, files in tiff_filenames.items():
         images = []
-        for channel, file in files.items():            
+        for channel, file in files.items():
             im = Image.open(file)
             im = im.convert('RGB')
             r, g, b = im.split()

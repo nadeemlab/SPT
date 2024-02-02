@@ -78,8 +78,8 @@ def transcribe_importance(
             connection,
             data_analysis_study,
             plugin_used,
-            plugin_version,
             datetime_of_run,
+            plugin_version,
             cohort_stratifier,
         )
 
@@ -116,14 +116,14 @@ def _upload(
     connection: Connection,
     data_analysis_study: str,
     plugin_used: str,
-    plugin_version: str,
     datetime_of_run: datetime,
+    plugin_version: str,
     cohort_stratifier: str,
 ) -> None:
     importance_score_set_indexer = (
         plugin_used,
-        plugin_version,
         datetime_of_run.strftime(STRFTIME_FORMAT),
+        plugin_version,
         cohort_stratifier,
     )
     with ADIFeaturesUploader(

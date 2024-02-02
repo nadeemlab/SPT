@@ -273,7 +273,7 @@ class DataAccessor:
         parts = sorted(list(set(parts)))
         parts.append(('study', self.study))
         query = urlencode(parts)
-        phenotype_counts, _ = self._retrieve('cggnn-importance-composition', query)
+        phenotype_counts, _ = self._retrieve('importance-composition', query)
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
 
 

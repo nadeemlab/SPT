@@ -1,5 +1,6 @@
 """The API service's endpoint handlers."""
 
+from turtle import st
 from typing import cast
 import json
 from io import BytesIO
@@ -7,7 +8,6 @@ from base64 import b64decode
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 
@@ -22,7 +22,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
-    CGGNNImportanceRank,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -211,23 +210,26 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
     return get_squidpy_metrics(study, list(markers), feature_class, radius=radius)
 
 
-@app.get("/request-cggnn-metrics/")
-async def request_cggnn_metrics(
-    study: ValidStudy,
-) -> list[CGGNNImportanceRank]:
-    """Importance scores as calculated by cggnn."""
-    return query().get_cggnn_metrics(study)
-
-
-@app.get("/cggnn-importance-composition/")
-async def cggnn_importance_composition(
+@app.get("/importance-composition/")
+async def importance_composition(
     study: ValidStudy,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
+    plugin: str = 'cg-gnn',
+    datetime_of_run: str = 'most recent',
+    plugin_version: str | None = None,
+    cohort_stratifier: str | None = None,
     cell_limit: int = 100,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of important cells expressing a given phenotype."""
-    cells_selected = query().get_important_cells(study, cell_limit)
+    cells_selected = query().get_important_cells(
+        study,
+        plugin,
+        datetime_of_run,
+        plugin_version,
+        cohort_stratifier,
+        cell_limit,
+    )
     return get_phenotype_counts(
         positive_marker,
         negative_marker,

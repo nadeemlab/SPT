@@ -67,9 +67,3 @@ class UMAPChannel(BaseModel):
     """
     channel: str
     base64_png: str
-
-
-class CGGNNImportanceRank(BaseModel):
-    """The importance ranking of histological structures in a study."""
-    histological_structure_id: int
-    rank: int

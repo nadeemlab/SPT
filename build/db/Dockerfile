@@ -26,5 +26,6 @@ ENV service_name $service_name
 COPY $WHEEL_FILENAME ./
 RUN python3 -m pip install --break-system-packages "$WHEEL_FILENAME"
 COPY .spt_db.config.container ./
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 HEALTHCHECK CMD spt db status --database-config-file .spt_db.config.container || exit 1
 CMD ["postgres", "-h", "0.0.0.0"]

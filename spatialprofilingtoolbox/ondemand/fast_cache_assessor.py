@@ -117,16 +117,15 @@ class FastCacheAssessor:
 
     def _check_centroids_bundle_studies(self):
         indexed_studies = self.centroids.keys()
-        known_studies = self._retrieve_measurement_studies()
-        known_measurement_studies = [row[1] for row in known_studies]
+        known_studies = retrieve_study_names(self.database_config_file)
         log_expected_found(
-            known_measurement_studies,
+            known_studies,
             indexed_studies,
             'Study "%s" not mentioned in centroids file.',
             '"%s" is mentioned in centroids file but not actually in database.',
             context='centroids',
         )
-        return set(known_measurement_studies).issubset(set(indexed_studies))
+        return set(known_studies).issubset(set(indexed_studies))
 
     def _check_expressions_index_studies(self):
         indexed_measurement_studies = [

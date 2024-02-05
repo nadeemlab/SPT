@@ -4,3 +4,4 @@ spt workflow configure --workflow='tabular import' --config-file=.workflow.confi
 nextflow run .
 spt graphs upload-importances --config_path=build/build_scripts/.graph.config2 --importances_csv_path test/test_data/gnn_importances/2.csv
 cat work/*/*/.command.log
+spt ondemand cache-expressions-data-array

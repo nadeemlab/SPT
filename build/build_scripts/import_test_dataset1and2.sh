@@ -30,6 +30,8 @@ cat work/*/*/.command.log
 
 nf_clean
 
+spt ondemand cache-expressions-data-array
+
 spt db status --database-config-file build/db/.spt_db.config.local > counts.txt
 cat counts.txt
 diff counts.txt build/build_scripts/expected_counts_1and2.txt

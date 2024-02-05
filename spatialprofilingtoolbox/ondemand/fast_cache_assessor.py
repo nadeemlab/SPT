@@ -64,13 +64,13 @@ class FastCacheAssessor:
         return all(checker() for checker in checkers)
 
     def _clear(self):
-        logger.info('Deleting the fast cache files.')
+        logger.info('Deleting the databased fast cache files.')
         drop_cache_files(self.database_config_file, 'feature_matrix')
         drop_cache_files(self.database_config_file, 'expressions_index')
         drop_cache_files(self.database_config_file, 'centroids')
 
     def _recreate(self):
-        logger.info('Recreating fast cache files.')
+        logger.info('Recreating databased fast cache files.')
         command = 'spt ondemand cache-expressions-data-array --database-config-file=none'
         logger.debug('Command is:')
         logger.debug(command)
@@ -98,9 +98,9 @@ class FastCacheAssessor:
             else:
                 logger.info('Found expressions index files for all studies.')
             if not centroids_present:
-                logger.info('Centroids files not present.')
+                logger.info('Databased centroids files not present.')
             else:
-                logger.info('Centroids files are present.')
+                logger.info('Databased centroids files are present.')
         return expressions_exist and centroids_present
 
     def _check_study_sets(self) -> bool:

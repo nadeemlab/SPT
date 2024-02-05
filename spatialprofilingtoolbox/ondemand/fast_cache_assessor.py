@@ -113,7 +113,6 @@ class FastCacheAssessor:
         for study in retrieve_study_names(self.database_config_file):
             blob = retrieve_expressions_index(self.database_config_file, study)
             self.expressions_index.extend(load_json_string(blob)[''])
-        self.expressions_index = load_json_string(blob)['']
 
     def _check_centroids_bundle_studies(self):
         indexed_studies = self.centroids.keys()

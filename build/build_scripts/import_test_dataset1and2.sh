@@ -30,7 +30,8 @@ cat work/*/*/.command.log
 
 nf_clean
 
-spt ondemand cache-expressions-data-array
+echo "Running: spt ondemand cache-expressions-data-array"
+spt ondemand cache-expressions-data-array --database-config-file build/db/.spt_db.config.local
 
 spt db status --database-config-file build/db/.spt_db.config.local > counts.txt
 cat counts.txt

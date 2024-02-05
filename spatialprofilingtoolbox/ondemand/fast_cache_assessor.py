@@ -11,7 +11,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
-from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
+from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
 from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -111,7 +111,7 @@ class FastCacheAssessor:
         self.centroids = cast(dict[str, dict[str, list]], scs.get_studies())
         self.expressions_index = []
         for study in retrieve_study_names(self.database_config_file):
-            blob = OnDemandProvider.retrieve_expressions_index(self.database_config_file, study)
+            blob = retrieve_expressions_index(self.database_config_file, study)
             self.expressions_index.extend(load_json_string(blob)[''])
         self.expressions_index = load_json_string(blob)['']
 

@@ -215,7 +215,7 @@ async def importance_composition(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     plugin: str = 'cg-gnn',
-    datetime_of_run: str = 'most recent',
+    datetime_of_run: str = 'latest',
     plugin_version: str | None = None,
     cohort_stratifier: str | None = None,
     cell_limit: int = 100,

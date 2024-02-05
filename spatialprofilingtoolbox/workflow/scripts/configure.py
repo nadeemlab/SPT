@@ -6,6 +6,7 @@ from os import (
     getcwd,
     stat,
     chmod,
+    makedirs,
 )
 from os.path import (
     isdir,
@@ -20,6 +21,7 @@ from importlib.resources import as_file
 from importlib.resources import files
 from typing import cast
 
+
 try:
     from jinja2 import Environment, BaseLoader
 except ModuleNotFoundError as e:
@@ -33,7 +35,7 @@ from spatialprofilingtoolbox import get_workflow
 from spatialprofilingtoolbox import get_workflow_names
 from spatialprofilingtoolbox.workflow.common.\
     file_identifier_schema import get_input_filename_by_identifier
-
+from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger('spt db configure')
@@ -41,13 +43,10 @@ logger = colorized_logger('spt db configure')
 workflows = {name: get_workflow(name) for name in get_workflow_names()}
 
 NF_CONFIG_FILE = 'nextflow.config'
-NF_PIPELINE_FILE = 'main.nf'
-NF_PIPELINE_FILE_VISITOR = 'main_visitor.nf'
-NF_PIPELINE_FILE_CGGNN = 'cggnn.nf'
 
 
 def _retrieve_from_library(subpackage: str, filename: str) -> str:
-    filepath = files('.'.join(['spatialprofilingtoolbox', subpackage])).joinpath(filename)
+    filepath = files('.'.join(('spatialprofilingtoolbox.workflow', subpackage))).joinpath(filename)
     with as_file(filepath) as path:
         with open(path, 'rt', encoding='utf-8') as file:
             contents = file.read()
@@ -55,7 +54,7 @@ def _retrieve_from_library(subpackage: str, filename: str) -> str:
 
 
 def _write_config_file(variables: dict[str, str]) -> None:
-    contents = _retrieve_from_library('workflow.assets', NF_CONFIG_FILE + '.jinja')
+    contents = _retrieve_from_library('assets', NF_CONFIG_FILE + '.jinja')
     template = jinja_environment.from_string(contents)
     file_to_write = template.render(**variables)
     file_to_write = re.sub(r'\n\n+', '\n', file_to_write)
@@ -63,17 +62,22 @@ def _write_config_file(variables: dict[str, str]) -> None:
         file.write(file_to_write)
 
 
-def _write_pipeline_script(variables: dict[str, str]) -> None:
-    workflow_name = variables['workflow']
-    if workflows[workflow_name].is_database_visitor:
-        if workflow_name == 'cg-gnn':
-            pipeline_file = _retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_CGGNN)
+def _write_pipeline_script(workflow: WorkflowModules) -> None:
+    main_seen: bool = False
+    for subpackage, filename in workflow.assets_needed:
+        pipeline_file = _retrieve_from_library(subpackage, filename)
+        if filename == 'main.nf':
+            if main_seen:
+                raise ValueError('Workflow can only one main.nf file.')
+            main_seen = True
+            copy_location = join(getcwd(), filename)
         else:
-            pipeline_file = _retrieve_from_library('workflow.assets', NF_PIPELINE_FILE_VISITOR)
-    else:
-        pipeline_file = _retrieve_from_library('workflow.assets', NF_PIPELINE_FILE)
-    with open(join(getcwd(), NF_PIPELINE_FILE), 'wt', encoding='utf-8') as file:
-        file.write(pipeline_file)
+            makedirs(join(getcwd(), 'nf_files'), exist_ok=True)
+            copy_location = join(getcwd(), 'nf_files', filename)
+        with open(copy_location, 'wt', encoding='utf-8') as file:
+            file.write(pipeline_file)
+    if not main_seen:
+        raise ValueError('Workflow must have a main.nf file.')
 
 
 def _record_configuration_command(variables: dict[str, str], configuration_file: str) -> None:
@@ -245,8 +249,8 @@ if __name__ == '__main__':
     config_variables = dict(config_file.items('general')) if config_file.has_section('general') \
         else {}
     config_variables = {k: v.lower() for k, v in config_variables.items()}
-    workflow: str = args.workflow.lower()
-    workflow_configuration = workflows[workflow]
+    workflow_name: str = args.workflow.lower()
+    workflow_configuration = workflows[workflow_name]
     config_variables['workflow'] = args.workflow
 
     if 'db_config_file' not in config_variables:
@@ -259,14 +263,14 @@ if __name__ == '__main__':
         logger.warning('Database configuration file was not found at the indicated location.')
         logger.debug('database_config_file: %s', config_variables['db_config_file'])
         logger.debug('db_config_file: %s', db_config_file)
-    
+
     if ('container_platform' not in config_variables) or \
-        (config_variables['container_platform'] == 'none'):
+            (config_variables['container_platform'] == 'none'):
         config_variables['container_platform'] = None
     elif config_variables['container_platform'] not in {'docker', 'singularity'}:
         raise ValueError('container_platform must be one of "none", "docker", or "singularity". '
                          f'Got {config_variables["container_platform"]}')
-    
+
     if ('image_tag' not in config_variables) or (config_variables['image_tag'] == ''):
         config_variables['image_tag'] = 'latest'
     config_variables['image'] = f'{workflow_configuration.image}:{config_variables["image_tag"]}'
@@ -279,21 +283,21 @@ if __name__ == '__main__':
             raise ValueError('study_name must be specified in the `database visitor` section.')
         config_variables.update(db_visitor_config)
 
-    if config_file.has_section(workflow):
+    if config_file.has_section(workflow_name):
         config_state = config_variables.copy()
-        workflow_config_variables = dict(config_file.items(workflow))
+        workflow_config_variables = dict(config_file.items(workflow_name))
         workflow_config_variables = {k: v.lower() for k, v in workflow_config_variables.items()}
         config_state.update(workflow_config_variables)
         workflow_configuration.process_inputs(config_state)
         config_variables.update(config_state)
     elif workflow_configuration.config_section_required:
-        raise ValueError(f'Workflow {workflow} requires a configuration section.')
+        raise ValueError(f'Workflow {workflow_name} requires a configuration section.')
 
     if not workflow_configuration.is_database_visitor:
         _process_filename_inputs(config_variables)
 
     _write_config_file(config_variables)
-    _write_pipeline_script(config_variables)
+    _write_pipeline_script(workflow_configuration)
     _record_configuration_command(config_variables, args.config_file)
-    if workflow == 'phenotype proximity':
+    if workflow_name == 'phenotype proximity':
         print(config_variables)

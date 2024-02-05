@@ -162,7 +162,7 @@ class FastCacheAssessor:
         )
 
     def _check_centroids_samples(self, study: str, measurement_study: str) -> bool:
-        indexed_samples = self.centroids[measurement_study].keys()
+        indexed_samples = self.centroids[study].keys()
         known_samples = self._retrieve_known_samples_measurement(study, measurement_study)
         log_expected_found(
             known_samples,

@@ -50,12 +50,12 @@ class OnDemandProvider(ABC):
     def _load_expressions_indices(self) -> None:
         """Load expressions metadata from a JSON-formatted index file."""
         logger.debug('Searching for source data in database')
+        self.studies = {}
         for study_name in retrieve_study_names(self.database_config_file):
             get_index = retrieve_expressions_index
             decoded_blob = get_index(self.database_config_file, study_name)
             root = loads(decoded_blob)
             entries = root[list(root.keys())[0]]
-            self.studies = {}
             for entry in entries:
                 self.studies[entry['specimen measurement study name']] = entry
 

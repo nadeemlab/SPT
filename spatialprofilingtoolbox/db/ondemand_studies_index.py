@@ -33,3 +33,13 @@ def retrieve_expressions_index(database_config_file: str, study: str) -> str:
         ''')
         result_blob = bytearray(tuple(cursor.fetchall())[0][0])
     return result_blob.decode(encoding='utf-8')
+
+
+def retrieve_indexed_samples(database_config_file: str, study: str) -> tuple[str, ...]:
+    with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+        cursor.execute('''
+            SELECT specimen FROM ondemand_studies_index osi
+            WHERE osi.blob_type='feature_matrix' ;
+        ''')
+        specimens = tuple(r[0] for r in cursor.fetchall())
+    return specimens

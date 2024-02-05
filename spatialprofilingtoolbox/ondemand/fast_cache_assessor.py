@@ -13,6 +13,7 @@ from spatialprofilingtoolbox.workflow.common.structure_centroids import Structur
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
 from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
+from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_indexed_samples
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -180,14 +181,7 @@ class FastCacheAssessor:
         )
 
     def _check_expressions_index_samples(self, study: str, measurement_study: str) -> bool:
-        index = [
-            row for row in self.expressions_index
-            if row['specimen measurement study name'] == measurement_study
-        ][0]
-        indexed_samples = [
-            entry['specimen']
-            for entry in index['expressions files']
-        ]
+        indexed_samples = retrieve_indexed_samples(cast(str, self.database_config_file), study)
         known_samples = self._retrieve_known_samples_measurement(study, measurement_study)
         log_expected_found(
             known_samples,

@@ -1,7 +1,5 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
 
-from subprocess import run as subprocess_run
-from subprocess import CalledProcessError
 from os import environ
 from typing import cast
 from json import loads as load_json_string
@@ -10,6 +8,7 @@ from time import sleep
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
+from spatialprofilingtoolbox.workflow.common.cache_pulling import cache_pull
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
 from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
@@ -71,21 +70,7 @@ class FastCacheAssessor:
 
     def _recreate(self):
         logger.info('Recreating databased fast cache files.')
-        command = 'spt ondemand cache-expressions-data-array --database-config-file=none'
-        logger.debug('Command is:')
-        logger.debug(command)
-        try:
-            subprocess_run(command, shell=True, check=True)
-        except CalledProcessError as exception:
-            err = 'CalledProcessError'
-            message = f'Received {err} during cache creation, maybe insufficient available RAM?'
-            logger.error(message)
-            logger.info(str(exception))
-            logger.info('Entering 2 hour indefinite sleep loop.')
-            hour = 60 * 60
-            while True:
-                sleep(2 * hour)
-                logger.info('Still sleeping.')
+        cache_pull(self.database_config_file)
 
     def _check_databased_files_present(self, verbose: bool = True) -> bool:
         writer = CompressedMatrixWriter(self.database_config_file)

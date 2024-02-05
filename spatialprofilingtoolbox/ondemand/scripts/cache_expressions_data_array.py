@@ -5,9 +5,8 @@ from typing import cast
 import argparse
 from os.path import abspath
 from os.path import expanduser
-import sys
 
-from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
+from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -29,37 +28,8 @@ def main():
     if database_config_file is not None:
         database_config_file = abspath(expanduser(database_config_file))
 
-    centroids = StructureCentroids(database_config_file)
-    # if not centroids.centroids_exist():
-    puller = StructureCentroidsPuller(database_config_file)
-    puller.pull_and_write_to_files()
-    # else:
-    #     logger.info('At least one centroids file already exists, skipping shapefile pull.')
-
-    if args.centroids_only:
-        sys.exit()
-
-    matrices = CompressedMatrixWriter(database_config_file)
-    # if matrices.expressions_indices_already_exist():
-    #     logger.info('Already exists, skipping feature matrix pull.')
-    #     sys.exit(1)
-    # else:
-    #     message = '%s was not found, will do feature matrix pull after all.'
-    #     logger.info(message)
-
-    puller = SparseMatrixPuller(database_config_file)
-    puller.pull_and_write_to_files()
+    assessor = FastCacheAssessor(database_config_file)
+    assessor.assess_and_act()
 
 if __name__ == '__main__':
-    from spatialprofilingtoolbox.standalone_utilities.module_load_error \
-        import SuggestExtrasException
-    try:
-        from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
-        from spatialprofilingtoolbox.ondemand.compressed_matrix_writer \
-            import CompressedMatrixWriter
-        from spatialprofilingtoolbox.workflow.common.structure_centroids_puller \
-            import StructureCentroidsPuller
-    except ModuleNotFoundError as e:
-        SuggestExtrasException(e, 'workflow')
-
     main()

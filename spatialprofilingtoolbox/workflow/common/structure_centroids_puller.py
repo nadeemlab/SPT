@@ -30,9 +30,7 @@ class StructureCentroidsPuller:
         self._structure_centroids = StructureCentroids(database_config_file)
 
     def pull_and_write_to_files(self):
-
-        study_names = self._get_study_names()
-        for study_index, (study_name, measurement_study) in enumerate(study_names):
+        for study_name, measurement_study in self._get_study_names():
             specimens = self._get_specimens(study_name, measurement_study)
             progress_reporter = FractionalProgressReporter(
                 len(specimens),
@@ -40,7 +38,7 @@ class StructureCentroidsPuller:
                 task_and_done_message=(f'pulling centroids for study "{study_name}"', None),
                 logger=logger,
             )
-            for specimen_index, specimen in enumerate(specimens):
+            for specimen in specimens:
                 self.pull(specimen=specimen)
                 self.get_structure_centroids().wrap_up_specimen()
                 progress_reporter.increment(iteration_details=specimen)
@@ -99,7 +97,7 @@ class StructureCentroidsPuller:
 
             self._structure_centroids.add_study_data(
                 measurement_study,
-                self._create_study_data(rows, specimen_count, study_name)
+                self._create_study_data(rows)
             )
 
     def _get_batch_size(self) -> int:
@@ -162,12 +160,7 @@ class StructureCentroidsPuller:
             studies = [(study, self._get_specimen_measurement_study(study))]
         return sorted(studies, key=lambda x: x[1])
 
-    def _create_study_data(
-        self,
-        rows: list[tuple[Any, ...]],
-        specimen_count: int,
-        study: str,
-    ) -> StudyStructureCentroids:
+    def _create_study_data(self, rows: list[tuple[Any, ...]]) -> StudyStructureCentroids:
         study_data: StudyStructureCentroids = {}
         field = {'structure': 0, 'specimen': 1, 'base64_contents': 2}
         current_specimen = rows[0][field['specimen']]

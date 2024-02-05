@@ -42,7 +42,7 @@ def start_services(
     service_classes = (CountsProvider, ProximityProvider, SquidpyProvider)
     specifiers_classes = {c.service_specifier(): c for c in service_classes}
     providers_initialized = {
-        specifier: service_class(timeout) if service in (specifier, None) else None
+        specifier: service_class(timeout, None) if service in (specifier, None) else None
         for specifier, service_class in specifiers_classes.items()
     }
     tcp_server = OnDemandTCPServer(

@@ -13,14 +13,10 @@ from inspect import getfullargspec
 from psycopg2 import connect
 from psycopg2.extensions import connection as Connection
 from psycopg2.extensions import cursor as Psycopg2Cursor
-from psycopg2.extensions import register_type
-from psycopg2.extensions import BYTES, BYTESARRAY
 from psycopg2 import Error as Psycopg2Error
 from psycopg2 import OperationalError
 from psycopg2.errors import DuplicateDatabase
 from attr import define
-
-
 
 from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import get_credentials_from_environment
@@ -67,8 +63,6 @@ class DBConnection(ConnectionProvider):
                 study_database = self._retrieve_study_database(credentials, study)
                 credentials.update_database(study_database)
             super().__init__(self.make_connection(credentials))
-            # register_type(BYTES, self.connection)
-            # register_type(BYTESARRAY, self.connection)
         except Psycopg2Error as exception:
             message = 'Failed to connect to database: %s, %s'
             logger.error(message, credentials.endpoint, credentials.database)
@@ -176,7 +170,7 @@ def get_specimen_names(cursor) -> list[str]:
     query = 'SELECT specimen FROM specimen_collection_process;'
     cursor.execute(query)
     rows = cursor.fetchall()
-    return sorted([row[0] for row in rows])
+    return sorted([str(row[0]) for row in rows])
 
 
 def retrieve_study_from_specimen(database_config_file: str | None, specimen: str) -> str:
@@ -194,6 +188,17 @@ def retrieve_study_from_specimen(database_config_file: str | None, specimen: str
         raise ValueError(message, specimen)
     return study
 
+
+def retrieve_primary_study(database_config_file: str, component_study: str) -> str | None:
+    studies = retrieve_study_names(database_config_file)
+    for study in studies:
+        with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+            query = 'SELECT COUNT(*) FROM study_component sc WHERE sc.component_study=%s ;'
+            cursor.execute(query, (component_study,))
+            count = tuple(cursor.fetchall())[0][0]
+            if count == 1:
+                return study
+    return None
 
 def create_database(database_config_file: str | None, database_name: str) -> None:
     if database_config_file is None:

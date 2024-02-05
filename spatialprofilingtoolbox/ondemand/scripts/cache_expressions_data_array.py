@@ -30,7 +30,7 @@ def main():
         database_config_file = abspath(expanduser(database_config_file))
 
     centroids = StructureCentroids(database_config_file)
-    if not centroids.already_exists():
+    if not centroids.centroids_exist():
         puller = StructureCentroidsPuller(database_config_file)
         puller.pull_and_write_to_files()
     else:
@@ -40,7 +40,7 @@ def main():
         sys.exit()
 
     matrices = CompressedMatrixWriter(database_config_file)
-    if matrices.already_exists():
+    if matrices.expressions_indices_already_exist():
         logger.info('%s already exists, skipping feature matrix pull.')
         sys.exit(1)
     else:

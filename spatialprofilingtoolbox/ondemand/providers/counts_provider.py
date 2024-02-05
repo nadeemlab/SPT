@@ -1,7 +1,6 @@
 """Count cells for a specific signature, over the specially-created binary-format index."""
 
 from typing import Any
-from typing import Collection
 from typing import cast
 
 from pandas import Index
@@ -16,10 +15,11 @@ logger = colorized_logger(__name__)
 class CountsProvider(OnDemandProvider):
     """Scan binary-format expression matrices for specific signatures."""
 
-    def __init__(self, database_config_file: str | None, load_centroids: bool = False) -> None:
+    def __init__(self, timeount: int, database_config_file: str | None, load_centroids: bool = False) -> None:
         """Load from precomputed binary expression files and a JSON index in the data directory.
 
-        Note: CountsProvider never loads centroids because it does not need them.
+        Note: CountsProvider never loads centroids because it does not need them. It also does not
+        using the pending system, so the timeout is irrelevant.
         """
         super().__init__(0, database_config_file)
 

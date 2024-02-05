@@ -1,18 +1,22 @@
 """Base class for on-demand calculation providers."""
 
-from typing import (
-    cast,
-    Any,
-)
+from typing import cast
+from typing import Any
 from abc import ABC
 from json import loads
 from warnings import warn
+
 from pandas import DataFrame
+
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
+from spatialprofilingtoolbox.db.database_connection import retrieve_primary_study
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
     StudyStructureCentroids,
 )
+from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -23,6 +27,7 @@ class OnDemandProvider(ABC):
     data_arrays: dict[str, dict[str, DataFrame]]
     timeout: int
     timeouts: dict[tuple[str, str], float]
+    database_config_file: str
 
     @classmethod
     def service_specifier(cls) -> str:
@@ -30,6 +35,7 @@ class OnDemandProvider(ABC):
 
     def __init__(self, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
+        self.database_config_file = cast(str, database_config_file)
         self._load_expressions_indices()
         self.timeout = timeout
         self.timeouts = {}
@@ -39,27 +45,14 @@ class OnDemandProvider(ABC):
             loader.load_from_db()
             centroids = loader.get_studies()
         self._load_data_matrices(centroids=centroids)
-        self.database_config_file = database_config_file
         logger.info('%s is finished loading source data.', type(self).__name__)
 
     def _load_expressions_indices(self) -> None:
         """Load expressions metadata from a JSON-formatted index file."""
         logger.debug('Searching for source data in database')
-        with DBCursor(database_config_file=self.database_config_file) as cursor:
-            cursor.execute('''
-                    SELECT study_name FROM study_lookup
-                    ''')
-            study_names = tuple(row[0] for row in cursor.fetchall())
-
-        for study_name in study_names:
-            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-                cursor.execute('''
-                        SELECT blob_contents FROM ondemand_studies_index osi
-                        WHERE osi.blob_type='expressions_index';
-                        ''')
-                result_blob = bytearray(cursor.fetchone())
-
-            decoded_blob = result_blob.decode(encoding='utf-8')
+        for study_name in retrieve_study_names(self.database_config_file):
+            get_index = retrieve_expressions_index
+            decoded_blob = get_index(self.database_config_file, study_name)
             root = loads(decoded_blob)
             entries = root[list(root.keys())[0]]
             self.studies = {}
@@ -72,24 +65,33 @@ class OnDemandProvider(ABC):
     ) -> None:
         """Load data matrices in reference to a JSON-formatted index file."""
         self.data_arrays = {}
-        for study_name in self._get_study_names():
-            self.data_arrays[study_name] = {
-                item['specimen']: self._get_data_array_from_db(
-                    item['specimen'],
-                    self.studies[study_name]['target index lookup'],
-                    self.studies[study_name]['target by symbol'],
-                    study_name
+        for measurement_study_name in self._get_study_names():
+            study = cast(str, retrieve_primary_study(
+                self.database_config_file, measurement_study_name
+            ))
+            pertinent_specimens = SparseMatrixPuller.get_pertinent_specimens(
+                self.database_config_file,
+                study,
+                measurement_study_name,
+                None,
+            )
+            self.data_arrays[measurement_study_name] = {
+                specimen: self._get_data_array_from_db(
+                    specimen,
+                    self.studies[measurement_study_name]['target index lookup'],
+                    self.studies[measurement_study_name]['target by symbol'],
+                    study,
                 )
-                for item in self.studies[study_name]['expressions files']
+                for specimen in pertinent_specimens
             }
-            shapes = [df.shape for df in self.data_arrays[study_name].values()]
+            shapes = [df.shape for df in self.data_arrays[measurement_study_name].values()]
             logger.debug('Loaded dataframes of sizes %s ...', shapes[0:5])
-            number_specimens = len(self.data_arrays[study_name])
-            specimens = list(self.data_arrays[study_name].keys())
+            number_specimens = len(self.data_arrays[measurement_study_name])
+            specimens = list(self.data_arrays[measurement_study_name].keys())
             logger.debug('%s specimens loaded (%s ...).', number_specimens, specimens[0:5])
             if centroids is not None:
-                for sample, df in self.data_arrays[study_name].items():
-                    self._add_centroids(df, centroids, study_name, sample)
+                for sample, df in self.data_arrays[measurement_study_name].items():
+                    self._add_centroids(df, centroids, measurement_study_name, sample)
 
     def _get_study_names(self) -> list[str]:
         """Retrieve names of the studies held in memory."""
@@ -97,25 +99,23 @@ class OnDemandProvider(ABC):
 
     def _get_data_array_from_db(
         self,
-            specimen: str,
-            target_index_lookup: dict,
-            target_by_symbol: dict,
-            study_name: str,
+        specimen: str,
+        target_index_lookup: dict,
+        target_by_symbol: dict,
+        study_name: str,
     ) -> DataFrame:
         """Load data arrays from a precomputed blob from database."""
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
             cursor.execute('''
-                    SELECT blob_contents FROM ondemand_studies_index osi
-                    WHERE osi.specimen=%s AND osi.blob_type='feature_matrix';
-                    ''', (specimen,))
-            result_blob = bytearray(cursor.fetchone())
-
+                SELECT blob_contents FROM ondemand_studies_index osi
+                WHERE osi.specimen=%s AND osi.blob_type='feature_matrix';
+            ''', (specimen,))
+            result_blob = bytearray(tuple(cursor.fetchall())[0][0])
         rows = []
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
         feature_columns = self._list_columns(target_index_lookup, target_by_symbol)
         size = len(feature_columns)
-
         if result_blob is not None:
             increment = 0
             while True:
@@ -126,35 +126,8 @@ class OnDemandProvider(ABC):
                 if row is None:
                     break
                 rows.append(row)
-
         df = DataFrame(rows, columns=feature_columns + ['integer', 'histological_structure_id'])
         df.set_index('histological_structure_id', inplace=True)
-        return df
-
-
-    def _get_data_array_from_file(
-        self,
-        filename: str,
-        target_index_lookup: dict,
-        target_by_symbol: dict,
-    ) -> DataFrame:
-        """Load data arrays from a precomputed binary artifact."""
-        rows = []
-        target_index_lookup = cast(dict, target_index_lookup)
-        target_by_symbol = cast(dict, target_by_symbol)
-        feature_columns = self._list_columns(target_index_lookup, target_by_symbol)
-        size = len(feature_columns)
-
-        with open(filename, 'rb') as file:
-            while True:
-                buffer1 = file.read(8)
-                buffer2 = file.read(8)
-                row = self._parse_cell_row(buffer1, buffer2, size)
-                if row is None:
-                    break
-                rows.append(row)
-            df = DataFrame(rows, columns=feature_columns + ['integer', 'histological_structure_id'])
-            df.set_index('histological_structure_id', inplace=True)
         return df
 
     @staticmethod
@@ -170,20 +143,23 @@ class OnDemandProvider(ABC):
         int_id = int.from_bytes(buffer1, 'little')
         return tuple([int(b) for b in list(truncated_to_channels)] + [int_phenotypes] + [int_id])
 
-    @staticmethod
     def _add_centroids(
+        self,
         df: DataFrame,
         centroids: dict[str, StudyStructureCentroids],
-        study_name: str,
+        measurement_study_name: str,
         sample: str,
     ) -> None:
         coordinates = ['pixel x', 'pixel y']
+        study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
+        study_name = cast(str, study_name)
         location_data = DataFrame.from_dict(centroids[study_name][sample], orient='index')
         if location_data.shape[0] != df.shape[0]:
             present = location_data.shape[0]
             before = df.shape[0]
             message = f'Can not add location data {present} to feature matrix with {before} rows.'
             logger.error(message)
+            logger.error(location_data)
         df[coordinates] = location_data
 
     @staticmethod

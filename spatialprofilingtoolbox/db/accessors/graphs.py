@@ -91,7 +91,7 @@ class GraphsAccess(SimpleReadOnlyProvider):
         plugin_version: str | None = None,
         cohort_stratifier: str | None = None,
         cell_limit: int = 100,
-    ) -> str:
+    ) -> set[int]:
         """Get the cell_limit most important cell IDs for each specimen in this study."""
         feature_specification = self._get_matching_feature_specification(
             study,

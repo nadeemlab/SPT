@@ -36,7 +36,9 @@ class GraphsAccess(SimpleReadOnlyProvider):
                 ) AS fsr1
                     ON fs.identifier = fsr1.feature_specification
                 JOIN (
-                    SELECT feature_specification
+                    SELECT
+                        feature_specification,
+                        specifier
                     FROM feature_specifier
                     WHERE ordinality='2'
         '''
@@ -109,7 +111,7 @@ class GraphsAccess(SimpleReadOnlyProvider):
                     ON df.sha256_hash=hsi.data_source
                 JOIN specimen_data_measurement_process sdmp
                     ON df.source_generation_process=sdmp.identifier
-            WHERE qfv.feature='%s'
+            WHERE qfv.feature=%s
             ORDER BY sdmp.specimen, qfv.value
             ;
         '''

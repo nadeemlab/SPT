@@ -1,4 +1,4 @@
-"""Extract information cg-gnn needs from SPT."""
+"""Extract graph data artifacts."""
 
 from pandas import DataFrame, concat, merge  # type: ignore
 from numpy import sort  # type: ignore
@@ -11,7 +11,7 @@ def extract(
     study: str,
     strata_to_use: list[int] | None,
 ) -> tuple[DataFrame, DataFrame, dict[int, str]]:
-    """Extract information cg-gnn needs from SPT.
+    """Extract graph data artifacts.
 
     Parameters
     ----------

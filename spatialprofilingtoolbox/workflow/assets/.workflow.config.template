@@ -9,7 +9,11 @@ study_name = name_of_study
 [tabular import]
 input_path = path/to/input/directory
 
-[cg-gnn]
+[graph generation]
 graph_config_file = path/to/graph.config
-cuda = true
+
+[graph plugin]
+plugin = cg-gnn or graph-transformer
+graph_config_file = path/to/graph.config
+cuda = true  # Must be blank or true for graph-transformer
 upload_importances = false

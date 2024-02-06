@@ -1,4 +1,4 @@
-"""Extract information cg-gnn needs from SPT and save to file."""
+"""Extract graph data artifacts as DataFrames and save to file."""
 
 from argparse import ArgumentParser
 from os import makedirs

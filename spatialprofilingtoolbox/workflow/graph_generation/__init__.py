@@ -13,8 +13,8 @@ def process_inputs(params: dict[str, str | bool]) -> None:
 components = WorkflowModules(
     is_database_visitor=True,
     assets_needed=[
-        ('graph_generation', 'graph_generation.nf'),
-        ('graph_generation', 'main.nf'),
+        ('graph_generation', 'graph_generation.nf', False),
+        ('graph_generation', 'main.nf', True),
     ],
     config_section_required=True,
     process_inputs=process_inputs,

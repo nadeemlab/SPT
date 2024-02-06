@@ -17,7 +17,7 @@ def _read_config_file(config_file_path: str, section: str) -> dict[str, Any]:
     if section in config_file:
         config.update(dict(config_file[section]))
     for key, value in config.items():
-        if value in {'none', 'null', ''}:
+        if value.lower() in {'none', 'null', ''}:
             config[key] = None
     return config
 
@@ -122,6 +122,9 @@ def read_upload_config(config_file_path: str) -> tuple[
     str,
     str,
     str,
+    str,
+    str | None,
+    str | None,
 ]:
     f"""Read the TOML config file and return the '{UPLOAD_SECTION_NAME}' section.
 
@@ -131,10 +134,15 @@ def read_upload_config(config_file_path: str) -> tuple[
     config = _read_config_file(config_file_path, UPLOAD_SECTION_NAME)
     db_config_file_path: str = config["db_config_file_path"]
     study_name: str = config["study_name"]
-    cohort_stratifier_str = config.get("cohort_stratifier", None)
-    cohort_stratifier: str = '' if (cohort_stratifier_str is None) else cohort_stratifier_str
+    plugin_used: str = config["plugin_used"]
+    datetime_of_run: str = config["datetime_of_run"]
+    plugin_version = config.get("plugin_version", None)
+    cohort_stratifier = config.get("cohort_stratifier", None)
     return (
         db_config_file_path,
         study_name,
+        plugin_used,
+        datetime_of_run,
+        plugin_version,
         cohort_stratifier,
     )

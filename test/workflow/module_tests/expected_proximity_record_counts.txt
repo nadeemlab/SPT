@@ -10,7 +10,7 @@
        diagnostic_selection_criterion        4
             expression_quantification     5200
                 feature_specification     1741
-                    feature_specifier     5221
+                    feature_specifier     5224
                histological_structure      200
 histological_structure_identification      200
          histology_assessment_process        7

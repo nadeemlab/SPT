@@ -1,10 +1,17 @@
 """Ingest importance scores and upload them to the local database."""
-from typing import cast
 
-from pandas import DataFrame
-from pandas import read_sql
+from datetime import datetime
+
+from pandas import (
+    DataFrame,
+    read_sql,
+    to_datetime,
+    Timestamp,
+)
 from psycopg2.extensions import connection as Connection
 
+from spatialprofilingtoolbox.util import STRFTIME_FORMAT
+from spatialprofilingtoolbox.graphs.plugin_constants import PLUGIN_ALIASES
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.create_data_analysis_study import DataAnalysisStudyFactory
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeaturesUploader
@@ -18,32 +25,63 @@ def transcribe_importance(
     df: DataFrame,
     database_config_file: str,
     study: str,
+    plugin_used: str,
+    datetime_of_run: str | datetime | Timestamp,
+    plugin_version: str | None = None,
+    cohort_stratifier: str | None = None,
     per_specimen_selection_number: int = 1000,
-    cohort_stratifier: str = '',
 ) -> None:
-    r"""Upload importance score output from a cg-gnn instance to the local db.
+    """Upload importance score output from a cg-gnn instance to the local db.
 
     Parameters:
         df: DataFrame
             One column, `importance`, indexed by `histological_structure`.
-        connection: psycopg2.extensions.connection
-        per_specimen_selection_number: int
-            Grab this many of the most important cells from each specimen (or fewer if there
-            aren't enough cells in the specimen).
-        cohort_stratifier: str = ''
-            Name of the classification cohort variable the GNN was trained on to produce
-                the importance score.
+        database_config_file: str
+            Path to the database configuration file.
+        study: str
+        plugin_used: str
+            Name of the classification model that produced these importance scores.
+        datetime_of_run: str | datetime
+            Datetime the classification model was run to produce these importance scores.
+        plugin_version: str | None = None
+            Version of the classification model that produced these importance scores.
+        cohort_stratifier: str | None = None
+            Name of the classification cohort variable the data was split on to create the data used
+            to generate the importance scores.
+        per_specimen_selection_number: int = 1000
+            Grab this many of the most important cells from each specimen (or fewer if there aren't
+            enough cells in the specimen).
     """
-    if study is None:
-        message = 'Study specifier not supplied.'
-        logger.error(message)
-        raise ValueError(message)
-    indicator: str = 'cell importance'
+    for plugin_name, plugin_aliases in PLUGIN_ALIASES.items():
+        if plugin_used.lower() in plugin_aliases:
+            plugin_used = plugin_name
+            break
+    else:
+        ValueError(f"Unrecognized plugin name: {plugin_used}")
+    if isinstance(datetime_of_run, str):
+        datetime_of_run = to_datetime(datetime_of_run)
+    if plugin_version is None:
+        plugin_version = ''
+    if cohort_stratifier is None:
+        cohort_stratifier = ''
+
     with DBConnection(database_config_file=database_config_file, study=study) as connection:
-        data_analysis_study = DataAnalysisStudyFactory(connection, study, indicator).create()
+        data_analysis_study = DataAnalysisStudyFactory(
+            connection,
+            study,
+            'cell importance',
+        ).create()
         _add_slide_column(connection, df)
         df_most_important = _group_and_filter(df, per_specimen_selection_number)
-        _upload(df_most_important, connection, data_analysis_study, cohort_stratifier)
+        _upload(
+            df_most_important,
+            connection,
+            data_analysis_study,
+            plugin_used,
+            datetime_of_run,
+            plugin_version,
+            cohort_stratifier,
+        )
 
 
 def _add_slide_column(connection: Connection, df: DataFrame) -> None:
@@ -77,17 +115,29 @@ def _upload(
     df: DataFrame,
     connection: Connection,
     data_analysis_study: str,
+    plugin_used: str,
+    datetime_of_run: datetime,
+    plugin_version: str,
     cohort_stratifier: str,
 ) -> None:
+    importance_score_set_indexer = (
+        plugin_used,
+        datetime_of_run.strftime(STRFTIME_FORMAT),
+        plugin_version,
+        cohort_stratifier,
+    )
     with ADIFeaturesUploader(
         connection,
         data_analysis_study=data_analysis_study,
-        derivation_and_number_specifiers=(get_feature_description("gnn importance score"), 1),
+        derivation_and_number_specifiers=(
+            get_feature_description("gnn importance score"),
+            len(importance_score_set_indexer),
+        ),
         impute_zeros=True,
     ) as feature_uploader:
         for histological_structure, row in df.iterrows():
             feature_uploader.stage_feature_value(
-                (cohort_stratifier,),
+                importance_score_set_indexer,
                 str(histological_structure),
                 row['importance_order'],
             )

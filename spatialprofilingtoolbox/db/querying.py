@@ -1,4 +1,5 @@
 """Some basic accessors that retrieve from the database."""
+
 import re
 
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
@@ -12,9 +13,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     Channel,
     PhenotypeCriteria,
     UMAPChannel,
-    CGGNNImportanceRank,
 )
-from spatialprofilingtoolbox.db.cohorts import get_cohort_identifiers
 from spatialprofilingtoolbox.db.accessors import (
     GraphsAccess,
     StudyAccess,
@@ -60,7 +59,8 @@ class QueryHandler:
         return PhenotypesAccess(cursor).get_phenotype_criteria(study, phenotype_symbol)
 
     @classmethod
-    def retrieve_signature_of_phenotype(cls,
+    def retrieve_signature_of_phenotype(
+        cls,
         cursor,
         phenotype_handle: str,
         study: str
@@ -94,12 +94,24 @@ class QueryHandler:
         return UMAPAccess(cursor).get_umap_row_for_channel(study, channel)
 
     @classmethod
-    def get_cggnn_metrics(cls, cursor, study: str) -> list[CGGNNImportanceRank]:
-        return GraphsAccess(cursor).get_metrics(study)
-
-    @classmethod
-    def get_important_cells(cls, cursor, study: str, cell_limit: int) -> set[int]:
-        return GraphsAccess(cursor).get_important_cells(study, cell_limit)
+    def get_important_cells(
+        cls,
+        cursor,
+        study: str,
+        plugin: str,
+        datetime_of_run: str,
+        plugin_version: str | None,
+        cohort_stratifier: str | None,
+        cell_limit: int = 100,
+    ) -> set[int]:
+        return GraphsAccess(cursor).get_important_cells(
+            study,
+            plugin,
+            datetime_of_run,
+            plugin_version,
+            cohort_stratifier,
+            cell_limit,
+        )
 
 
 def query() -> QueryCursor:

@@ -251,7 +251,6 @@ class QueryCursor:
     retrieve_signature_of_phenotype: Callable
     get_umaps_low_resolution: Callable
     get_umap: Callable
-    get_cggnn_metrics: Callable
     get_important_cells: Callable
 
     def __init__(self, query_handler: Type):

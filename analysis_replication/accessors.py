@@ -170,7 +170,13 @@ class DataAccessor:
         df = DataFrame(rows).set_index('sample')
         return concat([self.cohorts, self.all_cells, df], axis=1)
 
-    def counts_by_signature(self, positives, negatives):
+    def counts_by_signature(self, positives: list[str], negatives: list[str]):
+        if (not positives) and (not negatives):
+            raise ValueError('At least one positive or negative marker is required.')
+        if not positives:
+            positives = ['']
+        elif not negatives:
+            negatives = ['']
         parts = list(chain(*[
             [(f'{keyword}_marker', channel) for channel in argument]
             for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
@@ -273,7 +279,7 @@ class DataAccessor:
         parts = sorted(list(set(parts)))
         parts.append(('study', self.study))
         query = urlencode(parts)
-        phenotype_counts, _ = self._retrieve('cggnn-importance-composition', query)
+        phenotype_counts, _ = self._retrieve('importance-composition', query)
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
 
 

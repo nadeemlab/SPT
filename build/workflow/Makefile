@@ -9,10 +9,10 @@ MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tes
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT := ${MODULE_NAME}/module_tests/configure_cggnn_test.sh
-STANDALONE_MODULE_TEST_FILE := ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/no_docker_test_cggnn.sh
+STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT := ${MODULE_NAME}/module_tests/configure_graph_plugin_test.sh
+STANDALONE_MODULE_TEST_FILE := ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/no_docker_test_graph_plugin.sh
 STANDALONE_MODULE_TEST_TARGET := test-${STANDALONE_MODULE_TEST_FILE}
-STANDALONE_MODULE_TEST_NAME := "cggnn-dockerized"
+STANDALONE_MODULE_TEST_NAME := "graph-plugin-dockerized"
 
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}

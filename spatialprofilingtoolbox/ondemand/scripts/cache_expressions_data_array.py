@@ -1,6 +1,7 @@
 """Pull expression data from SPT database and store as compressed binary cache. Also pulls location
 data.
 """
+import json
 from typing import cast
 import argparse
 from os.path import abspath
@@ -37,7 +38,7 @@ def main():
     study = None
     if args.study_file is not None:
         with open(args.study_file, 'rt', encoding='utf-8') as file:
-            study = file.read().strip()
+            study = json.loads(file.read())['Study name']
 
     assessor = FastCacheAssessor(database_config_file, study=study)
     assessor.assess_and_act()

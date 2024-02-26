@@ -6,8 +6,6 @@ nextflow run .
 
 spt graphs upload-importances --config_path=build/build_scripts/.graph.config --importances_csv_path=test/test_data/gnn_importances/3.csv
 
-spt ondemand cache-expressions-data-array --database-config-file build/db/.spt_db.config.local
-
 cat work/*/*/.command.log
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt
 diff build/build_scripts/expected_table_counts_1small.txt table_counts.txt

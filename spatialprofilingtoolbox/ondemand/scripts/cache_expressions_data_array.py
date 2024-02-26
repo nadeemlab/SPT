@@ -21,7 +21,7 @@ def main():
     )
     add_argument(parser, 'database config')
     parser.add_argument('--centroids-only', dest='centroids_only', action='store_true')
-    parser.add_argument('--study-file', dest='study_file', required=True,
+    parser.add_argument('--study-file', dest='study_file', required=False,
         help='''
         If provided, the contents of this file should be the name of a study to which to restrict
         the caching operation.

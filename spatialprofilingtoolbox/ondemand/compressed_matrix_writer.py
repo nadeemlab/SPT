@@ -41,8 +41,8 @@ class CompressedMatrixWriter:
             index_item['target by symbol'] = target_by_symbols[measurement_study_name]
             index_str = json.dumps({'': [index_item]})
             index_str_as_bytes = index_str.encode('utf-8')
-            study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
-            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            study = retrieve_primary_study(self.database_config_file, measurement_study_name)
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
                 insert_query = '''
                     INSERT INTO
                     ondemand_studies_index (
@@ -54,30 +54,35 @@ class CompressedMatrixWriter:
                 '''
                 cursor.execute(insert_query, (None, 'expressions_index', index_str_as_bytes))
                 cursor.close()
-            logger.debug(f'Wrote expression index to database {study_name} .')
+            logger.debug(f'Wrote expression index to database {study} .')
 
-    def _write_data_array_to_db(self, data_array: dict[int, int], measurement_study_name: str, specimen: str) -> None:
-            blob = bytearray()
-            for histological_structure_id, entry in data_array.items():
-                blob.extend(histological_structure_id.to_bytes(8, 'little'))
-                blob.extend(entry.to_bytes(8, 'little'))
-            study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
-            with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-                insert_query = '''
-                    INSERT INTO
-                    ondemand_studies_index (
-                        specimen,
-                        blob_type,
-                        blob_contents)
-                    VALUES (%s, %s, %s) ;
-                '''
-                cursor.execute(insert_query, (specimen, 'feature_matrix', blob))
-                cursor.close()
+    def _write_data_array_to_db(
+        self,
+        data_array: dict[int, int],
+        measurement_study_name: str,
+        specimen: str,
+    ) -> None:
+        blob = bytearray()
+        for histological_structure_id, entry in data_array.items():
+            blob.extend(histological_structure_id.to_bytes(8, 'little'))
+            blob.extend(entry.to_bytes(8, 'little'))
+        study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            insert_query = '''
+                INSERT INTO
+                ondemand_studies_index (
+                    specimen,
+                    blob_type,
+                    blob_contents)
+                VALUES (%s, %s, %s) ;
+            '''
+            cursor.execute(insert_query, (specimen, 'feature_matrix', blob))
+            cursor.close()
 
-    def expressions_indices_already_exist(self):
-        counts = get_counts(self.database_config_file, 'expressions_index')
-        for study, count in counts.items():
+    def expressions_indices_already_exist(self, study: str | None = None):
+        counts = get_counts(self.database_config_file, 'expressions_index', study=study)
+        for _study, count in counts.items():
             if count > 1:
-                message = f'Too many ({count}) expression index files for study {study}.'
+                message = f'Too many ({count}) expression index files for study {_study}.'
                 raise ValueError(message)
         return all(count == 1 for count in counts.values())

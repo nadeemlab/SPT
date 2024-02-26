@@ -84,6 +84,17 @@ process workflow_main {
     """
 }
 
+process caching {
+    input:
+    path db_config_file
+
+    script:
+    """
+    spt ondemand cache-expressions-data-array \
+     --database-config-file=${db_config_file}
+    """
+}
+
 process report_run_configuration {
     publishDir 'results'
 

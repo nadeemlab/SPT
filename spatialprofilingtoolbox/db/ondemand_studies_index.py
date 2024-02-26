@@ -3,9 +3,13 @@
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 
-def get_counts(database_config_file: str, blob_type: str) -> dict[str, int]:
+def get_counts(database_config_file: str, blob_type: str, study: str | None = None) -> dict[str, int]:
+    if study is None:
+        studies = tuple(retrieve_study_names(database_config_file))
+    else:
+        studies = (study,)
     counts: dict[str, int] = {}
-    for study in retrieve_study_names(database_config_file):
+    for study in studies:
         with DBCursor(database_config_file=database_config_file, study=study) as cursor:
             cursor.execute(f'''
                 SELECT COUNT(*) FROM ondemand_studies_index osi
@@ -16,9 +20,13 @@ def get_counts(database_config_file: str, blob_type: str) -> dict[str, int]:
     return counts
 
 
-def drop_cache_files(database_config_file: str, blob_type: str) -> None:
-    for study in retrieve_study_names(database_config_file):
-        with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+def drop_cache_files(database_config_file: str, blob_type: str, study: str | None = None) -> None:
+    if study is None:
+        studies = tuple(retrieve_study_names(database_config_file))
+    else:
+        studies = (study,)
+    for _study in studies:
+        with DBCursor(database_config_file=database_config_file, study=_study) as cursor:
             cursor.execute(f'''
                 DELETE FROM ondemand_studies_index osi
                 WHERE osi.blob_type='{blob_type}' ;

@@ -79,11 +79,15 @@ class StructureCentroids:
         del self._studies[measurement_study_name]
         assert len(self._studies) == 0
 
-    def load_from_db(self) -> None:
+    def load_from_db(self, study: str | None = None) -> None:
         """
         Reads the structure centroids from the database.
         """
-        for study in retrieve_study_names(self.database_config_file):
+        if study is None:
+            studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            studies = (study,)
+        for study in studies:
             with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
                 cursor.execute('''
                     SELECT specimen, blob_contents FROM ondemand_studies_index osi
@@ -98,8 +102,8 @@ class StructureCentroids:
                             self._studies[study][key] = {}
                         self._studies[study][key].update(value)
 
-    def centroids_exist(self) -> bool:
-        counts = get_counts(self.database_config_file, 'centroids')
+    def centroids_exist(self, study: str | None = None) -> bool:
+        counts = get_counts(self.database_config_file, 'centroids', study=study)
         if any(count == 0 for count in counts.values()):
             return False
         expected = {study: self._retrieve_expected_counts(study) for study in counts.keys()}

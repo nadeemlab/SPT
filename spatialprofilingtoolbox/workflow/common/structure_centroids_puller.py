@@ -29,8 +29,8 @@ class StructureCentroidsPuller:
         self.database_config_file = database_config_file
         self._structure_centroids = StructureCentroids(database_config_file)
 
-    def pull_and_write_to_files(self):
-        for study_name, measurement_study in self._get_study_names():
+    def pull_and_write_to_files(self, study: str | None = None):
+        for study_name, measurement_study in self._get_study_names(study=study):
             specimens = self._get_specimens(study_name, measurement_study)
             progress_reporter = FractionalProgressReporter(
                 len(specimens),

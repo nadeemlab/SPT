@@ -20,6 +20,12 @@ def main():
     )
     add_argument(parser, 'database config')
     parser.add_argument('--centroids-only', dest='centroids_only', action='store_true')
+    parser.add_argument('--study-file', dest='study_file', required=True,
+        help='''
+        If provided, the contents of this file should be the name of a study to which to restrict
+        the caching operation.
+        '''
+    )
     args = parser.parse_args()
 
     database_config_file = cast(str, args.database_config_file)
@@ -28,7 +34,12 @@ def main():
     if database_config_file is not None:
         database_config_file = abspath(expanduser(database_config_file))
 
-    assessor = FastCacheAssessor(database_config_file)
+    study = None
+    if args.study_file is not None:
+        with open(args.study_file, 'rt', encoding='utf-8') as file:
+            study = file.read().strip()
+
+    assessor = FastCacheAssessor(database_config_file, study=study)
     assessor.assess_and_act()
 
 if __name__ == '__main__':

@@ -20,18 +20,16 @@ logger = colorized_logger(__name__)
 class FastCacheAssessor:
     """Assess "fast cache"."""
     database_config_file: str | None
+    study: str | None
     centroids: dict[str, dict[str, list]]
     expressions_index: list[dict]
 
-    def __init__(self, database_config_file: str | None):
+    def __init__(self, database_config_file: str | None, study: str | None=None):
         self.database_config_file = database_config_file
+        self.study = study
 
     def assess_and_act(self):
         up_to_date = self._cache_is_up_to_date()
-        if not self.recreation_enabled():
-            logger.info('Recreation not enabled, done assessing fast cache.')
-            return
-
         if not up_to_date:
             self._clear()
             self._recreate()
@@ -62,26 +60,29 @@ class FastCacheAssessor:
         ]
         return all(checker() for checker in checkers)
 
+    def _get_study_indicator(self):
+        return '' if self.study is None else f'({self.study})'
+
     def _clear(self):
-        logger.info('Deleting the databased fast cache files.')
-        drop_cache_files(self.database_config_file, 'feature_matrix')
-        drop_cache_files(self.database_config_file, 'expressions_index')
-        drop_cache_files(self.database_config_file, 'centroids')
+        logger.info(f'Deleting the databased fast cache files. {self._get_study_indicator()}')
+        drop_cache_files(self.database_config_file, 'feature_matrix', study=self.study)
+        drop_cache_files(self.database_config_file, 'expressions_index', study=self.study)
+        drop_cache_files(self.database_config_file, 'centroids', study=self.study)
 
     def _recreate(self):
-        logger.info('Recreating databased fast cache files.')
-        cache_pull(self.database_config_file)
+        logger.info(f'Recreating databased fast cache files. {self._get_study_indicator()}')
+        cache_pull(self.database_config_file, study=self.study)
 
     def _check_databased_files_present(self, verbose: bool = True) -> bool:
         writer = CompressedMatrixWriter(self.database_config_file)
-        expressions_exist = writer.expressions_indices_already_exist()
+        expressions_exist = writer.expressions_indices_already_exist(study=self.study)
         structure_centroids = StructureCentroids(self.database_config_file)
-        centroids_present = structure_centroids.centroids_exist()
+        centroids_present = structure_centroids.centroids_exist(study=self.study)
         if verbose:
             if not expressions_exist:
-                logger.info('Did not find expressions indices for at least one study.')
+                logger.info(f'Did not find expressions indices. {self._get_study_indicator()}')
             else:
-                logger.info('Found expressions index files for all studies.')
+                logger.info('Found expressions index file(s).')
             if not centroids_present:
                 logger.info('Databased centroids files not present.')
             else:
@@ -93,16 +94,23 @@ class FastCacheAssessor:
 
     def _do_caching(self):
         scs = StructureCentroids(self.database_config_file)
-        scs.load_from_db()
+        scs.load_from_db(study=self.study)
         self.centroids = cast(dict[str, dict[str, list]], scs.get_studies())
         self.expressions_index = []
-        for study in retrieve_study_names(self.database_config_file):
+        if self.study is None:
+            studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            studies = (study,)
+        for study in studies:
             blob = retrieve_expressions_index(self.database_config_file, study)
             self.expressions_index.extend(load_json_string(blob)[''])
 
     def _check_centroids_bundle_studies(self):
         indexed_studies = self.centroids.keys()
-        known_studies = retrieve_study_names(self.database_config_file)
+        if self.study is None:
+            known_studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            known_studies = (self.study,)
         log_expected_found(
             known_studies,
             indexed_studies,
@@ -129,7 +137,10 @@ class FastCacheAssessor:
         return set(known_measurement_studies).issubset(set(indexed_measurement_studies))
 
     def _retrieve_measurement_studies(self) -> list[tuple[str, str]]:
-        study_names = retrieve_study_names(None)
+        if self.study is None:
+            study_names = tuple(retrieve_study_names(None))
+        else:
+            study_names = (self.study,)
         studies = []
         for study in study_names:
             with DBCursor(study=study) as cursor:
@@ -186,19 +197,6 @@ class FastCacheAssessor:
             rows = cursor.fetchall()
         return [row[0] for row in rows]
 
-    @staticmethod
-    def recreation_enabled() -> bool:
-        """If environment variable DISABLE_FAST_CACHE_RECREATION=1, the fast cache assessor will not
-        do cache recreation, and it will not delete old cache. It will do only read operations.
-        If this environment variable does not exist or is not equal to 1, recreation will be
-        considered and possibly attempted.
-        """
-        key = 'DISABLE_FAST_CACHE_RECREATION'
-        if key in environ:
-            disable_fast_cache_recreation = environ[key] == '1'
-        else:
-            disable_fast_cache_recreation = False
-        return not disable_fast_cache_recreation
 
 def log_expected_found(set1, set2, message1, message2, context: str=''):
     """Logs error message1 (one formattable argument) for each element of set1 (expected) that is
@@ -215,6 +213,7 @@ def log_expected_found(set1, set2, message1, message2, context: str=''):
         logger.error(message1, element)
     for element in set(set2).difference(set(set1)):
         logger.warning(message2, element)
+
 
 def abbreviate_list(items: list[str]):
     if len(items) > 5:

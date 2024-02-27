@@ -81,7 +81,7 @@ class DataAccessor:
         )
         df.replace([inf, -inf], nan, inplace=True)
         return df
-    
+
     def name_for_all_phenotypes(self, phenotype_names):
         return ' and '.join([self._name_phenotype(p) for p in phenotype_names])
 
@@ -264,7 +264,14 @@ class DataAccessor:
             ]).rstrip()
         return str(phenotype)
 
-    def important(self, phenotype_names: str | list[str]) -> dict[str, float]:
+    def important(
+        self,
+        phenotype_names: str | list[str],
+        plugin: str = 'cg-gnn',
+        datetime_of_run: str | None = None,
+        plugin_version: str | None = None,
+        cohort_stratifier: str | None = None,
+    ) -> dict[str, float]:
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
         conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
@@ -278,6 +285,16 @@ class DataAccessor:
         ]))
         parts = sorted(list(set(parts)))
         parts.append(('study', self.study))
+        if plugin in {'cg-gnn', 'graph-transformer'}:
+            parts.append(('plugin', plugin))
+        else:
+            raise ValueError(f'Unrecognized plugin name: {plugin}')
+        if datetime_of_run is not None:
+            parts.append(('datetime_of_run', datetime_of_run))
+        if plugin_version is not None:
+            parts.append(('plugin_version', plugin_version))
+        if cohort_stratifier is not None:
+            parts.append(('cohort_stratifier', cohort_stratifier))
         query = urlencode(parts)
         phenotype_counts, _ = self._retrieve('importance-composition', query)
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
@@ -360,6 +377,7 @@ def univariate_pair_compare(
             print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
 
     print('')
+
 
 def print_comparison() -> None:
     pass

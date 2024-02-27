@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi import Response
 from fastapi.responses import StreamingResponse
+from fastapi import Query
 
 import secure
 
@@ -21,6 +22,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
+    CellData,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -287,6 +289,19 @@ def get_squidpy_metrics(
             radius=radius,
         )
     return metrics
+
+
+@app.get("/cell-data/")
+async def get_cell_data(
+    study: ValidStudy,
+    sample: str = Query(max_length=512),
+) -> CellData:
+    """Get lists of the positive markers and negative markers defining a given named phenotype, in
+    the context of the given study.
+    """
+    with OnDemandRequester(service='cells') as requester:
+        payload = requester.get_cells_data(study, sample)
+    return payload
 
 
 @app.get("/visualization-plots/")

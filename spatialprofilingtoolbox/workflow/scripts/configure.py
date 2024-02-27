@@ -2,6 +2,7 @@
 
 import re
 from argparse import ArgumentParser
+from argparse import RawDescriptionHelpFormatter
 from os import (
     getcwd,
     stat,
@@ -203,6 +204,7 @@ def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt workflow configure',
+        formatter_class=RawDescriptionHelpFormatter,
         description="""Configure an SPT (spatialprofilingtoolbox) run in the current directory.
 
 Below the format of the workflow configuration file is described.

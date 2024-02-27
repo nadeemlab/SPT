@@ -296,8 +296,7 @@ async def get_cell_data(
     study: ValidStudy,
     sample: str = Query(max_length=512),
 ) -> CellData:
-    """Get lists of the positive markers and negative markers defining a given named phenotype, in
-    the context of the given study.
+    """Get cell-level location and phenotype data.
     """
     with OnDemandRequester(service='cells') as requester:
         payload = requester.get_cells_data(study, sample)

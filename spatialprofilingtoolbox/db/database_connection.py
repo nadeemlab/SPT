@@ -163,14 +163,14 @@ def retrieve_study_names(database_config_file: str | None) -> list[str]:
     with DBCursor(database_config_file=database_config_file) as cursor:
         cursor.execute('SELECT study FROM study_lookup;')
         rows = cursor.fetchall()
-    return sorted([row[0] for row in rows])
+    return sorted([str(row[0]) for row in rows])
 
 
 def get_specimen_names(cursor) -> list[str]:
     query = 'SELECT specimen FROM specimen_collection_process;'
     cursor.execute(query)
     rows = cursor.fetchall()
-    return sorted([row[0] for row in rows])
+    return sorted([str(row[0]) for row in rows])
 
 
 def retrieve_study_from_specimen(database_config_file: str | None, specimen: str) -> str:
@@ -188,6 +188,17 @@ def retrieve_study_from_specimen(database_config_file: str | None, specimen: str
         raise ValueError(message, specimen)
     return study
 
+
+def retrieve_primary_study(database_config_file: str, component_study: str) -> str | None:
+    studies = retrieve_study_names(database_config_file)
+    for study in studies:
+        with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+            query = 'SELECT COUNT(*) FROM study_component sc WHERE sc.component_study=%s ;'
+            cursor.execute(query, (component_study,))
+            count = tuple(cursor.fetchall())[0][0]
+            if count == 1:
+                return study
+    return None
 
 def create_database(database_config_file: str | None, database_name: str) -> None:
     if database_config_file is None:

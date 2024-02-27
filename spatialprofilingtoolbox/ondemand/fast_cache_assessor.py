@@ -1,42 +1,35 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
 
-from subprocess import run as subprocess_run
-from subprocess import CalledProcessError
 from os import environ
-from os import remove
-from os import listdir
-from os.path import isfile
-from os.path import join
-from os.path import isdir
 from typing import cast
 from json import loads as load_json_string
-import re
 from time import sleep
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
-from spatialprofilingtoolbox.ondemand.defaults import EXPRESSIONS_INDEX_FILENAME
+from spatialprofilingtoolbox.workflow.common.cache_pulling import cache_pull
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
+from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
+from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
+from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_indexed_samples
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 class FastCacheAssessor:
     """Assess "fast cache"."""
-
-    source_data_location: str
+    database_config_file: str | None
+    study: str | None
     centroids: dict[str, dict[str, list]]
     expressions_index: list[dict]
 
-    def __init__(self, source_data_location: str):
-        self.source_data_location = source_data_location
+    def __init__(self, database_config_file: str | None, study: str | None=None):
+        self.database_config_file = database_config_file
+        self.study = study
 
     def assess_and_act(self):
         up_to_date = self._cache_is_up_to_date()
-        if not self.recreation_enabled():
-            logger.info('Recreation not enabled, done assessing fast cache.')
-            return
-
         if not up_to_date:
             self._clear()
             self._recreate()
@@ -58,95 +51,74 @@ class FastCacheAssessor:
             sleep(5)
 
     def _cache_is_up_to_date(self, verbose: bool = True) -> bool:
-        if not self._check_files_present(verbose=verbose):
+        if not self._check_databased_files_present(verbose=verbose):
             return False
-        self._retrieve_files()
+        self._do_caching()
         checkers = [
             self._check_study_sets,
             self._check_sample_sets,
         ]
         return all(checker() for checker in checkers)
 
+    def _get_study_indicator(self):
+        return '' if self.study is None else f'({self.study})'
+
     def _clear(self):
-        logger.info('Deleting the fast cache files.')
-        expressions_files = [
-            f for f in listdir(self.source_data_location)
-            if re.match(r'^expression_data_array\.[\d]+\.[\d]+\.bin$', f)
-        ]
-        scs = StructureCentroids()
-        scs.set_data_directory(self.source_data_location)
-        centroids_files = list(scs.get_all_centroids_pickle_files())
-        for filename in centroids_files + [EXPRESSIONS_INDEX_FILENAME] + expressions_files:
-            try:
-                remove(join(self.source_data_location, filename))
-                logger.info('Deleted %s .', filename)
-            except FileNotFoundError:
-                pass
+        logger.info(f'Deleting the databased fast cache files. {self._get_study_indicator()}')
+        drop_cache_files(self.database_config_file, 'feature_matrix', study=self.study)
+        drop_cache_files(self.database_config_file, 'expressions_index', study=self.study)
+        drop_cache_files(self.database_config_file, 'centroids', study=self.study)
 
     def _recreate(self):
-        logger.info('Recreating fast cache files.')
-        change_directory = f'cd {self.source_data_location}'
-        if not isdir(self.source_data_location):
-            raise RuntimeError(f'Directory does not exist: {self.source_data_location}')
-        main_command = 'spt ondemand cache-expressions-data-array --database-config-file=none'
-        commands = [change_directory, main_command]
-        command = '; '.join(commands)
-        logger.debug('Command is:')
-        logger.debug(command)
-        try:
-            subprocess_run(command, shell=True, check=True)
-        except CalledProcessError as exception:
-            err = 'CalledProcessError'
-            message = f'Received {err} during cache creation, probably insufficient available RAM.'
-            logger.error(message)
-            logger.info(str(exception))
-            logger.info('Entering 2 hour indefinite sleep loop.')
-            hour = 60 * 60
-            while True:
-                sleep(2 * hour)
-                logger.info('Still sleeping.')
+        logger.info(f'Recreating databased fast cache files. {self._get_study_indicator()}')
+        cache_pull(self.database_config_file, study=self.study)
 
-    def _check_files_present(self, verbose: bool = True) -> bool:
-        files_present = {
-            filename: isfile(join(self.source_data_location, filename))
-            for filename in [EXPRESSIONS_INDEX_FILENAME]
-        }
-        centroids_present = StructureCentroids.already_exists(self.source_data_location, verbose=verbose)
+    def _check_databased_files_present(self, verbose: bool = True) -> bool:
+        writer = CompressedMatrixWriter(self.database_config_file)
+        expressions_exist = writer.expressions_indices_already_exist(study=self.study)
+        structure_centroids = StructureCentroids(self.database_config_file)
+        centroids_present = structure_centroids.centroids_exist(study=self.study)
         if verbose:
-            for filename, present in files_present.items():
-                indicator = 'present' if present else 'not present'
-                logger.info('File %s is %s.', filename, indicator)
-            if not centroids_present:
-                logger.info('Centroids files not present.')
+            if not expressions_exist:
+                logger.info(f'Did not find expressions indices. {self._get_study_indicator()}')
             else:
-                logger.info('Centroids files are present.')
-        return all(files_present.values()) and centroids_present
+                logger.info('Found expressions index file(s).')
+            if not centroids_present:
+                logger.info('Databased centroids files not present.')
+            else:
+                logger.info('Databased centroids files are present.')
+        return expressions_exist and centroids_present
 
     def _check_study_sets(self) -> bool:
         return self._check_centroids_bundle_studies() and self._check_expressions_index_studies()
 
-    def _retrieve_files(self):
-        scs = StructureCentroids()
-        scs.set_data_directory(self.source_data_location)
-        scs.load_from_file()
+    def _do_caching(self):
+        scs = StructureCentroids(self.database_config_file)
+        scs.load_from_db(study=self.study)
         self.centroids = cast(dict[str, dict[str, list]], scs.get_studies())
-
-        filename = join(self.source_data_location, EXPRESSIONS_INDEX_FILENAME)
-        with open(filename, 'rt', encoding='utf-8') as file:
-            self.expressions_index = load_json_string(file.read())['']
+        self.expressions_index = []
+        if self.study is None:
+            studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            studies = (study,)
+        for study in studies:
+            blob = retrieve_expressions_index(self.database_config_file, study)
+            self.expressions_index.extend(load_json_string(blob)[''])
 
     def _check_centroids_bundle_studies(self):
         indexed_studies = self.centroids.keys()
-        known_studies = self._retrieve_measurement_studies()
-        known_measurement_studies = [row[1] for row in known_studies]
+        if self.study is None:
+            known_studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            known_studies = (self.study,)
         log_expected_found(
-            known_measurement_studies,
+            known_studies,
             indexed_studies,
             'Study "%s" not mentioned in centroids file.',
             '"%s" is mentioned in centroids file but not actually in database.',
             context='centroids',
         )
-        return set(known_measurement_studies).issubset(set(indexed_studies))
+        return set(known_studies).issubset(set(indexed_studies))
 
     def _check_expressions_index_studies(self):
         indexed_measurement_studies = [
@@ -165,7 +137,10 @@ class FastCacheAssessor:
         return set(known_measurement_studies).issubset(set(indexed_measurement_studies))
 
     def _retrieve_measurement_studies(self) -> list[tuple[str, str]]:
-        study_names = retrieve_study_names(None)
+        if self.study is None:
+            study_names = tuple(retrieve_study_names(None))
+        else:
+            study_names = (self.study,)
         studies = []
         for study in study_names:
             with DBCursor(study=study) as cursor:
@@ -184,7 +159,7 @@ class FastCacheAssessor:
         )
 
     def _check_centroids_samples(self, study: str, measurement_study: str) -> bool:
-        indexed_samples = self.centroids[measurement_study].keys()
+        indexed_samples = self.centroids[study].keys()
         known_samples = self._retrieve_known_samples_measurement(study, measurement_study)
         log_expected_found(
             known_samples,
@@ -202,14 +177,7 @@ class FastCacheAssessor:
         )
 
     def _check_expressions_index_samples(self, study: str, measurement_study: str) -> bool:
-        index = [
-            row for row in self.expressions_index
-            if row['specimen measurement study name'] == measurement_study
-        ][0]
-        indexed_samples = [
-            entry['specimen']
-            for entry in index['expressions files']
-        ]
+        indexed_samples = retrieve_indexed_samples(cast(str, self.database_config_file), study)
         known_samples = self._retrieve_known_samples_measurement(study, measurement_study)
         log_expected_found(
             known_samples,
@@ -229,19 +197,6 @@ class FastCacheAssessor:
             rows = cursor.fetchall()
         return [row[0] for row in rows]
 
-    @staticmethod
-    def recreation_enabled() -> bool:
-        """If environment variable DISABLE_FAST_CACHE_RECREATION=1, the fast cache assessor will not
-        do cache recreation, and it will not delete old cache. It will do only read operations.
-        If this environment variable does not exist or is not equal to 1, recreation will be
-        considered and possibly attempted.
-        """
-        key = 'DISABLE_FAST_CACHE_RECREATION'
-        if key in environ:
-            disable_fast_cache_recreation = environ[key] == '1'
-        else:
-            disable_fast_cache_recreation = False
-        return not disable_fast_cache_recreation
 
 def log_expected_found(set1, set2, message1, message2, context: str=''):
     """Logs error message1 (one formattable argument) for each element of set1 (expected) that is
@@ -258,6 +213,7 @@ def log_expected_found(set1, set2, message1, message2, context: str=''):
         logger.error(message1, element)
     for element in set(set2).difference(set(set1)):
         logger.warning(message2, element)
+
 
 def abbreviate_list(items: list[str]):
     if len(items) > 5:

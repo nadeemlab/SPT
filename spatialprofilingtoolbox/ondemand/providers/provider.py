@@ -1,23 +1,22 @@
 """Base class for on-demand calculation providers."""
 
-from typing import (
-    cast,
-    Any,
-)
+from typing import cast
+from typing import Any
 from abc import ABC
-from re import search
-from os import listdir
-from os.path import join
-from os.path import isfile
 from json import loads
 from warnings import warn
 
 from pandas import DataFrame
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
+from spatialprofilingtoolbox.db.database_connection import retrieve_primary_study
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
     StudyStructureCentroids,
 )
+from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -28,90 +27,102 @@ class OnDemandProvider(ABC):
     data_arrays: dict[str, dict[str, DataFrame]]
     timeout: int
     timeouts: dict[tuple[str, str], float]
+    database_config_file: str
 
     @classmethod
     def service_specifier(cls) -> str:
         raise NotImplementedError
 
-    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
+    def __init__(self, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
         """Load expressions from data files and a JSON index file in the data directory."""
-        self._load_expressions_indices(data_directory)
+        self.database_config_file = cast(str, database_config_file)
+        self._load_expressions_indices()
         self.timeout = timeout
         self.timeouts = {}
         centroids = None
         if load_centroids:
-            loader = StructureCentroids()
-            loader.set_data_directory(data_directory)
-            loader.load_from_file()
+            loader = StructureCentroids(database_config_file)
+            loader.load_from_db()
             centroids = loader.get_studies()
-        self._load_data_matrices(data_directory, centroids)
+        self._load_data_matrices(centroids=centroids)
         logger.info('%s is finished loading source data.', type(self).__name__)
 
-    def _load_expressions_indices(self, data_directory: str) -> None:
+    def _load_expressions_indices(self) -> None:
         """Load expressions metadata from a JSON-formatted index file."""
-        logger.debug('Searching for source data in: %s', data_directory)
-        json_files = [
-            f for f in listdir(data_directory)
-            if isfile(join(data_directory, f)) and search(r'\.json$', f)
-        ]
-        if len(json_files) != 1:
-            message = 'Did not find index JSON file.'
-            logger.error(message)
-            raise FileNotFoundError(message)
-        with open(join(data_directory, json_files[0]), 'rt', encoding='utf-8') as file:
-            root = loads(file.read())
+        logger.debug('Searching for source data in database')
+        self.studies = {}
+        for study_name in retrieve_study_names(self.database_config_file):
+            get_index = retrieve_expressions_index
+            decoded_blob = get_index(self.database_config_file, study_name)
+            root = loads(decoded_blob)
             entries = root[list(root.keys())[0]]
-            self.studies = {}
             for entry in entries:
                 self.studies[entry['specimen measurement study name']] = entry
 
     def _load_data_matrices(
         self,
-        data_directory: str,
         centroids: dict[str, StudyStructureCentroids] | None = None,
     ) -> None:
         """Load data matrices in reference to a JSON-formatted index file."""
         self.data_arrays = {}
-        for study_name in self._get_study_names():
-            self.data_arrays[study_name] = {
-                item['specimen']: OnDemandProvider._get_data_array_from_file(
-                    join(data_directory, item['filename']),
-                    self.studies[study_name]['target index lookup'],
-                    self.studies[study_name]['target by symbol'],
+        for measurement_study_name in self._get_study_names():
+            study = cast(str, retrieve_primary_study(
+                self.database_config_file, measurement_study_name
+            ))
+            pertinent_specimens = SparseMatrixPuller.get_pertinent_specimens(
+                self.database_config_file,
+                study,
+                measurement_study_name,
+                None,
+            )
+            self.data_arrays[measurement_study_name] = {
+                specimen: self._get_data_array_from_db(
+                    specimen,
+                    self.studies[measurement_study_name]['target index lookup'],
+                    self.studies[measurement_study_name]['target by symbol'],
+                    study,
                 )
-                for item in self.studies[study_name]['expressions files']
+                for specimen in pertinent_specimens
             }
-            shapes = [df.shape for df in self.data_arrays[study_name].values()]
+            shapes = [df.shape for df in self.data_arrays[measurement_study_name].values()]
             logger.debug('Loaded dataframes of sizes %s ...', shapes[0:5])
-            number_specimens = len(self.data_arrays[study_name])
-            specimens = list(self.data_arrays[study_name].keys())
+            number_specimens = len(self.data_arrays[measurement_study_name])
+            specimens = list(self.data_arrays[measurement_study_name].keys())
             logger.debug('%s specimens loaded (%s ...).', number_specimens, specimens[0:5])
             if centroids is not None:
-                for sample, df in self.data_arrays[study_name].items():
-                    self._add_centroids(df, centroids, study_name, sample)
+                for sample, df in self.data_arrays[measurement_study_name].items():
+                    self._add_centroids(df, centroids, measurement_study_name, sample)
 
     def _get_study_names(self) -> list[str]:
         """Retrieve names of the studies held in memory."""
         return list(self.studies.keys())
 
-    @classmethod
-    def _get_data_array_from_file(
-        cls,
-        filename: str,
+    def _get_data_array_from_db(
+        self,
+        specimen: str,
         target_index_lookup: dict,
         target_by_symbol: dict,
+        study_name: str,
     ) -> DataFrame:
-        """Load data arrays from a precomputed binary artifact."""
+        """Load data arrays from a precomputed blob from database."""
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            cursor.execute('''
+                SELECT blob_contents FROM ondemand_studies_index osi
+                WHERE osi.specimen=%s AND osi.blob_type='feature_matrix';
+            ''', (specimen,))
+            result_blob = bytearray(tuple(cursor.fetchall())[0][0])
         rows = []
         target_index_lookup = cast(dict, target_index_lookup)
         target_by_symbol = cast(dict, target_by_symbol)
-        feature_columns = cls._list_columns(target_index_lookup, target_by_symbol)
+        feature_columns = self._list_columns(target_index_lookup, target_by_symbol)
         size = len(feature_columns)
-        with open(filename, 'rb') as file:
+        if result_blob is not None:
+            increment = 0
             while True:
-                buffer1 = file.read(8)
-                buffer2 = file.read(8)
-                row = cls._parse_cell_row(buffer1, buffer2, size)
+                buffer1 = result_blob[increment: increment + 8]
+                buffer2 = result_blob[increment + 8: increment + 16]
+                increment += 16
+                row = self._parse_cell_row(buffer1, buffer2, size)
                 if row is None:
                     break
                 rows.append(row)
@@ -132,20 +143,23 @@ class OnDemandProvider(ABC):
         int_id = int.from_bytes(buffer1, 'little')
         return tuple([int(b) for b in list(truncated_to_channels)] + [int_phenotypes] + [int_id])
 
-    @staticmethod
     def _add_centroids(
+        self,
         df: DataFrame,
         centroids: dict[str, StudyStructureCentroids],
-        study_name: str,
+        measurement_study_name: str,
         sample: str,
     ) -> None:
         coordinates = ['pixel x', 'pixel y']
+        study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
+        study_name = cast(str, study_name)
         location_data = DataFrame.from_dict(centroids[study_name][sample], orient='index')
         if location_data.shape[0] != df.shape[0]:
             present = location_data.shape[0]
             before = df.shape[0]
             message = f'Can not add location data {present} to feature matrix with {before} rows.'
             logger.error(message)
+            logger.error(location_data)
         df[coordinates] = location_data
 
     @staticmethod

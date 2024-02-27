@@ -80,7 +80,10 @@ process workflow_main {
      --diagnosis-file=${diagnosis} \
      --interventions-file=${interventions} \
      --channels-file=${channels_file} \
-     --phenotypes-file=${phenotypes_file}
+     --phenotypes-file=${phenotypes_file} ;
+    spt ondemand cache-expressions-data-array \
+     --database-config-file=${db_config_file} \
+     --study-file=${study} ;
     """
 }
 

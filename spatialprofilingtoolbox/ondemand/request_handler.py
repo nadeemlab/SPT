@@ -221,9 +221,6 @@ class OnDemandRequestHandler(BaseRequestHandler):
         cells = cast(CellsProvider, self.server.providers.cells)
         measurement_study = self._get_measurement_study(study)
         message = cells.get_bundle(measurement_study, sample) + self._get_end_of_transmission()
-
-        logger.info(message)
-
         self.request.sendall(message.encode('utf-8'))
         return True
 

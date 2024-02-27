@@ -43,7 +43,7 @@ class CellsProvider(OnDemandProvider):
         {
             'feature_names': ['histological structure id', 'pixel x', 'pixel y', '<feature name1>', ...],
             'cells': [
-                ['<histological structure id>', <pixel x>, <pixel y>, <feature value 0/1>, ...],
+                [<histological structure id integer>, <pixel x>, <pixel y>, <feature value 0/1>, ...],
                 ...
             ]
         }

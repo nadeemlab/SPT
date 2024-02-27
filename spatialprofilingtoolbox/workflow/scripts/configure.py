@@ -40,8 +40,6 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger('spt db configure')
 
-workflows = {name: get_workflow(name) for name in get_workflow_names()}
-
 NF_CONFIG_FILE = 'nextflow.config'
 
 
@@ -265,6 +263,7 @@ if __name__ == '__main__':
         else {}
     config_variables = {k: v.lower() for k, v in config_variables.items()}
     workflow_name: str = args.workflow.lower()
+    workflows = {name: get_workflow(name) for name in get_workflow_names()}
     workflow_configuration = workflows[workflow_name]
     config_variables['workflow'] = args.workflow
 

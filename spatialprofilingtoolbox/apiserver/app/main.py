@@ -9,6 +9,8 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi import Response
 from fastapi.responses import StreamingResponse
+from fastapi import Query
+from fastapi import HTTPException
 
 import secure
 
@@ -21,6 +23,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
+    CellData,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -287,6 +290,20 @@ def get_squidpy_metrics(
             radius=radius,
         )
     return metrics
+
+
+@app.get("/cell-data/")
+async def get_cell_data(
+    study: ValidStudy,
+    sample: str = Query(max_length=512),
+) -> CellData:
+    """Get cell-level location and phenotype data.
+    """
+    if not sample in query().get_sample_names(study):
+        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+    with OnDemandRequester(service='cells') as requester:
+        payload = requester.get_cells_data(study, sample)
+    return payload
 
 
 @app.get("/visualization-plots/")

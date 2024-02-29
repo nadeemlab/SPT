@@ -67,3 +67,10 @@ class UMAPChannel(BaseModel):
     """
     channel: str
     base64_png: str
+
+
+class CellData(BaseModel):
+    """Cell-level data including position and phenotype information, for a single sample.
+    """
+    feature_names: list[str]
+    cells: list[list[str | float | int]]

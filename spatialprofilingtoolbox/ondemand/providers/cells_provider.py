@@ -37,7 +37,7 @@ class CellsProvider(OnDemandProvider):
                     message = f'Dropped {defect1} columns due to to NAs, for {sample_identifier}.'
                     logger.warning(message)
 
-    @simple_instance_method_cache(maxsize=10000)
+    @simple_instance_method_cache(maxsize=10000, log=True)
     def get_bundle(self, measurement_study: str, sample: str) -> str:
         """
         JSON-formatted representation of the cell-level data for the given sample.

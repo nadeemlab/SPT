@@ -2,15 +2,21 @@
 
 from functools import wraps
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+
+logger = colorized_logger(__name__)
+
 __shared_simple_cache__: dict = {}
 
-def simple_instance_method_cache(maxsize=1000):
+def simple_instance_method_cache(maxsize: int=1000, log: bool = False):
     def decorator(func):
         if func.__name__ not in __shared_simple_cache__:
             __shared_simple_cache__[func.__name__] = {}
         @wraps(func)
         def wrapped_func(self, *args):
             if args in __shared_simple_cache__[func.__name__]:
+                if log:
+                    logger.info(f'Cache hit: {func.__name__}  {args}')
                 return __shared_simple_cache__[func.__name__][args]
             result = func(self, *args)
             if len(__shared_simple_cache__[func.__name__]) >= maxsize:

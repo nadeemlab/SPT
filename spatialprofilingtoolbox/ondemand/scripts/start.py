@@ -11,6 +11,7 @@ from spatialprofilingtoolbox.ondemand.tcp_server import (
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
+from spatialprofilingtoolbox.ondemand.providers.cells_provider import CellsProvider
 
 from spatialprofilingtoolbox.ondemand.request_handler import OnDemandRequestHandler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -39,7 +40,7 @@ def start_services(
     service: str | None, 
     timeout: int,
 ) -> None:
-    service_classes = (CountsProvider, ProximityProvider, SquidpyProvider)
+    service_classes = (CountsProvider, ProximityProvider, SquidpyProvider, CellsProvider)
     specifiers_classes = {c.service_specifier(): c for c in service_classes}
     providers_initialized = {
         specifier: service_class(timeout, None) if service in (specifier, None) else None

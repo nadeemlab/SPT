@@ -2,12 +2,14 @@
 
 from socketserver import BaseRequestHandler
 from json import dumps
+from typing import cast
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.tcp_server import OnDemandTCPServer
+from spatialprofilingtoolbox.ondemand.providers.cells_provider import CellsProvider
 from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -30,7 +32,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     def _handle(self) -> None:
         """Handle an on demand request."""
-        data: bytes = self.request.recv(1000000).strip()
+        data: bytes = self.request.recv(10000000).strip()
         logger.info('Request: %s', data)
         if self._handle_empty_body(data):
             return
@@ -42,21 +44,32 @@ class OnDemandRequestHandler(BaseRequestHandler):
                     self._send_error_response()
                     return
                 handled = self._handle_single_phenotype_counts_request(groups)
+                if handled:
+                    return
             case 'proximity':
                 if self.server.providers.proximity is None:
                     self._send_error_response()
                     return
                 handled = self._handle_proximity_request(groups)
-            case _:
-                pass
-        if not handled:
-            if request_class in squidpy_feature_classnames():
-                if self.server.providers.squidpy is None:
+                if handled:
+                    return
+            case 'cells':
+                if self.server.providers.cells is None:
                     self._send_error_response()
                     return
-                handled = self._handle_squidpy_request(request_class, groups)
-        if not handled:
-            self._send_error_response()
+                handled = self._handle_cells_request(groups)
+                if handled:
+                    return
+            case _:
+                pass
+        if request_class in squidpy_feature_classnames():
+            if self.server.providers.squidpy is None:
+                self._send_error_response()
+                return
+            handled = self._handle_squidpy_request(request_class, groups)
+            if handled:
+                return
+        self._send_error_response()
 
     @staticmethod
     def _get_request_class_and_groups(data: bytes) -> tuple[str, list[str]]:
@@ -161,7 +174,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
             cells_selected = None
         return study_name, positive_channel_names, negative_channel_names, cells_selected
 
-    def _handle_proximity_request(self, groups):
+    def _handle_proximity_request(self, groups) -> bool:
         if len(groups) != 6:
             return False
         specification = self._get_phenotype_pair_specification(groups)
@@ -202,7 +215,16 @@ class OnDemandRequestHandler(BaseRequestHandler):
         ]
         return [study_name, radius, channel_lists]
 
-    def _handle_squidpy_request(self, feature_class, groups):
+    def _handle_cells_request(self, groups) -> bool:
+        study = groups[0]
+        sample = groups[1]
+        cells = cast(CellsProvider, self.server.providers.cells)
+        measurement_study = self._get_measurement_study(study)
+        message = cells.get_bundle(measurement_study, sample) + self._get_end_of_transmission()
+        self.request.sendall(message.encode('utf-8'))
+        return True
+
+    def _handle_squidpy_request(self, feature_class, groups) -> bool:
         logger.debug(groups)
         match feature_class:
             case 'neighborhood enrichment':

@@ -252,6 +252,7 @@ class QueryCursor:
     get_umaps_low_resolution: Callable
     get_umap: Callable
     get_important_cells: Callable
+    get_sample_names: Callable
 
     def __init__(self, query_handler: Type):
         self.query_handler = query_handler

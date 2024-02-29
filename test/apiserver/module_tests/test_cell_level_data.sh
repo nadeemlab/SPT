@@ -37,4 +37,22 @@ function test_cell_data() {
     fi
 }
 
+function test_missing_case() {
+    study=$1
+    sample=$2
+    query="http://spt-apiserver-testing:8080/cell-data/?study=$study&sample=$sample"
+    echo -e "Doing query $blue$query$reset_code ... "
+    curl -s "$query" > result.txt
+    cat result.txt
+    diff result.txt module_tests/expected_error.txt
+    status=$?
+    rm result.txt
+    if [ ! $status -eq 0 ];
+    then
+        echo "Did not get the expected error message in case of missing sample."
+        exit 1
+    fi
+}
+
 test_cell_data "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/expected_cell_data_1.json
+test_missing_case "Melanoma+intralesional+IL2" "ABC"

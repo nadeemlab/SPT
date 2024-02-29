@@ -32,7 +32,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     def _handle(self) -> None:
         """Handle an on demand request."""
-        data: bytes = self.request.recv(1000000).strip()
+        data: bytes = self.request.recv(10000000).strip()
         logger.info('Request: %s', data)
         if self._handle_empty_body(data):
             return

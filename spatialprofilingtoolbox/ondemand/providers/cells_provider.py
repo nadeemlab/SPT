@@ -2,6 +2,7 @@
 
 from json import dumps
 
+from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -36,6 +37,7 @@ class CellsProvider(OnDemandProvider):
                     message = f'Dropped {defect1} columns due to to NAs, for {sample_identifier}.'
                     logger.warning(message)
 
+    @simple_instance_method_cache(maxsize=10000)
     def get_bundle(self, measurement_study: str, sample: str) -> str:
         """
         JSON-formatted representation of the cell-level data for the given sample.

@@ -54,6 +54,7 @@ class OnDemandProvider(ABC):
         for study_name in retrieve_study_names(self.database_config_file):
             get_index = retrieve_expressions_index
             decoded_blob = get_index(self.database_config_file, study_name)
+            decoded_blob = cast(str, decoded_blob)
             root = loads(decoded_blob)
             entries = root[list(root.keys())[0]]
             for entry in entries:

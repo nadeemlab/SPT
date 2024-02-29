@@ -10,6 +10,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi import Response
 from fastapi.responses import StreamingResponse
 from fastapi import Query
+from fastapi import HTTPException
 
 import secure
 
@@ -298,6 +299,8 @@ async def get_cell_data(
 ) -> CellData:
     """Get cell-level location and phenotype data.
     """
+    if not sample in query().get_sample_names(study):
+        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
     with OnDemandRequester(service='cells') as requester:
         payload = requester.get_cells_data(study, sample)
     return payload

@@ -124,7 +124,7 @@ class OnDemandRequester:
     def _parse_response(self):
         received = None
         buffer = bytearray()
-        bytelimit = 10000000
+        bytelimit = 100000000
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)

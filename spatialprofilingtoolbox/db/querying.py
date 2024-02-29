@@ -113,6 +113,10 @@ class QueryHandler:
             cell_limit,
         )
 
+    @classmethod
+    def get_sample_names(cls, cursor, study) -> tuple[str, ...]:
+        return StudyAccess(cursor).get_specimen_names(study)
+
 
 def query() -> QueryCursor:
     return QueryCursor(QueryHandler)

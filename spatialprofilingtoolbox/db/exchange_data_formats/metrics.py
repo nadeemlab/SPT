@@ -69,7 +69,8 @@ class UMAPChannel(BaseModel):
     base64_png: str
 
 
-class CGGNNImportanceRank(BaseModel):
-    """The importance ranking of histological structures in a study."""
-    histological_structure_id: int
-    rank: int
+class CellData(BaseModel):
+    """Cell-level data including position and phenotype information, for a single sample.
+    """
+    feature_names: list[str]
+    cells: list[list[str | float | int]]

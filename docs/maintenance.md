@@ -204,3 +204,22 @@ Each workflow consists of:
 - integration/wrap-up
 
 **To make a new workflow**: copy the `phenotype_proximity` subdirectory to a sibling directory with a new name. Update the components accordingly, and update [`workflow/__init__.py`](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/__init__.py) with a new entry for your workflow, to ensure that it is discovered. You'll also need to update [`pyproject.toml`](https://github.com/nadeemlab/SPT/blob/main/pyproject.toml.unversioned) to declare your new subpackage.
+
+
+## <a id="one-test"></a> 8. Do one test
+
+It is often useful during development to run one test (e.g. a new test for a new feature).
+This is a little tricky in our environment, which creates an elaborate test harness to simulate the production environment.
+However, it can be done with the following snippet.
+
+```bash
+SHELL=$(realpath build/build_scripts/status_messages_only_shell.sh) \
+MAKEFLAGS=--no-builtin-rules \
+BUILD_SCRIPTS_LOCATION_ABSOLUTE=$(realpath build/build_scripts) \
+MESSAGE='bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh' \
+DOCKER_ORG_NAME=nadeemlab \
+DOCKER_REPO_PREFIX=spt \
+TEST_LOCATION_ABSOLUTE=$(realpath test) \
+TEST_LOCATION=test \
+  make --no-print-directory -C build/SUBMODULE_NAME test-../../test/SUBMODULE_NAME/module_tests/TEST_FILENAME
+```

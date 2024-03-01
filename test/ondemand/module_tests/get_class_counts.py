@@ -27,4 +27,6 @@ if __name__ == '__main__':
         )
     else:
         raise ValueError(f'{sys.argv[1]} is not a valid case to test.')
-    print(json.dumps(counts.model_dump(), indent=4), end='')
+    dump = counts.model_dump()
+    json_str = json.dumps(dump, indent=4)
+    print(json_str, end='')

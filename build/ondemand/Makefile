@@ -32,7 +32,6 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
 >@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-module-testing: ${MODULE_TESTS}
@@ -40,7 +39,6 @@ teardown-module-testing: ${MODULE_TESTS}
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
 >@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-testing: ${TESTS}
@@ -48,7 +46,6 @@ teardown-testing: ${TESTS}
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
 >@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 ${TESTS}: setup-testing
@@ -87,6 +84,5 @@ clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -f status_code
 >@rm -rf ../../test/ondemand/expression_data/
->@rm -f ../../test/ondemand/module_tests/expected_binary_expression_data_cohoused/.spt_db.config.generated
 >@rm -rf ../../test/test_data/fast_cache_testing
 >@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;

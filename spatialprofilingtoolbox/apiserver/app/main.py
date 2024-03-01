@@ -7,9 +7,10 @@ from base64 import b64decode
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from fastapi import Query
 from fastapi import Response
 from fastapi.responses import StreamingResponse
+from fastapi import Query
+from fastapi import HTTPException
 
 import secure
 
@@ -22,7 +23,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
-    CGGNNImportanceRank,
+    CellData,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -211,23 +212,26 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
     return get_squidpy_metrics(study, list(markers), feature_class, radius=radius)
 
 
-@app.get("/request-cggnn-metrics/")
-async def request_cggnn_metrics(
-    study: ValidStudy,
-) -> list[CGGNNImportanceRank]:
-    """Importance scores as calculated by cggnn."""
-    return query().get_cggnn_metrics(study)
-
-
-@app.get("/cggnn-importance-composition/")
-async def cggnn_importance_composition(
+@app.get("/importance-composition/")
+async def importance_composition(
     study: ValidStudy,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
+    plugin: str = 'cg-gnn',
+    datetime_of_run: str = 'latest',
+    plugin_version: str | None = None,
+    cohort_stratifier: str | None = None,
     cell_limit: int = 100,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of important cells expressing a given phenotype."""
-    cells_selected = query().get_important_cells(study, cell_limit)
+    cells_selected = query().get_important_cells(
+        study,
+        plugin,
+        datetime_of_run,
+        plugin_version,
+        cohort_stratifier,
+        cell_limit,
+    )
     return get_phenotype_counts(
         positive_marker,
         negative_marker,
@@ -286,6 +290,20 @@ def get_squidpy_metrics(
             radius=radius,
         )
     return metrics
+
+
+@app.get("/cell-data/")
+async def get_cell_data(
+    study: ValidStudy,
+    sample: str = Query(max_length=512),
+) -> CellData:
+    """Get cell-level location and phenotype data.
+    """
+    if not sample in query().get_sample_names(study):
+        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+    with OnDemandRequester(service='cells') as requester:
+        payload = requester.get_cells_data(study, sample)
+    return payload
 
 
 @app.get("/visualization-plots/")

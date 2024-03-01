@@ -243,8 +243,14 @@ class StudyAccess(SimpleReadOnlyProvider):
         )
         return Institution(name=name)
 
-    def get_specimen_names(self) -> list[str]:
-        query = 'SELECT specimen FROM specimen_collection_process;'
-        self.cursor.execute(query)
+    @simple_instance_method_cache(maxsize=10)
+    def get_specimen_names(self, study: str) -> tuple[str, ...]:
+        query = '''
+        SELECT specimen
+        FROM specimen_data_measurement_process sdmp
+        JOIN study_component sc ON sc.component_study=sdmp.study
+        WHERE sc.primary_study=%s
+        '''
+        self.cursor.execute(query, (study,))
         rows = self.cursor.fetchall()
-        return sorted([row[0] for row in rows])
+        return tuple(sorted([row[0] for row in rows]))

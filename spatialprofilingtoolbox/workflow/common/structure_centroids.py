@@ -1,12 +1,14 @@
 """An object for storage of summarized-location data for all cells of each study."""
-
+import pickle
 from typing import cast
-from pickle import dump
-from pickle import load
-from os.path import join
-from os import listdir
-from re import search
+from json import loads
 
+from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+from spatialprofilingtoolbox.db.ondemand_studies_index import get_counts
+from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
+from spatialprofilingtoolbox.db.database_connection import retrieve_primary_study
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -18,20 +20,13 @@ StudyStructureCentroids = dict[str, SpecimenStructureCentroids]
 class StructureCentroids:
     """An object for storage of summarized-location data for all cells of each study."""
     _studies: dict[str, StudyStructureCentroids]
-    data_directory: str | None
+    database_config_file: str
+    writing_data_locally_only: bool
 
-    def __init__(self):
+    def __init__(self, database_config_file: str | None, local_only: bool = False):
         self._studies = {}
-        self.data_directory = None
-
-    def set_data_directory(self, data_directory: str):
-        self.data_directory = data_directory
-
-    def get_data_directory(self) -> str:
-        return cast(str, self.data_directory)
-
-    def data_directory_available(self) -> bool:
-        return self.data_directory is not None
+        self.database_config_file = cast(str, database_config_file)
+        self.writing_data_locally_only = local_only
 
     def get_studies(self) -> dict[str, StudyStructureCentroids]:
         """Retrieve the dictionary of studies.
@@ -56,70 +51,78 @@ class StructureCentroids:
         """
         self._studies[measurement_study] = structure_centroids_by_specimen
 
-    def _get_all_centroids_pickle_indices(self) -> tuple[tuple[int, int], ...]:
-        def extract_index(filename) -> tuple[int, int]:
-            pattern = r'^centroids.(\d+)\.(\d+)\.pickle$'
-            match = search(pattern, filename)
-            if match is not None:
-                return (int(match.groups()[0]), int(match.groups()[1]))
-            return cast(tuple[int, int], None)
-        filenames = listdir(self.get_data_directory())
-        return tuple(set(map(extract_index, filenames)).difference([None]))
-
-    def _form_filename(self, study_index: int, specimen_index: int) -> str:
-        return f'centroids.{study_index}.{specimen_index}.pickle'
-
-    def get_all_centroids_pickle_files(self, verbose: bool = False) -> tuple[str, ...]:
-        if verbose:
-            logger.debug('Checking among files: %s', listdir(self.get_data_directory()))
-        return tuple(
-            self._form_filename(study_index, specimen_index)
-            for study_index, specimen_index in self._get_all_centroids_pickle_indices()
-        )
-
-    def wrap_up_specimen(self, study_index: int, specimen_index: int) -> None:
-        if not self.data_directory_available():
+    def wrap_up_specimen(self) -> None:
+        if self.writing_data_locally_only:
             return
         if len(self._studies) != 1:
             message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
             raise ValueError(message % list(self._studies.keys()))
-        study_name, data = list(self._studies.items())[0]
+        measurement_study_name, data = list(self._studies.items())[0]
         specimens = sorted(list(data.keys()))
         if len(specimens) != 1:
             message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
             raise ValueError(message % specimens)
         specimen = specimens[0]
-        filename = self._form_filename(study_index, specimen_index)
-        self._write_centroids(self._studies, filename)
-        message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
+        study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
+        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
+            insert_query = '''
+                INSERT INTO
+                ondemand_studies_index (
+                    specimen,
+                    blob_type,
+                    blob_contents)
+                VALUES (%s, %s, %s) ;
+                '''
+            cursor.execute(insert_query, (specimen, 'centroids', pickle.dumps(data)))
+        message = 'Deleting specimen data "%s" from internal memory, since it is saved to database.'
         logger.debug(message, specimen)
-        del self._studies[study_name]
+        del self._studies[measurement_study_name]
         assert len(self._studies) == 0
 
-    def _write_centroids(self, data: dict[str, StudyStructureCentroids], filename: str) -> None:
-        with open(join(self.get_data_directory(), filename), 'wb') as file:
-            dump(data, file)
-
-    def load_from_file(self) -> None:
+    def load_from_db(self, study: str | None = None) -> None:
         """
-        Reads the structure centroids from files in the data directory supplied during
-        initialization.
+        Reads the structure centroids from the database.
         """
-        for filename in self.get_all_centroids_pickle_files():
-            with open(join(self.get_data_directory(), filename), 'rb') as file:
-                for key, value in load(file).items():
-                    if not key in self._studies:
-                        self._studies[key] = {}
-                    self._studies[key].update(value)
+        if study is None:
+            studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            studies = (study,)
+        for study in studies:
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                cursor.execute('''
+                    SELECT specimen, blob_contents FROM ondemand_studies_index osi
+                    WHERE osi.blob_type='centroids';
+                ''', (study, ))
+                specimens_to_blobs = tuple(cursor.fetchall())
+                self._studies[study] = {}
+                for _, blob in specimens_to_blobs:
+                    obj = pickle.loads(blob)
+                    for key, value in obj.items():
+                        if not key in self._studies:
+                            self._studies[study][key] = {}
+                        self._studies[study][key].update(value)
 
-    @staticmethod
-    def already_exists(data_directory: str, verbose: bool = False) -> bool:
-        """Checks whether the structure centroids files already exist in the given directory."""
-        obj = StructureCentroids()
-        obj.set_data_directory(data_directory)
-        files = obj.get_all_centroids_pickle_files(verbose=verbose)
-        if verbose:
-            logger.info('Centroids files found: %s', files)
-        if not files:
+    def centroids_exist(self, study: str | None = None) -> bool:
+        counts = get_counts(self.database_config_file, 'centroids', study=study)
+        if any(count == 0 for count in counts.values()):
             return False
-        return True
+        expected = {study: self._retrieve_expected_counts(study) for study in counts.keys()}
+        return all(count == expected[study] for study, count in counts.items())
+
+    def _retrieve_expected_counts(self, study: str) -> int | None:
+        decoded_blob = retrieve_expressions_index(self.database_config_file, study)
+        if decoded_blob is None:
+            return None
+        root = loads(decoded_blob)
+        entries = root[list(root.keys())[0]]
+        if len(entries) > 1:
+            raise ValueError(f'Too many studies in one index file: {len(entries)}.')
+        entry = entries[0]
+        measurement_study = entry['specimen measurement study name']
+        specimens = SparseMatrixPuller.get_pertinent_specimens(
+            self.database_config_file,
+            study,
+            measurement_study,
+            None,
+        )
+        return len(specimens)

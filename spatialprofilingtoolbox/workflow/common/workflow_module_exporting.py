@@ -17,13 +17,16 @@ class WorkflowModules(NamedTuple):
     ----------
     is_database_visitor: bool
         Whether the workflow is a database visitor.
-    assets_needed: list[tuple[str, str]]
-        What file assets the workflow needs. The first tuple entry is the directory inside
-        `spatialprofilingtoolbox.workflow` that contains the asset (using period separators like
-        in Python imports), and the second is the filename of the asset. One of the filenames must
-        be `main.nf`, which is the entry point for the workflow. All other files will be copied to
-        a subdirectory `nf_files` at configuration time; make sure to write includes in your
-        Nextflow files to reflect this runtime directory structure if you're using them.
+    assets_needed: list[tuple[str, str, bool]]
+        What Nextflow file assets the workflow needs. The tuple format is as follows:
+            1. (str) The directory inside `spatialprofilingtoolbox.workflow` that contains the asset
+               (using period separators like in Python imports).
+            2. (str) The filename of the asset.
+            3. (bool) Whether this file is the workflow's entry point. (There can only be one of
+               these.) This file will be copied into the main directory as `main.nf`, and all other
+               assets will be copied to the subdirectory `nf_files` at configuration time. If you're
+               using `include` in your Nextflow files, make sure to write them to reflect this
+               runtime directory structure.
     generator: Type[JobGenerator] | None = None
     initializer: Type[Initializer] | None = None
     core_job: Type[CoreJob] | None = None
@@ -37,7 +40,7 @@ class WorkflowModules(NamedTuple):
         The name of the Docker Hub image to use for the workflow.
     """
     is_database_visitor: bool
-    assets_needed: list[tuple[str, str]]
+    assets_needed: list[tuple[str, str, bool]]
     generator: Type[JobGenerator] | None = None
     initializer: Type[Initializer] | None = None
     core_job: Type[CoreJob] | None = None

@@ -24,12 +24,12 @@ logger = colorized_logger(__name__)
 class SquidpyProvider(PendingProvider):
     """Calculate selected squidpy metrics."""
 
-    def __init__(self, data_directory: str, timeout: int, load_centroids: bool = False) -> None:
+    def __init__(self, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
         """Load from binary expression files and JSON-formatted index in the data directory.
 
         Note: SquidpyProvider always loads centroids because it needs them.
         """
-        super().__init__(data_directory, timeout, load_centroids=True)
+        super().__init__(timeout, database_config_file, load_centroids=True)
 
     @classmethod
     def service_specifier(cls) -> str:

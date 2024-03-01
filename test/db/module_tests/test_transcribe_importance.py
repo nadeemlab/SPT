@@ -63,7 +63,13 @@ def test_transcribe_importances():
     df = df.set_index('histological_structure')
     database_config_file = '../db/.spt_db.config.container'
     study = 'Melanoma intralesional IL2'
-    transcribe_importance(df, database_config_file, study)
+    transcribe_importance(
+        df,
+        database_config_file,
+        study,
+        'cg-gnn',
+        'October 2, 2023 10:16 AM',
+    )
     with DBConnection(database_config_file=database_config_file, study=study) as connection:
         feature_values = retrieve_feature_values(connection)
     check_records(feature_values)

@@ -11,6 +11,7 @@ from spatialprofilingtoolbox.ondemand.tcp_server import (
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
+from spatialprofilingtoolbox.ondemand.providers.cells_provider import CellsProvider
 
 from spatialprofilingtoolbox.ondemand.request_handler import OnDemandRequestHandler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -19,14 +20,14 @@ logger = colorized_logger('spt ondemand start')
 
 
 def start() -> None:
-    source_data_location, host, port, service, timeout = get_cli_arguments()
-    setup_data_sources(source_data_location, service)
-    start_services(source_data_location, host, port, service, timeout)
+    host, port, service, timeout = get_cli_arguments()
+    setup_data_sources(service)
+    start_services(host, port, service, timeout)
 
 
-def setup_data_sources(source_data_location: str, service: str | None) -> None:
+def setup_data_sources(service: str | None) -> None:
     wait_for_database_ready()
-    assessor = FastCacheAssessor(source_data_location)
+    assessor = FastCacheAssessor(database_config_file=None)
     if service is None or service == CountsProvider.service_specifier():
         assessor.assess_and_act()
     else:
@@ -34,16 +35,15 @@ def setup_data_sources(source_data_location: str, service: str | None) -> None:
 
 
 def start_services(
-    source_data_location: str,
     host: str,
     port: int,
     service: str | None, 
     timeout: int,
 ) -> None:
-    service_classes = (CountsProvider, ProximityProvider, SquidpyProvider)
+    service_classes = (CountsProvider, ProximityProvider, SquidpyProvider, CellsProvider)
     specifiers_classes = {c.service_specifier(): c for c in service_classes}
     providers_initialized = {
-        specifier: service_class(source_data_location, timeout) if service in (specifier, None) else None
+        specifier: service_class(timeout, None) if service in (specifier, None) else None
         for specifier, service_class in specifiers_classes.items()
     }
     tcp_server = OnDemandTCPServer(
@@ -58,7 +58,7 @@ def start_services(
     tcp_server.serve_forever(poll_interval=0.2)
 
 
-def get_cli_arguments() -> tuple[str, str, int, str | None, int]:
+def get_cli_arguments() -> tuple[str, int, str | None, int]:
     parser = argparse.ArgumentParser(
         prog='spt ondemand start',
         description='Server providing counts of samples satisfying given partial signatures.',
@@ -79,15 +79,6 @@ def get_cli_arguments() -> tuple[str, str, int, str | None, int]:
         help='The port on which to open the TCP socket.',
     )
     parser.add_argument(
-        '--source-data-location',
-        dest='source_data_location',
-        type=str,
-        default='/ondemand/source_data/',
-        help='The directory in which this process will search for expression data binaries and '
-        'the JSON index file. If they are not found, this program will attempt to create them '
-        'from data in the database referenced by argument DATABASE_CONFIG_FILE.',
-    )
-    parser.add_argument(
         '--timeout-seconds',
         dest='timeout_seconds',
         type=int,
@@ -105,7 +96,7 @@ def get_cli_arguments() -> tuple[str, str, int, str | None, int]:
         help='Choose which service to start. If not provided, all services will be started.',
     )
     args = parser.parse_args()
-    return args.source_data_location, args.host, args.port, args.service, args.timeout_seconds
+    return args.host, args.port, args.service, args.timeout_seconds
 
 
 if __name__ == '__main__':

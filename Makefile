@@ -334,7 +334,7 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_
         docker container start temporary-spt-db-preloading && \
         bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
         pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \
-        docker run \
+        docker container run \
         --rm \
         --network container:temporary-spt-db-preloading \
         --mount type=bind,src=${PWD},dst=/mount_sources \

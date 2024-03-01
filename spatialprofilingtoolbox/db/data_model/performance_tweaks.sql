@@ -44,3 +44,9 @@ CREATE TABLE pending_feature_computation (
     feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
     time_initiated VARCHAR(512)
 );
+
+CREATE TABLE ondemand_studies_index (
+    specimen VARCHAR(512),
+    blob_type VARCHAR(512),
+    blob_contents bytea
+);

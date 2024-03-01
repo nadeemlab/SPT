@@ -131,8 +131,8 @@ packages = [
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.component_interfaces",
-    "spatialprofilingtoolbox.workflow.cggnn",
     "spatialprofilingtoolbox.workflow.graph_generation",
+    "spatialprofilingtoolbox.workflow.graph_plugin",
     "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.reduction_visual",
     "spatialprofilingtoolbox.workflow.tabular_import",
@@ -160,27 +160,20 @@ packages = [
     "compute_umaps_all.py",
 ]
 "spatialprofilingtoolbox.workflow.assets" = [
+    ".spt_db.config.template",
     ".workflow.config.template",
-    "nextflow.config.jinja",
+    "compute_umaps_all.sh",
     "log_table.tex.jinja",
     "log_table.html.jinja",
-    ".spt_db.config.template",
-    "main.nf",
-    "fields.tsv",
-    "compute_umaps_all.sh",
-    "upload_importance_scores.nf",
-]
-"spatialprofilingtoolbox.workflow.cggnn" = [
-    "main.nf",
-    "train.nf",
+    "main_visitor.nf",
+    "nextflow.config.jinja",
 ]
 "spatialprofilingtoolbox.workflow.graph_generation" = [
     "graph_generation.nf",
     "main.nf",
 ]
-"spatialprofilingtoolbox.workflow.tabular_import" = [
-    "main.nf",
-]
+"spatialprofilingtoolbox.workflow.graph_plugin" = ["main.nf"]
+"spatialprofilingtoolbox.workflow.tabular_import" = ["main.nf"]
 "spatialprofilingtoolbox.ondemand.scripts" = [
     "read_expression_dump_file.py",
     "cache_expressions_data_array.py",
@@ -214,7 +207,5 @@ packages = [
     "generate_graphs.py",
     "plot_interactives.py",
     "prepare_graph_creation.py",
-    "seperability.py",
-    "train.py",
     "upload_importances.py",
 ]

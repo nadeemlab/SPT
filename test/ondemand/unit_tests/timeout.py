@@ -6,9 +6,8 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCr
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 
 def do_test():
-    data_directory = 'test_expression_data'
     timeout = 0.05
-    proximity = ProximityProvider(data_directory, timeout)
+    proximity = ProximityProvider(timeout, None)
 
     study = 'Melanoma intralesional IL2'
     phenotype1 = PhenotypeCriteria(positive_markers=['CD3', 'CD4'], negative_markers=['SOX10'])

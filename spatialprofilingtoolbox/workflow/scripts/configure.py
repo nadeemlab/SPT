@@ -2,6 +2,7 @@
 
 import re
 from argparse import ArgumentParser
+from argparse import RawDescriptionHelpFormatter
 from os import (
     getcwd,
     stat,
@@ -40,8 +41,6 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger('spt db configure')
 
-workflows = {name: get_workflow(name) for name in get_workflow_names()}
-
 NF_CONFIG_FILE = 'nextflow.config'
 
 
@@ -64,20 +63,24 @@ def _write_config_file(variables: dict[str, str]) -> None:
 
 def _write_pipeline_script(workflow: WorkflowModules) -> None:
     main_seen: bool = False
-    for subpackage, filename in workflow.assets_needed:
+    for subpackage, filename, is_main in workflow.assets_needed:
         pipeline_file = _retrieve_from_library(subpackage, filename)
-        if filename == 'main.nf':
+        if is_main:
             if main_seen:
-                raise ValueError('Workflow can only one main.nf file.')
+                raise ValueError(
+                    f'Workflow can only have one main Nextflow file. If it\'s {subpackage}.'
+                    f'{filename}, check assets_needed to ensure that it\'s the only file with a '
+                    'True value for the third element of the tuple.'
+                )
             main_seen = True
-            copy_location = join(getcwd(), filename)
+            copy_location = join(getcwd(), 'main.nf')
         else:
             makedirs(join(getcwd(), 'nf_files'), exist_ok=True)
             copy_location = join(getcwd(), 'nf_files', filename)
         with open(copy_location, 'wt', encoding='utf-8') as file:
             file.write(pipeline_file)
     if not main_seen:
-        raise ValueError('Workflow must have a main.nf file.')
+        raise ValueError('Workflow must have a main Nextflow file.')
 
 
 def _record_configuration_command(variables: dict[str, str], configuration_file: str) -> None:
@@ -201,12 +204,13 @@ def parse_arguments():
     """Process command line arguments."""
     parser = ArgumentParser(
         prog='spt workflow configure',
+        formatter_class=RawDescriptionHelpFormatter,
         description="""Configure an SPT (spatialprofilingtoolbox) run in the current directory.
 
 Below the format of the workflow configuration file is described.
 
 General variables should be included under:
-`[general]`:
+    [general]:
     db_config_file: <path>
         Path to a database configuration file.
     container_platform: {None, docker, singularity} (default: None)
@@ -214,17 +218,28 @@ General variables should be included under:
     image_tag: <docker/singularity image name> (default: latest)
         Tag of the Docker Hub image associated with the workflow to use.
 
-Some workflows require additional variables that are defined in their own section.
+Some workflows query an existing database. If so, the following variables are required:
+    [database visitor]
+    study_name: <name of the study to query>
 
-`[tabular_import]`:
+Some workflows require additional variables that are defined in their own section.
+    [tabular import]:
     input_path: <path>
         Path to the directory containing the input data files, e.g., `file_manifest.tsv`.
 
-`[cg-gnn]`:
+    [graph generation]:
     graph_config_file: <path>
-        Path to the graph configuration file. See spatialprofilingtoolbox.cggnn for more details.
-    cuda: {true, false} (default: false)
-        Whether to use a CUDA-enabled container for the CG-GNN workflow training step.
+        Path to the graph configuration file. See spatialprofilingtoolbox.graphs.config_reader for
+        more details.
+
+    [graph plugin]:
+    plugin: {cg-gnn, graph-transformer}
+        Which graph plugin to use.
+    graph_config_file: <path>
+        As above.
+    cuda: {true, false} (default: false for cg-gnn, true for graph-transformer)
+        Whether to use a CUDA-enabled container for the training step.
+        Graph-transformer requires CUDA.
     upload_importances: {true, false} (default: false)
         Whether to upload feature importances to the database after training.
 """
@@ -250,6 +265,7 @@ if __name__ == '__main__':
         else {}
     config_variables = {k: v.lower() for k, v in config_variables.items()}
     workflow_name: str = args.workflow.lower()
+    workflows = {name: get_workflow(name) for name in get_workflow_names()}
     workflow_configuration = workflows[workflow_name]
     config_variables['workflow'] = args.workflow
 

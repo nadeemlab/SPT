@@ -30,12 +30,13 @@ class CompressedDataArrays:
     _target_index_lookups: dict
     _target_by_symbols: dict
 
-    def __init__(self):
+    def __init__(self, database_config_file: str | None):
         self._studies = {}
         self._store_inmemory = True
         self._specimens_by_measurement_study = {}
         self._target_index_lookups = {}
         self._target_by_symbols = {}
+        self.database_config_file = database_config_file
 
     def set_store_inmemory(self, flag: bool) -> None:
         self._store_inmemory = flag
@@ -95,7 +96,7 @@ class CompressedDataArrays:
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
 
-    def wrap_up_specimen(self, study_index: int, specimen_index: int) -> None:
+    def wrap_up_specimen(self) -> None:
         if not self.storing_locally():
             if len(self._studies) != 1:
                 message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
@@ -107,7 +108,8 @@ class CompressedDataArrays:
                 raise ValueError(message % specimens)
             specimen = specimens[0]
             data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
-            CompressedMatrixWriter.write_specimen(data_specimen, study_index, specimen_index)
+            writer = CompressedMatrixWriter(self.database_config_file)
+            writer.write_specimen(data_specimen, study_name, specimen)
             if study_name not in self._specimens_by_measurement_study:
                 self._specimens_by_measurement_study[study_name] = []
             self._specimens_by_measurement_study[study_name].append(specimen)
@@ -124,7 +126,8 @@ class CompressedDataArrays:
     def wrap_up_writing(self) -> None:
         self._sort_specimens()
         if not self.storing_locally():
-            CompressedMatrixWriter.write_index(
+            writer = CompressedMatrixWriter(self.database_config_file)
+            writer.write_index(
                 self._specimens_by_measurement_study,
                 self._target_index_lookups,
                 self._target_by_symbols,
@@ -184,15 +187,18 @@ class SparseMatrixPuller:
 
     def __init__(self, database_config_file: str | None):
         self.database_config_file = database_config_file
-        self._data_arrays = CompressedDataArrays()
+        self._data_arrays = CompressedDataArrays(database_config_file)
 
-    def pull_and_write_to_files(self) -> None:
+    def pull_and_write_to_files(self, study: str | None = None) -> None:
         self._data_arrays.set_store_inmemory(False)
-        study_names = retrieve_study_names(self.database_config_file)
+        if study is None:
+            study_names = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            study_names = (study,)
         logger.info('Will pull feature matrices for studies:')
         for name in study_names:
             logger.info('    %s', name)
-        for study_index, study_name in enumerate(study_names):
+        for study_name in study_names:
             measurement_study = self._get_measurement_study_name(study_name)
             specimens = self._get_pertinent_specimens(study_name, measurement_study)
             progress_reporter = FractionalProgressReporter(
@@ -201,9 +207,9 @@ class SparseMatrixPuller:
                 task_and_done_message=(f'pulling sparse entries for study "{study_name}"', None),
                 logger=logger,
             )
-            for specimen_index, specimen in enumerate(specimens):
+            for specimen in specimens:
                 self.pull(specimen=specimen)
-                self.get_data_arrays().wrap_up_specimen(study_index, specimen_index)
+                self.get_data_arrays().wrap_up_specimen()
                 progress_reporter.increment(iteration_details=specimen)
             progress_reporter.done()
         self.get_data_arrays().wrap_up_writing()
@@ -292,6 +298,20 @@ class SparseMatrixPuller:
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
 
+    @classmethod
+    def get_pertinent_specimens(
+        cls,
+        database_config_file: str,
+        study: str,
+        measurement_study: str,
+        specimen: str | None,
+    ) -> tuple[str, ...]:
+        return SparseMatrixPuller(database_config_file)._get_pertinent_specimens(
+            study,
+            measurement_study,
+            specimen,
+        )
+
     def _get_pertinent_specimens(self,
         study_name: str,
         measurement_study: str,
@@ -350,7 +370,6 @@ class SparseMatrixPuller:
     ) -> list[tuple[str, str, int, str, str]]:
         sparse_entries: list = []
         number_log_messages = 0
-
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
             query, parameters = self._get_sparse_matrix_query_specimen_specific(
                 cursor,
@@ -367,7 +386,6 @@ class SparseMatrixPuller:
                 number_log_messages = number_log_messages + 1
             if number_log_messages > 1:
                 logger.debug('Received %s sparse entries total from DB.', len(sparse_entries))
-
         return sparse_entries
 
     def _get_sparse_matrix_query_specimen_specific(self,
@@ -377,7 +395,6 @@ class SparseMatrixPuller:
     ) -> tuple[str, tuple]:
         structures_present = histological_structures is not None
         parameters: list[str | tuple[str, ...] | int] = []
-
         range_definition = SparseMatrixPuller._retrieve_expressions_range(cursor, specimen)
         query = self._sparse_entries_query(structures_present)
         parameters = [range_definition[0], range_definition[1]]

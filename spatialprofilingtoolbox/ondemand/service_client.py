@@ -11,6 +11,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCounts,
     CompositePhenotype,
     UnivariateMetricsComputationResult,
+    CellData,
 )
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -123,7 +124,7 @@ class OnDemandRequester:
     def _parse_response(self):
         received = None
         buffer = bytearray()
-        bytelimit = 10000000
+        bytelimit = 100000000
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)
@@ -168,6 +169,12 @@ class OnDemandRequester:
             values=response['metrics'],
             is_pending=response['pending'],
         )
+
+    def get_cells_data(self, study: str, sample: str) -> CellData:
+        groups = ['cells', study, sample]
+        query = self._get_group_separator().join(groups).encode('utf-8')
+        self.tcp_client.sendall(query)
+        return self._parse_response()
 
     def __enter__(self):
         return self

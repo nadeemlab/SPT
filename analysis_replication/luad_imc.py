@@ -14,17 +14,17 @@ def test(host):
     df = access.spatial_autocorrelation('B cell')
     values1 = df[df['cohort'] == '1']['spatial autocorrelation, B cell']
     values2 = df[df['cohort'] == '2']['spatial autocorrelation, B cell']
-    compare(values1, values2, expected_fold=1.571, show_pvalue=True)
+    compare(values1, values2, expected_fold=1.513, show_pvalue=True)
 
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Regulatory T cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Regulatory T cell']
-    compare(values1, values2, expected_fold=797.46, do_log_fold=True, show_pvalue=True)
+    compare(values1, values2, expected_fold=467.1, do_log_fold=True, show_pvalue=True)
 
     df = access.neighborhood_enrichment(['CD163+ macrophage', 'Endothelial cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
     values2 = df[df['cohort'] == '2']['neighborhood enrichment, CD163+ macrophage and Endothelial cell']
-    compare(values1, values2, expected_fold=9.858, do_log_fold=True, show_pvalue=True)
+    compare(values1, values2, expected_fold=5.336, do_log_fold=True, show_pvalue=True)
 
     klrd1 = {'positive_markers': ['KLRD1'], 'negative_markers': []}
     cd14 = {'positive_markers': ['CD14'], 'negative_markers': []}

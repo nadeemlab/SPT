@@ -29,5 +29,5 @@ One figure is generated programmatically from published source TIFF files.
 To run the figure generation script, alter the command below to reference your own database configuration file and path to unzipped Moldoveanu et al dataset.
 
 ```bash
-python dataset_directory/ ~/.spt_db.config
+python retrieve_example_plot.py dataset_directory/ ~/.spt_db.config
 ```

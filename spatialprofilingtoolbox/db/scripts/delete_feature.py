@@ -42,10 +42,9 @@ class InteractiveFeatureDropper:
     method: str | None = None
 
     def start(self):
-        if self.specification is None:
-            specified = self._solicit_specification()
-            if not specified:
-                return
+        specified = self._solicit_specification()
+        if not specified:
+            return
         proceed = self._solicit_confirmation()
         if not proceed:
             self._print('Cancelling by user request.', 'flag')

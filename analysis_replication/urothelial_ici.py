@@ -77,6 +77,9 @@ def test(host):
     fractions1, fractions2 = get_fractions(df, 'CD3+ PD1+ LAG3+ intratumoral+', 'CD3+ intratumoral+', '1', '2', omit_zeros=False)
     compare(fractions2, fractions1, expected_fold=2.97, show_pvalue=True, show_auc=True)
 
+    print('\nSpatial results:')
+    
+
 if __name__=='__main__':
     host: str | None
     if len(sys.argv) == 2:

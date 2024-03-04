@@ -347,7 +347,7 @@ def compute_auc(list1: list[float], list2: list[float]) -> float:
     pairs.sort(key=lambda pair: pair[0])
     total_labelled = sum([pair[1] for pair in pairs])
     total_unlabelled = len(pairs) - total_labelled
-    graph_points = [(0, 1)]
+    graph_points = [(0.0, 1.0)]
     true_positives = 0
     true_negatives = total_unlabelled
     for _, label in pairs:
@@ -355,7 +355,7 @@ def compute_auc(list1: list[float], list2: list[float]) -> float:
             true_positives = true_positives + 1
         else:
             true_negatives = true_negatives - 1
-        graph_points.append([true_positives / total_labelled, true_negatives / total_unlabelled])
+        graph_points.append((true_positives / total_labelled, true_negatives / total_unlabelled))
     _auc = auc([p[0] for p in graph_points], [p[1] for p in graph_points])
     _auc = max(_auc, 1 - _auc)
     return _auc

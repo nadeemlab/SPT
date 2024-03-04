@@ -186,6 +186,7 @@ packages = [
     "retrieve_feature_matrices.py",
     "drop.py",
     "drop_ondemand_computations.py",
+    "delete_feature.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "metaschema.sql",

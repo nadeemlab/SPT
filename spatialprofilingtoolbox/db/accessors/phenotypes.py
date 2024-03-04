@@ -12,7 +12,7 @@ class PhenotypeNotFoundError(Exception):
 
 class PhenotypesAccess(SimpleReadOnlyProvider):
     """Access to phenotype-related database data."""
-    def get_phenotype_symbols(self, study: str) -> list[PhenotypeSymbol]:
+    def get_phenotype_symbols(self, study: str) -> tuple[PhenotypeSymbol, ...]:
         components = StudyAccess(self.cursor).get_study_components(study)
         query = '''
         SELECT DISTINCT cp.symbol, cp.identifier
@@ -24,18 +24,18 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         '''
         self.cursor.execute(query, (components.analysis,))
         rows = self.cursor.fetchall()
-        return [
+        return tuple(
             PhenotypeSymbol(handle_string=row[0], identifier=row[1])
             for row in rows
-        ]
+        )
 
-    def get_composite_phenotype_identifiers(self) -> list[str]:
+    def get_composite_phenotype_identifiers(self) -> tuple[str, ...]:
         query = '''
         SELECT cpc.cell_phenotype FROM cell_phenotype_criterion cpc
         ;
         '''
         self.cursor.execute(query)
-        return [row[0] for row in self.cursor.fetchall()]
+        return tuple(row[0] for row in self.cursor.fetchall())
 
     def get_phenotype_criteria(self, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
         query = '''
@@ -86,7 +86,7 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         negatives = sorted([str(row[0]) for row in rows if row[1] == 'negative'])
         return PhenotypeCriteria(positive_markers=positives, negative_markers=negatives)
 
-    def get_channel_names(self, study: str) -> list[str]:
+    def get_channel_names(self, study: str) -> tuple[str, ...]:
         components = StudyAccess(self.cursor).get_study_components(study)
         self.cursor.execute('''
             SELECT cs.symbol
@@ -97,4 +97,4 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
             ''',
             (components.measurement,),
         )
-        return [row[0] for row in self.cursor.fetchall()]
+        return tuple(row[0] for row in self.cursor.fetchall())

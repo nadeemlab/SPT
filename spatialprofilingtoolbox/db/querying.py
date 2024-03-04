@@ -1,6 +1,7 @@
 """Some basic accessors that retrieve from the database."""
 
 import re
+from typing import cast
 
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -20,6 +21,7 @@ from spatialprofilingtoolbox.db.accessors import (
     PhenotypesAccess,
     UMAPAccess,
 )
+from spatialprofilingtoolbox.standalone_utilities import sort
 
 
 class QueryHandler:
@@ -29,8 +31,8 @@ class QueryHandler:
         return StudyAccess(cursor).get_study_components(study)
 
     @classmethod
-    def retrieve_study_specifiers(cls, cursor) -> list[str]:
-        return StudyAccess(cursor).get_study_specifiers()
+    def retrieve_study_specifiers(cls, cursor) -> tuple[str, ...]:
+        return sort(StudyAccess(cursor).get_study_specifiers())
 
     @classmethod
     def retrieve_study_handle(cls, cursor, study: str) -> StudyHandle:
@@ -47,12 +49,14 @@ class QueryHandler:
         return StudyAccess(cursor).get_study_summary(study)
 
     @classmethod
-    def get_composite_phenotype_identifiers(cls, cursor) -> list[str]:
-        return PhenotypesAccess(cursor).get_composite_phenotype_identifiers()
+    def get_composite_phenotype_identifiers(cls, cursor) -> tuple[str, ...]:
+        return sort(PhenotypesAccess(cursor).get_composite_phenotype_identifiers())
 
     @classmethod
-    def get_phenotype_symbols(cls, cursor, study: str) -> list[PhenotypeSymbol]:
-        return PhenotypesAccess(cursor).get_phenotype_symbols(study)
+    def get_phenotype_symbols(cls, cursor, study: str) -> tuple[PhenotypeSymbol, ...]:
+        def key(symbol: PhenotypeSymbol) -> str:
+            return symbol.handle_string
+        return sort(PhenotypesAccess(cursor).get_phenotype_symbols(study), key=key)
 
     @classmethod
     def get_phenotype_criteria(cls, cursor, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
@@ -77,11 +81,11 @@ class QueryHandler:
         return PhenotypeCriteria(positive_markers=[], negative_markers=[])
 
     @classmethod
-    def get_channel_names(cls, cursor, study: str) -> list[Channel]:
-        return [
+    def get_channel_names(cls, cursor, study: str) -> tuple[Channel, ...]:
+        return sort(tuple(
             Channel(symbol=name)
             for name in PhenotypesAccess(cursor).get_channel_names(study)
-        ]
+        ), key=lambda c: c.symbol)
 
     @classmethod
     def get_umaps_low_resolution(cls, cursor, study: str) -> list[UMAPChannel]:
@@ -115,7 +119,7 @@ class QueryHandler:
 
     @classmethod
     def get_sample_names(cls, cursor, study) -> tuple[str, ...]:
-        return StudyAccess(cursor).get_specimen_names(study)
+        return sort(StudyAccess(cursor).get_specimen_names(study))
 
 
 def query() -> QueryCursor:

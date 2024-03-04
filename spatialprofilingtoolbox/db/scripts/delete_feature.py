@@ -59,13 +59,6 @@ class InteractiveFeatureDropper:
         self.known_specifications = tuple(df['Specification'])
 
         self._print(f'   Feature specifications for study "{self.study}"   ', 'title')
-        if self.specification is not None:
-            if not self._check_valid_specification():
-                self._print('Specification ', 'message', end='')
-                self._print(self.specification, 'specification', end='')
-                self._print(' does not exist.', 'message')
-                return False
-
         for method, df1 in df.groupby('Method'):
             self._print(str(method), 'method')
             for specification, df2 in df1.groupby('Specification'):
@@ -74,13 +67,21 @@ class InteractiveFeatureDropper:
                 self._print(': ', None, end='')
                 self._print(one_liner, 'specifiers')
             print('')
-        self._print('Choose specification: ', 'message', end='')
-        try:
-            self.specification = input()
-            print()
-        except KeyboardInterrupt:
-            self._print('Cancelled by user request.', 'flag')
-            return False
+
+        if self.specification is not None:
+            if not self._check_valid_specification():
+                self._print('Specification ', 'message', end='')
+                self._print(self.specification, 'specification', end='')
+                self._print(' does not exist.', 'message')
+                return False
+        else:
+            self._print('Choose specification: ', 'message', end='')
+            try:
+                self.specification = input()
+                print()
+            except KeyboardInterrupt:
+                self._print('Cancelled by user request.', 'flag')
+                return False
         if not self._check_valid_specification():
             self._print(self.specification, 'specification', end='')
             self._print(' is not a valid specification', 'message')

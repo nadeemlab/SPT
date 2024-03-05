@@ -86,7 +86,7 @@ def get_cli_arguments() -> tuple[str, int, str | None, int]:
         help='Maximum runtime that will be tolerated by a single feature value computation, after '
         'which a null is presumed. Default 300 (seconds).'
     )
-    service_classes = [CountsProvider, ProximityProvider, SquidpyProvider]
+    service_classes = [CountsProvider, ProximityProvider, SquidpyProvider, CellsProvider]
     parser.add_argument(
         '--service',
         dest='service',

@@ -74,10 +74,10 @@ class StudyAccess(SimpleReadOnlyProvider):
         is_ondemand_calculation = bool(re.search(descriptor, substudy))
         return is_fractions or is_proximity_calculation or is_ondemand_calculation
 
-    def get_study_specifiers(self) -> list[str]:
+    def get_study_specifiers(self) -> tuple[str, ...]:
         self.cursor.execute('SELECT study FROM study_lookup;')
         rows = self.cursor.fetchall()
-        return [str(row[0]) for row in rows]
+        return tuple(str(row[0]) for row in rows)
 
     def get_study_handle(self, study: str) -> StudyHandle:
         handles: list[StudyHandle] = []

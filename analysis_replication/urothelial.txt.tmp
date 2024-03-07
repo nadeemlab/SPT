@@ -34,6 +34,30 @@ Scenario 2
         CD3+ PD-1+ LAG3+ AND stromal
 
 
+----------
+Composite phenotype run results
+
+
+On average, the ratio of the number of cells that are CD4- CD8- T cells to those that are Tumor is 3.05 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are CD4- CD8- T cells to those that are intratumoral CD3+ LAG3+ is 14.70 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Macrophage to those that are CD4- CD8- T cells is 4.46 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Macrophage to those that are T cytotoxic cells is 7.76 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Macrophage to those that are T helper cells is 4.72 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Macrophage to those that are intratumoral CD3+ LAG3+ is 6.29 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are Regulatory T cells to those that are Tumor is 10.18 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are Regulatory T cells to those that are intratumoral CD3+ LAG3+ is 11.30 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are T cytotoxic cells to those that are T helper cells is 14.47 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are T cytotoxic cells to those that are intratumoral CD3+ LAG3+ is 9.92 times higher in cohort 1 than in cohort 2.
+On average, the ratio of the number of cells that are T helper cells to those that are Tumor is 5.72 times higher in cohort 2 than in cohort 1.
+On average, the ratio of the number of cells that are T helper cells to those that are intratumoral CD3+ LAG3+ is 12.08 times higher in cohort 1 than in cohort 2.
+
+On average, the ratio of the number of cells that are intratumoral CD3+ LAG3+ to those that are T helper cells is 113.01 times higher in cohort 1 than in cohort 2.
+
+
+Not significant:
+On average, the ratio of the number of cells that are CD4- CD8- T cells to those that are T helper cells is 5.47 times higher in cohort 1 than in cohort 2.
+
+
 ==========
 
 Spatial run results.

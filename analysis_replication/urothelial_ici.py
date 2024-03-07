@@ -5,11 +5,10 @@ from accessors import DataAccessor
 from accessors import get_default_host
 from accessors import univariate_pair_compare as compare
 from accessors import get_fractions
+from accessors import ExpectedQuantitativeValueError
 
-def test(host):
-    study = 'Urothelial ICI'
-    access = DataAccessor(study, host=host)
 
+def channel_fractions(access: DataAccessor):
     cd3 = {'positive_markers': ['CD3'], 'negative_markers': []}
     cd3tumoral = {'positive_markers': ['CD3', 'intratumoral'], 'negative_markers': []}
     cd8ki67 = {'positive_markers': ['CD8', 'KI67'], 'negative_markers': []}
@@ -77,8 +76,62 @@ def test(host):
     fractions1, fractions2 = get_fractions(df, 'CD3+ PD1+ LAG3+ intratumoral+', 'CD3+ intratumoral+', '1', '2', omit_zeros=False)
     compare(fractions2, fractions1, expected_fold=2.97, show_pvalue=True, show_auc=True)
 
+
+def phenotype_fractions(access: DataAccessor):
+    print('\nPhenotype results (all weak):')
+    null = 'CD4- CD8- T cell'
+    M = 'Macrophage'
+    Treg = 'Regulatory T cell'
+    Tc = 'T cytotoxic cell'
+    Th = 'T helper cell'
+    T = 'Tumor'
+    ex = 'intratumoral CD3+ LAG3+'
+    cases = (
+        (null, T, 1/3.05),
+        (null, ex, 14.7),
+        (M, null, 4.46),
+        (M, Tc, 7.76),
+        (M, Th, 4.72),
+        (M, ex, 6.29),
+        (Treg, T, 1/10.18),
+        (Treg, ex, 9.885),
+        (Tc, Th, 13.62),
+        (Th, Tc, 0.75),
+        (Tc, ex, 9.92),
+        (Th, T, 1/5.72),
+        (Th, ex, 11.32),
+    )
+    for P1, P2, E in cases:
+        df = access.counts([P1, P2])
+        fractions1, fractions2 = get_fractions(df, P1, P2, '1', '2', omit_zeros=False)
+        compare(fractions2, fractions1, expected_fold=E, show_pvalue=True, show_auc=True)
+
+
+def spatial(access: DataAccessor):
     print('\nSpatial results:')
-    
+
+    # df = access.spatial_autocorrelation(s100b)
+    # values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']
+    # values3 = df[df['cohort'] == '3'][f'spatial autocorrelation, {s100b}']
+    # compare(values1, values3, expected_fold=0.109, show_pvalue=True, show_auc=True)
+
+    # df = access.proximity([s100b, s100b])
+    # values1 = df[df['cohort'] == '1'][f'proximity, {s100b} and {s100b}']
+    # values3 = df[df['cohort'] == '3'][f'proximity, {s100b} and {s100b}']
+    # compare(values1, values3, expected_fold=0.146, show_pvalue=True, show_auc=True)
+
+    # df = access.neighborhood_enrichment([s100b, s100b])
+    # values1 = df[df['cohort'] == '1'][f'neighborhood enrichment, {s100b} and {s100b}']
+    # values3 = df[df['cohort'] == '3'][f'neighborhood enrichment, {s100b} and {s100b}']
+    # compare(values3, values1, expected_fold=14.9, show_pvalue=True, do_log_fold=True, show_auc=True)
+
+def test(host):
+    study = 'Urothelial ICI'
+    access = DataAccessor(study, host=host)    
+    channel_fractions(access)
+    phenotype_fractions(access)
+    # spatial(access)
+
 
 if __name__=='__main__':
     host: str | None

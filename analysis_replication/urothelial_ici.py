@@ -107,8 +107,23 @@ def phenotype_fractions(access: DataAccessor):
         compare(fractions2, fractions1, expected_fold=E, show_pvalue=True, show_auc=True)
 
 
+def one_case_proximity(access, P1, P2, E):
+    df = access.proximity([P1, P2])
+    feature = f'proximity, {P1} and {P2}'
+    values = {c: df[df['cohort'] == c][feature] for c in ('1', '2')}
+    compare(values['1'], values['2'], expected_fold=E, show_pvalue=True, show_auc=True)
+
 def spatial(access: DataAccessor):
     print('\nSpatial results:')
+    cases = (
+        ('intratumoral CD3+ LAG3+', 'intratumoral CD3+ LAG3+', 1.8, None),
+        ('intratumoral+ CD3+', 'PDL1+', 1 / 1.61, 1.0),
+        ('intratumoral CD3+ LAG3+', 'T helper cell', 1.59, 1.0),
+    )
+    for P1, P2, E, Ei in cases:
+        one_case_proximity(access, P1, P2, E)
+        if P1 != P2:
+            one_case_proximity(access, P2, P1, Ei)
 
     # df = access.spatial_autocorrelation(s100b)
     # values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']

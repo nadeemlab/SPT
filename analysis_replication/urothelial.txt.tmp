@@ -64,5 +64,21 @@ Spatial run results.
 
 The average value of the proximity score for phenotype(s) intratumoral CD3+ LAG3+ is 1.80 times higher in cohort 2 than in cohort 1.
 
+The average value of the proximity score for phenotype(s) intratumoral+ CD3+, PD1+ is 1.61 times higher in cohort 1 than in cohort 2.
+
+The average value of the proximity score for phenotype(s) intratumoral CD3+ LAG3+, T helper cell is 1.59 times higher in cohort 2 than in cohort 1.
+
+The average value of the neighborhood enrichment score for phenotype(s) Macrophage, CD4- CD8- T cell is 97.52 times higher in cohort 2 than in cohort 1.
+
+The average value of the neighborhood enrichment score for phenotype(s) Regulatory T cell, CD4- CD8- T cell is 17897.32 times higher in cohort 2 than in cohort 1.
+
+The average value of the neighborhood enrichment score for phenotype(s) Regulatory T cell, Macrophage is 22141084521290801152.00 times higher in cohort 2 than in cohort 1.
+The average value of the neighborhood enrichment score for phenotype(s) T cytotoxic cell, Macrophage is 899752317980332416.00 times higher in cohort 2 than in cohort 1.
+The average value of the neighborhood enrichment score for phenotype(s) T helper cell, Macrophage is 9.578336100232475e+21 times higher in cohort 2 than in cohort 1.
+The average value of the neighborhood enrichment score for phenotype(s) intratumoral CD3+ LAG3+, Macrophage is 12648970107.68 times higher in cohort 2 than in cohort 1.
+
+
+
+
 
 

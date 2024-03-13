@@ -1,5 +1,6 @@
 """Data analysis script for one dataset."""
 import sys
+from typing import Any
 
 from accessors import DataAccessor
 from accessors import get_default_host
@@ -106,24 +107,55 @@ def phenotype_fractions(access: DataAccessor):
         fractions1, fractions2 = get_fractions(df, P1, P2, '1', '2', omit_zeros=False)
         compare(fractions2, fractions1, expected_fold=E, show_pvalue=True, show_auc=True)
 
+def nominalize(item):
+    if isinstance(item, str):
+        return item
+    c1 = ' '.join([f'{p}+' for p in item['positive_markers']])
+    if len(item['negative_markers']) > 0 and item['negative_markers'] != ['']:
+        c2 = ' '.join([f'{p}-' for p in item['negative_markers']])        
+        return f'{c1} {c2}'
+    return c1
 
-def one_case_proximity(access, P1, P2, E):
-    df = access.proximity([P1, P2])
-    feature = f'proximity, {P1} and {P2}'
+def one_case_spatial(access, P1, P2, E, feature_class: str | None = None):
+    if feature_class is None:
+        raise ValueError('Specify feature class.')
+    if feature_class == 'proximity':
+        df = access.proximity([P1, P2])
+    if feature_class == 'neighborhood enrichment':
+        df = access.neighborhood_enrichment([P1, P2])
+    feature = f'{feature_class}, {nominalize(P1)} and {nominalize(P2)}'
     values = {c: df[df['cohort'] == c][feature] for c in ('1', '2')}
-    compare(values['1'], values['2'], expected_fold=E, show_pvalue=True, show_auc=True)
+    do_log_fold = feature_class == 'neighborhood enrichment'
+    compare(values['1'], values['2'], expected_fold=E, show_pvalue=True, do_log_fold=do_log_fold, show_auc=True)
 
 def spatial(access: DataAccessor):
     print('\nSpatial results:')
+    cases: tuple[tuple[Any, ...], ...]
     cases = (
         ('intratumoral CD3+ LAG3+', 'intratumoral CD3+ LAG3+', 1.8, None),
-        ('intratumoral+ CD3+', 'PDL1+', 1 / 1.61, 1.0),
-        ('intratumoral CD3+ LAG3+', 'T helper cell', 1.59, 1.0),
+        ({'positive_markers': ['intratumoral', 'CD3'], 'negative_markers': []}, {'positive_markers': ['PDL1'], 'negative_markers': []}, 1.197, 0.589),
+        ('intratumoral CD3+ LAG3+', 'T helper cell', 2.42, 1.593),
     )
     for P1, P2, E, Ei in cases:
-        one_case_proximity(access, P1, P2, E)
+        one_case_spatial(access, P1, P2, E, feature_class='proximity')
         if P1 != P2:
-            one_case_proximity(access, P2, P1, Ei)
+            one_case_spatial(access, P2, P1, Ei, feature_class='proximity')
+
+    cases = (
+        ('Regulatory T cell', 'CD4- CD8- T cell', 1.31, 42937419285),
+        ('Macrophage', 'CD4- CD8- T cell', 2.21410845212908e+19, 8.997523179803324e+17),
+        ('Macrophage', 'Regulatory T cell', 9.578336100232475e+21, 12648970107.682014),
+        ('Macrophage', 'T cytotoxic cell', 1.0, 1.0),
+        ('Macrophage', 'T helper cell', 1.0, 1.0),
+        ('Macrophage', 'intratumoral CD3+ LAG3+', 1.0, 1.0),
+    )
+    for P1, P2, E, Ei in cases:
+        try:
+            one_case_spatial(access, P1, P2, E, feature_class='neighborhood enrichment')
+            one_case_spatial(access, P2, P1, Ei, feature_class='neighborhood enrichment')
+        except ExpectedQuantitativeValueError as error:
+            print(str(error))
+            continue
 
     # df = access.spatial_autocorrelation(s100b)
     # values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']
@@ -143,9 +175,9 @@ def spatial(access: DataAccessor):
 def test(host):
     study = 'Urothelial ICI'
     access = DataAccessor(study, host=host)    
-    channel_fractions(access)
-    phenotype_fractions(access)
-    # spatial(access)
+    # channel_fractions(access)
+    # phenotype_fractions(access)
+    spatial(access)
 
 
 if __name__=='__main__':

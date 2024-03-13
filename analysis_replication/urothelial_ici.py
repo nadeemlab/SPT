@@ -142,10 +142,10 @@ def spatial(access: DataAccessor):
             one_case_spatial(access, P2, P1, Ei, feature_class='proximity')
 
     cases = (
-        ('Regulatory T cell', 'CD4- CD8- T cell', 1.31, 42937419285),
-        ('Macrophage', 'CD4- CD8- T cell', 2.21410845212908e+19, 8.997523179803324e+17),
-        ('Macrophage', 'Regulatory T cell', 9.578336100232475e+21, 12648970107.682014),
-        ('Macrophage', 'T cytotoxic cell', 1.0, 1.0),
+        ('Regulatory T cell', 'CD4- CD8- T cell', 1.31, 17897),
+        ('Macrophage', 'CD4- CD8- T cell', 42937419285, 2.21410845212908e+19),
+        ('Macrophage', 'Regulatory T cell', 8.997523179803324e+17, 9.578336100232475e+21),
+        ('Macrophage', 'T cytotoxic cell', 12648970107, 1.0),
         ('Macrophage', 'T helper cell', 1.0, 1.0),
         ('Macrophage', 'intratumoral CD3+ LAG3+', 1.0, 1.0),
     )

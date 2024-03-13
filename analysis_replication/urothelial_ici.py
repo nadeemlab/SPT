@@ -133,21 +133,13 @@ def spatial(access: DataAccessor):
     print('\nSpatial results:')
     cases: tuple[tuple[Any, ...], ...]
     cases = (
-        ('intratumoral CD3+ LAG3+', 'intratumoral CD3+ LAG3+', 1.8, None),
-        ({'positive_markers': ['intratumoral', 'CD3'], 'negative_markers': []}, {'positive_markers': ['PDL1'], 'negative_markers': []}, 1.197, 0.589),
-        ('intratumoral CD3+ LAG3+', 'T helper cell', 2.42, 1.593),
+        ('Macrophage', 'Regulatory T cell', 2.21410845212908e+19, 0.752),
+        ('Macrophage', 'T helper cell', 9.578336100232475e+21, 969609),
     )
-    for P1, P2, E, Ei in cases:
-        one_case_spatial(access, P1, P2, E, feature_class='proximity')
-        if P1 != P2:
-            one_case_spatial(access, P2, P1, Ei, feature_class='proximity')
-
-    cases = (
+    lesser_cases = (
         ('Regulatory T cell', 'CD4- CD8- T cell', 1.31, 17897),
         ('Macrophage', 'CD4- CD8- T cell', 42937419285, 97.52),
-        ('Macrophage', 'Regulatory T cell', 2.21410845212908e+19, 0.752),
         ('Macrophage', 'T cytotoxic cell', 8.997523179803324e+17, 0.373),
-        ('Macrophage', 'T helper cell', 9.578336100232475e+21, 969609),
         ('Macrophage', 'intratumoral CD3+ LAG3+', 12648970107, 3.17426442889618e-06),
     )
     for P1, P2, E, Ei in cases:
@@ -157,6 +149,25 @@ def spatial(access: DataAccessor):
         except ExpectedQuantitativeValueError as error:
             print(str(error))
             continue
+
+    print('\nLesser significance results:')
+    for P1, P2, E, Ei in lesser_cases:
+        try:
+            one_case_spatial(access, P1, P2, E, feature_class='neighborhood enrichment')
+            one_case_spatial(access, P2, P1, Ei, feature_class='neighborhood enrichment')
+        except ExpectedQuantitativeValueError as error:
+            print(str(error))
+            continue
+
+    proximity_cases = (
+        ('intratumoral CD3+ LAG3+', 'intratumoral CD3+ LAG3+', 1.8, None),
+        ({'positive_markers': ['intratumoral', 'CD3'], 'negative_markers': []}, {'positive_markers': ['PDL1'], 'negative_markers': []}, 1.197, 0.589),
+        ('intratumoral CD3+ LAG3+', 'T helper cell', 2.42, 1.593),
+    )
+    for P1, P2, E, Ei in proximity_cases:
+        one_case_spatial(access, P1, P2, E, feature_class='proximity')
+        if P1 != P2:
+            one_case_spatial(access, P2, P1, Ei, feature_class='proximity')
 
     # df = access.spatial_autocorrelation(s100b)
     # values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']

@@ -2,10 +2,8 @@
 from typing import cast
 import re
 from itertools import chain
-from urllib.request import urlopen
 from urllib.parse import urlencode
-from urllib.error import HTTPError
-import json
+from requests import get as get_request
 from os.path import exists
 from time import sleep
 
@@ -220,12 +218,11 @@ class DataAccessor:
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
         try:
-            with urlopen(url) as response:
-                content = response.read()
-        except HTTPError as exception:
+            content = get_request(url)
+        except Exception as exception:
             print(url)
             raise exception
-        return json.loads(content), url
+        return content.json(), url
 
     def _phenotype_criteria(self, name):
         if isinstance(name, dict):

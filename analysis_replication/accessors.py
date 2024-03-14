@@ -3,7 +3,7 @@ from typing import cast
 import re
 from itertools import chain
 from urllib.parse import urlencode
-from requests import get as get_request
+from requests import get as get_request  # type: ignore
 from os.path import exists
 from time import sleep
 

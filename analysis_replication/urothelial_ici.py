@@ -169,26 +169,12 @@ def spatial(access: DataAccessor):
         if P1 != P2:
             one_case_spatial(access, P2, P1, Ei, feature_class='proximity')
 
-    # df = access.spatial_autocorrelation(s100b)
-    # values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']
-    # values3 = df[df['cohort'] == '3'][f'spatial autocorrelation, {s100b}']
-    # compare(values1, values3, expected_fold=0.109, show_pvalue=True, show_auc=True)
-
-    # df = access.proximity([s100b, s100b])
-    # values1 = df[df['cohort'] == '1'][f'proximity, {s100b} and {s100b}']
-    # values3 = df[df['cohort'] == '3'][f'proximity, {s100b} and {s100b}']
-    # compare(values1, values3, expected_fold=0.146, show_pvalue=True, show_auc=True)
-
-    # df = access.neighborhood_enrichment([s100b, s100b])
-    # values1 = df[df['cohort'] == '1'][f'neighborhood enrichment, {s100b} and {s100b}']
-    # values3 = df[df['cohort'] == '3'][f'neighborhood enrichment, {s100b} and {s100b}']
-    # compare(values3, values1, expected_fold=14.9, show_pvalue=True, do_log_fold=True, show_auc=True)
 
 def test(host):
     study = 'Urothelial ICI'
     access = DataAccessor(study, host=host)    
-    # channel_fractions(access)
-    # phenotype_fractions(access)
+    channel_fractions(access)
+    phenotype_fractions(access)
     spatial(access)
 
 

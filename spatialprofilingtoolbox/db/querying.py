@@ -54,6 +54,10 @@ class QueryHandler:
         return StudyAccess(cursor).get_available_gnn(study)
 
     @classmethod
+    def get_study_findings(cls, cursor, study: str) -> list[str]:
+        return StudyAccess(cursor).get_study_findings()
+
+    @classmethod
     def get_composite_phenotype_identifiers(cls, cursor) -> tuple[str, ...]:
         return sort(PhenotypesAccess(cursor).get_composite_phenotype_identifiers())
 

@@ -80,6 +80,10 @@ class StudyAccess(SimpleReadOnlyProvider):
         rows = tuple(self.cursor.fetchall())
         return AvailableGNN(plugins=tuple(specifier for (specifier, ) in rows))
 
+    def get_study_findings(self) -> list[str]:
+        self.cursor.execute('SELECT txt FROM findings ORDER BY id;')
+        return [row[0] for row in self.cursor.fetchall()]
+
     @staticmethod
     def _is_secondary_substudy(substudy: str) -> bool:
         is_fractions = bool(re.search('phenotype fractions', substudy))

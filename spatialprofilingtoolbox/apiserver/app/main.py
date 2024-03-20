@@ -24,6 +24,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
     CellData,
+    AvailableGNN,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
@@ -115,6 +116,14 @@ async def get_study_summary(
 ) -> StudySummary:
     """A summary of a study's publications, authors, etc., as well as a summary of its datasets."""
     return query().get_study_summary(study)
+
+
+@app.get("/study-findings/")
+async def get_study_findings(
+    study: ValidStudy,
+) -> list[str]:
+    """Brief list of results of re-analysis of the given study."""
+    return query().get_study_findings(study)
 
 
 @app.get("/channels/")
@@ -210,6 +219,13 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
             radius = 30.0
         return get_proximity_metrics(study, markers, radius=radius)
     return get_squidpy_metrics(study, list(markers), feature_class, radius=radius)
+
+
+@app.get("/available-gnn-metrics/")
+async def available_gnn_metrics(
+    study: ValidStudy,
+) -> AvailableGNN:
+    return query().get_available_gnn(study)
 
 
 @app.get("/importance-composition/")

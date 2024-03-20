@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
+from spatialprofilingtoolbox.graphs.plugin_constants import GNNPlugin
+
 
 class FeatureAssociationTest(BaseModel):
     """One test for association between two cohorts along a feature."""
@@ -74,3 +76,8 @@ class CellData(BaseModel):
     """
     feature_names: list[str]
     cells: list[list[str | float | int]]
+
+
+class AvailableGNN(BaseModel):
+    """List of available GNN metrics, i.e. which plugins were used in a completed run."""
+    plugins: tuple[GNNPlugin, ...]

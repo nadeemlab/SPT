@@ -2,7 +2,6 @@
 
 from pydantic import BaseModel #pylint: disable=no-name-in-module
 
-
 class StudyComponents(BaseModel):
     """Main substudies of a primary study."""
     collection: str

@@ -41,6 +41,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
         match request_class:
             case 'counts':
                 if self.server.providers.counts is None:
+                    logger.error('Service not available: counts')
                     self._send_error_response()
                     return
                 handled = self._handle_single_phenotype_counts_request(groups)
@@ -48,6 +49,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
                     return
             case 'proximity':
                 if self.server.providers.proximity is None:
+                    logger.error('Service not available: proximity')
                     self._send_error_response()
                     return
                 handled = self._handle_proximity_request(groups)
@@ -55,6 +57,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
                     return
             case 'cells':
                 if self.server.providers.cells is None:
+                    logger.error('Service not available: cells')
                     self._send_error_response()
                     return
                 handled = self._handle_cells_request(groups)
@@ -64,11 +67,15 @@ class OnDemandRequestHandler(BaseRequestHandler):
                 pass
         if request_class in squidpy_feature_classnames():
             if self.server.providers.squidpy is None:
+                logger.error('Service not available: squidpy')
                 self._send_error_response()
                 return
             handled = self._handle_squidpy_request(request_class, groups)
             if handled:
                 return
+        else:
+            logger.error(f'Feature class "{request_class}" not among handleable: {squidpy_feature_classnames()}')
+        logger.error('Request could not be handled, tried all services.')
         self._send_error_response()
 
     @staticmethod

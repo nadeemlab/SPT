@@ -253,6 +253,8 @@ class QueryCursor:
     get_umap: Callable
     get_important_cells: Callable
     get_sample_names: Callable
+    get_available_gnn: Callable
+    get_study_findings: Callable
 
     def __init__(self, query_handler: Type):
         self.query_handler = query_handler

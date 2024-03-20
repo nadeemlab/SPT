@@ -190,6 +190,7 @@ packages = [
     "drop.py",
     "drop_ondemand_computations.py",
     "delete_feature.py",
+    "upload_sync_findings.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "metaschema.sql",

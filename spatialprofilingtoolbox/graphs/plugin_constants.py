@@ -1,5 +1,7 @@
 """Constants referring to canonical graph plugins."""
 
+from enum import Enum
+from enum import auto
 from itertools import product
 
 CG_GNN_ALIASES = ('cg-gnn', 'cggnn', 'cgnn')
@@ -14,7 +16,13 @@ graph_transformer_aliases = set(
 graph_transformer_aliases.add('tmi2022')
 GRAPH_TRANSFORMER_ALIASES = tuple(graph_transformer_aliases)
 
+
+class GNNPlugin(str, Enum):
+    CGGNN = 'cg-gnn'
+    GRAPH_TRANSFORMER = 'graph-transformer'
+
+
 PLUGIN_ALIASES = {
-    'cg-gnn': CG_GNN_ALIASES,
-    'graph-transformer': graph_transformer_aliases,
+    GNNPlugin.CGGNN.value: CG_GNN_ALIASES,
+    GNNPlugin.GRAPH_TRANSFORMER.value: graph_transformer_aliases,
 }

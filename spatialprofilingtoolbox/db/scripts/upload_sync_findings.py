@@ -8,7 +8,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-logger = colorized_logger(__name__)
+logger = colorized_logger('upload_sync_findings')
 
 
 def parse_args():

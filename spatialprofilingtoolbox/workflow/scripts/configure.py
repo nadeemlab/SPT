@@ -22,6 +22,8 @@ from importlib.resources import as_file
 from importlib.resources import files
 from typing import cast
 
+from spatialprofilingtoolbox import __version__ as SPT_VERSION
+
 
 try:
     from jinja2 import Environment, BaseLoader
@@ -288,7 +290,7 @@ if __name__ == '__main__':
                          f'Got {config_variables["container_platform"]}')
 
     if ('image_tag' not in config_variables) or (config_variables['image_tag'] == ''):
-        config_variables['image_tag'] = 'latest'
+        config_variables['image_tag'] = SPT_VERSION
     config_variables['image'] = f'{workflow_configuration.image}:{config_variables["image_tag"]}'
 
     config_variables['current_working_directory'] = getcwd()

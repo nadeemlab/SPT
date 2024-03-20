@@ -18,9 +18,11 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     Context,
     Products,
 )
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import AvailableGNN
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult
 from spatialprofilingtoolbox.db.cohorts import get_sample_cohorts
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -65,6 +67,18 @@ class StudyAccess(SimpleReadOnlyProvider):
             ][0]
             substudies[key] = name
         return StudyComponents(**substudies)
+
+    def get_available_gnn(self, study: str) -> AvailableGNN:
+        feature_class = get_feature_description("gnn importance score")
+        self.cursor.execute('''
+        SELECT fsp.specifier
+        FROM feature_specification fs
+        JOIN feature_specifier fsp ON fs.identifier=fsp.feature_specification
+        JOIN study_component sc ON sc.component_study=fs.study
+        WHERE sc.primary_study=%s AND fs.derivation_method=%s AND fsp.ordinality='1';
+        ''', (study, feature_class))
+        rows = tuple(self.cursor.fetchall())
+        return AvailableGNN(plugins=tuple(specifier for (specifier, ) in rows))
 
     @staticmethod
     def _is_secondary_substudy(substudy: str) -> bool:

@@ -14,6 +14,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     Channel,
     PhenotypeCriteria,
     UMAPChannel,
+    AvailableGNN,
 )
 from spatialprofilingtoolbox.db.accessors import (
     GraphsAccess,
@@ -47,6 +48,10 @@ class QueryHandler:
     @classmethod
     def get_study_summary(cls, cursor, study: str) -> StudySummary:
         return StudyAccess(cursor).get_study_summary(study)
+
+    @classmethod
+    def get_available_gnn(cls, cursor, study: str) -> AvailableGNN:
+        return StudyAccess(cursor).get_available_gnn(study)
 
     @classmethod
     def get_composite_phenotype_identifiers(cls, cursor) -> tuple[str, ...]:

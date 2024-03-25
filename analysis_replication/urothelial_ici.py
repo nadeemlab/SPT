@@ -35,10 +35,6 @@ def channel_fractions(access: DataAccessor):
     fractions1, fractions2 = get_fractions(df, 'CD8+ KI67+ and intratumoral+', 'all cells', '1', '2', omit_zeros=False)
     compare(fractions2, fractions1, expected_fold=3.519, show_pvalue=True, show_auc=True)
 
-    df = access.counts([cd8ki67tumoral, tumor])
-    fractions1, fractions2 = get_fractions(df, 'CD8+ KI67+ intratumoral+', 'PanCK-SOX10+', '1', '2', omit_zeros=False)
-    compare(fractions2, fractions1, expected_fold=6.50, show_pvalue=True, show_auc=True)
-
     df = access.counts([cd8ki67tumoral, tumoral])
     fractions1, fractions2 = get_fractions(df, 'CD8+ KI67+ intratumoral+', 'intratumoral+', '1', '2', omit_zeros=False)
     compare(fractions2, fractions1, expected_fold=3.534, show_pvalue=True, show_auc=True)

@@ -1,7 +1,7 @@
 
 # Reproducible analyses
 
-The scripts in this directory reproduce the analyses of the curated datasets, in the order they are mentioned in the article.
+The scripts in this directory reproduce the analyses of the curated datasets, in almost exactly the same order that they are mentioned in the article.
 
 These scripts were written as a record of usage of the dashboard web application, which provides the same results.
 

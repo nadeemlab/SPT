@@ -5,6 +5,7 @@ import SelectStudies from "./routes/SelectStudies";
 import Analysis from "./routes/Analysis";
 import AnalysisDetail from "./routes/AnalysisDetail";
 import Visualization from "./routes/Visualization";
+import SlideViewer from "./routes/SlideViewer";
 
 const RouterSwitcher: RouterType = [
   {
@@ -26,6 +27,10 @@ const RouterSwitcher: RouterType = [
   {
     path: "visualization",
     element: <Visualization />,
+  },
+  {
+    path: "slide-viewer",
+    element: <SlideViewer />,
   },
 ];
 

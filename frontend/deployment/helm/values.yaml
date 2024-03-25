@@ -1,4 +1,4 @@
-hostname: "oncopathtk.org"
+hostname: "k8s-ingressn-ingressn-957844105a-df35bc90d7a2ee62.elb.us-east-1.amazonaws.com"
 
 api:
   image:
@@ -7,7 +7,7 @@ api:
   resources:
     limits:
       cpu: "1500m"
-      memory: 2Gi
+      memory: 4Gi
     requests:
       cpu: "1"
       memory: 500Mi
@@ -20,7 +20,7 @@ counts:
   resources:
     limits:
       cpu: "1500m"
-      memory: 14Gi
+      memory: 12Gi
     requests:
       cpu: "1"
       memory: 500Mi

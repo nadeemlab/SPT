@@ -121,6 +121,13 @@ interface Phenotype {
   criteria: Criteria;
 }
 
+export type CellContent = {
+  cells: Float32Array;
+  highlightCells: { [key: string]: Float32Array };
+};
+
+export type CellsToShow = { [key: string]: CellContent };
+
 export interface Criteria {
   positive_markers: string[];
   negative_markers: string[];

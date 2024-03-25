@@ -15,9 +15,9 @@ export default function useAnalysisDetail() {
   useEffect(() => {
     if (selectedPhenotypes) {
       Promise.all(
-        selectedPhenotypes.map((item) =>
-          getPhenotypeCount(studyName, item.criteria!),
-        ),
+        selectedPhenotypes
+          .filter((item) => !phenotypesCountData[item.handle_string])
+          .map((item) => getPhenotypeCount(studyName, item.criteria!)),
       ).then((res) => {
         const phenotypesCount = res.map((item, index) => {
           return {
@@ -47,6 +47,12 @@ export default function useAnalysisDetail() {
             }
             if (secondIndex > firstIndex) {
               return new Promise<PhenotypesData>((resolve) => {
+                if (
+                  phenotypesCountData[
+                    `${secondItem.handle_string}, ${firstItem.handle_string}`
+                  ]
+                )
+                  return;
                 getPhenotypeCount(
                   studyName,
                   mergeCriteria(firstItem.criteria!, secondItem.criteria!),

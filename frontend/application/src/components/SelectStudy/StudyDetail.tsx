@@ -20,34 +20,31 @@ const SampleCohorts = ({ cohorts }: { cohorts: Cohorts[] }) => {
   if (parsedCohorts.length === 0) return <></>;
 
   return (
-    <>
-      <Divider />
-      <StudyItem label="Sample cohorts">
-        <table className="text-[13px] leading-4">
-          <tbody>
-            <tr className="font-bold [&>*]:text-left">
-              <th></th>
-              <th>Sample Extracted</th>
-              <th>Subject Outcome</th>
-            </tr>
-            {parsedCohorts.map((cohort) => {
-              return (
-                <tr
-                  key={cohort.identifier}
-                  className="[&>*]:p-1 [&>*]:text-left border-t border-gray-300 "
-                >
-                  <td>{cohort.identifier}</td>
-                  <td>{cohort.temporality}</td>
-                  <td>
-                    {cohort.diagnosis}: {cohort.result}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </StudyItem>
-    </>
+    <StudyItem label="Sample cohorts">
+      <table className="text-[13px] leading-4">
+        <tbody>
+          <tr className="font-bold [&>*]:text-left">
+            <th></th>
+            <th>Sample Extracted</th>
+            <th>Subject Outcome</th>
+          </tr>
+          {parsedCohorts.map((cohort) => {
+            return (
+              <tr
+                key={cohort.identifier}
+                className="[&>*]:p-1 [&>*]:text-left border-t border-gray-300 "
+              >
+                <td>{cohort.identifier}</td>
+                <td>{cohort.temporality}</td>
+                <td>
+                  {cohort.diagnosis}: {cohort.result}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </StudyItem>
   );
 };
 
@@ -118,6 +115,7 @@ export const StudyDetail = () => {
         <StudyItem label="Number of named composited phenotypes specified">
           {studyData.summary.counts.composite_phenotypes}
         </StudyItem>
+        <Divider />
         <SampleCohorts cohorts={studyData.summary.cohorts.cohorts} />
       </div>
     </div>

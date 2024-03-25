@@ -109,7 +109,7 @@ export async function getSpatialMetrics(
   if (spatialMetric === "cg-gnn importance") {
     params.append("cell_limit", "100");
     const { data } = await axios.get<CCGNMetricData>(
-      API_URL + "importance-composition/",
+      API_URL + "cggnn-importance-composition/",
       { params },
     );
     const values: { [key: string]: number | null } = {};
@@ -166,5 +166,17 @@ export async function getStudyVisualizationPlots(studyName: string) {
       params: { study: studyName },
     },
   );
+  return data;
+}
+
+export interface CellData {
+  feature_names: string[];
+  cells: number[][];
+}
+
+export async function getCellData(study: string, sample: string) {
+  const { data } = await axios.get<CellData>(API_URL + "cell-data/", {
+    params: { study, sample },
+  });
   return data;
 }

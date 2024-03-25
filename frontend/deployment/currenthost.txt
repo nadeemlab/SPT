@@ -1,1 +1,1 @@
-https://oncopathtk.org/api/
+https://oncopathtk.spt.aws.mskcc.org/api/

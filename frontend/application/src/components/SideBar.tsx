@@ -30,6 +30,12 @@ const SIDEBAR_ITEM_LIST = [
     icon: Icons.umap,
     requiresStudies: true,
   },
+  {
+    label: "Slide Viewer",
+    path: ["slide-viewer"],
+    icon: Icons.umap,
+    requiresStudies: true,
+  },
 ];
 
 const RouteList = () => {

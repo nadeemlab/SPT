@@ -13,6 +13,8 @@ interface StudyStoreType {
   phenotypesCountData: { [key: string]: PhenotypesData };
   enrichFieldsData: { [key: string]: SpatialMetricData };
   runningTasks: { [key: string]: number };
+  cellsData: { [key: string]: number[][] };
+  featureNames: string[];
   runTask: (phenotype: string) => number;
   setEnrichData: (data: SpatialMetricData, phenotypeName: string) => void;
   setSelectedPhenotypesToShow: (phenotype: SelectedPhenotype) => void;
@@ -22,9 +24,12 @@ interface StudyStoreType {
   setStudyData: (data: Partial<StudyData>) => void;
   setSelectedStudy: (studyName: string, summary: StudyData) => void;
   deleteSelectedStudy: () => void;
+  setCellsData: (cells: number[][], sample: string) => void;
 }
 
 const defaultEmptyFields = {
+  featureNames: [],
+  cellsData: {},
   studyName: "",
   displayStudyName: "",
   studyData: {
@@ -139,6 +144,12 @@ const useStudy = create<StudyStoreType>((set, get) => ({
     set((state) => ({
       ...state,
       ...defaultEmptyFields,
+    }));
+  },
+  setCellsData(cells, sample) {
+    set((state) => ({
+      ...state,
+      cellsData: { ...state.cellsData, [sample]: cells },
     }));
   },
 }));

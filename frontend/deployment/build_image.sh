@@ -2,7 +2,6 @@
 
 currenthost=$(cat currenthost.txt)
 cd ../application/
-spt apiserver dump-schema > public/openapi.json
 docker build -t spt-frontend-prod-build -f ../deployment/build.Dockerfile .
 mkdir -p dist
 docker run \
@@ -11,4 +10,3 @@ docker run \
     spt-frontend-prod-build
 cd ../
 docker build -t nadeemlab-development/frontend -t spt-frontend-prod -f ./deployment/Dockerfile .
-rm ./application/public/openapi.json

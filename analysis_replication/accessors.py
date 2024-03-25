@@ -2,10 +2,8 @@
 from typing import cast
 import re
 from itertools import chain
-from urllib.request import urlopen
 from urllib.parse import urlencode
-from urllib.error import HTTPError
-import json
+from requests import get as get_request  # type: ignore
 from os.path import exists
 from time import sleep
 
@@ -17,6 +15,7 @@ from numpy import isnan
 from numpy import mean
 from numpy import log
 from scipy.stats import ttest_ind  # type: ignore
+from sklearn.metrics import auc  # type:ignore
 
 
 def get_default_host(given: str | None) -> str | None:
@@ -219,12 +218,11 @@ class DataAccessor:
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
         try:
-            with urlopen(url) as response:
-                content = response.read()
-        except HTTPError as exception:
+            content = get_request(url)
+        except Exception as exception:
             print(url)
             raise exception
-        return json.loads(content), url
+        return content.json(), url
 
     def _phenotype_criteria(self, name):
         if isinstance(name, dict):
@@ -341,15 +339,35 @@ def handle_expected_actual(expected: float, actual: float | None):
     print(Colors.bold_green + padded + Colors.reset, end='')
 
 
+def compute_auc(list1: list[float], list2: list[float]) -> float:
+    pairs = [(value, 0) for value in list1] + [(value, 1) for value in list2]
+    pairs.sort(key=lambda pair: pair[0])
+    total_labelled = sum([pair[1] for pair in pairs])
+    total_unlabelled = len(pairs) - total_labelled
+    graph_points = [(0.0, 1.0)]
+    true_positives = 0
+    true_negatives = total_unlabelled
+    for _, label in pairs:
+        if label == 1:
+            true_positives = true_positives + 1
+        else:
+            true_negatives = true_negatives - 1
+        graph_points.append((true_positives / total_labelled, true_negatives / total_unlabelled))
+    _auc = auc([p[0] for p in graph_points], [p[1] for p in graph_points])
+    _auc = max(_auc, 1 - _auc)
+    return _auc
+
+
 def univariate_pair_compare(
     list1,
     list2,
     expected_fold=None,
     do_log_fold: bool = False,
     show_pvalue=False,
+    show_auc=False,
 ):
-    list1 = list(filter(lambda element: not isnan(element), list1.values))
-    list2 = list(filter(lambda element: not isnan(element), list2.values))
+    list1 = list(filter(lambda element: not isnan(element) and not element==inf, list1.values))
+    list2 = list(filter(lambda element: not isnan(element) and not element==inf, list2.values))
 
     mean1 = float(mean(list1))
     mean2 = float(mean(list2))
@@ -376,8 +394,25 @@ def univariate_pair_compare(
             result = ttest_ind(list1, list2, equal_var=False)
             print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
 
+    if show_auc:
+        _auc = compute_auc(list1, list2)
+        print('  AUC: ' + Colors.blue + str(_auc) + Colors.reset, end='')
+
     print('')
 
 
-def print_comparison() -> None:
-    pass
+def get_fractions(df, column_numerator, column_denominator, cohort1, cohort2, omit_zeros=True):
+    fractions = df[column_numerator] / df[column_denominator]
+    if omit_zeros:
+        mask = ~ ( (df[column_numerator] == 0) | (df[column_denominator] == 0) )
+        total1 = sum((df['cohort'] == cohort1))
+        omit1 = total1 - sum((df['cohort'] == cohort1) & mask)
+        total2 = sum((df['cohort'] == cohort2))
+        omit2 = total2 - sum((df['cohort'] == cohort2) & mask)
+        if omit1 !=0 or omit2 !=0:
+            print(f'(Omitting {omit1}/{total1} from {cohort1} and {omit2}/{total2} from {cohort2}.)')
+    else:
+        mask = True
+    fractions1 = fractions[(df['cohort'] == cohort1) & mask]
+    fractions2 = fractions[(df['cohort'] == cohort2) & mask]
+    return fractions1, fractions2

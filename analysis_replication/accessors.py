@@ -342,11 +342,11 @@ def handle_expected_actual(expected: float, actual: float | None):
 
 
 def univariate_pair_compare(
-        list1,
-        list2,
-        expected_fold=None,
-        do_log_fold: bool = False,
-        show_pvalue=False,
+    list1,
+    list2,
+    expected_fold=None,
+    do_log_fold: bool = False,
+    show_pvalue=False,
 ):
     list1 = list(filter(lambda element: not isnan(element), list1.values))
     list2 = list(filter(lambda element: not isnan(element), list2.values))
@@ -368,12 +368,12 @@ def univariate_pair_compare(
 
     if show_pvalue:
         if do_log_fold:
-            result = ttest_ind(_list1, _list2)
+            result = ttest_ind(_list1, _list2, equal_var=False)
             print(
                 '  p-value (after log): ' + Colors.blue + str(result.pvalue) + Colors.reset, end=''
             )
         else:
-            result = ttest_ind(list1, list2)
+            result = ttest_ind(list1, list2, equal_var=False)
             print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
 
     print('')

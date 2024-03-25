@@ -1,0 +1,3 @@
+/etc/nginx/nginx.conf
+/etc/nginx/sites-available/oncopathtk.org
+/etc/nginx/sites-available/data.oncopathtk.org

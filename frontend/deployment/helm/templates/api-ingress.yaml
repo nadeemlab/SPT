@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "spt.fullname" . }}-api-ingress
+  labels:
+  {{- include "spt.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: {{ .Values.ingress.cors.allowOrigins | quote}}
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.hostname | quote}}
+    http:
+      paths:
+      - backend:
+          service:
+            name: '{{ include "spt.fullname" . }}-api'
+            port:
+              number: 8080
+        path: /api/(.*)
+        pathType: ImplementationSpecific
+      - backend:
+          service:
+            name: '{{ include "spt.fullname" . }}-frontend'
+            port:
+              number: 80
+        path: /(.*)
+        pathType: ImplementationSpecific

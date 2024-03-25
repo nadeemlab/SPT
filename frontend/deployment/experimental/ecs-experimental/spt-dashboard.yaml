@@ -1,0 +1,475 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  CacheAccessPoint:
+    Properties:
+      AccessPointTags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.volume
+          Value: cache
+        - Key: Name
+          Value: spt-dashboard_cache
+      FileSystemId: fs-01e56cd144a9f301c
+    Type: AWS::EFS::AccessPoint
+  CacheNFSMountTargetOnSubnet061ca565de53395e4:
+    Properties:
+      FileSystemId: fs-01e56cd144a9f301c
+      SecurityGroups:
+        - Ref: DefaultNetwork
+      SubnetId: subnet-061ca565de53395e4
+    Type: AWS::EFS::MountTarget
+  CacheNFSMountTargetOnSubnet0b67a6cb9712a2d35:
+    Properties:
+      FileSystemId: fs-01e56cd144a9f301c
+      SecurityGroups:
+        - Ref: DefaultNetwork
+      SubnetId: subnet-0b67a6cb9712a2d35
+    Type: AWS::EFS::MountTarget
+  CacheNFSMountTargetOnSubnet0e3e0379722037f2d:
+    Properties:
+      FileSystemId: fs-01e56cd144a9f301c
+      SecurityGroups:
+        - Ref: DefaultNetwork
+      SubnetId: subnet-0e3e0379722037f2d
+    Type: AWS::EFS::MountTarget
+  CloudMap:
+    Properties:
+      Description: Service Map for Docker Compose project spt-dashboard
+      Name: spt-dashboard.local
+      Vpc: vpc-000592af23550e3af
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+  Cluster:
+    Properties:
+      ClusterName: spt-dashboard
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+    Type: AWS::ECS::Cluster
+  Default8016Ingress:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      Description: production-fast-counts-server:8016/tcp on default network
+      FromPort: 8016
+      GroupId:
+        Ref: DefaultNetwork
+      IpProtocol: TCP
+      ToPort: 8016
+    Type: AWS::EC2::SecurityGroupIngress
+  Default8080Ingress:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      Description: production-api-server:8080/tcp on default network
+      FromPort: 8080
+      GroupId:
+        Ref: DefaultNetwork
+      IpProtocol: TCP
+      ToPort: 8080
+    Type: AWS::EC2::SecurityGroupIngress
+  DefaultNetwork:
+    Properties:
+      GroupDescription: spt-dashboard Security Group for default network
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.network
+          Value: spt-dashboard_default
+      VpcId: vpc-000592af23550e3af
+    Type: AWS::EC2::SecurityGroup
+  DefaultNetworkIngress:
+    Properties:
+      Description: Allow communication within network default
+      GroupId:
+        Ref: DefaultNetwork
+      IpProtocol: "-1"
+      SourceSecurityGroupId:
+        Ref: DefaultNetwork
+    Type: AWS::EC2::SecurityGroupIngress
+  LogGroup:
+    Properties:
+      LogGroupName: /docker-compose/spt-dashboard
+    Type: AWS::Logs::LogGroup
+  ProductionapiserverService:
+    DependsOn:
+      - ProductionapiserverTCP8080Listener
+    Properties:
+      Cluster:
+        Fn::GetAtt:
+          - Cluster
+          - Arn
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DeploymentController:
+        Type: ECS
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: production-api-server
+          ContainerPort: 8080
+          TargetGroupArn:
+            Ref: ProductionapiserverTCP8080TargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Ref: DefaultNetwork
+          Subnets:
+            - subnet-0b67a6cb9712a2d35
+            - subnet-061ca565de53395e4
+            - subnet-0e3e0379722037f2d
+      PlatformVersion: 1.4.0
+      PropagateTags: SERVICE
+      SchedulingStrategy: REPLICA
+      ServiceRegistries:
+        - RegistryArn:
+            Fn::GetAtt:
+              - ProductionapiserverServiceDiscoveryEntry
+              - Arn
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.service
+          Value: production-api-server
+      TaskDefinition:
+        Ref: ProductionapiserverTaskDefinition
+    Type: AWS::ECS::Service
+  ProductionapiserverServiceDiscoveryEntry:
+    Properties:
+      Description: '"production-api-server" service discovery entry in Cloud Map'
+      DnsConfig:
+        DnsRecords:
+          - TTL: 60
+            Type: A
+        RoutingPolicy: MULTIVALUE
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Name: production-api-server
+      NamespaceId:
+        Ref: CloudMap
+    Type: AWS::ServiceDiscovery::Service
+  ProductionapiserverTCP8080Listener:
+    Properties:
+      DefaultActions:
+        - ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn:
+                  Ref: ProductionapiserverTCP8080TargetGroup
+          Type: forward
+      LoadBalancerArn: arn:aws:elasticloadbalancing:us-east-1:279465261568:loadbalancer/net/spt-load-balancer/21432994aa957e26
+      Port: 8080
+      Protocol: TCP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+  ProductionapiserverTCP8080TargetGroup:
+    Properties:
+      Port: 8080
+      Protocol: TCP
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+      TargetType: ip
+      VpcId: vpc-000592af23550e3af
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  ProductionapiserverTaskDefinition:
+    Properties:
+      ContainerDefinitions:
+        - Command:
+            - us-east-1.compute.internal
+            - spt-dashboard.local
+          Essential: false
+          Image: docker/ecs-searchdomain-sidecar:1.0
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: LogGroup
+              awslogs-region:
+                Ref: AWS::Region
+              awslogs-stream-prefix: spt-dashboard
+          Name: Productionapiserver_ResolvConf_InitContainer
+        - DependsOn:
+            - Condition: SUCCESS
+              ContainerName: Productionapiserver_ResolvConf_InitContainer
+          Environment:
+            - Name: COUNTS_SERVER_HOST
+              Value: production-fast-counts-server
+            - Name: COUNTS_SERVER_PORT
+              Value: "8016"
+            - Name: SINGLE_CELL_DATABASE_HOST
+              Value: host.docker.internal
+            - Name: SINGLE_CELL_DATABASE_PASSWORD
+              Value: gsf
+            - Name: SINGLE_CELL_DATABASE_USER
+              Value: gsf
+          Essential: true
+          Image: docker.io/nadeemlab/spt-apiserver:latest@sha256:fc6f9716a92a984c188cae4940701f9b828fcbe333e1c0d011d2664965f07091
+          LinuxParameters: {}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: LogGroup
+              awslogs-region:
+                Ref: AWS::Region
+              awslogs-stream-prefix: spt-dashboard
+          Name: production-api-server
+          PortMappings:
+            - ContainerPort: 8080
+              HostPort: 8080
+              Protocol: tcp
+      Cpu: "256"
+      ExecutionRoleArn:
+        Ref: ProductionapiserverTaskExecutionRole
+      Family: spt-dashboard-production-api-server
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn:
+        Ref: ProductionapiserverTaskRole
+    Type: AWS::ECS::TaskDefinition
+  ProductionapiserverTaskExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Condition: {}
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.service
+          Value: production-api-server
+      PermissionsBoundary: EngineerorUserServiceRolePermissions
+      RoleName: userServiceRoleApiServer
+    Type: AWS::IAM::Role
+  ProductionapiserverTaskRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Condition: {}
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/EngineerOrUserServiceRolePermissions
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.service
+          Value: production-api-server
+      PermissionsBoundary: EngineerorUserServiceRolePermissions
+      RoleName: userServiceRoleApiServerTask
+    Type: AWS::IAM::Role
+  ProductionfastcountsserverService:
+    DependsOn:
+      - ProductionfastcountsserverTCP8016Listener
+      - CacheNFSMountTargetOnSubnet0b67a6cb9712a2d35
+      - CacheNFSMountTargetOnSubnet061ca565de53395e4
+      - CacheNFSMountTargetOnSubnet0e3e0379722037f2d
+    Properties:
+      Cluster:
+        Fn::GetAtt:
+          - Cluster
+          - Arn
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DeploymentController:
+        Type: ECS
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: production-fast-counts-server
+          ContainerPort: 8016
+          TargetGroupArn:
+            Ref: ProductionfastcountsserverTCP8016TargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Ref: DefaultNetwork
+          Subnets:
+            - subnet-0b67a6cb9712a2d35
+            - subnet-061ca565de53395e4
+            - subnet-0e3e0379722037f2d
+      PlatformVersion: 1.4.0
+      PropagateTags: SERVICE
+      SchedulingStrategy: REPLICA
+      ServiceRegistries:
+        - RegistryArn:
+            Fn::GetAtt:
+              - ProductionfastcountsserverServiceDiscoveryEntry
+              - Arn
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.service
+          Value: production-fast-counts-server
+      TaskDefinition:
+        Ref: ProductionfastcountsserverTaskDefinition
+    Type: AWS::ECS::Service
+  ProductionfastcountsserverServiceDiscoveryEntry:
+    Properties:
+      Description: '"production-fast-counts-server" service discovery entry in Cloud Map'
+      DnsConfig:
+        DnsRecords:
+          - TTL: 60
+            Type: A
+        RoutingPolicy: MULTIVALUE
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Name: production-fast-counts-server
+      NamespaceId:
+        Ref: CloudMap
+    Type: AWS::ServiceDiscovery::Service
+  ProductionfastcountsserverTCP8016Listener:
+    Properties:
+      DefaultActions:
+        - ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn:
+                  Ref: ProductionfastcountsserverTCP8016TargetGroup
+          Type: forward
+      LoadBalancerArn: arn:aws:elasticloadbalancing:us-east-1:279465261568:loadbalancer/net/spt-load-balancer/21432994aa957e26
+      Port: 8016
+      Protocol: TCP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+  ProductionfastcountsserverTCP8016TargetGroup:
+    Properties:
+      Port: 8016
+      Protocol: TCP
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+      TargetType: ip
+      VpcId: vpc-000592af23550e3af
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  ProductionfastcountsserverTaskDefinition:
+    Properties:
+      ContainerDefinitions:
+        - Command:
+            - us-east-1.compute.internal
+            - spt-dashboard.local
+          Essential: false
+          Image: docker/ecs-searchdomain-sidecar:1.0
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: LogGroup
+              awslogs-region:
+                Ref: AWS::Region
+              awslogs-stream-prefix: spt-dashboard
+          Name: Productionfastcountsserver_ResolvConf_InitContainer
+        - DependsOn:
+            - Condition: SUCCESS
+              ContainerName: Productionfastcountsserver_ResolvConf_InitContainer
+          Essential: true
+          Image: docker.io/nadeemlab/spt-countsserver:latest@sha256:32f026867ced11182c98393e165cec81b8ca6122691be1c74be286d3c38b6fab
+          LinuxParameters: {}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: LogGroup
+              awslogs-region:
+                Ref: AWS::Region
+              awslogs-stream-prefix: spt-dashboard
+          MountPoints:
+            - ContainerPath: /countsserver/source_data
+              SourceVolume: cache
+          Name: production-fast-counts-server
+          PortMappings:
+            - ContainerPort: 8016
+              HostPort: 8016
+              Protocol: tcp
+      Cpu: "256"
+      ExecutionRoleArn:
+        Ref: ProductionfastcountsserverTaskExecutionRole
+      Family: spt-dashboard-production-fast-counts-server
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn:
+        Ref: ProductionfastcountsserverTaskRole
+      Volumes:
+        - EFSVolumeConfiguration:
+            AuthorizationConfig:
+              AccessPointId:
+                Ref: CacheAccessPoint
+              IAM: ENABLED
+            FilesystemId: fs-01e56cd144a9f301c
+            TransitEncryption: ENABLED
+          Name: cache
+    Type: AWS::ECS::TaskDefinition
+  ProductionfastcountsserverTaskExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Condition: {}
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.service
+          Value: production-fast-counts-server
+      PermissionsBoundary: EngineerorUserServiceRolePermissions
+      RoleName: userServiceRoleCountsServer
+    Type: AWS::IAM::Role
+  ProductionfastcountsserverTaskRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Condition: {}
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/EngineerOrUserServiceRolePermissions
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Action:
+                  - elasticfilesystem:ClientMount
+                  - elasticfilesystem:ClientWrite
+                  - elasticfilesystem:ClientRootAccess
+                Condition:
+                  StringEquals:
+                    elasticfilesystem:AccessPointArn:
+                      Ref: CacheAccessPoint
+                Effect: Allow
+                Principal: {}
+                Resource:
+                  - arn:aws:elasticfilesystem:us-east-1:279465261568:file-system/fs-01e56cd144a9f301c
+            Version: 2012-10-17
+          PolicyName: ProductionfastcountsserverCacheVolumeMountPolicy
+      Tags:
+        - Key: com.docker.compose.project
+          Value: spt-dashboard
+        - Key: com.docker.compose.service
+          Value: production-fast-counts-server
+      PermissionsBoundary: EngineerorUserServiceRolePermissions
+      RoleName: userServiceRoleCountsServerTask
+    Type: AWS::IAM::Role

@@ -1,0 +1,73 @@
+x-aws-loadbalancer: arn:aws:elasticloadbalancing:us-east-1:279465261568:loadbalancer/net/spt-load-balancer/21432994aa957e26
+
+x-aws-vpc: vpc-000592af23550e3af
+
+x-aws-cloudformation:
+  Resources: 
+    ProductionapiserverTaskExecutionRole:
+      Properties:
+        RoleName: userServiceRoleApiServer
+        PermissionsBoundary: EngineerorUserServiceRolePermissions
+
+    ProductionapiserverTaskRole:
+      Properties:
+        RoleName: userServiceRoleApiServerTask
+        PermissionsBoundary: EngineerorUserServiceRolePermissions
+
+    ProductionfastcountsserverTaskExecutionRole:
+      Properties:
+        RoleName: userServiceRoleCountsServer
+        PermissionsBoundary: EngineerorUserServiceRolePermissions
+
+    ProductionfastcountsserverTaskRole:
+      Properties:
+        RoleName: userServiceRoleCountsServerTask
+        PermissionsBoundary: EngineerorUserServiceRolePermissions
+
+volumes:
+  cache:
+
+services:
+  production-api-server:
+    x-aws-policies:
+      - "arn:aws:iam::aws:policy/EngineerOrUserServiceRolePermissions"
+    image: nadeemlab/spt-apiserver
+    container_name: production-apiserver
+    ports:
+      - target: 8080
+        host_ip: 127.0.0.1
+        published: 8080
+        protocol: tcp
+        mode: host
+    environment:
+      SINGLE_CELL_DATABASE_HOST : ${DATABASE_HOST_IP}
+      SINGLE_CELL_DATABASE_USER : ${DATABASE_USER}
+      SINGLE_CELL_DATABASE_PASSWORD : ${DATABASE_PASSWORD}
+      COUNTS_SERVER_HOST : production-fast-counts-server
+      COUNTS_SERVER_PORT : 8016
+
+  production-fast-counts-server:
+    x-aws-policies:
+      - "arn:aws:iam::aws:policy/EngineerOrUserServiceRolePermissions"
+    image: nadeemlab/spt-countsserver
+    container_name: production-countsserver
+    ports:
+      - target: 8016
+        host_ip: 127.0.0.1
+        published: 8016
+        protocol: tcp
+        mode: host
+    volumes:
+      - "cache:/countsserver/source_data"     
+
+  frontend:
+    image: spt-frontend
+    build:
+      dockerfile: Dockerfile
+    container_name: spt-frontend
+    ports:
+      - target: 80
+        host_ip: 127.0.0.1
+        published: 80
+        protocol: tcp
+        mode: host

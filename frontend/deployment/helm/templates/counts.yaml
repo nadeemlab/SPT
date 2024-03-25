@@ -1,0 +1,75 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spt.fullname" . }}-counts
+  labels:
+    io.kompose.service: counts
+  {{- include "spt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.counts.type }}
+  selector:
+    io.kompose.service: counts
+  {{- include "spt.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: "8016"
+    port: 8016
+    targetPort: 8016
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spt.fullname" . }}-counts
+  labels:
+    io.kompose.service: counts
+  {{- include "spt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.counts.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: counts
+    {{- include "spt.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: counts
+      {{- include "spt.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ .Values.kubernetesClusterDomain }}
+        - name: SINGLE_CELL_DATABASE_HOST
+          valueFrom:
+            secretKeyRef:
+              key: db-host
+              name: db-secret
+              optional: false
+        - name: SINGLE_CELL_DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              key: db-user
+              name: db-secret
+              optional: false
+        - name: SINGLE_CELL_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: db-password
+              name: db-secret
+              optional: false
+        image: {{ .Values.counts.image.repository }}:{{ .Values.counts.image.tag | default .Chart.AppVersion }}
+        name: spt-counts
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8016
+        resources: {{- toYaml .Values.counts.resources | nindent 10 }}
+        volumeMounts:
+        - mountPath: /ondemand/source_data/
+          name: mntdata
+      restartPolicy: Always
+      volumes:
+      - name: mntdata
+        hostPath:
+        #path: /mnt/s3data
+          path: /mnt/data

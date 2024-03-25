@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spt.fullname" . }}-proximity
+  labels:
+    io.kompose.service: proximity
+  {{- include "spt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.proximity.type }}
+  selector:
+    io.kompose.service: proximity
+  {{- include "spt.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: "8016"
+    port: 8016
+    targetPort: 8016
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spt.fullname" . }}-proximity
+  labels:
+    io.kompose.service: proximity
+  {{- include "spt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.proximity.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: proximity
+    {{- include "spt.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: proximity
+      {{- include "spt.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ .Values.kubernetesClusterDomain }}
+        - name: SINGLE_CELL_DATABASE_HOST
+          valueFrom:
+            secretKeyRef:
+              key: db-host
+              name: db-secret
+              optional: false
+        - name: SINGLE_CELL_DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              key: db-user
+              name: db-secret
+              optional: false
+        - name: SINGLE_CELL_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: db-password
+              name: db-secret
+              optional: false
+        image: {{ .Values.proximity.image.repository }}:{{ .Values.proximity.image.tag | default .Chart.AppVersion }}
+        name: spt-proximity
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8016
+        resources: {{- toYaml .Values.proximity.resources | nindent 10 }}
+        volumeMounts:
+        - mountPath: /ondemand/source_data/
+          name: mntdata
+        args:          
+        - "--service=proximity"
+      restartPolicy: Always
+      volumes:
+      - name: mntdata
+        hostPath:
+        #path: /mnt/s3data
+          path: /mnt/data

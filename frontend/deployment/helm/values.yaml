@@ -1,0 +1,48 @@
+hostname: "oncopathtk.org"
+
+api:
+  image:
+    repository: nadeemlab/spt-apiserver
+    tag: latest
+  resources:
+    limits:
+      cpu: "1500m"
+      memory: 2Gi
+    requests:
+      cpu: "1"
+      memory: 500Mi
+  replicas: 1
+  type: ClusterIP
+counts:
+  image:
+    repository: nadeemlab/spt-ondemand
+    tag: latest
+  resources:
+    limits:
+      cpu: "1500m"
+      memory: 14Gi
+    requests:
+      cpu: "1"
+      memory: 500Mi
+  replicas: 1
+  type: ClusterIP
+frontend:
+  image:
+    repository: 666466118732.dkr.ecr.us-east-1.amazonaws.com/spt-frontend-prod
+    tag: latest
+  resources:
+    limits:
+      cpu: "1"
+      memory: 500Mi
+    requests:
+      cpu: 500m
+      memory: 256Mi
+
+  replicas: 1
+  type: ClusterIP
+
+kubernetesClusterDomain: cluster.local
+
+ingress:
+  cors:
+    allowOrigins: "https://oncopathtk.spt.aws.mskcc.org:443, http://oncopathtk.spt.aws.mskcc.org, https://oncopathtk.org:443, http://oncopathtk.org"

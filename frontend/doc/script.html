@@ -1,0 +1,69 @@
+<html> <head> <style> h1 { background-color: #faae3c; padding: 10px; border-style: solid; border-width: 1px; border-color: #dbdbdb; } h2 { background-color: #ffe07a; padding: 10px; border-style: solid; border-width: 1px; border-color: #dbdbdb; } h3 { background-color: #fffade; padding: 10px; border-style: solid; border-width: 1px; border-color: #dbdbdb; } code { background-color: #dbdbdb; } body { font-family: sans-serif; padding: 5%; } </style> </head> <body>
+<p>Testing session October 31 2023.</p>
+<ul>
+<li>URL: http://k8s-ingressn-ingressn-957844105a-df35bc90d7a2ee62.elb.us-east-1.amazonaws.com</li>
+</ul>
+<h1>Scenario 1</h1>
+<p><em>This study found both indicators highly predictive of complete response and indicators highly predictive of resistance to immunotherapy. The presence of proliferating CD8+ T cells displaying the exhausted state and the presence of aggregations of B cells both predicted complete response to subsequent treatment, while loss of MHCI on tumor cells predicted resistance to subsequent treatment.</em></p>
+<ol>
+<li>Select study =&gt; <strong>Melanoma intralesional IL2</strong>.</li>
+<li>Create custom phenotype <strong>KI67+ PD1+ LAG3+ TIM3+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Select from phenotype list: <strong>CD8+ T cell</strong> and <strong>KI67+ PD1+ LAG3+ TIM3+</strong> and <strong>B cell</strong>.</li>
+<li><strong>Next</strong>.</li>
+<li>Click tile with row/column: <strong>CD8+ T cell</strong> and <strong>KI67+ PD1+ LAG3+ TIM3+</strong>.</li>
+<li>Click cohort <strong>1</strong> and click cohort <strong>3</strong>.</li>
+<li>Click the numerical table column heading <strong>CD8+ T cell, KI67+ PD1+ LAG3+ TIM3+</strong>.</li>
+<li>Note verbalization. (<em>25 ratio</em>)</li>
+<li>Click the isolated column tile <strong>CD8+ T cell</strong>.</li>
+<li>Click the numerical table column heading <strong>CD8+ T cell</strong>.</li>
+<li>Note verbalization. (<em>6 ratio</em>)</li>
+<li>Click the isolated column tile <strong>B cell</strong>.</li>
+<li>Click the expander button <strong>&gt;</strong> beside numerical table column header <strong>B cell</strong>.</li>
+<li>Select <strong>cell proximity</strong> from drop-down.</li>
+<li>After some time, if verbalization not updated, click cohort <strong>1</strong> or <strong>3</strong> again. (<em>3.58 ratio</em>)</li>
+</ol>
+<h1>Scenario 2</h1>
+<p><em>This study uncovered markers predictive of favorable response to ICI (Immune Checkpoint Inhibition) therapy, specifically anti-PDL1 and anti-CTLA4 therapies, by analysis of cell population structure and spatial proximity in pre-treatment melanoma samples, as measured by multiplexed imaging mass cytometry (time-of-flight) images. Proximity of antigen-experienced cytotoxic T cells (CD8+ CD45RO+) to melanoma cells was associated with favorable response. The overall presence of the proliferative such cells was also associated with favorable response.</em></p>
+<ol>
+<li>Select study =&gt; <strong>Melanoma CyTOF ICI</strong>.</li>
+<li>Create custom phenotype <strong>CD8A+ CD3+ CD45RO+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Create custom phenotype <strong>KI67+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Select from phenotype list: <strong>CD8A+ CD3+ CD45RO+</strong> and <strong>Melanoma</strong> and <strong>KI67+</strong>.</li>
+<li><strong>Next</strong>.</li>
+<li>Click tile with row/column: <strong>Melanoma</strong> and <strong>CD8A+ CD3+ CD45RO+</strong>.</li>
+<li>Click expander button <strong>&gt;</strong> beside numerical table column header <strong>CD8A+ CD3+ CD45RO+</strong>, <strong>Melanoma</strong>.</li>
+<li>Select <strong>neighborhood enrichment</strong> from drop-down.</li>
+<li>Wait for some values in the column to populate.</li>
+<li>Click cohort <strong>1</strong> and <strong>2</strong>.</li>
+<li>Note verbalization. Click cohort <strong>1</strong> or <strong>2</strong> again to refresh. (<em>1.24 ratio</em>)</li>
+<li>Select <strong>co-occurrence</strong> from drop-down.</li>
+<li>Wait for some values to populate.</li>
+<li>Note verbalization. Click cohort <strong>1</strong> or <strong>2</strong> to refresh. (<em>1.06 ratio</em>)</li>
+<li>Click tile with row/column: <strong>CD8A+ CD3+ CD45RO+</strong> and <strong>KI67</strong>.</li>
+<li>Click numerical table column header <strong>CD8A+ CD3+ CD45RO+, KI67</strong>.</li>
+<li>Note verbalization. (<em>1.41 ratio</em>)</li>
+</ol>
+<h1>Scenario 3</h1>
+<p><em>In this study, cell-intrinsic heterogeneity was found to be indicative of poor disease outcomes, and spatial localization of respective tumor subtypes within a single tumor to respective regions was found to be both common and associated with better prognosis than the heterogeneous alternative.</em></p>
+<ol>
+<li>Select study =&gt; <strong>Breast cancer IMC</strong>.</li>
+<li>Create custom phenotype <strong>CK+ KRT14+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Create custom phenotype <strong>CK+ KRT7+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Create custom phenotype <strong>CK+ KRT5+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Create custom phenotype <strong>CK+ KRT19+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Create custom phenotype <strong>CK+</strong>, then <strong>Add to selection</strong>.</li>
+<li>Select phenotypes from list: <strong>CK+ KRT14+</strong> and <strong>CK+ KRT7+</strong> and <strong>CK+ KRT5+</strong>.</li>
+<li>Select tile with row/column: <strong>CK+ KRT14+</strong> and <strong>CK+ KRT7+</strong>.</li>
+<li>Click expander button <strong>&gt;</strong> beside numerical table column header <strong>CK+ KRT14+, CK+ KRT7+</strong>.</li>
+<li>Select <strong>cell proximity</strong> from drop-down.</li>
+<li>Wait for values to populate.</li>
+<li>Click cohort <strong>2</strong> and cohort <strong>1</strong>.</li>
+<li>Note verbalization. (<em>1.69 ratio</em>)</li>
+<li>Repeat steps 7-12 for pair <strong>CK+ KRT14+</strong> and <strong>CK+ KRT5+</strong>, comparing cohorts <strong>2</strong> and <strong>3</strong>. (<em>1.53 ratio</em>)</li>
+<li>Click isolated column tile <strong>CK+ KRT14</strong> and <strong>CK+ KRT19+</strong>.</li>
+<li>Click numerical table column header <strong>CK+ KRT14</strong> then header <strong>CK+ KRT19+</strong>.</li>
+<li>Click cohort <strong>2</strong> and cohort <strong>1</strong>.</li>
+<li>Note verbalization. (<em>11.48 ratio</em>)</li>
+<li>Click cohort <strong>2</strong> and cohort <strong>3</strong>.</li>
+<li>Note verbalization. (<em>112.7 ratio</em>)</li>
+</ol></body> </html>

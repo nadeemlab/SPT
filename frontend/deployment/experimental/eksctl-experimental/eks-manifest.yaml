@@ -1,0 +1,29 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: spt-cluster
+  region: us-east-1
+
+vpc:
+  subnets:
+    private:
+      eu-east-1a: { id: subnet-061ca565de53395e4 }
+      eu-east-1b: { id: subnet-0b67a6cb9712a2d35 }
+      eu-east-1c: { id: subnet-0e3e0379722037f2d }
+
+managedNodeGroups:
+  - name: ng-2-workers
+    labels: { role: workers }
+    instanceType: m6i.large #m6i.large better for prod
+    desiredCapacity: 2
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        ebs: true
+        efs: true
+        awsLoadBalancerController: true
+        cloudWatch: true

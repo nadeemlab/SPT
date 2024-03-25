@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: k8s-ingressn-ingressn-4155e34ff2-ace0f1ad2e7e71fd.elb.us-east-1.amazonaws.com
+      http:
+        paths:
+        - pathType: Prefix
+          path: /api/(.*)
+          backend:
+            service:
+              name: api
+              port:
+                number: 8080
+        - pathType: Prefix
+          path: /(.*)
+          backend:
+            service:
+              name: frontend
+              port:
+                number: 80
+  tls: # < placing a host in the TLS config will determine what ends up in the cert's subjectAltNames
+    - hosts:
+      - k8s-ingressn-ingressn-4155e34ff2-ace0f1ad2e7e71fd.elb.us-east-1.amazonaws.com
+      secretName: spt-ingress-cert # < cert-manager will store the created certificate in this secret.

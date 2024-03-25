@@ -1,0 +1,67 @@
+\documentclass[10pt]{article}
+
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{fullpage}
+\usepackage{caption}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{courier}
+
+\usepackage{array}
+
+\begin{document}
+\title{Virtual slide viewer: feature development plan \vspace{-2em}}
+\date{\today}
+\maketitle
+
+\section*{Subfeatures, functionality, or requirements}
+\begin{center}
+{
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{| p{0.2\textwidth} | p{0.79\textwidth} |}
+\hline
+Basic layout & Separate tab with primary display pane for depiction of cells. \\
+Cell shape & Cells rendered as circles, or ovals if bounding box is available. \\
+Sample selector & One sample/slide viewed at a time, selectable e.g. with a dropdown menu. \\
+Pan and zoom & Mouse pan and zoom. Continuous behavior is good but not necessary. \\
+Downsampling & Reasonable downsampling when view is zoomed far out. \\
+Phenotype selection & Legend with checkboxes for each phenotype to control colorization. \\
+Phenotype representation & Cells colored according to selected phenotype (``composite phenotype''). \\
+User-defined phenotypes & User-defined composite phenotypes (defined in existing other tab) also listed in phenotype checkboxes list. \\
+Intensity imaging channel & Ability to overlay intensity (or 1/0 value) for one of the single imaged channels, e.g. as alpha channel or as color channel instead of (or in addition to?) selected phenotype colorization. \\
+Lasso selection & Lasso selection of focus cell set, up to some reasonable maximum size (e.g. 5000 cells, since this set will be passed back and forth for stats summary purposes). \\
+Context limitation & Lasso selection causes context limitation in feature matrix tab. \\ \hline
+\end{tabular}
+}
+\end{center}
+
+%  Mini-map... show selected/zoomed area in context?
+
+\begin{itemize}
+\itemsep0em
+\item{Open SPT issues every time new data is needed from the API server, or the query formats need updating to accomodate this work. I (Jimmy) will work on these issues ASAP.}
+\item{Real data not needed to complete prototype; can use random placement of e.g. 100k cells, and random assignment of e.g. 10 phenotypes, random assignment of a few channels of intensity.}
+\end{itemize}
+
+\section*{Schedule}
+
+\begin{center}
+{
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ | l | l | }
+\hline
+Date & Items completed \\ \hline
+\begin{tabular}{ l r} January 26 (Friday) \\ (\emph{meeting 2:30pm EST}) \end{tabular} & Basic layout, Cell shape \\ \hline
+\begin{tabular}{ l r} February 2 (Friday) \\ (\emph{meeting 2:30pm EST}) \end{tabular} & Sample selector, Pan and zoom, Downsampling \\ \hline
+\begin{tabular}{ l r} February 9 (Friday)\end{tabular} & Phenotype selection, Phenotype representation, User-defined phenotypes \\ \hline
+\begin{tabular}{ l r} February 16 (Friday) \\ (\emph{meeting 2:30pm EST}) \end{tabular} & Intensity imaging channel \\ \hline
+\begin{tabular}{ l r} February 23 (Friday) \end{tabular} & Lasso selection, Context limitation \\ \hline
+\begin{tabular}{ l r} February 26 (Monday) \\ (\emph{meeting 2:30pm EST}) \end{tabular} & \\ \hline
+\begin{tabular}{ l r} March 1 (Friday) \end{tabular} & \emph{loose ends} \\ \hline
+\end{tabular}
+}
+\end{center}
+
+\end{document}

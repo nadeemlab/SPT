@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spt.fullname" . }}-frontend
+  labels:
+    io.kompose.service: frontend
+  {{- include "spt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.frontend.type }}
+  selector:
+    io.kompose.service: frontend
+  {{- include "spt.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spt.fullname" . }}-frontend
+  labels:
+    io.kompose.service: frontend
+  {{- include "spt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: frontend
+    {{- include "spt.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: frontend
+      {{- include "spt.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ .Values.kubernetesClusterDomain }}
+        - name: VITE_API_URL
+          value: {{ .Values.hostname }}/api/
+        image: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: Always
+        name: frontend
+        ports:
+        - containerPort: 80
+        resources: {{- toYaml .Values.frontend.resources | nindent 10 }}
+      imagePullSecrets:
+      - name: regcred
+      restartPolicy: Always

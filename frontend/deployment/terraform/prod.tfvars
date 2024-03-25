@@ -1,0 +1,10 @@
+cluster_name = "spt-prod"
+db_identifier = "spt-prod"
+db_password = "Password"
+environment = "prod"
+vpc_id = "vpc-059a7bcd0fb57db89"
+subnet_ids = ["subnet-062a1c7eb9f96c87e","subnet-01cbaae4aa6d2216e","subnet-0674d408752ee61bf"]
+allowed_cidrs = [ "10.0.0.0/8","172.16.0.0/12" ]
+db_name = "scstudies"
+certificate_arn = "arn:aws:acm:us-east-1:666466118732:certificate/2ae8282e-87ec-4427-b88d-9b0b072ed7ab"
+fast_counts_bucket_name="spt-prod-fast-counts"

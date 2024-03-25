@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: api
+    spec:
+      containers:
+        - name: api
+          image: nadeemlab/spt-apiserver:latest
+          ports:
+            - containerPort: 8080
+          resources: 
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "1000m"
+          env:
+            - name: COUNTS_SERVER_HOST
+              value: fast-counts
+            - name: COUNTS_SERVER_PORT
+              value: "8016"
+            - name: SINGLE_CELL_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db-host
+                  optional: false
+            - name: SINGLE_CELL_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db-user
+                  optional: false
+            - name: SINGLE_CELL_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db-password
+                  optional: false
+      restartPolicy: Always

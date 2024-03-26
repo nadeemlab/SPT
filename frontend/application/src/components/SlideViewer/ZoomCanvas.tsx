@@ -7,39 +7,31 @@ import React, {
 } from "react";
 import { CellContent, CellsToShow, SelectedPhenotype } from "../../types/Study";
 import useStudy from "../../store/useStudy";
-// import twgl from "twgl.js";
 
-//@ts-nocheck
-
-const { devicePixelRatio: ratio = 1 } = window;
 
 const vs = `
   attribute vec3 coord;
   attribute vec4 position;
   attribute vec2 texcoord;
-  attribute vec2 camera;
+  attribute mat4 view_matrix;
   uniform mediump float scale;
 
   varying vec2 v_texcoord;
   varying vec4 v_color;
-  varying vec2 v_camera;
 
   void main() {
-    gl_Position = position + vec4(
-        coord.xy * (scale) - 1.0, 0, 0
-    );
+    gl_Position = position + vec4(coord.xy * scale, 0, 0);
+    // gl_Position = position + view_matrix * vec4(coord.xy, 0.0, 0.0);
 
     v_texcoord = texcoord;
     // v_color = vec4(0.0, coord.z, 0.0, 1.0);
     v_color = vec4(fract(coord.z * vec3(0.127, 0.373, 0.513)), 1);
-    v_camera = camera;
   }`;
 
 const fs = `
   precision mediump float;
   varying vec2 v_texcoord;
   varying vec4 v_color;
-  varying vec2 v_camera;
   uniform float scale;
 
   float circle(in vec2 st, in float radius) {
@@ -115,13 +107,12 @@ export default function ZoomCanvas({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvas2DRef = useRef<HTMLCanvasElement | null>(null);
   const [coords, setCoords] = useState<Float32Array>();
-  const [scale, setScale] = useState<number>(0.002);
+  const [scale, setScale] = useState<number>(1);
   const [context, setContext] = useState<WebGLRenderingContext>();
   const [context2D, set2DContext] = useState<CanvasRenderingContext2D>();
-  const [mousePos, setMousePos] = useState<Point>(ORIGIN);
   const [offset, setOffset] = useState<Point>(ORIGIN);
   const [viewportTopLeft, setViewportTopLeft] = useState<Point>(ORIGIN);
-  const [ctrl, setCtrl] = useState<boolean>(false);
+  const [drawing, setDrawing] = useState<boolean>(false);
   // const isResetRef = useRef<boolean>(false);
   const lastMousePosRef = useRef<Point>(ORIGIN);
   const lastOffsetRef = useRef<Point>(ORIGIN);
@@ -177,7 +168,6 @@ export default function ZoomCanvas({
       const pixelYIndex = featureNames.indexOf("pixel y");
 
       for (const [index, cell] of cells.entries()) {
-        console.log(cell[pixelXIndex], cell[pixelYIndex]);
         coords[index * 3] = cell[pixelXIndex];
         coords[index * 3 + 1] = cell[pixelYIndex];
         coords[index * 3 + 2] = matchesCriteria(
@@ -189,215 +179,233 @@ export default function ZoomCanvas({
           : 0;
       }
 
-      const minX = cells.reduce(
-        (min, c) => (c[pixelXIndex] < min ? c[pixelXIndex] : min),
-        Infinity,
-      );
-      const maxX = cells.reduce(
-        (max, c) => (c[pixelXIndex] > max ? c[pixelXIndex] : max),
-        -Infinity,
-      );
+      // const minX = cells.reduce(
+      //   (min, c) => (c[pixelXIndex] < min ? c[pixelXIndex] : min),
+      //   Infinity,
+      // );
+      // const maxX = cells.reduce(
+      //   (max, c) => (c[pixelXIndex] > max ? c[pixelXIndex] : max),
+      //   -Infinity,
+      // );
 
-      const minY = cells.reduce(
-        (min, c) => (c[pixelYIndex] < min ? c[pixelYIndex] : min),
-        Infinity,
-      );
-      const maxY = cells.reduce(
-        (max, c) => (c[pixelYIndex] > max ? c[pixelYIndex] : max),
-        -Infinity,
-      );
+      // const minY = cells.reduce(
+      //   (min, c) => (c[pixelYIndex] < min ? c[pixelYIndex] : min),
+      //   Infinity,
+      // );
+      // const maxY = cells.reduce(
+      //   (max, c) => (c[pixelYIndex] > max ? c[pixelYIndex] : max),
+      //   -Infinity,
+      // );
 
       setCoords(coords);
     }
   }, [studyData, selectedPhenotypesToShow, selectedSample]);
 
   useEffect(() => {
-    // console.log({selectedArea})
-    console.log(selectedArea);
-    // if(!context2D){
-    //   set2DContext(canvas2DRef.current!.getContext("2d")!);
+    if (!canvasRef?.current || !context || !context2D || !coords) {
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const ext = context.getExtension("ANGLE_instanced_arrays")!;
+    twgl.addExtensionsToContext(context);
+
+    const programInfo = twgl.createProgramInfo(context, [vs, fs]);
+
+    const x = (16 / canvas.width) * 2;
+    const y = (16 / canvas.height) * 2;
+
+    const dvp = {
+      x: (viewportTopLeft.x / canvas.width) * 2,
+      y: (viewportTopLeft.y / canvas.height) * 2,
+    };
+    // const dvp = {
+    //   x: 0, y: 0
     // }
 
-    if (context2D && selectedArea.length == 0) {
-      const storedTransform = context2D.getTransform();
-      context2D.canvas.width = context2D.canvas.width;
-      context2D.setTransform(storedTransform);
-    }
-    if (context2D && selectedArea.length > 1) {
-      const storedTransform = context2D.getTransform();
-      context2D.canvas.width = context2D.canvas.width;
-      context2D.setTransform(storedTransform);
-      for (let i = 0; i < selectedArea.length; i++) {
-        const curr = selectedArea[i];
-        const next = selectedArea[i + 1];
-        if (curr && next) {
-          context2D.beginPath();
-          context2D.moveTo(curr.x, curr.y);
-          context2D.lineTo(next.x, next.y);
-          context2D.stroke();
-        }
+    const bufferInfo = twgl.createBufferInfoFromArrays(context, {
+      position: {
+        numComponents: 2,
+        data: [
+          -x - dvp.x,
+          -y + dvp.y,
+          x - dvp.x,
+          -y + dvp.y,
+          -x - dvp.x,
+          y + dvp.y,
+          -x - dvp.x,
+          y + dvp.y,
+          x - dvp.x,
+          -y + dvp.y,
+          x - dvp.x,
+          y + dvp.y,
+        ],
+      },
+      texcoord: [0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0],
+      coord: {
+        numComponents: 3,
+        data: coords,
+        divisor: 1,
+      },
+    });
+    twgl.setBuffersAndAttributes(context, programInfo, bufferInfo);
+    context.useProgram(programInfo.program);
+    context.uniformMatrix4fv(
+      context.getUniformLocation(programInfo.program, "view_matrix"),
+      false,
+      // [m.a, m.b, 0, m.c, m.d, 0, m.e, m.f, 1]
+      context2D
+        .getTransform()
+        // .scale(1 / 450, 1 / 450)
+        .toFloat32Array(),
+    );
+
+    context.uniform1f(
+      context.getUniformLocation(programInfo.program, "scale"),
+      scale,
+    );
+    ext.drawArraysInstancedANGLE(context.TRIANGLES, 0, 6, coords.length * 3);
+
+    const { featureNames } = studyData;
+    const cells = studyData.cellsData[selectedSample];
+
+    if (cells) {
+      // console.log(viewportTopLeft, scale, Array.from(context2D.getTransform().toFloat32Array()))
+      const pixelXIndex = featureNames.indexOf("pixel x");
+      const pixelYIndex = featureNames.indexOf("pixel y");
+
+      for (const cell of cells) {
+        // context2D.fillRect(cell[pixelXIndex], cell[pixelYIndex], 10, 10);
       }
     }
-  }, [selectedArea]);
+  }, [viewportTopLeft, scale, coords, context]);
+
   useEffect(() => {
-    if (canvasRef?.current && context && coords) {
-      const canvas = canvasRef.current;
-      const ext = context.getExtension("ANGLE_instanced_arrays")!;
-      twgl.addExtensionsToContext(context);
+    const canvas2Delem = canvas2DRef.current;
 
-      const programInfo = twgl.createProgramInfo(context, [vs, fs]);
-
-      const x = (16 / canvas.width) * 2;
-      const y = (16 / canvas.height) * 2;
-
-      const dvp = {
-        x: (viewportTopLeft.x / canvas.width) * 2,
-        y: (viewportTopLeft.y / canvas.height) * 2,
-      };
-
-      const bufferInfo = twgl.createBufferInfoFromArrays(context, {
-        position: {
-          numComponents: 2,
-          data: [
-            -x - dvp.x,
-            -y + dvp.y,
-            x - dvp.x,
-            -y + dvp.y,
-            -x - dvp.x,
-            y + dvp.y,
-            -x - dvp.x,
-            y + dvp.y,
-            x - dvp.x,
-            -y + dvp.y,
-            x - dvp.x,
-            y + dvp.y,
-          ],
-        },
-        texcoord: [0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0],
-        coord: {
-          numComponents: 3,
-          data: coords,
-          divisor: 1,
-        },
-        camera: {
-          numComponents: 2,
-          data: [viewportTopLeft.x, viewportTopLeft.y],
-        },
-      });
-      twgl.setBuffersAndAttributes(context, programInfo, bufferInfo);
-      context.useProgram(programInfo.program);
-      context.uniform1f(
-        context.getUniformLocation(programInfo.program, "scale"),
-        scale,
-      );
-      ext.drawArraysInstancedANGLE(context.TRIANGLES, 0, 6, coords.length * 3);
+    if (!canvas2Delem || !context2D) {
+      return;
     }
-  }, [viewportTopLeft, scale, coords]);
+
+    context2D.save();
+    context2D.setTransform(1, 0, 0, 1, 0, 0);
+    context2D.clearRect(0, 0, canvas2Delem.width, canvas2Delem.height);
+    context2D.restore();
+
+    if (!selectedArea.length) {
+      return;
+    }
+    context2D.beginPath();
+    context2D.moveTo(selectedArea[0].x, selectedArea[0].y);
+    for (let i = 1; i < selectedArea.length; i++) {
+      const point = selectedArea[i];
+      context2D.lineTo(point.x, point.y);
+    }
+    if (!drawing) {
+      context2D.lineTo(selectedArea[0].x, selectedArea[0].y);
+    }
+    context2D.stroke();
+  }, [viewportTopLeft, scale, selectedArea, drawing, context2D]);
 
   useLayoutEffect(() => {
-    if (context && lastOffsetRef.current) {
+    if (lastOffsetRef.current && context2D) {
       const offsetDiff = scalePoint(
         diffPoints(offset, lastOffsetRef.current),
         scale,
       );
-      let diff = {
+      const diff = {
         x: offsetDiff.x * scale,
         y: offsetDiff.y * scale,
       };
+      context2D.translate(offsetDiff.x, offsetDiff.y);
       setViewportTopLeft((prevVal) => diffPoints(prevVal, diff));
     }
-  }, [context, offset, scale]);
+  }, [context2D, offset, scale]);
 
   useEffect(() => {
-    const canvasElem = canvasRef.current;
-    if (canvasElem === null) {
+    const canvas2Delem = canvas2DRef.current;
+    if (!canvas2Delem) {
       return;
     }
     function handleWheel(event: WheelEvent) {
       event.preventDefault();
+      if (!canvas2Delem || !context2D) {
+        return;
+      }
 
       const zoom = 1 - event.deltaY / 15000;
 
+      const mouseX = event.clientX - canvas2Delem.offsetLeft;
+      const mouseY = event.clientY - canvas2Delem.offsetTop;
       const viewportTopLeftDelta = {
-        x: (mousePos.x - 2) * (1 - 1 / zoom),
-        y: (mousePos.y - 2) * (1 - 1 / zoom),
+        x: (mouseX / scale) * (1 - 1 / zoom),
+        y: (mouseY / scale) * (1 - 1 / zoom),
       };
       const newViewportTopLeft = addPoints(
         viewportTopLeft,
         viewportTopLeftDelta,
       );
 
-      if (context2D) {
-        context2D.translate(viewportTopLeft.x, viewportTopLeft.y);
-        context2D.scale(zoom, zoom);
-        context2D.translate(-newViewportTopLeft.x, -newViewportTopLeft.y);
-      }
-      setViewportTopLeft(newViewportTopLeft);
-      setScale(scale * zoom);
-      // }
+      context2D.translate(viewportTopLeft.x, viewportTopLeft.y);
+      context2D.scale(zoom, zoom);
+      context2D.translate(-newViewportTopLeft.x, -newViewportTopLeft.y);
+
+      const transform = context2D.getTransform()
+
+      setViewportTopLeft({x: -transform.e, y: -transform.f});
+      setScale(transform.a);
     }
 
-    canvasElem.addEventListener("wheel", handleWheel);
-    return () => canvasElem.removeEventListener("wheel", handleWheel);
-  }, [context, mousePos.x, mousePos.y, scale]);
-  useEffect(() => {
-    const canvasElem = canvasRef.current;
+    canvas2Delem.addEventListener("wheel", handleWheel);
+    return () => canvas2Delem.removeEventListener("wheel", handleWheel);
+  }, [context, context2D, viewportTopLeft, scale]);
+
+  function handleMouseMove(event: React.MouseEventHandler) {
+    event.preventDefault();
+
     const canvas2Delem = canvas2DRef.current;
-    if (canvasElem === null || canvas2Delem == null) {
+    if (!canvas2Delem || !context2D) {
       return;
     }
 
-    function handleUpdateMouse(event: MouseEvent) {
-      event.preventDefault();
-      if (canvasElem) {
-        const viewportMousePos = { x: event.clientX, y: event.clientY };
-        const topLeftCanvasPos = {
-          x: canvasElem.offsetLeft,
-          y: canvasElem.offsetTop,
-        };
-        const newMousePosition = diffPoints(viewportMousePos, topLeftCanvasPos);
+    const transform = context2D.getTransform().invertSelf();
+    const point = transform.transformPoint(
+      new DOMPoint(
+        event.nativeEvent.offsetX,
+        event.nativeEvent.offsetY,
+      ),
+    );
 
-        if (event.ctrlKey) {
-          setCtrl(true);
+    // console.log(point.x, point.y)
 
-          if (drawSteps % 20 == 0) {
-            // setSelectedArea([...selectedArea, {
-            //   x: (viewportMousePos.x * scale) - viewportTopLeft.x,
-            //   y: (viewportMousePos.y * scale) - viewportTopLeft.y,
-            // }]);
-            setSelectedArea([...selectedArea, newMousePosition]);
-          }
-          setDrawSteps(drawSteps + 1);
-        } else {
-          setCtrl(false);
-        }
+    if (event.ctrlKey) {
+      if (!drawing) {
+        setSelectedArea([{ x: point.x, y: point.y }]);
+      } else if (drawSteps % 10 == 0) {
+        setSelectedArea([...selectedArea, { x: point.x, y: point.y }]);
+      }
+      setDrawing(true);
+      setDrawSteps(drawSteps + 1);
+    }
+  }
 
-        setMousePos(newMousePosition);
+  useEffect(() => {
+    function keyup(event: KeyboardEvent) {
+      if (event.key === "Control" && selectedArea.length != 0) {
+        setDrawing(false);
+        setDrawSteps(0);
       }
     }
-
-    canvasElem.addEventListener("mousemove", handleUpdateMouse);
-    canvasElem.addEventListener("wheel", handleUpdateMouse);
-
-    canvas2Delem.addEventListener("mousemove", handleUpdateMouse);
-    canvas2Delem.addEventListener("wheel", handleUpdateMouse);
+    document.addEventListener("keyup", keyup);
     return () => {
-      canvasElem.removeEventListener("mousemove", handleUpdateMouse);
-      canvasElem.removeEventListener("wheel", handleUpdateMouse);
+      document.removeEventListener("keyup", keyup);
     };
-  }, [drawSteps, context2D, selectedArea]);
-
-  window.addEventListener("keydown", (event) => {
-    if (event.ctrlKey && selectedArea.length != 0) {
-      setSelectedArea([]);
-    }
   });
 
   return (
     <>
       <canvas
         className="mx-auto bg-transparent absolute top-0"
-        onMouseDown={startPan}
         width={900}
         height={900}
         ref={canvasRef}
@@ -408,6 +416,7 @@ export default function ZoomCanvas({
         width={900}
         height={900}
         ref={canvas2DRef}
+        onMouseMove={handleMouseMove}
       ></canvas>
     </>
   );

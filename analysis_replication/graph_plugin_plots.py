@@ -421,10 +421,6 @@ class ImportanceFractionAndTestRetriever:
             important_proportion = important_proportions[phenotype]
             for _sample, row in df_phenotype.iterrows():
                 sample = str(_sample)
-                print('#')
-                print(_sample)
-                print(sample)
-                print(important_proportion[sample])
                 count_both = important_proportion[sample] * self.count_important / 100
                 test = self._test_one_case
                 test(phenotype, sample, row[phenotype], count_both, row['all cells'], df)

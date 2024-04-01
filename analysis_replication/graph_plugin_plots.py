@@ -339,33 +339,18 @@ def plot_heatmap(df: DataFrame, model_name: str, study_name: str, figsize: tuple
 
 
 @define
-class PlotGenerator:
+class PlotDataRetriever:
     host: str
-    output_directory: str 
 
-    def generate_plots(self) -> None:
-        for specification in plot_specifications():
-            self._generate_plot(specification)
-
-    def _generate_plot(self, specification: PlotSpecification) -> None:
+    def retrieve_data(self, specification: PlotSpecification) -> tuple[DataFrame, ...]:
         cohorts = set(c.index_int for c in specification.cohorts)
-        plugins = specification.plugins
-        plugins = cast(tuple[GNNModel, GNNModel], plugins)
+        plugins = cast(tuple[GNNModel, GNNModel], specification.plugins)
         phenotypes = list(specification.phenotypes)
         attribute_order = self._get_attribute_order(specification)
         retriever = ImportanceFractionAndTestRetriever(self.host, specification.study)
         retriever.initialize()
-        dfs_selected = tuple(
+        return tuple(
             retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
-        )
-        plot_2_heatmaps(
-            cast(tuple[DataFrame, DataFrame], dfs_selected),
-            plugins,
-            specification.study,
-            output_directory=self.output_directory,
-            cohort_map={c.index_int: c.label for c in specification.cohorts},
-            concat_axis=specification.orientation,
-            figsize=specification.figure_size
         )
 
     @staticmethod
@@ -376,6 +361,29 @@ class PlotGenerator:
         if 'cohort' not in attribute_order:
             attribute_order.append('cohort')
         return attribute_order
+
+
+@define
+class PlotGenerator:
+    host: str
+    output_directory: str 
+
+    def generate_plots(self) -> None:
+        for specification in plot_specifications():
+            self._generate_plot(specification)
+
+    def _generate_plot(self, specification: PlotSpecification) -> None:
+        dfs = PlotDataRetriever(self.host).retrieve_data(specification)
+        plot_2_heatmaps(
+            cast(tuple[DataFrame, DataFrame], dfs),
+            cast(tuple[GNNModel, GNNModel], specification.plugins),
+            specification.study,
+            output_directory=self.output_directory,
+            cohort_map={c.index_int: c.label for c in specification.cohorts},
+            concat_axis=specification.orientation,
+            figsize=specification.figure_size
+        )
+
 
 PhenotypeDataFrames = tuple[tuple[str, DataFrame], ...]
 

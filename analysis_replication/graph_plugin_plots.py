@@ -168,7 +168,7 @@ def plot_scatter_heatmap(df: DataFrame,
 
     # Separate the p_value and p_important
     df_p_value = df.xs('p_value', axis=0, level=1)
-    df_p_important = df.xs('p_important', axis=0, level=1)
+    df_p_important = df.xs('important_fraction', axis=0, level=1)
 
     # Clip the p_value to the range [0, 0.1] and normalize it to the range [0, 1]
     df_p_value_clipped = df_p_value.clip(upper=0.05)
@@ -334,7 +334,7 @@ def plot_2x2_heatmaps(df_model1: tuple[DataFrame, DataFrame], df_model2: tuple[D
 
 def plot_heatmap(df: DataFrame, model_name: str, study_name: str, figsize: tuple[float, float] = (16, 6)):
     fig, axs = plt.subplots(1, 1, figsize=figsize)
-    df_values_only = df.drop('cohort', axis=1, level=0).xs('p_important', axis=1, level=1)
+    df_values_only = df.drop('cohort', axis=1, level=0).xs('important_fraction', axis=1, level=1)
     norm = SymLogNorm(linthresh=0.001, linscale=0.001,
                       vmin=df_values_only.min().min(), vmax=df_values_only.max().max())
     plot_scatter_heatmap(df, axs, True, True, cmap, norm)

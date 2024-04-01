@@ -138,10 +138,6 @@ def plot_scatter_heatmap(df: DataFrame,
                          title_side: str = 'bottom',
                          s_factor: float = 200,
                          ):
-
-    print(df)
-    print(df.index)
-
     df = df.sort_values('cohort')
     df = df.sort_index()
 

@@ -98,7 +98,7 @@ def plot_specifications() -> tuple[PlotSpecification, ...]:
         'intratumoral CD3+ LAG3+',
         'Regulatory T cell',
     ]
-    return (
+    specifications = (
         PlotSpecification(
             study = 'Melanoma intralesional IL2',
             phenotypes = tuple(miscellaneous + t_cells + macrophages),
@@ -126,6 +126,8 @@ def plot_specifications() -> tuple[PlotSpecification, ...]:
             orientation = 'vertical',
         )
     )
+    # return specifications    
+    return (specifications[1], )
 
 
 
@@ -382,6 +384,7 @@ class PlotGenerator:
             attribute_order.append('cohort')
         return attribute_order
 
+PhenotypeDataFrames = tuple[tuple[str, DataFrame], ...]
 
 @define
 class ImportanceFractionAndTestRetriever:
@@ -389,6 +392,7 @@ class ImportanceFractionAndTestRetriever:
     study: str
     access: DataAccessor | None = None
     count_important: int = 100
+    df_phenotypes: PhenotypeDataFrames | None = None
 
     def initialize(self) -> None:
         self.access = DataAccessor(self.study, host=self.host)
@@ -396,32 +400,36 @@ class ImportanceFractionAndTestRetriever:
     def get_access(self) -> DataAccessor:
         return cast(DataAccessor, self.access)
 
+    def get_df_phenotypes(self) -> PhenotypeDataFrames:
+        return cast(PhenotypeDataFrames, self.df_phenotypes)
+
     def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: str) -> DataFrame:
         df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
-        df_phenotypes = tuple(
+        self.df_phenotypes = tuple(
             (str(phenotype), self.get_access().counts(phenotype).astype(int))
             for phenotype in df.columns.get_level_values(0).unique()
         )
         important_proportions = {
             phenotype: self.get_access().important(phenotype, plugin=plugin)
-            for phenotype, _ in df_phenotypes
+            for phenotype, _ in self.get_df_phenotypes()
         }
-        omittable = self._get_omittable_samples(df_phenotypes, important_proportions)
-        df_phenotypes = self._restrict_rows(df_phenotypes, cohorts, omittable)
-        cohort_column = self._get_cohort_column(df_phenotypes).astype(int)
-        df_phenotypes = self._restrict_columns(df_phenotypes)
-        for phenotype, df_phenotype in df_phenotypes:
+        omittable = self._get_omittable_samples(important_proportions)
+        self._restrict_rows(cohorts, omittable)
+        cohort_column = self._get_cohort_column().astype(int)
+        self._restrict_columns()
+        for phenotype, df_phenotype in self.get_df_phenotypes():
             important_proportion = important_proportions[phenotype]
             for _sample, row in df_phenotype.iterrows():
                 sample = str(_sample)
+                print('#')
+                print(_sample)
+                print(sample)
+                print(important_proportion[sample])
                 count_both = important_proportion[sample] * self.count_important / 100
                 test = self._test_one_case
                 test(phenotype, sample, row[phenotype], count_both, row['all cells'], df)
-        self._get_cell_count(df_phenotypes)
+        self._get_cell_count()
         df['cohort'] = cohort_column
-
-        print(df)
-
         return df
 
     def _test_one_case(self, phenotype: str, _sample: str, count_phenotype: int, count_both, total: int, df: DataFrame) -> None:
@@ -434,8 +442,8 @@ class ImportanceFractionAndTestRetriever:
         df.loc[sample, (phenotype, 'important_fraction')] = count_both / self.count_important
         df.loc[sample, (phenotype, 'p_value')] = p_value
 
-    def _restrict_rows(self, df_phenotypes: tuple[tuple[str, DataFrame], ...], cohorts: set[int], omittable: set[str]) -> tuple[tuple[str, DataFrame], ...]:
-        return tuple(
+    def _restrict_rows(self, cohorts: set[int], omittable: set[str]) -> None:
+        self.df_phenotypes = tuple(
             (
                 phenotype,
                 df[df['cohort'].isin(cohorts) & ~df.index.isin(omittable)]
@@ -443,11 +451,11 @@ class ImportanceFractionAndTestRetriever:
                     .sort_values(['cohort', 'sample'])
                     .set_index('sample'),
             )
-            for phenotype, df in df_phenotypes
+            for phenotype, df in self.get_df_phenotypes()
         )
 
-    def _restrict_columns(self, df_phenotypes: tuple[tuple[str, DataFrame], ...]) -> tuple[tuple[str, DataFrame], ...]:
-        return tuple(
+    def _restrict_columns(self) -> None:
+        self.df_phenotypes = tuple(
             (
                 phenotype,
                 df.iloc[:, [
@@ -455,12 +463,12 @@ class ImportanceFractionAndTestRetriever:
                     df.columns.get_indexer_for([phenotype])[0],
                 ]],
             )
-            for phenotype, df in df_phenotypes
+            for phenotype, df in self.get_df_phenotypes()
         )
 
-    def _get_cohort_column(self, df_phenotypes: tuple[tuple[str, DataFrame], ...]) -> Series:
+    def _get_cohort_column(self) -> Series:
         cohort_column: Series | None = None
-        for _, df_phenotype in df_phenotypes:
+        for _, df_phenotype in self.get_df_phenotypes():
             if cohort_column is None:
                 cohort_column = df_phenotype['cohort']
             else:
@@ -468,25 +476,30 @@ class ImportanceFractionAndTestRetriever:
         assert not cohort_column is None
         return cohort_column
 
-    def _get_omittable_samples(self, df_phenotypes: tuple[tuple[str, DataFrame], ...], important_proportions: dict[str, dict[str, float]]) -> set[str]:
-        occurring = set(str(sample) for df in df_phenotypes for sample in Series(df.index).items())
+    def _get_omittable_samples(self, important_proportions: dict[str, dict[str, float]]) -> set[str]:
+        occurring = set(
+            str(sample)
+            for _, df in self.get_df_phenotypes()
+            for _, sample in Series(df.index).items()
+        )
         with_none = set(
-            sample
+            str(sample)
             for _, important_proportion in important_proportions.items()
             for sample, value in important_proportion.items()
             if value is None
         )
-        return occurring.difference(with_none)
+        return occurring.intersection(with_none)
 
-    def _get_cell_count(self, df_phenotypes: tuple[tuple[str, DataFrame], ...]) -> Series:
+    def _get_cell_count(self) -> Series:
         cell_count = None
-        for _, df in df_phenotypes:
+        for _, df in self.get_df_phenotypes():
             if cell_count is None:
                 cell_count = df['all cells']
             else:
                 assert (cell_count == df['all cells']).all()
         assert not cell_count is None
         return cell_count
+
 
 def make_plots(args: Namespace):
     plt.rcParams['font.size'] = 14

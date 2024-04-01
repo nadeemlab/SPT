@@ -98,7 +98,7 @@ def plot_specifications() -> tuple[PlotSpecification, ...]:
         'intratumoral CD3+ LAG3+',
         'Regulatory T cell',
     ]
-    specifications = (
+    return (
         PlotSpecification(
             study = 'Melanoma intralesional IL2',
             phenotypes = tuple(miscellaneous + t_cells + macrophages),
@@ -126,9 +126,6 @@ def plot_specifications() -> tuple[PlotSpecification, ...]:
             orientation = 'vertical',
         )
     )
-    # return specifications    
-    return (specifications[1], )
-
 
 
 def plot_scatter_heatmap(df: DataFrame,

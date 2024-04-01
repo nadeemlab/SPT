@@ -1,66 +1,132 @@
-import os
+from os.path import join
 from argparse import ArgumentParser
+from argparse import Namespace
+from itertools import chain
+from typing import NamedTuple
+from typing import Literal
+from typing import cast
 
 import numpy as np
-from pandas import DataFrame, MultiIndex, concat
+from pandas import DataFrame
+from pandas import MultiIndex
+from pandas import concat
+from pandas import Series
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.colors import SymLogNorm
-from scipy.stats import fisher_exact
+from scipy.stats import fisher_exact  # type: ignore
+from attr import define
 
 from accessors import DataAccessor
 
+GNNModel = Literal['cg-gnn', 'graph-transformer']
 
-def df_study(study: str, host: str, cohorts: set[int], phenotypes: list[str], plugin_name: str = 'cg-gnn'):
-    access = DataAccessor(study, host=host)
-    df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'p_important']]))
-    specimens_to_delete: set[str] = set()
-    s_cohort = None
-    for phenotype in df.columns.get_level_values(0).unique():
-        df_phenotype = access.counts(phenotype).astype(int)
-        df_phenotype = df_phenotype[df_phenotype['cohort'].isin(cohorts)]
 
-        df_phenotype.reset_index(inplace=True)
-        df_phenotype.sort_values(['cohort', 'sample'], inplace=True)
-        df_phenotype.set_index('sample', inplace=True)
+class Cohort(NamedTuple):
+    index_int: int
+    label: str
 
-        if s_cohort is None:
-            s_cohort = df_phenotype['cohort']
-        df_phenotype = df_phenotype.iloc[:, [
-            df_phenotype.columns.get_loc('all cells'),
-            df_phenotype.columns.get_indexer_for([phenotype])[0],
-        ]]
-        if df.shape[0] == 0:
-            df['Cell count'] = df_phenotype['all cells']
-        else:
-            assert (df['Cell count'] == df_phenotype.drop(specimens_to_delete)['all cells']).all()
-            specimens_to_delete = set()
-        important_proportion = access.important(phenotype,
-                                                plugin=plugin_name,
-                                                # datetime_of_run='2023-12-31 00:00:00',
-                                                # plugin_version='0',
-                                                # cohort_stratifier='',
-                                                )
 
-        for specimen, row in df_phenotype.iterrows():
-            if important_proportion[specimen] is None:
-                specimens_to_delete.add(specimen)
-                continue
-            n_cells_of_this_phenotype = row[phenotype]
-            n_cells_total = row['all cells']
-            n_important_cells_of_this_phenotype = important_proportion[specimen]
-            n_important_cells_total = 100
-            odd_ratio, p_value = fisher_exact([
-                [n_important_cells_of_this_phenotype,
-                 n_important_cells_total - n_important_cells_of_this_phenotype],
-                [n_cells_of_this_phenotype - n_important_cells_of_this_phenotype,
-                 n_cells_total - n_cells_of_this_phenotype - n_important_cells_total + n_important_cells_of_this_phenotype],
-            ])
-            df.loc[specimen, (phenotype, 'p_important')] = n_important_cells_of_this_phenotype / 100
-            df.loc[specimen, (phenotype, 'p_value')] = p_value
-        df = df[~df.index.isin(specimens_to_delete)]
-    df['cohort'] = s_cohort.astype(int)
-    return df
+class PlotSpecification(NamedTuple):
+    study: str
+    phenotypes: tuple[str, ...]
+    attribute_order: tuple[str, ...]
+    cohorts: tuple[Cohort, ...]
+    plugins: tuple[GNNModel, ...]
+    figure_size: tuple[float, float]
+    orientation: Literal['horizontal', 'vertical']
+
+
+def plot_specifications() -> tuple[PlotSpecification, ...]:
+    miscellaneous = [
+        'Tumor',
+        'Adipocyte or Langerhans cell',
+        'Nerve',
+        'B cell',
+        'Natural killer cell',
+    ]
+    t_cells = [
+        'Natural killer T cell',
+        'CD4+/CD8+ T cell',
+        'CD4+ natural killer T cell',
+        'CD4+ regulatory T cell',
+        'CD4+ T cell',
+        'CD8+ natural killer T cell',
+        'CD8+ regulatory T cell',
+        'CD8+ T cell',
+        'Double negative regulatory T cell',
+        'T cell/null phenotype',
+    ]
+    macrophages = [
+        'CD163+MHCII- macrophage',
+        'CD163+MHCII+ macrophage',
+        'CD68+MHCII- macrophage',
+        'CD68+MHCII+ macrophage',
+        'Other macrophage/monocyte CD14+',
+        'Other macrophage/monocyte CD4+',
+    ]
+
+    most_interesting = [
+        'Tumor',
+        'Adipocyte or Langerhans cell',
+        'Natural killer cell',
+        'CD4+ T cell',
+    ]
+    less_activity = [
+        'Nerve',
+        'B cell',
+    ]
+    t_cell_types_selected = [
+        'CD4+/CD8+ T cell',
+        'CD4+ regulatory T cell',
+        'CD8+ natural killer T cell',
+        'CD8+ regulatory T cell',
+        'CD8+ T cell',
+        'Double negative regulatory T cell',
+        'T cell/null phenotype',
+    ]
+    no_activity = [
+        'Natural killer T cell',
+        'CD4+ natural killer T cell',
+    ]
+    phenotypes_urothelial = [
+        'Tumor',
+        'CD4- CD8- T cell',
+        'T cytotoxic cell',
+        'T helper cell',
+        'Macrophage',
+        'intratumoral CD3+ LAG3+',
+        'Regulatory T cell',
+    ]
+    return (
+        PlotSpecification(
+            study = 'Melanoma intralesional IL2',
+            phenotypes = tuple(miscellaneous + t_cells + macrophages),
+            attribute_order = tuple(chain(*
+                [most_interesting, less_activity, t_cell_types_selected, no_activity, ['cohort']]
+            )),
+            cohorts = (
+                Cohort(index_int=1, label='Non-responder'),
+                Cohort(index_int=3, label='Responder'),
+            ),
+            plugins = ('cg-gnn', 'graph-transformer'),
+            figure_size = (11, 8),
+            orientation = 'horizontal',
+        ),
+        PlotSpecification(
+            study = 'Urothelial ICI',
+            phenotypes = tuple(phenotypes_urothelial),
+            attribute_order = tuple(phenotypes_urothelial + ['cohort']),
+            cohorts = (
+                Cohort(index_int=1, label='Responder'),
+                Cohort(index_int=2, label='Non-responder'),
+            ),
+            plugins = ('cg-gnn', 'graph-transformer'),
+            figure_size = (14, 5),
+            orientation = 'vertical',
+        )
+    )
+
 
 
 def plot_scatter_heatmap(df: DataFrame,
@@ -73,7 +139,12 @@ def plot_scatter_heatmap(df: DataFrame,
                          title_side: str = 'bottom',
                          s_factor: float = 200,
                          ):
-    df.sort_values(['cohort', df.index.name], inplace=True)
+
+    print(df)
+    print(df.index)
+
+    df = df.sort_values('cohort')
+    df = df.sort_index()
 
     # Extract the 'cohort' column
     s_cohort = df['cohort']
@@ -164,7 +235,7 @@ cmap.set_under(color='white')
 
 
 def plot_2_heatmaps(dfs: tuple[DataFrame, DataFrame],
-                    model_names: tuple[str, str],
+                    model_names: tuple[GNNModel, GNNModel],
                     study_name: str,
                     output_directory: str | None = None,
                     cohort_map: dict[int, str] | None = None,
@@ -212,7 +283,7 @@ def plot_2_heatmaps(dfs: tuple[DataFrame, DataFrame],
 
     plt.tight_layout()
     if output_directory is not None:
-        plt.savefig(os.path.join(output_directory, f'{study_name}.svg'))
+        plt.savefig(join(output_directory, f'{study_name}.svg'))
     plt.show()
 
 
@@ -272,142 +343,161 @@ def plot_heatmap(df: DataFrame, model_name: str, study_name: str, figsize: tuple
     plt.show()
 
 
-def generate_study_heatmaps(study_name: str,
-                            host: str,
-                            cohorts: set[int],
-                            phenotypes: list[str],
-                            figsize: tuple[int, int],
-                            output_directory: str | None = None,
-                            channel_order: list[str] | None = None,
-                            cohort_map: dict[int, str] | None = None,
-                            concat_axis: str = 'horizontal',
-                            plugin_names: tuple[str, ...] = ('cg-gnn', 'graph-transformer'),
-                            ):
-    dfs = [df_study(study_name, host, cohorts, phenotypes, plugin_name=plugin_name)
-           for plugin_name in plugin_names]
-    if channel_order is None:
-        channel_order = phenotypes.copy()
-    if 'cohort' not in channel_order:
-        channel_order.append('cohort')
-    dfs_heatmap = [df.drop('Cell count', axis=1, level=0)[channel_order] for df in dfs]
-    plot_2_heatmaps(tuple(dfs_heatmap),
-                    plugin_names,
-                    study_name,
-                    output_directory=output_directory,
-                    cohort_map=cohort_map,
-                    concat_axis=concat_axis,
-                    figsize=figsize)
+@define
+class PlotGenerator:
+    host: str
+    output_directory: str 
+
+    def generate_plots(self) -> None:
+        for specification in plot_specifications():
+            self._generate_plot(specification)
+
+    def _generate_plot(self, specification: PlotSpecification) -> None:
+        cohorts = set(c.index_int for c in specification.cohorts)
+        plugins = specification.plugins
+        plugins = cast(tuple[GNNModel, GNNModel], plugins)
+        phenotypes = list(specification.phenotypes)
+        attribute_order = self._get_attribute_order(specification)
+        retriever = ImportanceFractionAndTestRetriever(self.host, specification.study)
+        retriever.initialize()
+        dfs_selected = tuple(
+            retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
+        )
+        plot_2_heatmaps(
+            cast(tuple[DataFrame, DataFrame], dfs_selected),
+            plugins,
+            specification.study,
+            output_directory=self.output_directory,
+            cohort_map={c.index_int: c.label for c in specification.cohorts},
+            concat_axis=specification.orientation,
+            figsize=specification.figure_size
+        )
+
+    @staticmethod
+    def _get_attribute_order(specification: PlotSpecification) -> list[str]:
+        attribute_order = list(specification.attribute_order)
+        if attribute_order is None:
+            attribute_order = specification.phenotypes.copy()
+        if 'cohort' not in attribute_order:
+            attribute_order.append('cohort')
+        return attribute_order
+
+
+@define
+class ImportanceFractionAndTestRetriever:
+    host: str
+    study: str
+    access: DataAccessor | None = None
+    count_important: int = 100
+
+    def initialize(self) -> None:
+        self.access = DataAccessor(self.study, host=self.host)
+
+    def get_access(self) -> DataAccessor:
+        return cast(DataAccessor, self.access)
+
+    def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: str) -> DataFrame:
+        df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
+        df_phenotypes = tuple(
+            (str(phenotype), self.get_access().counts(phenotype).astype(int))
+            for phenotype in df.columns.get_level_values(0).unique()
+        )
+        important_proportions = {
+            phenotype: self.get_access().important(phenotype, plugin=plugin)
+            for phenotype, _ in df_phenotypes
+        }
+        omittable = self._get_omittable_samples(df_phenotypes, important_proportions)
+        df_phenotypes = self._restrict_rows(df_phenotypes, cohorts, omittable)
+        cohort_column = self._get_cohort_column(df_phenotypes).astype(int)
+        df_phenotypes = self._restrict_columns(df_phenotypes)
+        for phenotype, df_phenotype in df_phenotypes:
+            important_proportion = important_proportions[phenotype]
+            for _sample, row in df_phenotype.iterrows():
+                sample = str(_sample)
+                count_both = important_proportion[sample] * self.count_important / 100
+                test = self._test_one_case
+                test(phenotype, sample, row[phenotype], count_both, row['all cells'], df)
+        self._get_cell_count(df_phenotypes)
+        df['cohort'] = cohort_column
+
+        print(df)
+
+        return df
+
+    def _test_one_case(self, phenotype: str, _sample: str, count_phenotype: int, count_both, total: int, df: DataFrame) -> None:
+        sample = str(_sample)
+        a = count_both
+        b = self.count_important - count_both
+        c = count_phenotype - count_both
+        d = total - a - b - c
+        _, p_value = fisher_exact([[a, b], [c, d]])
+        df.loc[sample, (phenotype, 'important_fraction')] = count_both / self.count_important
+        df.loc[sample, (phenotype, 'p_value')] = p_value
+
+    def _restrict_rows(self, df_phenotypes: tuple[tuple[str, DataFrame], ...], cohorts: set[int], omittable: set[str]) -> tuple[tuple[str, DataFrame], ...]:
+        return tuple(
+            (
+                phenotype,
+                df[df['cohort'].isin(cohorts) & ~df.index.isin(omittable)]
+                    .reset_index()
+                    .sort_values(['cohort', 'sample'])
+                    .set_index('sample'),
+            )
+            for phenotype, df in df_phenotypes
+        )
+
+    def _restrict_columns(self, df_phenotypes: tuple[tuple[str, DataFrame], ...]) -> tuple[tuple[str, DataFrame], ...]:
+        return tuple(
+            (
+                phenotype,
+                df.iloc[:, [
+                    df.columns.get_loc('all cells'),
+                    df.columns.get_indexer_for([phenotype])[0],
+                ]],
+            )
+            for phenotype, df in df_phenotypes
+        )
+
+    def _get_cohort_column(self, df_phenotypes: tuple[tuple[str, DataFrame], ...]) -> Series:
+        cohort_column: Series | None = None
+        for _, df_phenotype in df_phenotypes:
+            if cohort_column is None:
+                cohort_column = df_phenotype['cohort']
+            else:
+                assert (cohort_column == df_phenotype['cohort']).all()
+        assert not cohort_column is None
+        return cohort_column
+
+    def _get_omittable_samples(self, df_phenotypes: tuple[tuple[str, DataFrame], ...], important_proportions: dict[str, dict[str, float]]) -> set[str]:
+        occurring = set(str(sample) for df in df_phenotypes for sample in Series(df.index).items())
+        with_none = set(
+            sample
+            for _, important_proportion in important_proportions.items()
+            for sample, value in important_proportion.items()
+            if value is None
+        )
+        return occurring.difference(with_none)
+
+    def _get_cell_count(self, df_phenotypes: tuple[tuple[str, DataFrame], ...]) -> Series:
+        cell_count = None
+        for _, df in df_phenotypes:
+            if cell_count is None:
+                cell_count = df['all cells']
+            else:
+                assert (cell_count == df['all cells']).all()
+        assert not cell_count is None
+        return cell_count
+
+def make_plots(args: Namespace):
+    plt.rcParams['font.size'] = 14
+    generator = PlotGenerator(args.host, args.output_directory)
+    generator.generate_plots()
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('host', type=str, help='SPT API endpoint host to query')
-    parser.add_argument('output_directory', type=str, default='', help='Directory to save SVGs in.')
+    add = parser.add_argument
+    add('host', type=str, help='SPT API endpoint host to query')
+    add('output_directory', type=str, default='', help='Directory in which to save SVGs.')
     args = parser.parse_args()
-
-    plt.rcParams['font.size'] = 14
-
-    phenotypes_miil2 = ['Tumor',
-                        'Adipocyte or Langerhans cell',
-                        'Nerve',
-                        'B cell',
-                        'Natural killer cell',
-
-                        # T cells
-                        'Natural killer T cell',
-                        'CD4+/CD8+ T cell',
-                        'CD4+ natural killer T cell',
-                        'CD4+ regulatory T cell',
-                        'CD4+ T cell',
-                        'CD8+ natural killer T cell',
-                        'CD8+ regulatory T cell',
-                        'CD8+ T cell',
-                        'Double negative regulatory T cell',
-                        'T cell/null phenotype',
-
-                        # Macrophages
-                        'CD163+MHCII- macrophage',
-                        'CD163+MHCII+ macrophage',
-                        'CD68+MHCII- macrophage',
-                        'CD68+MHCII+ macrophage',
-                        'Other macrophage/monocyte CD14+',
-                        'Other macrophage/monocyte CD4+',
-                        ]
-    channel_order_miil2 = [
-        # Mostly active
-        'Tumor',
-        'Adipocyte or Langerhans cell',
-        'Natural killer cell',
-        'CD4+ T cell',
-
-        # Macrophages
-        'CD163+MHCII- macrophage',
-        'CD163+MHCII+ macrophage',
-        'CD68+MHCII- macrophage',
-        'CD68+MHCII+ macrophage',
-        'Other macrophage/monocyte CD14+',
-        'Other macrophage/monocyte CD4+',
-
-        # Slightly active
-        'Nerve',
-        'B cell',
-
-        # T cells useful for only one cohort
-        'CD4+/CD8+ T cell',
-        'CD4+ regulatory T cell',
-        'CD8+ natural killer T cell',
-        'CD8+ regulatory T cell',
-        'CD8+ T cell',
-        'Double negative regulatory T cell',
-        'T cell/null phenotype',
-
-        # Mostly inactive
-        'Natural killer T cell',
-        'CD4+ natural killer T cell',
-    ] + ['cohort']
-    miil2_cohort_map = {
-        1: 'Non-responder',
-        3: 'Ex. responder',
-    }
-    generate_study_heatmaps('Melanoma intralesional IL2',
-                            args.host,
-                            set(miil2_cohort_map.keys()),
-                            phenotypes_miil2,
-                            (11, 8),
-                            output_directory=args.output_directory,
-                            channel_order=channel_order_miil2,
-                            cohort_map=miil2_cohort_map,
-                            concat_axis='horizontal',
-                            )
-
-    phenotypes_uro = ['CD4- CD8- T cell',
-                      'intratumoral CD3+ LAG3+',
-                      'Macrophage',
-                      'Regulatory T cell',
-                      'T cytotoxic cell',
-                      'T helper cell',
-                      'Tumor',
-                      ]
-    channel_order_uro = [
-        'Tumor',
-        'CD4- CD8- T cell',
-        'T cytotoxic cell',
-        'T helper cell',
-        'Macrophage',
-        'intratumoral CD3+ LAG3+',
-        'Regulatory T cell',
-    ] + ['cohort']
-    uro_cohort_map = {
-        1: 'Responder',
-        2: 'Non-responder',
-    }
-    generate_study_heatmaps('Urothelial ICI',
-                            args.host,
-                            set(uro_cohort_map.keys()),
-                            phenotypes_uro,
-                            (14, 5),
-                            output_directory=args.output_directory,
-                            channel_order=channel_order_uro,
-                            cohort_map=uro_cohort_map,
-                            concat_axis='vertical',
-                            )
+    make_plots(args)

@@ -33,6 +33,7 @@ class Cohort:
     index_int: int
     label: str
 
+
 @define
 class PlotSpecification:
     study: str
@@ -42,6 +43,7 @@ class PlotSpecification:
     plugins: tuple[GNNModel, ...]
     figure_size: tuple[float, float]
     orientation: Literal['horizontal', 'vertical']
+
 
 def get_plot_specifications() -> tuple[PlotSpecification, ...]:
     filenames = glob('*.json')
@@ -54,6 +56,191 @@ def get_plot_specifications() -> tuple[PlotSpecification, ...]:
 
 def sanitized_study(study: str) -> str:
     return re.sub(' ', '_', study).lower()
+
+PhenotypeDataFrames = tuple[tuple[str, DataFrame], ...]
+
+
+@define
+class ImportanceFractionAndTestRetriever:
+    host: str
+    study: str
+    access: DataAccessor | None = None
+    count_important: int = 100
+    df_phenotypes: PhenotypeDataFrames | None = None
+    df_phenotypes_original: PhenotypeDataFrames | None = None
+
+    def initialize(self) -> None:
+        self.access = DataAccessor(self.study, host=self.host)
+
+    def get_access(self) -> DataAccessor:
+        return cast(DataAccessor, self.access)
+
+    def get_df_phenotypes(self) -> PhenotypeDataFrames:
+        return cast(PhenotypeDataFrames, self.df_phenotypes)
+
+    def get_sanitized_study(self) -> str:
+        return sanitized_study(self.study)
+
+    def get_pickle_file(self, data: Literal['counts', 'importance'], plugin: GNNModel | None = None) -> str:
+        if data == 'counts':
+            return f'{self.get_sanitized_study()}.df_phenotypes.pickle'
+        if data == 'importance':
+            return f'{self.get_sanitized_study()}.{plugin}.pickle'
+
+    @staticmethod
+    def get_progress_bar_format():
+        return '{l_bar}{bar:30}{r_bar}{bar:-30b}'
+
+    def reset_phenotype_counts(self, df: DataFrame) -> None:
+        if self.df_phenotypes_original is None:
+            self._retrieve_phenotype_counts(df)
+        self.df_phenotypes = tuple(
+            (phenotype, _df.copy())
+            for phenotype, _df in cast(PhenotypeDataFrames, self.df_phenotypes_original)
+        )
+
+    def _retrieve_phenotype_counts(self, df: DataFrame) -> None:
+        pickle_file = self.get_pickle_file('counts')
+        if exists(pickle_file):
+            with open(pickle_file, 'rb') as file:
+                self.df_phenotypes_original = pickle_load(file)
+                print(f'Loaded from cache: {pickle_file}')
+        else:
+            levels = df.columns.get_level_values(0).unique()
+            N = len(levels)
+            print(f'Retrieving count data to support plot.')
+            self.df_phenotypes_original = tuple(
+                (str(phenotype), self.get_access().counts(phenotype).astype(int))
+                for phenotype, _ in zip(levels, tqdm(range(N), bar_format=self.get_progress_bar_format()))
+            )
+            with open(pickle_file, 'wb') as file:
+                pickle_dump(self.df_phenotypes_original, file)
+
+    def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: GNNModel) -> DataFrame:
+        df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
+        self.reset_phenotype_counts(df)
+        print(f'Retrieving important cell fractions ({plugin}).')
+        N = len(self.get_df_phenotypes())
+        pickle_file = self.get_pickle_file('importance', plugin=plugin)
+        if exists(pickle_file):
+            with open(pickle_file, 'rb') as file:
+                important_proportions = pickle_load(file)
+                print(f'Loaded from cache: {pickle_file}')
+        else:
+            important_proportions = {
+                phenotype: self.get_access().important(phenotype, plugin=plugin)
+                for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format=self.get_progress_bar_format()))
+            }
+            with open(pickle_file, 'wb') as file:
+                pickle_dump(important_proportions, file)
+        omittable = self._get_omittable_samples(important_proportions)
+        self._restrict_rows(cohorts, omittable)
+        cohort_column = self._get_cohort_column().astype(int)
+        self._restrict_columns()
+        for phenotype, df_phenotype in self.get_df_phenotypes():
+            important_proportion = important_proportions[phenotype]
+            for _sample, row in df_phenotype.iterrows():
+                sample = str(_sample)
+                count_both = important_proportion[sample] * self.count_important / 100
+                test = self._test_one_case
+                test(phenotype, sample, row[phenotype], count_both, row['all cells'], df)
+        self._get_cell_count()
+        df['cohort'] = cohort_column
+        return df
+
+    def _test_one_case(self, phenotype: str, _sample: str, count_phenotype: int, count_both, total: int, df: DataFrame) -> None:
+        sample = str(_sample)
+        a = count_both
+        b = self.count_important - count_both
+        c = count_phenotype - count_both
+        d = total - a - b - c
+        _, p_value = fisher_exact([[a, b], [c, d]])
+        df.loc[sample, (phenotype, 'important_fraction')] = count_both / self.count_important
+        df.loc[sample, (phenotype, 'p_value')] = p_value
+
+    def _restrict_rows(self, cohorts: set[int], omittable: set[str]) -> None:
+        self.df_phenotypes = tuple(
+            (
+                phenotype,
+                df[df['cohort'].isin(cohorts) & ~df.index.isin(omittable)]
+                    .reset_index()
+                    .sort_values(['cohort', 'sample'])
+                    .set_index('sample'),
+            )
+            for phenotype, df in self.get_df_phenotypes()
+        )
+
+    def _restrict_columns(self) -> None:
+        self.df_phenotypes = tuple(
+            (
+                phenotype,
+                df.iloc[:, [
+                    df.columns.get_loc('all cells'),
+                    df.columns.get_indexer_for([phenotype])[0],
+                ]],
+            )
+            for phenotype, df in self.get_df_phenotypes()
+        )
+
+    def _get_cohort_column(self) -> Series:
+        cohort_column: Series | None = None
+        for _, df_phenotype in self.get_df_phenotypes():
+            if cohort_column is None:
+                cohort_column = df_phenotype['cohort']
+            else:
+                assert (cohort_column == df_phenotype['cohort']).all()
+        assert not cohort_column is None
+        return cohort_column
+
+    def _get_omittable_samples(self, important_proportions: dict[str, dict[str, float]]) -> set[str]:
+        occurring = set(
+            str(sample)
+            for _, df in self.get_df_phenotypes()
+            for _, sample in Series(df.index).items()
+        )
+        with_none = set(
+            str(sample)
+            for _, important_proportion in important_proportions.items()
+            for sample, value in important_proportion.items()
+            if value is None
+        )
+        return occurring.intersection(with_none)
+
+    def _get_cell_count(self) -> Series:
+        cell_count = None
+        for _, df in self.get_df_phenotypes():
+            if cell_count is None:
+                cell_count = df['all cells']
+            else:
+                assert (cell_count == df['all cells']).all()
+        assert not cell_count is None
+        return cell_count
+
+
+@define
+class PlotDataRetriever:
+    host: str
+
+    def retrieve_data(self, specification: PlotSpecification) -> tuple[DataFrame, ...]:
+        cohorts = set(c.index_int for c in specification.cohorts)
+        plugins = cast(tuple[GNNModel, GNNModel], specification.plugins)
+        phenotypes = list(specification.phenotypes)
+        attribute_order = self._get_attribute_order(specification)
+        retriever = ImportanceFractionAndTestRetriever(self.host, specification.study)
+        retriever.initialize()
+        return tuple(
+            retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
+        )
+
+    @staticmethod
+    def _get_attribute_order(specification: PlotSpecification) -> list[str]:
+        attribute_order = list(specification.attribute_order)
+        if attribute_order is None:
+            attribute_order = specification.phenotypes.copy()
+        if 'cohort' not in attribute_order:
+            attribute_order.append('cohort')
+        return attribute_order
+
 
 def plot_scatter_heatmap(df: DataFrame,
                          ax: plt.Axes,
@@ -266,31 +453,6 @@ def plot_heatmap(df: DataFrame, model_name: str, study_name: str, figsize: tuple
 
 
 @define
-class PlotDataRetriever:
-    host: str
-
-    def retrieve_data(self, specification: PlotSpecification) -> tuple[DataFrame, ...]:
-        cohorts = set(c.index_int for c in specification.cohorts)
-        plugins = cast(tuple[GNNModel, GNNModel], specification.plugins)
-        phenotypes = list(specification.phenotypes)
-        attribute_order = self._get_attribute_order(specification)
-        retriever = ImportanceFractionAndTestRetriever(self.host, specification.study)
-        retriever.initialize()
-        return tuple(
-            retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
-        )
-
-    @staticmethod
-    def _get_attribute_order(specification: PlotSpecification) -> list[str]:
-        attribute_order = list(specification.attribute_order)
-        if attribute_order is None:
-            attribute_order = specification.phenotypes.copy()
-        if 'cohort' not in attribute_order:
-            attribute_order.append('cohort')
-        return attribute_order
-
-
-@define
 class PlotGenerator:
     host: str
     output_directory: str 
@@ -310,165 +472,6 @@ class PlotGenerator:
             concat_axis=specification.orientation,
             figsize=specification.figure_size
         )
-
-
-PhenotypeDataFrames = tuple[tuple[str, DataFrame], ...]
-
-@define
-class ImportanceFractionAndTestRetriever:
-    host: str
-    study: str
-    access: DataAccessor | None = None
-    count_important: int = 100
-    df_phenotypes: PhenotypeDataFrames | None = None
-    df_phenotypes_original: PhenotypeDataFrames | None = None
-
-    def initialize(self) -> None:
-        self.access = DataAccessor(self.study, host=self.host)
-
-    def get_access(self) -> DataAccessor:
-        return cast(DataAccessor, self.access)
-
-    def get_df_phenotypes(self) -> PhenotypeDataFrames:
-        return cast(PhenotypeDataFrames, self.df_phenotypes)
-
-    def get_sanitized_study(self) -> str:
-        return sanitized_study(self.study)
-
-    def get_pickle_file(self, data: Literal['counts', 'importance'], plugin: GNNModel | None = None) -> str:
-        if data == 'counts':
-            return f'{self.get_sanitized_study()}.df_phenotypes.pickle'
-        if data == 'importance':
-            return f'{self.get_sanitized_study()}.{plugin}.pickle'
-
-    @staticmethod
-    def get_progress_bar_format():
-        return '{l_bar}{bar:30}{r_bar}{bar:-30b}'
-
-    def reset_phenotype_counts(self, df: DataFrame) -> None:
-        if self.df_phenotypes_original is None:
-            self._retrieve_phenotype_counts(df)
-        self.df_phenotypes = tuple(
-            (phenotype, _df.copy())
-            for phenotype, _df in cast(PhenotypeDataFrames, self.df_phenotypes_original)
-        )
-
-    def _retrieve_phenotype_counts(self, df: DataFrame) -> None:
-        pickle_file = self.get_pickle_file('counts')
-        if exists(pickle_file):
-            with open(pickle_file, 'rb') as file:
-                self.df_phenotypes_original = pickle_load(file)
-                print(f'Loaded from cache: {pickle_file}')
-        else:
-            levels = df.columns.get_level_values(0).unique()
-            N = len(levels)
-            print(f'Retrieving count data to support plot.')
-            self.df_phenotypes_original = tuple(
-                (str(phenotype), self.get_access().counts(phenotype).astype(int))
-                for phenotype, _ in zip(levels, tqdm(range(N), bar_format=self.get_progress_bar_format()))
-            )
-            with open(pickle_file, 'wb') as file:
-                pickle_dump(self.df_phenotypes_original, file)
-
-    def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: GNNModel) -> DataFrame:
-        df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
-        self.reset_phenotype_counts(df)
-        print(f'Retrieving important cell fractions ({plugin}).')
-        N = len(self.get_df_phenotypes())
-        pickle_file = self.get_pickle_file('importance', plugin=plugin)
-        if exists(pickle_file):
-            with open(pickle_file, 'rb') as file:
-                important_proportions = pickle_load(file)
-                print(f'Loaded from cache: {pickle_file}')
-        else:
-            important_proportions = {
-                phenotype: self.get_access().important(phenotype, plugin=plugin)
-                for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format=self.get_progress_bar_format()))
-            }
-            with open(pickle_file, 'wb') as file:
-                pickle_dump(important_proportions, file)
-        omittable = self._get_omittable_samples(important_proportions)
-        self._restrict_rows(cohorts, omittable)
-        cohort_column = self._get_cohort_column().astype(int)
-        self._restrict_columns()
-        for phenotype, df_phenotype in self.get_df_phenotypes():
-            important_proportion = important_proportions[phenotype]
-            for _sample, row in df_phenotype.iterrows():
-                sample = str(_sample)
-                count_both = important_proportion[sample] * self.count_important / 100
-                test = self._test_one_case
-                test(phenotype, sample, row[phenotype], count_both, row['all cells'], df)
-        self._get_cell_count()
-        df['cohort'] = cohort_column
-        return df
-
-    def _test_one_case(self, phenotype: str, _sample: str, count_phenotype: int, count_both, total: int, df: DataFrame) -> None:
-        sample = str(_sample)
-        a = count_both
-        b = self.count_important - count_both
-        c = count_phenotype - count_both
-        d = total - a - b - c
-        _, p_value = fisher_exact([[a, b], [c, d]])
-        df.loc[sample, (phenotype, 'important_fraction')] = count_both / self.count_important
-        df.loc[sample, (phenotype, 'p_value')] = p_value
-
-    def _restrict_rows(self, cohorts: set[int], omittable: set[str]) -> None:
-        self.df_phenotypes = tuple(
-            (
-                phenotype,
-                df[df['cohort'].isin(cohorts) & ~df.index.isin(omittable)]
-                    .reset_index()
-                    .sort_values(['cohort', 'sample'])
-                    .set_index('sample'),
-            )
-            for phenotype, df in self.get_df_phenotypes()
-        )
-
-    def _restrict_columns(self) -> None:
-        self.df_phenotypes = tuple(
-            (
-                phenotype,
-                df.iloc[:, [
-                    df.columns.get_loc('all cells'),
-                    df.columns.get_indexer_for([phenotype])[0],
-                ]],
-            )
-            for phenotype, df in self.get_df_phenotypes()
-        )
-
-    def _get_cohort_column(self) -> Series:
-        cohort_column: Series | None = None
-        for _, df_phenotype in self.get_df_phenotypes():
-            if cohort_column is None:
-                cohort_column = df_phenotype['cohort']
-            else:
-                assert (cohort_column == df_phenotype['cohort']).all()
-        assert not cohort_column is None
-        return cohort_column
-
-    def _get_omittable_samples(self, important_proportions: dict[str, dict[str, float]]) -> set[str]:
-        occurring = set(
-            str(sample)
-            for _, df in self.get_df_phenotypes()
-            for _, sample in Series(df.index).items()
-        )
-        with_none = set(
-            str(sample)
-            for _, important_proportion in important_proportions.items()
-            for sample, value in important_proportion.items()
-            if value is None
-        )
-        return occurring.intersection(with_none)
-
-    def _get_cell_count(self) -> Series:
-        cell_count = None
-        for _, df in self.get_df_phenotypes():
-            if cell_count is None:
-                cell_count = df['all cells']
-            else:
-                assert (cell_count == df['all cells']).all()
-        assert not cell_count is None
-        return cell_count
 
 
 if __name__ == '__main__':

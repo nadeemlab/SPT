@@ -477,8 +477,8 @@ class PlotGenerator:
 if __name__ == '__main__':
     parser = ArgumentParser()
     add = parser.add_argument
-    add('host', type=str, help='SPT API endpoint host to query')
-    add('output_directory', type=str, default='', help='Directory in which to save SVGs.')
+    add('host', nargs='?', type=str, default='http://oncopathtk.org/api', help='SPT API host.')
+    add('output_directory', nargs='?', type=str, default='.', help='Directory in which to save SVGs.')
     args = parser.parse_args()
     plt.rcParams['font.size'] = 14
     generator = PlotGenerator(args.host, args.output_directory)

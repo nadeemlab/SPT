@@ -338,7 +338,8 @@ class ImportanceFractionAndTestRetriever:
                 (str(phenotype), self.get_access().counts(phenotype).astype(int))
                 for phenotype, _ in zip(levels, tqdm(range(N), bar_format='{l_bar}{bar:30}{r_bar}{bar:-30b}'))
             )
-        print('Retrieving important cell fractions ({plugin}).')
+        print(f'Retrieving important cell fractions ({plugin}).')
+        N = len(self.get_df_phenotypes())
         important_proportions = {
             phenotype: self.get_access().important(phenotype, plugin=plugin)
             for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format='{l_bar}{bar:30}{r_bar}{bar:-30b}'))

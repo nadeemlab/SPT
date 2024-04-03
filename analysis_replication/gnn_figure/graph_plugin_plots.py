@@ -44,7 +44,7 @@ class PlotSpecification:
     orientation: Literal['horizontal', 'vertical']
 
 
-def plot_specifications() -> tuple[PlotSpecification, ...]:
+def get_plot_specifications() -> tuple[PlotSpecification, ...]:
     filenames = glob('*.json')
     specifications = []
     for filename in filenames:
@@ -52,6 +52,10 @@ def plot_specifications() -> tuple[PlotSpecification, ...]:
             contents = file.read()
         specifications.append(cattrs_structure(json_loads(contents), PlotSpecification))
     return tuple(specifications)
+
+@staticmethod
+def sanitized_study(study: str) -> str:
+    return re.sub(' ', '_', study).lower()
 
 
 def plot_scatter_heatmap(df: DataFrame,
@@ -204,7 +208,7 @@ def plot_2_heatmaps(dfs: tuple[DataFrame, DataFrame],
 
     plt.tight_layout()
     if output_directory is not None:
-        plt.savefig(join(output_directory, f'{study_name}.svg'))
+        plt.savefig(join(output_directory, f'{sanitized_study(study_name)}.svg'))
     plt.show()
 
 
@@ -295,7 +299,7 @@ class PlotGenerator:
     output_directory: str 
 
     def generate_plots(self) -> None:
-        for specification in plot_specifications():
+        for specification in get_plot_specifications():
             self._generate_plot(specification)
 
     def _generate_plot(self, specification: PlotSpecification) -> None:
@@ -332,7 +336,7 @@ class ImportanceFractionAndTestRetriever:
         return cast(PhenotypeDataFrames, self.df_phenotypes)
 
     def get_sanitized_study(self) -> str:
-        return re.sub(' ', '_', self.study).lower()
+        return sanitized_study(self.study)
 
     def get_pickle_file(self, data: Literal['counts', 'importance'], plugin: GNNModel | None = None) -> str:
         if data == 'counts':

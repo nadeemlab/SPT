@@ -19,10 +19,10 @@ from matplotlib.colors import SymLogNorm
 from scipy.stats import fisher_exact  # type: ignore
 from attr import define
 from cattrs import structure as cattrs_structure
-from cattrs import unstructure as cattrs_unstructure
+from tqdm import tqdm
 
 sys.path.append('../')
-from accessors import DataAccessor
+from accessors import DataAccessor  # type: ignore
 
 GNNModel = Literal['cg-gnn', 'graph-transformer']
 
@@ -154,13 +154,13 @@ cmap.set_under(color='white')
 
 
 def plot_2_heatmaps(dfs: tuple[DataFrame, DataFrame],
-                    model_names: tuple[GNNModel, GNNModel],
-                    study_name: str,
-                    output_directory: str | None = None,
-                    cohort_map: dict[int, str] | None = None,
-                    concat_axis: str = 'horizontal',
-                    figsize: tuple[float, float] = (16, 6),
-                    ):
+    model_names: tuple[GNNModel, GNNModel],
+    study_name: str,
+    output_directory: str | None = None,
+    cohort_map: dict[int, str] | None = None,
+    concat_axis: str = 'horizontal',
+    figsize: tuple[float, float] = (16, 6),
+):
 
     dfs_values_only = tuple(df.drop('cohort', axis=1, level=0) for df in dfs)
     vmin = min(df.min().min() for df in dfs_values_only)
@@ -330,13 +330,18 @@ class ImportanceFractionAndTestRetriever:
 
     def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: str) -> DataFrame:
         df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
-        self.df_phenotypes = tuple(
-            (str(phenotype), self.get_access().counts(phenotype).astype(int))
-            for phenotype in df.columns.get_level_values(0).unique()
-        )
+        if self.df_phenotypes is None:
+            levels = df.columns.get_level_values(0).unique()
+            N = len(levels)
+            print(f'Retrieving count data to support plot.')
+            self.df_phenotypes = tuple(
+                (str(phenotype), self.get_access().counts(phenotype).astype(int))
+                for phenotype, _ in zip(levels, tqdm(range(N), bar_format='{l_bar}{bar:30}{r_bar}{bar:-30b}'))
+            )
+        print('Retrieving important cell fractions ({plugin}).')
         important_proportions = {
             phenotype: self.get_access().important(phenotype, plugin=plugin)
-            for phenotype, _ in self.get_df_phenotypes()
+            for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format='{l_bar}{bar:30}{r_bar}{bar:-30b}'))
         }
         omittable = self._get_omittable_samples(important_proportions)
         self._restrict_rows(cohorts, omittable)

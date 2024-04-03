@@ -1,12 +1,14 @@
 from os.path import join
-from os import listdir
+from os.path import exists
+from pickle import load as pickle_load
+from pickle import dump as pickle_dump
 from argparse import ArgumentParser
-from itertools import chain
 from typing import Literal
 from typing import cast
 from json import loads as json_loads
 import sys
 from glob import glob
+import re
 
 import numpy as np
 from pandas import DataFrame
@@ -318,6 +320,7 @@ class ImportanceFractionAndTestRetriever:
     access: DataAccessor | None = None
     count_important: int = 100
     df_phenotypes: PhenotypeDataFrames | None = None
+    df_phenotypes_original: PhenotypeDataFrames | None = None
 
     def initialize(self) -> None:
         self.access = DataAccessor(self.study, host=self.host)
@@ -328,22 +331,61 @@ class ImportanceFractionAndTestRetriever:
     def get_df_phenotypes(self) -> PhenotypeDataFrames:
         return cast(PhenotypeDataFrames, self.df_phenotypes)
 
-    def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: str) -> DataFrame:
-        df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
-        if self.df_phenotypes is None:
+    def get_sanitized_study(self) -> str:
+        return re.sub(' ', '_', self.study).lower()
+
+    def get_pickle_file(self, data: Literal['counts', 'importance'], plugin: GNNModel | None = None) -> str:
+        if data == 'counts':
+            return f'{self.get_sanitized_study()}.df_phenotypes.pickle'
+        if data == 'importance':
+            return f'{self.get_sanitized_study()}.{plugin}.pickle'
+
+    @staticmethod
+    def get_progress_bar_format():
+        return '{l_bar}{bar:30}{r_bar}{bar:-30b}'
+
+    def reset_phenotype_counts(self, df: DataFrame) -> None:
+        if self.df_phenotypes_original is None:
+            self._retrieve_phenotype_counts(df)
+        self.df_phenotypes = tuple(
+            (phenotype, _df.copy())
+            for phenotype, _df in cast(PhenotypeDataFrames, self.df_phenotypes_original)
+        )
+
+    def _retrieve_phenotype_counts(self, df: DataFrame) -> None:
+        pickle_file = self.get_pickle_file('counts')
+        if exists(pickle_file):
+            with open(pickle_file, 'rb') as file:
+                self.df_phenotypes_original = pickle_load(file)
+                print(f'Loaded from cache: {pickle_file}')
+        else:
             levels = df.columns.get_level_values(0).unique()
             N = len(levels)
             print(f'Retrieving count data to support plot.')
-            self.df_phenotypes = tuple(
+            self.df_phenotypes_original = tuple(
                 (str(phenotype), self.get_access().counts(phenotype).astype(int))
-                for phenotype, _ in zip(levels, tqdm(range(N), bar_format='{l_bar}{bar:30}{r_bar}{bar:-30b}'))
+                for phenotype, _ in zip(levels, tqdm(range(N), bar_format=self.get_progress_bar_format()))
             )
+            with open(pickle_file, 'wb') as file:
+                pickle_dump(self.df_phenotypes_original, file)
+
+    def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: GNNModel) -> DataFrame:
+        df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
+        self.reset_phenotype_counts(df)
         print(f'Retrieving important cell fractions ({plugin}).')
         N = len(self.get_df_phenotypes())
-        important_proportions = {
-            phenotype: self.get_access().important(phenotype, plugin=plugin)
-            for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format='{l_bar}{bar:30}{r_bar}{bar:-30b}'))
-        }
+        pickle_file = self.get_pickle_file('importance', plugin=plugin)
+        if exists(pickle_file):
+            with open(pickle_file, 'rb') as file:
+                important_proportions = pickle_load(file)
+                print(f'Loaded from cache: {pickle_file}')
+        else:
+            important_proportions = {
+                phenotype: self.get_access().important(phenotype, plugin=plugin)
+                for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format=self.get_progress_bar_format()))
+            }
+            with open(pickle_file, 'wb') as file:
+                pickle_dump(important_proportions, file)
         omittable = self._get_omittable_samples(important_proportions)
         self._restrict_rows(cohorts, omittable)
         cohort_column = self._get_cohort_column().astype(int)

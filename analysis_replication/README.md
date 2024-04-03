@@ -38,5 +38,5 @@ Another figure is generated programmatically from extractions from Graph Neural 
 
 ```bash
 cd gnn_figure/
-python graph_plugin_plots.py http://oncopathtk.org/api .
+python graph_plugin_plots.py
 ```

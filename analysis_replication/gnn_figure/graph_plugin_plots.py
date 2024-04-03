@@ -43,7 +43,6 @@ class PlotSpecification:
     figure_size: tuple[float, float]
     orientation: Literal['horizontal', 'vertical']
 
-
 def get_plot_specifications() -> tuple[PlotSpecification, ...]:
     filenames = glob('*.json')
     specifications = []
@@ -53,10 +52,8 @@ def get_plot_specifications() -> tuple[PlotSpecification, ...]:
         specifications.append(cattrs_structure(json_loads(contents), PlotSpecification))
     return tuple(specifications)
 
-@staticmethod
 def sanitized_study(study: str) -> str:
     return re.sub(' ', '_', study).lower()
-
 
 def plot_scatter_heatmap(df: DataFrame,
                          ax: plt.Axes,

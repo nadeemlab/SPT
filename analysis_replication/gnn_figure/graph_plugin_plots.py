@@ -1,10 +1,12 @@
 from os.path import join
+from os import listdir
 from argparse import ArgumentParser
-from argparse import Namespace
 from itertools import chain
-from typing import NamedTuple
 from typing import Literal
 from typing import cast
+from json import loads as json_loads
+import sys
+from glob import glob
 
 import numpy as np
 from pandas import DataFrame
@@ -16,18 +18,21 @@ import matplotlib.colors as mcolors
 from matplotlib.colors import SymLogNorm
 from scipy.stats import fisher_exact  # type: ignore
 from attr import define
+from cattrs import structure as cattrs_structure
+from cattrs import unstructure as cattrs_unstructure
 
+sys.path.append('../')
 from accessors import DataAccessor
 
 GNNModel = Literal['cg-gnn', 'graph-transformer']
 
-
-class Cohort(NamedTuple):
+@define
+class Cohort:
     index_int: int
     label: str
 
-
-class PlotSpecification(NamedTuple):
+@define
+class PlotSpecification:
     study: str
     phenotypes: tuple[str, ...]
     attribute_order: tuple[str, ...]
@@ -38,94 +43,13 @@ class PlotSpecification(NamedTuple):
 
 
 def plot_specifications() -> tuple[PlotSpecification, ...]:
-    miscellaneous = [
-        'Tumor',
-        'Adipocyte or Langerhans cell',
-        'Nerve',
-        'B cell',
-        'Natural killer cell',
-    ]
-    t_cells = [
-        'Natural killer T cell',
-        'CD4+/CD8+ T cell',
-        'CD4+ natural killer T cell',
-        'CD4+ regulatory T cell',
-        'CD4+ T cell',
-        'CD8+ natural killer T cell',
-        'CD8+ regulatory T cell',
-        'CD8+ T cell',
-        'Double negative regulatory T cell',
-        'T cell/null phenotype',
-    ]
-    macrophages = [
-        'CD163+MHCII- macrophage',
-        'CD163+MHCII+ macrophage',
-        'CD68+MHCII- macrophage',
-        'CD68+MHCII+ macrophage',
-        'Other macrophage/monocyte CD14+',
-        'Other macrophage/monocyte CD4+',
-    ]
-
-    most_interesting = [
-        'Tumor',
-        'Adipocyte or Langerhans cell',
-        'Natural killer cell',
-        'CD4+ T cell',
-    ]
-    less_activity = [
-        'Nerve',
-        'B cell',
-    ]
-    t_cell_types_selected = [
-        'CD4+/CD8+ T cell',
-        'CD4+ regulatory T cell',
-        'CD8+ natural killer T cell',
-        'CD8+ regulatory T cell',
-        'CD8+ T cell',
-        'Double negative regulatory T cell',
-        'T cell/null phenotype',
-    ]
-    no_activity = [
-        'Natural killer T cell',
-        'CD4+ natural killer T cell',
-    ]
-    phenotypes_urothelial = [
-        'Tumor',
-        'CD4- CD8- T cell',
-        'T cytotoxic cell',
-        'T helper cell',
-        'Macrophage',
-        'intratumoral CD3+ LAG3+',
-        'Regulatory T cell',
-    ]
-    return (
-        PlotSpecification(
-            study = 'Melanoma intralesional IL2',
-            phenotypes = tuple(miscellaneous + t_cells + macrophages),
-            attribute_order = tuple(chain(*
-                [most_interesting, less_activity, t_cell_types_selected, no_activity, ['cohort']]
-            )),
-            cohorts = (
-                Cohort(index_int=1, label='Non-responder'),
-                Cohort(index_int=3, label='Responder'),
-            ),
-            plugins = ('cg-gnn', 'graph-transformer'),
-            figure_size = (11, 8),
-            orientation = 'horizontal',
-        ),
-        PlotSpecification(
-            study = 'Urothelial ICI',
-            phenotypes = tuple(phenotypes_urothelial),
-            attribute_order = tuple(phenotypes_urothelial + ['cohort']),
-            cohorts = (
-                Cohort(index_int=1, label='Responder'),
-                Cohort(index_int=2, label='Non-responder'),
-            ),
-            plugins = ('cg-gnn', 'graph-transformer'),
-            figure_size = (14, 5),
-            orientation = 'vertical',
-        )
-    )
+    filenames = glob('*.json')
+    specifications = []
+    for filename in filenames:
+        with open(filename, 'rt', encoding='utf-8') as file:
+            contents = file.read()
+        specifications.append(cattrs_structure(json_loads(contents), PlotSpecification))
+    return tuple(specifications)
 
 
 def plot_scatter_heatmap(df: DataFrame,

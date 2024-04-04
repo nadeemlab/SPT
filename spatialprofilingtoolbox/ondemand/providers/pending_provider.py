@@ -26,7 +26,7 @@ class PendingProvider(OnDemandProvider, ABC):
         **kwargs,
     ) -> dict[str, dict[str, float | None] | bool]:
         """Get requested metrics or signal that it's not done calculating yet."""
-        logger.debug('Requesting computation.')
+        log_messages = []
         with DBCursor(study=study) as cursor:
             get = ADIFeatureSpecificationUploader.get_data_analysis_study
             measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
@@ -35,19 +35,19 @@ class PendingProvider(OnDemandProvider, ABC):
         feature_specification = get_or_create(study, data_analysis_study, **kwargs)
         if self._is_already_computed(study, feature_specification):
             is_pending = False
-            logger.debug('Already computed.')
+            log_messages.append('Already computed.')
         else:
             is_pending = self._is_already_pending(study, feature_specification)
             if is_pending:
-                logger.debug('Already pending.')
+                log_messages.append('Already pending.')
             else:
-                logger.debug('Not already pending.')
+                log_messages.append('Not already pending.')
             if not is_pending:
-                logger.debug('Starting background task.')
                 self._fork_computation_task(study, feature_specification)
                 self._set_pending_computation(study, feature_specification)
-                logger.debug('Background task just started, is pending.')
+                log_messages.append('Background task just started, is pending.')
                 is_pending = True
+        logger.info(' '.join(log_messages))
         return self._query_for_computed_feature_values(
             study,
             feature_specification,
@@ -84,6 +84,7 @@ class PendingProvider(OnDemandProvider, ABC):
         expected = get_expected(study, feature_specification)
         get_actual = PendingProvider._get_actual_number_of_computed_values
         actual = get_actual(study, feature_specification)
+        logger.debug('Actual / expected total values: %s / %s', actual, expected)
         if actual < expected:
             return False
         if actual == expected:
@@ -96,7 +97,6 @@ class PendingProvider(OnDemandProvider, ABC):
         get_domain = PendingProvider._get_expected_domain_for_computed_values
         domain = get_domain(study, feature_specification)
         number = len(domain)
-        logger.debug('Number of values possible to be computed: %s', number)
         return number
 
     @staticmethod
@@ -125,7 +125,6 @@ class PendingProvider(OnDemandProvider, ABC):
             ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
-            logger.debug('Actual number computed: %s', rows[0][0])
             return rows[0][0]
 
     @classmethod

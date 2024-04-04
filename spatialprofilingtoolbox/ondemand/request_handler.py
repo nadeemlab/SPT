@@ -15,6 +15,9 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
+GROUP_SEPARATOR = chr(29)
+RECORD_SEPARATOR = chr(30)
+
 
 class OnDemandRequestHandler(BaseRequestHandler):
     """TCP server for on demand metrics."""
@@ -30,10 +33,24 @@ class OnDemandRequestHandler(BaseRequestHandler):
             self._send_error_response()
             raise exception
 
+    def _log_request(self, data: bytes) -> None:
+        string = data.decode()
+        structure = tuple(
+            [record for record in group.split(RECORD_SEPARATOR)]
+            for group in string.split(GROUP_SEPARATOR)
+        )
+        def truncate(group: list):
+            if len(group) > 10:
+                return [str(r) for r in group[0:10]] + [f'(... {len(group)} items)']
+            else:
+                return [str(r) for r in group]
+        serial =  '[ ' + ' | '.join(', '.join(truncate(group)) for group in structure) + ' ]'
+        logger.info('Received query structure: %s', serial)
+
     def _handle(self) -> None:
         """Handle an on demand request."""
         data: bytes = self.request.recv(10000000).strip()
-        logger.info('Request: %s', data)
+        self._log_request(data)
         if self._handle_empty_body(data):
             return
         request_class, groups = self._get_request_class_and_groups(data)
@@ -80,8 +97,7 @@ class OnDemandRequestHandler(BaseRequestHandler):
 
     @staticmethod
     def _get_request_class_and_groups(data: bytes) -> tuple[str, list[str]]:
-        group_separator = chr(29)
-        components = data.decode('utf-8').split(group_separator)
+        components = data.decode('utf-8').split(GROUP_SEPARATOR)
         return components[0], components[1:]
 
     def _handle_single_phenotype_counts_request(self, groups: list[str]) -> bool:
@@ -89,6 +105,8 @@ class OnDemandRequestHandler(BaseRequestHandler):
             return False
         specification = self._get_phenotype_counts_spec(groups)
         study_name = specification[0]
+        positive_channel_names = specification[1]
+        negative_channel_names = specification[2]
         if self._handle_missing_study(study_name):
             return True
 
@@ -146,7 +164,6 @@ class OnDemandRequestHandler(BaseRequestHandler):
         measurement_study_name = self._get_measurement_study(study_name)
         signature1 = self.server.providers.counts.compute_signature(positives, measurement_study_name)
         signature2 = self.server.providers.counts.compute_signature(negatives, measurement_study_name)
-        logger.info('Signature: %s, %s', signature1, signature2)
         return signature1, signature2
 
     def _get_measurement_study(self, study: str) -> str:
@@ -165,18 +182,17 @@ class OnDemandRequestHandler(BaseRequestHandler):
         self,
         groups: list[str],
     ) -> tuple[str, list[str], list[str], set[int] | None]:
-        record_separator = chr(30)
         study_name = groups[0]
-        positive_channel_names = groups[1].split(record_separator)
-        negative_channel_names = groups[2].split(record_separator)
+        positive_channel_names = groups[1].split(RECORD_SEPARATOR)
+        negative_channel_names = groups[2].split(RECORD_SEPARATOR)
         positive_channel_names = self._trim_empty_entry(positive_channel_names)
         negative_channel_names = self._trim_empty_entry(negative_channel_names)
-        logger.info('Study: %s', study_name)
-        logger.info('Positives: %s', positive_channel_names)
-        logger.info('Negatives: %s', negative_channel_names)
         if len(groups) == 4 and groups[3] != '':
-            cells_selected = {int(s) for s in groups[3].split(record_separator)}
-            logger.info('Cells selected: %s', cells_selected)
+            cells_selected = {int(s) for s in groups[3].split(RECORD_SEPARATOR)}
+            truncation: list[str | int] = list(cells_selected)
+            if len(truncation) > 5:
+                truncation = truncation[0:4] + [f'(... {len(cells_selected)} items)']
+            logger.info('Cells selected: %s', str(truncation))
         else:
             cells_selected = None
         return study_name, positive_channel_names, negative_channel_names, cells_selected
@@ -213,11 +229,10 @@ class OnDemandRequestHandler(BaseRequestHandler):
         )
 
     def _get_phenotype_pair_specification(self, groups):
-        record_separator = chr(30)
         study_name = groups[0]
         radius = float(groups[1])
         channel_lists = [
-            self._trim_empty_entry(group.split(record_separator))
+            self._trim_empty_entry(group.split(RECORD_SEPARATOR))
             for group in groups[2:6]
         ]
         return [study_name, radius, channel_lists]
@@ -232,7 +247,6 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return True
 
     def _handle_squidpy_request(self, feature_class, groups) -> bool:
-        logger.debug(groups)
         match feature_class:
             case 'neighborhood enrichment':
                 if len(groups) != 4 + 1:
@@ -264,9 +278,8 @@ class OnDemandRequestHandler(BaseRequestHandler):
         return True
 
     def _get_long_phenotype_spec(self, channel_lists_raw: list[str]) -> list[list[str]]:
-        record_separator = chr(30)
         return [
-            self._trim_empty_entry(phenotype.split(record_separator))
+            self._trim_empty_entry(phenotype.split(RECORD_SEPARATOR))
             for phenotype in channel_lists_raw
         ]
 

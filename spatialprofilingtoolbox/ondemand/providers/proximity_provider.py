@@ -170,7 +170,10 @@ class ProximityProvider(PendingProvider):
         ProximityProvider.drop_pending_computation(study, feature_specification)
         message = 'Wrapped up proximity metric calculation, feature "%s".'
         logger.debug(message, feature_specification)
-        logger.debug('The samples considered were: %s', sample_identifiers)
+        truncation = sample_identifiers
+        if len(sample_identifiers) > 5:
+            truncation = sample_identifiers[0:5] + [f'(... {len(sample_identifiers)} items)']
+        logger.debug('The samples considered were: %s', ' '.join(truncation))
 
     def _get_tree(self, sample_identifier: str, data_analysis_study: str) -> BallTree:
         return self.trees[data_analysis_study][sample_identifier]

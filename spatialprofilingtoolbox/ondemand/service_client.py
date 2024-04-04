@@ -52,7 +52,8 @@ class OnDemandRequester:
             None if (cells_selected is None) else [str(c) for c in cells_selected],
         )
         self.tcp_client.sendall(query)
-        logger.debug('Query to counts service: %s', query)
+        truncation = query[0:min(len(query), 200)]
+        logger.debug('Quering counts service: %s', f'({len(query)} bytes) ' + str(truncation))
         response = self._parse_response()
         return PhenotypeCounts(
             counts=[
@@ -201,5 +202,4 @@ class OnDemandRequester:
         if host is None or port is None:
             message = 'Specify ONDEMAND_HOST and ONDEMAND_PORT or else a specific service variant.'
             raise EnvironmentError(message)
-        logger.debug('Host and port (with service "%s"): %s', service, (host, port))
         return (host, port)

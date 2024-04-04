@@ -18,21 +18,11 @@ class CustomFormatter(logging.Formatter):
     reset = '\u001b[0m'
 
     FORMATS = {
-        logging.DEBUG: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + "%(levelname)s" +
-        reset + magenta + '  ] ' + "%(name)s:" + reset + blue + "%(lineno)d" + magenta + ": " +
-        reset + "%(message)s",
-        logging.INFO: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + bold_green +
-        "%(levelname)s" + reset + magenta + '   ] ' +
-        "%(name)s: " + reset + "%(message)s",
-        logging.WARNING: blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_yellow +
-        "%(levelname)s" + reset + magenta + ' ] ' + "%(name)s:" + reset + blue + "%(lineno)d" +
-        magenta + ": " + reset + "%(message)s",
-        logging.ERROR: blue + '%(asctime)s ' + reset + magenta + '[  ' + reset + bold_red +
-        "%(levelname)s" + reset + magenta + '  ] ' + "%(name)s:" + reset + blue + "%(lineno)d" +
-        magenta + ": " + reset + "%(message)s",
-        logging.CRITICAL: blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_red +
-        "%(levelname)s" + reset + magenta + '] ' + "%(name)s:" + reset + blue + "%(lineno)d" +
-        magenta + ": " + reset + "%(message)s",
+        logging.DEBUG:    blue + '%(asctime)s ' + reset + magenta + '[ ' + reset +               "%(levelname)s" + reset + magenta +  ' ] ' + blue + "%(lineno)3s" + reset + ' ' + magenta + "%(name)-37s" + reset + "%(message)s",
+        logging.INFO:     blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_green  + "%(levelname)s" + reset + magenta + '  ] ' +                                                "%(name)-41s" + reset + "%(message)s",
+        logging.WARNING:  blue + '%(asctime)s ' + reset + magenta + '['  + reset + bold_yellow + "%(levelname)s" + reset + magenta +   '] ' + blue + "%(lineno)3d" + reset + ' ' + magenta + "%(name)-37s" + reset + "%(message)s",
+        logging.ERROR:    blue + '%(asctime)s ' + reset + magenta + '[ ' + reset + bold_red    + "%(levelname)s" + reset + magenta +  ' ] ' + blue + "%(lineno)3d" + reset + ' ' + magenta + "%(name)-37s" + reset + "%(message)s",
+        logging.CRITICAL: blue + '%(asctime)s ' + reset + magenta + '['  + reset + bold_red    + "%(levelname)s" + reset + magenta +   '] ' + blue + "%(lineno)3d" + reset + ' ' + magenta + "%(name)-37s" + reset + "%(message)s",
     }
 
     def format(self, record):

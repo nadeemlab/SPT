@@ -3,6 +3,7 @@
 import argparse
 
 from spatialprofilingtoolbox.db.database_connection import wait_for_database_ready
+from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
 from spatialprofilingtoolbox.ondemand.tcp_server import (
     OnDemandTCPServer,
@@ -27,7 +28,13 @@ def start() -> None:
 
 def setup_data_sources(service: str | None) -> None:
     wait_for_database_ready()
-    assessor = FastCacheAssessor(database_config_file=None)
+    for study in retrieve_study_names(None):
+        setup_data_source_one_study(service, study)
+
+
+def setup_data_source_one_study(service: str | None, study: str) -> None:
+    assessor = FastCacheAssessor(database_config_file=None, study=study)
+    logger.info(f'Assessing cache for study {study}')
     if service is None or service == CountsProvider.service_specifier():
         assessor.assess_and_act()
     else:

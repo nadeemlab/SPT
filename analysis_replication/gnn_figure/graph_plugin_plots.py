@@ -414,10 +414,10 @@ class PlotGenerator:
 
     def _retrieve_data(self) -> tuple[DataFrame, ...]:
         dfs = PlotDataRetriever(self.host).retrieve_data(self.get_specification())
-        dfs = self._update_cohorts(dfs, self.get_specification())
+        dfs = self._transfer_cohort_labels(dfs, self.get_specification())
         return dfs
 
-    def _update_cohorts(
+    def _transfer_cohort_labels(
         self,
         dfs: tuple[DataFrame, ...],
         specification: PlotSpecification,

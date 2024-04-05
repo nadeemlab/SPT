@@ -55,7 +55,15 @@ function configure_umaps_one_dataset() {
     fi
     mkdir "$workflow_directory"
     cd "$workflow_directory"
-    spt workflow configure --workflow="reduction visual" --study-name="$study_name" --local --database-config-file="$db_config_file"
+
+    echo "[general]" >> workflow.config
+    echo "db_config_file = $db_config_file" >> workflow.config
+    echo "" >> workflow.config
+    echo "[database visitor]" >> workflow.config
+    echo "study_name = $study_name" >> workflow.config
+    echo "" >> workflow.config
+
+    spt workflow configure --workflow="reduction visual" --config-file=workflow.config
     cd "$noted_pwd"
 }
 

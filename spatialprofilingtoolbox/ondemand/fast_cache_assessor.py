@@ -100,7 +100,7 @@ class FastCacheAssessor:
         if self.study is None:
             studies = tuple(retrieve_study_names(self.database_config_file))
         else:
-            studies = (study,)
+            studies = (self.study,)
         for study in studies:
             blob = retrieve_expressions_index(self.database_config_file, study)
             self.expressions_index.extend(load_json_string(blob)[''])

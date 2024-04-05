@@ -390,7 +390,7 @@ def plot_2_heatmaps(dfs: tuple[DataFrame, DataFrame],
     cbar_ax = fig.add_axes([0.3, 0, 0.4, 0.01])  # [left, bottom, width, height]
     cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal', fraction=0.05)
 
-    plt.tight_layout()
+    # plt.tight_layout()
     if output_directory is not None:
         plt.savefig(join(output_directory, f'{sanitized_study(study_name)}.svg'))
     plt.show()

@@ -399,10 +399,13 @@ class PlotGenerator:
     def generate_plots(self) -> None:
         for specification in get_plot_specifications():
             self.current_specification = specification
+            self._generate_plot()
+
+    def _generate_plot(self) -> None:
             self._check_viability()
             dfs = self._retrieve_data()
             self._gather_subplot_cases(dfs)
-            self._generate_plot(dfs)
+            self._generate_subplots(dfs)
             self._export()
 
     def _check_viability(self) -> None:
@@ -435,7 +438,7 @@ class PlotGenerator:
         indicators = label_indicators(self.get_specification()).get_label_subplot_indicators()
         return subplot_specification, indicators, zip(dfs, self.get_specification().plugins)
 
-    def _generate_plot(self, dfs: tuple[DataFrame, ...]) -> None:
+    def _generate_subplots(self, dfs: tuple[DataFrame, ...]) -> None:
         plt.rcParams['font.size'] = 14
         norm = self._generate_normalization(dfs)
         subplot_specification, indicators, cases = self._gather_subplot_cases(dfs)

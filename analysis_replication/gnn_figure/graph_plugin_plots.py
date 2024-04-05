@@ -4,11 +4,13 @@ from pickle import load as pickle_load
 from pickle import dump as pickle_dump
 from argparse import ArgumentParser
 from typing import Literal
+from typing import Iterable
 from typing import cast
 from json import loads as json_loads
 import sys
 from glob import glob
 import re
+from enum import Enum
 
 import numpy as np
 from pandas import DataFrame
@@ -17,6 +19,7 @@ from pandas import concat
 from pandas import Series
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from matplotlib.colors import Normalize
 from matplotlib.colors import SymLogNorm
 from scipy.stats import fisher_exact  # type: ignore
 from attr import define
@@ -34,6 +37,11 @@ class Cohort:
     label: str
 
 
+class Orientation(Enum):
+    HORIZONTAL = 'horizontal'
+    VERTICAL = 'vertical'
+
+
 @define
 class PlotSpecification:
     study: str
@@ -42,7 +50,7 @@ class PlotSpecification:
     cohorts: tuple[Cohort, ...]
     plugins: tuple[GNNModel, ...]
     figure_size: tuple[float, float]
-    orientation: Literal['horizontal', 'vertical']
+    orientation: Orientation
 
 
 def get_plot_specifications() -> tuple[PlotSpecification, ...]:
@@ -244,12 +252,12 @@ class PlotDataRetriever:
 
 def plot_scatter_heatmap(df: DataFrame,
                          ax: plt.Axes,
+                         title: str | None,
+                         title_side: str,
                          label_phenotypes: bool,
                          label_cohorts: bool,
                          cmap: mcolors.ListedColormap,
-                         norm: mcolors.Normalize | None = None,
-                         title: str | None = None,
-                         title_side: str = 'bottom',
+                         norm: Normalize | None = None,
                          s_factor: float = 200,
                          ):
     df = df.sort_values('cohort')
@@ -337,141 +345,134 @@ def plot_scatter_heatmap(df: DataFrame,
             ax.text(1.021, .5, title, rotation=-90, ha='right', va='center', transform=ax.transAxes)
 
 
-# Create a colormap that varies in color
-colors = ["white", "red"]
-cmap = mcolors.LinearSegmentedColormap.from_list("", colors)
-cmap.set_under(color='white')
+@define
+class SubplotSpecification:
+    grid_dimensions: tuple[int, int]
+    title_location: Literal['bottom', 'side']
 
 
-def plot_2_heatmaps(dfs: tuple[DataFrame, DataFrame],
-    model_names: tuple[GNNModel, GNNModel],
-    study_name: str,
-    output_directory: str | None = None,
-    cohort_map: dict[int, str] | None = None,
-    concat_axis: str = 'horizontal',
-    figsize: tuple[float, float] = (16, 6),
-):
-
-    dfs_values_only = tuple(df.drop('cohort', axis=1, level=0) for df in dfs)
-    vmin = min(df.min().min() for df in dfs_values_only)
-    vmax = max(df.max().max() for df in dfs_values_only)
-    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
-
-    if concat_axis == 'horizontal':
-        fig, axs = plt.subplots(1, 2, figsize=figsize)
-        title_side = 'bottom'
-        label_phenotypes_2nd = False
-        label_cohorts_2nd = True
-    else:  # concat_axis == 'vertical'
-        fig, axs = plt.subplots(2, 1, figsize=figsize)
-        title_side = 'side'
-        label_phenotypes_2nd = True
-        label_cohorts_2nd = False
-
-    if cohort_map is not None:
-        dfs = tuple(df.copy() for df in dfs)
-        for i, df in enumerate(dfs):
-            df['cohort'] = df['cohort'].map(cohort_map)
-
-    plot_scatter_heatmap(dfs[0], axs[0], True, True, cmap, norm,
-                         title=model_names[0], title_side=title_side)
-    plot_scatter_heatmap(dfs[1], axs[1], label_phenotypes_2nd, label_cohorts_2nd, cmap, norm,
-                         title=model_names[1], title_side=title_side)
-
-    # Adjust the model/study labels
-    fig.suptitle(study_name)
-
-    # Create a ScalarMappable object with the same colormap and normalization as the scatter plots
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-
-    # Add the colorbar to the figure
-    # fig.subplots_adjust(left=0.2)  # Increase left margin
-    cbar_ax = fig.add_axes([0.3, 0, 0.4, 0.01])  # [left, bottom, width, height]
-    cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal', fraction=0.05)
-
-    # plt.tight_layout()
-    if output_directory is not None:
-        plt.savefig(join(output_directory, f'{sanitized_study(study_name)}.svg'))
-    plt.show()
+def derive_subplot_specification(specification: PlotSpecification) -> SubplotSpecification:
+    size = len(specification.plugins)
+    specs = {
+        Orientation.HORIZONTAL: SubplotSpecification((1, size), 'bottom'),
+        Orientation.VERTICAL: SubplotSpecification((size, 1), 'side'),
+    }
+    return specs[specification.orientation]
 
 
-def plot_2x2_heatmaps(df_model1: tuple[DataFrame, DataFrame], df_model2: tuple[DataFrame, DataFrame], model_names: tuple[str, str], study_names: tuple[str, str], figsize: tuple[float, float] = (16, 6)):
-    fig, axs = plt.subplots(2, 2, figsize=figsize)
-
-    # dfs = df_model1 + df_model2
-    # vmin = min(df.drop('cohort', axis=1, level=0).xs(
-    #     'p_important', axis=1, level=1).min().min() for df in dfs)
-    # vmax = max(df.drop('cohort', axis=1, level=0).xs(
-    #     'p_important', axis=1, level=1).max().max() for df in dfs)
-    vmin = 0
-    vmax = 1
-    # norm = SymLogNorm(linthresh=0.001, linscale=0.001, vmin=vmin, vmax=vmax)
-    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
-
-    plot_scatter_heatmap(df_model1[0], axs[0, 0], True, True, cmap, norm)
-    plot_scatter_heatmap(df_model2[0], axs[0, 1], False, True, cmap, norm)
-    plot_scatter_heatmap(df_model1[1], axs[1, 0], True, True, cmap, norm)
-    plot_scatter_heatmap(df_model2[1], axs[1, 1], False, True, cmap, norm)
-
-    # Adjust the model/study labels
-    fig.text(0.5, 1.15, model_names[0], ha='center', va='center', transform=axs[0, 0].transAxes)
-    fig.text(0.5, 1.15, model_names[1], ha='center', va='center', transform=axs[0, 1].transAxes)
-    fig.text(-0.2, 0.5, study_names[0], ha='center', va='center',
-             rotation='vertical', transform=axs[0, 0].transAxes)
-    fig.text(-0.2, 0.5, study_names[1], ha='center', va='center',
-             rotation='vertical', transform=axs[1, 0].transAxes)
-
-    # Create a ScalarMappable object with the same colormap and normalization as the scatter plots
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-
-    # # Adjust the position of the subplots to make room for the colorbar
-    # fig.subplots_adjust(bottom=0.1)
-
-    # Create a ScalarMappable object with the same colormap and normalization as the scatter plots
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-
-    # Add the colorbar to the figure
-    cbar_ax = fig.add_axes([0.15, 0.2, 0.7, 0.01])  # [left, bottom, width, height]
-    cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal', fraction=0.05)
-
-    plt.tight_layout()
-    plt.show()
+Indicator = tuple[bool, ...]
+Indicators = tuple[Indicator, Indicator]
 
 
-def plot_heatmap(df: DataFrame, model_name: str, study_name: str, figsize: tuple[float, float] = (16, 6)):
-    fig, axs = plt.subplots(1, 1, figsize=figsize)
-    df_values_only = df.drop('cohort', axis=1, level=0).xs('important_fraction', axis=1, level=1)
-    norm = SymLogNorm(linthresh=0.001, linscale=0.001,
-                      vmin=df_values_only.min().min(), vmax=df_values_only.max().max())
-    plot_scatter_heatmap(df, axs, True, True, cmap, norm)
+@define
+class LabelIndicators:
+    size: int
+    baseline_orientation: Orientation
 
-    plt.tight_layout()
-    plt.show()
+    def label_indicator_first(self) -> Indicator:
+        return tuple([True] + list(map(lambda _: False, range(1, self.size))))
+
+    def label_indicator_all(self) -> Indicator:
+        return tuple(map(lambda _: True, range(self.size)))
+
+    def get_label_subplot_indicators(self) -> Indicators:
+        indicators = (
+            self.label_indicator_first(),
+            self.label_indicator_all(),
+        )
+        if self.baseline_orientation == Orientation.HORIZONTAL:
+            return indicators
+        if self.baseline_orientation == Orientation.VERTICAL:
+            return cast(Indicators, tuple(reversed(indicators)))
+
+
+def label_indicators(spec: PlotSpecification) -> LabelIndicators:
+    return LabelIndicators(len(spec.plugins), spec.orientation)
 
 
 @define
 class PlotGenerator:
     host: str
     output_directory: str 
+    show_also: bool
+    current_specification: PlotSpecification | None = None
+
+    def get_specification(self) -> PlotSpecification:
+        return cast(PlotSpecification, self.current_specification)
 
     def generate_plots(self) -> None:
         for specification in get_plot_specifications():
-            self._generate_plot(specification)
+            self.current_specification = specification
+            self._check_viability()
+            dfs = self._retrieve_data()
+            self._gather_subplot_cases(dfs)
+            self._generate_plot(dfs)
+            self._export()
 
-    def _generate_plot(self, specification: PlotSpecification) -> None:
-        dfs = PlotDataRetriever(self.host).retrieve_data(specification)
-        plot_2_heatmaps(
-            cast(tuple[DataFrame, DataFrame], dfs),
-            cast(tuple[GNNModel, GNNModel], specification.plugins),
-            specification.study,
-            output_directory=self.output_directory,
-            cohort_map={c.index_int: c.label for c in specification.cohorts},
-            concat_axis=specification.orientation,
-            figsize=specification.figure_size
+    def _check_viability(self) -> None:
+        if len(self.get_specification().plugins) != 2:
+            raise ValueError('Currently plot generation requires 2 plugins worth of run data.')
+
+    def _retrieve_data(self) -> tuple[DataFrame, ...]:
+        dfs = PlotDataRetriever(self.host).retrieve_data(self.get_specification())
+        dfs = self._update_cohorts(dfs, self.get_specification())
+        return dfs
+
+    def _update_cohorts(
+        self,
+        dfs: tuple[DataFrame, ...],
+        specification: PlotSpecification,
+    ) -> tuple[DataFrame, ...]:
+        if specification.cohorts is not None:
+            cohort_map={c.index_int: c.label for c in specification.cohorts}
+            dfs = tuple(df.copy() for df in dfs)
+            for _, df in enumerate(dfs):
+                df['cohort'] = df['cohort'].map(cohort_map)
+        return dfs
+
+    def _gather_subplot_cases(
+        self,
+        dfs: tuple[DataFrame, ...],
+    ) -> tuple[SubplotSpecification, Indicators, Iterable[tuple[DataFrame, GNNModel]]]:
+        subplot_specification = derive_subplot_specification(self.get_specification())
+        indicators = label_indicators(self.get_specification()).get_label_subplot_indicators()
+        return subplot_specification, indicators, zip(dfs, self.get_specification().plugins)
+
+    def _generate_plot(self, dfs: tuple[DataFrame, ...]) -> None:
+        norm = self._generate_normalization(dfs)
+        subplot_specification, indicators, cases = self._gather_subplot_cases(dfs)
+        fig, axs = plt.subplots(
+            *subplot_specification.grid_dimensions,
+            figsize=self.get_specification().figure_size,
         )
+        title_location = subplot_specification.title_location
+        cmap = self._get_main_heatmap_colormap()
+        for i, ((df, plugin), ax) in enumerate(zip(cases, axs)):
+            plot_scatter_heatmap(
+                df, ax, plugin, title_location, indicators[0][i], indicators[1][i], cmap, norm,
+            )
+        fig.suptitle(self.get_specification().study)
+        plt.tight_layout()
+
+    def _export(self) -> None:
+        if self.output_directory is not None:
+            plt.savefig(join(self.output_directory, f'{sanitized_study(self.get_specification().study)}.svg'))
+        if self.show_also:
+            plt.show()
+
+    @staticmethod
+    def _get_main_heatmap_colormap():
+        colors = ['white', 'red']
+        cmap = mcolors.LinearSegmentedColormap.from_list('', colors)
+        cmap.set_under(color='white')
+        return cmap
+
+    @staticmethod
+    def _generate_normalization(dfs: tuple[DataFrame, ...]) -> Normalize:
+        dfs_values_only = tuple(df.drop('cohort', axis=1, level=0) for df in dfs)
+        vmin = min(df.min().min() for df in dfs_values_only)
+        vmax = max(df.max().max() for df in dfs_values_only)
+        return Normalize(vmin=vmin, vmax=vmax)
 
 
 if __name__ == '__main__':
@@ -479,7 +480,8 @@ if __name__ == '__main__':
     add = parser.add_argument
     add('host', nargs='?', type=str, default='http://oncopathtk.org/api', help='SPT API host.')
     add('output_directory', nargs='?', type=str, default='.', help='Directory in which to save SVGs.')
+    add('--show', action='store_true', help='If set, will display figures in addition to saving.')
     args = parser.parse_args()
     plt.rcParams['font.size'] = 14
-    generator = PlotGenerator(args.host, args.output_directory)
+    generator = PlotGenerator(args.host, args.output_directory, args.show)
     generator.generate_plots()

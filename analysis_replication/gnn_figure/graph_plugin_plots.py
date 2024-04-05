@@ -249,19 +249,19 @@ class PlotDataRetriever:
             attribute_order.append('cohort')
         return attribute_order
 
-
+@define
 class SubplotGenerator:
-    @classmethod
+    title_location: str
+    norm: Normalize
+    disc_scale_factor: float = 200
+
     def plot(
-        cls,
+        self,
         df: DataFrame,
         ax: Axes,
         title: str,
-        title_side: str,
         label_vertically: bool,
         label_horizontally: bool,
-        norm: Normalize,
-        s_factor: float = 200,
     ) -> None:
         # Extract the 'cohort' column
         s_cohort = df['cohort']
@@ -296,9 +296,9 @@ class SubplotGenerator:
 
         # Flatten the data and the sizes
         c = df_p_important.values.flatten()
-        s = df_p_value_normalized.values.flatten() * s_factor  # Scale up the sizes for visibility
+        s = df_p_value_normalized.values.flatten() * self.disc_scale_factor  # Scale up the sizes for visibility
 
-        ax.scatter(X.flatten(), Y.flatten(), c=c, s=s, cmap=cls._get_main_heatmap_colormap(), norm=norm, edgecolor='black')
+        ax.scatter(X.flatten(), Y.flatten(), c=c, s=s, cmap=self._get_main_heatmap_colormap(), norm=self.norm, edgecolor='black')
         ax.set_aspect('equal')
         # ax.set_aspect((df_p_important.shape[0] + len(cohorts) - 1) / df_p_important.shape[1]*1.5)
 
@@ -328,7 +328,7 @@ class SubplotGenerator:
             ax.set_yticks([])
         ax.yaxis.set_ticks_position('none')
 
-        if title_side == 'bottom':
+        if self.title_location == 'bottom':
             ax.set_xlabel(title)
         else:
             ax.text(1.021, .5, title, rotation=-90, ha='right', va='center', transform=ax.transAxes)
@@ -444,10 +444,9 @@ class PlotGenerator:
             figsize=self.get_specification().figure_size,
         )
         title_location = subplot_specification.title_location
+        subplot_generator = SubplotGenerator(title_location, norm)
         for i, ((df, plugin), ax) in enumerate(zip(cases, axs)):
-            SubplotGenerator.plot(
-                df, ax, plugin, title_location, indicators[0][i], indicators[1][i], norm,
-            )
+            subplot_generator.plot(df, ax, plugin, indicators[0][i], indicators[1][i])
         fig.suptitle(self.get_specification().study)
         plt.tight_layout()
 

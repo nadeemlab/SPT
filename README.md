@@ -3,7 +3,7 @@
 <img src="docs/image_assets/SPT_logo_blue_on_transparent.png" width="400"/>
 <br/>
 <br/>
-<a href="https://github.com/nadeemlab/SPT/raw/main/docs/image_assets/main_diagram_cropped.svg">
+<a href="docs/image_assets/diagram_medium_res.png">
 <img src="docs/image_assets/diagram_low_res.png"/>
 </a>
 </p>

@@ -116,20 +116,23 @@ class ImportanceFractionAndTestRetriever:
         else:
             levels = df.columns.get_level_values(0).unique()
             N = len(levels)
-            print(f'Retrieving count data to support plot.')
+            print('Retrieving count data to support plot.')
+            f = self.get_progress_bar_format()
             self.df_phenotypes_original = tuple(
                 (str(phenotype), self.get_access().counts(phenotype).astype(int))
-                for phenotype, _ in zip(levels, tqdm(range(N), bar_format=self.get_progress_bar_format()))
+                for phenotype, _ in zip(levels, tqdm(range(N), bar_format=f))
             )
             with open(pickle_file, 'wb') as file:
                 pickle_dump(self.df_phenotypes_original, file)
 
     def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: GNNModel) -> DataFrame:
-        df = DataFrame(columns=MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']]))
+        multiindex = MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']])
+        df = DataFrame(columns=multiindex)
         self.reset_phenotype_counts(df)
         print(f'Retrieving important cell fractions ({plugin}).')
         N = len(self.get_df_phenotypes())
         pickle_file = self.get_pickle_file('importance', plugin=plugin)
+        f = self.get_progress_bar_format()
         if exists(pickle_file):
             with open(pickle_file, 'rb') as file:
                 important_proportions = pickle_load(file)
@@ -137,7 +140,7 @@ class ImportanceFractionAndTestRetriever:
         else:
             important_proportions = {
                 phenotype: self.get_access().important(phenotype, plugin=plugin)
-                for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format=self.get_progress_bar_format()))
+                for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format=f))
             }
             with open(pickle_file, 'wb') as file:
                 pickle_dump(important_proportions, file)
@@ -156,7 +159,15 @@ class ImportanceFractionAndTestRetriever:
         df['cohort'] = cohort_column
         return df
 
-    def _test_one_case(self, phenotype: str, _sample: str, count_phenotype: int, count_both, total: int, df: DataFrame) -> None:
+    def _test_one_case(
+        self,
+        phenotype: str,
+        _sample: str,
+        count_phenotype: int,
+        count_both,
+        total: int,
+        df: DataFrame,
+    ) -> None:
         sample = str(_sample)
         a = count_both
         b = self.count_important - count_both
@@ -200,7 +211,10 @@ class ImportanceFractionAndTestRetriever:
         assert not cohort_column is None
         return cohort_column
 
-    def _get_omittable_samples(self, important_proportions: dict[str, dict[str, float]]) -> set[str]:
+    def _get_omittable_samples(
+        self,
+        important_proportions: dict[str, dict[str, float]],
+    ) -> set[str]:
         occurring = set(
             str(sample)
             for _, df in self.get_df_phenotypes()

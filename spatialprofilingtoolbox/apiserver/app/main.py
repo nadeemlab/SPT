@@ -14,6 +14,7 @@ from fastapi import HTTPException
 
 import secure
 
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
@@ -103,10 +104,19 @@ async def get_root():
 
 
 @app.get("/study-names/")
-async def get_study_names() -> list[StudyHandle]:
+async def get_study_names(collection: str | None = Query(max_length=512)) -> list[StudyHandle]:
     """The names of studies/datasets, with display names."""
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
+    if collection is None:
+        untagged = StudyCollectionNaming.is_untagged
+        handles = list(filter(untagged, map(query().retrieve_study_handle, specifiers)))
+    else:
+        if not StudyCollectionNaming.matches_tag_pattern(collection):
+            raise ValueError(f'{collection} does not match tag pattern.')
+        def tagged(study: str) -> bool:
+            return StudyCollectionNaming.tagged_with(study, collection)
+        handles = list(filter(tagged, map(query().retrieve_study_handle, specifiers)))
     return handles
 
 

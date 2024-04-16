@@ -3,6 +3,7 @@ import json
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -30,11 +31,11 @@ class StudyParser(SourceToADIParser):
     def parse(self, connection, study_file) -> str:
         with open(study_file, 'rt', encoding='utf-8') as file:
             study = json.loads(file.read())
-            study_name = study['Study name']
+        study_name = StudyCollectionNaming.extract_study_from_file(study_file)
 
         cursor = connection.cursor()
 
-        record: tuple[str, ...] = (study['Study name'], study['Institution'])
+        record: tuple[str, ...] = (study_name, study['Institution'])
         self._cautious_insert('study', record, cursor)
 
         for person in study['People']:

@@ -14,4 +14,4 @@ then
     exit 1
 fi
 
-python module_tests/create_plots_page.py "Melanoma intralesional IL2" ../db/.spt_db.config.container > plots.html
+python module_tests/create_plots_page.py "Melanoma intralesional IL2 collection: abc-123" ../db/.spt_db.config.container > plots.html

@@ -5,7 +5,6 @@ import re
 import json
 
 from psycopg2 import sql
-from psycopg2 import connect
 import pandas as pd
 
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.cell_manifests import \
@@ -28,6 +27,7 @@ from spatialprofilingtoolbox.db.database_connection import create_database
 from spatialprofilingtoolbox.db.modify_constraints import DBConstraintsToggling
 from spatialprofilingtoolbox.db.modify_constraints import toggle_constraints
 from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -82,12 +82,11 @@ class DataSkimmer:
 
     @staticmethod
     def _sanitize_token(token: str) -> str:
+        token, _ = StudyCollectionNaming.strip_token(token)
         return re.sub(r'[ \-]', '_', token).lower()
 
     def _register_study(self, study_file: str) -> str:
-        with open(study_file, 'rt', encoding='utf-8') as file:
-            study = json.loads(file.read())
-            study_name = study['Study name']
+        study_name = StudyCollectionNaming.extract_study_from_file(study_file)
 
         if self._study_is_registered(study_name):
             raise ValueError('The study "%s" is already registered.', study_name)

@@ -120,7 +120,7 @@ class ImportanceFractionAndTestRetriever:
             f = self.get_progress_bar_format()
             self.df_phenotypes_original = tuple(
                 (str(phenotype), self.get_access().counts(phenotype).astype(int))
-                for phenotype, _ in zip(levels, tqdm(range(N), bar_format=f))
+                for phenotype in tqdm(levels, total=N, bar_format=f)
             )
             with open(pickle_file, 'wb') as file:
                 pickle_dump(self.df_phenotypes_original, file)
@@ -140,7 +140,7 @@ class ImportanceFractionAndTestRetriever:
         else:
             important_proportions = {
                 phenotype: self.get_access().important(phenotype, plugin=plugin)
-                for (phenotype, _), _ in zip(self.get_df_phenotypes(), tqdm(range(N), bar_format=f))
+                for phenotype, _ in tqdm(self.get_df_phenotypes(), total=N, bar_format=f)
             }
             with open(pickle_file, 'wb') as file:
                 pickle_dump(important_proportions, file)

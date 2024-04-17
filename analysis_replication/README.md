@@ -5,7 +5,14 @@ The scripts in this directory reproduce the analyses of the curated datasets, in
 
 These scripts were written as a record of usage of the dashboard web application, which provides the same results.
 
-You can run them on the public demo API:
+Before starting, we recommend replicating our conda environment:
+
+```sh
+conda env create -f environment.yml
+conda activate spt-repl
+```
+
+You can run all the replication scripts in one go on the public demo API:
 
 ```sh
 python run_all.py http://oncopathtk.org/api

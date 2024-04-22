@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from typing import Literal
 from typing import Iterable
 from typing import cast
+from typing import Any
 from json import loads as json_loads
 import sys
 from glob import glob
@@ -13,6 +14,7 @@ import re
 from enum import Enum
 
 import numpy as np
+from numpy.typing import NDArray
 from pandas import DataFrame
 from pandas import MultiIndex
 from pandas import concat
@@ -30,6 +32,7 @@ sys.path.append('../')
 from accessors import DataAccessor  # type: ignore
 
 GNNModel = Literal['cg-gnn', 'graph-transformer']
+
 
 @define
 class Cohort:
@@ -62,8 +65,10 @@ def get_plot_specifications() -> tuple[PlotSpecification, ...]:
         specifications.append(cattrs_structure(json_loads(contents), PlotSpecification))
     return tuple(specifications)
 
+
 def sanitized_study(study: str) -> str:
     return re.sub(' ', '_', study).lower()
+
 
 PhenotypeDataFrames = tuple[tuple[str, DataFrame], ...]
 
@@ -263,6 +268,7 @@ class PlotDataRetriever:
             attribute_order.append('cohort')
         return attribute_order
 
+
 @define
 class SubplotGenerator:
     title_location: str
@@ -277,64 +283,113 @@ class SubplotGenerator:
         label_vertically: bool,
         label_horizontally: bool,
     ) -> None:
-        # Extract the 'cohort' column
+        """Plot the important fractions and p-values for the given dataframe."""
         s_cohort = df['cohort']
+        cohorts = s_cohort.unique()
 
-        # Add a row of NaN values between each cohort
+        df = self._prepare_dataframe(df, cohorts)
+        df_p_value_normalized, df_p_important = self._get_p_values(df)
+        X, Y = self._create_meshgrid(df_p_important)
+
+        c, s = self._flatten_data(df_p_important, df_p_value_normalized)
+
+        self._plot_scatter(ax, X, Y, c, s)
+        self._set_axes(ax, df_p_important)
+        self._add_labels(ax,
+                         s_cohort,
+                         cohorts,
+                         df_p_important,
+                         label_vertically,
+                         label_horizontally,
+                         )
+        self._set_title(ax, title)
+
+    def _prepare_dataframe(self, df: DataFrame, cohorts: NDArray[Any]) -> DataFrame:
+        """Prepare the dataframe for plotting by adding NaN rows between cohorts."""
         dfs = []
-        cohorts = df['cohort'].unique()
         for i, cohort in enumerate(cohorts):
             df_cohort = df[df['cohort'] == cohort]
-            # Skip adding a NaN row before the first cohort
             if i != 0:
                 df_cohort = concat([DataFrame([np.repeat(np.nan, df_cohort.shape[1])],
-                                columns=df_cohort.columns, index=['']), df_cohort])
+                                              columns=df_cohort.columns,
+                                              index=[''],
+                                              ), df_cohort])
             dfs.append(df_cohort)
         df = concat(dfs)
         df.index.name = 'Specimen by cohort'
         df.drop('cohort', axis=1, level=0, inplace=True)
 
-        df = df.transpose().astype(float)
+        return df.transpose().astype(float)
 
+    def _get_p_values(self, df: DataFrame) -> DataFrame:
+        """Get, clip, and normalize the p-values and important fractions from the dataframe."""
         df_p_value = df.xs('p_value', axis=0, level=1)
         df_p_important = df.xs('important_fraction', axis=0, level=1)
 
-        # Clip the p_value to the range [0, 0.1] and normalize it to the range [0, 1]
         df_p_value_clipped = df_p_value.clip(upper=0.05)
         df_p_value_normalized = 1 - df_p_value_clipped / 0.05
 
-        # Create a meshgrid for the cell centers
+        return df_p_value_normalized, df_p_important
+
+    def _create_meshgrid(self, df_p_important: DataFrame) -> tuple[NDArray[Any], NDArray[Any]]:
+        """Create a meshgrid for the cell centers."""
         x = np.arange(df_p_important.shape[1]) + 0.5
         y = np.arange(df_p_important.shape[0]) + 0.5
         X, Y = np.meshgrid(x, y)
+        return X, Y
 
-        # Flatten the data and the sizes
+    def _flatten_data(self,
+                      df_p_important: DataFrame,
+                      df_p_value_normalized: DataFrame,
+                      ) -> tuple[NDArray[Any], NDArray[Any]]:
+        """Flatten the data and the sizes and scale up the latter for visibility."""
         c = df_p_important.values.flatten()
-        s = df_p_value_normalized.values.flatten() * self.disc_scale_factor  # Scale up the sizes for visibility
+        s = df_p_value_normalized.values.flatten() * self.disc_scale_factor
+        return c, s
 
-        ax.scatter(X.flatten(), Y.flatten(), c=c, s=s, cmap=self._get_main_heatmap_colormap(), norm=self.norm, edgecolor='black')
+    def _plot_scatter(self,
+                      ax: Axes,
+                      X: NDArray[Any],
+                      Y: NDArray[Any],
+                      c: NDArray[Any],
+                      s: NDArray[Any],
+                      ) -> None:
+        ax.scatter(X.flatten(),
+                   Y.flatten(),
+                   c=c,
+                   s=s,
+                   cmap=self._get_main_heatmap_colormap(),
+                   norm=self.norm,
+                   edgecolor='black',
+                   )
         ax.set_aspect('equal')
         # ax.set_aspect((df_p_important.shape[0] + len(cohorts) - 1) / df_p_important.shape[1]*1.5)
 
-        # Invert the y-axis to match the heatmap orientation
+    def _set_axes(self, ax: Axes, df_p_important: DataFrame) -> None:
+        """Invert the y-axis and turn off x-tick labels."""
         ax.set_xlim(0, df_p_important.shape[1])
         ax.set_ylim(0, df_p_important.shape[0])
         ax.invert_yaxis()
 
-        # Turn off x-tick labels
         ax.tick_params(axis='x', length=0)
 
-        # Add text annotations to label the cohorts
+    def _add_labels(self,
+                    ax: Axes,
+                    s_cohort: Series,
+                    cohorts: NDArray[Any],
+                    df_p_important: DataFrame,
+                    label_vertically: bool,
+                    label_horizontally: bool,
+                    ) -> None:
+        """Add text annotations to the plot to label the cohort and phenotype."""
         if label_horizontally:
             start = 0
             for cohort in cohorts:
-                df_cohort = s_cohort[s_cohort == cohort]
                 ax.text(start, -0.25, cohort if isinstance(cohort, str) else f'Cohort {cohort}',
                         ha='left', va='center')
-                start += df_cohort.shape[0] + 1  # Add 1 to account for the NaN row
+                start += s_cohort[s_cohort == cohort].shape[0] + 1  # plus the NaN row
         ax.set_xticks([])
 
-        # Add the phenotype labels
         if label_vertically:
             ax.set_yticks(np.arange(df_p_important.shape[0]) + 0.5)
             ax.set_yticklabels(df_p_important.index, rotation=0)
@@ -342,6 +397,7 @@ class SubplotGenerator:
             ax.set_yticks([])
         ax.yaxis.set_ticks_position('none')
 
+    def _set_title(self, ax: Axes, title: str) -> None:
         if self.title_location == 'bottom':
             ax.set_xlabel(title)
         else:
@@ -403,7 +459,7 @@ def label_indicators(spec: PlotSpecification) -> LabelIndicators:
 @define
 class PlotGenerator:
     host: str
-    output_directory: str 
+    output_directory: str
     show_also: bool
     current_specification: PlotSpecification | None = None
 
@@ -416,11 +472,11 @@ class PlotGenerator:
             self._generate_plot()
 
     def _generate_plot(self) -> None:
-            self._check_viability()
-            dfs = self._retrieve_data()
-            self._gather_subplot_cases(dfs)
-            self._generate_subplots(dfs)
-            self._export()
+        self._check_viability()
+        dfs = self._retrieve_data()
+        self._gather_subplot_cases(dfs)
+        self._generate_subplots(dfs)
+        self._export()
 
     def _check_viability(self) -> None:
         if len(self.get_specification().plugins) != 2:
@@ -437,7 +493,7 @@ class PlotGenerator:
         specification: PlotSpecification,
     ) -> tuple[DataFrame, ...]:
         if specification.cohorts is not None:
-            cohort_map={c.index_int: c.label for c in specification.cohorts}
+            cohort_map = {c.index_int: c.label for c in specification.cohorts}
             dfs = tuple(df.copy() for df in dfs)
             for _, df in enumerate(dfs):
                 df['cohort'] = df['cohort'].map(cohort_map)
@@ -469,7 +525,9 @@ class PlotGenerator:
 
     def _export(self) -> None:
         if self.output_directory is not None:
-            plt.savefig(join(self.output_directory, f'{sanitized_study(self.get_specification().study)}.svg'))
+            plt.savefig(join(self.output_directory,
+                        f'{sanitized_study(self.get_specification().study)}.svg'),
+                        )
         if self.show_also:
             plt.show()
 

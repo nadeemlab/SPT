@@ -1,0 +1,41 @@
+{
+    "study": "Urothelial ICI",
+    "phenotypes": [
+        "Tumor",
+        "CD4- CD8- T cell",
+        "T cytotoxic cell",
+        "T helper cell",
+        "Macrophage",
+        "intratumoral CD3+ LAG3+",
+        "Regulatory T cell"
+    ],
+    "attribute_order": [
+        "Tumor",
+        "CD4- CD8- T cell",
+        "T cytotoxic cell",
+        "T helper cell",
+        "Macrophage",
+        "intratumoral CD3+ LAG3+",
+        "Regulatory T cell",
+        "cohort"
+    ],
+    "cohorts": [
+        {
+            "index_int": 1,
+            "label": "Responder"
+        },
+        {
+            "index_int": 2,
+            "label": "Non-responder"
+        }
+    ],
+    "plugins": [
+        "cg-gnn",
+        "graph-transformer"
+    ],
+    "figure_size": [
+        14,
+        5
+    ],
+    "orientation": "vertical"
+}

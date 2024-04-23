@@ -44,6 +44,8 @@ test/workflow/results/
 test/workflow/work/
 test/workflow/plots.html
 test/workflow/nf_files/
+*.svg
+*.pickle
 
 # Development files
 .vscode/

@@ -1,6 +1,7 @@
 """The API service's endpoint handlers."""
 
 from typing import cast
+from typing import Annotated
 import json
 from io import BytesIO
 from base64 import b64decode
@@ -104,7 +105,9 @@ async def get_root():
 
 
 @app.get("/study-names/")
-async def get_study_names(collection: str | None = Query(max_length=512)) -> list[StudyHandle]:
+async def get_study_names(
+    collection: Annotated[str | None, Query(max_length=512)] = None
+) -> list[StudyHandle]:
     """The names of studies/datasets, with display names."""
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
@@ -113,9 +116,12 @@ async def get_study_names(collection: str | None = Query(max_length=512)) -> lis
         handles = list(filter(untagged, map(query().retrieve_study_handle, specifiers)))
     else:
         if not StudyCollectionNaming.matches_tag_pattern(collection):
-            raise ValueError(f'{collection} does not match tag pattern.')
-        def tagged(study: str) -> bool:
-            return StudyCollectionNaming.tagged_with(study, collection)
+            raise HTTPException(
+                status_code=404,
+                detail=f'Collection "{collection}" is not a valid collection string.',
+            )
+        def tagged(study_handle: StudyHandle) -> bool:
+            return StudyCollectionNaming.tagged_with(study_handle, collection)
         handles = list(filter(tagged, map(query().retrieve_study_handle, specifiers)))
     return handles
 
@@ -321,7 +327,7 @@ def get_squidpy_metrics(
 @app.get("/cell-data/")
 async def get_cell_data(
     study: ValidStudy,
-    sample: str = Query(max_length=512),
+    sample: Annotated[str, Query(max_length=512)],
 ) -> CellData:
     """Get cell-level location and phenotype data.
     """

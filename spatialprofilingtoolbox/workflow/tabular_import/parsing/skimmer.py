@@ -2,10 +2,9 @@
 from importlib.resources import as_file
 from importlib.resources import files
 import re
-import json
 
 from psycopg2 import sql
-import pandas as pd
+from pandas import read_csv as pandas_read_csv
 
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.cell_manifests import \
     CellManifestsParser
@@ -28,6 +27,7 @@ from spatialprofilingtoolbox.db.modify_constraints import DBConstraintsToggling
 from spatialprofilingtoolbox.db.modify_constraints import toggle_constraints
 from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
+from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -82,7 +82,8 @@ class DataSkimmer:
 
     @staticmethod
     def _sanitize_token(token: str) -> str:
-        token, _ = StudyCollectionNaming.strip_token(token)
+        handle = StudyHandle(handle=token, display_name_detail='')
+        token, _ = StudyCollectionNaming.strip_extract_token(handle)
         return re.sub(r'[ \-]', '_', token).lower()
 
     def _register_study(self, study_file: str) -> str:
@@ -119,7 +120,7 @@ class DataSkimmer:
     def parse(self, _files) -> None:
         study_name = self._register_study(_files['study'])
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
-            fields = pd.read_csv(path, sep='\t', na_filter=False)
+            fields = pandas_read_csv(path, sep='\t', na_filter=False)
 
         toggle_constraints(
             self.database_config_file,

@@ -2,9 +2,14 @@
 import re
 import json
 
+from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 
 class StudyCollectionNaming:
     """Deal with naming related to study collection/aggregation tags."""
+    @classmethod
+    def strip_extract_token(cls, study_handle: StudyHandle) -> tuple[str, str | None]:
+        return cls.strip_token(study_handle.handle)
+
     @classmethod
     def strip_token(cls, study: str) -> tuple[str, str | None]:
         pattern = fr'{cls.infix()}({cls.tag_pattern()})$'
@@ -24,13 +29,13 @@ class StudyCollectionNaming:
         return cls.infix().join((study, extract))
 
     @classmethod
-    def is_untagged(cls, study: str) -> bool:
-        _, extract = cls.strip_token(study)
+    def is_untagged(cls, study_handle: StudyHandle) -> bool:
+        _, extract = cls.strip_extract_token(study_handle)
         return extract is None
 
     @classmethod
-    def tagged_with(cls, study: str, tag: str) -> bool:
-        _, extract = cls.strip_token(study)
+    def tagged_with(cls, study_handle: StudyHandle, tag: str) -> bool:
+        _, extract = cls.strip_extract_token(study_handle)
         return extract == tag
 
     @staticmethod
@@ -39,7 +44,7 @@ class StudyCollectionNaming:
 
     @staticmethod
     def tag_pattern() -> str:
-        return '[a-z0-9\-]+'
+        return '[a-z0-9\-]{1,513}'
 
     @classmethod
     def matches_tag_pattern(cls, tag: str) -> bool:

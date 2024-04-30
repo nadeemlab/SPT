@@ -1,7 +1,7 @@
 """Test study tokens."""
 
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
-
+from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 
 def test_study_tokens():
     initial = 'Study name ABCD collection: abc-def'
@@ -11,9 +11,11 @@ def test_study_tokens():
     recreated = StudyCollectionNaming.name_study(study, extract)
     assert initial == recreated
 
-    assert not StudyCollectionNaming.is_untagged(initial)
-    assert StudyCollectionNaming.is_untagged('Study name ABCD')
-    assert StudyCollectionNaming.tagged_with(initial, extract)
+    handle = StudyHandle(handle=initial, display_name_detail='')
+    assert not StudyCollectionNaming.is_untagged(handle)
+    assert StudyCollectionNaming.tagged_with(handle, extract)
+    handle = StudyHandle(handle='Study name ABCD', display_name_detail='')
+    assert StudyCollectionNaming.is_untagged(handle)
 
     study_file = 'study.small.json'
     tagged = 'Melanoma intralesional IL2 collection: abc-123'

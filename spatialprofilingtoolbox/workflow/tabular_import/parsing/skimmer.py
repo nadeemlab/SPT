@@ -81,7 +81,7 @@ class DataSkimmer:
             logger.debug('%s %s', padded, table)
 
     @staticmethod
-    def _sanitize_token(token: str) -> str:
+    def sanitize_study_to_database_name(token: str) -> str:
         handle = StudyHandle(handle=token, display_name_detail='')
         token, _ = StudyCollectionNaming.strip_extract_token(handle)
         return re.sub(r'[ \-]', '_', token).lower()
@@ -92,7 +92,7 @@ class DataSkimmer:
         if self._study_is_registered(study_name):
             raise ValueError('The study "%s" is already registered.', study_name)
 
-        database_name = self._sanitize_token(study_name)
+        database_name = self.sanitize_study_to_database_name(study_name)
         self._create_database(database_name)
         self._register_study_database_name(study_name, database_name)
         self._create_schema(study_name)

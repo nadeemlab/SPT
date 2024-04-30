@@ -34,6 +34,11 @@ class StudyCollectionNaming:
         return extract is None
 
     @classmethod
+    def is_untagged_name(cls, study_name: str) -> bool:
+        _, extract = cls.strip_extract_token(StudyHandle(handle=study_name, display_name_detail=''))
+        return extract is None
+
+    @classmethod
     def tagged_with(cls, study_handle: StudyHandle, tag: str) -> bool:
         _, extract = cls.strip_extract_token(study_handle)
         return extract == tag

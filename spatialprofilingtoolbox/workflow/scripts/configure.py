@@ -273,7 +273,11 @@ if __name__ == '__main__':
 
     if 'db_config_file' not in config_variables:
         raise ValueError('db_config_file must be specified in the workflow configuration file.')
-    db_config_file = expanduser(cast(str, config_variables['db_config_file']))
+    arg = cast(str, config_variables['db_config_file'])
+    if re.search('~', arg):
+        db_config_file = expanduser(arg)
+    else:
+        db_config_file = arg
     if exists(db_config_file):
         config_variables['db_config_file'] = db_config_file
         config_variables['db_config'] = True

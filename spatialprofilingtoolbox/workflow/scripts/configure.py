@@ -265,7 +265,10 @@ if __name__ == '__main__':
     config_file.read(args.config_file)
     config_variables = dict(config_file.items('general')) if config_file.has_section('general') \
         else {}
-    config_variables = {k: v.lower() for k, v in config_variables.items()}
+    config_variables = {
+        k: v.lower() if k not in ('db_config_file', 'input_path') else v
+        for k, v in config_variables.items()
+    }
     workflow_name: str = args.workflow.lower()
     workflows = {name: get_workflow(name) for name in get_workflow_names()}
     workflow_configuration = workflows[workflow_name]

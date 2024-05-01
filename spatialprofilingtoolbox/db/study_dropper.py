@@ -1,7 +1,10 @@
 """Drop a single study."""
 
+from psycopg2.errors import InvalidCatalogName
+
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -13,20 +16,32 @@ class StudyDropper:
     @staticmethod
     def drop(database_config_file: str | None, study: str) -> None:
         """ Use this method as the entrypoint into this class' functionality."""
+        def matches_base_study(_study: str) -> bool:
+            if _study == study:
+                return True
+            extract, _ = StudyCollectionNaming.strip_token(_study)
+            if extract == study:
+                return True
+            return False
+
         with DBCursor(database_config_file=database_config_file) as cursor:
-            cursor.execute('SELECT database_name FROM study_lookup WHERE study=%s ;', (study,))
+            cursor.execute('SELECT database_name, study FROM study_lookup ;')
             rows = cursor.fetchall()
-            if len(rows) != 1:
+            matches = tuple(filter(lambda row: matches_base_study(row[1]), rows))
+            if len(matches) != 1:
                 logger.warning('No database found for study "%s".', study)
                 return
-            database_name = rows[0][0]
+            database_name = matches[0][0]
 
         with DBConnection(database_config_file=database_config_file, autocommit = False) as connection:
             connection.set_session(autocommit = True)
             with connection.cursor() as cursor:
-                cursor.execute('DROP DATABASE %s ;' % database_name)
+                try:
+                    cursor.execute('DROP DATABASE %s ;' % database_name)
+                    logger.info(f'Dropped database: {database_name}')
+                except InvalidCatalogName:
+                    logger.warn(f'The database {database_name} does not exist, can not drop it.')
 
         with DBCursor(database_config_file=database_config_file) as cursor:
-            cursor.execute('DELETE FROM study_lookup WHERE study=%s ;', (study,))
-
-        logger.info('Dropped database %s.', database_name)
+            cursor.execute('DELETE FROM study_lookup WHERE database_name=%s ;', (database_name,))
+            logger.info('Dropped record of database %s.', database_name)

@@ -311,7 +311,10 @@ if __name__ == '__main__':
     if config_file.has_section(workflow_name):
         config_state = config_variables.copy()
         workflow_config_variables = dict(config_file.items(workflow_name))
-        workflow_config_variables = {k: v.lower() for k, v in workflow_config_variables.items()}
+        workflow_config_variables = {
+            k: v.lower() if k != 'input_path' else v
+            for k, v in workflow_config_variables.items()
+        }
         config_state.update(workflow_config_variables)
         workflow_configuration.process_inputs(config_state)
         config_variables.update(config_state)

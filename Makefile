@@ -78,7 +78,7 @@ SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(sub
 DLI := force-rebuild-data-loaded-image
 
 # Define PHONY targets
-.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment
+.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target
 
 # Submodule-specific variables
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
@@ -167,7 +167,7 @@ pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/cr
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
 
-build-and-push-docker-images: ${DOCKER_PUSH_TARGETS} generic-spt-push-target
+build-and-push-docker-images: ${DOCKER_PUSH_TARGETS} generic-spt-push-target data-loaded-images-push-target
 
 build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_TARGETS}
 
@@ -220,6 +220,25 @@ generic-spt-push-target: build-docker-images check-for-docker-credentials
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+data-loaded-images-push-target:
+>@${MESSAGE} start "Pushing preloaded data Docker containers"
+>@repository_name_prefix=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded ; \
+    codes=0 ; \
+    for suffix in 1 2 1and2 1small 1smallnointensity; \
+    do \
+        existing=$$repository_name_prefix-$$suffix:latest ; \
+        tag=$$repository_name_prefix-$$suffix:${VERSION} ; \
+        docker tag $$existing $$tag; ; \
+        docker push $$existing ; \
+        exitcode="$$?" ; \
+        codes=$$(( codes + exitcode )) ; \
+        docker push $$tag ; \
+        exitcode="$$?" ; \
+        codes=$$(( codes + exitcode )) ; \
+    done; \
+    echo "$$codes" > status_code
 >@${MESSAGE} end "Pushed." "Not pushed."
 
 check-for-docker-credentials:

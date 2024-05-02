@@ -230,7 +230,7 @@ data-loaded-images-push-target:
     do \
         existing=$$repository_name_prefix-$$suffix:latest ; \
         tag=$$repository_name_prefix-$$suffix:${VERSION} ; \
-        docker tag $$existing $$tag; ; \
+        docker tag $$existing $$tag ; \
         docker push $$existing ; \
         exitcode="$$?" ; \
         codes=$$(( codes + exitcode )) ; \

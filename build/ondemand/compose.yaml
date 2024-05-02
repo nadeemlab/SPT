@@ -25,7 +25,6 @@ services:
       - isolated_temporary_test
     environment:
       POSTGRES_PASSWORD: postgres
-    pull_policy: never
 
 networks:
   isolated_temporary_test:

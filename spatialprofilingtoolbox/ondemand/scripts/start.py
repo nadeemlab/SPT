@@ -35,10 +35,7 @@ def setup_data_sources(service: str | None) -> None:
 def setup_data_source_one_study(service: str | None, study: str) -> None:
     assessor = FastCacheAssessor(database_config_file=None, study=study)
     logger.info(f'Assessing cache for study {study}')
-    if service is None or service == CountsProvider.service_specifier():
-        assessor.assess_and_act()
-    else:
-        assessor.block_until_available()
+    assessor.block_until_available()
 
 
 def start_services(

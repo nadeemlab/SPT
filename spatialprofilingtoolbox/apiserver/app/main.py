@@ -24,6 +24,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     Channel,
     PhenotypeCriteria,
     PhenotypeCounts,
+    PhenotypeCount,
     UnivariateMetricsComputationResult,
     CellData,
     AvailableGNN,
@@ -65,6 +66,7 @@ app = FastAPI(
     },
 )
 
+CELL_DATA_CELL_LIMIT = 100001
 
 def custom_openapi():
     if app.openapi_schema:
@@ -329,10 +331,16 @@ async def get_cell_data(
     study: ValidStudy,
     sample: Annotated[str, Query(max_length=512)],
 ) -> CellData:
-    """Get cell-level location and phenotype data.
-    """
+    """Get cell-level location and phenotype data."""
     if not sample in query().get_sample_names(study):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+    number_cells = cast(int, query().get_number_cells(study))
+    def match(c: PhenotypeCount) -> bool:
+        return c.specimen == sample
+    count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
+    if count is None or count > CELL_DATA_CELL_LIMIT:
+        message = f'Sample "{sample}" has too many cells: {count}.'
+        raise HTTPException(status_code=404, detail=message)
     with OnDemandRequester(service='cells') as requester:
         payload = requester.get_cells_data(study, sample)
     return payload

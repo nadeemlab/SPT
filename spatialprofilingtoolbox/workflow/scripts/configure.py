@@ -265,7 +265,10 @@ if __name__ == '__main__':
     config_file.read(args.config_file)
     config_variables = dict(config_file.items('general')) if config_file.has_section('general') \
         else {}
-    config_variables = {k: v.lower() for k, v in config_variables.items()}
+    config_variables = {
+        k: v.lower() if k not in ('db_config_file', 'input_path') else v
+        for k, v in config_variables.items()
+    }
     workflow_name: str = args.workflow.lower()
     workflows = {name: get_workflow(name) for name in get_workflow_names()}
     workflow_configuration = workflows[workflow_name]
@@ -273,7 +276,11 @@ if __name__ == '__main__':
 
     if 'db_config_file' not in config_variables:
         raise ValueError('db_config_file must be specified in the workflow configuration file.')
-    db_config_file = expanduser(cast(str, config_variables['db_config_file']))
+    arg = cast(str, config_variables['db_config_file'])
+    if re.search('~', arg):
+        db_config_file = expanduser(arg)
+    else:
+        db_config_file = arg
     if exists(db_config_file):
         config_variables['db_config_file'] = db_config_file
         config_variables['db_config'] = True
@@ -304,7 +311,10 @@ if __name__ == '__main__':
     if config_file.has_section(workflow_name):
         config_state = config_variables.copy()
         workflow_config_variables = dict(config_file.items(workflow_name))
-        workflow_config_variables = {k: v.lower() for k, v in workflow_config_variables.items()}
+        workflow_config_variables = {
+            k: v.lower() if k != 'input_path' else v
+            for k, v in workflow_config_variables.items()
+        }
         config_state.update(workflow_config_variables)
         workflow_configuration.process_inputs(config_state)
         config_variables.update(config_state)

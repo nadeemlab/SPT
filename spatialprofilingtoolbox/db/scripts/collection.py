@@ -9,8 +9,9 @@ from spatialprofilingtoolbox.db.publish_promote import PublisherPromoter
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog='spt db publish',
-        description='Promote datasets from a private collection to the general, public collection.',
+        prog='spt db collection',
+        description='Promote datasets from a private collection to the general, public collection, '
+                    'or revert this action.',
     )
     add_argument(parser, 'database config')
     parser.add_argument(
@@ -18,6 +19,17 @@ def parse_args():
         dest='collection',
         help='The token/label for the study collection.',
         required=True,
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        '--publish',
+        action='store_true',
+        default=False,
+    )
+    group.add_argument(
+        '--unpublish',
+        action='store_true',
+        default=False,
     )
     return parser.parse_args()
 
@@ -27,7 +39,10 @@ def main():
     database_config_file = get_and_validate_database_config(args)
     collection = args.collection
     promoter = PublisherPromoter(database_config_file)
-    promoter.promote(collection)
+    if args.publish:
+        promoter.promote(collection)
+    if args.unpublish:
+        promoter.demote(collection)
 
 
 if __name__=='__main__':

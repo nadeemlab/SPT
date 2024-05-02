@@ -2,8 +2,10 @@
 
 from typing import cast
 import re
-from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 
+from psycopg2.errors import UndefinedTable
+
+from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     StudyContact,
@@ -108,7 +110,10 @@ class StudyAccess(SimpleReadOnlyProvider):
         return handles[0]
 
     def get_collection_whitelist(self) -> tuple[str, ...]:
-        self.cursor.execute('SELECT collection FROM collection_whitelist ;')
+        try:
+            self.cursor.execute('SELECT collection FROM collection_whitelist ;')
+        except UndefinedTable:
+            return ()
         return tuple(map(lambda row: row[0], self.cursor.fetchall()))
 
     def _get_publication_summary_text(self, study: str) -> str:

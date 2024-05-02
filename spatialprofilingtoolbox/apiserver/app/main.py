@@ -42,7 +42,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListNegatives2,
     ValidFeatureClass,
 )
-VERSION = '0.11.0'
+VERSION = '0.23.0'
 
 TITLE = 'Single cell studies data API'
 

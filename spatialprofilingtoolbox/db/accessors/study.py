@@ -107,6 +107,10 @@ class StudyAccess(SimpleReadOnlyProvider):
             handles.append(StudyHandle(handle=handle, display_name_detail=display_name_detail))
         return handles[0]
 
+    def get_collection_whitelist(self) -> tuple[str, ...]:
+        self.cursor.execute('SELECT collection FROM collection_whitelist ;')
+        return tuple(map(lambda row: row[0], self.cursor.fetchall()))
+
     def _get_publication_summary_text(self, study: str) -> str:
         query = '''
         SELECT publisher, date_of_publication

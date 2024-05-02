@@ -113,9 +113,15 @@ async def get_study_names(
     """The names of studies/datasets, with display names."""
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
+    def is_public(study_handle: StudyHandle) -> bool:
+        if StudyCollectionNaming.is_untagged(study_handle):
+            return True
+        _, tag = StudyCollectionNaming.strip_extract_token(study_handle)
+        if query().is_public_collection(tag):
+            return True
+        return False
     if collection is None:
-        untagged = StudyCollectionNaming.is_untagged
-        handles = list(filter(untagged, map(query().retrieve_study_handle, specifiers)))
+        handles = list(filter(is_public, map(query().retrieve_study_handle, specifiers)))
     else:
         if not StudyCollectionNaming.matches_tag_pattern(collection):
             raise HTTPException(

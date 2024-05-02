@@ -50,6 +50,11 @@ class QueryHandler:
         return StudyAccess(cursor).get_study_summary(study)
 
     @classmethod
+    def is_public_collection(cls, cursor, collection: str) -> bool:
+        whitelist = StudyAccess(cursor).get_collection_whitelist()
+        return collection in whitelist
+
+    @classmethod
     def get_available_gnn(cls, cursor, study: str) -> AvailableGNN:
         return StudyAccess(cursor).get_available_gnn(study)
 

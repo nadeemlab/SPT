@@ -1,4 +1,4 @@
-# v0.23.0
+# v0.23.1
 Implements a dataset collection concept using study name suffixes (tags/tokens/labels):
 - The tabular import workflow uses value for key `Study collection` in `study.json`.
 - API endpoint `study-names` hides collection-tagged datasets by default.

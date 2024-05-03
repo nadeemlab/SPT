@@ -1,3 +1,10 @@
+# v0.23.0
+Implements a dataset collection concept using study name suffixes (tags/tokens/labels):
+- The tabular import workflow uses value for key `Study collection` in `study.json`.
+- API endpoint `study-names` hides collection-tagged datasets by default.
+- Other API handlers unchanged, work as-is using the fully-qualified study names.
+- `spt db collection ... --publish / --unpublish` provided to managed collection visibility.
+
 # v0.17.5
 Organize workflow configuration options into a workflow configuration file.
 This breaks the API for tabular import and similar.

@@ -1,6 +1,7 @@
 """The API service's endpoint handlers."""
 
 from typing import cast
+from typing import Annotated
 import json
 from io import BytesIO
 from base64 import b64decode
@@ -14,6 +15,7 @@ from fastapi import HTTPException
 
 import secure
 
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
@@ -40,7 +42,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListNegatives2,
     ValidFeatureClass,
 )
-VERSION = '0.11.0'
+VERSION = '0.23.0'
 
 TITLE = 'Single cell studies data API'
 
@@ -105,10 +107,30 @@ async def get_root():
 
 
 @app.get("/study-names/")
-async def get_study_names() -> list[StudyHandle]:
+async def get_study_names(
+    collection: Annotated[str | None, Query(max_length=512)] = None
+) -> list[StudyHandle]:
     """The names of studies/datasets, with display names."""
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
+    def is_public(study_handle: StudyHandle) -> bool:
+        if StudyCollectionNaming.is_untagged(study_handle):
+            return True
+        _, tag = StudyCollectionNaming.strip_extract_token(study_handle)
+        if query().is_public_collection(tag):
+            return True
+        return False
+    if collection is None:
+        handles = list(filter(is_public, map(query().retrieve_study_handle, specifiers)))
+    else:
+        if not StudyCollectionNaming.matches_tag_pattern(collection):
+            raise HTTPException(
+                status_code=404,
+                detail=f'Collection "{collection}" is not a valid collection string.',
+            )
+        def tagged(study_handle: StudyHandle) -> bool:
+            return StudyCollectionNaming.tagged_with(study_handle, collection)
+        handles = list(filter(tagged, map(query().retrieve_study_handle, specifiers)))
     return handles
 
 
@@ -313,7 +335,7 @@ def get_squidpy_metrics(
 @app.get("/cell-data/")
 async def get_cell_data(
     study: ValidStudy,
-    sample: str = Query(max_length=512),
+    sample: Annotated[str, Query(max_length=512)],
 ) -> CellData:
     """Get cell-level location and phenotype data."""
     if not sample in query().get_sample_names(study):
@@ -321,9 +343,9 @@ async def get_cell_data(
     number_cells = cast(int, query().get_number_cells(study))
     def match(c: PhenotypeCount) -> bool:
         return c.specimen == sample
-    count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0]
-    if count.count > CELL_DATA_CELL_LIMIT:
-        message = f'Sample "{sample}" has too many cells: {count.count}.'
+    count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
+    if count is None or count > CELL_DATA_CELL_LIMIT:
+        message = f'Sample "{sample}" has too many cells: {count}.'
         raise HTTPException(status_code=404, detail=message)
     with OnDemandRequester(service='cells') as requester:
         payload = requester.get_cells_data(study, sample)

@@ -59,7 +59,11 @@ function test_squidpy() {
             sleep $waitperiod
         fi
     done
-
+    if [ ! -f squidpy.json ];
+    then
+        echo "Test timed out."
+        exit 1
+    fi;
     diff $filename squidpy.json
     status=$?
     [ $status -eq 0 ] || (echo "API query for squidpy metrics failed."; )

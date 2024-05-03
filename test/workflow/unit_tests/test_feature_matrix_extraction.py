@@ -108,7 +108,7 @@ def test_stratification(study: dict[str, DataFrame]):
 
 if __name__ == '__main__':
     extractor = FeatureMatrixExtractor(database_config_file='../db/.spt_db.config.container')
-    study_name = 'Melanoma intralesional IL2'
+    study_name = 'Melanoma intralesional IL2 collection: abc-123'
     test_study = extractor.extract(study=study_name)
     test_sample_set(test_study)
     test_feature_matrix_schemas(test_study)

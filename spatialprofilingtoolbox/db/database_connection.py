@@ -26,6 +26,17 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+class DatabaseNotFoundError(ValueError):
+    study: str
+
+    def __init__(self, study: str):
+        self.study = study
+        super().__init__(self.verbalize())
+
+    def verbalize(self) -> str:
+        return f'Did not find database for study named: "{self.study}"'
+
+
 class ConnectionProvider:
     """Simple wrapper of a database connection."""
     connection: Connection
@@ -80,7 +91,7 @@ class DBConnection(ConnectionProvider):
             cursor.execute('SELECT database_name FROM study_lookup WHERE study=%s', (study,))
             rows = cursor.fetchall()
             if len(rows) == 0:
-                raise ValueError('Did not find database for study "%s"', study)
+                raise DatabaseNotFoundError(study)
             return str(rows[0][0])
 
     @staticmethod
@@ -255,6 +266,7 @@ class QueryCursor:
     get_sample_names: Callable
     get_available_gnn: Callable
     get_study_findings: Callable
+    is_public_collection: Callable
 
     def __init__(self, query_handler: Type):
         self.query_handler = query_handler

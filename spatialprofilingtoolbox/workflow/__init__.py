@@ -18,7 +18,7 @@ from importlib import import_module
 
 from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 
-__version__ = '0.8.0'
+__version__ = '0.23.0'
 
 workflow_names_and_subpackages = {
     'tabular import': 'tabular_import',

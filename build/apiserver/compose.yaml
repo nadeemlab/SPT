@@ -10,7 +10,6 @@ services:
       - isolated_temporary_test
     environment:
       POSTGRES_PASSWORD: postgres
-    pull_policy: never
 
   testing-fast-counts-server:
     image: nadeemlab/spt-ondemand

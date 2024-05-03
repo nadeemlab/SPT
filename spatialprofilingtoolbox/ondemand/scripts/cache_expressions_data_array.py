@@ -7,6 +7,7 @@ import argparse
 from os.path import abspath
 from os.path import expanduser
 
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.fast_cache_assessor import FastCacheAssessor
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -37,8 +38,7 @@ def main():
 
     study = None
     if args.study_file is not None:
-        with open(args.study_file, 'rt', encoding='utf-8') as file:
-            study = json.loads(file.read())['Study name']
+        study = StudyCollectionNaming.extract_study_from_file(args.study_file)
 
     assessor = FastCacheAssessor(database_config_file, study=study)
     assessor.assess_and_act()

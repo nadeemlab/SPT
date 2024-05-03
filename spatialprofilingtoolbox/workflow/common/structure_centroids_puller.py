@@ -147,8 +147,30 @@ class StructureCentroidsPuller:
             WHERE sc.primary_study=%s
             ;
             ''', (study,))
-            rows = cursor.fetchall()
+            rows = tuple(cursor.fetchall())
+        if len(rows) == 0:
+            message = f'No specimen measurement studies associated with: {study}'
+            logger.error(message)
+            logger.debug(self._get_all_specimen_measurement_studies())
+            raise ValueError(message)
         return rows[0][0]
+
+    def _get_all_specimen_measurement_studies(self) -> tuple[tuple[str, tuple], ...]:
+        records: list[tuple[str, tuple]] = []
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT study FROM study_lookup ;')
+            studies = tuple(r[0] for r in cursor.fetchall())
+        for study in studies:
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                cursor.execute('''
+                SELECT sc.primary_study, sms.name FROM specimen_measurement_study sms
+                JOIN study_component sc ON sc.component_study=sms.name
+                WHERE sc.primary_study=%s
+                ;
+                ''', (study,))
+                rows = tuple(cursor.fetchall())
+                records.extend((study, tuple(rows)))
+        return tuple(records)
 
     def _get_study_names(self, study: str | None = None) -> list[tuple[str, str]]:
         if study is None:

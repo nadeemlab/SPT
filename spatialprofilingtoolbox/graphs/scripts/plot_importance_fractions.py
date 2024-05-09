@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
-from spatialprofilingtoolbox.graphs.graph_plugin_plots import PlotGenerator
+from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
 
 def parse_arguments():

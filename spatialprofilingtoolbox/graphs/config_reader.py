@@ -160,7 +160,7 @@ def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
     f"""Read the TOML config file and return the '{PLOT_FRACTIONS_SECTION_NAME}' section.
 
     For a detailed explanation of the return values, refer to the docstring of
-    `spatialprofilingtoolbox.graphs.graph_plugin_plots.PlotGenerator()`.
+    `spatialprofilingtoolbox.graphs.importance_fractions.PlotGenerator()`.
     """
     config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME)
     db_config_file_path: str = config["db_config_file_path"]

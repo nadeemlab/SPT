@@ -1,14 +1,14 @@
-from os.path import join
+"""GNN importance fractions figure generation."""
+
 from os.path import exists
 from pickle import load as pickle_load
 from pickle import dump as pickle_dump
-from argparse import ArgumentParser
 from typing import Literal
 from typing import Iterable
 from typing import cast
 from typing import Any
+from typing import TYPE_CHECKING
 from json import loads as json_loads
-import sys
 from glob import glob
 import re
 from enum import Enum
@@ -28,8 +28,10 @@ from attr import define
 from cattrs import structure as cattrs_structure
 from tqdm import tqdm
 
-sys.path.append('../')
 from accessors import DataAccessor  # type: ignore
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
 
 GNNModel = Literal['cg-gnn', 'graph-transformer']
 
@@ -187,9 +189,9 @@ class ImportanceFractionAndTestRetriever:
             (
                 phenotype,
                 df[df['cohort'].isin(cohorts) & ~df.index.isin(omittable)]
-                    .reset_index()
-                    .sort_values(['cohort', 'sample'])
-                    .set_index('sample'),
+                .reset_index()
+                .sort_values(['cohort', 'sample'])
+                .set_index('sample'),
             )
             for phenotype, df in self.get_df_phenotypes()
         )
@@ -456,35 +458,43 @@ def label_indicators(spec: PlotSpecification) -> LabelIndicators:
     return LabelIndicators(len(spec.plugins), spec.orientation)
 
 
-@define
 class PlotGenerator:
-    host: str
-    output_directory: str
-    show_also: bool
-    current_specification: PlotSpecification | None = None
+    """Generate a importance fractions plot."""
 
-    def get_specification(self) -> PlotSpecification:
-        return cast(PlotSpecification, self.current_specification)
+    def __init__(
+        self,
+        db_config_file_path: str,
+        study_name: str,
+        phenotypes: list[str],
+        plugins: list[str],
+        figure_size: tuple[int, int],
+        orientation: str | None,
+    ) -> None:
+        """Instantiate the importance fractions plot generator."""
+        self.db_config_file_path = db_config_file_path
+        self.specification = PlotSpecification(
+            study_name,
+            phenotypes,
+            phenotypes,
+            None,  # TODO: Get cohorts from database
+            plugins,
+            figure_size,
+            'horizontal' if (orientation is None) else orientation,
+        )
 
-    def generate_plots(self) -> None:
-        for specification in get_plot_specifications():
-            self.current_specification = specification
-            self._generate_plot()
-
-    def _generate_plot(self) -> None:
+    def generate_plot(self) -> 'Figure':
         self._check_viability()
         dfs = self._retrieve_data()
         self._gather_subplot_cases(dfs)
-        self._generate_subplots(dfs)
-        self._export()
+        return self._generate_subplots(dfs)
 
     def _check_viability(self) -> None:
-        if len(self.get_specification().plugins) != 2:
+        if len(self.specification.plugins) != 2:
             raise ValueError('Currently plot generation requires 2 plugins worth of run data.')
 
     def _retrieve_data(self) -> tuple[DataFrame, ...]:
-        dfs = PlotDataRetriever(self.host).retrieve_data(self.get_specification())
-        dfs = self._transfer_cohort_labels(dfs, self.get_specification())
+        dfs = PlotDataRetriever(self.host).retrieve_data(self.specification)
+        dfs = self._transfer_cohort_labels(dfs, self.specification)
         return dfs
 
     def _transfer_cohort_labels(
@@ -504,32 +514,25 @@ class PlotGenerator:
         self,
         dfs: tuple[DataFrame, ...],
     ) -> tuple[SubplotSpecification, Indicators, Iterable[tuple[DataFrame, GNNModel]]]:
-        subplot_specification = derive_subplot_specification(self.get_specification())
-        indicators = label_indicators(self.get_specification()).get_label_subplot_indicators()
-        return subplot_specification, indicators, zip(dfs, self.get_specification().plugins)
+        subplot_specification = derive_subplot_specification(self.specification)
+        indicators = label_indicators(self.specification).get_label_subplot_indicators()
+        return subplot_specification, indicators, zip(dfs, self.specification.plugins)
 
-    def _generate_subplots(self, dfs: tuple[DataFrame, ...]) -> None:
+    def _generate_subplots(self, dfs: tuple[DataFrame, ...]) -> 'Figure':
         plt.rcParams['font.size'] = 14
         norm = self._generate_normalization(dfs)
         subplot_specification, indicators, cases = self._gather_subplot_cases(dfs)
         fig, axs = plt.subplots(
             *subplot_specification.grid_dimensions,
-            figsize=self.get_specification().figure_size,
+            figsize=self.specification.figure_size,
         )
         title_location = subplot_specification.title_location
         subplot_generator = SubplotGenerator(title_location, norm)
         for i, ((df, plugin), ax) in enumerate(zip(cases, axs)):
             subplot_generator.plot(df, ax, plugin, indicators[0][i], indicators[1][i])
-        fig.suptitle(self.get_specification().study)
+        fig.suptitle(self.specification.study)
         plt.tight_layout()
-
-    def _export(self) -> None:
-        if self.output_directory is not None:
-            plt.savefig(join(self.output_directory,
-                        f'{sanitized_study(self.get_specification().study)}.svg'),
-                        )
-        if self.show_also:
-            plt.show()
+        return fig
 
     @staticmethod
     def _generate_normalization(dfs: tuple[DataFrame, ...]) -> Normalize:
@@ -537,14 +540,3 @@ class PlotGenerator:
         vmin = min(df.min().min() for df in dfs_values_only)
         vmax = max(df.max().max() for df in dfs_values_only)
         return Normalize(vmin=vmin, vmax=vmax)
-
-
-if __name__ == '__main__':
-    parser = ArgumentParser()
-    add = parser.add_argument
-    add('host', nargs='?', type=str, default='http://oncopathtk.org/api', help='SPT API host.')
-    add('output_directory', nargs='?', type=str, default='.', help='Directory in which to save SVGs.')
-    add('--show', action='store_true', help='If set, will display figures in addition to saving.')
-    args = parser.parse_args()
-    generator = PlotGenerator(args.host, args.output_directory, args.show)
-    generator.generate_plots()

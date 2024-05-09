@@ -7,6 +7,7 @@ GENERAL_SECTION_NAME = 'general'
 EXTRACT_SECTION_NAME = 'extract'
 GENERATION_SECTION_NAME = 'graph-generation'
 UPLOAD_SECTION_NAME = 'upload-importances'
+PLOT_FRACTIONS_SECTION_NAME = 'plot-importance-fractions'
 
 
 def _read_config_file(config_file_path: str, section: str) -> dict[str, Any]:
@@ -129,7 +130,7 @@ def read_upload_config(config_file_path: str) -> tuple[
     f"""Read the TOML config file and return the '{UPLOAD_SECTION_NAME}' section.
 
     For a detailed explanation of the return values, refer to the docstring of
-    `spatialprofilingtoolbox.graphs.scripts.upload_importances.parse_arguments()`.
+    `spatialprofilingtoolbox.db.importance_score_transcriber.transcribe_importance()`.
     """
     config = _read_config_file(config_file_path, UPLOAD_SECTION_NAME)
     db_config_file_path: str = config["db_config_file_path"]
@@ -145,4 +146,37 @@ def read_upload_config(config_file_path: str) -> tuple[
         datetime_of_run,
         plugin_version,
         cohort_stratifier,
+    )
+
+
+def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
+    str,
+    str,
+    list[str],
+    list[str],
+    tuple[int, int],
+    str | None,
+]:
+    f"""Read the TOML config file and return the '{PLOT_FRACTIONS_SECTION_NAME}' section.
+
+    For a detailed explanation of the return values, refer to the docstring of
+    `spatialprofilingtoolbox.graphs.graph_plugin_plots.PlotGenerator()`.
+    """
+    config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME)
+    db_config_file_path: str = config["db_config_file_path"]
+    study_name: str = config["study_name"]
+    phenotypes: list[str] = config['phenotypes']
+    plugins: list[str] = config['plugins']
+    figure_size_raw = tuple(config['figure_size'])
+    if len(figure_size_raw) != 2 or not all(isinstance(x, int) for x in figure_size_raw):
+        raise ValueError("figure_size must be a two-tuple of integers.")
+    figure_size: tuple[int, int] = figure_size_raw
+    orientation: str | None = config.get("orientation", None)
+    return (
+        db_config_file_path,
+        study_name,
+        phenotypes,
+        plugins,
+        figure_size,
+        orientation,
     )

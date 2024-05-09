@@ -38,12 +38,3 @@ To run the figure generation script, alter the command below to reference your o
 ```bash
 python retrieve_example_plot.py dataset_directory/ ~/.spt_db.config
 ```
-
-# GNN importance fractions figure generation
-
-Another figure is generated programmatically from extractions from Graph Neural Network models, provided by the API.
-
-```bash
-cd gnn_figure/
-python graph_plugin_plots.py
-```

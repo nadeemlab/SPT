@@ -211,6 +211,7 @@ packages = [
     "extract.py",
     "finalize_graphs.py",
     "generate_graphs.py",
+    "plot_importance_fractions.py",
     "plot_interactives.py",
     "prepare_graph_creation.py",
     "upload_importances.py",

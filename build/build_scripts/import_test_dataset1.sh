@@ -11,7 +11,7 @@ rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f
 
 spt graphs upload-importances --config_path=build/build_scripts/.graph.config --importances_csv_path=test/test_data/gnn_importances/1.csv
 
-spt db upload-sync-findings --database-config-file=build/db/.spt_db.config.local test/test_data/findings.json
+spt db upload-sync-small --database-config-file=build/db/.spt_db.config.local test/test_data/findings.json
 
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt
 diff build/build_scripts/expected_table_counts.txt table_counts.txt

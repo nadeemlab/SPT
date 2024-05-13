@@ -17,8 +17,12 @@ def _read_config_file(config_file_path: str, section: str) -> dict[str, Any]:
         dict(config_file[GENERAL_SECTION_NAME]) if (GENERAL_SECTION_NAME in config_file) else {}
     if section in config_file:
         config.update(dict(config_file[section]))
+    for sec in config_file.sections():
+        if sec.startswith(section + '.'):
+            sub_section = sec.split('.')[1]
+            config[sub_section] = dict(config_file[sec])
     for key, value in config.items():
-        if value.lower() in {'none', 'null', ''}:
+        if isinstance(value, str) and value.lower() in {'none', 'null', ''}:
             config[key] = None
     return config
 
@@ -166,22 +170,28 @@ def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
     config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME)
     host_name: str = config.get("host_name", "http://oncopathtk.org/api")
     study_name: str = config["study_name"]
-    phenotypes: list[str] = config['phenotypes']
-    plugins: list[str] = config['plugins']
-    figure_size_raw = tuple(config['figure_size'])
-    if len(figure_size_raw) != 2 or not all(isinstance(x, int) for x in figure_size_raw):
-        raise ValueError("figure_size must be a two-tuple of integers.")
-    figure_size: tuple[int, int] = figure_size_raw
+    phenotypes: list[str] = config['phenotypes'].split(', ')
+    plugins: list[str] = config['plugins'].split(', ')
+    try:
+        figure_size: tuple[int, int] = tuple(map(int, config['figure_size'].split(', ')))
+    except ValueError as e:
+        raise ValueError("figure_size must be a two-tuple of integers.") from e
+    assert len(figure_size) == 2, "figure_size must be a two-tuple of integers."
     orientation: str | None = config.get("orientation", None)
-    cohorts_raw: list[dict[str, str]] = config['cohorts']
+
     cohorts: list[tuple[int, str]] = []
-    for cohort in cohorts_raw:
+    i_cohort: int = 0
+    cohort_section_name: str = f'cohort0'
+    while cohort_section_name in config:
+        cohort = config[cohort_section_name]
         try:
             cohorts.append((int(cohort['index_int']), cohort['label']))
         except KeyError:
             'Each cohort must have an index_int and a label.'
         except ValueError:
             'Cohort index_int must be an integer.'
+        i_cohort += 1
+        cohort_section_name = f'cohort{i_cohort}'
     return (
         host_name,
         study_name,

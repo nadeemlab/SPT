@@ -1,0 +1,9 @@
+name: spt
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - toml
+  - make
+  - bash
+  - postgresql

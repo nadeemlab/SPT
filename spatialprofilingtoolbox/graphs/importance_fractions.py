@@ -70,10 +70,7 @@ class Colors:
 class ImportanceCountsAccessor:
     """Convenience caller of HTTP methods for access of phenotype counts and importance scores."""
 
-    def __init__(self, study, host=None):
-        if _host is None:
-            raise RuntimeError('Expected host name in api_host.txt .')
-        host = _host
+    def __init__(self, study, host):
         use_http = False
         if re.search('^http://', host):
             use_http = True
@@ -413,10 +410,11 @@ class PlotDataRetriever:
         cohorts = set(c.index_int for c in specification.cohorts)
         plugins = cast(tuple[GNNModel, GNNModel], specification.plugins)
         phenotypes = list(specification.phenotypes)
+        attribute_order = phenotypes + ['cohort']
         retriever = ImportanceFractionAndTestRetriever(self.host, specification.study)
         retriever.initialize()
         return tuple(
-            retriever.retrieve(cohorts, phenotypes, plugin)[phenotypes] for plugin in plugins
+            retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
         )
 
 

@@ -153,6 +153,7 @@ def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
     str,
     str,
     list[str],
+    list[tuple[int, str]],
     list[str],
     tuple[int, int],
     str | None,
@@ -163,7 +164,7 @@ def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
     `spatialprofilingtoolbox.graphs.importance_fractions.PlotGenerator()`.
     """
     config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME)
-    db_config_file_path: str = config["db_config_file_path"]
+    host_name: str = config.get("host_name", "http://oncopathtk.org/api")
     study_name: str = config["study_name"]
     phenotypes: list[str] = config['phenotypes']
     plugins: list[str] = config['plugins']
@@ -172,10 +173,20 @@ def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
         raise ValueError("figure_size must be a two-tuple of integers.")
     figure_size: tuple[int, int] = figure_size_raw
     orientation: str | None = config.get("orientation", None)
+    cohorts_raw: list[dict[str, str]] = config['cohorts']
+    cohorts: list[tuple[int, str]] = []
+    for cohort in cohorts_raw:
+        try:
+            cohorts.append((int(cohort['index_int']), cohort['label']))
+        except KeyError:
+            'Each cohort must have an index_int and a label.'
+        except ValueError:
+            'Cohort index_int must be an integer.'
     return (
-        db_config_file_path,
+        host_name,
         study_name,
         phenotypes,
+        cohorts,
         plugins,
         figure_size,
         orientation,

@@ -27,7 +27,7 @@ def parse_arguments():
         '--output_filename',
         type=str,
         default=None,
-        help='Filename (including extension) to save the plot to.',
+        help='Filename to save the plot to. (Plot file type is chosen based on the extension.)',
     )
     parser.add_argument(
         '--show',
@@ -42,17 +42,19 @@ if __name__ == "__main__":
     if not args.show and (args.output_filename is None):
         raise ValueError('Nothing requested of the plot, skipping.')
     (
-        db_config_file_path,
+        host_name,
         study_name,
         phenotypes,
+        cohorts,
         plugins,
         figure_size,
         orientation,
     ) = read_plot_importance_fractions_config(args.config_path)
     generator = PlotGenerator(
-        db_config_file_path,
+        host_name,
         study_name,
         phenotypes,
+        cohorts,
         plugins,
         figure_size,
         orientation,

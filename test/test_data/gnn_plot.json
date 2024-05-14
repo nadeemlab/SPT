@@ -1,0 +1,10 @@
+{
+    "Melanoma intralesional IL2": [
+        "Tumor, Adipocyte or Langerhans cell, Natural killer cell, CD4+ T cell, Nerve, B cell, CD4+/CD8+ T cell, CD4+ regulatory T cell, CD8+ natural killer T cell, CD8+ regulatory T cell, CD8+ T cell, Double negative regulatory T cell, T cell/null phenotype, Natural killer T cell, CD4+ natural killer T cell",
+        "cg-gnn, graph-transformer",
+        "11, 8",
+        "horizontal",
+        "1, Non-responder",
+        "3, Responder"
+    ]
+}

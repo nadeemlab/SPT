@@ -84,10 +84,10 @@ class StudyAccess(SimpleReadOnlyProvider):
 
     def get_study_findings(self) -> list[str]:
         return self._get_study_small_artifacts('findings')
-    
+
     def get_study_gnn_plot_configurations(self) -> list[str]:
-        return self._get_study_small_artifacts('gnn-plot-configurations')
-    
+        return self._get_study_small_artifacts('gnn_plot_configurations')
+
     def _get_study_small_artifacts(self, name: str) -> list[str]:
         self.cursor.execute(f'SELECT txt FROM {name} ORDER BY id;')
         return [row[0] for row in self.cursor.fetchall()]

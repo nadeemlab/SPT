@@ -12,6 +12,7 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 from fastapi import Query
 from fastapi import HTTPException
+import matplotlib.pyplot as plt
 
 import secure
 
@@ -42,6 +43,8 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListNegatives2,
     ValidFeatureClass,
 )
+from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
+
 VERSION = '0.23.0'
 
 TITLE = 'Single cell studies data API'
@@ -375,3 +378,60 @@ async def get_plot_high_resolution(
     def streaming_iteration():
         yield from input_buffer
     return StreamingResponse(streaming_iteration(), media_type="image/png")
+
+
+@app.get("/importance-fraction-plot/")
+async def importance_fraction_plot(
+    study: ValidStudy,
+    img_format: str = 'svs',
+) -> StreamingResponse:
+    """Return a plot of the fraction of important cells expressing a given phenotype."""
+    APPROVED_FORMATS = {'png', 'svs'}
+    if img_format not in APPROVED_FORMATS:
+        raise ValueError(f'Image format "{img_format}" not supported.')
+
+    settings: list[str] = cast(list[str], query().get_study_gnn_plot_configurations(study))
+    (
+        hostname,
+        phenotypes,
+        cohorts,
+        plugins,
+        figure_size,
+        orientation,
+    ) = parse_gnn_plot_settings(settings)
+
+    plot = PlotGenerator(
+        hostname,
+        study,
+        phenotypes,
+        cohorts,
+        plugins,
+        figure_size,
+        orientation,
+    ).generate_plot()
+    plt.figure(plot.number)
+    buf = BytesIO()
+    plt.savefig(buf, format=img_format)
+    buf.seek(0)
+    return StreamingResponse(buf, media_type=f"image/{img_format}")
+
+
+def parse_gnn_plot_settings(settings: list[str]) -> tuple[
+    str,
+    list[str],
+    list[tuple[int, str]],
+    list[str],
+    tuple[int, int],
+    str,
+]:
+    hostname = settings[0]
+    phenotypes = settings[1].split(', ')
+    plugins = settings[2].split(', ')
+    figure_size = tuple(map(int, settings[3].split(', ')))
+    assert len(figure_size) == 2
+    orientation = settings[4]
+    cohorts: list[tuple[int, str]] = []
+    for cohort in settings[5:]:
+        count, name = cohort.split(', ')
+        cohorts.append((int(count), name))
+    return hostname, phenotypes, cohorts, plugins, figure_size, orientation

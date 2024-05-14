@@ -31,6 +31,7 @@ repository = "https://github.com/nadeemlab/SPT"
 
 [project.optional-dependencies]
 apiserver = [
+    "matplotlib==3.7.1",
     "fastapi==0.100.0",
     "uvicorn>=0.15.0,<0.16.0",
     "pandas==2.0.2",

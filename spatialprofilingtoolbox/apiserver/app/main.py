@@ -383,10 +383,10 @@ async def get_plot_high_resolution(
 @app.get("/importance-fraction-plot/")
 async def importance_fraction_plot(
     study: ValidStudy,
-    img_format: str = 'svs',
+    img_format: str = 'svg',
 ) -> StreamingResponse:
     """Return a plot of the fraction of important cells expressing a given phenotype."""
-    APPROVED_FORMATS = {'png', 'svs'}
+    APPROVED_FORMATS = {'png', 'svg'}
     if img_format not in APPROVED_FORMATS:
         raise ValueError(f'Image format "{img_format}" not supported.')
 

@@ -40,9 +40,9 @@ def _sync_data(cursor, name: str, data: tuple[str, ...]) -> bool:
     rows = tuple(cursor.fetchall())
     if tuple(text for _, text in rows) == data:
         return True
-    cursor.execute(f'DELETE FROM {data};')
+    cursor.execute(f'DELETE FROM {name};')
     for datum in data:
-        cursor.execute(f'INSERT INTO {data}(txt) VALUES (%s);', (datum,))
+        cursor.execute(f'INSERT INTO {name}(txt) VALUES (%s);', (datum,))
     return False
 
 

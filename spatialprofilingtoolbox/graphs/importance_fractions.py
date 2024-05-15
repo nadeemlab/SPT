@@ -8,14 +8,11 @@ from typing import Iterable
 from typing import cast
 from typing import Any
 from typing import Callable
-from typing import Coroutine
 from typing import TYPE_CHECKING
 import re
 from itertools import chain
 from urllib.parse import urlencode
 from enum import Enum
-from concurrent.futures import ThreadPoolExecutor
-from asyncio import new_event_loop
 
 import numpy as np
 from numpy.typing import NDArray
@@ -29,6 +26,7 @@ import matplotlib.colors as mcolors
 from matplotlib.colors import Normalize
 from scipy.stats import fisher_exact  # type: ignore
 from attr import define
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -64,16 +62,16 @@ def sanitized_study(study: str) -> str:
 PhenotypeDataFrames = tuple[tuple[str, DataFrame], ...]
 
 APIServerCallables = tuple[
-    Callable[[list[str], list[str], str], Any],
-    Callable[[str], Any],
-    Callable[[str, str], Any],
+    Callable[[list[str], list[str], str], BaseModel],
+    Callable[[str], BaseModel],
+    Callable[[str, str], BaseModel],
     Callable[[
         str,
         list[str],
         list[str],
         str,
         dict[str, Any],
-    ], Any],
+    ], BaseModel],
 ]
 
 
@@ -159,8 +157,7 @@ class ImportanceCountsAccessor:
             return self._retrieve(endpoint, query)[0]
         else:
             assert self.query_anonymous_phenotype_counts_fast is not None
-            query = self.query_anonymous_phenotype_counts_fast(positives, negatives, self.study)
-            return _finish_retrieving_from_api_server(query)
+            return self.query_anonymous_phenotype_counts_fast(positives, negatives, self.study).dict()
 
     def _get_counts_series(self, criteria: dict[str, list[str]], column_name: str) -> Series:
         criteria_tuple = (
@@ -177,8 +174,7 @@ class ImportanceCountsAccessor:
             summary, _ = self._retrieve('study-summary', urlencode([('study', self.study)]))
         else:
             assert self.query_study_summary is not None
-            query = self.query_study_summary(self.study)
-            summary = _finish_retrieving_from_api_server(query)
+            summary = self.query_study_summary(self.study).dict()
         return DataFrame(summary['cohorts']['assignments']).set_index('sample')
 
     def _retrieve_all_cells_counts(self) -> Series:
@@ -219,8 +215,7 @@ class ImportanceCountsAccessor:
             criteria, _ = self._retrieve('phenotype-criteria', query)
         else:
             assert self.query_phenotype_criteria is not None
-            query = self.query_phenotype_criteria(self.study, name)
-            criteria = _finish_retrieving_from_api_server(query)
+            criteria = self.query_phenotype_criteria(self.study, name).dict()
         return criteria
 
     def _conjunction_phenotype_criteria(self, names: str) -> dict[str, list[str]]:
@@ -292,26 +287,14 @@ class ImportanceCountsAccessor:
             }
             optional_args = {k: v for k, v in optional_args.items() if v is not None}
 
-            query = self.query_importance_composition(
+            phenotype_counts = self.query_importance_composition(
                 self.study,
                 conjunction_criteria['positive_markers'],
                 conjunction_criteria['negative_markers'],
                 plugin,
                 **optional_args,
-            )
-            phenotype_counts = _finish_retrieving_from_api_server(query)
+            ).dict()
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
-
-
-def _finish_retrieving_from_api_server(query: Coroutine[Any, Any, Any]) -> dict[str, Any]:
-    """Wait for request to complete and return as dictionary."""
-    with ThreadPoolExecutor() as executor:
-        loop = new_event_loop()
-        try:
-            result = executor.submit(loop.run_until_complete, query).result()
-        finally:
-            loop.close()
-        return result.dict()
 
 
 class ImportanceFractionAndTestRetriever:

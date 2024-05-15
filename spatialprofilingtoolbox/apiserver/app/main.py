@@ -194,9 +194,15 @@ async def get_anonymous_phenotype_counts_fast(
     """Computes the number of cells satisfying the given positive and negative criteria, in the
     context of a given study.
     """
+    return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
+
+def _get_anonymous_phenotype_counts_fast(
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    study: ValidStudy,
+) -> PhenotypeCounts:
     number_cells = cast(int, query().get_number_cells(study))
     return get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
-
 
 @app.get("/request-spatial-metrics-computation/")
 async def request_spatial_metrics_computation(
@@ -261,7 +267,29 @@ async def available_gnn_metrics(
 
 
 @app.get("/importance-composition/")
-async def importance_composition(
+async def get_importance_composition(
+    study: ValidStudy,
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    plugin: str = 'cg-gnn',
+    datetime_of_run: str = 'latest',
+    plugin_version: str | None = None,
+    cohort_stratifier: str | None = None,
+    cell_limit: int = 100,
+) -> PhenotypeCounts:
+    """For each specimen, return the fraction of important cells expressing a given phenotype."""
+    return _get_importance_composition(
+        study,
+        positive_marker,
+        negative_marker,
+        plugin,
+        datetime_of_run,
+        plugin_version,
+        cohort_stratifier,
+        cell_limit,
+    )
+
+def _get_importance_composition(
     study: ValidStudy,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -405,10 +433,10 @@ async def importance_fraction_plot(
 
     plot = PlotGenerator(
         (
-            get_anonymous_phenotype_counts_fast,
-            get_study_summary,
-            get_phenotype_criteria,
-            importance_composition,
+            _get_anonymous_phenotype_counts_fast,
+            query().get_study_summary,
+            query().get_phenotype_criteria,
+            _get_importance_composition,
         ),
         study,
         phenotypes,

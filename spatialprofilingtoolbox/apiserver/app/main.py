@@ -392,7 +392,6 @@ async def importance_fraction_plot(
 
     settings: list[str] = cast(list[str], query().get_study_gnn_plot_configurations(study))
     (
-        hostname,
         phenotypes,
         cohorts,
         plugins,
@@ -401,7 +400,12 @@ async def importance_fraction_plot(
     ) = parse_gnn_plot_settings(settings)
 
     plot = PlotGenerator(
-        hostname,
+        (
+            get_anonymous_phenotype_counts_fast,
+            get_study_summary,
+            get_phenotype_criteria,
+            importance_composition,
+        ),
         study,
         phenotypes,
         cohorts,
@@ -417,21 +421,19 @@ async def importance_fraction_plot(
 
 
 def parse_gnn_plot_settings(settings: list[str]) -> tuple[
-    str,
     list[str],
     list[tuple[int, str]],
     list[str],
     tuple[int, int],
     str,
 ]:
-    hostname = settings[0]
-    phenotypes = settings[1].split(', ')
-    plugins = settings[2].split(', ')
-    figure_size = tuple(map(int, settings[3].split(', ')))
+    phenotypes = settings[0].split(', ')
+    plugins = settings[1].split(', ')
+    figure_size = tuple(map(int, settings[2].split(', ')))
     assert len(figure_size) == 2
-    orientation = settings[4]
+    orientation = settings[3]
     cohorts: list[tuple[int, str]] = []
-    for cohort in settings[5:]:
+    for cohort in settings[4:]:
         count, name = cohort.split(', ')
         cohorts.append((int(count), name))
-    return hostname, phenotypes, cohorts, plugins, figure_size, orientation
+    return phenotypes, cohorts, plugins, figure_size, orientation

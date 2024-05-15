@@ -10,6 +10,7 @@ nextflow run .
 rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 
 spt graphs upload-importances --config_path=build/build_scripts/.graph.config --importances_csv_path=test/test_data/gnn_importances/1.csv
+spt graphs upload-importances --config_path=build/build_scripts/.graph_transformer.config --importances_csv_path=test/test_data/gnn_importances/1.csv
 
 spt db upload-sync-small --database-config-file=build/db/.spt_db.config.local findings test/test_data/findings.json
 spt db upload-sync-small --database-config-file=build/db/.spt_db.config.local gnn_plot_configurations test/test_data/gnn_plot.json

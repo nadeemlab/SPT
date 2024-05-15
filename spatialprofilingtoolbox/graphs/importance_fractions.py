@@ -7,12 +7,15 @@ from typing import Literal
 from typing import Iterable
 from typing import cast
 from typing import Any
+from typing import Callable
+from typing import Coroutine
 from typing import TYPE_CHECKING
 import re
 from itertools import chain
 from urllib.parse import urlencode
-from requests import get as get_request  # type: ignore
 from enum import Enum
+from concurrent.futures import ThreadPoolExecutor
+from asyncio import new_event_loop
 
 import numpy as np
 from numpy.typing import NDArray
@@ -26,7 +29,6 @@ import matplotlib.colors as mcolors
 from matplotlib.colors import Normalize
 from scipy.stats import fisher_exact  # type: ignore
 from attr import define
-from tqdm import tqdm
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -61,6 +63,19 @@ def sanitized_study(study: str) -> str:
 
 PhenotypeDataFrames = tuple[tuple[str, DataFrame], ...]
 
+APIServerCallables = tuple[
+    Callable[[list[str], list[str], str], Any],
+    Callable[[str], Any],
+    Callable[[str, str], Any],
+    Callable[[
+        str,
+        list[str],
+        list[str],
+        str,
+        dict[str, Any],
+    ], Any],
+]
+
 
 class Colors:
     bold_magenta = '\u001b[35;1m'
@@ -70,19 +85,42 @@ class Colors:
 class ImportanceCountsAccessor:
     """Convenience caller of HTTP methods for access of phenotype counts and importance scores."""
 
-    def __init__(self, study, host):
-        use_http = False
-        if re.search('^http://', host):
-            use_http = True
-            host = re.sub(r'^http://', '', host)
-        self.host = host
+    def __init__(
+        self,
+        study: str,
+        what_to_query: str | APIServerCallables,
+    ) -> None:
+        self.use_http = False
+        self.host: str | None = None
+        self.query_anonymous_phenotype_counts_fast: Callable[[
+            list[str], list[str], str], Any] | None = None
+        self.query_study_summary: Callable[[str], Any] | None = None
+        self.query_phenotype_criteria: Callable[[str, str], Any] | None = None
+        self.query_importance_composition: Callable[[
+            str,
+            list[str],
+            list[str],
+            str,
+            dict[str, Any],
+        ], Any] | None = None
+        if isinstance(what_to_query, str):
+            if re.search('^http://', what_to_query):
+                self.use_http = True
+                what_to_query = re.sub(r'^http://', '', what_to_query)
+            self.host = what_to_query
+        else:
+            (
+                self.query_anonymous_phenotype_counts_fast,
+                self.query_study_summary,
+                self.query_phenotype_criteria,
+                self.query_importance_composition,
+            ) = what_to_query
         self.study = study
-        self.use_http = use_http
         print('\n' + Colors.bold_magenta + study + Colors.reset + '\n')
         self.cohorts = self._retrieve_cohorts()
         self.all_cells = self._retrieve_all_cells_counts()
 
-    def counts(self, phenotype_names):
+    def counts(self, phenotype_names: str | list[str]) -> DataFrame:
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
         conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
@@ -99,27 +137,32 @@ class ImportanceCountsAccessor:
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         return df
 
-    def name_for_all_phenotypes(self, phenotype_names):
+    def name_for_all_phenotypes(self, phenotype_names: list[str]) -> str:
         return ' and '.join([self._name_phenotype(p) for p in phenotype_names])
 
-    def counts_by_signature(self, positives: list[str], negatives: list[str]):
+    def counts_by_signature(self, positives: list[str], negatives: list[str]) -> dict[str, Any]:
         if (not positives) and (not negatives):
             raise ValueError('At least one positive or negative marker is required.')
         if not positives:
             positives = ['']
         elif not negatives:
             negatives = ['']
-        parts = list(chain(*[
-            [(f'{keyword}_marker', channel) for channel in argument]
-            for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
-        ]))
-        parts = sorted(list(set(parts)))
-        parts.append(('study', self.study))
-        query = urlencode(parts)
-        endpoint = 'anonymous-phenotype-counts-fast'
-        return self._retrieve(endpoint, query)[0]
+        if self.host is not None:
+            parts = list(chain(*[
+                [(f'{keyword}_marker', channel) for channel in argument]
+                for keyword, argument in zip(['positive', 'negative'], [positives, negatives])
+            ]))
+            parts = sorted(list(set(parts)))
+            parts.append(('study', self.study))
+            query = urlencode(parts)
+            endpoint = 'anonymous-phenotype-counts-fast'
+            return self._retrieve(endpoint, query)[0]
+        else:
+            assert self.query_anonymous_phenotype_counts_fast is not None
+            query = self.query_anonymous_phenotype_counts_fast(positives, negatives, self.study)
+            return _finish_retrieving_from_api_server(query)
 
-    def _get_counts_series(self, criteria, column_name):
+    def _get_counts_series(self, criteria: dict[str, list[str]], column_name: str) -> Series:
         criteria_tuple = (
             criteria['positive_markers'],
             criteria['negative_markers'],
@@ -129,11 +172,16 @@ class ImportanceCountsAccessor:
         mapper = {'specimen': 'sample', 'count': column_name}
         return df.rename(columns=mapper).set_index('sample')[column_name]
 
-    def _retrieve_cohorts(self):
-        summary, _ = self._retrieve('study-summary', urlencode([('study', self.study)]))
+    def _retrieve_cohorts(self) -> DataFrame:
+        if self.host is not None:
+            summary, _ = self._retrieve('study-summary', urlencode([('study', self.study)]))
+        else:
+            assert self.query_study_summary is not None
+            query = self.query_study_summary(self.study)
+            summary = _finish_retrieving_from_api_server(query)
         return DataFrame(summary['cohorts']['assignments']).set_index('sample')
 
-    def _retrieve_all_cells_counts(self):
+    def _retrieve_all_cells_counts(self) -> Series:
         counts = self.counts_by_signature([''], [''])
         df = DataFrame(counts['counts'])
         all_name = 'all cells'
@@ -141,13 +189,14 @@ class ImportanceCountsAccessor:
         counts_series = df.rename(columns=mapper).set_index('sample')[all_name]
         return counts_series
 
-    def _get_base(self):
+    def _get_base(self) -> str:
         protocol = 'https'
         if self.host == 'localhost' or re.search('127.0.0.1', self.host) or self.use_http:
             protocol = 'http'
         return '://'.join((protocol, self.host))
 
-    def _retrieve(self, endpoint, query):
+    def _retrieve(self, endpoint: str, query: str) -> tuple[dict[str, Any], str]:
+        from requests import get as get_request  # type: ignore
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
         try:
@@ -157,7 +206,7 @@ class ImportanceCountsAccessor:
             raise exception
         return content.json(), url
 
-    def _phenotype_criteria(self, name):
+    def _phenotype_criteria(self, name: str | dict[str, list[str]]) -> dict[str, list[str]]:
         if isinstance(name, dict):
             criteria = name
             keys = ['positive_markers', 'negative_markers']
@@ -165,18 +214,23 @@ class ImportanceCountsAccessor:
                 if criteria[key] == []:
                     criteria[key] = ['']
             return criteria
-        query = urlencode([('study', self.study), ('phenotype_symbol', name)])
-        criteria, _ = self._retrieve('phenotype-criteria', query)
+        if self.host is not None:
+            query = urlencode([('study', self.study), ('phenotype_symbol', name)])
+            criteria, _ = self._retrieve('phenotype-criteria', query)
+        else:
+            assert self.query_phenotype_criteria is not None
+            query = self.query_phenotype_criteria(self.study, name)
+            criteria = _finish_retrieving_from_api_server(query)
         return criteria
 
-    def _conjunction_phenotype_criteria(self, names):
-        criteria_list = []
+    def _conjunction_phenotype_criteria(self, names: str) -> dict[str, list[str]]:
+        criteria_list: list[dict[str, list[str]]] = []
         for name in names:
             criteria = self._phenotype_criteria(name)
             criteria_list.append(criteria)
         return self._merge_criteria(criteria_list)
 
-    def _merge_criteria(self, criteria_list):
+    def _merge_criteria(self, criteria_list: list[dict[str, list[str]]]) -> dict[str, list[str]]:
         keys = ['positive_markers', 'negative_markers']
         merged = {
             key: sorted(list(set(list(chain(*[criteria[key] for criteria in criteria_list])))))
@@ -187,7 +241,7 @@ class ImportanceCountsAccessor:
                 merged[key] = ['']
         return merged
 
-    def _name_phenotype(self, phenotype):
+    def _name_phenotype(self, phenotype: str) -> str:
         if isinstance(phenotype, dict):
             return ' '.join([
                 ' '.join([f'{p}{sign}' for p in phenotype[f'{keyword}_markers'] if p != ''])
@@ -206,47 +260,84 @@ class ImportanceCountsAccessor:
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
         conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
-        parts = list(chain(*[
-            [(f'{keyword}_marker', channel) for channel in argument]
-            for keyword, argument in zip(
-                ['positive', 'negative'], [
-                    conjunction_criteria['positive_markers'],
-                    conjunction_criteria['negative_markers'],
-                ])
-        ]))
-        parts = sorted(list(set(parts)))
-        parts.append(('study', self.study))
-        if plugin in {'cg-gnn', 'graph-transformer'}:
-            parts.append(('plugin', plugin))
+        if self.host is not None:
+            parts = list(chain(*[
+                [(f'{keyword}_marker', channel) for channel in argument]
+                for keyword, argument in zip(
+                    ['positive', 'negative'], [
+                        conjunction_criteria['positive_markers'],
+                        conjunction_criteria['negative_markers'],
+                    ])
+            ]))
+            parts = sorted(list(set(parts)))
+            parts.append(('study', self.study))
+            if plugin in {'cg-gnn', 'graph-transformer'}:
+                parts.append(('plugin', plugin))
+            else:
+                raise ValueError(f'Unrecognized plugin name: {plugin}')
+            if datetime_of_run is not None:
+                parts.append(('datetime_of_run', datetime_of_run))
+            if plugin_version is not None:
+                parts.append(('plugin_version', plugin_version))
+            if cohort_stratifier is not None:
+                parts.append(('cohort_stratifier', cohort_stratifier))
+            query = urlencode(parts)
+            phenotype_counts, _ = self._retrieve('importance-composition', query)
         else:
-            raise ValueError(f'Unrecognized plugin name: {plugin}')
-        if datetime_of_run is not None:
-            parts.append(('datetime_of_run', datetime_of_run))
-        if plugin_version is not None:
-            parts.append(('plugin_version', plugin_version))
-        if cohort_stratifier is not None:
-            parts.append(('cohort_stratifier', cohort_stratifier))
-        query = urlencode(parts)
-        phenotype_counts, _ = self._retrieve('importance-composition', query)
+            assert self.query_importance_composition is not None
+            optional_args = {
+                'datetime_of_run': datetime_of_run,
+                'plugin_version': plugin_version,
+                'cohort_stratifier': cohort_stratifier,
+            }
+            optional_args = {k: v for k, v in optional_args.items() if v is not None}
+
+            query = self.query_importance_composition(
+                self.study,
+                conjunction_criteria['positive_markers'],
+                conjunction_criteria['negative_markers'],
+                plugin,
+                **optional_args,
+            )
+            phenotype_counts = _finish_retrieving_from_api_server(query)
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
 
 
-@define
-class ImportanceFractionAndTestRetriever:
-    host: str
-    study: str
-    access: ImportanceCountsAccessor | None = None
-    count_important: int = 100
-    df_phenotypes: PhenotypeDataFrames | None = None
-    df_phenotypes_original: PhenotypeDataFrames | None = None
+def _finish_retrieving_from_api_server(query: Coroutine[Any, Any, Any]) -> dict[str, Any]:
+    """Wait for request to complete and return as dictionary."""
+    with ThreadPoolExecutor() as executor:
+        loop = new_event_loop()
+        try:
+            result = executor.submit(loop.run_until_complete, query).result()
+        finally:
+            loop.close()
+        return result.dict()
 
-    def initialize(self) -> None:
-        self.access = ImportanceCountsAccessor(self.study, host=self.host)
+
+class ImportanceFractionAndTestRetriever:
+
+    def __init__(
+        self,
+        host: str | APIServerCallables,
+        study: str,
+        count_important: int = 100,
+        use_tqdm: bool = False,
+    ) -> None:
+        self.host = host
+        self.study = study
+        self.count_important = count_important
+        self.use_tqdm = use_tqdm
+
+        self.df_phenotypes = None
+        self.df_phenotypes_original = None
+        self.access = ImportanceCountsAccessor(self.study, self.host)
 
     def get_access(self) -> ImportanceCountsAccessor:
-        return cast(ImportanceCountsAccessor, self.access)
+        return self.access
 
     def get_df_phenotypes(self) -> PhenotypeDataFrames:
+        if self.df_phenotypes is None:
+            raise RuntimeError('Phenotype dataframes have not been initialized.')
         return cast(PhenotypeDataFrames, self.df_phenotypes)
 
     def get_sanitized_study(self) -> str:
@@ -259,7 +350,7 @@ class ImportanceFractionAndTestRetriever:
             return f'{self.get_sanitized_study()}.{plugin}.pickle'
 
     @staticmethod
-    def get_progress_bar_format():
+    def get_progress_bar_format() -> str:
         return '{l_bar}{bar:30}{r_bar}{bar:-30b}'
 
     def reset_phenotype_counts(self, df: DataFrame) -> None:
@@ -281,9 +372,15 @@ class ImportanceFractionAndTestRetriever:
             N = len(levels)
             print('Retrieving count data to support plot.')
             f = self.get_progress_bar_format()
+
+            if self.use_tqdm:
+                from tqdm import tqdm
+                iterable = tqdm(levels, total=N, bar_format=f)
+            else:
+                iterable = levels
             self.df_phenotypes_original = tuple(
                 (str(phenotype), self.get_access().counts(phenotype).astype(int))
-                for phenotype in tqdm(levels, total=N, bar_format=f)
+                for phenotype in iterable
             )
             with open(pickle_file, 'wb') as file:
                 pickle_dump(self.df_phenotypes_original, file)
@@ -301,9 +398,14 @@ class ImportanceFractionAndTestRetriever:
                 important_proportions = pickle_load(file)
                 print(f'Loaded from cache: {pickle_file}')
         else:
+            if self.use_tqdm:
+                from tqdm import tqdm
+                iterable = tqdm(self.get_df_phenotypes(), total=N, bar_format=f)
+            else:
+                iterable = self.get_df_phenotypes()
             important_proportions = {
                 phenotype: self.get_access().important(phenotype, plugin=plugin)
-                for phenotype, _ in tqdm(self.get_df_phenotypes(), total=N, bar_format=f)
+                for phenotype, _ in iterable
             }
             with open(pickle_file, 'wb') as file:
                 pickle_dump(important_proportions, file)
@@ -404,15 +506,19 @@ class ImportanceFractionAndTestRetriever:
 
 @define
 class PlotDataRetriever:
-    host: str
+    host: str | APIServerCallables
+    use_tqdm: bool
 
     def retrieve_data(self, specification: PlotSpecification) -> tuple[DataFrame, ...]:
         cohorts = set(c.index_int for c in specification.cohorts)
         plugins = cast(tuple[GNNModel, GNNModel], specification.plugins)
         phenotypes = list(specification.phenotypes)
         attribute_order = phenotypes + ['cohort']
-        retriever = ImportanceFractionAndTestRetriever(self.host, specification.study)
-        retriever.initialize()
+        retriever = ImportanceFractionAndTestRetriever(
+            self.host,
+            specification.study,
+            use_tqdm=self.use_tqdm,
+        )
         return tuple(
             retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
         )
@@ -610,16 +716,17 @@ class PlotGenerator:
 
     def __init__(
         self,
-        host_name: str,
+        what_to_query: str | APIServerCallables,
         study_name: str,
         phenotypes: list[str],
         cohorts_raw: list[tuple[int, str]],
         plugins: list[str],
         figure_size: tuple[int, int],
         orientation: str | None,
+        use_tqdm: bool = False,
     ) -> None:
         """Instantiate the importance fractions plot generator."""
-        self.host = host_name
+        self.host = what_to_query
         cohorts: list[Cohort] = []
         for cohort in cohorts_raw:
             cohorts.append(Cohort(*cohort))
@@ -634,6 +741,7 @@ class PlotGenerator:
             figure_size,
             Orientation.HORIZONTAL if (orientation is None) else Orientation[orientation.upper()],
         )
+        self.use_tqdm = use_tqdm
 
     def generate_plot(self) -> 'Figure':
         self._check_viability()
@@ -646,7 +754,7 @@ class PlotGenerator:
             raise ValueError('Currently plot generation requires 2 plugins worth of run data.')
 
     def _retrieve_data(self) -> tuple[DataFrame, ...]:
-        dfs = PlotDataRetriever(self.host).retrieve_data(self.specification)
+        dfs = PlotDataRetriever(self.host, self.use_tqdm).retrieve_data(self.specification)
         dfs = self._transfer_cohort_labels(dfs, self.specification)
         return dfs
 

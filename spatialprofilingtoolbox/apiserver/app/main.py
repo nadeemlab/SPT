@@ -422,22 +422,3 @@ async def importance_fraction_plot(
     plt.savefig(buf, format=img_format)
     buf.seek(0)
     return StreamingResponse(buf, media_type=f"image/{img_format}")
-
-
-def parse_gnn_plot_settings(settings: list[str]) -> tuple[
-    list[str],
-    list[tuple[int, str]],
-    list[str],
-    tuple[int, int],
-    str,
-]:
-    phenotypes = settings[0].split(', ')
-    plugins = settings[1].split(', ')
-    figure_size = tuple(map(int, settings[2].split(', ')))
-    assert len(figure_size) == 2
-    orientation = settings[3]
-    cohorts: list[tuple[int, str]] = []
-    for cohort in settings[4:]:
-        count, name = cohort.split(', ')
-        cohorts.append((int(count), name))
-    return phenotypes, cohorts, plugins, figure_size, orientation

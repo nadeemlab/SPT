@@ -7,17 +7,31 @@ GENERAL_SECTION_NAME = 'general'
 EXTRACT_SECTION_NAME = 'extract'
 GENERATION_SECTION_NAME = 'graph-generation'
 UPLOAD_SECTION_NAME = 'upload-importances'
+PLOT_FRACTIONS_SECTION_NAME = 'plot-importance-fractions'
 
 
-def _read_config_file(config_file_path: str, section: str) -> dict[str, Any]:
+def _read_config_file(
+    config_file_path: str | None,
+    section: str,
+    config_file_string: str | None = None,
+) -> dict[str, Any]:
     config_file = ConfigParser()
-    config_file.read(config_file_path)
+    if config_file_path is not None:
+        config_file.read(config_file_path)
+    elif config_file_string is not None:
+        config_file.read_string(config_file_string)
+    else:
+        raise ValueError("Either config_file_path or config_file_string must be provided.")
     config: dict[str, Any] = \
         dict(config_file[GENERAL_SECTION_NAME]) if (GENERAL_SECTION_NAME in config_file) else {}
     if section in config_file:
         config.update(dict(config_file[section]))
+    for sec in config_file.sections():
+        if sec.startswith(section + '.'):
+            sub_section = sec.split('.')[1]
+            config[sub_section] = dict(config_file[sec])
     for key, value in config.items():
-        if value.lower() in {'none', 'null', ''}:
+        if isinstance(value, str) and value.lower() in {'none', 'null', ''}:
             config[key] = None
     return config
 
@@ -129,7 +143,7 @@ def read_upload_config(config_file_path: str) -> tuple[
     f"""Read the TOML config file and return the '{UPLOAD_SECTION_NAME}' section.
 
     For a detailed explanation of the return values, refer to the docstring of
-    `spatialprofilingtoolbox.graphs.scripts.upload_importances.parse_arguments()`.
+    `spatialprofilingtoolbox.db.importance_score_transcriber.transcribe_importance()`.
     """
     config = _read_config_file(config_file_path, UPLOAD_SECTION_NAME)
     db_config_file_path: str = config["db_config_file_path"]
@@ -145,4 +159,58 @@ def read_upload_config(config_file_path: str) -> tuple[
         datetime_of_run,
         plugin_version,
         cohort_stratifier,
+    )
+
+
+def read_plot_importance_fractions_config(
+    config_file_path: str | None,
+    config_file_string: str | None = None,
+    calling_by_api: bool = False,
+) -> tuple[
+    str,
+    str,
+    list[str],
+    list[tuple[int, str]],
+    list[str],
+    tuple[int, int],
+    str | None,
+]:
+    f"""Read the TOML config file and return the '{PLOT_FRACTIONS_SECTION_NAME}' section.
+
+    For a detailed explanation of the return values, refer to the docstring of
+    `spatialprofilingtoolbox.graphs.importance_fractions.PlotGenerator()`.
+    """
+    config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME, config_file_string)
+    host_name: str = config.get("host_name", "http://oncopathtk.org/api")
+    study_name: str = config["study_name"] if not calling_by_api else ''
+    phenotypes: list[str] = config['phenotypes'].split(', ')
+    plugins: list[str] = config['plugins'].split(', ')
+    try:
+        figure_size: tuple[int, int] = tuple(map(int, config['figure_size'].split(', ')))
+    except ValueError as e:
+        raise ValueError("figure_size must be a two-tuple of integers.") from e
+    assert len(figure_size) == 2, "figure_size must be a two-tuple of integers."
+    orientation: str | None = config.get("orientation", None)
+
+    cohorts: list[tuple[int, str]] = []
+    i_cohort: int = 0
+    cohort_section_name: str = f'cohort0'
+    while cohort_section_name in config:
+        cohort = config[cohort_section_name]
+        try:
+            cohorts.append((int(cohort['index_int']), cohort['label']))
+        except KeyError:
+            'Each cohort must have an index_int and a label.'
+        except ValueError:
+            'Cohort index_int must be an integer.'
+        i_cohort += 1
+        cohort_section_name = f'cohort{i_cohort}'
+    return (
+        host_name,
+        study_name,
+        phenotypes,
+        cohorts,
+        plugins,
+        figure_size,
+        orientation,
     )

@@ -30,7 +30,7 @@ substituting the argument with the address of your local API server. (See *Setti
 - You can alternatively store the API host in `api_host.txt` and omit the command-line argument above.
 - The run result is here in [results.txt](results.txt).
 
-# Cell arrangment figure generation
+## Cell arrangement figure generation
 
 One figure is generated programmatically from published source TIFF files.
 To run the figure generation script, alter the command below to reference your own database configuration file and path to unzipped Moldoveanu et al dataset.
@@ -39,11 +39,11 @@ To run the figure generation script, alter the command below to reference your o
 python retrieve_example_plot.py dataset_directory/ ~/.spt_db.config
 ```
 
-# GNN importance fractions figure generation
+## GNN importance fractions figure generation
 
-Another figure is generated programmatically from extractions from Graph Neural Network models, provided by the API.
+This plot replication requires the installation of SPT, as it's not a script in this directory. Instead, it's a command in the `spt graphs` CLI that uses the configuration files stored in `gnn_figure/` to reproduce the plots seen in our publication.
 
 ```bash
-cd gnn_figure/
-python graph_plugin_plots.py
+spt graphs plot-importance-fractions --config_path gnn_figure/melanoma_intralesional_il2.config --output_filename gnn_figure/melanoma_intralesional_il2.png
+spt graphs plot-importance-fractions --config_path gnn_figure/urothelial_ici.config --output_filename gnn_figure/urothelial_ici.png
 ```

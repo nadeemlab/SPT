@@ -9,7 +9,7 @@ then
     exit 1
 fi
 response=$(curl -s "$query")
-if [[ "$response" != '{"plugins":["cg-gnn"]}' ]];
+if [[ "$response" != '{"plugins":["cg-gnn","graph-transformer"]}' ]];
 then
     echo "API query for available GNN metrics failed."
     exit 1

@@ -9,15 +9,15 @@
                             diagnosis        2
        diagnostic_selection_criterion        4
             expression_quantification    18200
-                feature_specification        1
-                    feature_specifier        4
+                feature_specification        2
+                    feature_specifier        8
                histological_structure      700
 histological_structure_identification      700
          histology_assessment_process        7
                          intervention        2
    plane_coordinates_reference_system        0
                           publication        2
-           quantitative_feature_value      700
+           quantitative_feature_value     1400
                 research_professional       32
                            shape_file      700
           specimen_collection_process        7

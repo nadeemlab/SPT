@@ -2,6 +2,7 @@
 
 from typing import cast
 from typing import Annotated
+from typing import Literal
 import json
 from io import BytesIO
 from base64 import b64decode
@@ -12,6 +13,7 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 from fastapi import Query
 from fastapi import HTTPException
+import matplotlib.pyplot as plt
 
 import secure
 
@@ -42,6 +44,9 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListNegatives2,
     ValidFeatureClass,
 )
+from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
+from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
+
 VERSION = '0.23.0'
 
 TITLE = 'Single cell studies data API'
@@ -67,6 +72,7 @@ app = FastAPI(
 )
 
 CELL_DATA_CELL_LIMIT = 100001
+
 
 def custom_openapi():
     if app.openapi_schema:
@@ -113,6 +119,7 @@ async def get_study_names(
     """The names of studies/datasets, with display names."""
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
+
     def is_public(study_handle: StudyHandle) -> bool:
         if StudyCollectionNaming.is_untagged(study_handle):
             return True
@@ -128,6 +135,7 @@ async def get_study_names(
                 status_code=404,
                 detail=f'Collection "{collection}" is not a valid collection string.',
             )
+
         def tagged(study_handle: StudyHandle) -> bool:
             return StudyCollectionNaming.tagged_with(study_handle, collection)
         handles = list(filter(tagged, map(query().retrieve_study_handle, specifiers)))
@@ -186,9 +194,15 @@ async def get_anonymous_phenotype_counts_fast(
     """Computes the number of cells satisfying the given positive and negative criteria, in the
     context of a given study.
     """
+    return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
+
+def _get_anonymous_phenotype_counts_fast(
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    study: ValidStudy,
+) -> PhenotypeCounts:
     number_cells = cast(int, query().get_number_cells(study))
     return get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
-
 
 @app.get("/request-spatial-metrics-computation/")
 async def request_spatial_metrics_computation(
@@ -253,7 +267,29 @@ async def available_gnn_metrics(
 
 
 @app.get("/importance-composition/")
-async def importance_composition(
+async def get_importance_composition(
+    study: ValidStudy,
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    plugin: str = 'cg-gnn',
+    datetime_of_run: str = 'latest',
+    plugin_version: str | None = None,
+    cohort_stratifier: str | None = None,
+    cell_limit: int = 100,
+) -> PhenotypeCounts:
+    """For each specimen, return the fraction of important cells expressing a given phenotype."""
+    return _get_importance_composition(
+        study,
+        positive_marker,
+        negative_marker,
+        plugin,
+        datetime_of_run,
+        plugin_version,
+        cohort_stratifier,
+        cell_limit,
+    )
+
+def _get_importance_composition(
     study: ValidStudy,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -341,6 +377,7 @@ async def get_cell_data(
     if not sample in query().get_sample_names(study):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
     number_cells = cast(int, query().get_number_cells(study))
+
     def match(c: PhenotypeCount) -> bool:
         return c.specimen == sample
     count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
@@ -375,3 +412,41 @@ async def get_plot_high_resolution(
     def streaming_iteration():
         yield from input_buffer
     return StreamingResponse(streaming_iteration(), media_type="image/png")
+
+
+@app.get("/importance-fraction-plot/")
+async def importance_fraction_plot(
+    study: ValidStudy,
+    img_format: Literal['svg', 'png'] = 'svg',
+) -> StreamingResponse:
+    """Return a plot of the fraction of important cells expressing a given phenotype."""
+    settings: str = cast(list[str], query().get_study_gnn_plot_configurations(study))[0]
+    (
+        _,
+        _,
+        phenotypes,
+        cohorts,
+        plugins,
+        figure_size,
+        orientation,
+    ) = read_plot_importance_fractions_config(None, settings, True)
+
+    plot = PlotGenerator(
+        (
+            _get_anonymous_phenotype_counts_fast,
+            query().get_study_summary,
+            query().get_phenotype_criteria,
+            _get_importance_composition,
+        ),
+        study,
+        phenotypes,
+        cohorts,
+        plugins,
+        figure_size,
+        orientation,
+    ).generate_plot()
+    plt.figure(plot.number)
+    buf = BytesIO()
+    plt.savefig(buf, format=img_format)
+    buf.seek(0)
+    return StreamingResponse(buf, media_type=f"image/{img_format}")

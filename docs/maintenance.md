@@ -19,7 +19,9 @@ The modules in this repository are built, tested, and deployed using `make` and 
 | [Docker Engine](https://docs.docker.com/engine/install/)   | 20.10.17                         |
 | [Docker Compose](https://docs.docker.com/compose/install/) | 2.10.2                           |
 | [bash](https://www.gnu.org/software/bash/)                 | >= 4                             |
-| [python](https://www.python.org/downloads/)                | >=3.7                            |
+| [python](https://www.python.org/downloads/)                | >=3.7 <3.12                      |
+| [postgresql](https://www.postgresql.org/download/)         | 13.4                             |
+| [toml](https://pypi.org/project/toml/)                     | 0.10.2                           |
 
 A typical development workflow looks like:
 

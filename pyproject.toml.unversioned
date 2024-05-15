@@ -31,6 +31,7 @@ repository = "https://github.com/nadeemlab/SPT"
 
 [project.optional-dependencies]
 apiserver = [
+    "matplotlib==3.7.1",
     "fastapi==0.100.0",
     "uvicorn>=0.15.0,<0.16.0",
     "pandas==2.0.2",
@@ -190,7 +191,7 @@ packages = [
     "drop.py",
     "drop_ondemand_computations.py",
     "delete_feature.py",
-    "upload_sync_findings.py",
+    "upload_sync_small.py",
     "collection.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
@@ -211,6 +212,7 @@ packages = [
     "extract.py",
     "finalize_graphs.py",
     "generate_graphs.py",
+    "plot_importance_fractions.py",
     "plot_interactives.py",
     "prepare_graph_creation.py",
     "upload_importances.py",

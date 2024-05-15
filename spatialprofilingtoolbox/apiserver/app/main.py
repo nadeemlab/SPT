@@ -2,6 +2,7 @@
 
 from typing import cast
 from typing import Annotated
+from typing import Literal
 import json
 from io import BytesIO
 from base64 import b64decode
@@ -72,6 +73,7 @@ app = FastAPI(
 
 CELL_DATA_CELL_LIMIT = 100001
 
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -117,6 +119,7 @@ async def get_study_names(
     """The names of studies/datasets, with display names."""
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
+
     def is_public(study_handle: StudyHandle) -> bool:
         if StudyCollectionNaming.is_untagged(study_handle):
             return True
@@ -132,6 +135,7 @@ async def get_study_names(
                 status_code=404,
                 detail=f'Collection "{collection}" is not a valid collection string.',
             )
+
         def tagged(study_handle: StudyHandle) -> bool:
             return StudyCollectionNaming.tagged_with(study_handle, collection)
         handles = list(filter(tagged, map(query().retrieve_study_handle, specifiers)))
@@ -345,6 +349,7 @@ async def get_cell_data(
     if not sample in query().get_sample_names(study):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
     number_cells = cast(int, query().get_number_cells(study))
+
     def match(c: PhenotypeCount) -> bool:
         return c.specimen == sample
     count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
@@ -384,13 +389,9 @@ async def get_plot_high_resolution(
 @app.get("/importance-fraction-plot/")
 async def importance_fraction_plot(
     study: ValidStudy,
-    img_format: str = 'svg',
+    img_format: Literal['svg', 'png'] = 'svg',
 ) -> StreamingResponse:
     """Return a plot of the fraction of important cells expressing a given phenotype."""
-    APPROVED_FORMATS = {'png', 'svg'}
-    if img_format not in APPROVED_FORMATS:
-        raise ValueError(f'Image format "{img_format}" not supported.')
-
     settings: str = cast(list[str], query().get_study_gnn_plot_configurations(study))[0]
     (
         _,

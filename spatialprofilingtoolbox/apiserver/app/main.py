@@ -429,7 +429,7 @@ async def importance_fraction_plot(
         plugins,
         figure_size,
         orientation,
-    ) = read_plot_importance_fractions_config(None, settings)
+    ) = read_plot_importance_fractions_config(None, settings, True)
 
     plot = PlotGenerator(
         (

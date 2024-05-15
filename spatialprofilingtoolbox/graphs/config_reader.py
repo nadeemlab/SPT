@@ -165,6 +165,7 @@ def read_upload_config(config_file_path: str) -> tuple[
 def read_plot_importance_fractions_config(
     config_file_path: str | None,
     config_file_string: str | None = None,
+    calling_by_api: bool = False,
 ) -> tuple[
     str,
     str,
@@ -181,7 +182,7 @@ def read_plot_importance_fractions_config(
     """
     config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME, config_file_string)
     host_name: str = config.get("host_name", "http://oncopathtk.org/api")
-    study_name: str = config["study_name"]
+    study_name: str = config["study_name"] if not calling_by_api else ''
     phenotypes: list[str] = config['phenotypes'].split(', ')
     plugins: list[str] = config['plugins'].split(', ')
     try:

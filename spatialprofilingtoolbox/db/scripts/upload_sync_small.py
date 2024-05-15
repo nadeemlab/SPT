@@ -20,11 +20,12 @@ def parse_args():
     )
     parser.add_argument(
         'name',
+        choices=APPROVED_NAMES,
         help='The name of the table of strings to be synchronized.',
     )
     parser.add_argument(
         'file',
-        help='The JSON file containing a list of strings for each study.',
+        help='The JSON file containing the list of strings to be synced for each study.',
     )
     add_argument(parser, 'database config')
     return parser.parse_args()
@@ -71,9 +72,6 @@ def upload_sync(
 
 def main():
     args = parse_args()
-    if args.name not in APPROVED_NAMES:
-        logger.error(f'{args.name} is not an approved table name.')
-        return
     database_config_file = get_and_validate_database_config(args)
     with open(args.file, 'rt', encoding='utf-8') as file:
         contents = file.read()

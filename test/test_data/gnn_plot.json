@@ -1,10 +1,5 @@
 {
     "Melanoma intralesional IL2": [
-        "Tumor, CD4+ T cell, CD8+ T cell, T cell/null phenotype",
-        "cg-gnn, graph-transformer",
-        "11, 8",
-        "horizontal",
-        "1, Non-responder",
-        "3, Responder"
+        "[plot-importance-fractions]\nphenotypes = Tumor, CD4+ T cell, CD8+ T cell, T cell/null phenotype\nplugins = cg-gnn, graph-transformer\nfigure_size = 11, 8\norientation = horizontal\n[plot-importance-fractions.cohort0]\nindex_int = 1\nlabel = Non-responder\n[plot-importance-fractions.cohort1]\nindex_int = 3\nlabel = Responder"
     ]
 }

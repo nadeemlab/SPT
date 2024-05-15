@@ -43,6 +43,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListNegatives2,
     ValidFeatureClass,
 )
+from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
 VERSION = '0.23.0'
@@ -390,14 +391,16 @@ async def importance_fraction_plot(
     if img_format not in APPROVED_FORMATS:
         raise ValueError(f'Image format "{img_format}" not supported.')
 
-    settings: list[str] = cast(list[str], query().get_study_gnn_plot_configurations(study))
+    settings: str = cast(list[str], query().get_study_gnn_plot_configurations(study))[0]
     (
+        _,
+        _,
         phenotypes,
         cohorts,
         plugins,
         figure_size,
         orientation,
-    ) = parse_gnn_plot_settings(settings)
+    ) = read_plot_importance_fractions_config(None, settings)
 
     plot = PlotGenerator(
         (

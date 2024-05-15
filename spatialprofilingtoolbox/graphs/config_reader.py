@@ -10,9 +10,18 @@ UPLOAD_SECTION_NAME = 'upload-importances'
 PLOT_FRACTIONS_SECTION_NAME = 'plot-importance-fractions'
 
 
-def _read_config_file(config_file_path: str, section: str) -> dict[str, Any]:
+def _read_config_file(
+    config_file_path: str | None,
+    section: str,
+    config_file_string: str | None = None,
+) -> dict[str, Any]:
     config_file = ConfigParser()
-    config_file.read(config_file_path)
+    if config_file_path is not None:
+        config_file.read(config_file_path)
+    elif config_file_string is not None:
+        config_file.read_string(config_file_string)
+    else:
+        raise ValueError("Either config_file_path or config_file_string must be provided.")
     config: dict[str, Any] = \
         dict(config_file[GENERAL_SECTION_NAME]) if (GENERAL_SECTION_NAME in config_file) else {}
     if section in config_file:
@@ -153,7 +162,10 @@ def read_upload_config(config_file_path: str) -> tuple[
     )
 
 
-def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
+def read_plot_importance_fractions_config(
+    config_file_path: str | None,
+    config_file_string: str | None = None,
+) -> tuple[
     str,
     str,
     list[str],
@@ -167,7 +179,7 @@ def read_plot_importance_fractions_config(config_file_path: str) -> tuple[
     For a detailed explanation of the return values, refer to the docstring of
     `spatialprofilingtoolbox.graphs.importance_fractions.PlotGenerator()`.
     """
-    config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME)
+    config = _read_config_file(config_file_path, PLOT_FRACTIONS_SECTION_NAME, config_file_string)
     host_name: str = config.get("host_name", "http://oncopathtk.org/api")
     study_name: str = config["study_name"]
     phenotypes: list[str] = config['phenotypes'].split(', ')

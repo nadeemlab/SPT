@@ -93,10 +93,12 @@ class StructureCentroids:
                     SELECT specimen, blob_contents FROM ondemand_studies_index osi
                     WHERE osi.blob_type='centroids';
                 ''', (study, ))
-                specimens_to_blobs = tuple(cursor.fetchall())
                 self._studies[study] = {}
-                for _, blob in specimens_to_blobs:
-                    obj = pickle.loads(blob)
+                while True:
+                    row = cursor.fetchone()
+                    if row is None:
+                        break
+                    obj = pickle.loads(row[1])
                     for key, value in obj.items():
                         if not key in self._studies:
                             self._studies[study][key] = {}

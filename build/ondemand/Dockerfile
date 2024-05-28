@@ -4,16 +4,16 @@ ARG PIP_NO_CACHE_DIR=1
 RUN apt update && apt install -y gcc g++ libpq-dev && apt-get clean
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev && apt-get clean
-RUN python -m pip install psycopg2==2.9.6
+RUN python -m pip install psycopg2==2.9.9
 RUN python -m pip install adiscstudies==0.11.0
-RUN python -m pip install numba==0.57.0
-RUN python -m pip install attrs==23.1.0
-RUN python -m pip install pandas==2.0.2
-RUN python -m pip install numpy==1.24.3
-RUN python -m pip install scikit-learn==1.2.2
-RUN python -m pip install pyshp==2.2.0
-RUN python -m pip install pydantic==2.0.2
-RUN python -m pip install squidpy==1.3.0
+RUN python -m pip install numba==0.59.0
+RUN python -m pip install attrs==23.2.0
+RUN python -m pip install pandas==2.2.2
+RUN python -m pip install numpy==1.26.4
+RUN python -m pip install scikit-learn==1.5.0
+RUN python -m pip install pyshp==2.3.1
+RUN python -m pip install pydantic==2.7.2
+RUN python -m pip install squidpy==1.5.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

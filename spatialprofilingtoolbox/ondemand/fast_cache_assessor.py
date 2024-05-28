@@ -45,6 +45,8 @@ class FastCacheAssessor:
             else:
                 verbose=False
             up_to_date = self._cache_is_up_to_date(verbose=verbose)
+            if up_to_date:
+                break
             if verbose:
                 logger.debug('Waiting for cache to be available.')
             check_count += 1

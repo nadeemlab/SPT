@@ -13,7 +13,7 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 from fastapi import Query
 from fastapi import HTTPException
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
@@ -437,7 +437,7 @@ async def importance_fraction_plot(
             query().get_study_summary,
             query().get_phenotype_criteria,
             _get_importance_composition,
-        ),
+        ),  # type: ignore
         study,
         phenotypes,
         cohorts,

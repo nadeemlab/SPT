@@ -38,7 +38,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} end "Down." "Error."
 >@rm -f status_code
 
-teardown-module-testing: ${MODULE_TESTS} ${STANDALONE_MODULE_TEST_TARGET}
+teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "\u2517\u2501"
 >@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/

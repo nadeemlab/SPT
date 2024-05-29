@@ -445,7 +445,7 @@ async def importance_fraction_plot(
         figure_size,
         orientation,
     ).generate_plot()
-    plt.figure(plot.number)
+    plt.figure(plot.number)  # type: ignore
     buf = BytesIO()
     plt.savefig(buf, format=img_format)
     buf.seek(0)

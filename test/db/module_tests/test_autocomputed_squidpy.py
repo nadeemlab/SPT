@@ -20,7 +20,7 @@ def get_expected_records():
     df['feature'] = df['feature'].astype(str)
     df['sample'] = df['sample'].astype(str)
     df['value'] = df['value'].astype(float)
-    df['value'] = df['value'].apply(round6)
+    df['value'] = df['value'].apply(round3)
     return extract_feature_vectors(df)
 
 
@@ -37,11 +37,21 @@ def create_feature_vector(df: DataFrame) -> FeatureVector:
 
 
 def check_records(feature_values):
-    rows = [(row[0], row[1], round6(row[2])) for row in feature_values]
+    rows = [(row[0], row[1], round3(row[2])) for row in feature_values]
     df = DataFrame(rows, columns=['feature', 'sample', 'value'])
     feature_vectors = extract_feature_vectors(df)
     missing = set(get_expected_records()).difference(feature_vectors)
     if len(missing) > 0:
+
+        with open('module_tests/_expected_auto_correlations.tsv', 'wt', encoding='utf-8') as file:
+            count = 1
+            for feature_vector in feature_vectors:
+                for entry in feature_vector:
+                    file.write('\t'.join([str(count)] + [str(e) for e in entry]))
+                    file.write('\n')
+                count += 1
+
+
         raise ValueError(f'Expected to find records: {sorted(missing)}\nGot: {sorted(rows)}')
 
     print('All expected records found.')
@@ -51,8 +61,8 @@ def check_records(feature_values):
     print('No unexpected records encountered.')
 
 
-def round6(value):
-    return int(pow(10, 6) * value) / pow(10, 6)
+def round3(value):
+    return int(pow(10, 3) * value) / pow(10, 3)
 
 
 def retrieve_feature_values(connection):

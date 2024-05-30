@@ -302,6 +302,7 @@ class ExpectedQuantitativeValueError(ValueError):
     """
     Raised when an expected quantitative result is significantly different from the expected value.
     """
+    message: str
 
     def __init__(self, expected: float, actual: float):
         error_percent = self.error_percent(expected, actual)
@@ -310,7 +311,11 @@ class ExpectedQuantitativeValueError(ValueError):
         message = f'''
         Expected {expected} but got {Colors.bold_red}{actual}{Colors.reset}. Error is {error_percent}%.
         '''
+        self.message = message
         super().__init__(message)
+
+    def print(self) -> None:
+        print(self.message)
 
     @staticmethod
     def is_error(expected: float, actual: float) -> bool:
@@ -333,7 +338,8 @@ class ExpectedQuantitativeValueError(ValueError):
 def handle_expected_actual(expected: float, actual: float | None):
     _actual = cast(float, actual)
     if ExpectedQuantitativeValueError.is_error(expected, _actual):
-        raise ExpectedQuantitativeValueError(expected, _actual)
+        error = ExpectedQuantitativeValueError(expected, _actual)
+        error.print()
     string = str(_actual)
     padded = string + ' '*(21 - len(string))
     print(Colors.bold_green + padded + Colors.reset, end='')

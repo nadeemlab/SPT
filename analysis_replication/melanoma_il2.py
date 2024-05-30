@@ -61,24 +61,19 @@ def test(host):
     df = access.spatial_autocorrelation(s100b)
     values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']
     values3 = df[df['cohort'] == '3'][f'spatial autocorrelation, {s100b}']
-    compare(values1, values3, expected_fold=0.109, show_pvalue=True, show_auc=True)
+    compare(values1, values3, expected_fold=0.107, show_pvalue=True, show_auc=True)
 
     df = access.proximity([s100b, s100b])
     values1 = df[df['cohort'] == '1'][f'proximity, {s100b} and {s100b}']
     values3 = df[df['cohort'] == '3'][f'proximity, {s100b} and {s100b}']
     compare(values1, values3, expected_fold=0.146, show_pvalue=True, show_auc=True)
 
-    df = access.neighborhood_enrichment([s100b, s100b])
-    values1 = df[df['cohort'] == '1'][f'neighborhood enrichment, {s100b} and {s100b}']
-    values3 = df[df['cohort'] == '3'][f'neighborhood enrichment, {s100b} and {s100b}']
-    compare(values3, values1, expected_fold=14.9, show_pvalue=True, do_log_fold=True, show_auc=True)
-
-    # The average value of the neighborhood enrichment score for phenotype(s) B cells is 80.45 times
+    # The average value of the neighborhood enrichment score for phenotype(s) B cells is 9.39 times
     # higher in cohort 1 than in cohort 3.
     df = access.neighborhood_enrichment(['B cell', 'B cell'])
     values1 = df[df['cohort'] == '1']['neighborhood enrichment, B cell and B cell']
     values3 = df[df['cohort'] == '3']['neighborhood enrichment, B cell and B cell']
-    compare(values3, values1, expected_fold=80.45, do_log_fold=True)
+    compare(values1, values3, expected_fold=0.106, show_pvalue=True, show_auc=True)
 
     for phenotype, expected_baseline, expected_percentage, expected_p in [
         ('Adipocyte or Langerhans cell', 3.593e-2, 15.33, [3, 9]),

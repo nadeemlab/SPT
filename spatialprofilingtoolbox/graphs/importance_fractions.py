@@ -20,16 +20,16 @@ from pandas import DataFrame
 from pandas import MultiIndex
 from pandas import concat
 from pandas import Series
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 from matplotlib.pyplot import Axes
-import matplotlib.colors as mcolors
+import matplotlib.colors as mcolors  # type: ignore
 from matplotlib.colors import Normalize
 from scipy.stats import fisher_exact  # type: ignore
 from attr import define
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from matplotlib.figure import Figure
+    from matplotlib.figure import Figure  # type: ignore
 
 GNNModel = Literal['cg-gnn', 'graph-transformer']
 
@@ -187,9 +187,9 @@ class ImportanceCountsAccessor:
 
     def _get_base(self) -> str:
         protocol = 'https'
-        if self.host == 'localhost' or re.search('127.0.0.1', self.host) or self.use_http:
+        if self.host is not None and (self.host == 'localhost' or re.search('127.0.0.1', self.host) or self.use_http):
             protocol = 'http'
-        return '://'.join((protocol, self.host))
+        return '://'.join((protocol, cast(str, self.host)))
 
     def _retrieve(self, endpoint: str, query: str) -> tuple[dict[str, Any], str]:
         from requests import get as get_request  # type: ignore
@@ -218,7 +218,7 @@ class ImportanceCountsAccessor:
             criteria = self.query_phenotype_criteria(self.study, name).dict()
         return criteria
 
-    def _conjunction_phenotype_criteria(self, names: str) -> dict[str, list[str]]:
+    def _conjunction_phenotype_criteria(self, names: list[str]) -> dict[str, list[str]]:
         criteria_list: list[dict[str, list[str]]] = []
         for name in names:
             criteria = self._phenotype_criteria(name)
@@ -293,11 +293,13 @@ class ImportanceCountsAccessor:
                 conjunction_criteria['negative_markers'],
                 plugin,
                 **optional_args,
-            ).dict()
+            ).dict()  # type: ignore
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
 
 
 class ImportanceFractionAndTestRetriever:
+    df_phenotypes: PhenotypeDataFrames | None
+    df_phenotypes_original: PhenotypeDataFrames | None
 
     def __init__(
         self,
@@ -356,6 +358,7 @@ class ImportanceFractionAndTestRetriever:
             print('Retrieving count data to support plot.')
             f = self.get_progress_bar_format()
 
+            iterable: Iterable
             if self.use_tqdm:
                 from tqdm import tqdm
                 iterable = tqdm(levels, total=N, bar_format=f)
@@ -381,9 +384,10 @@ class ImportanceFractionAndTestRetriever:
                 important_proportions = pickle_load(file)
                 print(f'Loaded from cache: {pickle_file}')
         else:
+            iterable: PhenotypeDataFrames
             if self.use_tqdm:
                 from tqdm import tqdm
-                iterable = tqdm(self.get_df_phenotypes(), total=N, bar_format=f)
+                iterable = tqdm(self.get_df_phenotypes(), total=N, bar_format=f)  # type: ignore
             else:
                 iterable = self.get_df_phenotypes()
             important_proportions = {
@@ -559,7 +563,7 @@ class SubplotGenerator:
 
         return df.transpose().astype(float)
 
-    def _get_p_values(self, df: DataFrame) -> DataFrame:
+    def _get_p_values(self, df: DataFrame) -> tuple[DataFrame, DataFrame]:
         """Get, clip, and normalize the p-values and important fractions from the dataframe."""
         df_p_value = df.xs('p_value', axis=0, level=1)
         df_p_important = df.xs('important_fraction', axis=0, level=1)
@@ -567,7 +571,7 @@ class SubplotGenerator:
         df_p_value_clipped = df_p_value.clip(upper=0.05)
         df_p_value_normalized = 1 - df_p_value_clipped / 0.05
 
-        return df_p_value_normalized, df_p_important
+        return cast(DataFrame, df_p_value_normalized), cast(DataFrame, df_p_important)
 
     def _create_meshgrid(self, df_p_important: DataFrame) -> tuple[NDArray[Any], NDArray[Any]]:
         """Create a meshgrid for the cell centers."""

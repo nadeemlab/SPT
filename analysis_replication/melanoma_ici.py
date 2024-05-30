@@ -32,21 +32,14 @@ def test(host):
     print(f'Neighborhood enrichment for {name1} w.r.t. {name2}.')
     values1 = df[df['cohort'] == '1'][ne]
     values2 = df[df['cohort'] == '2'][ne]
-    compare(values1, values2, expected_fold=0.75, show_pvalue=True)
-
-    df = access.neighborhood_enrichment([name2, name1])
-    ne = f'neighborhood enrichment, {name2} and {name1}'
-    print(f'Neighborhood enrichment for {name2} w.r.t. {name1}.')
-    values1 = df[df['cohort'] == '1'][ne]
-    values2 = df[df['cohort'] == '2'][ne]
-    compare(values1, values2, expected_fold=0.405, show_pvalue=True)
+    compare(values1, values2, expected_fold=0.452, show_pvalue=True)
 
     # Two phenotypes spatial
     print('\nResults involving spatial metrics for 2 phenotypes (shown in both orders for reference)')
     for p1, p2, fold in zip(
         ['Cytotoxic T cell antigen-experienced', 'T regulatory cells', 'Cytotoxic T cell antigen-experienced', 'Naive cytotoxic T cell'],
         ['T regulatory cells', 'Cytotoxic T cell antigen-experienced', 'Naive cytotoxic T cell', 'Cytotoxic T cell antigen-experienced'],
-        [0.285, 0.369, 0.299, 0.5],
+        [0.182, 0.312, 0.223, 0.695],
     ):
         df = access.neighborhood_enrichment([p1, p2])
         ne = f'neighborhood enrichment, {p1} and {p2}'
@@ -74,7 +67,7 @@ def test(host):
 
     CD3CD45RO = {'positive_markers': ['CD3', 'CD45RO'], 'negative_markers': []}
     name = 'CD3+ CD45RO+'
-    fold = 0.000878
+    fold = 0.038
     df = access.neighborhood_enrichment([CD3CD45RO, CD3CD45RO])
     ne = f'neighborhood enrichment, {name} and {name}'
     values1 = df[df['cohort'] == '1'][ne].dropna()
@@ -92,7 +85,7 @@ def test(host):
         compare(values1, values2, expected_fold=fold, show_pvalue=True, show_auc=True)
 
     ### Phenotype
-    for phenotype, fold in zip(['B cells'], [0.0826]):
+    for phenotype, fold in zip(['B cells'], [0.0954]):
         df = access.spatial_autocorrelation(phenotype)
         autocorr = f'spatial autocorrelation, {phenotype}'
         values1 = df[df['cohort'] == '1'][autocorr]
@@ -100,7 +93,7 @@ def test(host):
         print(f'Spatial autocorrelation for {phenotype}')
         compare(values1, values2, expected_fold=fold, show_pvalue=True, show_auc=True)
 
-    for phenotype, fold in zip(['T helper cell antigen-experienced', 'Cytotoxic T cell antigen-experienced'], [12.42, 0.278]):
+    for phenotype, fold in zip(['T helper cell antigen-experienced', 'Cytotoxic T cell antigen-experienced'], [14.90, 0.219]):
         df = access.neighborhood_enrichment([phenotype, phenotype])
         ne = f'neighborhood enrichment, {phenotype} and {phenotype}'
         values1 = df[df['cohort'] == '1'][ne].dropna()

@@ -129,14 +129,14 @@ def spatial(access: DataAccessor):
     print('\nSpatial results:')
     cases: tuple[tuple[Any, ...], ...]
     cases = (
-        ('Macrophage', 'Regulatory T cell', 2.21410845212908e+19, 0.752),
-        ('Macrophage', 'T helper cell', 9.578336100232475e+21, 969609),
+        ('Macrophage', 'Regulatory T cell', 2.110, 1.285),
+        ('Macrophage', 'T helper cell', 1.812, 2.089),
     )
     lesser_cases = (
-        ('Regulatory T cell', 'CD4- CD8- T cell', 1.31, 17897),
-        ('Macrophage', 'CD4- CD8- T cell', 42937419285, 97.52),
-        ('Macrophage', 'T cytotoxic cell', 8.997523179803324e+17, 0.373),
-        ('Macrophage', 'intratumoral CD3+ LAG3+', 12648970107, 3.17426442889618e-06),
+        ('Regulatory T cell', 'CD4- CD8- T cell', 1.578, 1.459),
+        ('Macrophage', 'CD4- CD8- T cell', 3.099, 1.221),
+        ('Macrophage', 'T cytotoxic cell', 1.453, 2.973),
+        ('Macrophage', 'intratumoral CD3+ LAG3+', 2.308, 0.441),
     )
     for P1, P2, E, Ei in cases:
         try:

@@ -122,16 +122,20 @@ class OnDemandRequester:
             )
         ).encode('utf-8')
 
-    def _parse_response(self):
+    def _parse_response(self, verbose: bool = False):
         received = None
         buffer = bytearray()
         bytelimit = 10 * int(pow(10, 9))
+        if verbose:
+            logger.debug(f'Receiving TCP payload from service.')
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)
             received = self.tcp_client.recv(1)
         if len(buffer) == bytelimit:
             logger.warning('Response limit of {bytelimit} bytes was reached, payload is truncated (about 10gb).')
+        if verbose:
+            logger.debug(f'Forming JSON payload from TCP payload string of {len(buffer)} bytes.')
         return json.loads(buffer.decode('utf-8'))
 
     def _sanitize_token(self, text: str) -> str:
@@ -177,7 +181,7 @@ class OnDemandRequester:
         groups = ['cells', study, sample]
         query = self._get_group_separator().join(groups).encode('utf-8')
         self.tcp_client.sendall(query)
-        return self._parse_response()
+        return self._parse_response(verbose=True)
 
     def __enter__(self):
         return self

@@ -125,11 +125,13 @@ class OnDemandRequester:
     def _parse_response(self):
         received = None
         buffer = bytearray()
-        bytelimit = 100000000
+        bytelimit = 10 * int(pow(10, 9))
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)
             received = self.tcp_client.recv(1)
+        if len(buffer) == bytelimit:
+            logger.warning('Response limit of {bytelimit} bytes was reached, payload is truncated (about 10gb).')
         return json.loads(buffer.decode('utf-8'))
 
     def _sanitize_token(self, text: str) -> str:

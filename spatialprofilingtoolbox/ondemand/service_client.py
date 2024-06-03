@@ -131,7 +131,7 @@ class OnDemandRequester:
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)
-            received = self.tcp_client.recv(1)
+            received = self.tcp_client.recv(4096)
         if len(buffer) == bytelimit:
             logger.warning('Response limit of {bytelimit} bytes was reached, payload is truncated (about 10gb).')
         if verbose:

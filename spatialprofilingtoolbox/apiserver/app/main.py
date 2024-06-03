@@ -71,7 +71,7 @@ app = FastAPI(
     },
 )
 
-CELL_DATA_CELL_LIMIT = 100001
+CELL_DATA_CELL_LIMIT = 5 * int(pow(10, 6))
 
 
 def custom_openapi():

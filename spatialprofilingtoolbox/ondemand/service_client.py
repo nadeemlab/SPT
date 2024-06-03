@@ -53,7 +53,7 @@ class OnDemandRequester:
         )
         self.tcp_client.sendall(query)
         truncation = query[0:min(len(query), 200)]
-        logger.debug('Quering counts service: %s', f'({len(query)} bytes) ' + str(truncation))
+        logger.debug('Querying counts service: %s', f'({len(query)} bytes) ' + str(truncation))
         response = self._parse_response()
         return PhenotypeCounts(
             counts=[
@@ -131,7 +131,7 @@ class OnDemandRequester:
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)
-            received = self.tcp_client.recv(4096)
+            received = self.tcp_client.recv(1)
         if len(buffer) == bytelimit:
             logger.warning('Response limit of {bytelimit} bytes was reached, payload is truncated (about 10gb).')
         if verbose:

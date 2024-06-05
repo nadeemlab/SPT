@@ -80,10 +80,13 @@ class CellsAccess(SimpleReadOnlyProvider):
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
         integers_from_hsi = dict(
-            (int.from_bytes(batch[0:8], 'little'), int.from_bytes(batch[8:16], 'little'))
+            (int.from_bytes(batch[0:8], 'little'), bytes(batch[8:16]))
             for batch in self._batched(bytes_iterator, 16)
         )
-        return DataFrame.from_dict(integers_from_hsi, orient='index', columns=['integer_representation'], dtype=int)
+
+        logger.info(f'integers_from_hsi[3]: {integers_from_hsi[3]!r} {type(integers_from_hsi[3])}')
+
+        return DataFrame.from_dict(integers_from_hsi, orient='index', columns=['integer_representation'])
 
     @staticmethod
     def _batched(iterable: Iterable, batch_size: int):
@@ -98,6 +101,12 @@ class CellsAccess(SimpleReadOnlyProvider):
         phenotype_data: DataFrame,
     ) -> CellsData:
         df = concat((location_data, phenotype_data))
+
+        logger.info(location_data.head())
+        logger.info(phenotype_data.head())
+
+        logger.info(df.head())
+
         format = cast(Callable[[tuple[Hashable | None, Series]], bytes], cls._format_cell_bytes)
         serial = b''.join(map(format, df.iterrows()))
         if len(serial) % 20 != 0:
@@ -109,13 +118,17 @@ class CellsAccess(SimpleReadOnlyProvider):
         return b''.join((header, serial))
 
     @classmethod
-    def _format_cell_bytes(cls, index_row: tuple[int, tuple[float, float, int]]) -> bytes:
+    def _format_cell_bytes(cls, index_row: tuple[int, Series]) -> bytes:
         index, row = index_row
+
+        logger.info(f'row[2]: {row[2]} {type(row[2])}')
+
         return b''.join((
             index.to_bytes(4, 'little'),
-            int(row[0]).to_bytes(4, 'little'),
-            int(row[1]).to_bytes(4, 'little'),
-            row[2].to_bytes(8, 'little'),
+            int(row.iloc[0]).to_bytes(4, 'little'),
+            int(row.iloc[1]).to_bytes(4, 'little'),
+            # row[2].to_bytes(8, 'little'),
+            row.iloc[2],
         ))
 
     @staticmethod

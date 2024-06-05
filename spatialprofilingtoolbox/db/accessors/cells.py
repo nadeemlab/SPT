@@ -83,7 +83,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             (int.from_bytes(batch[0:8], 'little'), int.from_bytes(batch[8:16], 'little'))
             for batch in self._batched(bytes_iterator, 16)
         )
-        return DataFrame.from_dict(integers_from_hsi, orient='index', columns=['integer_representation'])
+        return DataFrame.from_dict(integers_from_hsi, orient='index', columns=['integer_representation'], dtype=int)
 
     @staticmethod
     def _batched(iterable: Iterable, batch_size: int):

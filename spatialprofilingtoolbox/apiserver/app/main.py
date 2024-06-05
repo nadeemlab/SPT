@@ -389,6 +389,30 @@ async def get_cell_data(
     return payload
 
 
+@app.get("/cell-data-binary/")
+async def get_cell_data_binary(
+    study: ValidStudy,
+    sample: Annotated[str, Query(max_length=512)],
+):
+    """Get streaming cell-level location and phenotype data in a custom binary format."""
+    if not sample in query().get_sample_names(study):
+        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+    number_cells = cast(int, query().get_number_cells(study))
+    def match(c: PhenotypeCount) -> bool:
+        return c.specimen == sample
+    count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
+    if count is None or count > CELL_DATA_CELL_LIMIT:
+        message = f'Sample "{sample}" has too many cells: {count}.'
+        raise HTTPException(status_code=404, detail=message)
+
+    data = query().get_cells_data(study, sample)
+    input_buffer = BytesIO(data)
+    input_buffer.seek(0)
+    def streaming_iteration():
+        yield from input_buffer
+    return StreamingResponse(streaming_iteration(), media_type="application/octet-stream")
+
+
 @app.get("/visualization-plots/")
 async def get_plots(
     study: ValidStudy,

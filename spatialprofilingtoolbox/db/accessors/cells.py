@@ -8,7 +8,7 @@ from typing import Callable
 from typing import cast
 from itertools import islice
 
-from psycopg2 import cursor as Psycopg2Cursor
+from psycopg2.extensions import cursor as Psycopg2Cursor
 from pandas import DataFrame
 from pandas import Series
 from pandas import concat
@@ -21,7 +21,7 @@ logger = colorized_logger(__name__)
 
 
 class CellsAccess(SimpleReadOnlyProvider):
-    def get_cell_data(self, study: str, sample: str) -> CellsData:
+    def get_cells_data(self, sample: str) -> CellsData:
         return CellsAccess._zip_location_and_phenotype_data(
             self._get_location_data(sample),
             self._get_phenotype_data(sample),
@@ -80,7 +80,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
         integers_from_hsi = dict(
-            (int.from_bytes(batch[0:8], 'little'), batch[8:16])
+            (int.from_bytes(batch[0:8], 'little'), int.from_bytes(batch[8:16], 'little'))
             for batch in self._batched(bytes_iterator, 16)
         )
         return DataFrame.from_dict(integers_from_hsi, orient='index', columns=['integer_representation'])
@@ -104,7 +104,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             message = f'Expected exactly 20 bytes per cell to be created. Got total {len(serial)}.'
             logger.error(message)
             raise ValueError(message)
-        cell_count = len(serial) / 20
+        cell_count = int(len(serial) / 20)
         header = cell_count.to_bytes(8, 'little')
         return b''.join((header, serial))
 

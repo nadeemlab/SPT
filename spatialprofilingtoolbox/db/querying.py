@@ -1,7 +1,6 @@
 """Some basic accessors that retrieve from the database."""
 
 import re
-from typing import cast
 
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -16,11 +15,13 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     UMAPChannel,
     AvailableGNN,
 )
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.accessors import (
     GraphsAccess,
     StudyAccess,
     PhenotypesAccess,
     UMAPAccess,
+    CellsAccess,
 )
 from spatialprofilingtoolbox.standalone_utilities import sort
 
@@ -136,7 +137,11 @@ class QueryHandler:
         )
 
     @classmethod
-    def get_sample_names(cls, cursor, study) -> tuple[str, ...]:
+    def get_cells_data(cls, cursor, study: str, sample: str) -> CellsData:
+        return CellsAccess(cursor).get_cells_data(sample)
+
+    @classmethod
+    def get_sample_names(cls, cursor, study: str) -> tuple[str, ...]:
         return sort(StudyAccess(cursor).get_specimen_names(study))
 
 

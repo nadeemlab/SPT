@@ -264,6 +264,7 @@ class QueryCursor:
     get_umaps_low_resolution: Callable
     get_umap: Callable
     get_important_cells: Callable
+    get_cells_data: Callable
     get_sample_names: Callable
     get_available_gnn: Callable
     get_study_findings: Callable

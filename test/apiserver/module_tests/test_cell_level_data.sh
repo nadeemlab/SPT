@@ -37,6 +37,37 @@ function test_cell_data() {
     fi
 }
 
+function test_cell_data_binary() {
+    study="$1"
+    sample="$2"
+    filename="$3"
+    query="http://spt-apiserver-testing:8080/cell-data-binary/?study=$study&sample=$sample"
+
+    echo -e "Doing query $blue$query$reset_code ... "
+    curl -s "$query"  > _celldata.bin;
+    if [ "$?" -gt 0 ];
+    then
+        echo -e "${red}Error with apiserver query.$reset_code"
+        echo "Result saved to file: _celldata.bin"
+        exit 1
+    fi
+
+    diff $filename _celldata.bin
+    status=$?
+    [ $status -eq 0 ] || (echo "API query for cell data failed, unexpected contents."; )
+    if [ $status -eq 0 ];
+    then
+        rm _celldata.bin
+        echo -e "${green}Artifact matches.$reset_code"
+        echo
+    else
+        echo -e "${red}Some error with the diff command.$reset_code"
+        echo "Erroneous file saved to: _celldata.bin"
+        rm _celldata.bin
+        exit 1
+    fi
+}
+
 function test_missing_case() {
     study=$1
     sample=$2
@@ -56,3 +87,5 @@ function test_missing_case() {
 
 test_cell_data "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/expected_cell_data_1.json
 test_missing_case "Melanoma+intralesional+IL2" "ABC"
+
+test_cell_data_binary "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/expected_cell_data_1.json

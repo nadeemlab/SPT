@@ -65,7 +65,7 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         negatives = sorted([
             marker for marker, polarity in rows if polarity == 'negative'
         ])
-        return PhenotypeCriteria(positive_markers=positives, negative_markers=negatives)
+        return PhenotypeCriteria(positive_markers=tuple(positives), negative_markers=tuple(negatives))
 
     def get_phenotype_criteria_by_identifier(
             self,
@@ -84,7 +84,9 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         rows = self.cursor.fetchall()
         positives = sorted([str(row[0]) for row in rows if row[1] == 'positive'])
         negatives = sorted([str(row[0]) for row in rows if row[1] == 'negative'])
-        return PhenotypeCriteria(positive_markers=positives, negative_markers=negatives)
+        return PhenotypeCriteria(
+            positive_markers=tuple(positives), negative_markers=tuple(negatives),
+        )
 
     def get_channel_names(self, study: str) -> tuple[str, ...]:
         components = StudyAccess(self.cursor).get_study_components(study)

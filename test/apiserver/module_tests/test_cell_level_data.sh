@@ -52,18 +52,20 @@ function test_cell_data_binary() {
         exit 1
     fi
 
-    diff $filename _celldata.bin
+    cat _celldata.bin | tail -c +5 | xxd -e -b -c 20 > _celldata.dump
+    rm _celldata.bin
+    diff $filename _celldata.dump
+
     status=$?
     [ $status -eq 0 ] || (echo "API query for cell data failed, unexpected contents."; )
     if [ $status -eq 0 ];
     then
-        rm _celldata.bin
+        rm _celldata.dump
         echo -e "${green}Artifact matches.$reset_code"
         echo
     else
         echo -e "${red}Some error with the diff command.$reset_code"
-        echo "Erroneous file saved to: _celldata.bin"
-        rm _celldata.bin
+        echo "Erroneous file saved to: _celldata.dump"
         exit 1
     fi
 }
@@ -75,17 +77,20 @@ function test_missing_case() {
     echo -e "Doing query $blue$query$reset_code ... "
     curl -s "$query" > result.txt
     cat result.txt
-    diff result.txt module_tests/expected_error.txt
+    diff result.txt module_tests/expected_error.txt 1>/dev/null 2>/dev/null
     status=$?
     rm result.txt
     if [ ! $status -eq 0 ];
     then
         echo "Did not get the expected error message in case of missing sample."
         exit 1
+    else
+        echo -n " Got expected error message in case of missing sample. "
+        echo -e "${green}Artifact matches.$reset_code"
     fi
 }
 
 test_cell_data "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/expected_cell_data_1.json
 test_missing_case "Melanoma+intralesional+IL2" "ABC"
 
-test_cell_data_binary "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/expected_cell_data_1.json
+test_cell_data_binary "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/celldata.dump

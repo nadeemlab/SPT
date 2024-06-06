@@ -20,7 +20,7 @@ def get_expected_records():
     df['feature'] = df['feature'].astype(str)
     df['sample'] = df['sample'].astype(str)
     df['value'] = df['value'].astype(float)
-    df['value'] = df['value'].apply(round2)
+    df['value'] = df['value'].apply(round3)
     return extract_feature_vectors(df)
 
 
@@ -37,7 +37,7 @@ def create_feature_vector(df: DataFrame) -> FeatureVector:
 
 
 def check_records(feature_values):
-    rows = [(row[0], row[1], round2(row[2])) for row in feature_values]
+    rows = [(row[0], row[1], round3(row[2])) for row in feature_values]
     df = DataFrame(rows, columns=['feature', 'sample', 'value'])
     feature_vectors = extract_feature_vectors(df)
     missing = set(get_expected_records()).difference(feature_vectors)
@@ -61,8 +61,8 @@ def check_records(feature_values):
     print('No unexpected records encountered.')
 
 
-def round2(value):
-    return int(pow(10, 2) * value) / pow(10, 2)
+def round3(value):
+    return round(value, ndigits=3)
 
 
 def retrieve_feature_values(connection):

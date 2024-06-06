@@ -110,7 +110,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             logger.error(message)
             raise ValueError(message)
         cell_count = int(len(serial) / 20)
-        header = cell_count.to_bytes(8, 'little')
+        header = cell_count.to_bytes(4)
         return b''.join((header, serial))
 
     @classmethod
@@ -125,9 +125,9 @@ class CellsAccess(SimpleReadOnlyProvider):
     def _format_cell_bytes(cls, args: tuple[int, tuple[float, float], bytes]) -> bytes:
         identifier, location, phenotype = args
         return b''.join((
-            identifier.to_bytes(4, 'little'),
-            int(location[0]).to_bytes(4, 'little'),
-            int(location[1]).to_bytes(4, 'little'),
+            identifier.to_bytes(4),
+            int(location[0]).to_bytes(4),
+            int(location[1]).to_bytes(4),
             phenotype,
         ))
 

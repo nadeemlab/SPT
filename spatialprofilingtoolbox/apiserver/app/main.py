@@ -422,7 +422,7 @@ async def get_cell_data_binary(
         return c.specimen == sample
     count = tuple(filter(
         match,
-        get_phenotype_counts_cached([], [], study, number_cells,
+        get_phenotype_counts([], [], study, number_cells,
     ).counts))[0].count
     if count is None or count > CELL_DATA_CELL_LIMIT:
         message = f'Sample "{sample}" has too many cells: {count}.'

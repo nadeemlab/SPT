@@ -100,7 +100,7 @@ function test_squidpy_custom_phenotypes() {
             rm _squidpy.json
             break
         else
-            waitperiod=1.0
+            waitperiod=5.0
             echo "Still pending. Waiting ${waitperiod} seconds to poll for metrics availability... "
             sleep $waitperiod
         fi

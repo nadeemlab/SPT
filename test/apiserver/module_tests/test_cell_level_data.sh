@@ -52,7 +52,7 @@ function test_cell_data_binary() {
         exit 1
     fi
 
-    cat _celldata.bin | tail -c +5 | xxd -e -b -c 20 > _celldata.dump
+    cat _celldata.bin | tail -c +21 | xxd -e -b -c 20 > _celldata.dump
     rm _celldata.bin
     diff $filename _celldata.dump
 

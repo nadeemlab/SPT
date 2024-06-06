@@ -3,8 +3,8 @@ from pickle import loads as pickle_loads
 from json import loads as json_loads
 from typing import Any
 from typing import Iterable
-from typing import cast
 from itertools import islice
+from itertools import product
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
@@ -110,14 +110,23 @@ class CellsAccess(SimpleReadOnlyProvider):
             logger.error(message)
             raise ValueError(message)
         cell_count = int(len(serial) / 20)
-        header = cell_count.to_bytes(4)
+        
+        extrema = {
+            (operation[1], index): operation[0](map(lambda pair: pair[index-1], location_data.values()))
+            for operation, index in product(((min, 'min'), (max, 'max')), (1, 2))
+        }
+        header = b''.join(map(
+            lambda i: int(i).to_bytes(4),
+            (cell_count, extrema[('min',1)], extrema[('max',1)], extrema[('min',2)], extrema[('max',2)])
+        ))
         return b''.join((header, serial))
 
     @classmethod
     def _check_consecutive(cls, identifiers: list[int]):
+        offset = identifiers[0]
         for i1, i2 in zip(identifiers, range(len(identifiers))):
-            if i1 != i2:
-                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {i1} should be {i2}.'
+            if i1 != i2 + offset:
+                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {i1} should be {i2 + offset}.'
                 logger.warning(message)
                 break
 

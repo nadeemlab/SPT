@@ -55,8 +55,6 @@ function test_cell_data_binary() {
     cat _celldata.bin | tail -c +21 | xxd -e -b -c 20 > _celldata.dump
     rm _celldata.bin
 
-    echo "PWD 1: $PWD"
-
     diff $filename _celldata.dump
 
     status=$?
@@ -86,7 +84,6 @@ function test_feature_names_retrieval() {
         exit 1
     fi
 
-    echo "PWD 2: $PWD"
     diff module_tests/expected_bitmask_feature_names.json _names.json
 
     status=$?

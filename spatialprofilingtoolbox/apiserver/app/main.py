@@ -415,7 +415,10 @@ async def get_cell_data_binary(
     study: ValidStudy,
     sample: Annotated[str, Query(max_length=512)],
 ):
-    """Get streaming cell-level location and phenotype data in a custom binary format."""
+    """
+    Get streaming cell-level location and phenotype data in a custom binary format.
+    The format is documented [here](https://github.com/nadeemlab/SPT/blob/issue314/docs/cells.md).
+    """
     if not sample in query().get_sample_names(study):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
     number_cells = cast(int, query().get_number_cells(study))

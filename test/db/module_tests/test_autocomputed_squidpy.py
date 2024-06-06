@@ -50,9 +50,8 @@ def check_records(feature_values):
                     file.write('\t'.join([str(count)] + [str(e) for e in entry]))
                     file.write('\n')
                 count += 1
-
-
-        raise ValueError(f'Expected to find records: {sorted(missing)}\nGot: {sorted(rows)}')
+        newline = '\n'
+        raise ValueError(f'Expected to find records: {newline.join(sorted(missing))}\nGot: {newline.join(sorted(rows))}')
 
     print('All expected records found.')
     unexpected = set(feature_vectors).difference(get_expected_records())

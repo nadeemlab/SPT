@@ -1,7 +1,6 @@
 """Some basic accessors that retrieve from the database."""
 
 import re
-from typing import cast
 
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -16,11 +15,14 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     UMAPChannel,
     AvailableGNN,
 )
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.accessors import (
     GraphsAccess,
     StudyAccess,
     PhenotypesAccess,
     UMAPAccess,
+    CellsAccess,
 )
 from spatialprofilingtoolbox.standalone_utilities import sort
 
@@ -90,13 +92,13 @@ class QueryHandler:
         channel_names = PhenotypesAccess(cursor).get_channel_names(study)
         components = StudyAccess(cursor).get_study_components(study)
         if phenotype_handle in channel_names:
-            return PhenotypeCriteria(positive_markers=[phenotype_handle], negative_markers=[])
+            return PhenotypeCriteria(positive_markers=(phenotype_handle,), negative_markers=())
         if re.match(r'^\d+$', phenotype_handle):
             return PhenotypesAccess(cursor).get_phenotype_criteria_by_identifier(
                 phenotype_handle,
                 components.analysis,
             )
-        return PhenotypeCriteria(positive_markers=[], negative_markers=[])
+        return PhenotypeCriteria(positive_markers=(), negative_markers=())
 
     @classmethod
     def get_channel_names(cls, cursor, study: str) -> tuple[Channel, ...]:
@@ -136,7 +138,15 @@ class QueryHandler:
         )
 
     @classmethod
-    def get_sample_names(cls, cursor, study) -> tuple[str, ...]:
+    def get_cells_data(cls, cursor, study: str, sample: str) -> CellsData:
+        return CellsAccess(cursor).get_cells_data(sample)
+
+    @classmethod
+    def get_ordered_feature_names(cls, cursor, study: str) -> BitMaskFeatureNames:
+        return CellsAccess(cursor).get_ordered_feature_names()
+
+    @classmethod
+    def get_sample_names(cls, cursor, study: str) -> tuple[str, ...]:
         return sort(StudyAccess(cursor).get_specimen_names(study))
 
 

@@ -37,7 +37,6 @@ class CellsProvider(OnDemandProvider):
                     message = f'Dropped {defect1} columns due to to NAs, for {sample_identifier}.'
                     logger.warning(message)
 
-    @simple_instance_method_cache(maxsize=10000, log=True)
     def get_bundle(self, measurement_study: str, sample: str) -> str:
         """
         JSON-formatted representation of the cell-level data for the given sample.
@@ -53,10 +52,10 @@ class CellsProvider(OnDemandProvider):
         df = self.data_arrays[measurement_study][sample].drop('integer', axis=1).reset_index()
         additional = ['histological_structure_id', 'pixel x', 'pixel y']
         feature_names = sorted(list(set(list(df.columns)).difference(set(additional))))
-        feature_names = ['histological_structure_id', 'pixel x', 'pixel y'] + feature_names
-        values = df[feature_names].to_json(orient='values')
+        feature_names = additional + feature_names
+        logger.debug(f'Forming JSON for cells dataframe of shape {df.shape} for {sample}.')
         return f'''{{
             "feature_names": {dumps(feature_names)},
-            "cells": {values}
+            "cells": {df[feature_names].to_json(orient='values')}
         }}
         '''

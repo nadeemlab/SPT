@@ -49,7 +49,7 @@ def create_and_transcribe_one_sample(
     for column in df.columns:
         if column.startswith('C '):
             symbol = column[2:]
-            criteria = PhenotypeCriteria(positive_markers=[symbol], negative_markers=[])
+            criteria = PhenotypeCriteria(positive_markers=(symbol,), negative_markers=())
             value = compute_squidpy_metric_for_one_sample(df, [criteria], 'spatial autocorrelation')
             if value is None:
                 continue

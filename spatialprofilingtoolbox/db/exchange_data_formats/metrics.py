@@ -26,8 +26,8 @@ class Channel(BaseModel):
 
 class PhenotypeCriteria(BaseModel):
     """Criteria defining a "composite" phenotype by expression and non-expression of markers."""
-    positive_markers: list[str]
-    negative_markers: list[str]
+    positive_markers: tuple[str, ...]
+    negative_markers: tuple[str, ...]
 
 
 class CompositePhenotype(BaseModel):
@@ -50,7 +50,7 @@ class PhenotypeCount(BaseModel):
 
 class PhenotypeCounts(BaseModel):
     """The number of cells of a given phenotype across all samples in a given study."""
-    counts: list[PhenotypeCount]
+    counts: tuple[PhenotypeCount, ...]
     phenotype: CompositePhenotype
     number_cells_in_study: int
 

@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
+from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -317,6 +318,26 @@ def _get_importance_composition(
     )
 
 
+
+@simple_function_cache(log=True)
+def get_phenotype_counts_cached(
+    positives: tuple[str, ...],
+    negatives: tuple[str, ...],
+    study: str,
+    number_cells: int,
+    selected: tuple[int, ...],
+) -> PhenotypeCounts:
+    with OnDemandRequester(service='counts') as requester:
+        counts = requester.get_counts_by_specimen(
+            positives,
+            negatives,
+            study,
+            number_cells,
+            set(selected),
+        )
+    return counts
+
+
 def get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -327,15 +348,13 @@ def get_phenotype_counts(
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    with OnDemandRequester(service='counts') as requester:
-        counts = requester.get_counts_by_specimen(
-            positive_markers,
-            negative_markers,
-            study,
-            number_cells,
-            cells_selected,
-        )
-    return counts
+    return get_phenotype_counts_cached(
+        tuple(positive_markers),
+        tuple(negative_markers),
+        study,
+        number_cells,
+        tuple(sorted(list(cells_selected))),
+    )
 
 
 def get_proximity_metrics(
@@ -400,11 +419,13 @@ async def get_cell_data_binary(
     number_cells = cast(int, query().get_number_cells(study))
     def match(c: PhenotypeCount) -> bool:
         return c.specimen == sample
-    count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
+    count = tuple(filter(
+        match,
+        get_phenotype_counts_cached([], [], study, number_cells,
+    ).counts))[0].count
     if count is None or count > CELL_DATA_CELL_LIMIT:
         message = f'Sample "{sample}" has too many cells: {count}.'
         raise HTTPException(status_code=404, detail=message)
-
     data = query().get_cells_data(study, sample)
     input_buffer = BytesIO(data)
     input_buffer.seek(0)

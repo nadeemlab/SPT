@@ -1,0 +1,82 @@
+{
+    "names": [
+        {
+            "symbol": "B2M"
+        },
+        {
+            "symbol": "B7H3"
+        },
+        {
+            "symbol": "CD68"
+        },
+        {
+            "symbol": "CD8"
+        },
+        {
+            "symbol": "DAPI"
+        },
+        {
+            "symbol": "FOXP3"
+        },
+        {
+            "symbol": "IDO1"
+        },
+        {
+            "symbol": "KI67"
+        },
+        {
+            "symbol": "LAG3"
+        },
+        {
+            "symbol": "MHCI"
+        },
+        {
+            "symbol": "MHCII"
+        },
+        {
+            "symbol": "MRC1"
+        },
+        {
+            "symbol": "CD14"
+        },
+        {
+            "symbol": "PD1"
+        },
+        {
+            "symbol": "PDL1"
+        },
+        {
+            "symbol": "S100B"
+        },
+        {
+            "symbol": "SOX10"
+        },
+        {
+            "symbol": "TGM2"
+        },
+        {
+            "symbol": "TIM3"
+        },
+        {
+            "symbol": "CD163"
+        },
+        {
+            "symbol": "CD20"
+        },
+        {
+            "symbol": "CD25"
+        },
+        {
+            "symbol": "CD27"
+        },
+        {
+            "symbol": "CD3"
+        },
+        {
+            "symbol": "CD4"
+        },
+        {
+            "symbol": "CD56"
+        }
+    ]
+}

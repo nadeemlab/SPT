@@ -30,8 +30,9 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCount,
     UnivariateMetricsComputationResult,
     CellData,
-    AvailableGNN,
+    AvailableGNN
 )
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
@@ -433,6 +434,15 @@ async def get_cell_data_binary(
     def streaming_iteration():
         yield from input_buffer
     return StreamingResponse(streaming_iteration(), media_type="application/octet-stream")
+
+
+@app.get("/cell-data-binary-feature-names/")
+async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatureNames:
+    """
+    Get the features corresponding to the channels in the binary/bitmask representation of a cell's
+    channel positivity/negativity assignments.
+    """
+    return query().get_ordered_feature_names(study)
 
 
 @app.get("/visualization-plots/")

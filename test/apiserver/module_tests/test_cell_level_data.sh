@@ -54,6 +54,9 @@ function test_cell_data_binary() {
 
     cat _celldata.bin | tail -c +21 | xxd -e -b -c 20 > _celldata.dump
     rm _celldata.bin
+
+    echo "PWD 1: $PWD"
+
     diff $filename _celldata.dump
 
     status=$?
@@ -66,6 +69,37 @@ function test_cell_data_binary() {
     else
         echo -e "${red}Some error with the diff command.$reset_code"
         echo "Erroneous file saved to: _celldata.dump"
+        exit 1
+    fi
+}
+
+function test_feature_names_retrieval() {
+    study="$1"
+    query="http://spt-apiserver-testing:8080/cell-data-binary-feature-names/?study=$study"
+
+    echo -e "Doing query $blue$query$reset_code ... "
+    curl -s "$query" | python -m json.tool > _names.json;
+    if [ "$?" -gt 0 ];
+    then
+        echo -e "${red}Error with apiserver query.$reset_code"
+        echo "Result saved to file: _names.json"
+        exit 1
+    fi
+
+    echo "PWD 2: $PWD"
+    diff module_tests/expected_bitmask_feature_names.json _names.json
+
+    status=$?
+    [ $status -eq 0 ] || (echo "API query for cell data failed, unexpected contents."; )
+    if [ $status -eq 0 ];
+    then
+        rm _names.json
+        echo -e "${green}Artifact matches.$reset_code"
+        echo
+    else
+        echo -e "${red}Some error with the diff command.$reset_code"
+        cat _names.json
+        echo "Erroneous file saved to: _names.json"
         exit 1
     fi
 }
@@ -94,3 +128,4 @@ test_cell_data "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/expected_c
 test_missing_case "Melanoma+intralesional+IL2" "ABC"
 
 test_cell_data_binary "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/celldata.dump
+test_feature_names_retrieval "Melanoma+intralesional+IL2"

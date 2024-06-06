@@ -16,6 +16,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     AvailableGNN,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.accessors import (
     GraphsAccess,
     StudyAccess,
@@ -139,6 +140,10 @@ class QueryHandler:
     @classmethod
     def get_cells_data(cls, cursor, study: str, sample: str) -> CellsData:
         return CellsAccess(cursor).get_cells_data(sample)
+
+    @classmethod
+    def get_ordered_feature_names(cls, cursor, study: str) -> BitMaskFeatureNames:
+        return CellsAccess(cursor).get_ordered_feature_names()
 
     @classmethod
     def get_sample_names(cls, cursor, study: str) -> tuple[str, ...]:

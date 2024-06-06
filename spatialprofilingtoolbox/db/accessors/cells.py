@@ -9,6 +9,8 @@ from itertools import product
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -24,7 +26,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             self._get_phenotype_data(sample),
         )
 
-    def get_ordered_feature_names(self) -> tuple[str, ...]:
+    def get_ordered_feature_names(self) -> BitMaskFeatureNames:
         expressions_index = json_loads(bytearray(self.fetch_one_or_else(
             '''
             SELECT blob_contents
@@ -40,10 +42,13 @@ class CellsAccess(SimpleReadOnlyProvider):
         target_from_index = {value: key for key, value in lookup1.items()}
         symbol_from_target = {value: key for key, value in lookup2.items()}
         indices = sorted(list(target_from_index.keys()))
-        return tuple(map(
+        names = tuple(map(
             lambda i: symbol_from_target[target_from_index[i]],
             indices,
         ))
+        return BitMaskFeatureNames(
+            names=tuple(Channel(symbol=n) for n in names)
+        )
 
     def _get_location_data(self, sample: str) -> dict[int, tuple[float, float]]:
         by_sample = pickle_loads(

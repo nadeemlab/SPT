@@ -197,6 +197,7 @@ async def get_anonymous_phenotype_counts_fast(
     """
     return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
 
+
 def _get_anonymous_phenotype_counts_fast(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -204,6 +205,7 @@ def _get_anonymous_phenotype_counts_fast(
 ) -> PhenotypeCounts:
     number_cells = cast(int, query().get_number_cells(study))
     return get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+
 
 @app.get("/request-spatial-metrics-computation/")
 async def request_spatial_metrics_computation(
@@ -219,8 +221,8 @@ async def request_spatial_metrics_computation(
     ]
     markers: list[list[str]] = []
     for criterion in criteria:
-        markers.append(criterion.positive_markers)
-        markers.append(criterion.negative_markers)
+        markers.append(list(criterion.positive_markers))
+        markers.append(list(criterion.negative_markers))
     return get_squidpy_metrics(study, markers, feature_class, radius=radius)
 
 
@@ -318,7 +320,6 @@ def _get_importance_composition(
     )
 
 
-
 @simple_function_cache(log=True)
 def get_phenotype_counts_cached(
     positives: tuple[str, ...],
@@ -333,7 +334,7 @@ def get_phenotype_counts_cached(
             negatives,
             study,
             number_cells,
-            set(selected),
+            set(selected) if selected is not None else None,
         )
     return counts
 
@@ -353,7 +354,7 @@ def get_phenotype_counts(
         tuple(negative_markers),
         study,
         number_cells,
-        tuple(sorted(list(cells_selected))),
+        tuple(sorted(list(cells_selected))) if cells_selected is not None else None,
     )
 
 
@@ -447,7 +448,8 @@ async def get_plot_high_resolution(
     study: ValidStudy,
     channel: ValidChannel,
 ):
-    """One full-resolution UMAP plot (for the given channel in the given study), provided as a
+    """
+    One full-resolution UMAP plot (for the given channel in the given study), provided as a
     streaming PNG.
     """
     umap = query().get_umap(study, channel)

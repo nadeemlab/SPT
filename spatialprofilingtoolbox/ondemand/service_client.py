@@ -56,7 +56,7 @@ class OnDemandRequester:
         logger.debug('Querying counts service: %s', f'({len(query)} bytes) ' + str(truncation))
         response = self._parse_response()
         return PhenotypeCounts(
-            counts=[
+            counts=tuple(
                 PhenotypeCount(
                     specimen=specimen,
                     count=count,
@@ -64,13 +64,13 @@ class OnDemandRequester:
                     if ((count is not None) and (count_all_in_specimen not in {0, None})) else None,
                 )
                 for specimen, (count, count_all_in_specimen) in response.items()
-            ],
+            ),
             phenotype=CompositePhenotype(
                 name='',
                 identifier='',
                 criteria=PhenotypeCriteria(
-                    positive_markers=positive_signature_channels,
-                    negative_markers=negative_signature_channels,
+                    positive_markers=tuple(positive_signature_channels),
+                    negative_markers=tuple(negative_signature_channels),
                 ),
             ),
             number_cells_in_study=number_cells,

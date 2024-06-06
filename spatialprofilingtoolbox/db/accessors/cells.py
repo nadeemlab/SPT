@@ -3,15 +3,10 @@ from pickle import loads as pickle_loads
 from json import loads as json_loads
 from typing import Any
 from typing import Iterable
-from typing import Hashable
-from typing import Callable
 from typing import cast
 from itertools import islice
 
 from psycopg2.extensions import cursor as Psycopg2Cursor
-from pandas import DataFrame
-from pandas import Series
-from pandas import concat
 
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
@@ -21,6 +16,8 @@ logger = colorized_logger(__name__)
 
 
 class CellsAccess(SimpleReadOnlyProvider):
+    """Retrieve cell-level data for a sample."""
+
     def get_cells_data(self, sample: str) -> CellsData:
         return CellsAccess._zip_location_and_phenotype_data(
             self._get_location_data(sample),
@@ -48,7 +45,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             indices,
         ))
 
-    def _get_location_data(self, sample: str) -> DataFrame:
+    def _get_location_data(self, sample: str) -> dict[int, tuple[float, float]]:
         by_sample = pickle_loads(
             self.fetch_one_or_else(
                 '''
@@ -61,9 +58,9 @@ class CellsAccess(SimpleReadOnlyProvider):
                 f'Requested centroids data for "{sample}" not found in database.'
             )
         )
-        return DataFrame.from_dict(by_sample[sample], orient='index', columns=['x', 'y'])
+        return by_sample[sample]
 
-    def _get_phenotype_data(self, sample: str) -> DataFrame:
+    def _get_phenotype_data(self, sample: str) -> dict[int, bytes]:
         index_and_expressions = bytearray(self.fetch_one_or_else(
             '''
             SELECT blob_contents
@@ -77,16 +74,13 @@ class CellsAccess(SimpleReadOnlyProvider):
         byte_count = len(index_and_expressions)
         if byte_count % 16 != 0:
             message = f'Expected 16 bytes per cell in binary representation of phenotype data, got {byte_count}.'
+            logger.error(message)
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
-        integers_from_hsi = dict(
+        return dict(
             (int.from_bytes(batch[0:8], 'little'), bytes(batch[8:16]))
             for batch in self._batched(bytes_iterator, 16)
         )
-
-        logger.info(f'integers_from_hsi[3]: {integers_from_hsi[3]!r} {type(integers_from_hsi[3])}')
-
-        return DataFrame.from_dict(integers_from_hsi, orient='index', columns=['integer_representation'])
 
     @staticmethod
     def _batched(iterable: Iterable, batch_size: int):
@@ -97,18 +91,20 @@ class CellsAccess(SimpleReadOnlyProvider):
     @classmethod
     def _zip_location_and_phenotype_data(
         cls,
-        location_data: DataFrame,
-        phenotype_data: DataFrame,
+        location_data: dict[int, tuple[float, float]],
+        phenotype_data: dict[int, bytes],
     ) -> CellsData:
-        df = concat((location_data, phenotype_data))
-
-        logger.info(location_data.head())
-        logger.info(phenotype_data.head())
-
-        logger.info(df.head())
-
-        format = cast(Callable[[tuple[Hashable | None, Series]], bytes], cls._format_cell_bytes)
-        serial = b''.join(map(format, df.iterrows()))
+        identifiers = sorted(list(location_data.keys()))
+        _identifiers = sorted(list(phenotype_data.keys()))
+        if _identifiers != identifiers:
+            message = f'Mismatch of cell sets for location and phenotype data.'
+            raise ValueError(message)
+        cls._check_consecutive(identifiers)
+        combined = tuple(
+            (i, location_data[i], phenotype_data[i])
+            for i in identifiers
+        )
+        serial = b''.join(map(cls._format_cell_bytes, combined))
         if len(serial) % 20 != 0:
             message = f'Expected exactly 20 bytes per cell to be created. Got total {len(serial)}.'
             logger.error(message)
@@ -118,17 +114,21 @@ class CellsAccess(SimpleReadOnlyProvider):
         return b''.join((header, serial))
 
     @classmethod
-    def _format_cell_bytes(cls, index_row: tuple[int, Series]) -> bytes:
-        index, row = index_row
+    def _check_consecutive(cls, identifiers: list[int]):
+        for i1, i2 in zip(identifiers, range(len(identifiers))):
+            if i1 != i2:
+                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {i1} should be {i2}.'
+                logger.warning(message)
+                break
 
-        logger.info(f'row[2]: {row[2]} {type(row[2])}')
-
+    @classmethod
+    def _format_cell_bytes(cls, args: tuple[int, tuple[float, float], bytes]) -> bytes:
+        identifier, location, phenotype = args
         return b''.join((
-            index.to_bytes(4, 'little'),
-            int(row.iloc[0]).to_bytes(4, 'little'),
-            int(row.iloc[1]).to_bytes(4, 'little'),
-            # row[2].to_bytes(8, 'little'),
-            row.iloc[2],
+            identifier.to_bytes(4, 'little'),
+            int(location[0]).to_bytes(4, 'little'),
+            int(location[1]).to_bytes(4, 'little'),
+            phenotype,
         ))
 
     @staticmethod

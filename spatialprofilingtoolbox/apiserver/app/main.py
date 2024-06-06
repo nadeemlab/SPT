@@ -417,7 +417,7 @@ async def get_cell_data_binary(
 ):
     """
     Get streaming cell-level location and phenotype data in a custom binary format.
-    The format is documented [here](https://github.com/nadeemlab/SPT/blob/issue314/docs/cells.md).
+    The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
     """
     if not sample in query().get_sample_names(study):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')

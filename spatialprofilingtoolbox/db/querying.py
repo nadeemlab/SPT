@@ -91,13 +91,13 @@ class QueryHandler:
         channel_names = PhenotypesAccess(cursor).get_channel_names(study)
         components = StudyAccess(cursor).get_study_components(study)
         if phenotype_handle in channel_names:
-            return PhenotypeCriteria(positive_markers=[phenotype_handle], negative_markers=[])
+            return PhenotypeCriteria(positive_markers=(phenotype_handle,), negative_markers=())
         if re.match(r'^\d+$', phenotype_handle):
             return PhenotypesAccess(cursor).get_phenotype_criteria_by_identifier(
                 phenotype_handle,
                 components.analysis,
             )
-        return PhenotypeCriteria(positive_markers=[], negative_markers=[])
+        return PhenotypeCriteria(positive_markers=(), negative_markers=())
 
     @classmethod
     def get_channel_names(cls, cursor, study: str) -> tuple[Channel, ...]:

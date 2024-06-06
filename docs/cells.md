@@ -22,3 +22,11 @@ The memory map is as follows:
 The ellipsis represents repetition of the per-cell section once for each cell. This is 4 + 4 + 4 + 8 = 20 bytes per cell. The "header" preceding the per-cell sections is 20 bytes.
 
 A representation of an example of the cell sections can be found [here](https://github.com/nadeemlab/SPT/blob/main/test/apiserver/module_tests/celldata.dump).
+
+There is a convenient way to preview the contents at the command line using `xxd`:
+
+```sh
+tail -c +21 payload.bin | xxd -b -c 20
+```
+
+(The initial `tail` command strips out the header.)

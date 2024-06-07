@@ -87,7 +87,7 @@ SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(sub
 DLI := force-rebuild-data-loaded-image
 
 # Define PHONY targets
-.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target
+.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated
 
 # Submodule-specific variables
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
@@ -333,6 +333,9 @@ check-dockerfiles-consistency:
 >@status_code=$$(cat status_code); if [[ "$$status_code" == "0" && ( ! -f check-dockerfiles-consistency ) ]]; then touch check-dockerfiles-consistency; fi;
 >@${MESSAGE} end "Consistent." "Something missing."
 
+ensure-plugin-submodules-are-populated:
+>@git submodule update --init --recursive
+
 build-docker-images: ${DOCKER_BUILD_SUBMODULE_TARGETS} ${DOCKER_BUILD_PLUGIN_TARGETS} ${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}
 
 # Build the Docker container for each submodule by doing the following:
@@ -376,7 +379,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
 
-${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
+${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ensure-plugin-submodules-are-populated
 >@plugin_name=$$(basename $@ .docker.built) ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
@@ -408,7 +411,7 @@ ${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-cre
     plugin_directory=$$(dirname $@)/$$plugin_name ; \
     rm -r $$plugin_directory ; \
 
-${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
+${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ensure-plugin-submodules-are-populated
 >@plugin_name=$$(basename $@ -cuda.docker.built) ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name:cuda"

@@ -98,7 +98,8 @@ def _handle_image_params(params: dict[str, str | bool], plugin_name: str) -> Non
             'For graph plugin workflows, the container_platform must be either `docker` or '
             f'`singularity`, not `{params["container_platform"]}`.')
     params['graph_plugin_image'] = f'{PLUGIN_DOCKER_IMAGES[plugin_name]}:' \
-        f'{"cuda-" if params["cuda"] else ""}{PLUGIN_DOCKER_TAGS[plugin_name]}'
+        f'{"cuda-" if (params["cuda"] and (plugin_name not in CUDA_REQUIRED)) else ""}' \
+        f'{PLUGIN_DOCKER_TAGS[plugin_name]}'
     params['graph_plugin_singularity_run_options'] = '--nv' if \
         ((params['container_platform'] == 'singularity') and params['cuda']) else ''
 

@@ -20,6 +20,7 @@ build/*/Dockerfile
 /Dockerfile
 **.whl
 build/*/docker.built
+build/plugins/**/*.built
 build/*/requirements.txt
 build/*/specific_requirements.txt
 build/*/dlogs.*.txt

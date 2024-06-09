@@ -42,7 +42,6 @@ def check_records(feature_values):
     feature_vectors = extract_feature_vectors(df)
     missing = set(get_expected_records()).difference(feature_vectors)
     if len(missing) > 0:
-
         with open('module_tests/_expected_auto_correlations.tsv', 'wt', encoding='utf-8') as file:
             count = 1
             for feature_vector in feature_vectors:
@@ -50,9 +49,10 @@ def check_records(feature_values):
                     file.write('\t'.join([str(count)] + [str(e) for e in entry]))
                     file.write('\n')
                 count += 1
-
-
-        raise ValueError(f'Expected to find records: {sorted(missing)}\nGot: {sorted(rows)}')
+        newline = '\n'
+        _expected = newline.join(str(x) for x in sorted(missing))
+        _got = newline.join(str(x) for x in sorted(rows))
+        raise ValueError(f'Expected to find records: {_expected}\nGot: {_got}')
 
     print('All expected records found.')
     unexpected = set(feature_vectors).difference(get_expected_records())
@@ -62,7 +62,7 @@ def check_records(feature_values):
 
 
 def round3(value):
-    return int(pow(10, 3) * value) / pow(10, 3)
+    return round(value, ndigits=3)
 
 
 def retrieve_feature_values(connection):

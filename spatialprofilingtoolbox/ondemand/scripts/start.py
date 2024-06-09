@@ -86,7 +86,7 @@ def get_cli_arguments() -> tuple[str, int, str | None, int]:
         '--timeout-seconds',
         dest='timeout_seconds',
         type=int,
-        default=300,
+        default=1200,
         help='Maximum runtime that will be tolerated by a single feature value computation, after '
         'which a null is presumed. Default 300 (seconds).'
     )

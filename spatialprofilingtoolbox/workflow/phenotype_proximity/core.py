@@ -87,8 +87,8 @@ class PhenotypeProximityCoreJob(CoreJob):
         all_features = channels + phenotypes
         signatures.update({
             column_name: PhenotypeCriteria(
-                positive_markers=[column_name],
-                negative_markers=[],
+                positive_markers=tuple([column_name]),
+                negative_markers=(),
             ) for column_name in channels
         })
 
@@ -131,8 +131,8 @@ class PhenotypeProximityCoreJob(CoreJob):
 
         def make_signature(df) -> PhenotypeCriteria:
             return PhenotypeCriteria(
-                positive_markers=list_channels(df, 1),
-                negative_markers=list_channels(df, 0),
+                positive_markers=tuple(list_channels(df, 1)),
+                negative_markers=tuple(list_channels(df, 0)),
             )
         by_identifier: dict[str, PhenotypeCriteria] = {}
         for phenotype, criteria in criteria.groupby('phenotype'):

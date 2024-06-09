@@ -2,3 +2,5 @@
 docs/image_assets/**
 .venv
 venv
+**/.mypy_cache
+**/.mypy

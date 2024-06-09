@@ -53,10 +53,10 @@ class OnDemandRequester:
         )
         self.tcp_client.sendall(query)
         truncation = query[0:min(len(query), 200)]
-        logger.debug('Quering counts service: %s', f'({len(query)} bytes) ' + str(truncation))
+        logger.debug('Querying counts service: %s', f'({len(query)} bytes) ' + str(truncation))
         response = self._parse_response()
         return PhenotypeCounts(
-            counts=[
+            counts=tuple(
                 PhenotypeCount(
                     specimen=specimen,
                     count=count,
@@ -64,13 +64,13 @@ class OnDemandRequester:
                     if ((count is not None) and (count_all_in_specimen not in {0, None})) else None,
                 )
                 for specimen, (count, count_all_in_specimen) in response.items()
-            ],
+            ),
             phenotype=CompositePhenotype(
                 name='',
                 identifier='',
                 criteria=PhenotypeCriteria(
-                    positive_markers=positive_signature_channels,
-                    negative_markers=negative_signature_channels,
+                    positive_markers=tuple(positive_signature_channels),
+                    negative_markers=tuple(negative_signature_channels),
                 ),
             ),
             number_cells_in_study=number_cells,
@@ -122,14 +122,20 @@ class OnDemandRequester:
             )
         ).encode('utf-8')
 
-    def _parse_response(self):
+    def _parse_response(self, verbose: bool = False):
         received = None
         buffer = bytearray()
-        bytelimit = 100000000
+        bytelimit = 10 * int(pow(10, 9))
+        if verbose:
+            logger.debug(f'Receiving TCP payload from service.')
         while (not received in [self._get_end_of_transmission(), '']) and (len(buffer) < bytelimit):
             if not received is None:
                 buffer.extend(received)
             received = self.tcp_client.recv(1)
+        if len(buffer) == bytelimit:
+            logger.warning('Response limit of {bytelimit} bytes was reached, payload is truncated (about 10gb).')
+        if verbose:
+            logger.debug(f'Forming JSON payload from TCP payload string of {len(buffer)} bytes.')
         return json.loads(buffer.decode('utf-8'))
 
     def _sanitize_token(self, text: str) -> str:
@@ -175,7 +181,7 @@ class OnDemandRequester:
         groups = ['cells', study, sample]
         query = self._get_group_separator().join(groups).encode('utf-8')
         self.tcp_client.sendall(query)
-        return self._parse_response()
+        return self._parse_response(verbose=True)
 
     def __enter__(self):
         return self

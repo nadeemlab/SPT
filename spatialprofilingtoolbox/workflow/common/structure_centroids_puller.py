@@ -169,7 +169,7 @@ class StructureCentroidsPuller:
                 ;
                 ''', (study,))
                 rows = tuple(cursor.fetchall())
-                records.extend((study, tuple(rows)))
+                records.append((study, tuple(rows)))
         return tuple(records)
 
     def _get_study_names(self, study: str | None = None) -> list[tuple[str, str]]:

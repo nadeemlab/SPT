@@ -211,6 +211,7 @@ def retrieve_primary_study(database_config_file: str, component_study: str) -> s
                 return study
     return None
 
+
 def create_database(database_config_file: str | None, database_name: str) -> None:
     if database_config_file is None:
         message = 'Data import requires a database configuration file.'
@@ -263,6 +264,8 @@ class QueryCursor:
     get_umaps_low_resolution: Callable
     get_umap: Callable
     get_important_cells: Callable
+    get_cells_data: Callable
+    get_ordered_feature_names: Callable
     get_sample_names: Callable
     get_available_gnn: Callable
     get_study_findings: Callable

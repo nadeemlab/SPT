@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
+from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -29,8 +30,9 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCount,
     UnivariateMetricsComputationResult,
     CellData,
-    AvailableGNN,
+    AvailableGNN
 )
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
@@ -71,7 +73,7 @@ app = FastAPI(
     },
 )
 
-CELL_DATA_CELL_LIMIT = 100001
+CELL_DATA_CELL_LIMIT = 5 * int(pow(10, 6))
 
 
 def custom_openapi():
@@ -196,6 +198,7 @@ async def get_anonymous_phenotype_counts_fast(
     """
     return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
 
+
 def _get_anonymous_phenotype_counts_fast(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -203,6 +206,7 @@ def _get_anonymous_phenotype_counts_fast(
 ) -> PhenotypeCounts:
     number_cells = cast(int, query().get_number_cells(study))
     return get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+
 
 @app.get("/request-spatial-metrics-computation/")
 async def request_spatial_metrics_computation(
@@ -218,8 +222,8 @@ async def request_spatial_metrics_computation(
     ]
     markers: list[list[str]] = []
     for criterion in criteria:
-        markers.append(criterion.positive_markers)
-        markers.append(criterion.negative_markers)
+        markers.append(list(criterion.positive_markers))
+        markers.append(list(criterion.negative_markers))
     return get_squidpy_metrics(study, markers, feature_class, radius=radius)
 
 
@@ -317,6 +321,25 @@ def _get_importance_composition(
     )
 
 
+@simple_function_cache()
+def get_phenotype_counts_cached(
+    positives: tuple[str, ...],
+    negatives: tuple[str, ...],
+    study: str,
+    number_cells: int,
+    selected: tuple[int, ...],
+) -> PhenotypeCounts:
+    with OnDemandRequester(service='counts') as requester:
+        counts = requester.get_counts_by_specimen(
+            positives,
+            negatives,
+            study,
+            number_cells,
+            set(selected) if selected is not None else None,
+        )
+    return counts
+
+
 def get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -327,15 +350,13 @@ def get_phenotype_counts(
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    with OnDemandRequester(service='counts') as requester:
-        counts = requester.get_counts_by_specimen(
-            positive_markers,
-            negative_markers,
-            study,
-            number_cells,
-            cells_selected,
-        )
-    return counts
+    return get_phenotype_counts_cached(
+        tuple(positive_markers),
+        tuple(negative_markers),
+        study,
+        number_cells,
+        tuple(sorted(list(cells_selected))) if cells_selected is not None else None,
+    )
 
 
 def get_proximity_metrics(
@@ -389,6 +410,44 @@ async def get_cell_data(
     return payload
 
 
+@app.get("/cell-data-binary/")
+async def get_cell_data_binary(
+    study: ValidStudy,
+    sample: Annotated[str, Query(max_length=512)],
+):
+    """
+    Get streaming cell-level location and phenotype data in a custom binary format.
+    The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
+    """
+    if not sample in query().get_sample_names(study):
+        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+    number_cells = cast(int, query().get_number_cells(study))
+    def match(c: PhenotypeCount) -> bool:
+        return c.specimen == sample
+    count = tuple(filter(
+        match,
+        get_phenotype_counts([], [], study, number_cells,
+    ).counts))[0].count
+    if count is None or count > CELL_DATA_CELL_LIMIT:
+        message = f'Sample "{sample}" has too many cells: {count}.'
+        raise HTTPException(status_code=404, detail=message)
+    data = query().get_cells_data(study, sample)
+    input_buffer = BytesIO(data)
+    input_buffer.seek(0)
+    def streaming_iteration():
+        yield from input_buffer
+    return StreamingResponse(streaming_iteration(), media_type="application/octet-stream")
+
+
+@app.get("/cell-data-binary-feature-names/")
+async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatureNames:
+    """
+    Get the features corresponding to the channels in the binary/bitmask representation of a cell's
+    channel positivity/negativity assignments.
+    """
+    return query().get_ordered_feature_names(study)
+
+
 @app.get("/visualization-plots/")
 async def get_plots(
     study: ValidStudy,
@@ -402,7 +461,8 @@ async def get_plot_high_resolution(
     study: ValidStudy,
     channel: ValidChannel,
 ):
-    """One full-resolution UMAP plot (for the given channel in the given study), provided as a
+    """
+    One full-resolution UMAP plot (for the given channel in the given study), provided as a
     streaming PNG.
     """
     umap = query().get_umap(study, channel)

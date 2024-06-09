@@ -219,8 +219,8 @@ class OnDemandRequestHandler(BaseRequestHandler):
     def _get_proximity_metrics(self, study, radius, signature):
         assert self.server.providers.proximity is not None
         positives1, negatives1, positives2, negatives2 = signature
-        phenotype1 = PhenotypeCriteria(positive_markers=positives1, negative_markers=negatives1)
-        phenotype2 = PhenotypeCriteria(positive_markers=positives2, negative_markers=negatives2)
+        phenotype1 = PhenotypeCriteria(positive_markers=tuple(positives1), negative_markers=tuple(negatives1))
+        phenotype2 = PhenotypeCriteria(positive_markers=tuple(positives2), negative_markers=tuple(negatives2))
         return self.server.providers.proximity.get_metrics(
             study,
             phenotype1=phenotype1,
@@ -294,8 +294,8 @@ class OnDemandRequestHandler(BaseRequestHandler):
         phenotypes: list[PhenotypeCriteria] = []
         for i in range(len(channel_lists)//2):
             phenotypes.append(PhenotypeCriteria(
-                positive_markers=channel_lists[2*i],
-                negative_markers=channel_lists[2*i+1],
+                positive_markers=tuple(channel_lists[2*i]),
+                negative_markers=tuple(channel_lists[2*i+1]),
             ))
         return self.server.providers.squidpy.get_metrics(
             study,

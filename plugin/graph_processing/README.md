@@ -4,7 +4,7 @@ These plugins create and process cell graphs that are used to train prediction m
 
 New plugins can be contributed by modifying the [template](template/) or implementation ([1](cg-gnn/), [2](graph-transformer/)) source to use alternative processing methods.
 
-Graph processing plugins are Docker images. (Template [Dockerfile](template/Dockerfile), and example implementation Dockerfiles [1](https://github.com/nadeemlab/SPT/blob/main/build/plugins/graph_processing/cg-gnn.dockerfile) and [2](https://github.com/nadeemlab/SPT/blob/main/build/plugins/graph_processing/graph-transformer.dockerfile)).
+Graph processing plugins are Docker images. (template [Dockerfile](template/Dockerfile), and example implementation Dockerfiles [1](https://github.com/nadeemlab/SPT/blob/main/build/plugins/graph_processing/cg-gnn.dockerfile) and [2](https://github.com/nadeemlab/SPT/blob/main/build/plugins/graph_processing/graph-transformer.dockerfile))
 
 Each plugin is expected to have the following commands available on the path:
 * `spt-plugin-print-graph-request-configuration`, which prints to `stdout` the configuration file intended to be used by this plugin to fetch graphs from an SPT instance to use for model training. An empty configuration file and a shell script to do this is provided in this repo, as well as the command needed to make this available in the template `Dockerfile`.

@@ -16,7 +16,7 @@ PLUGIN_DOCKER_TAGS = {
     'cg-gnn': '0.0.3',
     'graph-transformer': '0.0.1',
 }
-CUDA_REQUIRED: tuple[str, ...] = ('graph transformer', )
+CUDA_REQUIRED: tuple[str, ...] = ('graph-transformer', )
 CPU_REQUIRED: tuple[str, ...] = ()
 
 

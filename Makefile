@@ -390,7 +390,7 @@ ${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-cre
     plugin_version=$$(cat $$source_directory/version.txt) ; \
     plugin_directory=$$(dirname $@)/$$plugin_name ; \
     mkdir -p $$plugin_directory ; \
-    cp $$source_directory/* $$plugin_directory ; \
+    cp -r $$source_directory/* $$plugin_directory ; \
     cp $$(dirname $@)/$$(basename $@ .docker.built).dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
     docker build \

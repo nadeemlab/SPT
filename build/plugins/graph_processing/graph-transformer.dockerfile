@@ -2,8 +2,20 @@ FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-runtime
 WORKDIR /app
 
 # Install apt packages you need here, and then clean up afterward
-RUN apt-get update
-RUN rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libhdf5-dev \
+    libopenblas0 libopenblas-dev \
+    libprotobuf-dev \
+    libjpeg8-dev \
+    libpng-dev \
+    libtiff-dev \
+    libwebp-dev \
+    libopenjp2-7-dev \
+    libtbb-dev \
+    libeigen3-dev \
+    tesseract-ocr tesseract-ocr-por libtesseract-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install python packages you need here
 ENV PIP_NO_CACHE_DIR=1

@@ -230,7 +230,7 @@ ${DOCKER_PUSH_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
     echo "$$plugin_version"; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
-    docker push $$repository_name:$$submodule_version ; \
+    docker push $$repository_name:$$plugin_version ; \
     exit_code1=$$?; \
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
@@ -266,7 +266,7 @@ ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credent
     echo "$$plugin_version"; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
-    docker push $$repository_name:cuda-$$submodule_version ; \
+    docker push $$repository_name:cuda-$$plugin_version ; \
     exit_code1=$$?; \
     docker push $$repository_name:cuda-latest ; \
     exit_code2=$$?; \

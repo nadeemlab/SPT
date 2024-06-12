@@ -35,6 +35,67 @@ class SquidpyProvider(PendingProvider):
     def service_specifier(cls) -> str:
         return 'squidpy'
 
+    # Feature specification and dispatch stuff:
+
+    # def _handle_squidpy_request(self, feature_class, groups) -> bool:
+    #     match feature_class:
+    #         case 'neighborhood enrichment':
+    #             if len(groups) != 4 + 1:
+    #                 return False
+    #         case 'co-occurrence':
+    #             if len(groups) != 4 + 1 + 1:
+    #                 return False
+    #         case 'ripley':
+    #             if len(groups) != 2 + 1:
+    #                 return False
+    #     study = groups[0]
+    #     radius = None
+    #     if feature_class == 'co-occurrence':
+    #         radius = float(groups[5])
+    #         groups = groups[0:5]
+    #     if self._handle_missing_study(study):
+    #         return True
+
+    #     channel_lists = self._get_long_phenotype_spec(groups[1:])
+    #     try:
+    #         metrics = self._get_squidpy_metrics(study, feature_class, channel_lists, radius=radius)
+    #     except Exception as exception:
+    #         message = "Error response." + self._get_end_of_transmission()
+    #         self.request.sendall(message.encode('utf-8'))
+    #         raise exception
+
+    #     message = dumps(metrics) + self._get_end_of_transmission()
+    #     self.request.sendall(message.encode('utf-8'))
+    #     return True
+
+    # def _get_long_phenotype_spec(self, channel_lists_raw: list[str]) -> list[list[str]]:
+    #     return [
+    #         self._trim_empty_entry(phenotype.split(RECORD_SEPARATOR))
+    #         for phenotype in channel_lists_raw
+    #     ]
+
+    # def _get_squidpy_metrics(
+    #     self,
+    #     study: str,
+    #     feature_class: str,
+    #     channel_lists: list[list[str]],
+    #     radius: float | None = None,
+    # ) -> dict[str, dict[str, float | None] | bool]:
+    #     assert self.server.providers.squidpy is not None
+    #     phenotypes: list[PhenotypeCriteria] = []
+    #     for i in range(len(channel_lists)//2):
+    #         phenotypes.append(PhenotypeCriteria(
+    #             positive_markers=tuple(channel_lists[2*i]),
+    #             negative_markers=tuple(channel_lists[2*i+1]),
+    #         ))
+    #     return self.server.providers.squidpy.get_metrics(
+    #         study,
+    #         feature_class=feature_class,
+    #         phenotypes=phenotypes,
+    #         radius=radius,
+    #     )
+
+
     @classmethod
     def get_or_create_feature_specification(cls,
         study: str,

@@ -10,8 +10,10 @@ from numpy.typing import NDArray
 from attrs import define
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
+from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -26,17 +28,15 @@ class CellDataArrays:
 
 
 class OnDemandProvider(ABC):
-    """Base class for OnDemandProvider instances, since they share data ingestion methods."""
-    database_config_file: str
-    timeout: int
+    """Base class for OnDemandProvider instances, since they share some data ingestion methods."""
+    job: ComputationJobReference
 
-    @classmethod
-    def service_specifier(cls) -> str:
+    def __init__(self, job: ComputationJobReference):
+        self.job = job
+
+    @abstractmethod
+    def compute(self) -> None:
         raise NotImplementedError
-
-    def __init__(self, timeout: int, database_config_file: str | None) -> None:
-        self.database_config_file = cast(str, database_config_file)
-        self.timeout = timeout
 
     def get_cell_data_arrays(self, study: str, sample: str) -> CellDataArrays:
         with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
@@ -65,3 +65,7 @@ class OnDemandProvider(ABC):
     def _expect_number(got: int, expected: int) -> None:
         if got != expected:
             raise ValueError(f'Unexpected number of cells, got {got}, expected {expected}.')
+
+    def _get_measurement_study(self, study: str) -> str:
+        with DBCursor(study=study) as cursor:
+            return StudyAccess(cursor).get_study_components(study).measurement

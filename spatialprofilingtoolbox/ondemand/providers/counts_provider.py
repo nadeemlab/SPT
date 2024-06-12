@@ -27,6 +27,88 @@ class CountsProvider(OnDemandProvider):
     def service_specifier(cls) -> str:
         return 'counts'
 
+    # Feature specification stuff:
+
+    # def _get_phenotype_counts_spec(
+    #     self,
+    #     groups: list[str],
+    # ) -> tuple[str, list[str], list[str], set[int] | None]:
+    #     study_name = groups[0]
+    #     positive_channel_names = groups[1].split(RECORD_SEPARATOR)
+    #     negative_channel_names = groups[2].split(RECORD_SEPARATOR)
+    #     positive_channel_names = self._trim_empty_entry(positive_channel_names)
+    #     negative_channel_names = self._trim_empty_entry(negative_channel_names)
+    #     if len(groups) == 4 and groups[3] != '':
+    #         cells_selected = {int(s) for s in groups[3].split(RECORD_SEPARATOR)}
+    #         truncation: list[str | int] = list(cells_selected)
+    #         if len(truncation) > 5:
+    #             truncation = truncation[0:4] + [f'(... {len(cells_selected)} items)']
+    #         logger.info('Cells selected: %s', str(truncation))
+    #     else:
+    #         cells_selected = None
+    #     return study_name, positive_channel_names, negative_channel_names, cells_selected
+
+
+    # def _handle_single_phenotype_counts_request(self) -> bool:
+
+    #     specification = self._get_phenotype_counts_spec()
+    #     study_name = specification[0]
+    #     positive_channel_names = specification[1]
+    #     negative_channel_names = specification[2]
+
+    #     positives_signature, negatives_signature = self._get_signatures(
+    #         study_name,
+    #         specification[1],
+    #         specification[2],
+    #     )
+    #     if self._handle_unparseable_signature(positives_signature, specification[1]):
+    #         return True
+    #     if self._handle_unparseable_signature(negatives_signature, specification[2]):
+    #         return True
+    #     assert (positives_signature is not None) and (negatives_signature is not None)
+
+    #     counts = self._get_counts(
+    #         study_name,
+    #         positives_signature,
+    #         negatives_signature,
+    #         specification[3],
+    #     )
+    #     message = dumps(counts) + self._get_end_of_transmission()
+    #     self.request.sendall(message.encode('utf-8'))
+    #     return True
+
+    # def _get_signatures(
+    #     self,
+    #     study_name: str,
+    #     positives: list[str],
+    #     negatives: list[str],
+    # ) -> tuple[int | None, int | None]:
+    #     assert self.server.providers.counts is not None
+    #     measurement_study_name = self._get_measurement_study(study_name)
+    #     signature1 = self.server.providers.counts.compute_signature(positives, measurement_study_name)
+    #     signature2 = self.server.providers.counts.compute_signature(negatives, measurement_study_name)
+    #     return signature1, signature2
+
+
+    # Dispatch:
+
+    # def _get_counts(
+    #     self,
+    #     study: str,
+    #     positives_signature: int,
+    #     negatives_signature: int,
+    #     cells_selected: set[int] | None = None,
+    # ) -> dict[str, tuple[int, int] | tuple[None, None]]:
+    #     assert self.server.providers.counts is not None
+    #     measurement_study = self._get_measurement_study(study)
+    #     return self.server.providers.counts.count_structures_of_partial_signed_signature(
+    #         positives_signature,
+    #         negatives_signature,
+    #         measurement_study,
+    #         tuple(sorted(list(cells_selected))) if cells_selected else None,
+    #     )
+
+
     @simple_instance_method_cache(maxsize=50000)
     def count_structures_of_partial_signed_signature(
         self,

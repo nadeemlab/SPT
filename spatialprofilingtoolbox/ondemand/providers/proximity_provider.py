@@ -40,6 +40,49 @@ class ProximityProvider(PendingProvider):
     def service_specifier(cls) -> str:
         return 'proximity'
 
+    # Feature specification and dispatch stuff:
+
+    # def _handle_proximity_request(self, groups) -> bool:
+    #     if len(groups) != 6:
+    #         return False
+    #     specification = self._get_phenotype_pair_specification(groups)
+    #     study_name = specification[0]
+    #     if self._handle_missing_study(study_name):
+    #         return True
+
+    #     try:
+    #         metrics = self._get_proximity_metrics(*specification)
+    #     except Exception as exception:
+    #         message = "Error response." + self._get_end_of_transmission()
+    #         self.request.sendall(message.encode('utf-8'))
+    #         raise exception
+
+    #     message = dumps(metrics) + self._get_end_of_transmission()
+    #     self.request.sendall(message.encode('utf-8'))
+    #     return True
+
+    # def _get_proximity_metrics(self, study, radius, signature):
+    #     assert self.server.providers.proximity is not None
+    #     positives1, negatives1, positives2, negatives2 = signature
+    #     phenotype1 = PhenotypeCriteria(positive_markers=tuple(positives1), negative_markers=tuple(negatives1))
+    #     phenotype2 = PhenotypeCriteria(positive_markers=tuple(positives2), negative_markers=tuple(negatives2))
+    #     return self.server.providers.proximity.get_metrics(
+    #         study,
+    #         phenotype1=phenotype1,
+    #         phenotype2=phenotype2,
+    #         radius=radius,
+    #     )
+
+    # def _get_phenotype_pair_specification(self, groups):
+    #     study_name = groups[0]
+    #     radius = float(groups[1])
+    #     channel_lists = [
+    #         self._trim_empty_entry(group.split(RECORD_SEPARATOR))
+    #         for group in groups[2:6]
+    #     ]
+    #     return [study_name, radius, channel_lists]
+
+
     def _dropna_in_data_arrays(self) -> None:
         for _, _data_arrays in self.data_arrays.items():
             for sample_identifier, df in _data_arrays.items():

@@ -15,6 +15,14 @@ class ComputationJobReference:
 
 @define
 class MetricComputationScheduler:
+    """
+    When a request for computation of some feature is received by the application, first the
+    feature specification is written to the database, then this class should be used to "schedule"
+    each of the values for computation.
+
+    Workers can then use the pop function to remove one such job from the queue, before beginning
+    work on the job.
+    """
     database_config_file: str
     cursor: Psycopg2Cursor | None = None
 

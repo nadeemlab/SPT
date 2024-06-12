@@ -1,0 +1,64 @@
+"""Queue of metrics to be computed as jobs."""
+
+from attrs import define
+from psycopg2.extensions import cursor as Psycopg2Cursor
+
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+
+@define
+class ComputationJobReference:
+    feature_specification: int
+    study: str
+    sample: str
+
+
+@define
+class MetricComputationScheduler:
+    database_config_file: str
+    cursor: Psycopg2Cursor | None = None
+
+    def schedule_feature_computation(self, study: str, feature_specification: int) -> None:
+        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+            self._insert_nulls(cursor, feature_specification)
+
+    def pop_uncomputed(self) -> ComputationJobReference | None:
+        for study in self._get_studies():
+            query = '''
+            DELETE FROM
+            quantitative_feature_value
+            WHERE identifier IN
+                (SELECT qfv.identifier FROM quantitative_feature_value qfv WHERE qfv.value IS NULL LIMIT 1)
+            RETURNING feature, subject ;
+            '''
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                cursor.execute(query)
+                rows = tuple(cursor.fetchall())
+                if len(rows) == 0:
+                    continue
+                row = rows[0]
+                return ComputationJobReference(int(row[0]), study, row[1])
+        return None
+
+    @staticmethod
+    def _insert_nulls(cursor: Psycopg2Cursor, feature_specification: int) -> None:
+        query = '''
+        INSERT INTO quantitative_feature_value
+            (identifier, feature, subject, value)
+        SELECT
+            (
+                SELECT
+                CASE WHEN (SELECT COUNT(*) FROM quantitative_feature_value) > 0
+                THEN (SELECT MAX(CAST(identifier as integer)) FROM quantitative_feature_value)
+                ELSE 0 END
+            ) + row_number() OVER (ORDER BY specimen),
+            %s,
+            specimen,
+            NULL
+        FROM specimen_collection_process ;
+        '''
+        cursor.execute(query, (str(feature_specification),))
+
+    def _get_studies(self) -> tuple[str, ...]:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT study FROM study_lookup ;')
+            return tuple(map(lambda row: row[0], cursor.fetchall()))

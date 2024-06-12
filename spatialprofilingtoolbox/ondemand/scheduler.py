@@ -3,6 +3,7 @@
 from attrs import define
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
+from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 @define
@@ -50,13 +51,16 @@ class MetricComputationScheduler:
                 CASE WHEN (SELECT COUNT(*) FROM quantitative_feature_value) > 0
                 THEN (SELECT MAX(CAST(identifier as integer)) FROM quantitative_feature_value)
                 ELSE 0 END
-            ) + row_number() OVER (ORDER BY specimen),
+            ) + row_number() OVER (ORDER BY sq.specimen),
             %s,
-            specimen,
+            sq.specimen,
             NULL
-        FROM specimen_collection_process ;
-        '''
-        cursor.execute(query, (str(feature_specification),))
+        FROM ( %s ) sq ;
+        ''' % (
+            f"'{feature_specification}'",
+            PendingProvider.relevant_specimens_query() % f"'{feature_specification}'",
+        )
+        cursor.execute(query)
 
     def _get_studies(self) -> tuple[str, ...]:
         with DBCursor(database_config_file=self.database_config_file) as cursor:

@@ -9,7 +9,7 @@ from itertools import product
 import re
 
 import pandas as pd
-from psycopg2.extensions import connection as Psycopg2Connection
+from psycopg import connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
@@ -30,7 +30,7 @@ class ADIFeaturesUploader(SourceToADIParser):
     quiet: bool
 
     def __init__(self,
-        connection: Psycopg2Connection,
+        connection: PsycopgConnection,
         data_analysis_study,
         derivation_and_number_specifiers,
         impute_zeros=False,
@@ -275,7 +275,7 @@ class ADIFeatureSpecificationUploader:
     def get_data_analysis_study(measurement_study, cursor):
         cursor.execute('''
         SELECT sc.primary_study FROM study_component sc
-        WHERE sc.component_study=%s
+        WHERE sc.component_study=%s ;
         ''', (measurement_study,))
         study = cursor.fetchall()[0][0]
 
@@ -283,7 +283,7 @@ class ADIFeatureSpecificationUploader:
         SELECT das.name
         FROM data_analysis_study das
         JOIN study_component sc ON sc.component_study=das.name
-        WHERE sc.primary_study=%s
+        WHERE sc.primary_study=%s ;
         ''', (study,))
         rows = cursor.fetchall()
         ondemand = ADIFeatureSpecificationUploader.ondemand_descriptor()
@@ -293,9 +293,10 @@ class ADIFeatureSpecificationUploader:
         data_analysis_study = ADIFeatureSpecificationUploader.form_ondemand_study_name(study)
         cursor.execute('''
         INSERT INTO data_analysis_study (name) VALUES (%s) ;
+        ''', (data_analysis_study,))
+        cursor.execute('''
         INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ;
-        ''', (data_analysis_study, study, data_analysis_study))
-        # cursor.commit()
+        ''', (study, data_analysis_study))
         return data_analysis_study
 
     @staticmethod

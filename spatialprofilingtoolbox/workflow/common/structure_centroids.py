@@ -92,7 +92,7 @@ class StructureCentroids:
                 cursor.execute('''
                     SELECT specimen, blob_contents FROM ondemand_studies_index osi
                     WHERE osi.blob_type='centroids';
-                ''', (study, ))
+                ''')
                 self._studies[study] = {}
                 while True:
                     row = cursor.fetchone()

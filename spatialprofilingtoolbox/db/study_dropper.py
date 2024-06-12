@@ -1,6 +1,6 @@
 """Drop a single study."""
 
-from psycopg2.errors import InvalidCatalogName
+from psycopg.errors import InvalidCatalogName
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
@@ -33,8 +33,8 @@ class StudyDropper:
                 return
             database_name = matches[0][0]
 
-        with DBConnection(database_config_file=database_config_file, autocommit = False) as connection:
-            connection.set_session(autocommit = True)
+        with DBConnection(database_config_file=database_config_file, autocommit = True) as connection:
+            connection.autocommit = True
             with connection.cursor() as cursor:
                 try:
                     cursor.execute('DROP DATABASE %s ;' % database_name)

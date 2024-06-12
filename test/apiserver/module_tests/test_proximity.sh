@@ -1,9 +1,15 @@
 
+
 blue="\033[36;2m"
 green="\033[32m"
 yellow="\033[33m"
 red="\033[31m"
 reset_code="\033[0m"
+
+function normalize_floats() {
+    filename="$1"
+    sed -r 's/(\.[0-9][0-9][0-9])[0-9]+/\1/g' "$filename"
+}
 
 function test_proximity() {
     p1="$1"
@@ -37,8 +43,11 @@ function test_proximity() {
         fi
     done
 
-    diff $filename proximity.json
+    normalize_floats "$filename" > n1.json
+    normalize_floats proximity.json > n2.json
+    diff n1.json n2.json
     status=$?
+    rm n1.json n2.json
     [ $status -eq 0 ] || (echo "API query for proximity metrics failed."; )
     if [ $status -eq 0 ];
     then

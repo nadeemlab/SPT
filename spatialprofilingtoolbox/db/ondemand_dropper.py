@@ -3,7 +3,7 @@
 from typing import cast
 import re
 
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -14,7 +14,7 @@ class OnDemandComputationsDropper:
     """Drop ondemand-computed feature values, specifications, etc."""
 
     @staticmethod
-    def drop(cursor: Psycopg2Cursor, pending_only: bool = False, drop_all: bool = False):
+    def drop(cursor: PsycopgCursor, pending_only: bool = False, drop_all: bool = False):
         specifications = cast(list[str], OnDemandComputationsDropper.get_droppable(
             cursor,
             pending_only=pending_only,
@@ -24,7 +24,7 @@ class OnDemandComputationsDropper:
 
     @staticmethod
     def get_droppable(
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
         pending_only: bool = False,
         drop_all: bool = False,
     ) -> list[str] | None:
@@ -45,7 +45,7 @@ class OnDemandComputationsDropper:
         return None
 
     @staticmethod
-    def drop_features(cursor: Psycopg2Cursor, specifications: list[str]):
+    def drop_features(cursor: PsycopgCursor, specifications: list[str]):
         for specification in specifications:
             queries = [
                 'DELETE FROM pending_feature_computation WHERE feature_specification=%s ;',

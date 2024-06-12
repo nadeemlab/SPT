@@ -1,7 +1,7 @@
 """Utility to pre-create cell data JSON payloads for application/client-use and save them to the database."""
 import argparse
 
-from psycopg2 import cursor as Psycopg2Cursor
+from psycopg import cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument

@@ -47,9 +47,11 @@ class PhenotypeProximityAnalysisIntegrator(Integrator):
             cursor.execute('''
             INSERT INTO data_analysis_study(name)
             VALUES (%s) ;
+            ''', (name,))
+            cursor.execute('''
             INSERT INTO study_component(primary_study, component_study)
             VALUES (%s, %s) ;
-            ''', (name, self.study_name, name))
+            ''', (self.study_name, name))
         return name
 
     def export_feature_values(self, core_computation_results_files, data_analysis_study):

@@ -19,7 +19,7 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "psycopg2==2.9.9",
+    "psycopg==3.1.19",
     "adiscstudies==0.11.0",
     "numba==0.59.1",
     "attrs==23.2.0",

@@ -203,14 +203,7 @@ class CellManifestsParser(SourceToADIParser):
                     '\t'.join(r) for r in records[tablename]
                 ]).encode('utf-8')
                 timer.record_timepoint('Started inserting chunk into local memory')
-                with mmap.mmap(-1, len(values_file_contents)) as memmap:
-                    memmap.write(values_file_contents)
-                    memmap.seek(0)
-                    timer.record_timepoint('Started copy from command for bulk insertion')
-                    if tablename == 'expression_quantification':
-                        cursor.copy_from(memmap, tablename, columns=['histological_structure', 'target', 'quantity', 'unit', 'quantification_method', 'discrete_value', 'discretization_method'])
-                    else:
-                        cursor.copy_from(memmap, tablename)
+                self.copy_from(cursor, values_file_contents, tablename)
                 timer.record_timepoint('Finished inserting one chunk')
         expression_quantification_index = self.get_expression_quantification_last_index(cursor) + 1
         return {
@@ -218,6 +211,15 @@ class CellManifestsParser(SourceToADIParser):
             'shape file' : shape_file_identifier_index,
             'expression quantification' : expression_quantification_index,
         }
+
+    def copy_from(self, cursor, contents: bytes, tablename: str) -> None:
+        if tablename == 'expression_quantification':
+            columns = ('histological_structure', 'target', 'quantity', 'unit', 'quantification_method', 'discrete_value', 'discretization_method')
+            copy = f"COPY {tablename} ({', '.join(columns)}) FROM STDIN" 
+        else:
+            copy = f'COPY {tablename} FROM STDIN'
+        with cursor.copy(copy) as copy:
+            copy.write(contents)
 
     def parse_cell_manifest(self,
         cursor,

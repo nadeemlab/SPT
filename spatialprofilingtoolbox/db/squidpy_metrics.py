@@ -1,7 +1,7 @@
 """Make squidpy metrics that don't require specific phenotype selection available."""
 
 from pandas import DataFrame
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.feature_matrix_extractor import FeatureMatrixExtractor

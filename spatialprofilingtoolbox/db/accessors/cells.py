@@ -6,7 +6,7 @@ from typing import Iterable
 from itertools import islice
 from itertools import product
 
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
@@ -149,7 +149,7 @@ class CellsAccess(SimpleReadOnlyProvider):
     def fetch_one_or_else(
         query: str,
         args: tuple,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
         error_message: str,
     ) -> Any:
         cursor.execute(query, args)

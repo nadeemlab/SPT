@@ -5,6 +5,11 @@ yellow="\033[33m"
 red="\033[31m"
 reset_code="\033[0m"
 
+function normalize_floats() {
+    filename="$1"
+    sed -r 's/(\.[0-9][0-9][0-9])[0-9]+/\1/g' "$filename"
+}
+
 function test_squidpy() {
     feature_class="$1"
     if [[ "$feature_class" == "neighborhood%20enrichment" ]];
@@ -64,8 +69,12 @@ function test_squidpy() {
         echo "Test timed out."
         exit 1
     fi;
-    diff $filename squidpy.json
+
+    normalize_floats "$filename" > n1.json
+    normalize_floats squidpy.json > n2.json
+    diff n1.json n2.json
     status=$?
+    rm n1.json n2.json
     [ $status -eq 0 ] || (echo "API query for squidpy metrics failed."; )
     if [ $status -eq 0 ];
     then

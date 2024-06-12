@@ -4,7 +4,7 @@ ARG PIP_NO_CACHE_DIR=1
 RUN apt update && apt install -y gcc g++ libpq-dev && apt-get clean
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev && apt-get clean
-RUN python -m pip install psycopg2==2.9.9
+RUN python -m pip install psycopg==3.1.19
 RUN python -m pip install adiscstudies==0.11.0
 RUN python -m pip install numba==0.59.0
 RUN python -m pip install attrs==23.2.0

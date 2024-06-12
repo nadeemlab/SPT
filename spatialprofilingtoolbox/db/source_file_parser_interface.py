@@ -5,7 +5,7 @@ studies ADI' schema.
 """
 import re
 
-import psycopg2
+import psycopg
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -75,7 +75,7 @@ class SourceToADIParser:
         cursor.execute(f'SELECT {key_name} FROM {tablename};')
         try:
             identifiers = cursor.fetchall()
-        except psycopg2.ProgrammingError:
+        except psycopg.ProgrammingError:
             return 0
         known_integer_identifiers = [
             int(i[0]) for i in identifiers if SourceToADIParser.is_integer(i[0])]

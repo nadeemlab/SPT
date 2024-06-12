@@ -8,7 +8,7 @@ from pandas import (
     to_datetime,
     Timestamp,
 )
-from psycopg2.extensions import connection as Connection
+from psycopg import connection as Connection
 
 from spatialprofilingtoolbox.util import STRFTIME_FORMAT
 from spatialprofilingtoolbox.graphs.plugin_constants import PLUGIN_ALIASES

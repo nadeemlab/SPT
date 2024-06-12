@@ -3,7 +3,7 @@
 from typing import cast
 import re
 
-from psycopg2.errors import UndefinedTable
+from psycopg.errors import UndefinedTable
 
 from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader

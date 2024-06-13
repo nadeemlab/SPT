@@ -38,7 +38,7 @@ class OnDemandWorker:
                 self._wait_for_queue_activity_on(connection)
                 self._work_until_complete()
 
-    def _wait_for_queue_activity_on(self, connection: PsycopgConnection):
+    def _wait_for_queue_activity_on(self, connection: PsycopgConnection) -> None:
         connection.execute('LISTEN queue_activity ;')
         logger.info('Listening on queue_activity channel.')
         notifications = connection.notifies()

@@ -2,26 +2,23 @@
 import sys
 import json
 
-from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
+from asyncio import run as asyncio_run
 
-HOST = 'spt-ondemand-testing'
-PORT = 8016
-
-
-def get_counts(study_name, positives, negatives):
-    with OnDemandRequester(HOST, PORT) as requester:
-        counts_by_specimen = requester.get_counts_by_specimen(positives, negatives, study_name, 0)
-    return counts_by_specimen
+from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 
 
-if __name__ == '__main__':
+async def get_counts(study_name, positives, negatives):
+    return await OnDemandRequester.get_counts_by_specimen(positives, negatives, study_name, 0, ())
+
+
+async def main():
     if sys.argv[1] == '1':
-        counts = get_counts(
+        counts = await get_counts(
             'Melanoma intralesional IL2',
             ['CD3'], ['CD8', 'CD20'],
         )
     elif sys.argv[1] == '2':
-        counts = get_counts(
+        counts = await get_counts(
             'Breast cancer IMC',
             ['CD3 epsilon'], ['CD20'],
         )
@@ -30,3 +27,6 @@ if __name__ == '__main__':
     dump = counts.model_dump()
     json_str = json.dumps(dump, indent=4)
     print(json_str, end='')
+
+if __name__ == '__main__':
+    asyncio_run(main())

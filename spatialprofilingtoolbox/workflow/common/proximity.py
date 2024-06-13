@@ -41,7 +41,10 @@ def compute_proximity_metric_for_signature_pair(
         entry = int(_entry)
         return (entry | signatures2[0] == entry) and (~entry | signatures2[1] == ~entry)
 
-    augmented_mask1 = tuple(map(lambda pair: (membership1(pair[0]), pair[1]), zip(phenotype_masks, locations.transpose())))
+    augmented_mask1 = tuple(map(
+        lambda pair: (membership1(pair[0]), pair[1]),
+        zip(phenotype_masks, locations.transpose()),
+    ))
     mask1 = tuple(map(lambda pair: pair[0], augmented_mask1))
     locations1 = tuple(map(lambda pair: pair[1], filter(lambda pair: pair[0], augmented_mask1)))
     mask2 = tuple(map(membership2, phenotype_masks))

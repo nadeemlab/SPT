@@ -45,7 +45,8 @@ class PendingProvider(OnDemandProvider, ABC):
             )
 
         was_pending = not cls._no_outstanding_jobs(study, feature_specification)
-        should_be_scheduled = is_new and not was_pending
+        no_outstanding_jobs = cls._no_outstanding_jobs(study, feature_specification)
+        should_be_scheduled = is_new and no_outstanding_jobs
         if should_be_scheduled:
             scheduler = MetricComputationScheduler(None)
             scheduler.schedule_feature_computation(study, int(feature_specification))

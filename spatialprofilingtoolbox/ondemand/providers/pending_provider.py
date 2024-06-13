@@ -1,9 +1,11 @@
 """Abstract class for providers that need to wait for on demand calculations to complete."""
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from threading import Thread
 from datetime import datetime
-from math import isnan, isinf
+from math import isnan
+from math import isinf
 
 from pandas import DataFrame
 
@@ -226,13 +228,6 @@ class PendingProvider(OnDemandProvider, ABC):
             'metrics': metrics,
             'pending': still_pending,
         }
-
-    @classmethod
-    def get_sample_identifiers(cls, study: str, feature_specification: str) -> list[str]:
-        return cls._get_expected_domain_for_computed_values(study, feature_specification)
-
-    def get_cells(self, sample_identifier: str, data_analysis_study: str) -> DataFrame:
-        return self.data_arrays[data_analysis_study][sample_identifier]
 
     @classmethod
     def retrieve_feature_derivation_method(cls, study: str, feature_specification: str) -> str:

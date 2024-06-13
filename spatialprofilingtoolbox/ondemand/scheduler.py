@@ -24,7 +24,7 @@ class MetricComputationScheduler:
     Workers can then use the pop function to remove one such job from the queue, before beginning
     work on the job.
     """
-    database_config_file: str
+    database_config_file: str | None
     cursor: Psycopg2Cursor | None = None
 
     def schedule_feature_computation(self, study: str, feature_specification: int) -> None:

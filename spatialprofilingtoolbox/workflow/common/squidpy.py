@@ -35,7 +35,7 @@ def lookup_squidpy_feature_class(method: str) -> str | None:
 
 def compute_squidpy_metric_for_one_sample(
     df_cell: DataFrame,
-    phenotypes: list[PhenotypeCriteria],
+    phenotypes: tuple[PhenotypeCriteria, ...],
     feature_class: str,
     radius: float | None = None,
 ) -> float | None:

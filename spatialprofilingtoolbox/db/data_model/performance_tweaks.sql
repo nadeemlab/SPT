@@ -45,6 +45,12 @@ CREATE TABLE pending_feature_computation (
     time_initiated VARCHAR(512)
 );
 
+CREATE TABLE quantitative_feature_value_queue (
+    identifier VARCHAR(512) PRIMARY KEY,
+    feature VARCHAR(512) REFERENCES feature_specification(identifier) ON DELETE CASCADE ,
+    subject VARCHAR
+);
+
 CREATE TABLE ondemand_studies_index (
     specimen VARCHAR(512),
     blob_type VARCHAR(512),

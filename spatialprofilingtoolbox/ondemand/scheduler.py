@@ -5,6 +5,7 @@ from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 
 @define
 class ComputationJobReference:
@@ -28,15 +29,20 @@ class MetricComputationScheduler:
 
     def schedule_feature_computation(self, study: str, feature_specification: int) -> None:
         with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
-            self._insert_nulls(cursor, feature_specification)
+            self._insert_jobs(cursor, feature_specification)
+            self._broadcast_queue_activity()
+
+    def _broadcast_queue_activity(self) -> None:
+        with DBConnection(database_config_file=self.database_config_file) as connection:
+            connection.execute("NOTIFY queue_activity, 'new items' ;")
 
     def pop_uncomputed(self) -> ComputationJobReference | None:
         for study in self._get_studies():
             query = '''
             DELETE FROM
-            quantitative_feature_value
+            quantitative_feature_value_queue
             WHERE identifier IN
-                (SELECT qfv.identifier FROM quantitative_feature_value qfv WHERE qfv.value IS NULL LIMIT 1)
+                (SELECT qfvq.identifier FROM quantitative_feature_value_queue qfvq LIMIT 1)
             RETURNING feature, subject ;
             '''
             with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
@@ -49,20 +55,19 @@ class MetricComputationScheduler:
         return None
 
     @staticmethod
-    def _insert_nulls(cursor: Psycopg2Cursor, feature_specification: int) -> None:
+    def _insert_jobs(cursor: Psycopg2Cursor, feature_specification: int) -> None:
         query = '''
-        INSERT INTO quantitative_feature_value
-            (identifier, feature, subject, value)
+        INSERT INTO quantitative_feature_value_queue
+            (identifier, feature, subject)
         SELECT
             (
                 SELECT
-                CASE WHEN (SELECT COUNT(*) FROM quantitative_feature_value) > 0
-                THEN (SELECT MAX(CAST(identifier as integer)) FROM quantitative_feature_value)
+                CASE WHEN (SELECT COUNT(*) FROM quantitative_feature_value_queue) > 0
+                THEN (SELECT MAX(CAST(identifier as integer)) FROM quantitative_feature_value_queue)
                 ELSE 0 END
             ) + row_number() OVER (ORDER BY sq.specimen),
             %s,
-            sq.specimen,
-            NULL
+            sq.specimen
         FROM ( %s ) sq ;
         ''' % (
             f"'{feature_specification}'",

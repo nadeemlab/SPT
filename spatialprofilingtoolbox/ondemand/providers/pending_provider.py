@@ -10,8 +10,10 @@ from pandas import DataFrame
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
+from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
+from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -20,39 +22,48 @@ logger = colorized_logger(__name__)
 class PendingProvider(OnDemandProvider, ABC):
     """Provide precalculated metrics or start, wait, receive, and then provide them."""
 
-    def get_metrics(
-        self,
+    @classmethod
+    def get_metrics_or_schedule(
+        cls,
         study: str,
         **kwargs,
     ) -> dict[str, dict[str, float | None] | bool]:
-        """Get requested metrics or signal that it's not done calculating yet."""
-        log_messages = []
+        """Get requested metrics, computed up to now."""
         with DBCursor(study=study) as cursor:
             get = ADIFeatureSpecificationUploader.get_data_analysis_study
             measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
             data_analysis_study = get(measurement_study_name, cursor)
-        get_or_create = self.get_or_create_feature_specification
+        get_or_create = cls.get_or_create_feature_specification
         feature_specification = get_or_create(study, data_analysis_study, **kwargs)
-        if self._is_already_computed(study, feature_specification):
+        if cls._is_already_computed(study, feature_specification):
             is_pending = False
-            log_messages.append('Already computed.')
+            logger.info('Already computed.')
         else:
-            is_pending = self._is_already_pending(study, feature_specification)
+            is_pending = cls._is_already_pending(study, feature_specification)
             if is_pending:
-                log_messages.append('Already pending.')
+                logger.info('Already pending.')
             else:
-                log_messages.append('Not already pending.')
+                logger.info('Not already pending.')
             if not is_pending:
-                self._fork_computation_task(study, feature_specification)
-                self._set_pending_computation(study, feature_specification)
-                log_messages.append('Background task just started, is pending.')
+                cls._set_pending_computation(study, feature_specification)
+                scheduler = MetricComputationScheduler(None)
+                scheduler.schedule_feature_computation(study, int(feature_specification))
                 is_pending = True
-        logger.info(' '.join(log_messages))
-        return self._query_for_computed_feature_values(
+        return cls._query_for_computed_feature_values(
             study,
             feature_specification,
             still_pending=is_pending,
         )
+
+    def insert_value(self, value: float | int) -> None:
+        study = self.job.study
+        specification = str(self.job.feature_specification)
+        sample = self.job.sample
+        with DBCursor(study=study) as cursor:
+            add_feature_value(specification, sample, str(value), cursor)
+        if self._is_already_computed(study, specification):
+            self.drop_pending_computation(study, specification)
+            logger.info(f'Finished computing feature {specification} ({study}).')
 
     @classmethod
     @abstractmethod
@@ -65,8 +76,8 @@ class PendingProvider(OnDemandProvider, ABC):
         """Return feature specification, creating one if necessary."""
         raise NotImplementedError("For subclasses to implement.")
 
-    @classmethod
-    def create_feature_specification(cls,
+    @staticmethod
+    def create_feature_specification(
         study: str,
         specifiers: tuple[str, ...],
         data_analysis_study: str,
@@ -125,7 +136,7 @@ class PendingProvider(OnDemandProvider, ABC):
         with DBCursor(study=study) as cursor:
             cursor.execute('''
             SELECT COUNT(*) FROM quantitative_feature_value qfv
-            WHERE qfv.feature=%s
+            WHERE qfv.feature=%s AND qfv.value IS NOT NULL
             ;
             ''', (feature_specification,))
             rows = cursor.fetchall()
@@ -142,13 +153,6 @@ class PendingProvider(OnDemandProvider, ABC):
         if len(rows) >= 1:
             return True
         return False
-
-    def _fork_computation_task(self, study:str, feature_specification: str) -> None:
-        background_thread = Thread(
-            target=self.have_feature_computed,
-            args=(study, feature_specification,)
-        )
-        background_thread.start()
 
     @classmethod
     def _set_pending_computation(cls, study: str, feature_specification: str) -> None:
@@ -171,29 +175,6 @@ class PendingProvider(OnDemandProvider, ABC):
                 ''',
                 (feature_specification, ),
             )
-
-    def reset_timeout(self, study: str, feature_specification: str) -> None:
-        now_seconds = datetime.now().timestamp()
-        args = (study, feature_specification)
-        self.timeouts[args] = now_seconds
-
-    def check_timeout(self, study: str, feature_specification: str) -> bool:
-        now_seconds = datetime.now().timestamp()
-        args = (study, feature_specification)
-        if args in self.timeouts:
-            difference = now_seconds - self.timeouts[args]
-            if difference > self.timeout:
-                logger.debug('Ondemand timeout %s exceeded.', self.timeout)
-                del self.timeouts[args]
-                return True
-        else:
-            self.timeouts[args] = now_seconds
-        return False
-
-    @abstractmethod
-    def have_feature_computed(self, study: str, feature_specification: str) -> None:
-        """Compute the feature and add it to the database."""
-        raise NotImplementedError("For subclasses to implement.")
 
     @staticmethod
     def retrieve_specifiers(study: str, feature_specification: str) -> tuple[str, list[str]]:

@@ -3,6 +3,8 @@
 from typing import cast
 from itertools import chain
 
+from pandas import DataFrame
+
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import (
@@ -10,6 +12,8 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (
     phenotype_to_phenotype_str,
 )
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
+from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.squidpy import (
@@ -24,16 +28,104 @@ logger = colorized_logger(__name__)
 class SquidpyProvider(PendingProvider):
     """Calculate selected squidpy metrics."""
 
-    def __init__(self, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
-        """Load from binary expression files and JSON-formatted index in the data directory.
+    def __init__(self, job: ComputationJobReference):
+        super().__init__(job)
 
-        Note: SquidpyProvider always loads centroids because it needs them.
-        """
-        super().__init__(timeout, database_config_file, load_centroids=True)
+    def compute(self) -> None:
+        args, arrays = self._prepare_parameters()
+        value = self._perform_computation(args, arrays)
+        self._handle_value(value)
 
-    @classmethod
-    def service_specifier(cls) -> str:
-        return 'squidpy'
+    def _prepare_parameters(
+        self,
+    ) -> tuple[tuple[str, str, tuple[PhenotypeCriteria, ...], float | None], CellDataArrays]:
+        method = self.retrieve_feature_derivation_method(study, feature_specification)
+        feature_class = cast(str, lookup_squidpy_feature_class(method))
+        _, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
+        phenotypes: tuple[PhenotypeCriteria, ...]
+        if feature_class == 'co-occurrence':
+            phenotypes = tuple(map(phenotype_str_to_phenotype, specifiers[0:2]))
+            radius = float(specifiers[2])
+        else:
+            phenotypes = tuple(map(phenotype_str_to_phenotype, specifiers))
+            radius = None
+        arrays = self.get_cell_data_arrays()
+        return ((method, feature_class, phenotypes, radius), arrays)
+
+    def _perform_computation(
+        self,
+        args: tuple[str, str, tuple[PhenotypeCriteria, ...], float | None],
+        arrays: CellDataArrays,
+    ) -> float | None:
+        method, feature_class, phenotypes, radius = args
+        df = self._form_cells_dataframe(arrays)
+        return compute_squidpy_metric_for_one_sample(df, phenotypes, feature_class, radius=radius)
+
+    def _handle_value(self, value: float | None) -> None:
+        if value is not None:
+            self.insert_value(value)
+        else:
+            self._warn_no_value()
+
+    def _warn_no_value(self) -> None:
+        feature = self.job.feature_specification
+        study = self.job.study
+        logger.warn(f'Feature {feature} ({study}) could not be computed.')
+
+    @staticmethod
+    def _form_cells_dataframe(arrays: CellDataArrays) -> DataFrame:
+        features = arrays.feature_names
+        rows = []
+        for identifier, phenotype, location in zip(arrays.identifiers, arrays.phenotype, arrays.location):
+            binary_expression_64_string = ''.join([
+                ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
+                for ii in int.to_bytes(phenotype, 'big')
+            ])
+            x = location[0]
+            y = location[0]
+            row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + [x, y])
+            rows.append(row)
+        columns = features + ['histological_structure_id'] + ['pixel x', 'pixel y']
+        df = DataFrame(rows, columns=columns)
+        df.set_index('histological_structure_id', inplace=True)
+        return df
+
+    # def have_feature_computed(self, study: str, feature_specification: str) -> None:
+    #     args = (study, feature_specification)
+    #     method = self.retrieve_feature_derivation_method(study, feature_specification)
+    #     feature_class = cast(str, lookup_squidpy_feature_class(method))
+    #     data_analysis_study, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
+    #     phenotypes: list[PhenotypeCriteria] = []
+    #     if feature_class == 'co-occurrence':
+    #         phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers[0:2]]
+    #         radius = float(specifiers[2])
+    #     else:
+    #         phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers]
+    #         radius = None
+    #     sample_identifiers = SquidpyProvider.get_sample_identifiers(study, feature_specification)
+    #     use_nulls = False
+    #     for sample_identifier in sample_identifiers:
+    #         if not use_nulls:
+    #             value = compute_squidpy_metric_for_one_sample(
+    #                 self.get_cells(sample_identifier, data_analysis_study),
+    #                 phenotypes,
+    #                 feature_class,
+    #                 radius=radius,
+    #             )
+    #         else:
+    #             value = None
+    #         message = 'Computed feature value of %s: %s, %s'
+    #         logger.debug(message, feature_specification, sample_identifier, value)
+    #         with DBCursor(study=study) as cursor:
+    #             add_feature_value(feature_specification, sample_identifier, value, cursor)
+    #         if self.check_timeout(*args):
+    #             use_nulls = True
+    #     SquidpyProvider.drop_pending_computation(study, feature_specification)
+    #     logger.debug('Wrapped up squidpy metric calculation, feature "%s".', feature_specification)
+    #     logger.debug(
+    #         'The samples considered were: %s',
+    #         [sample_identifiers[0:5], f'(... {len(sample_identifiers)} entries)'],
+    #     )
 
     # Feature specification and dispatch stuff:
 
@@ -204,40 +296,3 @@ class SquidpyProvider(PendingProvider):
             specifiers = tuple(phenotypes)
         method = cast(str, get_feature_description(feature_class))
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
-
-    def have_feature_computed(self, study: str, feature_specification: str) -> None:
-        args = (study, feature_specification)
-        method = self.retrieve_feature_derivation_method(study, feature_specification)
-        feature_class = cast(str, lookup_squidpy_feature_class(method))
-        data_analysis_study, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
-        phenotypes: list[PhenotypeCriteria] = []
-        if feature_class == 'co-occurrence':
-            phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers[0:2]]
-            radius = float(specifiers[2])
-        else:
-            phenotypes = [phenotype_str_to_phenotype(s) for s in specifiers]
-            radius = None
-        sample_identifiers = SquidpyProvider.get_sample_identifiers(study, feature_specification)
-        use_nulls = False
-        for sample_identifier in sample_identifiers:
-            if not use_nulls:
-                value = compute_squidpy_metric_for_one_sample(
-                    self.get_cells(sample_identifier, data_analysis_study),
-                    phenotypes,
-                    feature_class,
-                    radius=radius,
-                )
-            else:
-                value = None
-            message = 'Computed feature value of %s: %s, %s'
-            logger.debug(message, feature_specification, sample_identifier, value)
-            with DBCursor(study=study) as cursor:
-                add_feature_value(feature_specification, sample_identifier, value, cursor)
-            if self.check_timeout(*args):
-                use_nulls = True
-        SquidpyProvider.drop_pending_computation(study, feature_specification)
-        logger.debug('Wrapped up squidpy metric calculation, feature "%s".', feature_specification)
-        logger.debug(
-            'The samples considered were: %s',
-            [sample_identifiers[0:5], f'(... {len(sample_identifiers)} entries)'],
-        )

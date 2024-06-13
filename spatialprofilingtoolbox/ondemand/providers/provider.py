@@ -38,8 +38,10 @@ class OnDemandProvider(ABC):
     def compute(self) -> None:
         raise NotImplementedError
 
-    def get_cell_data_arrays(self, study: str, sample: str) -> CellDataArrays:
-        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+    def get_cell_data_arrays(self) -> CellDataArrays:
+        study = self.job.study
+        sample = self.job.sample
+        with DBCursor(study=study) as cursor:
             access = CellsAccess(cursor)
             raw = access.get_cells_data(sample)
             feature_names = access.get_ordered_feature_names()

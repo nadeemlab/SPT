@@ -12,7 +12,6 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (
     phenotype_to_phenotype_str,
 )
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.squidpy import (
@@ -68,9 +67,8 @@ class SquidpyProvider(PendingProvider):
                 ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
                 for ii in int.to_bytes(phenotype, byteorder='big')
             ])
-            x0 = location[0]
-            y0 = location[0]
-            row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + [x0, y0])
+            loc = [location[0], location[1]]
+            row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + loc)
             rows.append(row)
         columns = list(features) + ['histological_structure_id'] + ['pixel x', 'pixel y']
         df = DataFrame(rows, columns=columns)

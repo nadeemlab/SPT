@@ -11,7 +11,7 @@ from typing import Callable
 from inspect import getfullargspec
 
 from psycopg import connect
-from psycopg import Connection as Connection
+from psycopg import Connection as PsycopgConnection
 from psycopg import Cursor as PsycopgCursor
 from psycopg import Error as PsycopgError
 from psycopg import OperationalError
@@ -39,9 +39,9 @@ class DatabaseNotFoundError(ValueError):
 
 class ConnectionProvider:
     """Simple wrapper of a database connection."""
-    connection: Connection
+    connection: PsycopgConnection
 
-    def __init__(self, connection: Connection):
+    def __init__(self, connection: PsycopgConnection):
         self.connection = connection
 
     def get_connection(self):
@@ -95,7 +95,7 @@ class DBConnection(ConnectionProvider):
             return str(rows[0][0])
 
     @staticmethod
-    def make_connection(credentials: DBCredentials) -> Connection:
+    def make_connection(credentials: DBCredentials) -> PsycopgConnection:
         return connect(
             dbname=credentials.database,
             host=credentials.endpoint,

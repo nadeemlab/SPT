@@ -4,7 +4,7 @@ from statistics import mean
 from typing import Any
 from typing import cast
 
-from psycopg import cursor as PsycopgCursor
+from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points

@@ -37,7 +37,7 @@ class StudyDropper:
             connection.autocommit = True
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute('DROP DATABASE %s ;' % database_name)
+                    cursor.execute(f'DROP DATABASE {database_name} ;')
                     logger.info(f'Dropped database: {database_name}')
                 except InvalidCatalogName:
                     logger.warning(f'The database {database_name} does not exist, can not drop it.')

@@ -128,9 +128,9 @@ class CellsAccess(SimpleReadOnlyProvider):
     @classmethod
     def _check_consecutive(cls, identifiers: list[int]):
         offset = identifiers[0]
-        for i1, i2 in zip(identifiers, range(len(identifiers))):
-            if i1 != i2 + offset:
-                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {i1} should be {i2 + offset}.'  # pylint: disable=line-too-long
+        for id1, id2 in zip(identifiers, range(len(identifiers))):
+            if id1 != id2 + offset:
+                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {id1} should be {id2 + offset}.'  # pylint: disable=line-too-long
                 logger.warning(message)
                 break
 

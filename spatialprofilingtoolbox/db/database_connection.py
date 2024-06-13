@@ -11,8 +11,8 @@ from typing import Callable
 from inspect import getfullargspec
 
 from psycopg import connect
-from psycopg import connection as Connection
-from psycopg import cursor as PsycopgCursor
+from psycopg import Connection as Connection
+from psycopg import Cursor as PsycopgCursor
 from psycopg import Error as PsycopgError
 from psycopg import OperationalError
 from psycopg.errors import DuplicateDatabase

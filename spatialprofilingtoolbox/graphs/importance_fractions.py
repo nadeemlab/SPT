@@ -198,7 +198,7 @@ class ImportanceCountsAccessor:
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
         try:
-            content = get_request(url)
+            content = get_request(url, timeout=200)
         except Exception as exception:
             print(url)
             raise exception

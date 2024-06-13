@@ -26,7 +26,6 @@ from spatialprofilingtoolbox.db.cohorts import get_sample_cohorts
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 
 logger = colorized_logger(__name__)
 

@@ -27,9 +27,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     Channel,
     PhenotypeCriteria,
     PhenotypeCounts,
-    PhenotypeCount,
     UnivariateMetricsComputationResult,
-    CellData,
     AvailableGNN
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames

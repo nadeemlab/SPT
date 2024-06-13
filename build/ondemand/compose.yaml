@@ -2,10 +2,6 @@ services:
   testing-fast-counts-server:
     image: nadeemlab/spt-ondemand
     container_name: spt-ondemand-testing
-    ports:
-      - target: 8016
-        published: 8016
-        protocol: tcp
     networks:
       - isolated_temporary_test
     environment:

@@ -1,4 +1,4 @@
-"""TCP client for on demand metrics service."""
+"""Entry point for requesting computation by the on-demand service."""
 
 import re
 import json

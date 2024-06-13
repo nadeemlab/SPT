@@ -10,7 +10,6 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (\
 )
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
-from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.proximity import \
     compute_proximity_metric_for_signature_pair
@@ -22,9 +21,6 @@ logger = colorized_logger(__name__)
 
 class ProximityProvider(PendingProvider):
     """Do proximity calculation from pair of signatures."""
-
-    def __init__(self, job: ComputationJobReference):
-        super().__init__(job)
 
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()

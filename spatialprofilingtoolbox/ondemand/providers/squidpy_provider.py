@@ -27,9 +27,6 @@ logger = colorized_logger(__name__)
 class SquidpyProvider(PendingProvider):
     """Calculate selected squidpy metrics."""
 
-    def __init__(self, job: ComputationJobReference):
-        super().__init__(job)
-
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()
         value = self._perform_computation(args, arrays)
@@ -71,9 +68,9 @@ class SquidpyProvider(PendingProvider):
                 ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
                 for ii in int.to_bytes(phenotype, byteorder='big')
             ])
-            x = location[0]
-            y = location[0]
-            row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + [x, y])
+            x0 = location[0]
+            y0 = location[0]
+            row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + [x0, y0])
             rows.append(row)
         columns = list(features) + ['histological_structure_id'] + ['pixel x', 'pixel y']
         df = DataFrame(rows, columns=columns)

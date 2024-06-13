@@ -75,9 +75,9 @@ class StructureCentroidsPuller:
                 else:
                     specimen_count = self._get_specimen_count(measurement_study, cursor)
                 if histological_structures is not None:
-                    def format(hs: int) -> str:
+                    def _format(hs: int) -> str:
                         return f"'{hs}'"
-                    parameters.append(f"({', '.join(map(format, histological_structures))})")
+                    parameters.append(f"({', '.join(map(_format, histological_structures))})")
 
                 query = self._get_shapefiles_query(
                     specimen is not None,

@@ -5,7 +5,6 @@ from ast import literal_eval
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
-from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.phenotype_str import (\
@@ -22,9 +21,6 @@ logger = colorized_logger(__name__)
 class CountsProvider(PendingProvider):
     """Scan binary-format expression matrices for specific signatures."""
 
-    def __init__(self, job: ComputationJobReference):
-        super().__init__(job)
-
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()
         count = self._perform_count(args, arrays)
@@ -33,7 +29,6 @@ class CountsProvider(PendingProvider):
     def _prepare_parameters(self) -> tuple[tuple[int, int, tuple[int, ...]], CellDataArrays]:
         study = self.job.study
         specification = str(self.job.feature_specification)
-        sample = self.job.sample
         _, specifiers = self.retrieve_specifiers(study, specification)
         phenotype = phenotype_str_to_phenotype(specifiers[0])
         cells_selected = self._selections_from_str(specifiers[1])

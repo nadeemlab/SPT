@@ -87,13 +87,13 @@ class StructureCentroids:
             studies = tuple(retrieve_study_names(self.database_config_file))
         else:
             studies = (study,)
-        for study in studies:
-            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+        for _study in studies:
+            with DBCursor(database_config_file=self.database_config_file, study=_study) as cursor:
                 cursor.execute('''
                     SELECT specimen, blob_contents FROM ondemand_studies_index osi
                     WHERE osi.blob_type='centroids';
                 ''')
-                self._studies[study] = {}
+                self._studies[_study] = {}
                 while True:
                     row = cursor.fetchone()
                     if row is None:
@@ -101,8 +101,8 @@ class StructureCentroids:
                     obj = pickle.loads(row[1])
                     for key, value in obj.items():
                         if not key in self._studies:
-                            self._studies[study][key] = {}
-                        self._studies[study][key].update(value)
+                            self._studies[_study][key] = {}
+                        self._studies[_study][key].update(value)
 
     def centroids_exist(self, study: str | None = None) -> bool:
         counts = get_counts(self.database_config_file, 'centroids', study=study)

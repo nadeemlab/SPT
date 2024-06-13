@@ -2,7 +2,6 @@
 
 from abc import ABC
 from abc import abstractmethod
-from threading import Thread
 from datetime import datetime
 from math import isnan
 from math import isinf
@@ -68,7 +67,7 @@ class PendingProvider(OnDemandProvider, ABC):
     def _warn_no_value(self) -> None:
         feature = self.job.feature_specification
         study = self.job.study
-        logger.warn(f'Feature {feature} ({study}) could not be computed.')
+        logger.warning(f'Feature {feature} ({study}) could not be computed.')
 
     def insert_value(self, value: float | int) -> None:
         study = self.job.study

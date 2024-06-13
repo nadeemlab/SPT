@@ -1,9 +1,5 @@
 """Entry point for requesting computation by the on-demand service."""
 
-import re
-import json
-import socket
-import os
 from typing import cast
 
 from asyncio import sleep as asyncio_sleep

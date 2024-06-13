@@ -6,7 +6,7 @@ from typing import Iterable
 from itertools import islice
 from itertools import product
 
-from psycopg import cursor as PsycopgCursor
+from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
@@ -78,7 +78,7 @@ class CellsAccess(SimpleReadOnlyProvider):
         ))
         byte_count = len(index_and_expressions)
         if byte_count % 16 != 0:
-            message = f'Expected 16 bytes per cell in binary representation of phenotype data, got {byte_count}.'
+            message = f'Expected 16 bytes per cell in binary representation of phenotype data, got {byte_count}.'  # pylint: disable=line-too-long
             logger.error(message)
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
@@ -117,12 +117,12 @@ class CellsAccess(SimpleReadOnlyProvider):
         cell_count = int(len(serial) / 20)
         
         extrema = {
-            (operation[1], index): operation[0](map(lambda pair: pair[index-1], location_data.values()))
+            (operation[1], index): operation[0](map(lambda p: p[index-1], location_data.values()))
             for operation, index in product(((min, 'min'), (max, 'max')), (1, 2))
         }
         header = b''.join(map(
             lambda i: int(i).to_bytes(4),
-            (cell_count, extrema[('min',1)], extrema[('max',1)], extrema[('min',2)], extrema[('max',2)])
+            (cell_count,extrema[('min',1)],extrema[('max',1)],extrema[('min',2)],extrema[('max',2)])
         ))
         return b''.join((header, serial))
 
@@ -131,7 +131,7 @@ class CellsAccess(SimpleReadOnlyProvider):
         offset = identifiers[0]
         for i1, i2 in zip(identifiers, range(len(identifiers))):
             if i1 != i2 + offset:
-                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {i1} should be {i2 + offset}.'
+                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {i1} should be {i2 + offset}.'  # pylint: disable=line-too-long
                 logger.warning(message)
                 break
 

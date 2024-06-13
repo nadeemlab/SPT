@@ -398,8 +398,8 @@ async def get_cell_data_binary(
     if not sample in query().get_sample_names(study):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
     number_cells = cast(int, query().get_number_cells(study))
-    def match(c: PhenotypeCount) -> bool:
-        return c.specimen == sample
+    def match(pc: PhenotypeCount) -> bool:
+        return pc.specimen == sample
     count = tuple(filter(
         match,
         await get_phenotype_counts([], [], study, number_cells).counts))[0].count
@@ -480,8 +480,7 @@ async def importance_fraction_plot(
         figure_size,
         orientation,
     )
-    await generator.init_awaitable()
-    await generator.generate_plot()
+    plot = await generator.generate_plot()
     plt.figure(plot.number)  # type: ignore
     buf = BytesIO()
     plt.savefig(buf, format=img_format)

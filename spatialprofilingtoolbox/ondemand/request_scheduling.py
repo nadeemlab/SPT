@@ -4,6 +4,7 @@ import re
 import json
 import socket
 import os
+from typing import cast
 
 from asyncio import sleep as asyncio_sleep
 
@@ -63,8 +64,8 @@ class OnDemandRequester:
             counts=tuple(
                 PhenotypeCount(
                     specimen = sample,
-                    count = counts.values[sample],
-                    percentage = _fancy_round(counts.values[sample] / counts_all.values[sample])
+                    count = int(cast(float, counts.values[sample])) if counts.values[sample] is not None else None,
+                    percentage = _fancy_round(cast(float, counts.values[sample]) / counts_all.values[sample])
                     if ((counts.values[sample] is not None) and (counts_all.values[sample] not in {0, None})) else None,
                 )
                 for sample in combined_keys
@@ -84,10 +85,10 @@ class OnDemandRequester:
         signature: tuple[list[str], list[str], list[str], list[str]]
     ) -> UnivariateMetricsComputationResult:
         phenotype1 = PhenotypeCriteria(
-            positive_markers=tuple(signature[0]), negative_markgers=tuple(signature[1]),
+            positive_markers=tuple(signature[0]), negative_markers=tuple(signature[1]),
         )
         phenotype2 = PhenotypeCriteria(
-            positive_markers=tuple(signature[2]), negative_markgers=tuple(signature[3]),
+            positive_markers=tuple(signature[2]), negative_markers=tuple(signature[3]),
         )
         get = ProximityProvider.get_metrics_or_schedule
         return get(study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)

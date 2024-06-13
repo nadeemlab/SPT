@@ -3,12 +3,13 @@
 from attrs import define
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
-from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
+from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 
 @define
 class ComputationJobReference:
+    """Represent one job."""
     feature_specification: int
     study: str
     sample: str
@@ -71,7 +72,7 @@ class MetricComputationScheduler:
         FROM ( %s ) sq ;
         ''' % (
             f"'{feature_specification}'",
-            PendingProvider.relevant_specimens_query() % f"'{feature_specification}'",
+            OnDemandProvider.relevant_specimens_query() % f"'{feature_specification}'",
         )
         cursor.execute(query)
 

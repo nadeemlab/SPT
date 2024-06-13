@@ -319,6 +319,9 @@ class ImportanceFractionAndTestRetriever:
         self.df_phenotypes_original = None
         self.access = ImportanceCountsAccessor(self.study, self.host)
 
+    async def init_awaitable(self):
+        await self.access.init_awaitable()
+
     def get_access(self) -> ImportanceCountsAccessor:
         return self.access
 
@@ -508,6 +511,7 @@ class PlotDataRetriever:
             specification.study,
             use_tqdm=self.use_tqdm,
         )
+        await retriever.init_awaitable()
         return tuple(
             await retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
         )

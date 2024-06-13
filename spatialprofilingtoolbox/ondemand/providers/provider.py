@@ -71,3 +71,13 @@ class OnDemandProvider(ABC):
     def _get_measurement_study(self, study: str) -> str:
         with DBCursor(study=study) as cursor:
             return StudyAccess(cursor).get_study_components(study).measurement
+
+    @staticmethod
+    def relevant_specimens_query() -> str:
+        return '''
+            SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp
+            JOIN study_component sc1 ON sc1.component_study=sdmp.study
+            JOIN study_component sc2 ON sc1.primary_study=sc2.primary_study
+            JOIN feature_specification fsn ON fsn.study=sc2.component_study
+            WHERE fsn.identifier=%s
+        '''

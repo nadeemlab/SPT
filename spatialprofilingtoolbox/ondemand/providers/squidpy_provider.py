@@ -83,7 +83,7 @@ class SquidpyProvider(PendingProvider):
         phenotypes: list[PhenotypeCriteria] | None = None,
         radius: float | None = None,
         **kwargs,
-    ) -> str:
+    ) -> tuple[str, bool]:
         """Create and return the identifier of a feature specification defined by the specifiers,
         if it does not exist. If it already exists, return the already-existing specification's
         identifier.
@@ -101,20 +101,20 @@ class SquidpyProvider(PendingProvider):
             radius=radius,
         )
         if specification is not None:
-            return specification
+            return (specification, False)
         if radius is not None:
             message = 'Creating feature with specifiers: (%s) %s, %s'
             logger.debug(message, data_analysis_study, str(phenotypes_strs), radius)
         else:
             message = 'Creating feature with specifiers: (%s) %s'
             logger.debug(message, data_analysis_study, str(phenotypes_strs))
-        return cls._create_feature_specification(
+        return (cls._create_feature_specification(
             study,
             data_analysis_study,
             feature_class,
             phenotypes_strs,
             radius=radius,
-        )
+        ), True)
 
     @classmethod
     def _get_feature_specification(cls,

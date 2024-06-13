@@ -58,7 +58,7 @@ class ProximityProvider(PendingProvider):
         phenotype2: PhenotypeCriteria | None = None,
         radius: float | None = None,
         **kwargs,
-    ) -> str:
+    ) -> tuple[str, bool]:
         phenotype1 = cast(PhenotypeCriteria, phenotype1)
         phenotype2 = cast(PhenotypeCriteria, phenotype2)
         radius = cast(float, radius)
@@ -70,10 +70,10 @@ class ProximityProvider(PendingProvider):
         )
         specification = cls._get_feature_specification(study, *specifiers_arguments)
         if specification is not None:
-            return specification
+            return (specification, False)
         message = 'Creating feature with specifiers: (%s) %s, %s, %s'
         logger.debug(message, *specifiers_arguments)
-        return cls._create_feature_specification(study, *specifiers_arguments)
+        return (cls._create_feature_specification(study, *specifiers_arguments), True)
 
     @classmethod
     def _get_feature_specification(cls,

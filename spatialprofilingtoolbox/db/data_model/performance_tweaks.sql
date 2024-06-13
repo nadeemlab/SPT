@@ -40,11 +40,6 @@ CREATE TABLE umap_plots (
     png_base64 VARCHAR
 );
 
-CREATE TABLE pending_feature_computation (
-    feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
-    time_initiated VARCHAR(512)
-);
-
 CREATE TABLE quantitative_feature_value_queue (
     identifier VARCHAR(512) PRIMARY KEY,
     feature VARCHAR(512) REFERENCES feature_specification(identifier) ON DELETE CASCADE ,

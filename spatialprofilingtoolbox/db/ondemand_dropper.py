@@ -3,7 +3,7 @@
 from typing import cast
 import re
 
-from psycopg import cursor as PsycopgCursor
+from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -14,42 +14,29 @@ class OnDemandComputationsDropper:
     """Drop ondemand-computed feature values, specifications, etc."""
 
     @staticmethod
-    def drop(cursor: PsycopgCursor, pending_only: bool = False, drop_all: bool = False):
-        specifications = cast(list[str], OnDemandComputationsDropper.get_droppable(
-            cursor,
-            pending_only=pending_only,
-            drop_all=drop_all,
-        ))
+    def drop(cursor: PsycopgCursor):
+        specifications = cast(list[str], OnDemandComputationsDropper.get_droppable(cursor))
         OnDemandComputationsDropper.drop_features(cursor, specifications)
 
     @staticmethod
-    def get_droppable(
-        cursor: PsycopgCursor,
-        pending_only: bool = False,
-        drop_all: bool = False,
-    ) -> list[str] | None:
-        if pending_only:
-            cursor.execute('SELECT feature_specification FROM pending_feature_computation;')
-            return [row[0] for row in cursor.fetchall()]
-        if drop_all:
-            cursor.execute('SELECT DISTINCT study FROM feature_specification;')
-            studies = [row[0] for row in cursor.fetchall()]
-            studies = [s for s in studies if re.search(r' ondemand computed features$', s)]
-            specifications: list[str] = []
-            for study in studies:
-                query = 'SELECT identifier FROM feature_specification WHERE study=%s ;'
-                cursor.execute(query, (study,))
-                _specifications = [row[0] for row in cursor.fetchall()]
-                specifications = specifications + _specifications
-            return specifications
-        return None
+    def get_droppable(cursor: PsycopgCursor) -> list[str] | None:
+        cursor.execute('SELECT DISTINCT study FROM feature_specification;')
+        studies = [row[0] for row in cursor.fetchall()]
+        studies = [s for s in studies if re.search(r' ondemand computed features$', s)]
+        specifications: list[str] = []
+        for study in studies:
+            query = 'SELECT identifier FROM feature_specification WHERE study=%s ;'
+            cursor.execute(query, (study,))
+            _specifications = [row[0] for row in cursor.fetchall()]
+            specifications = specifications + _specifications
+        return specifications
 
     @staticmethod
     def drop_features(cursor: PsycopgCursor, specifications: list[str]):
         for specification in specifications:
             queries = [
-                'DELETE FROM pending_feature_computation WHERE feature_specification=%s ;',
                 'DELETE FROM quantitative_feature_value WHERE feature=%s ;',
+                'DELETE FROM quantitative_feature_value_queue WHERE feature=%s ;',
                 'DELETE FROM feature_specifier WHERE feature_specification=%s ;',
                 'DELETE FROM feature_specification WHERE identifier=%s ;',
             ]

@@ -35,26 +35,35 @@ class PendingProvider(OnDemandProvider, ABC):
             measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
             data_analysis_study = get(measurement_study_name, cursor)
         get_or_create = cls.get_or_create_feature_specification
-        feature_specification = get_or_create(study, data_analysis_study, **kwargs)
-        if cls._is_already_computed(study, feature_specification):
-            is_pending = False
-            logger.info('Already computed.')
-        else:
-            is_pending = cls._is_already_pending(study, feature_specification)
-            if is_pending:
-                logger.info('Already pending.')
-            else:
-                logger.info('Not already pending.')
-            if not is_pending:
-                cls._set_pending_computation(study, feature_specification)
-                scheduler = MetricComputationScheduler(None)
-                scheduler.schedule_feature_computation(study, int(feature_specification))
-                is_pending = True
+        feature_specification, is_new = get_or_create(study, data_analysis_study, **kwargs)
+        if not is_new and cls._no_outstanding_jobs(study, feature_specification):
+            logger.info(f'No outstanding computation jobs for {feature_specification}.')
+            return cls._query_for_computed_feature_values(
+                study,
+                feature_specification,
+                still_pending=False,
+            )
+
+        was_pending = not cls._no_outstanding_jobs(study, feature_specification)
+        should_be_scheduled = is_new and not was_pending
+        if should_be_scheduled:
+            scheduler = MetricComputationScheduler(None)
+            scheduler.schedule_feature_computation(study, int(feature_specification))
+        was_scheduled = should_be_scheduled
+        is_pending = should_be_scheduled or was_pending
         return cls._query_for_computed_feature_values(
             study,
             feature_specification,
             still_pending=is_pending,
         )
+
+    @classmethod
+    def _no_outstanding_jobs(cls, study: str, feature_specification: str) -> bool:
+        with DBCursor(study=study) as cursor:
+            query = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
+            cursor.execute(query, (feature_specification,))
+            count = tuple(cursor.fetchall())[0][0]
+        return count == 0
 
     def handle_insert_value(self, value: float | None) -> None:
         if value is not None:
@@ -74,8 +83,7 @@ class PendingProvider(OnDemandProvider, ABC):
         sample = self.job.sample
         with DBCursor(study=study) as cursor:
             add_feature_value(specification, sample, str(value), cursor)
-        if self._is_already_computed(study, specification):
-            self.drop_pending_computation(study, specification)
+        if self._no_outstanding_jobs(study, specification):
             logger.info(f'Finished computing feature {specification} ({study}).')
 
     @classmethod
@@ -85,7 +93,7 @@ class PendingProvider(OnDemandProvider, ABC):
         study: str,
         data_analysis_study: str,
         **kwargs,
-    ) -> str:
+    ) -> tuple[str, bool]:
         """Return feature specification, creating one if necessary."""
         raise NotImplementedError("For subclasses to implement.")
 
@@ -101,83 +109,6 @@ class PendingProvider(OnDemandProvider, ABC):
             add = Uploader.add_new_feature
             feature_specification = add(specifiers, method, data_analysis_study, cursor)
         return feature_specification
-
-    @staticmethod
-    def _is_already_computed(study: str, feature_specification: str) -> bool:
-        get_expected = PendingProvider._get_expected_number_of_computed_values
-        expected = get_expected(study, feature_specification)
-        get_actual = PendingProvider._get_actual_number_of_computed_values
-        actual = get_actual(study, feature_specification)
-        logger.debug('Actual / expected total values: %s / %s', actual, expected)
-        if actual < expected:
-            return False
-        if actual == expected:
-            return True
-        message = 'Possibly too many computed values of the given type?'
-        raise ValueError(f'{message} Feature "{feature_specification}"')
-
-    @staticmethod
-    def _get_expected_number_of_computed_values(study: str, feature_specification: str) -> int:
-        get_domain = PendingProvider._get_expected_domain_for_computed_values
-        domain = get_domain(study, feature_specification)
-        number = len(domain)
-        return number
-
-    @staticmethod
-    def _get_expected_domain_for_computed_values(
-        study: str,
-        feature_specification: str,
-    ) -> list[str]:
-        with DBCursor(study=study) as cursor:
-            query = PendingProvider.relevant_specimens_query()
-            cursor.execute(f'{query};', (feature_specification,))
-            rows = cursor.fetchall()
-        return [row[0] for row in rows]
-
-    @staticmethod
-    def _get_actual_number_of_computed_values(study: str, feature_specification: str) -> int:
-        with DBCursor(study=study) as cursor:
-            cursor.execute('''
-            SELECT COUNT(*) FROM quantitative_feature_value qfv
-            WHERE qfv.feature=%s AND qfv.value IS NOT NULL
-            ;
-            ''', (feature_specification,))
-            rows = cursor.fetchall()
-            return rows[0][0]
-
-    @classmethod
-    def _is_already_pending(cls, study: str, feature_specification: str) -> bool:
-        with DBCursor(study=study) as cursor:
-            cursor.execute('''
-            SELECT * FROM pending_feature_computation pfc
-            WHERE pfc.feature_specification=%s
-            ''', (feature_specification,))
-            rows = cursor.fetchall()
-        if len(rows) >= 1:
-            return True
-        return False
-
-    @classmethod
-    def _set_pending_computation(cls, study: str, feature_specification: str) -> None:
-        time_str = datetime.now().ctime()
-        with DBCursor(study=study) as cursor:
-            cursor.execute('''
-                INSERT INTO pending_feature_computation (feature_specification, time_initiated)
-                VALUES (%s, %s) ;
-                ''',
-               (feature_specification, time_str),
-            )
-
-    @classmethod
-    def drop_pending_computation(cls, study: str, feature_specification: str) -> None:
-        """Drop note that the computation is still pending."""
-        with DBCursor(study=study) as cursor:
-            cursor.execute('''
-                DELETE FROM pending_feature_computation pfc
-                WHERE pfc.feature_specification=%s ;
-                ''',
-                (feature_specification, ),
-            )
 
     @staticmethod
     def retrieve_specifiers(study: str, feature_specification: str) -> tuple[str, list[str]]:

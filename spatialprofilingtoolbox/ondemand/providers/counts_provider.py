@@ -108,7 +108,7 @@ class CountsProvider(PendingProvider):
         phenotype: PhenotypeCriteria | None = None,
         cells_selected: tuple[int, ...] = (),
         **kwargs,
-    ) -> str:
+    ) -> tuple[str, bool]:
         if phenotype is None:
             phenotype = PhenotypeCriteria(positive_markers=(), negative_markers=())
         else:
@@ -120,7 +120,7 @@ class CountsProvider(PendingProvider):
         )
         specification = cls._get_feature_specification(study, *specifiers_arguments)
         if specification is not None:
-            return specification
+            return (specification, False)
         message = 'Creating feature with specifiers: (%s) %s, %s'
         logger.debug(message, *specifiers_arguments)
         specifiers_arguments_str = (
@@ -128,7 +128,7 @@ class CountsProvider(PendingProvider):
             phenotype_to_phenotype_str(phenotype),
             cls._selections_str(cells_selected),
         )
-        return cls._create_feature_specification(study, *specifiers_arguments_str)
+        return (cls._create_feature_specification(study, *specifiers_arguments_str), True)
 
     @classmethod
     def _get_feature_specification(cls,

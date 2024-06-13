@@ -16,6 +16,8 @@ from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationSchedule
 from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
+    UnivariateMetricsComputationResult
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -29,7 +31,7 @@ class PendingProvider(OnDemandProvider, ABC):
         cls,
         study: str,
         **kwargs,
-    ) -> dict[str, dict[str, float | None] | bool]:
+    ) -> UnivariateMetricsComputationResult:
         """Get requested metrics, computed up to now."""
         with DBCursor(study=study) as cursor:
             get = ADIFeatureSpecificationUploader.get_data_analysis_study
@@ -56,6 +58,17 @@ class PendingProvider(OnDemandProvider, ABC):
             feature_specification,
             still_pending=is_pending,
         )
+
+    def handle_insert_value(self, value: float | None) -> None:
+        if value is not None:
+            self.insert_value(value)
+        else:
+            self._warn_no_value()
+
+    def _warn_no_value(self) -> None:
+        feature = self.job.feature_specification
+        study = self.job.study
+        logger.warn(f'Feature {feature} ({study}) could not be computed.')
 
     def insert_value(self, value: float | int) -> None:
         study = self.job.study
@@ -210,7 +223,7 @@ class PendingProvider(OnDemandProvider, ABC):
         study: str,
         feature_specification: str,
         still_pending: bool = False
-    ) -> dict[str, dict[str, float | None] | bool]:
+    ) -> UnivariateMetricsComputationResult:
         with DBCursor(study=study) as cursor:
             cursor.execute('''
                 SELECT qfv.subject, qfv.value
@@ -221,13 +234,13 @@ class PendingProvider(OnDemandProvider, ABC):
             )
             rows = cursor.fetchall()
             metrics = {
-                row[0]: _json_compliant_float(row[1])
+                str(row[0]): _json_compliant_float(row[1])
                 for row in rows
             }
-        return {
-            'metrics': metrics,
-            'pending': still_pending,
-        }
+        return UnivariateMetricsComputationResult(
+            values = metrics,
+            is_pending = still_pending,
+        )
 
     @classmethod
     def retrieve_feature_derivation_method(cls, study: str, feature_specification: str) -> str:

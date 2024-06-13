@@ -2,48 +2,60 @@
 
 from math import isnan
 
-from pandas import DataFrame
 from sklearn.neighbors import BallTree  # type: ignore
-from numpy import logical_and
 
+from numpy import uint64 as np_int64
+from numpy.typing import NDArray
+
+from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
 def compute_proximity_metric_for_signature_pair(
-    signature1: PhenotypeCriteria,
-    signature2: PhenotypeCriteria,
+    phenotype1: PhenotypeCriteria,
+    phenotype2: PhenotypeCriteria,
     radius: float,
-    cells: DataFrame,
-    tree: BallTree,
+    phenotype_masks: NDArray[np_int64],
+    locations: NDArray[np_int64],
+    feature_names: BitMaskFeatureNames,
 ) -> float | None:
-    cells = cells.rename({
-        column: (column[2:] if (column.startswith('C ') or column.startswith('P ')) else column)
-        for column in cells.columns
-    }, axis=1)
-    p1 = list(signature1.positive_markers)
-    p2 = list(signature1.negative_markers)
-    p3 = list(signature2.positive_markers)
-    p4 = list(signature2.negative_markers)
-    mask1 = cells.astype(bool)[p1].all(axis=1) & (~(cells.astype(bool))[p2]).all(axis=1)
-    mask2 = cells.astype(bool)[p3].all(axis=1) & (~(cells.astype(bool))[p4]).all(axis=1)
-    source_count = sum(mask1)
+    def signature(markers: tuple[str, ...]):
+        return CountsProvider._compute_signature(markers, feature_names)
 
+    marker_set1 = (phenotype1.positive_markers, phenotype1.negative_markers)
+    signatures1 = tuple(map(signature, marker_set1))
+
+    marker_set2 = (phenotype2.positive_markers, phenotype2.negative_markers)
+    signatures2 = tuple(map(signature, marker_set2))
+
+    def membership1(entry: int) -> bool:
+        return (entry | signatures1[0] == entry) and (~entry | signatures1[1] == ~entry)
+
+    def membership2(entry: int) -> bool:
+        return (entry | signatures2[0] == entry) and (~entry | signatures2[1] == ~entry)
+
+    augmented_mask1 = map(lambda pair: membership1(pair[0]), zip(phenotype_masks, locations))
+    mask1 = tuple(map(lambda pair: pair[0], augmented_mask1))
+    locations1 = tuple(map(lambda pair: pair[1], augmented_mask1))
+
+    mask2 = tuple(map(membership2, phenotype_masks))
+
+    mask12_size = len(tuple(filter(lambda pair: pair[0] and pair[1], zip(mask1, mask2))))
+
+    source_count = len(locations1)
     if source_count == 0:
         return None
-    source_cell_locations = cells.loc[mask1, ['pixel x', 'pixel y']]
-    within_radius_indices_list = tree.query_radius(
-        source_cell_locations,
-        radius,
-        return_distance=False,
-    )
-    counts = [
-        sum(mask2.iloc[integer_index] for integer_index in list(integer_indices))
+    tree = BallTree(locations)
+    within_radius_indices_list = tree.query_radius(locations1, radius, return_distance=False)
+    counts = (
+        sum(mask2[integer_index] for integer_index in list(integer_indices))
         for integer_indices in within_radius_indices_list
-    ]
-    count = sum(counts) - sum(logical_and(mask1, mask2))
+    )
+    count = sum(counts) - mask12_size
     return count / source_count
 
 

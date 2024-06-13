@@ -19,7 +19,7 @@ import secure
 
 from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
-from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
+from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
@@ -199,13 +199,14 @@ async def get_anonymous_phenotype_counts_fast(
     return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
 
 
-def _get_anonymous_phenotype_counts_fast(
+async def _get_anonymous_phenotype_counts_fast(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
     number_cells = cast(int, query().get_number_cells(study))
-    return get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+    counts = await get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+    return counts
 
 
 @app.get("/request-spatial-metrics-computation/")
@@ -282,7 +283,7 @@ async def get_importance_composition(
     cell_limit: int = 100,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of important cells expressing a given phenotype."""
-    return _get_importance_composition(
+    return await _get_importance_composition(
         study,
         positive_marker,
         negative_marker,
@@ -293,7 +294,7 @@ async def get_importance_composition(
         cell_limit,
     )
 
-def _get_importance_composition(
+async def _get_importance_composition(
     study: ValidStudy,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -312,7 +313,7 @@ def _get_importance_composition(
         cohort_stratifier,
         cell_limit,
     )
-    return get_phenotype_counts(
+    return await get_phenotype_counts(
         positive_marker,
         negative_marker,
         study,
@@ -322,25 +323,24 @@ def _get_importance_composition(
 
 
 @simple_function_cache()
-def get_phenotype_counts_cached(
+async def get_phenotype_counts_cached(
     positives: tuple[str, ...],
     negatives: tuple[str, ...],
     study: str,
     number_cells: int,
     selected: tuple[int, ...],
 ) -> PhenotypeCounts:
-    with OnDemandRequester(service='counts') as requester:
-        counts = requester.get_counts_by_specimen(
-            positives,
-            negatives,
-            study,
-            number_cells,
-            set(selected) if selected is not None else None,
-        )
+    counts = await OnDemandRequester.get_counts_by_specimen(
+        positives,
+        negatives,
+        study,
+        number_cells,
+        set(selected) if selected is not None else None,
+    )
     return counts
 
 
-def get_phenotype_counts(
+async def get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
@@ -350,13 +350,14 @@ def get_phenotype_counts(
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    return get_phenotype_counts_cached(
+    counts = await get_phenotype_counts_cached(
         tuple(positive_markers),
         tuple(negative_markers),
         study,
         number_cells,
         tuple(sorted(list(cells_selected))) if cells_selected is not None else None,
     )
+    return counts
 
 
 def get_proximity_metrics(
@@ -364,13 +365,11 @@ def get_proximity_metrics(
     markers: tuple[list[str], list[str], list[str], list[str]],
     radius: float,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester(service='proximity') as requester:
-        metrics = requester.get_proximity_metrics(
-            study,
-            radius,
-            markers,
-        )
-    return metrics
+    return OnDemandRequester.get_proximity_metrics(
+        study,
+        radius,
+        markers,
+    )
 
 
 def get_squidpy_metrics(
@@ -379,35 +378,12 @@ def get_squidpy_metrics(
     feature_class: str,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester(service='squidpy') as requester:
-        metrics = requester.get_squidpy_metrics(
-            study,
-            markers,
-            feature_class,
-            radius=radius,
-        )
-    return metrics
-
-
-@app.get("/cell-data/")
-async def get_cell_data(
-    study: ValidStudy,
-    sample: Annotated[str, Query(max_length=512)],
-) -> CellData:
-    """Get cell-level location and phenotype data."""
-    if not sample in query().get_sample_names(study):
-        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
-    number_cells = cast(int, query().get_number_cells(study))
-
-    def match(c: PhenotypeCount) -> bool:
-        return c.specimen == sample
-    count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
-    if count is None or count > CELL_DATA_CELL_LIMIT:
-        message = f'Sample "{sample}" has too many cells: {count}.'
-        raise HTTPException(status_code=404, detail=message)
-    with OnDemandRequester(service='cells') as requester:
-        payload = requester.get_cells_data(study, sample)
-    return payload
+    return OnDemandRequester.get_squidpy_metrics(
+        study,
+        markers,
+        feature_class,
+        radius=radius,
+    )
 
 
 @app.get("/cell-data-binary/")
@@ -426,8 +402,7 @@ async def get_cell_data_binary(
         return c.specimen == sample
     count = tuple(filter(
         match,
-        get_phenotype_counts([], [], study, number_cells,
-    ).counts))[0].count
+        await get_phenotype_counts([], [], study, number_cells).counts))[0].count
     if count is None or count > CELL_DATA_CELL_LIMIT:
         message = f'Sample "{sample}" has too many cells: {count}.'
         raise HTTPException(status_code=404, detail=message)
@@ -491,7 +466,7 @@ async def importance_fraction_plot(
         orientation,
     ) = read_plot_importance_fractions_config(None, settings, True)
 
-    plot = PlotGenerator(
+    generator = PlotGenerator(
         (
             _get_anonymous_phenotype_counts_fast,
             query().get_study_summary,
@@ -504,7 +479,9 @@ async def importance_fraction_plot(
         plugins,
         figure_size,
         orientation,
-    ).generate_plot()
+    )
+    await generator.init_awaitable()
+    await generator.generate_plot()
     plt.figure(plot.number)  # type: ignore
     buf = BytesIO()
     plt.savefig(buf, format=img_format)

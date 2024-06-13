@@ -14,7 +14,6 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
-from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.squidpy import (
     lookup_squidpy_feature_class,
@@ -34,7 +33,7 @@ class SquidpyProvider(PendingProvider):
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()
         value = self._perform_computation(args, arrays)
-        self._handle_value(value)
+        self.handle_insert_value(value)
 
     def _prepare_parameters(
         self,
@@ -60,17 +59,6 @@ class SquidpyProvider(PendingProvider):
         method, feature_class, phenotypes, radius = args
         df = self._form_cells_dataframe(arrays)
         return compute_squidpy_metric_for_one_sample(df, phenotypes, feature_class, radius=radius)
-
-    def _handle_value(self, value: float | None) -> None:
-        if value is not None:
-            self.insert_value(value)
-        else:
-            self._warn_no_value()
-
-    def _warn_no_value(self) -> None:
-        feature = self.job.feature_specification
-        study = self.job.study
-        logger.warn(f'Feature {feature} ({study}) could not be computed.')
 
     @staticmethod
     def _form_cells_dataframe(arrays: CellDataArrays) -> DataFrame:

@@ -116,16 +116,18 @@ class ImportanceCountsAccessor:
         self.study = study
         print('\n' + Colors.bold_magenta + study + Colors.reset + '\n')
         self.cohorts = self._retrieve_cohorts()
-        self.all_cells = self._retrieve_all_cells_counts()
 
-    def counts(self, phenotype_names: str | list[str]) -> DataFrame:
+    async def init_awaitable(self) -> None:
+        self.all_cells = await self._retrieve_all_cells_counts()
+
+    async def counts(self, phenotype_names: str | list[str]) -> DataFrame:
         if isinstance(phenotype_names, str):
             phenotype_names = [phenotype_names]
         conjunction_criteria = self._conjunction_phenotype_criteria(phenotype_names)
         all_name = self.name_for_all_phenotypes(phenotype_names)
-        conjunction_counts_series = self._get_counts_series(conjunction_criteria, all_name)
+        conjunction_counts_series = await self._get_counts_series(conjunction_criteria, all_name)
         individual_counts_series = [
-            self._get_counts_series(self._phenotype_criteria(name), self._name_phenotype(name))
+            await self._get_counts_series(self._phenotype_criteria(name), self._name_phenotype(name))
             for name in phenotype_names
         ]
         df = concat(
@@ -138,7 +140,7 @@ class ImportanceCountsAccessor:
     def name_for_all_phenotypes(self, phenotype_names: list[str]) -> str:
         return ' and '.join([self._name_phenotype(p) for p in phenotype_names])
 
-    def counts_by_signature(self, positives: list[str], negatives: list[str]) -> dict[str, Any]:
+    async def counts_by_signature(self, positives: list[str], negatives: list[str]) -> dict[str, Any]:
         if (not positives) and (not negatives):
             raise ValueError('At least one positive or negative marker is required.')
         if not positives:
@@ -157,14 +159,14 @@ class ImportanceCountsAccessor:
             return self._retrieve(endpoint, query)[0]
         else:
             assert self.query_anonymous_phenotype_counts_fast is not None
-            return self.query_anonymous_phenotype_counts_fast(positives, negatives, self.study).dict()
+            return await self.query_anonymous_phenotype_counts_fast(positives, negatives, self.study).dict()
 
-    def _get_counts_series(self, criteria: dict[str, list[str]], column_name: str) -> Series:
+    async def _get_counts_series(self, criteria: dict[str, list[str]], column_name: str) -> Series:
         criteria_tuple = (
             criteria['positive_markers'],
             criteria['negative_markers'],
         )
-        counts = self.counts_by_signature(*criteria_tuple)
+        counts = await self.counts_by_signature(*criteria_tuple)
         df = DataFrame(counts['counts'])
         mapper = {'specimen': 'sample', 'count': column_name}
         return df.rename(columns=mapper).set_index('sample')[column_name]
@@ -177,8 +179,8 @@ class ImportanceCountsAccessor:
             summary = self.query_study_summary(self.study).dict()
         return DataFrame(summary['cohorts']['assignments']).set_index('sample')
 
-    def _retrieve_all_cells_counts(self) -> Series:
-        counts = self.counts_by_signature([''], [''])
+    async def _retrieve_all_cells_counts(self) -> Series:
+        counts = await self.counts_by_signature([''], [''])
         df = DataFrame(counts['counts'])
         all_name = 'all cells'
         mapper = {'specimen': 'sample', 'count': all_name}
@@ -244,7 +246,7 @@ class ImportanceCountsAccessor:
             ]).rstrip()
         return str(phenotype)
 
-    def important(
+    async def important(
         self,
         phenotype_names: str | list[str],
         plugin: str = 'cg-gnn',
@@ -287,7 +289,7 @@ class ImportanceCountsAccessor:
             }
             optional_args = {k: v for k, v in optional_args.items() if v is not None}
 
-            phenotype_counts = self.query_importance_composition(
+            phenotype_counts = await self.query_importance_composition(
                 self.study,
                 conjunction_criteria['positive_markers'],
                 conjunction_criteria['negative_markers'],
@@ -338,15 +340,15 @@ class ImportanceFractionAndTestRetriever:
     def get_progress_bar_format() -> str:
         return '{l_bar}{bar:30}{r_bar}{bar:-30b}'
 
-    def reset_phenotype_counts(self, df: DataFrame) -> None:
+    async def reset_phenotype_counts(self, df: DataFrame) -> None:
         if self.df_phenotypes_original is None:
-            self._retrieve_phenotype_counts(df)
+            await self._retrieve_phenotype_counts(df)
         self.df_phenotypes = tuple(
             (phenotype, _df.copy())
             for phenotype, _df in cast(PhenotypeDataFrames, self.df_phenotypes_original)
         )
 
-    def _retrieve_phenotype_counts(self, df: DataFrame) -> None:
+    async def _retrieve_phenotype_counts(self, df: DataFrame) -> None:
         pickle_file = self.get_pickle_file('counts')
         if exists(pickle_file):
             with open(pickle_file, 'rb') as file:
@@ -365,16 +367,16 @@ class ImportanceFractionAndTestRetriever:
             else:
                 iterable = levels
             self.df_phenotypes_original = tuple(
-                (str(phenotype), self.get_access().counts(phenotype).astype(int))
+                (str(phenotype), (await self.get_access().counts(phenotype)).astype(int))
                 for phenotype in iterable
             )
             with open(pickle_file, 'wb') as file:
                 pickle_dump(self.df_phenotypes_original, file)
 
-    def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: GNNModel) -> DataFrame:
+    async def retrieve(self, cohorts: set[int], phenotypes: list[str], plugin: GNNModel) -> DataFrame:
         multiindex = MultiIndex.from_product([phenotypes, ['p_value', 'important_fraction']])
         df = DataFrame(columns=multiindex)
-        self.reset_phenotype_counts(df)
+        await self.reset_phenotype_counts(df)
         print(f'Retrieving important cell fractions ({plugin}).')
         N = len(self.get_df_phenotypes())
         pickle_file = self.get_pickle_file('importance', plugin=plugin)
@@ -391,7 +393,7 @@ class ImportanceFractionAndTestRetriever:
             else:
                 iterable = self.get_df_phenotypes()
             important_proportions = {
-                phenotype: self.get_access().important(phenotype, plugin=plugin)
+                phenotype: await self.get_access().important(phenotype, plugin=plugin)
                 for phenotype, _ in iterable
             }
             with open(pickle_file, 'wb') as file:
@@ -496,7 +498,7 @@ class PlotDataRetriever:
     host: str | APIServerCallables
     use_tqdm: bool
 
-    def retrieve_data(self, specification: PlotSpecification) -> tuple[DataFrame, ...]:
+    async def retrieve_data(self, specification: PlotSpecification) -> tuple[DataFrame, ...]:
         cohorts = set(c.index_int for c in specification.cohorts)
         plugins = cast(tuple[GNNModel, GNNModel], specification.plugins)
         phenotypes = list(specification.phenotypes)
@@ -507,7 +509,7 @@ class PlotDataRetriever:
             use_tqdm=self.use_tqdm,
         )
         return tuple(
-            retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
+            await retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
         )
 
 
@@ -730,9 +732,9 @@ class PlotGenerator:
         )
         self.use_tqdm = use_tqdm
 
-    def generate_plot(self) -> 'Figure':
+    async def generate_plot(self) -> 'Figure':
         self._check_viability()
-        dfs = self._retrieve_data()
+        dfs = await self._retrieve_data()
         self._gather_subplot_cases(dfs)
         return self._generate_subplots(dfs)
 
@@ -740,8 +742,8 @@ class PlotGenerator:
         if len(self.specification.plugins) != 2:
             raise ValueError('Currently plot generation requires 2 plugins worth of run data.')
 
-    def _retrieve_data(self) -> tuple[DataFrame, ...]:
-        dfs = PlotDataRetriever(self.host, self.use_tqdm).retrieve_data(self.specification)
+    async def _retrieve_data(self) -> tuple[DataFrame, ...]:
+        dfs = await PlotDataRetriever(self.host, self.use_tqdm).retrieve_data(self.specification)
         dfs = self._transfer_cohort_labels(dfs, self.specification)
         return dfs
 

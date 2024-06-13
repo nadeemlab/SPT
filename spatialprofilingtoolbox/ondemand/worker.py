@@ -1,8 +1,5 @@
 """Handler for requests for on demand calculations."""
 
-from typing import cast
-from time import sleep
-
 from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor

@@ -218,7 +218,7 @@ def create_database(database_config_file: str | None, database_name: str) -> Non
         logger.error(message)
         raise ValueError(message)
     credentials = retrieve_credentials_from_file(database_config_file)
-    create_statement = 'CREATE DATABASE %s;' % database_name
+    create_statement = f'CREATE DATABASE {database_name};'
     connection = connect(
         dbname='postgres',
         host=credentials.endpoint,

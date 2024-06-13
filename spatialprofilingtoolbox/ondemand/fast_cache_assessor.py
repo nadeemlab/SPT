@@ -1,6 +1,5 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
 
-from os import environ
 from typing import cast
 from json import loads as load_json_string
 from time import sleep
@@ -40,10 +39,7 @@ class FastCacheAssessor:
         check_count = 0
         up_to_date = False
         while up_to_date is False:
-            if check_count % 120 == 0:
-                verbose=True
-            else:
-                verbose=False
+            verbose = (check_count % 120 == 0)
             up_to_date = self._cache_is_up_to_date(verbose=verbose)
             if up_to_date:
                 break

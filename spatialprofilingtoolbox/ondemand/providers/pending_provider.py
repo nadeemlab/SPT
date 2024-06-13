@@ -6,8 +6,6 @@ from datetime import datetime
 from math import isnan
 from math import isinf
 
-from pandas import DataFrame
-
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider

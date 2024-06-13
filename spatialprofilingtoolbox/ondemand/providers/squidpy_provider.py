@@ -33,7 +33,7 @@ class SquidpyProvider(PendingProvider):
 
     def _prepare_parameters(
         self,
-    ) -> tuple[tuple[str, str, tuple[PhenotypeCriteria, ...], float | None], CellDataArrays]:
+    ) -> tuple[tuple[str, tuple[PhenotypeCriteria, ...], float | None], CellDataArrays]:
         study = self.job.study
         feature_specification = str(self.job.feature_specification)
         method = self.retrieve_feature_derivation_method(study, feature_specification)
@@ -47,14 +47,14 @@ class SquidpyProvider(PendingProvider):
             phenotypes = tuple(map(phenotype_str_to_phenotype, specifiers))
             radius = None
         arrays = self.get_cell_data_arrays()
-        return ((method, feature_class, phenotypes, radius), arrays)
+        return ((feature_class, phenotypes, radius), arrays)
 
     def _perform_computation(
         self,
-        args: tuple[str, str, tuple[PhenotypeCriteria, ...], float | None],
+        args: tuple[str, tuple[PhenotypeCriteria, ...], float | None],
         arrays: CellDataArrays,
     ) -> float | None:
-        method, feature_class, phenotypes, radius = args
+        feature_class, phenotypes, radius = args
         df = self._form_cells_dataframe(arrays)
         return compute_squidpy_metric_for_one_sample(df, phenotypes, feature_class, radius=radius)
 

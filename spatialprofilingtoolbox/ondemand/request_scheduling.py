@@ -7,14 +7,12 @@ from asyncio import sleep as asyncio_sleep
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
-from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCount,
     PhenotypeCounts,
     CompositePhenotype,
     UnivariateMetricsComputationResult,
-    CellData,
 )
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

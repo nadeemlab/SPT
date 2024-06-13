@@ -30,6 +30,7 @@ class OnDemandWorker:
     def _listen_for_queue_activity(self) -> None:
         while True:
             with DBConnection() as connection:
+                connection._set_autocommit(True)
                 self._wait_for_queue_activity_on(connection)
                 self._work_until_complete()
 
@@ -56,7 +57,7 @@ class OnDemandWorker:
         job = self.queue.pop_uncomputed()
         if job is None:
             return False
-        message = f'Working on job ({job.study}, {job.feature_specification}, {job.sample})'
+        message = f'Doing job (feature={job.feature_specification}, sample={job.sample})'
         logger.info(message)
         self._compute(job)
         return True

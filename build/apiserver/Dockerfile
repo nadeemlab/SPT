@@ -17,6 +17,7 @@ RUN python -m pip install Pillow==9.5.0
 RUN python -m pip install pydantic==2.7.2
 RUN python -m pip install secure==0.3.0
 RUN python -m pip install matplotlib==3.9.0
+RUN python -m pip install squidpy==1.5.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

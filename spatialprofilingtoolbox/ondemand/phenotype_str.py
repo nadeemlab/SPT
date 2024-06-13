@@ -1,5 +1,6 @@
 """Helper functions for translating phenotype definition strings."""
 
+import re
 from ast import literal_eval
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
@@ -7,7 +8,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCr
 
 def phenotype_to_phenotype_str(phenotype: PhenotypeCriteria) -> str:
     """Convert phenotype criteria to a controlled string format."""
-    return str((tuple(phenotype.positive_markers), tuple(phenotype.negative_markers)))
+    return re.sub("'", '"', str((tuple(phenotype.positive_markers), tuple(phenotype.negative_markers))))
 
 
 def phenotype_str_to_phenotype(phenotype_str: str) -> PhenotypeCriteria:

@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
-from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -318,7 +317,6 @@ async def _get_importance_composition(
     )
 
 
-@simple_function_cache()
 async def get_phenotype_counts_cached(
     positives: tuple[str, ...],
     negatives: tuple[str, ...],
@@ -351,7 +349,7 @@ async def get_phenotype_counts(
         tuple(negative_markers),
         study,
         number_cells,
-        tuple(sorted(list(cells_selected))) if cells_selected is not None else None,
+        tuple(sorted(list(cells_selected))) if cells_selected is not None else (),
     )
     return counts
 

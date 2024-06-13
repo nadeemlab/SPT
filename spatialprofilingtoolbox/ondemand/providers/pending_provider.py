@@ -65,7 +65,8 @@ class PendingProvider(OnDemandProvider, ABC):
     def _warn_no_value(self) -> None:
         feature = self.job.feature_specification
         study = self.job.study
-        logger.warning(f'Feature {feature} ({study}) could not be computed.')
+        sample = self.job.sample
+        logger.warning(f'Feature {feature} ({sample}, {study}) could not be computed.')
 
     def insert_value(self, value: float | int) -> None:
         study = self.job.study
@@ -243,7 +244,7 @@ class PendingProvider(OnDemandProvider, ABC):
 
 
 def _json_compliant_float(value: str) -> float | None:
-    if value:
+    if value is not None:
         floated = float(value)
         if not (isnan(floated) or isinf(floated)):
             return floated

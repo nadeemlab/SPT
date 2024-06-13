@@ -83,7 +83,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
         return dict(
-            (int.from_bytes(batch[0:8], 'little'), bytes(batch[8:16]))
+            (int.from_bytes(batch[0:8], byteorder='little'), bytes(reversed(bytes(batch[8:16]))))
             for batch in self._batched(bytes_iterator, 16)
         )
 

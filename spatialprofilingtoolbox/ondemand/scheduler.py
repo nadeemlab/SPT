@@ -1,14 +1,15 @@
 """Queue of metrics to be computed as jobs."""
 
 from attrs import define
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-
+logger = colorized_logger(__name__)
 
 @define
 class MetricComputationScheduler:
@@ -21,7 +22,7 @@ class MetricComputationScheduler:
     work on the job.
     """
     database_config_file: str | None
-    cursor: Psycopg2Cursor | None = None
+    cursor: PsycopgCursor | None = None
 
     def schedule_feature_computation(self, study: str, feature_specification: int) -> None:
         with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
@@ -29,6 +30,7 @@ class MetricComputationScheduler:
             self._broadcast_queue_activity()
 
     def _broadcast_queue_activity(self) -> None:
+        logger.debug('Notifying queue activity channel that there are new items.')
         with DBConnection(database_config_file=self.database_config_file) as connection:
             connection.execute("NOTIFY queue_activity, 'new items' ;")
 
@@ -51,7 +53,7 @@ class MetricComputationScheduler:
         return None
 
     @staticmethod
-    def _insert_jobs(cursor: Psycopg2Cursor, feature_specification: int) -> None:
+    def _insert_jobs(cursor: PsycopgCursor, feature_specification: int) -> None:
         query = '''
         INSERT INTO quantitative_feature_value_queue
             (identifier, feature, subject)

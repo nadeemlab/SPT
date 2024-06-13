@@ -62,10 +62,10 @@ class SquidpyProvider(PendingProvider):
     def _form_cells_dataframe(arrays: CellDataArrays) -> DataFrame:
         features = tuple(f.symbol for f in arrays.feature_names.names)
         rows = []
-        for identifier, phenotype, location in zip(arrays.identifiers, arrays.phenotype, arrays.location):
+        for identifier, phenotype, location in zip(arrays.identifiers, arrays.phenotype, arrays.location.transpose()):
             binary_expression_64_string = ''.join([
                 ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
-                for ii in int.to_bytes(phenotype, byteorder='big')
+                for ii in int(phenotype).to_bytes(8)
             ])
             loc = [location[0], location[1]]
             row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + loc)

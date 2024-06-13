@@ -54,8 +54,8 @@ class CountsProvider(PendingProvider):
                 lambda pair: pair[1],
                 filter(
                     lambda pair: pair[0] in cells_selected,
-                    zip(arrays.identifiers, arrays.phenotype,
-                ))
+                    zip(arrays.identifiers, arrays.phenotype,)
+                ),
             ))
         else:
             candidates = tuple(arrays.phenotype)
@@ -70,7 +70,8 @@ class CountsProvider(PendingProvider):
         by the negatives mask.
         """
         count = 0
-        for entry in integers:
+        for _entry in integers:
+            entry = int(_entry)
             if (entry | positives_mask == entry) and (~entry | negatives_mask == ~entry):
                 count = count + 1
         return count
@@ -79,10 +80,12 @@ class CountsProvider(PendingProvider):
     def _compute_signature(
         channel_names: tuple[str, ...],
         all_features: tuple[str, ...],
-    ) -> int | None:
+    ) -> int:
         """Compute int signature of this channel name combination."""
-        if len(set(channel_names).difference(all_features)) > 0:
-            return None
+        missing = set(channel_names).difference(all_features)
+        if len(missing) > 0:
+            message = f'Cannot compute signature when these columns are requested: {missing}'
+            raise ValueError(message)
         signature = 0
         indices = map(lambda name: all_features.index(name), channel_names)
         for index in indices:
@@ -134,11 +137,12 @@ class CountsProvider(PendingProvider):
         phenotype: PhenotypeCriteria,
         cells_selected: tuple[int, ...],
     ) -> str | None:
+        feature_description = get_feature_description('population fractions')
         args = (
             data_analysis_study,
             phenotype_to_phenotype_str(phenotype),
             cls._selections_str(cells_selected),
-            get_feature_description('population fractions'),
+            feature_description,
         )
         with DBCursor(study=study) as cursor:
             cursor.execute('''
@@ -150,8 +154,8 @@ class CountsProvider(PendingProvider):
             JOIN study_component sc ON sc.component_study=fsn.study
             JOIN study_component sc2 ON sc2.primary_study=sc.primary_study
             WHERE sc2.component_study=%s AND
-                  ( fs.specifier=%s AND fs.ordinality='1'
-                    fs.specifier=%s AND fs.ordinality='2' ) AND
+                  ( (fs.specifier=%s AND fs.ordinality='1') OR
+                    (fs.specifier=%s AND fs.ordinality='2')     ) AND
                   fsn.derivation_method=%s
             ;
             ''', args)

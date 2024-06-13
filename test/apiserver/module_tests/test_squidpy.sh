@@ -40,7 +40,7 @@ function test_squidpy() {
         query="http://spt-apiserver-testing:8080/request-spatial-metrics-computation/?study=Melanoma%20intralesional%20IL2&phenotype=$p&feature_class=$feature_class"
     fi
     start=$SECONDS
-    while (( SECONDS - start < 200 )); do
+    while (( SECONDS - start < 120 )); do
         echo -en "Doing query $blue$query$reset_code ... "
         curl -s "$query" > _squidpy.json;
         if [ "$?" -gt 0 ];

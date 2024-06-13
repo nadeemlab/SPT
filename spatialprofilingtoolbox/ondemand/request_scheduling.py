@@ -26,6 +26,10 @@ def _fancy_division(numerator: float | None, denominator: float | None) -> float
     return 100 * round(ratio * 10000)/10000
 
 
+def _nonempty(string: str) -> bool:
+    return string != ''
+
+
 class OnDemandRequester:
     """Entry point for requesting computation by the on-demand service."""
 
@@ -38,9 +42,10 @@ class OnDemandRequester:
         cells_selected: set[int],
     ) -> PhenotypeCounts:
         phenotype = PhenotypeCriteria(
-            positive_markers=tuple(positives), negative_markers=tuple(negatives),
+            positive_markers=tuple(filter(_nonempty, positives)),
+            negative_markers=tuple(filter(_nonempty, negatives)),
         )
-        selected = tuple(sorted(list(cells_selected)))
+        selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
         get = CountsProvider.get_metrics_or_schedule
         while True:
             counts = get(
@@ -78,13 +83,14 @@ class OnDemandRequester:
     def get_proximity_metrics(
         study: str,
         radius: float,
-        signature: tuple[list[str], list[str], list[str], list[str]]
+        _signature: tuple[list[str], list[str], list[str], list[str]]
     ) -> UnivariateMetricsComputationResult:
+        signature = tuple(map(lambda l: tuple(filter(_nonempty, l)), _signature))
         phenotype1 = PhenotypeCriteria(
-            positive_markers=tuple(signature[0]), negative_markers=tuple(signature[1]),
+            positive_markers=signature[0], negative_markers=signature[1],
         )
         phenotype2 = PhenotypeCriteria(
-            positive_markers=tuple(signature[2]), negative_markers=tuple(signature[3]),
+            positive_markers=signature[2], negative_markers=signature[3],
         )
         get = ProximityProvider.get_metrics_or_schedule
         return get(study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
@@ -92,14 +98,15 @@ class OnDemandRequester:
     @staticmethod
     def get_squidpy_metrics(
         study: str,
-        signature: list[list[str]],
+        _signature: list[list[str]],
         feature_class: str,
         radius: float | None = None,
     ) -> UnivariateMetricsComputationResult:
         """Get spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
-        if not len(signature) in {2, 4}:
-            message = f'Expected 2 or 4 channel lists (1 or 2 phenotypes) but got {len(signature)}.'
+        if not len(_signature) in {2, 4}:
+            message = f'Expected 2 or 4 channel lists (1 or 2 phenotypes) but got {len(_signature)}.'
             raise ValueError(message)
+        signature = tuple(map(lambda l: tuple(filter(_nonempty, l)), _signature))
         if feature_class == 'co-occurrence':
             if radius is None:
                 raise ValueError('You must supply a radius value.')
@@ -107,8 +114,8 @@ class OnDemandRequester:
         for i in range(int(len(signature)/2)):
             phenotypes.append(
                 PhenotypeCriteria(
-                    positive_markers = tuple(signature[2*i]),
-                    negative_markers = tuple(signature[2*i + 1]),
+                    positive_markers = signature[2*i],
+                    negative_markers = signature[2*i + 1],
                 )
             )
         get = SquidpyProvider.get_metrics_or_schedule

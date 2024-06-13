@@ -159,7 +159,7 @@ class ImportanceCountsAccessor:
             return self._retrieve(endpoint, query)[0]
         else:
             assert self.query_anonymous_phenotype_counts_fast is not None
-            return await self.query_anonymous_phenotype_counts_fast(positives, negatives, self.study).dict()
+            return (await self.query_anonymous_phenotype_counts_fast(positives, negatives, self.study)).dict()
 
     async def _get_counts_series(self, criteria: dict[str, list[str]], column_name: str) -> Series:
         criteria_tuple = (
@@ -289,13 +289,13 @@ class ImportanceCountsAccessor:
             }
             optional_args = {k: v for k, v in optional_args.items() if v is not None}
 
-            phenotype_counts = await self.query_importance_composition(
+            phenotype_counts = (await self.query_importance_composition(
                 self.study,
                 conjunction_criteria['positive_markers'],
                 conjunction_criteria['negative_markers'],
                 plugin,
                 **optional_args,
-            ).dict()  # type: ignore
+            )).dict()  # type: ignore
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
 
 

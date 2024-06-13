@@ -17,8 +17,6 @@ from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReferen
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-
 logger = colorized_logger(__name__)
 
 

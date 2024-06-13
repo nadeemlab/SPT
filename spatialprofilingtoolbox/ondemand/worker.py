@@ -13,7 +13,7 @@ from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsPro
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 
 from spatialprofilingtoolbox.db.describe_features import get_handle
-from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -42,8 +42,8 @@ class OnDemandWorker:
         connection.execute('LISTEN queue_activity ;')
         logger.info('Listening on queue_activity channel.')
         notifications = connection.notifies()
-        for n in notifications:
-            if n.payload == 'new items':
+        for notification in notifications:
+            if notification.payload == 'new items':
                 notifications.close()
                 logger.info('Received notice of new items in job queue.')
                 break
@@ -80,7 +80,7 @@ class OnDemandWorker:
             'population fractions': CountsProvider,
             'proximity': ProximityProvider,
         }
-        return providers[get_handle(derivation_method)](job)
+        return providers[get_handle(derivation_method)](job)  # type: ignore
 
     def _retrieve_derivation_method(self, job: ComputationJobReference) -> str:
         with DBCursor(study=job.study) as cursor:

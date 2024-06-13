@@ -14,7 +14,7 @@ from spatialprofilingtoolbox.workflow.common.export_features import add_feature_
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.proximity import \
     compute_proximity_metric_for_signature_pair
-from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

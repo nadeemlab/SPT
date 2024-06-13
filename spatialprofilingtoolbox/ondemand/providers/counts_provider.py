@@ -7,7 +7,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCr
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.phenotype_str import (\
     phenotype_str_to_phenotype,
     phenotype_to_phenotype_str,
@@ -39,7 +39,8 @@ class CountsProvider(PendingProvider):
         cells_selected = self._selections_from_str(specifiers[1])
         marker_set = (phenotype.positive_markers, phenotype.negative_markers)
         arrays = self.get_cell_data_arrays()
-        signatures = tuple(map(lambda m: self._compute_signature(m, arrays.feature_names), marker_set))
+        features = tuple(n.symbol for n in arrays.feature_names.names)
+        signatures = tuple(map(lambda m: cast(int, self._compute_signature(m, features)), marker_set))
         return ((signatures[0], signatures[1], cells_selected), arrays)
 
     @staticmethod
@@ -63,7 +64,7 @@ class CountsProvider(PendingProvider):
                 ))
             ))
         else:
-            candidates = arrays.phenotype
+            candidates = tuple(arrays.phenotype)
         count = CountsProvider._get_count(candidates, positives_signature, negatives_signature)
         return count
 
@@ -112,12 +113,12 @@ class CountsProvider(PendingProvider):
         **kwargs,
     ) -> str:
         if phenotype is None:
-            phenotype = PhenotypeCriteria(positive_markers=[], negative_markers=[])
+            phenotype = PhenotypeCriteria(positive_markers=(), negative_markers=())
         else:
             phenotype = cast(PhenotypeCriteria, phenotype)
         specifiers_arguments = (
             data_analysis_study,
-            phenotype_to_phenotype_str(phenotype),
+            phenotype,
             cells_selected,
         )
         specification = cls._get_feature_specification(study, *specifiers_arguments)
@@ -125,7 +126,12 @@ class CountsProvider(PendingProvider):
             return specification
         message = 'Creating feature with specifiers: (%s) %s, %s'
         logger.debug(message, *specifiers_arguments)
-        return cls._create_feature_specification(study, *specifiers_arguments)
+        specifiers_arguments_str = (
+            data_analysis_study,
+            phenotype_to_phenotype_str(phenotype),
+            cls._selections_str(cells_selected),
+        )
+        return cls._create_feature_specification(study, *specifiers_arguments_str)
 
     @classmethod
     def _get_feature_specification(cls,
@@ -169,7 +175,8 @@ class CountsProvider(PendingProvider):
         study: str,
         data_analysis_study: str,
         phenotype: str,
+        cells_selected: str,
     ) -> str:
-        specifiers = (phenotype,)
+        specifiers = (phenotype, cells_selected)
         method = get_feature_description('population fractions')
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)

@@ -12,7 +12,7 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (
     phenotype_to_phenotype_str,
 )
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.squidpy import (
@@ -38,6 +38,8 @@ class SquidpyProvider(PendingProvider):
     def _prepare_parameters(
         self,
     ) -> tuple[tuple[str, str, tuple[PhenotypeCriteria, ...], float | None], CellDataArrays]:
+        study = self.job.study
+        feature_specification = str(self.job.feature_specification)
         method = self.retrieve_feature_derivation_method(study, feature_specification)
         feature_class = cast(str, lookup_squidpy_feature_class(method))
         _, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
@@ -62,18 +64,18 @@ class SquidpyProvider(PendingProvider):
 
     @staticmethod
     def _form_cells_dataframe(arrays: CellDataArrays) -> DataFrame:
-        features = arrays.feature_names
+        features = tuple(f.symbol for f in arrays.feature_names.names)
         rows = []
         for identifier, phenotype, location in zip(arrays.identifiers, arrays.phenotype, arrays.location):
             binary_expression_64_string = ''.join([
                 ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
-                for ii in int.to_bytes(phenotype, 'big')
+                for ii in int.to_bytes(phenotype, byteorder='big')
             ])
             x = location[0]
             y = location[0]
             row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + [x, y])
             rows.append(row)
-        columns = features + ['histological_structure_id'] + ['pixel x', 'pixel y']
+        columns = list(features) + ['histological_structure_id'] + ['pixel x', 'pixel y']
         df = DataFrame(rows, columns=columns)
         df.set_index('histological_structure_id', inplace=True)
         return df

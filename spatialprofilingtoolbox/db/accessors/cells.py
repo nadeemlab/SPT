@@ -102,7 +102,7 @@ class CellsAccess(SimpleReadOnlyProvider):
         identifiers = sorted(list(location_data.keys()))
         _identifiers = sorted(list(phenotype_data.keys()))
         if _identifiers != identifiers:
-            message = f'Mismatch of cell sets for location and phenotype data.'
+            message = 'Mismatch of cell sets for location and phenotype data.'
             raise ValueError(message)
         cls._check_consecutive(identifiers)
         combined = tuple(
@@ -115,7 +115,6 @@ class CellsAccess(SimpleReadOnlyProvider):
             logger.error(message)
             raise ValueError(message)
         cell_count = int(len(serial) / 20)
-        
         extrema = {
             (operation[1], index): operation[0](map(lambda p: p[index-1], location_data.values()))
             for operation, index in product(((min, 'min'), (max, 'max')), (1, 2))

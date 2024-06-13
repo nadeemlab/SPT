@@ -365,14 +365,14 @@ class ImportanceFractionAndTestRetriever:
 
             iterable: Iterable
             if self.use_tqdm:
-                from tqdm import tqdm
+                from tqdm import tqdm  # type: ignore
                 iterable = tqdm(levels, total=N, bar_format=f)
             else:
                 iterable = levels
-            self.df_phenotypes_original = tuple(
-                (str(phenotype), (await self.get_access().counts(phenotype)).astype(int))
-                for phenotype in iterable
-            )
+            df_phenotypes_original = []
+            for phenotype in iterable:
+                df_phenotypes_original.append((str(phenotype), (await self.get_access().counts(phenotype)).astype(int)))
+            self.df_phenotypes_original = tuple(df_phenotypes_original)
             with open(pickle_file, 'wb') as file:
                 pickle_dump(self.df_phenotypes_original, file)
 
@@ -512,9 +512,11 @@ class PlotDataRetriever:
             use_tqdm=self.use_tqdm,
         )
         await retriever.init_awaitable()
-        return tuple(
-            await retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
-        )
+        retrieved = []
+        for plugin in plugins:
+            item = (await retriever.retrieve(cohorts, phenotypes, plugin))[attribute_order]
+            retrieved.append(item)
+        return tuple(retrieved)
 
 
 @define

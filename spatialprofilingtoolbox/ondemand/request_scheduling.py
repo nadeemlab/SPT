@@ -25,7 +25,10 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-def _fancy_round(ratio: float) -> float:
+def _fancy_division(numerator: float | None, denominator: float | None) -> float | None:
+    if numerator is None or denominator is None or denominator == 0:
+        return None
+    ratio = numerator / denominator
     return 100 * round(ratio * 10000)/10000
 
 
@@ -34,8 +37,8 @@ class OnDemandRequester:
 
     @staticmethod
     async def get_counts_by_specimen(
-        positives: list[str],
-        negatives: list[str],
+        positives: tuple[str, ...],
+        negatives: tuple[str, ...],
         study_name: str,
         number_cells: int,
         cells_selected: set[int],
@@ -65,8 +68,7 @@ class OnDemandRequester:
                 PhenotypeCount(
                     specimen = sample,
                     count = int(cast(float, counts.values[sample])) if counts.values[sample] is not None else None,
-                    percentage = _fancy_round(cast(float, counts.values[sample]) / counts_all.values[sample])
-                    if ((counts.values[sample] is not None) and (counts_all.values[sample] not in {0, None})) else None,
+                    percentage = _fancy_division(counts.values[sample], counts_all.values[sample]),
                 )
                 for sample in combined_keys
             ),

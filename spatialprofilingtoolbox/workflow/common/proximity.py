@@ -24,7 +24,8 @@ def compute_proximity_metric_for_signature_pair(
     feature_names: BitMaskFeatureNames,
 ) -> float | None:
     def signature(markers: tuple[str, ...]):
-        return CountsProvider._compute_signature(markers, feature_names)
+        features = tuple(n.symbol for n in feature_names.names)
+        return CountsProvider._compute_signature(markers, features)
 
     marker_set1 = (phenotype1.positive_markers, phenotype1.negative_markers)
     signatures1 = tuple(map(signature, marker_set1))
@@ -38,9 +39,9 @@ def compute_proximity_metric_for_signature_pair(
     def membership2(entry: int) -> bool:
         return (entry | signatures2[0] == entry) and (~entry | signatures2[1] == ~entry)
 
-    augmented_mask1 = map(lambda pair: membership1(pair[0]), zip(phenotype_masks, locations))
+    augmented_mask1 = map(lambda pair: (membership1(pair[0]), pair[1]), zip(phenotype_masks, locations))
     mask1 = tuple(map(lambda pair: pair[0], augmented_mask1))
-    locations1 = tuple(map(lambda pair: pair[1], augmented_mask1))
+    locations1 = tuple(map(lambda pair: pair[1], filter(lambda pair: pair[0], augmented_mask1)))
 
     mask2 = tuple(map(membership2, phenotype_masks))
 

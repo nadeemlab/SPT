@@ -73,8 +73,6 @@ app = FastAPI(
     },
 )
 
-CELL_DATA_CELL_LIMIT = 5 * int(pow(10, 6))
-
 
 def custom_openapi():
     if app.openapi_schema:
@@ -196,7 +194,7 @@ async def get_anonymous_phenotype_counts_fast(
     """Computes the number of cells satisfying the given positive and negative criteria, in the
     context of a given study.
     """
-    return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
+    return await _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
 
 
 async def _get_anonymous_phenotype_counts_fast(
@@ -397,15 +395,6 @@ async def get_cell_data_binary(
     """
     if not sample in query().get_sample_names(study):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
-    number_cells = cast(int, query().get_number_cells(study))
-    def match(pc: PhenotypeCount) -> bool:
-        return pc.specimen == sample
-    count = tuple(filter(
-        match,
-        await get_phenotype_counts([], [], study, number_cells).counts))[0].count
-    if count is None or count > CELL_DATA_CELL_LIMIT:
-        message = f'Sample "{sample}" has too many cells: {count}.'
-        raise HTTPException(status_code=404, detail=message)
     data = query().get_cells_data(study, sample)
     input_buffer = BytesIO(data)
     input_buffer.seek(0)

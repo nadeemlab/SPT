@@ -3,6 +3,7 @@
 from typing import cast
 from typing import Type
 from abc import ABC
+from abc import abstractmethod
 
 from numpy import asarray
 from numpy import uint64 as np_int64
@@ -13,7 +14,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
-from spatialprofilingtoolbox.ondemand.scheduler import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

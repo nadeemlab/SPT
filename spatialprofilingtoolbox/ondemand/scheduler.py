@@ -4,15 +4,10 @@ from attrs import define
 from psycopg2.extensions import cursor as Psycopg2Cursor
 
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
+from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 
-@define
-class ComputationJobReference:
-    """Represent one job."""
-    feature_specification: int
-    study: str
-    sample: str
 
 
 @define

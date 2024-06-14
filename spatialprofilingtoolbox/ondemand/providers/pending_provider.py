@@ -36,34 +36,39 @@ class PendingProvider(OnDemandProvider, ABC):
             data_analysis_study = get(measurement_study_name, cursor)
         get_or_create = cls.get_or_create_feature_specification
         feature_specification, is_new = get_or_create(study, data_analysis_study, **kwargs)
-        if not is_new and cls._no_outstanding_jobs(study, feature_specification):
-            logger.info(f'Cache hit for feature {feature_specification}, because there are no outstanding computation jobs for it.')
+        all_jobs_complete = cls._all_jobs_complete(study, feature_specification)
+        if not is_new and all_jobs_complete:
+            fs = feature_specification
+            logger.info(f'Cache hit for feature {fs}, because all associated jobs are complete.')
             return cls._query_for_computed_feature_values(
                 study,
                 feature_specification,
                 still_pending=False,
             )
-        was_pending = not cls._no_outstanding_jobs(study, feature_specification)
-        no_outstanding_jobs = cls._no_outstanding_jobs(study, feature_specification)
-        should_be_scheduled = is_new and no_outstanding_jobs
-        if should_be_scheduled:
+        if is_new:
             scheduler = MetricComputationScheduler(None)
             scheduler.schedule_feature_computation(study, int(feature_specification))
-        was_scheduled = should_be_scheduled
-        is_pending = should_be_scheduled or was_pending
         return cls._query_for_computed_feature_values(
             study,
             feature_specification,
-            still_pending=is_pending,
+            still_pending = not all_jobs_complete,
         )
 
     @classmethod
-    def _no_outstanding_jobs(cls, study: str, feature_specification: str) -> bool:
+    def _all_jobs_complete(cls, study: str, feature_specification: str) -> bool:
         with DBCursor(study=study) as cursor:
-            query = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
+            query = 'SELECT COUNT(*) FROM quantitative_feature_value WHERE feature=%s ;'
             cursor.execute(query, (feature_specification,))
             count = tuple(cursor.fetchall())[0][0]
-        return count == 0
+        expected = cls._get_expected_number_samples(study, feature_specification)
+        return count == expected
+
+    @classmethod
+    def _get_expected_number_samples(cls, study: str, feature_specification: str) -> int:
+        with DBCursor(study=study) as cursor:
+            query = cls.relevant_specimens_query() % f"'{feature_specification}'"
+            cursor.execute(query)
+            return len(tuple(cursor.fetchall()))
 
     def handle_insert_value(self, value: float | None) -> None:
         if value is not None:
@@ -90,7 +95,7 @@ class PendingProvider(OnDemandProvider, ABC):
     def _wrap_up_feature(self) -> None:
         study = self.job.study
         specification = str(self.job.feature_specification)
-        if self._no_outstanding_jobs(study, specification):
+        if self._all_jobs_complete(study, specification):
             logger.info(f'Finished computing feature {specification} ({study}).')
 
     @classmethod

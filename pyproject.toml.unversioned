@@ -134,7 +134,6 @@ packages = [
     "spatialprofilingtoolbox.workflow.component_interfaces",
     "spatialprofilingtoolbox.workflow.graph_generation",
     "spatialprofilingtoolbox.workflow.graph_plugin",
-    "spatialprofilingtoolbox.workflow.phenotype_proximity",
     "spatialprofilingtoolbox.workflow.reduction_visual",
     "spatialprofilingtoolbox.workflow.tabular_import",
     "spatialprofilingtoolbox.workflow.tabular_import.parsing",

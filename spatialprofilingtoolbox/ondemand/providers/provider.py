@@ -2,6 +2,7 @@
 
 from abc import ABC
 from abc import abstractmethod
+from typing import Literal
 
 from numpy import asarray
 from numpy import uint64 as np_int64
@@ -47,18 +48,20 @@ class OnDemandProvider(ABC):
         number_cells = int.from_bytes(raw[0:4])
         location = asarray((self._get_parts(4, 8, raw), self._get_parts(8, 12, raw)))
         self._expect_number(location.shape[1], number_cells)
-        phenotype = asarray(self._get_parts(12, 20, raw))
+        phenotype = asarray(self._get_parts(12, 20, raw, byteorder='little'))
         self._expect_number(phenotype.shape[0], number_cells)
         identifiers = asarray(self._get_parts(0, 4, raw))
         self._expect_number(identifiers.shape[0], number_cells)
         return CellDataArrays(location, phenotype, feature_names, identifiers)
 
     @staticmethod
-    def _get_parts(start: int, end: int, raw: bytes) -> tuple:
+    def _get_parts(
+        start: int, end: int, raw: bytes, byteorder: Literal['big', 'little']='big',
+    ) -> tuple[np_int64, ...]:
         offset = 20
         period = 20
         return tuple(map(
-            lambda batch: np_int64(int.from_bytes(batch[start:end])),
+            lambda batch: np_int64(int.from_bytes(batch[start:end], byteorder=byteorder)),
             CellsAccess._batched(raw[offset:], period),
         ))
 

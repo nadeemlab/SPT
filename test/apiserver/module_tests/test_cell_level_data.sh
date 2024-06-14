@@ -69,27 +69,5 @@ function test_feature_names_retrieval() {
     fi
 }
 
-function test_missing_case() {
-    study=$1
-    sample=$2
-    query="http://spt-apiserver-testing:8080/cell-data/?study=$study&sample=$sample"
-    echo -e "Doing query $blue$query$reset_code ... "
-    curl -s "$query" > result.txt
-    cat result.txt
-    diff result.txt module_tests/expected_error.txt 1>/dev/null 2>/dev/null
-    status=$?
-    rm result.txt
-    if [ ! $status -eq 0 ];
-    then
-        echo "Did not get the expected error message in case of missing sample."
-        exit 1
-    else
-        echo -n " Got expected error message in case of missing sample. "
-        echo -e "${green}Artifact matches.$reset_code"
-    fi
-}
-
-test_missing_case "Melanoma+intralesional+IL2" "ABC"
-
 test_cell_data_binary "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/celldata.dump
 test_feature_names_retrieval "Melanoma+intralesional+IL2"

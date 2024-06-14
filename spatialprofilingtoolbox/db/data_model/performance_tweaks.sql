@@ -51,3 +51,8 @@ CREATE TABLE ondemand_studies_index (
     blob_type VARCHAR(512),
     blob_contents bytea
 );
+
+CREATE TABLE cell_set_cache (
+    feature VARCHAR(512),
+    histological_structure VARCHAR(512)
+);

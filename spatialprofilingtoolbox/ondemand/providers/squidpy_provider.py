@@ -11,6 +11,7 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (
     phenotype_str_to_phenotype,
     phenotype_to_phenotype_str,
 )
+from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
@@ -62,13 +63,11 @@ class SquidpyProvider(PendingProvider):
     def _form_cells_dataframe(arrays: CellDataArrays) -> DataFrame:
         features = tuple(f.symbol for f in arrays.feature_names.names)
         rows = []
-        for identifier, phenotype, location in zip(arrays.identifiers, arrays.phenotype, arrays.location.transpose()):
-            binary_expression_64_string = ''.join([
-                ''.join(list(reversed(bin(ii)[2:].rjust(8, '0'))))
-                for ii in int(phenotype).to_bytes(8)
-            ])
-            loc = [location[0], location[1]]
-            row = tuple(list(binary_expression_64_string[0:len(features)]) + [identifier] + loc)
+        zipped = zip(arrays.identifiers, arrays.phenotype, arrays.location.transpose())
+        for identifier, phenotype, location in zipped:
+            location_list = [location[0], location[1]]
+            vector = list(OnDemandProvider.extract_binary(phenotype, len(features)))
+            row = tuple(vector + [identifier] + location_list)
             rows.append(row)
         columns = list(features) + ['histological_structure_id'] + ['pixel x', 'pixel y']
         df = DataFrame(rows, columns=columns)

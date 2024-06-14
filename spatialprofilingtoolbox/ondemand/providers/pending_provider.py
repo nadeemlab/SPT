@@ -73,10 +73,12 @@ class PendingProvider(OnDemandProvider, ABC):
             self._warn_no_value()
 
     def _warn_no_value(self) -> None:
-        feature = self.job.feature_specification
+        specification = str(self.job.feature_specification)
         study = self.job.study
         sample = self.job.sample
-        logger.warning(f'Feature {feature} ({sample}, {study}) could not be computed.')
+        logger.warning(f'Feature {specification} ({sample}, {study}) could not be computed.')
+        with DBCursor(study=study) as cursor:
+            add_feature_value(specification, sample, None, cursor)
 
     def insert_value(self, value: float | int) -> None:
         study = self.job.study
@@ -84,6 +86,11 @@ class PendingProvider(OnDemandProvider, ABC):
         sample = self.job.sample
         with DBCursor(study=study) as cursor:
             add_feature_value(specification, sample, str(value), cursor)
+        self._wrap_up_feature()
+
+    def _wrap_up_feature(self) -> None:
+        study = self.job.study
+        specification = str(self.job.feature_specification)
         if self._no_outstanding_jobs(study, specification):
             logger.info(f'Finished computing feature {specification} ({study}).')
 

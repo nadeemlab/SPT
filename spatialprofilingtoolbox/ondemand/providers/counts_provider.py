@@ -30,12 +30,22 @@ class CountsProvider(PendingProvider):
         specification = str(self.job.feature_specification)
         _, specifiers = self.retrieve_specifiers(study, specification)
         phenotype = phenotype_str_to_phenotype(specifiers[0])
-        cells_selected = self._selections_from_str(specifiers[1])
+        cells_selected = self._retrieve_cells_selected(study, specification)
         marker_set = (phenotype.positive_markers, phenotype.negative_markers)
         arrays = self.get_cell_data_arrays()
         features = tuple(n.symbol for n in arrays.feature_names.names)
         signatures = tuple(map(lambda m: cast(int, self._compute_signature(m, features)), marker_set))
         return ((signatures[0], signatures[1], cells_selected), arrays)
+
+    @staticmethod
+    def _retrieve_cells_selected(study: str, specification: str) -> tuple[int, ...]:
+        with DBCursor(study=study) as cursor:
+            query = 'SELECT histological_structure FROM cell_set_cache WHERE feature=%s ;'
+            cursor.execute(query, (specification,))
+            rows = tuple(cursor.fetchall())
+        if len(rows) == 0:
+            return ()
+        return tuple(map(lambda row: int(row[0]), rows))
 
     @staticmethod
     def _perform_count(args: tuple[int, int, tuple[int, ...]], arrays: CellDataArrays) -> int:
@@ -93,14 +103,6 @@ class CountsProvider(PendingProvider):
         return signature
 
     @classmethod
-    def _selections_str(cls, cells_selected: tuple[int, ...]) -> str:
-        return str(cells_selected)
-
-    @classmethod
-    def _selections_from_str(cls, cells_selected_str: str) -> tuple[int, ...]:
-        return literal_eval(cells_selected_str)
-
-    @classmethod
     def get_or_create_feature_specification(
         cls,
         study: str,
@@ -121,14 +123,52 @@ class CountsProvider(PendingProvider):
         specification = cls._get_feature_specification(study, *specifiers_arguments)
         if specification is not None:
             return (specification, False)
-        message = 'Creating feature with specifiers: (%s) %s, %s'
+        addend = f' (and cell set, {len(cells_selected)} cells)' if cells_selected != () else ''
+        message = 'Creating feature with specifiers: (%s) %s' + addend
         logger.debug(message, *specifiers_arguments)
         specifiers_arguments_str = (
             data_analysis_study,
             phenotype_to_phenotype_str(phenotype),
-            cls._selections_str(cells_selected),
         )
-        return (cls._create_feature_specification(study, *specifiers_arguments_str), True)
+        specification = cls._create_feature_specification(study, *specifiers_arguments_str)
+        cls._append_cell_set(study, specification, cells_selected)
+        return (specification, True)
+
+    @classmethod
+    def _append_cell_set(
+        cls, study: str, specification: str, cells_selected: tuple[int, ...],
+    ) -> None:
+        with DBCursor(study=study) as cursor:
+            copy_command = 'COPY cell_set_cache (feature, histological_structure) FROM STDIN'
+            with cursor.copy(copy_command) as copy:
+                for cell in cells_selected:
+                    copy.write_row((specification, str(cell)))
+
+    @classmethod
+    def _get_features_for_cell_set(
+        cls, study: str, cells_selected: tuple[int, ...],
+    ) -> list[str] | None:
+        with DBCursor(study=study) as cursor:
+            query = 'SELECT feature, histological_structure FROM cell_set_cache ;'
+            rows = tuple(cursor.execute(query))
+        cell_sets: dict[str, list[int]] = {row[0]: [] for row in rows}
+        for row in rows:
+            cell_sets[row[0]].append(int(row[1]))
+        ItemList = tuple[str, list[int]]
+        Item = tuple[str, tuple[int, ...]]
+        def normalize(item: ItemList) -> Item:
+            key, cell_set = item
+            return (key, tuple(sorted(list(cell_set))))
+        def match_cells(item: Item) -> bool:
+            key, cell_set = item
+            return cell_set == cells_selected
+        cell_sets_items = cast(tuple[ItemList, ...], tuple(cell_sets.items()))
+        _matches = tuple(filter(match_cells, map(normalize, cell_sets_items)))
+        if len(_matches) == 0:
+            return None
+        if len(_matches) == 1:
+            return [_matches[0][0]]
+        return list(set(map(lambda match: match[0], _matches)))
 
     @classmethod
     def _get_feature_specification(cls,
@@ -137,11 +177,17 @@ class CountsProvider(PendingProvider):
         phenotype: PhenotypeCriteria,
         cells_selected: tuple[int, ...],
     ) -> str | None:
+        feature_matches = None
+        if cells_selected != ():
+            feature_matches = cls._get_features_for_cell_set(study, cells_selected)
+            if feature_matches is None:
+                return None
+            if len(feature_matches) == 1:
+                return feature_matches[0]
         feature_description = get_feature_description('population fractions')
         args = (
             data_analysis_study,
             phenotype_to_phenotype_str(phenotype),
-            cls._selections_str(cells_selected),
             feature_description,
         )
         with DBCursor(study=study) as cursor:
@@ -154,27 +200,32 @@ class CountsProvider(PendingProvider):
             JOIN study_component sc ON sc.component_study=fsn.study
             JOIN study_component sc2 ON sc2.primary_study=sc.primary_study
             WHERE sc2.component_study=%s AND
-                  ( (fs.specifier=%s AND fs.ordinality='1') OR
-                    (fs.specifier=%s AND fs.ordinality='2')     ) AND
+                  ( fs.specifier=%s AND fs.ordinality='1') AND
                   fsn.derivation_method=%s
             ;
             ''', args)
             rows = cursor.fetchall()
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
+        matches: list[str] = []
         for row in rows:
             feature_specifications[row[0]].append(row[1])
         for key, specifiers in feature_specifications.items():
-            if len(specifiers) == 2:
-                return key
-        return None
+            if len(specifiers) == 1:
+                matches.append(key)
+        if feature_matches is not None:
+            matches = list(set(matches).intersection(feature_matches))
+        if len(matches) == 0:
+            return None
+        if len(matches) > 1:
+            logger.warning(f'Multiple features match the selected specification.')
+        return matches[0]
 
     @classmethod
     def _create_feature_specification(cls,
         study: str,
         data_analysis_study: str,
         phenotype: str,
-        cells_selected: str,
     ) -> str:
-        specifiers = (phenotype, cells_selected)
+        specifiers = (phenotype,)
         method = get_feature_description('population fractions')
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)

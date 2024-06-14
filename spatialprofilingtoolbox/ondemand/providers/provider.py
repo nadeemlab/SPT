@@ -80,3 +80,7 @@ class OnDemandProvider(ABC):
             JOIN feature_specification fsn ON fsn.study=sc2.component_study
             WHERE fsn.identifier=%s
         '''
+
+    @staticmethod
+    def extract_binary(mask: int, length: int) -> tuple[int, ...]:
+        return tuple(reversed(list(map(int, bin(mask)[2:].rjust(length, '0')))))

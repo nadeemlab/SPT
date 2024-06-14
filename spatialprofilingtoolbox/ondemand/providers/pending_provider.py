@@ -37,13 +37,12 @@ class PendingProvider(OnDemandProvider, ABC):
         get_or_create = cls.get_or_create_feature_specification
         feature_specification, is_new = get_or_create(study, data_analysis_study, **kwargs)
         if not is_new and cls._no_outstanding_jobs(study, feature_specification):
-            logger.info(f'No outstanding computation jobs for {feature_specification}.')
+            logger.info(f'Cache hit for feature {feature_specification}, because there are no outstanding computation jobs for it.')
             return cls._query_for_computed_feature_values(
                 study,
                 feature_specification,
                 still_pending=False,
             )
-
         was_pending = not cls._no_outstanding_jobs(study, feature_specification)
         no_outstanding_jobs = cls._no_outstanding_jobs(study, feature_specification)
         should_be_scheduled = is_new and no_outstanding_jobs

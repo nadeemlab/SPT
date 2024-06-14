@@ -122,10 +122,13 @@ class CountsProvider(PendingProvider):
         )
         specification = cls._get_feature_specification(study, *specifiers_arguments)
         if specification is not None:
-            return (specification, False)
-        addend = f' (and cell set, {len(cells_selected)} cells)' if cells_selected != () else ''
-        message = 'Creating feature with specifiers: (%s) %s' + addend
-        logger.debug(message, *specifiers_arguments)
+            _cells_selected = cls._retrieve_cells_selected(study, specification)
+            if set(cells_selected) == set(_cells_selected):
+                return (specification, False)
+        short = str(cells_selected[0:min(len(cells_selected), 5)]) + ' ...'
+        addend = f' (and cell set {short}, {len(cells_selected)} cells)' if cells_selected != () else ''
+        message = 'Creating feature with specifiers: %s' + addend
+        logger.debug(message, phenotype)
         specifiers_arguments_str = (
             data_analysis_study,
             phenotype_to_phenotype_str(phenotype),
@@ -182,8 +185,6 @@ class CountsProvider(PendingProvider):
             feature_matches = cls._get_features_for_cell_set(study, cells_selected)
             if feature_matches is None:
                 return None
-            if len(feature_matches) == 1:
-                return feature_matches[0]
         feature_description = get_feature_description('population fractions')
         args = (
             data_analysis_study,
@@ -217,7 +218,10 @@ class CountsProvider(PendingProvider):
         if len(matches) == 0:
             return None
         if len(matches) > 1:
-            logger.warning(f'Multiple features match the selected specification.')
+            cells = f'{cells_selected[0:min(5, len(cells_selected))]} ... ({len(cells_selected)})'
+            text = 'Multiple features match the selected specification'
+            message = f'{text}: {matches} {phenotype} {cells}'
+            logger.warning(message)
         return matches[0]
 
     @classmethod

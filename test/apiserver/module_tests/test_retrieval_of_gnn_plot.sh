@@ -11,5 +11,5 @@ fi
 
 if [ ! -s _gnn.svg ] || ! grep -q "<svg" _gnn.svg; then
     echo "Error: Invalid or empty SVG file."
-    # exit 1
+    exit 1
 fi

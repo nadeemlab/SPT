@@ -22,7 +22,8 @@ setup-testing:
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-apiserver-testing \
      spt-db-testing \
-     spt-ondemand-testing ; \
+     spt-ondemand-testing \
+     spt-ondemand-testing2 ; \
     echo "$$?" > status_code
 >@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "Setup env." "Env not setup."

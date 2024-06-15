@@ -168,8 +168,9 @@ class PendingProvider(OnDemandProvider, ABC):
                 str(row[0]): _json_compliant_float(row[1])
                 for row in rows
             }
+            sorted_metrics = {key: metrics[key] for key in sorted(list(metrics.keys()))}
         return UnivariateMetricsComputationResult(
-            values = metrics,
+            values = sorted_metrics,
             is_pending = still_pending,
         )
 

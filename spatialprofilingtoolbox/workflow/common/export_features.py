@@ -334,5 +334,5 @@ class ADIFeatureSpecificationUploader:
 def add_feature_value(feature_specification, subject, value, cursor: PsycopgCursor):
     # identifier = SourceToADIParser.get_next_integer_identifier('quantitative_feature_value', cursor)
     cursor.execute('''
-    INSERT INTO quantitative_feature_value VALUES (%s, %s, %s) ;
+    INSERT INTO quantitative_feature_value (feature, subject, value) VALUES (%s, %s, %s) ;
     ''', (feature_specification, subject, value))

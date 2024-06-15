@@ -9,7 +9,8 @@ from itertools import product
 import re
 
 import pandas as pd
-from psycopg import connection as PsycopgConnection
+from psycopg import Connection as PsycopgConnection
+from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
@@ -19,7 +20,8 @@ logger = colorized_logger(__name__)
 
 
 class ADIFeaturesUploader(SourceToADIParser):
-    """Upload sparse representation of feature values to tables quantitative_feature_value,
+    """
+    Upload sparse representation of feature values to tables quantitative_feature_value,
     feature_specification, feature_specifier.
     """
 
@@ -106,7 +108,7 @@ class ADIFeaturesUploader(SourceToADIParser):
             for i, specifiers in enumerate(specifiers_list)
         }
 
-        self.get_feature_value_next_identifier(cursor)
+        # self.get_feature_value_next_identifier(cursor)
         insert_notice = 'Inserting feature "%s" for study "%s".'
         logger.info(insert_notice, self.derivation_method, self.data_analysis_study)
         for feature_identifier, specifiers in specifiers_by_id.items():
@@ -228,17 +230,17 @@ class ADIFeaturesUploader(SourceToADIParser):
         assignments = [(case[0], case[1], 0) for case in no_value_cases]
         self.feature_values = self.feature_values + assignments
 
-    def get_feature_value_next_identifier(self, cursor):
-        get_next = SourceToADIParser.get_next_integer_identifier
-        next_identifier = get_next('quantitative_feature_value', cursor)
-        self.feature_value_identifier = next_identifier
+    # def get_feature_value_next_identifier(self, cursor):
+    #     get_next = SourceToADIParser.get_next_integer_identifier
+    #     next_identifier = get_next('quantitative_feature_value', cursor)
+    #     self.feature_value_identifier = next_identifier
 
-    def request_new_feature_value_identifier(self):
-        identifier = self.feature_value_identifier
-        self.feature_value_identifier = self.feature_value_identifier + 1
-        return identifier
+    # def request_new_feature_value_identifier(self):
+    #     identifier = self.feature_value_identifier
+    #     self.feature_value_identifier = self.feature_value_identifier + 1
+    #     return identifier
 
-    def insert_specifiers(self, cursor, specifiers, feature_identifier):
+    def insert_specifiers(self, cursor: PsycopgCursor, specifiers, feature_identifier):
         for i, specifier in enumerate(specifiers):
             ordinality = i + 1
             cursor.execute(
@@ -246,18 +248,19 @@ class ADIFeaturesUploader(SourceToADIParser):
                 (feature_identifier, specifier, ordinality),
             )
 
-    def insert_feature_values(self, cursor, feature_identifier, feature_values):
+    def insert_feature_values(self, cursor: PsycopgCursor, feature_identifier, feature_values):
         for subject, value in feature_values:
-            identifier = self.request_new_feature_value_identifier()
+            # identifier = self.request_new_feature_value_identifier()
             cursor.execute(
                 self.insert_queries['quantitative_feature_value'],
-                (identifier, feature_identifier, subject, value),
+                (feature_identifier, subject, value),
             )
+
 
 class ADIFeatureSpecificationUploader:
     """Just upload a new feature specification."""
     @staticmethod
-    def add_new_feature(specifiers, derivation_method, measurement_study, cursor):
+    def add_new_feature(specifiers, derivation_method, measurement_study, cursor: PsycopgCursor):
         FSU = ADIFeatureSpecificationUploader
         data_analysis_study = FSU.get_data_analysis_study(measurement_study, cursor)
         get_next = SourceToADIParser.get_next_integer_identifier
@@ -272,7 +275,7 @@ class ADIFeatureSpecificationUploader:
         return 'ondemand computed features'
 
     @staticmethod
-    def get_data_analysis_study(measurement_study, cursor):
+    def get_data_analysis_study(measurement_study, cursor: PsycopgCursor):
         cursor.execute('''
         SELECT sc.primary_study FROM study_component sc
         WHERE sc.component_study=%s ;
@@ -305,7 +308,9 @@ class ADIFeatureSpecificationUploader:
         return f'{study} - {ondemand}'
 
     @staticmethod
-    def insert_specification(specification, derivation_method, data_analysis_study, cursor):
+    def insert_specification(
+        specification, derivation_method, data_analysis_study, cursor: PsycopgCursor,
+    ):
         logger.debug(
             'Inserting specification %s, data_analysis_study %s',
             specification,
@@ -317,7 +322,7 @@ class ADIFeatureSpecificationUploader:
         ''', (specification, derivation_method, data_analysis_study))
 
     @staticmethod
-    def insert_specifiers(specification, specifiers, cursor):
+    def insert_specifiers(specification, specifiers, cursor: PsycopgCursor):
         many = [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)]
         for entry in many:
             logger.debug('Inserting specifier: %s', entry)
@@ -326,8 +331,8 @@ class ADIFeatureSpecificationUploader:
         ''', [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)])
 
 
-def add_feature_value(feature_specification, subject, value, cursor):
-    identifier = SourceToADIParser.get_next_integer_identifier('quantitative_feature_value', cursor)
+def add_feature_value(feature_specification, subject, value, cursor: PsycopgCursor):
+    # identifier = SourceToADIParser.get_next_integer_identifier('quantitative_feature_value', cursor)
     cursor.execute('''
-    INSERT INTO quantitative_feature_value VALUES (%s, %s, %s, %s) ;
-    ''', (identifier, feature_specification, subject, value))
+    INSERT INTO quantitative_feature_value VALUES (%s, %s, %s) ;
+    ''', (feature_specification, subject, value))

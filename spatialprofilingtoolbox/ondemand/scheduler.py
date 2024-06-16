@@ -39,7 +39,7 @@ class MetricComputationScheduler:
         number_studies = len(studies)
         studies_empty: set[str] = set([])
         while len(studies_empty) < number_studies:
-            for study in studies:
+            for study in set(studies).difference(studies_empty):
                 query = '''
                 DELETE FROM
                 quantitative_feature_value_queue
@@ -50,11 +50,14 @@ class MetricComputationScheduler:
                 with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
                     cursor.execute(query)
                     rows = tuple(cursor.fetchall())
-                    if len(rows) == 0:
+                    if len(rows) == 1:
+                        row = rows[0]
+                        return ComputationJobReference(int(row[0]), study, row[1])
+                    cursor.execute('SELECT COUNT(*) FROM quantitative_feature_value_queue;')
+                    count = int(tuple(cursor.fetchall())[0][0])
+                    if count == 0:
                         studies_empty.add(study)
                         continue
-                    row = rows[0]
-                    return ComputationJobReference(int(row[0]), study, row[1])
         return None
 
     @staticmethod

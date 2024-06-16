@@ -35,21 +35,26 @@ class MetricComputationScheduler:
             connection.execute("NOTIFY queue_activity, 'new items' ;")
 
     def pop_uncomputed(self) -> ComputationJobReference | None:
-        for study in self._get_studies():
-            query = '''
-            DELETE FROM
-            quantitative_feature_value_queue
-            WHERE identifier IN
-                (SELECT qfvq.identifier FROM quantitative_feature_value_queue qfvq LIMIT 1)
-            RETURNING feature, subject ;
-            '''
-            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
-                cursor.execute(query)
-                rows = tuple(cursor.fetchall())
-                if len(rows) == 0:
-                    continue
-                row = rows[0]
-                return ComputationJobReference(int(row[0]), study, row[1])
+        studies = self._get_studies()
+        number_studies = len(studies)
+        studies_empty: set[str] = set([])
+        while len(studies_empty) < number_studies:
+            for study in studies:
+                query = '''
+                DELETE FROM
+                quantitative_feature_value_queue
+                WHERE identifier IN
+                    (SELECT qfvq.identifier FROM quantitative_feature_value_queue qfvq LIMIT 1)
+                RETURNING feature, subject ;
+                '''
+                with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                    cursor.execute(query)
+                    rows = tuple(cursor.fetchall())
+                    if len(rows) == 0:
+                        studies_empty.add(study)
+                        continue
+                    row = rows[0]
+                    return ComputationJobReference(int(row[0]), study, row[1])
         return None
 
     @staticmethod

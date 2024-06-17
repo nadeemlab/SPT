@@ -126,6 +126,10 @@ class CellsAccess(SimpleReadOnlyProvider):
             logger.error(message)
             raise ValueError(message)
         cell_count = int(len(serial) / 20)
+        extrema = {
+            (operation[1], index): operation[0](map(lambda p: p[index-1], location_data.values()))
+            for operation, index in product(((min, 'min'), (max, 'max')), (1, 2))
+        }
         header = b''.join(map(
             lambda i: int(i).to_bytes(4),
             (cell_count,extrema[('min',1)],extrema[('max',1)],extrema[('min',2)],extrema[('max',2)])

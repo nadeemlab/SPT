@@ -7,6 +7,7 @@ from math import isnan
 from math import isinf
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
@@ -28,7 +29,7 @@ class PendingProvider(OnDemandProvider, ABC):
         cls,
         study: str,
         **kwargs,
-    ) -> UnivariateMetricsComputationResult:
+    ) -> tuple[UnivariateMetricsComputationResult, str]:
         """Get requested metrics, computed up to now."""
         with DBCursor(study=study) as cursor:
             get = ADIFeatureSpecificationUploader.get_data_analysis_study
@@ -37,22 +38,29 @@ class PendingProvider(OnDemandProvider, ABC):
         get_or_create = cls.get_or_create_feature_specification
         feature_specification, is_new = get_or_create(study, data_analysis_study, **kwargs)
         all_jobs_complete = cls._all_jobs_complete(study, feature_specification)
-        if not is_new and all_jobs_complete:
-            fs = feature_specification
-            logger.info(f'Cache hit for feature {fs}, because all associated jobs are complete.')
-            return cls._query_for_computed_feature_values(
+        if all_jobs_complete:
+            cls._notify_cache_hit(feature_specification)
+            return (cls._query_for_computed_feature_values(
                 study,
                 feature_specification,
                 still_pending=False,
-            )
+            ), feature_specification)
         if is_new:
             scheduler = MetricComputationScheduler(None)
             scheduler.schedule_feature_computation(study, int(feature_specification))
-        return cls._query_for_computed_feature_values(
+        return (cls._query_for_computed_feature_values(
             study,
             feature_specification,
             still_pending = not all_jobs_complete,
-        )
+        ), feature_specification)
+
+    @classmethod
+    def _notify_cache_hit(cls, feature_specification: str) -> None:
+        with DBConnection() as connection:
+            connection._set_autocommit(True)
+            connection.execute('NOTIFY feature_cache_hit ;')
+        fs = feature_specification
+        logger.info(f'Cache hit for feature {fs}, because all associated jobs are complete.')
 
     @classmethod
     def _all_jobs_complete(cls, study: str, feature_specification: str) -> bool:

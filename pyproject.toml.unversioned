@@ -65,6 +65,7 @@ ondemand = [
     "pydantic==2.7.2",
     "squidpy==1.5.0",
 ]
+watcher = []
 workflow = [
     "matplotlib==3.9.0",
     "umap-learn==0.5.6",
@@ -129,6 +130,8 @@ packages = [
     "spatialprofilingtoolbox.db.exchange_data_formats",
     "spatialprofilingtoolbox.db.scripts",
     "spatialprofilingtoolbox.db.data_model",
+    "spatialprofilingtoolbox.watcher",
+    "spatialprofilingtoolbox.watcher.scripts",
     "spatialprofilingtoolbox.workflow",
     "spatialprofilingtoolbox.workflow.scripts",
     "spatialprofilingtoolbox.workflow.component_interfaces",
@@ -144,6 +147,9 @@ packages = [
 
 [tool.setuptools.package-data]
 "spatialprofilingtoolbox.entry_point" = ["spt-completion.sh.jinja"]
+"spatialprofilingtoolbox.watcher.scripts" = [
+    "start.py"
+]
 "spatialprofilingtoolbox.workflow.scripts" = [
     "aggregate_core_results.py",
     "core_job.py",

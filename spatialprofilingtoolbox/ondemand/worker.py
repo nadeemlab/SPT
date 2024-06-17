@@ -4,7 +4,7 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
-from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
+from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
@@ -13,6 +13,7 @@ from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+Job = ComputationJobReference
 
 logger = colorized_logger(__name__)
 
@@ -20,6 +21,7 @@ logger = colorized_logger(__name__)
 class OnDemandWorker:
     """Worker that computes one feature value at a time."""
     queue: MetricComputationScheduler
+    connection: PsycopgConnection
 
     def __init__(self):
         self.queue = MetricComputationScheduler(None)
@@ -28,9 +30,9 @@ class OnDemandWorker:
         self._listen_for_queue_activity()
 
     def _listen_for_queue_activity(self) -> None:
-        while True:
-            with DBConnection() as connection:
-                connection._set_autocommit(True)
+        with DBConnection() as connection:
+            connection._set_autocommit(True)
+            while True:
                 self._wait_for_queue_activity_on(connection)
                 self._work_until_complete()
 
@@ -54,19 +56,34 @@ class OnDemandWorker:
         logger.info(f'Finished {count} jobs.')
 
     def _one_job(self) -> bool:
-        job = self.queue.pop_uncomputed()
-        if job is None:
-            return False
-        message = f'Doing job (feature={job.feature_specification}, sample={job.sample})'
-        logger.info(message)
-        self._compute(job)
-        return True
+        with DBConnection() as connection:
+            connection._set_autocommit(True)
+            self.connection = connection
+            job = self.queue.pop_uncomputed()
+            if job is None:
+                return False
+            self._notify_start(job)
+            logger.info(f'Doing job (feature={job.feature_specification}, sample={job.sample})')
+            self._compute(job)
+            self._notify_complete(job)
+            return True
 
-    def _compute(self, job: ComputationJobReference) -> None:
+    def _compute(self, job: Job) -> None:
         provider = self._get_provider(job)
-        provider.compute()
+        try:
+            provider.compute()
+        except Exception as error:
+            logger.error(error)
+            self._get_provider(job)._warn_no_value()
 
-    def _get_provider(self, job: ComputationJobReference) -> OnDemandProvider:
+    def _notify_start(self, job: Job) -> None:
+        payload = f'{job.feature_specification}\t{job.study}\t{job.sample}'
+        self.connection.execute(f"NOTIFY queue_pop_activity, '{payload}' ;")
+
+    def _notify_complete(self, job: Job) -> None:
+        self.connection.execute('NOTIFY queue_job_complete ;')
+
+    def _get_provider(self, job: Job) -> PendingProvider:
         derivation_method = self._retrieve_derivation_method(job)
         providers = {
             'spatial autocorrelation': SquidpyProvider,
@@ -78,7 +95,7 @@ class OnDemandWorker:
         }
         return providers[get_handle(derivation_method)](job)  # type: ignore
 
-    def _retrieve_derivation_method(self, job: ComputationJobReference) -> str:
+    def _retrieve_derivation_method(self, job: Job) -> str:
         with DBCursor(study=job.study) as cursor:
             query = 'SELECT derivation_method FROM feature_specification WHERE identifier=%s ;'
             cursor.execute(query, (str(job.feature_specification),))

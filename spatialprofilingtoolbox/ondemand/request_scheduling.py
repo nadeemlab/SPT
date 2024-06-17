@@ -2,8 +2,9 @@
 
 from typing import cast
 
-from asyncio import sleep as asyncio_sleep
+from psycopg import Connection as PsycopgConnection
 
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
@@ -15,6 +16,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     UnivariateMetricsComputationResult,
 )
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+Metrics1D = UnivariateMetricsComputationResult
 
 logger = colorized_logger(__name__)
 
@@ -34,7 +36,7 @@ class OnDemandRequester:
     """Entry point for requesting computation by the on-demand service."""
 
     @staticmethod
-    async def get_counts_by_specimen(
+    def get_counts_by_specimen(
         positives: tuple[str, ...],
         negatives: tuple[str, ...],
         study_name: str,
@@ -46,21 +48,7 @@ class OnDemandRequester:
             negative_markers=tuple(filter(_nonempty, negatives)),
         )
         selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
-        get = CountsProvider.get_metrics_or_schedule
-        while True:
-            counts = get(
-                study_name,
-                phenotype=phenotype,
-                cells_selected=selected,
-            )
-            counts_all = get(
-                study_name,
-                phenotype=PhenotypeCriteria(positive_markers=(), negative_markers=()),
-                cells_selected=selected,
-            )
-            if not counts.is_pending and not counts_all.is_pending:
-                break
-            await asyncio_sleep(3)
+        counts, counts_all = OnDemandRequester._counts(study_name, phenotype, selected)
         combined_keys = sorted(list(set(list(counts.values.keys()) + list(counts_all.values.keys()))))
         return PhenotypeCounts(
             counts=tuple(
@@ -79,12 +67,48 @@ class OnDemandRequester:
             number_cells_in_study=number_cells,
         )
 
+    @classmethod
+    def _counts(
+        cls, study_name: str, phenotype: PhenotypeCriteria, selected: tuple[int, ...],
+    ) -> tuple[Metrics1D, Metrics1D]:
+        get = CountsProvider.get_metrics_or_schedule
+        def get_results() -> tuple[Metrics1D, str, Metrics1D, str]:
+            counts, feature1 = get(
+                study_name,
+                phenotype=phenotype,
+                cells_selected=selected,
+            )
+            counts_all, feature2 = get(
+                study_name,
+                phenotype=PhenotypeCriteria(positive_markers=(), negative_markers=()),
+                cells_selected=selected,
+            )
+            return (counts, feature1, counts_all, feature2)
+        with DBConnection() as connection:
+            connection._set_autocommit(True)
+            connection.execute('LISTEN queue_failed_jobs_cleared ;')
+            _, feature1, _, feature2 = get_results()
+            while True:
+                cls._wait_for_wrapup_activity(connection)
+                counts, _, counts_all, _ =  get_results()
+                if not counts.is_pending and not counts_all.is_pending:
+                    return (counts, counts_all)
+
+    @classmethod
+    def _wait_for_wrapup_activity(cls, connection: PsycopgConnection) -> None:
+        logger.info('Waiting for signal that failed jobs were definitely cleared.')
+        notifications = connection.notifies()
+        for notification in notifications:
+            logger.info('Received signal that failed jobs were cleared.')
+            notifications.close()
+            break
+
     @staticmethod
     def get_proximity_metrics(
         study: str,
         radius: float,
         _signature: tuple[list[str], list[str], list[str], list[str]]
-    ) -> UnivariateMetricsComputationResult:
+    ) -> Metrics1D:
         signature = tuple(map(lambda l: tuple(filter(_nonempty, l)), _signature))
         phenotype1 = PhenotypeCriteria(
             positive_markers=signature[0], negative_markers=signature[1],
@@ -93,7 +117,8 @@ class OnDemandRequester:
             positive_markers=signature[2], negative_markers=signature[3],
         )
         get = ProximityProvider.get_metrics_or_schedule
-        return get(study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
+        result, _ = get(study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
+        return result
 
     @staticmethod
     def get_squidpy_metrics(
@@ -101,7 +126,7 @@ class OnDemandRequester:
         _signature: list[list[str]],
         feature_class: str,
         radius: float | None = None,
-    ) -> UnivariateMetricsComputationResult:
+    ) -> Metrics1D:
         """Get spatial proximity statistics between phenotype clusters as calculated by Squidpy."""
         if not len(_signature) in {2, 4}:
             message = f'Expected 2 or 4 channel lists (1 or 2 phenotypes) but got {len(_signature)}.'
@@ -119,4 +144,5 @@ class OnDemandRequester:
                 )
             )
         get = SquidpyProvider.get_metrics_or_schedule
-        return get(study, feature_class=feature_class, phenotypes=phenotypes, radius=radius)
+        result, _ = get(study, feature_class=feature_class, phenotypes=phenotypes, radius=radius)
+        return result

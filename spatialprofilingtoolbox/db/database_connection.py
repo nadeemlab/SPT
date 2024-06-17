@@ -44,7 +44,7 @@ class ConnectionProvider:
     def __init__(self, connection: PsycopgConnection):
         self.connection = connection
 
-    def get_connection(self):
+    def get_connection(self) -> PsycopgConnection:
         return self.connection
 
     def is_connected(self):
@@ -156,7 +156,7 @@ def wait_for_database_ready():
                 break
         except OperationalError:
             logger.debug('Database is not ready.')
-            time.sleep(2.0)
+        time.sleep(2.0)
     logger.info('Database is ready.')
 
 

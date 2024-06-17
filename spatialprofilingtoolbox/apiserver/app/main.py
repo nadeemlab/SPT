@@ -191,16 +191,16 @@ async def get_anonymous_phenotype_counts_fast(
     """Computes the number of cells satisfying the given positive and negative criteria, in the
     context of a given study.
     """
-    return await _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
+    return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
 
 
-async def _get_anonymous_phenotype_counts_fast(
+def _get_anonymous_phenotype_counts_fast(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
     number_cells = cast(int, query().get_number_cells(study))
-    counts = await get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+    counts = get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
     return counts
 
 
@@ -278,7 +278,7 @@ async def get_importance_composition(
     cell_limit: int = 100,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of important cells expressing a given phenotype."""
-    return await _get_importance_composition(
+    return _get_importance_composition(
         study,
         positive_marker,
         negative_marker,
@@ -289,7 +289,7 @@ async def get_importance_composition(
         cell_limit,
     )
 
-async def _get_importance_composition(
+def _get_importance_composition(
     study: ValidStudy,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
@@ -308,7 +308,7 @@ async def _get_importance_composition(
         cohort_stratifier,
         cell_limit,
     )
-    return await get_phenotype_counts(
+    return get_phenotype_counts(
         positive_marker,
         negative_marker,
         study,
@@ -317,14 +317,14 @@ async def _get_importance_composition(
     )
 
 
-async def get_phenotype_counts_cached(
+def get_phenotype_counts_cached(
     positives: tuple[str, ...],
     negatives: tuple[str, ...],
     study: str,
     number_cells: int,
     selected: tuple[int, ...],
 ) -> PhenotypeCounts:
-    counts = await OnDemandRequester.get_counts_by_specimen(
+    counts = OnDemandRequester.get_counts_by_specimen(
         positives,
         negatives,
         study,
@@ -334,7 +334,7 @@ async def get_phenotype_counts_cached(
     return counts
 
 
-async def get_phenotype_counts(
+def get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
@@ -344,7 +344,7 @@ async def get_phenotype_counts(
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    counts = await get_phenotype_counts_cached(
+    counts = get_phenotype_counts_cached(
         tuple(positive_markers),
         tuple(negative_markers),
         study,
@@ -465,7 +465,7 @@ async def importance_fraction_plot(
         figure_size,
         orientation,
     )
-    plot = await generator.generate_plot()
+    plot = generator.generate_plot()
     plt.figure(plot.number)  # type: ignore
     buf = BytesIO()
     plt.savefig(buf, format=img_format)

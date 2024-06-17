@@ -2,14 +2,12 @@
 import json
 import sys
 
-from asyncio import run as asyncio_run
-
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 
 
-async def main():
+def main():
     study_name = 'Melanoma intralesional IL2'
-    counts = await OnDemandRequester.get_counts_by_specimen(['CD3'], ['CD8', 'CD20'], study_name, 0, ())
+    counts = OnDemandRequester.get_counts_by_specimen(['CD3'], ['CD8', 'CD20'], study_name, 0, ())
 
     counts_json = json.dumps(counts.model_dump(), indent=4).rstrip()
     with open('module_tests/expected_counts_structured1.json', 'rt', encoding='utf-8') as file:
@@ -20,4 +18,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio_run(main())
+    main()

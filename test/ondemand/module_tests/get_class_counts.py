@@ -2,23 +2,21 @@
 import sys
 import json
 
-from asyncio import run as asyncio_run
-
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 
 
-async def get_counts(study_name, positives, negatives):
-    return await OnDemandRequester.get_counts_by_specimen(positives, negatives, study_name, 0, ())
+def get_counts(study_name, positives, negatives):
+    return OnDemandRequester.get_counts_by_specimen(positives, negatives, study_name, 0, ())
 
 
-async def main():
+def main():
     if sys.argv[1] == '1':
-        counts = await get_counts(
+        counts = get_counts(
             'Melanoma intralesional IL2',
             ['CD3'], ['CD8', 'CD20'],
         )
     elif sys.argv[1] == '2':
-        counts = await get_counts(
+        counts = get_counts(
             'Breast cancer IMC',
             ['CD3 epsilon'], ['CD20'],
         )
@@ -29,4 +27,4 @@ async def main():
     print(json_str, end='')
 
 if __name__ == '__main__':
-    asyncio_run(main())
+    main()

@@ -62,6 +62,7 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/graphs/; $$executor $$test_script" ; \
     docker run \
+     -i \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \

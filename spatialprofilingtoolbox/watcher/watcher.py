@@ -55,9 +55,12 @@ class WorkerWatcher:
         self._notify_cleared()
 
     def _check_for_missing_values(self) -> None:
-        if len(self.worker_jobs) == 0 and self._all_queues_are_empty():
+        empty = self._all_queues_are_empty()
+        if len(self.worker_jobs) == 0 and empty:
             self._write_all_nulls()
             self._notify_cleared()
+        if len(self.worker_jobs) == 0 and not empty:
+            self._notify_jobs_remain()
 
     def _all_queues_are_empty(self):
         number_empty = 0
@@ -91,6 +94,9 @@ class WorkerWatcher:
 
     def _notify_cleared(self) -> None:
         self.connection.execute('NOTIFY queue_failed_jobs_cleared ;')
+
+    def _notify_jobs_remain(self) -> None:
+        self.connection.execute("NOTIFY queue_activity, 'possibly new items' ;")
 
     def _assume_dead(self, pid: int) -> None:
         job = self.worker_jobs[pid]

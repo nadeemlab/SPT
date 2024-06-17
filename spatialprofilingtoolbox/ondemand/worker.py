@@ -41,9 +41,9 @@ class OnDemandWorker:
         logger.info('Listening on queue_activity channel.')
         notifications = connection.notifies()
         for notification in notifications:
-            if notification.payload == 'new items':
+            if notification.payload in ('new items', 'possibly new items'):
                 notifications.close()
-                logger.info('Received notice of new items in job queue.')
+                logger.info('Received notice of new or possibly new items in job queue.')
                 break
 
     def _work_until_complete(self) -> None:

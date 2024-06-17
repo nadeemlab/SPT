@@ -46,6 +46,9 @@ CREATE TABLE quantitative_feature_value_queue (
     subject VARCHAR
 );
 
+ALTER TABLE quantitative_feature_value
+ADD CONSTRAINT unique_qfv UNIQUE (feature, subject) ;
+
 CREATE TABLE ondemand_studies_index (
     specimen VARCHAR(512),
     blob_type VARCHAR(512),

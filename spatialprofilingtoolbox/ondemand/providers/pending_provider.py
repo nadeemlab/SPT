@@ -69,6 +69,9 @@ class PendingProvider(OnDemandProvider, ABC):
             cursor.execute(query, (feature_specification,))
             count = tuple(cursor.fetchall())[0][0]
         expected = cls._get_expected_number_samples(study, feature_specification)
+        if count > expected:
+            message = f'Feature {feature_specification} has too many values, {count} / {expected}.'
+            logger.warning(message)
         return count == expected
 
     @classmethod

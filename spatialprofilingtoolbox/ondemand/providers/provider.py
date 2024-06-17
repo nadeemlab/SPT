@@ -10,6 +10,7 @@ from numpy.typing import NDArray
 from attrs import define
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
@@ -76,13 +77,7 @@ class OnDemandProvider(ABC):
 
     @staticmethod
     def relevant_specimens_query() -> str:
-        return '''
-            SELECT DISTINCT sdmp.specimen FROM specimen_data_measurement_process sdmp
-            JOIN study_component sc1 ON sc1.component_study=sdmp.study
-            JOIN study_component sc2 ON sc1.primary_study=sc2.primary_study
-            JOIN feature_specification fsn ON fsn.study=sc2.component_study
-            WHERE fsn.identifier=%s
-        '''
+        return relevant_specimens_query()
 
     @staticmethod
     def extract_binary(mask: int, length: int) -> tuple[int, ...]:

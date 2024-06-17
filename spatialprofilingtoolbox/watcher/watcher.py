@@ -4,6 +4,7 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -40,6 +41,8 @@ class WorkerWatcher:
                 job = Job(int(payload[0]), payload[1], payload[2])
                 pid = notification.pid
                 self.worker_jobs[pid] = job
+            if notification.channel in ('queue_job_complete', 'queue_activity', 'feature_cache_hit'):
+                self._check_for_missing_values()
             self._check_for_failed_jobs()
             self._log_status()
 
@@ -50,6 +53,33 @@ class WorkerWatcher:
         for pid in set(self.worker_jobs.keys()).difference(pids):
             self._assume_dead(pid)
         self._notify_cleared()
+
+    def _check_for_missing_values(self) -> None:
+        if len(self.worker_jobs) == 0 and self._all_queues_are_empty():
+            self._write_all_nulls()
+            self._notify_cleared()
+
+    def _all_queues_are_empty(self):
+        number_empty = 0
+        studies = self._get_studies()
+        for study in studies:
+            with DBCursor(study=study) as cursor:
+                cursor.execute('SELECT COUNT(*) FROM quantitative_feature_value_queue ;')
+                count = tuple(cursor.fetchall())[0][0]
+                if count == 0:
+                    number_empty += 1
+        return number_empty == len(studies)
+
+    def _write_all_nulls(self) -> None:
+        for study in self._get_studies():
+            with DBCursor(study=study) as cursor:
+                cursor.execute('SELECT DISTINCT identifier FROM feature_specification ;')
+                features = tuple(map(lambda row: row[0], cursor.fetchall()))
+            for feature in features:
+                missing = self.get_missing_samples(study, feature)
+                if len(missing) > 0:
+                    for sample in missing:
+                        self._insert_null(Job(int(feature), study, sample))
 
     def _log_status(self) -> None:
         pids = sorted(list(self.worker_jobs.keys()))
@@ -84,3 +114,24 @@ class WorkerWatcher:
         logger.warning(f'Assumed null, feature {specification} ({sample}, {study}).')
         with DBCursor(study=study) as cursor:
             add_feature_value(specification, sample, None, cursor)
+
+    def _get_studies(self) -> tuple[str, ...]:
+        with DBCursor() as cursor:
+            cursor.execute('SELECT study FROM study_lookup ;')
+            return tuple(map(lambda row: row[0], cursor.fetchall()))
+
+    @classmethod
+    def _get_expected_samples(cls, study: str, feature_specification: str) -> tuple[str, ...]:
+        with DBCursor(study=study) as cursor:
+            query = relevant_specimens_query() % f"'{feature_specification}'"
+            cursor.execute(query)
+            return tuple(map(lambda row: row[0], cursor.fetchall()))
+
+    @staticmethod
+    def get_missing_samples(study: str, feature_specification: str) -> tuple[str, ...]:
+        expected = WorkerWatcher._get_expected_samples(study, feature_specification)
+        with DBCursor(study=study) as cursor:
+            query = 'SELECT subject FROM quantitative_feature_value WHERE feature=%s ;'
+            cursor.execute(query, (feature_specification,))
+            present = tuple(map(lambda row: row[0], cursor.fetchall()))
+        return tuple(sorted(list(set(expected).difference(present))))

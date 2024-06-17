@@ -89,17 +89,17 @@ class OnDemandRequester:
             connection.execute('LISTEN queue_failed_jobs_cleared ;')
             _, feature1, _, feature2 = get_results()
             while True:
-                cls._wait_for_wrapup_activity(connection)
+                cls._wait_for_wrapup_activity(connection, (feature1, feature2))
                 counts, _, counts_all, _ =  get_results()
                 if not counts.is_pending and not counts_all.is_pending:
                     return (counts, counts_all)
 
     @classmethod
-    def _wait_for_wrapup_activity(cls, connection: PsycopgConnection) -> None:
-        logger.info('Waiting for signal that failed jobs were definitely cleared.')
+    def _wait_for_wrapup_activity(cls, connection: PsycopgConnection, features: tuple[str, ...]) -> None:
+        logger.info(f'Waiting for signals that whole features {features} may be ready.')
         notifications = connection.notifies()
         for notification in notifications:
-            logger.info('Received signal that failed jobs were cleared.')
+            logger.info(f'Received signal that whole features {features} may be ready.')
             notifications.close()
             break
 

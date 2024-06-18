@@ -114,7 +114,7 @@ class OnDemandRequester:
             _, feature2 = get_results2()
             while True:
                 cls._wait_for_wrapup_activity(connection, (feature2,))
-                counts_all, _ =  get_results()
+                counts_all, _ =  get_results2()
                 if not counts_all.is_pending:
                     break
         return (counts, counts_all)

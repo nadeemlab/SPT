@@ -16,7 +16,7 @@ logger = colorized_logger(__name__)
 class WorkerWatcher:
     """Watch for failed jobs and handle the insertion of default results."""
     connection: PsycopgConnection
-    worker_jobs: dict[int, Job]
+    worker_jobs: dict[Job, int]
 
     def __init__(self) -> None:
         self.worker_jobs = {}
@@ -40,11 +40,11 @@ class WorkerWatcher:
                 payload = notification.payload.split('\t')
                 job = Job(int(payload[0]), payload[1], payload[2])
                 pid = notification.pid
-                self.worker_jobs[pid] = job
+                self.worker_jobs[job] = pid
                 logger.info(f'{pid} noticed to be working on {job.feature_specification} {job.sample}.')
             if notification.channel == 'queue_job_complete':
                 pid = notification.pid
-                if not pid in self.worker_jobs:
+                if not pid in self.worker_jobs.values():
                     logger.warning(f'Worker {pid} completed job but was not under monitoring.')
             if notification.channel in ('queue_job_complete', 'queue_activity', 'feature_cache_hit'):
                 self._check_for_missing_values()
@@ -55,7 +55,7 @@ class WorkerWatcher:
         with self.connection.cursor() as cursor:
             cursor.execute('SELECT pid FROM pg_stat_activity ;')
             pids = tuple(map(lambda row: int(row[0]), cursor.fetchall()))
-        for pid in set(self.worker_jobs.keys()).difference(pids):
+        for pid in set(self.worker_jobs.values()).difference(pids):
             self._assume_dead(pid)
         self._notify_cleared()
 
@@ -91,7 +91,7 @@ class WorkerWatcher:
                         self._insert_null(Job(int(feature), study, sample))
 
     def _log_status(self) -> None:
-        pids = sorted(list(self.worker_jobs.keys()))
+        pids = sorted(list(self.worker_jobs.values()))
         abridged = pids[0:min(5, len(pids))]
         display = ' '.join(map(str, abridged))
         if len(pids) > len(abridged):
@@ -105,10 +105,14 @@ class WorkerWatcher:
         self.connection.execute("NOTIFY queue_activity, 'possibly new items' ;")
 
     def _assume_dead(self, pid: int) -> None:
-        job = self.worker_jobs[pid]
-        del self.worker_jobs[pid]
-        if self._no_value(job):
-            self._insert_null(job)
+        jobs = tuple(map(
+            lambda job_pid: job_pid[0],
+            filter(lambda job_pid: job_pid[1] == pid, self.worker_jobs.items(),),
+        ))
+        for job in jobs:
+            del self.worker_jobs[job]
+            if self._no_value(job):
+                self._insert_null(job)
 
     def _no_value(self, job: Job) -> bool:
         with DBCursor(study=job.study) as cursor:

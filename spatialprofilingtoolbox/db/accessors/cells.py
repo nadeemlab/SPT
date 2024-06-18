@@ -20,10 +20,10 @@ logger = colorized_logger(__name__)
 class CellsAccess(SimpleReadOnlyProvider):
     """Retrieve cell-level data for a sample."""
 
-    def get_cells_data(self, sample: str) -> CellsData:
+    def get_cells_data(self, sample: str, cell_identifiers: tuple[int, ...] = ()) -> CellsData:
         return CellsAccess._zip_location_and_phenotype_data(
-            self._get_location_data(sample),
-            self._get_phenotype_data(sample),
+            self._get_location_data(sample, cell_identifiers),
+            self._get_phenotype_data(sample, cell_identifiers),
         )
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:
@@ -50,8 +50,12 @@ class CellsAccess(SimpleReadOnlyProvider):
             names=tuple(Channel(symbol=n) for n in names)
         )
 
-    def _get_location_data(self, sample: str) -> dict[int, tuple[float, float]]:
-        by_sample = pickle_loads(
+    def _get_location_data(
+        self,
+        sample: str,
+        cell_identifiers: tuple[int, ...],
+    ) -> dict[int, tuple[float, float]]:
+        locations: dict[int, tuple[float, float]] = pickle_loads(
             self.fetch_one_or_else(
                 '''
                 SELECT blob_contents
@@ -62,10 +66,16 @@ class CellsAccess(SimpleReadOnlyProvider):
                 self.cursor,
                 f'Requested centroids data for "{sample}" not found in database.'
             )
-        )
-        return by_sample[sample]
+        )[sample]
+        if cell_identifiers == ():
+            return locations
+        return {key: locations[key] for key in set(cell_identifiers).intersection(locations.keys())}
 
-    def _get_phenotype_data(self, sample: str) -> dict[int, bytes]:
+    def _get_phenotype_data(
+        self,
+        sample: str,
+        cell_identifiers: tuple[int, ...],
+    ) -> dict[int, bytes]:
         index_and_expressions = bytearray(self.fetch_one_or_else(
             '''
             SELECT blob_contents
@@ -82,10 +92,13 @@ class CellsAccess(SimpleReadOnlyProvider):
             logger.error(message)
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
-        return dict(
+        masks = dict(
             (int.from_bytes(batch[0:8], byteorder='little'), bytes(bytes(batch[8:16])))
             for batch in self._batched(bytes_iterator, 16)
         )
+        if cell_identifiers == ():
+            return masks
+        return {key: masks[key] for key in set(cell_identifiers).intersection(masks.keys())}
 
     @staticmethod
     def _batched(iterable: Iterable, batch_size: int):

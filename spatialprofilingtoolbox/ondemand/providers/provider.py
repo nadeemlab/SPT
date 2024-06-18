@@ -42,9 +42,10 @@ class OnDemandProvider(ABC):
     def get_cell_data_arrays(self) -> CellDataArrays:
         study = self.job.study
         sample = self.job.sample
+        cell_identifiers = self._get_cells_selected()
         with DBCursor(study=study) as cursor:
             access = CellsAccess(cursor)
-            raw = access.get_cells_data(sample)
+            raw = access.get_cells_data(sample, cell_identifiers=cell_identifiers)
             feature_names = access.get_ordered_feature_names()
         number_cells = int.from_bytes(raw[0:4])
         location = asarray((self._get_parts(4, 8, raw), self._get_parts(8, 12, raw)))
@@ -54,6 +55,12 @@ class OnDemandProvider(ABC):
         identifiers = asarray(self._get_parts(0, 4, raw))
         self._expect_number(identifiers.shape[0], number_cells)
         return CellDataArrays(location, phenotype, feature_names, identifiers)
+
+    def _get_cells_selected(self) -> tuple[int, ...]:
+        with DBCursor(study=self.job.study) as cursor:
+            query = 'SELECT histological_structure FROM cell_set_cache WHERE feature=%s ;'
+            cursor.execute(query, (str(self.job.feature_specification),))
+            return tuple(map(lambda row: int(row[0]), cursor.fetchall()))
 
     @staticmethod
     def _get_parts(

@@ -72,33 +72,46 @@ class OnDemandRequester:
         cls, study_name: str, phenotype: PhenotypeCriteria, selected: tuple[int, ...],
     ) -> tuple[Metrics1D, Metrics1D]:
         get = CountsProvider.get_metrics_or_schedule
-        def get_results() -> tuple[Metrics1D, str, Metrics1D, str]:
+        def get_results() -> tuple[Metrics1D, str]:
             counts, feature1 = get(
                 study_name,
                 phenotype=phenotype,
                 cells_selected=selected,
             )
+            return (counts, feature1)
+        with DBConnection() as connection:
+            connection._set_autocommit(True)
+            connection.execute('LISTEN queue_failed_jobs_cleared ;')
+            _, feature1 = get_results()
+            while True:
+                cls._wait_for_wrapup_activity(connection, (feature1,))
+                counts, _ =  get_results()
+                if not counts.is_pending:
+                    break
+
+        def get_results2() -> tuple[Metrics1D, str]:
             counts_all, feature2 = get(
                 study_name,
                 phenotype=PhenotypeCriteria(positive_markers=(), negative_markers=()),
                 cells_selected=selected,
             )
-            return (counts, feature1, counts_all, feature2)
+            return (counts_all, feature2)
         with DBConnection() as connection:
             connection._set_autocommit(True)
             connection.execute('LISTEN queue_failed_jobs_cleared ;')
-            _, feature1, _, feature2 = get_results()
+            _, feature2 = get_results2()
             while True:
-                cls._wait_for_wrapup_activity(connection, (feature1, feature2))
-                counts, _, counts_all, _ =  get_results()
-                if not counts.is_pending and not counts_all.is_pending:
-                    return (counts, counts_all)
+                cls._wait_for_wrapup_activity(connection, (feature2,))
+                counts_all, _ =  get_results()
+                if not counts_all.is_pending:
+                    break
+        return (counts, counts_all)
 
     @classmethod
     def _wait_for_wrapup_activity(cls, connection: PsycopgConnection, features: tuple[str, ...]) -> None:
         logger.info(f'Waiting for signals that whole features {features} may be ready.')
         notifications = connection.notifies()
-        for notification in notifications:
+        for _ in notifications:
             logger.info(f'Received signal that whole features {features} may be ready.')
             notifications.close()
             break

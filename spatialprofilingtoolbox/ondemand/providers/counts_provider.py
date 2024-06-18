@@ -1,7 +1,6 @@
 """Count cells for a specific signature, over the specially-created binary-format index."""
 
 from typing import cast
-from ast import literal_eval
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
@@ -13,6 +12,8 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (\
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+ItemList = tuple[str, list[int]]
+Item = tuple[str, tuple[int, ...]]
 
 logger = colorized_logger(__name__)
 
@@ -157,8 +158,6 @@ class CountsProvider(PendingProvider):
         cell_sets: dict[str, list[int]] = {row[0]: [] for row in rows}
         for row in rows:
             cell_sets[row[0]].append(int(row[1]))
-        ItemList = tuple[str, list[int]]
-        Item = tuple[str, tuple[int, ...]]
         def normalize(item: ItemList) -> Item:
             key, cell_set = item
             return (key, tuple(sorted(list(cell_set))))

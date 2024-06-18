@@ -411,7 +411,7 @@ clean-files:
 >@rm -f .initial_time.txt
 >@rm -f ${BUILD_LOCATION}/*/.initiation_message_size
 >@rm -f ${BUILD_LOCATION}/*/.current_time.txt
->@for submodule in ${SUBMODULES} ; do \
+>@for submodule in ${TESTABLE_SUBMODULES} ; do \
         submodule_directory=${BUILD_LOCATION}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
         rm -rf $$submodule_directory/docker.built ; \

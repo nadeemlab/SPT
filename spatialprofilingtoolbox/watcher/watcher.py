@@ -41,6 +41,11 @@ class WorkerWatcher:
                 job = Job(int(payload[0]), payload[1], payload[2])
                 pid = notification.pid
                 self.worker_jobs[pid] = job
+                logger.info(f'{pid} noticed to be working on {job.feature_specification} {job.sample}.')
+            if notification.channel == 'queue_job_complete':
+                pid = notification.pid
+                if not pid in self.worker_jobs:
+                    logger.warning(f'Worker {pid} completed job but was not under monitoring.')
             if notification.channel in ('queue_job_complete', 'queue_activity', 'feature_cache_hit'):
                 self._check_for_missing_values()
             self._check_for_failed_jobs()
@@ -57,8 +62,9 @@ class WorkerWatcher:
     def _check_for_missing_values(self) -> None:
         empty = self._all_queues_are_empty()
         if len(self.worker_jobs) == 0 and empty:
-            self._write_all_nulls()
-            self._notify_cleared()
+            logger.warning('Not writing null values, aggressive null-filling is disabled.')
+            # self._write_all_nulls()
+            # self._notify_cleared()
         if len(self.worker_jobs) == 0 and not empty:
             self._notify_jobs_remain()
 

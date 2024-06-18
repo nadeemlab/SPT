@@ -48,25 +48,26 @@ class OnDemandWorker:
 
     def _work_until_complete(self) -> None:
         completed = True
-        count = 0
+        completed_pids = []
         while completed:
-            completed = self._one_job()
+            completed, pid = self._one_job()
             if completed:
-                count += 1
-        logger.info(f'Finished {count} jobs.')
+                completed_pids.append(str(pid))
+        logger.info(f'Finished jobs {" ".join(completed_pids)}.')
 
-    def _one_job(self) -> bool:
+    def _one_job(self) -> tuple[bool, int]:
         with DBConnection() as connection:
             connection._set_autocommit(True)
             self.connection = connection
+            pid = self.connection.info.backend_pid
             job = self.queue.pop_uncomputed()
             if job is None:
-                return False
+                return (False, pid)
             self._notify_start(job)
-            logger.info(f'Doing job (feature={job.feature_specification}, sample={job.sample})')
+            logger.info(f'{pid} doing job (feature={job.feature_specification}, sample={job.sample})')
             self._compute(job)
             self._notify_complete(job)
-            return True
+            return (True, pid)
 
     def _compute(self, job: Job) -> None:
         provider = self._get_provider(job)

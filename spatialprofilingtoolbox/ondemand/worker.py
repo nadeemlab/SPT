@@ -11,6 +11,9 @@ from spatialprofilingtoolbox.ondemand.providers.proximity_provider import Proxim
 
 from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
+from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
+from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Job = ComputationJobReference
@@ -40,8 +43,9 @@ class OnDemandWorker:
         connection.execute('LISTEN queue_activity ;')
         logger.info('Listening on queue_activity channel.')
         notifications = connection.notifies()
-        for notification in notifications:
-            if notification.payload in ('new items', 'possibly new items'):
+        for _notification in notifications:
+            notification = parse_notification(_notification)
+            if notification.channel in ('new items', 'possibly new items'):
                 notifications.close()
                 logger.info('Received notice of new or possibly new items in job queue.')
                 break
@@ -78,11 +82,12 @@ class OnDemandWorker:
             self._get_provider(job)._warn_no_value()
 
     def _notify_start(self, job: Job) -> None:
-        payload = f'{job.feature_specification}\t{job.study}\t{job.sample}'
-        self.connection.execute(f"NOTIFY queue_pop_activity, '{payload}' ;")
+        notify = create_notify_command('queue pop', job)
+        self.connection.execute(notify)
 
     def _notify_complete(self, job: Job) -> None:
-        self.connection.execute('NOTIFY queue_job_complete ;')
+        notify = create_notify_command('job complete', job)
+        self.connection.execute(notify)
 
     def _get_provider(self, job: Job) -> PendingProvider:
         derivation_method = self._retrieve_derivation_method(job)

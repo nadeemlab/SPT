@@ -4,6 +4,8 @@ from typing import cast
 
 from psycopg import Connection as PsycopgConnection
 
+from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
+from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
@@ -22,8 +24,13 @@ logger = colorized_logger(__name__)
 
 
 def _fancy_division(numerator: float | None, denominator: float | None) -> float | None:
-    if numerator is None or denominator is None or denominator == 0:
+    if numerator is None or denominator is None:
         return None
+    if denominator == 0:
+        if numerator == 0:
+            return 0
+        else:
+            return None
     ratio = numerator / denominator
     return 100 * round(ratio * 10000)/10000
 
@@ -49,7 +56,13 @@ class OnDemandRequester:
         )
         selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
         counts, counts_all = OnDemandRequester._counts(study_name, phenotype, selected)
-        combined_keys = sorted(list(set(list(counts.values.keys()) + list(counts_all.values.keys()))))
+        combined_keys = sorted(list(set(counts.values.keys()).intersection(counts_all.values.keys())))
+        missing_numerator = set(counts.values.keys()).difference(combined_keys)
+        if len(missing_numerator) > 0:
+            logger.warning(f'In forming population fractions, some samples were missing from numerator: {missing_numerator}')
+        missing_denominator = set(counts_all.values.keys()).difference(combined_keys)
+        if len(missing_denominator) > 0:
+            logger.warning(f'In forming population fractions, some samples were missing from denominator: {missing_denominator}')
         return PhenotypeCounts(
             counts=tuple(
                 PhenotypeCount(
@@ -81,7 +94,7 @@ class OnDemandRequester:
             return (counts, feature1)
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute('LISTEN queue_failed_jobs_cleared ;')
+            connection.execute('LISTEN queue_activity ;')
             _, feature1 = get_results()
             while True:
                 cls._wait_for_wrapup_activity(connection, (feature1,))
@@ -98,7 +111,7 @@ class OnDemandRequester:
             return (counts_all, feature2)
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute('LISTEN queue_failed_jobs_cleared ;')
+            connection.execute('LISTEN queue_activity ;')
             _, feature2 = get_results2()
             while True:
                 cls._wait_for_wrapup_activity(connection, (feature2,))
@@ -111,9 +124,11 @@ class OnDemandRequester:
     def _wait_for_wrapup_activity(cls, connection: PsycopgConnection, features: tuple[str, ...]) -> None:
         logger.info(f'Waiting for signals that whole features {features} may be ready.')
         notifications = connection.notifies()
-        for _ in notifications:
-            logger.info(f'Received signal that whole features {features} may be ready.')
-            notifications.close()
+        for _notification in notifications:
+            notification = parse_notification(_notification)
+            if notification.channel in ('jobs cleared heartbeat',):
+                logger.info(f'Received signal that whole features {features} may be ready.')
+                notifications.close()
             break
 
     @staticmethod

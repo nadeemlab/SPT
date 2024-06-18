@@ -6,6 +6,7 @@ from datetime import datetime
 from math import isnan
 from math import isinf
 
+from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
@@ -38,6 +39,9 @@ class PendingProvider(OnDemandProvider, ABC):
         get_or_create = cls.get_or_create_feature_specification
         feature_specification, is_new = get_or_create(study, data_analysis_study, **kwargs)
         all_jobs_complete = cls._all_jobs_complete(study, feature_specification)
+        if is_new and all_jobs_complete:
+            fs = feature_specification
+            logger.warning(f'Newly created feature somehow has all jobs complete already ({fs}).')
         if all_jobs_complete:
             cls._notify_cache_hit(feature_specification)
             return (cls._query_for_computed_feature_values(
@@ -58,7 +62,8 @@ class PendingProvider(OnDemandProvider, ABC):
     def _notify_cache_hit(cls, feature_specification: str) -> None:
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute('NOTIFY feature_cache_hit ;')
+            notify = create_notify_command('feature cache hit', '')
+            connection.execute(notify)
         fs = feature_specification
         logger.info(f'Cache hit for feature {fs}, because all associated jobs are complete.')
 

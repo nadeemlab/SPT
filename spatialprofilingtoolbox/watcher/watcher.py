@@ -1,4 +1,5 @@
 """Watch for failed jobs and handle the insertion of default results."""
+from typing import cast
 
 from psycopg import Connection as PsycopgConnection
 
@@ -6,6 +7,9 @@ from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
+from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
+from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Job = ComputationJobReference
@@ -24,10 +28,7 @@ class WorkerWatcher:
     def start(self) -> None:
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute('LISTEN queue_pop_activity ;')
-            connection.execute('LISTEN queue_job_complete ;')
             connection.execute('LISTEN queue_activity ;')
-            connection.execute('LISTEN feature_cache_hit ;')
             self.connection = connection
             logger.info('Watching workers.')
             while True:
@@ -35,21 +36,45 @@ class WorkerWatcher:
 
     def _monitor(self) -> None:
         notifications = self.connection.notifies()
-        for notification in notifications:
-            if notification.channel == 'queue_pop_activity':
-                payload = notification.payload.split('\t')
-                job = Job(int(payload[0]), payload[1], payload[2])
+        for _notification in notifications:
+            notification = parse_notification(_notification)
+            if notification.channel == 'queue pop':
+                job = cast(Job, notification.payload)
                 pid = notification.pid
                 self.worker_jobs[job] = pid
-                logger.info(f'{pid} noticed to be working on {job.feature_specification} {job.sample}.')
-            if notification.channel == 'queue_job_complete':
+                logger.info(f'{pid} claims to be working on {job.feature_specification} {job.sample}.')
+            elif notification.channel == 'job complete':
+                job = cast(Job, notification.payload)
                 pid = notification.pid
-                if not pid in self.worker_jobs.values():
-                    logger.warning(f'Worker {pid} completed job but was not under monitoring.')
-            if notification.channel in ('queue_job_complete', 'queue_activity', 'feature_cache_hit'):
-                self._check_for_missing_values()
-            self._check_for_failed_jobs()
+                self._log_status_of_completion_notice(job, pid)
+                job_present = job in self.worker_jobs.keys()
+                if job_present:
+                    del self.worker_jobs[job]
+            else:
+                # if notification.channel in ('queue_job_complete', 'queue_activity', 'feature_cache_hit'):
+                #     self._check_for_missing_values()
+                self._check_for_failed_jobs()
             self._log_status()
+
+    def _log_status_of_completion_notice(self, job: ComputationJobReference, pid: int) -> None:
+        pid_present = pid in self.worker_jobs.values()
+        job_present = job in self.worker_jobs.keys()
+        job_str = f'{job.feature_specification}, {job.sample}'
+        if pid_present:
+            if job_present:
+                del self.worker_jobs[job]
+                logger.info(f'{pid} claims to have completed {job_str}.')
+            else:
+                logger.warning(f'{pid} was not working on job {job_str}.')
+        else:
+            if job_present:
+                _pid = self.worker_jobs[job]
+                message = f'The job {job_str} was picked up by {_pid}, not {pid}.'
+                logger.warning(message)
+            else:
+                ignored = 'Completion notice ignored.'
+                message = f'Neither worker {pid} nor job {job_str} are recorded. {ignored}'
+                logger.warning(message)
 
     def _check_for_failed_jobs(self) -> None:
         with self.connection.cursor() as cursor:
@@ -99,16 +124,22 @@ class WorkerWatcher:
         logger.info(f'{len(self.worker_jobs)} workers actively working on jobs ({display}).')
 
     def _notify_cleared(self) -> None:
-        self.connection.execute('NOTIFY queue_failed_jobs_cleared ;')
+        notify = create_notify_command('jobs cleared heartbeat', '')
+        self.connection.execute(notify)
 
     def _notify_jobs_remain(self) -> None:
-        self.connection.execute("NOTIFY queue_activity, 'possibly new items' ;")
+        notify = create_notify_command('possibly new items', '')
+        self.connection.execute(notify)
 
     def _assume_dead(self, pid: int) -> None:
         jobs = tuple(map(
             lambda job_pid: job_pid[0],
             filter(lambda job_pid: job_pid[1] == pid, self.worker_jobs.items(),),
         ))
+        for job in jobs:
+            _job = JobSerialization.to_string(job)
+            message = f'Completion of job "{_job}" by {pid} inferred, direct notice absent.'
+            logger.warning(message)
         for job in jobs:
             del self.worker_jobs[job]
             if self._no_value(job):

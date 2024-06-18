@@ -50,6 +50,8 @@ class CountsProvider(PendingProvider):
 
     @staticmethod
     def _perform_count(args: tuple[int, int, tuple[int, ...]], arrays: CellDataArrays) -> int:
+        if arrays.identifiers.shape[0] == 0:
+            return 0
         return CountsProvider._count_structures_of_partial_signed_signature(*args, arrays)
 
     @staticmethod
@@ -60,6 +62,7 @@ class CountsProvider(PendingProvider):
         arrays: CellDataArrays,
     ) -> int:
         """Count the number of cells in the given sample that match this signature."""
+        # This check should be unnecessary now
         if cells_selected != ():
             candidates = tuple(map(
                 lambda pair: pair[1],

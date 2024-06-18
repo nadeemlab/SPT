@@ -28,6 +28,9 @@ from scipy.stats import fisher_exact  # type: ignore
 from attr import define
 from pydantic import BaseModel
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+logger = colorized_logger(__name__)
+
 if TYPE_CHECKING:
     from matplotlib.figure import Figure  # type: ignore
 
@@ -420,6 +423,9 @@ class ImportanceFractionAndTestRetriever:
         total: int,
         df: DataFrame,
     ) -> None:
+        if count_phenotype > count_both:
+            message = f'Count {count_both} for both phenotype and selected exceeds count {count_phenotype} for phenotype alone.'
+            logger.error(message)
         sample = str(_sample)
         a = count_both
         b = self.count_important - count_both

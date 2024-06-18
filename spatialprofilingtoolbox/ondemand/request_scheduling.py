@@ -106,7 +106,6 @@ class OnDemandRequester:
             counts_all, feature2 = get(
                 study_name,
                 phenotype=PhenotypeCriteria(positive_markers=(), negative_markers=()),
-                cells_selected=selected,
             )
             return (counts_all, feature2)
         with DBConnection() as connection:

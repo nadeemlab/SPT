@@ -8,7 +8,7 @@ from importlib.resources import files
 from itertools import product
 import re
 
-import pandas as pd
+import pandas as pd  # type: ignore
 from psycopg import Connection as PsycopgConnection
 from psycopg import Cursor as PsycopgCursor
 

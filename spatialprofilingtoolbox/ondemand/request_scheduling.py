@@ -29,11 +29,13 @@ Metrics1D = UnivariateMetricsComputationResult
 logger = colorized_logger(__name__)
 
 
-def _fancy_division(numerator: float | None, denominator: float | None) -> float:
+def _fancy_division(numerator: float | None, denominator: float | None) -> float | None:
     if numerator is None or denominator is None:
+        return None
+    if numerator == 0:
         return 0
-    if denominator == 0 or numerator == 0:
-        return 0
+    if denominator == 0:
+        return None
     ratio = numerator / denominator
     return 100 * round(ratio * 10000)/10000
 
@@ -72,11 +74,11 @@ class OnDemandRequester:
             counts=tuple([
                 PhenotypeCount(
                     specimen = sample,
-                    count = int(cast(float, counts.values[sample])) if counts.values[sample] is not None else 0,
+                    count = int(cast(float, counts.values[sample])) if counts.values[sample] is not None else None,
                     percentage = _fancy_division(counts.values[sample], counts_all.values[sample]),
                 )
                 for sample in combined_keys
-            ] + [PhenotypeCount(specimen=sample, count=0, percentage=0) for sample in additional]),
+            ] + [PhenotypeCount(specimen=sample, count=None, percentage=None) for sample in additional]),
             phenotype=CompositePhenotype(
                 name='',
                 identifier='',

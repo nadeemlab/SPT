@@ -117,6 +117,14 @@ class CellsAccess(SimpleReadOnlyProvider):
         if _identifiers != identifiers:
             message = 'Mismatch of cell sets for location and phenotype data.'
             raise ValueError(message)
+
+        if len(identifiers) == 0:
+            header = b''.join(map(
+                lambda i: int(i).to_bytes(4),
+                (0, 0, 0, 0, 0)
+            ))
+            return b''.join((header, b''))
+
         cls._check_consecutive(identifiers)
         extrema = {
             (operation[1], index): operation[0](map(lambda p: p[index-1], location_data.values()))

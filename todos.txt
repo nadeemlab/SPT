@@ -62,3 +62,6 @@ The first wrong event seems to be (8). Why was message (6) seen by the Watcher b
 * Null insertion needs to be an option in the counts case... in importance counts, some don't exist.
 * Does the notification generator block the API instance? Seems like can't access sometimes
 * Bug: ex. "Adipo..." in Mel-intr: On second try, full computation of pop. fractions was performed twice, got multiple features.
+
+* Need related cell set cache to be deleted when ondemand features are dropped!
+* Null needs to be allowed as a final return value in gnn counts case

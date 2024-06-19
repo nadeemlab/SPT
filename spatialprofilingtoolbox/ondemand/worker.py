@@ -1,5 +1,7 @@
 """Handler for requests for on demand calculations."""
 
+from traceback import print_exception
+
 from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -78,6 +80,7 @@ class OnDemandWorker:
             provider.compute()
         except Exception as error:
             logger.error(error)
+            print_exception(type(error), error, error.__traceback__)
             self._get_provider(job)._warn_no_value()
 
     def _notify_complete(self, job: Job) -> None:

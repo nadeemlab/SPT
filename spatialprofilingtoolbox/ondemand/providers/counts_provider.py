@@ -34,7 +34,7 @@ class CountsProvider(PendingProvider):
         specification = str(self.job.feature_specification)
         _, specifiers = self.retrieve_specifiers(study, specification)
         phenotype = phenotype_str_to_phenotype(specifiers[0])
-        cells_selected = self._retrieve_cells_selected(study, specification)
+        cells_selected = self._retrieve_cells_selected(study, specification)  # to deprecate
         marker_set = (phenotype.positive_markers, phenotype.negative_markers)
         arrays = self.get_cell_data_arrays()
         features = tuple(n.symbol for n in arrays.feature_names.names)
@@ -66,19 +66,19 @@ class CountsProvider(PendingProvider):
     ) -> int:
         """Count the number of cells in the given sample that match this signature."""
         # This check should be unnecessary now
-        if cells_selected != ():
-            candidates = tuple(map(
-                lambda pair: pair[1],
-                filter(
-                    lambda pair: pair[0] in cells_selected,
-                    zip(arrays.identifiers, arrays.phenotype,)
-                ),
-            ))
-        else:
-            candidates = tuple(arrays.phenotype)
-        # if positives_signature == 0 and negatives_signature == 0:
-        #     return arrays.identifiers.shape[0]
-        count = CountsProvider._get_count(candidates, positives_signature, negatives_signature)
+        # if cells_selected != ():
+        #     candidates = tuple(map(
+        #         lambda pair: pair[1],
+        #         filter(
+        #             lambda pair: pair[0] in cells_selected,
+        #             zip(arrays.identifiers, arrays.phenotype,)
+        #         ),
+        #     ))
+        # else:
+        #     candidates = tuple(arrays.phenotype)
+        if positives_signature == 0 and negatives_signature == 0:
+            return arrays.identifiers.shape[0]
+        count = CountsProvider._get_count(tuple(arrays.phenotype), positives_signature, negatives_signature)
         return count
 
     @staticmethod

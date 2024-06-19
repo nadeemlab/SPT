@@ -23,8 +23,11 @@ class ProximityProvider(PendingProvider):
 
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()
-        value = self._perform_computation(args, arrays)
-        self.handle_insert_value(value)
+        if arrays.identifiers is None:
+            self.handle_insert_value(None, allow_null=True)
+        else:
+            value = self._perform_computation(args, arrays)
+            self.handle_insert_value(value, allow_null=True)
 
     def _prepare_parameters(
         self,

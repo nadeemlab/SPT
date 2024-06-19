@@ -23,8 +23,11 @@ class CountsProvider(PendingProvider):
 
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()
-        count = self._perform_count(args, arrays)
-        self.handle_insert_value(count, allow_null=not arrays.identifiers.shape[0] == 0)
+        if arrays.identifiers is None:
+            self.handle_insert_value(None, allow_null=True)
+        else:
+            count = self._perform_count(args, arrays)
+            self.handle_insert_value(count)
 
     def _prepare_parameters(self) -> tuple[tuple[int, int, tuple[int, ...]], CellDataArrays]:
         study = self.job.study

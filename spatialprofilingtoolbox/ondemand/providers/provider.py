@@ -48,6 +48,8 @@ class OnDemandProvider(ABC):
             raw = access.get_cells_data(sample, cell_identifiers=cell_identifiers)
             feature_names = access.get_ordered_feature_names()
         number_cells = int.from_bytes(raw[0:4])
+        if number_cells == 0:
+            return CellDataArrays(None, None, feature_names, None)
         location = asarray((self._get_parts(4, 8, raw), self._get_parts(8, 12, raw)))
         self._expect_number(location.shape[1], number_cells)
         phenotype = asarray(self._get_parts(12, 20, raw, byteorder='little'))

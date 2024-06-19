@@ -1,11 +1,13 @@
 """Entry point for requesting computation by the on-demand service."""
 
 from typing import cast
+from typing import Callable
 
 from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
 from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
+from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
 from spatialprofilingtoolbox.ondemand.job_reference import CompletedFeature
 from spatialprofilingtoolbox.db.database_connection import DBConnection
@@ -100,12 +102,8 @@ class OnDemandRequester:
         with DBConnection() as connection:
             connection._set_autocommit(True)
             connection.execute('LISTEN queue_activity ;')
-            counts, feature1 = get_results()
-            while True:
-                cls._wait_for_wrapup_activity(connection, feature1)
-                counts, _ =  get_results()
-                if not counts.is_pending and not cls._feature_is_missing_values(study_name, feature1):
-                    break
+            cls._wait_for_wrappedup(connection, get_results)
+            counts, feature1 =  get_results()
 
         def get_results2() -> tuple[Metrics1D, str]:
             counts_all, feature2 = get(
@@ -117,12 +115,8 @@ class OnDemandRequester:
         with DBConnection() as connection:
             connection._set_autocommit(True)
             connection.execute('LISTEN queue_activity ;')
-            counts_all, feature2 = get_results2()
-            while True:
-                cls._wait_for_wrapup_activity(connection, feature2)
-                counts_all, _ =  get_results2()
-                if not counts_all.is_pending and not cls._feature_is_missing_values(study_name, feature2):
-                    break
+            cls._wait_for_wrappedup(connection, get_results2)
+            counts_all, _ =  get_results2()
 
         cls._request_check_for_failed_jobs()
         return (feature1, counts, counts_all)
@@ -135,47 +129,31 @@ class OnDemandRequester:
             connection.execute(notify)
 
     @classmethod
-    def _wait_for_wrapup_activity(cls, connection: PsycopgConnection, feature: str) -> None:
+    def _wait_for_wrappedup(
+        cls,
+        connection: PsycopgConnection,
+        get_results: Callable[[], tuple[Metrics1D, str]],
+    ) -> None:
+        counts, feature = get_results()
+        if not get_results()[0].is_pending:
+            logger.debug(f'Feature {feature} already complete.')
+            return
         logger.debug(f'Waiting for signal that feature {feature} may be ready.')
         notifications = connection.notifies()
         for _notification in notifications:
+            if not get_results()[0].is_pending:
+                logger.debug(f'Closing notification processing, {feature} ready.')
+                notifications.close()
+                break
             notification = parse_notification(_notification)
             channel = notification.channel
             payload = notification.payload
-            if channel == 'feature computation jobs complete':
-                payload = cast(CompletedFeature, payload)
-                fs = payload.feature_specification
-                if fs != int(feature):
-                    logger.warning(f'Waiting for {feature}, not {fs} (which may be complete).')
-                    continue
-                logger.debug(f'Feature {fs} computation jobs no longer present in queue.')
-                notifications.close()
-                break
-            if channel == 'feature cache hit':
-                logger.debug(f'Cache hit also triggers check if {feature} is ready.')
-                notifications.close()
-                break
-
-    @classmethod
-    def _feature_is_missing_values(cls, study: str, feature: str) -> bool:
-        missing = cls._get_missing_samples(study, feature)
-        return len(missing) > 0
-
-    @classmethod
-    def _get_expected_samples(cls, study: str, feature_specification: str) -> tuple[str, ...]:
-        with DBCursor(study=study) as cursor:
-            query = relevant_specimens_query() % f"'{feature_specification}'"
-            cursor.execute(query)
-            return tuple(map(lambda row: row[0], cursor.fetchall()))
-
-    @classmethod
-    def _get_missing_samples(cls, study: str, feature_specification: str) -> tuple[str, ...]:
-        expected = cls._get_expected_samples(study, feature_specification)
-        with DBCursor(study=study) as cursor:
-            query = 'SELECT subject FROM quantitative_feature_value WHERE feature=%s ;'
-            cursor.execute(query, (feature_specification,))
-            present = tuple(map(lambda row: row[0], cursor.fetchall()))
-        return tuple(sorted(list(set(expected).difference(present))))
+            if channel == 'one job complete':
+                logger.debug(f'A job is complete, so {feature} may be ready.')
+                if not get_results()[0].is_pending:
+                    logger.debug(f'And {feature} was ready. Closing.')
+                    notifications.close()
+                    break
 
     @classmethod
     def get_proximity_metrics(

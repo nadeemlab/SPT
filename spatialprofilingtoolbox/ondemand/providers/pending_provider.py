@@ -44,7 +44,6 @@ class PendingProvider(OnDemandProvider, ABC):
             fs = feature_specification
             logger.warning(f'Newly created feature somehow has all jobs complete already ({fs}).')
         if all_jobs_complete:
-            cls._notify_cache_hit(feature_specification)
             return (cls._query_for_computed_feature_values(
                 study,
                 feature_specification,
@@ -53,20 +52,14 @@ class PendingProvider(OnDemandProvider, ABC):
         if is_new:
             scheduler = MetricComputationScheduler(None)
             scheduler.schedule_feature_computation(study, int(feature_specification))
-        return (cls._query_for_computed_feature_values(
-            study,
+        return (
+            cls._query_for_computed_feature_values(
+                study,
+                feature_specification,
+                still_pending=True,
+            ),
             feature_specification,
-            still_pending = not all_jobs_complete,
-        ), feature_specification)
-
-    @classmethod
-    def _notify_cache_hit(cls, feature_specification: str) -> None:
-        with DBConnection() as connection:
-            connection._set_autocommit(True)
-            notify = create_notify_command('feature cache hit', '')
-            connection.execute(notify)
-            fs = feature_specification
-            logger.info(f'Cache hit for feature {fs}, because all associated jobs are complete.')
+        )
 
     @classmethod
     def _all_jobs_complete(cls, study: str, feature_specification: str) -> bool:

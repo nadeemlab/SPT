@@ -24,7 +24,7 @@ class CountsProvider(PendingProvider):
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()
         count = self._perform_count(args, arrays)
-        self.handle_insert_value(count, allow_null=False)
+        self.handle_insert_value(count, allow_null=not arrays.identifiers.shape[0] == 0)
 
     def _prepare_parameters(self) -> tuple[tuple[int, int, tuple[int, ...]], CellDataArrays]:
         study = self.job.study
@@ -73,6 +73,8 @@ class CountsProvider(PendingProvider):
             ))
         else:
             candidates = tuple(arrays.phenotype)
+        # if positives_signature == 0 and negatives_signature == 0:
+        #     return arrays.identifiers.shape[0]
         count = CountsProvider._get_count(candidates, positives_signature, negatives_signature)
         return count
 

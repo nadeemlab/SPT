@@ -67,7 +67,6 @@ class OnDemandWorker:
             job = self.queue.pop_uncomputed()
             if job is None:
                 return (False, pid)
-            self._notify_start(job)
             logger.info(f'{pid} doing job {job.feature_specification} {job.sample}.')
             self._compute(job)
             self._notify_complete(job)
@@ -81,12 +80,8 @@ class OnDemandWorker:
             logger.error(error)
             self._get_provider(job)._warn_no_value()
 
-    def _notify_start(self, job: Job) -> None:
-        notify = create_notify_command('queue pop', job)
-        self.connection.execute(notify)
-
     def _notify_complete(self, job: Job) -> None:
-        notify = create_notify_command('job complete', job)
+        notify = create_notify_command('one job complete', job)
         self.connection.execute(notify)
 
     def _get_provider(self, job: Job) -> PendingProvider:

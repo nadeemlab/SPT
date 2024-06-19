@@ -19,6 +19,9 @@ if __name__ == '__main__':
     )
     parser.parse_args()
     wait_for_database_ready()
-    watcher = WorkerWatcher()
-    logger.info('Starting worker watcher.')
-    watcher.start()
+    # watcher = WorkerWatcher()
+    # logger.info('Starting worker watcher.')
+    # watcher.start()
+
+    logger.info('Starting worker watcher. (dummy)')
+    logger.info('Watching workers. (dummy)')

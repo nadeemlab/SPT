@@ -87,7 +87,7 @@ class WorkerWatcher:
         if len(pids) > len(abridged):
             display_pids = display_pids + ' ...'
         cw = len(self.worker_jobs)
-        cj = len(self.worker_jobs.values())
+        cj = len(set(self.worker_jobs.values()))
         r = self._get_queue_size()
         logger.info(f'Recorded {cw} workers ({display_pids}) actively working on {cj} jobs ({r} remaining).')
 
@@ -106,17 +106,17 @@ class WorkerWatcher:
             return tuple(map(lambda row: row[0], cursor.fetchall()))
 
     def _check_for_feature_completion(self, study: str, feature: int) -> None:
-        with DBCursor(study=study) as cursor:
-            queue = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
-            cursor.execute(queue, (str(feature),))
-            count = tuple(cursor.fetchall())[0][0]
-        if count > 0:
-            return
         def match(worker_job: tuple[Job, int]) -> bool:
             job = worker_job[0]
             return job.feature_specification == feature and job.study == study
         number_active = len(tuple(filter(match, self.worker_jobs.items())))
         if number_active > 0:
+            return
+        with DBCursor(study=study) as cursor:
+            queue = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
+            cursor.execute(queue, (str(feature),))
+            count = tuple(cursor.fetchall())[0][0]
+        if count > 0:
             return
         logger.debug(f'Feature {feature} jobs no longer in queue or active/running.')
         notify_feature_complete(study, feature, self.connection)

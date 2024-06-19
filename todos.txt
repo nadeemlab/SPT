@@ -55,3 +55,6 @@ In summary:
 
 The first wrong event seems to be (8). Why was message (6) seen by the Watcher before message (2)?
 
+
+
+* Add a special case for counts to make it faster... just report the array length.

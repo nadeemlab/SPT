@@ -27,14 +27,11 @@ Metrics1D = UnivariateMetricsComputationResult
 logger = colorized_logger(__name__)
 
 
-def _fancy_division(numerator: float | None, denominator: float | None) -> float | None:
+def _fancy_division(numerator: float | None, denominator: float | None) -> float:
     if numerator is None or denominator is None:
-        return None
-    if denominator == 0:
-        if numerator == 0:
-            return 0
-        else:
-            return None
+        return 0
+    if denominator == 0 or numerator == 0:
+        return 0
     ratio = numerator / denominator
     return 100 * round(ratio * 10000)/10000
 
@@ -59,7 +56,7 @@ class OnDemandRequester:
             negative_markers=tuple(filter(_nonempty, negatives)),
         )
         selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
-        counts, counts_all = OnDemandRequester._counts(study_name, phenotype, selected)
+        feature1, counts, counts_all = OnDemandRequester._counts(study_name, phenotype, selected)
         combined_keys = sorted(list(set(counts.values.keys()).intersection(counts_all.values.keys())))
         missing_numerator = set(counts.values.keys()).difference(combined_keys)
         if len(missing_numerator) > 0:
@@ -67,15 +64,17 @@ class OnDemandRequester:
         missing_denominator = set(counts_all.values.keys()).difference(combined_keys)
         if len(missing_denominator) > 0:
             logger.warning(f'In forming population fractions, some samples were missing from denominator: {missing_denominator}')
+        expected = CountsProvider._get_expected_samples(study_name, feature1)
+        additional = set(expected).difference(combined_keys)
         return PhenotypeCounts(
-            counts=tuple(
+            counts=tuple([
                 PhenotypeCount(
                     specimen = sample,
-                    count = int(cast(float, counts.values[sample])) if counts.values[sample] is not None else None,
+                    count = int(cast(float, counts.values[sample])) if counts.values[sample] is not None else 0,
                     percentage = _fancy_division(counts.values[sample], counts_all.values[sample]),
                 )
                 for sample in combined_keys
-            ),
+            ] + [PhenotypeCount(specimen=sample, count=0, percentage=0) for sample in additional]),
             phenotype=CompositePhenotype(
                 name='',
                 identifier='',
@@ -87,7 +86,7 @@ class OnDemandRequester:
     @classmethod
     def _counts(
         cls, study_name: str, phenotype: PhenotypeCriteria, selected: tuple[int, ...],
-    ) -> tuple[Metrics1D, Metrics1D]:
+    ) -> tuple[str, Metrics1D, Metrics1D]:
         get = CountsProvider.get_metrics_or_schedule
 
         def get_results() -> tuple[Metrics1D, str]:
@@ -126,7 +125,7 @@ class OnDemandRequester:
                     break
 
         cls._request_check_for_failed_jobs()
-        return (counts, counts_all)
+        return (feature1, counts, counts_all)
 
     @classmethod
     def _request_check_for_failed_jobs(cls) -> None:
@@ -147,7 +146,7 @@ class OnDemandRequester:
                 payload = cast(CompletedFeature, payload)
                 fs = payload.feature_specification
                 if fs != int(feature):
-                    logger.warning('Waiting for different feature.')
+                    logger.warning(f'Waiting for {feature}, not {fs} (which may be complete).')
                     continue
                 logger.debug(f'Feature {fs} computation jobs no longer present in queue.')
                 notifications.close()
@@ -156,6 +155,10 @@ class OnDemandRequester:
     @classmethod
     def _feature_is_missing_values(cls, study: str, feature: str) -> bool:
         missing = cls._get_missing_samples(study, feature)
+
+        if len(missing) == 0:
+            logger.debug(f'Feature {feature} is NOT missing values.')
+
         return len(missing) > 0
 
     @classmethod

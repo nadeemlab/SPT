@@ -81,10 +81,14 @@ class PendingProvider(OnDemandProvider, ABC):
 
     @classmethod
     def _get_expected_number_samples(cls, study: str, feature_specification: str) -> int:
+        return len(cls._get_expected_samples(study, feature_specification))
+
+    @classmethod
+    def _get_expected_samples(cls, study: str, feature_specification: str) -> tuple[str, ...]:
         with DBCursor(study=study) as cursor:
             query = cls.relevant_specimens_query() % f"'{feature_specification}'"
             cursor.execute(query)
-            return len(tuple(cursor.fetchall()))
+            return tuple(map(lambda row: row[0], cursor.fetchall()))
 
     def handle_insert_value(self, value: float | None, allow_null: bool=True) -> None:
         if value is not None:

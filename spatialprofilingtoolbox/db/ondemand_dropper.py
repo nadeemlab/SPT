@@ -44,3 +44,4 @@ class OnDemandComputationsDropper:
                 logger.debug(query, specification)
                 cursor.execute(query, (specification,))
         cursor.execute('DELETE FROM cell_set_cache ;')
+        cursor.execute('DELETE FROM quantitative_feature_value_queue ;')

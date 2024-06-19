@@ -2,6 +2,7 @@
 
 from attrs import define
 from psycopg import Notify
+from psycopg import Connection as PsycopgConnection
 
 
 @define(frozen=True)
@@ -80,3 +81,9 @@ def create_notify_command(channel: str, payload: NotificationPayload) -> str:
         payload_str = JobSerialization.to_string(payload)
     internal_payload = '\t'.join((channel, payload_str))
     return f"NOTIFY queue_activity, '{internal_payload}' ;"
+
+
+def notify_feature_complete(study: str, feature: int, connection: PsycopgConnection) -> None:
+    completed = CompletedFeature(feature, study)
+    notify = create_notify_command('feature computation jobs complete', completed)
+    connection.execute(notify)

@@ -6,6 +6,7 @@ from datetime import datetime
 from math import isnan
 from math import isinf
 
+from spatialprofilingtoolbox.ondemand.job_reference import notify_feature_complete
 from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
@@ -64,8 +65,8 @@ class PendingProvider(OnDemandProvider, ABC):
             connection._set_autocommit(True)
             notify = create_notify_command('feature cache hit', '')
             connection.execute(notify)
-        fs = feature_specification
-        logger.info(f'Cache hit for feature {fs}, because all associated jobs are complete.')
+            fs = feature_specification
+            logger.info(f'Cache hit for feature {fs}, because all associated jobs are complete.')
 
     @classmethod
     def _all_jobs_complete(cls, study: str, feature_specification: str) -> bool:

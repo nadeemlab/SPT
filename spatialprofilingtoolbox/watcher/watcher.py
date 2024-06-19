@@ -10,6 +10,7 @@ from spatialprofilingtoolbox.ondemand.job_reference import CompletedFeature
 from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
 from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
 from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
+from spatialprofilingtoolbox.ondemand.job_reference import notify_feature_complete
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Job = ComputationJobReference
@@ -117,10 +118,8 @@ class WorkerWatcher:
         number_active = len(tuple(filter(match, self.worker_jobs.items())))
         if number_active > 0:
             return
-        completed = CompletedFeature(feature, study)
-        notify = create_notify_command('feature computation jobs complete', completed)
         logger.debug(f'Feature {feature} jobs no longer in queue or active/running.')
-        self.connection.execute(notify)
+        notify_feature_complete(study, feature, self.connection)
 
     def _check_for_failed_jobs(self) -> None:
         with self.connection.cursor() as cursor:

@@ -101,10 +101,10 @@ class OnDemandRequester:
             connection._set_autocommit(True)
             connection.execute('LISTEN queue_activity ;')
             counts, feature1 = get_results()
-            while cls._feature_is_missing_values(study_name, feature1):
+            while True:
                 cls._wait_for_wrapup_activity(connection, feature1)
                 counts, _ =  get_results()
-                if not counts.is_pending:
+                if not counts.is_pending and not cls._feature_is_missing_values(study_name, feature1):
                     break
 
         def get_results2() -> tuple[Metrics1D, str]:
@@ -118,10 +118,10 @@ class OnDemandRequester:
             connection._set_autocommit(True)
             connection.execute('LISTEN queue_activity ;')
             counts_all, feature2 = get_results2()
-            while cls._feature_is_missing_values(study_name, feature2):
+            while True:
                 cls._wait_for_wrapup_activity(connection, feature2)
                 counts_all, _ =  get_results2()
-                if not counts_all.is_pending:
+                if not counts_all.is_pending and not cls._feature_is_missing_values(study_name, feature2):
                     break
 
         cls._request_check_for_failed_jobs()
@@ -151,14 +151,14 @@ class OnDemandRequester:
                 logger.debug(f'Feature {fs} computation jobs no longer present in queue.')
                 notifications.close()
                 break
+            if channel == 'feature cache hit':
+                logger.debug(f'Cache hit also triggers check if {feature} is ready.')
+                notifications.close()
+                break
 
     @classmethod
     def _feature_is_missing_values(cls, study: str, feature: str) -> bool:
         missing = cls._get_missing_samples(study, feature)
-
-        if len(missing) == 0:
-            logger.debug(f'Feature {feature} is NOT missing values.')
-
         return len(missing) > 0
 
     @classmethod

@@ -24,7 +24,7 @@ class CountsProvider(PendingProvider):
     def compute(self) -> None:
         args, arrays = self._prepare_parameters()
         count = self._perform_count(args, arrays)
-        self.insert_value(count)
+        self.handle_insert_value(count, allow_null=False)
 
     def _prepare_parameters(self) -> tuple[tuple[int, int, tuple[int, ...]], CellDataArrays]:
         study = self.job.study

@@ -86,11 +86,13 @@ class PendingProvider(OnDemandProvider, ABC):
             cursor.execute(query)
             return len(tuple(cursor.fetchall()))
 
-    def handle_insert_value(self, value: float | None) -> None:
+    def handle_insert_value(self, value: float | None, allow_null: bool=True) -> None:
         if value is not None:
-            self.insert_value(value)
+            self._insert_value(value)
         else:
             self._warn_no_value()
+            if allow_null:
+                self._insert_null()
 
     def _warn_no_value(self) -> None:
         specification = str(self.job.feature_specification)
@@ -98,19 +100,19 @@ class PendingProvider(OnDemandProvider, ABC):
         sample = self.job.sample
         logger.warning(f'Feature {specification} ({sample}, {study}) could not be computed, worker generated None.')
 
-    def insert_value(self, value: float | int) -> None:
+    def _insert_value(self, value: float | int) -> None:
         study = self.job.study
         specification = str(self.job.feature_specification)
         sample = self.job.sample
         with DBCursor(study=study) as cursor:
             add_feature_value(specification, sample, str(value), cursor)
-        self._wrap_up_feature()
 
-    def _wrap_up_feature(self) -> None:
+    def _insert_null(self) -> None:
         study = self.job.study
         specification = str(self.job.feature_specification)
-        if self._all_jobs_complete(study, specification):
-            logger.info(f'Finished computing feature {specification} ({study}).')
+        sample = self.job.sample
+        with DBCursor(study=study) as cursor:
+            add_feature_value(specification, sample, None, cursor)
 
     @classmethod
     @abstractmethod

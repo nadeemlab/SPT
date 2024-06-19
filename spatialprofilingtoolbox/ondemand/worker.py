@@ -45,9 +45,9 @@ class OnDemandWorker:
         notifications = connection.notifies()
         for _notification in notifications:
             notification = parse_notification(_notification)
-            if notification.channel in ('new items', 'possibly new items'):
+            if notification.channel == 'new items':
                 notifications.close()
-                logger.info('Received notice of new or possibly new items in job queue.')
+                logger.info('Received notice of new items in the job queue.')
                 break
 
     def _work_until_complete(self) -> None:
@@ -68,7 +68,7 @@ class OnDemandWorker:
             if job is None:
                 return (False, pid)
             self._notify_start(job)
-            logger.info(f'{pid} doing job (feature={job.feature_specification}, sample={job.sample})')
+            logger.info(f'{pid} doing job {job.feature_specification} {job.sample}.')
             self._compute(job)
             self._notify_complete(job)
             return (True, pid)

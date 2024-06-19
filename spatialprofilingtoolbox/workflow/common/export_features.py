@@ -12,6 +12,7 @@ import pandas as pd
 from psycopg import Connection as PsycopgConnection
 from psycopg import Cursor as PsycopgCursor
 
+from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.db.database_connection import ConnectionProvider
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -311,10 +312,11 @@ class ADIFeatureSpecificationUploader:
     def insert_specification(
         specification, derivation_method, data_analysis_study, cursor: PsycopgCursor,
     ):
+        handle = get_handle(derivation_method)
         logger.debug(
-            'Inserting specification %s, data_analysis_study %s',
+            'Inserting specification %s (%s)',
             specification,
-            data_analysis_study,
+            handle,
         )
         cursor.execute('''
         INSERT INTO feature_specification (identifier, derivation_method, study)

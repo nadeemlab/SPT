@@ -96,9 +96,7 @@ class PendingProvider(OnDemandProvider, ABC):
         specification = str(self.job.feature_specification)
         study = self.job.study
         sample = self.job.sample
-        logger.warning(f'Feature {specification} ({sample}, {study}) could not be computed.')
-        with DBCursor(study=study) as cursor:
-            add_feature_value(specification, sample, None, cursor)
+        logger.warning(f'Feature {specification} ({sample}, {study}) could not be computed, worker generated None.')
 
     def insert_value(self, value: float | int) -> None:
         study = self.job.study

@@ -5,8 +5,8 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
+from spatialprofilingtoolbox.ondemand.job_reference import CompletedFeature
 from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
 from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
 from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
@@ -38,23 +38,26 @@ class WorkerWatcher:
         notifications = self.connection.notifies()
         for _notification in notifications:
             notification = parse_notification(_notification)
-            if notification.channel == 'queue pop':
-                job = cast(Job, notification.payload)
-                pid = notification.pid
+            channel = notification.channel
+            pid = notification.pid
+            payload = notification.payload
+            check: Job | None = None
+            if channel == 'queue pop':
+                job = cast(Job, payload)
                 self.worker_jobs[job] = pid
-                logger.info(f'{pid} claims to be working on {job.feature_specification} {job.sample}.')
-            elif notification.channel == 'job complete':
-                job = cast(Job, notification.payload)
-                pid = notification.pid
+                logger.debug(f'{pid} claims to be working on {job.feature_specification} {job.sample}.')
+            if channel == 'job complete':
+                job = cast(Job, payload)
                 self._log_status_of_completion_notice(job, pid)
                 job_present = job in self.worker_jobs.keys()
                 if job_present:
                     del self.worker_jobs[job]
-            else:
-                # if notification.channel in ('queue_job_complete', 'queue_activity', 'feature_cache_hit'):
-                #     self._check_for_missing_values()
+                check = job
+            if channel == 'check for failed jobs':
                 self._check_for_failed_jobs()
             self._log_status()
+            if check is not None:
+                self._check_for_feature_completion(check.study, check.feature_specification)
 
     def _log_status_of_completion_notice(self, job: ComputationJobReference, pid: int) -> None:
         pid_present = pid in self.worker_jobs.values()
@@ -63,7 +66,7 @@ class WorkerWatcher:
         if pid_present:
             if job_present:
                 del self.worker_jobs[job]
-                logger.info(f'{pid} claims to have completed {job_str}.')
+                logger.debug(f'{pid} claims to have completed {job_str}.')
             else:
                 logger.warning(f'{pid} was not working on job {job_str}.')
         else:
@@ -76,60 +79,55 @@ class WorkerWatcher:
                 message = f'Neither worker {pid} nor job {job_str} are recorded. {ignored}'
                 logger.warning(message)
 
+    def _log_status(self) -> None:
+        pids = sorted(list(self.worker_jobs.values()))
+        abridged = pids[0:min(5, len(pids))]
+        display_pids = ' '.join(map(str, abridged))
+        if len(pids) > len(abridged):
+            display_pids = display_pids + ' ...'
+        cw = len(self.worker_jobs)
+        cj = len(self.worker_jobs.values())
+        r = self._get_queue_size()
+        logger.info(f'Recorded {cw} workers ({display_pids}) actively working on {cj} jobs ({r} remaining).')
+
+    def _get_queue_size(self) -> int:
+        count = 0
+        for study in self._get_studies():
+            with DBCursor(study=study) as cursor:
+                queue = 'SELECT COUNT(*) FROM quantitative_feature_value_queue ;'
+                cursor.execute(queue)
+                count += tuple(cursor.fetchall())[0][0]
+        return count
+
+    def _get_studies(self) -> tuple[str, ...]:
+        with DBCursor() as cursor:
+            cursor.execute('SELECT study FROM study_lookup ;')
+            return tuple(map(lambda row: row[0], cursor.fetchall()))
+
+    def _check_for_feature_completion(self, study: str, feature: int) -> None:
+        with DBCursor(study=study) as cursor:
+            queue = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
+            cursor.execute(queue, (str(feature),))
+            count = tuple(cursor.fetchall())[0][0]
+        if count > 0:
+            return
+        def match(worker_job: tuple[Job, int]) -> bool:
+            job = worker_job[0]
+            return job.feature_specification == feature and job.study == study
+        number_active = len(tuple(filter(match, self.worker_jobs.items())))
+        if number_active > 0:
+            return
+        completed = CompletedFeature(feature, study)
+        notify = create_notify_command('feature computation jobs complete', completed)
+        logger.debug(f'Feature {feature} jobs no longer in queue or active/running.')
+        self.connection.execute(notify)
+
     def _check_for_failed_jobs(self) -> None:
         with self.connection.cursor() as cursor:
             cursor.execute('SELECT pid FROM pg_stat_activity ;')
             pids = tuple(map(lambda row: int(row[0]), cursor.fetchall()))
         for pid in set(self.worker_jobs.values()).difference(pids):
             self._assume_dead(pid)
-        self._notify_cleared()
-
-    def _check_for_missing_values(self) -> None:
-        empty = self._all_queues_are_empty()
-        if len(self.worker_jobs) == 0 and empty:
-            logger.warning('Not writing null values, aggressive null-filling is disabled.')
-            # self._write_all_nulls()
-            # self._notify_cleared()
-        if len(self.worker_jobs) == 0 and not empty:
-            self._notify_jobs_remain()
-
-    def _all_queues_are_empty(self):
-        number_empty = 0
-        studies = self._get_studies()
-        for study in studies:
-            with DBCursor(study=study) as cursor:
-                cursor.execute('SELECT COUNT(*) FROM quantitative_feature_value_queue ;')
-                count = tuple(cursor.fetchall())[0][0]
-                if count == 0:
-                    number_empty += 1
-        return number_empty == len(studies)
-
-    def _write_all_nulls(self) -> None:
-        for study in self._get_studies():
-            with DBCursor(study=study) as cursor:
-                cursor.execute('SELECT DISTINCT identifier FROM feature_specification ;')
-                features = tuple(map(lambda row: row[0], cursor.fetchall()))
-            for feature in features:
-                missing = self.get_missing_samples(study, feature)
-                if len(missing) > 0:
-                    for sample in missing:
-                        self._insert_null(Job(int(feature), study, sample))
-
-    def _log_status(self) -> None:
-        pids = sorted(list(self.worker_jobs.values()))
-        abridged = pids[0:min(5, len(pids))]
-        display = ' '.join(map(str, abridged))
-        if len(pids) > len(abridged):
-            display = display + ' ...'
-        logger.info(f'{len(self.worker_jobs)} workers actively working on jobs ({display}).')
-
-    def _notify_cleared(self) -> None:
-        notify = create_notify_command('jobs cleared heartbeat', '')
-        self.connection.execute(notify)
-
-    def _notify_jobs_remain(self) -> None:
-        notify = create_notify_command('possibly new items', '')
-        self.connection.execute(notify)
 
     def _assume_dead(self, pid: int) -> None:
         jobs = tuple(map(
@@ -143,7 +141,7 @@ class WorkerWatcher:
         for job in jobs:
             del self.worker_jobs[job]
             if self._no_value(job):
-                self._insert_null(job)
+                self._warn_dead_job(job)
 
     def _no_value(self, job: Job) -> bool:
         with DBCursor(study=job.study) as cursor:
@@ -154,31 +152,9 @@ class WorkerWatcher:
             count = len(tuple(cursor.fetchall()))
         return count == 0
 
-    def _insert_null(self, job: Job) -> None:
+    def _warn_dead_job(self, job: Job) -> None:
         specification = str(job.feature_specification)
         study = job.study
         sample = job.sample
-        logger.warning(f'Assumed null, feature {specification} ({sample}, {study}).')
-        with DBCursor(study=study) as cursor:
-            add_feature_value(specification, sample, None, cursor)
-
-    def _get_studies(self) -> tuple[str, ...]:
-        with DBCursor() as cursor:
-            cursor.execute('SELECT study FROM study_lookup ;')
-            return tuple(map(lambda row: row[0], cursor.fetchall()))
-
-    @classmethod
-    def _get_expected_samples(cls, study: str, feature_specification: str) -> tuple[str, ...]:
-        with DBCursor(study=study) as cursor:
-            query = relevant_specimens_query() % f"'{feature_specification}'"
-            cursor.execute(query)
-            return tuple(map(lambda row: row[0], cursor.fetchall()))
-
-    @staticmethod
-    def get_missing_samples(study: str, feature_specification: str) -> tuple[str, ...]:
-        expected = WorkerWatcher._get_expected_samples(study, feature_specification)
-        with DBCursor(study=study) as cursor:
-            query = 'SELECT subject FROM quantitative_feature_value WHERE feature=%s ;'
-            cursor.execute(query, (feature_specification,))
-            present = tuple(map(lambda row: row[0], cursor.fetchall()))
-        return tuple(sorted(list(set(expected).difference(present))))
+        message = f'Worker for feature {specification} ({sample}, {study}) did not write a value before closing its connection.'
+        logger.warning(message)

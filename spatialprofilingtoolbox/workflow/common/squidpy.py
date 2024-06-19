@@ -2,7 +2,7 @@
 
 from typing import Any
 from typing import cast
-from warnings import warn
+from warnings import filterwarnings
 
 from numpy.typing import NDArray
 from numpy import isnan
@@ -24,6 +24,8 @@ from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classna
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
+
+filterwarnings('ignore', message='1 variables were constant, will return nan for these.')
 
 
 def lookup_squidpy_feature_class(method: str) -> str | None:
@@ -155,7 +157,7 @@ def convert_df_to_anndata(
         adata.obs['cluster'] = clustering.to_numpy()
         adata.obs['cluster'] = adata.obs['cluster'].astype('category')
         if adata.obs['cluster'].nunique() == 1:
-            warn('All phenotypes provided had identical values. Only one cluster could be made.')
+            logger.warning('All phenotypes provided had identical values. Only one cluster could be made.')
     return adata
 
 

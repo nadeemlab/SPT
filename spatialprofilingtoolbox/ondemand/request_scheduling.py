@@ -5,8 +5,11 @@ from typing import cast
 from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
+from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
 from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
+from spatialprofilingtoolbox.ondemand.job_reference import CompletedFeature
 from spatialprofilingtoolbox.db.database_connection import DBConnection
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
@@ -17,6 +20,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     CompositePhenotype,
     UnivariateMetricsComputationResult,
 )
+from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult
 
@@ -85,6 +89,7 @@ class OnDemandRequester:
         cls, study_name: str, phenotype: PhenotypeCriteria, selected: tuple[int, ...],
     ) -> tuple[Metrics1D, Metrics1D]:
         get = CountsProvider.get_metrics_or_schedule
+
         def get_results() -> tuple[Metrics1D, str]:
             counts, feature1 = get(
                 study_name,
@@ -92,12 +97,13 @@ class OnDemandRequester:
                 cells_selected=selected,
             )
             return (counts, feature1)
+
         with DBConnection() as connection:
             connection._set_autocommit(True)
             connection.execute('LISTEN queue_activity ;')
-            _, feature1 = get_results()
-            while True:
-                cls._wait_for_wrapup_activity(connection, (feature1,))
+            counts, feature1 = get_results()
+            while cls._feature_is_missing_values(study_name, feature1):
+                cls._wait_for_wrapup_activity(connection, feature1)
                 counts, _ =  get_results()
                 if not counts.is_pending:
                     break
@@ -108,30 +114,69 @@ class OnDemandRequester:
                 phenotype=PhenotypeCriteria(positive_markers=(), negative_markers=()),
             )
             return (counts_all, feature2)
+
         with DBConnection() as connection:
             connection._set_autocommit(True)
             connection.execute('LISTEN queue_activity ;')
-            _, feature2 = get_results2()
-            while True:
-                cls._wait_for_wrapup_activity(connection, (feature2,))
+            counts_all, feature2 = get_results2()
+            while cls._feature_is_missing_values(study_name, feature2):
+                cls._wait_for_wrapup_activity(connection, feature2)
                 counts_all, _ =  get_results2()
                 if not counts_all.is_pending:
                     break
+
+        cls._request_check_for_failed_jobs()
         return (counts, counts_all)
 
     @classmethod
-    def _wait_for_wrapup_activity(cls, connection: PsycopgConnection, features: tuple[str, ...]) -> None:
-        logger.info(f'Waiting for signals that whole features {features} may be ready.')
+    def _request_check_for_failed_jobs(cls) -> None:
+        notify = create_notify_command('check for failed jobs', '')
+        with DBConnection() as connection:
+            connection._set_autocommit(True)
+            connection.execute(notify)
+
+    @classmethod
+    def _wait_for_wrapup_activity(cls, connection: PsycopgConnection, feature: str) -> None:
+        logger.debug(f'Waiting for signal that feature {feature} may be ready.')
         notifications = connection.notifies()
         for _notification in notifications:
             notification = parse_notification(_notification)
-            if notification.channel in ('jobs cleared heartbeat',):
-                logger.info(f'Received signal that whole features {features} may be ready.')
+            channel = notification.channel
+            payload = notification.payload
+            if channel == 'feature computation jobs complete':
+                payload = cast(CompletedFeature, payload)
+                fs = payload.feature_specification
+                if fs != int(feature):
+                    logger.warning('Waiting for different feature.')
+                    continue
+                logger.debug(f'Feature {fs} computation jobs no longer present in queue.')
                 notifications.close()
-            break
+                break
 
-    @staticmethod
+    @classmethod
+    def _feature_is_missing_values(cls, study: str, feature: str) -> bool:
+        missing = cls._get_missing_samples(study, feature)
+        return len(missing) > 0
+
+    @classmethod
+    def _get_expected_samples(cls, study: str, feature_specification: str) -> tuple[str, ...]:
+        with DBCursor(study=study) as cursor:
+            query = relevant_specimens_query() % f"'{feature_specification}'"
+            cursor.execute(query)
+            return tuple(map(lambda row: row[0], cursor.fetchall()))
+
+    @classmethod
+    def _get_missing_samples(cls, study: str, feature_specification: str) -> tuple[str, ...]:
+        expected = cls._get_expected_samples(study, feature_specification)
+        with DBCursor(study=study) as cursor:
+            query = 'SELECT subject FROM quantitative_feature_value WHERE feature=%s ;'
+            cursor.execute(query, (feature_specification,))
+            present = tuple(map(lambda row: row[0], cursor.fetchall()))
+        return tuple(sorted(list(set(expected).difference(present))))
+
+    @classmethod
     def get_proximity_metrics(
+        cls,
         study: str,
         radius: float,
         _signature: tuple[list[str], list[str], list[str], list[str]]
@@ -147,8 +192,9 @@ class OnDemandRequester:
         result, _ = get(study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
         return result
 
-    @staticmethod
+    @classmethod
     def get_squidpy_metrics(
+        cls,
         study: str,
         _signature: list[list[str]],
         feature_class: str,

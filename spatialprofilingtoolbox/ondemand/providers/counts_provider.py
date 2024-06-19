@@ -65,17 +65,6 @@ class CountsProvider(PendingProvider):
         arrays: CellDataArrays,
     ) -> int:
         """Count the number of cells in the given sample that match this signature."""
-        # This check should be unnecessary now
-        # if cells_selected != ():
-        #     candidates = tuple(map(
-        #         lambda pair: pair[1],
-        #         filter(
-        #             lambda pair: pair[0] in cells_selected,
-        #             zip(arrays.identifiers, arrays.phenotype,)
-        #         ),
-        #     ))
-        # else:
-        #     candidates = tuple(arrays.phenotype)
         if positives_signature == 0 and negatives_signature == 0:
             return arrays.identifiers.shape[0]
         count = CountsProvider._get_count(tuple(arrays.phenotype), positives_signature, negatives_signature)
@@ -157,28 +146,23 @@ class CountsProvider(PendingProvider):
                     copy.write_row((specification, str(cell)))
 
     @classmethod
-    def _get_features_for_cell_set(
-        cls, study: str, cells_selected: tuple[int, ...],
-    ) -> list[str] | None:
+    def _check_cell_set(
+        cls, study: str, feature: str, _cells_selected: tuple[int, ...],
+    ) -> bool:
         with DBCursor(study=study) as cursor:
-            query = 'SELECT feature, histological_structure FROM cell_set_cache ;'
-            rows = tuple(cursor.execute(query))
-        cell_sets: dict[str, list[int]] = {row[0]: [] for row in rows}
-        for row in rows:
-            cell_sets[row[0]].append(int(row[1]))
-        def normalize(item: ItemList) -> Item:
-            key, cell_set = item
-            return (key, tuple(sorted(list(cell_set))))
-        def match_cells(item: Item) -> bool:
-            key, cell_set = item
-            return cell_set == tuple(sorted(list(cells_selected)))
-        cell_sets_items = cast(tuple[ItemList, ...], tuple(cell_sets.items()))
-        _matches = tuple(filter(match_cells, map(normalize, cell_sets_items)))
-        if len(_matches) == 0:
-            return None
-        if len(_matches) == 1:
-            return [_matches[0][0]]
-        return list(set(map(lambda match: match[0], _matches)))
+            query = '''
+            SELECT histological_structure
+            FROM cell_set_cache
+            WHERE feature=%s ;
+            '''
+            cursor.execute(query, (feature,))
+            rows = tuple(cursor.fetchall())
+        cells = tuple(sorted(list(map(lambda row: int(row[0]), rows))))
+        cells_selected = tuple(sorted(list(_cells_selected)))
+        if len(cells) == 0 or len(cells_selected) == 0:
+            return len(cells) == len(cells_selected)
+        condition = cells == cells_selected
+        return condition
 
     @classmethod
     def _get_feature_specification(cls,
@@ -187,11 +171,7 @@ class CountsProvider(PendingProvider):
         phenotype: PhenotypeCriteria,
         cells_selected: tuple[int, ...],
     ) -> str | None:
-        feature_matches = None
-        if cells_selected != ():
-            feature_matches = cls._get_features_for_cell_set(study, cells_selected)
-            if feature_matches is None:
-                return None
+        cells = f'{cells_selected[0:min(5, len(cells_selected))]} ... ({len(cells_selected)})'
         feature_description = get_feature_description('population fractions')
         args = (
             data_analysis_study,
@@ -214,18 +194,19 @@ class CountsProvider(PendingProvider):
             ''', args)
             rows = tuple(cursor.fetchall())
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
-        matches: list[str] = []
+        matches_list: list[str] = []
         for row in rows:
             feature_specifications[row[0]].append(row[1])
         for key, specifiers in feature_specifications.items():
             if len(specifiers) == 1:
-                matches.append(key)
-        if feature_matches is not None:
-            matches = list(set(matches).intersection(feature_matches))
+                matches_list.append(key)
+        matches = tuple(filter(
+            lambda feature: cls._check_cell_set(study, feature, cells_selected),
+            matches_list,
+        ))
         if len(matches) == 0:
             return None
         if len(matches) > 1:
-            cells = f'{cells_selected[0:min(5, len(cells_selected))]} ... ({len(cells_selected)})'
             text = 'Multiple features match the selected specification'
             message = f'{text}: {matches} {phenotype} {cells}'
             logger.warning(message)

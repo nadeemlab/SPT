@@ -171,7 +171,7 @@ class CountsProvider(PendingProvider):
             return (key, tuple(sorted(list(cell_set))))
         def match_cells(item: Item) -> bool:
             key, cell_set = item
-            return cell_set == cells_selected
+            return cell_set == tuple(sorted(list(cells_selected)))
         cell_sets_items = cast(tuple[ItemList, ...], tuple(cell_sets.items()))
         _matches = tuple(filter(match_cells, map(normalize, cell_sets_items)))
         if len(_matches) == 0:
@@ -212,7 +212,7 @@ class CountsProvider(PendingProvider):
                   fsn.derivation_method=%s
             ;
             ''', args)
-            rows = cursor.fetchall()
+            rows = tuple(cursor.fetchall())
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
         matches: list[str] = []
         for row in rows:

@@ -23,6 +23,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeSymbol,
+    PhenotypeSymbolAndCriteria,
     Channel,
     PhenotypeCriteria,
     PhenotypeCounts,
@@ -166,9 +167,17 @@ async def get_channels(
 @app.get("/phenotype-symbols/")
 async def get_phenotype_symbols(
     study: ValidStudy,
-) -> list[PhenotypeSymbol]:
+) -> list[PhenotypeSymbolAndCriteria]:
     """The display names and identifiers for the "composite" phenotypes in a given study."""
-    return query().get_phenotype_symbols(study)
+    symbols: tuple[PhenotypeSymbol, ...] = query().get_phenotype_symbols(study)
+    return list(
+        PhenotypeSymbolAndCriteria(
+            handle_string = s.handle_string,
+            identifier = s.identifier,
+            criteria = query().get_phenotype_criteria(study, s.handle_string),
+        )
+        for s in symbols
+    )
 
 
 @app.get("/phenotype-criteria/")

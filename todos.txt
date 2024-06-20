@@ -65,3 +65,8 @@ The first wrong event seems to be (8). Why was message (6) seen by the Watcher b
 
 * Need related cell set cache to be deleted when ondemand features are dropped!
 * Null needs to be allowed as a final return value in gnn counts case
+* Add link to plot
+* Two classes of service ... low ram and high. Jobs can pick up based on classification of studies, or samples?
+
+* Check that the max integer histological structure id is the right cell count... 
+* Remove "on delete cascade" from new tables

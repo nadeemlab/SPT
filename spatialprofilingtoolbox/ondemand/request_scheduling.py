@@ -32,10 +32,10 @@ logger = colorized_logger(__name__)
 def _fancy_division(numerator: float | None, denominator: float | None) -> float | None:
     if numerator is None or denominator is None:
         return None
-    if numerator == 0:
-        return 0
     if denominator == 0:
         return None
+    if numerator == 0:
+        return 0
     ratio = numerator / denominator
     return 100 * round(ratio * 10000)/10000
 
@@ -111,6 +111,7 @@ class OnDemandRequester:
             counts_all, feature2 = get(
                 study_name,
                 phenotype=PhenotypeCriteria(positive_markers=(), negative_markers=()),
+                cells_selected=selected,
             )
             return (counts_all, feature2)
 

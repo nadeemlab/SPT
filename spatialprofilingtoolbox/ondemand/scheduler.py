@@ -42,10 +42,10 @@ class MetricComputationScheduler:
             for study in set(studies).difference(studies_empty):
                 query = '''
                 DELETE FROM
-                quantitative_feature_value_queue
-                WHERE identifier IN
-                    (SELECT qfvq.identifier FROM quantitative_feature_value_queue qfvq LIMIT 1)
-                RETURNING feature, subject ;
+                quantitative_feature_value_queue q1
+                USING (SELECT q2.feature, q2.subject FROM quantitative_feature_value_queue q2 LIMIT 1) q
+                WHERE q1.feature=q.feature AND q1.subject=q.subject
+                RETURNING q1.feature, q1.subject ;
                 '''
                 with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
                     cursor.execute(query)
@@ -64,17 +64,11 @@ class MetricComputationScheduler:
     def _insert_jobs(cursor: PsycopgCursor, feature_specification: int) -> None:
         query = '''
         INSERT INTO quantitative_feature_value_queue
-            (identifier, feature, subject)
+            (feature, subject)
         SELECT
-            (
-                SELECT
-                CASE WHEN (SELECT COUNT(*) FROM quantitative_feature_value_queue) > 0
-                THEN (SELECT MAX(CAST(identifier as integer)) FROM quantitative_feature_value_queue)
-                ELSE 0 END
-            ) + row_number() OVER (ORDER BY sq.specimen),
-            %s,
-            sq.specimen
-        FROM ( %s ) sq ;
+            %s, sq.specimen
+        FROM ( %s ) sq
+        ON CONFLICT DO NOTHING ;
         ''' % (
             f"'{feature_specification}'",
             OnDemandProvider.relevant_specimens_query() % f"'{feature_specification}'",

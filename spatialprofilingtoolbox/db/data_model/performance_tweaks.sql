@@ -41,10 +41,12 @@ CREATE TABLE umap_plots (
 );
 
 CREATE TABLE quantitative_feature_value_queue (
-    identifier VARCHAR(512) PRIMARY KEY,
-    feature VARCHAR(512) REFERENCES feature_specification(identifier) ON DELETE CASCADE ,
+    feature VARCHAR(512) REFERENCES feature_specification(identifier) ,
     subject VARCHAR
 );
+
+ALTER TABLE quantitative_feature_value_queue
+ADD CONSTRAINT unique_qfvq UNIQUE (feature, subject) ;
 
 ALTER TABLE quantitative_feature_value
 ADD CONSTRAINT unique_qfv UNIQUE (feature, subject) ;

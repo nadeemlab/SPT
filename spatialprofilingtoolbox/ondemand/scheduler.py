@@ -62,15 +62,6 @@ class MetricComputationScheduler:
 
     @staticmethod
     def _insert_jobs(cursor: PsycopgCursor, feature_specification: int) -> None:
-        # query = OnDemandProvider.relevant_specimens_query() % f"'{feature_specification}'"
-        # cursor.execute(query)
-        # samples = tuple(cursor.fetchall())
-        # query = 'SELECT subject FROM quantitative_feature_value WHERE feature=%s ;'
-        # cursor.execute(query, (str(feature_specification),))
-        # with_value = tuple(cursor.fetchall())
-        # extant = sorted(list(set(samples).difference(with_value)))
-        # ... Need to only insert jobs for the un-computed. Alter the subquery for specimens to filter those with value. Need join.
-
         query = '''
         INSERT INTO quantitative_feature_value_queue
             (identifier, feature, subject)

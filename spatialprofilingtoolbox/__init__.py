@@ -16,7 +16,7 @@ def get_subpackage_name(module_info):
         return ''
     return name
 
-submodule_names = ['apiserver', 'graphs', 'db', 'ondemand', 'workflow', 'watcher']
+submodule_names = ['apiserver', 'graphs', 'db', 'ondemand', 'workflow']
 
 __version__ = get_version()
 

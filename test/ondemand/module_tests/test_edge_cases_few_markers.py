@@ -1,18 +1,16 @@
 """Test a few cases of using the counts service."""
-from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
+
+from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 
 
 def retrieve_case(case):
     study_name = 'Melanoma intralesional IL2'
-    host = 'spt-ondemand-testing'
-    port = 8016
-    with OnDemandRequester(host, port) as requester:
-        counts = requester.get_counts_by_specimen(case[0], case[1], study_name, 0)
-        total = sum(entry.count for entry in counts.counts)
-        return total
+    counts = OnDemandRequester.get_counts_by_specimen(case[0], case[1], study_name, 0, ())
+    total = sum(entry.count for entry in counts.counts)
+    return total
 
 
-if __name__ == '__main__':
+def main():
     cases = [
         [[], ['CD8', 'CD20']],
         [['CD3', 'CD4'], []],
@@ -25,3 +23,7 @@ if __name__ == '__main__':
         if comparison[0] != comparison[1]:
             print(f'Incorrect response: {comparison}')
             raise ValueError("Incorrect cell count in an edge case.")
+
+
+if __name__ == '__main__':
+    main()

@@ -49,13 +49,14 @@ class InteractiveFeatureDropper:
         if not proceed:
             self._print('Cancelling by user request.', 'flag')
             return
-        self._perform_deletion()        
+        self._perform_deletion()
 
-    def _solicit_specification(self) -> bool:            
+    def _solicit_specification(self) -> bool:
         specifications = self._get_specifications()
         if specifications is None:
             return False
-        df = DataFrame(specifications, columns=['Specification', 'Specifier', 'Ordinality', 'Method'])
+        columns = ['Specification', 'Specifier', 'Ordinality', 'Method']
+        df = DataFrame(specifications, columns=columns)
         self.known_specifications = tuple(df['Specification'])
 
         self._print(f'   Feature specifications for study "{self.study}"   ', 'title')
@@ -152,9 +153,10 @@ class InteractiveFeatureDropper:
         self._print(self.specification, 'specification', end='')
         self._print('.', 'message')
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
-            cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', (self.specification,))
-            cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', (self.specification,))
-            cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', (self.specification,))
+            param = (self.specification,)
+            cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
+            cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
+            cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
         self._print('Done.', 'message')
 
     def _get_specifications(self) -> tuple[tuple[str, ...], ...] | None:

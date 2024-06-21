@@ -21,8 +21,9 @@ setup-testing:
 >@docker compose up -d && (bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh &) && sleep 0.2 && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-apiserver-testing \
-     spt-db-testing \
-     spt-ondemand-testing ; \
+     spt-db---testing-only \
+     spt-ondemand--testing \
+     spt-ondemand-testing2 ; \
     echo "$$?" > status_code
 >@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "Setup env." "Env not setup."
@@ -67,6 +68,7 @@ ${TESTS}: setup-testing
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh & \
     sleep 0.2; \
     docker run \
+     -i \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \

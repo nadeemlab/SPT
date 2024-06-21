@@ -371,12 +371,12 @@ class SparseMatrixPuller:
         sparse_entries: list = []
         number_log_messages = 0
         with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-            query, parameters = self._get_sparse_matrix_query_specimen_specific(
+            query = self._get_sparse_matrix_query_specimen_specific(
                 cursor,
                 specimen,
                 histological_structures,
             )
-            cursor.execute(query, parameters)
+            cursor.execute(query)
             total = cursor.rowcount
             while cursor.rownumber < total - 1:
                 current_number_stored = len(sparse_entries)
@@ -392,15 +392,16 @@ class SparseMatrixPuller:
         cursor,
         specimen: str,
         histological_structures: set[int] | None,
-    ) -> tuple[str, tuple]:
+    ) -> str:
         structures_present = histological_structures is not None
         parameters: list[str | tuple[str, ...] | int] = []
         range_definition = SparseMatrixPuller._retrieve_expressions_range(cursor, specimen)
         query = self._sparse_entries_query(structures_present)
-        parameters = [range_definition[0], range_definition[1]]
         if histological_structures is not None:
-            parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
-        return (query, tuple(parameters))
+            query = query % (range_definition[0], range_definition[1], f'{tuple(str(hs_id) for hs_id in histological_structures)}')
+        else:
+            query = query % (range_definition[0], range_definition[1])
+        return query
 
     @staticmethod
     def _retrieve_expressions_range(cursor, scope: str) -> tuple[int, int]:

@@ -6,7 +6,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 def test_one_expression_vector():
     environment = {
-        'SINGLE_CELL_DATABASE_HOST': 'spt-db-testing-only',
+        'SINGLE_CELL_DATABASE_HOST': 'spt-db---testing-only',
         'SINGLE_CELL_DATABASE_USER': 'postgres',
         'SINGLE_CELL_DATABASE_PASSWORD': 'postgres',
         'USE_ALTERNATIVE_TESTING_DATABASE': '1',

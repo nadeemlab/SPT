@@ -9,7 +9,7 @@ RUN apt install python3-venv -y && apt-get clean
 RUN apt install python3-pip -y && apt-get clean
 RUN apt install -y libpq-dev && apt-get clean
 RUN apt install -y libgdal-dev && apt-get clean
-RUN python3 -m pip install --break-system-packages psycopg2==2.9.6
+RUN python3 -m pip install --break-system-packages psycopg==3.1.19
 RUN python3 -m pip install --break-system-packages adiscstudies==0.11.0
 RUN python3 -m pip install --break-system-packages numba==0.59.1
 RUN python3 -m pip install --break-system-packages attrs==23.2.0

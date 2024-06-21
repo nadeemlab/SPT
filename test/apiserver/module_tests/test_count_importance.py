@@ -52,7 +52,6 @@ def main():
             check=True,
         ).stdout
         response = loads(result)
-        print(dumps(response, indent=4))
         phenotype_total = sum(
             phenotype_count['count'] for phenotype_count in response['counts']
         )
@@ -60,6 +59,7 @@ def main():
         for item in response['counts']:
             sample = item["specimen"]
             if item['count'] != expected[sample]:
+                print(f'Expected {expected[sample]}, got {item["count"]}, for {sample}.')
                 raise ValueError(f'Expected {expected[sample]}, got {item["count"]}, for {sample}.')
             print(f'Got expected {item["count"]} for {sample}.')
         if phenotype_total != expected_total:

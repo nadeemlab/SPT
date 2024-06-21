@@ -14,5 +14,14 @@ def get_feature_description(handle: str) -> str:
     return descriptions[handle]
 
 
+def get_handle(feature_description: str) -> str:
+    _file = files('spatialprofilingtoolbox.db.data_model').joinpath('feature_descriptions.tsv')
+    with as_file(_file) as path:
+        with open(path, 'rt', encoding='utf-8') as file:
+            reader = csv_reader(file, delimiter='\t')
+            handles = {row[1] : row[0] for row in reader}
+    return handles[feature_description]
+
+
 def squidpy_feature_classnames() -> tuple[str, ...]:
     return ('neighborhood enrichment', 'co-occurrence', 'ripley', 'spatial autocorrelation')

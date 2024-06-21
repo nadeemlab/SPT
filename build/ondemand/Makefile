@@ -20,8 +20,8 @@ setup-testing:
 >@${MESSAGE} start "ondemand"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-ondemand-testing \
-     spt-db-testing-only ; \
+     spt-ondemand--testing \
+     spt-db---testing-only ; \
     echo "$$?" > status_code
 >@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;
 >@${MESSAGE} end "Setup env." "Env not setup."
@@ -65,10 +65,11 @@ ${TESTS}: setup-testing
     executor=none-cmd ; \
     if [[ "$$extension" == ".py" ]]; then executor=${PYTHON}; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
-    test_cmd="cd /mount_sources/ondemand/ && SINGLE_CELL_DATABASE_HOST=spt-db-testing-only SINGLE_CELL_DATABASE_USER=postgres SINGLE_CELL_DATABASE_PASSWORD=postgres USE_ALTERNATIVE_TESTING_DATABASE=1 $$executor $$test_script" ; \
+    test_cmd="cd /mount_sources/ondemand/ && SINGLE_CELL_DATABASE_HOST=spt-db---testing-only SINGLE_CELL_DATABASE_USER=postgres SINGLE_CELL_DATABASE_PASSWORD=postgres USE_ALTERNATIVE_TESTING_DATABASE=1 $$executor $$test_script" ; \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh & \
     sleep 0.2; \
     docker run \
+     -i \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \

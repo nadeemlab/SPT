@@ -16,7 +16,6 @@ __pycache__/
 .initiation_message_size
 /.initial_time.txt
 *.pyc
-build/*/Dockerfile
 /Dockerfile
 **.whl
 build/*/docker.built

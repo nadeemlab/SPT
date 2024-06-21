@@ -10,12 +10,12 @@ from typing import Type
 from typing import Callable
 from inspect import getfullargspec
 
-from psycopg2 import connect
-from psycopg2.extensions import connection as Connection
-from psycopg2.extensions import cursor as Psycopg2Cursor
-from psycopg2 import Error as Psycopg2Error
-from psycopg2 import OperationalError
-from psycopg2.errors import DuplicateDatabase
+from psycopg import connect
+from psycopg import Connection as PsycopgConnection
+from psycopg import Cursor as PsycopgCursor
+from psycopg import Error as PsycopgError
+from psycopg import OperationalError
+from psycopg.errors import DuplicateDatabase
 from attr import define
 
 from spatialprofilingtoolbox.db.credentials import DBCredentials
@@ -39,12 +39,12 @@ class DatabaseNotFoundError(ValueError):
 
 class ConnectionProvider:
     """Simple wrapper of a database connection."""
-    connection: Connection
+    connection: PsycopgConnection
 
-    def __init__(self, connection: Connection):
+    def __init__(self, connection: PsycopgConnection):
         self.connection = connection
 
-    def get_connection(self):
+    def get_connection(self) -> PsycopgConnection:
         return self.connection
 
     def is_connected(self):
@@ -56,7 +56,7 @@ class ConnectionProvider:
 
 
 class DBConnection(ConnectionProvider):
-    """Provides a psycopg2 Postgres database connection. Takes care of connecting and disconnecting.
+    """Provides a psycopg Postgres database connection. Takes care of connecting and disconnecting.
     """
     autocommit: bool
 
@@ -74,7 +74,7 @@ class DBConnection(ConnectionProvider):
                 study_database = self._retrieve_study_database(credentials, study)
                 credentials.update_database(study_database)
             super().__init__(self.make_connection(credentials))
-        except Psycopg2Error as exception:
+        except PsycopgError as exception:
             message = 'Failed to connect to database: %s, %s'
             logger.error(message, credentials.endpoint, credentials.database)
             raise exception
@@ -95,7 +95,7 @@ class DBConnection(ConnectionProvider):
             return str(rows[0][0])
 
     @staticmethod
-    def make_connection(credentials: DBCredentials) -> Connection:
+    def make_connection(credentials: DBCredentials) -> PsycopgConnection:
         return connect(
             dbname=credentials.database,
             host=credentials.endpoint,
@@ -118,15 +118,15 @@ class DBConnection(ConnectionProvider):
 
 class DBCursor(DBConnection):
     """Context manager for shortcutting right to provision of a cursor."""
-    cursor: Psycopg2Cursor
+    cursor: PsycopgCursor
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def get_cursor(self) -> Psycopg2Cursor:
+    def get_cursor(self) -> PsycopgCursor:
         return self.cursor
 
-    def set_cursor(self, cursor: Psycopg2Cursor) -> None:
+    def set_cursor(self, cursor: PsycopgCursor) -> None:
         self.cursor = cursor
 
     def __enter__(self):
@@ -156,7 +156,7 @@ def wait_for_database_ready():
                 break
         except OperationalError:
             logger.debug('Database is not ready.')
-            time.sleep(2.0)
+        time.sleep(2.0)
     logger.info('Database is ready.')
 
 
@@ -166,7 +166,7 @@ def _check_database_is_ready() -> bool:
             cursor.execute('SELECT * FROM study_lookup;')
             _ = cursor.fetchall()
             return True
-    except Psycopg2Error as _:
+    except PsycopgError as _:
         return False
 
 
@@ -218,7 +218,7 @@ def create_database(database_config_file: str | None, database_name: str) -> Non
         logger.error(message)
         raise ValueError(message)
     credentials = retrieve_credentials_from_file(database_config_file)
-    create_statement = 'CREATE DATABASE %s;' % database_name
+    create_statement = f'CREATE DATABASE {database_name};'
     connection = connect(
         dbname='postgres',
         host=credentials.endpoint,
@@ -239,7 +239,7 @@ def create_database(database_config_file: str | None, database_name: str) -> Non
 @define
 class SimpleReadOnlyProvider:
     """State-holder for basic read-only one-time database data provider classes."""
-    cursor: Psycopg2Cursor
+    cursor: PsycopgCursor
 
 
 class QueryCursor:

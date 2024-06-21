@@ -36,7 +36,7 @@ class PublisherPromoter:
             members = tuple(filter(is_in_collection, map(lambda row: row[0], cursor.fetchall())))
         if len(members) == 0:
             message = f'No studies are tagged with collection label "{self._get_collection()}".'
-            logger.warn(message)
+            logger.warning(message)
 
     def _whitelist_collection(self) -> None:
         file = self.database_config_file

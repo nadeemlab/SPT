@@ -1,6 +1,6 @@
 """Drop a single study."""
 
-from psycopg2.errors import InvalidCatalogName
+from psycopg.errors import InvalidCatalogName
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
@@ -33,14 +33,14 @@ class StudyDropper:
                 return
             database_name = matches[0][0]
 
-        with DBConnection(database_config_file=database_config_file, autocommit = False) as connection:
-            connection.set_session(autocommit = True)
+        with DBConnection(database_config_file=database_config_file, autocommit = True) as connection:
+            connection.autocommit = True
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute('DROP DATABASE %s ;' % database_name)
+                    cursor.execute(f'DROP DATABASE {database_name} ;')
                     logger.info(f'Dropped database: {database_name}')
                 except InvalidCatalogName:
-                    logger.warn(f'The database {database_name} does not exist, can not drop it.')
+                    logger.warning(f'The database {database_name} does not exist, can not drop it.')
 
         with DBCursor(database_config_file=database_config_file) as cursor:
             cursor.execute('DELETE FROM study_lookup WHERE database_name=%s ;', (database_name,))

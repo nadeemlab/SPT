@@ -8,7 +8,7 @@ from pandas import (
     to_datetime,
     Timestamp,
 )
-from psycopg2.extensions import connection as Connection
+from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.util import STRFTIME_FORMAT
 from spatialprofilingtoolbox.graphs.plugin_constants import PLUGIN_ALIASES
@@ -84,7 +84,7 @@ def transcribe_importance(
         )
 
 
-def _add_slide_column(connection: Connection, df: DataFrame) -> None:
+def _add_slide_column(connection: PsycopgConnection, df: DataFrame) -> None:
     lookup = read_sql("""
         SELECT
             hsi.histological_structure,
@@ -113,7 +113,7 @@ def _group_and_filter(df: DataFrame, filter_number: int) -> DataFrame:
 
 def _upload(
     df: DataFrame,
-    connection: Connection,
+    connection: PsycopgConnection,
     data_analysis_study: str,
     plugin_used: str,
     datetime_of_run: datetime,

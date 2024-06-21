@@ -1,9 +1,10 @@
 
 declare -A expectedmessages
 expectedmessages[spt-apiserver-testing]="Uvicorn running on"
-expectedmessages[spt-ondemand-testing]="Ondemand services are ready to accept connections"
-expectedmessages[spt-db-testing-only]="database system is ready to accept connections"
-expectedmessages[spt-workflow-testing]="workflow container is ready to work"
+expectedmessages[spt-ondemand--testing]="Listening on new_items_in_queue channel"
+expectedmessages[spt-ondemand-testing2]="Listening on new_items_in_queue channel"
+expectedmessages[spt-db---testing-only]="database system is ready to accept connections"
+expectedmessages[spt--workflow-testing]="workflow container is ready to work"
 expectedmessages[temporary-spt-db-preloading]="database system is ready to accept connections"
 
 container_wait_time=60 #seconds

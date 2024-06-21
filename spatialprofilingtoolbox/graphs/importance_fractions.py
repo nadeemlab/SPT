@@ -28,6 +28,9 @@ from scipy.stats import fisher_exact  # type: ignore
 from attr import define
 from pydantic import BaseModel
 
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+logger = colorized_logger(__name__)
+
 if TYPE_CHECKING:
     from matplotlib.figure import Figure  # type: ignore
 
@@ -196,7 +199,7 @@ class ImportanceCountsAccessor:
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
         try:
-            content = get_request(url)
+            content = get_request(url, timeout=200)
         except Exception as exception:
             print(url)
             raise exception
@@ -287,13 +290,13 @@ class ImportanceCountsAccessor:
             }
             optional_args = {k: v for k, v in optional_args.items() if v is not None}
 
-            phenotype_counts = self.query_importance_composition(
+            phenotype_counts = (self.query_importance_composition(
                 self.study,
                 conjunction_criteria['positive_markers'],
                 conjunction_criteria['negative_markers'],
                 plugin,
                 **optional_args,
-            ).dict()  # type: ignore
+            )).dict()  # type: ignore
         return {c['specimen']: c['percentage'] for c in phenotype_counts['counts']}
 
 
@@ -360,14 +363,14 @@ class ImportanceFractionAndTestRetriever:
 
             iterable: Iterable
             if self.use_tqdm:
-                from tqdm import tqdm
+                from tqdm import tqdm  # type: ignore
                 iterable = tqdm(levels, total=N, bar_format=f)
             else:
                 iterable = levels
-            self.df_phenotypes_original = tuple(
-                (str(phenotype), self.get_access().counts(phenotype).astype(int))
-                for phenotype in iterable
-            )
+            df_phenotypes_original = []
+            for phenotype in iterable:
+                df_phenotypes_original.append((str(phenotype), self.get_access().counts(phenotype).astype(int)))
+            self.df_phenotypes_original = tuple(df_phenotypes_original)
             with open(pickle_file, 'wb') as file:
                 pickle_dump(self.df_phenotypes_original, file)
 
@@ -420,6 +423,9 @@ class ImportanceFractionAndTestRetriever:
         total: int,
         df: DataFrame,
     ) -> None:
+        if count_phenotype > count_both:
+            message = f'Count {count_both} for both phenotype and selected exceeds count {count_phenotype} for phenotype alone.'
+            logger.error(message)
         sample = str(_sample)
         a = count_both
         b = self.count_important - count_both
@@ -506,9 +512,11 @@ class PlotDataRetriever:
             specification.study,
             use_tqdm=self.use_tqdm,
         )
-        return tuple(
-            retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order] for plugin in plugins
-        )
+        retrieved = []
+        for plugin in plugins:
+            item = retriever.retrieve(cohorts, phenotypes, plugin)[attribute_order]
+            retrieved.append(item)
+        return tuple(retrieved)
 
 
 @define

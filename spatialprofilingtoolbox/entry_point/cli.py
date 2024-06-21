@@ -12,7 +12,7 @@ from spatialprofilingtoolbox import submodule_names
 
 
 def get_argument_free_commands():
-    return ['tail-logs', 'dump-schema']
+    return ['tail-logs', 'dump-schema', 'start']
 
 def get_commands(submodule_name):
     _files = files(f'spatialprofilingtoolbox.{submodule_name}')
@@ -124,10 +124,10 @@ def main_program():
     if len(sys.argv) >= 3:
         executable, script_path = get_executable_and_script(module, command)
         unparsed_arguments = sys.argv[3:]
-        TERM = signal.SIGTERM
-        INTER = signal.SIGINT
+        terminate = signal.SIGTERM
+        interrupt = signal.SIGINT
         with subprocess.Popen([executable, script_path,] + unparsed_arguments) as running_process:
-            signal.signal(TERM, lambda signum, frame: running_process.send_signal(TERM))
-            signal.signal(INTER, lambda signum, frame: running_process.send_signal(INTER))
+            signal.signal(terminate, lambda signum, frame: running_process.send_signal(terminate))
+            signal.signal(interrupt, lambda signum, frame: running_process.send_signal(interrupt))
             exit_code = running_process.wait()
         sys.exit(exit_code)

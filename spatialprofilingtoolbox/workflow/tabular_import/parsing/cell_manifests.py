@@ -2,11 +2,11 @@
 
 from io import BytesIO as StringIO
 import base64
-import mmap
 from typing import cast
 
 import shapefile  # type: ignore
 import pandas as pd
+from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design\
     import TabularCellMetadataDesign
@@ -32,7 +32,7 @@ class CellManifestsParser(SourceToADIParser):
         self.scope = None
 
     def parse(self,
-        connection,
+        connection: PsycopgConnection,
         file_manifest_file,
         chemical_species_identifiers_by_symbol,
     ):
@@ -57,7 +57,7 @@ class CellManifestsParser(SourceToADIParser):
             'expression quantification': expression_quantification_index,
         }
         channel_symbols = self.get_channel_symbols(chemical_species_identifiers_by_symbol)
-        final_indices = {}
+        final_indices: dict[str, int] = {}
         file_count = 1
         for _, cell_manifest in self.get_cell_manifests(file_manifest_file).iterrows():
             logger.debug(
@@ -87,7 +87,7 @@ class CellManifestsParser(SourceToADIParser):
         cursor.close()
         self.wrap_up_timer(timer)
 
-    def open_expression_quantification_scope(self, scope_identifier: str, initial_index: int) -> None:        
+    def open_expression_quantification_scope(self, scope_identifier: str, initial_index: int) -> None:
         logger.debug('Opening range scope with %s.', initial_index)
         self.scope = RangeDefinitionFactory.create(
             scope_identifier,
@@ -203,14 +203,7 @@ class CellManifestsParser(SourceToADIParser):
                     '\t'.join(r) for r in records[tablename]
                 ]).encode('utf-8')
                 timer.record_timepoint('Started inserting chunk into local memory')
-                with mmap.mmap(-1, len(values_file_contents)) as memmap:
-                    memmap.write(values_file_contents)
-                    memmap.seek(0)
-                    timer.record_timepoint('Started copy from command for bulk insertion')
-                    if tablename == 'expression_quantification':
-                        cursor.copy_from(memmap, tablename, columns=['histological_structure', 'target', 'quantity', 'unit', 'quantification_method', 'discrete_value', 'discretization_method'])
-                    else:
-                        cursor.copy_from(memmap, tablename)
+                self.copy_from(cursor, values_file_contents, tablename)
                 timer.record_timepoint('Finished inserting one chunk')
         expression_quantification_index = self.get_expression_quantification_last_index(cursor) + 1
         return {
@@ -218,6 +211,15 @@ class CellManifestsParser(SourceToADIParser):
             'shape file' : shape_file_identifier_index,
             'expression quantification' : expression_quantification_index,
         }
+
+    def copy_from(self, cursor, contents: bytes, tablename: str) -> None:
+        if tablename == 'expression_quantification':
+            columns = ('histological_structure', 'target', 'quantity', 'unit', 'quantification_method', 'discrete_value', 'discretization_method')
+            copy_command = f"COPY {tablename} ({', '.join(columns)}) FROM STDIN"
+        else:
+            copy_command = f'COPY {tablename} FROM STDIN'
+        with cursor.copy(copy_command) as copy:
+            copy.write(contents)
 
     def parse_cell_manifest(self,
         cursor,

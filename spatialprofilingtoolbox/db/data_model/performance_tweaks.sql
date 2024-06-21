@@ -40,13 +40,22 @@ CREATE TABLE umap_plots (
     png_base64 VARCHAR
 );
 
-CREATE TABLE pending_feature_computation (
-    feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
-    time_initiated VARCHAR(512)
+CREATE TABLE quantitative_feature_value_queue (
+    identifier VARCHAR(512) PRIMARY KEY,
+    feature VARCHAR(512) REFERENCES feature_specification(identifier) ON DELETE CASCADE ,
+    subject VARCHAR
 );
+
+ALTER TABLE quantitative_feature_value
+ADD CONSTRAINT unique_qfv UNIQUE (feature, subject) ;
 
 CREATE TABLE ondemand_studies_index (
     specimen VARCHAR(512),
     blob_type VARCHAR(512),
     blob_contents bytea
+);
+
+CREATE TABLE cell_set_cache (
+    feature VARCHAR(512),
+    histological_structure VARCHAR(512)
 );

@@ -49,7 +49,7 @@ class StudyCollectionNaming:
 
     @staticmethod
     def tag_pattern() -> str:
-        return '[a-z0-9\-]{1,513}'
+        return r'[a-z0-9\-]{1,513}'
 
     @classmethod
     def matches_tag_pattern(cls, tag: str) -> bool:

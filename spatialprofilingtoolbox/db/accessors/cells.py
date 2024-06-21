@@ -6,7 +6,7 @@ from typing import Iterable
 from itertools import islice
 from itertools import product
 
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
@@ -20,10 +20,10 @@ logger = colorized_logger(__name__)
 class CellsAccess(SimpleReadOnlyProvider):
     """Retrieve cell-level data for a sample."""
 
-    def get_cells_data(self, sample: str) -> CellsData:
+    def get_cells_data(self, sample: str, cell_identifiers: tuple[int, ...] = ()) -> CellsData:
         return CellsAccess._zip_location_and_phenotype_data(
-            self._get_location_data(sample),
-            self._get_phenotype_data(sample),
+            self._get_location_data(sample, cell_identifiers),
+            self._get_phenotype_data(sample, cell_identifiers),
         )
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:
@@ -50,8 +50,12 @@ class CellsAccess(SimpleReadOnlyProvider):
             names=tuple(Channel(symbol=n) for n in names)
         )
 
-    def _get_location_data(self, sample: str) -> dict[int, tuple[float, float]]:
-        by_sample = pickle_loads(
+    def _get_location_data(
+        self,
+        sample: str,
+        cell_identifiers: tuple[int, ...],
+    ) -> dict[int, tuple[float, float]]:
+        locations: dict[int, tuple[float, float]] = pickle_loads(
             self.fetch_one_or_else(
                 '''
                 SELECT blob_contents
@@ -62,10 +66,16 @@ class CellsAccess(SimpleReadOnlyProvider):
                 self.cursor,
                 f'Requested centroids data for "{sample}" not found in database.'
             )
-        )
-        return by_sample[sample]
+        )[sample]
+        if cell_identifiers == ():
+            return locations
+        return {key: locations[key] for key in set(cell_identifiers).intersection(locations.keys())}
 
-    def _get_phenotype_data(self, sample: str) -> dict[int, bytes]:
+    def _get_phenotype_data(
+        self,
+        sample: str,
+        cell_identifiers: tuple[int, ...],
+    ) -> dict[int, bytes]:
         index_and_expressions = bytearray(self.fetch_one_or_else(
             '''
             SELECT blob_contents
@@ -78,14 +88,17 @@ class CellsAccess(SimpleReadOnlyProvider):
         ))
         byte_count = len(index_and_expressions)
         if byte_count % 16 != 0:
-            message = f'Expected 16 bytes per cell in binary representation of phenotype data, got {byte_count}.'
+            message = f'Expected 16 bytes per cell in binary representation of phenotype data, got {byte_count}.'  # pylint: disable=line-too-long
             logger.error(message)
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
-        return dict(
-            (int.from_bytes(batch[0:8], 'little'), bytes(batch[8:16]))
+        masks = dict(
+            (int.from_bytes(batch[0:8], byteorder='little'), bytes(batch[8:16]))
             for batch in self._batched(bytes_iterator, 16)
         )
+        if cell_identifiers == ():
+            return masks
+        return {key: masks[key] for key in set(cell_identifiers).intersection(masks.keys())}
 
     @staticmethod
     def _batched(iterable: Iterable, batch_size: int):
@@ -102,9 +115,28 @@ class CellsAccess(SimpleReadOnlyProvider):
         identifiers = sorted(list(location_data.keys()))
         _identifiers = sorted(list(phenotype_data.keys()))
         if _identifiers != identifiers:
-            message = f'Mismatch of cell sets for location and phenotype data.'
+            message = 'Mismatch of cell sets for location and phenotype data.'
             raise ValueError(message)
+
+        if len(identifiers) == 0:
+            header = b''.join(map(
+                lambda i: int(i).to_bytes(4),
+                (0, 0, 0, 0, 0)
+            ))
+            return b''.join((header, b''))
+
         cls._check_consecutive(identifiers)
+        extrema = {
+            (operation[1], index): operation[0](map(lambda p: p[index-1], location_data.values()))
+            for operation, index in product(((min, 'min'), (max, 'max')), (1, 2))
+        }
+        min_x = extrema[('min', 1)]
+        min_y = extrema[('min', 2)]
+        if min_x <= 1 or min_y <= 1:
+            keys = set(location_data.keys())
+            for key in keys:
+                location = location_data[key]
+                location_data[key] = (location[0] - min_x + 1, location[1] - min_y + 1)
         combined = tuple(
             (i, location_data[i], phenotype_data[i])
             for i in identifiers
@@ -115,23 +147,22 @@ class CellsAccess(SimpleReadOnlyProvider):
             logger.error(message)
             raise ValueError(message)
         cell_count = int(len(serial) / 20)
-        
         extrema = {
-            (operation[1], index): operation[0](map(lambda pair: pair[index-1], location_data.values()))
+            (operation[1], index): operation[0](map(lambda p: p[index-1], location_data.values()))
             for operation, index in product(((min, 'min'), (max, 'max')), (1, 2))
         }
         header = b''.join(map(
             lambda i: int(i).to_bytes(4),
-            (cell_count, extrema[('min',1)], extrema[('max',1)], extrema[('min',2)], extrema[('max',2)])
+            (cell_count,extrema[('min',1)],extrema[('max',1)],extrema[('min',2)],extrema[('max',2)])
         ))
         return b''.join((header, serial))
 
     @classmethod
     def _check_consecutive(cls, identifiers: list[int]):
         offset = identifiers[0]
-        for i1, i2 in zip(identifiers, range(len(identifiers))):
-            if i1 != i2 + offset:
-                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {i1} should be {i2 + offset}.'
+        for id1, id2 in zip(identifiers, range(len(identifiers))):
+            if id1 != id2 + offset:
+                message = f'Identifiers {identifiers[0]}..{identifiers[-1]} not consecutive: {id1} should be {id2 + offset}.'  # pylint: disable=line-too-long
                 logger.warning(message)
                 break
 
@@ -149,7 +180,7 @@ class CellsAccess(SimpleReadOnlyProvider):
     def fetch_one_or_else(
         query: str,
         args: tuple,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
         error_message: str,
     ) -> Any:
         cursor.execute(query, args)

@@ -176,11 +176,13 @@ pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/cr
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
 
+build-and-push-application-images: ${DOCKER_PUSH_SUBMODULE_TARGETS}
+
 build-and-push-docker-images: ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} generic-spt-push-target data-loaded-images-push-target
 
 build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS} ${DOCKER_PUSH_DEV_PLUGIN_TARGETS} ${DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS}
 
-${DOCKER_PUSH_SUBMODULE_TARGETS}: build-docker-images check-for-docker-credentials
+${DOCKER_PUSH_SUBMODULE_TARGETS}: ${DOCKER_BUILD_SUBMODULE_TARGETS} check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
@@ -335,6 +337,8 @@ check-dockerfiles-consistency:
 
 ensure-plugin-submodules-are-populated:
 >@git submodule update --init --recursive
+
+build-application-images: ${DOCKER_BUILD_SUBMODULE_TARGETS}
 
 build-docker-images: ${DOCKER_BUILD_SUBMODULE_TARGETS} ${DOCKER_BUILD_PLUGIN_TARGETS} ${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}
 

@@ -10,6 +10,7 @@ PACKAGE_NAME := spatialprofilingtoolbox
 export PYTHON := python
 export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build/build_scripts
 SOURCE_LOCATION := ${PACKAGE_NAME}
+PLUGIN_SOURCE_LOCATION := plugin
 BUILD_LOCATION := build
 BUILD_LOCATION_ABSOLUTE := ${PWD}/build
 export TEST_LOCATION := test
@@ -64,21 +65,29 @@ export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
 SUBMODULES := apiserver graphs ondemand db workflow
 DOCKERIZED_SUBMODULES := apiserver db ondemand
+PLUGINS := graph_processing/cg-gnn graph_processing/graph-transformer
+CUDA_PLUGINS := graph_processing/cg-gnn
 
 DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 
-DOCKER_BUILD_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
+DOCKER_BUILD_SUBMODULE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION_ABSOLUTE}/$(submodule)/docker.built)
+DOCKER_BUILD_PLUGIN_TARGETS := $(foreach plugin,$(PLUGINS),${BUILD_LOCATION_ABSOLUTE}/plugins/$(plugin).docker.built)
+DOCKER_BUILD_PLUGIN_CUDA_TARGETS := $(foreach plugin,$(CUDA_PLUGINS),${BUILD_LOCATION_ABSOLUTE}/plugins/$(plugin)-cuda.docker.built)
 _UNPUSHABLES := db
 PUSHABLE_SUBMODULES := $(filter-out ${_UNPUSHABLES},$(DOCKERIZED_SUBMODULES))
-DOCKER_PUSH_TARGETS := $(foreach submodule,$(PUSHABLE_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
-DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
+DOCKER_PUSH_SUBMODULE_TARGETS := $(foreach submodule,$(PUSHABLE_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
+DOCKER_PUSH_DEV_SUBMODULE_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
+DOCKER_PUSH_PLUGIN_TARGETS := $(foreach plugin,$(PLUGINS),docker-push-${PACKAGE_NAME}/$(plugin))
+DOCKER_PUSH_DEV_PLUGIN_TARGETS := $(foreach plugin,$(PLUGINS),docker-push-dev-${PACKAGE_NAME}/$(plugin))
+DOCKER_PUSH_PLUGIN_CUDA_TARGETS := $(foreach plugin,$(CUDA_PLUGINS),docker-push-${PACKAGE_NAME}/$(plugin)-cuda)
+DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS := $(foreach plugin,$(CUDA_PLUGINS),docker-push-dev-${PACKAGE_NAME}/$(plugin)-cuda)
 MODULE_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),unit-test-$(submodule))
 SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 
 # Define PHONY targets
-.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target
+.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated
 
 # Submodule-specific variables
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
@@ -167,11 +176,11 @@ pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/cr
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
 
-build-and-push-docker-images: ${DOCKER_PUSH_TARGETS} generic-spt-push-target data-loaded-images-push-target
+build-and-push-docker-images: ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} generic-spt-push-target data-loaded-images-push-target
 
-build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_TARGETS}
+build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS} ${DOCKER_PUSH_DEV_PLUGIN_TARGETS} ${DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS}
 
-${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
+${DOCKER_PUSH_SUBMODULE_TARGETS}: build-docker-images check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
@@ -191,7 +200,7 @@ ${DOCKER_PUSH_TARGETS}: build-docker-images check-for-docker-credentials
     exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
 >@${MESSAGE} end "Pushed." "Not pushed."
 
-${DOCKER_PUSH_DEV_TARGETS}: build-docker-images check-for-docker-credentials
+${DOCKER_PUSH_DEV_SUBMODULE_TARGETS}: build-docker-images check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-dev-//g') ; \
     submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
@@ -205,6 +214,78 @@ ${DOCKER_PUSH_DEV_TARGETS}: build-docker-images check-for-docker-credentials
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     echo "$$repository_name"; \
     docker push $$repository_name:dev ; \
+    exit_code1=$$?; \
+    echo "$$exit_code1" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+${DOCKER_PUSH_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
+>@plugin_name=$$(basename $@) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name"
+>@plugin_name=$$(basename $@) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
+    source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
+    plugin_version=$$(cat $$source_directory/version.txt) ; \
+    echo "$$plugin_version"; \
+    echo "$$plugin_name"; \
+    echo "$$repository_name"; \
+    docker push $$repository_name:$$plugin_version ; \
+    exit_code1=$$?; \
+    docker push $$repository_name:latest ; \
+    exit_code2=$$?; \
+    exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+${DOCKER_PUSH_DEV_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
+>@plugin_name=$$(basename $@) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name"
+>@plugin_name=$$(basename $@) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-dev-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
+    source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
+    plugin_version=$$(cat $$source_directory/version.txt) ; \
+    echo "$$plugin_version"; \
+    echo "$$plugin_name"; \
+    echo "$$repository_name"; \
+    docker push $$repository_name:dev ; \
+    exit_code1=$$?; \
+    echo "$$exit_code1" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+${DOCKER_PUSH_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credentials
+>@plugin_name=$$(basename $@ -cuda) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name:cuda"
+>@plugin_name=$$(basename $@ -cuda) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
+    source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
+    plugin_version=$$(cat $$source_directory/version.txt) ; \
+    echo "$$plugin_version"; \
+    echo "$$plugin_name"; \
+    echo "$$repository_name"; \
+    docker push $$repository_name:cuda-$$plugin_version ; \
+    exit_code1=$$?; \
+    docker push $$repository_name:cuda-latest ; \
+    exit_code2=$$?; \
+    exit_code=$$(( exit_code1 + exit_code2 )); echo "$$exit_code" > status_code
+>@${MESSAGE} end "Pushed." "Not pushed."
+
+${DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credentials
+>@plugin_name=$$(basename $@ -cuda) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    ${MESSAGE} start "Pushing Docker container $$repository_name:cuda"
+>@plugin_name=$$(basename $@ -cuda) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-dev-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
+    source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
+    plugin_version=$$(cat $$source_directory/version.txt) ; \
+    echo "$$plugin_version"; \
+    echo "$$plugin_name"; \
+    echo "$$repository_name"; \
+    docker push $$repository_name:cuda-dev ; \
     exit_code1=$$?; \
     echo "$$exit_code1" > status_code
 >@${MESSAGE} end "Pushed." "Not pushed."
@@ -252,7 +333,10 @@ check-dockerfiles-consistency:
 >@status_code=$$(cat status_code); if [[ "$$status_code" == "0" && ( ! -f check-dockerfiles-consistency ) ]]; then touch check-dockerfiles-consistency; fi;
 >@${MESSAGE} end "Consistent." "Something missing."
 
-build-docker-images: ${DOCKER_BUILD_TARGETS}
+ensure-plugin-submodules-are-populated:
+>@git submodule update --init --recursive
+
+build-docker-images: ${DOCKER_BUILD_SUBMODULE_TARGETS} ${DOCKER_BUILD_PLUGIN_TARGETS} ${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}
 
 # Build the Docker container for each submodule by doing the following:
 #   1. Identify the submodule being built
@@ -260,7 +344,7 @@ build-docker-images: ${DOCKER_BUILD_TARGETS}
 #   3. Copy relevant files to the build folder
 #   4. docker build the container
 #   5. Remove copied files
-${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
+${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
@@ -295,6 +379,70 @@ ${DOCKER_BUILD_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-ru
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
 
+${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ensure-plugin-submodules-are-populated
+>@plugin_name=$$(basename $@ .docker.built) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    ${MESSAGE} start "Building Docker image $$repository_name"
+>@plugin_name=$$(basename $@ .docker.built) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    plugin_relative_directory=$$(dirname $@ | sed 's,${BUILD_LOCATION_ABSOLUTE}\/plugins\/,,g')/$$plugin_name ; \
+    source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
+    plugin_version=$$(cat $$source_directory/version.txt) ; \
+    plugin_directory=$$(dirname $@)/$$plugin_name ; \
+    mkdir -p $$plugin_directory ; \
+    cp -r $$source_directory/* $$plugin_directory ; \
+    cp $$(dirname $@)/$$(basename $@ .docker.built).dockerfile ./Dockerfile ; \
+    cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
+    docker build \
+     ${NO_CACHE_FLAG} \
+     -f ./Dockerfile \
+     -t $$repository_name:$$plugin_version \
+     -t $$repository_name:latest \
+     -t $$repository_name:dev \
+     --build-arg version=$$plugin_version \
+     --build-arg service_name=$$plugin_name \
+     $$plugin_directory ; echo "$$?" > status_code; \
+    if [[ "$$(cat status_code)" == "0" ]]; \
+    then \
+        touch $@ ; \
+    fi
+>@${MESSAGE} end "Built." "Build failed."
+>@plugin_name=$$(basename $@ .docker.built) ; \
+    plugin_directory=$$(dirname $@)/$$plugin_name ; \
+    rm -r $$plugin_directory ; \
+
+${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ensure-plugin-submodules-are-populated
+>@plugin_name=$$(basename $@ -cuda.docker.built) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    ${MESSAGE} start "Building Docker image $$repository_name:cuda"
+>@plugin_name=$$(basename $@ -cuda.docker.built) ; \
+    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    plugin_relative_directory=$$(dirname $@ | sed 's,${BUILD_LOCATION_ABSOLUTE}\/plugins\/,,g')/$$plugin_name ; \
+    source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
+    plugin_version=$$(cat $$source_directory/version.txt) ; \
+    plugin_directory=$$(dirname $@)/$$plugin_name-cuda ; \
+    mkdir -p $$plugin_directory ; \
+    cp $$source_directory/* $$plugin_directory ; \
+    cp $$(dirname $@)/$$(basename $@ .docker.built).dockerfile ./Dockerfile ; \
+    cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
+    docker build \
+     ${NO_CACHE_FLAG} \
+     -f ./Dockerfile \
+     -t $$repository_name:cuda-$$plugin_version \
+     -t $$repository_name:cuda-latest \
+     -t $$repository_name:cuda-dev \
+     --build-arg version=$$plugin_version \
+     --build-arg service_name=$$plugin_name \
+     $$plugin_directory ; echo "$$?" > status_code; \
+    if [[ "$$(cat status_code)" == "0" ]]; \
+    then \
+        touch $@ ; \
+    fi
+>@${MESSAGE} end "Built." "Build failed."
+>@plugin_name=$$(basename $@ -cuda.docker.built) ; \
+    plugin_directory=$$(dirname $@)/$$plugin_name-cuda ; \
+    rm -r $$plugin_directory ; \
+
 check-docker-daemon-running:
 >@${MESSAGE} start "Checking that Docker daemon is running"
 >@docker stats --no-stream ; echo "$$?" > status_code
@@ -325,17 +473,17 @@ test: unit-tests module-tests
 
 module-tests: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
+${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} clean-network-environment .initial_time.txt
 >@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
-${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
+${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} clean-network-environment .initial_time.txt
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_TARGETS} clean-network-environment .initial_time.txt
+${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} clean-network-environment .initial_time.txt
 >@submodule_directory=$$(echo $@ | sed 's/^singleton-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory singleton-tests ;
 

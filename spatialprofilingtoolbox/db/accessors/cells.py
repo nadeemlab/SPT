@@ -93,7 +93,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             raise ValueError(message)
         bytes_iterator = index_and_expressions.__iter__()
         masks = dict(
-            (int.from_bytes(batch[0:8], byteorder='little'), bytes(bytes(batch[8:16])))
+            (int.from_bytes(batch[0:8], byteorder='little'), bytes(batch[8:16]))
             for batch in self._batched(bytes_iterator, 16)
         )
         if cell_identifiers == ():

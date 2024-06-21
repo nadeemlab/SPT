@@ -62,9 +62,8 @@ help:
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
-SUBMODULES := apiserver graphs ondemand db workflow watcher
-TESTABLE_SUBMODULES := apiserver graphs ondemand db workflow
-DOCKERIZED_SUBMODULES := apiserver db ondemand watcher
+SUBMODULES := apiserver graphs ondemand db workflow
+DOCKERIZED_SUBMODULES := apiserver db ondemand
 
 DOCKERFILES := $(foreach submodule,$(DOCKERIZED_SUBMODULES),${BUILD_LOCATION}/$(submodule)/Dockerfile)
 
@@ -73,9 +72,9 @@ _UNPUSHABLES := db
 PUSHABLE_SUBMODULES := $(filter-out ${_UNPUSHABLES},$(DOCKERIZED_SUBMODULES))
 DOCKER_PUSH_TARGETS := $(foreach submodule,$(PUSHABLE_SUBMODULES),docker-push-${PACKAGE_NAME}/$(submodule))
 DOCKER_PUSH_DEV_TARGETS := $(foreach submodule,$(DOCKERIZED_SUBMODULES),docker-push-dev-${PACKAGE_NAME}/$(submodule))
-MODULE_TEST_TARGETS := $(foreach submodule,$(TESTABLE_SUBMODULES),module-test-$(submodule))
-UNIT_TEST_TARGETS := $(foreach submodule,$(TESTABLE_SUBMODULES),unit-test-$(submodule))
-SINGLETON_TEST_TARGETS := $(foreach submodule,$(TESTABLE_SUBMODULES),singleton-test-$(submodule))
+MODULE_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),module-test-$(submodule))
+UNIT_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),unit-test-$(submodule))
+SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 
 # Define PHONY targets
@@ -411,7 +410,7 @@ clean-files:
 >@rm -f .initial_time.txt
 >@rm -f ${BUILD_LOCATION}/*/.initiation_message_size
 >@rm -f ${BUILD_LOCATION}/*/.current_time.txt
->@for submodule in ${TESTABLE_SUBMODULES} ; do \
+>@for submodule in ${SUBMODULES} ; do \
         submodule_directory=${BUILD_LOCATION}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
         rm -rf $$submodule_directory/docker.built ; \

@@ -21,7 +21,6 @@ setup-testing:
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
      spt-ondemand--testing \
-     spt-watcher---testing \
      spt-db---testing-only ; \
     echo "$$?" > status_code
 >@if [[ $$(cat status_code) -gt 0 ]]; then echo "Printing docker compose logs in case of error:"; docker compose logs; echo ""; docker network ls; echo ""; docker container ls; fi;

@@ -12,6 +12,5 @@ unbuffer docker compose logs --since="$nowtime" -f testing-database > dlogs.db.t
 unbuffer docker compose logs --since="$nowtime" -f testing-api-server > dlogs.api.txt &
 unbuffer docker compose logs --since="$nowtime" -f testing-fast-counts-server > dlogs.od.txt &
 unbuffer docker compose logs --since="$nowtime" -f testing-fast-counts-server2 > dlogs.od2.txt &
-unbuffer docker compose logs --since="$nowtime" -f testing-watcher > dlogs.ww.txt &
 
 tail -f /dev/null

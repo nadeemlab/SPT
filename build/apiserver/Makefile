@@ -23,8 +23,7 @@ setup-testing:
      spt-apiserver-testing \
      spt-db---testing-only \
      spt-ondemand--testing \
-     spt-ondemand-testing2 \
-     spt-watcher---testing ; \
+     spt-ondemand-testing2 ; \
     echo "$$?" > status_code
 >@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "Setup env." "Env not setup."

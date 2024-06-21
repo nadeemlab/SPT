@@ -4,7 +4,6 @@ from attrs import define
 from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
-from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
@@ -33,7 +32,7 @@ class MetricComputationScheduler:
     def _broadcast_queue_activity(self) -> None:
         logger.debug('Notifying queue activity channel that there are new items.')
         with DBConnection(database_config_file=self.database_config_file) as connection:
-            connection.execute(create_notify_command('new items', ''))
+            connection.execute('NOTIFY new_items_in_queue ;')
 
     def pop_uncomputed(self) -> ComputationJobReference | None:
         studies = self._get_studies()

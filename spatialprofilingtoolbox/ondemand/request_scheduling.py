@@ -5,11 +5,7 @@ from typing import Callable
 
 from psycopg import Connection as PsycopgConnection
 
-from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
-from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
-from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
-from spatialprofilingtoolbox.ondemand.job_reference import CompletedFeature
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
@@ -103,7 +99,8 @@ class OnDemandRequester:
 
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute('LISTEN queue_activity ;')
+            connection.execute('LISTEN new_items_in_queue ;')
+            connection.execute('LISTEN one_job_complete ;')
             cls._wait_for_wrappedup(connection, get_results)
             counts, feature1 =  get_results()
 
@@ -117,7 +114,8 @@ class OnDemandRequester:
 
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute('LISTEN queue_activity ;')
+            connection.execute('LISTEN new_items_in_queue ;')
+            connection.execute('LISTEN one_job_complete ;')
             cls._wait_for_wrappedup(connection, get_results2)
             counts_all, _ =  get_results2()
 
@@ -126,10 +124,9 @@ class OnDemandRequester:
 
     @classmethod
     def _request_check_for_failed_jobs(cls) -> None:
-        notify = create_notify_command('check for failed jobs', '')
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute(notify)
+            connection.execute('NOTIFY check_for_failed_jobs ;')
 
     @classmethod
     def _wait_for_wrappedup(
@@ -143,15 +140,13 @@ class OnDemandRequester:
             return
         logger.debug(f'Waiting for signal that feature {feature} may be ready.')
         notifications = connection.notifies()
-        for _notification in notifications:
+        for notification in notifications:
             if not get_results()[0].is_pending:
                 logger.debug(f'Closing notification processing, {feature} ready.')
                 notifications.close()
                 break
-            notification = parse_notification(_notification)
             channel = notification.channel
-            payload = notification.payload
-            if channel == 'one job complete':
+            if channel == 'one_job_complete':
                 logger.debug(f'A job is complete, so {feature} may be ready.')
                 if not get_results()[0].is_pending:
                     logger.debug(f'And {feature} was ready. Closing.')

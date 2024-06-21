@@ -6,8 +6,6 @@ from datetime import datetime
 from math import isnan
 from math import isinf
 
-from spatialprofilingtoolbox.ondemand.job_reference import notify_feature_complete
-from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess

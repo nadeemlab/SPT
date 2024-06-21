@@ -13,9 +13,6 @@ from spatialprofilingtoolbox.ondemand.providers.proximity_provider import Proxim
 
 from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
-from spatialprofilingtoolbox.ondemand.job_reference import parse_notification
-from spatialprofilingtoolbox.ondemand.job_reference import create_notify_command
-from spatialprofilingtoolbox.ondemand.job_reference import JobSerialization
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Job = ComputationJobReference
@@ -42,15 +39,13 @@ class OnDemandWorker:
                 self._work_until_complete()
 
     def _wait_for_queue_activity_on(self, connection: PsycopgConnection) -> None:
-        connection.execute('LISTEN queue_activity ;')
-        logger.info('Listening on queue_activity channel.')
+        connection.execute('LISTEN new_items_in_queue ;')
+        logger.info('Listening on new_items_in_queue channel.')
         notifications = connection.notifies()
-        for _notification in notifications:
-            notification = parse_notification(_notification)
-            if notification.channel == 'new items':
-                notifications.close()
-                logger.info('Received notice of new items in the job queue.')
-                break
+        for notification in notifications:
+            notifications.close()
+            logger.info('Received notice of new items in the job queue.')
+            break
 
     def _work_until_complete(self) -> None:
         completed = True
@@ -84,8 +79,7 @@ class OnDemandWorker:
             self._get_provider(job)._warn_no_value()
 
     def _notify_complete(self, job: Job) -> None:
-        notify = create_notify_command('one job complete', job)
-        self.connection.execute(notify)
+        self.connection.execute('NOTIFY one_job_complete ;')
 
     def _get_provider(self, job: Job) -> PendingProvider:
         derivation_method = self._retrieve_derivation_method(job)

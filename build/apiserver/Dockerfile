@@ -17,6 +17,7 @@ RUN python -m pip install Pillow==9.5.0
 RUN python -m pip install pydantic==2.7.2
 RUN python -m pip install secure==0.3.0
 RUN python -m pip install matplotlib==3.9.0
+RUN python -m pip install squidpy==1.5.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME
@@ -27,4 +28,4 @@ COPY $WHEEL_FILENAME ./
 RUN pip3 install "$WHEEL_FILENAME"
 ENV API_SERVER_PORT=8080
 HEALTHCHECK CMD curl --fail http://localhost:${API_SERVER_PORT}/ || exit 1
-CMD uvicorn app.main:app --app-dir /usr/local/lib/python3.11/site-packages/spatialprofilingtoolbox/apiserver/ --host 0.0.0.0 --port ${API_SERVER_PORT} --log-level debug
+CMD uvicorn app.main:app --workers 4 --app-dir /usr/local/lib/python3.11/site-packages/spatialprofilingtoolbox/apiserver/ --host 0.0.0.0 --port ${API_SERVER_PORT} --log-level debug

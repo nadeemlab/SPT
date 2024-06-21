@@ -53,6 +53,8 @@ class SourceToADIParser:
 
     def generate_basic_insert_query(self, tablename):
         fields_sorted = self.get_field_names(tablename)
+        if tablename == 'quantitative_feature_value':
+            fields_sorted = fields_sorted[1:]
         handle_duplicates = 'ON CONFLICT DO NOTHING '
         query = (
             'INSERT INTO ' + tablename + ' (' + ', '.join(fields_sorted) + ') '

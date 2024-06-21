@@ -1,100 +1,223 @@
 """Count cells for a specific signature, over the specially-created binary-format index."""
 
-from typing import Any
 from typing import cast
 
-from pandas import Index
-
-from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
-from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
+from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
+from spatialprofilingtoolbox.ondemand.phenotype_str import (\
+    phenotype_str_to_phenotype,
+    phenotype_to_phenotype_str,
+)
+from spatialprofilingtoolbox.db.describe_features import get_feature_description
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+ItemList = tuple[str, list[int]]
+Item = tuple[str, tuple[int, ...]]
 
 logger = colorized_logger(__name__)
 
 
-class CountsProvider(OnDemandProvider):
+class CountsProvider(PendingProvider):
     """Scan binary-format expression matrices for specific signatures."""
 
-    def __init__(self, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
-        """Load from precomputed binary expression files and a JSON index in the data directory.
+    def compute(self) -> None:
+        args, arrays = self._prepare_parameters()
+        if arrays.identifiers is None:
+            self.handle_insert_value(None, allow_null=True)
+        else:
+            count = self._perform_count(args, arrays)
+            self.handle_insert_value(count)
 
-        Note: CountsProvider never loads centroids because it does not need them. It also does not
-        using the pending system, so the timeout is irrelevant.
-        """
-        super().__init__(0, database_config_file)
+    def _prepare_parameters(self) -> tuple[tuple[int, int, tuple[int, ...]], CellDataArrays]:
+        study = self.job.study
+        specification = str(self.job.feature_specification)
+        _, specifiers = self.retrieve_specifiers(study, specification)
+        phenotype = phenotype_str_to_phenotype(specifiers[0])
+        cells_selected = self._retrieve_cells_selected(study, specification)  # to deprecate
+        marker_set = (phenotype.positive_markers, phenotype.negative_markers)
+        arrays = self.get_cell_data_arrays()
+        features = tuple(n.symbol for n in arrays.feature_names.names)
+        signatures = tuple(map(lambda m: cast(int, self._compute_signature(m, features)), marker_set))
+        return ((signatures[0], signatures[1], cells_selected), arrays)
 
-    @classmethod
-    def service_specifier(cls) -> str:
-        return 'counts'
+    @staticmethod
+    def _retrieve_cells_selected(study: str, specification: str) -> tuple[int, ...]:
+        with DBCursor(study=study) as cursor:
+            query = 'SELECT histological_structure FROM cell_set_cache WHERE feature=%s ;'
+            cursor.execute(query, (specification,))
+            rows = tuple(cursor.fetchall())
+        if len(rows) == 0:
+            return ()
+        return tuple(map(lambda row: int(row[0]), rows))
 
-    @simple_instance_method_cache(maxsize=50000)
-    def count_structures_of_partial_signed_signature(
-        self,
+    @staticmethod
+    def _perform_count(args: tuple[int, int, tuple[int, ...]], arrays: CellDataArrays) -> int:
+        if arrays.identifiers.shape[0] == 0:
+            return 0
+        return CountsProvider._count_structures_of_partial_signed_signature(*args, arrays)
+
+    @staticmethod
+    def _count_structures_of_partial_signed_signature(
         positives_signature: int,
         negatives_signature: int,
-        measurement_study: str,
-        cells_selected: tuple[int, ...] | None = None,
-    ) -> dict[str, tuple[int, int] | tuple[None, None]]:
-        """Count the number of structures per specimen that match this signature."""
-        counts: dict[str, tuple[int, int] | tuple[None, None]] = {}
-        selection = Index(list(cells_selected)) if cells_selected else None
-        for specimen, data_array in self.data_arrays[measurement_study].items():
-            count = 0
-            if len(data_array) == 0:
-                raise ValueError(f'Data array for specimen "{specimen}" is empty.')
-            integers = cast(
-                list[int],
-                data_array['integer'] if (selection is None) else
-                data_array.loc[data_array.index.intersection(selection), 'integer'],
-            )
-            if len(integers) == 0:
-                counts[specimen] = (None, None)
-                continue
-            count = self.get_count(integers, positives_signature, negatives_signature)
-            counts[specimen] = (count, len(integers))
-        return counts
+        cells_selected: tuple[int, ...],
+        arrays: CellDataArrays,
+    ) -> int:
+        """Count the number of cells in the given sample that match this signature."""
+        if positives_signature == 0 and negatives_signature == 0:
+            return arrays.identifiers.shape[0]
+        count = CountsProvider._get_count(tuple(arrays.phenotype), positives_signature, negatives_signature)
+        return count
 
-    def get_count(self, integers: list[int], positives_mask: int, negatives_mask: int) -> int:
-        """Counts the number of elements of the list of integer-represented binary numbers which
-        equal to 1 along the bits indicated by the positives mask, and equal to 0 along the bits
-        indicated by the negatives mask.
+    @staticmethod
+    def _get_count(integers: tuple[int, ...], positives_mask: int, negatives_mask: int) -> int:
+        """
+        Counts the number of elements of the list of integer-represented binary numbers which equal
+        to 1 along the bits indicated by the positives mask, and equal to 0 along the bits indicated
+        by the negatives mask.
         """
         count = 0
-        for entry in integers:
+        for _entry in integers:
+            entry = int(_entry)
             if (entry | positives_mask == entry) and (~entry | negatives_mask == ~entry):
                 count = count + 1
         return count
 
-    def compute_signature(self, channel_names: list[str], measurement_study: str) -> int | None:
+    @staticmethod
+    def _compute_signature(
+        channel_names: tuple[str, ...],
+        all_features: tuple[str, ...],
+    ) -> int:
         """Compute int signature of this channel name combination."""
-        target_by_symbol = self.studies[measurement_study]['target by symbol']
-        target_index_lookup = self.studies[measurement_study]['target index lookup']
-        if not all(name in target_by_symbol.keys() for name in channel_names):
-            return None
-        identifiers = [target_by_symbol[name] for name in channel_names]
-        indices = [target_index_lookup[identifier] for identifier in identifiers]
+        missing = set(channel_names).difference(all_features)
+        if len(missing) > 0:
+            message = f'Cannot compute signature when these columns are requested: {missing}'
+            raise ValueError(message)
         signature = 0
+        indices = map(lambda name: all_features.index(name), channel_names)
         for index in indices:
             signature = signature + (1 << index)
         return signature
 
-    def get_status(self) -> list[dict[str, Any]]:
-        """Get the status of all studies."""
-        return [
-            {
-                'study': study_name,
-                'counts by channel': [
-                    {
-                        'channel symbol': symbol,
-                        'count': self.count_structures_of_partial_signed_signature(
-                            cast(int, self.compute_signature([cast(str, symbol)], study_name)),
-                            cast(int, self.compute_signature([], study_name)),
-                            study_name
-                        ),
-                    }
-                    for symbol in sorted(list(targets['target by symbol'].keys()))
-                ],
-                'total number of cells': len(self.data_arrays[study_name]),
-            }
-            for study_name, targets in self.studies.items()
-        ]
+    @classmethod
+    def get_or_create_feature_specification(
+        cls,
+        study: str,
+        data_analysis_study: str,
+        phenotype: PhenotypeCriteria | None = None,
+        cells_selected: tuple[int, ...] = (),
+        **kwargs,
+    ) -> tuple[str, bool]:
+        if phenotype is None:
+            phenotype = PhenotypeCriteria(positive_markers=(), negative_markers=())
+        else:
+            phenotype = cast(PhenotypeCriteria, phenotype)
+        specifiers_arguments = (
+            data_analysis_study,
+            phenotype,
+            cells_selected,
+        )
+        specification = cls._get_feature_specification(study, *specifiers_arguments)
+        if specification is not None:
+            _cells_selected = cls._retrieve_cells_selected(study, specification)
+            if set(cells_selected) == set(_cells_selected):
+                return (specification, False)
+        short = str(cells_selected[0:min(len(cells_selected), 5)]) + ' ...'
+        addend = f' (and cell set {short}, {len(cells_selected)} cells)' if cells_selected != () else ''
+        message = 'Creating feature with specifiers: %s' + addend
+        logger.debug(message, phenotype)
+        specifiers_arguments_str = (
+            data_analysis_study,
+            phenotype_to_phenotype_str(phenotype),
+        )
+        specification = cls._create_feature_specification(study, *specifiers_arguments_str)
+        cls._append_cell_set(study, specification, cells_selected)
+        return (specification, True)
+
+    @classmethod
+    def _append_cell_set(
+        cls, study: str, specification: str, cells_selected: tuple[int, ...],
+    ) -> None:
+        with DBCursor(study=study) as cursor:
+            copy_command = 'COPY cell_set_cache (feature, histological_structure) FROM STDIN'
+            with cursor.copy(copy_command) as copy:
+                for cell in cells_selected:
+                    copy.write_row((specification, str(cell)))
+
+    @classmethod
+    def _check_cell_set(
+        cls, study: str, feature: str, _cells_selected: tuple[int, ...],
+    ) -> bool:
+        with DBCursor(study=study) as cursor:
+            query = '''
+            SELECT histological_structure
+            FROM cell_set_cache
+            WHERE feature=%s ;
+            '''
+            cursor.execute(query, (feature,))
+            rows = tuple(cursor.fetchall())
+        cells = tuple(sorted(list(map(lambda row: int(row[0]), rows))))
+        cells_selected = tuple(sorted(list(_cells_selected)))
+        if len(cells) == 0 or len(cells_selected) == 0:
+            return len(cells) == len(cells_selected)
+        condition = cells == cells_selected
+        return condition
+
+    @classmethod
+    def _get_feature_specification(cls,
+        study: str,
+        data_analysis_study: str,
+        phenotype: PhenotypeCriteria,
+        cells_selected: tuple[int, ...],
+    ) -> str | None:
+        cells = f'{cells_selected[0:min(5, len(cells_selected))]} ... ({len(cells_selected)})'
+        feature_description = get_feature_description('population fractions')
+        args = (
+            data_analysis_study,
+            phenotype_to_phenotype_str(phenotype),
+            feature_description,
+        )
+        with DBCursor(study=study) as cursor:
+            cursor.execute('''
+            SELECT
+                fsn.identifier,
+                fs.specifier
+            FROM feature_specification fsn
+            JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
+            JOIN study_component sc ON sc.component_study=fsn.study
+            JOIN study_component sc2 ON sc2.primary_study=sc.primary_study
+            WHERE sc2.component_study=%s AND
+                  ( fs.specifier=%s AND fs.ordinality='1') AND
+                  fsn.derivation_method=%s
+            ;
+            ''', args)
+            rows = tuple(cursor.fetchall())
+        feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
+        matches_list: list[str] = []
+        for row in rows:
+            feature_specifications[row[0]].append(row[1])
+        for key, specifiers in feature_specifications.items():
+            if len(specifiers) == 1:
+                matches_list.append(key)
+        matches = tuple(filter(
+            lambda feature: cls._check_cell_set(study, feature, cells_selected),
+            matches_list,
+        ))
+        if len(matches) == 0:
+            return None
+        if len(matches) > 1:
+            text = 'Multiple features match the selected specification'
+            message = f'{text}: {matches} {phenotype} {cells}'
+            logger.warning(message)
+        return matches[0]
+
+    @classmethod
+    def _create_feature_specification(cls,
+        study: str,
+        data_analysis_study: str,
+        phenotype: str,
+    ) -> str:
+        specifiers = (phenotype,)
+        method = get_feature_description('population fractions')
+        return cls.create_feature_specification(study, specifiers, data_analysis_study, method)

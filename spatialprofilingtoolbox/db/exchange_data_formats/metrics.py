@@ -30,6 +30,13 @@ class PhenotypeCriteria(BaseModel):
     negative_markers: tuple[str, ...]
 
 
+class PhenotypeSymbolAndCriteria(BaseModel):
+    """The display/handle string and the internal identifier for a phenotype."""
+    handle_string: str
+    identifier: str
+    criteria: PhenotypeCriteria
+
+
 class CompositePhenotype(BaseModel):
     """For named phenotypes, the name and the internal identifier used for matching up related
     records.

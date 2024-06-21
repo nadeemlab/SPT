@@ -2,7 +2,6 @@
 from typing import cast
 
 from pandas import DataFrame
-from psycopg import cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names

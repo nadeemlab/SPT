@@ -1,7 +1,6 @@
 """Pull expression data from SPT database and store as compressed binary cache. Also pulls location
 data.
 """
-import json
 from typing import cast
 import argparse
 from os.path import abspath

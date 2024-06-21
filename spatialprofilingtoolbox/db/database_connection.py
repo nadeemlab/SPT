@@ -11,8 +11,8 @@ from typing import Callable
 from inspect import getfullargspec
 
 from psycopg import connect
-from psycopg import connection as Connection
-from psycopg import cursor as PsycopgCursor
+from psycopg import Connection as PsycopgConnection
+from psycopg import Cursor as PsycopgCursor
 from psycopg import Error as PsycopgError
 from psycopg import OperationalError
 from psycopg.errors import DuplicateDatabase
@@ -39,12 +39,12 @@ class DatabaseNotFoundError(ValueError):
 
 class ConnectionProvider:
     """Simple wrapper of a database connection."""
-    connection: Connection
+    connection: PsycopgConnection
 
-    def __init__(self, connection: Connection):
+    def __init__(self, connection: PsycopgConnection):
         self.connection = connection
 
-    def get_connection(self):
+    def get_connection(self) -> PsycopgConnection:
         return self.connection
 
     def is_connected(self):
@@ -95,7 +95,7 @@ class DBConnection(ConnectionProvider):
             return str(rows[0][0])
 
     @staticmethod
-    def make_connection(credentials: DBCredentials) -> Connection:
+    def make_connection(credentials: DBCredentials) -> PsycopgConnection:
         return connect(
             dbname=credentials.database,
             host=credentials.endpoint,
@@ -156,7 +156,7 @@ def wait_for_database_ready():
                 break
         except OperationalError:
             logger.debug('Database is not ready.')
-            time.sleep(2.0)
+        time.sleep(2.0)
     logger.info('Database is ready.')
 
 
@@ -218,7 +218,7 @@ def create_database(database_config_file: str | None, database_name: str) -> Non
         logger.error(message)
         raise ValueError(message)
     credentials = retrieve_credentials_from_file(database_config_file)
-    create_statement = 'CREATE DATABASE %s;' % database_name
+    create_statement = f'CREATE DATABASE {database_name};'
     connection = connect(
         dbname='postgres',
         host=credentials.endpoint,

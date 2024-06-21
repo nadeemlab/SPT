@@ -37,10 +37,10 @@ class StudyDropper:
             connection.autocommit = True
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute('DROP DATABASE %s ;' % database_name)
+                    cursor.execute(f'DROP DATABASE {database_name} ;')
                     logger.info(f'Dropped database: {database_name}')
                 except InvalidCatalogName:
-                    logger.warn(f'The database {database_name} does not exist, can not drop it.')
+                    logger.warning(f'The database {database_name} does not exist, can not drop it.')
 
         with DBCursor(database_config_file=database_config_file) as cursor:
             cursor.execute('DELETE FROM study_lookup WHERE database_name=%s ;', (database_name,))

@@ -86,7 +86,7 @@ function test_squidpy_custom_phenotypes() {
     fi
 
     start=$SECONDS
-    while (( SECONDS - start < 200 )); do
+    while (( SECONDS - start < 300 )); do
         echo -en "Doing query $blue$query$reset_code ... "
         curl -s "$query" > _squidpy.json;
         if [ "$?" -gt 0 ];

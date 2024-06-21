@@ -2,19 +2,14 @@
 import sys
 import json
 
-from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
-
-HOST = 'spt-ondemand-testing'
-PORT = 8016
+from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 
 
 def get_counts(study_name, positives, negatives):
-    with OnDemandRequester(HOST, PORT) as requester:
-        counts_by_specimen = requester.get_counts_by_specimen(positives, negatives, study_name, 0)
-    return counts_by_specimen
+    return OnDemandRequester.get_counts_by_specimen(positives, negatives, study_name, 0, ())
 
 
-if __name__ == '__main__':
+def main():
     if sys.argv[1] == '1':
         counts = get_counts(
             'Melanoma intralesional IL2',
@@ -30,3 +25,6 @@ if __name__ == '__main__':
     dump = counts.model_dump()
     json_str = json.dumps(dump, indent=4)
     print(json_str, end='')
+
+if __name__ == '__main__':
+    main()

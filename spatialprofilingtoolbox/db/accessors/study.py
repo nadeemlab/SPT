@@ -26,7 +26,6 @@ from spatialprofilingtoolbox.db.cohorts import get_sample_cohorts
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 
 logger = colorized_logger(__name__)
 
@@ -211,19 +210,13 @@ class StudyAccess(SimpleReadOnlyProvider):
     def get_number_cells(self, specimen_measurement_study: str) -> int:
         logger.debug('Querying for number of cells in "%s".', specimen_measurement_study)
         query = '''
-        SELECT count(*)
-        FROM histological_structure_identification hsi
-        JOIN histological_structure hs ON hsi.histological_structure = hs.identifier
-        JOIN data_file df ON hsi.data_source = df.sha256_hash
-        JOIN specimen_data_measurement_process sdmp ON df.source_generation_process = sdmp.identifier
-        WHERE sdmp.study=%s AND hs.anatomical_entity='cell'
-        ;
+        SELECT MAX(CAST(identifier AS INTEGER)) FROM histological_structure ;
         '''
         return GetSingleResult.integer(
             self.cursor,
             query=query,
-            parameters=(specimen_measurement_study,),
-        )
+            parameters=(),
+        ) + 1
 
     def _get_number_channels(self, specimen_measurement_study: str) -> int:
         query = '''

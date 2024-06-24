@@ -41,7 +41,7 @@ CREATE TABLE umap_plots (
 );
 
 CREATE TABLE quantitative_feature_value_queue (
-    feature VARCHAR(512) REFERENCES feature_specification(identifier) ,
+    feature INTEGER REFERENCES feature_specification(identifier) ,
     subject VARCHAR
 );
 
@@ -58,6 +58,6 @@ CREATE TABLE ondemand_studies_index (
 );
 
 CREATE TABLE cell_set_cache (
-    feature VARCHAR(512),
+    feature INTEGER,
     histological_structure VARCHAR(512)
 );

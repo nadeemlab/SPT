@@ -1,0 +1,90 @@
+
+Need to catch this warning ... and trigger job fail
+
+ WARNING: `n_splits` was automatically set to `430` to prevent `879621x879621` distance matrix from being created
+
+
+... WIth API concurrency, need a more robust taking of feature spec IDs...
+
+- Add a timeout for any computation ... global
+
+- add p-value ... Fisher exact... wrt slide viewer selection region
+
+- slide icon ... link
+
+- need the GNN plot to be cached after creation... still takes too long
+
+- add links to findings
+
+
+
+
+# One-time migration scripts to change the db schema in-place to support auto-incrementing features specs
+
+# Get rid of dependency constraint...
+
+ALTER table feature_specifier
+DROP CONSTRAINT feature_specifier_feature_specification_fkey ;
+
+ALTER table quantitative_feature_value
+DROP CONSTRAINT quantitative_feature_value_feature_fkey ;
+
+ALTER table two_cohort_feature_association_test
+DROP CONSTRAINT two_cohort_feature_association_test_feature_tested_fkey ;
+
+ALTER table quantitative_feature_value_queue
+DROP CONSTRAINT quantitative_feature_value_queue_feature_fkey ;
+
+
+# Alter the data type for the referenced-bys from the former constraints
+
+ALTER TABLE feature_specifier
+ALTER COLUMN feature_specification TYPE INTEGER USING feature_specification::integer;
+
+ALTER TABLE quantitative_feature_value
+ALTER COLUMN feature TYPE INTEGER USING feature::integer;
+
+ALTER TABLE two_cohort_feature_association_test
+ALTER COLUMN feature_tested TYPE INTEGER USING feature_tested::integer;
+
+ALTER TABLE quantitative_feature_value_queue
+ALTER COLUMN feature TYPE INTEGER USING feature::integer;
+
+
+# Alter data type of main identifier...
+                    ALTER TABLE feature_specification
+                    DROP CONSTRAINT feature_specification_pkey ;
+
+ALTER TABLE feature_specification
+ALTER COLUMN identifier TYPE INTEGER USING identifier::integer ;
+
+CREATE SEQUENCE feature_specification_identifier_seq ;
+ALTER TABLE feature_specification ALTER COLUMN identifier SET NOT NULL ;
+ALTER TABLE feature_specification ALTER COLUMN identifier SET DEFAULT nextval('feature_specification_identifier_seq') ;
+ALTER SEQUENCE feature_specification_identifier_seq OWNED BY feature_specification.identifier ;
+
+
+# Add the constraints back
+                    ALTER TABLE feature_specification
+                    ADD CONSTRAINT feature_specification_pkey PRIMARY KEY (identifier) ;
+
+ALTER TABLE feature_specifier
+ADD CONSTRAINT fk_identifier_feature_specifier FOREIGN KEY (feature_specification)
+    REFERENCES feature_specification(identifier) ;
+
+ALTER TABLE quantitative_feature_value
+ADD CONSTRAINT fk_identifier_quantitative_feature_value FOREIGN KEY (feature)
+    REFERENCES feature_specification(identifier) ;
+
+ALTER TABLE two_cohort_feature_association_test
+ADD CONSTRAINT fk_identifier_two_cohort_feature_association_test FOREIGN KEY (feature_tested)
+    REFERENCES feature_specification(identifier) ;
+
+ALTER TABLE quantitative_feature_value_queue
+ADD CONSTRAINT fk_identifier_quantitative_feature_value_queue FOREIGN KEY (feature)
+    REFERENCES feature_specification(identifier) ;
+
+
+# Misc
+ALTER TABLE cell_set_cache
+ALTER COLUMN feature TYPE INTEGER USING feature::integer ;

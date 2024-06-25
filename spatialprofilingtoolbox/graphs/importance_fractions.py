@@ -423,7 +423,7 @@ class ImportanceFractionAndTestRetriever:
         total: int,
         df: DataFrame,
     ) -> None:
-        if count_phenotype > count_both:
+        if count_both > count_phenotype:
             message = f'Count {count_both} for both phenotype and selected exceeds count {count_phenotype} for phenotype alone.'
             logger.error(message)
         sample = str(_sample)

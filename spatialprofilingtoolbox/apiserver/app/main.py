@@ -486,7 +486,7 @@ async def importance_fraction_plot(
     img_format: Literal['svg', 'png'] = 'svg',
 ) -> StreamingResponse:
     """Return a plot of the fraction of important cells expressing a given phenotype."""
-    raw = get_importance_fraction_plot(study, img_format)
+    raw = get_importance_fraction_plot(str(study), str(img_format))
     buffer = BytesIO()
     buffer.write(raw)
     buffer.seek(0)

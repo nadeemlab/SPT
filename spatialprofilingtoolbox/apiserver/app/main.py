@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
+from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -443,12 +444,8 @@ async def get_plot_high_resolution(
     return StreamingResponse(streaming_iteration(), media_type="image/png")
 
 
-@app.get("/importance-fraction-plot/")
-async def importance_fraction_plot(
-    study: ValidStudy,
-    img_format: Literal['svg', 'png'] = 'svg',
-) -> StreamingResponse:
-    """Return a plot of the fraction of important cells expressing a given phenotype."""
+@simple_function_cache(log=True)
+def get_importance_fraction_plot(study: str, img_format: str) -> bytes:
     settings: str = cast(list[str], query().get_study_gnn_plot_configurations(study))[0]
     (
         _,
@@ -476,7 +473,21 @@ async def importance_fraction_plot(
     )
     plot = generator.generate_plot()
     plt.figure(plot.number)  # type: ignore
-    buf = BytesIO()
-    plt.savefig(buf, format=img_format)
-    buf.seek(0)
-    return StreamingResponse(buf, media_type=f"image/{img_format}")
+    buffer = BytesIO()
+    plt.savefig(buffer, format=img_format)
+    buffer.seek(0)
+    contents = buffer.read()
+    return contents
+
+
+@app.get("/importance-fraction-plot/")
+async def importance_fraction_plot(
+    study: ValidStudy,
+    img_format: Literal['svg', 'png'] = 'svg',
+) -> StreamingResponse:
+    """Return a plot of the fraction of important cells expressing a given phenotype."""
+    raw = get_importance_fraction_plot(study, img_format)
+    buffer = BytesIO()
+    buffer.write(raw)
+    buffer.seek(0)
+    return StreamingResponse(buffer, media_type=f"image/{img_format}")

@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
-from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -444,8 +444,43 @@ async def get_plot_high_resolution(
     return StreamingResponse(streaming_iteration(), media_type="image/png")
 
 
-@simple_function_cache(log=True)
+def _ensure_plot_cache_exists(study: str):
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS gnn_plot_cache(
+            img_format VARCHAR(3),
+            blob_contents bytea
+        ) ;
+        ''')
+
+
+def _retrieve_gnn_plot(study: str, img_format: str) -> bytes | None:
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        SELECT blob_contents
+        FROM gnn_plot_cache
+        WHERE img_format=%s
+        ''', (img_format,))
+        rows = tuple(cursor.fetchall())
+    if len(rows) == 0:
+        return None
+    return bytes(rows[0][0])
+
+
+def _write_gnn_plot(contents: bytes, study: str, img_format: str) -> None:
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        INSERT INTO gnn_plot_cache(img_format, blob_contents)
+        VALUES (%s, %s) ;
+        ''', (img_format, contents))
+
+
 def get_importance_fraction_plot(study: str, img_format: str) -> bytes:
+    _ensure_plot_cache_exists(study)
+    contents = _retrieve_gnn_plot(study, img_format)
+    if contents is not None:
+        return contents
+
     settings: str = cast(list[str], query().get_study_gnn_plot_configurations(study))[0]
     (
         _,
@@ -477,6 +512,7 @@ def get_importance_fraction_plot(study: str, img_format: str) -> bytes:
     plt.savefig(buffer, format=img_format)
     buffer.seek(0)
     contents = buffer.read()
+    _write_gnn_plot(contents, study, img_format)
     return contents
 
 

@@ -1,0 +1,354 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Roboto";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/KFOkCnqEu92Fr1Mu52xP.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/KFOmCnqEu92Fr1Me5Q.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/KFOlCnqEu92Fr1MmEU9vAw.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/KFOlCnqEu92Fr1MmWUlvAw.ttf") format("truetype");
+}
+@font-face {
+  font-family: "spt_icons";
+  src: url("/spt_icons_extended.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Works on Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: #ffb549 rgba(255, 255, 255, 0);
+}
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 12px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0);
+  border-radius: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #ffb549;
+  border-radius: 6px;
+}
+
+.customIcon {
+  font-family: "spt_icons";
+  font-style: normal;
+  font-weight: normal;
+  display: inline-block;
+  text-decoration: inherit;
+  width: 1em;
+  text-align: center;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  font-family: "Roboto";
+}
+
+@media (min-width: 1024px) {
+  .router-content {
+    width: calc(100% - 330px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .router-content {
+    height: calc(100vh - 80px);
+  }
+}
+
+.no-longer-hoverable {
+  width: calc(100vw + 60px);
+}
+
+.navigationButtonActive::before {
+  right: 0;
+  top: -40px;
+  position: absolute;
+  content: " ";
+  width: 20px;
+  height: 40px;
+  background-color: transparent;
+  border-bottom-right-radius: 20px;
+  box-shadow: 1px 20px 0 0 #ffd392;
+  transition: all;
+  transition-duration: 0.5s, 0.5s;
+}
+.navigationButtonActive::after {
+  right: 0;
+  bottom: -40px;
+  position: absolute;
+  content: " ";
+  width: 20px;
+  height: 40px;
+  background-color: transparent;
+  border-top-right-radius: 20px;
+  box-shadow: 1px -20px 0 0 #ffd392;
+  transition: all;
+  transition-duration: 0.5s, 0.5s;
+}
+
+.hovertext-common:hover::after {
+  content: attr(data-title);
+  padding: 2px;
+  border: 1px solid gray;
+  border-style: dotted;
+  position: absolute;
+  background: #d0d0dd;
+  color: black;
+  opacity: 90%;
+  z-index: 2;
+  white-space: nowrap;
+}
+.hovertext-common:hover {
+  cursor: pointer;
+}
+.hovertext-narrow:hover::after {
+  font-size: 0.8em;
+  width: calc(min(102%, max-content));
+  top: 35px;
+  left: 5px;
+}
+.hovertext-wide:hover::after {
+  white-space: normal;
+  width: 150%;
+  font-size: 0.9em;
+  top: 0px;
+  left: 102%;
+}
+.hovertext-td:hover::after {
+  font-size: 0.8em;
+  width: calc(min(102%, max-content));
+  top: 20px;
+  left: 40px;
+  position: absolute;
+}
+
+.disabled-button {
+  color: #404040;
+  background-color: #dddddd;
+}
+
+.spacer {
+  position: relative;
+  display: flex;
+  top: initial;
+  left: initial;
+  width: 95px;
+  height: 6px;
+  margin-top: 1px;
+  visibility: hidden;
+}
+
+.progress-bar {
+  position: relative;
+  display: flex;
+  top: initial;
+  left: initial;
+  width: 95px;
+  height: 7px;
+  margin-top: 1px;
+}
+
+.progress-bar-disabled {
+  visibility: hidden;
+}
+
+.progress-bar-background {
+  border: solid gray 1px;
+  background: lightgray;
+}
+
+.progress-bar-foreground {
+  width: 5px;
+  height: 4px;
+  /* border: solid gray 1px; */
+  background-color: #45b703;
+}
+
+.v-text > span {
+  vertical-align: inherit;
+  margin-bottom: 5px;
+  -ms-writing-mode: tb-rl;
+  -webkit-writing-mode: vertical-rl;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid #1c2b56;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #1c2b56 transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.menu span {
+  display: block;
+  background-color: #1c2b56;
+  width: 25px;
+  height: 4px;
+  margin: 4px auto;
+  border-radius: 2px;
+  transition: all;
+  transition-duration: 0.5s, 0.5s;
+}
+.menuOpen span:first-child {
+  transform: rotate(45deg) translate(6px, 5px);
+  transition: all;
+  transition-duration: 0.5s, 0.5s;
+}
+.menuOpen span:nth-child(2) {
+  opacity: 0;
+  transform: translate(-20px);
+  transition: all;
+  transition-duration: 0.5s, 0.5s;
+}
+.menuOpen span:last-child {
+  transform: rotate(-45deg) translate(6px, -5px);
+  transition: all;
+  transition-duration: 0.5s, 0.5s;
+}
+
+.containScreen {
+  height: calc(100vh - 24px);
+}
+
+@media (max-width: 1024px) {
+  .containScreen {
+    height: calc(100vh - 110px);
+  }
+}
+
+.tableCenter {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.svg-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.svg-itself {
+  pointer-events: none;
+}
+
+.svg-wrapper-hide {
+  display: none;
+}
+
+.desktop-pad {
+  padding-top: 120px;
+}
+
+@media (max-width: 450px) {
+  .desktop-pad {
+    padding-top: 0px;
+  }
+}
+
+@media (max-width: 1500px) {
+  .svg-wrapper-hide {
+    display: none;
+  }
+
+  .blurb-wrapper-hide {
+    display: none;
+  }
+}
+
+.section-reference {
+  padding: 0.3ex;
+  margin-left: 0.7ex;
+  margin-right: 0.2ex;
+  background: #1c2b56;
+  color: #efefef;
+  border-radius: 1em;
+}
+
+.highlighted-item-reference {
+  padding: 0.3ex;
+  margin-right: 0.2ex;
+  background: #1c2b56;
+  color: #ffd392;
+  border-radius: 0.2em;
+}
+
+ul.nesting > li > ul > li {
+  margin-left: 2em;
+  list-style-type: circle;
+}
+
+ul.nesting > li {
+  margin-bottom: 1.5em;
+}
+
+a.normal-link {
+  color: rgb(14 116 144);
+  text-decoration: underline;
+}
+
+.squidpy-logo {
+  width: 2.5ex;
+  display: inline;
+}

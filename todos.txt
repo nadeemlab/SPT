@@ -21,7 +21,7 @@ Need to catch this warning ... and trigger job fail
 
 # One-time migration scripts to change the db schema in-place to support auto-incrementing features specs
 
-# Get rid of dependency constraint...
+-- Drop the foreign key constraints referencing the identifier column that needs to be altered
 
 ALTER table feature_specifier
 DROP CONSTRAINT feature_specifier_feature_specification_fkey ;
@@ -35,9 +35,7 @@ DROP CONSTRAINT two_cohort_feature_association_test_feature_tested_fkey ;
 ALTER table quantitative_feature_value_queue
 DROP CONSTRAINT quantitative_feature_value_queue_feature_fkey ;
 
-
-# Alter the data type for the referenced-bys from the former constraints
-
+-- Alter the data type for all those formerly foreign keys
 ALTER TABLE feature_specifier
 ALTER COLUMN feature_specification TYPE INTEGER USING feature_specification::integer;
 
@@ -50,23 +48,25 @@ ALTER COLUMN feature_tested TYPE INTEGER USING feature_tested::integer;
 ALTER TABLE quantitative_feature_value_queue
 ALTER COLUMN feature TYPE INTEGER USING feature::integer;
 
+-- Alter data type of main identifier (why is this commented out?)
+--                    ALTER TABLE feature_specification
+--                    DROP CONSTRAINT feature_specification_pkey ;
 
-# Alter data type of main identifier...
-                    ALTER TABLE feature_specification
-                    DROP CONSTRAINT feature_specification_pkey ;
-
+-- Alter the data type of the actual identifier (as opposed to references to it)
 ALTER TABLE feature_specification
 ALTER COLUMN identifier TYPE INTEGER USING identifier::integer ;
 
+-- Simulate the SERIAL modifier, since the table isn't being recreated
 CREATE SEQUENCE feature_specification_identifier_seq ;
 ALTER TABLE feature_specification ALTER COLUMN identifier SET NOT NULL ;
 ALTER TABLE feature_specification ALTER COLUMN identifier SET DEFAULT nextval('feature_specification_identifier_seq') ;
 ALTER SEQUENCE feature_specification_identifier_seq OWNED BY feature_specification.identifier ;
 
+-- Add the constraints back, the foreign keys into the identifier with newly-numeric-auto-incrementing type
 
-# Add the constraints back
-                    ALTER TABLE feature_specification
-                    ADD CONSTRAINT feature_specification_pkey PRIMARY KEY (identifier) ;
+--                          (why is this commented out?)
+--                  ALTER TABLE feature_specification
+--                  ADD CONSTRAINT feature_specification_pkey PRIMARY KEY (identifier) ;
 
 ALTER TABLE feature_specifier
 ADD CONSTRAINT fk_identifier_feature_specifier FOREIGN KEY (feature_specification)
@@ -84,7 +84,6 @@ ALTER TABLE quantitative_feature_value_queue
 ADD CONSTRAINT fk_identifier_quantitative_feature_value_queue FOREIGN KEY (feature)
     REFERENCES feature_specification(identifier) ;
 
-
-# Misc
+-- Miscellaneous update to additional table, no constraint changes necessary
 ALTER TABLE cell_set_cache
 ALTER COLUMN feature TYPE INTEGER USING feature::integer ;

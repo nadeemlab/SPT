@@ -13,9 +13,20 @@ VerbosityOptions = Literal['itemize', 'silent', None]
 
 
 def _patch_schema(contents: str) -> str:
+    buffer = contents
     line = r'quantitative_feature_value \(\n    identifier VARCHAR\(512\) PRIMARY KEY,'
     replacement = r'quantitative_feature_value (\n    identifier BIGSERIAL PRIMARY KEY,'
-    return re.sub(line, replacement, contents)
+    buffer = re.sub(line, replacement, buffer)
+
+    line = r'feature_specification \(\n    identifier VARCHAR\(512\) PRIMARY KEY,'
+    replacement = r'feature_specification (\n    identifier BIGSERIAL PRIMARY KEY,'
+    buffer = re.sub(line, replacement, buffer)
+
+    line = r'VARCHAR\(512\) REFERENCES feature_specification\(identifier\)'
+    replacement = r'INTEGER REFERENCES feature_specification(identifier)'
+    buffer = re.sub(line, replacement, buffer)
+
+    return buffer
 
 
 def _retrieve_script(

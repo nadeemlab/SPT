@@ -2,6 +2,7 @@
 query="http://spt-apiserver-testing:8080/importance-fraction-plot/?study=Melanoma%20intralesional%20IL2"
 
 curl -sf "$query" > _gnn.svg ;
+curl -sf "$query" > _gnn.svg ;
 if [ "$?" -gt 0 ];
 then
     echo "Error with apiserver query for GNN plot."

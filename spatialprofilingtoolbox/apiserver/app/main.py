@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -443,12 +444,43 @@ async def get_plot_high_resolution(
     return StreamingResponse(streaming_iteration(), media_type="image/png")
 
 
-@app.get("/importance-fraction-plot/")
-async def importance_fraction_plot(
-    study: ValidStudy,
-    img_format: Literal['svg', 'png'] = 'svg',
-) -> StreamingResponse:
-    """Return a plot of the fraction of important cells expressing a given phenotype."""
+def _ensure_plot_cache_exists(study: str):
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS gnn_plot_cache(
+            img_format VARCHAR(3),
+            blob_contents bytea
+        ) ;
+        ''')
+
+
+def _retrieve_gnn_plot(study: str, img_format: str) -> bytes | None:
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        SELECT blob_contents
+        FROM gnn_plot_cache
+        WHERE img_format=%s
+        ''', (img_format,))
+        rows = tuple(cursor.fetchall())
+    if len(rows) == 0:
+        return None
+    return bytes(rows[0][0])
+
+
+def _write_gnn_plot(contents: bytes, study: str, img_format: str) -> None:
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        INSERT INTO gnn_plot_cache(img_format, blob_contents)
+        VALUES (%s, %s) ;
+        ''', (img_format, contents))
+
+
+def get_importance_fraction_plot(study: str, img_format: str) -> bytes:
+    _ensure_plot_cache_exists(study)
+    contents = _retrieve_gnn_plot(study, img_format)
+    if contents is not None:
+        return contents
+
     settings: str = cast(list[str], query().get_study_gnn_plot_configurations(study))[0]
     (
         _,
@@ -476,7 +508,22 @@ async def importance_fraction_plot(
     )
     plot = generator.generate_plot()
     plt.figure(plot.number)  # type: ignore
-    buf = BytesIO()
-    plt.savefig(buf, format=img_format)
-    buf.seek(0)
-    return StreamingResponse(buf, media_type=f"image/{img_format}")
+    buffer = BytesIO()
+    plt.savefig(buffer, format=img_format)
+    buffer.seek(0)
+    contents = buffer.read()
+    _write_gnn_plot(contents, study, img_format)
+    return contents
+
+
+@app.get("/importance-fraction-plot/")
+async def importance_fraction_plot(
+    study: ValidStudy,
+    img_format: Literal['svg', 'png'] = 'svg',
+) -> StreamingResponse:
+    """Return a plot of the fraction of important cells expressing a given phenotype."""
+    raw = get_importance_fraction_plot(str(study), str(img_format))
+    buffer = BytesIO()
+    buffer.write(raw)
+    buffer.seek(0)
+    return StreamingResponse(buffer, media_type=f"image/{img_format}")

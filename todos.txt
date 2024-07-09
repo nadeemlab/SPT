@@ -18,8 +18,10 @@ Need to catch this warning ... and trigger job fail
 
 
 
-
 # One-time migration scripts to change the db schema in-place to support auto-incrementing features specs
+
+
+drop table pending_feature_computation;
 
 -- Drop the foreign key constraints referencing the identifier column that needs to be altered
 
@@ -48,7 +50,7 @@ ALTER COLUMN feature_tested TYPE INTEGER USING feature_tested::integer;
 ALTER TABLE quantitative_feature_value_queue
 ALTER COLUMN feature TYPE INTEGER USING feature::integer;
 
--- Alter data type of main identifier (why is this commented out?)
+-- Alter data type of main identifier (why is this commented out? I think because the below may work in-place now.)
 --                    ALTER TABLE feature_specification
 --                    DROP CONSTRAINT feature_specification_pkey ;
 
@@ -64,7 +66,7 @@ ALTER SEQUENCE feature_specification_identifier_seq OWNED BY feature_specificati
 
 -- Add the constraints back, the foreign keys into the identifier with newly-numeric-auto-incrementing type
 
---                          (why is this commented out?)
+--                          (why is this commented out? see above; never needed to drop it?)
 --                  ALTER TABLE feature_specification
 --                  ADD CONSTRAINT feature_specification_pkey PRIMARY KEY (identifier) ;
 

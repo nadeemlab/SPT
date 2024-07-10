@@ -2,10 +2,14 @@
 
 from typing import cast
 
+from numpy import sum
+from numpy import uint64 as np_int64
+from numpy.typing import NDArray
+
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.ondemand.phenotype_str import (\
+from spatialprofilingtoolbox.ondemand.phenotype_str import (
     phenotype_str_to_phenotype,
     phenotype_to_phenotype_str,
 )
@@ -67,22 +71,18 @@ class CountsProvider(PendingProvider):
         """Count the number of cells in the given sample that match this signature."""
         if positives_signature == 0 and negatives_signature == 0:
             return arrays.identifiers.shape[0]
-        count = CountsProvider._get_count(tuple(arrays.phenotype), positives_signature, negatives_signature)
+        count = CountsProvider._get_count(arrays.phenotype, positives_signature, negatives_signature)
         return count
 
     @staticmethod
-    def _get_count(integers: tuple[int, ...], positives_mask: int, negatives_mask: int) -> int:
+    def _get_count(array_phenotype: NDArray[np_int64], positives_mask: int, negatives_mask: int) -> int:
         """
         Counts the number of elements of the list of integer-represented binary numbers which equal
         to 1 along the bits indicated by the positives mask, and equal to 0 along the bits indicated
         by the negatives mask.
         """
-        count = 0
-        for _entry in integers:
-            entry = int(_entry)
-            if (entry | positives_mask == entry) and (~entry | negatives_mask == ~entry):
-                count = count + 1
-        return count
+        return sum((array_phenotype | positives_mask == array_phenotype) and
+                   (~array_phenotype | negatives_mask == ~array_phenotype))
 
     @staticmethod
     def _compute_signature(
@@ -166,11 +166,11 @@ class CountsProvider(PendingProvider):
 
     @classmethod
     def _get_feature_specification(cls,
-        study: str,
-        data_analysis_study: str,
-        phenotype: PhenotypeCriteria,
-        cells_selected: tuple[int, ...],
-    ) -> str | None:
+                                   study: str,
+                                   data_analysis_study: str,
+                                   phenotype: PhenotypeCriteria,
+                                   cells_selected: tuple[int, ...],
+                                   ) -> str | None:
         cells = f'{cells_selected[0:min(5, len(cells_selected))]} ... ({len(cells_selected)})'
         feature_description = get_feature_description('population fractions')
         args = (
@@ -214,10 +214,10 @@ class CountsProvider(PendingProvider):
 
     @classmethod
     def _create_feature_specification(cls,
-        study: str,
-        data_analysis_study: str,
-        phenotype: str,
-    ) -> str:
+                                      study: str,
+                                      data_analysis_study: str,
+                                      phenotype: str,
+                                      ) -> str:
         specifiers = (phenotype,)
         method = get_feature_description('population fractions')
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)

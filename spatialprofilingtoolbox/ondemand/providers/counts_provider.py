@@ -166,11 +166,11 @@ class CountsProvider(PendingProvider):
 
     @classmethod
     def _get_feature_specification(cls,
-                                   study: str,
-                                   data_analysis_study: str,
-                                   phenotype: PhenotypeCriteria,
-                                   cells_selected: tuple[int, ...],
-                                   ) -> str | None:
+        study: str,
+        data_analysis_study: str,
+        phenotype: PhenotypeCriteria,
+        cells_selected: tuple[int, ...],
+    ) -> str | None:
         cells = f'{cells_selected[0:min(5, len(cells_selected))]} ... ({len(cells_selected)})'
         feature_description = get_feature_description('population fractions')
         args = (
@@ -214,10 +214,10 @@ class CountsProvider(PendingProvider):
 
     @classmethod
     def _create_feature_specification(cls,
-                                      study: str,
-                                      data_analysis_study: str,
-                                      phenotype: str,
-                                      ) -> str:
+        study: str,
+        data_analysis_study: str,
+        phenotype: str,
+    ) -> str:
         specifiers = (phenotype,)
         method = get_feature_description('population fractions')
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)

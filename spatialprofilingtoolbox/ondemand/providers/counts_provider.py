@@ -81,7 +81,7 @@ class CountsProvider(PendingProvider):
         to 1 along the bits indicated by the positives mask, and equal to 0 along the bits indicated
         by the negatives mask.
         """
-        return sum((array_phenotype | positives_mask == array_phenotype) and
+        return sum((array_phenotype | positives_mask == array_phenotype) &
                    (~array_phenotype | negatives_mask == ~array_phenotype))
 
     @staticmethod

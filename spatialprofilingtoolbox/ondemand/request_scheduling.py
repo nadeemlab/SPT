@@ -135,19 +135,20 @@ class OnDemandRequester:
             )
             return (counts, feature1)
 
-        _, feature1 = get_results()
-        handler1 = TimeoutHandler(feature1, study_name)
-        signal.signal(signal.SIGALRM, handler1.handle)
-        signal.alarm(handler1.wait_for_results_timeout_seconds)
+        counts, feature1 = get_results()
+        if counts.is_pending:
+            handler1 = TimeoutHandler(feature1, study_name)
+            signal.signal(signal.SIGALRM, handler1.handle)
+            signal.alarm(handler1.wait_for_results_timeout_seconds)
 
-        with DBConnection() as connection:
-            connection._set_autocommit(True)
-            connection.execute('LISTEN new_items_in_queue ;')
-            connection.execute('LISTEN one_job_complete ;')
-            cls._wait_for_wrappedup(connection, get_results)
-            counts, feature1 =  get_results()
+            with DBConnection() as connection:
+                connection._set_autocommit(True)
+                connection.execute('LISTEN new_items_in_queue ;')
+                connection.execute('LISTEN one_job_complete ;')
+                cls._wait_for_wrappedup(connection, get_results)
+                counts, feature1 =  get_results()
 
-        handler1.disalarm()
+            handler1.disalarm()
 
         def get_results2() -> tuple[Metrics1D, str]:
             counts_all, feature2 = get(
@@ -157,19 +158,20 @@ class OnDemandRequester:
             )
             return (counts_all, feature2)
 
-        _, feature2 = get_results2()
-        handler2 = TimeoutHandler(feature2, study_name)
-        signal.signal(signal.SIGALRM, handler2.handle)
-        signal.alarm(handler2.wait_for_results_timeout_seconds)
+        counts_all, feature2 = get_results2()
+        if counts_all.is_pending:
+            handler2 = TimeoutHandler(feature2, study_name)
+            signal.signal(signal.SIGALRM, handler2.handle)
+            signal.alarm(handler2.wait_for_results_timeout_seconds)
 
-        with DBConnection() as connection:
-            connection._set_autocommit(True)
-            connection.execute('LISTEN new_items_in_queue ;')
-            connection.execute('LISTEN one_job_complete ;')
-            cls._wait_for_wrappedup(connection, get_results2)
-            counts_all, _ =  get_results2()
+            with DBConnection() as connection:
+                connection._set_autocommit(True)
+                connection.execute('LISTEN new_items_in_queue ;')
+                connection.execute('LISTEN one_job_complete ;')
+                cls._wait_for_wrappedup(connection, get_results2)
+                counts_all, _ =  get_results2()
 
-        handler2.disalarm()
+            handler2.disalarm()
 
         cls._request_check_for_failed_jobs()
         return (feature1, counts, counts_all)

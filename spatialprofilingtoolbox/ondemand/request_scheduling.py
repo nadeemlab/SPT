@@ -7,6 +7,7 @@ import signal
 from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
@@ -41,18 +42,40 @@ def _nonempty(string: str) -> bool:
 class TimeoutHandler:
     active: bool
     wait_for_results_timeout_seconds: int = 300
+    feature: str
+    study: str
 
-    def __init__(self):
+    def __init__(self, feature: str, study: str):
         self.active = True
+        self.feature = feature
+        self.study = study
 
     def handle(self, signum, frame) -> None:
         if self.active:
-            message = f'Waited {self.wait_for_results_timeout_seconds} seconds for the feature to complete. Aborting.'
+            timeout = self.wait_for_results_timeout_seconds
+            message = f'Waited {timeout} seconds for the feature {self.feature} to complete. Aborting.'
             logger.error(message)
+            if self._queue_size() == 0:
+                self._delete_feature()
             raise RuntimeError(message)
 
     def disalarm(self) -> None:
         self.active = False
+
+    def _queue_size(self) -> int:
+        with DBCursor(study=self.study) as cursor:
+            query = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
+            cursor.execute(query, self.feature)
+            count = tuple(cursor.fetchall())[0][0]
+        return count
+
+    def _delete_feature(self) -> None:
+        logger.error('Also deleting the feature, since the queue was empty; we assume the remaining jobs failed.')
+        with DBCursor(study=self.study) as cursor:
+            param = (self.feature,)
+            cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
+            cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
+            cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
 
 
 class OnDemandRequester:
@@ -112,9 +135,10 @@ class OnDemandRequester:
             )
             return (counts, feature1)
 
-        handler = TimeoutHandler()
-        signal.signal(signal.SIGALRM, handler.handle)
-        signal.alarm(handler.wait_for_results_timeout_seconds)
+        _, feature1 = get_results()
+        handler1 = TimeoutHandler(feature1, study_name)
+        signal.signal(signal.SIGALRM, handler1.handle)
+        signal.alarm(handler1.wait_for_results_timeout_seconds)
 
         with DBConnection() as connection:
             connection._set_autocommit(True)
@@ -123,7 +147,7 @@ class OnDemandRequester:
             cls._wait_for_wrappedup(connection, get_results)
             counts, feature1 =  get_results()
 
-        handler.disalarm()
+        handler1.disalarm()
 
         def get_results2() -> tuple[Metrics1D, str]:
             counts_all, feature2 = get(
@@ -133,7 +157,8 @@ class OnDemandRequester:
             )
             return (counts_all, feature2)
 
-        handler2 = TimeoutHandler()
+        _, feature2 = get_results2()
+        handler2 = TimeoutHandler(feature2, study_name)
         signal.signal(signal.SIGALRM, handler2.handle)
         signal.alarm(handler2.wait_for_results_timeout_seconds)
 
@@ -167,7 +192,7 @@ class OnDemandRequester:
             return
         logger.debug(f'Waiting for signal that feature {feature} may be ready.')
         counts.values = '(truncated)'
-        logger.debug(f'Because result ready yet: {counts}')
+        logger.debug(f'Because result not ready yet: {counts}')
         notifications = connection.notifies()
         for notification in notifications:
             if not get_results()[0].is_pending:

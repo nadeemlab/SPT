@@ -33,15 +33,16 @@ class OnDemandWorker:
 
     def _listen_for_queue_activity(self) -> None:
         with DBConnection() as connection:
-            connection._set_autocommit(True)
+            self.connection = connection
+            self.connection._set_autocommit(True)
             while True:
-                self._wait_for_queue_activity_on(connection)
+                self._wait_for_queue_activity_on_connection()
                 self._work_until_complete()
 
-    def _wait_for_queue_activity_on(self, connection: PsycopgConnection) -> None:
-        connection.execute('LISTEN new_items_in_queue ;')
+    def _wait_for_queue_activity_on_connection(self) -> None:
+        self.connection.execute('LISTEN new_items_in_queue ;')
         logger.info('Listening on new_items_in_queue channel.')
-        notifications = connection.notifies()
+        notifications = self.connection.notifies()
         for notification in notifications:
             notifications.close()
             logger.info('Received notice of new items in the job queue.')
@@ -57,17 +58,14 @@ class OnDemandWorker:
         logger.info(f'Finished jobs {" ".join(completed_pids)}.')
 
     def _one_job(self) -> tuple[bool, int]:
-        with DBConnection() as connection:
-            connection._set_autocommit(True)
-            self.connection = connection
-            pid = self.connection.info.backend_pid
-            job = self.queue.pop_uncomputed()
-            if job is None:
-                return (False, pid)
-            logger.info(f'{pid} doing job {job.feature_specification} {job.sample}.')
-            self._compute(job)
-            self._notify_complete(job)
-            return (True, pid)
+        pid = self.connection.info.backend_pid
+        job = self.queue.pop_uncomputed()
+        if job is None:
+            return (False, pid)
+        logger.info(f'{pid} doing job {job.feature_specification} {job.sample}.')
+        self._compute(job)
+        self._notify_complete(job)
+        return (True, pid)
 
     def _compute(self, job: Job) -> None:
         provider = self._get_provider(job)
@@ -76,7 +74,9 @@ class OnDemandWorker:
         except Exception as error:
             logger.error(error)
             print_exception(type(error), error, error.__traceback__)
-            self._get_provider(job)._warn_no_value()
+            provider = self._get_provider(job)
+            provider._warn_no_value()
+            provider._insert_null()
 
     def _notify_complete(self, job: Job) -> None:
         self.connection.execute('NOTIFY one_job_complete ;')

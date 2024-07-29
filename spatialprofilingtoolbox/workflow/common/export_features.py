@@ -25,26 +25,18 @@ class ADIFeaturesUploader(SourceToADIParser):
     Upload sparse representation of feature values to tables quantitative_feature_value,
     feature_specification, feature_specifier.
     """
-
-    feature_value_identifier: int
     connection_provider: ConnectionProvider
     feature_values: list[tuple[tuple[str, ...], str , float | None]]
-    upload_anyway: bool
-    quiet: bool
 
     def __init__(self,
         connection: PsycopgConnection,
-        data_analysis_study,
+        data_analysis_study: str,
         derivation_and_number_specifiers,
-        impute_zeros=False,
-        upload_anyway: bool = False,
-        quiet: bool = False,
-        **kwargs
+        impute_zeros: bool = False,
+        **kwargs,
     ):
         derivation_method, specifier_number = derivation_and_number_specifiers
-        self.impute_zeros=impute_zeros
-        self.upload_anyway = upload_anyway
-        self.quiet = quiet
+        self.impute_zeros = impute_zeros
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', na_filter=False)
         SourceToADIParser.__init__(self, fields)
@@ -72,7 +64,7 @@ class ADIFeaturesUploader(SourceToADIParser):
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.connection_provider.is_connected():
-            self.upload(upload_anyway=self.upload_anyway)
+            self.upload()
 
     def stage_feature_value(self, specifiers: tuple[str, ...], subject: str, value: float | None):
         self.validate_specifiers(specifiers)
@@ -89,45 +81,27 @@ class ADIFeaturesUploader(SourceToADIParser):
     def get_connection(self):
         return self.connection_provider.get_connection()
 
-    def upload(self, upload_anyway: bool = False) -> None:
+    def upload(self) -> None:
         if self.check_nothing_to_upload():
-            return
-        if self.check_exact_feature_values_already_present() and not upload_anyway:
             return
         self.test_subject_existence()
         self.test_study_existence()
-
         if self.impute_zeros:
             self.add_imputed_zero_values()
-
         cursor = self.get_connection().cursor()
-        get_next = SourceToADIParser.get_next_integer_identifier
-        next_identifier = get_next('feature_specification', cursor)
         specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
-        specifiers_by_id = {
-            next_identifier + i: specifiers
-            for i, specifiers in enumerate(specifiers_list)
-        }
-
-        # self.get_feature_value_next_identifier(cursor)
         insert_notice = 'Inserting feature "%s" for study "%s".'
         logger.info(insert_notice, self.derivation_method, self.data_analysis_study)
-        for feature_identifier, specifiers in specifiers_by_id.items():
-            cursor.execute(
-                self.insert_queries['feature_specification'],
-                (feature_identifier, self.derivation_method, self.data_analysis_study),
+        for specifiers in specifiers_list:
+            get_or_create = ADIFeaturesUploader._get_or_create_generic_feature_specification
+            feature_identifier, is_new = get_or_create(
+                cursor, self.data_analysis_study, specifiers, self.derivation_method
             )
-            self.insert_specifiers(cursor, specifiers, feature_identifier)
-            if not self.quiet:
-                logger.debug('Inserted feature specification, "%s".', specifiers)
-            feature_values = [
-                [row[1], row[2]] for row in self.feature_values
-                if row[0] == specifiers
-            ]
+            feature_values = map(
+                lambda row: (row[1], row[2]),
+                filter(lambda row: row[0] == specifiers, self.feature_values),
+            )
             self.insert_feature_values(cursor, feature_identifier, feature_values)
-            if not self.quiet:
-                logger.debug('Inserted %s feature values.', len(feature_values))
-
         self.get_connection().commit()
         cursor.close()
 
@@ -136,52 +110,6 @@ class ADIFeaturesUploader(SourceToADIParser):
             logger.info('No feature values given to be uploaded.')
             return True
         return False
-
-    def check_exact_feature_values_already_present(self):
-        count = self.count_known_feature_values_this_study()
-        if count == len(self.feature_values):
-            logger.info(
-                'Exactly %s feature values already associated with study "%s" of '
-                'description "%s". This is the correct number; skipping upload '
-                'without error, unless "upload_anyway" is set.',
-                count,
-                self.data_analysis_study,
-                self.derivation_method,
-            )
-            return True
-        if count > 0:
-            message = f'Already have {count} features associated with study ' \
-                f'"{self.data_analysis_study}" of description "{self.derivation_method}". ' \
-                'May be an error.'
-            logger.warning(message)
-        if count == 0:
-            logger.info(
-                'No feature values yet associated with study "%s" of description "%s". '
-                'Proceeding with upload.',
-                self.data_analysis_study,
-                self.derivation_method,
-            )
-            return False
-        return None
-
-    def count_known_feature_values_this_study(self):
-        cursor = self.get_connection().cursor()
-        count_query = '''
-        SELECT COUNT(*)
-        FROM quantitative_feature_value qfv
-        JOIN feature_specification fs
-        ON fs.identifier = qfv.feature
-        WHERE fs.study = %s AND fs.derivation_method = %s
-        ;
-        '''
-        cursor.execute(
-            count_query,
-            (self.data_analysis_study, self.derivation_method),
-        )
-        rows = cursor.fetchall()
-        count = rows[0][0]
-        cursor.close()
-        return count
 
     def test_subject_existence(self):
         subject_ids = self.get_subject_identifiers()
@@ -231,14 +159,6 @@ class ADIFeaturesUploader(SourceToADIParser):
         assignments = [(case[0], case[1], 0) for case in no_value_cases]
         self.feature_values = self.feature_values + assignments
 
-    def insert_specifiers(self, cursor: PsycopgCursor, specifiers, feature_identifier):
-        for i, specifier in enumerate(specifiers):
-            ordinality = i + 1
-            cursor.execute(
-                self.insert_queries['feature_specifier'],
-                (feature_identifier, specifier, ordinality),
-            )
-
     def insert_feature_values(self, cursor: PsycopgCursor, feature_identifier, feature_values):
         for subject, value in feature_values:
             cursor.execute(
@@ -246,13 +166,82 @@ class ADIFeaturesUploader(SourceToADIParser):
                 (feature_identifier, subject, value),
             )
 
+    @classmethod
+    def _get_or_create_generic_feature_specification(
+        cls,
+        cursor: PsycopgCursor,
+        data_analysis_study: str,
+        specifiers: tuple[str, ...],
+        derivation_method: str,
+    ) -> tuple[str, bool]:
+        specification = cls._get_feature_specification(cursor, specifiers, derivation_method)
+        if specification is not None:
+            return (specification, False)
+        logger.debug(f'Creating feature with specifiers: {specifiers}')
+        specification = cls._create_feature_specification(
+            cursor, data_analysis_study, specifiers, derivation_method,
+        )
+        return (specification, True)
+
+    @classmethod
+    def _get_feature_specification(cls,
+        cursor: PsycopgCursor,
+        specifiers: tuple[str, ...],
+        derivation_method: str,
+    ) -> str | None:
+        args = (
+            *specifiers,
+            derivation_method,
+        )
+        specifiers_portion = ' AND '.join(
+            f"( fs.specifier=%s AND fs.ordinality='{i+1}')"
+            for i in range(len(specifiers))
+        )
+        query = f'''
+        SELECT
+            fsn.identifier,
+            fs.specifier
+        FROM feature_specification fsn
+        JOIN feature_specifier fs ON fs.feature_specification=fsn.identifier
+        WHERE {specifiers_portion} AND fsn.derivation_method=%s
+        ;
+        '''
+        cursor.execute(query, args)
+        rows = tuple(cursor.fetchall())
+        feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
+        matches_list: list[str] = []
+        for row in rows:
+            feature_specifications[row[0]].append(row[1])
+        for key, _specifiers in feature_specifications.items():
+            if len(_specifiers) == len(specifiers):
+                matches_list.append(key)
+        matches = tuple(matches_list)
+        if len(matches) == 0:
+            return None
+        if len(matches) > 1:
+            text = 'Multiple features match the selected specification'
+            message = f'{text}: {matches} {specifiers}'
+            logger.warning(message)
+        return matches[0]
+
+    @classmethod
+    def _create_feature_specification(cls,
+        cursor: PsycopgCursor,
+        data_analysis_study: str,
+        specifiers: tuple[str, ...],
+        derivation_method: str,
+    ) -> str:
+        Uploader = ADIFeatureSpecificationUploader
+        add = Uploader.add_new_feature
+        feature_specification = add(specifiers, derivation_method, data_analysis_study, cursor)
+        return feature_specification
+
 
 class ADIFeatureSpecificationUploader:
     """Just upload a new feature specification."""
     @staticmethod
-    def add_new_feature(specifiers, derivation_method, measurement_study, cursor: PsycopgCursor):
+    def add_new_feature(specifiers, derivation_method, data_analysis_study, cursor: PsycopgCursor):
         FSU = ADIFeatureSpecificationUploader
-        data_analysis_study = FSU.get_data_analysis_study(measurement_study, cursor)
         identifier = FSU.insert_specification(derivation_method, data_analysis_study, cursor)
         FSU.insert_specifiers(identifier, specifiers, cursor)
         return identifier

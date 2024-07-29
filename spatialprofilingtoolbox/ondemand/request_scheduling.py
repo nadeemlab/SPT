@@ -65,7 +65,7 @@ class TimeoutHandler:
     def _queue_size(self) -> int:
         with DBCursor(study=self.study) as cursor:
             query = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
-            cursor.execute(query, self.feature)
+            cursor.execute(query, (self.feature,))
             count = tuple(cursor.fetchall())[0][0]
         return count
 

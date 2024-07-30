@@ -18,6 +18,8 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     CompositePhenotype,
     UnivariateMetricsComputationResult,
 )
+from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
+from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult
 
@@ -39,34 +41,19 @@ def _nonempty(string: str) -> bool:
     return string != ''
 
 
-class FeatureComputationTimeoutError(RuntimeError):
-    def __init__(self, message: str):
-        super().__init__(message)
-        self.message = message
-
-
-class TimeoutHandler:
-    active: bool
-    wait_for_results_timeout_seconds: int = 300
+class FeatureComputationTimeoutHandler:
     feature: str
     study: str
 
     def __init__(self, feature: str, study: str):
-        self.active = True
         self.feature = feature
         self.study = study
 
-    def handle(self, signum, frame) -> None:
-        if self.active:
-            timeout = self.wait_for_results_timeout_seconds
-            message = f'Waited {timeout} seconds for the feature {self.feature} to complete. Aborting.'
-            logger.error(message)
-            if self._queue_size() == 0 and self._completed_size() < self._expected_size():
-                self._delete_feature()
-            raise FeatureComputationTimeoutError(message)
-
-    def disalarm(self) -> None:
-        self.active = False
+    def handle(self) -> None:
+        message = f'Timed out waiting for the feature {self.feature} to complete. Aborting.'
+        logger.error(message)
+        if self._queue_size() == 0 and self._completed_size() < self._expected_size():
+            self._delete_feature()
 
     def _queue_size(self) -> int:
         with DBCursor(study=self.study) as cursor:
@@ -96,6 +83,7 @@ class TimeoutHandler:
             cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
             cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
             cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
+
 
 
 class OnDemandRequester:
@@ -187,10 +175,8 @@ class OnDemandRequester:
         notifications = connection.notifies()
 
         counts, feature = get_results()
-        handler = TimeoutHandler(feature, study_name)
-        signal.signal(signal.SIGALRM, handler.handle)
-        signal.alarm(handler.wait_for_results_timeout_seconds)
-
+        handler = FeatureComputationTimeoutHandler(feature, study_name)
+        generic_handler = create_timeout_handler(handler.handle)
         try:
             if not counts.is_pending:
                 logger.debug(f'Feature {feature} already complete.')
@@ -206,10 +192,10 @@ class OnDemandRequester:
                     logger.debug(f'Closing notification processing, {feature} ready.')
                     notifications.close()
                     break
-        except FeatureComputationTimeoutError:
+        except SPTTimeoutError:
             pass
         finally:
-            handler.disalarm()
+            generic_handler.disalarm()
 
     @classmethod
     def get_proximity_metrics(

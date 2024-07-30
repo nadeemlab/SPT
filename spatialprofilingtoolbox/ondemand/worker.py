@@ -14,6 +14,8 @@ from spatialprofilingtoolbox.ondemand.providers.proximity_provider import Proxim
 from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
+from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
+from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Job = ComputationJobReference
 
@@ -66,16 +68,26 @@ class OnDemandWorker:
         self._notify_complete(job)
         return (True, pid)
 
+    def _no_value_wrapup(self, job) -> None:
+        provider = self._get_provider(job)
+        provider._warn_no_value()
+        provider._insert_null()
+
     def _compute(self, job: Job) -> None:
         provider = self._get_provider(job)
+        generic_handler = create_timeout_handler(
+            lambda *arg: self._no_value_wrapup(job),
+            timeout_seconds=150,
+        )
         try:
             provider.compute()
+        except SPTTimeoutError:
+            pass
         except Exception as error:
             logger.error(error)
             print_exception(type(error), error, error.__traceback__)
-            provider = self._get_provider(job)
-            provider._warn_no_value()
-            provider._insert_null()
+        finally:
+            generic_handler.disalarm()
 
     def _notify_complete(self, job: Job) -> None:
         self.connection.execute('NOTIFY one_job_complete ;')

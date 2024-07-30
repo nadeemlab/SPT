@@ -127,28 +127,13 @@ class OnDemandRequester:
     ) -> tuple[str, Metrics1D, Metrics1D]:
         get = CountsProvider.get_metrics_or_schedule
 
-        def get_results() -> tuple[Metrics1D, str]:
+        def get_results1() -> tuple[Metrics1D, str]:
             counts, feature1 = get(
                 study_name,
                 phenotype=phenotype,
                 cells_selected=selected,
             )
             return (counts, feature1)
-
-        counts, feature1 = get_results()
-        if counts.is_pending:
-            handler1 = TimeoutHandler(feature1, study_name)
-            signal.signal(signal.SIGALRM, handler1.handle)
-            signal.alarm(handler1.wait_for_results_timeout_seconds)
-
-            with DBConnection() as connection:
-                connection._set_autocommit(True)
-                connection.execute('LISTEN new_items_in_queue ;')
-                connection.execute('LISTEN one_job_complete ;')
-                cls._wait_for_wrappedup(connection, get_results)
-                counts, feature1 =  get_results()
-
-            handler1.disalarm()
 
         def get_results2() -> tuple[Metrics1D, str]:
             counts_all, feature2 = get(
@@ -158,60 +143,50 @@ class OnDemandRequester:
             )
             return (counts_all, feature2)
 
-        counts_all, feature2 = get_results2()
-        if counts_all.is_pending:
-            handler2 = TimeoutHandler(feature2, study_name)
-            signal.signal(signal.SIGALRM, handler2.handle)
-            signal.alarm(handler2.wait_for_results_timeout_seconds)
-
-            with DBConnection() as connection:
-                connection._set_autocommit(True)
-                connection.execute('LISTEN new_items_in_queue ;')
-                connection.execute('LISTEN one_job_complete ;')
-                cls._wait_for_wrappedup(connection, get_results2)
-                counts_all, _ =  get_results2()
-
-            handler2.disalarm()
-
-        cls._request_check_for_failed_jobs()
-        return (feature1, counts, counts_all)
-
-    @classmethod
-    def _request_check_for_failed_jobs(cls) -> None:
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            connection.execute('NOTIFY check_for_failed_jobs ;')
+            cls._wait_for_wrappedup(connection, get_results1, study_name)
+            counts, feature1 =  get_results1()
+
+        with DBConnection() as connection:
+            connection._set_autocommit(True)
+            cls._wait_for_wrappedup(connection, get_results2, study_name)
+            counts_all, _ =  get_results2()
+
+        return (feature1, counts, counts_all)
 
     @classmethod
     def _wait_for_wrappedup(
         cls,
         connection: PsycopgConnection,
         get_results: Callable[[], tuple[Metrics1D, str]],
+        study_name: str,
     ) -> None:
+        connection.execute('LISTEN new_items_in_queue ;')
+        connection.execute('LISTEN one_job_complete ;')
+        notifications = connection.notifies()
+
         counts, feature = get_results()
+        handler = TimeoutHandler(feature, study_name)
+        signal.signal(signal.SIGALRM, handler.handle)
+        signal.alarm(handler.wait_for_results_timeout_seconds)
+
         if not counts.is_pending:
             logger.debug(f'Feature {feature} already complete.')
+            handler.disalarm()
             return
-        logger.debug(f'Waiting for signal that feature {feature} may be ready.')
-        counts.values = '(truncated)'
-        logger.debug(f'Because result not ready yet: {counts}')
-        notifications = connection.notifies()
+        logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
+
         for notification in notifications:
-            if not get_results()[0].is_pending:
-                logger.debug(f'Closing notification processing, {feature} ready.')
-                notifications.close()
-                break
             channel = notification.channel
             if channel == 'one_job_complete':
                 logger.debug(f'A job is complete, so {feature} may be ready. (PID: {notification.pid})')
-                _result = get_results()
-                if not _result[0].is_pending:
-                    logger.debug(f'And {feature} was ready. Closing.')
-                    notifications.close()
-                    break
-                _result[0].values = '(truncated)'
-                logger.debug(f'Not ready yet: {_result}')
-                logger.debug(f'Notification: {notification}')
+            _result = get_results()
+            if not _result[0].is_pending:
+                logger.debug(f'Closing notification processing, {feature} ready.')
+                notifications.close()
+                break
+        handler.disalarm()
 
     @classmethod
     def get_proximity_metrics(

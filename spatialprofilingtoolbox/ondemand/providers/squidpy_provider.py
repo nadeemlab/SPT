@@ -68,16 +68,13 @@ class SquidpyProvider(PendingProvider):
     @staticmethod
     def _form_cells_dataframe(arrays: CellDataArrays) -> DataFrame:
         features = tuple(f.symbol for f in arrays.feature_names.names)
-
-        phenotype_uint8 = arrays.phenotype.view(np_uint8) \
-            .reshape(arrays.phenotype.shape[0], 8)
-        binary = unpackbits(phenotype_uint8, axis=1)
-        phenotypes = binary[:, -len(features):][:, ::-1].astype(int)
-
-        identifiers = arrays.identifiers.reshape(-1, 1)
-        location = arrays.location.transpose()
-        rows = hstack((phenotypes, identifiers, location))
-
+        rows = []
+        zipped = zip(arrays.identifiers, arrays.phenotype, arrays.location.transpose())
+        for identifier, phenotype, location in zipped:
+            location_list = [location[0], location[1]]
+            vector = list(OnDemandProvider.extract_binary(phenotype, len(features)))
+            row = tuple(vector + [identifier] + location_list)
+            rows.append(row)
         columns = list(features) + ['histological_structure_id'] + ['pixel x', 'pixel y']
         df = DataFrame(rows, columns=columns)
         df.set_index('histological_structure_id', inplace=True)

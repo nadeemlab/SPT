@@ -35,16 +35,15 @@ class OnDemandWorker:
         with DBConnection() as connection:
             self.connection = connection
             self.connection._set_autocommit(True)
+            self.connection.execute('LISTEN new_items_in_queue ;')
+            logger.info('Listening on new_items_in_queue channel.')
+            self.notifications = self.connection.notifies()
             while True:
                 self._wait_for_queue_activity_on_connection()
                 self._work_until_complete()
 
     def _wait_for_queue_activity_on_connection(self) -> None:
-        self.connection.execute('LISTEN new_items_in_queue ;')
-        logger.info('Listening on new_items_in_queue channel.')
-        notifications = self.connection.notifies()
-        for notification in notifications:
-            notifications.close()
+        for _ in self.notifications:
             logger.info('Received notice of new items in the job queue.')
             break
 

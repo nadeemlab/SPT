@@ -39,6 +39,12 @@ def _nonempty(string: str) -> bool:
     return string != ''
 
 
+class FeatureComputationTimeoutError(RuntimeError):
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
 class TimeoutHandler:
     active: bool
     wait_for_results_timeout_seconds: int = 300
@@ -55,9 +61,9 @@ class TimeoutHandler:
             timeout = self.wait_for_results_timeout_seconds
             message = f'Waited {timeout} seconds for the feature {self.feature} to complete. Aborting.'
             logger.error(message)
-            if self._queue_size() == 0:
+            if self._queue_size() == 0 and self._completed_size() < self._expected_size():
                 self._delete_feature()
-            raise RuntimeError(message)
+            raise FeatureComputationTimeoutError(message)
 
     def disalarm(self) -> None:
         self.active = False
@@ -66,6 +72,20 @@ class TimeoutHandler:
         with DBCursor(study=self.study) as cursor:
             query = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
             cursor.execute(query, (self.feature,))
+            count = tuple(cursor.fetchall())[0][0]
+        return count
+
+    def _completed_size(self) -> int:
+        with DBCursor(study=self.study) as cursor:
+            query = 'SELECT COUNT(*) FROM quantitative_feature_value WHERE feature=%s ;'
+            cursor.execute(query, (self.feature,))
+            count = tuple(cursor.fetchall())[0][0]
+        return count
+
+    def _expected_size(self) -> int:
+        with DBCursor(study=self.study) as cursor:
+            query = 'SELECT COUNT(*) FROM specimen_data_measurement_process ;'
+            cursor.execute(query)
             count = tuple(cursor.fetchall())[0][0]
         return count
 
@@ -171,22 +191,25 @@ class OnDemandRequester:
         signal.signal(signal.SIGALRM, handler.handle)
         signal.alarm(handler.wait_for_results_timeout_seconds)
 
-        if not counts.is_pending:
-            logger.debug(f'Feature {feature} already complete.')
-            handler.disalarm()
-            return
-        logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
+        try:
+            if not counts.is_pending:
+                logger.debug(f'Feature {feature} already complete.')
+                return
+            logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
 
-        for notification in notifications:
-            channel = notification.channel
-            if channel == 'one_job_complete':
-                logger.debug(f'A job is complete, so {feature} may be ready. (PID: {notification.pid})')
-            _result = get_results()
-            if not _result[0].is_pending:
-                logger.debug(f'Closing notification processing, {feature} ready.')
-                notifications.close()
-                break
-        handler.disalarm()
+            for notification in notifications:
+                channel = notification.channel
+                if channel == 'one_job_complete':
+                    logger.debug(f'A job is complete, so {feature} may be ready. (PID: {notification.pid})')
+                _result = get_results()
+                if not _result[0].is_pending:
+                    logger.debug(f'Closing notification processing, {feature} ready.')
+                    notifications.close()
+                    break
+        except FeatureComputationTimeoutError:
+            pass
+        finally:
+            handler.disalarm()
 
     @classmethod
     def get_proximity_metrics(

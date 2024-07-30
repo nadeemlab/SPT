@@ -94,7 +94,7 @@ class PendingProvider(OnDemandProvider, ABC):
         specification = str(self.job.feature_specification)
         study = self.job.study
         sample = self.job.sample
-        logger.warning(f'Feature {specification} ({sample}, {study}) could not be computed, worker generated None.')
+        logger.warning(f'Feature {specification} ({sample}, {study}) could not be computed, worker generated None. May insert None.')
 
     def _insert_value(self, value: float | int) -> None:
         study = self.job.study

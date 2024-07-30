@@ -133,8 +133,6 @@ def _upload(
             get_feature_description("gnn importance score"),
             len(importance_score_set_indexer),
         ),
-        impute_zeros=True,
-        upload_anyway=True,
     ) as feature_uploader:
         for histological_structure, row in df.iterrows():
             feature_uploader.stage_feature_value(

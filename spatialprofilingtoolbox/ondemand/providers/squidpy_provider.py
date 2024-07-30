@@ -3,9 +3,6 @@
 from typing import cast
 from itertools import chain
 
-from numpy import hstack
-from numpy import unpackbits
-from numpy import uint8 as np_uint8
 from pandas import DataFrame
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor

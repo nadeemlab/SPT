@@ -9,6 +9,7 @@ from os.path import expanduser
 from typing import Type
 from typing import Callable
 from inspect import getfullargspec
+from traceback import print_exception
 
 from psycopg import connect
 from psycopg import Connection as PsycopgConnection
@@ -56,7 +57,8 @@ class ConnectionProvider:
 
 
 class DBConnection(ConnectionProvider):
-    """Provides a psycopg Postgres database connection. Takes care of connecting and disconnecting.
+    """
+    Provides a psycopg Postgres database connection. Takes care of connecting and disconnecting.
     """
     autocommit: bool
 
@@ -109,7 +111,11 @@ class DBConnection(ConnectionProvider):
     def wrap_up_connection(self):
         if self.is_connected():
             if self.autocommit:
-                self.get_connection().commit()
+                try:
+                    self.get_connection().commit()
+                except OperationalError as error:
+                    logger.warn('Connection was possibly interrupted by deliberate timeout. Stack trace:')
+                    print_exception(type(error), error, error.__traceback__)
             self.get_connection().close()
 
     def __exit__(self, exception_type, exception_value, traceback):

@@ -143,6 +143,7 @@ def ripley_custom(
 
     pvalues /= n_simulations + 1
     # pvalues = np.minimum(pvalues, 1 - pvalues)
+    pvalues = 1 - pvalues
 
     obs_df = _reshape_res(obs_arr.T, columns=le.classes_, index=bins, var_name=cluster_key)
     sims_df = _reshape_res(sims.T, columns=np.arange(n_simulations), index=bins, var_name="simulations")
@@ -230,7 +231,7 @@ def _summarize_ripley(unstructured_metrics: dict[str, NDArray[Any]]) -> float | 
     total_p = np_sum(pvalues)
     if len(bins) != len(pvalues) or total_p == 0:
         return None
-    return inner(pvalues, bins) / np_sum(pvalues)
+    return round(inner(pvalues, bins) / total_p, 1)
 
 
 def _summarize_spatial_autocorrelation(unstructured_metrics: DataFrame) -> float | None:

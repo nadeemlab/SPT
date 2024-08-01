@@ -86,6 +86,7 @@ class OnDemandWorker:
         except Exception as error:
             logger.error(error)
             print_exception(type(error), error, error.__traceback__)
+            self._no_value_wrapup(job)
         finally:
             generic_handler.disalarm()
 

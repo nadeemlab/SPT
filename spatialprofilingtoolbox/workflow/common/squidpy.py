@@ -138,12 +138,11 @@ def ripley_custom(
             raise NotImplementedError(f"Mode `{mode.s!r}` is not yet implemented.")
 
         for j in range(obs_arr.shape[0]):
-            pvalues[j] += stats_i >= obs_arr[j]
+            pvalues[j] += stats_i < obs_arr[j]
         sims[i] = stats_i
 
     pvalues /= n_simulations + 1
     # pvalues = np.minimum(pvalues, 1 - pvalues)
-    pvalues = 1 - pvalues
 
     obs_df = _reshape_res(obs_arr.T, columns=le.classes_, index=bins, var_name=cluster_key)
     sims_df = _reshape_res(sims.T, columns=np.arange(n_simulations), index=bins, var_name="simulations")

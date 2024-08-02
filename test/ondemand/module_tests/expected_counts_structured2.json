@@ -33,5 +33,6 @@
             ]
         }
     },
-    "number_cells_in_study": 0
+    "number_cells_in_study": 0,
+    "is_pending": false
 }

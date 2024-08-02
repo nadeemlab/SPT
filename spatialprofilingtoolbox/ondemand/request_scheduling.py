@@ -96,13 +96,14 @@ class OnDemandRequester:
         study_name: str,
         number_cells: int,
         cells_selected: set[int],
+        blocking: bool = True,
     ) -> PhenotypeCounts:
         phenotype = PhenotypeCriteria(
             positive_markers=tuple(filter(_nonempty, positives)),
             negative_markers=tuple(filter(_nonempty, negatives)),
         )
         selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
-        feature1, counts, counts_all = OnDemandRequester._counts(study_name, phenotype, selected)
+        feature1, counts, counts_all, pending = OnDemandRequester._counts(study_name, phenotype, selected, blocking)
         combined_keys = sorted(list(set(counts.values.keys()).intersection(counts_all.values.keys())))
         missing_numerator = set(counts.values.keys()).difference(combined_keys)
         if len(missing_numerator) > 0:
@@ -127,12 +128,17 @@ class OnDemandRequester:
                 criteria=phenotype,
             ),
             number_cells_in_study=number_cells,
+            is_pending=pending,
         )
 
     @classmethod
     def _counts(
-        cls, study_name: str, phenotype: PhenotypeCriteria, selected: tuple[int, ...],
-    ) -> tuple[str, Metrics1D, Metrics1D]:
+        cls,
+        study_name: str,
+        phenotype: PhenotypeCriteria,
+        selected: tuple[int, ...],
+        blocking: bool,
+    ) -> tuple[str, Metrics1D, Metrics1D, bool]:
         get = CountsProvider.get_metrics_or_schedule
 
         def get_results1() -> tuple[Metrics1D, str]:
@@ -153,15 +159,17 @@ class OnDemandRequester:
 
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            cls._wait_for_wrappedup(connection, get_results1, study_name)
+            if blocking:
+                cls._wait_for_wrappedup(connection, get_results1, study_name)
             counts, feature1 =  get_results1()
 
         with DBConnection() as connection:
             connection._set_autocommit(True)
-            cls._wait_for_wrappedup(connection, get_results2, study_name)
+            if blocking:
+                cls._wait_for_wrappedup(connection, get_results2, study_name)
             counts_all, _ =  get_results2()
 
-        return (feature1, counts, counts_all)
+        return (feature1, counts, counts_all, counts.is_pending or counts_all.is_pending)
 
     @classmethod
     def _wait_for_wrappedup(

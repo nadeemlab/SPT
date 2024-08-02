@@ -214,6 +214,19 @@ def _get_anonymous_phenotype_counts_fast(
     return counts
 
 
+@app.get("/phenotype-counts/")
+async def get_phenotype_counts_nonblocking(
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    study: ValidStudy,
+) -> PhenotypeCounts:
+    """Computes the number of cells satisfying the given positive and negative criteria, in the
+    context of a given study. Non-blocking, has a "pending" flag in the response.
+    """
+    counts = get_phenotype_counts(positive_marker, negative_marker, study, 0, blocking=False)
+    return counts
+
+
 @app.get("/request-spatial-metrics-computation/")
 async def request_spatial_metrics_computation(
     study: ValidStudy,
@@ -333,6 +346,7 @@ def get_phenotype_counts_cached(
     study: str,
     number_cells: int,
     selected: tuple[int, ...],
+    blocking: bool = True,
 ) -> PhenotypeCounts:
     counts = OnDemandRequester.get_counts_by_specimen(
         positives,
@@ -340,6 +354,7 @@ def get_phenotype_counts_cached(
         study,
         number_cells,
         set(selected) if selected is not None else None,
+        blocking = blocking,
     )
     return counts
 
@@ -350,6 +365,7 @@ def get_phenotype_counts(
     study: ValidStudy,
     number_cells: int,
     cells_selected: set[int] | None = None,
+    blocking: bool = True,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
@@ -360,6 +376,7 @@ def get_phenotype_counts(
         study,
         number_cells,
         tuple(sorted(list(cells_selected))) if cells_selected is not None else (),
+        blocking = blocking,
     )
     return counts
 

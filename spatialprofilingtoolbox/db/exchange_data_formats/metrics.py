@@ -60,6 +60,7 @@ class PhenotypeCounts(BaseModel):
     counts: tuple[PhenotypeCount, ...]
     phenotype: CompositePhenotype
     number_cells_in_study: int
+    is_pending: bool
 
 
 class UnivariateMetricsComputationResult(BaseModel):

@@ -543,4 +543,5 @@ async def importance_fraction_plot(
     buffer = BytesIO()
     buffer.write(raw)
     buffer.seek(0)
-    return StreamingResponse(buffer, media_type=f"image/{img_format}")
+    media_type = "image/svg+xml" if img_format == "svg" else "image/png"
+    return StreamingResponse(buffer, media_type=media_type)

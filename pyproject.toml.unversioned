@@ -31,7 +31,7 @@ repository = "https://github.com/nadeemlab/SPT"
 
 [project.optional-dependencies]
 apiserver = [
-    "matplotlib==3.9.0",
+    "matplotlib==3.9.2",
     "fastapi==0.111.0",
     "uvicorn==0.30.0",
     "pandas==2.2.2",
@@ -66,7 +66,7 @@ ondemand = [
     "squidpy==1.5.0",
 ]
 workflow = [
-    "matplotlib==3.9.0",
+    "matplotlib==3.9.2",
     "umap-learn==0.5.6",
     "numpy==1.26.4",
     "scipy==1.13.1",
@@ -82,7 +82,7 @@ workflow = [
 all = [
     "bokeh==3.4.1",
     "h5py==3.10.0",
-    "matplotlib==3.9.0",
+    "matplotlib==3.9.2",
     "umap-learn==0.5.6",
     "uvicorn==0.30.0",
     "Jinja2==3.1.4",

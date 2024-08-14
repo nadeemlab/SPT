@@ -43,11 +43,13 @@ class StudyAccess(SimpleReadOnlyProvider):
         publication = self._get_publication(study)
         assay = self._get_assay(components.measurement)
         sample_cohorts = get_sample_cohorts(self.cursor, study)
+        findings = self.get_study_findings()
         return StudySummary(
             context=Context(institution=institution, assay=assay, contact=contact),
             products=Products(data_release=data_release, publication=publication),
             counts=counts_summary,
             cohorts=sample_cohorts,
+            findings=findings,
         )
 
     def get_study_components(self, study: str) -> StudyComponents:

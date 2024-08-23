@@ -97,3 +97,4 @@ class StudySummary(BaseModel):
     products: Products
     counts: CountsSummary
     cohorts: SampleCohorts
+    findings: list[str]

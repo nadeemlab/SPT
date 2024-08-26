@@ -215,7 +215,10 @@ class FastCacheAssessor:
         return [row[0] for row in rows]
 
     def _umap_cache_is_up_to_date(self) -> bool:
-        studies = tuple(retrieve_study_names(self.database_config_file))
+        if self.study is None:
+            studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            studies = (self.study,)
         for study in studies:
             with DBCursor(study=study, database_config_file=self.database_config_file) as cursor:
                 query = '''

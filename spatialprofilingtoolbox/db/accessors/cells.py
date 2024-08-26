@@ -86,7 +86,7 @@ class CellsAccess(SimpleReadOnlyProvider):
         if sample == VIRTUAL_SAMPLE:
             blob_type = VIRTUAL_SAMPLE_SPEC1[1]
         else:
-            blob_type = 'feautre_matrix'
+            blob_type = 'feature_matrix'
         index_and_expressions = bytearray(self.fetch_one_or_else(
             '''
             SELECT blob_contents

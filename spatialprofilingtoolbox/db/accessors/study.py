@@ -289,7 +289,7 @@ class StudyAccess(SimpleReadOnlyProvider):
     def has_umap(self, study: str) -> bool:
         query = '''
         SELECT COUNT(*)
-        FROM on_demand_studies_index
+        FROM ondemand_studies_index
         WHERE specimen=%s ;
         '''
         self.cursor.execute(query, (VIRTUAL_SAMPLE,))

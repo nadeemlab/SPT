@@ -91,7 +91,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             '''
             SELECT blob_contents
             FROM ondemand_studies_index
-            WHERE specimen=%s AND blob_type=blob_type ;
+            WHERE specimen=%s AND blob_type=%s ;
             ''',
             (sample, blob_type),
             self.cursor,

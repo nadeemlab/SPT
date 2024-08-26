@@ -20,7 +20,7 @@ def get_counts(database_config_file: str, blob_type: str, study: str | None = No
     return counts
 
 
-def drop_cache_files(database_config_file: str, blob_type: str, study: str | None = None) -> None:
+def drop_cache_files(database_config_file: str | None, blob_type: str, study: str | None = None) -> None:
     if study is None:
         studies = tuple(retrieve_study_names(database_config_file))
     else:

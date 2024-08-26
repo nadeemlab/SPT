@@ -8,6 +8,9 @@ from itertools import product
 
 from psycopg import Cursor as PsycopgCursor
 
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
@@ -55,14 +58,18 @@ class CellsAccess(SimpleReadOnlyProvider):
         sample: str,
         cell_identifiers: tuple[int, ...],
     ) -> dict[int, tuple[float, float]]:
+        if sample == VIRTUAL_SAMPLE:
+            blob_type = VIRTUAL_SAMPLE_SPEC2[1]
+        else:
+            blob_type = 'centroids'
         locations: dict[int, tuple[float, float]] = pickle_loads(
             self.fetch_one_or_else(
                 '''
                 SELECT blob_contents
                 FROM ondemand_studies_index
-                WHERE specimen=%s AND blob_type='centroids' ;
+                WHERE specimen=%s AND blob_type=%s ;
                 ''',
-                (sample,),
+                (sample, blob_type),
                 self.cursor,
                 f'Requested centroids data for "{sample}" not found in database.'
             )
@@ -76,13 +83,17 @@ class CellsAccess(SimpleReadOnlyProvider):
         sample: str,
         cell_identifiers: tuple[int, ...],
     ) -> dict[int, bytes]:
+        if sample == VIRTUAL_SAMPLE:
+            blob_type = VIRTUAL_SAMPLE_SPEC1[1]
+        else:
+            blob_type = 'feautre_matrix'
         index_and_expressions = bytearray(self.fetch_one_or_else(
             '''
             SELECT blob_contents
             FROM ondemand_studies_index
-            WHERE specimen=%s AND blob_type='feature_matrix' ;
+            WHERE specimen=%s AND blob_type=blob_type ;
             ''',
-            (sample,),
+            (sample, blob_type),
             self.cursor,
             f'Requested phenotype data for "{sample}" not found in database.',
         ))

@@ -276,6 +276,7 @@ class QueryCursor:
     get_available_gnn: Callable
     get_study_findings: Callable
     get_study_gnn_plot_configurations: Callable
+    has_umap: Callable
     is_public_collection: Callable
 
     def __init__(self, query_handler: Type):

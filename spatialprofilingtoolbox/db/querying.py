@@ -149,6 +149,10 @@ class QueryHandler:
     def get_sample_names(cls, cursor, study: str) -> tuple[str, ...]:
         return sort(StudyAccess(cursor).get_specimen_names(study))
 
+    @classmethod
+    def has_umap(cls, cursor, study: str) -> bool:
+        return StudyAccess(cursor).has_umap(study)
+
 
 def query() -> QueryCursor:
     return QueryCursor(QueryHandler)

@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
@@ -416,7 +417,8 @@ async def get_cell_data_binary(
     Get streaming cell-level location and phenotype data in a custom binary format.
     The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
     """
-    if not sample in query().get_sample_names(study):
+    has_umap = query().has_umap(study)
+    if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
     data = query().get_cells_data(study, sample)
     input_buffer = BytesIO(data)

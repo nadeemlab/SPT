@@ -71,14 +71,6 @@ class UnivariateMetricsComputationResult(BaseModel):
     is_pending: bool
 
 
-class UMAPChannel(BaseModel):
-    """A UMAP dimensional reduction of a cell set, with one intensity channel's overlay.
-    The image is encoded in base 64.
-    """
-    channel: str
-    base64_png: str
-
-
 class CellData(BaseModel):
     """Cell-level data including position and phenotype information, for a single sample.
     """

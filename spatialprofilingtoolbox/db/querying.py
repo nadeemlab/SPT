@@ -12,7 +12,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeSymbol,
     Channel,
     PhenotypeCriteria,
-    UMAPChannel,
     AvailableGNN,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
@@ -21,7 +20,6 @@ from spatialprofilingtoolbox.db.accessors import (
     GraphsAccess,
     StudyAccess,
     PhenotypesAccess,
-    UMAPAccess,
     CellsAccess,
 )
 from spatialprofilingtoolbox.standalone_utilities import sort
@@ -106,16 +104,6 @@ class QueryHandler:
             Channel(symbol=name)
             for name in PhenotypesAccess(cursor).get_channel_names(study)
         ), key=lambda c: c.symbol)
-
-    @classmethod
-    def get_umaps_low_resolution(cls, cursor, study: str) -> list[UMAPChannel]:
-        access = UMAPAccess(cursor)
-        umap_rows = access.get_umap_rows(study)
-        return UMAPAccess.downsample_umaps_base64(umap_rows)
-
-    @classmethod
-    def get_umap(cls, cursor, study: str, channel: str) -> UMAPChannel:
-        return UMAPAccess(cursor).get_umap_row_for_channel(study, channel)
 
     @classmethod
     def get_important_cells(

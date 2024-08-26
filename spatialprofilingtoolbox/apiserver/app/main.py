@@ -5,7 +5,6 @@ from typing import Annotated
 from typing import Literal
 import json
 from io import BytesIO
-from base64 import b64decode
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -33,10 +32,8 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     AvailableGNN
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
-    ValidChannel,
     ValidStudy,
     ValidPhenotypeSymbol,
     ValidPhenotypeList,
@@ -416,6 +413,8 @@ async def get_cell_data_binary(
     """
     Get streaming cell-level location and phenotype data in a custom binary format.
     The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
+    
+    The sample may be "UMAP virtual sample" if UMAP dimensional reduction is available.
     """
     has_umap = query().has_umap(study)
     if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
@@ -435,32 +434,6 @@ async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatur
     channel positivity/negativity assignments.
     """
     return query().get_ordered_feature_names(study)
-
-
-@app.get("/visualization-plots/")
-async def get_plots(
-    study: ValidStudy,
-) -> list[UMAPChannel]:
-    """Base64-encoded plots of UMAP visualizations, one per channel."""
-    return query().get_umaps_low_resolution(study)
-
-
-@app.get("/visualization-plot-high-resolution/")
-async def get_plot_high_resolution(
-    study: ValidStudy,
-    channel: ValidChannel,
-):
-    """
-    One full-resolution UMAP plot (for the given channel in the given study), provided as a
-    streaming PNG.
-    """
-    umap = query().get_umap(study, channel)
-    input_buffer = BytesIO(b64decode(umap.base64_png))
-    input_buffer.seek(0)
-
-    def streaming_iteration():
-        yield from input_buffer
-    return StreamingResponse(streaming_iteration(), media_type="image/png")
 
 
 def _ensure_plot_cache_exists(study: str):

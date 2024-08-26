@@ -45,12 +45,14 @@ class StudyAccess(SimpleReadOnlyProvider):
         assay = self._get_assay(components.measurement)
         sample_cohorts = get_sample_cohorts(self.cursor, study)
         findings = self.get_study_findings()
+        has_umap = self.has_umap(study)
         return StudySummary(
             context=Context(institution=institution, assay=assay, contact=contact),
             products=Products(data_release=data_release, publication=publication),
             counts=counts_summary,
             cohorts=sample_cohorts,
             findings=findings,
+            has_umap=has_umap,
         )
 
     def get_study_components(self, study: str) -> StudyComponents:

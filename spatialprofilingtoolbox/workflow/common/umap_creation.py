@@ -172,7 +172,12 @@ class UMAPReducer:
 
     @staticmethod
     def scale_up(array):
+        first = tuple(zip(array[0:5,0], array[0:5,1]))
+        logger.info(f'First few points: {first}')
         size_x = max(array[:,0])
         size_y = max(array[:,1])
-        scale = 1500 * min(size_x, size_y)
-        return scale * array
+        scale = 3000 / min(size_x, size_y)
+        scaled = scale * array
+        first = tuple(zip(scaled[0:5,0], scaled[0:5,1]))
+        logger.info(f'After scaling: {first}')
+        return scaled

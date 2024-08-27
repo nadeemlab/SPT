@@ -24,7 +24,7 @@ from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 
 logger = colorized_logger(__name__)
 
-UMAP_POINT_LIMIT = 150000
+UMAP_POINT_LIMIT = 100000
 
 
 class UMAPCreator:
@@ -167,7 +167,7 @@ class UMAPReducer:
 
     @staticmethod
     def umap_reduce_to_2d(array):
-        manifold = UMAP(random_state=99).fit(array)
+        manifold = UMAP(random_state=99, min_dist=0.2).fit(array)
         return manifold.transform(array)
 
     @staticmethod
@@ -176,7 +176,7 @@ class UMAPReducer:
         logger.info(f'First few points: {first}')
         size_x = max(array[:,0])
         size_y = max(array[:,1])
-        scale = 3000 / min(size_x, size_y)
+        scale = 5000 / min(size_x, size_y)
         scaled = scale * array
         first = tuple(zip(scaled[0:5,0], scaled[0:5,1]))
         logger.info(f'After scaling: {first}')

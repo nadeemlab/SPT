@@ -156,7 +156,9 @@ class UMAPReducer:
     @staticmethod
     def create_2d_point_cloud(dense_df: DataFrame):
         normalized = UMAPReducer.preprocess_univariate_adjustments(dense_df)
-        return UMAPReducer.umap_reduce_to_2d(normalized)
+        reduced = UMAPReducer.umap_reduce_to_2d(normalized)
+        reduced_scaled = UMAPReducer.scale_up(reduced)
+        return reduced_scaled
 
     @staticmethod
     def preprocess_univariate_adjustments(df):
@@ -167,3 +169,10 @@ class UMAPReducer:
     def umap_reduce_to_2d(array):
         manifold = UMAP(random_state=99).fit(array)
         return manifold.transform(array)
+
+    @staticmethod
+    def scale_up(array):
+        size_x = max(array[:,0])
+        size_y = max(array[:,1])
+        scale = 1500 * min(size_x, size_y)
+        return scale * array

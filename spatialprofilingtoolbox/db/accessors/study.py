@@ -20,6 +20,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     Context,
     Products,
 )
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import AvailableGNN
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult
 from spatialprofilingtoolbox.db.cohorts import get_sample_cohorts
@@ -44,12 +45,14 @@ class StudyAccess(SimpleReadOnlyProvider):
         assay = self._get_assay(components.measurement)
         sample_cohorts = get_sample_cohorts(self.cursor, study)
         findings = self.get_study_findings()
+        has_umap = self.has_umap(study)
         return StudySummary(
             context=Context(institution=institution, assay=assay, contact=contact),
             products=Products(data_release=data_release, publication=publication),
             counts=counts_summary,
             cohorts=sample_cohorts,
             findings=findings,
+            has_umap=has_umap,
         )
 
     def get_study_components(self, study: str) -> StudyComponents:
@@ -284,3 +287,14 @@ class StudyAccess(SimpleReadOnlyProvider):
         self.cursor.execute(query, (study,))
         rows = self.cursor.fetchall()
         return tuple(sorted([row[0] for row in rows]))
+
+    def has_umap(self, study: str) -> bool:
+        query = '''
+        SELECT COUNT(*)
+        FROM ondemand_studies_index
+        WHERE specimen=%s ;
+        '''
+        self.cursor.execute(query, (VIRTUAL_SAMPLE,))
+        rows = self.cursor.fetchall()
+        return rows[0][0] == 2
+        

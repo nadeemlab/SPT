@@ -8,6 +8,9 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.cache_pulling import cache_pull
+from spatialprofilingtoolbox.workflow.common.cache_pulling import umap_cache_pull
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
 from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
@@ -33,7 +36,14 @@ class FastCacheAssessor:
             self._clear()
             self._recreate()
         else:
-            logger.info('Cache is basically as expected, not recreating.')
+            logger.info('Main cache is basically as expected, not recreating.')
+        logger.info('Checking UMAP cache.')
+        up_to_date = self._umap_cache_is_up_to_date()
+        if not up_to_date:
+            self._clear_umap_cache()
+            self._recreate_umap_cache()
+        else:
+            logger.info('UMAP cache is up to date.')
 
     def block_until_available(self):
         check_count = 0
@@ -67,9 +77,18 @@ class FastCacheAssessor:
         drop_cache_files(self.database_config_file, 'expressions_index', study=self.study)
         drop_cache_files(self.database_config_file, 'centroids', study=self.study)
 
+    def _clear_umap_cache(self) -> None:
+        logger.info(f'Deleting the databased UMAP cache files. {self._get_study_indicator()}')
+        drop_cache_files(self.database_config_file, VIRTUAL_SAMPLE_SPEC1[1], study=self.study)
+        drop_cache_files(self.database_config_file, VIRTUAL_SAMPLE_SPEC2[1], study=self.study)
+
     def _recreate(self):
         logger.info(f'Recreating databased fast cache files. {self._get_study_indicator()}')
         cache_pull(self.database_config_file, study=self.study)
+
+    def _recreate_umap_cache(self) -> None:
+        logger.info(f'Recreating databased UMAP cache files. {self._get_study_indicator()}')
+        umap_cache_pull(self.database_config_file, study=self.study)
 
     def _check_databased_files_present(self, verbose: bool = True) -> bool:
         writer = CompressedMatrixWriter(self.database_config_file)
@@ -92,7 +111,7 @@ class FastCacheAssessor:
 
     def _do_caching(self):
         scs = StructureCentroids(self.database_config_file)
-        scs.load_from_db(study=self.study)
+        scs.load_from_db(study=self.study)  # check if necessary to perform anymore
         self.centroids = cast(dict[str, dict[str, list]], scs.get_studies())
         self.expressions_index = []
         if self.study is None:
@@ -190,10 +209,34 @@ class FastCacheAssessor:
         with DBCursor(study=study) as cursor:
             cursor.execute('''
             SELECT specimen FROM specimen_data_measurement_process sdmp
-            WHERE sdmp.study=%s
+            WHERE sdmp.study=%s ;
             ''', (measurement_study,))
             rows = cursor.fetchall()
         return [row[0] for row in rows]
+
+    def _umap_cache_is_up_to_date(self) -> bool:
+        if self.study is None:
+            studies = tuple(retrieve_study_names(self.database_config_file))
+        else:
+            studies = (self.study,)
+        for study in studies:
+            with DBCursor(study=study, database_config_file=self.database_config_file) as cursor:
+                query = '''
+                SELECT COUNT(*)
+                FROM ondemand_studies_index
+                WHERE specimen=%s AND blob_type=%s ;
+                '''
+                cursor.execute(query, VIRTUAL_SAMPLE_SPEC1)
+                count = cursor.fetchall()[0][0]
+                if count != 1:
+                    logger.info(f'Study {study} lacks "UMAP virtual sample feature matrix".')
+                    return False
+                cursor.execute(query, VIRTUAL_SAMPLE_SPEC2)
+                count = cursor.fetchall()[0][0]
+                if count != 1:
+                    logger.info(f'Study {study} lacks "UMAP virtual sample centroids".')
+                    return False
+        return True
 
 
 def log_expected_found(set1, set2, message1, message2, context: str=''):

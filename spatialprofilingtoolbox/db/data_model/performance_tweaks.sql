@@ -34,12 +34,6 @@ CREATE TABLE sample_strata (
     subject_diagnosed_result VARCHAR(512)
 );
 
-CREATE TABLE umap_plots (
-    study VARCHAR(512),
-    channel VARCHAR(512),
-    png_base64 VARCHAR
-);
-
 CREATE TABLE quantitative_feature_value_queue (
     feature INTEGER REFERENCES feature_specification(identifier) ,
     subject VARCHAR

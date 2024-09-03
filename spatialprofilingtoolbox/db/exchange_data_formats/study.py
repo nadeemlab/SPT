@@ -98,3 +98,4 @@ class StudySummary(BaseModel):
     counts: CountsSummary
     cohorts: SampleCohorts
     findings: list[str]
+    has_umap: bool

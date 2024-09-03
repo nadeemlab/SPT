@@ -4,11 +4,6 @@ spt workflow configure --workflow='tabular import' --config-file=.workflow.confi
 nextflow run .
 cat work/*/*/.command.log
 
-cat build/build_scripts/.workflow.config > .workflow.config
-spt workflow configure --workflow='reduction visual' --config-file=.workflow.config
-nextflow run .
-rm -f .nextflow.log*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
-
 spt graphs upload-importances --config_path=build/build_scripts/.graph.config --importances_csv_path=test/test_data/gnn_importances/1.csv
 spt graphs upload-importances --config_path=build/build_scripts/.graph_transformer.config --importances_csv_path=test/test_data/gnn_importances/1.csv
 

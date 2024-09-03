@@ -267,8 +267,6 @@ class QueryCursor:
     get_composite_phenotype_identifiers: Callable
     get_phenotype_criteria: Callable
     retrieve_signature_of_phenotype: Callable
-    get_umaps_low_resolution: Callable
-    get_umap: Callable
     get_important_cells: Callable
     get_cells_data: Callable
     get_ordered_feature_names: Callable
@@ -276,6 +274,7 @@ class QueryCursor:
     get_available_gnn: Callable
     get_study_findings: Callable
     get_study_gnn_plot_configurations: Callable
+    has_umap: Callable
     is_public_collection: Callable
 
     def __init__(self, query_handler: Type):

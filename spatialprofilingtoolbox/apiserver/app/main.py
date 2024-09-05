@@ -46,7 +46,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
-VERSION = '0.24.0'
+VERSION = '0.25.0'
 
 TITLE = 'Single cell studies data API'
 
@@ -63,6 +63,7 @@ app = FastAPI(
     title=TITLE,
     description=DESCRIPTION,
     version=VERSION,
+    openapi_url='/api/openapi.json',
     contact={
         'name': 'James Mathews',
         'url': 'https://nadeemlab.org',

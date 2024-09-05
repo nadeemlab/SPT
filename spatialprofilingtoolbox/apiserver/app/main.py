@@ -88,6 +88,10 @@ You can also retrieve:
 This API was created using [FastAPI](https://fastapi.tiangolo.com) and
 [Pydantic](https://docs.pydantic.dev/latest/).
 
+The documentation you are reading is automatically generated and comes in two flavors:
+* [Redoc variant](https://oncopathtk.org/api/redoc)
+* [Swagger UI variant](https://oncopathtk.org/api/docs) (includes a list of the JSON-formatted return value types)
+
 The hierarchical system for the JSON-formatted return values is described in detail at the end of
 this page. This system is a simplified version of the complete [schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#)
 which was used to guide the development of the SPT application components.
@@ -196,13 +200,13 @@ async def get_study_summary(
     * Authors
     * Institution where the research was carried out
     * Contact information
-    * The kind of data measurements collected, typically a kind of imaging
+    * Kind of data measurements collected, typically a kind of imaging
     * Manuscript and data publication
     * Summary of the number of cells, specimens, measured channels
     * Grouping of samples/patients into cohorts, outcome assignments
 
     The exact format is shown by clicking "Schema" below, or navigating to the StudySummary
-    description at the bottom of this page.
+    description at the bottom of the Swagger UI version of this page.
     """
     return query().get_study_summary(study)
 

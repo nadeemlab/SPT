@@ -51,12 +51,35 @@ VERSION = '0.25.0'
 TITLE = 'Single cell studies data API'
 
 DESCRIPTION = """
-Get information about single cell phenotyping studies, including:
+This API provides useful access to the single-cell datasets residing in a database that is curated
+and maintained by the [Nadeem Lab](https://nadeemlab.org).
 
-* aggregated counts by outcome/case
-* phenotype definitions
-* spatial statistics
-* study metadata
+The public portion of the database includes phenotype and slide position information for
+
+* ~9 million cells
+* across about 1000 specimens
+* typically with around 30 protein targets quantified per cell
+* from cancers of the breast and lung, as well as urothelial cancer and melanoma
+* with a range of outcome assignments depending on the study design (often immunotherapy response)
+
+This is the data source for the Spatial Profiling Toolbox web application location at [oncopathtk.org](https://oncopathtk.org).
+
+Using this API you can also request computation of some metrics completely on-the-fly for a given study:
+
+* **Phenotype fractions** per sample, with custom or pre-defined signatures
+* Other per-sample metrics informed by cells' relative **spatial position**, like:
+  - Proximity score between two cell populations
+  - Neighborhood enrichment in a bootstrapped probabilistic sense
+  - Ripley statistic summary
+  - Spatial auto-correlation
+
+Many of these metrics are computed using the [Squidpy](https://squidpy.readthedocs.io/en/stable/)
+library.
+
+You can also retrieve:
+
+* A highly compressed **binary representation** of a given sample's **phenotype and position** information, suitable for live applications
+* A **UMAP** representation of a large random subsample of each study's cell set
 """
 
 app = FastAPI(

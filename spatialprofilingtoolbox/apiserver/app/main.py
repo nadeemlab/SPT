@@ -93,7 +93,7 @@ The documentation you are reading is automatically generated and comes in two fl
 * [Swagger UI variant](https://oncopathtk.org/api/docs) (includes a list of the JSON-formatted return value types)
 
 The hierarchical system for the JSON-formatted return values is described in detail at the end of
-this page. This system is a simplified version of the complete [schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#)
+the Swagger UI version. This system is a simplified version of the complete [schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#)
 which was used to guide the development of the SPT application components.
 
 Each endpoint (i.e. one URL for fetching a bundle of data) is documented with sample usage and a

@@ -151,7 +151,16 @@ async def set_secure_headers(request, call_next):
 async def get_study_names(
     collection: Annotated[str | None, Query(max_length=512)] = None
 ) -> list[StudyHandle]:
-    """The names of studies/datasets, with display names."""
+    """
+    This is the list of studies or datasets, including only:
+    * A short readable name or handle
+    * An extended name intended for display, with some publication information
+
+    The short names are used for reference as parameter values in many of the other endpoints, as
+    described below.
+
+    The collection parameter is a token providing access to private datasets, so it is not required.
+    """
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
 
@@ -181,7 +190,20 @@ async def get_study_names(
 async def get_study_summary(
     study: ValidStudy,
 ) -> StudySummary:
-    """A summary of a study's publications, authors, etc., as well as a summary of its datasets."""
+    """
+    This summary includes metadata, or the small data, associated with a given study:
+
+    * Authors
+    * Institution where the research was carried out
+    * Contact information
+    * The kind of data measurements collected, typically a kind of imaging
+    * Manuscript and data publication
+    * Summary of the number of cells, specimens, measured channels
+    * Grouping of samples/patients into cohorts, outcome assignments
+
+    The exact format is shown by clicking "Schema" below, or navigating to the StudySummary
+    description at the bottom of this page.
+    """
     return query().get_study_summary(study)
 
 
@@ -189,7 +211,9 @@ async def get_study_summary(
 async def get_study_findings(
     study: ValidStudy,
 ) -> list[str]:
-    """Brief list of results of re-analysis of the given study."""
+    """
+    Brief list of results of re-analysis of the given study.
+    """
     return query().get_study_findings(study)
 
 

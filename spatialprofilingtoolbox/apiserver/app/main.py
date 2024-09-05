@@ -51,7 +51,9 @@ VERSION = '0.25.0'
 TITLE = 'Single cell studies data API'
 
 DESCRIPTION = """
-This API provides useful access to the single-cell datasets residing in a database that is curated
+# What's available
+
+This API provides useful access to the **single-cell datasets** residing in a database that is curated
 and maintained by the [Nadeem Lab](https://nadeemlab.org).
 
 The public portion of the database includes phenotype and slide position information for
@@ -62,7 +64,7 @@ The public portion of the database includes phenotype and slide position informa
 * from cancers of the breast and lung, as well as urothelial cancer and melanoma
 * with a range of outcome assignments depending on the study design (often immunotherapy response)
 
-This is the data source for the Spatial Profiling Toolbox web application location at [oncopathtk.org](https://oncopathtk.org).
+This is the data source for the Spatial Profiling Toolbox (SPT) web application located at [oncopathtk.org](https://oncopathtk.org).
 
 Using this API you can also request computation of some metrics completely on-the-fly for a given study:
 
@@ -78,8 +80,26 @@ library.
 
 You can also retrieve:
 
-* A highly compressed **binary representation** of a given sample's **phenotype and position** information, suitable for live applications
-* A **UMAP** representation of a large random subsample of each study's cell set
+* A highly compressed **binary representation** of a given sample's **phenotype and position** information, suitable for live applications.
+* A **UMAP** representation of a large random subsample of each study's cell set.
+
+# Reading this documentation
+
+This API was created using [FastAPI](https://fastapi.tiangolo.com) and
+[Pydantic](https://docs.pydantic.dev/latest/).
+
+The hierarchical system for the JSON-formatted return values is described in detail at the end of
+this page. This system is a simplified version of the complete [schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#)
+which was used to guide the development of the SPT application components.
+
+Each endpoint (i.e. one URL for fetching a bundle of data) is documented with sample usage and a
+high-level description of how to specify parameters and interpret the results. You can access these
+the same way you would access any HTTP API, for example using:
+
+* [`curl`](https://curl.se) or [`wget`](https://www.gnu.org/software/wget/) on the command line
+* the [`requests`](https://requests.readthedocs.io/en/latest/) Python library
+* the [Axios](https://axios-http.com/docs/intro) Javascript library
+
 """
 
 app = FastAPI(

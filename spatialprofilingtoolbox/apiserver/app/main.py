@@ -63,7 +63,6 @@ app = FastAPI(
     title=TITLE,
     description=DESCRIPTION,
     version=VERSION,
-    openapi_url='/api/openapi.json',
     contact={
         'name': 'James Mathews',
         'url': 'https://nadeemlab.org',

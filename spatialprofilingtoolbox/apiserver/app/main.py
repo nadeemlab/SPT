@@ -79,6 +79,11 @@ def custom_openapi():
         version=VERSION,
         # This is a manual replacement for 3.1.0 default, which isn't supported by Swagger UI yet.
         openapi_version='3.0.0',
+        servers=[
+            {
+                'url': '/api'
+            }
+        ],
         summary=TITLE,
         description=DESCRIPTION,
         routes=app.routes,

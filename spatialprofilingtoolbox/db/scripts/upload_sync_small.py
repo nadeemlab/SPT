@@ -3,6 +3,8 @@
 import argparse
 from json import loads as json_loads
 
+from psycopg import Cursor as PsycopgCursor
+
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
@@ -35,7 +37,7 @@ def _create_table_query(name: str) -> str:
     return f'CREATE TABLE IF NOT EXISTS {name} (id SERIAL PRIMARY KEY, txt TEXT);'
 
 
-def _sync_data(cursor, name: str, data: tuple[str, ...]) -> bool:
+def _sync_data(cursor: PsycopgCursor, name: str, data: tuple[str, ...]) -> bool:
     cursor.execute(_create_table_query(name))
     cursor.execute(f'SELECT id, txt FROM {name} ORDER BY id;')
     rows = tuple(cursor.fetchall())

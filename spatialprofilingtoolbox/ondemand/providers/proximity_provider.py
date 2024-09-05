@@ -2,9 +2,6 @@
 
 from typing import cast
 
-from pandas import DataFrame
-from sklearn.neighbors import BallTree  # type: ignore
-
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import (\
@@ -12,11 +9,10 @@ from spatialprofilingtoolbox.ondemand.phenotype_str import (\
     phenotype_to_phenotype_str,
 )
 from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
+from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
-from spatialprofilingtoolbox.workflow.common.proximity import (\
-    compute_proximity_metric_for_signature_pair,
-)
+from spatialprofilingtoolbox.workflow.common.proximity import \
+    compute_proximity_metric_for_signature_pair
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -25,44 +21,36 @@ logger = colorized_logger(__name__)
 class ProximityProvider(PendingProvider):
     """Do proximity calculation from pair of signatures."""
 
-    def __init__(self, timeout: int, database_config_file: str | None, load_centroids: bool = False) -> None:
-        """Load from a precomputed JSON artifact in the data directory.
+    def compute(self) -> None:
+        args, arrays = self._prepare_parameters()
+        if arrays.identifiers is None:
+            self.handle_insert_value(None, allow_null=True)
+        else:
+            value = self._perform_computation(args, arrays)
+            self.handle_insert_value(value, allow_null=True)
 
-        Note: ProximityProvider always loads centroids because it needs them.
-        """
-        super().__init__(timeout, database_config_file, load_centroids=True)
-        logger.info('Start loading location data and creating ball trees.')
-        self._dropna_in_data_arrays()
-        self._create_ball_trees()
-        logger.info('Finished creating ball trees.')
+    def _prepare_parameters(
+        self,
+    ) -> tuple[tuple[PhenotypeCriteria, PhenotypeCriteria, float], CellDataArrays]:
+        study = self.job.study
+        feature_specification = str(self.job.feature_specification)
+        _, specifiers = ProximityProvider.retrieve_specifiers(study, feature_specification)
+        phenotype1 = phenotype_str_to_phenotype(specifiers[0])
+        phenotype2 = phenotype_str_to_phenotype(specifiers[1])
+        radius = float(specifiers[2])
+        arrays = self.get_cell_data_arrays()
+        return (phenotype1, phenotype2, radius), arrays
 
-    @classmethod
-    def service_specifier(cls) -> str:
-        return 'proximity'
-
-    def _dropna_in_data_arrays(self) -> None:
-        for _, _data_arrays in self.data_arrays.items():
-            for sample_identifier, df in _data_arrays.items():
-                former = df.shape
-                df.dropna(inplace=True)
-                current = df.shape
-                if current[0] != former[0]:
-                    defect0 = former[0] - current[0]
-                    message = f'Dropped {defect0} rows due to to NAs, for {sample_identifier}.'
-                    logger.info(message)
-                if current[1] != former[1]:
-                    defect1 = former[1] - current[1]
-                    message = f'Dropped {defect1} columns due to to NAs, for {sample_identifier}.'
-                    logger.warning(message)
-
-    def _create_ball_trees(self) -> None:
-        self.trees = {
-            study_name: {
-                sample_identifier: BallTree(df[['pixel x', 'pixel y']].to_numpy())
-                for sample_identifier, df in _data_arrays.items()
-            }
-            for study_name, _data_arrays in self.data_arrays.items()
-        }
+    def _perform_computation(self, args: tuple, arrays: CellDataArrays) -> float | None:
+        phenotype1, phenotype2, radius = args
+        return compute_proximity_metric_for_signature_pair(
+            phenotype1,
+            phenotype2,
+            radius,
+            arrays.phenotype,
+            arrays.location,
+            arrays.feature_names,
+        )
 
     @classmethod
     def get_or_create_feature_specification(
@@ -73,7 +61,7 @@ class ProximityProvider(PendingProvider):
         phenotype2: PhenotypeCriteria | None = None,
         radius: float | None = None,
         **kwargs,
-    ) -> str:
+    ) -> tuple[str, bool]:
         phenotype1 = cast(PhenotypeCriteria, phenotype1)
         phenotype2 = cast(PhenotypeCriteria, phenotype2)
         radius = cast(float, radius)
@@ -85,10 +73,10 @@ class ProximityProvider(PendingProvider):
         )
         specification = cls._get_feature_specification(study, *specifiers_arguments)
         if specification is not None:
-            return specification
+            return (specification, False)
         message = 'Creating feature with specifiers: (%s) %s, %s, %s'
         logger.debug(message, *specifiers_arguments)
-        return cls._create_feature_specification(study, *specifiers_arguments)
+        return (cls._create_feature_specification(study, *specifiers_arguments), True)
 
     @classmethod
     def _get_feature_specification(cls,
@@ -141,39 +129,3 @@ class ProximityProvider(PendingProvider):
         specifiers = (phenotype1, phenotype2, str(radius))
         method = get_feature_description('proximity')
         return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
-
-    def have_feature_computed(self, study: str, feature_specification: str) -> None:
-        args = (study, feature_specification)
-        data_analysis_study, specifiers = ProximityProvider.retrieve_specifiers(study, feature_specification)
-        phenotype1 = phenotype_str_to_phenotype(specifiers[0])
-        phenotype2 = phenotype_str_to_phenotype(specifiers[1])
-        radius = float(specifiers[2])
-        sample_identifiers = ProximityProvider.get_sample_identifiers(study, feature_specification)
-        use_nulls = False
-        for sample_identifier in sample_identifiers:
-            if not use_nulls:
-                value = compute_proximity_metric_for_signature_pair(
-                    phenotype1,
-                    phenotype2,
-                    radius,
-                    self.get_cells(sample_identifier, data_analysis_study),
-                    self._get_tree(sample_identifier, data_analysis_study),
-                )
-            else:
-                value = None
-            message = 'Computed one feature value of %s: %s, %s'
-            logger.debug(message, feature_specification, sample_identifier, value)
-            with DBCursor(study=study) as cursor:
-                add_feature_value(feature_specification, sample_identifier, value, cursor)
-            if self.check_timeout(*args):
-                use_nulls = True
-        ProximityProvider.drop_pending_computation(study, feature_specification)
-        message = 'Wrapped up proximity metric calculation, feature "%s".'
-        logger.debug(message, feature_specification)
-        truncation = sample_identifiers
-        if len(sample_identifiers) > 5:
-            truncation = sample_identifiers[0:5] + [f'(... {len(sample_identifiers)} items)']
-        logger.debug('The samples considered were: %s', ' '.join(truncation))
-
-    def _get_tree(self, sample_identifier: str, data_analysis_study: str) -> BallTree:
-        return self.trees[data_analysis_study][sample_identifier]

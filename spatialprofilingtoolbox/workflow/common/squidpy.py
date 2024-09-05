@@ -2,21 +2,47 @@
 
 from typing import Any
 from typing import cast
-from warnings import warn
+from typing import (
+    TYPE_CHECKING,
+    Literal,
+)
+from warnings import filterwarnings
 
 from numpy.typing import NDArray
 from numpy import isnan
+from numpy import inner
+from numpy import sum as np_sum
 from pandas import DataFrame, Series
 from squidpy.gr import (  # type: ignore
     spatial_neighbors,
     nhood_enrichment,
     co_occurrence,
-    ripley,
     spatial_autocorr,
+    # ripley,
 )
 
 from anndata import AnnData  # type: ignore
 from scipy.stats import norm  # type: ignore
+
+import numpy as np
+import pandas as pd
+from scanpy import logging as logg
+
+from scipy.spatial import ConvexHull
+from scipy.spatial.distance import pdist
+from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import LabelEncoder
+from spatialdata import SpatialData
+
+from squidpy._constants._constants import RipleyStat
+from squidpy._constants._pkg_constants import Key
+from squidpy._utils import NDArrayA
+from squidpy.gr._utils import _assert_categorical_obs, _assert_spatial_basis, _save_data
+
+from squidpy.gr._ripley import _reshape_res
+from squidpy.gr._ripley import _f_g_function
+from squidpy.gr._ripley import _l_function
+from squidpy.gr._ripley import _ppp
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
@@ -24,6 +50,114 @@ from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classna
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
+
+filterwarnings('ignore', message='1 variables were constant, will return nan for these.')
+
+
+def ripley_custom(
+    adata: AnnData | SpatialData,
+    cluster_key: str,
+    mode: Literal["F", "G", "L"] = "F",
+    spatial_key: str = Key.obsm.spatial,
+    metric: str = "euclidean",
+    n_neigh: int = 2,
+    n_simulations: int = 100,
+    n_observations: int = 1000,
+    max_dist: float | None = None,
+    n_steps: int = 50,
+    seed: int | None = None,
+    copy: bool = False,
+) -> dict[str, pd.DataFrame | NDArrayA]:
+    """
+    Copied from squidpy in order to alter the treatement of p values.
+    https://github.com/scverse/squidpy/blob/93ee854fe4ab18583bd8bb6f1a45e9e052a0d8fa/src/squidpy/gr/_ripley.py
+    """
+    if isinstance(adata, SpatialData):
+        adata = adata.table
+    _assert_categorical_obs(adata, key=cluster_key)
+    _assert_spatial_basis(adata, key=spatial_key)
+    coordinates = adata.obsm[spatial_key]
+    clusters = adata.obs[cluster_key].values
+
+    mode = RipleyStat(mode)  # type: ignore[assignment]
+    if TYPE_CHECKING:
+        assert isinstance(mode, RipleyStat)
+
+    # prepare support
+    N = coordinates.shape[0]
+    hull = ConvexHull(coordinates)
+    area = hull.volume
+    if max_dist is None:
+        max_dist = ((area / 2) ** 0.5) / 4
+    support = np.linspace(0, max_dist, n_steps)
+
+    # prepare labels
+    le = LabelEncoder().fit(clusters)
+    cluster_idx = le.transform(clusters)
+    obs_arr = np.empty((le.classes_.shape[0], n_steps))
+
+    start = logg.info(
+        f"Calculating Ripley's {mode} statistic for `{le.classes_.shape[0]}` clusters and `{n_simulations}` simulations"
+    )
+
+    for i in np.arange(np.max(cluster_idx) + 1):
+        coord_c = coordinates[cluster_idx == i, :]
+        if mode == RipleyStat.F:
+            random = _ppp(hull, n_simulations=1, n_observations=n_observations, seed=seed)
+            tree_c = NearestNeighbors(metric=metric, n_neighbors=n_neigh).fit(coord_c)
+            distances, _ = tree_c.kneighbors(random, n_neighbors=n_neigh)
+            bins, obs_stats = _f_g_function(distances.squeeze(), support)
+        elif mode == RipleyStat.G:
+            tree_c = NearestNeighbors(metric=metric, n_neighbors=n_neigh).fit(coord_c)
+            distances, _ = tree_c.kneighbors(coordinates[cluster_idx != i, :], n_neighbors=n_neigh)
+            bins, obs_stats = _f_g_function(distances.squeeze(), support)
+        elif mode == RipleyStat.L:
+            distances = pdist(coord_c, metric=metric)
+            bins, obs_stats = _l_function(distances, support, N, area)
+        else:
+            raise NotImplementedError(f"Mode `{mode.s!r}` is not yet implemented.")
+        obs_arr[i] = obs_stats
+
+    sims = np.empty((n_simulations, len(bins)))
+    pvalues = np.ones((le.classes_.shape[0], len(bins)))
+
+    for i in range(n_simulations):
+        random_i = _ppp(hull, n_simulations=1, n_observations=n_observations, seed=seed)
+        if mode == RipleyStat.F:
+            tree_i = NearestNeighbors(metric=metric, n_neighbors=n_neigh).fit(random_i)
+            distances_i, _ = tree_i.kneighbors(random, n_neighbors=1)
+            _, stats_i = _f_g_function(distances_i.squeeze(), support)
+        elif mode == RipleyStat.G:
+            tree_i = NearestNeighbors(metric=metric, n_neighbors=n_neigh).fit(random_i)
+            distances_i, _ = tree_i.kneighbors(coordinates, n_neighbors=1)
+            _, stats_i = _f_g_function(distances_i.squeeze(), support)
+        elif mode == RipleyStat.L:
+            distances_i = pdist(random_i, metric=metric)
+            _, stats_i = _l_function(distances_i, support, N, area)
+        else:
+            raise NotImplementedError(f"Mode `{mode.s!r}` is not yet implemented.")
+
+        for j in range(obs_arr.shape[0]):
+            pvalues[j] += stats_i < obs_arr[j]
+        sims[i] = stats_i
+
+    pvalues /= n_simulations + 1
+    # pvalues = np.minimum(pvalues, 1 - pvalues)
+
+    obs_df = _reshape_res(obs_arr.T, columns=le.classes_, index=bins, var_name=cluster_key)
+    sims_df = _reshape_res(sims.T, columns=np.arange(n_simulations), index=bins, var_name="simulations")
+
+    res = {f"{mode}_stat": obs_df, "sims_stat": sims_df, "bins": bins, "pvalues": pvalues}
+
+    if TYPE_CHECKING:
+        assert isinstance(res, dict)
+
+    if copy:
+        logg.info("Finish", time=start)
+        return res
+
+    _save_data(adata, attr="uns", key=Key.uns.ripley(cluster_key, mode), data=res, time=start)
+    return None
 
 
 def lookup_squidpy_feature_class(method: str) -> str | None:
@@ -35,7 +169,7 @@ def lookup_squidpy_feature_class(method: str) -> str | None:
 
 def compute_squidpy_metric_for_one_sample(
     df_cell: DataFrame,
-    phenotypes: list[PhenotypeCriteria],
+    phenotypes: tuple[PhenotypeCriteria, ...],
     feature_class: str,
     radius: float | None = None,
 ) -> float | None:
@@ -45,8 +179,8 @@ def compute_squidpy_metric_for_one_sample(
         for column in df_cell.columns
     }, axis=1)
     masks: list[Series] = [
-        (df_cell.astype(bool)[signature.positive_markers].all(axis=1) &
-         (~(df_cell.astype(bool))[signature.negative_markers]).all(axis=1))
+        (df_cell.astype(bool)[list(signature.positive_markers)].all(axis=1) &
+         (~(df_cell.astype(bool))[list(signature.negative_markers)]).all(axis=1))
         for signature in phenotypes
     ]
     adata = convert_df_to_anndata(df_cell, masks)
@@ -93,14 +227,10 @@ def _summarize_co_occurrence(unstructured_metrics: dict[str, NDArray[Any]] | Non
 def _summarize_ripley(unstructured_metrics: dict[str, NDArray[Any]]) -> float | None:
     bins = unstructured_metrics['bins']
     pvalues = unstructured_metrics['pvalues']
-    pairs = list(zip(bins.tolist(), pvalues.tolist()))
-    if len(bins) != len(pvalues) or len(pairs) == 0:
+    total_p = np_sum(pvalues)
+    if len(bins) != len(pvalues) or total_p == 0:
         return None
-    filtered = [pair for pair in pairs if pair[1] > 0]
-    if len(filtered) == 0:
-        return 1.0
-    sorted_pairs = sorted(filtered, key=lambda pair: pair[1])
-    return float(sorted_pairs[0][1])
+    return round(inner(pvalues, bins) / total_p, 1)
 
 
 def _summarize_spatial_autocorrelation(unstructured_metrics: DataFrame) -> float | None:
@@ -155,7 +285,7 @@ def convert_df_to_anndata(
         adata.obs['cluster'] = clustering.to_numpy()
         adata.obs['cluster'] = adata.obs['cluster'].astype('category')
         if adata.obs['cluster'].nunique() == 1:
-            warn('All phenotypes provided had identical values. Only one cluster could be made.')
+            logger.warning('All phenotypes provided had identical values. Only one cluster could be made.')
     return adata
 
 
@@ -182,8 +312,8 @@ def _co_occurrence(adata: AnnData, radius: float) -> dict[str, NDArray[Any]] | N
 
 
 def _ripley(adata: AnnData) -> dict[str, NDArray[Any]]:
-    r"""Compute various Ripley\'s statistics for point processes."""
-    result = ripley(adata, 'cluster', copy=True)
+    r"""Compute Ripley statistics."""
+    result = ripley_custom(adata, 'cluster', copy=True, n_steps=100)
     bins = cast(NDArray[Any], result['bins'])
     pvalues = cast(NDArray[Any], result['pvalues'])
     return {

@@ -1,7 +1,7 @@
 """Source file parsing for overall study/project metadata."""
 import json
 
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
@@ -13,14 +13,14 @@ logger = colorized_logger(__name__)
 class StudyParser(SourceToADIParser):
     """Parse source files containing study-level metadata."""
 
-    def _cautious_insert(self, tablename, record, cursor: Psycopg2Cursor, no_primary=True):
+    def _cautious_insert(self, tablename, record, cursor: PsycopgCursor, no_primary=True):
         was_found, _ = self.check_exists(tablename, record, cursor, no_primary=no_primary)
         if was_found:
             logger.debug('"%s" %s already exists.', tablename, str(record))
         else:
             cursor.execute(self.generate_basic_insert_query(tablename), record)
 
-    def _insert_study_components(self, study_name: str, cursor: Psycopg2Cursor) -> None:
+    def _insert_study_components(self, study_name: str, cursor: PsycopgCursor) -> None:
         collection = SourceToADIParser.get_measurement_study_name(study_name)
         measurement = SourceToADIParser.get_collection_study_name(study_name)
         data_analysis = SourceToADIParser.get_data_analysis_study_name(study_name)

@@ -5,7 +5,7 @@ from typing import cast
 
 from pandas import Series
 from pandas import read_csv
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import cursor as PsycopgCursor
 
 from \
     spatialprofilingtoolbox.workflow.tabular_import.tabular_dataset_design \
@@ -60,7 +60,7 @@ class CellManifestSetParser(SourceToADIParser):
     def _handle_cell_manifest(self,
         cell_manifest: Series,
         measurement_study: str,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
     ):
         message = 'Considering "%s" file "%s" .'
         logger.debug(message, cell_manifest_data_type(), cell_manifest['File ID'])

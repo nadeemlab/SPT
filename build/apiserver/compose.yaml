@@ -1,7 +1,7 @@
 services:
   testing-database:
     image: nadeemlab/spt-db-preloaded-1
-    container_name: spt-db-testing-only
+    container_name: spt-db---testing-only
     ports:
       - target: 5432
         published: 5432
@@ -13,15 +13,22 @@ services:
 
   testing-fast-counts-server:
     image: nadeemlab/spt-ondemand
-    container_name: spt-ondemand-testing
-    ports:
-      - target: 8016
-        published: 8016
-        protocol: tcp
+    container_name: spt-ondemand--testing
     networks:
       - isolated_temporary_test
     environment:
-      SINGLE_CELL_DATABASE_HOST: spt-db-testing-only
+      SINGLE_CELL_DATABASE_HOST: spt-db---testing-only
+      SINGLE_CELL_DATABASE_USER: postgres
+      SINGLE_CELL_DATABASE_PASSWORD: postgres
+    pull_policy: never
+
+  testing-fast-counts-server2:
+    image: nadeemlab/spt-ondemand
+    container_name: spt-ondemand-testing2
+    networks:
+      - isolated_temporary_test
+    environment:
+      SINGLE_CELL_DATABASE_HOST: spt-db---testing-only
       SINGLE_CELL_DATABASE_USER: postgres
       SINGLE_CELL_DATABASE_PASSWORD: postgres
     pull_policy: never
@@ -36,12 +43,9 @@ services:
     networks:
       - isolated_temporary_test
     environment:
-      SINGLE_CELL_DATABASE_HOST: spt-db-testing-only
+      SINGLE_CELL_DATABASE_HOST: spt-db---testing-only
       SINGLE_CELL_DATABASE_USER: postgres
       SINGLE_CELL_DATABASE_PASSWORD: postgres
-      USE_ALTERNATIVE_TESTING_DATABASE: 1
-      ONDEMAND_HOST: spt-ondemand-testing
-      ONDEMAND_PORT: 8016
     pull_policy: never
 
 networks:

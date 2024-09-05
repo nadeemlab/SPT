@@ -3,7 +3,7 @@ from importlib.resources import as_file
 from importlib.resources import files
 import re
 
-from psycopg2 import sql
+from psycopg import sql
 from pandas import read_csv as pandas_read_csv
 
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.cell_manifests import \

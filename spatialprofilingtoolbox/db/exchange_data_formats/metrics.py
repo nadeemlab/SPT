@@ -26,8 +26,15 @@ class Channel(BaseModel):
 
 class PhenotypeCriteria(BaseModel):
     """Criteria defining a "composite" phenotype by expression and non-expression of markers."""
-    positive_markers: list[str]
-    negative_markers: list[str]
+    positive_markers: tuple[str, ...]
+    negative_markers: tuple[str, ...]
+
+
+class PhenotypeSymbolAndCriteria(BaseModel):
+    """The display/handle string and the internal identifier for a phenotype."""
+    handle_string: str
+    identifier: str
+    criteria: PhenotypeCriteria
 
 
 class CompositePhenotype(BaseModel):
@@ -50,9 +57,10 @@ class PhenotypeCount(BaseModel):
 
 class PhenotypeCounts(BaseModel):
     """The number of cells of a given phenotype across all samples in a given study."""
-    counts: list[PhenotypeCount]
+    counts: tuple[PhenotypeCount, ...]
     phenotype: CompositePhenotype
     number_cells_in_study: int
+    is_pending: bool
 
 
 class UnivariateMetricsComputationResult(BaseModel):
@@ -61,14 +69,6 @@ class UnivariateMetricsComputationResult(BaseModel):
     """
     values: dict[str, float | None]
     is_pending: bool
-
-
-class UMAPChannel(BaseModel):
-    """A UMAP dimensional reduction of a cell set, with one intensity channel's overlay.
-    The image is encoded in base 64.
-    """
-    channel: str
-    base64_png: str
 
 
 class CellData(BaseModel):

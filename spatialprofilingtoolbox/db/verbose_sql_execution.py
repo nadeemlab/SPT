@@ -2,6 +2,7 @@
 from importlib.resources import as_file
 from importlib.resources import files
 from typing import Literal
+import re
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -9,6 +10,23 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 VerbosityOptions = Literal['itemize', 'silent', None]
+
+
+def _patch_schema(contents: str) -> str:
+    buffer = contents
+    line = r'quantitative_feature_value \(\n    identifier VARCHAR\(512\) PRIMARY KEY,'
+    replacement = r'quantitative_feature_value (\n    identifier BIGSERIAL PRIMARY KEY,'
+    buffer = re.sub(line, replacement, buffer)
+
+    line = r'feature_specification \(\n    identifier VARCHAR\(512\) PRIMARY KEY,'
+    replacement = r'feature_specification (\n    identifier BIGSERIAL PRIMARY KEY,'
+    buffer = re.sub(line, replacement, buffer)
+
+    line = r'VARCHAR\(512\) REFERENCES feature_specification\(identifier\)'
+    replacement = r'INTEGER REFERENCES feature_specification(identifier)'
+    buffer = re.sub(line, replacement, buffer)
+
+    return buffer
 
 
 def _retrieve_script(
@@ -26,6 +44,8 @@ def _retrieve_script(
         with as_file(files(source_package).joinpath(filename)) as path:
             with open(path, encoding='utf-8') as file:
                 script = file.read()
+        if filename == 'schema.sql':
+            script = _patch_schema(script)
     else:
         script = contents
     return script

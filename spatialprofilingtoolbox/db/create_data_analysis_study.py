@@ -3,7 +3,7 @@ import re
 import datetime
 from typing import cast
 
-from psycopg2.extensions import connection as Connection
+from psycopg import connection as Connection
 
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -54,9 +54,11 @@ class DataAnalysisStudyFactory:
         cursor.execute('''
             INSERT INTO data_analysis_study(name)
             VALUES (%s) ;
+        ''', (name,))
+        cursor.execute('''
             INSERT INTO study_component(primary_study, component_study)
             VALUES (%s, %s) ;
-        ''', (name, self.study, name))
+        ''', (self.study, name))
         cursor.close()
         self.connection.commit()
         logger.info('Inserted data analysis study: "%s"', name)

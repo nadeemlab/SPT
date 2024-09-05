@@ -1,5 +1,4 @@
 """Utility to report basic health/status of the SPT database."""
-import sys
 import argparse
 from itertools import chain
 

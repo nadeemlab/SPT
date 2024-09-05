@@ -1,4 +1,6 @@
 """Convenience accessors/manipulators for phenotype data."""
+
+from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeSymbol
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
@@ -37,6 +39,7 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         self.cursor.execute(query)
         return tuple(row[0] for row in self.cursor.fetchall())
 
+    @simple_instance_method_cache(maxsize=2000)
     def get_phenotype_criteria(self, study: str, phenotype_symbol: str) -> PhenotypeCriteria:
         query = '''
         SELECT cs.symbol, cpc.polarity
@@ -65,7 +68,7 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         negatives = sorted([
             marker for marker, polarity in rows if polarity == 'negative'
         ])
-        return PhenotypeCriteria(positive_markers=positives, negative_markers=negatives)
+        return PhenotypeCriteria(positive_markers=tuple(positives), negative_markers=tuple(negatives))
 
     def get_phenotype_criteria_by_identifier(
             self,
@@ -84,8 +87,11 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         rows = self.cursor.fetchall()
         positives = sorted([str(row[0]) for row in rows if row[1] == 'positive'])
         negatives = sorted([str(row[0]) for row in rows if row[1] == 'negative'])
-        return PhenotypeCriteria(positive_markers=positives, negative_markers=negatives)
+        return PhenotypeCriteria(
+            positive_markers=tuple(positives), negative_markers=tuple(negatives),
+        )
 
+    @simple_instance_method_cache(maxsize=1000)
     def get_channel_names(self, study: str) -> tuple[str, ...]:
         components = StudyAccess(self.cursor).get_study_components(study)
         self.cursor.execute('''

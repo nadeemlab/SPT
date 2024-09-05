@@ -6,9 +6,9 @@ from importlib.resources import files
 import re
 
 import pandas as pd
-from psycopg2 import Error as Psycopg2Error
-from psycopg2.errors import UndefinedTable
-from psycopg2.errors import DuplicateTable
+from psycopg import Error as PsycopgError
+from psycopg.errors import UndefinedTable
+from psycopg.errors import DuplicateTable
 
 from spatialprofilingtoolbox.db.database_connection import create_database
 from spatialprofilingtoolbox.db.credentials import metaschema_database
@@ -43,7 +43,7 @@ class SchemaInfuser:
 
         try:
             self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
-        except Psycopg2Error as exception:
+        except PsycopgError as exception:
             logger.warning('Could not run grant privileges script. Possibly users are not set up.')
             logger.warning(exception)
 
@@ -64,7 +64,7 @@ class SchemaInfuser:
         self._verbose_sql_execute(('performance_tweaks.sql', 'tweak main schema'))
         try:
             self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
-        except Psycopg2Error as exception:
+        except PsycopgError as exception:
             logger.warning('Could not run grant privileges script. Possibly users are not set up.')
             logger.warning(exception)
 
@@ -81,7 +81,7 @@ class SchemaInfuser:
         with as_file(files('adiscstudies').joinpath('fields.tsv')) as path:
             fields = pd.read_csv(path, sep='\t', keep_default_na=False)
         table_names = sorted(list(set(self.normalize(t) for t in fields['Table'])))
-        performance_extras = ['sample_strata', 'pending_feature_computation', 'umap_plots']
+        performance_extras = ['sample_strata', 'quantitative_feature_value_queue', 'umap_plots']
         table_names = table_names + self.get_schema_documentation_tables() + performance_extras
         return '\n'.join([
             f'DROP TABLE IF EXISTS {t} CASCADE ; ' for t in table_names

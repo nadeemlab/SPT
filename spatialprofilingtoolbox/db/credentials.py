@@ -42,7 +42,6 @@ def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
     missing = set(_get_credential_keys()).difference(credentials.keys())
     if len(missing) > 0:
         raise ValueError(f'Database configuration file is missing keys: {missing}')
-    
     return DBCredentials(
         credentials['endpoint'],
         metaschema_database(),

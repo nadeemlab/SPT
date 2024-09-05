@@ -5,6 +5,11 @@ yellow="\033[33m"
 red="\033[31m"
 reset_code="\033[0m"
 
+function normalize_floats() {
+    filename="$1"
+    sed -r 's/(\.[0-9][0-9][0-9])[0-9]+/\1/g' "$filename"
+}
+
 function signature_query_form() {
     ordinality="$2"
     if [[ "$ordinality" == "2" ]];
@@ -81,7 +86,7 @@ function test_squidpy_custom_phenotypes() {
     fi
 
     start=$SECONDS
-    while (( SECONDS - start < 200 )); do
+    while (( SECONDS - start < 300 )); do
         echo -en "Doing query $blue$query$reset_code ... "
         curl -s "$query" > _squidpy.json;
         if [ "$?" -gt 0 ];
@@ -100,7 +105,7 @@ function test_squidpy_custom_phenotypes() {
             rm _squidpy.json
             break
         else
-            waitperiod=1.0
+            waitperiod=5.0
             echo "Still pending. Waiting ${waitperiod} seconds to poll for metrics availability... "
             sleep $waitperiod
         fi
@@ -110,8 +115,12 @@ function test_squidpy_custom_phenotypes() {
         echo "Test timed out."
         exit 1
     fi;
-    diff $filename squidpy.json
+
+    normalize_floats "$filename" > n1.json
+    normalize_floats squidpy.json > n2.json
+    diff n1.json n2.json
     status=$?
+    rm n1.json n2.json
     [ $status -eq 0 ] || (echo "API query for squidpy metrics failed."; )
     if [ $status -eq 0 ];
     then

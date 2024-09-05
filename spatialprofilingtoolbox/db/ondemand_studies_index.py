@@ -9,18 +9,18 @@ def get_counts(database_config_file: str, blob_type: str, study: str | None = No
     else:
         studies = (study,)
     counts: dict[str, int] = {}
-    for study in studies:
-        with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+    for _study in studies:
+        with DBCursor(database_config_file=database_config_file, study=_study) as cursor:
             cursor.execute(f'''
                 SELECT COUNT(*) FROM ondemand_studies_index osi
                 WHERE osi.blob_type='{blob_type}' ;
             ''')
             count = tuple(cursor.fetchall())[0][0]
-            counts[study] = count
+            counts[_study] = count
     return counts
 
 
-def drop_cache_files(database_config_file: str, blob_type: str, study: str | None = None) -> None:
+def drop_cache_files(database_config_file: str | None, blob_type: str, study: str | None = None) -> None:
     if study is None:
         studies = tuple(retrieve_study_names(database_config_file))
     else:

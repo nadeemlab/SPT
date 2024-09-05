@@ -5,7 +5,6 @@ from typing import Annotated
 from typing import Literal
 import json
 from io import BytesIO
-from base64 import b64decode
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -17,24 +16,24 @@ import matplotlib.pyplot as plt  # type: ignore
 
 import secure
 
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
-from spatialprofilingtoolbox.ondemand.service_client import OnDemandRequester
+from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeSymbol,
+    PhenotypeSymbolAndCriteria,
     Channel,
     PhenotypeCriteria,
     PhenotypeCounts,
-    PhenotypeCount,
     UnivariateMetricsComputationResult,
-    CellData,
-    AvailableGNN,
+    AvailableGNN
 )
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import UMAPChannel
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
-    ValidChannel,
     ValidStudy,
     ValidPhenotypeSymbol,
     ValidPhenotypeList,
@@ -47,7 +46,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
-VERSION = '0.23.0'
+VERSION = '0.24.0'
 
 TITLE = 'Single cell studies data API'
 
@@ -70,8 +69,6 @@ app = FastAPI(
         'email': 'mathewj2@mskcc.org"',
     },
 )
-
-CELL_DATA_CELL_LIMIT = 100001
 
 
 def custom_openapi():
@@ -169,9 +166,17 @@ async def get_channels(
 @app.get("/phenotype-symbols/")
 async def get_phenotype_symbols(
     study: ValidStudy,
-) -> list[PhenotypeSymbol]:
+) -> list[PhenotypeSymbolAndCriteria]:
     """The display names and identifiers for the "composite" phenotypes in a given study."""
-    return query().get_phenotype_symbols(study)
+    symbols: tuple[PhenotypeSymbol, ...] = query().get_phenotype_symbols(study)
+    return list(
+        PhenotypeSymbolAndCriteria(
+            handle_string = s.handle_string,
+            identifier = s.identifier,
+            criteria = query().get_phenotype_criteria(study, s.handle_string),
+        )
+        for s in symbols
+    )
 
 
 @app.get("/phenotype-criteria/")
@@ -196,13 +201,29 @@ async def get_anonymous_phenotype_counts_fast(
     """
     return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
 
+
 def _get_anonymous_phenotype_counts_fast(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
     number_cells = cast(int, query().get_number_cells(study))
-    return get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+    counts = get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+    return counts
+
+
+@app.get("/phenotype-counts/")
+async def get_phenotype_counts_nonblocking(
+    positive_marker: ValidChannelListPositives,
+    negative_marker: ValidChannelListNegatives,
+    study: ValidStudy,
+) -> PhenotypeCounts:
+    """Computes the number of cells satisfying the given positive and negative criteria, in the
+    context of a given study. Non-blocking, has a "pending" flag in the response.
+    """
+    counts = get_phenotype_counts(positive_marker, negative_marker, study, 0, blocking=False)
+    return counts
+
 
 @app.get("/request-spatial-metrics-computation/")
 async def request_spatial_metrics_computation(
@@ -218,8 +239,8 @@ async def request_spatial_metrics_computation(
     ]
     markers: list[list[str]] = []
     for criterion in criteria:
-        markers.append(criterion.positive_markers)
-        markers.append(criterion.negative_markers)
+        markers.append(list(criterion.positive_markers))
+        markers.append(list(criterion.negative_markers))
     return get_squidpy_metrics(study, markers, feature_class, radius=radius)
 
 
@@ -317,24 +338,44 @@ def _get_importance_composition(
     )
 
 
+def get_phenotype_counts_cached(
+    positives: tuple[str, ...],
+    negatives: tuple[str, ...],
+    study: str,
+    number_cells: int,
+    selected: tuple[int, ...],
+    blocking: bool = True,
+) -> PhenotypeCounts:
+    counts = OnDemandRequester.get_counts_by_specimen(
+        positives,
+        negatives,
+        study,
+        number_cells,
+        set(selected) if selected is not None else None,
+        blocking = blocking,
+    )
+    return counts
+
+
 def get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
     number_cells: int,
     cells_selected: set[int] | None = None,
+    blocking: bool = True,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    with OnDemandRequester(service='counts') as requester:
-        counts = requester.get_counts_by_specimen(
-            positive_markers,
-            negative_markers,
-            study,
-            number_cells,
-            cells_selected,
-        )
+    counts = get_phenotype_counts_cached(
+        tuple(positive_markers),
+        tuple(negative_markers),
+        study,
+        number_cells,
+        tuple(sorted(list(cells_selected))) if cells_selected is not None else (),
+        blocking = blocking,
+    )
     return counts
 
 
@@ -343,13 +384,11 @@ def get_proximity_metrics(
     markers: tuple[list[str], list[str], list[str], list[str]],
     radius: float,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester(service='proximity') as requester:
-        metrics = requester.get_proximity_metrics(
-            study,
-            radius,
-            markers,
-        )
-    return metrics
+    return OnDemandRequester.get_proximity_metrics(
+        study,
+        radius,
+        markers,
+    )
 
 
 def get_squidpy_metrics(
@@ -358,68 +397,82 @@ def get_squidpy_metrics(
     feature_class: str,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    with OnDemandRequester(service='squidpy') as requester:
-        metrics = requester.get_squidpy_metrics(
-            study,
-            markers,
-            feature_class,
-            radius=radius,
-        )
-    return metrics
+    return OnDemandRequester.get_squidpy_metrics(
+        study,
+        markers,
+        feature_class,
+        radius=radius,
+    )
 
 
-@app.get("/cell-data/")
-async def get_cell_data(
+@app.get("/cell-data-binary/")
+async def get_cell_data_binary(
     study: ValidStudy,
     sample: Annotated[str, Query(max_length=512)],
-) -> CellData:
-    """Get cell-level location and phenotype data."""
-    if not sample in query().get_sample_names(study):
-        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
-    number_cells = cast(int, query().get_number_cells(study))
-
-    def match(c: PhenotypeCount) -> bool:
-        return c.specimen == sample
-    count = tuple(filter(match, get_phenotype_counts([], [], study, number_cells).counts))[0].count
-    if count is None or count > CELL_DATA_CELL_LIMIT:
-        message = f'Sample "{sample}" has too many cells: {count}.'
-        raise HTTPException(status_code=404, detail=message)
-    with OnDemandRequester(service='cells') as requester:
-        payload = requester.get_cells_data(study, sample)
-    return payload
-
-
-@app.get("/visualization-plots/")
-async def get_plots(
-    study: ValidStudy,
-) -> list[UMAPChannel]:
-    """Base64-encoded plots of UMAP visualizations, one per channel."""
-    return query().get_umaps_low_resolution(study)
-
-
-@app.get("/visualization-plot-high-resolution/")
-async def get_plot_high_resolution(
-    study: ValidStudy,
-    channel: ValidChannel,
 ):
-    """One full-resolution UMAP plot (for the given channel in the given study), provided as a
-    streaming PNG.
     """
-    umap = query().get_umap(study, channel)
-    input_buffer = BytesIO(b64decode(umap.base64_png))
+    Get streaming cell-level location and phenotype data in a custom binary format.
+    The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
+    
+    The sample may be "UMAP virtual sample" if UMAP dimensional reduction is available.
+    """
+    has_umap = query().has_umap(study)
+    if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
+        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+    data = query().get_cells_data(study, sample)
+    input_buffer = BytesIO(data)
     input_buffer.seek(0)
-
     def streaming_iteration():
         yield from input_buffer
-    return StreamingResponse(streaming_iteration(), media_type="image/png")
+    return StreamingResponse(streaming_iteration(), media_type="application/octet-stream")
 
 
-@app.get("/importance-fraction-plot/")
-async def importance_fraction_plot(
-    study: ValidStudy,
-    img_format: Literal['svg', 'png'] = 'svg',
-) -> StreamingResponse:
-    """Return a plot of the fraction of important cells expressing a given phenotype."""
+@app.get("/cell-data-binary-feature-names/")
+async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatureNames:
+    """
+    Get the features corresponding to the channels in the binary/bitmask representation of a cell's
+    channel positivity/negativity assignments.
+    """
+    return query().get_ordered_feature_names(study)
+
+
+def _ensure_plot_cache_exists(study: str):
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS gnn_plot_cache(
+            img_format VARCHAR(3),
+            blob_contents bytea
+        ) ;
+        ''')
+
+
+def _retrieve_gnn_plot(study: str, img_format: str) -> bytes | None:
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        SELECT blob_contents
+        FROM gnn_plot_cache
+        WHERE img_format=%s
+        ''', (img_format,))
+        rows = tuple(cursor.fetchall())
+    if len(rows) == 0:
+        return None
+    return bytes(rows[0][0])
+
+
+def _write_gnn_plot(contents: bytes, study: str, img_format: str) -> None:
+    with DBCursor(study=study) as cursor:
+        cursor.execute('''
+        INSERT INTO gnn_plot_cache(img_format, blob_contents)
+        VALUES (%s, %s) ;
+        ''', (img_format, contents))
+
+
+def get_importance_fraction_plot(study: str, img_format: str) -> bytes:
+    _ensure_plot_cache_exists(study)
+    contents = _retrieve_gnn_plot(study, img_format)
+    if contents is not None:
+        return contents
+
     settings: str = cast(list[str], query().get_study_gnn_plot_configurations(study))[0]
     (
         _,
@@ -431,7 +484,7 @@ async def importance_fraction_plot(
         orientation,
     ) = read_plot_importance_fractions_config(None, settings, True)
 
-    plot = PlotGenerator(
+    generator = PlotGenerator(
         (
             _get_anonymous_phenotype_counts_fast,
             query().get_study_summary,
@@ -444,9 +497,26 @@ async def importance_fraction_plot(
         plugins,
         figure_size,
         orientation,
-    ).generate_plot()
+    )
+    plot = generator.generate_plot()
     plt.figure(plot.number)  # type: ignore
-    buf = BytesIO()
-    plt.savefig(buf, format=img_format)
-    buf.seek(0)
-    return StreamingResponse(buf, media_type=f"image/{img_format}")
+    buffer = BytesIO()
+    plt.savefig(buffer, format=img_format)
+    buffer.seek(0)
+    contents = buffer.read()
+    _write_gnn_plot(contents, study, img_format)
+    return contents
+
+
+@app.get("/importance-fraction-plot/")
+async def importance_fraction_plot(
+    study: ValidStudy,
+    img_format: Literal['svg', 'png'] = 'svg',
+) -> StreamingResponse:
+    """Return a plot of the fraction of important cells expressing a given phenotype."""
+    raw = get_importance_fraction_plot(str(study), str(img_format))
+    buffer = BytesIO()
+    buffer.write(raw)
+    buffer.seek(0)
+    media_type = "image/svg+xml" if img_format == "svg" else "image/png"
+    return StreamingResponse(buffer, media_type=media_type)

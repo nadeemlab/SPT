@@ -1,0 +1,69 @@
+[
+    {
+        "handle_string": "CD4+ T cell",
+        "identifier": "2",
+        "criteria": {
+            "positive_markers": [
+                "CD3",
+                "CD4"
+            ],
+            "negative_markers": [
+                "CD20",
+                "CD56",
+                "CD8",
+                "FOXP3",
+                "SOX10"
+            ]
+        }
+    },
+    {
+        "handle_string": "CD8+ T cell",
+        "identifier": "3",
+        "criteria": {
+            "positive_markers": [
+                "CD3",
+                "CD8"
+            ],
+            "negative_markers": [
+                "CD20",
+                "CD4",
+                "CD56",
+                "FOXP3",
+                "SOX10"
+            ]
+        }
+    },
+    {
+        "handle_string": "T cell/null phenotype",
+        "identifier": "0",
+        "criteria": {
+            "positive_markers": [
+                "CD3"
+            ],
+            "negative_markers": [
+                "CD20",
+                "CD4",
+                "CD56",
+                "CD8",
+                "FOXP3",
+                "SOX10"
+            ]
+        }
+    },
+    {
+        "handle_string": "Tumor",
+        "identifier": "1",
+        "criteria": {
+            "positive_markers": [
+                "SOX10"
+            ],
+            "negative_markers": [
+                "CD20",
+                "CD3",
+                "CD4",
+                "CD8",
+                "FOXP3"
+            ]
+        }
+    }
+]

@@ -4,7 +4,7 @@ from statistics import mean
 from typing import Any
 from typing import cast
 
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
@@ -66,25 +66,26 @@ class StructureCentroidsPuller:
         """
         study_names = self._get_study_names(study=study)
         for study_name, measurement_study in study_names:
-            parameters: list[str | tuple[str, ...]] = [measurement_study]
+            parameters: list[str | tuple[str, ...]] = [f"'{measurement_study}'"]
 
             with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
                 if specimen is not None:
-                    parameters.append(specimen)
+                    parameters.append(f"'{specimen}'")
                     specimen_count = 1
                 else:
                     specimen_count = self._get_specimen_count(measurement_study, cursor)
                 if histological_structures is not None:
-                    parameters.append(tuple(str(hs_id) for hs_id in histological_structures))
+                    def _format(hs: int) -> str:
+                        return f"'{hs}'"
+                    parameters.append(f"({', '.join(map(_format, histological_structures))})")
 
-                cursor.execute(
-                    self._get_shapefiles_query(
-                        specimen is not None,
-                        histological_structures is not None,
-                    ),
-                    parameters,
+                query = self._get_shapefiles_query(
+                    specimen is not None,
+                    histological_structures is not None,
                 )
+                query = query % tuple(parameters)
 
+                cursor.execute(query)
                 rows: list = []
                 total = cursor.rowcount
                 while cursor.rownumber < total - 1:
@@ -105,7 +106,7 @@ class StructureCentroidsPuller:
 
     def _get_specimen_count(self,
         measurement_study: str,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
     ) -> int:
         cursor.execute('''
         SELECT COUNT(*) FROM specimen_data_measurement_process sdmp
@@ -169,7 +170,7 @@ class StructureCentroidsPuller:
                 ;
                 ''', (study,))
                 rows = tuple(cursor.fetchall())
-                records.extend((study, tuple(rows)))
+                records.append((study, tuple(rows)))
         return tuple(records)
 
     def _get_study_names(self, study: str | None = None) -> list[tuple[str, str]]:

@@ -4,7 +4,7 @@ ARG PIP_NO_CACHE_DIR=1
 RUN apt update && apt install -y gcc g++ libpq-dev && apt-get clean
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev && apt-get clean
-RUN python -m pip install psycopg2==2.9.9
+RUN python -m pip install psycopg==3.1.19
 RUN python -m pip install adiscstudies==0.11.0
 RUN python -m pip install numba==0.59.0
 RUN python -m pip install attrs==23.2.0
@@ -23,4 +23,4 @@ ENV service_name $service_name
 COPY $WHEEL_FILENAME ./
 RUN python -m pip install "$WHEEL_FILENAME"
 ENV API_SERVER_PORT=8016
-ENTRYPOINT ["spt", "ondemand", "start", "--host", "0.0.0.0", "--port", "8016", "--timeout-seconds", "360"]
+ENTRYPOINT ["spt", "ondemand", "start"]

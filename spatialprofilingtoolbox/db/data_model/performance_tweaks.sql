@@ -34,19 +34,24 @@ CREATE TABLE sample_strata (
     subject_diagnosed_result VARCHAR(512)
 );
 
-CREATE TABLE umap_plots (
-    study VARCHAR(512),
-    channel VARCHAR(512),
-    png_base64 VARCHAR
+CREATE TABLE quantitative_feature_value_queue (
+    feature INTEGER REFERENCES feature_specification(identifier) ,
+    subject VARCHAR
 );
 
-CREATE TABLE pending_feature_computation (
-    feature_specification VARCHAR(512) REFERENCES feature_specification(identifier),
-    time_initiated VARCHAR(512)
-);
+ALTER TABLE quantitative_feature_value_queue
+ADD CONSTRAINT unique_qfvq UNIQUE (feature, subject) ;
+
+ALTER TABLE quantitative_feature_value
+ADD CONSTRAINT unique_qfv UNIQUE (feature, subject) ;
 
 CREATE TABLE ondemand_studies_index (
     specimen VARCHAR(512),
     blob_type VARCHAR(512),
     blob_contents bytea
+);
+
+CREATE TABLE cell_set_cache (
+    feature INTEGER,
+    histological_structure VARCHAR(512)
 );

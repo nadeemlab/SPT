@@ -4,7 +4,7 @@ from typing import cast
 from pandas import DataFrame
 from pandas import Series
 from pandas import read_csv
-from psycopg2.extensions import cursor as Psycopg2Cursor
+from psycopg import cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -59,7 +59,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
 
     def _handle_chemical_species(self,
         channels: DataFrame,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
     ) -> dict[str, str]:
         identifier = self._get_next('chemical_species', cursor)
         initial_value = identifier
@@ -94,7 +94,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         channels: DataFrame,
         measurement_study: str,
         chemical_species_identifiers_by_symbol: dict[str, str],
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
     ):
         identifier = self._get_next('biological_marking_system', cursor)
         initial_value = identifier
@@ -124,7 +124,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         phenotypes: DataFrame,
         chemical_species_identifiers_by_symbol: dict[str, str],
         data_analysis_study: str,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
     ) -> None:
         identifier = self._get_next('cell_phenotype', cursor)
         initial_value = identifier
@@ -145,7 +145,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         phenotype: Series,
         chemical_species_identifiers_by_symbol: dict[str, str],
         identifier: int,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
     ) -> tuple[str, int, int, list[tuple[str, str]]]:
         symbol = phenotype['Name']
         record: tuple[str, ...] = (str(identifier), symbol, symbol)
@@ -190,7 +190,7 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         signature: list[tuple[str, str]],
         phenotype_identifier: int,
         data_analysis_study: str,
-        cursor: Psycopg2Cursor,
+        cursor: PsycopgCursor,
     ) -> None:
         for polarity, chemical_species_identifier in signature:
             record = (

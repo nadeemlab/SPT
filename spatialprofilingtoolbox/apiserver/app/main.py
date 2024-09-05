@@ -104,16 +104,6 @@ async def set_secure_headers(request, call_next):
     return response
 
 
-@app.get("/")
-async def get_root():
-    return Response(
-        content=json.dumps(
-            {'server description': 'Single cell studies database views API'}
-        ),
-        media_type='application/json',
-    )
-
-
 @app.get("/study-names/")
 async def get_study_names(
     collection: Annotated[str | None, Query(max_length=512)] = None

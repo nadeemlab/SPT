@@ -36,7 +36,8 @@ class Institution(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                }
+                    "name": "University of Zurich"
+                },
             ]
         }
     }
@@ -52,7 +53,8 @@ class Assay(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                }
+                    "name": "Imaging mass cytometry"
+                },
             ]
         }
     }
@@ -70,7 +72,9 @@ class StudyContact(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                }
+                    "name": "Hartland W. Jackson",
+                    "email_address": "hjackson@lunenfeld.ca"
+                },
             ]
         }
     }
@@ -88,7 +92,10 @@ class DataRelease(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                }
+                    "repository": "Zenodo (CERN)",
+                    "url": "https://doi.org/10.5281/zenodo.4607374",
+                    "date": "2019-11-04",
+                },
             ]
         }
     }
@@ -108,6 +115,10 @@ class Publication(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
+                    "title": "The single-cell pathology landscape of breast cancer",
+                    "url": "https://doi.org/10.1038/s41586-019-1876-x",
+                    "first_author_name": "Hartland W. Jackson",
+                    "date": "2020-01-20",
                 }
             ]
         }
@@ -128,7 +139,11 @@ class CountsSummary(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                }
+                    "specimens": 169,
+                    "cells": 430029,
+                    "channels": 33,
+                    "composite_phenotypes": 3,
+                },
             ]
         }
     }
@@ -150,7 +165,23 @@ class Cohort(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                }
+                    "identifier": "1",
+                    "temporality": "Before intervention",
+                    "diagnosis": "Response to hormone therapy",
+                    "result": "Refractory"
+                },
+                {
+                    "identifier": "2",
+                    "temporality": "Before intervention",
+                    "diagnosis": "Response to hormone therapy",
+                    "result": "Sensitive"
+                },
+                {
+                    "identifier": "3",
+                    "temporality": "Before intervention",
+                    "diagnosis": "Response to hormone therapy",
+                    "result": "Resistant"
+                },
             ]
         }
     }
@@ -164,7 +195,13 @@ class CohortAssignment(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                }
+                    "sample": "BaselTMA_SP41_101_X10Y8",
+                    "cohort": "1"
+                },
+                {
+                    "sample": "BaselTMA_SP43_95_X13Y2",
+                    "cohort": "3"
+                },
             ]
         }
     }
@@ -177,14 +214,6 @@ class SampleCohorts(BaseModel):
     """
     assignments: list[CohortAssignment]
     cohorts: list[Cohort]
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                }
-            ]
-        }
-    }
 
 
 class Context(BaseModel):
@@ -192,28 +221,12 @@ class Context(BaseModel):
     institution: Institution
     assay: Assay
     contact: StudyContact
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                }
-            ]
-        }
-    }
 
 
 class Products(BaseModel):
     """These are the formal research products of a given study."""
     data_release: DataRelease
     publication: Publication
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                }
-            ]
-        }
-    }
 
 
 class StudySummary(BaseModel):
@@ -224,11 +237,8 @@ class StudySummary(BaseModel):
     cohorts: SampleCohorts
     findings: list[str]
     has_umap: bool
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                }
-            ]
-        }
-    }
+
+            # "findings": [
+            #     "Proximity (occurrence within 50um) of KRT7+ CK+ cells in neighborhoods of KRT14+ CK+ cells is elevated 1.6 times in the sensitive cohort compared with refractory (p=0.03). /study/breast-cancer-imc/analysis/detail?phenotypes=KRT14%2B+CK%2B%2CKRT7%2B+CK%2B&selected_phenotypes=KRT14%2B+CK%2B%26KRT7%2B+CK%2B&enrichfields=KRT14%2B+CK%2B%26KRT7%2B+CK%2B-proximity&cohorts=1%2C2"
+            # ],
+            # "has_umap": True,

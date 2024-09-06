@@ -15,13 +15,13 @@ def abbreviate_string(string: str) -> str:
     return abbreviation
 
 
-async def valid_study_name(study: str = Query(min_length=3)) -> str:
+async def valid_study_name(study: str = Query(min_length=3, examples=['Breast cancer IMC', 'Urothelial ICI'])) -> str:
     if study in query().retrieve_study_specifiers():
         return study
     raise ValueError(f'Study name invalid: "{abbreviate_string(study)}"')
 
 
-async def valid_channel(channel: str = Query(min_length=1)) -> str:
+async def valid_channel(channel: str = Query(min_length=1, examples=['CD3', 'CD8'])) -> str:
     study_names = query().retrieve_study_specifiers()
     names = list(chain(*[query().get_channel_names(study) for study in study_names]))
     names = [n.symbol for n in names]

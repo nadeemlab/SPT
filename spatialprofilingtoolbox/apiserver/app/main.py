@@ -53,8 +53,8 @@ TITLE = 'Single cell studies data API'
 DESCRIPTION = """
 # What's available
 
-This API provides useful access to the **single-cell datasets** residing in a database that is curated
-and maintained by the [Nadeem Lab](https://nadeemlab.org).
+This API provides useful access to the **single-cell datasets** residing in a database that is
+curated and maintained by the [Nadeem Lab](https://nadeemlab.org).
 
 The public portion of the database includes phenotype and slide position information for
 
@@ -64,9 +64,11 @@ The public portion of the database includes phenotype and slide position informa
 * from cancers of the breast and lung, as well as urothelial cancer and melanoma
 * with a range of outcome assignments depending on the study design (often immunotherapy response)
 
-This is the data source for the Spatial Profiling Toolbox (SPT) web application located at [oncopathtk.org](https://oncopathtk.org).
+This is the data source for the Spatial Profiling Toolbox (SPT) web application located at
+[oncopathtk.org](https://oncopathtk.org).
 
-Using this API you can also request computation of some metrics completely on-the-fly for a given study:
+Using this API you can also request computation of some metrics completely on-the-fly for a given
+study:
 
 * **Phenotype fractions** per sample, with custom or pre-defined signatures
 * Other per-sample metrics informed by cells' relative **spatial position**, like:
@@ -80,7 +82,8 @@ library.
 
 You can also retrieve:
 
-* A highly compressed **binary representation** of a given sample's **phenotype and position** information, suitable for live applications.
+* A highly compressed **binary representation** of a given sample's **phenotype and position**
+  information, suitable for live applications.
 * A **UMAP** representation of a large random subsample of each study's cell set.
 
 # Reading this documentation
@@ -88,13 +91,15 @@ You can also retrieve:
 This API was created using [FastAPI](https://fastapi.tiangolo.com) and
 [Pydantic](https://docs.pydantic.dev/latest/).
 
-The documentation you are reading is automatically generated and comes in two flavors:
+The documentation you are reading in the browser is automatically generated and comes in two
+flavors:
 * [Redoc variant](https://oncopathtk.org/api/redoc)
-* [Swagger UI variant](https://oncopathtk.org/api/docs) (includes a list of the JSON-formatted return value types)
+* [Swagger UI variant](https://oncopathtk.org/api/docs) (includes a list of the JSON-formatted
+  return value types)
 
-The hierarchical system for the JSON-formatted return values is described in detail at the end of
-the Swagger UI version. This system is a simplified version of the complete [schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#)
-which was used to guide the development of the SPT application components.
+The system of JSON-formatted return values is a simplified version of the complete
+[schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#) which was used to guide
+the development of the SPT application components.
 
 Each endpoint (i.e. one URL for fetching a bundle of data) is documented with sample usage and a
 high-level description of how to specify parameters and interpret the results. You can access these
@@ -103,7 +108,6 @@ the same way you would access any HTTP API, for example using:
 * [`curl`](https://curl.se) or [`wget`](https://www.gnu.org/software/wget/) on the command line
 * the [`requests`](https://requests.readthedocs.io/en/latest/) Python library
 * the [Axios](https://axios-http.com/docs/intro) Javascript library
-
 """
 
 app = FastAPI(
@@ -124,8 +128,10 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title=TITLE,
         version=VERSION,
+
         # This is a manual replacement for 3.1.0 default, which isn't supported by Swagger UI yet.
-        openapi_version='3.0.0',
+        # openapi_version='3.0.0',
+
         servers=[
             {
                 'url': '/api'
@@ -153,7 +159,7 @@ async def set_secure_headers(request, call_next):
 
 @app.get("/study-names/")
 async def get_study_names(
-    collection: Annotated[str | None, Query(max_length=512)] = None
+    collection: Annotated[str | None, Query(max_length=512, examples=['abcdef'])] = None
 ) -> list[StudyHandle]:
     """
     This is the list of studies or datasets, including only:
@@ -204,9 +210,6 @@ async def get_study_summary(
     * Manuscript and data publication
     * Summary of the number of cells, specimens, measured channels
     * Grouping of samples/patients into cohorts, outcome assignments
-
-    The exact format is shown by clicking "Schema" below, or navigating to the StudySummary
-    description at the bottom of the Swagger UI version of this page.
     """
     return query().get_study_summary(study)
 

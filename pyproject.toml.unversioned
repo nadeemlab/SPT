@@ -142,6 +142,7 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
+"spatialprofilingtoolbox" = ["py.typed"]
 "spatialprofilingtoolbox.entry_point" = ["spt-completion.sh.jinja"]
 "spatialprofilingtoolbox.workflow.scripts" = [
     "aggregate_core_results.py",

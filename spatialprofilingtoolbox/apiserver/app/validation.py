@@ -15,13 +15,13 @@ def abbreviate_string(string: str) -> str:
     return abbreviation
 
 
-async def valid_study_name(study: str = Query(min_length=3)) -> str:
+async def valid_study_name(study: str = Query(min_length=3, examples=['Breast cancer IMC', 'Urothelial ICI'])) -> str:
     if study in query().retrieve_study_specifiers():
         return study
     raise ValueError(f'Study name invalid: "{abbreviate_string(study)}"')
 
 
-async def valid_channel(channel: str = Query(min_length=1)) -> str:
+async def valid_channel(channel: str = Query(min_length=1, examples=['CD3', 'CD8'])) -> str:
     study_names = query().retrieve_study_specifiers()
     names = list(chain(*[query().get_channel_names(study) for study in study_names]))
     names = [n.symbol for n in names]
@@ -39,7 +39,7 @@ def valid_composite_phenotype_name(identifier: str) -> str:
     raise ValueError(f'Composite phenotype identifier invalid: {abbreviate_string(identifier)}')
 
 
-async def valid_phenotype_symbol(phenotype_symbol: str = Query(min_length=1)) -> str:
+async def valid_phenotype_symbol(phenotype_symbol: str = Query(min_length=1, examples=['1', '2'])) -> str:
     return valid_composite_phenotype_name(phenotype_symbol)
 
 
@@ -57,21 +57,21 @@ def valid_single_or_composite_identifier(identifier) -> str:
     raise ValueError(f'Channel name or phenotype identifier invalid: {abbreviation}')
 
 
-async def valid_phenotype(phenotype: str = Query(min_length=1)) -> str:
+async def valid_phenotype(phenotype: str = Query(min_length=1, examples=['CD3', 'CD4', '1', '2'])) -> str:
     return valid_single_or_composite_identifier(phenotype)
 
 
-async def valid_phenotype_list(phenotype: list[str] = Query(min_length=1)) -> list[str]:
+async def valid_phenotype_list(phenotype: list[str] = Query(min_length=1, examples=[['FOXP3', 'CD56']])) -> list[str]:
     if not all(valid_single_or_composite_identifier(p) for p in phenotype):
         raise ValueError(f'Phenotype list contains some invalid member. {phenotype}')
     return phenotype
 
 
-async def valid_phenotype1(phenotype1: str = Query(min_length=1)) -> str:
+async def valid_phenotype1(phenotype1: str = Query(min_length=1, examples=['CD3', 'CD4', '1', '2'])) -> str:
     return valid_single_or_composite_identifier(phenotype1)
 
 
-async def valid_phenotype2(phenotype2: str = Query(min_length=1)) -> str:
+async def valid_phenotype2(phenotype2: str = Query(min_length=1, examples=['CD3', 'CD4', '1', '2'])) -> str:
     return valid_single_or_composite_identifier(phenotype2)
 
 

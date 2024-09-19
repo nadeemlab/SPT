@@ -46,17 +46,68 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
-VERSION = '0.24.0'
+VERSION = '0.25.0'
 
 TITLE = 'Single cell studies data API'
 
 DESCRIPTION = """
-Get information about single cell phenotyping studies, including:
+# What's available
 
-* aggregated counts by outcome/case
-* phenotype definitions
-* spatial statistics
-* study metadata
+This API provides useful access to the **single-cell datasets** residing in a database that is
+curated and maintained by the [Nadeem Lab](https://nadeemlab.org).
+
+The public portion of the database includes phenotype and slide position information for
+
+* ~9 million cells
+* across about 1000 specimens
+* typically with around 30 protein targets quantified per cell
+* from cancers of the breast and lung, as well as urothelial cancer and melanoma
+* with a range of outcome assignments depending on the study design (often immunotherapy response)
+
+This is the data source for the Spatial Profiling Toolbox (SPT) web application located at
+[oncopathtk.org](https://oncopathtk.org).
+
+Using this API you can also request computation of some metrics completely on-the-fly for a given
+study:
+
+* **Phenotype fractions** per sample, with custom or pre-defined signatures
+* Other per-sample metrics informed by cells' relative **spatial position**, like:
+  - Proximity score between two cell populations
+  - Neighborhood enrichment in a bootstrapped probabilistic sense
+  - Ripley statistic summary
+  - Spatial auto-correlation
+
+Many of these metrics are computed using the [Squidpy](https://squidpy.readthedocs.io/en/stable/)
+library.
+
+You can also retrieve:
+
+* A highly compressed **binary representation** of a given sample's **phenotype and position**
+  information, suitable for live applications.
+* A **UMAP** representation of a large random subsample of each study's cell set.
+
+# Reading this documentation
+
+This API was created using [FastAPI](https://fastapi.tiangolo.com) and
+[Pydantic](https://docs.pydantic.dev/latest/).
+
+The documentation you are reading in the browser is automatically generated and comes in two
+flavors:
+* [Redoc variant](https://oncopathtk.org/api/redoc)
+* [Swagger UI variant](https://oncopathtk.org/api/docs) (includes a list of the JSON-formatted
+  return value types)
+
+The system of JSON-formatted return values is a simplified version of the complete
+[schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#) which was used to guide
+the development of the SPT application components.
+
+Each endpoint (i.e. one URL for fetching a bundle of data) is documented with sample usage and a
+high-level description of how to specify parameters and interpret the results. You can access these
+the same way you would access any HTTP API, for example using:
+
+* [`curl`](https://curl.se) or [`wget`](https://www.gnu.org/software/wget/) on the command line
+* the [`requests`](https://requests.readthedocs.io/en/latest/) Python library
+* the [Axios](https://axios-http.com/docs/intro) Javascript library
 """
 
 app = FastAPI(
@@ -77,8 +128,15 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title=TITLE,
         version=VERSION,
+
         # This is a manual replacement for 3.1.0 default, which isn't supported by Swagger UI yet.
-        openapi_version='3.0.0',
+        # openapi_version='3.0.0',
+
+        servers=[
+            {
+                'url': '/api'
+            }
+        ],
         summary=TITLE,
         description=DESCRIPTION,
         routes=app.routes,
@@ -99,21 +157,20 @@ async def set_secure_headers(request, call_next):
     return response
 
 
-@app.get("/")
-async def get_root():
-    return Response(
-        content=json.dumps(
-            {'server description': 'Single cell studies database views API'}
-        ),
-        media_type='application/json',
-    )
-
-
 @app.get("/study-names/")
 async def get_study_names(
-    collection: Annotated[str | None, Query(max_length=512)] = None
+    collection: Annotated[str | None, Query(max_length=512, examples=['abcdef'])] = None
 ) -> list[StudyHandle]:
-    """The names of studies/datasets, with display names."""
+    """
+    This is the list of studies or datasets, including only:
+    * A short readable name or handle
+    * An extended name intended for display, with some publication information
+
+    The short names are used for reference as parameter values in many of the other endpoints, as
+    described below.
+
+    The collection parameter is a token providing access to private datasets, so it is not required.
+    """
     specifiers = query().retrieve_study_specifiers()
     handles = [query().retrieve_study_handle(study) for study in specifiers]
 
@@ -143,7 +200,17 @@ async def get_study_names(
 async def get_study_summary(
     study: ValidStudy,
 ) -> StudySummary:
-    """A summary of a study's publications, authors, etc., as well as a summary of its datasets."""
+    """
+    This summary includes metadata, or the small data, associated with a given study:
+
+    * Authors
+    * Institution where the research was carried out
+    * Contact information
+    * Kind of data measurements collected, typically a kind of imaging
+    * Manuscript and data publication
+    * Summary of the number of cells, specimens, measured channels
+    * Grouping of samples/patients into cohorts, outcome assignments
+    """
     return query().get_study_summary(study)
 
 
@@ -151,7 +218,9 @@ async def get_study_summary(
 async def get_study_findings(
     study: ValidStudy,
 ) -> list[str]:
-    """Brief list of results of re-analysis of the given study."""
+    """
+    Brief list of results of re-analysis of the given study.
+    """
     return query().get_study_findings(study)
 
 

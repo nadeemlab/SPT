@@ -28,6 +28,20 @@ class PhenotypeCriteria(BaseModel):
     """Criteria defining a "composite" phenotype by expression and non-expression of markers."""
     positive_markers: tuple[str, ...]
     negative_markers: tuple[str, ...]
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "positive_markers": ['CD3', 'CD4'],
+                    "negative_markers": ['FOXP3'],
+                },
+                {
+                    "positive_markers": ['SOX10'],
+                    "negative_markers": [],
+                },
+            ]
+        }
+    }
 
 
 class PhenotypeSymbolAndCriteria(BaseModel):

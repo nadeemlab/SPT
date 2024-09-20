@@ -104,6 +104,12 @@ def _record_configuration_command(variables: dict[str, str], configuration_file:
 
     with open('run.sh', 'wt', encoding='utf-8') as file:
         file.write('#!/bin/sh\n\n')
+        if 'input_path' in variables and source_of_reference(variables['input_path']) == 's3':
+            file.write('# Unsetting the below is a workaround for Nextflow\'s default non-support for session-specific credentials.\n')
+            file.write('# This is intended to force Nextflow to fall back to ~/.aws/credentials, for which Nextflow DOES support\n')
+            file.write('# session-specific credentials.\n')
+            file.write('unset AWS_ACCESS_KEY_ID\n')
+            file.write('unset AWS_SECRET_ACCESS_KEY\n\n')
         file.write('nextflow run .\n')
 
     file_stat = stat('configure.sh')
@@ -396,13 +402,20 @@ if __name__ == '__main__':
         _process_filename_inputs(config_variables)
         if source_of_reference(config_variables['input_path']) == 's3':
             def copy_profile_from_saml_to_default():
-                profile = os_environ['SAML2AWS_PROFILE']
+                if 'AWS_PROFILE'  in os_environ:
+                    profile = os_environ['AWS_PROFILE']
+                elif 'SAML2AWS_PROFILE' in os_environ:
+                    profile = os_environ['SAML2AWS_PROFILE']
+                else:
+                    print('Warning: No AWS profile could be determined, implicitly using "default".')
+                    return
                 config = ConfigParser()
                 filename = expanduser('~/.aws/credentials')
                 config.read(filename)
                 config['default'] = config[profile]
                 with open(filename, 'wt', encoding='utf-8') as file:
                     config.write(file)
+                print(f'Note: Overwrote "default" profile in ~/.aws/credentials with "{profile}" values.')
             copy_profile_from_saml_to_default()
 
     _write_config_file(config_variables)

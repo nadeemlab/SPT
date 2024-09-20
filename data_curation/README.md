@@ -48,7 +48,7 @@ db_config_file = /Users/username/.spt_db.config.local
 study_name = Melanoma CyTOF ICI
 
 [tabular import]
-input_path = datasets/moldoveanus/generated_artifacts
+input_path = datasets/moldoveanu/generated_artifacts
 ```
 
 If you wish for Nextflow to pull directly from S3, rather than a local directory like `.../generated_artifacts`, `workflow.config` may look like this instead:

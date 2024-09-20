@@ -1,0 +1,358 @@
+{
+    "Study name": "Melanoma CyTOF ICI",
+    "Institution": "Rosalind and Morris Goodman Cancer Institute, McGill University",
+    "Study contact person": {
+        "Name": "Dan Moldoveanu",
+        "Contact reference": "dan.moldeveanu@mcgill.org"
+    },
+    "Publications": [
+        {
+            "Title": "Spatially mapping the immune landscape of melanoma using imaging mass cytometry",
+            "Document type": "Article",
+            "Publisher": "Cancer Immunology Research",
+            "Date": "2022-04-01",
+            "URL": "https://doi.org/10.1126/sciimmunol.abi5072",
+            "Authors": [
+                "Dan Moldoveanu",
+                "LeeAnn Ramsay",
+                "Mathieu Lajoie",
+                "Luke Anderson-Trocme",
+                "Marine Lingrand",
+                "Diana Berry",
+                "Lucas J M Perus",
+                "Yuhong Wei",
+                "Cleber Moraes",
+                "Rached Alkallas",
+                "Shivshankari Rajkumar",
+                "Dongmei Zuo",
+                "Matthew Dankner",
+                "Eric Hongbo Xu",
+                "Nicholas R Bertos",
+                "Hamed S Najafabadi",
+                "Simon Gravel",
+                "Santiago Costantino",
+                "Martin J Richer",
+                "Amanda W Lund",
+                "Sonia V Del Rincon",
+                "Alan Spatz",
+                "Wilson H Miller Jr",
+                "Rahima Jamal",
+                "R\u00e9jean Lapointe",
+                "Anne-Marie Mes-Masson",
+                "Simon Turcotte",
+                "Kevin Petrecca",
+                "Sinziana Dumitra",
+                "Ari-Nareg Meguerditchian",
+                "Keith Richardson",
+                "Francine Tremblay",
+                "Beatrice Wang",
+                "May Chergui",
+                "Marie-Christine Guiot",
+                "Kevin Watters",
+                "John Stagg",
+                "Daniela F Quail",
+                "Catalin Mihalcioiu",
+                "Sarkis Meterissian",
+                "Ian R Watson"
+            ]
+        },
+        {
+            "Title": "Raw CyTOF images associated with Moldoveanu et al. 2022, Science Immunology",
+            "Document type": "Dataset",
+            "Publisher": "Zenodo (CERN)",
+            "Date": "2022-01-25",
+            "URL": "https://zenodo.org/record/5903190#.Y_tTntLMJH4",
+            "Authors": [
+                "Dan Moldoveanu",
+                "LeeAnn Ramsay",
+                "Mathieu Lajoie",
+                "Luke Anderson-Trocme",
+                "Marine Lingrand",
+                "Diana Berry",
+                "Lucas J M Perus",
+                "Yuhong Wei",
+                "Cleber Moraes",
+                "Rached Alkallas",
+                "Shivshankari Rajkumar",
+                "Dongmei Zuo",
+                "Matthew Dankner",
+                "Eric Hongbo Xu",
+                "Nicholas R Bertos",
+                "Hamed S Najafabadi",
+                "Simon Gravel",
+                "Santiago Costantino",
+                "Martin J Richer",
+                "Amanda W Lund",
+                "Sonia V Del Rincon",
+                "Alan Spatz",
+                "Wilson H Miller Jr",
+                "Rahima Jamal",
+                "R\u00e9jean Lapointe",
+                "Anne-Marie Mes-Masson",
+                "Simon Turcotte",
+                "Kevin Petrecca",
+                "Sinziana Dumitra",
+                "Ari-Nareg Meguerditchian",
+                "Keith Richardson",
+                "Francine Tremblay",
+                "Beatrice Wang",
+                "May Chergui",
+                "Marie-Christine Guiot",
+                "Kevin Watters",
+                "John Stagg",
+                "Daniela F Quail",
+                "Catalin Mihalcioiu",
+                "Sarkis Meterissian",
+                "Ian R Watson"
+            ]
+        }
+    ],
+    "People": [
+        {
+            "Full name": "Dan Moldoveanu",
+            "Surname": "Moldoveanu",
+            "Given name": "Dan",
+            "ORCID": ""
+        },
+        {
+            "Full name": "LeeAnn Ramsay",
+            "Surname": "Ramsay",
+            "Given name": "LeeAnn",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Mathieu Lajoie",
+            "Surname": "Lajoie",
+            "Given name": "Mathieu",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Luke Anderson-Trocme",
+            "Surname": "Anderson-Trocme",
+            "Given name": "Luke",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Marine Lingrand",
+            "Surname": "Lingrand",
+            "Given name": "Marine",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Diana Berry",
+            "Surname": "Berry",
+            "Given name": "Diana",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Lucas J M Perus",
+            "Surname": "Perus",
+            "Given name": "Lucas",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Yuhong Wei",
+            "Surname": "Wei",
+            "Given name": "Yuhong",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Cleber Moraes",
+            "Surname": "Moraes",
+            "Given name": "Cleber",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Rached Alkallas",
+            "Surname": "Alkallas",
+            "Given name": "Rached",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Shivshankari Rajkumar",
+            "Surname": "Rajkumar",
+            "Given name": "Shivshankari",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Dongmei Zuo",
+            "Surname": "Zuo",
+            "Given name": "Dongmei",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Matthew Dankner",
+            "Surname": "Dankner",
+            "Given name": "Matthew",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Eric Hongbo Xu",
+            "Surname": "Xu",
+            "Given name": "Eric",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Nicholas R Bertos",
+            "Surname": "Bertos",
+            "Given name": "Nicholas",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Hamed S Najafabadi",
+            "Surname": "Najafabadi",
+            "Given name": "Hamed",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Simon Gravel",
+            "Surname": "Gravel",
+            "Given name": "Simon",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Santiago Costantino",
+            "Surname": "Costantino",
+            "Given name": "Santiago",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Martin J Richer",
+            "Surname": "Richer",
+            "Given name": "Martin",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Amanda W Lund",
+            "Surname": "Lund",
+            "Given name": "Amanda",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Sonia V Del Rincon",
+            "Surname": "Rincon",
+            "Given name": "Sonia",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Alan Spatz",
+            "Surname": "Spatz",
+            "Given name": "Alan",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Wilson H Miller Jr",
+            "Surname": "Jr",
+            "Given name": "Wilson",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Rahima Jamal",
+            "Surname": "Jamal",
+            "Given name": "Rahima",
+            "ORCID": ""
+        },
+        {
+            "Full name": "R\u00e9jean Lapointe",
+            "Surname": "Lapointe",
+            "Given name": "R\u00e9jean",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Anne-Marie Mes-Masson",
+            "Surname": "Mes-Masson",
+            "Given name": "Anne-Marie",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Simon Turcotte",
+            "Surname": "Turcotte",
+            "Given name": "Simon",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Kevin Petrecca",
+            "Surname": "Petrecca",
+            "Given name": "Kevin",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Sinziana Dumitra",
+            "Surname": "Dumitra",
+            "Given name": "Sinziana",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Ari-Nareg Meguerditchian",
+            "Surname": "Meguerditchian",
+            "Given name": "Ari-Nareg",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Keith Richardson",
+            "Surname": "Richardson",
+            "Given name": "Keith",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Francine Tremblay",
+            "Surname": "Tremblay",
+            "Given name": "Francine",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Beatrice Wang",
+            "Surname": "Wang",
+            "Given name": "Beatrice",
+            "ORCID": ""
+        },
+        {
+            "Full name": "May Chergui",
+            "Surname": "Chergui",
+            "Given name": "May",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Marie-Christine Guiot",
+            "Surname": "Guiot",
+            "Given name": "Marie-Christine",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Kevin Watters",
+            "Surname": "Watters",
+            "Given name": "Kevin",
+            "ORCID": ""
+        },
+        {
+            "Full name": "John Stagg",
+            "Surname": "Stagg",
+            "Given name": "John",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Daniela F Quail",
+            "Surname": "Quail",
+            "Given name": "Daniela",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Catalin Mihalcioiu",
+            "Surname": "Mihalcioiu",
+            "Given name": "Catalin",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Sarkis Meterissian",
+            "Surname": "Meterissian",
+            "Given name": "Sarkis",
+            "ORCID": ""
+        },
+        {
+            "Full name": "Ian R Watson",
+            "Surname": "Watson",
+            "Given name": "Ian",
+            "ORCID": ""
+        }
+    ]
+}

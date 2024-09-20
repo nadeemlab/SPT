@@ -81,8 +81,6 @@ Deleted SourceData/ and generated_artifacts/ .
 #
 # In this dummy example case we'll pretend this (committed) zip file was downloaded by this script:
 #     SourceData_March_10_2023.zip
-#
-# Prefer NOT to commit such downloaded files, even to git LFS.
 
 main_source_file=SourceData_March_10_2023.zip
 

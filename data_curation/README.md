@@ -64,7 +64,7 @@ study_name = Melanoma CyTOF ICI
 input_path = s3://bucketname/moldoveanu
 ```
 
-In the S3 case, you would have to make sure that credentials are available. Currently Nextflow requires, in the case of session-specific credentials, a "profile" `~/.aws/credentials`, usually the profile named `default`.
+In the S3 case, you would have to make sure that credentials are available. Currently Nextflow requires, in the case of session-specific credentials, a "profile" in `~/.aws/credentials`, usually the profile named `default`.
 
 You can monitor progress by watching the Nextflow logs:
 

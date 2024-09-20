@@ -1,5 +1,6 @@
 """Merge TIFF channel file data and aggregate over cell segments."""
 
+import sys
 import warnings
 
 from pandas import DataFrame
@@ -9,7 +10,9 @@ from numpy import nanmean
 from numpy import isnan
 
 from _extraction_formats import create_sparse_dataframe  # pylint: disable=E0611
-from ...convenience_scripts.bimodality_assessor import BimodalityAssessor
+
+sys.path.append('../../convenience_scripts')
+from bimodality_assessor import create_bimodal_vector
 
 def aggregate_cell(group: DataFrame, channel_name: str) -> float:
     with warnings.catch_warnings():

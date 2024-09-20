@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p generated_artifacts/
+
 if [[ ! -d CP_output_tiff ]];
 then
     filebase="Moldoveanu2022-cytof-RAW"

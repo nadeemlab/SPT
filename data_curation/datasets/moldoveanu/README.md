@@ -6,7 +6,7 @@ This script creates cell-level data files as well as study-level metadata files,
 
 Use, for example,
 ```sh
-`extract.sh --cores=4`
+./extract.sh --cores=4
 ```
 to speed up this process if your machine has multiple cores.
 

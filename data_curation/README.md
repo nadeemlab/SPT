@@ -18,7 +18,7 @@ Make sure that you have installed:
 - [Nextflow](https://nextflow.io)
 
 ```sh
-./import_datasets.sh ~/.spt_db.config.local --drop-first moldoveanu
+./import_dataset.sh ~/.spt_db.config.local --drop-first moldoveanu
 ```
 
 - `~/.spt_db.config.local` is an example name of a [database configuration file](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).

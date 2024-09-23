@@ -4,14 +4,14 @@ The scripts here are used to import dataset into a PostgreSQL database for the S
 2. [Doing import / upload into the database](#doing-import--upload-into-the-database)
 3. [Finer control of upload process](#finer-control-of-upload-process)
 
-# 1. Curation or pre-processing
+# Curation or pre-processing
 
 Datasets are stored in subdirectories of `datasets/`. To prepare a new dataset, follow the full example [here](`datasets/moldoveanu/README.md`). The example includes files pre-generated in a format ready for import into the database, but you can also re-generate them yourself.
 
 Extraction scripts tend to be dataset-specific, but there are some common tasks like quantification over segments in images, and formulation of standardized representations of channel or clinical metadata.
 
 
-# 2. Doing import / upload into the database
+# Doing import / upload into the database
 Make sure that
 - [`spatialprofilingtoolbox` Python package](https://pypi.org/project/spatialprofilingtoolbox/) has been installed, and
 - PostgresQL is installed and running on your machine.
@@ -25,7 +25,7 @@ Make sure that
 - `moldoveanu` is the name of the dataset subdirectory for the complete example.
 
 
-# 3. Finer control of the upload process
+# Finer control of the upload process
 The usage above uses several convenience wrapper functions, and assumes that you have saved dataset artifacts to `datasetes/<dataset_name>/generated_artifacts/`.
 
 For finer control, for example when drawing source files from an S3 bucket, use the following:

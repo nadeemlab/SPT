@@ -1,4 +1,4 @@
-The scripts here are used to organize datasets before importing into a PostgreSQL database for the SPT application or analysis.
+The scripts here are used to import dataset into a PostgreSQL database for the SPT application or analysis, as well as organize or curate these datasets into a form acceptable for import.
 
 1. [Curation or pre-processing](#curation-or-pre-processing)
 2. [Doing import / upload into the database](#doing-import--upload-into-the-database)

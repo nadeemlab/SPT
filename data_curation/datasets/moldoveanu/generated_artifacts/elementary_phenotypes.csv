@@ -1,0 +1,36 @@
+Name,Column header fragment prefix,Target structure class,Antibody,Marking mechanism,Target full name
+SMA,SMA,protein,1A4,Imaging mass cytometry,Survival Of Motor Neuron 1
+MEK1/2,MEK1/2,protein,L38C12,Imaging mass cytometry,Mitogen-Activated Protein Kinase Kinase 2
+MKI67,MKI67,protein,B56,Imaging mass cytometry,Marker Of Proliferation Ki-67
+CD14,CD14,protein,EPR3653,Imaging mass cytometry,Monocyte Differentiation Antigen CD14
+ERK1/2,ERK1/2,protein,poly-9102,Imaging mass cytometry,Mitogen-Activated Protein Kinase 3
+CD16,CD16,protein,EPR16784,Imaging mass cytometry,Fc Gamma Receptor IIIa
+CD31,CD31,protein,EP3095,Imaging mass cytometry,Platelet And Endothelial Cell Adhesion Molecule 1
+ICOS,ICOS,protein,D1K2T,Imaging mass cytometry,Inducible T Cell Costimulator
+CD29,CD29,protein,EPR16895,Imaging mass cytometry,Integrin Subunit Beta 1
+PDL1,PDL1,protein,SP142,Imaging mass cytometry,Programmed Cell Death 1 Ligand 1
+OX40,OX40,protein,SP195,Imaging mass cytometry,Tumor Necrosis Factor Receptor Superfamily Member 4
+CD45,CD45,protein,CD45-2B11,Imaging mass cytometry,Protein Tyrosine Phosphatase Receptor Type C
+LAG3,LAG3,protein,D2G40,Imaging mass cytometry,Lymphocyte Activating 3
+TIM3,TIM3,protein,D5D5R,Imaging mass cytometry,Hepatitis A Virus Cellular Receptor 2
+FOXP3,FOXP3,protein,236A/E7,Imaging mass cytometry,Forkhead Box P3
+CD4,CD4,protein,EPR6855,Imaging mass cytometry,T-Cell Surface Glycoprotein CD4
+CCR7,CCR7,protein,Y59,Imaging mass cytometry,C-C Motif Chemokine Receptor 7
+CD68,CD68,protein,KP1,Imaging mass cytometry,Macrophage Antigen CD68
+VISTA,VISTA,protein,D1L2G,Imaging mass cytometry,V-Set Immunoregulatory Receptor
+CD20,CD20,protein,H1,Imaging mass cytometry,B-Lymphocyte Cell-Surface Antigen B1
+CD8A,CD8A,protein,polyclonal,Imaging mass cytometry,T-Cell Surface Glycoprotein CD8
+pMEK1/2,pMEK1/2,phosphorylated protein,166F8,Imaging mass cytometry,Phosphorylated Mitogen-Activated Protein Kinase Kinase 2
+SOX10,SOX10,protein,SOX10/991,Imaging mass cytometry,SRY-Box Transcription Factor 10
+CTNNB1,CTNNB1,protein,D13A1,Imaging mass cytometry,Catenin Beta 1
+CD45RA,CD45RA,protein,HI100,Imaging mass cytometry,Protein Tyrosine Phosphatase Receptor Type C isoform A
+IGLL5,IGLL5,protein,EPR20129-217,Imaging mass cytometry,Immunoglobulin Lambda Like Polypeptide 5
+CD40,CD40,protein,EPR20540,Imaging mass cytometry,B Cell Surface Antigen CD40
+COL1,COL1,protein,polyclonal,Imaging mass cytometry,Collagen I
+CD3,CD3,protein complex,polyclonal,Imaging mass cytometry,T-Cell Receptor Complex
+pERK1/2,pERK1/2,phosphorylated protein,D13.14.4E,Imaging mass cytometry,Phosphorylated Mitogen-Activated Protein Kinase 3
+CASP3,CASP3,protein,5A1E,Imaging mass cytometry,Caspase 3 Apoptosis-Related Cysteine Peptidase
+CD45RO,CD45RO,protein,UCHL1,Imaging mass cytometry,Protein Tyrosine Phosphatase Receptor Type C isoform O
+HLA-DR,HLA-DR,protein complex,YE2/36 HLK,Imaging mass cytometry,Major Histocompatibility Complex Class II DR
+S100,S100,protein family,4C4.9,Imaging mass cytometry,S100 Calcium Binding Protein
+H3,H3,protein family,D1H2,Imaging mass cytometry,Histone H3

@@ -12,7 +12,7 @@ from numpy import isnan
 from _extraction_formats import create_sparse_dataframe  # pylint: disable=E0611
 
 sys.path.append('../../convenience_scripts')
-from bimodality_assessor import create_bimodal_vector
+from bimodality_assessor import BimodalityAssessor
 
 def aggregate_cell(group: DataFrame, channel_name: str) -> float:
     with warnings.catch_warnings():

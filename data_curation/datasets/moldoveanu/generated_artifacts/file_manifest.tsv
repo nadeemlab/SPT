@@ -1,0 +1,38 @@
+File ID	File name	Sample ID	Data type	Project ID
+file_0	0.csv	Mold_sample_01RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_1	1.csv	Mold_sample_02RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_2	2.csv	Mold_sample_04RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_3	3.csv	Mold_sample_05RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_4	4.csv	Mold_sample_06RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_5	5.csv	Mold_sample_08BL	Tabular cell manifest	Melanoma CyTOF ICI
+file_6	6.csv	Mold_sample_09RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_7	7.csv	Mold_sample_10RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_8	8.csv	Mold_sample_12RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_9	9.csv	Mold_sample_13RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_10	10.csv	Mold_sample_14RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_11	11.csv	Mold_sample_16BL	Tabular cell manifest	Melanoma CyTOF ICI
+file_12	12.csv	Mold_sample_19BL	Tabular cell manifest	Melanoma CyTOF ICI
+file_13	13.csv	Mold_sample_21RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_14	14.csv	Mold_sample_22RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_15	15.csv	Mold_sample_23RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_16	16.csv	Mold_sample_24RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_17	17.csv	Mold_sample_25RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_18	18.csv	Mold_sample_26BL	Tabular cell manifest	Melanoma CyTOF ICI
+file_19	19.csv	Mold_sample_29RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_20	20.csv	Mold_sample_31RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_21	21.csv	Mold_sample_32RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_22	22.csv	Mold_sample_33RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_23	23.csv	Mold_sample_34RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_24	24.csv	Mold_sample_35RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_25	25.csv	Mold_sample_37RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_26	26.csv	Mold_sample_39RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_27	27.csv	Mold_sample_40RD	Tabular cell manifest	Melanoma CyTOF ICI
+file_28	28.csv	Mold_sample_41BL	Tabular cell manifest	Melanoma CyTOF ICI
+file_29	29.csv	Mold_sample_42RD	Tabular cell manifest	Melanoma CyTOF ICI
+Channels file	elementary_phenotypes.csv		Manifest of basic channels/phenotypes	Melanoma CyTOF ICI
+Phenotypes file	composite_phenotypes.csv		Manifest of composite phenotypes	Melanoma CyTOF ICI
+Samples file	samples.tsv		Samples	Melanoma CyTOF ICI
+Subjects file	subjects.tsv		Manifest of subjects	Melanoma CyTOF ICI
+Study file	study.json		Project-level data	Melanoma CyTOF ICI
+Diagnosis file	diagnosis.tsv		List of subject diagnoses	Melanoma CyTOF ICI
+Interventions file	interventions.tsv		List of subject intervention events	Melanoma CyTOF ICI

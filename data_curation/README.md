@@ -12,9 +12,10 @@ Extraction scripts tend to be dataset-specific, but there are some common tasks 
 
 
 # Doing import / upload into the database
-Make sure that
-- [`spatialprofilingtoolbox` Python package](https://pypi.org/project/spatialprofilingtoolbox/) has been installed, and
-- PostgresQL is installed and running on your machine.
+Make sure that you have installed:
+- [`spatialprofilingtoolbox` Python package](https://pypi.org/project/spatialprofilingtoolbox/)
+- PostgresQL
+- [Nextflow](https://nextflow.io)
 
 ```sh
 ./import_datasets.sh ~/.spt_db.config.local --drop-first moldoveanu

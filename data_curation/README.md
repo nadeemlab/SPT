@@ -2,7 +2,7 @@ The scripts here are used to import dataset into a PostgreSQL database for the S
 
 1. [Curation or pre-processing](#curation-or-pre-processing)
 2. [Doing import / upload into the database](#doing-import--upload-into-the-database)
-3. [Finer control of upload process](#finer-control-of-upload-process)
+3. [Finer control of the upload process](#finer-control-of-the-upload-process)
 
 # Curation or pre-processing
 

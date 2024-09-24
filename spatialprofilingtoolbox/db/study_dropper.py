@@ -39,7 +39,7 @@ class StudyDropper:
             connection.autocommit = True
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute(f'DROP SCHEMA {schema_name} ;')
+                    cursor.execute(f'DROP SCHEMA {schema_name} CASCADE;')
                     logger.info(f'Dropped schema: {schema_name}')
                 except InvalidCatalogName:
                     logger.warning(f'The schema {schema_name} does not exist, can not drop it.')

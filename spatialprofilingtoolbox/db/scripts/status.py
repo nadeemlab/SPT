@@ -10,6 +10,7 @@ except ModuleNotFoundError as e:
     SuggestExtrasException(e, 'db')
 import pandas as pd  # pylint: disable=ungrouped-imports
 
+from spatialprofilingtoolbox.workflow.tabular_import.parsing.skimmer import DataSkimmer
 from spatialprofilingtoolbox.db.check_tables import check_tables  # pylint: disable=ungrouped-imports
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -51,7 +52,8 @@ def main():
     all_counts = []
     for study in studies:
         with DBCursor(database_config_file=config_file, study=study) as cursor:
-            present, counted = check_tables(cursor)
+            schema_name = DataSkimmer.sanitize_study_to_identifier(study)
+            present, counted = check_tables(cursor, schema_name)
             if not present:
                 logger.error('Some tables are missing in "%s" database.', study)
             all_counts.append(counted)

@@ -15,21 +15,26 @@ class DBCredentials:
     database: str
     user: str
     password: str
+    schema: str
 
-    def update_database(self, database: str):
-        self.database = database
+    def update_schema(self, schema: str):
+        self.schema = schema
         return self
 
-def metaschema_database() -> str:
+def metaschema_schema() -> str:
     return 'default_study_lookup'
+
+def main_database_name() -> str:
+    return 'spt_datasets'
 
 def get_credentials_from_environment() -> DBCredentials:
     _handle_unavailability()
     return DBCredentials(
         environ['SINGLE_CELL_DATABASE_HOST'],
-        metaschema_database(),
+        main_database_name(),
         environ['SINGLE_CELL_DATABASE_USER'],
         environ['SINGLE_CELL_DATABASE_PASSWORD'],
+        metaschema_schema(),
     )
 
 def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
@@ -44,9 +49,10 @@ def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
         raise ValueError(f'Database configuration file is missing keys: {missing}')
     return DBCredentials(
         credentials['endpoint'],
-        metaschema_database(),
+        main_database_name(),
         credentials['user'],
         credentials['password'],
+        metaschema_schema(),
     )
 
 def _handle_unavailability():

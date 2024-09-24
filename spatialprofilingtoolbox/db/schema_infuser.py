@@ -5,13 +5,14 @@ from importlib.resources import as_file
 from importlib.resources import files
 import re
 
-import pandas as pd
+import pandas as pd  # type: ignore
 from psycopg import Error as PsycopgError
 from psycopg.errors import UndefinedTable
 from psycopg.errors import DuplicateTable
 
-from spatialprofilingtoolbox.db.database_connection import create_database
-from spatialprofilingtoolbox.db.credentials import metaschema_database
+from spatialprofilingtoolbox.db.database_connection import ensure_main_database_created
+from spatialprofilingtoolbox.db.database_connection import create_common_area
+from spatialprofilingtoolbox.db.credentials import metaschema_schema
 from spatialprofilingtoolbox.db.verbose_sql_execution import verbose_sql_execute
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -28,7 +29,8 @@ class SchemaInfuser:
         self.study = study
 
     def setup_lightweight_metaschema(self, force=False):
-        create_database(self.database_config_file, metaschema_database())
+        ensure_main_database_created(self.database_config_file)
+        create_common_area(self.database_config_file, metaschema_schema())
         if force:
             try:
                 self._verbose_sql_execute(('drop_metaschema.sql', 'drop metaschema tables'))
@@ -37,9 +39,10 @@ class SchemaInfuser:
         try:
             self._verbose_sql_execute(
                 ('metaschema.sql', 'create tables from lightweight metaschema'),
+                verbosity='itemize',
             )
         except DuplicateTable:
-            logger.warning('Metaschema table already exists.')
+            logger.info('Metaschema table already exists.')
 
         try:
             self._verbose_sql_execute(('grant_on_tables.sql', 'grant appropriate access to users'))
@@ -48,7 +51,7 @@ class SchemaInfuser:
             logger.warning(exception)
 
     def setup_schema(self, force=False):
-        message = 'This creation tool assumes that the database itself and users are already setup.'
+        message = 'This creation tool assumes that the database server itself and users are already setup.'
         logger.info(message)
         if force:
             self._verbose_sql_execute(

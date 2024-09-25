@@ -191,6 +191,7 @@ packages = [
     "delete_feature.py",
     "upload_sync_small.py",
     "collection.py",
+    "interactive_uploader.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "metaschema.sql",

@@ -37,6 +37,12 @@ def get_credentials_from_environment() -> DBCredentials:
         metaschema_schema(),
     )
 
+class MissingKeysError(ValueError):
+    def __init__(self, missing: set[str]):
+        self.missing = missing
+        message = f'Database configuration file is missing keys: {missing}'
+        super().__init__(message)
+
 def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
     parser = configparser.ConfigParser()
     credentials = {}
@@ -46,7 +52,7 @@ def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
             credentials[key] = parser['database-credentials'][key]
     missing = set(_get_credential_keys()).difference(credentials.keys())
     if len(missing) > 0:
-        raise ValueError(f'Database configuration file is missing keys: {missing}')
+        raise MissingKeysError(missing)
     return DBCredentials(
         credentials['endpoint'],
         main_database_name(),

@@ -1,0 +1,331 @@
+"""CLI utility to drop one feature (values, specification, specifiers) from the database"""
+from os import listdir
+from os.path import expanduser
+from os.path import isfile
+from os.path import basename
+from os.path import join
+from os.path import split
+from os.path import abspath
+from os import walk as os_walk
+from os import environ as os_environ
+import re
+from sys import exit as sys_exit
+import argparse
+
+if 'SPT_S3_BUCKET' in os_environ:
+    S3_BUCKET = os_environ['SPT_S3_BUCKET']
+else:
+    S3_BUCKET = None
+
+from psycopg import connect
+
+from boto3 import client as boto3_client
+from botocore.exceptions import ClientError
+
+from spatialprofilingtoolbox.db.credentials import main_database_name
+from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
+from spatialprofilingtoolbox.db.credentials import MissingKeysError
+from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.standalone_utilities.log_formats import CustomFormatter
+
+PREVIOUS_FILENAME = '.spt_last_used_config'
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog='spt db interactive-uploader',
+        description='Upload datasets. Options are selected interactively with prompts.'
+    )
+    parser.parse_args()
+
+
+class QuitRequested(RuntimeError):
+    """Raised when the user requests exiting the application."""
+    def __init__(self):
+        super().__init__('Quit requested.')
+
+
+class InteractiveUploader:
+    selected_database_config_file: str | None
+    connectables: tuple[str, ...]
+    selected_dataset_source: str | None
+    sourceables: tuple[str, ...]
+
+    def __init__(self):
+        self.selected_database_config_file = None
+        self.connectables = ()
+        self.selected_dataset_source = None
+        self.sourceables = ()
+
+    def start(self) -> None:
+        self._initial_assessment_of_available_options()
+        self._enter_upload_loop()
+
+    def _initial_assessment_of_available_options(self) -> None:
+        self.print('(Enter "q" to quit.)\n', style='message')
+        self._assess_database_config_files()
+        if self.selected_database_config_file is not None:
+            self._assess_datasets()
+
+    def _assess_database_config_files(self) -> None:
+        home = expanduser('~')
+        considered = [join(home, f) for f in listdir(home)] + listdir('.')
+        filename_matches = tuple(filter(
+            lambda filename: re.search('^\.spt_db.config', basename(filename)),
+            filter(isfile, considered),
+        ))
+        if len(filename_matches) == 0:
+            self.print('No database config files ', style='message', end='')
+            self.print('(named like ', style='message', end='')
+            self.print('.spt_db.config', style='popout', end='')
+            self.print('...) were found in home directory or current working directory.', style='message')
+            sys_exit(1)
+        format_matches = tuple(filter(self._check_database_config_file_format, filename_matches))
+        if len(format_matches) < len(filename_matches):
+            print('')
+        connectables = tuple(sorted(list(filter(self._check_connectability, format_matches))))
+        if len(connectables) < len(format_matches):
+            print('')
+        self._report_validated_config_files(connectables)
+        if len(connectables) == 1:
+            file = connectables[0]
+            self._select_config_file(file)
+        else:
+            self.connectables = connectables
+
+    def _select_config_file(self, file: str) -> None:
+        path, filename = split(file)
+        self.print('Using ', style='message', end='')
+        self.print(f'{path}{"/" if not path == "" else "./"}', style='fieldname', end='')
+        self.print(f'{filename}', style='popout')
+        print()
+        self.selected_database_config_file = file
+        self._record_selected_database_config_file(file)
+
+    def _get_previous_database_config_file(self) -> str | None:
+        file = join(expanduser('~'), PREVIOUS_FILENAME)
+        if isfile(file):
+            with open(file, 'rt', encoding='utf-8') as f:
+                name = f.read()
+            return name
+        return None
+
+    def _record_selected_database_config_file(self, filename: str) -> None:
+        file = join(expanduser('~'), PREVIOUS_FILENAME)
+        with open(file, 'wt', encoding='utf-8') as f:
+            f.write(filename)
+
+    def _report_validated_config_files(self, validated: tuple[str, ...]) -> None:
+        self.print('Found database config files with correct format and validated credentials:', style='message')
+        previous = self._get_previous_database_config_file()
+        self._print_paths(validated, previous)
+        print('')
+        if previous is not None:
+            self.print('Previously used marked with *.', 'message')
+            print('')
+
+    def _print_paths(self, paths: tuple[str, ...], indicated_item: str | None) -> None:
+        pairs = [split(f) for f in paths]
+        width = 2 + max([len(pair[0]) for pair in pairs])
+        for i, (path, filename) in enumerate(pairs):
+            if join(path, filename) == indicated_item:
+                ordinal = f'*{i} '
+            else:
+                ordinal = f'{i} '
+            self.print(ordinal.rjust(3), style='item', end='')
+            self.print(f' {path}{"/" if not path == "" else "./"}'.rjust(width), style='fieldname', end='')
+            self.print(f'{filename}', style='popout')
+
+    def _check_database_config_file_format(self, filename: str) -> bool:
+        try:
+            retrieve_credentials_from_file(filename)
+        except MissingKeysError as error:
+            self.print(f'Warning: ', style='flag', end='')
+            self.print(f'{filename}', style='popout', end='')
+            self.print(f' is missing keys: ', style='flag', end='')
+            self.print(", ".join(list(error.missing)), style='item')
+            return False
+        return True
+
+    def _check_connectability(self, file: str) -> bool:
+        credentials = retrieve_credentials_from_file(file)
+        try:
+            with connect(
+                dbname='postgres',
+                host=credentials.endpoint,
+                user=credentials.user,
+                password=credentials.password,
+            ) as _:
+                return True
+        except Exception:
+            pass
+        self.print(f'Warning: ', style='flag', end='')
+        self.print(f'{file}', style='popout', end='')
+        self.print(f' credentials are invalid or database ', style='flag', end='')
+        self.print('postgres', style='item', end='')
+        self.print(f' does not exist.', style='flag')
+        return False
+
+    def _assess_datasets(self) -> None:
+        pass
+
+    def _enter_upload_loop(self) -> None:
+        quit_requested = False
+        while not quit_requested:
+            quit_requested = self._upload_loop()
+        self.print('Exiting.', style='message')
+
+    def _upload_loop(self) -> bool:
+        for step in (
+            self._solicit_and_ensure_database_selection,
+            self._solicit_and_ensure_dataset_selection,
+            self._solicit_intended_drop_behavior,
+        ):
+            try:
+                step()
+            except QuitRequested:
+                return True
+        try:
+            proceed = self._solicit_confirmation_of_action()
+        except QuitRequested:
+            return True
+        if proceed:
+            self._do_specified_upload()
+        return False
+
+    def _solicit_and_ensure_database_selection(self) -> None:
+        while self.selected_database_config_file is None:
+            self.print('Select database config file', 'prompt', end='')
+            previous_index = self._get_previous_index()
+            if previous_index is not None:
+                self.print(f' [default selection ', 'prompt', end='')
+                self.print(f'{previous_index}', 'item', end='')
+                self.print(']', 'prompt', end='')
+            self.print(': ', 'prompt', end='')
+            answer = input()
+            print()
+            if answer == 'q':
+                raise QuitRequested
+            if answer in ['', '\n'] and previous_index is not None:
+                self._select_config_file(self.connectables[previous_index])
+                continue
+            try:
+                index = int(answer)
+            except ValueError:
+                self.print('Enter a valid index', 'flag')
+                continue
+            if index < 0 or index >= len(self.connectables):
+                self.print('Enter a valid index', 'flag')
+                continue
+            self._select_config_file(self.connectables[index])
+
+    def _get_previous_index(self) -> int | None:
+        previous = self._get_previous_database_config_file()
+        if previous is None:
+            return None
+        for i, connectable in enumerate(self.connectables):
+            if connectable == previous:
+                return i
+        return None
+
+    def _solicit_and_ensure_dataset_selection(self) -> None:
+        if len(self.sourceables) == 0:
+            self._retrieve_dataset_sources()
+        if len(self.sourceables) == 0:
+            self.print('No dataset sources found, whether subdirectories of the form ', style='message', end='')
+            self.print('../generated_artifacts/', style='popout', end='')
+            self.print(' or folders in S3 bucket ', style='message', end='')
+            self.print(f'{S3_BUCKET if S3_BUCKET else "(SPT_S3_BUCKET environment variable)"}', style='item', end='')
+            self.print(' or folders in S3 bucket ', style='message')
+            raise QuitRequested
+        self._print_sources()
+        while self.selected_dataset_source is None:
+            answer = input('Select a dataset or enter q: ')
+            if answer == 'q':
+                raise QuitRequested
+
+    def _print_sources(self) -> None:
+        self.print('Available dataset sources:', style='message')
+        for source in self.sourceables:
+            self.print(source, style='dataset source')
+        print()
+
+    def _retrieve_dataset_sources(self) -> None:
+        sources = []
+        for root, dirs, _ in os_walk(abspath('.')):
+            dirs[:] = [d for d in dirs if not d[0] == '.']
+            if basename(root) == 'generated_artifacts':
+                sources.append(root)
+        if S3_BUCKET is not None:
+            try:
+                folders = []
+                client = boto3_client('s3', region_name='us-east-1')
+                paginator = client.get_paginator('list_objects_v2')
+                pages = paginator.paginate(Bucket=S3_BUCKET, Delimiter='/', Prefix='')
+                for page in pages:
+                    for obj in page['CommonPrefixes']:
+                        folders.append(obj['Prefix'].rstrip('/'))
+            except ClientError:
+                self.print('S3 client cannot connect to ', style='flag', end='')
+                self.print(S3_BUCKET, style='item')
+                raise QuitRequested
+            uris = [f's3://{S3_BUCKET}/{f}' for f in folders]
+            sources.extend(uris)
+        self.sourceables = tuple(sources)
+
+    def _solicit_intended_drop_behavior(self) -> None:
+        pass
+
+    def _solicit_confirmation_of_action(self) -> bool:
+        return False
+
+    def _do_specified_upload(self) -> None:
+        pass
+
+    @staticmethod
+    def print(message: str, style: str | None, end: str = '\n') -> None:
+        codes = {
+            None: '',
+            'title': '\033[7;36m',
+            'fieldname': '\033[100;97m',
+            'message': '',
+            'popout': CustomFormatter.magenta,
+            'item': CustomFormatter.blue,
+            'dataset source': CustomFormatter.yellow,
+            'order': '\033[100;97m',
+            'prompt': '',
+            'flag': CustomFormatter.red,
+            'no': CustomFormatter.red,
+            'yes': CustomFormatter.green,
+        }
+        reset = CustomFormatter.reset
+        print(f'{codes[style]}{message}{reset}', end=end)
+
+    def _solicit_confirmation(self) -> bool:
+        self._announce_plan()
+        self.print('Proceed? [', 'prompt', end='')
+        self.print('y', 'yes', end='')
+        self.print('/', 'prompt', end='')
+        self.print('n', 'no', end='')
+        self.print('] ', 'prompt', end='')
+        answer = input()
+        print()
+        if answer in ('y', 'Y', 'yes'):
+            return True
+        return False
+
+    def _announce_plan(self) -> None:
+        self.print('This is the plan...', 'message', end='')
+
+
+def main():
+    parse_args()
+    gui = InteractiveUploader()
+    try:
+        gui.start()
+    except KeyboardInterrupt:
+        InteractiveUploader.print('\nCancelled by user request.', style='flag')
+
+
+if __name__=='__main__':
+    main()

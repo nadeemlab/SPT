@@ -6,11 +6,17 @@ from os.path import basename
 from os.path import join
 from os.path import split
 from os.path import abspath
+from os.path import isdir
 from os import walk as os_walk
 from os import environ as os_environ
+from os import mkdir
+from os import system as os_system
 import re
 from sys import exit as sys_exit
 import argparse
+from configparser import ConfigParser
+from json import loads as json_loads
+from typing import cast
 
 if 'SPT_S3_BUCKET' in os_environ:
     S3_BUCKET = os_environ['SPT_S3_BUCKET']
@@ -23,6 +29,7 @@ from boto3 import client as boto3_client
 from botocore.exceptions import ClientError
 
 from spatialprofilingtoolbox.db.credentials import main_database_name
+from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.credentials import MissingKeysError
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -48,14 +55,20 @@ class QuitRequested(RuntimeError):
 class InteractiveUploader:
     selected_database_config_file: str | None
     connectables: tuple[str, ...]
+    credentials: DBCredentials | None
     selected_dataset_source: str | None
     sourceables: tuple[str, ...]
+    drop_behavior: str | None
+    existing_studies: tuple[str, ...]
 
     def __init__(self):
         self.selected_database_config_file = None
         self.connectables = ()
         self.selected_dataset_source = None
         self.sourceables = ()
+        self.drop_behavior = None
+        self.credentials = None
+        self.existing_studies = ()
 
     def start(self) -> None:
         self._initial_assessment_of_available_options()
@@ -114,6 +127,7 @@ class InteractiveUploader:
         file = join(expanduser('~'), PREVIOUS_FILENAME)
         with open(file, 'wt', encoding='utf-8') as f:
             f.write(filename)
+        self.credentials = retrieve_credentials_from_file(filename)
 
     def _report_validated_config_files(self, validated: tuple[str, ...]) -> None:
         self.print('Found database config files with correct format and validated credentials:', style='message')
@@ -188,9 +202,11 @@ class InteractiveUploader:
         try:
             proceed = self._solicit_confirmation_of_action()
         except QuitRequested:
+            self.print('Dataset upload not scheduled.', 'flag')
             return True
         if proceed:
             self._do_specified_upload()
+            return True
         return False
 
     def _solicit_and_ensure_database_selection(self) -> None:
@@ -240,15 +256,44 @@ class InteractiveUploader:
             raise QuitRequested
         self._print_sources()
         while self.selected_dataset_source is None:
-            answer = input('Select a dataset or enter q: ')
+            answer = input('Select a dataset: ')
             if answer == 'q':
                 raise QuitRequested
+            try:
+                index = int(answer)
+            except ValueError:
+                self.print('Enter a valid index.', 'flag')
+                continue
+            if index < 0 or index >= len(self.sourceables):
+                self.print('Enter a valid index.', 'flag')
+                continue
+            self.selected_dataset_source = self.sourceables[index]
 
     def _print_sources(self) -> None:
         self.print('Available dataset sources:', style='message')
-        for source in self.sourceables:
-            self.print(source, style='dataset source')
+        for i, source in enumerate(self.sourceables):
+            self.print(f'{i} '.rjust(3), style='item', end='')
+            presence = self._determine_presence(source)
+            self.print(f' {presence}'.rjust(9), style='fieldname', end='')
+            self.print(f' {source}', style='dataset source')
         print()
+
+    def _determine_presence(self, source: str) -> str:
+        if self.existing_studies is None:
+            with DBCursor(database_config_file=self.selected_database_config_file) as cursor:
+                cursor.execute('SELECT schema_name FROM study_lookup;')
+                self.existing_studies = tuple(map(lambda row: row[0], cursor.fetchall()))
+        for study in self.existing_studies:
+            if basename(source) == study:
+                return 'present'
+            study_file = join(source, 'study.json')
+            if isfile(study_file):
+                with open(study_file, 'rt', encoding='utf-8') as file:
+                    study_name = json_loads(file.read())['Study name']
+                normal = re.sub('[ \-]', '_', study_name).lower()
+                if normal == study:
+                    return 'present'
+        return ''
 
     def _retrieve_dataset_sources(self) -> None:
         sources = []
@@ -274,13 +319,68 @@ class InteractiveUploader:
         self.sourceables = tuple(sources)
 
     def _solicit_intended_drop_behavior(self) -> None:
-        pass
+        behavior = None
+        while behavior is None:
+            self.print('Drop dataset before upload? [', 'prompt', end='')
+            self.print('y', 'yes', end='')
+            self.print('/', 'prompt', end='')
+            self.print('n', 'no', end='')
+            self.print('] (default no) ', 'prompt', end='')
+            answer = input()
+            print()
+            if answer in ('y', 'Y', 'yes'):
+                behavior = 'drop'
+            if answer in ('n', 'N', 'no', ''):
+                behavior = 'no drop'
+        self.drop_behavior = behavior
 
     def _solicit_confirmation_of_action(self) -> bool:
+        self._announce_plan()
+        self.print('Proceed? [', 'prompt', end='')
+        self.print('y', 'yes', end='')
+        self.print('/', 'prompt', end='')
+        self.print('n', 'no', end='')
+        self.print('] (default no) ', 'prompt', end='')
+        answer = input()
+        print()
+        if answer in ('y', 'Y', 'yes'):
+            return True
+        self.selected_dataset_source = None
+        self.selected_database_config_file = None
+        self.sourceables = ()
         return False
 
+    def _announce_plan(self) -> None:
+        self.print('Will upload dataset from', 'message')
+        self.print(f'  {self.selected_dataset_source}', 'dataset source')
+        self.print('to the database at', 'message')
+        assert self.credentials is not None
+        self.print(f'  {self.credentials.endpoint}', 'item', end='')
+        self.print(f'  (from credentials ', 'message', end='')
+        self.print(f'{self.selected_database_config_file}', 'popout', end='')
+        self.print(f' )', 'message')
+        print()
+
     def _do_specified_upload(self) -> None:
-        pass
+        self._write_workflow_config()
+        change = 'cd working_directory'
+        configure = 'spt workflow configure --workflow="tabular import" --config-file=workflow.config'
+        run = 'bash run.sh'
+        commands = [change, configure, run]
+        for c in commands:
+            self.print(f'  {c}', 'item')
+        print()
+        os_system('; '.join(commands))
+
+    def _write_workflow_config(self) -> None:
+        config = ConfigParser()
+        config['general'] = {'db_config_file': cast(str, self.selected_database_config_file)}
+        config['tabular import'] = {'input_path': cast(str, self.selected_dataset_source)}
+        w = 'working_directory'
+        if not isdir(w):
+            mkdir(w)
+        with open(join(w, 'workflow.config'), 'w') as file:
+            config.write(file)
 
     @staticmethod
     def print(message: str, style: str | None, end: str = '\n') -> None:
@@ -300,22 +400,6 @@ class InteractiveUploader:
         }
         reset = CustomFormatter.reset
         print(f'{codes[style]}{message}{reset}', end=end)
-
-    def _solicit_confirmation(self) -> bool:
-        self._announce_plan()
-        self.print('Proceed? [', 'prompt', end='')
-        self.print('y', 'yes', end='')
-        self.print('/', 'prompt', end='')
-        self.print('n', 'no', end='')
-        self.print('] ', 'prompt', end='')
-        answer = input()
-        print()
-        if answer in ('y', 'Y', 'yes'):
-            return True
-        return False
-
-    def _announce_plan(self) -> None:
-        self.print('This is the plan...', 'message', end='')
 
 
 def main():

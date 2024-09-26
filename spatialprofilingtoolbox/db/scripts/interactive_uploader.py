@@ -398,6 +398,7 @@ class InteractiveUploader:
         commands = [change, configure, run]
         for c in commands:
             self.print(f'  {c}', 'item')
+        print()
         self.print('You can monitor progress in another terminal with:', 'message')
         self.print('  tail -f -n1000 working_directory/work/*/*/.command.log', 'item')
         print()

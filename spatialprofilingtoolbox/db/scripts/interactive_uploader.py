@@ -303,17 +303,11 @@ class InteractiveUploader:
                 cursor.execute('SELECT study, schema_name FROM study_lookup;')
                 name_schema = tuple(map(lambda row: (row[1], row[0]), cursor.fetchall()))
             self.study_names_by_schema = dict(name_schema)
-            self.existing_studies = tuple(sorted(list(self.study_names_by_schema.values())))
-        for study in self.existing_studies:
-            if basename(source) == study:
-                return 'present on remote'
-            study_file = join(source, 'study.json')
-            if isfile(study_file):
-                with open(study_file, 'rt', encoding='utf-8') as file:
-                    study_name = json_loads(file.read())['Study name']
-                normal = re.sub('[ \-]', '_', study_name).lower()
-                if normal == study:
-                    return 'present on remote'
+            self.existing_studies = tuple(sorted(list(self.study_names_by_schema.keys())))
+        study_name = self._retrieve_study_name(source)
+        normal = re.sub('[ \-]', '_', study_name).lower()
+        if normal in self.existing_studies:
+            return 'present on remote'
         return ''
 
     def _retrieve_dataset_sources(self) -> None:
@@ -395,6 +389,7 @@ class InteractiveUploader:
         command = f'spt db drop --database-config-file={self.selected_database_config_file} --study-name="{study_name}"'
         self.print(f'  {command}', 'item')
         os_system(command)
+        print()
 
     def _upload_commands(self) -> None:
         change = 'cd working_directory'

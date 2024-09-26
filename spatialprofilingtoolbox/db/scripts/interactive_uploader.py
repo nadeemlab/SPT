@@ -132,6 +132,8 @@ class InteractiveUploader:
         self.credentials = retrieve_credentials_from_file(filename)
 
     def _report_validated_config_files(self, validated: tuple[str, ...]) -> None:
+        self.print('    Target database'.ljust(72), 'title')
+        print()
         self.print('Found database config files with correct format and validated credentials:', style='message')
         previous = self._get_previous_database_config_file()
         self._print_paths(validated, previous)
@@ -247,6 +249,8 @@ class InteractiveUploader:
         return None
 
     def _solicit_and_ensure_dataset_selection(self) -> None:
+        self.print('    Dataset source'.ljust(72), 'title')
+        print()
         if len(self.sourceables) == 0:
             self._retrieve_dataset_sources()
         if len(self.sourceables) == 0:
@@ -366,6 +370,8 @@ class InteractiveUploader:
         return False
 
     def _announce_plan(self) -> None:
+        self.print('    Upload'.ljust(72), 'title')
+        print()
         self.print('Will upload dataset from', 'message')
         self.print(f'  {self.selected_dataset_source}', 'dataset source')
         self.print('to the database at', 'message')

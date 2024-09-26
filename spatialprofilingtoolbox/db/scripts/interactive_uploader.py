@@ -62,6 +62,7 @@ class InteractiveUploader:
     drop_behavior: str | None
     existing_studies: tuple[str, ...]
     study_names_by_schema: dict[str, str]
+    present_on_remote: list[str]
 
     def __init__(self):
         self.selected_database_config_file = None
@@ -71,6 +72,7 @@ class InteractiveUploader:
         self.drop_behavior = None
         self.credentials = None
         self.existing_studies = None
+        self.present_on_remote = []
 
     def start(self) -> None:
         self._initial_assessment_of_available_options()
@@ -132,7 +134,7 @@ class InteractiveUploader:
         self.credentials = retrieve_credentials_from_file(filename)
 
     def _report_validated_config_files(self, validated: tuple[str, ...]) -> None:
-        self.print('    Target database'.ljust(72), 'title')
+        self.print('    Target database'.ljust(80), 'title')
         print()
         self.print('Found database config files with correct format and validated credentials:', style='message')
         previous = self._get_previous_database_config_file()
@@ -178,10 +180,10 @@ class InteractiveUploader:
         except Exception:
             pass
         self.print(f'Warning: ', style='flag', end='')
-        self.print(f'{file}', style='popout', end='')
         self.print(f' credentials are invalid or database ', style='message', end='')
         self.print('postgres', style='item', end='')
-        self.print(f' does not exist.', style='message')
+        self.print(f' does not exist in ', style='message', end='')
+        self.print(f'{file}', style='popout')
         return False
 
     def _assess_datasets(self) -> None:
@@ -223,7 +225,6 @@ class InteractiveUploader:
                 self.print(']', 'prompt', end='')
             self.print(': ', 'prompt', end='')
             answer = input()
-            print()
             if answer == 'q':
                 raise QuitRequested
             if answer in ['', '\n'] and previous_index is not None:
@@ -249,7 +250,7 @@ class InteractiveUploader:
         return None
 
     def _solicit_and_ensure_dataset_selection(self) -> None:
-        self.print('    Dataset source'.ljust(72), 'title')
+        self.print('    Dataset source'.ljust(80), 'title')
         print()
         if len(self.sourceables) == 0:
             self._retrieve_dataset_sources()
@@ -311,6 +312,7 @@ class InteractiveUploader:
         study_name = self._retrieve_study_name(source)
         normal = re.sub('[ \-]', '_', study_name).lower()
         if normal in self.existing_studies:
+            self.present_on_remote.append(source)
             return 'present on remote'
         return ''
 
@@ -339,6 +341,8 @@ class InteractiveUploader:
 
     def _solicit_intended_drop_behavior(self) -> None:
         behavior = None
+        if not self.selected_dataset_source in self.present_on_remote:
+            behavior = 'no drop'
         while behavior is None:
             self.print('Drop dataset before upload? [', 'prompt', end='')
             self.print('y', 'yes', end='')
@@ -364,17 +368,19 @@ class InteractiveUploader:
         print()
         if answer in ('y', 'Y', 'yes'):
             return True
+        if answer == 'q':
+            raise QuitRequested
         self.selected_dataset_source = None
         self.selected_database_config_file = None
         self.sourceables = ()
         return False
 
     def _announce_plan(self) -> None:
-        self.print('    Upload'.ljust(72), 'title')
+        self.print('    Upload'.ljust(80), 'title')
         print()
-        self.print('Will upload dataset from', 'message')
+        self.print('Will upload dataset from  '.ljust(26), 'message', end='')
         self.print(f'  {self.selected_dataset_source}', 'dataset source')
-        self.print('to the database at', 'message')
+        self.print('to the database at'.ljust(26), 'message', end='')
         assert self.credentials is not None
         self.print(f'  {self.credentials.endpoint}', 'item', end='')
         self.print(f'  (from credentials ', 'message', end='')

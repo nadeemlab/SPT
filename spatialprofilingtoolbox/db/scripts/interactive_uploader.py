@@ -68,7 +68,7 @@ class InteractiveUploader:
         self.sourceables = ()
         self.drop_behavior = None
         self.credentials = None
-        self.existing_studies = ()
+        self.existing_studies = None
 
     def start(self) -> None:
         self._initial_assessment_of_available_options()
@@ -156,7 +156,7 @@ class InteractiveUploader:
         except MissingKeysError as error:
             self.print(f'Warning: ', style='flag', end='')
             self.print(f'{filename}', style='popout', end='')
-            self.print(f' is missing keys: ', style='flag', end='')
+            self.print(f' is missing keys: ', style='message', end='')
             self.print(", ".join(list(error.missing)), style='item')
             return False
         return True
@@ -175,9 +175,9 @@ class InteractiveUploader:
             pass
         self.print(f'Warning: ', style='flag', end='')
         self.print(f'{file}', style='popout', end='')
-        self.print(f' credentials are invalid or database ', style='flag', end='')
+        self.print(f' credentials are invalid or database ', style='message', end='')
         self.print('postgres', style='item', end='')
-        self.print(f' does not exist.', style='flag')
+        self.print(f' does not exist.', style='message')
         return False
 
     def _assess_datasets(self) -> None:
@@ -274,7 +274,7 @@ class InteractiveUploader:
         for i, source in enumerate(self.sourceables):
             self.print(f'{i} '.rjust(3), style='item', end='')
             presence = self._determine_presence(source)
-            self.print(f' {presence}'.rjust(9), style='fieldname', end='')
+            self.print(f' {presence} '.rjust(9), style='fieldname', end='')
             self.print(f' {source}', style='dataset source')
         print()
 

@@ -137,7 +137,7 @@ class InteractiveUploader:
         self._print_paths(validated, previous)
         print('')
         if previous is not None:
-            self.print('Previously used marked with *.', 'message')
+            self.print('The previously-used credentials file is marked with *.', 'message')
             print('')
 
     def _print_paths(self, paths: tuple[str, ...], indicated_item: str | None) -> None:

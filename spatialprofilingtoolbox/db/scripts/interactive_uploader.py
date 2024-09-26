@@ -32,6 +32,7 @@ from spatialprofilingtoolbox.db.credentials import main_database_name
 from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.credentials import MissingKeysError
+from spatialprofilingtoolbox.workflow.scripts.configure import _parse_s3_reference
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import CustomFormatter
 
@@ -60,6 +61,7 @@ class InteractiveUploader:
     sourceables: tuple[str, ...]
     drop_behavior: str | None
     existing_studies: tuple[str, ...]
+    study_names_by_schema: dict[str, str]
 
     def __init__(self):
         self.selected_database_config_file = None
@@ -274,25 +276,44 @@ class InteractiveUploader:
         for i, source in enumerate(self.sourceables):
             self.print(f'{i} '.rjust(3), style='item', end='')
             presence = self._determine_presence(source)
-            self.print(f' {presence} '.rjust(9), style='fieldname', end='')
+            self.print(f' {presence} '.rjust(19), style='fieldname', end='')
             self.print(f' {source}', style='dataset source')
         print()
+
+    def _retrieve_study_name(self, source: str) -> str:
+        study_name = None
+        study_file = join(source, 'study.json')
+        if isfile(study_file):
+            with open(study_file, 'rt', encoding='utf-8') as file:
+                study_name = json_loads(file.read())['Study name']
+        if re.search('^s3://', source):
+            resource = _parse_s3_reference(join(source, 'study.json'))
+            client = boto3_client('s3')
+            local_study_file = '_study.temp.json'
+            client.download_file(resource.bucket, resource.get_key_string(), local_study_file)
+            with open(local_study_file, 'rt', encoding='utf-8') as file:
+                study_name = json_loads(file.read())['Study name']
+        if study_name is None:
+            raise ValueError(f'Could not find study name for given source: {source}')
+        return study_name
 
     def _determine_presence(self, source: str) -> str:
         if self.existing_studies is None:
             with DBCursor(database_config_file=self.selected_database_config_file) as cursor:
-                cursor.execute('SELECT schema_name FROM study_lookup;')
-                self.existing_studies = tuple(map(lambda row: row[0], cursor.fetchall()))
+                cursor.execute('SELECT study, schema_name FROM study_lookup;')
+                name_schema = tuple(map(lambda row: (row[1], row[0]), cursor.fetchall()))
+            self.study_names_by_schema = dict(name_schema)
+            self.existing_studies = tuple(sorted(list(self.study_names_by_schema.values())))
         for study in self.existing_studies:
             if basename(source) == study:
-                return 'present'
+                return 'present on remote'
             study_file = join(source, 'study.json')
             if isfile(study_file):
                 with open(study_file, 'rt', encoding='utf-8') as file:
                     study_name = json_loads(file.read())['Study name']
                 normal = re.sub('[ \-]', '_', study_name).lower()
                 if normal == study:
-                    return 'present'
+                    return 'present on remote'
         return ''
 
     def _retrieve_dataset_sources(self) -> None:
@@ -359,10 +380,23 @@ class InteractiveUploader:
         self.print(f'  (from credentials ', 'message', end='')
         self.print(f'{self.selected_database_config_file}', 'popout', end='')
         self.print(f' )', 'message')
+        if self.drop_behavior == 'drop':
+            self.print('(The dataset will be dropped first, so the upload will be fresh.)', 'message')
         print()
 
     def _do_specified_upload(self) -> None:
         self._write_workflow_config()
+        if self.drop_behavior == 'drop':
+            self._drop_first()
+        self._upload_commands()
+
+    def _drop_first(self) -> None:
+        study_name = self._retrieve_study_name(cast(str, self.selected_dataset_source))
+        command = f'spt db drop --database-config-file={self.selected_database_config_file} --study-name="{study_name}"'
+        self.print(f'  {command}', 'item')
+        os_system(command)
+
+    def _upload_commands(self) -> None:
         change = 'cd working_directory'
         configure = 'spt workflow configure --workflow="tabular import" --config-file=workflow.config'
         run = 'bash run.sh'

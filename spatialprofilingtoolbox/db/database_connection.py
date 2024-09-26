@@ -70,6 +70,7 @@ class DBConnection(ConnectionProvider):
         database_config_file: str | None = None,
         autocommit: bool=True,
         study: str | None = None,
+        verbose: bool = True,
     ):
         self.schema = None
         if database_config_file is not None:
@@ -85,7 +86,8 @@ class DBConnection(ConnectionProvider):
             super().__init__(self.make_connection(credentials))
         except PsycopgError as exception:
             message = 'Failed to connect to database: %s, %s'
-            logger.error(message, credentials.endpoint, credentials.database)
+            if verbose:
+                logger.error(message, credentials.endpoint, credentials.database)
             raise exception
         self.autocommit = autocommit
 

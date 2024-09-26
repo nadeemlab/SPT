@@ -27,6 +27,7 @@ from psycopg import connect
 
 from boto3 import client as boto3_client
 from botocore.exceptions import ClientError
+from psycopg.errors import OperationalError
 
 from spatialprofilingtoolbox.db.credentials import main_database_name
 from spatialprofilingtoolbox.db.credentials import DBCredentials
@@ -304,9 +305,12 @@ class InteractiveUploader:
 
     def _determine_presence(self, source: str) -> str:
         if self.existing_studies is None:
-            with DBCursor(database_config_file=self.selected_database_config_file) as cursor:
-                cursor.execute('SELECT study, schema_name FROM study_lookup;')
-                name_schema = tuple(map(lambda row: (row[1], row[0]), cursor.fetchall()))
+            try:
+                with DBCursor(database_config_file=self.selected_database_config_file, verbose=False) as cursor:
+                    cursor.execute('SELECT study, schema_name FROM study_lookup;')
+                    name_schema = tuple(map(lambda row: (row[1], row[0]), cursor.fetchall()))
+            except OperationalError:
+                return ''
             self.study_names_by_schema = dict(name_schema)
             self.existing_studies = tuple(sorted(list(self.study_names_by_schema.keys())))
         study_name = self._retrieve_study_name(source)

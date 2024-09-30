@@ -1,5 +1,6 @@
 """Source file parsing for imaging/feature-assessment channel metadata."""
 from typing import cast
+import re
 
 from pandas import DataFrame
 from pandas import Series
@@ -219,6 +220,10 @@ class ChannelsPhenotypesParser(SourceToADIParser):
         mechanisms = list(set(row['Marking mechanism'] for i, row in channels.iterrows()))
         if len(mechanisms) > 1:
             logger.warning('Encountered multiple marking mechanisms: %s', mechanisms)
+            computational = [m for m in mechanisms if re.search('[Cc]omputational [Ii]dentification', m)]
+            for mechanism in computational:
+                logger.info(f'Excluding "{mechanism}" as computationally-generated, not the primary marking mechanism.')
+                mechanisms.remove(mechanism)
         if len(mechanisms) == 1:
             mechanism = mechanisms[0]
         else:

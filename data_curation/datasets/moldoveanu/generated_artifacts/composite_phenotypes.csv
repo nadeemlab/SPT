@@ -1,0 +1,14 @@
+Name,Positive markers,Negative markers
+Melanocyte,S100,CD20;CD3;CD45;CD31
+Melanoma,SOX10,CD20;CD3;CD45;CD31
+Endothelial stroma,CD31,CD20;CD45;CD3;SOX10
+B cells,CD20,CD31;SOX10
+T cells,CD3,CD20
+Cytotoxic T cell antigen-experienced,CD3;CD8A;CD45RO,CD20
+T regulatory cells,FOXP3;CD4;CD3,SOX10;CD31;CD20
+Lineage including macrophage,CD68,CD3;SOX10
+Lineage including monocyte,CD14,CD3;SOX10
+Naive cytotoxic T cell,CD8A;CD3;CD45RA,CD20;CD31;SOX10;CD4
+T helper cell antigen-experienced,CD4;CD3;CD45RO,SOX10
+T helper cell,CD3;CD4,CD20
+Naive T helper cell,CD3;CD4;CD45RA,SOX10

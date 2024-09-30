@@ -46,7 +46,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
-VERSION = '0.25.0'
+VERSION = '0.26.0'
 
 TITLE = 'Single cell studies data API'
 

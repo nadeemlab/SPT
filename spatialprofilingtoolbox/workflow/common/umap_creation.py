@@ -56,7 +56,9 @@ class UMAPCreator:
             raise ValueError('Need to choose a cell_limit.')
         logger.info(f'Retrieving cell data for "{self.study}".')
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
-            cursor.execute('''
+            cursor.execute('SELECT COUNT(*) FROM histological_structure;')
+            total = tuple(cursor.fetchall())[0][0]
+            cursor.execute(f'''
             SELECT
                 eq.histological_structure,
                 cs.symbol,
@@ -70,16 +72,13 @@ class UMAPCreator:
             JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
             JOIN study_component sc ON scp.study=sc.component_study
             WHERE sc.primary_study=%s AND eq.histological_structure IN (
-                    SELECT hsi2.histological_structure FROM histological_structure_identification hsi2
-                    JOIN data_file df2 ON df2.sha256_hash=hsi2.data_source            
-                    JOIN specimen_data_measurement_process sdmp2 ON df2.source_generation_process=sdmp2.identifier
-                    JOIN specimen_collection_process scp2 ON scp2.specimen=sdmp2.specimen
-                    JOIN study_component sc2 ON scp2.study=sc2.component_study
-                    WHERE sc2.primary_study=%s
-                    ORDER BY RANDOM() LIMIT %s
+                SELECT temp.random_id FROM (
+                        SELECT generate_series (1, {UMAP_POINT_LIMIT}), (random() * {total})::int::VARCHAR(512) AS random_id
+                        FROM (SELECT 1 AS n) AS temp1
+                    ) AS temp
                 )
             ;
-            ''', (self.study, self.study, cell_limit))
+            ''', (self.study,))
             rows = cursor.fetchall()
         sparse_df = DataFrame(rows, columns=['structure', 'channel', 'quantity', 'discrete_value'])
         sparse_df = sparse_df.astype({'structure': str, 'channel': str, 'quantity': float, 'discrete_value': int})

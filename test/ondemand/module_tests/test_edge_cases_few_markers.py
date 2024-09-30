@@ -5,7 +5,7 @@ from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequeste
 
 def retrieve_case(case):
     study_name = 'Melanoma intralesional IL2'
-    counts = OnDemandRequester.get_counts_by_specimen(case[0], case[1], study_name, 0, ())
+    counts = OnDemandRequester.get_counts_by_specimen(case[0], case[1], study_name, ())
     total = sum(entry.count for entry in counts.counts)
     return total
 

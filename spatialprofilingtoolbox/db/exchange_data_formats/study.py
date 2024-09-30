@@ -18,7 +18,7 @@ class StudyHandle(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                    "name": "Dataset ABC",
+                    "handle": "Dataset ABC",
                     "display_name_detail": "Dataset ABC - Nature 2030"
                 }
             ]
@@ -237,8 +237,3 @@ class StudySummary(BaseModel):
     cohorts: SampleCohorts
     findings: list[str]
     has_umap: bool
-
-            # "findings": [
-            #     "Proximity (occurrence within 50um) of KRT7+ CK+ cells in neighborhoods of KRT14+ CK+ cells is elevated 1.6 times in the sensitive cohort compared with refractory (p=0.03). /study/breast-cancer-imc/analysis/detail?phenotypes=KRT14%2B+CK%2B%2CKRT7%2B+CK%2B&selected_phenotypes=KRT14%2B+CK%2B%26KRT7%2B+CK%2B&enrichfields=KRT14%2B+CK%2B%26KRT7%2B+CK%2B-proximity&cohorts=1%2C2"
-            # ],
-            # "has_umap": True,

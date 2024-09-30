@@ -20,8 +20,17 @@ class PhenotypeSymbol(BaseModel):
 
 
 class Channel(BaseModel):
-    """The symbol for one of the imaged or measured channels.."""
+    """The symbol for one of the imaged or measured channels."""
     symbol: str
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {'symbol': 'CD3'},
+                {'symbol': 'CD4'},
+                {'symbol': 'FOXP3'},
+            ]
+        }
+    }
 
 
 class PhenotypeCriteria(BaseModel):
@@ -29,15 +38,15 @@ class PhenotypeCriteria(BaseModel):
     positive_markers: tuple[str, ...]
     negative_markers: tuple[str, ...]
     model_config = {
-        "json_schema_extra": {
-            "examples": [
+        'json_schema_extra': {
+            'examples': [
                 {
-                    "positive_markers": ['CD3', 'CD4'],
-                    "negative_markers": ['FOXP3'],
+                    'positive_markers': ['CD3', 'CD4'],
+                    'negative_markers': ['FOXP3'],
                 },
                 {
-                    "positive_markers": ['SOX10'],
-                    "negative_markers": [],
+                    'positive_markers': ['SOX10'],
+                    'negative_markers': [],
                 },
             ]
         }
@@ -49,15 +58,38 @@ class PhenotypeSymbolAndCriteria(BaseModel):
     handle_string: str
     identifier: str
     criteria: PhenotypeCriteria
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'handle_string': 'T regulatory cells',
+                    'identifier': '8',
+                    'criteria': {
+                        'positive_markers': ['CD3', 'CD4', 'FOXP3'],
+                        'negative_markers': [],
+                    }
+                },
+            ]
+        }
+    }
 
 
-class CompositePhenotype(BaseModel):
-    """For named phenotypes, the name and the internal identifier used for matching up related
-    records.
+class WrapperPhenotype(BaseModel):
+    """The phenotype criteria used during the counting procedure (not applicable in GNN case).
     """
-    name: str
-    identifier: str
     criteria: PhenotypeCriteria
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'criteria': {
+                        'positive_markers': ['CD3', 'CD4', 'FOXP3'],
+                        'negative_markers': [],
+                    },
+                },
+            ]
+        }
+    }
 
 
 class PhenotypeCount(BaseModel):
@@ -67,13 +99,23 @@ class PhenotypeCount(BaseModel):
     specimen: str
     count: int | None
     percentage: float | None
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'specimen': 'Sample001',
+                    'count': 3108,
+                    'percentage': 42.3,
+                },
+            ]
+        }
+    }
 
 
 class PhenotypeCounts(BaseModel):
     """The number of cells of a given phenotype across all samples in a given study."""
     counts: tuple[PhenotypeCount, ...]
-    phenotype: CompositePhenotype
-    number_cells_in_study: int
+    phenotype: WrapperPhenotype
     is_pending: bool
 
 
@@ -83,6 +125,20 @@ class UnivariateMetricsComputationResult(BaseModel):
     """
     values: dict[str, float | None]
     is_pending: bool
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'values': {
+                        'Sample001': 3.4,
+                        'Sample700': 0.01,
+                        'Sample715': 0.02,
+                    },
+                    'is_pending': False,
+                },
+            ]
+        }
+    }
 
 
 class CellData(BaseModel):

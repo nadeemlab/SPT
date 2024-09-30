@@ -1,5 +1,4 @@
 """The API service's endpoint handlers."""
-
 from typing import cast
 from typing import Annotated
 from typing import Literal
@@ -42,6 +41,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidChannelListPositives2,
     ValidChannelListNegatives2,
     ValidFeatureClass,
+    ValidFeatureClass2Phenotypes,
 )
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
@@ -56,12 +56,12 @@ DESCRIPTION = """
 This API provides useful access to the **single-cell datasets** residing in a database that is
 curated and maintained by the [Nadeem Lab](https://nadeemlab.org).
 
-The public portion of the database includes phenotype and slide position information for
+The public portion of the database includes phenotype and slide position information for:
 
 * ~9 million cells
 * across about 1000 specimens
 * typically with around 30 protein targets quantified per cell
-* from cancers of the breast and lung, as well as urothelial cancer and melanoma
+* from cancers from several sites: breast, lung, urothelial cancer and melanoma
 * with a range of outcome assignments depending on the study design (often immunotherapy response)
 
 This is the data source for the Spatial Profiling Toolbox (SPT) web application located at
@@ -93,9 +93,8 @@ This API was created using [FastAPI](https://fastapi.tiangolo.com) and
 
 The documentation you are reading in the browser is automatically generated and comes in two
 flavors:
-* [Redoc variant](https://oncopathtk.org/api/redoc)
-* [Swagger UI variant](https://oncopathtk.org/api/docs) (includes a list of the JSON-formatted
-  return value types)
+* the [Redoc variant](https://oncopathtk.org/api/redoc)
+* the [Swagger UI variant](https://oncopathtk.org/api/docs)
 
 The system of JSON-formatted return values is a simplified version of the complete
 [schema](https://adiframework.com/docs_site/scstudies_quick_reference.html#) which was used to guide
@@ -214,16 +213,6 @@ async def get_study_summary(
     return query().get_study_summary(study)
 
 
-@app.get("/study-findings/")
-async def get_study_findings(
-    study: ValidStudy,
-) -> list[str]:
-    """
-    Brief list of results of re-analysis of the given study.
-    """
-    return query().get_study_findings(study)
-
-
 @app.get("/channels/")
 async def get_channels(
     study: ValidStudy,
@@ -236,7 +225,8 @@ async def get_channels(
 async def get_phenotype_symbols(
     study: ValidStudy,
 ) -> list[PhenotypeSymbolAndCriteria]:
-    """The display names and identifiers for the "composite" phenotypes in a given study."""
+    """The display names and identifiers for the "composite" phenotypes in a given study, defined
+    by combination of positive and negative markers."""
     symbols: tuple[PhenotypeSymbol, ...] = query().get_phenotype_symbols(study)
     return list(
         PhenotypeSymbolAndCriteria(
@@ -253,8 +243,8 @@ async def get_phenotype_criteria(
     study: ValidStudy,
     phenotype_symbol: ValidPhenotypeSymbol,
 ) -> PhenotypeCriteria:
-    """Get lists of the positive markers and negative markers defining a given named phenotype, in
-    the context of the given study.
+    """Get lists of the positive markers and negative markers defining a given named phenotype,
+    itself specified by identifier index, in the context of the given study.
     """
     return query().get_phenotype_criteria(study, phenotype_symbol)
 
@@ -265,8 +255,7 @@ async def get_anonymous_phenotype_counts_fast(
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
-    """Computes the number of cells satisfying the given positive and negative criteria, in the
-    context of a given study.
+    """Alternative syntax for `phenotype-counts`. To be deprecated.
     """
     return _get_anonymous_phenotype_counts_fast(positive_marker, negative_marker, study)
 
@@ -276,21 +265,23 @@ def _get_anonymous_phenotype_counts_fast(
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
-    number_cells = cast(int, query().get_number_cells(study))
-    counts = get_phenotype_counts(positive_marker, negative_marker, study, number_cells)
+    counts = _get_phenotype_counts(positive_marker, negative_marker, study)
     return counts
 
 
 @app.get("/phenotype-counts/")
-async def get_phenotype_counts_nonblocking(
+async def get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
     """Computes the number of cells satisfying the given positive and negative criteria, in the
-    context of a given study. Non-blocking, has a "pending" flag in the response.
+    context of a given study, for each sample individually. This request should generally be
+    non-blocking, returning immediately with either a full or partial set of count values. A
+    "pending" flag in the response indicates which scenario is the case. If pending, poll this
+    endpoint until all values are available.
     """
-    counts = get_phenotype_counts(positive_marker, negative_marker, study, 0, blocking=False)
+    counts = _get_phenotype_counts(positive_marker, negative_marker, study, blocking=False)
     return counts
 
 
@@ -298,10 +289,12 @@ async def get_phenotype_counts_nonblocking(
 async def request_spatial_metrics_computation(
     study: ValidStudy,
     phenotype: ValidPhenotypeList,
-    feature_class: ValidFeatureClass,
+    feature_class: ValidFeatureClass2Phenotypes,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    """Spatial proximity statistics between phenotype cell sets, as calculated by Squidpy."""
+    """Spatial proximity statistics like the single-phenotype case, but between *two* phenotype cell
+    sets, where the phenotypes are specified by index among the pre-defined/combination phenotypes
+    for the given study."""
     phenotypes = phenotype
     criteria: list[PhenotypeCriteria] = [
         query().retrieve_signature_of_phenotype(p, study) for p in phenotypes
@@ -321,8 +314,13 @@ async def request_spatial_metrics_computation_custom_phenotype(
     feature_class: ValidFeatureClass,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    """Spatial proximity statistics for a single custom-defined phenotype (cell set), as
-    calculated by Squidpy.
+    """Spatial proximity statistics for a single custom-defined phenotype (cell set). Different
+    metrics are available, including several provided by the Squidpy package. If a feature class is
+    specified which requires two cell sets, the provided cell set will be duplicated. The radius
+    value provides a scale to the metric computation algorithm. Here "request" connotes that the
+    query will request computation and then return. Poll this endpoint until all values are
+    available. Note that `positive_marker` and `negative_marker` paramters can be supplied
+    multiple times, once for each item in the list of positive or negative markers respectively.
     """
     markers = [positive_marker, negative_marker]
     return get_squidpy_metrics(study, markers, feature_class, radius=radius)
@@ -338,8 +336,7 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
     feature_class: ValidFeatureClass,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
-    """Spatial proximity statistics for a pair of custom-defined phenotypes (cell sets), most
-    calculated by Squidpy.
+    """Spatial proximity statistics for a pair of custom-defined phenotypes (cell sets).
     """
     markers = (positive_marker, negative_marker, positive_marker2, negative_marker2)
     if feature_class == 'proximity':
@@ -398,20 +395,18 @@ def _get_importance_composition(
         cohort_stratifier,
         cell_limit,
     )
-    return get_phenotype_counts(
+    return _get_phenotype_counts(
         positive_marker,
         negative_marker,
         study,
-        len(cells_selected),
         cells_selected,
     )
 
 
-def get_phenotype_counts_cached(
+def _get_phenotype_counts_cached(
     positives: tuple[str, ...],
     negatives: tuple[str, ...],
     study: str,
-    number_cells: int,
     selected: tuple[int, ...],
     blocking: bool = True,
 ) -> PhenotypeCounts:
@@ -419,29 +414,26 @@ def get_phenotype_counts_cached(
         positives,
         negatives,
         study,
-        number_cells,
         set(selected) if selected is not None else None,
         blocking = blocking,
     )
     return counts
 
 
-def get_phenotype_counts(
+def _get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
-    number_cells: int,
     cells_selected: set[int] | None = None,
     blocking: bool = True,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
-    counts = get_phenotype_counts_cached(
+    counts = _get_phenotype_counts_cached(
         tuple(positive_markers),
         tuple(negative_markers),
         study,
-        number_cells,
         tuple(sorted(list(cells_selected))) if cells_selected is not None else (),
         blocking = blocking,
     )
@@ -482,7 +474,7 @@ async def get_cell_data_binary(
     """
     Get streaming cell-level location and phenotype data in a custom binary format.
     The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
-    
+
     The sample may be "UMAP virtual sample" if UMAP dimensional reduction is available.
     """
     has_umap = query().has_umap(study)
@@ -582,7 +574,8 @@ async def importance_fraction_plot(
     study: ValidStudy,
     img_format: Literal['svg', 'png'] = 'svg',
 ) -> StreamingResponse:
-    """Return a plot of the fraction of important cells expressing a given phenotype."""
+    """Return a plot of the fraction of the top most important cells for GNN classification,
+    expressing various phenotypes."""
     raw = get_importance_fraction_plot(str(study), str(img_format))
     buffer = BytesIO()
     buffer.write(raw)

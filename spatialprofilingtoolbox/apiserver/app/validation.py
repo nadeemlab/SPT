@@ -86,7 +86,7 @@ def valid_channel_list(markers: list[str]) -> list[str]:
     raise ValueError(f'Marker names invalid: {missing}')
 
 
-ChannelList = Annotated[list[str], Query()]
+ChannelList = Annotated[list[str], Query(examples=['B2M', 'SOX10'])]
 
 
 async def valid_channel_list_positives(positive_marker: ChannelList) -> list[str]:
@@ -106,7 +106,23 @@ async def valid_channel_list_negatives2(negative_marker2: ChannelList) -> list[s
 
 
 async def valid_spatial_feature_classname(
-    feature_class: str = Query(min_length=1, max_length=100),
+    feature_class: str = Query(
+        min_length=1,
+        max_length=100,
+        examples=['proximity', 'neighborhood enrichment', 'co-occurrence', 'ripley', 'spatial autocorrelation'],
+    ),
+) -> str:
+    if feature_class not in (list(squidpy_feature_classnames()) + ['proximity']):
+        raise ValueError(f'Feature class "{feature_class}" does not exist.')
+    return feature_class
+
+
+async def valid_spatial_feature_classname2(
+    feature_class: str = Query(
+        min_length=1,
+        max_length=100,
+        examples=['proximity', 'neighborhood enrichment', 'co-occurrence'],
+    ),
 ) -> str:
     if feature_class not in (list(squidpy_feature_classnames()) + ['proximity']):
         raise ValueError(f'Feature class "{feature_class}" does not exist.')
@@ -123,3 +139,4 @@ ValidChannelListNegatives = Annotated[list[str], Depends(valid_channel_list_nega
 ValidChannelListPositives2 = Annotated[list[str], Depends(valid_channel_list_positives2)]
 ValidChannelListNegatives2 = Annotated[list[str], Depends(valid_channel_list_negatives2)]
 ValidFeatureClass = Annotated[str, Depends(valid_spatial_feature_classname)]
+ValidFeatureClass2Phenotypes = Annotated[str, Depends(valid_spatial_feature_classname2)]

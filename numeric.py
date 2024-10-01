@@ -113,7 +113,7 @@ def get_expression(byte1: bytes, f: SmallFloatByteFormat) -> str:
 
 
 def generate_whole_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMetadata], DataFrame]:
-    rows = []
+    rows: list[SmallFloatMetadata] = []
     for i in range(256):
         s = SmallFloatMetadata(
             i,

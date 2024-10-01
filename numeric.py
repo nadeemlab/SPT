@@ -2,6 +2,9 @@
 from math import log2
 
 from attr import define
+from attr import fields as attrs_fields
+from pandas import DataFrame
+
 
 @define
 class SmallFloatByteFormat:
@@ -34,6 +37,7 @@ class SmallFloatByteFormat:
     exponent_shift: int
     max_fixed: int
     max_exponent: int
+    lowest_denomination: float
 
 
 def float_format(fixed_bits: int, exponent_bits: int, exponent_shift: int) -> SmallFloatByteFormat:
@@ -44,6 +48,7 @@ def float_format(fixed_bits: int, exponent_bits: int, exponent_shift: int) -> Sm
         exponent_shift,
         2**fixed_bits,
         2**exponent_bits,
+        2**(-1 * exponent_shift),
     )
     bits = f.fixed_bits + f.exponent_bits
     if bits != 8:
@@ -57,17 +62,18 @@ def encode(value: float, f: SmallFloatByteFormat) -> bytes:
     `value` should be non-negative and, approximately, less than the largest `f`-representable
     number.
     """
-    if value < 0:
+    _value = f.lowest_denomination + value
+    if _value <= 0:
         raise OverflowError
-    if value == 0:
-        exponent_integer = 0
-    else:
-        exponent_integer = round(log2(value))
+    exponent_integer = round(log2(_value))
+    nonexponent_part = _value / pow(2, exponent_integer)
+    if nonexponent_part < 1:
+        exponent_integer -= 1
+        nonexponent_part = _value / pow(2, exponent_integer)
+
     exponent_stored = exponent_integer + f.exponent_shift
     if exponent_stored >= f.max_exponent or exponent_stored < 0:
         raise OverflowError
-    nonexponent_part = value / pow(2, exponent_integer)
-    precision = f.exponent_bits - 1
     fixed = f.max_fixed * (nonexponent_part - 1)
     fixed_stored = int(fixed)
     if fixed_stored >= f.max_fixed or fixed_stored < 0:
@@ -78,59 +84,52 @@ def encode(value: float, f: SmallFloatByteFormat) -> bytes:
 def decode(byte1: bytes, f: SmallFloatByteFormat) -> float:
     exponent = -f.exponent_shift + (int.from_bytes(byte1) % f.max_exponent)
     fixed = ((int.from_bytes(byte1) >> f.exponent_bits) / f.max_fixed) + 1
-    return fixed * pow(2, exponent)
+    return fixed * pow(2, exponent) - f.lowest_denomination
 
 
-def _print_expression(byte1: bytes, f: SmallFloatByteFormat) -> str:
+@define
+class SmallFloatMetadata:
+    ordinal: int
+    byte1: bytes
+    decoded_value: float
+    recoded: bytes
+    recoded_integrity: bool
+    expression: str
+
+
+def expand_metadata(s: SmallFloatMetadata) -> tuple:
+    return (s.ordinal, s.byte1, s.decoded_value, s.recoded, s.recoded_integrity, s.expression)
+
+
+def get_expression(byte1: bytes, f: SmallFloatByteFormat) -> str:
     exponent = -f.exponent_shift + (int.from_bytes(byte1) % f.max_exponent)
     fixed = ((int.from_bytes(byte1) >> f.exponent_bits) / f.max_fixed) + 1
-    expression = f'{str(fixed).ljust(8)} * 2^{exponent}'.ljust(15)
-    return f'{expression}   ({int.from_bytes(byte1) >> f.exponent_bits}, {int.from_bytes(byte1)})'
+    return f'{str(fixed).ljust(8)} * 2^{exponent}'
 
 
-# class SmallFloat:
-#     def __init__(self, fixed_bits: int, exponent_bits: int, zero_exponent_code: int):
-#         self.f = fixed_bits
-#         self.e = exponent_bits
-#         self.z = zero_exponent_code
+def generate_whole_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMetadata], DataFrame]:
+    rows = []
+    for i in range(256):
+        s = SmallFloatMetadata(
+            i,
+            i.to_bytes(),
+            decode(i.to_bytes(), f),
+            encode(decode(i.to_bytes(), f), f),
+            encode(decode(i.to_bytes(), f), f) == i.to_bytes(),
+            get_expression(i.to_bytes(), f),
+        )
+        rows.append(s)
+    rows = sorted(rows, key=lambda s: s.decoded_value)
+    tuple_rows = [expand_metadata(r) for r in rows]
+    df = DataFrame(tuple_rows, columns=list(map(lambda field: field.name, attrs_fields(SmallFloatMetadata))))
+    return rows, df
 
-#     def encode(self, value: float) -> bytes:
-#         exponent = round(log2(abs(value)))
-#         scale = pow(2, self.e)
-#         if exponent >= scale - self.z or exponent < -self.z:
-#             raise OverflowError
-#         nonexponent_part = (value / pow(2, exponent))
-#         fixed = round(pow(2, self.p()) * nonexponent_part) / pow(2, self.p())
-#         fixed_whole = int(pow(2, self.p()) * fixed)
-#         if fixed_whole >= pow(2, self.f) or fixed_whole < 0:
-#             raise OverflowError
-#         binary = ((fixed_whole << self.e) + (self.z + exponent)).to_bytes()
-#         return binary
-
-#     def decode(self, binary: bytes) -> float:
-#         exponent = pow(2, -self.z + (int.from_bytes(binary) % pow(2, self.e)))
-#         fixed = (int.from_bytes(binary) >> self.e) / pow(2, self.p())
-#         return fixed * exponent
-
-#     def p(self):
-#         return self.f - 1
-
-# c = SmallFloat(5, 3, 4)
-# c.decode(c.encode(11.32))
-# c.decode(c.encode(11.3))
 
 def print_table():
     f = float_format(5, 3, 4)
-    l = []
-    for i in range(256):
-        d = decode(i.to_bytes(), f)
-        # print((i, d))
-        # e = encode(d, f)
-        e = 1
-        l.append((i, i.to_bytes(), d, e))
+    rows, df = generate_whole_table(f)
+    print(df.to_string())
 
-    for x in sorted(l, key=lambda t: t[2]):
-        print(f'{str(x[0]).ljust(8)} {str(x[1]).ljust(8)} {str(x[2]).ljust(14)} {str(x[3]).ljust(8)} {_print_expression(x[1], f)}')
 
 if __name__=='__main__':
     print_table()

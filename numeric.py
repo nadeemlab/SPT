@@ -1,5 +1,7 @@
 
 from math import log2
+import re
+from json import dumps as json_dumps
 
 from attr import define
 from attr import fields as attrs_fields
@@ -128,10 +130,24 @@ def generate_whole_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMetada
     return rows, df
 
 
-def print_table():
+def print_javascript_lookup() -> None:
+    rows, df = generate_whole_table(SMALL_FLOAT_FORMAT)
+    def format_bin(integer: int):
+        return bin(integer)[2:].rjust(8, '0')
+    data = json_dumps(dict(map(lambda row: (format_bin(row.integer), row.decoded_value), rows)), indent=4)
+    data = 'var lookup = ' + re.sub('"([01]+)"', r'0b\1' , data)
+    print(data)
+
+
+def print_table() -> None:
     rows, df = generate_whole_table(SMALL_FLOAT_FORMAT)
     print(df.to_string())
 
 
 if __name__=='__main__':
+    import sys
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'javascript':
+            print_javascript_lookup()
+            sys.exit()
     print_table()

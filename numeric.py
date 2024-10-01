@@ -58,7 +58,8 @@ def float_format(fixed_bits: int, exponent_bits: int, exponent_shift: int) -> Sm
     return f
 
 
-SMALL_FLOAT_FORMAT = float_format(5, 3, 4)
+# SMALL_FLOAT_FORMAT = float_format(5, 3, 4)
+SMALL_FLOAT_FORMAT = float_format(6, 2, 2)
 
 
 def encode(value: float, f: SmallFloatByteFormat) -> bytes:
@@ -109,7 +110,7 @@ def expand_metadata(s: SmallFloatMetadata) -> tuple:
 def get_expression(byte1: bytes, f: SmallFloatByteFormat) -> str:
     exponent = -f.exponent_shift + (int.from_bytes(byte1) % f.max_exponent)
     fixed = ((int.from_bytes(byte1) >> f.exponent_bits) / f.max_fixed) + 1
-    return f'{str(fixed).ljust(8)} * 2^{exponent}'
+    return f'{str(fixed).ljust(8)} * 2^{exponent} - lowest value'
 
 
 def generate_whole_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMetadata], DataFrame]:

@@ -56,6 +56,9 @@ def float_format(fixed_bits: int, exponent_bits: int, exponent_shift: int) -> Sm
     return f
 
 
+SMALL_FLOAT_FORMAT = float_format(5, 3, 4)
+
+
 def encode(value: float, f: SmallFloatByteFormat) -> bytes:
     """
     Create an approximation of `value` in the 1-byte format specified by `f`.
@@ -89,7 +92,7 @@ def decode(byte1: bytes, f: SmallFloatByteFormat) -> float:
 
 @define
 class SmallFloatMetadata:
-    ordinal: int
+    integer: int
     byte1: bytes
     decoded_value: float
     recoded: bytes
@@ -98,7 +101,7 @@ class SmallFloatMetadata:
 
 
 def expand_metadata(s: SmallFloatMetadata) -> tuple:
-    return (s.ordinal, s.byte1, s.decoded_value, s.recoded, s.recoded_integrity, s.expression)
+    return (s.integer, s.byte1, s.decoded_value, s.recoded, s.recoded_integrity, s.expression)
 
 
 def get_expression(byte1: bytes, f: SmallFloatByteFormat) -> str:
@@ -126,8 +129,7 @@ def generate_whole_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMetada
 
 
 def print_table():
-    f = float_format(5, 3, 4)
-    rows, df = generate_whole_table(f)
+    rows, df = generate_whole_table(SMALL_FLOAT_FORMAT)
     print(df.to_string())
 
 

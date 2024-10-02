@@ -18,21 +18,23 @@ class SmallFloatByteFormat:
 
     where the fixed part and the exponent part are encodeable as binary integers. The encoding that
     we actually do is not simply to make the fixed part and exponent part literally integers,
-    because we want the floating-point scheme to have a favorable distribution.
-            
+    because we want the floating-point scheme to have a favorable distribution. Specifically, we
+    want:
+    - range from 0 to 1
+    - much higher density near 0
+
     The memory map is:
 
-    - a `fixed_bits`-bit binary integer, F
     - an `exponent_bits`-bit binary integer, E
+    - a `fixed_bits`-bit binary integer, F
 
-    The pair (F, E) then represents exactly the number given by the arithmetic formula:
+    The pair (E, F) then represents exactly the number given by the arithmetic formula:
 
-        A * [ ((F / M) + 1) * 2^(E - S) - 2^(-S) ]
+        S * [ ((F / M) + 1) * 2^(E) - 2^(0) ]
 
     where:
-    - S is the value of `exponent_shift`
     - M is the integer upper bound for F, i.e. 2^(fixed_bits)
-    - A is a constant scale factor that ensures that the largest value that occurs is 1
+    - S is the constant scale factor that ensures that the largest value that occurs is 1
 
     The term ((F / M) + 1) is a linear transformation of the F values, which range
     from 0 to M-1, onto the range 1 to 2. The purpose of this is to ensure that the fixed
@@ -40,28 +42,22 @@ class SmallFloatByteFormat:
 
         (3) * 2^4 = (6) * 2^3
 
-    The term - 2^(-S) is an offset that ensures that byte 0 encodes 0 rather than the smallest
-    denomination 1 * 2 ^ (-S), which would otherwise be the smallest representable value.
+    The term - 2^(0) is an offset that ensures that byte 0 encodes 0 rather than the smallest
+    denomination 2^(0), which would otherwise be the smallest representable value.
 
     The `test` area has a table of extended metadata and a flat lookup table for the encoding of
-    this type which we use as the default (fixed_bits = 5, exponent_bits = 3, exponent_shift = 2)
+    this type which we use as the default (fixed_bits = 5, exponent_bits = 3)
     That area also has a script to generate distribution plots to compare the possible formats.
-    
-    Note that the exponent shift is not very important, since the overall scale factor `A` was
-    introduced. The purpose of the shift was to do such a scaling, but the problem with that was
-    that the highest value was only approximately, and not exactly, equal to a round power-of-2
-    integer.
     """
-    fixed_bits: int
     exponent_bits: int
-    exponent_shift: int
+    fixed_bits: int
     max_fixed: int
     max_exponent: int
     lowest_denomination: float
     scale_adjustment: float
 
 
-def float_format(exponent_bits: int, exponent_shift: int) -> SmallFloatByteFormat:
+def float_format(exponent_bits: int) -> SmallFloatByteFormat:
     """Constructor for the SmallFloatByteFormat specification object."""
     if exponent_bits >= 8:
         raise ValueError(f'This format requires exactly 8 bits in memory map, and {exponent_bits} '
@@ -69,20 +65,19 @@ def float_format(exponent_bits: int, exponent_shift: int) -> SmallFloatByteForma
     if exponent_bits < 1:
         raise ValueError(f'This format requires at least 1 bit for encoding the exponent.')
     fixed_bits = 8 - exponent_bits
-    highest = (1 + (-1 + (2**fixed_bits)) / (2**fixed_bits)) * 2**(2**exponent_bits - 1 - exponent_shift) - 2**(-1 * exponent_shift)
+    highest = (1 + (-1 + (2**fixed_bits)) / (2**fixed_bits)) * 2**(2**exponent_bits - 1) - 2**(0)
     f = SmallFloatByteFormat(
-        fixed_bits,
         exponent_bits,
-        exponent_shift,
+        fixed_bits,
         2**fixed_bits,
         2**exponent_bits,
-        2**(-1 * exponent_shift),
+        1,
         1.0 / highest,
     )
     return f
 
 
-SMALL_FLOAT_FORMAT = float_format(3, 2)
+SMALL_FLOAT_FORMAT = float_format(3)
 
 
 def encode(value: float, f: SmallFloatByteFormat) -> bytes:
@@ -98,22 +93,22 @@ def encode(value: float, f: SmallFloatByteFormat) -> bytes:
     while nonexponent_part < 1:
         exponent_integer -= 1
         nonexponent_part = _value / pow(2, exponent_integer)
-    exponent_stored = exponent_integer + f.exponent_shift
+    exponent_stored = exponent_integer
     if exponent_stored >= f.max_exponent or exponent_stored < 0:
         raise OverflowError
     fixed = f.max_fixed * (nonexponent_part - 1)
     fixed_stored = int(fixed)
     if fixed_stored >= f.max_fixed or fixed_stored < 0:
         raise OverflowError
-    return ((fixed_stored << f.exponent_bits) + (exponent_stored)).to_bytes()
+    return ((exponent_stored << f.fixed_bits) + (fixed_stored)).to_bytes()
 
 
 def decode(byte1: bytes, f: SmallFloatByteFormat) -> float:
     """
     Expand the `f`-encoded float.
     """
-    exponent = -f.exponent_shift + (int.from_bytes(byte1) % f.max_exponent)
-    fixed = ((int.from_bytes(byte1) >> f.exponent_bits) / f.max_fixed) + 1
+    fixed = (int.from_bytes(byte1) % f.max_fixed / f.max_fixed) + 1
+    exponent = int.from_bytes(byte1) >> f.fixed_bits
     return (fixed * pow(2, exponent) - f.lowest_denomination) * f.scale_adjustment
 
 
@@ -125,8 +120,8 @@ class SmallFloatMetadata:
     recoded: bytes
     recoded_integrity: bool
     expression: str
-    fixed_integer: int
     exponent_integer: int
+    fixed_integer: int
 
 
 def _expand_metadata(s: SmallFloatMetadata) -> tuple:
@@ -137,17 +132,17 @@ def _expand_metadata(s: SmallFloatMetadata) -> tuple:
 
 
 def _get_expression(byte1: bytes, f: SmallFloatByteFormat) -> str:
-    exponent = -f.exponent_shift + (int.from_bytes(byte1) % f.max_exponent)
-    fixed = ((int.from_bytes(byte1) >> f.exponent_bits) / f.max_fixed) + 1
+    fixed = (int.from_bytes(byte1) % f.max_fixed / f.max_fixed) + 1
+    exponent = int.from_bytes(byte1) >> f.fixed_bits
     return f'(scale) * [{str(fixed).ljust(8)} * 2^{exponent} - lowest value]'
 
 
 def _get_fixed_integer(byte1: bytes, f: SmallFloatByteFormat) -> int:
-    return int.from_bytes(byte1) >> f.exponent_bits
+    return int.from_bytes(byte1) % f.max_fixed
 
 
 def _get_exponent_integer(byte1: bytes, f: SmallFloatByteFormat) -> int:
-    return int.from_bytes(byte1) % f.max_exponent
+    return int.from_bytes(byte1) >> f.fixed_bits
 
 
 def generate_metadata_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMetadata], DataFrame]:
@@ -162,8 +157,8 @@ def generate_metadata_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMet
             recoded,
             recoded == i.to_bytes(),
             _get_expression(i.to_bytes(), f),
-            _get_fixed_integer(i.to_bytes(), f),
             _get_exponent_integer(i.to_bytes(), f),
+            _get_fixed_integer(i.to_bytes(), f),
         )
         rows.append(s)
     rows = sorted(rows, key=lambda s: s.decoded_value)

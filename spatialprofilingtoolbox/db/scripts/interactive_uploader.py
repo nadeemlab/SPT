@@ -313,7 +313,10 @@ class InteractiveUploader:
                 return ''
             self.study_names_by_schema = dict(name_schema)
             self.existing_studies = tuple(sorted(list(self.study_names_by_schema.keys())))
-        study_name = self._retrieve_study_name(source)
+        try:
+            study_name = self._retrieve_study_name(source)
+        except ValueError:
+            return 'not a valid study'
         normal = re.sub('[ \-]', '_', study_name).lower()
         if normal in self.existing_studies:
             self.present_on_remote.append(source)

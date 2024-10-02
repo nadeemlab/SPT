@@ -6,8 +6,8 @@ from json import dumps as json_dumps
 from spatialprofilingtoolbox.standalone_utilities.float8 import SMALL_FLOAT_FORMAT
 from spatialprofilingtoolbox.standalone_utilities.float8 import generate_metadata_table
 
-# WRITE_ARTIFACTS = False
-WRITE_ARTIFACTS = True
+WRITE_ARTIFACTS = False
+# WRITE_ARTIFACTS = True
 
 
 def check_javascript_lookup() -> None:

@@ -10,7 +10,6 @@ from spatialprofilingtoolbox.standalone_utilities.float8 import generate_metadat
 def create_comparison_plot():
     n_bins = 50
     _, axs = plt.subplots(4, 6, sharey=True, tight_layout=True)
-    # bases = [2, 3, 5, 10]
     bases = [2, 3, 5, 10]
     for J, B in list(enumerate(bases)):
         for I in range(6):

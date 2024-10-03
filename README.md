@@ -95,13 +95,15 @@ The "virtual slide viewer" opens. Choose a few phenotypes, and the corresponding
 
 A UMAP dimensional reduction of the cell set across the whole data collection is available in this case. Click **UMAP**.
 
-You can zoom and pan the view using scroll and click-and-drag.
+> [!NOTE]
+> :mag: You can zoom and pan the view using scroll and click-and-drag.
 
 We spot a region that looks "saturated" with Tc cells. Select it by clicking and dragging the mouse while holding either the **Ctrl** key or (on Mac) **CMD**.
 
 The new cell count for each phenotype is now shown, together with the new percentage, relative to the selection. In this case the Tc fraction approximately doubled, to **6996** cells (shown in green). This increase is assessed using the Fisher test (the entire contingency table is also shown, for reference). The test verifies that the increase is highly statistically significant in this case, as expected.
 
-By careful use of the selection tool, noting enrichments in each virtual region, you can account for most of the cell types present and hone the focus of study.
+> [!NOTE]
+> :dna: By careful use of the selection tool, noting enrichments in each virtual region, you can account for most of the cell types present and hone the focus of study.
 
 ![alt](docs/image_assets/f10.png)
 
@@ -119,7 +121,8 @@ This metric is the average number of **Naive cytotoxic T cells** appearing withi
 
 ![alt](docs/image_assets/f12.png)
 
-You can **save results like this for later** by copying the URL in the address bar. In fact, this result is highlighted on the study summary page. Try reproducing it by following the first link as shown below.
+> [!NOTE]
+> :clipboard: You can **save results like this for later** by copying the URL in the address bar. In fact, this result is highlighted on the study summary page. Try reproducing it by following the first link as shown below.
 
 ![alt](docs/image_assets/f13.png)
 

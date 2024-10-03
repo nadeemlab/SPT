@@ -116,7 +116,7 @@ In the column header that appears, click `>`. The **spatial metrics** dropdown a
 
 ![alt](docs/image_assets/f12.png)
 
-You can **save results like this for later** by copying the URL. In fact, this result is highlighted on the study summary page. Try reproducing it by following the first link as shown below.
+You can **save results like this for later** by copying the URL in the address bar. In fact, this result is highlighted on the study summary page. Try reproducing it by following the first link as shown below.
 
 ![alt](docs/image_assets/f13.png)
 

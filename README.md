@@ -5,7 +5,18 @@
 <br/>
 <br/>
 
-# What can cells tell us about biology and disease?
+- [What do cell profiles tell us about biology and disease?](#what-do-cell-profiles-tell-us-about-biology-and-disease)
+- [User tutorial](#user-tutorial)
+- [Example: Exploratory data analysis of immunotherapy response in melanoma](#example-exploratory-data-analysis-of-immunotherapy-response-in-melanoma)
+- [Spatially-informed metrics](#spatially-informed-metrics)
+- [Data management](#data-management)
+- [CLI command reference](#cli-command-reference)
+- [API reference](#api-reference)
+- [Development and maintenance](#development-and-maintenance)
+- [Deployment options](#deployment-options)
+
+
+# What do cell profiles tell us about biology and disease?
 
 By studying microscopic imaging of small specimens of tissue, like skin or organ resections, pathologists and basic scientists can draw inferences about the way that cells coordinate to set biological processes in motion, and how these processes are disrupted in the course of disease.
 
@@ -93,6 +104,22 @@ By careful use of the selection tool, noting enrichments in each virtual region,
 
 ![alt](docs/f10.png)
 
+## Spatially-informed metrics
+
+Let's see an example of quantification over samples that makes use of the spatial arrangement of cells.
+
+Choose the phenotypes **Naive cytoxic T cell** and **T helper cell antigen-experienced**. Select the tile with row **T helper cell antigen-experienced** and column **Naive cytoxic T cell**, representing the pair of phenotypes.
+
+In the column header that appears, click `>`. The **spatial metrics** dropdown appears. Click `v` to show the available metrics. Choose **cell-to-cell proximity**. After the metric is finished computing, click the column header **cell-to-cell proximity** and the two cohorts **1** and **2** to perform a univariate comparison.
+
+![alt](docs/f11.png)
+
+![alt](docs/f12.png)
+
+You can **save results like this for later** by copying the URL. In fact, this result is highlighted on the study summary page. Try reproducing it by following the first link as shown below.
+
+![alt](docs/f13.png)
+
 # Data management
 To support this project's semantic integrity goals, we designed a general data model and ontology for cell-resolved measurement studies, using a schema-authoring system we call the Application Data Interface (ADI) framework.
 
@@ -100,7 +127,7 @@ The schema is called `scstudies` and it is documented in detail [here](https://a
 
 In our implementation, we sought to strike an effective balance between the completeness of annotation demanded by accurate record-keeping, on the one hand, and practical computational efficiency on the other. Much of the application is organized around a SQL database with a schema that conforms tightly to the formal `scstudies` data model, but we also make liberal use of derivative data artifacts to improve speed and performance. For example, a highly-compressed [binary format](docs/cells.md) is adopted for transmission of a given sample's cell-feature matrix.
 
-Similarly, datasets that we have curated for uniform data import are stored in a simple tabular file format which does not generally support all the features of the `scstudies` model. This intermediary format is designed for ease of creation. For an example, see [data_curation/](data_curation/).
+Similarly, datasets that we have curated for uniform data import are stored in a simple tabular file format which does not generally support all the features of the `scstudies` model. This intermediary format is designed for ease of creation and it is not entirely formalized. For an example, see [data_curation/](data_curation/).
 
 # CLI command reference
 The Python package `spatialprofilingtoolbox` is released on [PyPI](https://pypi.org/project/spatialprofilingtoolbox/), so it can be installed with

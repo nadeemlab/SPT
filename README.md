@@ -49,15 +49,15 @@ On the main page, select **Melanoma CyTOF ICI**. This brings up a dataset that w
 
 You'll see a summary of this dataset, including the numbers of samples, cells, and channels, links to relevant publications, classification of the samples, and highlighted findings that can be observed by using the SPT application. In this case the study collected samples from patients treated with immune-checkpoint inhibitor therapy, and the patients either responded favorably or poorly to this treatment.
 
-![alt](docs/f1.png)
+![alt](docs/image_assets/f1.png)
 
 On the next page you can choose which cell phenotypes you want to focus on. Click one of the pre-defined phenotypes, or define a custom phenotype by indicating positive and negative markers from among the channels which were imaged.
 
-![alt](docs/f2.png)
+![alt](docs/image_assets/f2.png)
 
 We select five custom phenotypes. The first phenotype, for example, was defined by clicking the **+** beside **CD3+**, then clicking **Add to selection**. This generally indicates the T cells. The second phenotype is **CD3+ CD4+**, the markers of T helper cells. We also include: **CD3+ CD8A+**, **CD3+ CD4+ FOXP3+**, and **CD20+ CD3-**. We are ascertaining the rough profile of lymphocytes in the dataset.
 
-![alt](docs/f3.png)
+![alt](docs/image_assets/f3.png)
 
 The next page shows the cell population breakdown with respect to the phenotypes we've just selected. Each phenotype is shown with the fraction of cells expressing that phenotype across all samples, for example 54.02% are indicated as T cells.
 
@@ -66,7 +66,7 @@ In the grid, each *pair* of phenotypes is shown with the fraction of cells expre
 > [!NOTE]
 > You could use this technique to make a standard heat map for assessment of clusters, by selecting all single-channel phenotypes. Depending on the size of the samples, since these metrics are computed live, this could take up to 1 minute per computed value, and sometimes longer.
 
-![alt](docs/f4.png)
+![alt](docs/image_assets/f4.png)
 
 To continue with a finer analysis, click one of the "tiles", either for one phenotype (the tiles on the left) or two phenotypes (the grid on the right).
 
@@ -74,23 +74,23 @@ We choose the tile at row **CD3+ CD4+ FOXP3+** (Treg) and column **CD3+ CD8A+** 
 
 We also selected the single-phenotype tiles **CD3+ CD4+ FOXP3+** and **CD3+ CD8A**.
 
-![alt](docs/f5.png)
+![alt](docs/image_assets/f5.png)
 
 Click on the column header **CD3+ CD8A+** (it becomes underlined to indicate that it is selected). Then select the two cohorts by clicking one of the **1** values and one of the **2** values. A "verbalization" appears which states that the trend, according to a t-test, is that the fraction of Tc cells is increased about 1.5 times in the non-responder cohort compared to the responders, with statistical significance value p=0.01.
 
-![alt](docs/f6.png)
+![alt](docs/image_assets/f6.png)
 
 We click on column **CD3+ CD4+ FOXP3+**, in addition to the prior selection. A similar assessment appears, this time with respect to the ratio of the number of **CD3+ CD8A+** (the first selection) to **CD3+ CD4+ FOXP3+** (the second selection).
 
-![alt](docs/f7.png)
+![alt](docs/image_assets/f7.png)
 
 Let's focus our attention on one of the samples that exhibited a large fraction of Tc cells. Click **31RD**.
 
-![alt](docs/f8.png)
+![alt](docs/image_assets/f8.png)
 
 The "virtual slide viewer" opens. Choose a few phenotypes, and the corresponding cells will become highlighted. The fraction and count of the cells for each phenotype are shown.
 
-![alt](docs/f9.png)
+![alt](docs/image_assets/f9.png)
 
 A UMAP dimensional reduction of the cell set across the whole data collection is available in this case. Click **UMAP**.
 
@@ -102,7 +102,7 @@ The new cell count for each phenotype is now shown, together with the new percen
 
 By careful use of the selection tool, noting enrichments in each virtual region, you can account for most of the cell types present and hone the focus of study.
 
-![alt](docs/f10.png)
+![alt](docs/image_assets/f10.png)
 
 ## Spatially-informed metrics
 
@@ -112,13 +112,13 @@ Choose the phenotypes **Naive cytoxic T cell** and **T helper cell antigen-exper
 
 In the column header that appears, click `>`. The **spatial metrics** dropdown appears. Click `v` to show the available metrics. Choose **cell-to-cell proximity**. After the metric is finished computing, click the column header **cell-to-cell proximity** and the two cohorts **1** and **2** to perform a univariate comparison.
 
-![alt](docs/f11.png)
+![alt](docs/image_assets/f11.png)
 
-![alt](docs/f12.png)
+![alt](docs/image_assets/f12.png)
 
 You can **save results like this for later** by copying the URL. In fact, this result is highlighted on the study summary page. Try reproducing it by following the first link as shown below.
 
-![alt](docs/f13.png)
+![alt](docs/image_assets/f13.png)
 
 # Data management
 To support this project's semantic integrity goals, we designed a general data model and ontology for cell-resolved measurement studies, using a schema-authoring system we call the Application Data Interface (ADI) framework.

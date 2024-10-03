@@ -191,7 +191,7 @@ Several commands are mainly for use internal to the application components.
 Some others are TUIs (Terminal User Interfaces) meant to make common tasks, like uploading datasets or inspecting cache or metadata, more reliable.
 
 ## Dataset uploader
-`spt db interactive-uploader` is a TUI that automatically determines available data sources and targets after you have created or located source datasets (format: [data_curation/](data_curation/)). It looks for [database configuration files](spatialprofilingtoolbox//workflow/assets/.spt_db.config.template) named `~/.spt_db.config.*`, checks the environment variable `SPT_S3_BUCKET`, and searches recursively for datasets in the current working directory named `generated_artifacts`.
+`spt db interactive-uploader` is a TUI that automatically determines available data sources and targets after you have created or located source datasets (format: [data_curation/](data_curation/)). It looks for [database configuration files](spatialprofilingtoolbox//workflow/assets/.spt_db.config.template) named `~/.spt_db.config.*`, checks the environment variable `SPT_S3_BUCKET`, and searches recursively for datasets in the current working directory named `generated_artifacts`. It presents available options and initiates the upload process.
 
 Example usage is shown below.
 

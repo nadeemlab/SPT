@@ -15,6 +15,7 @@ Multiple-channel imaging technology, capable of measuring several dozen protein 
 
 The Spatial Profiling Toolbox (SPT) project is about making the most of this informative data source using quality software. The guiding principles are:
 
+|                             |         |
 |-----------------------------|---------|
 | :zap: **High availability** | Datasets should be available for analysis immediately with the widest range of tools. Preprocessing and indexing should be done in advance as much as possible.|
 | :repeat: **Reproducible analysis** | Results and findings should be based on analyses that others can easily recreate in their entirety. |

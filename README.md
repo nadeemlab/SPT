@@ -193,6 +193,8 @@ Some others are TUIs (Terminal User Interfaces) meant to make common tasks, like
 ## Dataset uploader
 `spt db interactive-uploader` is a TUI that automatically determines available data sources and targets after you have created or located source datasets (format: [data_curation/](data_curation/)). It looks for [database configuration files](spatialprofilingtoolbox//workflow/assets/.spt_db.config.template) named `~/.spt_db.config.*`, checks the environment variable `SPT_S3_BUCKET`, and searches recursively for datasets in the current working directory named `generated_artifacts`.
 
+Example usage is shown below.
+
 ![alt](docs/image_assets/uploader_example.png)
 
 # API reference

@@ -31,7 +31,7 @@ SPT is available to the public at [oncopathtk.org](https://oncopathtk.org).
 
 ## Example: Exploratory data analysis of immunotherapy response in melanoma
 
-On the main page, select **Melanoma CyTOF ICI**. This dataset was published by Moldoveanu et al.[^1].
+On the main page, select **Melanoma CyTOF ICI**. This brings up a dataset that was collected and published by Moldoveanu et al.[^1].
 
 You'll see a summary of this dataset, including the numbers of samples, cells, and channels, links to relevant publications, classification of the samples, and highlighted findings that can be observed by using the SPT application. In this case the study collected samples from patients treated with immune-checkpoint inhibitor therapy, and the patients either responded favorably or poorly to this treatment.
 
@@ -41,7 +41,7 @@ On the next page you can choose which cell phenotypes you want to focus on. Clic
 
 ![alt](docs/f2.png)
 
-We select five custom phenotypes. The first phenotype, for example, was defined by selecting **CD3+**. This generally indicates the T cells. The second phenotype is **CD3+ CD4+**, the markers T helper cells. We also include: **CD3+ CD8A+**, **CD3+ CD4+ FOXP3+**, and **CD20+ CD3-**. We are ascertaining the rough profile of lymphocytes in the dataset.
+We select five custom phenotypes. The first phenotype, for example, was defined by clicking the **+** beside **CD3+**, then clicking **Add to selection**. This generally indicates the T cells. The second phenotype is **CD3+ CD4+**, the markers of T helper cells. We also include: **CD3+ CD8A+**, **CD3+ CD4+ FOXP3+**, and **CD20+ CD3-**. We are ascertaining the rough profile of lymphocytes in the dataset.
 
 ![alt](docs/f3.png)
 
@@ -50,7 +50,7 @@ The next page shows the cell population breakdown with respect to the phenotypes
 In the grid, each *pair* of phenotypes is shown with the fraction of cells expressing *both* phenotypes. For example, the fraction of cells that are both **CD3+ CD4+ FOXP3+** and **CD3+** is 16.53%, the same as the fraction of cells that are **CD3+ CD4+ FOXP3+**, as expected since **CD3+** is part of the signature of this phenotype (the T regulatory cells).
 
 > [!NOTE]
-> You could use this technique to make a standard heat map for assessment of clusters, by selecting all single-channel phenotypes. Depending on the size of the samples, since these metrics are computed live, this could take up to 1 minute per computed value.
+> You could use this technique to make a standard heat map for assessment of clusters, by selecting all single-channel phenotypes. Depending on the size of the samples, since these metrics are computed live, this could take up to 1 minute per computed value, and sometimes longer.
 
 ![alt](docs/f4.png)
 
@@ -70,7 +70,7 @@ We click on column **CD3+ CD4+ FOXP3+**, in addition to the prior selection. A s
 
 ![alt](docs/f7.png)
 
-Let's focus our attention on one of the samples that exhibited a large fraction of Tc cells. Click **31RD**
+Let's focus our attention on one of the samples that exhibited a large fraction of Tc cells. Click **31RD**.
 
 ![alt](docs/f8.png)
 
@@ -78,25 +78,97 @@ The "virtual slide viewer" opens. Choose a few phenotypes, and the corresponding
 
 ![alt](docs/f9.png)
 
-A UMAP dimensional reduction across the whole dataset is available in this case, by clicking **UMAP**.
+A UMAP dimensional reduction of the cell set across the whole data collection is available in this case. Click **UMAP**.
 
 You can zoom and pan the view using scroll and click-and-drag.
 
 We spot a region that looks "saturated" with Tc cells. Select it by clicking and dragging the mouse while holding either the **Ctrl** key or (on Mac) **CMD**.
 
-The new cell count for each phenotype is now shown, together with the new percentage, relative to the selection. In this case the Tc fraction approximately doubled, to **6996** cells (shown in green). This increase is assessed using the Fisher test (the entire contingency table is also shown, for reference). The test verifies that the increase highly statistically significant in this case, as expected.
+The new cell count for each phenotype is now shown, together with the new percentage, relative to the selection. In this case the Tc fraction approximately doubled, to **6996** cells (shown in green). This increase is assessed using the Fisher test (the entire contingency table is also shown, for reference). The test verifies that the increase is highly statistically significant in this case, as expected.
+
+By careful use of the selection tool, noting enrichments in each virtual region, you can account for most of the cell types present and hone the focus of study.
 
 ![alt](docs/f10.png)
 
 # Data management
+To support this project's semantic integrity goals, we designed a general data model and ontology for cell-resolved measurement studies, using a schema-authoring system we call the Application Data Interface (ADI) framework.
+
+The schema is called `scstudies` and is documented in detail [here](https://adiframework.com/docs_site/scstudies_quick_reference.html#).
+
+In our implementation, we sought to strike an effective balance between the completeness of annotation demanded by accurate record-keeping and practical computational efficiency. Much of the application is organized around a SQL database with a schema that conforms tightly to the formal `scstudies` data model, but we also make liberal use of derivative data artifacts to improve speed and performance. For example, a highly-compressed [binary format](docs/cells.md) is adopted for transmission of a given sample's cell-feature matrix.
+
+Similarly, datasets that we have curated for uniform data import are stored in a simple tabular file format which does not generally support all the features of the `scstudies` model. This intermediary format is designed for ease of creation. For an example, see [data_curation/](data_curation/).
 
 # CLI command reference
+The Python package `spatialprofilingtoolbox` is released on [PyPI](https://pypi.org/project/spatialprofilingtoolbox/), so it can be installed with
+
+```sh
+python -m pip install spatialprofilingtoolbox
+```
+
+This make several commands available in the shell. List them with `spt`:
+
+```sh
+spt apiserver dump-schema
+
+spt graphs create-specimen-graphs
+spt graphs explore-classes
+spt graphs extract
+spt graphs finalize-graphs
+spt graphs generate-graphs
+spt graphs plot-importance-fractions
+spt graphs plot-interactives
+spt graphs prepare-graph-creation
+spt graphs upload-importances
+
+spt db collection
+spt db delete-feature
+spt db do-fractions-tests
+spt db drop
+spt db drop-ondemand-computations
+spt db guess-channels-from-object-files
+spt db interactive-uploader
+spt db list-studies
+spt db load-query
+spt db retrieve-feature-matrices
+spt db status
+spt db upload-sync-small
+
+spt ondemand cache-expressions-data-array
+spt ondemand start
+
+spt workflow aggregate-core-results
+spt workflow configure
+spt workflow core-job
+spt workflow generate-run-information
+spt workflow initialize
+spt workflow merge-performance-reports
+spt workflow report-on-logs
+spt workflow report-run-configuration
+spt workflow tail-logs
+```
+
+Each command will print documentation by providing the `--help` option.
+
+Several commands are mainly for use internal to the application components.
+
+Some others are TUIs (Terminal User Interfaces) meant to make it easier to do common tasks like uploading datasets or inspecting cache or metadata.
 
 # API reference
+The SPT application is supported by a web API, which provides fine-grained access to specific components of a given dataset. The API is documented [here](https://oncopathtk.org/api/redoc).
 
 # Development and maintenance
+See [docs/maintenance.md](docs/maintenance.md).
 
 # Deployment options
+If you want help setting up a deployment of the SPT application for your institution or business, write to us at [nadeems@mskcc.org](nadeems@mskcc.org).
+
+The application can be deployed in several ways:
+
+- As manually-managed services on a single server
+- Using Docker compose
+- On a Kubernetes cluster using a cloud provider
+
 
 [^1]: Moldoveanu et al. [*Spatially mapping the immune landscape of melanoma using imaging mass cytometry*](https://doi.org/10.1126/sciimmunol.abi5072)
 

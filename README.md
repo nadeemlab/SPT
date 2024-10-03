@@ -14,7 +14,7 @@
 - [API reference](#api-reference)
 - [Development and maintenance](#development-and-maintenance)
 - [Deployment options](#deployment-options)
-
+  - [License](#license)
 
 # What do cell profiles tell us about biology and disease?
 
@@ -205,3 +205,5 @@ The application can be deployed in several ways:
 
 [^1]: Moldoveanu et al. [*Spatially mapping the immune landscape of melanoma using imaging mass cytometry*](https://doi.org/10.1126/sciimmunol.abi5072)
 
+## License
+© [Nadeem Lab](https://nadeemlab.org/) - SPT code is distributed under **Apache 2.0 with Commons Clause** license, and is available for non-commercial academic purposes. 

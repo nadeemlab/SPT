@@ -109,9 +109,12 @@ The Python package `spatialprofilingtoolbox` is released on [PyPI](https://pypi.
 python -m pip install spatialprofilingtoolbox
 ```
 
-This make several commands available in the shell. List them with `spt`:
+Installation makes several commands available in the shell. List them with `spt`:
 
 ```sh
+$ spt
+...
+
 spt apiserver dump-schema
 
 spt graphs create-specimen-graphs
@@ -155,7 +158,7 @@ Each command will print documentation by providing the `--help` option.
 
 Several commands are mainly for use internal to the application components.
 
-Some others are TUIs (Terminal User Interfaces) meant to make it easier to do common tasks like uploading datasets or inspecting cache or metadata.
+Some others are TUIs (Terminal User Interfaces) meant to make common tasks, like uploading datasets or inspecting cache or metadata, more reliable.
 
 # API reference
 The SPT application is supported by a web API, which provides fine-grained access to specific components of a given dataset. The API is documented [here](https://oncopathtk.org/api/redoc).

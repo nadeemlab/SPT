@@ -14,10 +14,12 @@ The taxonomy of cell types and their functional states is surprisingly diverse, 
 Multiple-channel imaging technology, capable of measuring several dozen protein targets, is reaching maturity. Multiplexed immunofluoresence, imaging mass cytometry, and their variants measure data similar to what is measured by flow cytometry or single-cell RNA-seq, since this is also at the single-cell level and involves multiple quantitative features, but with the crucial advantage that cell positions are also observed -- spatial context.
 
 The Spatial Profiling Toolbox (SPT) project is about making the most of this informative data source using quality software. The guiding principles are:
-- :zap: **High availability**. Datasets should be available for analysis immediately with the widest range of tools. Preprocessing and indexing should be done in advance as much as possible.
-- :repeat: **Reproducible analysis**. Results and findings should be based on analyses that others can easily recreate in their entirety.
-- :computer: **No code**. The tools should be usable by investigators without doing any programming and without the need for specialized knowledge of computer systems.
-- :white_check_mark: **Uniform data management**. Datasets should be organized with high semantic integrity, to ensure analysis can be performed on them in a consistent way and to ensure that the conclusions that are drawn are valid.
+
+|-----------------------------|---------|
+| :zap: **High availability** | Datasets should be available for analysis immediately with the widest range of tools. Preprocessing and indexing should be done in advance as much as possible.|
+| :repeat: **Reproducible analysis** | Results and findings should be based on analyses that others can easily recreate in their entirety. |
+| :computer: **No code** | The tools should be usable by investigators without doing any programming and without the need for specialized knowledge of computer systems. |
+| :white_check_mark: **Uniform data management** | Datasets should be organized with high semantic integrity, to ensure analysis can be performed on them in a consistent way and to ensure that the conclusions that are drawn are valid.|
 
 SPT is available to the public at [oncopathtk.org](https://oncopathtk.org).
 

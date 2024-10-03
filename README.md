@@ -197,6 +197,8 @@ Example usage is shown below.
 
 ![alt](docs/image_assets/uploader_example.png)
 
+The ETL (Extract/Transform/Load) process includes a number of data integrity checks and the creation of several intermediate data artifacts.
+
 # API reference
 The SPT application is supported by a web API, which provides fine-grained access to specific components of a given dataset. The API is documented [here](https://oncopathtk.org/api/redoc).
 

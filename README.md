@@ -98,5 +98,5 @@ The new cell count for each phenotype is now shown, together with the new percen
 
 # Deployment options
 
-[^1] Moldoveanu et al. [*Spatially mapping the immune landscape of melanoma using imaging mass cytometry*](https://doi.org/10.1126/sciimmunol.abi5072)
+[^1]: Moldoveanu et al. [*Spatially mapping the immune landscape of melanoma using imaging mass cytometry*](https://doi.org/10.1126/sciimmunol.abi5072)
 

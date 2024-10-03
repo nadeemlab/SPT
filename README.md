@@ -112,7 +112,7 @@ Choose the phenotypes **Naive cytoxic T cell** and **T helper cell antigen-exper
 
 In the column header that appears, click `>`. The **spatial metrics** dropdown appears. Click `v` to show the available metrics. Choose **cell-to-cell proximity**. After the metric is finished computing, click the column header **cell-to-cell proximity** and the two cohorts **1** and **2** to perform a univariate comparison.
 
-This metric is the average number of **Naive cytotoxic T cells** appearing within a specified radius of a given **T helper antigen-experienced** cell. It measures generally how common it is to find cells of one phenotype in close proximity to those of another phenotype. There are several other metrics available, many computed using the [Squidpy](https://squidpy.readthedocs.io/en/stable/) package. These are explained in more detail in the [API documentation](#api-reference).
+This metric is the average number of **Naive cytotoxic T cells** appearing within a specified radius of given **T helper antigen-experienced** cells. It measures generally how common it is to find cells of one phenotype in close proximity to those of another phenotype. There are several other metrics available, of various degrees of statistical sophistication, many computed using the [Squidpy](https://squidpy.readthedocs.io/en/stable/) package. These are explained in more detail in the [API documentation](#api-reference).
 
 ![alt](docs/image_assets/f11.png)
 

@@ -2,7 +2,6 @@
 from typing import cast
 from typing import Annotated
 from typing import Literal
-import json
 from io import BytesIO
 
 from fastapi import FastAPI
@@ -46,7 +45,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
-VERSION = '0.26.0'
+VERSION = '1.0.0'
 
 TITLE = 'Single cell studies data API'
 

@@ -7,8 +7,8 @@
 
 - [What do cell profiles tell us about biology and disease?](#what-do-cell-profiles-tell-us-about-biology-and-disease)
 - [User tutorial](#user-tutorial)
-- [Example: Exploratory data analysis of immunotherapy response in melanoma](#example-exploratory-data-analysis-of-immunotherapy-response-in-melanoma)
-- [Spatially-informed metrics](#spatially-informed-metrics)
+  - [Example: Exploratory data analysis of immunotherapy response in melanoma](#example-exploratory-data-analysis-of-immunotherapy-response-in-melanoma)
+  - [Spatially-informed metrics](#spatially-informed-metrics)
 - [Data management](#data-management)
 - [CLI command reference](#cli-command-reference)
 - [API reference](#api-reference)

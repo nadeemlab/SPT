@@ -11,6 +11,7 @@
   - [Spatially-informed metrics](#spatially-informed-metrics)
 - [Data management](#data-management)
 - [CLI command reference](#cli-command-reference)
+  - [Dataset uploader](#dataset-uploader)
 - [API reference](#api-reference)
 - [Development and maintenance](#development-and-maintenance)
 - [Deployment options](#deployment-options)
@@ -112,6 +113,8 @@ Choose the phenotypes **Naive cytoxic T cell** and **T helper cell antigen-exper
 
 In the column header that appears, click `>`. The **spatial metrics** dropdown appears. Click `v` to show the available metrics. Choose **cell-to-cell proximity**. After the metric is finished computing, click the column header **cell-to-cell proximity** and the two cohorts **1** and **2** to perform a univariate comparison.
 
+This metric is the average number of **Naive cytotoxic T cells** appearing within a specified radius of given **T helper antigen-experienced** cells. It measures generally how common it is to find cells of one phenotype in close proximity to those of another phenotype. There are several other metrics available, of various degrees of statistical sophistication, many computed using the [Squidpy](https://squidpy.readthedocs.io/en/stable/) package. These are explained in more detail in the [API documentation](#api-reference).
+
 ![alt](docs/image_assets/f11.png)
 
 ![alt](docs/image_assets/f12.png)
@@ -186,6 +189,15 @@ Each command will print documentation by providing the `--help` option.
 Several commands are mainly for use internal to the application components.
 
 Some others are TUIs (Terminal User Interfaces) meant to make common tasks, like uploading datasets or inspecting cache or metadata, more reliable.
+
+## Dataset uploader
+`spt db interactive-uploader` is a TUI that automatically determines available data sources and targets after you have created or located source datasets (format: [data_curation/](data_curation/)). It looks for [database configuration files](spatialprofilingtoolbox//workflow/assets/.spt_db.config.template) named `~/.spt_db.config.*`, checks the environment variable `SPT_S3_BUCKET`, and searches recursively for datasets in the current working directory named `generated_artifacts`. It presents available options and initiates the upload process.
+
+Example usage is shown below.
+
+![alt](docs/image_assets/uploader_example.png)
+
+The ETL (Extract/Transform/Load) process includes a number of data integrity checks and the creation of several intermediate data artifacts.
 
 # API reference
 The SPT application is supported by a web API, which provides fine-grained access to specific components of a given dataset. The API is documented [here](https://oncopathtk.org/api/redoc).

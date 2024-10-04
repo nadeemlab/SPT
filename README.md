@@ -32,7 +32,7 @@ The Spatial Profiling Toolbox (SPT) project is about making the most of this inf
 | :zap: | **High availability** | Datasets should be available for analysis immediately with the widest range of tools. Preprocessing and indexing should be done in advance as much as possible.|
 | :repeat: | **Reproducible analysis** | Results and findings should be based on analyses that others can easily recreate in their entirety. |
 | :computer: | **No code** | The tools should be usable by investigators without doing any programming and without the need for specialized knowledge of computer systems. |
-| :white_check_mark: | **Uniform data management** | Datasets should be organized with high semantic integrity, to ensure analysis can be performed on them in a consistent way and to ensure that the conclusions that are drawn are valid.|
+| :white_check_mark: | **Uniform data management** | Datasets should be organized with high semantic integrity, to ensure that analysis can be performed on them in a consistent way and that the conclusions drawn are valid. |
 
 SPT is available to the public at [oncopathtk.org](https://oncopathtk.org).
 

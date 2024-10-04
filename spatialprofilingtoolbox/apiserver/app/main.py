@@ -2,7 +2,6 @@
 from typing import cast
 from typing import Annotated
 from typing import Literal
-import json
 from io import BytesIO
 
 from fastapi import FastAPI
@@ -46,7 +45,7 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 
-VERSION = '0.26.0'
+VERSION = '1.0.0'
 
 TITLE = 'Single cell studies data API'
 
@@ -58,8 +57,8 @@ curated and maintained by the [Nadeem Lab](https://nadeemlab.org).
 
 The public portion of the database includes phenotype and slide position information for:
 
-* ~9 million cells
-* across about 1000 specimens
+* ~75 million cells
+* across about 1500 specimens
 * typically with around 30 protein targets quantified per cell
 * from cancers from several sites: breast, lung, urothelial cancer and melanoma
 * with a range of outcome assignments depending on the study design (often immunotherapy response)

@@ -57,8 +57,8 @@ curated and maintained by the [Nadeem Lab](https://nadeemlab.org).
 
 The public portion of the database includes phenotype and slide position information for:
 
-* ~9 million cells
-* across about 1000 specimens
+* ~75 million cells
+* across about 1500 specimens
 * typically with around 30 protein targets quantified per cell
 * from cancers from several sites: breast, lung, urothelial cancer and melanoma
 * with a range of outcome assignments depending on the study design (often immunotherapy response)

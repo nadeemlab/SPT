@@ -77,7 +77,7 @@ We also selected the single-phenotype tiles **CD3+ CD4+ FOXP3+** and **CD3+ CD8A
 
 ![alt](docs/image_assets/f5.png)
 
-Click on the column header **CD3+ CD8A+** (it becomes underlined to indicate that it is selected). Then select the two cohorts by clicking one of the **1** values and one of the **2** values. A "verbalization" appears which states that the trend, according to a t-test, is that the fraction of Tc cells is increased about 1.5 times in the non-responder cohort compared to the responders, with statistical significance value p=0.01.
+Click on the column header **CD3+ CD8A+** (it becomes underlined to indicate that it is selected). Then select the two cohorts by clicking one of the **1** values and one of the **2** values. A "verbalization" appears which states that the trend, according to a t-test, is that the fraction of Tc cells is increased about 1.5 times in the non-responder cohort compared to the responders, with statistical significance value p=0.1.
 
 ![alt](docs/image_assets/f6.png)
 
@@ -103,7 +103,7 @@ We spot a region that looks "saturated" with Tc cells. Select it by clicking and
 The new cell count for each phenotype is now shown, together with the new percentage, relative to the selection. In this case the Tc fraction approximately doubled, to **6996** cells (shown in green). This increase is assessed using the Fisher test (the entire contingency table is also shown, for reference). The test verifies that the increase is highly statistically significant in this case, as expected.
 
 > [!NOTE]
-> :dna: By careful use of the selection tool, noting enrichments in each virtual region, you can account for most of the cell types present and hone the focus of study.
+> By careful use of the selection tool, noting enrichments in each virtual region, you can account for most of the cell types present and hone the focus of study.
 
 ![alt](docs/image_assets/f10.png)
 

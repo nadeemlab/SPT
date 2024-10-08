@@ -15,8 +15,6 @@ class WorkflowModules(NamedTuple):
     
     Parameters
     ----------
-    is_database_visitor: bool
-        Whether the workflow is a database visitor.
     assets_needed: list[tuple[str, str, bool]]
         What Nextflow file assets the workflow needs. The tuple format is as follows:
             1. (str) The directory inside `spatialprofilingtoolbox.workflow` that contains the asset
@@ -39,7 +37,6 @@ class WorkflowModules(NamedTuple):
     image: str = 'nadeemlab/spt'
         The name of the Docker Hub image to use for the workflow.
     """
-    is_database_visitor: bool
     assets_needed: list[tuple[str, str, bool]]
     generator: Type[JobGenerator] | None = None
     initializer: Type[Initializer] | None = None

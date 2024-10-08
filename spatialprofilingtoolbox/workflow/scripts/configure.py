@@ -104,7 +104,7 @@ def _record_configuration_command(variables: dict[str, str], configuration_file:
 
     with open('run.sh', 'wt', encoding='utf-8') as file:
         file.write('#!/bin/sh\n\n')
-        if 'input_path' in variables and source_of_reference(variables['input_path']) == 's3':
+        if 'input_path' in variables and _source_of_reference(variables['input_path']) == 's3':
             file.write('# Unsetting the below is a workaround for Nextflow\'s default non-support for session-specific credentials.\n')
             file.write('# This is intended to force Nextflow to fall back to ~/.aws/credentials, for which Nextflow DOES support\n')
             file.write('# session-specific credentials.\n')
@@ -118,7 +118,7 @@ def _record_configuration_command(variables: dict[str, str], configuration_file:
     chmod('run.sh', file_stat.st_mode | S_IEXEC)
 
 
-def source_of_reference(path_or_uri: str) -> Literal['s3', 'local']:
+def _source_of_reference(path_or_uri: str) -> Literal['s3', 'local']:
     if re.search('^s3://', path_or_uri):
         return 's3'
     return 'local'
@@ -139,7 +139,7 @@ class SPTS3Resource:
         raise ValueError('This resource represents a directory, has no "Key" serialization.')
 
 
-def parse_s3_reference(uri: str) -> SPTS3Resource:
+def _parse_s3_reference(uri: str) -> SPTS3Resource:
     match = re.search(r'^s3://([\w\-]+)/([\w\-]+)/([\w\-\.]+)$', uri)
     if match:
         groups3 = cast(tuple[str, str, str], match.groups())
@@ -152,11 +152,11 @@ def parse_s3_reference(uri: str) -> SPTS3Resource:
     raise ValueError(f'Could not parse uri "{uri}" as S3 resource for SPT dataset.')
 
 
-def exists_s3_or_local(path_or_uri: str) -> bool:
-    source = source_of_reference(path_or_uri)
+def _exists_s3_or_local(path_or_uri: str) -> bool:
+    source = _source_of_reference(path_or_uri)
     if source == 's3':
         uri = path_or_uri
-        resource = parse_s3_reference(uri)
+        resource = _parse_s3_reference(uri)
         client = boto3_client('s3')
         if resource.is_directory():
             listing = client.list_objects(Bucket=resource.bucket, Prefix=resource.dataset)
@@ -180,22 +180,22 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
         return
     input_path = cast(str, options['input_path'])
     del options['input_path']
-    if exists_s3_or_local(input_path):
+    if _exists_s3_or_local(input_path):
         file_manifest_path = join(input_path, 'file_manifest.tsv')
-        if exists_s3_or_local(file_manifest_path):
+        if _exists_s3_or_local(file_manifest_path):
             options['input_path'] = input_path
             options['file_manifest_filename'] = file_manifest_path
         else:
             raise FileNotFoundError(file_manifest_path)
     else:
-        if source_of_reference(input_path) == 's3':
-            resource = parse_s3_reference(input_path)
+        if _source_of_reference(input_path) == 's3':
+            resource = _parse_s3_reference(input_path)
             raise ValueError(f'\nS3 URI is wrong: {input_path}\nCheck the:\n  bucket:  "{resource.bucket}"\n  dataset: "{resource.dataset}"\n')
         raise FileNotFoundError(input_path)
 
-    if source_of_reference(file_manifest_path) == 's3':
+    if _source_of_reference(file_manifest_path) == 's3':
         local_file_manifest = '_file_manifest.temp.tsv'
-        resource = parse_s3_reference(file_manifest_path)
+        resource = _parse_s3_reference(file_manifest_path)
         client = boto3_client('s3')
         client.download_file(resource.bucket, resource.get_key_string(), local_file_manifest)
     else:
@@ -208,7 +208,7 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
     options['samples'] = False
     if not samples_file is None:
         samples_file_abs = join(input_path, samples_file)
-        if exists_s3_or_local(samples_file_abs):
+        if _exists_s3_or_local(samples_file_abs):
             options['samples_file'] = samples_file_abs
             options['samples'] = True
 
@@ -219,7 +219,7 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
     options['subjects'] = False
     if not subjects_file is None:
         subjects_file_abs = join(input_path, subjects_file)
-        if exists_s3_or_local(subjects_file_abs):
+        if _exists_s3_or_local(subjects_file_abs):
             options['subjects_file'] = subjects_file_abs
             options['subjects'] = True
 
@@ -229,7 +229,7 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
     )
     if not study_file is None:
         study_file_abs = join(input_path, study_file)
-        if not exists_s3_or_local(study_file_abs):
+        if not _exists_s3_or_local(study_file_abs):
             raise FileNotFoundError(f'Did not find study file ({study_file}).')
         options['study_file'] = study_file_abs
         options['study'] = True
@@ -240,7 +240,7 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
     )
     if not diagnosis_file is None:
         diagnosis_file_abs = join(input_path, diagnosis_file)
-        if not exists_s3_or_local(diagnosis_file_abs):
+        if not _exists_s3_or_local(diagnosis_file_abs):
             raise FileNotFoundError(f'Did not find diagnosis file ({diagnosis_file}).')
         options['diagnosis_file'] = diagnosis_file_abs
         options['diagnosis'] = True
@@ -251,7 +251,7 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
     )
     if not interventions_file is None:
         interventions_file_abs = join(input_path, interventions_file)
-        if not exists_s3_or_local(interventions_file_abs):
+        if not _exists_s3_or_local(interventions_file_abs):
             raise FileNotFoundError(f'Did not find interventions file ({interventions_file}).')
         options['interventions_file'] = interventions_file_abs
         options['interventions'] = True
@@ -262,7 +262,7 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
     )
     if not channels_file is None:
         channels_file_abs = join(input_path, channels_file)
-        if not exists_s3_or_local(channels_file_abs):
+        if not _exists_s3_or_local(channels_file_abs):
             raise FileNotFoundError(f'Did not find channels file ({channels_file}).')
         options['channels_file'] = channels_file_abs
         options['channels'] = True
@@ -273,7 +273,7 @@ def _process_filename_inputs(options: dict[str, str | bool]) -> None:
     )
     if not phenotypes_file is None:
         phenotypes_file_abs = join(input_path, phenotypes_file)
-        if not exists_s3_or_local(phenotypes_file_abs):
+        if not _exists_s3_or_local(phenotypes_file_abs):
             raise FileNotFoundError(f'Did not find phenotypes file ({phenotypes_file}).')
         options['phenotypes_file'] = phenotypes_file_abs
         options['phenotypes'] = True
@@ -297,14 +297,11 @@ General variables should be included under:
     image_tag: <docker/singularity image name> (default: latest)
         Tag of the Docker Hub image associated with the workflow to use.
 
-Some workflows query an existing database. If so, the following variables are required:
-    [database visitor]
-    study_name: <name of the study to query>
-
 Some workflows require additional variables that are defined in their own section.
     [tabular import]:
     input_path: <path>
-        Path to the directory containing the input data files, e.g., `file_manifest.tsv`.
+        Path to the directory containing the input data files like `file_manifest.tsv`. In
+        some cases this can be an S3 URI.
 
     [graph generation]:
     graph_config_file: <path>
@@ -379,12 +376,6 @@ if __name__ == '__main__':
 
     config_variables['current_working_directory'] = getcwd()
 
-    if workflow_configuration.is_database_visitor:
-        db_visitor_config = dict(config_file.items('database visitor'))
-        if 'study_name' not in db_visitor_config:
-            raise ValueError('study_name must be specified in the `database visitor` section.')
-        config_variables.update(db_visitor_config)
-
     if config_file.has_section(workflow_name):
         config_state = config_variables.copy()
         workflow_config_variables = dict(config_file.items(workflow_name))
@@ -398,9 +389,9 @@ if __name__ == '__main__':
     elif workflow_configuration.config_section_required:
         raise ValueError(f'Workflow {workflow_name} requires a configuration section.')
 
-    if not workflow_configuration.is_database_visitor:
+    if workflow_name == 'tabular import':
         _process_filename_inputs(config_variables)
-        if source_of_reference(config_variables['input_path']) == 's3':
+        if _source_of_reference(config_variables['input_path']) == 's3':
             def copy_profile_from_saml_to_default():
                 if 'AWS_PROFILE'  in os_environ:
                     profile = os_environ['AWS_PROFILE']
@@ -421,5 +412,3 @@ if __name__ == '__main__':
     _write_config_file(config_variables)
     _write_pipeline_script(workflow_configuration)
     _record_configuration_command(config_variables, args.config_file)
-    if workflow_name == 'phenotype proximity':
-        print(config_variables)

@@ -15,7 +15,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCount,
     PhenotypeCounts,
-    CompositePhenotype,
+    WrapperPhenotype,
     UnivariateMetricsComputationResult,
 )
 from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
@@ -94,7 +94,6 @@ class OnDemandRequester:
         positives: tuple[str, ...],
         negatives: tuple[str, ...],
         study_name: str,
-        number_cells: int,
         cells_selected: set[int],
         blocking: bool = True,
     ) -> PhenotypeCounts:
@@ -122,12 +121,9 @@ class OnDemandRequester:
                 )
                 for sample in combined_keys
             ] + [PhenotypeCount(specimen=sample, count=None, percentage=None) for sample in additional]),
-            phenotype=CompositePhenotype(
-                name='',
-                identifier='',
+            phenotype=WrapperPhenotype(
                 criteria=phenotype,
             ),
-            number_cells_in_study=number_cells,
             is_pending=pending,
         )
 

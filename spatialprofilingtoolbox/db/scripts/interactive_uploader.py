@@ -18,6 +18,7 @@ from configparser import ConfigParser
 from json import loads as json_loads
 from typing import cast
 
+S3_BUCKET: str | None
 if 'SPT_S3_BUCKET' in os_environ:
     S3_BUCKET = os_environ['SPT_S3_BUCKET']
 else:
@@ -29,7 +30,6 @@ from boto3 import client as boto3_client
 from botocore.exceptions import ClientError
 from psycopg.errors import OperationalError
 
-from spatialprofilingtoolbox.db.credentials import main_database_name
 from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.credentials import MissingKeysError
@@ -64,6 +64,7 @@ class InteractiveUploader:
     existing_studies: tuple[str, ...]
     study_names_by_schema: dict[str, str]
     present_on_remote: list[str]
+    working_directory: str | None
 
     def __init__(self):
         self.selected_database_config_file = None
@@ -74,6 +75,7 @@ class InteractiveUploader:
         self.credentials = None
         self.existing_studies = None
         self.present_on_remote = []
+        self.working_directory = None
 
     def start(self) -> None:
         self._initial_assessment_of_available_options()
@@ -313,7 +315,10 @@ class InteractiveUploader:
                 return ''
             self.study_names_by_schema = dict(name_schema)
             self.existing_studies = tuple(sorted(list(self.study_names_by_schema.keys())))
-        study_name = self._retrieve_study_name(source)
+        try:
+            study_name = self._retrieve_study_name(source)
+        except ValueError:
+            return 'not a valid study'
         normal = re.sub('[ \-]', '_', study_name).lower()
         if normal in self.existing_studies:
             self.present_on_remote.append(source)
@@ -395,6 +400,7 @@ class InteractiveUploader:
         print()
 
     def _do_specified_upload(self) -> None:
+        self._infer_new_working_directory()
         self._write_workflow_config()
         if self.drop_behavior == 'drop':
             self._drop_first()
@@ -407,8 +413,16 @@ class InteractiveUploader:
         os_system(command)
         print()
 
+    def _infer_new_working_directory(self) -> None:
+        i = 0
+        while isdir(f'working_directory{i}'):
+            i += 1
+            if i == 100:
+                raise ValueError('Cannot run more than 100 workflows in the same directory, probably this was not intended.')
+        self.working_directory = f'working_directory{i}'
+
     def _upload_commands(self) -> None:
-        change = 'cd working_directory'
+        change = f'cd {self.working_directory}'
         configure = 'spt workflow configure --workflow="tabular import" --config-file=workflow.config'
         run = 'bash run.sh'
         commands = [change, configure, run]
@@ -416,7 +430,7 @@ class InteractiveUploader:
             self.print(f'  {c}', 'item')
         print()
         self.print('You can monitor progress in another terminal with:', 'message')
-        self.print('  tail -f -n1000 working_directory/work/*/*/.command.log', 'item')
+        self.print(f'  tail -f -n1000 {self.working_directory}/work/*/*/.command.log', 'item')
         print()
         os_system('; '.join(commands))
 
@@ -424,10 +438,11 @@ class InteractiveUploader:
         config = ConfigParser()
         config['general'] = {'db_config_file': cast(str, self.selected_database_config_file)}
         config['tabular import'] = {'input_path': cast(str, self.selected_dataset_source)}
-        w = 'working_directory'
-        if not isdir(w):
-            mkdir(w)
-        with open(join(w, 'workflow.config'), 'w') as file:
+        if self.working_directory is None:
+            raise ValueError('Could not infer working directory.')
+        if not isdir(self.working_directory):
+            mkdir(self.working_directory)
+        with open(join(self.working_directory, 'workflow.config'), 'w') as file:
             config.write(file)
 
     @staticmethod

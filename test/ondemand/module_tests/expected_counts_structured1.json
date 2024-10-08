@@ -37,8 +37,6 @@
         }
     ],
     "phenotype": {
-        "name": "",
-        "identifier": "",
         "criteria": {
             "positive_markers": [
                 "CD3"
@@ -49,6 +47,5 @@
             ]
         }
     },
-    "number_cells_in_study": 0,
     "is_pending": false
 }

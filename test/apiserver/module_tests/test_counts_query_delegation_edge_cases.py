@@ -46,8 +46,6 @@ def main():
         phenotype_total = sum(
             phenotype_count['count'] for phenotype_count in response['counts']
         )
-        total = response['number_cells_in_study']
-        print(total)
         if phenotype_total != expected:
             raise ValueError(f'Got wrong number: {phenotype_total}, expected {expected}.')
 

@@ -72,10 +72,10 @@ class UMAPCreator:
             JOIN specimen_collection_process scp ON scp.specimen=sdmp.specimen
             JOIN study_component sc ON scp.study=sc.component_study
             WHERE sc.primary_study=%s AND eq.histological_structure IN (
-                SELECT temp0.random_id FROM (
+                SELECT temp.random_id FROM (
                         SELECT generate_series (1, {UMAP_POINT_LIMIT}), (random() * {total})::int::VARCHAR(512) AS random_id
-                        FROM (SELECT 1 AS n) AS temp
-                    ) AS temp0
+                        FROM (SELECT 1 AS n) AS temp1
+                    ) AS temp
                 )
             ;
             ''', (self.study,))

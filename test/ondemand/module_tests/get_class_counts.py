@@ -6,7 +6,7 @@ from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequeste
 
 
 def get_counts(study_name, positives, negatives):
-    return OnDemandRequester.get_counts_by_specimen(positives, negatives, study_name, 0, ())
+    return OnDemandRequester.get_counts_by_specimen(positives, negatives, study_name, ())
 
 
 def main():

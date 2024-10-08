@@ -1,3 +1,8 @@
+# v1.0.2
+- Converts the database model to a single named database with one (PostgreSQL-sense) schema for each dataset.
+- Uses the new model to implement cross-cut queries, specifically computation job count (load metric).
+- Adds a TUI for dataset import to help prevent errors in selection of database credentials, data sources, and upload options.
+
 # v1.0.0
 - Includes comprehensive tutorial and reference documentation
 - Adds dataset "curation" or preprocessing details, with a complete example

@@ -90,7 +90,6 @@ class OnDemandWorker:
         return False
 
     def _one_job(self) -> tuple[bool, ComputationJobReference | None]:
-        pid = self.connection.info.backend_pid
         job = self.queue.pop_uncomputed()
         if job is None:
             return (False, None)

@@ -78,7 +78,7 @@ class OnDemandWorker:
         delta = int(10 * delta) / 10
         if time_limit_seconds is None or (delta >= time_limit_seconds):
             abridged = completed_jobs[0:min(3, len(completed_jobs))]
-            summary = ', '.join(map(lambda job: f'{job}', abridged))
+            summary = ', '.join(map(lambda job: f'{job.feature_specification} {job.sample}', abridged))
             if len(completed_jobs) > 3:
                 summary = summary + ' ...'
             logger.info(f'Finished {len(completed_jobs)} jobs {summary} in {delta} seconds.')

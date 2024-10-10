@@ -193,10 +193,18 @@ class OnDemandRequester:
                     logger.debug(f'Closing notification processing, {feature} ready.')
                     notifications.close()
                     break
+            cls._clear_queue_of_feature(study_name, int(feature))
         except SPTTimeoutError:
             pass
         finally:
             generic_handler.disalarm()
+
+    @classmethod
+    def _clear_queue_of_feature(cls, study: str, feature: int) -> None:
+        with DBCursor(study=study) as cursor:
+            query = 'DELETE FROM quantitative_feature_value_queue q WHERE q.feature=%s ;'
+            cursor.execute(query, (feature,))
+            logger.debug(f'Cleared the job queue for feature {feature} ({study}).')
 
     @classmethod
     def get_proximity_metrics(

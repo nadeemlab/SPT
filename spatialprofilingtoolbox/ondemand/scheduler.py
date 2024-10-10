@@ -94,10 +94,6 @@ class MetricComputationScheduler:
                             ''',
                             (feature, sample, new_retries)
                         )
-
-                        logger.debug(f'Popped:     {row}')
-                        logger.debug(f'Reinserted: {(feature, sample, "now()", new_retries)}')
-
                         return ComputationJobReference(feature, study, sample)
                     studies_empty.add(study)
                     continue

@@ -2,7 +2,6 @@
 
 from typing import cast
 from typing import Callable
-import signal
 
 from psycopg import Connection as PsycopgConnection
 
@@ -104,9 +103,6 @@ class OnDemandRequester:
         selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
         feature1, counts, counts_all, pending = OnDemandRequester._counts(study_name, phenotype, selected, blocking)
         combined_keys = sorted(list(set(counts.values.keys()).intersection(counts_all.values.keys())))
-        missing_numerator = set(counts.values.keys()).difference(combined_keys)
-        if len(missing_numerator) > 0:
-            logger.warning(f'In forming population fractions, some samples were missing from numerator: {missing_numerator}')
         missing_denominator = set(counts_all.values.keys()).difference(combined_keys)
         if len(missing_denominator) > 0:
             logger.warning(f'In forming population fractions, some samples were missing from denominator: {missing_denominator}')

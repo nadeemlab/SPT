@@ -34,6 +34,27 @@ class MetricComputationScheduler:
         with DBConnection(database_config_file=self.database_config_file) as connection:
             connection.execute('NOTIFY new_items_in_queue ;')
 
+    @staticmethod
+    def select_active_jobs_query() -> str:
+        retry_interval_seconds = 60 * 3
+        max_retries = 3
+        return '''
+        SELECT * FROM (
+            SELECT
+                q2.feature, q2.subject, q2.computation_start
+            FROM quantitative_feature_value_queue q2
+            WHERE q2.computation_start IS NULL and q2.retries < %s
+            UNION
+            SELECT
+                q3.feature, q3.subject, q3.computation_start
+            FROM quantitative_feature_value_queue q3
+            WHERE
+                q3.computation_start IS NOT NULL AND
+                now() - q3.computation_start > ( %s ) * INTERVAL '1' second AND
+                q3.retries < %s
+        ) ORDER BY computation_start NULLS FIRST
+        ''' % (max_retries, retry_interval_seconds, max_retries)
+
     def pop_uncomputed(self) -> ComputationJobReference | None:
         studies = self._get_studies()
         number_studies = len(studies)
@@ -43,30 +64,52 @@ class MetricComputationScheduler:
                 query = '''
                 DELETE FROM
                 quantitative_feature_value_queue q1
-                USING (SELECT q2.feature, q2.subject FROM quantitative_feature_value_queue q2 LIMIT 1) q
+                USING (
+                    %s
+                    LIMIT 1
+                ) q
                 WHERE q1.feature=q.feature AND q1.subject=q.subject
-                RETURNING q1.feature, q1.subject ;
-                '''
+                RETURNING q1.feature, q1.subject, q1.computation_start, q1.retries ;
+                ''' % self.select_active_jobs_query()
                 with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
                     cursor.execute(query)
                     rows = tuple(cursor.fetchall())
                     if len(rows) == 1:
                         row = rows[0]
-                        return ComputationJobReference(int(row[0]), study, row[1])
-                    cursor.execute('SELECT COUNT(*) FROM quantitative_feature_value_queue;')
-                    count = int(tuple(cursor.fetchall())[0][0])
-                    if count == 0:
-                        studies_empty.add(study)
-                        continue
+                        feature = int(row[0])
+                        sample = str(row[1])
+                        computation_start = row[2]
+                        retries = int(row[3])
+                        if computation_start is not None:
+                            new_retries = retries + 1
+                            logger.debug(f'Retrying due to assumed failure, iteration {new_retries}, ({feature}, {sample}).')
+                        else:
+                            new_retries = retries
+                        cursor.execute('''
+                            INSERT INTO quantitative_feature_value_queue
+                                (feature, subject, computation_start, retries)
+                            VALUES(
+                                %s, %s, now(), %s
+                            )
+                            ''',
+                            (feature, sample, new_retries)
+                        )
+
+                        logger.debug(f'Popped:     {row}')
+                        logger.debug(f'Reinserted: {(feature, sample, "now()", new_retries)}')
+
+                        return ComputationJobReference(feature, study, sample)
+                    studies_empty.add(study)
+                    continue
         return None
 
     @staticmethod
     def _insert_jobs(cursor: PsycopgCursor, feature_specification: int) -> None:
         query = '''
         INSERT INTO quantitative_feature_value_queue
-            (feature, subject)
+            (feature, subject, computation_start, retries)
         SELECT
-            %s, sq.specimen
+            %s, sq.specimen, NULL, 0
         FROM ( %s ) sq
         ON CONFLICT DO NOTHING ;
         ''' % (

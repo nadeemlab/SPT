@@ -18,7 +18,9 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     UnivariateMetricsComputationResult,
 )
 from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
+from spatialprofilingtoolbox.ondemand.timeout import TIMEOUT_SECONDS_DEFAULT
 from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
+from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult
 
@@ -52,11 +54,13 @@ class FeatureComputationTimeoutHandler:
         message = f'Timed out waiting for the feature {self.feature} to complete. Aborting.'
         logger.error(message)
         if self._queue_size() == 0 and self._completed_size() < self._expected_size():
-            self._delete_feature()
+            logger.error(f'After {TIMEOUT_SECONDS_DEFAULT} seconds feature {self.feature} ({self.study}) still not complete. Consider deleting it.')
+            # self._delete_feature()
 
     def _queue_size(self) -> int:
         with DBCursor(study=self.study) as cursor:
-            query = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
+            subselect = MetricComputationScheduler.select_active_jobs_query()
+            query = f'SELECT COUNT(*) FROM ( {subselect} ) AS all_active_queue WHERE all_active_queue.feature=%s ;'
             cursor.execute(query, (self.feature,))
             count = tuple(cursor.fetchall())[0][0]
         return count
@@ -184,9 +188,6 @@ class OnDemandRequester:
             logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
 
             for notification in notifications:
-                channel = notification.channel
-                if channel == 'one_job_complete':
-                    logger.debug(f'A job is complete, so {feature} may be ready. (PID: {notification.pid})')
                 _result = get_results()
                 if not _result[0].is_pending:
                     logger.debug(f'Closing notification processing, {feature} ready.')

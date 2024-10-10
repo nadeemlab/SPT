@@ -1,16 +1,20 @@
+# v1.0.3
+- Reduces the log burden due to computation worker processes, provides summaries instead.
+- Adds more flexible triggering of job queue pops, on worker process start not just explicit signaling.
+
 # v1.0.2
 - Converts the database model to a single named database with one (PostgreSQL-sense) schema for each dataset.
 - Uses the new model to implement cross-cut queries, specifically computation job count (load metric).
 - Adds a TUI for dataset import to help prevent errors in selection of database credentials, data sources, and upload options.
 
 # v1.0.0
-- Includes comprehensive tutorial and reference documentation
-- Adds dataset "curation" or preprocessing details, with a complete example
-- A number of updates to the graph processing workflows
-- Improve UMAP functionality into an interactive plot
-- Fix some timing bugs in edge cases related to the feature value computation queue
-- Greatly improves handling of the Ripley statistic summaries
-- Adds support for S3 source files in Nextflow workflows that operate on these source files
+- Includes comprehensive tutorial and reference documentation.
+- Adds dataset "curation" or preprocessing details, with a complete example.
+- A number of updates to the graph processing workflows.
+- Improve UMAP functionality into an interactive plot.
+- Fix some timing bugs in edge cases related to the feature value computation queue.
+- Greatly improves handling of the Ripley statistic summaries.
+- Adds support for S3 source files in Nextflow workflows that operate on these source files.
 
 # v0.24.0
 Implements a major refactoring of on-demand metrics computation in which each worker container picks up a single sample's worth of feature computation at a time. This is organized with a simple PostgresQL table considered as a task queue, and database notifications. Now all computations for a given sample begin from a database query for the same compressed binary payload representing phenotype and location data for all cells. The TCP client/server model for dispatching specific feature computations to different services is deprecated.

@@ -2,6 +2,8 @@
 import warnings
 import pickle
 
+import brotli
+
 from pandas import DataFrame  # type: ignore
 import pandas.errors as pd_errors  # type: ignore
 from psycopg import Cursor as PsycopgCursor
@@ -19,8 +21,10 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 warnings.simplefilter(action='ignore', category=pd_errors.PerformanceWarning)
 warnings.filterwarnings(action='ignore', message='n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.')
 
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
 
 logger = colorized_logger(__name__)
 
@@ -113,6 +117,7 @@ class UMAPCreator:
                 zip(tuple(discrete.index.astype(int)), tuple(zip(reduced[:,0], reduced[:,1])))
             ))
         }
+
         logger.info('Saving UMAP centroids and feature matrix.')
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
             self._drop_existing_umap_cache(cursor)
@@ -121,11 +126,22 @@ class UMAPCreator:
                 ondemand_studies_index (
                     specimen,
                     blob_type,
-                    blob_contents)
-                VALUES (%s, %s, %s) ;
+                    blob_contents
+                )
+                VALUES (%s, %s, %s);
             '''
             cursor.execute(insert_query, (*VIRTUAL_SAMPLE_SPEC1, blob))
             cursor.execute(insert_query, (*VIRTUAL_SAMPLE_SPEC2, pickle.dumps(centroid_data)))
+
+            access = CellsAccess(cursor)
+            data = access._zip_location_and_phenotype_data(
+                centroid_data[VIRTUAL_SAMPLE_SPEC2[0]],
+                access._get_phenotype_data(VIRTUAL_SAMPLE_SPEC2[0], cell_identifiers=())
+            )
+            compressed_data = brotli.compress(data, quality=11, lgwin=24)
+
+            cursor.execute(insert_query, (VIRTUAL_SAMPLE, VIRTUAL_SAMPLE_COMPRESSED, compressed_data))
+
         logger.info('Done.')
 
     def _drop_existing_umap_cache(self, cursor: PsycopgCursor):
@@ -135,6 +151,7 @@ class UMAPCreator:
         '''
         cursor.execute(delete_directive, VIRTUAL_SAMPLE_SPEC1)
         cursor.execute(delete_directive, VIRTUAL_SAMPLE_SPEC2)
+        cursor.execute(delete_directive, (VIRTUAL_SAMPLE, VIRTUAL_SAMPLE_COMPRESSED))
         logger.info('  Done.')
 
     def _create_data_array(self, discrete: DataFrame) -> dict[int, int]:

@@ -6,7 +6,7 @@ from io import BytesIO
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from fastapi import Response
+from fastapi import Header, Response
 from fastapi.responses import StreamingResponse
 from fastapi import Query
 from fastapi import HTTPException
@@ -469,6 +469,7 @@ def get_squidpy_metrics(
 async def get_cell_data_binary(
     study: ValidStudy,
     sample: Annotated[str, Query(max_length=512)],
+    accept_encoding: Annotated[str | None, Header()] = None,
 ):
     """
     Get streaming cell-level location and phenotype data in a custom binary format.
@@ -476,15 +477,19 @@ async def get_cell_data_binary(
 
     The sample may be "UMAP virtual sample" if UMAP dimensional reduction is available.
     """
+
+    accept_encoding = [enc.strip() for enc in accept_encoding.split(',')]
+
     has_umap = query().has_umap(study)
     if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
-    data = query().get_cells_data(study, sample)
-    input_buffer = BytesIO(data)
-    input_buffer.seek(0)
-    def streaming_iteration():
-        yield from input_buffer
-    return StreamingResponse(streaming_iteration(), media_type="application/octet-stream")
+
+    data, content_encoding = query().get_cells_data(study, sample, accept_encoding=accept_encoding)
+
+    return Response(
+        data,
+        headers={"Content-Encoding": content_encoding} if content_encoding else {},
+    )
 
 
 @app.get("/cell-data-binary-feature-names/")

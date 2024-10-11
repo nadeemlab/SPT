@@ -9,10 +9,12 @@ from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.cache_pulling import cache_pull
 from spatialprofilingtoolbox.workflow.common.cache_pulling import umap_cache_pull
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
-from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_expressions_index
+from spatialprofilingtoolbox.db.ondemand_studies_index import get_counts, retrieve_expressions_index
 from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
 from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_indexed_samples
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -76,11 +78,13 @@ class FastCacheAssessor:
         drop_cache_files(self.database_config_file, 'feature_matrix', study=self.study)
         drop_cache_files(self.database_config_file, 'expressions_index', study=self.study)
         drop_cache_files(self.database_config_file, 'centroids', study=self.study)
+        drop_cache_files(self.database_config_file, 'cell_data_brotli', study=self.study)
 
     def _clear_umap_cache(self) -> None:
         logger.info(f'Deleting the databased UMAP cache files. {self._get_study_indicator()}')
         drop_cache_files(self.database_config_file, VIRTUAL_SAMPLE_SPEC1[1], study=self.study)
         drop_cache_files(self.database_config_file, VIRTUAL_SAMPLE_SPEC2[1], study=self.study)
+        drop_cache_files(self.database_config_file, VIRTUAL_SAMPLE_COMPRESSED, study=self.study)
 
     def _recreate(self):
         logger.info(f'Recreating databased fast cache files. {self._get_study_indicator()}')
@@ -95,16 +99,30 @@ class FastCacheAssessor:
         expressions_exist = writer.expressions_indices_already_exist(study=self.study)
         structure_centroids = StructureCentroids(self.database_config_file)
         centroids_present = structure_centroids.centroids_exist(study=self.study)
+
+        cell_data_counts = get_counts(self.database_config_file, 'cell_data_brotli', study=self.study)
+        cell_data_compressed_exist = all(
+            structure_centroids._retrieve_expected_counts(study) == count
+            for study, count in cell_data_counts.items()
+        )
+
         if verbose:
             if not expressions_exist:
                 logger.info(f'Did not find expressions indices. {self._get_study_indicator()}')
             else:
                 logger.info('Found expressions index file(s).')
+
             if not centroids_present:
                 logger.info('Databased centroids files not present.')
             else:
                 logger.info('Databased centroids files are present.')
-        return expressions_exist and centroids_present
+
+            if not cell_data_compressed_exist:
+                logger.info('Compressed cell_data files not present.')
+            else:
+                logger.info('Compressed cell_data files are present.')
+
+        return expressions_exist and centroids_present and cell_data_compressed_exist
 
     def _check_study_sets(self) -> bool:
         return self._check_centroids_bundle_studies() and self._check_expressions_index_studies()
@@ -235,6 +253,11 @@ class FastCacheAssessor:
                 count = cursor.fetchall()[0][0]
                 if count != 1:
                     logger.info(f'Study {study} lacks "UMAP virtual sample centroids".')
+                    return False
+                cursor.execute(query, (VIRTUAL_SAMPLE, VIRTUAL_SAMPLE_COMPRESSED))
+                count = cursor.fetchall()[0][0]
+                if count != 1:
+                    logger.info(f'Study {study} lacks "UMAP compressed virtual sample".')
                     return False
         return True
 

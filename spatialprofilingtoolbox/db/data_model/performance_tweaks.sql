@@ -36,7 +36,9 @@ CREATE TABLE sample_strata (
 
 CREATE TABLE quantitative_feature_value_queue (
     feature INTEGER REFERENCES feature_specification(identifier) ,
-    subject VARCHAR
+    subject VARCHAR,
+    computation_start TIMESTAMP WITH TIME ZONE,
+    retries INTEGER
 );
 
 ALTER TABLE quantitative_feature_value_queue

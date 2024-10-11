@@ -18,10 +18,10 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     WrapperPhenotype,
     UnivariateMetricsComputationResult,
 )
+from spatialprofilingtoolbox.ondemand.feature_computation_timeout import FeatureComputationTimeoutHandler
 from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
 from spatialprofilingtoolbox.ondemand.timeout import TIMEOUT_SECONDS_DEFAULT
 from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
-from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult
 
@@ -42,66 +42,6 @@ def _fancy_division(numerator: float | None, denominator: float | None) -> float
 def _nonempty(string: str) -> bool:
     return string != ''
 
-
-class FeatureComputationTimeoutHandler:
-    feature: str
-    study: str
-
-    def __init__(self, feature: str, study: str):
-        self.feature = feature
-        self.study = study
-
-    def handle(self) -> None:
-        message = f'Timed out waiting for the feature {self.feature} to complete. Aborting.'
-        logger.error(message)
-        if self._queue_size() == 0 and self._completed_size() < self._expected_size():
-            logger.error(f'After {TIMEOUT_SECONDS_DEFAULT} seconds feature {self.feature} ({self.study}) still not complete. Consider deleting it.')
-            # self._delete_feature()
-            self._insert_remaining_nulls()
-
-    def _queue_size(self) -> int:
-        with DBCursor(study=self.study) as cursor:
-            subselect = MetricComputationScheduler.select_active_jobs_query()
-            query = f'SELECT COUNT(*) FROM ( {subselect} ) AS all_active_queue WHERE all_active_queue.feature=%s ;'
-            cursor.execute(query, (self.feature,))
-            count = tuple(cursor.fetchall())[0][0]
-        return count
-
-    def _completed_size(self) -> int:
-        with DBCursor(study=self.study) as cursor:
-            query = 'SELECT COUNT(*) FROM quantitative_feature_value WHERE feature=%s ;'
-            cursor.execute(query, (self.feature,))
-            count = tuple(cursor.fetchall())[0][0]
-        return count
-
-    def _expected_size(self) -> int:
-        with DBCursor(study=self.study) as cursor:
-            query = 'SELECT COUNT(*) FROM specimen_data_measurement_process ;'
-            cursor.execute(query)
-            count = tuple(cursor.fetchall())[0][0]
-        return count
-
-    def _delete_feature(self) -> None:
-        logger.error('Also deleting the feature, since the queue was empty; we assume the remaining jobs failed.')
-        with DBCursor(study=self.study) as cursor:
-            param = (self.feature,)
-            cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
-            cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
-            cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
-
-    def _insert_remaining_nulls(self) -> None:
-        with DBCursor(study=self.study) as cursor:
-            cursor.execute('''
-                SELECT sdmp.specimen FROM specimen_data_meaurement_process sdmp
-                LEFT JOIN quantitative_feature_value qfv
-                ON qfv.subject=sdmp.specimen
-                WHERE qfv.subject IS NULL
-                ;
-            ''')
-            samples = tuple(map(lambda row: row[0], tuple(cursor.fetchall())))
-            logger.info(f'Inserting nulls for {self.feature}: {samples}')
-            for sample in samples:            
-                add_feature_value(self.feature, sample, None, cursor)
 
 
 class OnDemandRequester:

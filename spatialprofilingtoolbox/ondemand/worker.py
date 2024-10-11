@@ -38,6 +38,7 @@ class OnDemandWorker:
         with DBConnection() as connection:
             self.connection = connection
             self.connection._set_autocommit(True)
+            logger.info('Initial search (and pop) over job queue.')
             self._work_until_complete()
             self._listen_for_queue_activity()
 
@@ -51,7 +52,6 @@ class OnDemandWorker:
 
     def _wait_for_queue_activity_on_connection(self) -> None:
         for _ in self.notifications:
-            logger.info('Received notice of new items in the job queue.')
             break
 
     def _work_until_complete(self) -> None:

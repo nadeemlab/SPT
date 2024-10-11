@@ -3,6 +3,8 @@
 from attrs import define
 from psycopg import Cursor as PsycopgCursor
 
+from spatialprofilingtoolbox.ondemand.queue_query import select_active_jobs_query
+from spatialprofilingtoolbox.ondemand.feature_computation_timeout import feature_computation_timeout_handler
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -10,6 +12,7 @@ from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
+
 
 @define
 class MetricComputationScheduler:
@@ -27,33 +30,14 @@ class MetricComputationScheduler:
     def schedule_feature_computation(self, study: str, feature_specification: int) -> None:
         with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
             self._insert_jobs(cursor, feature_specification)
+        NORMAL_FEATURE_COMPUTATION_TIMEOUT = 60 * 5
+        feature_computation_timeout_handler(str(feature_specification), study, NORMAL_FEATURE_COMPUTATION_TIMEOUT)
         self._broadcast_queue_activity()
 
     def _broadcast_queue_activity(self) -> None:
         logger.debug('Notifying queue activity channel that there are new items.')
         with DBConnection(database_config_file=self.database_config_file) as connection:
             connection.execute('NOTIFY new_items_in_queue ;')
-
-    @staticmethod
-    def select_active_jobs_query() -> str:
-        retry_interval_seconds = 60 * 3
-        max_retries = 3
-        return '''
-        SELECT * FROM (
-            SELECT
-                q2.feature, q2.subject, q2.computation_start
-            FROM quantitative_feature_value_queue q2
-            WHERE q2.computation_start IS NULL and q2.retries < %s
-            UNION
-            SELECT
-                q3.feature, q3.subject, q3.computation_start
-            FROM quantitative_feature_value_queue q3
-            WHERE
-                q3.computation_start IS NOT NULL AND
-                now() - q3.computation_start > ( %s ) * INTERVAL '1' second AND
-                q3.retries < %s
-        ) AS activequeue ORDER BY computation_start NULLS FIRST
-        ''' % (max_retries, retry_interval_seconds, max_retries)
 
     def pop_uncomputed(self) -> ComputationJobReference | None:
         studies = self._get_studies()
@@ -70,7 +54,7 @@ class MetricComputationScheduler:
                 ) q
                 WHERE q1.feature=q.feature AND q1.subject=q.subject
                 RETURNING q1.feature, q1.subject, q1.computation_start, q1.retries ;
-                ''' % self.select_active_jobs_query()
+                ''' % select_active_jobs_query()
                 with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
                     cursor.execute(query)
                     rows = tuple(cursor.fetchall())

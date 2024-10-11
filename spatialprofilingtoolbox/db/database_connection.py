@@ -192,7 +192,7 @@ def get_and_validate_database_config(args):
     raise ValueError('Could not parse CLI argument for database config.')
 
 
-def wait_for_database_ready():
+def wait_for_database_ready(verbose: bool = True):
     while True:
         try:
             if _check_database_is_ready():
@@ -200,7 +200,8 @@ def wait_for_database_ready():
         except OperationalError:
             logger.debug('Database is not ready.')
         time.sleep(2.0)
-    logger.info('Database is ready.')
+    if verbose:
+        logger.info('Database is ready.')
 
 
 def _check_database_is_ready() -> bool:

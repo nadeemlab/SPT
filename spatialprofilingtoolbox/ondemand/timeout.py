@@ -31,7 +31,7 @@ class TimeoutHandler:
         if self.active:
             message = f'Waited {self.timeout} seconds, timed out.'
             logger.error(message)
-            self.callback()
+            self.callback(self.timeout)
             raise SPTTimeoutError(message)
 
     def disalarm(self) -> None:

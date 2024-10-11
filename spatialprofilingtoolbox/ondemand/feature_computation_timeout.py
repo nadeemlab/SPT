@@ -1,4 +1,5 @@
 """Helper timeout object."""
+from os import environ as os_environ
 from asyncio import get_event_loop as asyncio_get_event_loop
 from time import sleep as time_sleep
 
@@ -80,6 +81,8 @@ def do_in_background(f):
 
 @do_in_background
 def feature_computation_timeout_handler(feature: str, study: str, timeout: int):
+    if 'SPT_TESTING_MODE' in os_environ:
+        return
     time_sleep(timeout)
     handler = FeatureComputationTimeoutHandler(feature, study)
     handler.handle(timeout)

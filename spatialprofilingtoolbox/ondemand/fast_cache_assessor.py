@@ -100,7 +100,7 @@ class FastCacheAssessor:
         structure_centroids = StructureCentroids(self.database_config_file)
         centroids_present = structure_centroids.centroids_exist(study=self.study)
 
-        cell_data_counts = get_counts(self.database_config_file, 'cell_data_brotli', study=self.study)
+        cell_data_counts = get_counts(cast(str, self.database_config_file), 'cell_data_brotli', study=self.study)
         cell_data_compressed_exist = all(
             structure_centroids._retrieve_expected_counts(study) == count
             for study, count in cell_data_counts.items()

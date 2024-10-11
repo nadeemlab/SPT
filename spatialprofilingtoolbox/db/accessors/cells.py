@@ -7,7 +7,7 @@ from itertools import islice
 from itertools import product
 
 from psycopg import Cursor as PsycopgCursor
-import zstandard
+import zstandard  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
@@ -25,18 +25,26 @@ logger = colorized_logger(__name__)
 class CellsAccess(SimpleReadOnlyProvider):
     """Retrieve cell-level data for a sample."""
 
-    def get_cells_data(self, sample: str, *, cell_identifiers: tuple[int, ...] = (), accept_encoding: list[str] = ()) -> tuple[CellsData, str | None]:
+    def get_cells_data(
+        self,
+        sample: str,
+        *,
+        cell_identifiers: tuple[int, ...] = (),
+        accept_encoding: tuple[str, ...] = (),
+    ) -> tuple[CellsData, str | None]:
         if "br" in accept_encoding and cell_identifiers == ():
-            return self.fetch_one_or_else(
+            self.cursor.execute(
                 '''
                 SELECT blob_contents
                 FROM ondemand_studies_index
                 WHERE specimen=%s AND blob_type=%s;
                 ''',
                 (sample, VIRTUAL_SAMPLE_COMPRESSED if sample == VIRTUAL_SAMPLE else 'cell_data_brotli'),
-                self.cursor,
-                f'Requested cell_data for "{sample}" not found in database.'
-            ), "br"
+            )
+            compressed = self.cursor.fetchone()
+            if compressed is not None:
+                return compressed[0], 'br'
+            logger.error(f'Requested "br" (Brotli) compressed blob that does not exist for {sample}.')
 
         raw = CellsAccess._zip_location_and_phenotype_data(
             self._get_location_data(sample, cell_identifiers),

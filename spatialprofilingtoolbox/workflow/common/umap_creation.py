@@ -2,7 +2,7 @@
 import warnings
 import pickle
 
-import brotli
+import brotli  # type: ignore
 
 from pandas import DataFrame  # type: ignore
 import pandas.errors as pd_errors  # type: ignore

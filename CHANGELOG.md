@@ -1,6 +1,7 @@
 # v1.0.3
 - Reduces the log burden due to computation worker processes, provides summaries instead.
 - Adds more flexible triggering of job queue pops, on worker process start not just explicit signaling.
+- Adds a robust timeout (default 5 minutes), after which any pending jobs will no longer have an effect when complete; incomplete computations are recorded as null and the queue is cleared of these items.
 
 # v1.0.2
 - Converts the database model to a single named database with one (PostgreSQL-sense) schema for each dataset.

@@ -66,6 +66,8 @@ class StructureCentroidsPuller:
         """
         study_names = self._get_study_names(study=study)
         for study_name, measurement_study in study_names:
+            if measurement_study is None:
+                continue
             parameters: list[str | tuple[str, ...]] = [f"'{measurement_study}'"]
 
             with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
@@ -140,7 +142,7 @@ class StructureCentroidsPuller:
         ;
         '''
 
-    def _get_specimen_measurement_study(self, study: str) -> str:
+    def _get_specimen_measurement_study(self, study: str) -> str | None:
         with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
             cursor.execute('''
             SELECT sms.name FROM specimen_measurement_study sms
@@ -150,10 +152,10 @@ class StructureCentroidsPuller:
             ''', (study,))
             rows = tuple(cursor.fetchall())
         if len(rows) == 0:
-            message = f'No specimen measurement studies associated with: {study}'
-            logger.error(message)
+            message = f'No specimen measurement studies currently associated with: {study}'
+            logger.warning(message)
             logger.debug(self._get_all_specimen_measurement_studies())
-            raise ValueError(message)
+            return None
         return rows[0][0]
 
     def _get_all_specimen_measurement_studies(self) -> tuple[tuple[str, tuple], ...]:
@@ -178,10 +180,11 @@ class StructureCentroidsPuller:
             with DBCursor(database_config_file=self.database_config_file) as cursor:
                 cursor.execute('SELECT study FROM study_lookup ;')
                 rows = cursor.fetchall()
-            studies = [(study, self._get_specimen_measurement_study(study)) for (study,) in rows]
+            studies = [(cast(str, study), self._get_specimen_measurement_study(study)) for (study,) in rows]
         else:
-            studies = [(study, self._get_specimen_measurement_study(study))]
-        return sorted(studies, key=lambda x: x[1])
+            studies = [(cast(str, study), self._get_specimen_measurement_study(study))]
+        _studies: list[tuple[str, str]] = [cast(tuple[str, str], pair) for pair in studies if not pair[1] is None]
+        return sorted(_studies, key=lambda x: x[1])
 
     def _create_study_data(self, rows: list[tuple[Any, ...]]) -> StudyStructureCentroids:
         study_data: StudyStructureCentroids = {}

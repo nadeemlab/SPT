@@ -1,6 +1,8 @@
 """Handler for requests for on demand calculations."""
 
+from typing import cast
 from traceback import print_exception
+from time import time as time_time
 
 from psycopg import Connection as PsycopgConnection
 
@@ -26,47 +28,74 @@ class OnDemandWorker:
     """Worker that computes one feature value at a time."""
     queue: MetricComputationScheduler
     connection: PsycopgConnection
+    work_start_time_seconds: float | None
 
     def __init__(self):
         self.queue = MetricComputationScheduler(None)
+        self.work_start_time_seconds = None
 
     def start(self) -> None:
-        self._listen_for_queue_activity()
-
-    def _listen_for_queue_activity(self) -> None:
         with DBConnection() as connection:
             self.connection = connection
             self.connection._set_autocommit(True)
-            self.connection.execute('LISTEN new_items_in_queue ;')
-            logger.info('Listening on new_items_in_queue channel.')
-            self.notifications = self.connection.notifies()
-            while True:
-                self._wait_for_queue_activity_on_connection()
-                self._work_until_complete()
+            logger.info('Initial search (and pop) over job queue.')
+            self._work_until_complete()
+            self._listen_for_queue_activity()
+
+    def _listen_for_queue_activity(self) -> None:
+        self.connection.execute('LISTEN new_items_in_queue ;')
+        logger.info('Listening on new_items_in_queue channel.')
+        self.notifications = self.connection.notifies()
+        while True:
+            self._wait_for_queue_activity_on_connection()
+            self._work_until_complete()
 
     def _wait_for_queue_activity_on_connection(self) -> None:
         for _ in self.notifications:
-            logger.info('Received notice of new items in the job queue.')
             break
 
     def _work_until_complete(self) -> None:
         completed = True
-        completed_pids = []
+        completed_jobs = []
+        self.work_start_time_seconds = time_time()
         while completed:
-            completed, pid = self._one_job()
-            if completed:
-                completed_pids.append(str(pid))
-        logger.info(f'Finished jobs {" ".join(completed_pids)}.')
+            completed, job = self._one_job()
+            if completed and job is not None:
+                completed_jobs.append(job)
+                reported_on_jobs_already = self._report_on_completed_jobs(completed_jobs)
+                if reported_on_jobs_already:
+                    completed_jobs = []
+        self._report_on_completed_jobs(completed_jobs, time_limit_seconds=None)
 
-    def _one_job(self) -> tuple[bool, int]:
-        pid = self.connection.info.backend_pid
+    def _report_on_completed_jobs(
+        self,
+        completed_jobs: list[Job],
+        time_limit_seconds: int | None = 60,
+    ) -> bool:
+        if len(completed_jobs) == 0:
+            return False
+        delta = time_time() - cast(float, self.work_start_time_seconds)
+        delta = int(10 * delta) / 10
+        if time_limit_seconds is None or (delta >= time_limit_seconds):
+            abridged = completed_jobs[0:min(3, len(completed_jobs))]
+            summary = ', '.join(map(lambda job: f'{job.feature_specification} {job.sample}', abridged))
+            if len(completed_jobs) > 3:
+                summary = summary + ' ...'
+            logger.info(f'Finished {len(completed_jobs)} jobs {summary} in {delta} seconds.')
+            if time_limit_seconds is None:
+                self.work_start_time_seconds = None
+            else:
+                self.work_start_time_seconds = time_time()
+            return True
+        return False
+
+    def _one_job(self) -> tuple[bool, ComputationJobReference | None]:
         job = self.queue.pop_uncomputed()
         if job is None:
-            return (False, pid)
-        logger.info(f'{pid} doing job {job.feature_specification} {job.sample}.')
+            return (False, None)
         self._compute(job)
         self._notify_complete(job)
-        return (True, pid)
+        return (True, job)
 
     def _no_value_wrapup(self, job) -> None:
         provider = self._get_provider(job)

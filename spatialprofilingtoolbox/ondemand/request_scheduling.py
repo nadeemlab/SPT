@@ -2,12 +2,12 @@
 
 from typing import cast
 from typing import Callable
-import signal
 
 from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
@@ -18,7 +18,9 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     WrapperPhenotype,
     UnivariateMetricsComputationResult,
 )
+from spatialprofilingtoolbox.ondemand.feature_computation_timeout import FeatureComputationTimeoutHandler
 from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
+from spatialprofilingtoolbox.ondemand.timeout import TIMEOUT_SECONDS_DEFAULT
 from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult
@@ -41,50 +43,6 @@ def _nonempty(string: str) -> bool:
     return string != ''
 
 
-class FeatureComputationTimeoutHandler:
-    feature: str
-    study: str
-
-    def __init__(self, feature: str, study: str):
-        self.feature = feature
-        self.study = study
-
-    def handle(self) -> None:
-        message = f'Timed out waiting for the feature {self.feature} to complete. Aborting.'
-        logger.error(message)
-        if self._queue_size() == 0 and self._completed_size() < self._expected_size():
-            self._delete_feature()
-
-    def _queue_size(self) -> int:
-        with DBCursor(study=self.study) as cursor:
-            query = 'SELECT COUNT(*) FROM quantitative_feature_value_queue WHERE feature=%s ;'
-            cursor.execute(query, (self.feature,))
-            count = tuple(cursor.fetchall())[0][0]
-        return count
-
-    def _completed_size(self) -> int:
-        with DBCursor(study=self.study) as cursor:
-            query = 'SELECT COUNT(*) FROM quantitative_feature_value WHERE feature=%s ;'
-            cursor.execute(query, (self.feature,))
-            count = tuple(cursor.fetchall())[0][0]
-        return count
-
-    def _expected_size(self) -> int:
-        with DBCursor(study=self.study) as cursor:
-            query = 'SELECT COUNT(*) FROM specimen_data_measurement_process ;'
-            cursor.execute(query)
-            count = tuple(cursor.fetchall())[0][0]
-        return count
-
-    def _delete_feature(self) -> None:
-        logger.error('Also deleting the feature, since the queue was empty; we assume the remaining jobs failed.')
-        with DBCursor(study=self.study) as cursor:
-            param = (self.feature,)
-            cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
-            cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
-            cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
-
-
 
 class OnDemandRequester:
     """Entry point for requesting computation by the on-demand service."""
@@ -104,10 +62,7 @@ class OnDemandRequester:
         selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
         feature1, counts, counts_all, pending = OnDemandRequester._counts(study_name, phenotype, selected, blocking)
         combined_keys = sorted(list(set(counts.values.keys()).intersection(counts_all.values.keys())))
-        missing_numerator = set(counts.values.keys()).difference(combined_keys)
-        if len(missing_numerator) > 0:
-            logger.warning(f'In forming population fractions, some samples were missing from numerator: {missing_numerator}')
-        missing_denominator = set(counts_all.values.keys()).difference(combined_keys)
+        missing_denominator = set(counts.values.keys()).difference(combined_keys)
         if len(missing_denominator) > 0:
             logger.warning(f'In forming population fractions, some samples were missing from denominator: {missing_denominator}')
         expected = CountsProvider._get_expected_samples(study_name, feature1)
@@ -188,18 +143,23 @@ class OnDemandRequester:
             logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
 
             for notification in notifications:
-                channel = notification.channel
-                if channel == 'one_job_complete':
-                    logger.debug(f'A job is complete, so {feature} may be ready. (PID: {notification.pid})')
                 _result = get_results()
                 if not _result[0].is_pending:
                     logger.debug(f'Closing notification processing, {feature} ready.')
                     notifications.close()
                     break
+            cls._clear_queue_of_feature(study_name, int(feature))
         except SPTTimeoutError:
             pass
         finally:
             generic_handler.disalarm()
+
+    @classmethod
+    def _clear_queue_of_feature(cls, study: str, feature: int) -> None:
+        with DBCursor(study=study) as cursor:
+            query = 'DELETE FROM quantitative_feature_value_queue q WHERE q.feature=%s ;'
+            cursor.execute(query, (feature,))
+            logger.debug(f'Cleared the job queue for feature {feature} ({study}).')
 
     @classmethod
     def get_proximity_metrics(

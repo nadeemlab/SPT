@@ -18,7 +18,6 @@ if __name__ == '__main__':
         formatter_class=RawDescriptionHelpFormatter,
     )
     parser.parse_args()
-    wait_for_database_ready()
+    wait_for_database_ready(verbose=False)
     worker = OnDemandWorker()
-    logger.info('Starting on-demand computations worker.')
     worker.start()

@@ -15,22 +15,33 @@ class DBCredentials:
     database: str
     user: str
     password: str
+    schema: str
 
-    def update_database(self, database: str):
-        self.database = database
+    def update_schema(self, schema: str):
+        self.schema = schema
         return self
 
-def metaschema_database() -> str:
+def metaschema_schema() -> str:
     return 'default_study_lookup'
+
+def main_database_name() -> str:
+    return 'spt_datasets'
 
 def get_credentials_from_environment() -> DBCredentials:
     _handle_unavailability()
     return DBCredentials(
         environ['SINGLE_CELL_DATABASE_HOST'],
-        metaschema_database(),
+        main_database_name(),
         environ['SINGLE_CELL_DATABASE_USER'],
         environ['SINGLE_CELL_DATABASE_PASSWORD'],
+        metaschema_schema(),
     )
+
+class MissingKeysError(ValueError):
+    def __init__(self, missing: set[str]):
+        self.missing = missing
+        message = f'Database configuration file is missing keys: {missing}'
+        super().__init__(message)
 
 def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
     parser = configparser.ConfigParser()
@@ -41,12 +52,13 @@ def retrieve_credentials_from_file(database_config_file: str) -> DBCredentials:
             credentials[key] = parser['database-credentials'][key]
     missing = set(_get_credential_keys()).difference(credentials.keys())
     if len(missing) > 0:
-        raise ValueError(f'Database configuration file is missing keys: {missing}')
+        raise MissingKeysError(missing)
     return DBCredentials(
         credentials['endpoint'],
-        metaschema_database(),
+        main_database_name(),
         credentials['user'],
         credentials['password'],
+        metaschema_schema(),
     )
 
 def _handle_unavailability():

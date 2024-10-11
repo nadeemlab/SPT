@@ -22,7 +22,7 @@ from spatialprofilingtoolbox.workflow.tabular_import.parsing.diagnosis import Di
 from spatialprofilingtoolbox.workflow.tabular_import.parsing.study import StudyParser
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.db.database_connection import create_database
+from spatialprofilingtoolbox.db.database_connection import create_dataset_area
 from spatialprofilingtoolbox.db.modify_constraints import DBConstraintsToggling
 from spatialprofilingtoolbox.db.modify_constraints import toggle_constraints
 from spatialprofilingtoolbox.db.schema_infuser import SchemaInfuser
@@ -81,7 +81,7 @@ class DataSkimmer:
             logger.debug('%s %s', padded, table)
 
     @staticmethod
-    def sanitize_study_to_database_name(token: str) -> str:
+    def sanitize_study_to_identifier(token: str) -> str:
         handle = StudyHandle(handle=token, display_name_detail='')
         token, _ = StudyCollectionNaming.strip_extract_token(handle)
         return re.sub(r'[ \-]', '_', token).lower()
@@ -92,18 +92,18 @@ class DataSkimmer:
         if self._study_is_registered(study_name):
             raise ValueError('The study "%s" is already registered.', study_name)
 
-        database_name = self.sanitize_study_to_database_name(study_name)
-        self._create_database(database_name)
-        self._register_study_database_name(study_name, database_name)
+        dataset_identifier = self.sanitize_study_to_identifier(study_name)
+        self._create_dataset_area(dataset_identifier)
+        self._register_study_area(study_name, dataset_identifier)
         self._create_schema(study_name)
         return study_name
 
-    def _create_database(self, database_name: str) -> None:
-        create_database(self.database_config_file, database_name)
+    def _create_dataset_area(self, dataset_identifier: str) -> None:
+        create_dataset_area(self.database_config_file, dataset_identifier)
 
-    def _register_study_database_name(self, study_name: str, database_name: str) -> None:
+    def _register_study_area(self, study_name: str, dataset_identifier: str) -> None:
         with DBCursor(database_config_file=self.database_config_file) as cursor:
-            cursor.execute('INSERT INTO study_lookup VALUES (%s, %s) ;', (study_name, database_name))
+            cursor.execute('INSERT INTO study_lookup VALUES (%s, %s) ;', (study_name, dataset_identifier))
 
     def _create_schema(self, study: str) -> None:
         infuser = SchemaInfuser(database_config_file=self.database_config_file, study=study)

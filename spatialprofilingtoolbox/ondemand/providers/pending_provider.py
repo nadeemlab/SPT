@@ -6,6 +6,8 @@ from datetime import datetime
 from math import isnan
 from math import isinf
 
+from psycopg.errors import UniqueViolation
+
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
@@ -101,14 +103,23 @@ class PendingProvider(OnDemandProvider, ABC):
         specification = str(self.job.feature_specification)
         sample = self.job.sample
         with DBCursor(study=study) as cursor:
-            add_feature_value(specification, sample, str(value), cursor)
+            try:
+                add_feature_value(specification, sample, str(value), cursor)
+            except UniqueViolation:
+                logger.warning(f'Worker took too long to compute ({value}, case: ({specification}, {sample})).')
+        with DBCursor(study=study) as cursor:
+            query = 'DELETE FROM quantitative_feature_value_queue WHERE feature=%s and subject=%s;'
+            cursor.execute(query, (int(specification), sample))
 
     def _insert_null(self) -> None:
         study = self.job.study
         specification = str(self.job.feature_specification)
         sample = self.job.sample
         with DBCursor(study=study) as cursor:
-            add_feature_value(specification, sample, None, cursor)
+            try:
+                add_feature_value(specification, sample, None, cursor)
+            except UniqueViolation:
+                logger.warning(f'Worker took too long to compute ({None}, case: ({specification}, {sample})).')
 
     @classmethod
     @abstractmethod

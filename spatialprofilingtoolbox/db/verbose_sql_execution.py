@@ -4,7 +4,7 @@ from importlib.resources import files
 from typing import Literal
 import re
 
-from spatialprofilingtoolbox.db.database_connection import DBConnection
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -60,9 +60,8 @@ def verbose_sql_execute(
     study: str | None = None,
 ):
     script = _retrieve_script(filename_description, contents, source_package)
-    with DBConnection(database_config_file=database_config_file, study=study) as connection:
-        cursor = connection.cursor()
-        if not verbosity == 'silent':
+    with DBCursor(database_config_file=database_config_file, study=study) as cursor:
+        if not verbosity == 'silent' and verbosity != 'itemize':
             logger.debug(script)
 
         if verbosity == 'itemize':
@@ -71,9 +70,7 @@ def verbose_sql_execute(
             for statement in script_statements:
                 logger.debug(statement)
                 cursor.execute(statement)
-                connection.commit()
         else:
             cursor.execute(script)
         cursor.close()
-        connection.commit()
         logger.info('Done with %s.', filename_description[1])

@@ -17,11 +17,14 @@ from psycopg import Cursor as PsycopgCursor
 from psycopg import Error as PsycopgError
 from psycopg import OperationalError
 from psycopg.errors import DuplicateDatabase
+from psycopg.errors import DuplicateSchema
 from attr import define
 
 from spatialprofilingtoolbox.db.credentials import DBCredentials
 from spatialprofilingtoolbox.db.credentials import get_credentials_from_environment
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
+from spatialprofilingtoolbox.db.credentials import main_database_name
+from spatialprofilingtoolbox.db.credentials import metaschema_schema
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -61,28 +64,34 @@ class DBConnection(ConnectionProvider):
     Provides a psycopg Postgres database connection. Takes care of connecting and disconnecting.
     """
     autocommit: bool
+    schema: str | None
 
     def __init__(self,
         database_config_file: str | None = None,
         autocommit: bool=True,
         study: str | None = None,
+        verbose: bool = True,
     ):
+        self.schema = None
         if database_config_file is not None:
             credentials = retrieve_credentials_from_file(database_config_file)
         else:
             credentials = get_credentials_from_environment()
         try:
-            if study is not None:
-                study_database = self._retrieve_study_database(credentials, study)
-                credentials.update_database(study_database)
+            if study is None:
+                self.schema = metaschema_schema()
+            else:
+                self.schema = self._retrieve_study_schema(credentials, study)
+            credentials.update_schema(self.schema)
             super().__init__(self.make_connection(credentials))
         except PsycopgError as exception:
             message = 'Failed to connect to database: %s, %s'
-            logger.error(message, credentials.endpoint, credentials.database)
+            if verbose:
+                logger.error(message, credentials.endpoint, credentials.database)
             raise exception
         self.autocommit = autocommit
 
-    def _retrieve_study_database(self, credentials: DBCredentials, study: str) -> str:
+    def _retrieve_study_schema(self, credentials: DBCredentials, study: str) -> str:
         with connect(
             dbname=credentials.database,
             host=credentials.endpoint,
@@ -90,7 +99,7 @@ class DBConnection(ConnectionProvider):
             password=credentials.password,
         ) as connection:
             cursor = connection.cursor()
-            cursor.execute('SELECT database_name FROM study_lookup WHERE study=%s', (study,))
+            cursor.execute(f'SELECT schema_name FROM {metaschema_schema()}.study_lookup WHERE study=%s ;', (study,))
             rows = cursor.fetchall()
             if len(rows) == 0:
                 raise DatabaseNotFoundError(study)
@@ -98,12 +107,14 @@ class DBConnection(ConnectionProvider):
 
     @staticmethod
     def make_connection(credentials: DBCredentials) -> PsycopgConnection:
-        return connect(
+        connection = connect(
             dbname=credentials.database,
             host=credentials.endpoint,
             user=credentials.user,
             password=credentials.password,
+            options=f'-c search_path={credentials.schema}',
         )
+        return connection
 
     def __enter__(self):
         return self.get_connection()
@@ -114,7 +125,7 @@ class DBConnection(ConnectionProvider):
                 try:
                     self.get_connection().commit()
                 except OperationalError as error:
-                    logger.warn('Connection was possibly interrupted by deliberate timeout. Stack trace:')
+                    logger.warning('Connection was possibly interrupted by deliberate timeout. Stack trace:')
                     print_exception(type(error), error, error.__traceback__)
             self.get_connection().close()
 
@@ -137,12 +148,38 @@ class DBCursor(DBConnection):
 
     def __enter__(self):
         self.set_cursor(self.get_connection().cursor())
+        if not self.schema:
+            logger.warning('DBConnection.schema field is empty.')
+        else:
+            self.cursor.execute(f'SET search_path TO {self.schema} ;')
         return self.get_cursor()
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.is_connected():
             self.get_cursor().close()
         self.wrap_up_connection()
+
+
+def ensure_main_database_created(database_config_file: str | None) -> None:
+    create_statement = f'CREATE DATABASE {main_database_name()} ;'
+    if database_config_file is not None:
+        credentials = retrieve_credentials_from_file(database_config_file)
+    else:
+        credentials = get_credentials_from_environment()
+    with connect(
+        dbname='postgres',
+        host=credentials.endpoint,
+        user=credentials.user,
+        password=credentials.password,
+        autocommit=True,
+    ) as connection:
+        with connection.cursor() as cursor:
+            try:
+                logger.info('Creating database:')
+                logger.info(f'    {create_statement}')
+                cursor.execute(create_statement)
+            except DuplicateDatabase:
+                pass
 
 
 def get_and_validate_database_config(args):
@@ -155,7 +192,7 @@ def get_and_validate_database_config(args):
     raise ValueError('Could not parse CLI argument for database config.')
 
 
-def wait_for_database_ready():
+def wait_for_database_ready(verbose: bool = True):
     while True:
         try:
             if _check_database_is_ready():
@@ -163,7 +200,8 @@ def wait_for_database_ready():
         except OperationalError:
             logger.debug('Database is not ready.')
         time.sleep(2.0)
-    logger.info('Database is ready.')
+    if verbose:
+        logger.info('Database is ready.')
 
 
 def _check_database_is_ready() -> bool:
@@ -218,15 +256,23 @@ def retrieve_primary_study(database_config_file: str, component_study: str) -> s
     return None
 
 
-def create_database(database_config_file: str | None, database_name: str) -> None:
+def create_dataset_area(database_config_file: str | None, dataset_identifier: str) -> None:
+    _create_postgres_schema(database_config_file, dataset_identifier)
+
+
+def create_common_area(database_config_file: str | None, identifier: str) -> None:
+    _create_postgres_schema(database_config_file, identifier)
+
+
+def _create_postgres_schema(database_config_file: str | None, schema_name: str) -> None:
     if database_config_file is None:
         message = 'Data import requires a database configuration file.'
         logger.error(message)
         raise ValueError(message)
     credentials = retrieve_credentials_from_file(database_config_file)
-    create_statement = f'CREATE DATABASE {database_name};'
+    create_statement = f'CREATE SCHEMA {schema_name} ;'
     connection = connect(
-        dbname='postgres',
+        dbname=credentials.database,
         host=credentials.endpoint,
         user=credentials.user,
         password=credentials.password,
@@ -235,9 +281,11 @@ def create_database(database_config_file: str | None, database_name: str) -> Non
         connection.autocommit = True
         try:
             with connection.cursor() as cursor:
+                logger.info('Creating schema in database "%s":' % credentials.database)
+                logger.info(f'    {create_statement}')
                 cursor.execute(create_statement)
-        except DuplicateDatabase:
-            logger.warning('Attempt to recreate existing database "%s".', database_name)
+        except DuplicateSchema:
+            logger.warning('Attempt to recreate existing schema "%s".', schema_name)
     finally:
         connection.close()
 

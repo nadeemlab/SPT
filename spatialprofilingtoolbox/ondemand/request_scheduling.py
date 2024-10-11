@@ -7,6 +7,7 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
 from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
@@ -56,6 +57,7 @@ class FeatureComputationTimeoutHandler:
         if self._queue_size() == 0 and self._completed_size() < self._expected_size():
             logger.error(f'After {TIMEOUT_SECONDS_DEFAULT} seconds feature {self.feature} ({self.study}) still not complete. Consider deleting it.')
             # self._delete_feature()
+            self._insert_remaining_nulls()
 
     def _queue_size(self) -> int:
         with DBCursor(study=self.study) as cursor:
@@ -87,6 +89,19 @@ class FeatureComputationTimeoutHandler:
             cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
             cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
 
+    def _insert_remaining_nulls(self) -> None:
+        with DBCursor(study=self.study) as cursor:
+            cursor.execute('''
+                SELECT sdmp.specimen FROM specimen_data_meaurement_process sdmp
+                LEFT JOIN quantitative_feature_value qfv
+                ON qfv.subject=sdmp.specimen
+                WHERE qfv.subject IS NULL
+                ;
+            ''')
+            samples = tuple(map(lambda row: row[0], tuple(cursor.fetchall())))
+            logger.info(f'Inserting nulls for {self.feature}: {samples}')
+            for sample in samples:            
+                add_feature_value(self.feature, sample, None, cursor)
 
 
 class OnDemandRequester:

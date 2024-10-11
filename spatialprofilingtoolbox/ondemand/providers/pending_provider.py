@@ -102,6 +102,8 @@ class PendingProvider(OnDemandProvider, ABC):
         sample = self.job.sample
         with DBCursor(study=study) as cursor:
             add_feature_value(specification, sample, str(value), cursor)
+            query = 'DELETE FROM quantitative_feature_value_queue WHERE feature=%s and subject=%s;'
+            cursor.execute(query, (int(specification), sample))
 
     def _insert_null(self) -> None:
         study = self.job.study

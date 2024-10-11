@@ -52,7 +52,7 @@ class MetricComputationScheduler:
                 q3.computation_start IS NOT NULL AND
                 now() - q3.computation_start > ( %s ) * INTERVAL '1' second AND
                 q3.retries < %s
-        ) ORDER BY computation_start NULLS FIRST
+        ) AS activequeue ORDER BY computation_start NULLS FIRST
         ''' % (max_retries, retry_interval_seconds, max_retries)
 
     def pop_uncomputed(self) -> ComputationJobReference | None:

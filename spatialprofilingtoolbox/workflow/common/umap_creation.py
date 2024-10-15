@@ -30,6 +30,9 @@ logger = colorized_logger(__name__)
 
 UMAP_POINT_LIMIT = 100000
 
+class NoContinuousIntensityDataError(ValueError):
+    pass
+
 
 class UMAPCreator:
     database_config_file: str | None
@@ -50,6 +53,8 @@ class UMAPCreator:
     def retrieve_feature_matrix_dense(self, cell_limit=None):
         sparse_df = self.retrieve_feature_matrix_sparse(cell_limit=cell_limit)
         continuous = UMAPCreator.sparse_to_dense(sparse_df, 'quantity')
+        if all(continuous.isna().all()):
+            raise NoContinuousIntensityDataError
         discrete = UMAPCreator.sparse_to_dense(sparse_df, 'discrete_value')
         continuous.sort_index(inplace=True)
         discrete.sort_index(inplace=True)
@@ -132,16 +137,6 @@ class UMAPCreator:
             '''
             cursor.execute(insert_query, (*VIRTUAL_SAMPLE_SPEC1, blob))
             cursor.execute(insert_query, (*VIRTUAL_SAMPLE_SPEC2, pickle.dumps(centroid_data)))
-
-            access = CellsAccess(cursor)
-            data = access._zip_location_and_phenotype_data(
-                centroid_data[VIRTUAL_SAMPLE_SPEC2[0]],
-                access._get_phenotype_data(VIRTUAL_SAMPLE_SPEC2[0], cell_identifiers=())
-            )
-            compressed_data = brotli.compress(data, quality=11, lgwin=24)
-
-            cursor.execute(insert_query, (VIRTUAL_SAMPLE, VIRTUAL_SAMPLE_COMPRESSED, compressed_data))
-
         logger.info('Done.')
 
     def _drop_existing_umap_cache(self, cursor: PsycopgCursor):

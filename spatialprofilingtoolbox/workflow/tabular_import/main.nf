@@ -81,7 +81,7 @@ process workflow_main {
      --interventions-file=${interventions} \
      --channels-file=${channels_file} \
      --phenotypes-file=${phenotypes_file} ;
-    spt ondemand cache-expressions-data-array \
+    spt ondemand assess-recreate-cache \
      --database-config-file=${db_config_file} \
      --study-file=${study} ;
     """

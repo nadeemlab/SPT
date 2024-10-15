@@ -22,6 +22,10 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+class RecordNotFoundInDatabaseError(ValueError):
+    pass
+
+
 class CellsAccess(SimpleReadOnlyProvider):
     """Retrieve cell-level data for a sample."""
 
@@ -225,5 +229,5 @@ class CellsAccess(SimpleReadOnlyProvider):
         fetched = cursor.fetchone()
         if fetched is None:
             logger.error(error_message)
-            raise ValueError(error_message)
+            raise RecordNotFoundInDatabaseError(error_message)
         return fetched[0]

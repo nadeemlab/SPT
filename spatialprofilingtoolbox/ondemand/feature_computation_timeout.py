@@ -69,7 +69,12 @@ class FeatureComputationTimeoutHandler:
             if len(samples) == 0:
                 return
             logger.info(f'Inserting nulls for {self.feature}: {samples}')
-            for sample in samples:            
+            cursor.execute('''
+                DELETE FROM
+                quantitative_feature_value_queue
+                WHERE feature=%s ;
+            ''', (self.feature,))
+            for sample in samples:
                 add_feature_value(self.feature, sample, None, cursor)
 
 

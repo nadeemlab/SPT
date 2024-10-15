@@ -183,7 +183,7 @@ packages = [
 ]
 "spatialprofilingtoolbox.ondemand.scripts" = [
     "read_expression_dump_file.py",
-    "cache_expressions_data_array.py",
+    "assess_recreate_cache.py",
     "start.py",
 ]
 "spatialprofilingtoolbox.db.scripts" = [

@@ -22,6 +22,7 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
 RUN apt install gcc -y && apt-get clean
 RUN apt install postgresql-client -y && apt-get clean
 RUN apt-get install -y build-essential libssl-dev libffi-dev && apt-get clean
+RUN apt-get install -y brotli && apt-get clean
 RUN python -m pip install -U pip
 COPY README.md .
 COPY pyproject.toml.unversioned .

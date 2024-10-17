@@ -126,8 +126,8 @@ class QueryHandler:
         )
 
     @classmethod
-    def get_cells_data(cls, cursor, study: str, sample: str) -> CellsData:
-        return CellsAccess(cursor).get_cells_data(sample)
+    def get_cells_data(cls, cursor, study: str, sample: str, **kwargs) -> tuple[CellsData, str | None]:
+        return CellsAccess(cursor).get_cells_data(sample, **kwargs)
 
     @classmethod
     def get_ordered_feature_names(cls, cursor, study: str) -> BitMaskFeatureNames:

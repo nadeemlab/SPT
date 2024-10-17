@@ -44,7 +44,6 @@ class OnDemandWorker:
 
     def _listen_for_queue_activity(self) -> None:
         self.connection.execute('LISTEN new_items_in_queue ;')
-        logger.info('Listening on new_items_in_queue channel.')
         self.notifications = self.connection.notifies()
         while True:
             self._wait_for_queue_activity_on_connection()

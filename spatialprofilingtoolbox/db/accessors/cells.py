@@ -7,10 +7,12 @@ from itertools import islice
 from itertools import product
 
 from psycopg import Cursor as PsycopgCursor
+import zstandard  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
@@ -20,21 +22,50 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+class RecordNotFoundInDatabaseError(ValueError):
+    pass
+
+
 class CellsAccess(SimpleReadOnlyProvider):
     """Retrieve cell-level data for a sample."""
 
-    def get_cells_data(self, sample: str, cell_identifiers: tuple[int, ...] = ()) -> CellsData:
-        return CellsAccess._zip_location_and_phenotype_data(
+    def get_cells_data(
+        self,
+        sample: str,
+        *,
+        cell_identifiers: tuple[int, ...] = (),
+        accept_encoding: tuple[str, ...] = (),
+    ) -> tuple[CellsData, str | None]:
+        if "br" in accept_encoding and cell_identifiers == ():
+            self.cursor.execute(
+                '''
+                SELECT blob_contents
+                FROM ondemand_studies_index
+                WHERE specimen=%s AND blob_type=%s;
+                ''',
+                (sample, VIRTUAL_SAMPLE_COMPRESSED if sample == VIRTUAL_SAMPLE else 'cell_data_brotli'),
+            )
+            compressed = self.cursor.fetchone()
+            if compressed is not None:
+                return compressed[0], 'br'
+            logger.error(f'Requested "br" (Brotli) compressed blob that does not exist for {sample}.')
+
+        raw = CellsAccess._zip_location_and_phenotype_data(
             self._get_location_data(sample, cell_identifiers),
             self._get_phenotype_data(sample, cell_identifiers),
         )
+
+        if "zstd" in accept_encoding:
+            return zstandard.compress(raw), "zstd"
+
+        return raw, None
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:
         expressions_index = json_loads(bytearray(self.fetch_one_or_else(
             '''
             SELECT blob_contents
             FROM ondemand_studies_index osi
-            WHERE blob_type='expressions_index' ;
+            WHERE blob_type='expressions_index';
             ''',
             (),
             self.cursor,
@@ -67,7 +98,7 @@ class CellsAccess(SimpleReadOnlyProvider):
                 '''
                 SELECT blob_contents
                 FROM ondemand_studies_index
-                WHERE specimen=%s AND blob_type=%s ;
+                WHERE specimen=%s AND blob_type=%s;
                 ''',
                 (sample, blob_type),
                 self.cursor,
@@ -91,7 +122,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             '''
             SELECT blob_contents
             FROM ondemand_studies_index
-            WHERE specimen=%s AND blob_type=%s ;
+            WHERE specimen=%s AND blob_type=%s;
             ''',
             (sample, blob_type),
             self.cursor,
@@ -198,5 +229,5 @@ class CellsAccess(SimpleReadOnlyProvider):
         fetched = cursor.fetchone()
         if fetched is None:
             logger.error(error_message)
-            raise ValueError(error_message)
+            raise RecordNotFoundInDatabaseError(error_message)
         return fetched[0]

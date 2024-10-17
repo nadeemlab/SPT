@@ -296,5 +296,5 @@ class StudyAccess(SimpleReadOnlyProvider):
         '''
         self.cursor.execute(query, (VIRTUAL_SAMPLE,))
         rows = self.cursor.fetchall()
-        return rows[0][0] == 2
+        return rows[0][0] == 3
         

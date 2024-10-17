@@ -108,8 +108,8 @@ class StructureCentroids:
         counts = get_counts(self.database_config_file, 'centroids', study=study)
         if any(count == 0 for count in counts.values()):
             return False
-        expected = {study: self._retrieve_expected_counts(study) for study in counts.keys()}
-        return all(count == expected[study] for study, count in counts.items())
+        expected = {_study: self._retrieve_expected_counts(_study) for _study in counts.keys()}
+        return all(count == expected[_study] for _study, count in counts.items())
 
     def _retrieve_expected_counts(self, study: str) -> int | None:
         decoded_blob = retrieve_expressions_index(self.database_config_file, study)

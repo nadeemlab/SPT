@@ -1,3 +1,8 @@
+# v1.0.4
+- Refactors the assessment/recreation of derivative data payloads (e.g. binary feature matrices):
+  - Deprecates unnecessary logic, since now a single study must be specified.
+  - Assesses and recreates the different derivatives independently.
+
 # v1.0.3
 - Reduces the log burden due to computation worker processes, provides summaries instead.
 - Adds more flexible triggering of job queue pops, on worker process start not just explicit signaling.

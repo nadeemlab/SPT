@@ -42,6 +42,7 @@ apiserver = [
     "Pillow==9.5.0",
     "pydantic==2.7.2",
     "secure==0.3.0",
+    "zstandard==0.23.0",
 ]
 graphs = [
     "bokeh==3.4.1",
@@ -64,6 +65,8 @@ ondemand = [
     "pyshp==2.3.1",
     "pydantic==2.7.2",
     "squidpy==1.5.0",
+    "Brotli==1.1.0",
+    "zstandard==0.23.0",
 ]
 workflow = [
     "matplotlib==3.9.2",
@@ -101,6 +104,8 @@ all = [
     "tables==3.9.2",
     "tqdm==4.66.4",
     "boto3==1.35.23",
+    "Brotli==1.1.0",
+    "zstandard==0.23.0",
 ]
 dev = [
     "autopep8",
@@ -178,7 +183,7 @@ packages = [
 ]
 "spatialprofilingtoolbox.ondemand.scripts" = [
     "read_expression_dump_file.py",
-    "cache_expressions_data_array.py",
+    "assess_recreate_cache.py",
     "start.py",
 ]
 "spatialprofilingtoolbox.db.scripts" = [

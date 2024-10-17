@@ -3,7 +3,7 @@ from os import environ as os_environ
 from asyncio import get_event_loop as asyncio_get_event_loop
 from time import sleep as time_sleep
 
-from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -53,11 +53,11 @@ class FeatureComputationTimeoutHandler:
                 SELECT matched.specimen FROM
                 (
                     SELECT sdmp.specimen, computedalready.subject
-                    FROM orion_crc.specimen_data_measurement_process sdmp
+                    FROM specimen_data_measurement_process sdmp
                     LEFT JOIN
                         (
                             SELECT qfv.subject
-                            FROM orion_crc.quantitative_feature_value qfv
+                            FROM quantitative_feature_value qfv
                             WHERE qfv.feature=%s
                         ) as computedalready
                     ON computedalready.subject=sdmp.specimen
@@ -69,7 +69,12 @@ class FeatureComputationTimeoutHandler:
             if len(samples) == 0:
                 return
             logger.info(f'Inserting nulls for {self.feature}: {samples}')
-            for sample in samples:            
+            cursor.execute('''
+                DELETE FROM
+                quantitative_feature_value_queue
+                WHERE feature=%s ;
+            ''', (self.feature,))
+            for sample in samples:
                 add_feature_value(self.feature, sample, None, cursor)
 
 
@@ -79,10 +84,20 @@ def do_in_background(f):
     return wrapped
 
 
+def _heartbeat_force_check_queue():
+    with DBConnection() as connection:
+        connection.execute('NOTIFY new_items_in_queue ;')
+
+
 @do_in_background
 def feature_computation_timeout_handler(feature: str, study: str, timeout: int):
     if 'SPT_TESTING_MODE' in os_environ:
         return
-    time_sleep(timeout)
+    elapsed = 0
+    increment = 5
+    while elapsed < timeout:
+        _heartbeat_force_check_queue()
+        time_sleep(increment)
+        elapsed += increment
     handler = FeatureComputationTimeoutHandler(feature, study)
     handler.handle(timeout)

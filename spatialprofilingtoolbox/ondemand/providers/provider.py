@@ -45,7 +45,7 @@ class OnDemandProvider(ABC):
         cell_identifiers = self._get_cells_selected()
         with DBCursor(study=study) as cursor:
             access = CellsAccess(cursor)
-            raw = access.get_cells_data(sample, cell_identifiers=cell_identifiers)
+            raw, _ = access.get_cells_data(sample, cell_identifiers=cell_identifiers)
             feature_names = access.get_ordered_feature_names()
         number_cells = int.from_bytes(raw[0:4])
         if number_cells == 0:

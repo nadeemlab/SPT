@@ -2,13 +2,12 @@
 from typing import Callable
 import signal
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-TIMEOUT_SECONDS_DEFAULT = 300
+TIMEOUT_SECONDS_DEFAULT = 600
 
 
 class SPTTimeoutError(RuntimeError):

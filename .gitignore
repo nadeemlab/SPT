@@ -46,6 +46,11 @@ test/workflow/plots.html
 test/workflow/nf_files/
 *.svg
 *.pickle
+data_curation/datasets/moldoveanu/CP_output_tiff/
+data_curation/datasets/moldoveanu/Moldoveanu2022-cytof-RAW.tar
+data_curation/datasets/moldoveanu/Moldoveanu2022-cytof-RAW.tar.gz
+data_curation/datasets/moldoveanu/sciimmunol.abi5072_tables_s1 to_s5.xlsx
+data_curation/datasets/moldoveanu/sciimmunol.abi5072_tables_s1 to_s5.zip
 
 # Development files
 .vscode/

@@ -69,3 +69,9 @@ You can monitor progress by watching the Nextflow logs:
 ```bash
 tail -f -n1000 work/*/*.command.log
 ```
+
+> [!NOTE]
+> To put the `generated_artifacts/` files into an S3 bucket, you can use: 
+> ```sh
+> aws s3 cp generated_artifacts s3://bucket-name/dataset-name --recursive`
+> ```

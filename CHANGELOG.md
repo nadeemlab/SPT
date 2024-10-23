@@ -1,3 +1,6 @@
+# v1.0.5
+- Adds a way to retrieve the version strings for a number of dependency packages.
+
 # v1.0.4
 - Refactors the assessment/recreation of derivative data payloads (e.g. binary feature matrices):
   - Deprecates unnecessary logic, since now a single study must be specified.

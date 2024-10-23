@@ -27,7 +27,8 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
-    AvailableGNN
+    AvailableGNN,
+    SoftwareComponentVersion,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.querying import query
@@ -500,6 +501,13 @@ async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatur
     """
     return query().get_ordered_feature_names(study)
 
+
+@app.get("/software-component-versions/")
+async def get_software_component_versions() -> list[SoftwareComponentVersion]:
+    """
+    Get the versions of software dependencies, to help pin specific computation results.
+    """
+    return query().get_software_component_versions()
 
 def _ensure_plot_cache_exists(study: str):
     with DBCursor(study=study) as cursor:

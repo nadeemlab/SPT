@@ -151,3 +151,19 @@ class CellData(BaseModel):
 class AvailableGNN(BaseModel):
     """List of available GNN metrics, i.e. which plugins were used in a completed run."""
     plugins: tuple[GNNPlugin, ...]
+
+
+class SoftwareComponentVersion(BaseModel):
+    """Version metadata for a software component."""
+    component_name: str
+    version: str
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'component_name': 'Squidpy python package',
+                    'version': '1.5.0',
+                },
+            ]
+        }
+    }

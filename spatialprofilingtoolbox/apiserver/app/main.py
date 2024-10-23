@@ -27,7 +27,8 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCounts,
     UnivariateMetricsComputationResult,
-    AvailableGNN
+    AvailableGNN,
+    SoftwareComponentVersion,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.querying import query
@@ -42,8 +43,10 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidFeatureClass,
     ValidFeatureClass2Phenotypes,
 )
+from spatialprofilingtoolbox.apiserver.app.versions import get_software_component_versions as _get_software_component_versions
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
+
 
 VERSION = '1.0.0'
 
@@ -499,6 +502,14 @@ async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatur
     channel positivity/negativity assignments.
     """
     return query().get_ordered_feature_names(study)
+
+
+@app.get("/software-component-versions/")
+async def get_software_component_versions() -> list[SoftwareComponentVersion]:
+    """
+    Get the versions of software dependencies, to help pin specific computation results.
+    """
+    return _get_software_component_versions()
 
 
 def _ensure_plot_cache_exists(study: str):

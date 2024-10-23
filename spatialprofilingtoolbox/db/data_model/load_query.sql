@@ -5,7 +5,7 @@ SUM(
       '/row/c/text()',
       query_to_xml(
         format(
-          'select count(*) as c from %I.%I',
+          'select count(*) as c from %I.%I where retries=0',
           schema_name,
           'quantitative_feature_value_queue'
         ),

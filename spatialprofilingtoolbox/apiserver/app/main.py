@@ -43,8 +43,10 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidFeatureClass,
     ValidFeatureClass2Phenotypes,
 )
+from spatialprofilingtoolbox.apiserver.app.versions import get_software_component_versions as _get_software_component_versions
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
+
 
 VERSION = '1.0.0'
 
@@ -507,7 +509,8 @@ async def get_software_component_versions() -> list[SoftwareComponentVersion]:
     """
     Get the versions of software dependencies, to help pin specific computation results.
     """
-    return query().get_software_component_versions()
+    return _get_software_component_versions()
+
 
 def _ensure_plot_cache_exists(study: str):
     with DBCursor(study=study) as cursor:

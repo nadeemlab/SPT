@@ -1,6 +1,6 @@
 
 declare -A expectedmessages
-expectedmessages[spt-apiserver-testing]="Uvicorn running on"
+expectedmessages[spt-apiserver-testing]="Application startup complete"
 expectedmessages[spt-ondemand--testing]="Initial search"
 expectedmessages[spt-ondemand-testing2]="Initial search"
 expectedmessages[spt-db---testing-only]="database system is ready to accept connections"

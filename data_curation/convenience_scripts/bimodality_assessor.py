@@ -97,7 +97,7 @@ class BimodalityAssessor:
         if inconsistent:
             print('\n'.join([str(p) for p in pairs]))
             return 'Assignments inconsistent with thresholding'
-        if (lower_limit is None) and (upper_limit is None):
+        if (lower_limit is None) or (upper_limit is None):
             return 'No threshold behavior detected somehow'
         return (lower_limit + upper_limit) / 2
 
@@ -160,7 +160,10 @@ def create_bimodal_vector(s: pd.Series, downsample: int | None = None, quiet: bo
     assessor = BimodalityAssessor(subsample, quiet=quiet)
     quality = assessor.get_average_mahalanobis_distance()
     if quality >= 0.5:
-        return assessor.get_dichotomized_feature(use_threshold=True, original=s)
+        dichotomized = pd.Series(assessor.get_dichotomized_feature(use_threshold=True, original=s))
+        dichotomized.name = s.name
+        dichotomized.index = s.index
+        return dichotomized
     threshold = np.nanmean(s)
 
     def thresholding(value):

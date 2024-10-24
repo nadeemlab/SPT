@@ -2,7 +2,6 @@ The scripts here are used to import dataset into a PostgreSQL database for the S
 
 1. [Curation or pre-processing](#curation-or-pre-processing)
 2. [Doing import / upload into the database](#doing-import--upload-into-the-database)
-3. [Finer control of the upload process](#finer-control-of-the-upload-process)
 
 # Curation or pre-processing
 
@@ -12,32 +11,11 @@ Extraction scripts tend to be dataset-specific, but there are some common tasks 
 
 
 # Doing import / upload into the database
-Make sure that you have installed:
-- [`spatialprofilingtoolbox` Python package](https://pypi.org/project/spatialprofilingtoolbox/)
-- PostgresQL
-- [Nextflow](https://nextflow.io)
+The recommended import method is to use `spt db interactive-uploader`.
 
-```sh
-./import_dataset.sh ~/.spt_db.config.local --drop-first moldoveanu
-```
+It will take care of creating a run directory for Nextflow, configuring it with a `workflow.config`
+file like:
 
-- `~/.spt_db.config.local` is an example name of a [database configuration file](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/workflow/assets/.spt_db.config.template).
-- The `--drop-first` option causes dropping/deleting a dataset with the same study name as one which is about to be uploaded. Without this option, upload will only take place if the dataset is not already in the database.
-- `moldoveanu` is the name of the dataset subdirectory for the complete example.
-
-
-# Finer control of the upload process
-The usage above uses several convenience wrapper functions, and assumes that you have saved dataset artifacts to `datasetes/<dataset_name>/generated_artifacts/`.
-
-For finer control, for example when drawing source files from an S3 bucket, use the following:
-
-```bash
-mkdir rundir; cd rundir
-spt workflow configure --workflow="tabular import" --config-file=workflow.config
-./run.sh
-```
-
-Here the `workflow.config` file should look something like this:
 ```ini
 [general]
 db_config_file = /Users/username/.spt_db.config.local
@@ -49,26 +27,15 @@ study_name = Melanoma CyTOF ICI
 input_path = datasets/moldoveanu/generated_artifacts
 ```
 
-If you wish for Nextflow (which runs in `run.sh`) to pull source files directly from S3, `workflow.config` may look like this instead:
+or, in the case of S3 source files, with:
 
 ```ini
-[general]
-db_config_file = /Users/username/.spt_db.config.local
-
-[database visitor]
-study_name = Melanoma CyTOF ICI
-
+...
 [tabular import]
 input_path = s3://bucketname/moldoveanu
 ```
 
 In the S3 case, you would have to make sure that credentials are available. Currently Nextflow requires, in the case of session-specific credentials, a "profile" in `~/.aws/credentials`, usually the profile named `default`.
-
-You can monitor progress by watching the Nextflow logs:
-
-```bash
-tail -f -n1000 work/*/*.command.log
-```
 
 > [!NOTE]
 > To put the `generated_artifacts/` files into an S3 bucket, you can use: 

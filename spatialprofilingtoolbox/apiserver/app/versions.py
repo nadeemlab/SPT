@@ -7,6 +7,7 @@ from sklearn import __version__ as version_sklearn
 from umap import __version__ as version_umap
 
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import SoftwareComponentVersion
+from spatialprofilingtoolbox import __version__
 
 def get_software_component_versions() -> list[SoftwareComponentVersion]:
     V = SoftwareComponentVersion
@@ -17,4 +18,5 @@ def get_software_component_versions() -> list[SoftwareComponentVersion]:
     versions.append(V(component_name='SciPy python package', version=version_scipy))
     versions.append(V(component_name='scikit-learn python package', version=version_sklearn))
     versions.append(V(component_name='umap-learn python package', version=version_umap))
+    versions.append(V(component_name='spatialprofilingtoolbox python package', version=__version__))
     return versions

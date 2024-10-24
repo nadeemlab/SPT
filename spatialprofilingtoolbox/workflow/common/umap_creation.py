@@ -166,10 +166,22 @@ class UMAPReducer:
     """From dataframe create UMAP-reduced point clouds."""
     @staticmethod
     def create_2d_point_cloud(dense_df: DataFrame):
-        normalized = UMAPReducer.preprocess_univariate_adjustments(dense_df)
+        continuous_only = UMAPReducer.drop_discrete_features(dense_df)
+        normalized = UMAPReducer.preprocess_univariate_adjustments(continuous_only)
         reduced = UMAPReducer.umap_reduce_to_2d(normalized)
         reduced_scaled = UMAPReducer.scale_up(reduced)
         return reduced_scaled
+
+    @staticmethod
+    def drop_discrete_features(df: DataFrame) -> DataFrame:
+        droppables = []
+        for column in df.columns:
+            if len(set(df[column])) <= 2:
+                droppables.append(column)
+        remainder = [c for c in df.columns if not c in droppables]
+        if len(remainder) == 0:
+            raise NoContinuousIntensityDataError
+        return df[remainder]
 
     @staticmethod
     def preprocess_univariate_adjustments(df):

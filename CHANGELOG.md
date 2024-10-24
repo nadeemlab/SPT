@@ -1,3 +1,6 @@
+# v1.0.6
+- Makes UMAP dimensional reduction more aggressive in removing discrete features before reduction.
+
 # v1.0.5
 - Adds a way to retrieve the version strings for a number of dependency packages.
 

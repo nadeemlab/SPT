@@ -197,7 +197,6 @@ packages = [
     "upload_sync_small.py",
     "collection.py",
     "interactive_uploader.py",
-    "load_query.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "metaschema.sql",
@@ -205,8 +204,6 @@ packages = [
     "create_roles.sql",
     "create_views.sql",
     "drop_views.sql",
-    "load_query.sql",
-    "load_query_breakdown.sql",
     "fields.tsv",
     "grant_on_tables.sql",
     "performance_tweaks.sql",

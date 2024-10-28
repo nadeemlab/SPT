@@ -57,3 +57,32 @@ CREATE TABLE cell_set_cache (
     feature INTEGER,
     histological_structure VARCHAR(512)
 );
+
+CREATE OR REPLACE FUNCTION get_queue_size(_schemaname varchar, OUT result int)
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+  EXECUTE format('SELECT COUNT(*) as queue_size FROM %s.quantitative_feature_value_queue', _schemaname)
+  INTO result;
+END
+$func$;
+
+CREATE OR REPLACE FUNCTION get_active_queue_size(_schemaname varchar, OUT result int)
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+  EXECUTE format('SELECT COUNT(*) as active_queue_size FROM %s.quantitative_feature_value_queue WHERE retries=0', _schemaname)
+  INTO result;
+END
+$func$;
+
+CREATE OR REPLACE FUNCTION get_pending_features(_schemaname varchar)
+  RETURNS TABLE(feature INT)
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+  RETURN QUERY
+  EXECUTE format('SELECT DISTINCT feature FROM %s.quantitative_feature_value_queue', _schemaname)
+  ;
+END
+$func$;

@@ -20,7 +20,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
 )
 from spatialprofilingtoolbox.ondemand.feature_computation_timeout import FeatureComputationTimeoutHandler
 from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
-from spatialprofilingtoolbox.ondemand.timeout import TIMEOUT_SECONDS_DEFAULT
 from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult

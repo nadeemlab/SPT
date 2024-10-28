@@ -30,7 +30,7 @@ class MetricComputationScheduler:
     def schedule_feature_computation(self, study: str, feature_specification: int) -> None:
         with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
             self._insert_jobs(cursor, feature_specification)
-        NORMAL_FEATURE_COMPUTATION_TIMEOUT = 60 * 5
+        NORMAL_FEATURE_COMPUTATION_TIMEOUT = 60 * 10
         feature_computation_timeout_handler(str(feature_specification), study, NORMAL_FEATURE_COMPUTATION_TIMEOUT)
         self._broadcast_queue_activity()
 

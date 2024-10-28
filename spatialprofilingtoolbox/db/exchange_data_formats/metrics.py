@@ -154,14 +154,26 @@ class AvailableGNN(BaseModel):
 
 
 class SoftwareComponentVersion(BaseModel):
-    """Version metadata for a software component."""
+    """
+    Version metadata for a software component. The format is the form of the component, whether a
+    package, framework, docker or container image, etc. The source is the repository from which the
+    component was downloaded. The flag relevant_to_reproducible_computation is intended to indicate
+    components that are expected to have an effect on exact computed values (rather than, for
+    example, just affecting performance or data formats).
+    """
     component_name: str
+    format: str
+    source: str
     version: str
+    relevant_to_reproducible_computation: bool
     model_config = {
         'json_schema_extra': {
             'examples': [
                 {
-                    'component_name': 'Squidpy python package',
+                    'component_name': 'Squidpy',
+                    'format': 'Python package',
+                    'source': 'Python package index (PyPI)',
+                    'relevant_to_reproducible_computation': True,
                     'version': '1.5.0',
                 },
             ]

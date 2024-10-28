@@ -366,6 +366,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     docker build \
      ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
+     -t ${DOCKER_REPO_PREFIX}-$$submodule_name \
      -t $$repository_name:$$submodule_version \
      -t $$repository_name:latest \
      -t $$repository_name:dev \

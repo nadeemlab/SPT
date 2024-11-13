@@ -48,6 +48,18 @@ class LoadTester:
         except QuitRequested:
             Printer.print('Quit requested.', style='flag')
 
+    def _simple_speed_test(self) -> None:
+        pass
+
+    def _intermediate_speed_test(self) -> None:
+        pass
+
+    def _large_job_set_speed_test(self) -> None:
+        pass
+
+    def _intensive_job_set_speed_test(self) -> None:
+        pass
+
     def _print_application_status_summary(self) -> None:
         with DBCursor(database_config_file=self.database_config_file) as cursor:
             cursor.execute('SELECT schema_name, get_queue_size(schema_name) AS queue_size FROM default_study_lookup.study_lookup ;')

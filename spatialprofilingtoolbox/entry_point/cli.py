@@ -12,7 +12,7 @@ from spatialprofilingtoolbox import submodule_names
 
 
 def get_argument_free_commands():
-    return ['tail-logs', 'dump-schema', 'start', 'interactive-uploader']
+    return ['tail-logs', 'dump-schema', 'start', 'interactive-uploader', 'load-testing']
 
 def get_commands(submodule_name):
     _files = files(f'spatialprofilingtoolbox.{submodule_name}')

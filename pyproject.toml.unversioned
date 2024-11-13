@@ -197,6 +197,7 @@ packages = [
     "upload_sync_small.py",
     "collection.py",
     "interactive_uploader.py",
+    "load_testing.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "metaschema.sql",

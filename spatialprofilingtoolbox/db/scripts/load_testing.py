@@ -3,9 +3,11 @@ from argparse import ArgumentParser
 from typing import cast
 import re
 from json import loads as json_loads
+from time import sleep
 
 from requests import get as requests_get
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.scripts.interactive_uploader import InteractiveUploader as DatabaseSelector
 Printer = DatabaseSelector
 
@@ -42,10 +44,31 @@ class LoadTester:
             self.database_selector._solicit_and_ensure_database_selection()
             self.database_config_file = cast(str, self.database_selector.selected_database_config_file)
             self._solicit_and_ensure_api_reachable()
+            self._print_application_status_summary()
         except QuitRequested:
             Printer.print('Quit requested.', style='flag')
 
-    def _solicit_and_ensure_api_reachable(self):
+    def _print_application_status_summary(self) -> None:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT schema_name, get_queue_size(schema_name) AS queue_size FROM default_study_lookup.study_lookup ;')
+            rows = tuple(cursor.fetchall())
+        Printer.print('Number of pending jobs, including failed (abandoned, reached maximum retries):', style='message')
+        self._print_numbers_and_names(rows)
+        sleep(3)
+        print('')
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT schema_name, get_active_queue_size(schema_name) AS active_queue_size FROM default_study_lookup.study_lookup ;')
+            rows = tuple(cursor.fetchall())
+        Printer.print('Number of fresh pending jobs with no retries:', style='message')
+        self._print_numbers_and_names(rows)
+
+    def _print_numbers_and_names(self, rows) -> None:
+        for row in rows:
+            Printer.print(row[0].ljust(30), end='', style='fieldname')
+            Printer.print(' ', end='', style='message')
+            Printer.print(str(row[1]).rjust(6), style='message')
+
+    def _solicit_and_ensure_api_reachable(self) -> None:
         default_value = 'oncopathtk.org/api'
         while self.api_url is None:
             Printer.print('Select API server', 'prompt', end='')

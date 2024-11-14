@@ -175,7 +175,8 @@ class LoadTester:
             raise(error)
 
     def _simple_speed_test(self) -> None:
-        Printer.print('Basic testing, simple queries', style='title')
+        Printer.print('', style='message')
+        Printer.print('    Basic testing, simple queries'.ljust(80), style='title')
         dataset = 'Breast cancer IMC'
         requests = [
             ('study-summary', {'study': dataset}),
@@ -227,7 +228,10 @@ class LoadTester:
 
     def _intermediate_speed_test(self) -> None:
         Printer.print('', style='message')
-        Printer.print('Intermediate non-trivial metrics computation, speed test', style='title')
+        Printer.print('    Intermediate non-trivial metrics computation, speed test'.ljust(80), style='title')
+        Printer.print('Test example is a ', end='', style='message')
+        Printer.print('phenotype fractions', end='', style='popout')
+        Printer.print(' metric.', style='message')
         checker = QueueSizeChecker()
         checker.measure(verbose=False)
         if not checker.size_measurements[-1][1] == 0:
@@ -244,9 +248,9 @@ class LoadTester:
 
         self._show_clearance_rate(checker.size_measurements)
 
-        Printer.print('Cleaning up test example computed feature... ', end='', style='message')
+        Printer.print('Cleaning up test example computed feature... ', end='', style='item')
         self._drop_fractions_feature(details)
-        Printer.print('Done.', style='message')
+        Printer.print('Done.', style='item')
 
     def _show_clearance_rate(self, measurements) -> None:
         max_time = max(m[0] for m in measurements)
@@ -275,7 +279,10 @@ class LoadTester:
 
     def _large_job_set_speed_test(self) -> None:
         Printer.print('', style='message')
-        Printer.print('Large job-set metrics computation, speed test', style='title')
+        Printer.print('    Large job-set metrics computation, speed test'.ljust(80), style='title')
+        Printer.print('Test examples are ', end='', style='message')
+        Printer.print('phenotype fractions', end='', style='popout')
+        Printer.print(' metrics.', style='message')
         checker = QueueSizeChecker()
         checker.measure(verbose=False)
         if not checker.size_measurements[-1][1] == 0:
@@ -283,18 +290,25 @@ class LoadTester:
             return
         checker.reset()
         dataset = 'LUAD progression'
-        details = {'study': dataset, 'positive_marker': 'MPO', 'negative_marker': 'KIT'}
-        Printer.print('Dropping test example computed feature, if it exists.', style='message')
-        self._drop_fractions_feature(details)
-        self._retrieve('phenotype-counts', details)
+        details_list = [
+            {'study': dataset, 'positive_marker': 'MPO', 'negative_marker': 'KIT'},
+            {'study': dataset, 'positive_marker': 'ITGAX', 'negative_marker': 'MPO'},
+            {'study': dataset, 'positive_marker': 'KLRD1', 'negative_marker': 'CD14'},
+            {'study': dataset, 'positive_marker': 'KIT', 'negative_marker': 'MPO'},
+        ]
+        Printer.print('Dropping test example computed features, if they exists.', style='message')
+        for details in details_list:
+            self._drop_fractions_feature(details)
+        for details in details_list:
+            self._retrieve('phenotype-counts', details)
         checker.poll()
         Printer.print('', style='message')
 
         self._show_clearance_rate(checker.size_measurements)
 
-        Printer.print('Cleaning up test example computed feature... ', end='', style='message')
+        Printer.print('Cleaning up test example computed feature... ', end='', style='item')
         self._drop_fractions_feature(details)
-        Printer.print('Done.', style='message')
+        Printer.print('Done.', style='item')
 
     def _intensive_job_set_speed_test(self) -> None:
         pass

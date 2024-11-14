@@ -32,7 +32,7 @@ class OnDemandComputationsDropper:
         return specifications
 
     @staticmethod
-    def drop_features(cursor: PsycopgCursor, specifications: list[str]):
+    def drop_features(cursor: PsycopgCursor, specifications: list[str], just_features: bool=False, verbose: bool=True):
         for specification in specifications:
             queries = [
                 'DELETE FROM quantitative_feature_value WHERE feature=%s ;',
@@ -41,7 +41,10 @@ class OnDemandComputationsDropper:
                 'DELETE FROM feature_specification WHERE identifier=%s ;',
             ]
             for query in queries:
-                logger.debug(query, specification)
+                if verbose:
+                    logger.debug(query, specification)
                 cursor.execute(query, (specification,))
+        if just_features:
+            return
         cursor.execute('DELETE FROM cell_set_cache ;')
         cursor.execute('DELETE FROM quantitative_feature_value_queue ;')

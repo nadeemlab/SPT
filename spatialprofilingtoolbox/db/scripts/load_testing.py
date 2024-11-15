@@ -7,15 +7,18 @@ from time import time as time_time
 from time import sleep
 from random import choice as random_choice
 from os import environ as os_environ
+from os.path import expanduser
 
 from requests import get as requests_get
 import termplotlib as tpl
 
+from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
+from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
 from spatialprofilingtoolbox.db.ondemand_dropper import OnDemandComputationsDropper
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
@@ -143,9 +146,9 @@ class LoadTester:
             os_environ['SINGLE_CELL_DATABASE_PASSWORD'] = credentials.password
             self._solicit_and_ensure_api_reachable()
             self._print_application_status_summary()
-            self._simple_speed_test()
-            self._intermediate_speed_test()
-            self._large_job_set_speed_test()
+            # self._simple_speed_test()
+            # self._intermediate_speed_test()
+            # self._large_job_set_speed_test()
             self._intensive_job_set_speed_test()
         except QuitRequested:
             Printer.print('Quit requested.', style='flag')
@@ -220,6 +223,30 @@ class LoadTester:
             data_analysis_study,
             PhenotypeCriteria(positive_markers=(details['positive_marker'],), negative_markers=(details['negative_marker'],)),
             (),
+        )
+        if specification is None:
+            return
+        with DBCursor(study=study) as cursor:
+            OnDemandComputationsDropper.drop_features(cursor, [specification], just_features=True, verbose=False)
+
+    def _drop_proximity_feature(self, details) -> None:
+        study = details['study']
+        with DBCursor(study=study) as cursor:
+            get = ADIFeatureSpecificationUploader.get_data_analysis_study
+            measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
+            data_analysis_study = get(measurement_study_name, cursor)
+
+        phenotype1 = PhenotypeCriteria(positive_markers=(details['positive_marker'],), negative_markers=(details['negative_marker'],))
+        phenotype2 = PhenotypeCriteria(positive_markers=(details['positive_marker2'],), negative_markers=(details['negative_marker2'],))
+        p1 = phenotype_to_phenotype_str(phenotype1)
+        p2 = phenotype_to_phenotype_str(phenotype2)
+        radius = '50'
+        specification = ProximityProvider._get_feature_specification(
+            study,
+            data_analysis_study,
+            p1,
+            p2,
+            radius,
         )
         if specification is None:
             return
@@ -311,7 +338,43 @@ class LoadTester:
         Printer.print('Done.', style='item')
 
     def _intensive_job_set_speed_test(self) -> None:
-        pass
+        Printer.print('', style='message')
+        Printer.print('    Intensive job-set metrics computation, speed test'.ljust(80), style='title')
+        Printer.print('Test example is a ', end='', style='message')
+        Printer.print('proximity', end='', style='popout')
+        Printer.print(' metric.', style='message')
+        checker = QueueSizeChecker()
+        checker.measure(verbose=False)
+        if not checker.size_measurements[-1][1] == 0:
+            Printer.print('Warning: There is a non-trivial job queue already, testing aborted.', style='flag')
+            return
+        checker.reset()
+        with DBCursor() as cursor:
+            cursor.execute('SELECT study FROM default_study_lookup.study_lookup WHERE schema_name=\'orion_crc\';')
+            dataset = tuple(cursor.fetchall())[0][0]
+        details_list = [
+            {
+                'study': dataset,
+                'positive_marker': 'PDL1',
+                'negative_marker': 'KIT',
+                'positive_marker2': 'MKI67',
+                'negative_marker2': 'SMA',
+                'feature_class': 'proximity',
+            },
+        ]
+        Printer.print('Dropping test example computed features, if they exists.', style='message')
+        for details in details_list:
+            self._drop_proximity_feature(details)
+        for details in details_list:
+            self._retrieve('request-spatial-metrics-computation-custom-phenotypes', details)
+        checker.poll()
+        Printer.print('', style='message')
+
+        self._show_clearance_rate(checker.size_measurements)
+
+        Printer.print('Cleaning up test example computed feature... ', end='', style='item')
+        self._drop_proximity_feature(details)
+        Printer.print('Done.', style='item')
 
     def _print_application_status_summary(self) -> None:
         with DBCursor() as cursor:
@@ -391,39 +454,6 @@ class LoadTester:
             Printer.print(title, style='item')
             return ({}, False)
         return ({'version': version}, True)
-
-    # def _solicit_confirmation_of_action(self) -> bool:
-    #     self._announce_plan()
-    #     self.print('Proceed? [', 'prompt', end='')
-    #     self.print('y', 'yes', end='')
-    #     self.print('/', 'prompt', end='')
-    #     self.print('n', 'no', end='')
-    #     self.print('] (default no) ', 'prompt', end='')
-    #     answer = input()
-    #     print()
-    #     if answer in ('y', 'Y', 'yes'):
-    #         return True
-    #     if answer == 'q':
-    #         raise QuitRequested
-    #     self.selected_dataset_source = None
-    #     self.selected_database_config_file = None
-    #     self.sourceables = ()
-    #     return False
-
-    # def _announce_plan(self) -> None:
-    #     self.print('    Upload'.ljust(80), 'title')
-    #     print()
-    #     self.print('Will upload dataset from  '.ljust(26), 'message', end='')
-    #     self.print(f'  {self.selected_dataset_source}', 'dataset source')
-    #     self.print('to the database at'.ljust(26), 'message', end='')
-    #     assert self.credentials is not None
-    #     self.print(f'  {self.credentials.endpoint}', 'item', end='')
-    #     self.print(f'  (from credentials ', 'message', end='')
-    #     self.print(f'{self.selected_database_config_file}', 'popout', end='')
-    #     self.print(f' )', 'message')
-    #     if self.drop_behavior == 'drop':
-    #         self.print('(The dataset will be dropped first, so the upload will be fresh.)', 'message')
-    #     print()
 
 
 def main():

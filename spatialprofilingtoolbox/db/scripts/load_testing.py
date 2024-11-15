@@ -240,7 +240,7 @@ class LoadTester:
         phenotype2 = PhenotypeCriteria(positive_markers=(details['positive_marker2'],), negative_markers=(details['negative_marker2'],))
         p1 = phenotype_to_phenotype_str(phenotype1)
         p2 = phenotype_to_phenotype_str(phenotype2)
-        radius = '50'
+        radius = details['radius']
         specification = ProximityProvider._get_feature_specification(
             study,
             data_analysis_study,
@@ -326,6 +326,7 @@ class LoadTester:
         Printer.print('Dropping test example computed features, if they exists.', style='message')
         for details in details_list:
             self._drop_fractions_feature(details)
+
         for details in details_list:
             self._retrieve('phenotype-counts', details)
         checker.poll()
@@ -356,15 +357,16 @@ class LoadTester:
             {
                 'study': dataset,
                 'positive_marker': 'PDL1',
-                'negative_marker': 'KIT',
+                'negative_marker': 'SMA',
                 'positive_marker2': 'MKI67',
                 'negative_marker2': 'SMA',
                 'feature_class': 'proximity',
+                'radius': '30.0',
             },
         ]
         Printer.print('Dropping test example computed features, if they exists.', style='message')
         for details in details_list:
-            self._drop_proximity_feature(details)
+            self._drop_proximity_feature(details)    
         for details in details_list:
             self._retrieve('request-spatial-metrics-computation-custom-phenotypes', details)
         checker.poll()

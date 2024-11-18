@@ -146,9 +146,9 @@ class LoadTester:
             os_environ['SINGLE_CELL_DATABASE_PASSWORD'] = credentials.password
             self._solicit_and_ensure_api_reachable()
             self._print_application_status_summary()
-            # self._simple_speed_test()
-            # self._intermediate_speed_test()
-            # self._large_job_set_speed_test()
+            self._simple_speed_test()
+            self._intermediate_speed_test()
+            self._large_job_set_speed_test()
             self._intensive_job_set_speed_test()
         except QuitRequested:
             Printer.print('Quit requested.', style='flag')

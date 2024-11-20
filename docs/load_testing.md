@@ -30,8 +30,8 @@ The report for an example run is shown below. The real report is colorized in th
     Target database                                                             
 
 Found database config files with correct format and validated credentials:
-*0  /Users/mathewj2/.spt_db.config
- 1  /Users/mathewj2/.spt_db.config.2
+*0  /Users/username/.spt_db.config
+ 1  /Users/username/.spt_db.config.2
 
 The previously-used credentials file is marked with *.
 

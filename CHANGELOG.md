@@ -1,3 +1,6 @@
+# v1.0.8
+- Adds `spt db load-testing` interactive script to stress test the application backend under varying conditions and report the performance results.
+
 # v1.0.6
 - Makes UMAP dimensional reduction more aggressive in removing discrete features before reduction.
 

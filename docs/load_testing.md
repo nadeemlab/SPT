@@ -150,7 +150,7 @@ Cleaning up test example computed feature... Done.
     Intensive job-set metrics computation, speed test                           
 Test example is a proximity metric.
 Dropping test example computed features, if they exists.
- Retrieving http://oncopathtk.org/api/request-spatial-metrics-computation-custom-phenotypes/?study=Orion+CRC+collection:+850baea791514561ab298e9a241f377ac14d81bed4740c728248e8e7bf9d50a0&positive_marker=PDL1&negative_marker=SMA&positive_marker2=MKI67&negative_marker2=SMA&feature_class=proximity&radius=30.0 ... Done. 
+ Retrieving http://oncopathtk.org/api/request-spatial-metrics-computation-custom-phenotypes/?study=Orion+CRC&positive_marker=PDL1&negative_marker=SMA&positive_marker2=MKI67&negative_marker2=SMA&feature_class=proximity&radius=30.0 ... Done. 
  polling job queue size... (time=67.6, size=0)
 
                                       Jobs cleared on average at 36.4 jobs / minute

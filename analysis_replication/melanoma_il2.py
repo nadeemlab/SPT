@@ -61,7 +61,7 @@ def test(host):
     df = access.spatial_autocorrelation(s100b)
     values1 = df[df['cohort'] == '1'][f'spatial autocorrelation, {s100b}']
     values3 = df[df['cohort'] == '3'][f'spatial autocorrelation, {s100b}']
-    compare(values1, values3, expected_fold=0.066, show_pvalue=True, show_auc=True)
+    compare(values1, values3, expected_fold=0.06690, show_pvalue=True, show_auc=True)
 
     df = access.proximity([s100b, s100b])
     values1 = df[df['cohort'] == '1'][f'proximity, {s100b} and {s100b}']

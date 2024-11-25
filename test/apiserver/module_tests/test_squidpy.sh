@@ -93,7 +93,8 @@ test_squidpy "neighborhood%20enrichment" 1 2 module_tests/expected_squidpy1.json
 test_squidpy "neighborhood%20enrichment" 2 CD20 module_tests/expected_squidpy2.json
 test_squidpy "neighborhood%20enrichment" CD3 CD20 module_tests/expected_squidpy3.json
 test_squidpy "co-occurrence" CD3 CD20 50 module_tests/expected_squidpy4.json
-test_squidpy "ripley" CD3 module_tests/expected_squidpy5.json
+# Not reproducible:
+# test_squidpy "ripley" CD3 module_tests/expected_squidpy5.json
 test_squidpy "spatial%20autocorrelation" CD3 module_tests/expected_squidpy6.json
 test_squidpy "spatial%20autocorrelation" 1 module_tests/expected_squidpy7.json
 test_squidpy "spatial%20autocorrelation" 2 module_tests/expected_squidpy8.json

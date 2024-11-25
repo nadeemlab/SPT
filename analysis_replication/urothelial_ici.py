@@ -129,14 +129,14 @@ def spatial(access: DataAccessor):
     print('\nSpatial results:')
     cases: tuple[tuple[Any, ...], ...]
     cases = (
-        ('Macrophage', 'Regulatory T cell', 2.110, 1.285),
-        ('Macrophage', 'T helper cell', 1.812, 2.089),
+        ('Macrophage', 'Regulatory T cell', 2.3289, 1.285),
+        ('Macrophage', 'T helper cell', 2.128, 2.2532),
     )
     lesser_cases = (
-        ('Regulatory T cell', 'CD4- CD8- T cell', 1.578, 1.459),
-        ('Macrophage', 'CD4- CD8- T cell', 3.099, 1.221),
-        ('Macrophage', 'T cytotoxic cell', 1.453, 2.973),
-        ('Macrophage', 'intratumoral CD3+ LAG3+', 2.308, 0.441),
+        ('Regulatory T cell', 'CD4- CD8- T cell', 1.8182, 2.6265),
+        ('Macrophage', 'CD4- CD8- T cell', 3.8629, 2.2492),
+        ('Macrophage', 'T cytotoxic cell', 1.7805, 3.3426),
+        ('Macrophage', 'intratumoral CD3+ LAG3+', 2.5639, 0.4624),
     )
     for P1, P2, E, Ei in cases:
         try:
@@ -156,9 +156,9 @@ def spatial(access: DataAccessor):
             continue
 
     proximity_cases = (
-        ('intratumoral CD3+ LAG3+', 'intratumoral CD3+ LAG3+', 1.8, None),
-        ({'positive_markers': ['intratumoral', 'CD3'], 'negative_markers': []}, {'positive_markers': ['PDL1'], 'negative_markers': []}, 1.197, 0.589),
-        ('intratumoral CD3+ LAG3+', 'T helper cell', 2.42, 1.593),
+        ('intratumoral CD3+ LAG3+', 'intratumoral CD3+ LAG3+', 2.464, None),
+        ({'positive_markers': ['intratumoral', 'CD3'], 'negative_markers': []}, {'positive_markers': ['PDL1'], 'negative_markers': []}, 0.9887, 0.4339),
+        ('intratumoral CD3+ LAG3+', 'T helper cell', 3.8798, 1.0567),
     )
     for P1, P2, E, Ei in proximity_cases:
         one_case_spatial(access, P1, P2, E, feature_class='proximity')

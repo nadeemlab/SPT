@@ -94,7 +94,7 @@ def feature_computation_timeout_handler(feature: str, study: str, timeout: int):
     if 'SPT_TESTING_MODE' in os_environ:
         return
     elapsed = 0
-    increment = 5
+    increment = 1
     while elapsed < timeout:
         _heartbeat_force_check_queue()
         time_sleep(increment)

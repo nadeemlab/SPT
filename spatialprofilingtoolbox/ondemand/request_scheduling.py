@@ -110,14 +110,14 @@ class OnDemandRequester:
         with DBConnection() as connection:
             connection._set_autocommit(True)
             if blocking:
-                cls._wait_for_wrappedup(connection, get_results1, study_name)
-            counts, feature1 =  get_results1()
+                counts, feature1 = cls._wait_for_wrappedup(connection, get_results1, study_name)
+            else:
+                counts, feature1 =  get_results1()
 
-        with DBConnection() as connection:
-            connection._set_autocommit(True)
             if blocking:
-                cls._wait_for_wrappedup(connection, get_results2, study_name)
-            counts_all, _ =  get_results2()
+                counts_all, _ = cls._wait_for_wrappedup(connection, get_results2, study_name)
+            else:
+                counts_all, _ =  get_results2()
 
         return (feature1, counts, counts_all, counts.is_pending or counts_all.is_pending)
 
@@ -127,26 +127,28 @@ class OnDemandRequester:
         connection: PsycopgConnection,
         get_results: Callable[[], tuple[Metrics1D, str]],
         study_name: str,
-    ) -> None:
+    ):
+        counts, feature = get_results()
+        if not counts.is_pending:
+            logger.debug(f'Feature {feature} already complete.')
+            return (counts, feature)
         connection.execute('LISTEN new_items_in_queue ;')
         connection.execute('LISTEN one_job_complete ;')
         notifications = connection.notifies()
-
-        counts, feature = get_results()
         handler = FeatureComputationTimeoutHandler(feature, study_name)
         generic_handler = create_timeout_handler(handler.handle)
         try:
             if not counts.is_pending:
                 logger.debug(f'Feature {feature} already complete.')
-                return
+                return (counts, feature)
             logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
-
             for notification in notifications:
                 _result = get_results()
                 if not _result[0].is_pending:
                     logger.debug(f'Closing notification processing, {feature} ready.')
                     notifications.close()
-                    break
+                    return _result
+            logger.debug(f'Notification processing completed, giving up on feature {feature}')
             cls._clear_queue_of_feature(study_name, int(feature))
         except SPTTimeoutError:
             pass

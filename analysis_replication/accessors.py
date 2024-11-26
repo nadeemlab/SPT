@@ -6,6 +6,10 @@ from urllib.parse import urlencode
 from requests import get as get_request  # type: ignore
 from os.path import exists
 from time import sleep
+from time import time
+from datetime import datetime
+from sqlite3 import connect
+import pickle
 
 from pandas import DataFrame
 from pandas import concat
@@ -47,8 +51,14 @@ def sleep_poll():
 
 class DataAccessor:
     """Convenience caller of HTTP methods for data access."""
+    caching: bool
 
-    def __init__(self, study, host=None):
+    def __init__(self, study, host=None, caching: bool=True):
+        self.caching = caching
+        if self.caching:
+            with connect('cache.sqlite3') as connection:
+                cursor = connection.cursor()
+                cursor.execute('CREATE TABLE IF NOT EXISTS cache(url TEXT, contents BLOB);')
         _host = get_default_host(host)
         if _host is None:
             raise RuntimeError('Expected host name in api_host.txt .')
@@ -214,11 +224,40 @@ class DataAccessor:
             protocol = 'http'
         return '://'.join((protocol, self.host))
 
+    def _add_to_cache(self, url, contents):
+        if not self.caching:
+            return
+        with connect('cache.sqlite3') as connection:
+            cursor = connection.cursor()
+            cursor.execute('INSERT INTO cache(url, contents) VALUES (?, ?);', (url, pickle.dumps(contents)))
+
+    def _lookup_cache(self, url):
+        if not self.caching:
+            return None
+        with connect('cache.sqlite3') as connection:
+            cursor = connection.cursor()
+            cursor.execute('SELECT contents FROM cache WHERE url=?;', (url,))
+            rows = cursor.fetchall()
+            if len(rows) > 0:
+                print('Cache hit.')
+                return pickle.loads(rows[0][0], encoding='bytes').json(), url
+        return None
+
     def _retrieve(self, endpoint, query):
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
+        c = self._lookup_cache(url)
+        if c:
+            return c
         try:
+            start = time()
             content = get_request(url)
+            end = time()
+            self._add_to_cache(url, content)
+            delta = str(end - start)
+            now = str(datetime.now())
+            with open('requests_timing.txt', 'ta', encoding='utf-8') as file:
+                file.write('\t'.join([delta, now, url]) + '\n')
         except Exception as exception:
             print(url)
             raise exception

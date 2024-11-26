@@ -239,7 +239,6 @@ class DataAccessor:
             cursor.execute('SELECT contents FROM cache WHERE url=?;', (url,))
             rows = cursor.fetchall()
             if len(rows) > 0:
-                print('Cache hit.')
                 return pickle.loads(rows[0][0], encoding='bytes').json(), url
         return None
 

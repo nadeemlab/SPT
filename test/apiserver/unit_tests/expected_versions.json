@@ -38,14 +38,14 @@
         "component_name": "umap-learn",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "0.5.6",
+        "version": "0.5.7",
         "relevant_to_reproducible_computation": true
     },
     {
         "component_name": "spatialprofilingtoolbox",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "1.0.7",
+        "version": "1.0.9",
         "relevant_to_reproducible_computation": true
     },
     {

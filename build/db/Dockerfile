@@ -16,6 +16,7 @@ RUN python3 -m pip install --break-system-packages attrs==23.2.0
 RUN python3 -m pip install --break-system-packages pandas==2.2.2
 RUN python3 -m pip install --break-system-packages pyshp==2.3.1
 RUN python3 -m pip install --break-system-packages pydantic==2.7.2
+RUN python3 -m pip install --break-system-packages anndata==0.10.9
 RUN python3 -m pip install --break-system-packages squidpy==1.5.0
 RUN python3 -m pip install --break-system-packages termplotlib==0.3.9
 ARG version

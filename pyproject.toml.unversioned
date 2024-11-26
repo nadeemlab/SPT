@@ -42,6 +42,8 @@ apiserver = [
     "Pillow==9.5.0",
     "pydantic==2.7.2",
     "secure==0.3.0",
+    "anndata==0.10.9",
+    "squidpy==1.5.0",
     "zstandard==0.23.0",
 ]
 graphs = [
@@ -56,6 +58,7 @@ db = [
     "pandas==2.2.2",
     "pyshp==2.3.1",
     "pydantic==2.7.2",
+    "anndata==0.10.9",
     "squidpy==1.5.0",
     "termplotlib==0.3.9",
 ]
@@ -65,6 +68,7 @@ ondemand = [
     "scikit-learn==1.5.0",
     "pyshp==2.3.1",
     "pydantic==2.7.2",
+    "anndata==0.10.9",
     "squidpy==1.5.0",
     "Brotli==1.1.0",
     "zstandard==0.23.0",
@@ -100,6 +104,7 @@ all = [
     "pydantic==2.7.2",
     "fastapi==0.111.0",
     "Pillow==9.5.0",
+    "anndata==0.10.9",
     "squidpy==1.5.0",
     "secure==0.3.0",
     "tables==3.9.2",

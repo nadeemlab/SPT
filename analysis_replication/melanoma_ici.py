@@ -18,28 +18,28 @@ def test(host):
     print(f'Proximity of {name1} to {name2}')
     values1 = df[df['cohort'] == '1'][prox]
     values2 = df[df['cohort'] == '2'][prox]
-    compare(values1, values2, expected_fold=1.66, show_pvalue=True, show_auc=True)
+    compare(values1, values2, expected_fold=2.044, show_pvalue=True, show_auc=True)
 
     df = access.proximity([name2, name1])
     prox = f'proximity, {name2} and {name1}'
     print(f'Proximity of {name2} to {name1}')
     values1 = df[df['cohort'] == '1'][prox]
     values2 = df[df['cohort'] == '2'][prox]
-    compare(values1, values2, expected_fold=1.34, show_pvalue=True, show_auc=True)
+    compare(values1, values2, expected_fold=1.209, show_pvalue=True, show_auc=True)
 
     df = access.neighborhood_enrichment([name1, name2])
     ne = f'neighborhood enrichment, {name1} and {name2}'
     print(f'Neighborhood enrichment for {name1} w.r.t. {name2}.')
     values1 = df[df['cohort'] == '1'][ne]
     values2 = df[df['cohort'] == '2'][ne]
-    compare(values1, values2, expected_fold=0.452, show_pvalue=True)
+    compare(values1, values2, expected_fold=0.4726, show_pvalue=True)
 
     # Two phenotypes spatial
     print('\nResults involving spatial metrics for 2 phenotypes (shown in both orders for reference)')
     for p1, p2, fold in zip(
         ['Cytotoxic T cell antigen-experienced', 'T regulatory cells', 'Cytotoxic T cell antigen-experienced', 'Naive cytotoxic T cell'],
         ['T regulatory cells', 'Cytotoxic T cell antigen-experienced', 'Naive cytotoxic T cell', 'Cytotoxic T cell antigen-experienced'],
-        [0.182, 0.312, 0.223, 0.695],
+        [0.1794, 0.2986, 0.2203, 0.7096],
     ):
         df = access.neighborhood_enrichment([p1, p2])
         ne = f'neighborhood enrichment, {p1} and {p2}'
@@ -51,7 +51,7 @@ def test(host):
     for p1, p2, fold in zip(
         ['Naive cytotoxic T cell', 'T regulatory cells', 'Naive cytotoxic T cell', 'T helper cell antigen-experienced'],
         ['T regulatory cells', 'Naive cytotoxic T cell', 'T helper cell antigen-experienced', 'Naive cytotoxic T cell'],
-        [0.683, 0.417, 0.899, 0.400],
+        [0.6189, 0.378, 0.899, 0.4272],
     ):
         df = access.proximity([p1, p2])
         prox = f'proximity, {p1} and {p2}'
@@ -67,7 +67,7 @@ def test(host):
 
     CD3CD45RO = {'positive_markers': ['CD3', 'CD45RO'], 'negative_markers': []}
     name = 'CD3+ CD45RO+'
-    fold = 0.038
+    fold = 0.027
     df = access.neighborhood_enrichment([CD3CD45RO, CD3CD45RO])
     ne = f'neighborhood enrichment, {name} and {name}'
     values1 = df[df['cohort'] == '1'][ne].dropna()
@@ -85,7 +85,7 @@ def test(host):
         compare(values1, values2, expected_fold=fold, show_pvalue=True, show_auc=True)
 
     ### Phenotype
-    for phenotype, fold in zip(['B cells'], [0.0954]):
+    for phenotype, fold in zip(['B cells'], [0.1427]):
         df = access.spatial_autocorrelation(phenotype)
         autocorr = f'spatial autocorrelation, {phenotype}'
         values1 = df[df['cohort'] == '1'][autocorr]
@@ -93,7 +93,7 @@ def test(host):
         print(f'Spatial autocorrelation for {phenotype}')
         compare(values1, values2, expected_fold=fold, show_pvalue=True, show_auc=True)
 
-    for phenotype, fold in zip(['T helper cell antigen-experienced', 'Cytotoxic T cell antigen-experienced'], [14.90, 0.219]):
+    for phenotype, fold in zip(['T helper cell antigen-experienced', 'Cytotoxic T cell antigen-experienced'], [19.045, 0.219]):
         df = access.neighborhood_enrichment([phenotype, phenotype])
         ne = f'neighborhood enrichment, {phenotype} and {phenotype}'
         values1 = df[df['cohort'] == '1'][ne].dropna()

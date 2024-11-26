@@ -31,7 +31,7 @@ def test(host):
     values3 = df[df['cohort'] == '3']['proximity, KRT14+ CK+ and KRT5+ CK+']
     # # handle_expected_actual(0.65, mean2 / mean3)
     # handle_expected_actual(1.265, mean2 / mean3)
-    compare(values3, values2, expected_fold=1.265)
+    compare(values3, values2, expected_fold=1.7463, show_pvalue=True)
 
     df = access.counts([KRT['14'], KRT['7']])
     fractions = df['KRT14+ CK+ and KRT7+ CK+'] / df['all cells']

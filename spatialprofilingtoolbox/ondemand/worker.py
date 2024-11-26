@@ -59,7 +59,7 @@ class OnDemandWorker:
         self.work_start_time_seconds = time_time()
         while completed:
             completed, job = self._one_job()
-            if completed and job is not None:
+            if completed and (job is not None):
                 completed_jobs.append(job)
                 reported_on_jobs_already = self._report_on_completed_jobs(completed_jobs)
                 if reported_on_jobs_already:
@@ -75,12 +75,16 @@ class OnDemandWorker:
             return False
         delta = time_time() - cast(float, self.work_start_time_seconds)
         delta = int(10 * delta) / 10
+        if time_limit_seconds is None:
+            prefix = '(reached end of loop over available queue) '
+        else:
+            prefix = ''
         if time_limit_seconds is None or (delta >= time_limit_seconds):
             abridged = completed_jobs[0:min(3, len(completed_jobs))]
             summary = ', '.join(map(lambda job: f'{job.feature_specification} {job.sample}', abridged))
             if len(completed_jobs) > 3:
                 summary = summary + ' ...'
-            logger.info(f'Finished {len(completed_jobs)} jobs {summary} in {delta} seconds.')
+            logger.info(f'{prefix} Finished {len(completed_jobs)} jobs {summary} in {delta} seconds.')
             if time_limit_seconds is None:
                 self.work_start_time_seconds = None
             else:

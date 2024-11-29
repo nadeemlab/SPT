@@ -1,4 +1,6 @@
 """The API service's endpoint handlers."""
+
+from datetime import datetime
 from typing import cast
 from typing import Annotated
 from typing import Literal
@@ -10,11 +12,17 @@ from fastapi import Header, Response
 from fastapi.responses import StreamingResponse
 from fastapi import Query
 from fastapi import HTTPException
+from fastapi import Depends
 import matplotlib.pyplot as plt  # type: ignore
+
+import jwt
+from sqlmodel import Session, select
 
 import secure
 
+from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
+from spatialprofilingtoolbox.db.data_model.findings import Finding, create_db_and_tables, engine
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
@@ -121,6 +129,19 @@ app = FastAPI(
         'email': 'mathewj2@mskcc.org"',
     },
 )
+
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
+SessionDep = Annotated[Session, Depends(get_session)]
 
 
 def custom_openapi():
@@ -592,8 +613,63 @@ async def importance_fraction_plot(
     """Return a plot of the fraction of the top most important cells for GNN classification,
     expressing various phenotypes."""
     raw = get_importance_fraction_plot(str(study), str(img_format))
-    buffer = BytesIO()
-    buffer.write(raw)
-    buffer.seek(0)
     media_type = "image/svg+xml" if img_format == "svg" else "image/png"
-    return StreamingResponse(buffer, media_type=media_type)
+    return Response(raw, media_type=media_type)
+
+
+@app.post("/findings/")
+def create_finding(finding: FindingCreate, session: SessionDep) -> Finding:
+    # https://sandbox.orcid.org/oauth/jwks
+    orcid_cert = '''
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApl+jp+kTAGf6BZUrWIYU
+JTvqqMVd4iAnoLS6vve+KNV0q8TxKvMre7oi9IulDcqTuJ1alHrZAIVlgrgFn88M
+KirZuTqHG6LCtEsr7qGD9XyVcz64oXrb9vx4FO9tLNQxvdnIWCIwyPAYWtPMHMSS
+D5oEVUtVL/5IaxfCJvU+FchdHiwfxvXMWmA+i3mcEEe9zggag2vUPPIqUwbPVUFN
+j2hE7UsZbasuIToEMFRZqSB6juc9zv6PEUueQ5hAJCEylTkzMwyBMibrt04TmtZk
+2w9DfKJR91555s2ZMstX4G/su1/FqQ6p9vgcuLQ6tCtrW77tta+Rw7McF/tyPmvn
+hQIDAQAB
+-----END PUBLIC KEY-----
+'''
+
+    data = jwt.decode(
+        finding.id_token,
+        key=orcid_cert,
+        algorithms=['RS256'],
+        audience='APP-Y38AYV276S8Z7574',
+        issuer=["https://sandbox.orcid.org"]
+    )
+
+    new_finding = Finding(
+        study=finding.study,
+        submission_datetime=datetime.now(),
+        status="pending_review",
+        orcid_id=data['sub'],
+        name=data['given_name'],
+        email=finding.email,
+        url=finding.url,
+        description=finding.description,
+        p_value=finding.p_value,
+        effect_size=finding.effect_size
+    )
+
+    session.add(new_finding)
+    session.commit()
+    session.refresh(new_finding)
+    return new_finding
+
+
+@app.get("/findings/")
+def get_findings(
+    session: SessionDep,
+    study: str,
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100,
+) -> list[Finding]:
+    findings = session.exec(
+        select(Finding).offset(offset).limit(limit).where(
+            Finding.study == study,
+            Finding.status == "published"
+        )
+    )
+    return findings

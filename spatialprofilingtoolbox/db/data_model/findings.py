@@ -6,6 +6,7 @@ from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from sqlmodel import Field, SQLModel, Column, create_engine
 
+from spatialprofilingtoolbox.db.database_connection import get_credentials_from_environment
 
 class FindingStatus(str, Enum):
     pending_review = "pending_review"
@@ -49,5 +50,5 @@ def create_db_and_tables():
 
 
 
-
-engine = create_engine("postgresql://postgres:postgres@localhost/spt_datasets")
+credentials = get_credentials_from_environment()
+engine = create_engine(f"postgresql+psycopg://{credentials.user}:{credentials.password}@{credentials.endpoint}/spt_datasets")

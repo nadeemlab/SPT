@@ -14,7 +14,7 @@ class FindingCreate(BaseModel):
     id_token: str
 
 
-class FindingPublic(BaseModel)
+class FindingPublic(BaseModel):
     id: int 
     submission_datetime: datetime
     publication_datetime: datetime | None

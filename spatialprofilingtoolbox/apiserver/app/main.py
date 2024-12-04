@@ -6,6 +6,7 @@ from typing import Annotated
 from typing import Literal
 from io import BytesIO
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi import Header, Response
@@ -119,6 +120,12 @@ the same way you would access any HTTP API, for example using:
 * the [Axios](https://axios-http.com/docs/intro) Javascript library
 """
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+
 app = FastAPI(
     title=TITLE,
     description=DESCRIPTION,
@@ -128,12 +135,8 @@ app = FastAPI(
         'url': 'https://nadeemlab.org',
         'email': 'mathewj2@mskcc.org"',
     },
+    lifespan=lifespan,
 )
-
-
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
 
 
 def get_session():

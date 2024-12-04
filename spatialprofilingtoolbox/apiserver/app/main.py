@@ -612,7 +612,7 @@ def get_importance_fraction_plot(study: str, img_format: str) -> bytes:
 async def importance_fraction_plot(
     study: ValidStudy,
     img_format: Literal['svg', 'png'] = 'svg',
-) -> StreamingResponse:
+) -> Response:
     """Return a plot of the fraction of the top most important cells for GNN classification,
     expressing various phenotypes."""
     raw = get_importance_fraction_plot(str(study), str(img_format))

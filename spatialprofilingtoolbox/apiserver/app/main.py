@@ -23,7 +23,7 @@ import secure
 
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
-from spatialprofilingtoolbox.db.data_model.findings import Finding, create_db_and_tables, engine
+from spatialprofilingtoolbox.db.data_model.findings import Finding, create_db_and_tables, get_engine
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
@@ -138,6 +138,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+engine = get_engine()
 
 def get_session():
     with Session(engine) as session:
@@ -634,8 +635,7 @@ j2hE7UsZbasuIToEMFRZqSB6juc9zv6PEUueQ5hAJCEylTkzMwyBMibrt04TmtZk
 hQIDAQAB
 -----END PUBLIC KEY-----
 '''
-
-    ##
+    ## temporary
     DEBUG=True
     if DEBUG:
         data = {'sub': 'orcidid', 'given_name': 'given_name'}
@@ -677,7 +677,7 @@ def get_findings(
     findings = session.exec(
         select(Finding).offset(offset).limit(limit).where(
             Finding.study == study,
-            # Finding.status == "published"
+            Finding.status == "published"
         )
     )
     return findings

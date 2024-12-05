@@ -2,11 +2,56 @@
 from argparse import ArgumentParser
 from typing import cast
 from os import environ as os_environ
+import warnings
+import re
+import string
 
+from pandas import read_sql
+from pandas import DataFrame
+from pandas import Series
+
+from spatialprofilingtoolbox.db.data_model.findings import FindingStatus
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.scripts.interactive_uploader import InteractiveUploader as DatabaseSelector
 Printer = DatabaseSelector
+
+def getch():
+    import sys, termios
+
+    fd = sys.stdin.fileno()
+    orig = termios.tcgetattr(fd)
+
+    new = termios.tcgetattr(fd)
+    new[3] = new[3] & ~termios.ICANON
+    new[6][termios.VMIN] = 1
+    new[6][termios.VTIME] = 0
+
+    try:
+        termios.tcsetattr(fd, termios.TCSAFLUSH, new)
+        return sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
+
+def prefilled_input(prompt, prefill=''):
+    buffer = prefill
+    print(prompt + buffer, end='', flush=True)
+    while True:
+        c = getch()
+        if c == '\n':
+            break
+        if not (c in string.printable or c == '\x7f'):
+            continue
+        if c == '\x7f':
+            if len(buffer) > 0:
+                buffer = buffer[0:-1]
+        else:
+            buffer = buffer + c
+        print('\33[2K\r', end='')
+        print(prompt + buffer, end='', flush=True)
+    print('', flush=True)
+    return buffer
 
 def parse_args():
     parser = ArgumentParser(
@@ -22,9 +67,11 @@ class QuitRequested(RuntimeError):
         super().__init__('Quit requested.')
 
 
-
 class Reviewer:
     database_selector: DatabaseSelector
+    findings: DataFrame
+    finding_id: int
+    finding: Series
 
     def __init__(self):
         self.database_selector = DatabaseSelector()
@@ -46,22 +93,96 @@ class Reviewer:
         except QuitRequested:
             Printer.print('Quit requested.', style='flag')
 
+    def _retrieve_findings(self) -> None:
+        with DBConnection() as connection:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self.findings = read_sql('SELECT * from public.finding;', connection)
+
     def _print_findings(self) -> None:
-        Printer.print('findings')
+        Printer.print('    Findings'.ljust(80), 'title')
+        self._retrieve_findings()
+        for study, df in self.findings.groupby('study'):
+            Printer.print(study, style='popout')
+            for i, row in df.iterrows():
+                self._print_numbers_and_names(zip(df.columns, [str(x) for x in row]))
+                print('')
+
+    def _select_finding(self) -> None:
+        finding_id = None
+        known_ids = set(map(int, self.findings['id']))
+        while finding_id is None:
+            Printer.print('Enter finding id', 'prompt', end='')
+            Printer.print(': ', 'prompt', end='')
+            response = input()
+            if not re.match('^[1-9][0-9]*$', response):
+                continue
+            numeral = int(response)
+            if numeral in known_ids:
+                finding_id = numeral
+        f = self.findings[self.findings['id'] == finding_id].squeeze()
+        self._print_numbers_and_names(zip(f.index, f.values), style='emphfieldname')
+        self.finding_id = finding_id
+        self.finding = f
+
+    def _revise_sentence(self) -> None:
+        confirmed = False
+        while not confirmed:
+            sentence = self.finding['description']
+            revision = prefilled_input('Enter sentence description: ', prefill=sentence)
+            Printer.print('New description: ', style='message', end='')
+            Printer.print(revision, style='popout')
+            confirmed = self._confirm()
+        with DBCursor() as cursor:
+            cursor.execute('UPDATE public.finding SET description=%s WHERE id=%s;', (revision, self.finding_id))
+
+    def _update_status(self, value: FindingStatus) -> None:
+        Printer.print(f'Setting finding {self.finding_id} status to: ', 'message', end='')
+        Printer.print(value.value, 'popout')
+        confirmed = self._confirm()
+        if not confirmed:
+            Printer.print('Canceling.', 'flag')
+            return
+        with DBCursor() as cursor:
+            cursor.execute('UPDATE public.finding SET status=%s WHERE id=%s;', (value.value, self.finding_id))
 
     def _accept_commands(self) -> None:
-        Printer.print('commands')
+        self._select_finding()
+        action = None
+        while action is None:
+            answer = input('e - edit description  d - defer decision  r - reject  p - publish: ')
+            if answer in ['e', 'd', 'r', 'p']:
+                action = answer
+        if action == 'e':
+            self._revise_sentence()
+        status = {
+            'd': FindingStatus.deferred_decision,
+            'r': FindingStatus.rejected,
+            'p': FindingStatus.published,
+        }
+        if action in status:
+            s = status[action]
+            self._update_status(s)
 
-        # with DBCursor(study=study) as cursor:
-        #     OnDemandComputationsDropper.drop_features(cursor, [specification], just_features=True, verbose=False)
+    def _confirm(self) -> bool:
+        Printer.print('Proceed? [', 'prompt', end='')
+        Printer.print('y', 'yes', end='')
+        Printer.print('/', 'prompt', end='')
+        Printer.print('n', 'no', end='')
+        Printer.print('] (default no) ', 'prompt', end='')
+        answer = input()
+        print()
+        if answer in ('y', 'Y', 'yes'):
+            return True
+        if answer == 'q':
+            raise QuitRequested
+        return False
 
-        # Printer.print('Cleaning up test example computed feature... ', end='', style='item')
-
-    # def _print_numbers_and_names(self, rows) -> None:
-    #     for row in rows:
-    #         Printer.print(row[0].ljust(30), end='', style='fieldname')
-    #         Printer.print(' ', end='', style='message')
-    #         Printer.print(str(row[1]).rjust(6), style='message')
+    def _print_numbers_and_names(self, rows, style: str = 'message') -> None:
+        for row in rows:
+            Printer.print(row[0].ljust(30), end='', style='fieldname')
+            Printer.print(' ', end='', style='message')
+            Printer.print(str(row[1]), style=style)
 
 
 def main():

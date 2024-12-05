@@ -31,6 +31,7 @@ class Finding(SQLModel, table=True):
 
 
 def create_db_and_tables():
+    engine = get_engine()
     SQLModel.metadata.create_all(engine)
 
     mc = MigrationContext.configure(engine.connect())
@@ -49,6 +50,7 @@ def create_db_and_tables():
     # REFERENCES default_study_lookup.study_lookup (study)
 
 
-
-credentials = get_credentials_from_environment()
-engine = create_engine(f"postgresql+psycopg://{credentials.user}:{credentials.password}@{credentials.endpoint}/spt_datasets")
+def get_engine():
+    credentials = get_credentials_from_environment()
+    engine = create_engine(f"postgresql+psycopg://{credentials.user}:{credentials.password}@{credentials.endpoint}/spt_datasets")
+    return engine

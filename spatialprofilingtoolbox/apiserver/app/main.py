@@ -635,13 +635,18 @@ hQIDAQAB
 -----END PUBLIC KEY-----
 '''
 
-    data = jwt.decode(
-        finding.id_token,
-        key=orcid_cert,
-        algorithms=['RS256'],
-        audience='APP-Y38AYV276S8Z7574',
-        issuer=["https://sandbox.orcid.org"]
-    )
+    ##
+    DEBUG=True
+    if DEBUG:
+        data = {'sub': 'orcidid', 'given_name': 'given_name'}
+    else:
+        data = jwt.decode(
+            finding.id_token,
+            key=orcid_cert,
+            algorithms=['RS256'],
+            audience='APP-Y38AYV276S8Z7574',
+            issuer=["https://sandbox.orcid.org"]
+        )
 
     new_finding = Finding(
         study=finding.study,
@@ -672,7 +677,7 @@ def get_findings(
     findings = session.exec(
         select(Finding).offset(offset).limit(limit).where(
             Finding.study == study,
-            Finding.status == "published"
+            # Finding.status == "published"
         )
     )
     return findings

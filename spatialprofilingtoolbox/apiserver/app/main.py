@@ -635,18 +635,13 @@ j2hE7UsZbasuIToEMFRZqSB6juc9zv6PEUueQ5hAJCEylTkzMwyBMibrt04TmtZk
 hQIDAQAB
 -----END PUBLIC KEY-----
 '''
-    ## temporary
-    DEBUG=True
-    if DEBUG:
-        data = {'sub': 'orcidid', 'given_name': 'given_name'}
-    else:
-        data = jwt.decode(
-            finding.id_token,
-            key=orcid_cert,
-            algorithms=['RS256'],
-            audience='APP-Y38AYV276S8Z7574',
-            issuer=["https://sandbox.orcid.org"]
-        )
+    data = jwt.decode(
+        finding.id_token,
+        key=orcid_cert,
+        algorithms=['RS256'],
+        audience='APP-Y38AYV276S8Z7574',
+        issuer=["https://sandbox.orcid.org"]
+    )
 
     new_finding = Finding(
         study=finding.study,

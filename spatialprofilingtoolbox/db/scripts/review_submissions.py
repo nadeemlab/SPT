@@ -5,6 +5,8 @@ from os import environ as os_environ
 import warnings
 import re
 import string
+import time
+import sys
 
 from pandas import read_sql
 from pandas import DataFrame
@@ -191,8 +193,12 @@ def main():
     try:
         gui.start()
     except KeyboardInterrupt:
+        try:
+            time.sleep(2)
+        except KeyboardInterrupt:
+            pass
         Printer.print('\nCancelled by user request.', style='flag')
-
+        sys.exit()
 
 if __name__=='__main__':
     main()

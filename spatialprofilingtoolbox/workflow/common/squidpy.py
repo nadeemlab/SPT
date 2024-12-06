@@ -7,21 +7,24 @@ from typing import (
     Literal,
 )
 from warnings import filterwarnings
+from warnings import catch_warnings
+from warnings import simplefilter
 
 from numpy.typing import NDArray
 from numpy import isnan
 from numpy import inner
 from numpy import sum as np_sum
 from pandas import DataFrame, Series
-from squidpy.gr import (  # type: ignore
-    spatial_neighbors,
-    nhood_enrichment,
-    co_occurrence,
-    spatial_autocorr,
-    # ripley,
-)
-
-from anndata import AnnData  # type: ignore
+with catch_warnings():
+    simplefilter(action='ignore', category=FutureWarning)
+    from squidpy.gr import (  # type: ignore
+        spatial_neighbors,
+        nhood_enrichment,
+        co_occurrence,
+        spatial_autocorr,
+        # ripley,
+    )
+    from anndata import AnnData  # type: ignore
 from scipy.stats import norm  # type: ignore
 
 import numpy as np

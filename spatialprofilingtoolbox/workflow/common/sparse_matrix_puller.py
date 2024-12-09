@@ -219,7 +219,8 @@ class SparseMatrixPuller:
                 self.get_data_arrays().wrap_up_specimen(continuous_also=continuous)
                 progress_reporter.increment(iteration_details=specimen)
             progress_reporter.done()
-        self.get_data_arrays().wrap_up_writing()
+        if not continuous:
+            self.get_data_arrays().wrap_up_writing()
 
     def pull(self,
         specimen: str | None = None,

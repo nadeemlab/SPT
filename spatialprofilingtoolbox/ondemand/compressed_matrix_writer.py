@@ -2,6 +2,7 @@
 
 from typing import cast
 import json
+import brotli  # type: ignore
 
 from spatialprofilingtoolbox.db.ondemand_studies_index import get_counts
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -96,7 +97,8 @@ class CompressedMatrixWriter:
                 encoded = self._encode_float8_with_clipping(value)
                 blob.extend(encoded)
         study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
-        self._insert_blob(study_name, blob, specimen, 'feature_matrix with intensities')
+        compressed_blob = brotli.compress(blob, quality=11, lgwin=24)
+        self._insert_blob(study_name, compressed_blob, specimen, 'feature_matrix with intensities')
 
     def _write_data_array_to_db(
         self,

@@ -82,11 +82,12 @@ def test_expression_vectors(
             for _, row in reference.iterrows()
         ])
 
-        def fudge_factor(vector: tuple[float, ...]):
-            scale = 1.0/10.0
-            return [scale * v for v in vector]
-        correction = list(map(fudge_factor, expected_expression_vectors))
-        expected_expression_vectors = correction
+        if continuous:
+            def fudge_factor(vector: tuple[float, ...]):
+                scale = 1.0/10.0
+                return [scale * v for v in vector]
+            correction = list(map(fudge_factor, expected_expression_vectors))
+            expected_expression_vectors = correction
 
         if expected_expression_vectors != expression_vectors:
             print('Expression vector sets not equal.')

@@ -8,8 +8,7 @@ from spatialprofilingtoolbox.db.ondemand_studies_index import get_counts
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_primary_study
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
-from spatialprofilingtoolbox.standalone_utilities.float8 import encode as encode_float8
-from spatialprofilingtoolbox.standalone_utilities.float8 import Float8OverflowError
+from spatialprofilingtoolbox.standalone_utilities.float8 import encode_float8_with_clipping
 
 logger = colorized_logger(__name__)
 
@@ -74,16 +73,6 @@ class CompressedMatrixWriter:
             cursor.execute(insert_query, (specimen, blob_type, blob))
             cursor.close()
 
-    def _encode_float8_with_clipping(self, value) -> bytes:
-        try:
-            encoded = encode_float8(value)
-        except Float8OverflowError as error:
-            if error._is_underflow:
-                encoded = encode_float8(0.0)
-            else:
-                encoded = encode_float8(1.0)
-        return encoded
-
     def _write_intensities_data_array_to_db(
         self,
         data_array: dict[int, tuple[float, ...]],
@@ -94,7 +83,7 @@ class CompressedMatrixWriter:
         for histological_structure_id, values in data_array.items():
             blob.extend(histological_structure_id.to_bytes(8, 'little'))
             for value in values:
-                encoded = self._encode_float8_with_clipping(value)
+                encoded = encode_float8_with_clipping(value)
                 blob.extend(encoded)
         study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
         compressed_blob = brotli.compress(blob, quality=11, lgwin=24)

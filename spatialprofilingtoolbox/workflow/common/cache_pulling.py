@@ -3,7 +3,7 @@
 import brotli  # type: ignore
 
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
-from spatialprofilingtoolbox.db.accessors.cells import RecordNotFoundInDatabaseError
+from spatialprofilingtoolbox.db.accessors.feature_names import RecordNotFoundInDatabaseError
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller

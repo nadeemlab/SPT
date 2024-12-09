@@ -475,7 +475,7 @@ async def get_cell_data_binary(
     accept_encoding: Annotated[str, Header()] = '',
 ):
     """
-    Get streaming cell-level location and phenotype data in a custom binary format.
+    Get cell-level location and phenotype data in a custom binary format.
     The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
 
     The sample may be "UMAP virtual sample" if UMAP dimensional reduction is available.

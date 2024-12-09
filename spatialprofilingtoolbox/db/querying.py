@@ -139,7 +139,7 @@ class QueryHandler:
 
     @classmethod
     def has_umap(cls, cursor, study: str) -> bool:
-        return StudyAccess(cursor).has_umap(study)
+        return StudyAccess(cursor).has_umap()
 
 
 def query() -> QueryCursor:

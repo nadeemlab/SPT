@@ -1,25 +1,21 @@
 """Assesses presence of "fast cache" files, and creates/deletes as necessary."""
 
 from typing import cast
-from json import loads as load_json_string
-from time import sleep
 from attr import define
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
 from spatialprofilingtoolbox.workflow.common.structure_centroids import StructureCentroids
 from spatialprofilingtoolbox.workflow.common.cache_pulling import cache_pull
-from spatialprofilingtoolbox.workflow.common.cache_pulling import umap_cache_pull
 from spatialprofilingtoolbox.workflow.common.cache_pulling import compressed_payloads_cache_pull
+from spatialprofilingtoolbox.workflow.common.cache_pulling import umap_cache_pull
+from spatialprofilingtoolbox.workflow.common.cache_pulling import intensities_cache_pull
 from spatialprofilingtoolbox.workflow.common.cache_pulling import BROTLI_BLOB_TYPE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
-from spatialprofilingtoolbox.db.ondemand_studies_index import get_counts, retrieve_expressions_index
 from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
-from spatialprofilingtoolbox.db.ondemand_studies_index import retrieve_indexed_samples
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -41,6 +37,14 @@ class CacheAssessorRecreator:
 
     def is_up_to_date(self) -> bool:
         raise NotImplementedError
+
+    @staticmethod
+    def _get_number_specimens(cursor) -> int:
+        cursor.execute('''
+            SELECT COUNT(*)
+            FROM specimen_data_measurement_process sdmp;
+        ''')
+        return int(cursor.fetchall()[0][0])
 
     def clear(self) -> None:
         logger.info(f'Deleting the {self.cache_specifier_name()}. ({self.study})')
@@ -152,12 +156,54 @@ class CompressedPayloadsCacheManager(CacheAssessorRecreator):
     def _recreate(self) -> None:
         compressed_payloads_cache_pull(self.database_config_file, study=self.study)
 
-    def _get_number_specimens(self, cursor) -> int:
-        cursor.execute('''
+
+class IntensitiesCacheManager(CacheAssessorRecreator):
+    blob_type = 'feature_matrix with intensities'
+
+    def cache_specifier_name(self) -> str:
+        return 'Channel intensity feature matrix, binary per-sample payloads'
+
+    def is_up_to_date(self) -> bool:
+        if not self._guess_whether_intensities_available():
+            logger.info('Expression quantification table appears not to have non-trivial intensity values, skipping cache review for this.')
+            return True
+        with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
+            number_specimens = self._get_number_specimens(cursor)
+            query = '''
             SELECT COUNT(*)
-            FROM specimen_data_measurement_process sdmp;
-        ''')
-        return int(cursor.fetchall()[0][0])
+            FROM ondemand_studies_index
+            WHERE blob_type=%s ;
+            '''
+            cursor.execute(query, (self.blob_type,))
+            count = cursor.fetchall()[0][0]
+        if count != number_specimens:
+            logger.info(f'Study {self.study} lacks some intensity payloads.')
+            return False
+        return True
+
+    def _guess_whether_intensities_available(self) -> bool:
+        with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
+            query = '''
+            SELECT quantity FROM expression_quantification LIMIT 5;
+            '''
+            cursor.execute(query)
+            values = list(map(lambda row: row[0], tuple(cursor.fetchall())))
+            def assess_numeric(value) -> bool:
+                try:
+                    f = float(value)
+                    return True
+                except ValueError:
+                    return False
+                except TypeError:
+                    return False
+            has_some_numeric = sum(list(map(assess_numeric, values))) >= 4
+            return has_some_numeric
+
+    def _clear(self) -> None:
+        drop_cache_files(self.database_config_file, self.blob_type, study=self.study)
+
+    def _recreate(self) -> None:
+        intensities_cache_pull(self.database_config_file, self.study)
 
 
 class CacheAssessment:
@@ -177,6 +223,7 @@ class CacheAssessment:
             BinaryFeaturePositionsCacheManager,
             UMAPCacheManager,
             CompressedPayloadsCacheManager,
+            IntensitiesCacheManager,
         ]:
             assessor = cast(CacheAssessorRecreator, Assessor(self.database_config_file, self.study))
             assessor.assess_and_act()

@@ -1,10 +1,10 @@
 """Do cache file pulling/creation and stashing in database."""
 
-import brotli
+import brotli  # type: ignore
 
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.accessors.cells import RecordNotFoundInDatabaseError
-from spatialprofilingtoolbox.db.database_connection import DBCursor, retrieve_study_names
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
 from spatialprofilingtoolbox.workflow.common.structure_centroids_puller \
@@ -80,3 +80,8 @@ def umap_cache_pull(database_config_file: str | None, study: str):
         creator.create()
     except NoContinuousIntensityDataError:
         logger.warning(f'No continuous intensity data was found for "{study}".')
+
+
+def intensities_cache_pull(database_config_file: str | None, study: str) -> None:
+    puller = SparseMatrixPuller(database_config_file)
+    puller.pull_and_write_to_files(study=study, continuous=True)

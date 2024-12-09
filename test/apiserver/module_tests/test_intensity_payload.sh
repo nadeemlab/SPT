@@ -39,5 +39,5 @@ function test_cell_data_binary_intensity() {
     fi
 }
 
-test_cell_data_binary "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/celldata.dump2
-test_cell_data_binary "Melanoma+intralesional+IL2" "UMAP+virtual+slide" module_tests/celldata.dump3
+test_cell_data_binary_intensity "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/celldata.dump2
+test_cell_data_binary_intensity "Melanoma+intralesional+IL2" "UMAP+virtual+slide" module_tests/celldata.dump3

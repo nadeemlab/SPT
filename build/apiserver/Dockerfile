@@ -20,6 +20,7 @@ RUN python -m pip install matplotlib==3.9.2
 RUN python -m pip install anndata==0.10.9
 RUN python -m pip install squidpy==1.5.0
 RUN python -m pip install zstandard==0.23.0
+RUN python -m pip install Brotli==1.1.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

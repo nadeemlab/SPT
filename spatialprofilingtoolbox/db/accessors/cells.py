@@ -73,7 +73,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             (sample, FEATURE_MATRIX_WITH_INTENSITIES),
         )
         compressed = self.cursor.fetchone()
-        return cast(bytes, compressed)
+        return cast(bytes, compressed[0])
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:
         return get_ordered_feature_names(self.cursor)

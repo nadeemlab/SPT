@@ -10,6 +10,8 @@ from spatialprofilingtoolbox.db.database_connection import retrieve_primary_stud
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.standalone_utilities.float8 import encode_float8_with_clipping
 
+FEATURE_MATRIX_WITH_INTENSITIES = 'feature_matrix with intensities'
+
 logger = colorized_logger(__name__)
 
 
@@ -87,7 +89,7 @@ class CompressedMatrixWriter:
                 blob.extend(encoded)
         study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
         compressed_blob = brotli.compress(blob, quality=11, lgwin=24)
-        self._insert_blob(study_name, compressed_blob, specimen, 'feature_matrix with intensities')
+        self._insert_blob(study_name, compressed_blob, specimen, FEATURE_MATRIX_WITH_INTENSITIES)
 
     def _write_data_array_to_db(
         self,

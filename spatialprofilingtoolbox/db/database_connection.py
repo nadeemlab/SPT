@@ -317,6 +317,7 @@ class QueryCursor:
     retrieve_signature_of_phenotype: Callable
     get_important_cells: Callable
     get_cells_data: Callable
+    get_cells_data_intensity: Callable
     get_ordered_feature_names: Callable
     get_sample_names: Callable
     get_available_gnn: Callable

@@ -14,6 +14,8 @@ from sklearn.pipeline import make_pipeline  # type: ignore
 from sklearn.preprocessing import QuantileTransformer  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
+
 from spatialprofilingtoolbox.db.accessors import CellsAccess
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.float8 import encode_float8_with_clipping
@@ -30,7 +32,6 @@ from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 logger = colorized_logger(__name__)
 
 UMAP_POINT_LIMIT = 100000
-FEATURE_MATRIX_WITH_INTENSITIES = 'feature_matrix with intensities'
 
 class NoContinuousIntensityDataError(ValueError):
     pass

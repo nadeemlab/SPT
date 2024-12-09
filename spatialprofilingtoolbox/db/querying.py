@@ -130,6 +130,10 @@ class QueryHandler:
         return CellsAccess(cursor).get_cells_data(sample, **kwargs)
 
     @classmethod
+    def get_cells_data_intensity(cls, cursor, study: str, sample: str, **kwargs) -> CellsData:
+        return CellsAccess(cursor).get_cells_data_intensity(sample, **kwargs)
+
+    @classmethod
     def get_ordered_feature_names(cls, cursor, study: str) -> BitMaskFeatureNames:
         return CellsAccess(cursor).get_ordered_feature_names()
 

@@ -14,6 +14,7 @@ from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.db.ondemand_studies_index import drop_cache_files
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -158,7 +159,7 @@ class CompressedPayloadsCacheManager(CacheAssessorRecreator):
 
 
 class IntensitiesCacheManager(CacheAssessorRecreator):
-    blob_type = 'feature_matrix with intensities'
+    blob_type = FEATURE_MATRIX_WITH_INTENSITIES
 
     def cache_specifier_name(self) -> str:
         return 'Channel intensity feature matrix, binary per-sample payloads'

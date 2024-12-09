@@ -1,21 +1,19 @@
 """Convenience accessor of all cell data for a given sample."""
 from pickle import loads as pickle_loads
-from json import loads as json_loads
-from typing import Any
 from typing import Iterable
+from typing import cast
 from itertools import islice
 from itertools import product
 
-from psycopg import Cursor as PsycopgCursor
 import zstandard  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
 from spatialprofilingtoolbox.db.accessors.feature_names import fetch_one_or_else
 from spatialprofilingtoolbox.db.accessors.feature_names import get_ordered_feature_names
@@ -58,6 +56,24 @@ class CellsAccess(SimpleReadOnlyProvider):
             return zstandard.compress(raw), "zstd"
 
         return raw, None
+
+    def get_cells_data_intensity(
+        self,
+        sample: str,
+        accept_encoding: tuple[str, ...] = (),
+    ) -> CellsData:
+        if accept_encoding != ('br',):
+            raise ValueError('Only "br" (brotli) encoding is supported.')
+        self.cursor.execute(
+            '''
+            SELECT blob_contents
+            FROM ondemand_studies_index
+            WHERE specimen=%s AND blob_type=%s;
+            ''',
+            (sample, FEATURE_MATRIX_WITH_INTENSITIES),
+        )
+        compressed = self.cursor.fetchone()
+        return cast(bytes, compressed)
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:
         return get_ordered_feature_names(self.cursor)

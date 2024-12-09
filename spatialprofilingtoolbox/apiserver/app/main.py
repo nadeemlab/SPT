@@ -504,6 +504,30 @@ async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatur
     return query().get_ordered_feature_names(study)
 
 
+@app.get("/cell-data-binary-intensity/")
+async def get_cell_data_binary_intensity(
+    study: ValidStudy,
+    sample: Annotated[str, Query(max_length=512)],
+):
+    """
+    Get cell-level intensity data for each cell and channel. The channel order is the same as in
+    `cell-data-binary`, but note that in the binary format here, 1 byte is used for each channel's
+    value, so the number of bytes in each "row" (for a single cell) is variable depending on the
+    number of channels (unlike the bit-wise binary format for the discrete 0/1 values).
+
+    The sample may be "UMAP virtual sample" if UMAP dimensional reduction is available.
+    """
+    has_umap = query().has_umap(study)
+    if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
+        raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+
+    data = query().get_cells_data_intensity(study, sample, accept_encoding=('br',))
+    return Response(
+        data,
+        headers={"Content-Encoding": 'br'},
+    )
+
+
 @app.get("/software-component-versions/")
 async def get_software_component_versions() -> list[SoftwareComponentVersion]:
     """

@@ -107,8 +107,10 @@ def encode(value: float, f: SmallFloatByteFormat = SMALL_FLOAT_FORMAT) -> bytes:
         exponent_integer -= 1
         nonexponent_part = _value / pow(f.base, exponent_integer)
     exponent_stored = exponent_integer
-    if exponent_stored >= f.max_exponent or exponent_stored < 0:
-        raise OverflowError
+    if exponent_stored >= f.max_exponent:
+        raise Float8OverflowError()
+    if exponent_stored < 0:
+        raise Float8OverflowError(underflow=True)
     fixed = f.max_fixed * (nonexponent_part - 1) / (f.base - 1)
     fixed_stored = int(fixed)
     if fixed_stored >= f.max_fixed:

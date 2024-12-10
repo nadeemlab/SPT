@@ -9,6 +9,7 @@ class FindingCreate(BaseModel):
     email: str
     url: str
     description: str
+    background: str
     p_value: float
     effect_size: float
     id_token: str
@@ -24,5 +25,6 @@ class FindingPublic(BaseModel):
     family_name: str
     url: str
     description: str
+    background: str
     p_value: float
     effect_size: float

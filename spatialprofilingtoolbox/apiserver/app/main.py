@@ -670,6 +670,7 @@ wQIDAQAB
         email=finding.email,
         url=finding.url,
         description=finding.description,
+        background=finding.background,
         p_value=finding.p_value,
         effect_size=finding.effect_size
     )

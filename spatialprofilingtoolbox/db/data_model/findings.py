@@ -27,6 +27,7 @@ class Finding(SQLModel, table=True):
     email: str
     url: str
     description: str
+    background: str
     p_value: float
     effect_size: float
 

@@ -649,6 +649,7 @@ hQIDAQAB
         status="pending_review",
         orcid_id=data['sub'],
         name=data['given_name'],
+        family_name=data.get('family_name', ''),
         email=finding.email,
         url=finding.url,
         description=finding.description,

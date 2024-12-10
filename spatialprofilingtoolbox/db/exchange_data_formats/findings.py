@@ -21,6 +21,7 @@ class FindingPublic(BaseModel):
     status: FindingStatus
     orcid_id: str
     name: str
+    family_name: str
     url: str
     description: str
     p_value: float

@@ -23,6 +23,7 @@ class Finding(SQLModel, table=True):
     status: FindingStatus = Field()
     orcid_id: str
     name: str
+    family_name: str
     email: str
     url: str
     description: str

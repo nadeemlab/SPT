@@ -625,11 +625,10 @@ async def importance_fraction_plot(
 @app.post("/findings/")
 def create_finding(finding: FindingCreate, session: SessionDep) -> Finding:
     if os.environ['ORCID_ENVIRONMENT'] == 'sandbox':
-        orcid_cert = pem_from_url('https://sandbox.orcid.org/oauth/jwks')
         issuer = 'https://sandbox.orcid.org'
     elif os.environ['ORCID_ENVIRONMENT'] == 'production':
-        orcid_cert = pem_from_url('https://orcid.org/oauth/jwks')
         issuer = 'https://orcid.org'
+    orcid_cert = pem_from_url(f'{issuer}/oauth/jwks')
 
     data = jwt.decode(
         finding.id_token,

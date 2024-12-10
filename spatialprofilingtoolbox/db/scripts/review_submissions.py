@@ -2,6 +2,8 @@
 from argparse import ArgumentParser
 from typing import cast
 from os import environ as os_environ
+from os import system as os_system
+from os.path import expanduser
 import warnings
 import re
 import string
@@ -132,11 +134,35 @@ class Reviewer:
         while not confirmed:
             sentence = self.finding['description']
             revision = prefilled_input('Enter sentence description: ', prefill=sentence)
-            Printer.print('New description: ', style='message', end='')
+            Printer.print('New sentence: ', style='message', end='')
             Printer.print(revision, style='popout')
             confirmed = self._confirm()
+        if sentence == revision:
+            Printer.print('No change.', style='flag')
+            return
         with DBCursor() as cursor:
             cursor.execute('UPDATE public.finding SET description=%s WHERE id=%s;', (revision, self.finding_id))
+
+    def _revise_background(self) -> None:
+        confirmed = False
+        while not confirmed:
+            background = self.finding['background']
+
+            filename = expanduser('~/._background.tmp.spt.txt')
+            with open(filename, 'wt', encoding='utf-8') as file:
+                file.write(background)
+            os_system(f'nano -$ {filename}')
+            with open(filename, 'rt', encoding='utf-8') as file:
+                revision = file.read()
+
+            Printer.print('New background: ', style='message', end='')
+            Printer.print(revision, style='popout')
+            confirmed = self._confirm()
+        if background == revision:
+            Printer.print('No change.', style='flag')
+            return
+        with DBCursor() as cursor:
+            cursor.execute('UPDATE public.finding SET background=%s WHERE id=%s;', (revision, self.finding_id))
 
     def _update_status(self, value: FindingStatus) -> None:
         Printer.print(f'Setting finding {self.finding_id} status to: ', 'message', end='')
@@ -152,11 +178,13 @@ class Reviewer:
         self._select_finding()
         action = None
         while action is None:
-            answer = input('e - edit description  d - defer decision  r - reject  p - publish: ')
-            if answer in ['e', 'd', 'r', 'p']:
+            answer = input('e - edit description  b - edit background  d - defer decision  r - reject  p - publish: ')
+            if answer in ['e', 'b', 'd', 'r', 'p']:
                 action = answer
         if action == 'e':
             self._revise_sentence()
+        if action == 'b':
+            self._revise_background()
         status = {
             'd': FindingStatus.deferred_decision,
             'r': FindingStatus.rejected,

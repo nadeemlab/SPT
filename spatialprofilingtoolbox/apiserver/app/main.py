@@ -5,6 +5,7 @@ from typing import cast
 from typing import Annotated
 from typing import Literal
 from io import BytesIO
+import os
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -638,7 +639,7 @@ hQIDAQAB
         finding.id_token,
         key=orcid_cert,
         algorithms=['RS256'],
-        audience='APP-Y38AYV276S8Z7574',
+        audience=os.environ['ORCID_CLIENT_ID'],
         issuer=["https://sandbox.orcid.org"]
     )
 

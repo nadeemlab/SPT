@@ -52,7 +52,7 @@
         "component_name": "PostgreSQL",
         "format": "Database",
         "source": "Amazon RDS-managed",
-        "version": "16.3",
+        "version": "16.0",
         "relevant_to_reproducible_computation": false
     }
 ]

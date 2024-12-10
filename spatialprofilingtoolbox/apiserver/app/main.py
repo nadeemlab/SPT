@@ -623,8 +623,9 @@ async def importance_fraction_plot(
 
 @app.post("/findings/")
 def create_finding(finding: FindingCreate, session: SessionDep) -> Finding:
-    # https://sandbox.orcid.org/oauth/jwks
-    orcid_cert = '''
+    if os.environ['ORCID_ENVIRONMENT'] == 'sandbox':
+        # https://sandbox.orcid.org/oauth/jwks
+        orcid_cert = '''
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApl+jp+kTAGf6BZUrWIYU
 JTvqqMVd4iAnoLS6vve+KNV0q8TxKvMre7oi9IulDcqTuJ1alHrZAIVlgrgFn88M
@@ -634,13 +635,29 @@ j2hE7UsZbasuIToEMFRZqSB6juc9zv6PEUueQ5hAJCEylTkzMwyBMibrt04TmtZk
 2w9DfKJR91555s2ZMstX4G/su1/FqQ6p9vgcuLQ6tCtrW77tta+Rw7McF/tyPmvn
 hQIDAQAB
 -----END PUBLIC KEY-----
-'''
+    '''
+        issuer = 'https://sandbox.orcid.org'
+    elif os.environ['ORCID_ENVIRONMENT'] == 'production':
+        # https://orcid.org/oauth/jwks
+        orcid_cert = '''
+    -----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjxTIntA7YvdfnYkLSN4w
+k//E2zf/wbb0SV/HLHFvh6a9ENVRD1/rHK0EijlBzikb+1rgDQihJETcgBLsMoZV
+QqGj8fDUUuxnVHsuGav/bf41PA7E/58HXKPrB2C0cON41f7K3o9TStKpVJOSXBrR
+WURmNQ64qnSSryn1nCxMzXpaw7VUo409ohybbvN6ngxVy4QR2NCC7Fr0QVdtapxD
+7zdlwx6lEwGemuqs/oG5oDtrRuRgeOHmRps2R6gG5oc+JqVMrVRv6F9h4ja3UgxC
+DBQjOVT1BFPWmMHnHCsVYLqbbXkZUfvP2sO1dJiYd/zrQhi+FtNth9qrLLv3gkgt
+wQIDAQAB
+-----END PUBLIC KEY-----
+    '''
+        issuer = 'https://orcid.org'
+
     data = jwt.decode(
         finding.id_token,
         key=orcid_cert,
         algorithms=['RS256'],
         audience=os.environ['ORCID_CLIENT_ID'],
-        issuer=["https://sandbox.orcid.org"]
+        issuer=[issuer]
     )
 
     new_finding = Finding(

@@ -73,6 +73,8 @@ class CellsAccess(SimpleReadOnlyProvider):
             (sample, FEATURE_MATRIX_WITH_INTENSITIES),
         )
         compressed = self.cursor.fetchone()
+        if compressed is None:
+            raise ValueError(f'No intensity data available for: {sample}')
         return cast(bytes, compressed[0])
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:

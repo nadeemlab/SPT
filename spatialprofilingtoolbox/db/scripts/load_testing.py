@@ -7,7 +7,6 @@ from time import time as time_time
 from time import sleep
 from random import choice as random_choice
 from os import environ as os_environ
-from os.path import expanduser
 
 from requests import get as requests_get
 import termplotlib as tpl

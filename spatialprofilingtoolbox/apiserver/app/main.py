@@ -515,10 +515,15 @@ async def get_cell_data_binary_intensity(
     value, so the number of bytes in each "row" (for a single cell) is variable depending on the
     number of channels (unlike the bit-wise binary format for the discrete 0/1 values).
 
+    The cell order (order of "rows") is the same as in `cell-data-binary`.
+
     The sample may be "UMAP virtual sample" if UMAP dimensional reduction is available.
     """
     has_umap = query().has_umap(study)
     if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
+        print(has_umap)
+        print(sample)
+        print(sample == VIRTUAL_SAMPLE)
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
 
     data = query().get_cells_data_intensity(study, sample, accept_encoding=('br',))

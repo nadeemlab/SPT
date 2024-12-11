@@ -207,7 +207,7 @@ class IntensitiesCacheManager(CacheAssessorRecreator):
             return has_some_numeric
 
     def _clear(self) -> None:
-        drop_cache_files(self.database_config_file, self.blob_type, study=self.study)
+        drop_cache_files(self.database_config_file, self.blob_type, study=self.study, omit_virtual=True)
 
     def _recreate(self) -> None:
         intensities_cache_pull(self.database_config_file, self.study)

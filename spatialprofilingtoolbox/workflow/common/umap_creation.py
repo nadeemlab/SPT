@@ -15,6 +15,8 @@ from sklearn.preprocessing import QuantileTransformer  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
+
 
 from spatialprofilingtoolbox.db.accessors import CellsAccess
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -126,15 +128,7 @@ class UMAPCreator:
             ))
         }
 
-        intensities = self._normalize_column_order(continuous, 'quantity')
-        blob_intensities = bytearray()
-        for histological_structure_id, row in intensities.iterrows():
-            blob_intensities.extend(int(histological_structure_id).to_bytes(8, 'little'))
-            for c in intensities.columns:
-                encoded = encode_float8_with_clipping(row[c])
-                blob_intensities.extend(encoded)
-
-        logger.info('Saving UMAP centroids and feature matrix (and feature matrix with intensities).')
+        logger.info('Saving UMAP centroids and feature matrix.')
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
             self._drop_existing_umap_cache(cursor)
             insert_query = '''
@@ -148,7 +142,12 @@ class UMAPCreator:
             '''
             cursor.execute(insert_query, (*VIRTUAL_SAMPLE_SPEC1, blob))
             cursor.execute(insert_query, (*VIRTUAL_SAMPLE_SPEC2, pickle.dumps(centroid_data)))
-            cursor.execute(insert_query, (VIRTUAL_SAMPLE, FEATURE_MATRIX_WITH_INTENSITIES, blob_intensities))
+        logger.info('Done.')
+
+        logger.info('Saving UMAP specialized intensities matrix.')
+        intensities = self._normalize_column_order(continuous, 'quantity')
+        intensities_dict = {int(i): tuple(float(intensities.loc[i, c]) for c in intensities.columns) for i in intensities.index}
+        CompressedMatrixWriter(self.database_config_file)._write_intensities_data_array_to_db(intensities_dict, None, VIRTUAL_SAMPLE, self.study)
         logger.info('Done.')
 
     def _drop_existing_umap_cache(self, cursor: PsycopgCursor):

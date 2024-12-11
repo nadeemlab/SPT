@@ -2,7 +2,6 @@
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_names
-from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 
 def get_counts(database_config_file: str, blob_type: str, study: str | None = None) -> dict[str, int]:
@@ -22,7 +21,7 @@ def get_counts(database_config_file: str, blob_type: str, study: str | None = No
     return counts
 
 
-def drop_cache_files(database_config_file: str | None, blob_type: str, study: str | None = None, specimen: str | None = None) -> None:
+def drop_cache_files(database_config_file: str | None, blob_type: str, study: str | None = None, specimen: str | None = None, omit_virtual: bool=False) -> None:
     if study is None:
         studies = tuple(retrieve_study_names(database_config_file))
     else:
@@ -30,7 +29,7 @@ def drop_cache_files(database_config_file: str | None, blob_type: str, study: st
     for _study in studies:
         with DBCursor(database_config_file=database_config_file, study=_study) as cursor:
             if specimen is None:
-                if blob_type == FEATURE_MATRIX_WITH_INTENSITIES:
+                if omit_virtual:
                     cursor.execute(f'''
                         DELETE FROM ondemand_studies_index osi
                         WHERE osi.blob_type='{blob_type}' AND osi.specimen!='{VIRTUAL_SAMPLE}' ;

@@ -80,6 +80,7 @@ class CompressedMatrixWriter:
         data_array: dict[int, tuple[float, ...]],
         measurement_study_name: str,
         specimen: str,
+        study_name: str | None = None,
     ):
         blob = bytearray()
         for histological_structure_id in sorted(list(data_array.keys())):
@@ -87,7 +88,8 @@ class CompressedMatrixWriter:
             for value in data_array[histological_structure_id]:
                 encoded = encode_float8_with_clipping(value)
                 blob.extend(encoded)
-        study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
+        if study_name is None:
+            study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
         compressed_blob = brotli.compress(blob, quality=11, lgwin=24)
         self._insert_blob(study_name, compressed_blob, specimen, FEATURE_MATRIX_WITH_INTENSITIES)
 

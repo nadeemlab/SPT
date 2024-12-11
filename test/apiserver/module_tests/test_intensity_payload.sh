@@ -20,7 +20,7 @@ function test_cell_data_binary_intensity() {
         exit 1
     fi
 
-    cat _celldata.bin.i | xxd -e -b -c 26 > _celldata.dump.i
+    cat _celldata.bin.i | brotli -d |  xxd -e -b -c 34 > _celldata.dump.i
     rm _celldata.bin.i
 
     diff $filename _celldata.dump.i
@@ -40,4 +40,4 @@ function test_cell_data_binary_intensity() {
 }
 
 test_cell_data_binary_intensity "Melanoma+intralesional+IL2" "lesion+0_1" module_tests/celldata.dump2
-test_cell_data_binary_intensity "Melanoma+intralesional+IL2" "UMAP+virtual+slide" module_tests/celldata.dump3
+test_cell_data_binary_intensity "Melanoma+intralesional+IL2" "UMAP+virtual+sample" module_tests/celldata.dump3

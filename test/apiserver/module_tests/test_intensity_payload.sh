@@ -12,29 +12,29 @@ function test_cell_data_binary_intensity() {
     query="http://spt-apiserver-testing:8080/cell-data-binary-intensity/?study=$study&sample=$sample"
 
     echo -e "Doing query $blue$query$reset_code ... "
-    curl -s "$query"  > _celldata.bin;
+    curl -s "$query"  > _celldata.bin.i;
     if [ "$?" -gt 0 ];
     then
         echo -e "${red}Error with apiserver query.$reset_code"
-        echo "Result saved to file: _celldata.bin"
+        echo "Result saved to file: _celldata.bin.i"
         exit 1
     fi
 
-    cat _celldata.bin | tail -c +21 | xxd -e -b -c 20 > _celldata.dump
-    rm _celldata.bin
+    cat _celldata.bin.i | xxd -e -b -c 26 > _celldata.dump.i
+    rm _celldata.bin.i
 
-    diff $filename _celldata.dump
+    diff $filename _celldata.dump.i
 
     status=$?
     [ $status -eq 0 ] || (echo "API query for cell data failed, unexpected contents."; )
     if [ $status -eq 0 ];
     then
-        rm _celldata.dump
+        rm _celldata.dump.i
         echo -e "${green}Artifact matches.$reset_code"
         echo
     else
         echo -e "${red}Some error with the diff command.$reset_code"
-        echo "Erroneous file saved to: _celldata.dump"
+        echo "Erroneous file saved to: _celldata.dump.i"
         exit 1
     fi
 }

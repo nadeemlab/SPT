@@ -85,7 +85,7 @@ def test_expression_vectors(
         if continuous:
             def fudge_factor(vector: tuple[float, ...]):
                 scale = 1.0/10.0
-                return [scale * v for v in vector]
+                return tuple(scale * v for v in vector)
             correction = list(map(fudge_factor, expected_expression_vectors))
             expected_expression_vectors = correction
 

@@ -298,7 +298,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         '''
         self.cursor.execute(query, (VIRTUAL_SAMPLE,))
         rows = self.cursor.fetchall()
-        return rows[0][0] == 3
+        return rows[0][0] > 0
 
     def has_intensities(self) -> bool:
         query = '''

@@ -521,9 +521,6 @@ async def get_cell_data_binary_intensity(
     """
     has_umap = query().has_umap(study)
     if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
-        print(has_umap)
-        print(sample)
-        print(sample == VIRTUAL_SAMPLE)
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
 
     data = query().get_cells_data_intensity(study, sample, accept_encoding=('br',))

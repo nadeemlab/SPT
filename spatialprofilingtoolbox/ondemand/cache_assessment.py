@@ -111,11 +111,17 @@ class UMAPCacheManager(CacheAssessorRecreator):
             if count != 1:
                 logger.info(f'Study {self.study} lacks "UMAP virtual sample centroids".')
                 return False
+            cursor.execute(query, (VIRTUAL_SAMPLE, FEATURE_MATRIX_WITH_INTENSITIES))
+            count = cursor.fetchall()[0][0]
+            if count != 1:
+                logger.info(f'Study {self.study} lacks "UMAP virtual sample feature matrix with intensities".')
+                return False
         return True
 
     def _clear(self) -> None:
         drop_cache_files(self.database_config_file, VIRTUAL_SAMPLE_SPEC1[1], study=self.study)
         drop_cache_files(self.database_config_file, VIRTUAL_SAMPLE_SPEC2[1], study=self.study)
+        drop_cache_files(self.database_config_file, FEATURE_MATRIX_WITH_INTENSITIES, study=self.study, specimen=VIRTUAL_SAMPLE)
 
     def _recreate(self) -> None:
         umap_cache_pull(self.database_config_file, study=self.study)

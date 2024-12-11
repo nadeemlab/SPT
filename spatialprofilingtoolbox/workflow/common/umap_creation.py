@@ -134,7 +134,7 @@ class UMAPCreator:
                 encoded = encode_float8_with_clipping(row[c])
                 blob_intensities.extend(encoded)
 
-        logger.info('Saving UMAP centroids and feature matrix.')
+        logger.info('Saving UMAP centroids and feature matrix (and feature matrix with intensities).')
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
             self._drop_existing_umap_cache(cursor)
             insert_query = '''
@@ -168,7 +168,7 @@ class UMAPCreator:
         symbols = [(modifier, n.symbol) for n in ordered.names]
         logger.info(f'Using feature order: {[s[1] for s in symbols]}')
         df_ordered = df[symbols]
-        return df_ordered
+        return df_ordered.sort_index()
 
     def _create_data_array(self, df: DataFrame) -> dict[int, int]:
         df_ordered = self._normalize_column_order(df, 'discrete_value')

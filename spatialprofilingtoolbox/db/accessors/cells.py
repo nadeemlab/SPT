@@ -74,6 +74,9 @@ class CellsAccess(SimpleReadOnlyProvider):
         )
         compressed = self.cursor.fetchone()
         if compressed is None:
+            self.cursor.execute('SELECT specimen, blob_type FROM ondemand_studies_index;')
+            for row in tuple(self.cursor.fetchall()):
+                print(row)
             raise ValueError(f'No intensity data available for: {sample}')
         return cast(bytes, compressed[0])
 

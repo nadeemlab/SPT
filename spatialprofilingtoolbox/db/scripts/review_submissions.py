@@ -1,4 +1,6 @@
 """CLI utility to review and annotate result submissions."""
+from datetime import datetime
+from datetime import timezone
 from argparse import ArgumentParser
 from typing import cast
 from os import environ as os_environ
@@ -10,10 +12,13 @@ import string
 import time
 import sys
 
-from pandas import read_sql
+from pandas import read_sql  # type: ignore
 from pandas import DataFrame
 from pandas import Series
+from pandas import isnull as is_nat
 
+from spatialprofilingtoolbox.standalone_utilities.timestamping import now
+from spatialprofilingtoolbox.standalone_utilities.timestamping import GUESSED_LOCAL_TIMEZONE
 from spatialprofilingtoolbox.db.data_model.findings import FindingStatus
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
@@ -103,13 +108,21 @@ class Reviewer:
                 warnings.simplefilter("ignore")
                 self.findings = read_sql('SELECT * from public.finding;', connection)
 
+    def _format_value(self, value) -> str:
+        if isinstance(value, datetime) and GUESSED_LOCAL_TIMEZONE is not None:
+            if is_nat(value):
+                return ''
+            d = value.replace(tzinfo=timezone.utc).astimezone(GUESSED_LOCAL_TIMEZONE)
+            return d.strftime('%a %d %b %Y, %I:%M%p')
+        return str(value)
+
     def _print_findings(self) -> None:
         Printer.print('    Findings'.ljust(80), 'title')
         self._retrieve_findings()
         for study, df in self.findings.groupby('study'):
             Printer.print(study, style='popout')
-            for i, row in df.iterrows():
-                self._print_numbers_and_names(zip(df.columns, [str(x) for x in row]))
+            for i, row in df.sort_values(by='id').iterrows():
+                self._print_numbers_and_names(zip(df.columns, [x for x in row]))
                 print('')
 
     def _select_finding(self) -> None:
@@ -150,10 +163,10 @@ class Reviewer:
 
             filename = expanduser('~/._background.tmp.spt.txt')
             with open(filename, 'wt', encoding='utf-8') as file:
-                file.write(background)
+                file.write(background.rstrip())
             os_system(f'nano -$ {filename}')
             with open(filename, 'rt', encoding='utf-8') as file:
-                revision = file.read()
+                revision = file.read().rstrip()
 
             Printer.print('New background: ', style='message', end='')
             Printer.print(revision, style='popout')
@@ -173,6 +186,17 @@ class Reviewer:
             return
         with DBCursor() as cursor:
             cursor.execute('UPDATE public.finding SET status=%s WHERE id=%s;', (value.value, self.finding_id))
+        if value == FindingStatus.published:
+            with DBCursor() as cursor:
+                cursor.execute('SELECT publication_datetime FROM public.finding WHERE id=%s;', (self.finding_id,))
+                publication_datetime = tuple(cursor.fetchall())[0][0]
+                if publication_datetime == None:
+                    publication_datetime = now()
+                    cursor.execute('UPDATE public.finding SET publication_datetime=%s WHERE id=%s;', (publication_datetime, self.finding_id))
+                    Printer.print('Set publication datetime: ', end='', style='message')
+                    Printer.print(self._format_value(publication_datetime.astimezone(timezone.utc)), style='popout')
+                else:
+                    Printer.print('Already published, not updating publication datetime.', style='flag')
 
     def _accept_commands(self) -> None:
         self._select_finding()
@@ -212,7 +236,7 @@ class Reviewer:
         for row in rows:
             Printer.print(row[0].ljust(30), end='', style='fieldname')
             Printer.print(' ', end='', style='message')
-            Printer.print(str(row[1]), style=style)
+            Printer.print(self._format_value(row[1]), style=style)
 
 
 def main():

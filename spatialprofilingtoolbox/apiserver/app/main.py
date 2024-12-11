@@ -56,6 +56,7 @@ from spatialprofilingtoolbox.apiserver.app.versions import get_software_componen
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 from spatialprofilingtoolbox.standalone_utilities.jwk_pem import pem_from_url
+from spatialprofilingtoolbox.standalone_utilities.timestamping import now
 
 
 VERSION = '1.0.0'
@@ -640,7 +641,7 @@ def create_finding(finding: FindingCreate, session: SessionDep) -> Finding:
 
     new_finding = Finding(
         study=finding.study,
-        submission_datetime=datetime.now(),
+        submission_datetime=now(),
         status="pending_review",
         orcid_id=data['sub'],
         name=data['given_name'],

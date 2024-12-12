@@ -84,7 +84,7 @@ class CompressedMatrixWriter:
     ):
         blob = bytearray()
         for histological_structure_id in sorted(list(data_array.keys())):
-            blob.extend(histological_structure_id.to_bytes(8, 'little'))
+            blob.extend(int(histological_structure_id).to_bytes(4))
             for value in data_array[histological_structure_id]:
                 encoded = encode_float8_with_clipping(value)
                 blob.extend(encoded)

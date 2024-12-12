@@ -508,6 +508,7 @@ async def get_cell_data_binary_feature_names(study: ValidStudy) -> BitMaskFeatur
 async def get_cell_data_binary_intensity(
     study: ValidStudy,
     sample: Annotated[str, Query(max_length=512)],
+    accept_encoding: Annotated[str, Header()] = '',
 ):
     """
     Get cell-level intensity data for each cell and channel. The channel order is the same as in
@@ -522,6 +523,9 @@ async def get_cell_data_binary_intensity(
     has_umap = query().has_umap(study)
     if not sample in query().get_sample_names(study) and not (has_umap and sample == VIRTUAL_SAMPLE):
         raise HTTPException(status_code=404, detail=f'Sample "{sample}" does not exist.')
+
+    if not 'br' in accept_encoding:
+        raise HTTPException(status_code=400, detail='Only brotli encoding supported.')
 
     data = query().get_cells_data_intensity(study, sample, accept_encoding=('br',))
     return Response(

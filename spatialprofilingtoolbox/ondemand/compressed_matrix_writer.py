@@ -2,11 +2,15 @@
 
 from typing import cast
 import json
+import brotli  # type: ignore
 
 from spatialprofilingtoolbox.db.ondemand_studies_index import get_counts
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_primary_study
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.standalone_utilities.float8 import encode_float8_with_clipping
+
+FEATURE_MATRIX_WITH_INTENSITIES = 'feature_matrix with intensities'
 
 logger = colorized_logger(__name__)
 
@@ -18,15 +22,17 @@ class CompressedMatrixWriter:
     def __init__(self, database_config_file: str | None) -> None:
         self.database_config_file = cast(str, database_config_file)
 
-    def write_specimen(self, data: dict[int, int], study_name: str, specimen: str) -> None:
-        self._write_data_array(data, study_name, specimen)
-
-    def _write_data_array(self,
-        data_array: dict[int, int],
+    def write_specimen(
+        self,
+        data: dict[int, int] | dict[int, tuple[float, ...]],
         study_name: str,
         specimen: str,
+        continuous: bool=False,
     ) -> None:
-        self._write_data_array_to_db(data_array, study_name, specimen)
+        if continuous:
+            self._write_intensities_data_array_to_db(cast(dict[int, tuple[float, ...]], data), study_name, specimen)
+        else:
+            self._write_data_array_to_db(cast(dict[int, int], data), study_name, specimen)
 
     def write_index(self,
         specimens_by_measurement_study: dict[str, list[str]],
@@ -56,6 +62,37 @@ class CompressedMatrixWriter:
                 cursor.close()
             logger.debug(f'Wrote expression index to database {study} .')
 
+    def _insert_blob(self, study: str | None, blob: bytearray, specimen: str, blob_type: str) -> None:
+        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+            insert_query = '''
+                INSERT INTO
+                ondemand_studies_index (
+                    specimen,
+                    blob_type,
+                    blob_contents)
+                VALUES (%s, %s, %s) ;
+            '''
+            cursor.execute(insert_query, (specimen, blob_type, blob))
+            cursor.close()
+
+    def _write_intensities_data_array_to_db(
+        self,
+        data_array: dict[int, tuple[float, ...]],
+        measurement_study_name: str,
+        specimen: str,
+        study_name: str | None = None,
+    ):
+        blob = bytearray()
+        for histological_structure_id in sorted(list(data_array.keys())):
+            blob.extend(histological_structure_id.to_bytes(8, 'little'))
+            for value in data_array[histological_structure_id]:
+                encoded = encode_float8_with_clipping(value)
+                blob.extend(encoded)
+        if study_name is None:
+            study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
+        compressed_blob = brotli.compress(blob, quality=11, lgwin=24)
+        self._insert_blob(study_name, compressed_blob, specimen, FEATURE_MATRIX_WITH_INTENSITIES)
+
     def _write_data_array_to_db(
         self,
         data_array: dict[int, int],
@@ -67,17 +104,7 @@ class CompressedMatrixWriter:
             blob.extend(histological_structure_id.to_bytes(8, 'little'))
             blob.extend(entry.to_bytes(8, 'little'))
         study_name = retrieve_primary_study(self.database_config_file, measurement_study_name)
-        with DBCursor(database_config_file=self.database_config_file, study=study_name) as cursor:
-            insert_query = '''
-                INSERT INTO
-                ondemand_studies_index (
-                    specimen,
-                    blob_type,
-                    blob_contents)
-                VALUES (%s, %s, %s) ;
-            '''
-            cursor.execute(insert_query, (specimen, 'feature_matrix', blob))
-            cursor.close()
+        self._insert_blob(study_name, blob, specimen, 'feature_matrix')
 
     def expressions_indices_already_exist(self, study: str | None = None):
         counts = get_counts(self.database_config_file, 'expressions_index', study=study)

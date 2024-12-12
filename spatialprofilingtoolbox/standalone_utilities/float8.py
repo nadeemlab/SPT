@@ -4,7 +4,7 @@ from math import log
 
 from attr import define
 from attr import fields as attrs_fields
-from pandas import DataFrame
+from pandas import DataFrame  # type: ignore
 
 
 @define
@@ -84,31 +84,43 @@ def float_format(exponent_bits: int, base: int) -> SmallFloatByteFormat:
 
 SMALL_FLOAT_FORMAT = float_format(3, 2)
 
+class Float8OverflowError(OverflowError):
+    is_underflow: bool
 
-def encode(value: float, f: SmallFloatByteFormat) -> bytes:
+    def __init__(self, underflow: bool=False):
+        self._is_underflow = underflow
+        super().__init__()
+
+
+def encode(value: float, f: SmallFloatByteFormat = SMALL_FLOAT_FORMAT) -> bytes:
     """
     Create an approximation of `value` in the 1-byte format specified by `f`.
     `value` should be non-negative and less than or equal to the largest `f`-representable number.
+    The range is 0 to 1.0 in the case of the default, SMALL_FLOAT_FORMAT.
     """
     _value = (f.lowest_denomination + (value / f.scale_adjustment))
     if _value < 0:
-        raise OverflowError
+        raise Float8OverflowError(underflow=True)
     exponent_integer = round(log(_value, f.base))
     nonexponent_part = _value / pow(f.base, exponent_integer)
     while nonexponent_part < 1:
         exponent_integer -= 1
         nonexponent_part = _value / pow(f.base, exponent_integer)
     exponent_stored = exponent_integer
-    if exponent_stored >= f.max_exponent or exponent_stored < 0:
-        raise OverflowError
+    if exponent_stored >= f.max_exponent:
+        raise Float8OverflowError()
+    if exponent_stored < 0:
+        raise Float8OverflowError(underflow=True)
     fixed = f.max_fixed * (nonexponent_part - 1) / (f.base - 1)
     fixed_stored = int(fixed)
-    if fixed_stored >= f.max_fixed or fixed_stored < 0:
-        raise OverflowError
+    if fixed_stored >= f.max_fixed:
+        raise Float8OverflowError()
+    if fixed_stored < 0:
+        raise Float8OverflowError(underflow=True)
     return ((exponent_stored << f.fixed_bits) + (fixed_stored)).to_bytes()
 
 
-def decode(byte1: bytes, f: SmallFloatByteFormat) -> float:
+def decode(byte1: bytes, f: SmallFloatByteFormat = SMALL_FLOAT_FORMAT) -> float:
     """
     Expand the `f`-encoded float.
     """
@@ -153,8 +165,8 @@ def _get_exponent_integer(byte1: bytes, f: SmallFloatByteFormat) -> int:
 def generate_metadata_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMetadata], DataFrame]:
     rows: list[SmallFloatMetadata] = []
     for i in range(256):
-        value = decode(i.to_bytes(), f)
-        recoded = encode(value, f)
+        value = decode(i.to_bytes(), f=f)
+        recoded = encode(value, f=f)
         s = SmallFloatMetadata(
             i,
             i.to_bytes(),
@@ -171,3 +183,14 @@ def generate_metadata_table(f: SmallFloatByteFormat) -> tuple[list[SmallFloatMet
     c = list(map(lambda field: getattr(field, 'name'), attrs_fields(SmallFloatMetadata)))
     df = DataFrame(tuple_rows, columns=c)
     return rows, df
+
+
+def encode_float8_with_clipping(value) -> bytes:
+    try:
+        encoded = encode(value)
+    except Float8OverflowError as error:
+        if error._is_underflow:
+            encoded = encode(0.0)
+        else:
+            encoded = encode(1.0)
+    return encoded

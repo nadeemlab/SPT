@@ -45,6 +45,7 @@ apiserver = [
     "anndata==0.10.9",
     "squidpy==1.5.0",
     "zstandard==0.23.0",
+    "Brotli==1.1.0",
 ]
 graphs = [
     "bokeh==3.4.1",

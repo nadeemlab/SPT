@@ -1,29 +1,26 @@
 """Convenience accessor of all cell data for a given sample."""
 from pickle import loads as pickle_loads
-from json import loads as json_loads
-from typing import Any
 from typing import Iterable
+from typing import cast
 from itertools import islice
 from itertools import product
 
-from psycopg import Cursor as PsycopgCursor
 import zstandard  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC1
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import Channel
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
+from spatialprofilingtoolbox.db.accessors.feature_names import fetch_one_or_else
+from spatialprofilingtoolbox.db.accessors.feature_names import get_ordered_feature_names
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-
-class RecordNotFoundInDatabaseError(ValueError):
-    pass
 
 
 class CellsAccess(SimpleReadOnlyProvider):
@@ -60,29 +57,31 @@ class CellsAccess(SimpleReadOnlyProvider):
 
         return raw, None
 
-    def get_ordered_feature_names(self) -> BitMaskFeatureNames:
-        expressions_index = json_loads(bytearray(self.fetch_one_or_else(
+    def get_cells_data_intensity(
+        self,
+        sample: str,
+        accept_encoding: tuple[str, ...] = (),
+    ) -> CellsData:
+        if accept_encoding != ('br',):
+            raise ValueError('Only "br" (brotli) encoding is supported.')
+        self.cursor.execute(
             '''
             SELECT blob_contents
-            FROM ondemand_studies_index osi
-            WHERE blob_type='expressions_index';
+            FROM ondemand_studies_index
+            WHERE specimen=%s AND blob_type=%s;
             ''',
-            (),
-            self.cursor,
-            'No feature metadata for the given study.',
-        )).decode('utf-8'))[''][0]
-        lookup1: dict[str, int] = expressions_index['target index lookup']
-        lookup2: dict[str, str] = expressions_index['target by symbol']
-        target_from_index = {value: key for key, value in lookup1.items()}
-        symbol_from_target = {value: key for key, value in lookup2.items()}
-        indices = sorted(list(target_from_index.keys()))
-        names = tuple(map(
-            lambda i: symbol_from_target[target_from_index[i]],
-            indices,
-        ))
-        return BitMaskFeatureNames(
-            names=tuple(Channel(symbol=n) for n in names)
+            (sample, FEATURE_MATRIX_WITH_INTENSITIES),
         )
+        compressed = self.cursor.fetchone()
+        if compressed is None:
+            self.cursor.execute('SELECT specimen, blob_type FROM ondemand_studies_index;')
+            for row in tuple(self.cursor.fetchall()):
+                print(row)
+            raise ValueError(f'No intensity data available for: {sample}')
+        return cast(bytes, compressed[0])
+
+    def get_ordered_feature_names(self) -> BitMaskFeatureNames:
+        return get_ordered_feature_names(self.cursor)
 
     def _get_location_data(
         self,
@@ -94,7 +93,7 @@ class CellsAccess(SimpleReadOnlyProvider):
         else:
             blob_type = 'centroids'
         locations: dict[int, tuple[float, float]] = pickle_loads(
-            self.fetch_one_or_else(
+            fetch_one_or_else(
                 '''
                 SELECT blob_contents
                 FROM ondemand_studies_index
@@ -118,7 +117,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             blob_type = VIRTUAL_SAMPLE_SPEC1[1]
         else:
             blob_type = 'feature_matrix'
-        index_and_expressions = bytearray(self.fetch_one_or_else(
+        index_and_expressions = bytearray(fetch_one_or_else(
             '''
             SELECT blob_contents
             FROM ondemand_studies_index
@@ -217,17 +216,3 @@ class CellsAccess(SimpleReadOnlyProvider):
             int(location[1]).to_bytes(4),
             phenotype,
         ))
-
-    @staticmethod
-    def fetch_one_or_else(
-        query: str,
-        args: tuple,
-        cursor: PsycopgCursor,
-        error_message: str,
-    ) -> Any:
-        cursor.execute(query, args)
-        fetched = cursor.fetchone()
-        if fetched is None:
-            logger.error(error_message)
-            raise RecordNotFoundInDatabaseError(error_message)
-        return fetched[0]

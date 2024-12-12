@@ -14,8 +14,13 @@ from sklearn.pipeline import make_pipeline  # type: ignore
 from sklearn.preprocessing import QuantileTransformer  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
+from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
+
+
 from spatialprofilingtoolbox.db.accessors import CellsAccess
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.standalone_utilities.float8 import encode_float8_with_clipping
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 warnings.simplefilter(action='ignore', category=pd_errors.PerformanceWarning)
@@ -48,7 +53,7 @@ class UMAPCreator:
     def _generate_and_write_reductions(self) -> None:
         continuous, discrete = self.retrieve_feature_matrix_dense(cell_limit=UMAP_POINT_LIMIT)
         reduced = UMAPReducer.create_2d_point_cloud(continuous)
-        self._write_to_database(reduced, discrete)
+        self._write_to_database(reduced, discrete, continuous)
 
     def retrieve_feature_matrix_dense(self, cell_limit=None):
         sparse_df = self.retrieve_feature_matrix_sparse(cell_limit=cell_limit)
@@ -111,7 +116,7 @@ class UMAPCreator:
             raise ValueError(message % self.study)
         return True
 
-    def _write_to_database(self, reduced, discrete: DataFrame) -> None:
+    def _write_to_database(self, reduced, discrete: DataFrame, continuous: DataFrame) -> None:
         data_array = self._create_data_array(discrete)
         blob = bytearray()
         for histological_structure_id, entry in data_array.items():
@@ -139,6 +144,12 @@ class UMAPCreator:
             cursor.execute(insert_query, (*VIRTUAL_SAMPLE_SPEC2, pickle.dumps(centroid_data)))
         logger.info('Done.')
 
+        logger.info('Saving UMAP specialized intensities matrix.')
+        intensities = self._normalize_column_order(continuous, 'quantity')
+        intensities_dict = {int(i): tuple(float(intensities.loc[i, c]) for c in intensities.columns) for i in intensities.index}
+        CompressedMatrixWriter(self.database_config_file)._write_intensities_data_array_to_db(intensities_dict, None, VIRTUAL_SAMPLE, self.study)
+        logger.info('Done.')
+
     def _drop_existing_umap_cache(self, cursor: PsycopgCursor):
         logger.info('  Dropping existing UMAP cache blobs.')
         delete_directive='''
@@ -147,16 +158,21 @@ class UMAPCreator:
         cursor.execute(delete_directive, VIRTUAL_SAMPLE_SPEC1)
         cursor.execute(delete_directive, VIRTUAL_SAMPLE_SPEC2)
         cursor.execute(delete_directive, (VIRTUAL_SAMPLE, VIRTUAL_SAMPLE_COMPRESSED))
+        cursor.execute(delete_directive, (VIRTUAL_SAMPLE, FEATURE_MATRIX_WITH_INTENSITIES))
         logger.info('  Done.')
 
-    def _create_data_array(self, discrete: DataFrame) -> dict[int, int]:
+    def _normalize_column_order(self, df: DataFrame, modifier: str) -> DataFrame:
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
             ordered = CellsAccess(cursor).get_ordered_feature_names()
-        symbols = [('discrete_value', n.symbol) for n in ordered.names]
+        symbols = [(modifier, n.symbol) for n in ordered.names]
         logger.info(f'Using feature order: {[s[1] for s in symbols]}')
-        discrete_ordered = discrete[symbols]
+        df_ordered = df[symbols]
+        return df_ordered.sort_index()
+
+    def _create_data_array(self, df: DataFrame) -> dict[int, int]:
+        df_ordered = self._normalize_column_order(df, 'discrete_value')
         data_array = {}
-        for i, row in discrete_ordered.iterrows():
+        for i, row in df_ordered.iterrows():
             binary = row.astype(int).to_numpy()
             data_array[int(i)] = SparseMatrixPuller._compress_bitwise_to_int(binary)
         return data_array

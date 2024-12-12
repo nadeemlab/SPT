@@ -2,7 +2,7 @@
 
 from typing import cast, Any
 
-from pandas import DataFrame
+from pandas import DataFrame  # type: ignore
 from numpy import ndarray
 from numpy import arange  # type: ignore
 
@@ -96,27 +96,33 @@ class CompressedDataArrays:
                 continuous_data_arrays_by_specimen=continuous_data_arrays_by_specimen,
             )
 
-    def wrap_up_specimen(self) -> None:
-        if not self.storing_locally():
-            if len(self._studies) != 1:
-                message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
-                raise ValueError(message % list(self._studies.keys()))
-            study_name, data = list(self._studies.items())[0]
-            specimens = sorted(list(data['data arrays by specimen'].keys()))
-            if len(specimens) != 1:
-                message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
-                raise ValueError(message % specimens)
-            specimen = specimens[0]
+    def wrap_up_specimen(self, continuous_also: bool=False) -> None:
+        if self.storing_locally():
+            return
+        if len(self._studies) != 1:
+            message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 study are present in buffer: %s'
+            raise ValueError(message % list(self._studies.keys()))
+        study_name, data = list(self._studies.items())[0]
+        specimens = sorted(list(data['data arrays by specimen'].keys()))
+        if len(specimens) != 1:
+            message = 'Need to write exactly 1 specimen at a time, but more or fewer than 1 are present: %s'
+            raise ValueError(message % specimens)
+        specimen = specimens[0]
+        if continuous_also:
+            data_specimen = cast(dict[int, tuple[float, ...]], data['continuous data arrays by specimen'][specimen])
+            writer = CompressedMatrixWriter(self.database_config_file)
+            writer.write_specimen(data_specimen, study_name, specimen, continuous=True)
+        else:
             data_specimen = cast(dict[int, int], data['data arrays by specimen'][specimen])
             writer = CompressedMatrixWriter(self.database_config_file)
             writer.write_specimen(data_specimen, study_name, specimen)
-            if study_name not in self._specimens_by_measurement_study:
-                self._specimens_by_measurement_study[study_name] = []
-            self._specimens_by_measurement_study[study_name].append(specimen)
-            message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
-            logger.debug(message, specimen)
-            del self._studies[study_name]
-            assert len(self._studies) == 0
+        if study_name not in self._specimens_by_measurement_study:
+            self._specimens_by_measurement_study[study_name] = []
+        self._specimens_by_measurement_study[study_name].append(specimen)
+        message = 'Deleting specimen data "%s" from internal memory, since it is saved to file.'
+        logger.debug(message, specimen)
+        del self._studies[study_name]
+        assert len(self._studies) == 0
 
     def _sort_specimens(self) -> None:
         for study_name in self._specimens_by_measurement_study:  # pylint: disable=consider-using-dict-items
@@ -125,13 +131,14 @@ class CompressedDataArrays:
 
     def wrap_up_writing(self) -> None:
         self._sort_specimens()
-        if not self.storing_locally():
-            writer = CompressedMatrixWriter(self.database_config_file)
-            writer.write_index(
-                self._specimens_by_measurement_study,
-                self._target_index_lookups,
-                self._target_by_symbols,
-            )
+        if self.storing_locally():
+            return
+        writer = CompressedMatrixWriter(self.database_config_file)
+        writer.write_index(
+            self._specimens_by_measurement_study,
+            self._target_index_lookups,
+            self._target_by_symbols,
+        )
 
     def _add_more_data_arrays(
         self,
@@ -189,7 +196,7 @@ class SparseMatrixPuller:
         self.database_config_file = database_config_file
         self._data_arrays = CompressedDataArrays(database_config_file)
 
-    def pull_and_write_to_files(self, study: str | None = None) -> None:
+    def pull_and_write_to_files(self, study: str | None = None, continuous: bool=False) -> None:
         self._data_arrays.set_store_inmemory(False)
         if study is None:
             study_names = tuple(retrieve_study_names(self.database_config_file))
@@ -204,15 +211,16 @@ class SparseMatrixPuller:
             progress_reporter = FractionalProgressReporter(
                 len(specimens),
                 parts=8,
-                task_and_done_message=(f'pulling sparse entries for study "{study_name}"', None),
+                task_and_done_message=(f'pulling sparse entries (intensities={continuous}) for study "{study_name}"', None),
                 logger=logger,
             )
             for specimen in specimens:
-                self.pull(specimen=specimen)
-                self.get_data_arrays().wrap_up_specimen()
+                self.pull(specimen=specimen, continuous_also=continuous)
+                self.get_data_arrays().wrap_up_specimen(continuous_also=continuous)
                 progress_reporter.increment(iteration_details=specimen)
             progress_reporter.done()
-        self.get_data_arrays().wrap_up_writing()
+        if not continuous:
+            self.get_data_arrays().wrap_up_writing()
 
     def pull(self,
         specimen: str | None = None,
@@ -440,6 +448,14 @@ class SparseMatrixPuller:
         dict[str, int],
         dict[str, dict[int, list[float]]] | None,
     ]:
+        """
+        If continuous_also is True, the last entry in the return value will contain
+        intensities data for each structure (cell). These are currently scaled down
+        by a factor of 10, in case the intensity values as stored in the database
+        tables exceed 1.0 (the limit for downstream encoding). Ideally (for the
+        future) these should be downscaled in advance so that this fudge factor
+        would not needed.
+        """
         target_index_lookup = self._get_target_index_lookup(sparse_entries)
         data_arrays_by_specimen: dict[str, dict[int, int]] = {}
         continuous_data_arrays_by_specimen: dict[str, dict[int, list[float]]] | None = {} \
@@ -464,9 +480,9 @@ class SparseMatrixPuller:
             if continuous_data_arrays_by_specimen is not None:
                 if specimen not in continuous_data_arrays_by_specimen:
                     continuous_data_arrays_by_specimen[specimen] = {}
+                scale = 1.0 / 10.0
                 continuous_data_arrays_by_specimen[specimen][hs_id] = \
-                    df_group['quantity'].astype(float).to_list()
-
+                    list(map(lambda v: v*scale, df_group['quantity'].astype(float).to_list()))
         return data_arrays_by_specimen, target_index_lookup, continuous_data_arrays_by_specimen
 
     def _check_targets(self, targets: list[str], target_index_lookup: dict) -> None:

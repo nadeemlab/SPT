@@ -237,3 +237,4 @@ class StudySummary(BaseModel):
     cohorts: SampleCohorts
     findings: list[str]
     has_umap: bool
+    has_intensities: bool

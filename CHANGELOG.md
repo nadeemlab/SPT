@@ -1,3 +1,7 @@
+# v1.0.10
+- New `findings` API endpoint provides a mechanism for users to contribute precise findings with attribution.
+- Adds `spt db review-submissions` to interactively make specific alterations to the contributions (e.g. to correct typos) and also to update visibility and review status.
+
 # v1.0.8
 - Adds `spt db load-testing` interactive script to stress test the application backend under varying conditions and report the performance results.
 

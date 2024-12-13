@@ -57,6 +57,8 @@ from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fr
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 from spatialprofilingtoolbox.standalone_utilities.jwk_pem import pem_from_url
 from spatialprofilingtoolbox.standalone_utilities.timestamping import now
+from spatialprofilingtoolbox import consider_print_build_timestamp
+consider_print_build_timestamp()
 
 
 VERSION = '1.0.3'

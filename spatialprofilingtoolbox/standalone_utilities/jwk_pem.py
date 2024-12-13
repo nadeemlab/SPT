@@ -1,4 +1,6 @@
 
+from os import environ as os_environ
+from json import loads as json_loads
 from base64 import urlsafe_b64decode
 
 from requests import get as requests_get  # type: ignore
@@ -22,5 +24,9 @@ def jwks_to_pem(jwks: dict) -> str:
     ).decode('ascii')
 
 def pem_from_url(url: str) -> str:
-    jwk = requests_get(url=url).json()
+    k = 'ORCID_JWKS_PAYLOAD'
+    if k in os_environ:
+        jwk = json_loads(os_environ[k])
+    else:
+        jwk = requests_get(url=url).json()
     return jwks_to_pem(jwk)

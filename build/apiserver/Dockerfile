@@ -25,6 +25,7 @@ RUN python -m pip install cryptography==44.0.0
 RUN python -m pip install alembic==1.14.0
 RUN python -m pip install sqlmodel==0.0.22
 RUN python -m pip install SQLAlchemy==2.0.36
+RUN python -m pip install Brotli==1.1.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

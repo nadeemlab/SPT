@@ -50,6 +50,7 @@ apiserver = [
     "alembic==1.14.0",
     "sqlmodel==0.0.22",
     "SQLAlchemy==2.0.36",
+    "Brotli==1.1.0",
 ]
 graphs = [
     "bokeh==3.4.1",

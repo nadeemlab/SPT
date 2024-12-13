@@ -45,7 +45,8 @@ class StudyAccess(SimpleReadOnlyProvider):
         assay = self._get_assay(components.measurement)
         sample_cohorts = get_sample_cohorts(self.cursor, study)
         findings = self.get_study_findings()
-        has_umap = self.has_umap(study)
+        has_umap = self.has_umap()
+        has_intensities = self.has_intensities()
         return StudySummary(
             context=Context(institution=institution, assay=assay, contact=contact),
             products=Products(data_release=data_release, publication=publication),
@@ -53,6 +54,7 @@ class StudyAccess(SimpleReadOnlyProvider):
             cohorts=sample_cohorts,
             findings=findings,
             has_umap=has_umap,
+            has_intensities=has_intensities,
         )
 
     def get_study_components(self, study: str) -> StudyComponents:
@@ -288,7 +290,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         rows = self.cursor.fetchall()
         return tuple(sorted([row[0] for row in rows]))
 
-    def has_umap(self, study: str) -> bool:
+    def has_umap(self) -> bool:
         query = '''
         SELECT COUNT(*)
         FROM ondemand_studies_index
@@ -296,5 +298,14 @@ class StudyAccess(SimpleReadOnlyProvider):
         '''
         self.cursor.execute(query, (VIRTUAL_SAMPLE,))
         rows = self.cursor.fetchall()
-        return rows[0][0] == 3
-        
+        return rows[0][0] > 0
+
+    def has_intensities(self) -> bool:
+        query = '''
+        SELECT COUNT(*)
+        FROM ondemand_studies_index
+        WHERE blob_type=%s ;
+        '''
+        self.cursor.execute(query, ('feature_matrix with intensities',))
+        rows = self.cursor.fetchall()
+        return rows[0][0] > 0

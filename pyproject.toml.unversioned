@@ -45,6 +45,11 @@ apiserver = [
     "anndata==0.10.9",
     "squidpy==1.5.0",
     "zstandard==0.23.0",
+    "PyJWT==2.10.1",
+    "cryptography==44.0.0",
+    "alembic==1.14.0",
+    "sqlmodel==0.0.22",
+    "SQLAlchemy==2.0.36",
     "Brotli==1.1.0",
 ]
 graphs = [
@@ -114,6 +119,11 @@ all = [
     "Brotli==1.1.0",
     "zstandard==0.23.0",
     "termplotlib==0.3.9",
+    "PyJWT==2.10.1",
+    "cryptography==44.0.0",
+    "alembic==1.14.0",
+    "sqlmodel==0.0.22",
+    "SQLAlchemy==2.0.36",
 ]
 dev = [
     "autopep8",

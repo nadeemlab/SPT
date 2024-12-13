@@ -451,6 +451,7 @@ class InteractiveUploader:
             None: '',
             'title': '\033[7;36m',
             'fieldname': '\033[100;97m',
+            'emphfieldname': '\033[32m',
             'message': '',
             'popout': CustomFormatter.magenta,
             'item': CustomFormatter.blue,

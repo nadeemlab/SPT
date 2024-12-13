@@ -1,20 +1,29 @@
 """The API service's endpoint handlers."""
+
+from datetime import datetime
 from typing import cast
 from typing import Annotated
 from typing import Literal
 from io import BytesIO
+import os
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi import Header, Response
-from fastapi.responses import StreamingResponse
 from fastapi import Query
 from fastapi import HTTPException
+from fastapi import Depends
 import matplotlib.pyplot as plt  # type: ignore
+
+import jwt
+from sqlmodel import Session, select
 
 import secure
 
+from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
+from spatialprofilingtoolbox.db.data_model.findings import Finding, create_db_and_tables, get_engine
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
@@ -46,6 +55,8 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
 from spatialprofilingtoolbox.apiserver.app.versions import get_software_component_versions as _get_software_component_versions
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
+from spatialprofilingtoolbox.standalone_utilities.jwk_pem import pem_from_url
+from spatialprofilingtoolbox.standalone_utilities.timestamping import now
 
 
 VERSION = '1.0.0'
@@ -111,6 +122,12 @@ the same way you would access any HTTP API, for example using:
 * the [Axios](https://axios-http.com/docs/intro) Javascript library
 """
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+
 app = FastAPI(
     title=TITLE,
     description=DESCRIPTION,
@@ -120,7 +137,17 @@ app = FastAPI(
         'url': 'https://nadeemlab.org',
         'email': 'mathewj2@mskcc.org"',
     },
+    lifespan=lifespan,
 )
+
+engine = get_engine()
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
+SessionDep = Annotated[Session, Depends(get_session)]
 
 
 def custom_openapi():
@@ -618,12 +645,62 @@ def get_importance_fraction_plot(study: str, img_format: str) -> bytes:
 async def importance_fraction_plot(
     study: ValidStudy,
     img_format: Literal['svg', 'png'] = 'svg',
-) -> StreamingResponse:
+) -> Response:
     """Return a plot of the fraction of the top most important cells for GNN classification,
     expressing various phenotypes."""
     raw = get_importance_fraction_plot(str(study), str(img_format))
-    buffer = BytesIO()
-    buffer.write(raw)
-    buffer.seek(0)
     media_type = "image/svg+xml" if img_format == "svg" else "image/png"
-    return StreamingResponse(buffer, media_type=media_type)
+    return Response(raw, media_type=media_type)
+
+
+@app.post("/findings/")
+def create_finding(finding: FindingCreate, session: SessionDep) -> Finding:
+    if os.environ['ORCID_ENVIRONMENT'] == 'sandbox':
+        issuer = 'https://sandbox.orcid.org'
+    elif os.environ['ORCID_ENVIRONMENT'] == 'production':
+        issuer = 'https://orcid.org'
+    orcid_cert = pem_from_url(f'{issuer}/oauth/jwks')
+
+    data = jwt.decode(
+        finding.id_token,
+        key=orcid_cert,
+        algorithms=['RS256'],
+        audience=os.environ['ORCID_CLIENT_ID'],
+        issuer=[issuer]
+    )
+
+    new_finding = Finding(
+        study=finding.study,
+        submission_datetime=now(),
+        status="pending_review",
+        orcid_id=data['sub'],
+        name=data['given_name'],
+        family_name=data.get('family_name', ''),
+        email=finding.email,
+        url=finding.url,
+        description=finding.description,
+        background=finding.background,
+        p_value=finding.p_value,
+        effect_size=finding.effect_size
+    )
+
+    session.add(new_finding)
+    session.commit()
+    session.refresh(new_finding)
+    return new_finding
+
+
+@app.get("/findings/")
+def get_findings(
+    session: SessionDep,
+    study: str,
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100,
+) -> list[Finding]:
+    findings = session.exec(
+        select(Finding).offset(offset).limit(limit).where(
+            Finding.study == study,
+            Finding.status == "published"
+        )
+    )
+    return list(findings)

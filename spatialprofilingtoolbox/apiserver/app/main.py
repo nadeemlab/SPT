@@ -59,7 +59,7 @@ from spatialprofilingtoolbox.standalone_utilities.jwk_pem import pem_from_url
 from spatialprofilingtoolbox.standalone_utilities.timestamping import now
 
 
-VERSION = '1.0.0'
+VERSION = '1.0.3'
 
 TITLE = 'Single cell studies data API'
 

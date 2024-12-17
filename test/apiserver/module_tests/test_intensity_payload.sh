@@ -12,7 +12,7 @@ function test_cell_data_binary_intensity() {
     query="http://spt-apiserver-testing:8080/cell-data-binary-intensity/?study=$study&sample=$sample"
 
     echo -e "Doing query $blue$query$reset_code ... "
-    curl -s "$query"  > _celldata.bin.i;
+    curl -s -H "Accept-Encoding: br" "$query"  > _celldata.bin.i;
     if [ "$?" -gt 0 ];
     then
         echo -e "${red}Error with apiserver query.$reset_code"
@@ -20,7 +20,7 @@ function test_cell_data_binary_intensity() {
         exit 1
     fi
 
-    cat _celldata.bin.i | brotli -d |  xxd -e -b -c 34 > _celldata.dump.i
+    cat _celldata.bin.i | brotli -d | xxd -e -b -c 30 > _celldata.dump.i
     rm _celldata.bin.i
 
     diff $filename _celldata.dump.i

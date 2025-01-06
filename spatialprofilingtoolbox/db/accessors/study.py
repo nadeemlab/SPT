@@ -47,6 +47,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         findings = self.get_study_findings()
         has_umap = self.has_umap()
         has_intensities = self.has_intensities()
+        curation_notes = self.get_curation_notes()
         return StudySummary(
             context=Context(institution=institution, assay=assay, contact=contact),
             products=Products(data_release=data_release, publication=publication),
@@ -55,6 +56,7 @@ class StudyAccess(SimpleReadOnlyProvider):
             findings=findings,
             has_umap=has_umap,
             has_intensities=has_intensities,
+            curation_notes=curation_notes,
         )
 
     def get_study_components(self, study: str) -> StudyComponents:
@@ -309,3 +311,14 @@ class StudyAccess(SimpleReadOnlyProvider):
         self.cursor.execute(query, ('feature_matrix with intensities',))
         rows = self.cursor.fetchall()
         return rows[0][0] > 0
+
+    def get_curation_notes(self) -> str | None:
+        query = 'SELECT txt FROM curation_notes;'
+        try:
+            self.cursor.execute(query)
+            rows = tuple(self.cursor.fetchall())
+        except UndefinedTable:
+            return None
+        if len(rows) == 0:
+            return None
+        return ' '.join([r[0] for r in rows])

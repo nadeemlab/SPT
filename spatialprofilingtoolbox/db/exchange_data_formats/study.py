@@ -238,3 +238,4 @@ class StudySummary(BaseModel):
     findings: list[str]
     has_umap: bool
     has_intensities: bool
+    curation_notes: str | None

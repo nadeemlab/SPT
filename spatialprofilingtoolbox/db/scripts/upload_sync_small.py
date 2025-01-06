@@ -12,7 +12,7 @@ from spatialprofilingtoolbox.workflow.common.cli_arguments import add_argument
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger('upload_sync_small')
 
-APPROVED_NAMES = ('findings', 'gnn_plot_configurations')
+APPROVED_NAMES = ('findings', 'gnn_plot_configurations', 'curation_notes')
 
 
 def parse_args():

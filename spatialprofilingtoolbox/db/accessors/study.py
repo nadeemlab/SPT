@@ -313,7 +313,7 @@ class StudyAccess(SimpleReadOnlyProvider):
         return rows[0][0] > 0
 
     def get_curation_notes(self) -> str | None:
-        query = 'SELECT text FROM curation_notes;'
+        query = 'SELECT txt FROM curation_notes;'
         try:
             self.cursor.execute(query)
             rows = tuple(self.cursor.fetchall())

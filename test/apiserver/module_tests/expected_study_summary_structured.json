@@ -94,5 +94,6 @@
         "Finding 3."
     ],
     "has_umap": true,
-    "has_intensities": true
+    "has_intensities": true,
+    "curation_notes": null
 }

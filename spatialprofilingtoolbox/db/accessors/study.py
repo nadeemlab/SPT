@@ -314,8 +314,11 @@ class StudyAccess(SimpleReadOnlyProvider):
 
     def get_curation_notes(self) -> str | None:
         query = 'SELECT text FROM curation_notes;'
-        self.cursor.execute(query)
-        rows = tuple(self.cursor.fetchall())
+        try:
+            self.cursor.execute(query)
+            rows = tuple(self.cursor.fetchall())
+        except UndefinedTable:
+            return None
         if len(rows) == 0:
             return None
         return ' '.join([r[0] for r in rows])

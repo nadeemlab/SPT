@@ -222,3 +222,7 @@ The application can be deployed in several ways:
 
 ## License
 © [Nadeem Lab](https://nadeemlab.org/) - SPT code is distributed under **Apache 2.0 with Commons Clause** license, and is available for non-commercial academic purposes. 
+
+## Funding
+This work is funded by 7-year NIH/NCI R37 MERIT Award ([R37CA295658](https://reporter.nih.gov/search/5dgSOlHosEKepkZEAS5_kQ/project-details/11018883#description)).
+

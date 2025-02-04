@@ -11,12 +11,12 @@ RUN apt install -y libpq-dev && apt-get clean
 RUN apt install -y libgdal-dev && apt-get clean
 RUN python3 -m pip install --break-system-packages psycopg==3.1.19
 RUN python3 -m pip install --break-system-packages adiscstudies==0.11.0
-RUN python3 -m pip install --break-system-packages numba==0.59.1
 RUN python3 -m pip install --break-system-packages attrs==23.2.0
-RUN python3 -m pip install --break-system-packages pandas==2.2.2
+RUN python3 -m pip install --break-system-packages pandas==2.2.3
 RUN python3 -m pip install --break-system-packages pyshp==2.3.1
-RUN python3 -m pip install --break-system-packages pydantic==2.7.2
+RUN python3 -m pip install --break-system-packages pydantic==2.10.6
 RUN python3 -m pip install --break-system-packages anndata==0.10.9
+RUN python3 -m pip install --break-system-packages numba==0.61.0
 RUN python3 -m pip install --break-system-packages spatialdata==0.3.0
 RUN python3 -m pip install --break-system-packages squidpy==1.5.0
 RUN python3 -m pip install --break-system-packages termplotlib==0.3.9

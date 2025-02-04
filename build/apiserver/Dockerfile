@@ -18,6 +18,7 @@ RUN python -m pip install pydantic==2.7.2
 RUN python -m pip install secure==0.3.0
 RUN python -m pip install matplotlib==3.9.2
 RUN python -m pip install anndata==0.10.9
+RUN python -m pip install spatialdata==0.3.0
 RUN python -m pip install squidpy==1.5.0
 RUN python -m pip install zstandard==0.23.0
 RUN python -m pip install PyJWT==2.10.1

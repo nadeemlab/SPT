@@ -14,6 +14,7 @@ RUN python -m pip install scikit-learn==1.5.0
 RUN python -m pip install pyshp==2.3.1
 RUN python -m pip install pydantic==2.7.2
 RUN python -m pip install anndata==0.10.9
+RUN python -m pip install spatialdata==0.3.0
 RUN python -m pip install squidpy==1.5.0
 RUN python -m pip install Brotli==1.1.0
 RUN python -m pip install zstandard==0.23.0

@@ -12,12 +12,11 @@ WORKDIR /usr/src/app
 ENV PATH="/usr/src/app:$PATH"
 RUN apt install curl -y
 RUN curl -s https://get.nextflow.io | bash; if [[ "$(which nextflow)" == "" ]]; then echo "nextflow not really installed."; exit 1; fi;
-RUN apt install python3.11 -y && apt-get clean
-RUN apt install python3.11-dev -y && apt-get clean
-RUN apt install python3.11-venv -y && apt-get clean
-RUN apt install python3.11-distutils && apt-get clean
+RUN apt install python3.13 -y && apt-get clean
+RUN apt install python3.13-dev -y && apt-get clean
+RUN apt install python3.13-venv -y && apt-get clean
 ARG PIP_NO_CACHE_DIR=1
-RUN ln -s /usr/bin/python3.11 /usr/bin/python
+RUN ln -s /usr/bin/python3.13 /usr/bin/python
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
 RUN apt install gcc -y && apt-get clean
 RUN apt install postgresql-client -y && apt-get clean

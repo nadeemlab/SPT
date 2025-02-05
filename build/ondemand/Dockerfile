@@ -4,20 +4,6 @@ ARG PIP_NO_CACHE_DIR=1
 RUN apt update && apt install -y gcc g++ libpq-dev && apt-get clean
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev && apt-get clean
-RUN python -m pip install psycopg==3.1.19
-RUN python -m pip install adiscstudies==0.11.0
-RUN python -m pip install attrs==23.2.0
-RUN python -m pip install pandas==2.2.3
-RUN python -m pip install numpy==2.2.2
-RUN python -m pip install scikit-learn==1.6.1
-RUN python -m pip install pyshp==2.3.1
-RUN python -m pip install pydantic==2.10.6
-RUN python -m pip install anndata==0.10.9
-RUN python -m pip install numba==0.61.0
-RUN python -m pip install spatialdata==0.3.0
-RUN python -m pip install squidpy==1.5.0
-RUN python -m pip install Brotli==1.1.0
-RUN python -m pip install zstandard==0.23.0
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

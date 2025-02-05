@@ -4,5 +4,5 @@ ARG PIP_NO_CACHE_DIR=1
 COPY pyproject.toml .
 COPY spatialprofilingtoolbox spatialprofilingtoolbox
 ENV SPT_TESTING_MODE=1
-RUN python -m build
-RUN python -m pip install --no-deps "dist/$WHEEL_FILENAME"
+RUN python3.13 -m build
+RUN python3.13 -m pip install --no-deps "dist/$WHEEL_FILENAME"

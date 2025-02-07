@@ -177,9 +177,9 @@ secure_headers = secure.Secure()
 
 
 @app.middleware("http")
-async def set_secure_headers(request, call_next):
+async def add_security_headers(request, call_next):
     response = await call_next(request)
-    secure_headers.framework.fastapi(response)
+    await secure_headers.set_headers_async(response)
     return response
 
 

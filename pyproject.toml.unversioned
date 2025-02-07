@@ -42,7 +42,7 @@ dependencies = [
     "pyshp",
     "pytz",
     "requests",
-    "secure==0.3.0",
+    "secure",
     "scipy",
     "scikit-learn",
     "sqlmodel",

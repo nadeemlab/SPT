@@ -13,7 +13,7 @@ then
 fi
 
 cat "graphs/feature_names.txt"
-python3.11 -c 'from spatialprofilingtoolbox.graphs.util import load_hs_graphs; graphs, _ = load_hs_graphs("graphs/"); assert len(graphs) == 30, f"Graph count ({len(graphs)}) does not match true value (30).";'
+python3.13 -c 'from spatialprofilingtoolbox.graphs.util import load_hs_graphs; graphs, _ = load_hs_graphs("graphs/"); assert len(graphs) == 30, f"Graph count ({len(graphs)}) does not match true value (30).";'
 lengths_ok="$?"
 
 rm -r "graphs/"

@@ -47,6 +47,7 @@ dependencies = [
     "scikit-learn",
     "sqlmodel",
     "squidpy>=1.6.2",
+    "tables",
     "tabulate",
     "termplotlib",
     "tqdm",

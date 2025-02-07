@@ -11,7 +11,7 @@ from numpy import (
     savetxt,  # type: ignore
     loadtxt,
     int_,
-    float_,
+    float64,
 )
 from numpy.random import seed as np_seed
 from numpy.typing import NDArray
@@ -26,10 +26,10 @@ SETS_type = Literal['train', 'validation', 'test']
 class HSGraph:
     """A histological structure graph instance."""
     adj: spmatrix
-    node_features: NDArray[float_]
-    centroids: NDArray[float_]
+    node_features: NDArray[float64]
+    centroids: NDArray[float64]
     histological_structure_ids: NDArray[int_]
-    importances: NDArray[float_] | None = field(default=None)
+    importances: NDArray[float64] | None = field(default=None)
 
 
 class GraphData(NamedTuple):
@@ -107,10 +107,10 @@ def load_graph_data(filename: str) -> GraphData:
         adj_shape = f['graph/adj/shape'][()]
         adj = csr_matrix((adj_data, adj_indices, adj_indptr), shape=adj_shape)
 
-        node_features: NDArray[float_] = f['graph/node_features'][()]
-        centroids: NDArray[float_] = f['graph/centroids'][()]
+        node_features: NDArray[float64] = f['graph/node_features'][()]
+        centroids: NDArray[float64] = f['graph/centroids'][()]
         histological_structure_ids: NDArray[int_] = f['graph/histological_structure_ids'][()]
-        importances: NDArray[float_] = \
+        importances: NDArray[float64] = \
             f['graph/importances'][()] if 'graph/importances' in f else None
 
         # h5 files store strings as byte arrays

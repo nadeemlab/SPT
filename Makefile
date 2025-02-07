@@ -360,6 +360,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
     submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    cp pyproject.toml.unversioned $$submodule_directory ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \

@@ -27,7 +27,7 @@ from squidpy.gr import (  # type: ignore
     spatial_autocorr,
     # ripley,
 )
-    from anndata import AnnData  # type: ignore
+from anndata import AnnData  # type: ignore
 from scipy.stats import norm  # type: ignore
 
 import numpy as np

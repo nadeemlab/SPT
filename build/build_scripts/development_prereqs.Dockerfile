@@ -24,11 +24,11 @@ RUN apt-get install -y build-essential libssl-dev libffi-dev && apt-get clean
 RUN apt-get install -y brotli && apt-get clean
 RUN python -m pip install -U pip
 COPY README.md .
+RUN python -m pip install --ignore-requires-python spatialdata==0.3.0
 RUN python -m pip install toml
 RUN apt install libgdal-dev -y && apt-get clean
 COPY pyproject.toml.unversioned .
 RUN python -c 'import toml; c = toml.load("pyproject.toml.unversioned"); print("\n".join(c["project"]["dependencies"]))' | python -m pip install -r /dev/stdin
-RUN python -c 'import toml; c = toml.load("pyproject.toml.unversioned"); print("\n".join(c["project"]["optional-dependencies"]["all"]))' | python -m pip install -r /dev/stdin
 RUN python -m pip install build
 RUN python -m pip install twine
 RUN apt install -y bc && apt-get clean

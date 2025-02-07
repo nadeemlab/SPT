@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt  # type: ignore
 import jwt
 from sqlmodel import Session, select
 
-import secure
+from secure import Secure
 
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
@@ -173,7 +173,7 @@ def custom_openapi():
 
 setattr(app, 'openapi', custom_openapi)
 
-secure_headers = secure.Secure()
+secure_headers = Secure.with_default_headers()
 
 
 @app.middleware("http")

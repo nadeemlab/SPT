@@ -44,13 +44,13 @@ class OnDemandWorker:
 
     def _listen_for_queue_activity(self) -> None:
         self.connection.execute('LISTEN new_items_in_queue ;')
-        self.notifications = self.connection.notifies()
         while True:
             self._wait_for_queue_activity_on_connection()
             self._work_until_complete()
 
     def _wait_for_queue_activity_on_connection(self) -> None:
-        for _ in self.notifications:
+        notifications = self.connection.notifies(timeout=3)
+        for _ in notifications:
             break
 
     def _work_until_complete(self) -> None:
@@ -123,7 +123,8 @@ class OnDemandWorker:
             generic_handler.disalarm()
 
     def _notify_complete(self, job: Job) -> None:
-        self.connection.execute('NOTIFY one_job_complete ;')
+        with DBConnection() as connection:
+            connection.execute('NOTIFY one_job_complete ;')
 
     def _get_provider(self, job: Job) -> PendingProvider:
         derivation_method = self._retrieve_derivation_method(job)

@@ -329,12 +329,6 @@ check-for-docker-credentials:
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py docker ; status="$$?"; echo "$$status" > status_code; if [[ "$$status" == "0" ]]; then touch check-for-docker-credentials; fi;
 >@${MESSAGE} end "Found." "Not found."
 
-check-dockerfiles-consistency:
->@${MESSAGE} start "Checking dependency lists in Dockerfiles."
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_dockerfiles_consistency.py ${DOCKERIZED_SUBMODULES}; echo "$$?" > status_code;
->@status_code=$$(cat status_code); if [[ "$$status_code" == "0" && ( ! -f check-dockerfiles-consistency ) ]]; then touch check-dockerfiles-consistency; fi;
->@${MESSAGE} end "Consistent." "Something missing."
-
 ensure-plugin-submodules-are-populated:
 >@git submodule update --init --recursive
 
@@ -348,7 +342,7 @@ build-docker-images: ${DOCKER_BUILD_SUBMODULE_TARGETS} ${DOCKER_BUILD_PLUGIN_TAR
 #   3. Copy relevant files to the build folder
 #   4. docker build the container
 #   5. Remove copied files
-${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency
+${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
@@ -385,7 +379,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
 
-${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ensure-plugin-submodules-are-populated
+${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-credentials ensure-plugin-submodules-are-populated
 >@plugin_name=$$(basename $@ .docker.built) ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
@@ -417,7 +411,7 @@ ${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-cre
     plugin_directory=$$(dirname $@)/$$plugin_name ; \
     rm -r $$plugin_directory ; \
 
-${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docker-credentials check-dockerfiles-consistency ensure-plugin-submodules-are-populated
+${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docker-credentials ensure-plugin-submodules-are-populated
 >@plugin_name=$$(basename $@ -cuda.docker.built) ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name:cuda"
@@ -586,7 +580,6 @@ clean-files:
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@rm -f status_code
 >@rm -f check-docker-daemon-running
->@rm -f check-dockerfiles-consistency
 >@rm -f check-for-docker-credentials
 >@rm -rf ${BUILD_LOCATION}/lib
 >@rm -f build/*/log_of_build.log

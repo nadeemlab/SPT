@@ -18,6 +18,7 @@ from pandas import DataFrame, Series
 
 import dask
 dask.config.set({'dataframe.query-planning': True})
+import dask.dataframe as dd
 # with catch_warnings():
 #     simplefilter(action='ignore', category=FutureWarning)
 from squidpy.gr import (  # type: ignore

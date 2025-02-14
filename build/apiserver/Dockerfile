@@ -2,16 +2,14 @@ FROM python:3.13-slim
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt install -y gcc libpq-dev curl && apt-get clean
 ARG PIP_NO_CACHE_DIR=1
-RUN python -m pip install --ignore-requires-python spatialdata==0.3.0
-RUN python -m pip install toml
-COPY pyproject.toml.unversioned .
-RUN python -c 'import toml; c = toml.load("pyproject.toml.unversioned"); print("\n".join(c["project"]["dependencies"]))' | python -m pip install -r /dev/stdin
+COPY requirements.txt /usr/local/lib/python3.13/site-packages/spatialprofilingtoolbox/apiserver/app/
+COPY requirements.apiserver.txt .
+RUN python -m pip install -r requirements.apiserver.txt
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME
 LABEL version=$version
 LABEL service_name=$service_name
-ENV service_name=$service_name
 COPY $WHEEL_FILENAME ./
 RUN python -m pip install --no-deps "$WHEEL_FILENAME"
 ENV API_SERVER_PORT=8080

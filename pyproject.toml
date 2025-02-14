@@ -7,6 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
+version = "1.0.13"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]
@@ -19,6 +20,23 @@ classifiers = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "attrs",
+    "boto3",
+    "botocore",
+    "jinja2",
+    "psycopg",
+    "pyshp",
+    "pytz",
+    "requests",
+    "termplotlib",
+]
+
+[project.urls]
+documentation = "https://github.com/nadeemlab/SPT"
+repository = "https://github.com/nadeemlab/SPT"
+
+[project.optional-dependencies]
+all = [
     "adiscstudies",
     "alembic",
     "attrs",
@@ -46,176 +64,53 @@ dependencies = [
     "scipy",
     "scikit-learn",
     "sqlmodel",
-    "squidpy>=1.6.2",
-    "tables",
+    "squidpy", "zarr<3",
     "tabulate",
     "termplotlib",
     "tqdm",
-    "umap",
+    "umap-learn",
     "uvicorn",
     "zstandard",
-]
-
-[project.urls]
-documentation = "https://github.com/nadeemlab/SPT"
-repository = "https://github.com/nadeemlab/SPT"
-
-[project.optional-dependencies]
-all = [
-    "alembic",
-    "attrs",
-    "bokeh",
-    "boto3",
-    "botocore",
-    "cryptography",
-    "fastapi",
-    "h5py",
-    "jinja2",
-    "matplotlib",
-    "networkx",
-    "numpy",
-    "pandas",
-    "psycopg",
-    "pydantic",
-    "pytz",
-    "requests",
-    "scipy",
-    "scikit-learn",
-    "spatialdata",
-    "sqlmodel",
-    "squidpy",
-    "tqdm",
-    "umap"
 ]
 apiserver = [
     "alembic",
     "attrs",
-    "bokeh",
-    "boto3",
-    "botocore",
     "cryptography",
     "fastapi",
-    "h5py",
-    "jinja2",
     "matplotlib",
-    "networkx",
-    "numpy",
-    "pandas",
     "psycopg",
     "pydantic",
+    "PyJWT",
     "pytz",
     "requests",
-    "scipy",
-    "scikit-learn",
-    "spatialdata",
+    "secure",
     "sqlmodel",
-    "squidpy",
-    "tqdm",
-    "umap"
+    "uvicorn",
+    "zstandard",
+    "scikit-learn", "squidpy", "zarr<3", "dask[dataframe]", "dask-expr",
 ]
 graphs = [
-    "alembic",
-    "attrs",
     "bokeh",
-    "boto3",
-    "botocore",
-    "cryptography",
-    "fastapi",
     "h5py",
-    "jinja2",
     "matplotlib",
     "networkx",
-    "numpy",
-    "pandas",
-    "psycopg",
-    "pydantic",
-    "pytz",
     "requests",
-    "scipy",
-    "scikit-learn",
-    "spatialdata",
-    "sqlmodel",
-    "squidpy",
-    "tqdm",
-    "umap"
-]
-db = [
-    "alembic",
-    "attrs",
-    "bokeh",
-    "boto3",
-    "botocore",
-    "cryptography",
-    "fastapi",
-    "h5py",
-    "jinja2",
-    "matplotlib",
-    "networkx",
-    "numpy",
-    "pandas",
-    "psycopg",
-    "pydantic",
-    "pytz",
-    "requests",
-    "scipy",
-    "scikit-learn",
-    "spatialdata",
-    "sqlmodel",
-    "squidpy",
-    "tqdm",
-    "umap"
 ]
 ondemand = [
-    "alembic",
     "attrs",
-    "bokeh",
-    "boto3",
-    "botocore",
-    "cryptography",
-    "fastapi",
-    "h5py",
-    "jinja2",
-    "matplotlib",
-    "networkx",
+    "Brotli",
+    "dask[dataframe]",
+    "dask-expr",
     "numpy",
     "pandas",
     "psycopg",
     "pydantic",
-    "pytz",
-    "requests",
     "scipy",
     "scikit-learn",
-    "spatialdata",
-    "sqlmodel",
-    "squidpy",
+    "squidpy", "zarr<3",
+    "tabulate",
     "tqdm",
-    "umap"
-]
-workflow = [
-    "alembic",
-    "attrs",
-    "bokeh",
-    "boto3",
-    "botocore",
-    "cryptography",
-    "fastapi",
-    "h5py",
-    "jinja2",
-    "matplotlib",
-    "networkx",
-    "numpy",
-    "pandas",
-    "psycopg",
-    "pydantic",
-    "pytz",
-    "requests",
-    "scipy",
-    "scikit-learn",
-    "spatialdata",
-    "sqlmodel",
-    "squidpy",
-    "tqdm",
-    "umap"
+    "umap-learn",
 ]
 dev = [
     "autopep8",

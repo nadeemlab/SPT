@@ -125,7 +125,7 @@ check-for-pypi-credentials:
 >@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py pypi ; echo "$$?" > status_code
 >@${MESSAGE} end "Found." "Not found."
 
-development-image-prerequisites-installed: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile
+development-image-prerequisites-installed: requirements.txt requirements.apiserver.txt requirements.ondemand.txt ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile
 >@${MESSAGE} start "Building development image precursor"
 >@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
 >@docker build \
@@ -168,10 +168,23 @@ development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/de
 >@${MESSAGE} end "Built." "Build failed."
 >@rm -f .dockerignore
 
-pyproject.toml: pyproject.toml.unversioned ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_pyproject.py version.txt
->@${MESSAGE} start "Creating pyproject.toml"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/create_pyproject.py; echo "$$?" > status_code
->@${MESSAGE} end "Created." "Failed."
+requirements.txt: pyproject.toml
+>@uv venv venv; \
+    uv pip install .[all]; \
+    uv pip freeze | grep -v spatialprofilingtoolbox > requirements.txt; \
+    rm -rf venv
+
+requirements.apiserver.txt: pyproject.toml
+>@uv venv venv; \
+    uv pip install .[apiserver]; \
+    uv pip freeze | grep -v spatialprofilingtoolbox > requirements.apiserver.txt; \
+    rm -rf venv
+
+requirements.ondemand.txt: pyproject.toml
+>@uv venv venv; \
+    uv pip install .[ondemand]; \
+    uv pip freeze | grep -v spatialprofilingtoolbox > requirements.ondemand.txt; \
+    rm -rf venv
 
 print-source-files:
 >@echo "${PACKAGE_SOURCE_FILES}" | tr ' ' '\n'
@@ -354,7 +367,9 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
     submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
-    cp pyproject.toml.unversioned $$submodule_directory ; \
+    cp requirements.txt $$submodule_directory ; \
+    cp requirements.apiserver.txt $$submodule_directory ; \
+    cp requirements.ondemand.txt $$submodule_directory ; \
     cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
@@ -568,9 +583,11 @@ clean-files:
 >@rm -f .dockerignore
 >@rm -rf spatialprofilingtoolbox.egg-info/
 >@rm -rf __pycache__/
+>@rm -f requirements.txt
+>@rm -f requirements.apiserver.txt
+>@rm -f requirements.ondemand.txt
 >@rm -f development-image
 >@rm -f development-image-prerequisites-installed
->@rm -f pyproject.toml
 >@rm -f data-loaded-image-1
 >@rm -f data-loaded-image-2
 >@rm -f data-loaded-image-1and2

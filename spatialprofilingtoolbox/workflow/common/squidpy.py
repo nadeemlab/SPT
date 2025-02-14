@@ -9,6 +9,7 @@ from typing import (
 from warnings import filterwarnings
 from warnings import catch_warnings
 from warnings import simplefilter
+from warnings import filterwarnings
 
 from numpy.typing import NDArray
 from numpy import isnan
@@ -16,6 +17,9 @@ from numpy import inner
 from numpy import sum as np_sum
 from pandas import DataFrame, Series
 
+filterwarnings(action='ignore', category=FutureWarning, message=r'functools.partial will be a method descriptor in future Python versions; wrap it in enum.member\(\) if you want to preserve the old behavior')
+filterwarnings(action='ignore', category=RuntimeWarning, message=r'nopython is set for njit and is ignored')
+filterwarnings(action='ignore', category=FutureWarning, message=r'Importing read_text from `anndata` is deprecated. Import anndata.io.read_text instead.')
 import dask
 dask.config.set({'dataframe.query-planning': True})
 import dask.dataframe as dd

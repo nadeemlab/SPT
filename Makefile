@@ -16,7 +16,7 @@ BUILD_LOCATION_ABSOLUTE := ${PWD}/build
 export TEST_LOCATION := test
 export TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
-VERSION := $(shell cat version.txt | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+VERSION := $(shell cat pyproject.toml | grep 'version = ' | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 export WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 export MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
 
@@ -197,18 +197,15 @@ build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS} ${DOCKER_
 
 ${DOCKER_PUSH_SUBMODULE_TARGETS}: ${DOCKER_BUILD_SUBMODULE_TARGETS} check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
-    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Pushing Docker container $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
-    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
-    echo "$$submodule_version"; \
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     echo "$$submodule_name"; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     echo "$$repository_name"; \
-    docker push $$repository_name:$$submodule_version ; \
+    docker push $$repository_name:${VERSION} ; \
     exit_code1=$$?; \
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
@@ -217,13 +214,10 @@ ${DOCKER_PUSH_SUBMODULE_TARGETS}: ${DOCKER_BUILD_SUBMODULE_TARGETS} check-for-do
 
 ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS}: build-docker-images check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-dev-//g') ; \
-    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Pushing Docker container $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-dev-//g') ; \
-    submodule_version=$$(grep '^__version__ = ' $$submodule_directory/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
-    echo "$$submodule_version"; \
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     echo "$$submodule_name"; \
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
@@ -241,11 +235,9 @@ ${DOCKER_PUSH_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
-    plugin_version=$$(cat $$source_directory/version.txt) ; \
-    echo "$$plugin_version"; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
-    docker push $$repository_name:$$plugin_version ; \
+    docker push $$repository_name:${VERSION} ; \
     exit_code1=$$?; \
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
@@ -260,8 +252,6 @@ ${DOCKER_PUSH_DEV_PLUGIN_TARGETS}: build-docker-images check-for-docker-credenti
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-dev-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
-    plugin_version=$$(cat $$source_directory/version.txt) ; \
-    echo "$$plugin_version"; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
     docker push $$repository_name:dev ; \
@@ -277,11 +267,9 @@ ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credent
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
-    plugin_version=$$(cat $$source_directory/version.txt) ; \
-    echo "$$plugin_version"; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
-    docker push $$repository_name:cuda-$$plugin_version ; \
+    docker push $$repository_name:cuda-${VERSION} ; \
     exit_code1=$$?; \
     docker push $$repository_name:cuda-latest ; \
     exit_code2=$$?; \
@@ -296,8 +284,6 @@ ${DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-cre
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-dev-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
-    plugin_version=$$(cat $$source_directory/version.txt) ; \
-    echo "$$plugin_version"; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
     docker push $$repository_name:cuda-dev ; \
@@ -359,13 +345,11 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     ${MESSAGE} start "Building Docker image $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
-    submodule_version=$$(grep '^__version__ = ' ${SOURCE_LOCATION}/$$submodule_name/__init__.py |  grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+') ;\
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
     cp requirements.txt $$submodule_directory ; \
     cp requirements.apiserver.txt $$submodule_directory ; \
@@ -377,10 +361,10 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
      ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
      -t ${DOCKER_REPO_PREFIX}-$$submodule_name \
-     -t $$repository_name:$$submodule_version \
+     -t $$repository_name:${VERSION} \
      -t $$repository_name:latest \
      -t $$repository_name:dev \
-     --build-arg version=$$submodule_version \
+     --build-arg version=${VERSION} \
      --build-arg service_name=$$submodule_name \
      --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
      $$submodule_directory ; echo "$$?" > status_code; \
@@ -402,7 +386,6 @@ ${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-cre
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,${BUILD_LOCATION_ABSOLUTE}\/plugins\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
-    plugin_version=$$(cat $$source_directory/version.txt) ; \
     plugin_directory=$$(dirname $@)/$$plugin_name ; \
     mkdir -p $$plugin_directory ; \
     cp -r $$source_directory/* $$plugin_directory ; \
@@ -411,10 +394,10 @@ ${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-cre
     docker build \
      ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
-     -t $$repository_name:$$plugin_version \
+     -t $$repository_name:${VERSION} \
      -t $$repository_name:latest \
      -t $$repository_name:dev \
-     --build-arg version=$$plugin_version \
+     --build-arg version=${VERSION} \
      --build-arg service_name=$$plugin_name \
      $$plugin_directory ; echo "$$?" > status_code; \
     if [[ "$$(cat status_code)" == "0" ]]; \
@@ -434,7 +417,6 @@ ${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docke
     repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,${BUILD_LOCATION_ABSOLUTE}\/plugins\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
-    plugin_version=$$(cat $$source_directory/version.txt) ; \
     plugin_directory=$$(dirname $@)/$$plugin_name-cuda ; \
     mkdir -p $$plugin_directory ; \
     cp $$source_directory/* $$plugin_directory ; \
@@ -443,10 +425,10 @@ ${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docke
     docker build \
      ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
-     -t $$repository_name:cuda-$$plugin_version \
+     -t $$repository_name:cuda-${VERSION} \
      -t $$repository_name:cuda-latest \
      -t $$repository_name:cuda-dev \
-     --build-arg version=$$plugin_version \
+     --build-arg version=${VERSION} \
      --build-arg service_name=$$plugin_name \
      $$plugin_directory ; echo "$$?" > status_code; \
     if [[ "$$(cat status_code)" == "0" ]]; \

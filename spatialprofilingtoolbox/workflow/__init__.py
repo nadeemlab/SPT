@@ -18,8 +18,6 @@ from importlib import import_module
 
 from spatialprofilingtoolbox.workflow.common.workflow_module_exporting import WorkflowModules
 
-__version__ = '1.0.0'
-
 workflow_names_and_subpackages = {
     'tabular import': 'tabular_import',
     'graph generation': 'graph_generation',

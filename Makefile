@@ -1,11 +1,44 @@
-# Set up makefile config
 .RECIPEPREFIX = >
+
+help:
+>@echo '  The main targets are:'
+>@echo ' '
+>@echo '  make release-package'
+>@echo '    Build the Python package wheel and push it to PyPI.'
+>@echo ' '
+>@echo '  make build-and-push-docker-images'
+>@echo '    Build the Docker images and push them to DockerHub repositories.'
+>@echo ' '
+>@echo '  make force-rebuild-data-loaded-images'
+>@echo '    Rebuild the data-preloaded Docker images. This is relatively'
+>@echo '    long-running and so is left out of the typical test target'
+>@echo '    fulfillment process.'
+>@echo ' '
+>@echo '  make test'
+>@echo '    Do unit and module tests.'
+>@echo ' '
+>@echo '  make [unit | module]-test-[apiserver | graphs | ondemand | db | workflow]'
+>@echo '    Do only the unit or module tests for the indicated module.'
+>@echo ' '
+>@echo '  make clean'
+>@echo '    Attempt to remove all build or partial-build artifacts.'
+>@echo ' '
+>@echo '  make clean-docker-images'
+>@echo '    Aggressively removes the Docker images created here.'
+>@echo '    It makes use `docker system prune`, which might delete other images, so use at your own risk.'
+>@echo '    This target does not attempt to remove external images pulled as base images, however.'
+>@echo '    Note that normal `make clean` does not attempt to remove Docker images at all.'
+>@echo ' '
+>@echo '  make help VERBOSE=1'
+>@echo '    Show this text.'
+>@echo ' '
+>@echo 'Use VERBOSE=1 to send command outputs to STDOUT rather than log files.'
+>@echo 'Use NOCACHE=1 to cause docker build commands to rebuild each cached layer.'
+>@echo ' '
+
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
-# export
 
-# Define globally used variables
-# Locations are relative unless indicated otherwise
 PACKAGE_NAME := spatialprofilingtoolbox
 export PYTHON := python
 export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build/build_scripts
@@ -20,46 +53,6 @@ VERSION := $(shell cat pyproject.toml | grep 'version = ' | grep -o '[0-9]\+\.[0
 export WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
 export MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
 
-help:
->@${MESSAGE} print 'The main targets are:'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make release-package'
->@${MESSAGE} print '    Build the Python package wheel and push it to PyPI.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make build-docker-images'
->@${MESSAGE} print '    Build the Docker images.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make build-and-push-docker-images'
->@${MESSAGE} print '    Build the Docker images and push them to DockerHub repositories.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make force-rebuild-data-loaded-images'
->@${MESSAGE} print '    Rebuild the data-preloaded Docker images. This is relatively'
->@${MESSAGE} print '    long-running and so is left out of the typical test target'
->@${MESSAGE} print '    fulfillment process.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make test'
->@${MESSAGE} print '    Do unit and module tests.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make [unit | module]-test-[apiserver | graphs | ondemand | db | workflow]'
->@${MESSAGE} print '    Do only the unit or module tests for the indicated module.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make clean'
->@${MESSAGE} print '    Attempt to remove all build or partial-build artifacts.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make clean-docker-images'
->@${MESSAGE} print '    Aggressively removes the Docker images created here.'
->@${MESSAGE} print '    It makes use `docker system prune`, which might delete other images, so use at your own risk.'
->@${MESSAGE} print '    This target does not attempt to remove external images pulled as base images, however.'
->@${MESSAGE} print '    Note that normal `make clean` does not attempt to remove Docker images at all.'
->@${MESSAGE} print ' '
->@${MESSAGE} print '  make help'
->@${MESSAGE} print '    Show this text.'
->@${MESSAGE} print ' '
->@${MESSAGE} print 'Use VERBOSE=1 to send command outputs to STDOUT rather than log files.'
->@${MESSAGE} print 'Use NOCACHE=1 to cause docker build commands to rebuild each cached layer.'
->@${MESSAGE} print ' '
-
-# Docker and test variables
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
 export DOCKER_SCAN_SUGGEST:=false
@@ -86,25 +79,27 @@ UNIT_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),unit-test-$(submodule))
 SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 
-# Define PHONY targets
 .PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated
 
-# Submodule-specific variables
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
 export DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
-# Locations can't be relative because these are used by the submodules' Makefiles.
 
-# Fetch all runnable files that will be needed for making
 PACKAGE_SOURCE_FILES := pyproject.toml $(shell find ${SOURCE_LOCATION} -type f)
 
-# Redefine what shell to pass to submodule makefiles
 export SHELL := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/status_messages_only_shell.sh
 
-# Adjust verbosity based on how make was called
 ifdef VERBOSE
-export .SHELLFLAGS := -c -super-verbose
+    export .SHELLFLAGS := -c -super-verbose
 else
-export .SHELLFLAGS := -c -not-super-verbose
+    ifeq ('${MAKECMDGOALS}', '')
+        export .SHELLFLAGS := -c -super-verbose
+    else
+        ifeq ('${MAKECMDGOALS}', 'help')
+            export .SHELLFLAGS := -c -super-verbose
+        else
+            export .SHELLFLAGS := -c -not-super-verbose
+        endif
+    endif
 endif
 
 ifdef NOCACHE

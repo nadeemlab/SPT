@@ -165,32 +165,32 @@ development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/de
 
 requirements.txt: pyproject.toml
 >@${MESSAGE} start "Determining requirements.txt"
->@uv venv --python=3.13 venv; \
+>@uv venv --python=3.13; \
     uv pip install spatialdata==0.3.0 && \
     uv pip install .[all] && \
     uv pip freeze | grep -v spatialprofilingtoolbox > requirements.txt; \
     echo $$? > status_code; \
-    rm -rf venv
+    rm -rf .venv
 >@${MESSAGE} end "Complete." "Determination failed."
 
 requirements.apiserver.txt: pyproject.toml
 >@${MESSAGE} start "Determining requirements.apiserver.txt"
->@uv venv --python=3.13 venv; \
+>@uv venv --python=3.13; \
     uv pip install spatialdata==0.3.0 && \
     uv pip install .[apiserver] && \
     uv pip freeze | grep -v spatialprofilingtoolbox > requirements.apiserver.txt; \
     echo $$? > status_code; \
-    rm -rf venv
+    rm -rf .venv
 >@${MESSAGE} end "Complete." "Determination failed."
 
 requirements.ondemand.txt: pyproject.toml
 >@${MESSAGE} start "Determining requirements.ondemand.txt"
->@uv venv --python=3.13 venv; \
+>@uv venv --python=3.13; \
     uv pip install spatialdata==0.3.0 && \
     uv pip install .[ondemand] && \
     uv pip freeze | grep -v spatialprofilingtoolbox > requirements.ondemand.txt; \
     echo $$? > status_code; \
-    rm -rf venv
+    rm -rf .venv
 >@${MESSAGE} end "Complete." "Determination failed."
 
 print-source-files:

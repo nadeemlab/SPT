@@ -1,4 +1,4 @@
-FROM ubuntu:25.04
+FROM ubuntu:24.04
 RUN apt update && apt-get install -y apt-transport-https && apt-get clean
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt install software-properties-common -y && apt-get clean

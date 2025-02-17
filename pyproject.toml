@@ -24,6 +24,7 @@ dependencies = [
     "boto3",
     "botocore",
     "jinja2",
+    "numba>=0.44.0",
     "psycopg",
     "pyshp",
     "pytz",

@@ -5,6 +5,7 @@ RUN apt update && apt install -y gcc g++ libpq-dev && apt-get clean
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev && apt-get clean
 COPY requirements.ondemand.txt .
+RUN python -m pip install --ignore-requires-python spatialdata==0.3.0
 RUN python -m pip install -r requirements.ondemand.txt
 ARG version
 ARG service_name

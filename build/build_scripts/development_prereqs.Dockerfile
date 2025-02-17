@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:25.04
 RUN apt update && apt-get install -y apt-transport-https && apt-get clean
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt install software-properties-common -y && apt-get clean
@@ -26,6 +26,7 @@ RUN python -m pip install -U pip
 COPY README.md .
 RUN apt install libgdal-dev -y && apt-get clean
 COPY requirements.txt .
+RUN python -m pip install --ignore-requires-python spatialdata==0.3.0
 RUN python -m pip install -r requirements.txt
 RUN python -m pip install build
 RUN python -m pip install twine

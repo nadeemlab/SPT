@@ -4,7 +4,6 @@ RUN apt update && apt install -y gcc libpq-dev curl && apt-get clean
 ARG PIP_NO_CACHE_DIR=1
 COPY requirements.txt /usr/local/lib/python3.13/site-packages/spatialprofilingtoolbox/apiserver/app/
 COPY requirements.apiserver.txt .
-RUN python -m pip install --ignore-requires-python spatialdata==0.3.0
 RUN python -m pip install -r requirements.apiserver.txt
 ARG version
 ARG service_name

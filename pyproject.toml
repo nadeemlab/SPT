@@ -65,7 +65,7 @@ all = [
     "scipy",
     "scikit-learn",
     "sqlmodel",
-    "squidpy", "zarr<3",
+    "squidpy>=1.6.2", "zarr<3",
     "tables",
     "tabulate",
     "termplotlib",
@@ -89,7 +89,7 @@ apiserver = [
     "sqlmodel",
     "uvicorn",
     "zstandard",
-    "scikit-learn", "squidpy", "zarr<3", "dask[dataframe]", "dask-expr",
+    "scikit-learn", "squidpy>=1.6.2", "zarr<3", "dask[dataframe]", "dask-expr",
 ]
 graphs = [
     "bokeh",
@@ -110,7 +110,7 @@ ondemand = [
     "pydantic",
     "scipy",
     "scikit-learn",
-    "squidpy", "zarr<3",
+    "squidpy>=1.6.2", "zarr<3",
     "tabulate",
     "tqdm",
     "umap-learn",

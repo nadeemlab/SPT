@@ -11,7 +11,7 @@ def _get_postgres_version() -> str | None:
         with DBCursor() as cursor:
             cursor.execute('SELECT version();')
             text = tuple(cursor.fetchall())[0][0]
-        match = re.search('^PostgreSQL (\d+).(\d+) ', text)
+        match = re.search(r'^PostgreSQL (\d+).(\d+) ', text)
         if not match:
             return None
         return '.'.join(list(match.groups()))

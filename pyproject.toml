@@ -114,6 +114,7 @@ ondemand = [
     "tabulate",
     "tqdm",
     "umap-learn",
+    "zstandard",
 ]
 dev = [
     "autopep8",

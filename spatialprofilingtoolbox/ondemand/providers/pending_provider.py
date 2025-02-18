@@ -2,15 +2,12 @@
 
 from abc import ABC
 from abc import abstractmethod
-from datetime import datetime
 from math import isnan
 from math import isinf
 
 from psycopg.errors import UniqueViolation
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.db.database_connection import DBConnection
-from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
 from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
 from spatialprofilingtoolbox.workflow.common.export_features import \
@@ -19,6 +16,7 @@ from spatialprofilingtoolbox.workflow.common.export_features import add_feature_
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
     UnivariateMetricsComputationResult
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
+from spatialprofilingtoolbox.ondemand.providers.study_component_extraction import ComponentGetter
 
 logger = colorized_logger(__name__)
 
@@ -35,7 +33,7 @@ class PendingProvider(OnDemandProvider, ABC):
         """Get requested metrics, computed up to now."""
         with DBCursor(study=study) as cursor:
             get = ADIFeatureSpecificationUploader.get_data_analysis_study
-            measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
+            measurement_study_name = ComponentGetter.get_study_components(cursor, study).measurement
             data_analysis_study = get(measurement_study_name, cursor)
         get_or_create = cls.get_or_create_feature_specification
         feature_specification, is_new = get_or_create(study, data_analysis_study, **kwargs)

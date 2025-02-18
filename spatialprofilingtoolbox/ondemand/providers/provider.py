@@ -11,7 +11,7 @@ from attrs import define
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
-from spatialprofilingtoolbox.db.accessors.study import StudyAccess
+from spatialprofilingtoolbox.ondemand.providers.study_component_extraction import ComponentGetter
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
@@ -82,7 +82,7 @@ class OnDemandProvider(ABC):
 
     def _get_measurement_study(self, study: str) -> str:
         with DBCursor(study=study) as cursor:
-            return StudyAccess(cursor).get_study_components(study).measurement
+            return ComponentGetter.get_study_components(cursor, study).measurement
 
     @staticmethod
     def relevant_specimens_query() -> str:

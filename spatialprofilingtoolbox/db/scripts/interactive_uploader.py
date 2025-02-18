@@ -91,7 +91,7 @@ class InteractiveUploader:
         home = expanduser('~')
         considered = [join(home, f) for f in listdir(home)] + listdir('.')
         filename_matches = tuple(filter(
-            lambda filename: re.search('^\.spt_db.config', basename(filename)),
+            lambda filename: re.search(r'^\.spt_db.config', basename(filename)),
             filter(isfile, considered),
         ))
         if len(filename_matches) == 0:
@@ -294,7 +294,7 @@ class InteractiveUploader:
         if isfile(study_file):
             with open(study_file, 'rt', encoding='utf-8') as file:
                 study_name = json_loads(file.read())['Study name']
-        if re.search('^s3://', source):
+        if re.search(r'^s3://', source):
             resource = _parse_s3_reference(join(source, 'study.json'))
             client = boto3_client('s3')
             local_study_file = '_study.temp.json'
@@ -319,7 +319,7 @@ class InteractiveUploader:
             study_name = self._retrieve_study_name(source)
         except ValueError:
             return 'not a valid study'
-        normal = re.sub('[ \-]', '_', study_name).lower()
+        normal = re.sub(r'[ \-]', '_', study_name).lower()
         if normal in self.existing_studies:
             self.present_on_remote.append(source)
             return 'present on remote'

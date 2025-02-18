@@ -138,9 +138,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-engine = get_engine()
-
 def get_session():
+    engine = get_engine()
     with Session(engine) as session:
         yield session
 

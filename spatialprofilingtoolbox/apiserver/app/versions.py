@@ -7,13 +7,16 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import SoftwareCom
 from spatialprofilingtoolbox import __version__
 
 def _get_postgres_version() -> str | None:
-    with DBCursor() as cursor:
-        cursor.execute('SELECT version();')
-        text = tuple(cursor.fetchall())[0][0]
-    match = re.search('^PostgreSQL (\d+).(\d+) ', text)
-    if not match:
-        return None
-    return '.'.join(list(match.groups()))
+    try:
+        with DBCursor() as cursor:
+            cursor.execute('SELECT version();')
+            text = tuple(cursor.fetchall())[0][0]
+        match = re.search('^PostgreSQL (\d+).(\d+) ', text)
+        if not match:
+            return None
+        return '.'.join(list(match.groups()))
+    except EnvironmentError:
+        return 'unavailable'
 
 PG_VERSION = str(_get_postgres_version())
 

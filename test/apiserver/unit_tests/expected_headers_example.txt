@@ -11,7 +11,3 @@
 < server: 
 < x-content-type-options: nosniff
 < x-frame-options: SAMEORIGIN
-< 
-{ [97 bytes data]
-* Connection #0 to host spt-apiserver-testing left intact
-[{"handle":"Melanoma intralesional IL2","display_name_detail":"Cancer Immunology Research 2022"}]

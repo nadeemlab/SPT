@@ -12,7 +12,8 @@ RUN apt install postgresql-client -y && apt-get clean
 RUN apt-get install -y build-essential libssl-dev libffi-dev && apt-get clean
 RUN apt-get install -y brotli && apt-get clean
 RUN apt install curl -y
-RUN curl -s https://get.nextflow.io | bash; if [[ "$(which nextflow)" == "" ]]; then echo "nextflow not really installed."; exit 1; fi;
+RUN curl -s https://get.nextflow.io | bash; mv nextflow /usr/local/bin/;
+RUN bash -c 'if [[ "$(which nextflow)" = "" ]]; then echo "Nextflow not on path."; exit 1; fi;'
 RUN apt install libgdal-dev -y && apt-get clean
 RUN add-apt-repository ppa:deadsnakes/ppa && apt update
 RUN apt install python3.13 -y && apt-get clean

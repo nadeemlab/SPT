@@ -31,6 +31,7 @@ module-tests: teardown-module-testing
 test: teardown-testing
 
 setup-testing:
+>@rm -f buildcache.sqlite3
 >@${MESSAGE} start "$@" "db"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \

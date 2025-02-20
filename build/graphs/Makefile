@@ -10,36 +10,29 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-.PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
+.PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
-test: teardown-testing
 
 setup-testing:
 >@rm -f buildcache.sqlite3
 >@${MESSAGE} start "$@" "graphs"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-db---testing-only ; \
+     spt-db---testing-only-graphs ; \
     status_code=$$? ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "$@" "\u2517\u2501"
+>@${MESSAGE} start "$@" "teardown graphs"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "$@" "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
->@${MESSAGE} end "$@" "Down." "Error."
-
-teardown-testing: ${TESTS}
->@${MESSAGE} start "$@" "\u2517\u2501"
+>@${MESSAGE} start "$@" "teardown graphs"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Down." "Error."
@@ -52,7 +45,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "$@" "\u2503 $$test_name"
+    ${MESSAGE} start "$@" "$$test_name"
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \

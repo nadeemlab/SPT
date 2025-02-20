@@ -35,31 +35,31 @@ setup-testing:
 >@${MESSAGE} start "$@" "db"
 >@docker compose up -d && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-db---testing-only ; \
+     spt-db---testing-only-db ; \
     status_code=$$? ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
 teardown-singleton-testing: ${SINGLETON_TESTS}
->@${MESSAGE} start "$@" "\u2517\u2501"
+>@${MESSAGE} start "$@" "teardown db"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "$@" "\u2517\u2501"
+>@${MESSAGE} start "$@" "teardown db"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "$@" "\u2517\u2501"
+>@${MESSAGE} start "$@" "teardown db"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "$@" "\u2517\u2501"
+>@${MESSAGE} start "$@" "teardown db"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Down." "Error."
@@ -90,7 +90,6 @@ ${TESTS}: setup-testing
      /bin/bash -c "$$test_cmd && exit $$?"; \
     status_code=$$? ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
->@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:

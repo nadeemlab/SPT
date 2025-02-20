@@ -5,7 +5,7 @@ from spatialprofilingtoolbox.workflow.common.structure_centroids_puller import \
     StructureCentroidsPuller
 
 if __name__ == '__main__':
-    database_config_file='../db/.spt_db.config.container'
+    database_config_file='../workflow/.spt_db.config.container'
     puller = StructureCentroidsPuller(database_config_file)
     puller.pull()
     structure_centroids = puller.get_structure_centroids()

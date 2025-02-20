@@ -21,10 +21,10 @@ setup-testing:
 >@${MESSAGE} start "apiserver compose" "apiserver compose"
 >@docker compose up -d && (bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh &) && sleep 0.2 && \
     bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-apiserver-testing \
-     spt-db---testing-only \
-     spt-ondemand--testing \
-     spt-ondemand-testing2 ; \
+     spt-apiserver-testing-apiserver \
+     spt-db---testing-only-apiserver \
+     spt-ondemand--testing-apiserver \
+     spt-ondemand-testing2-apiserver ; \
     status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "apiserver compose" | sqlite3 buildcache.sqlite3
 >@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "apiserver compose" "Setup env." "Env not setup."

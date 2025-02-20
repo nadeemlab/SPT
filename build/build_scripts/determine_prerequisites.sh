@@ -13,6 +13,8 @@ if [[ "$FILENAME" == "" ]]; then
     exit 1
 fi
 
+SPECIFIER=$(echo $FILENAME | sed 's/\./_/g' | sed 's/_txt//g');
+
 function handle_status() {
     status=$1
     if [ $1 -gt 0 ]; then
@@ -20,7 +22,8 @@ function handle_status() {
     fi
 }
 
-$PYTHON -m venv .venv;
+$PYTHON -m venv .venv_$SPECIFIER;
+source .venv_$SPECIFIER/bin/activate
 uv pip install .$MODULE
 handle_status $?
 if [ $? -gt 0 ]; then
@@ -28,4 +31,5 @@ if [ $? -gt 0 ]; then
 fi
 uv pip freeze | grep -v spatialprofilingtoolbox > $FILENAME
 handle_status $?
-rm -rf .venv
+deactivate
+rm -rf .venv_$SPECIFIER

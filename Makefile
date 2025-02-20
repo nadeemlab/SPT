@@ -79,7 +79,7 @@ UNIT_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),unit-test-$(submodule))
 SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 
-.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated before_all_tests
+.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated before_all_tests initialize_message_cache
 
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
 export DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
@@ -141,6 +141,9 @@ development-image-prerequisites-installed: requirements.txt requirements.apiserv
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
+
+initialize_message_cache:
+>@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/message_cache.sh; initialize_message_cache;
 
 development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile development-image-prerequisites-installed
 >@${MESSAGE} start "$@" "Building development image"
@@ -468,11 +471,12 @@ check-docker-daemon-running:
     fi ; \
     touch check-docker-daemon-running ;
 
-before_all_tests:
->@${MESSAGE} start "start all tests" "Timing tests"
+before_all_tests: initialize_message_cache
+>@${MESSAGE} start "start timing" "Timing tests"
 
 test: unit-tests module-tests
->@${MESSAGE} end "start all tests" "Total time:" "Error computing time."
+>@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} end "start timing" "Total time:" "Error computing time."
 
 module-tests: ${MODULE_TEST_TARGETS}
 

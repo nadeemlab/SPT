@@ -1,10 +1,19 @@
 
 declare -A expectedmessages
-expectedmessages[spt-apiserver-testing]="Application startup complete"
-expectedmessages[spt-ondemand--testing]="Initial search"
-expectedmessages[spt-ondemand-testing2]="Initial search"
-expectedmessages[spt-db---testing-only]="database system is ready to accept connections"
-expectedmessages[spt--workflow-testing]="workflow container is ready to work"
+expectedmessages[spt-db---testing-only-apiserver]="database system is ready to accept connections"
+expectedmessages[spt-ondemand--testing-apiserver]="Initial search"
+expectedmessages[spt-ondemand-testing2-apiserver]="Initial search"
+expectedmessages[spt-apiserver-testing-apiserver]="Application startup complete"
+
+expectedmessages[spt-db---testing-only-db]="database system is ready to accept connections"
+
+expectedmessages[spt-db---testing-only-graphs]="database system is ready to accept connections"
+
+expectedmessages[spt-ondemand--testing-ondemand]="Initial search"
+expectedmessages[spt-db---testing-only-ondemand]="database system is ready to accept connections"
+
+expectedmessages[spt-db---testing-only-workflow]="database system is ready to accept connections"
+
 expectedmessages[temporary-spt-db-preloading]="database system is ready to accept connections"
 
 container_wait_time=60 #seconds

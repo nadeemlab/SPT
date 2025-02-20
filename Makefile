@@ -77,6 +77,7 @@ DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS := $(foreach plugin,$(CUDA_PLUGINS),docker-p
 MODULE_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),module-test-$(submodule))
 UNIT_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),unit-test-$(submodule))
 SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(submodule))
+COMBINED_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),combined-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 P := ${BUILD_LOCATION_ABSOLUTE}
 .PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated before_all_tests initialize_message_cache
@@ -484,7 +485,10 @@ data-loaded-image-1: data-loaded-image-1and2
 data-loaded-image-1small: data-loaded-image-1
 data-loaded-image-1smallnointensity: data-loaded-image-1small
 
-test: unit-tests module-tests
+# test: unit-tests module-tests
+# >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
+# >@${MESSAGE} end "start timing" "Total time:" "Error computing time."
+test: ${COMBINED_TEST_TARGETS}
 >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "start timing" "Total time:" "Error computing time."
 
@@ -503,6 +507,10 @@ ${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data
 ${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^singleton-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory singleton-tests ;
+
+${COMBINED_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+>@submodule_directory=$$(echo $@ | sed 's/^combined-test-/${BUILD_LOCATION}\//g') ; \
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory test ;
 
 # The below explicitly checks whether the docker image already exists locally.
 # If so, not rebuilt. To trigger rebuild, use "make clean-docker-images" first,

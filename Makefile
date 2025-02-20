@@ -78,7 +78,7 @@ MODULE_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),module-test-$(submodule
 UNIT_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),unit-test-$(submodule))
 SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
-
+P := ${BUILD_LOCATION_ABSOLUTE}
 .PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated before_all_tests initialize_message_cache
 
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
@@ -143,7 +143,7 @@ development-image-prerequisites-installed: requirements.txt requirements.apiserv
 >@rm -f .dockerignore
 
 initialize_message_cache:
->@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/message_cache.sh; initialize_message_cache;
+>@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/message_cache.sh; rm buildcache.sqlite3; initialize_message_cache;
 
 development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile development-image-prerequisites-installed
 >@${MESSAGE} start "$@" "Building development image"
@@ -471,8 +471,18 @@ check-docker-daemon-running:
     fi ; \
     touch check-docker-daemon-running ;
 
-before_all_tests: initialize_message_cache
+# Some dependencies to force serial processing (build environments would conflict if concurrent)
+clean-network-environment: initialize_message_cache
+before_all_tests: clean-network-environment
 >@${MESSAGE} start "start timing" "Timing tests"
+
+${P}/db/docker.built: before_all_tests
+${P}/apiserver/docker.built: ${P}/db/docker.built
+${P}/ondemand/docker.built: ${P}/apiserver/docker.built
+data-loaded-image-1and2: ${P}/ondemand/docker.built
+data-loaded-image-1: data-loaded-image-1and2
+data-loaded-image-1small: data-loaded-image-1
+data-loaded-image-1smallnointensity: data-loaded-image-1small
 
 test: unit-tests module-tests
 >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
@@ -480,17 +490,17 @@ test: unit-tests module-tests
 
 module-tests: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} clean-network-environment before_all_tests
+${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
-${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} clean-network-environment before_all_tests
+${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} clean-network-environment before_all_tests
+${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^singleton-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory singleton-tests ;
 

@@ -10,6 +10,8 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
+P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
+
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
 unit-tests: teardown-unit-testing
@@ -19,24 +21,25 @@ test: teardown-testing
 setup-testing:
 >@rm -f buildcache.sqlite3
 >@${MESSAGE} start "apiserver compose" "apiserver compose"
->@docker compose up -d && (bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh &) && sleep 0.2 && \
-    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
+>@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
+    bash ${P}/poll_container_readiness.sh \
      spt-apiserver-testing-apiserver \
      spt-db---testing-only-apiserver \
      spt-ondemand--testing-apiserver \
      spt-ondemand-testing2-apiserver ; \
-    status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "apiserver compose" | sqlite3 buildcache.sqlite3
->@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
+    status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "apiserver compose" | sqlite3 buildcache.sqlite3;
 >@${MESSAGE} end "apiserver compose" "Setup env." "Env not setup."
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "teardown apiserver (unit tests)" "teardown apiserver (unit tests)"
 >@docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (unit tests)" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "teardown apiserver (unit tests)" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "teardown apiserver (module tests)" "teardown apiserver (module tests)"
 >@docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (module tests)" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "teardown apiserver (module tests)" "Down." "Error."
 
 teardown-testing: ${TESTS}

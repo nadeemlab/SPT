@@ -16,6 +16,7 @@ STANDALONE_MODULE_TEST_NAME := "graph-plugin-dockerized"
 
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
+P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
@@ -25,8 +26,8 @@ module-tests: teardown-module-testing
 setup-testing:
 >@rm -f buildcache.sqlite3
 >@${MESSAGE} start "$@" "workflow"
->@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
+>@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
+    bash ${P}/poll_container_readiness.sh \
      spt-db---testing-only-workflow; \
     status_code=$$? ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
@@ -37,6 +38,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
+>@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
@@ -44,6 +46,7 @@ teardown-module-testing: ${MODULE_TESTS}
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
+>@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 ${TESTS}: setup-testing
@@ -72,7 +75,6 @@ ${TESTS}: setup-testing
     status_code=$$? ; \
     rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/ ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
->@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 ${STANDALONE_MODULE_TEST_TARGET}: setup-testing

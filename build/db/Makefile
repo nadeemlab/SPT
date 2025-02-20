@@ -13,6 +13,8 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
 
+P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
+
 DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
 
 schema.sql:
@@ -33,8 +35,8 @@ test: teardown-testing
 setup-testing:
 >@rm -f buildcache.sqlite3
 >@${MESSAGE} start "$@" "db"
->@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
+>@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
+    bash ${P}/poll_container_readiness.sh \
      spt-db---testing-only-db ; \
     status_code=$$? ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
@@ -50,12 +52,14 @@ teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "$@" "teardown db"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "$@" "teardown db"
 >@docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}

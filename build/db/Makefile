@@ -30,7 +30,7 @@ schema.sql:
 singleton-tests: teardown-singleton-testing
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
-test: teardown-testing
+combined-tests: teardown-testing
 
 setup-testing:
 >@rm -f buildcache.sqlite3

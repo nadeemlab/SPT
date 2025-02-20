@@ -510,7 +510,7 @@ ${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity
 
 ${COMBINED_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^combined-test-/${BUILD_LOCATION}\//g') ; \
-    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory test ;
+    ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory combined-tests ;
 
 # The below explicitly checks whether the docker image already exists locally.
 # If so, not rebuilt. To trigger rebuild, use "make clean-docker-images" first,

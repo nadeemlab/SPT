@@ -16,7 +16,7 @@ P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
 
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
-test: teardown-testing
+combined-tests: teardown-testing
 
 setup-testing:
 >@rm -f buildcache.sqlite3

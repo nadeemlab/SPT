@@ -6,8 +6,8 @@ annotated-types==0.7.0
 array-api-compat==1.10.0
 asciitree==0.3.3
 attrs==25.1.0
-boto3==1.36.23
-botocore==1.36.23
+boto3==1.36.25
+botocore==1.36.25
 brotli==1.1.0
 certifi==2025.1.31
 charset-normalizer==3.4.1
@@ -69,7 +69,7 @@ pims==0.7
 pip==25.0
 platformdirs==4.3.6
 pooch==1.8.2
-propcache==0.2.1
+propcache==0.3.0
 psutil==7.0.0
 psycopg==3.2.4
 pyarrow==19.0.1
@@ -110,7 +110,7 @@ tblib==3.0.0
 termplotlib==0.3.9
 texttable==1.7.0
 threadpoolctl==3.5.0
-tifffile==2025.1.10
+tifffile==2025.2.18
 toolz==1.0.0
 tornado==6.4.2
 tqdm==4.67.1

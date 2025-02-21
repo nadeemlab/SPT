@@ -15,7 +15,6 @@ services:
     container_name: spt-db---testing-only-ondemand
     ports:
       - target: 5432
-        # published: 5432
         protocol: tcp
     networks:
       - isolated_temporary_test

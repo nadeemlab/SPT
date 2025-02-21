@@ -4,7 +4,6 @@ services:
     container_name: spt-db---testing-only-apiserver
     ports:
       - target: 5432
-        # published: 5432
         protocol: tcp
     networks:
       - isolated_temporary_test
@@ -38,7 +37,6 @@ services:
     container_name: spt-apiserver-testing-apiserver
     ports:
       - target: 8080
-        # published: 8080
         protocol: tcp
     networks:
       - isolated_temporary_test

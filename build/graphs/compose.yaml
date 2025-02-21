@@ -4,7 +4,6 @@ services:
     container_name: spt-db---testing-only-graphs
     ports:
       - target: 5432
-        # published: 5432
         protocol: tcp
     networks:
       - isolated_temporary_test

@@ -20,15 +20,15 @@ combined-tests: teardown-testing
 
 setup-testing:
 >@rm -f buildcache.sqlite3
->@${MESSAGE} start "apiserver compose" "apiserver compose"
+>@${MESSAGE} start "apiserver" "apiserver"
 >@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
     bash ${P}/poll_container_readiness.sh \
      spt-apiserver-testing-apiserver \
      spt-db---testing-only-apiserver \
      spt-ondemand--testing-apiserver \
      spt-ondemand-testing2-apiserver ; \
-    status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "apiserver compose" | sqlite3 buildcache.sqlite3;
->@${MESSAGE} end "apiserver compose" "Setup env." "Env not setup."
+    status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "apiserver" | sqlite3 buildcache.sqlite3;
+>@${MESSAGE} end "apiserver" "Setup env." "Env not setup."
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "teardown apiserver (unit tests)" "teardown apiserver (unit tests)"

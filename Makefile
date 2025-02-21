@@ -172,21 +172,21 @@ development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/de
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
-requirements.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh
+requirements.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh initialize_message_cache
 >@${MESSAGE} start "$@" "Determining requirements.txt"
 >@${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh "[all]" requirements.txt; \
     status_code=$$? ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Complete." "Determination failed."
 
-requirements.apiserver.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh
+requirements.apiserver.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh initialize_message_cache
 >@${MESSAGE} start "$@" "Determining requirements.apiserver.txt"
 >@${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh "[apiserver]" requirements.apiserver.txt; \
     status_code=$$? ; \
     printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "$@" "Complete." "Determination failed."
 
-requirements.ondemand.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh
+requirements.ondemand.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh initialize_message_cache
 >@${MESSAGE} start "$@" "Determining requirements.ondemand.txt"
 >@${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh "[ondemand]" requirements.ondemand.txt; \
     status_code=$$? ; \
@@ -613,7 +613,6 @@ clean-files:
 >@rm -f buildcache.sqlite3
 
 docker-compositions-rm: check-docker-daemon-running
->@rm -f buildcache.sqlite3
 >@${MESSAGE} start "$@" "Running docker compose rm (remove)"
 >@docker compose --project-directory ./build/apiserver/ rm --force --stop ; status_code1="$$?" ; \
     docker compose --project-directory ./build/ondemand/ rm --force --stop ; status_code2="$$?" ; \

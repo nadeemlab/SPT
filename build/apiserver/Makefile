@@ -78,3 +78,4 @@ ${TESTS}: setup-testing
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt ../../${TEST_LOCATION}\/${MODULE_NAME}/_proximity.json ../../${TEST_LOCATION}\/${MODULE_NAME}/_squidpy.json ../../${TEST_LOCATION}\/${MODULE_NAME}/_gnn.svg ; do rm -f $$f; done;
+>@rm -f buildcache.sqlite3

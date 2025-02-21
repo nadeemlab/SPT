@@ -80,3 +80,4 @@ ${TESTS}: setup-testing
 
 clean:
 >@rm -f ${WHEEL_FILENAME}
+>@rm -f buildcache.sqlite3

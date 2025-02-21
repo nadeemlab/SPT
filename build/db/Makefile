@@ -14,6 +14,12 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 # TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
+# Ensures that the test for database record numbers (for clean image) is run first, before new
+# records are created by subsequent tests.
+INITIAL_TEST := test-../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_record_counts_cohoused_datasets.sh
+OTHER_TESTS := $(filter-out ${INITIAL_TEST},${TESTS})
+${OTHER_TESTS}: ${INITIAL_TEST}
+
 P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
 
 DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
@@ -102,3 +108,4 @@ clean:
 >@rm -rf schema.sql
 >@rm -f err_log.*.txt
 >@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;
+>@rm -f buildcache.sqlite3

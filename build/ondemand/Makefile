@@ -85,3 +85,4 @@ clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -rf ../../test/ondemand/expression_data/
 >@rm -rf ../../test/test_data/fast_cache_testing
+>@rm -f buildcache.sqlite3

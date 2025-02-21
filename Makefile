@@ -577,6 +577,8 @@ force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${
 
 clean: clean-files clean-network-environment
 
+clean-files: clean-network-environment
+
 clean-files:
 >@rm -rf ${PACKAGE_NAME}.egg-info/
 >@rm -rf dist/
@@ -608,6 +610,7 @@ clean-files:
 >@rm -rf ${BUILD_LOCATION}/lib
 >@rm -f build/*/log_of_build.log
 >@rm -f log_of_build.log
+>@rm -f buildcache.sqlite3
 
 docker-compositions-rm: check-docker-daemon-running
 >@rm -f buildcache.sqlite3

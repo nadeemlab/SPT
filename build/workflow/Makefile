@@ -103,3 +103,4 @@ clean:
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@rm -f ${TD}/plots.html
 >@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;
+>@rm -f buildcache.sqlite3

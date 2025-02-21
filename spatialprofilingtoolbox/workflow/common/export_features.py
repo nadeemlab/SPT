@@ -271,10 +271,10 @@ class ADIFeatureSpecificationUploader:
             return names[0]
         data_analysis_study = ADIFeatureSpecificationUploader.form_ondemand_study_name(study)
         cursor.execute('''
-        INSERT INTO data_analysis_study (name) VALUES (%s) ;
+        INSERT INTO data_analysis_study (name) VALUES (%s) ON CONFLICT DO NOTHING;
         ''', (data_analysis_study,))
         cursor.execute('''
-        INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ;
+        INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ON CONFLICT DO NOTHING;
         ''', (study, data_analysis_study))
         return data_analysis_study
 

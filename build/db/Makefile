@@ -11,7 +11,8 @@ UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
-TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
+# TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
+TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
 

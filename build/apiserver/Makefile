@@ -32,19 +32,19 @@ setup-testing:
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "teardown apiserver (unit tests)" "teardown apiserver (unit tests)"
->@docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (unit tests)" | sqlite3 buildcache.sqlite3 ;
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (unit tests)" | sqlite3 buildcache.sqlite3 ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "teardown apiserver (unit tests)" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "teardown apiserver (module tests)" "teardown apiserver (module tests)"
->@docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (module tests)" | sqlite3 buildcache.sqlite3 ;
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (module tests)" | sqlite3 buildcache.sqlite3 ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "teardown apiserver (module tests)" "Down." "Error."
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "teardown apiserver (all tests)" "teardown apiserver (all tests)"
->@docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (all tests)" | sqlite3 buildcache.sqlite3 ;
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (all tests)" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "teardown apiserver (all tests)" "Down." "Error."
 
 ${TESTS}: setup-testing

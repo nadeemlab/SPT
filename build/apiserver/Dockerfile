@@ -15,4 +15,4 @@ RUN python -m pip install --no-deps "$WHEEL_FILENAME"
 ENV API_SERVER_PORT=8080
 HEALTHCHECK CMD curl --fail http://localhost:${API_SERVER_PORT}/ || exit 1
 RUN TZ=America/New_York date +"%A %B %d %Y %l:%M %p %Z" >/build_datetime.txt
-CMD echo "Container built at:" $(cat /build_datetime.txt) && uvicorn app.main:app --root-path /api --workers 4 --app-dir /usr/local/lib/python3.13/site-packages/spatialprofilingtoolbox/apiserver/ --host 0.0.0.0 --port ${API_SERVER_PORT} --log-level debug
+CMD echo "Container built at:" $(cat /build_datetime.txt) && uvicorn app.main:app --root-path /api --app-dir /usr/local/lib/python3.13/site-packages/spatialprofilingtoolbox/apiserver/ --host 0.0.0.0 --port ${API_SERVER_PORT} --log-level debug

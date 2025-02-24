@@ -22,11 +22,11 @@ from sqlmodel import Session, select
 from secure import Secure
 
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
+from spatialprofilingtoolbox.db.exchange_data_formats.findings import Finding
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
-from spatialprofilingtoolbox.db.data_model.findings import Finding, create_db_and_tables, get_engine
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
-from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
+from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
@@ -122,18 +122,6 @@ the same way you would access any HTTP API, for example using:
 * the [Axios](https://axios-http.com/docs/intro) Javascript library
 """
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    while True:
-        try:
-            with DBCursor() as c:
-                break
-        except OperationalError:
-            sleep(1)
-    create_db_and_tables()
-    yield
-
-
 app = FastAPI(
     title=TITLE,
     description=DESCRIPTION,
@@ -143,16 +131,7 @@ app = FastAPI(
         'url': 'https://nadeemlab.org',
         'email': 'mathewj2@mskcc.org"',
     },
-    lifespan=lifespan,
 )
-
-def get_session():
-    engine = get_engine()
-    with Session(engine) as session:
-        yield session
-
-
-SessionDep = Annotated[Session, Depends(get_session)]
 
 
 def custom_openapi():
@@ -161,10 +140,8 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title=TITLE,
         version=VERSION,
-
         # This is a manual replacement for 3.1.0 default, which isn't supported by Swagger UI yet.
         # openapi_version='3.0.0',
-
         servers=[
             {
                 'url': '/api'
@@ -659,13 +636,12 @@ async def importance_fraction_plot(
 
 
 @app.post("/findings/")
-def create_finding(finding: FindingCreate, session: SessionDep) -> Finding:
+def create_finding(finding: FindingCreate) -> Finding:
     if os.environ['ORCID_ENVIRONMENT'] == 'sandbox':
         issuer = 'https://sandbox.orcid.org'
     elif os.environ['ORCID_ENVIRONMENT'] == 'production':
         issuer = 'https://orcid.org'
     orcid_cert = pem_from_url(f'{issuer}/oauth/jwks')
-
     data = jwt.decode(
         finding.id_token,
         key=orcid_cert,
@@ -673,39 +649,38 @@ def create_finding(finding: FindingCreate, session: SessionDep) -> Finding:
         audience=os.environ['ORCID_CLIENT_ID'],
         issuer=[issuer]
     )
-
-    new_finding = Finding(
-        study=finding.study,
-        submission_datetime=now(),
-        status="pending_review",
-        orcid_id=data['sub'],
-        name=data['given_name'],
-        family_name=data.get('family_name', ''),
-        email=finding.email,
-        url=finding.url,
-        description=finding.description,
-        background=finding.background,
-        p_value=finding.p_value,
-        effect_size=finding.effect_size
+    new_finding = (
+        finding.study,
+        now(),
+        None,
+        "pending_review",
+        data['sub'],
+        data['given_name'],
+        data.get('family_name', ''),
+        finding.email,
+        finding.url,
+        finding.description,
+        finding.background,
+        finding.p_value,
+        finding.effect_size
     )
-
-    session.add(new_finding)
-    session.commit()
-    session.refresh(new_finding)
-    return new_finding
+    with DBCursor() as cursor:
+        cursor.execute(
+            'INSERT INTO finding VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);',
+            new_finding,
+        )
+    return Finding(new_finding)
 
 
 @app.get("/findings/")
 def get_findings(
-    session: SessionDep,
     study: str,
-    offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
 ) -> list[Finding]:
-    findings = session.exec(
-        select(Finding).offset(offset).limit(limit).where(
-            Finding.study == study,
-            Finding.status == "published"
+    with DBCursor() as cursor:
+        cursor.execute(
+            'SELECT * FROM finding f WHERE f.study=%s AND f.status=%s LIMIT %s ;',
+            (study, 'published', limit),
         )
-    )
-    return list(findings)
+        rows = tuple(cursor.fetchall())
+    return list(map(lambda row: Finding(*row), rows))

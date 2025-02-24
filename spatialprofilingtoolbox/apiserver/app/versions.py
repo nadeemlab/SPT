@@ -18,8 +18,6 @@ def _get_postgres_version() -> str | None:
     except EnvironmentError:
         return 'unavailable'
 
-PG_VERSION = str(_get_postgres_version())
-
 def retrieve_from_dependency_pins() -> dict[str, str]:
     source_path = Path(__file__).resolve()
     path = source_path.parent
@@ -55,5 +53,5 @@ def get_software_component_versions() -> list[SoftwareComponentVersion]:
     append('scikit-learn', py, pypi, True, pins['scikit-learn'])
     append('umap-learn', py, pypi, True, pins['umap-learn'])
     append('spatialprofilingtoolbox', py, pypi, True, __version__)
-    append('PostgreSQL', 'Database', 'Amazon RDS-managed', False, PG_VERSION)
+    append('PostgreSQL', 'Database', 'Amazon RDS-managed', False, str(_get_postgres_version()))
     return versions

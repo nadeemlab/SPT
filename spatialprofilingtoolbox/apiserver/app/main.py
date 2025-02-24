@@ -4,7 +4,9 @@ from typing import Annotated
 from typing import Literal
 from io import BytesIO
 import os
+from time import sleep
 
+from psycopg import OperationalError
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -122,6 +124,12 @@ the same way you would access any HTTP API, for example using:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    while True:
+        try:
+            with DBCursor() as c:
+                break
+        except OperationalError:
+            sleep(1)
     create_db_and_tables()
     yield
 

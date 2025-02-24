@@ -15,7 +15,7 @@ from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specime
 from spatialprofilingtoolbox.ondemand.computers.cell_data_arrays import CellDataArrays
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
-from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
+from spatialprofilingtoolbox.ondemand.add_feature_value import add_feature_value
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 

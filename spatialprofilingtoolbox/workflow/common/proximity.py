@@ -10,7 +10,7 @@ from numpy import concatenate
 from numpy import uint64 as np_int64
 from numpy.typing import NDArray
 
-from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
+from spatialprofilingtoolbox.ondemand.computers.counts_computer import CountsComputer
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -28,7 +28,7 @@ def compute_proximity_metric_for_signature_pair(
 ) -> float | None:
     def signature(markers: tuple[str, ...]):
         features = tuple(n.symbol for n in feature_names.names)
-        return CountsProvider._compute_signature(markers, features)
+        return CountsComputer._compute_signature(markers, features)
 
     marker_set1 = (phenotype1.positive_markers, phenotype1.negative_markers)
     signatures1 = array(tuple(map(signature, marker_set1)), dtype=np_int64)

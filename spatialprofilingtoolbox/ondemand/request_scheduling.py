@@ -7,9 +7,9 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
-from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
-from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
+from spatialprofilingtoolbox.apiserver.request_scheduling.counts_scheduler import CountsScheduler
+from spatialprofilingtoolbox.apiserver.request_scheduling.proximity_scheduler import ProximityScheduler
+from spatialprofilingtoolbox.apiserver.request_scheduling.squidpy_scheduler import SquidpyScheduler
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeCriteria,
     PhenotypeCount,
@@ -63,7 +63,7 @@ class OnDemandRequester:
         missing_denominator = set(counts.values.keys()).difference(combined_keys)
         if len(missing_denominator) > 0:
             logger.warning(f'In forming population fractions, some samples were missing from denominator: {missing_denominator}')
-        expected = CountsProvider._get_expected_samples(study_name, feature1)
+        expected = CountsScheduler._get_expected_samples(study_name, feature1)
         additional = set(expected).difference(combined_keys)
         return PhenotypeCounts(
             counts=tuple([
@@ -88,7 +88,7 @@ class OnDemandRequester:
         selected: tuple[int, ...],
         blocking: bool,
     ) -> tuple[str, Metrics1D, Metrics1D, bool]:
-        get = CountsProvider.get_metrics_or_schedule
+        get = CountsScheduler.get_metrics_or_schedule
 
         def get_results1() -> tuple[Metrics1D, str]:
             counts, feature1 = get(
@@ -175,7 +175,7 @@ class OnDemandRequester:
         phenotype2 = PhenotypeCriteria(
             positive_markers=signature[2], negative_markers=signature[3],
         )
-        get = ProximityProvider.get_metrics_or_schedule
+        get = ProximityScheduler.get_metrics_or_schedule
         result, _ = get(study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
         return result
 
@@ -203,6 +203,6 @@ class OnDemandRequester:
                     negative_markers = signature[2*i + 1],
                 )
             )
-        get = SquidpyProvider.get_metrics_or_schedule
+        get = SquidpyScheduler.get_metrics_or_schedule
         result, _ = get(study, feature_class=feature_class, phenotypes=phenotypes, radius=radius)
         return result

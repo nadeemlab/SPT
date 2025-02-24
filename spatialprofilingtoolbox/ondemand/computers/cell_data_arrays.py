@@ -3,7 +3,7 @@ from numpy import uint64 as np_int64
 from numpy.typing import NDArray
 from attrs import define
 
-from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
+from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 
 @define
 class CellDataArrays:

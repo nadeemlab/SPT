@@ -80,16 +80,17 @@ apiserver = [
     "cryptography",
     "fastapi",
     "matplotlib",
+    "pandas",
     "psycopg",
     "pydantic",
     "PyJWT",
     "pytz",
     "requests",
+    "scipy",
     "secure",
     "sqlmodel",
     "uvicorn",
     "zstandard",
-    "scikit-learn", "squidpy>=1.6.2", "zarr<3", "dask[dataframe]", "dask-expr",
 ]
 graphs = [
     "bokeh",

@@ -1,82 +1,18 @@
-"""Selected metrics from the squidpy library, adapted for use with SPT."""
 
 from typing import cast
 from itertools import chain
 
-from pandas import DataFrame
-
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.ondemand.phenotype_str import (
-    phenotype_str_to_phenotype,
-    phenotype_to_phenotype_str,
-)
-from spatialprofilingtoolbox.ondemand.providers.provider import OnDemandProvider
-from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
+from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
-from spatialprofilingtoolbox.workflow.common.squidpy import (
-    lookup_squidpy_feature_class,
-    compute_squidpy_metric_for_one_sample,
-)
+from spatialprofilingtoolbox.apiserver.request_scheduling.computation_scheduler import GenericComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class SquidpyProvider(PendingProvider):
-    """Calculate selected squidpy metrics."""
-
-    def compute(self) -> None:
-        args, arrays = self._prepare_parameters()
-        if arrays.identifiers is None:
-            self.handle_insert_value(None, allow_null=True)
-        else:
-            value = self._perform_computation(args, arrays)
-            self.handle_insert_value(value, allow_null=True)
-
-    def _prepare_parameters(
-        self,
-    ) -> tuple[tuple[str, tuple[PhenotypeCriteria, ...], float | None], CellDataArrays]:
-        study = self.job.study
-        feature_specification = str(self.job.feature_specification)
-        method = self.retrieve_feature_derivation_method(study, feature_specification)
-        feature_class = cast(str, lookup_squidpy_feature_class(method))
-        _, specifiers = SquidpyProvider.retrieve_specifiers(study, feature_specification)
-        phenotypes: tuple[PhenotypeCriteria, ...]
-        if feature_class == 'co-occurrence':
-            phenotypes = tuple(map(phenotype_str_to_phenotype, specifiers[0:2]))
-            radius = float(specifiers[2])
-        else:
-            phenotypes = tuple(map(phenotype_str_to_phenotype, specifiers))
-            radius = None
-        arrays = self.get_cell_data_arrays()
-        return ((feature_class, phenotypes, radius), arrays)
-
-    def _perform_computation(
-        self,
-        args: tuple[str, tuple[PhenotypeCriteria, ...], float | None],
-        arrays: CellDataArrays,
-    ) -> float | None:
-        feature_class, phenotypes, radius = args
-        df = self._form_cells_dataframe(arrays)
-        return compute_squidpy_metric_for_one_sample(df, phenotypes, feature_class, radius=radius)
-
-    @staticmethod
-    def _form_cells_dataframe(arrays: CellDataArrays) -> DataFrame:
-        features = tuple(f.symbol for f in arrays.feature_names.names)
-        rows = []
-        zipped = zip(arrays.identifiers, arrays.phenotype, arrays.location.transpose())
-        for identifier, phenotype, location in zipped:
-            location_list = [location[0], location[1]]
-            vector = list(OnDemandProvider.extract_binary(phenotype, len(features)))
-            row = tuple(vector + [identifier] + location_list)
-            rows.append(row)
-        columns = list(features) + ['histological_structure_id'] + ['pixel x', 'pixel y']
-        df = DataFrame(rows, columns=columns)
-        df.set_index('histological_structure_id', inplace=True)
-        return df
-
+class SquidpyScheduler(GenericComputationScheduler):
     @classmethod
     def get_or_create_feature_specification(cls,
         study: str,

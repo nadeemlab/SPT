@@ -1,57 +1,17 @@
-"""Proximity calculation from pairs of signatures."""
 
 from typing import cast
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.ondemand.phenotype_str import (\
-    phenotype_str_to_phenotype,
-    phenotype_to_phenotype_str,
-)
-from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.ondemand.providers.provider import CellDataArrays
+from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
-from spatialprofilingtoolbox.workflow.common.proximity import \
-    compute_proximity_metric_for_signature_pair
+from spatialprofilingtoolbox.apiserver.request_scheduling.computation_scheduler import GenericComputationScheduler
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
 
-class ProximityProvider(PendingProvider):
-    """Do proximity calculation from pair of signatures."""
-
-    def compute(self) -> None:
-        args, arrays = self._prepare_parameters()
-        if arrays.identifiers is None:
-            self.handle_insert_value(None, allow_null=True)
-        else:
-            value = self._perform_computation(args, arrays)
-            self.handle_insert_value(value, allow_null=True)
-
-    def _prepare_parameters(
-        self,
-    ) -> tuple[tuple[PhenotypeCriteria, PhenotypeCriteria, float], CellDataArrays]:
-        study = self.job.study
-        feature_specification = str(self.job.feature_specification)
-        _, specifiers = ProximityProvider.retrieve_specifiers(study, feature_specification)
-        phenotype1 = phenotype_str_to_phenotype(specifiers[0])
-        phenotype2 = phenotype_str_to_phenotype(specifiers[1])
-        radius = float(specifiers[2])
-        arrays = self.get_cell_data_arrays()
-        return (phenotype1, phenotype2, radius), arrays
-
-    def _perform_computation(self, args: tuple, arrays: CellDataArrays) -> float | None:
-        phenotype1, phenotype2, radius = args
-        return compute_proximity_metric_for_signature_pair(
-            phenotype1,
-            phenotype2,
-            radius,
-            arrays.phenotype,
-            arrays.location,
-            arrays.feature_names,
-        )
-
+class ProximityScheduler(GenericComputationScheduler):
     @classmethod
     def get_or_create_feature_specification(
         cls,

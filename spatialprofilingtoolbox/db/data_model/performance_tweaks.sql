@@ -51,7 +51,7 @@ ALTER TABLE study_component
 ADD CONSTRAINT unique_sc UNIQUE (primary_study, component_study) ;
 
 CREATE TYPE findingstatus AS ENUM('pending_review','published','deferred_decision','rejected');
-CREATE TABLE findings (
+CREATE TABLE finding (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     study VARCHAR(512) REFERENCES default_study_lookup.study_lookup,
     submission_datetime TIMESTAMP,

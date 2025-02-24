@@ -80,7 +80,7 @@ SINGLETON_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),singleton-test-$(sub
 COMBINED_TEST_TARGETS := $(foreach submodule,$(SUBMODULES),combined-test-$(submodule))
 DLI := force-rebuild-data-loaded-image
 P := ${BUILD_LOCATION_ABSOLUTE}
-.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated before_all_tests initialize_message_cache
+.PHONY: help release-package check-for-pypi-credentials print-source-files build-and-push-docker-images ${DOCKER_PUSH_SUBMODULE_TARGETS} ${DOCKER_PUSH_PLUGIN_TARGETS} ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS} build-docker-images test module-tests ${MODULE_TEST_TARGETS} ${UNIT_TEST_TARGETS} clean clean-files docker-compositions-rm clean-network-environment generic-spt-push-target data-loaded-images-push-target ensure-plugin-submodules-are-populated before_all_tests
 
 export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
 export DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
@@ -610,7 +610,6 @@ clean-files:
 >@rm -rf ${BUILD_LOCATION}/lib
 >@rm -f build/*/log_of_build.log
 >@rm -f log_of_build.log
->@rm -f buildcache.sqlite3
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "$@" "Running docker compose rm (remove)"

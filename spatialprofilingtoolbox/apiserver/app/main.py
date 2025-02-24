@@ -4,20 +4,15 @@ from typing import Annotated
 from typing import Literal
 from io import BytesIO
 import os
-from time import sleep
 
-from psycopg import OperationalError
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi import Header, Response
 from fastapi import Query
 from fastapi import HTTPException
-from fastapi import Depends
 import matplotlib.pyplot as plt  # type: ignore
 
 import jwt
-from sqlmodel import Session, select
 
 from secure import Secure
 

@@ -37,6 +37,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
+    valid_study_name,
     ValidStudy,
     ValidPhenotypeSymbol,
     ValidPhenotypeList,
@@ -631,19 +632,22 @@ async def importance_fraction_plot(
 
 
 @app.post("/findings/")
-def create_finding(finding: FindingCreate) -> Finding:
+async def create_finding(finding: FindingCreate) -> Finding:
     if os.environ['ORCID_ENVIRONMENT'] == 'sandbox':
         issuer = 'https://sandbox.orcid.org'
     elif os.environ['ORCID_ENVIRONMENT'] == 'production':
         issuer = 'https://orcid.org'
     orcid_cert = pem_from_url(f'{issuer}/oauth/jwks')
-    data = jwt.decode(
-        finding.id_token,
-        key=orcid_cert,
-        algorithms=['RS256'],
-        audience=os.environ['ORCID_CLIENT_ID'],
-        issuer=[issuer]
-    )
+    if os.environ['ORCID_ENVIRONMENT'] == 'sandbox' and os.environ['SPT_TESTING_MODE'] == '1':
+        data = {'sub': '0000', 'given_name': 'First', 'family_name': 'Last'}
+    else:
+        data = jwt.decode(
+            finding.id_token,
+            key=orcid_cert,
+            algorithms=['RS256'],
+            audience=os.environ['ORCID_CLIENT_ID'],
+            issuer=[issuer]
+        )
     new_finding = (
         finding.study,
         now(),
@@ -659,7 +663,14 @@ def create_finding(finding: FindingCreate) -> Finding:
         finding.p_value,
         finding.effect_size
     )
-    with DBCursor() as cursor:
+    try:
+        study = await valid_study_name(finding.study)
+    except ValueError:
+        raise HTTPException(
+            status_code=404,
+            detail=f'"{finding.study}" is not a valid study.',
+        )
+    with DBCursor(study=study) as cursor:
         cursor.execute(
             'INSERT INTO finding VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);',
             new_finding,
@@ -669,10 +680,10 @@ def create_finding(finding: FindingCreate) -> Finding:
 
 @app.get("/findings/")
 def get_findings(
-    study: str,
+    study: ValidStudy,
     limit: Annotated[int, Query(le=100)] = 100,
 ) -> list[Finding]:
-    with DBCursor() as cursor:
+    with DBCursor(study=study) as cursor:
         cursor.execute(
             'SELECT * FROM finding f WHERE f.study=%s AND f.status=%s LIMIT %s ;',
             (study, 'published', limit),

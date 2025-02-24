@@ -47,6 +47,7 @@ services:
       SINGLE_CELL_DATABASE_USER: postgres
       SINGLE_CELL_DATABASE_PASSWORD: postgres
       SPT_TESTING_MODE: 1
+      ORCID_ENVIRONMENT: sandbox
     pull_policy: never
 
 networks:

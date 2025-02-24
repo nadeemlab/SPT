@@ -475,7 +475,7 @@ check-docker-daemon-running:
 # Some dependencies to force serial processing (build environments would conflict if concurrent)
 clean-network-environment: initialize_message_cache
 before_all_tests: clean-network-environment
->@${MESSAGE} start "start timing" "Timing tests"
+>@${MESSAGE} start "start timing" "Start timing"
 
 ${P}/db/docker.built: before_all_tests
 ${P}/apiserver/docker.built: ${P}/db/docker.built

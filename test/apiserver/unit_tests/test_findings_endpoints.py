@@ -36,10 +36,9 @@ def test_findings():
     item = items[0]
     for attribute in ['study', 'email', 'url', 'description', 'background', 'p_value', 'effect_size']:
         a1 = getattr(finding, attribute)
-        a2 = getattr(item, attribute)
+        a2 = item[attribute]
         if a1 != a2:
             raise ValueError(f'{attribute} value does not agree: {a1} ; {a2}')
-    print(item)
 
 if __name__=='__main__':
     test_findings()

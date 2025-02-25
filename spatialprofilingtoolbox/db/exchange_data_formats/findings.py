@@ -36,3 +36,19 @@ class Finding(BaseModel):
     background: str
     p_value: float
     effect_size: float
+
+finding_fields = [
+    'study',
+    'submission_datetime',
+    'publication_datetime',
+    'status',
+    'orcid_id',
+    'name',
+    'family_name',
+    'email',
+    'url',
+    'description',
+    'background',
+    'p_value',
+    'effect_size',
+]

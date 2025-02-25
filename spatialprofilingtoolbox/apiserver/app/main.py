@@ -16,6 +16,7 @@ import jwt
 
 from secure import Secure
 
+from spatialprofilingtoolbox.db.exchange_data_formats.findings import finding_fields
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import Finding
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
@@ -640,6 +641,7 @@ async def create_finding(finding: FindingCreate) -> Finding:
     orcid_cert = pem_from_url(f'{issuer}/oauth/jwks')
     if os.environ['ORCID_ENVIRONMENT'] == 'sandbox' and os.environ['SPT_TESTING_MODE'] == '1':
         data = {'sub': '0000', 'given_name': 'First', 'family_name': 'Last'}
+        status = 'published'
     else:
         data = jwt.decode(
             finding.id_token,
@@ -648,11 +650,12 @@ async def create_finding(finding: FindingCreate) -> Finding:
             audience=os.environ['ORCID_CLIENT_ID'],
             issuer=[issuer]
         )
+        status = 'pending_review'
     new_finding = (
         finding.study,
         now(),
         None,
-        "pending_review",
+        status,
         data['sub'],
         data['given_name'],
         data.get('family_name', ''),
@@ -672,10 +675,10 @@ async def create_finding(finding: FindingCreate) -> Finding:
         )
     with DBCursor(study=study) as cursor:
         cursor.execute(
-            'INSERT INTO finding VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);',
+            'INSERT INTO finding VALUES (DEFAULT,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);',
             new_finding,
         )
-    return Finding(new_finding)
+    return Finding(id=-1, **{key: new_finding[i] for i, key in enumerate(finding_fields)})
 
 
 @app.get("/findings/")
@@ -689,4 +692,4 @@ def get_findings(
             (study, 'published', limit),
         )
         rows = tuple(cursor.fetchall())
-    return list(map(lambda row: Finding(*row), rows))
+    return list(map(lambda row: Finding(id=-1, **{key: row[i + 1] for i, key in enumerate(finding_fields)}), rows))

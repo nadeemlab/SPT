@@ -4,7 +4,7 @@
 - As part of the development environment updates, the Makefiles and Dockerfiles were simplified, and the for-testing Docker compose files are now creating environments that are more isolated from one another.
 - We updated for `secure==1.0.1` and the headers were updated accordingly.
 - We updated for `psycopg==3.2.5` by slightly altering our Postgres notifications processing.
-- The computation task/job-queue code was updated to separate pushing jobs (the concern of the API server) and popping jobs (the concern of the worker containers).
+- The computation task/job-queue code was refactored to separate pushing jobs (the concern of the API server) and popping jobs (the concern of the worker containers).
 - ORM usage (`sqlmodel`, `alembic`), which was minimal, was deprecated.
 
 # v1.0.10

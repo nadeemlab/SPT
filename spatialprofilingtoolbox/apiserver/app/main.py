@@ -673,7 +673,7 @@ async def create_finding(finding: FindingCreate) -> Finding:
             status_code=404,
             detail=f'"{finding.study}" is not a valid study.',
         )
-    with DBCursor(study=study) as cursor:
+    with DBCursor() as cursor:
         cursor.execute(
             'INSERT INTO finding VALUES (DEFAULT,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);',
             new_finding,
@@ -686,7 +686,7 @@ def get_findings(
     study: ValidStudy,
     limit: Annotated[int, Query(le=100)] = 100,
 ) -> list[Finding]:
-    with DBCursor(study=study) as cursor:
+    with DBCursor() as cursor:
         cursor.execute(
             'SELECT * FROM finding f WHERE f.study=%s AND f.status=%s LIMIT %s ;',
             (study, 'published', limit),

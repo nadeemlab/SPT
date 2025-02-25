@@ -2,7 +2,7 @@
 import json
 import sys
 
-from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
+from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 
 
 def main():

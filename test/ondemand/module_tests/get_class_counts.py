@@ -2,7 +2,7 @@
 import sys
 import json
 
-from spatialprofilingtoolbox.ondemand.request_scheduling import OnDemandRequester
+from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 
 
 def get_counts(study_name, positives, negatives):

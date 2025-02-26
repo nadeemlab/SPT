@@ -242,9 +242,10 @@ class ADIFeatureSpecificationUploader:
     @classmethod
     def add_new_feature(cls, specifiers, derivation_method, data_analysis_study, cursor: PsycopgCursor, appendix: str | None = None):
         cursor.execute('BEGIN;')
-        identifier = cls.insert_hash(derivation_method, specifiers, cursor, appendix=appendix)
-        cls.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
-        cls.insert_specifiers(identifier, specifiers, cursor)
+        identifier, is_new = cls.insert_hash(derivation_method, specifiers, cursor, appendix=appendix)
+        if is_new:
+            cls.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
+            cls.insert_specifiers(identifier, specifiers, cursor)
         cursor.execute('COMMIT;')
         return identifier
 
@@ -307,8 +308,9 @@ class ADIFeatureSpecificationUploader:
         )
 
     @classmethod
-    def insert_hash(cls, derivation_method: str, specifiers: tuple, cursor: PsycopgCursor, appendix: str | None=None) -> int:
+    def insert_hash(cls, derivation_method: str, specifiers: tuple, cursor: PsycopgCursor, appendix: str | None=None) -> tuple[int, bool]:
         hash_identity = cls._generate_hash(tuple([derivation_method] + list(specifiers) + ([appendix] if appendix else [])))
+        logger.debug(hash_identity)
         try:
             cursor.execute(
                 '''
@@ -323,12 +325,13 @@ class ADIFeatureSpecificationUploader:
             )
             feature = tuple(cursor.fetchall())[0][0]
             logger.debug(f'Created new feature: {feature}')
+            return (feature, True)
         except UniqueViolation:
             cursor.execute('COMMIT;')
             cursor.execute('SELECT feature FROM feature_hash WHERE hash_identity=%s;', (hash_identity,))
             feature = tuple(cursor.fetchall())[0][0]
-            logger.debug(f'Feauture already exists: {feature}')
-        return feature
+            logger.debug(f'Feature already exists: {feature}')
+            return (feature, False)
 
     @classmethod
     def _generate_hash(cls, specifiers: tuple) -> str:

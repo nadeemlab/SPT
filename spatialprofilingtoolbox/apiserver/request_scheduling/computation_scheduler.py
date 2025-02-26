@@ -102,7 +102,7 @@ class GenericComputationScheduler(ABC):
     ) -> str:
         with DBCursor(study=study) as cursor:
             feature_specification = ADIFeatureSpecificationUploader.add_new_feature(
-                specifiers, method, data_analysis_study, cursor,
+                specifiers, method, data_analysis_study, cursor, appendix=appendix,
             )
         return feature_specification
 

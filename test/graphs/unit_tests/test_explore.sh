@@ -1,5 +1,5 @@
 spt graphs explore-classes \
-    --database-config-file ../db/.spt_db.config.container \
+    --database-config-file ../graphs/.spt_db.config.container \
     --study-name "Melanoma intralesional IL2"
 status=$?
 [ $status -eq 0 ] || echo "graphs explore-classes failed."

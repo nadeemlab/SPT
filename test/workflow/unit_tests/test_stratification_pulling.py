@@ -5,7 +5,7 @@ from spatialprofilingtoolbox.db.stratification_puller import StratificationPulle
 
 
 def test_stratification_puller(measured_only: bool):
-    database_config_file='../db/.spt_db.config.container'
+    database_config_file='../workflow/.spt_db.config.container'
     puller = StratificationPuller(database_config_file)
     puller.pull(measured_only=measured_only)
     stratification = puller.get_stratification()

@@ -6,8 +6,8 @@ status="$?"
 [ $status -eq 0 ] || echo "graphs extract failed."
 
 cat "label_to_result.json"
-python3.11 -c 'import pandas as pd; print(pd.read_hdf("cells.h5"))'
-python3.11 -c 'import pandas as pd; print(pd.read_hdf("labels.h5"))'
+python3.13 -c 'import pandas as pd; print(pd.read_hdf("cells.h5"))'
+python3.13 -c 'import pandas as pd; print(pd.read_hdf("labels.h5"))'
 
 rm "label_to_result.json"; rm "cells.h5"; rm "labels.h5"
 

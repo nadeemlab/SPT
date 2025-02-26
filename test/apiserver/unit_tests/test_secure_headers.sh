@@ -1,5 +1,5 @@
 
-query=http://spt-apiserver-testing:8080/study-names/
+query=http://spt-apiserver-testing-apiserver:8080/study-names/
 
 curl -s $query 1>/dev/null 2>/dev/null;
 if [ "$?" -gt 0 ];
@@ -9,7 +9,7 @@ then
     exit 1
 fi
 
-curl -s --verbose $query 2>&1 | tail -n +9 | grep -v 'date: ' | tr -d '\b\r' > response.txt
+curl -s --verbose $query 2>&1 | grep '^< ' | grep -v 'date: ' | tr -d '\b\r' > response.txt
 
 diff unit_tests/expected_headers_example.txt response.txt
 status=$?

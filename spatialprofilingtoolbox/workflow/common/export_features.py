@@ -271,10 +271,10 @@ class ADIFeatureSpecificationUploader:
             return names[0]
         data_analysis_study = ADIFeatureSpecificationUploader.form_ondemand_study_name(study)
         cursor.execute('''
-        INSERT INTO data_analysis_study (name) VALUES (%s) ;
+        INSERT INTO data_analysis_study (name) VALUES (%s) ON CONFLICT DO NOTHING;
         ''', (data_analysis_study,))
         cursor.execute('''
-        INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ;
+        INSERT INTO study_component (primary_study, component_study) VALUES (%s , %s) ON CONFLICT DO NOTHING;
         ''', (study, data_analysis_study))
         return data_analysis_study
 
@@ -305,9 +305,3 @@ class ADIFeatureSpecificationUploader:
         cursor.executemany('''
         INSERT INTO feature_specifier (feature_specification, specifier, ordinality) VALUES (%s, %s, %s) ;
         ''', [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)])
-
-
-def add_feature_value(feature_specification, subject, value, cursor: PsycopgCursor):
-    cursor.execute('''
-    INSERT INTO quantitative_feature_value (feature, subject, value) VALUES (%s, %s, %s) ;
-    ''', (feature_specification, subject, value))

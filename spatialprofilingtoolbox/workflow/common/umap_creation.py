@@ -14,7 +14,7 @@ from sklearn.pipeline import make_pipeline  # type: ignore
 from sklearn.preprocessing import QuantileTransformer  # type: ignore
 
 from spatialprofilingtoolbox.workflow.common.sparse_matrix_puller import SparseMatrixPuller
-from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import FEATURE_MATRIX_WITH_INTENSITIES
+from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 
 

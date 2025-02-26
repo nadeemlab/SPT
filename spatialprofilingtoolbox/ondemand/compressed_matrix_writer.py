@@ -9,8 +9,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_primary_study
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 from spatialprofilingtoolbox.standalone_utilities.float8 import encode_float8_with_clipping
-
-FEATURE_MATRIX_WITH_INTENSITIES = 'feature_matrix with intensities'
+from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES
 
 logger = colorized_logger(__name__)
 

@@ -47,6 +47,9 @@ ADD CONSTRAINT unique_qfvq UNIQUE (feature, subject) ;
 ALTER TABLE quantitative_feature_value
 ADD CONSTRAINT unique_qfv UNIQUE (feature, subject) ;
 
+ALTER TABLE study_component
+ADD CONSTRAINT unique_sc UNIQUE (primary_study, component_study) ;
+
 CREATE TABLE ondemand_studies_index (
     specimen VARCHAR(512),
     blob_type VARCHAR(512),

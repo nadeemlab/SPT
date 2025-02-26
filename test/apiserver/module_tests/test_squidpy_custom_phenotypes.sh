@@ -60,7 +60,7 @@ function test_squidpy_custom_phenotypes() {
     then
         endpoint="${endpoint}s"
     fi
-    query="http://spt-apiserver-testing:8080/$endpoint/?study=Melanoma%20intralesional%20IL2&$phenotype_query&feature_class=$feature_class"
+    query="http://spt-apiserver-testing-apiserver:8080/$endpoint/?study=Melanoma%20intralesional%20IL2&$phenotype_query&feature_class=$feature_class"
 
     if [[ "$feature_class" == "co-occurrence" ]];
     then
@@ -88,21 +88,21 @@ function test_squidpy_custom_phenotypes() {
     start=$SECONDS
     while (( SECONDS - start < 300 )); do
         echo -en "Doing query $blue$query$reset_code ... "
-        curl -s "$query" > _squidpy.json;
+        curl -s "$query" > _squidpy_cp.json;
         if [ "$?" -gt 0 ];
         then
             echo -e "${red}Error with apiserver query.$reset_code"
-            cat _squidpy.json
-            rm _squidpy.json
+            cat _squidpy_cp.json
+            rm _squidpy_cp.json
             exit 1
         fi
-        pending=$(python -c 'import json; o=json.loads(open("_squidpy.json").read()); print(o["is_pending"])')
+        pending=$(python -c 'import json; o=json.loads(open("_squidpy_cp.json").read()); print(o["is_pending"])')
         if [[ "$pending" == "False" ]];
         then
             echo
             echo -en "${yellow}Metrics available.$reset_code "
-            cat _squidpy.json | python -m json.tool > squidpy.json
-            rm _squidpy.json
+            cat _squidpy_cp.json | python -m json.tool > squidpy.json
+            rm _squidpy_cp.json
             break
         else
             waitperiod=5.0

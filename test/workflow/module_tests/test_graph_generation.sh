@@ -5,7 +5,7 @@ nextflow run . || { echo "Error: Nextflow run failed"; exit 1; }
 cat "results/feature_names.txt"
 
 set -e
-python3.11 -c '
+python3.13 -c '
 from spatialprofilingtoolbox.graphs.util import load_hs_graphs
 graphs, _ = load_hs_graphs("results/")
 assert len(graphs) == 4, f"Error: Graph count ({len(graphs)}) does not match true value (4)."

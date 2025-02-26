@@ -209,7 +209,7 @@ The SPT application is supported by a web API, which provides fine-grained acces
 See [docs/maintenance.md](docs/maintenance.md).
 
 # Deployment options
-For assistance setting up a deployment of the SPT application for your institution or business, write to us at [nadeems@mskcc.org](nadeems@mskcc.org).
+For assistance setting up a deployment of the SPT application for your institution or lab, write to us at [nadeems@mskcc.org](nadeems@mskcc.org).
 
 The application can be deployed in several ways:
 

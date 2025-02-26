@@ -4,7 +4,7 @@ reset_code="\033[0m"
 
 echo
 echo
-echo -e "${titlecolor}(Started recording Docker compose logs for this test.)${reset_code}"
+echo -e "${titlecolor}(Started recording Docker compose logs.)${reset_code}"
 
 nowtime=$(TZ=GMT date -u +"%Y-%m-%dT%H:%M:%SZ") ; \
 

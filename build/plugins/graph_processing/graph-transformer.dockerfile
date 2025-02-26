@@ -19,9 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install python packages you need here
 ENV PIP_NO_CACHE_DIR=1
-RUN pip install h5py==3.10.0
-RUN pip install numpy==1.24.3
-RUN pip install scipy==1.10.1
+RUN pip install h5py==3.12.1
+RUN pip install numpy==2.2.2
+RUN pip install scipy==1.15.1
 RUN pip install pandas
 RUN pip install pillow
 RUN pip install tensorboardX

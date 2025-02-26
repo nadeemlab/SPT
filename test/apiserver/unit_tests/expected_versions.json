@@ -3,35 +3,35 @@
         "component_name": "Squidpy",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "1.5.0",
+        "version": "1.6.2",
         "relevant_to_reproducible_computation": true
     },
     {
         "component_name": "Pandas",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "2.2.2",
+        "version": "2.2.3",
         "relevant_to_reproducible_computation": true
     },
     {
         "component_name": "NumPy",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "1.26.4",
+        "version": "2.1.3",
         "relevant_to_reproducible_computation": true
     },
     {
         "component_name": "SciPy",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "1.13.1",
+        "version": "1.15.2",
         "relevant_to_reproducible_computation": true
     },
     {
         "component_name": "scikit-learn",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "1.5.0",
+        "version": "1.6.1",
         "relevant_to_reproducible_computation": true
     },
     {
@@ -45,14 +45,14 @@
         "component_name": "spatialprofilingtoolbox",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "1.0.9",
+        "version": "1.0.15",
         "relevant_to_reproducible_computation": true
     },
     {
         "component_name": "PostgreSQL",
         "format": "Database",
         "source": "Amazon RDS-managed",
-        "version": "16.0",
+        "version": "17.2",
         "relevant_to_reproducible_computation": false
     }
 ]

@@ -4,8 +4,8 @@ from asyncio import get_event_loop as asyncio_get_event_loop
 from time import sleep as time_sleep
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
-from spatialprofilingtoolbox.workflow.common.export_features import add_feature_value
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.ondemand.add_feature_value import add_feature_value
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

@@ -10,38 +10,44 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
-.PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
+P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
+
+.PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
-test: teardown-testing
+combined-tests: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "graphs"
->@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-db---testing-only ; \
-    echo "$$?" > status_code
->@${MESSAGE} end "Setup env." "Env not setup."
->@rm -f status_code
+>@rm -f buildcache.sqlite3
+>@${MESSAGE} start "$@" "graphs"
+>@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
+    bash ${P}/poll_container_readiness.sh \
+     spt-db---testing-only-graphs ; \
+    status_code=$$? ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
+>@${MESSAGE} start "$@" "teardown graphs"
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
+>@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
+>@${MESSAGE} start "$@" "teardown graphs"
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
+>@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
+>@${MESSAGE} start "$@" "teardown graphs"
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
+>@${MESSAGE} end "$@" "Down." "Error."
 
 ${TESTS}: setup-testing
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
@@ -51,7 +57,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "\u2503 $$test_name"
+    ${MESSAGE} start "$@" "$$test_name"
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -62,17 +68,16 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/graphs/; $$executor $$test_script" ; \
     docker run \
-     -i \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd" \
       --gpus all ; \
-    echo "$$?" > status_code
->@${MESSAGE} end "Passed." "Failed."
->@rm -f status_code
+    status_code=$$? ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:
 >@rm -f ${WHEEL_FILENAME}
->@rm -f status_code
+>@rm -f buildcache.sqlite3

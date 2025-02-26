@@ -19,7 +19,7 @@ from pandas import isnull as is_nat
 
 from spatialprofilingtoolbox.standalone_utilities.timestamping import now
 from spatialprofilingtoolbox.standalone_utilities.timestamping import GUESSED_LOCAL_TIMEZONE
-from spatialprofilingtoolbox.db.data_model.findings import FindingStatus
+from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingStatus
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file

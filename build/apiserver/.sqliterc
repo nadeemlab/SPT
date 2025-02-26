@@ -1,0 +1,3 @@
+.output /dev/null
+PRAGMA busy_timeout=20000;
+.output stdout

@@ -1,3 +1,12 @@
+# v1.0.15
+- Many updates were made to support the most recent versions of dependencies. This included PostgresQL 17.2 and Python 3.13, and a few dozen Python package dependencies.
+- The development environment was heavily modified to make future dependency-related upates easier. We have separate pinned (`requirements.txt`) and unpinned (`pyproject.toml`) dependency declarations. Now, on every run of the integration test suite, the `requirements.txt` files are updated with the latest versions, so it will be easier to make such updates incrementally (i.e. with `git status` to see version changes). As the codebase is primarily to support an application and not a library, we do not have a real need to support older versions of anything.
+- As part of the development environment updates, the Makefiles and Dockerfiles were simplified, and the for-testing Docker compose files are now creating environments that are more isolated from one another.
+- We updated for `secure==1.0.1` and the headers were updated accordingly.
+- We updated for `psycopg==3.2.5` by slightly altering our Postgres notifications processing.
+- The computation task/job-queue code was refactored to separate pushing jobs (the concern of the API server) and popping jobs (the concern of the worker containers).
+- ORM usage (`sqlmodel`, `alembic`), which was minimal, was deprecated.
+
 # v1.0.10
 - New `findings` API endpoint provides a mechanism for users to contribute precise findings with attribution.
 - Adds `spt db review-submissions` to interactively make specific alterations to the contributions (e.g. to correct typos) and also to update visibility and review status.

@@ -11,7 +11,16 @@ UNIT_TESTS := $(foreach test_file,$(UNIT_TEST_FILES),test-$(test_file))
 MODULE_TEST_FILES := $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.sh ) $(wildcard ../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_*.py )
 MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 
-TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
+# TESTS := ${UNIT_TESTS} ${MODULE_TESTS} ${SINGLETON_TESTS}
+TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
+
+# Ensures that the test for database record numbers (for clean image) is run first, before new
+# records are created by subsequent tests.
+INITIAL_TEST := test-../../${TEST_LOCATION}/${MODULE_NAME}/module_tests/test_record_counts_cohoused_datasets.sh
+OTHER_TESTS := $(filter-out ${INITIAL_TEST},${TESTS})
+${OTHER_TESTS}: ${INITIAL_TEST}
+
+P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
 
 DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
 
@@ -21,47 +30,50 @@ schema.sql:
      --mount type=bind,src=${DB_BUILD_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c \
-     'cd /mount_sources; adiscstudies dump-schema > schema.sql' ; \
-     echo "$$?" > status_code
+     'cd /mount_sources; adiscstudies dump-schema > schema.sql' ;
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing teardown-testing
 
 singleton-tests: teardown-singleton-testing
 unit-tests: teardown-unit-testing
 module-tests: teardown-module-testing
-test: teardown-testing
+combined-tests: teardown-testing
 
 setup-testing:
->@${MESSAGE} start "db"
->@docker compose up -d && \
-    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness.sh \
-     spt-db---testing-only ; \
-    echo "$$?" > status_code
->@${MESSAGE} end "Setup env." "Env not setup."
->@rm -f status_code
+>@rm -f buildcache.sqlite3
+>@${MESSAGE} start "$@" "db"
+>@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
+    bash ${P}/poll_container_readiness.sh \
+     spt-db---testing-only-db ; \
+    status_code=$$? ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
 teardown-singleton-testing: ${SINGLETON_TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
+>@${MESSAGE} start "$@" "teardown db"
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
+>@${MESSAGE} start "$@" "teardown db"
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
+>@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@${MESSAGE} end "Down." "Error."
+>@${MESSAGE} start "$@" "teardown db"
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
+>@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "\u2517\u2501"
->@docker compose down && docker compose rm --force --stop ; echo "$$?" > status_code
->@${MESSAGE} end "Down." "Error."
->@rm -f status_code
+>@${MESSAGE} start "$@" "teardown db"
+>@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} end "$@" "Down." "Error."
 
 ${TESTS}: setup-testing
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
@@ -71,7 +83,7 @@ ${TESTS}: setup-testing
     extension=$$(echo $$test_name | grep -o "\.sh\|\.py$$" ) ; \
     test_name=$${test_name/$$extension/} ; \
     test_name=$$(echo "$$test_name" | tr '_' ' ' ) ; \
-    ${MESSAGE} start "\u2503 $$test_name"
+    ${MESSAGE} start "$@" "$$test_name"
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
     test_script=$${test_target/test-/} ; \
     test_name=$${test_script/module_tests\/test_/} ; \
@@ -81,24 +93,19 @@ ${TESTS}: setup-testing
     if [[ "$$extension" == ".py" ]]; then executor=python; fi ; \
     if [[ "$$extension" == ".sh" ]]; then executor=bash; fi ; \
     test_cmd="cd /mount_sources/db/ && $$executor $$test_script" ; \
-    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/record_docker_logs.sh & \
-    sleep 0.2; \
     docker run \
-     -i \
      --rm \
      --network ${MODULE_NAME}_isolated_temporary_test \
      --mount type=bind,src=${TEST_LOCATION_ABSOLUTE},dst=/mount_sources \
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd && exit $$?"; \
-    echo "$$?" > status_code ; \
-    kill %1
->@bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/print_docker_logs.sh
->@${MESSAGE} end "Passed." "Failed."
->@rm -f status_code
+    status_code=$$? ; \
+    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:
 >@rm -f ${WHEEL_FILENAME}
 >@rm -rf schema.sql
->@rm -f status_code
 >@rm -f err_log.*.txt
 >@for f in dlogs.db.txt dlogs.api.txt dlogs.od.txt; do rm -f $$f; done;
+>@rm -f buildcache.sqlite3

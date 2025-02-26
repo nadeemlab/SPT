@@ -8,14 +8,14 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
-from spatialprofilingtoolbox.ondemand.providers.pending_provider import PendingProvider
-from spatialprofilingtoolbox.ondemand.providers.squidpy_provider import SquidpyProvider
-from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
-from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
+from spatialprofilingtoolbox.ondemand.computers.generic_job_computer import GenericJobComputer
+from spatialprofilingtoolbox.ondemand.computers.counts_computer import CountsComputer
+from spatialprofilingtoolbox.ondemand.computers.proximity_computer import ProximityComputer
+from spatialprofilingtoolbox.ondemand.computers.squidpy_computer import SquidpyComputer
 
 from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
-from spatialprofilingtoolbox.ondemand.scheduler import MetricComputationScheduler
+from spatialprofilingtoolbox.ondemand.metrics_job_queue_popper import MetricsJobQueuePopper
 from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
 from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -26,12 +26,10 @@ logger = colorized_logger(__name__)
 
 class OnDemandWorker:
     """Worker that computes one feature value at a time."""
-    queue: MetricComputationScheduler
     connection: PsycopgConnection
     work_start_time_seconds: float | None
 
     def __init__(self):
-        self.queue = MetricComputationScheduler(None)
         self.work_start_time_seconds = None
 
     def start(self) -> None:
@@ -44,13 +42,13 @@ class OnDemandWorker:
 
     def _listen_for_queue_activity(self) -> None:
         self.connection.execute('LISTEN new_items_in_queue ;')
-        self.notifications = self.connection.notifies()
         while True:
             self._wait_for_queue_activity_on_connection()
             self._work_until_complete()
 
     def _wait_for_queue_activity_on_connection(self) -> None:
-        for _ in self.notifications:
+        notifications = self.connection.notifies(timeout=3)
+        for _ in notifications:
             break
 
     def _work_until_complete(self) -> None:
@@ -93,7 +91,7 @@ class OnDemandWorker:
         return False
 
     def _one_job(self) -> tuple[bool, ComputationJobReference | None]:
-        job = self.queue.pop_uncomputed()
+        job = MetricsJobQueuePopper.pop_uncomputed()
         if job is None:
             return (False, None)
         self._compute(job)
@@ -123,17 +121,18 @@ class OnDemandWorker:
             generic_handler.disalarm()
 
     def _notify_complete(self, job: Job) -> None:
-        self.connection.execute('NOTIFY one_job_complete ;')
+        with DBConnection() as connection:
+            connection.execute('NOTIFY one_job_complete ;')
 
-    def _get_provider(self, job: Job) -> PendingProvider:
+    def _get_provider(self, job: Job) -> GenericJobComputer:
         derivation_method = self._retrieve_derivation_method(job)
         providers = {
-            'spatial autocorrelation': SquidpyProvider,
-            'neighborhood enrichment': SquidpyProvider,
-            'co-occurrence': SquidpyProvider,
-            'ripley': SquidpyProvider,
-            'population fractions': CountsProvider,
-            'proximity': ProximityProvider,
+            'spatial autocorrelation': SquidpyComputer,
+            'neighborhood enrichment': SquidpyComputer,
+            'co-occurrence': SquidpyComputer,
+            'ripley': SquidpyComputer,
+            'population fractions': CountsComputer,
+            'proximity': ProximityComputer,
         }
         return providers[get_handle(derivation_method)](job)  # type: ignore
 

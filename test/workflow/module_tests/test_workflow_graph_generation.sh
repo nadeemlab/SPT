@@ -1,6 +1,8 @@
 test_dir=nf_workflow_graph_generation
-mkdir $test_dir
+mkdir -p $test_dir
 cp module_tests/.workflow.config $test_dir
+cp .spt_db.config.container $test_dir
+cp module_tests/.graph.config $test_dir
 cd $test_dir
 
 spt workflow configure --workflow='graph generation' --config-file=.workflow.config

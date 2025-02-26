@@ -35,7 +35,7 @@ CREATE TABLE sample_strata (
 );
 
 CREATE TABLE quantitative_feature_value_queue (
-    feature INTEGER REFERENCES feature_specification(identifier) ,
+    feature INTEGER REFERENCES feature_specification(identifier),
     subject VARCHAR,
     computation_start TIMESTAMP WITH TIME ZONE,
     retries INTEGER
@@ -49,6 +49,11 @@ ADD CONSTRAINT unique_qfv UNIQUE (feature, subject) ;
 
 ALTER TABLE study_component
 ADD CONSTRAINT unique_sc UNIQUE (primary_study, component_study) ;
+
+CREATE TABLE feature_hash(
+    feature INTEGER REFERENCES feature_specification(identifier),
+    hash_identity VARCHAR UNIQUE
+);
 
 CREATE TABLE ondemand_studies_index (
     specimen VARCHAR(512),

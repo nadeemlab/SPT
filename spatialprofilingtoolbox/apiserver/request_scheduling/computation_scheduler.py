@@ -98,11 +98,12 @@ class GenericComputationScheduler(ABC):
         specifiers: tuple[str, ...],
         data_analysis_study: str,
         method: str,
+        appendix: str | None = None,
     ) -> str:
         with DBCursor(study=study) as cursor:
-            Uploader = ADIFeatureSpecificationUploader
-            add = Uploader.add_new_feature
-            feature_specification = add(specifiers, method, data_analysis_study, cursor)
+            feature_specification = ADIFeatureSpecificationUploader.add_new_feature(
+                specifiers, method, data_analysis_study, cursor,
+            )
         return feature_specification
 
     @classmethod

@@ -95,7 +95,7 @@ class GenericJobComputer(ABC):
             try:
                 add_feature_value(specification, sample, str(value), cursor)
             except UniqueViolation:
-                logger.warning(f'Worker took too long to compute ({value}, case: ({specification}, {sample})).')
+                logger.warning(f'({specification}, {sample}) value already exists, can\'t insert {value}')
         with DBCursor(study=study) as cursor:
             query = 'DELETE FROM quantitative_feature_value_queue WHERE feature=%s and subject=%s;'
             cursor.execute(query, (int(specification), sample))
@@ -108,7 +108,7 @@ class GenericJobComputer(ABC):
             try:
                 add_feature_value(specification, sample, None, cursor)
             except UniqueViolation:
-                logger.warning(f'Worker took too long to compute ({None}, case: ({specification}, {sample})).')
+                logger.warning(f'({specification}, {sample}) value already exists, can\'t insert {None}')
 
     @staticmethod
     def retrieve_specifiers(study: str, feature_specification: str) -> tuple[str, list[str]]:

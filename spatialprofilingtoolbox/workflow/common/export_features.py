@@ -312,16 +312,22 @@ class ADIFeatureSpecificationUploader:
         try:
             cursor.execute(
                 '''
-                INSERT INTO feature_hash(hash_identity) VALUES (%s)
-                RETURNING feature;
-                ;''',
+                INSERT INTO
+                    feature_hash(feature, hash_identity)
+                VALUES
+                    (nextval(pg_get_serial_sequence('feature_hash', 'feature')), %s)
+                RETURNING feature
+                ;
+                ''',
                 (hash_identity,),
             )
             feature = tuple(cursor.fetchall())[0][0]
+            logger.debug(f'A: {feature}')
         except UniqueViolation:
             cursor.execute('COMMIT;')
             cursor.execute('SELECT feature FROM feature_hash WHERE hash_identity=%s;', (hash_identity,))
             feature = tuple(cursor.fetchall())[0][0]
+            logger.debug(f'B: {feature}')
         return feature
 
     @classmethod

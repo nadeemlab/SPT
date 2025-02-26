@@ -51,7 +51,7 @@ ALTER TABLE study_component
 ADD CONSTRAINT unique_sc UNIQUE (primary_study, component_study) ;
 
 CREATE TABLE feature_hash(
-    feature INTEGER REFERENCES feature_specification(identifier),
+    feature SERIAL PRIMARY KEY,
     hash_identity VARCHAR UNIQUE
 );
 

@@ -310,7 +310,6 @@ class ADIFeatureSpecificationUploader:
     @classmethod
     def insert_hash(cls, derivation_method: str, specifiers: tuple, cursor: PsycopgCursor, appendix: str | None=None) -> tuple[int, bool]:
         hash_identity = cls._generate_hash(tuple([derivation_method] + list(specifiers) + ([appendix] if appendix else [])))
-        logger.debug(hash_identity)
         try:
             cursor.execute(
                 '''

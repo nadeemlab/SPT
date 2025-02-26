@@ -322,12 +322,12 @@ class ADIFeatureSpecificationUploader:
                 (hash_identity,),
             )
             feature = tuple(cursor.fetchall())[0][0]
-            logger.debug(f'A: {feature}')
+            logger.debug(f'Created new feature: {feature}')
         except UniqueViolation:
             cursor.execute('COMMIT;')
             cursor.execute('SELECT feature FROM feature_hash WHERE hash_identity=%s;', (hash_identity,))
             feature = tuple(cursor.fetchall())[0][0]
-            logger.debug(f'B: {feature}')
+            logger.debug(f'Feauture already exists: {feature}')
         return feature
 
     @classmethod

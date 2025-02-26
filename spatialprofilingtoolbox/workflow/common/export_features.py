@@ -246,7 +246,7 @@ class ADIFeatureSpecificationUploader:
         if is_new:
             cls.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
             cls.insert_specifiers(identifier, specifiers, cursor)
-        cursor.execute('COMMIT;')
+            cursor.execute('COMMIT;')
         return identifier
 
     @classmethod

@@ -3,7 +3,7 @@ aiohttp==3.11.13
 aiosignal==1.3.2
 anndata==0.11.3
 annotated-types==0.7.0
-array-api-compat==1.10.0
+array-api-compat==1.11
 asciitree==0.3.3
 attrs==25.1.0
 boto3==1.37.2
@@ -44,7 +44,7 @@ llvmlite==0.44.0
 locket==1.0.0
 markdown-it-py==3.0.0
 markupsafe==3.0.2
-matplotlib==3.10.0
+matplotlib==3.10.1
 matplotlib-scalebar==0.9.0
 mdurl==0.1.2
 more-itertools==10.6.0
@@ -66,7 +66,7 @@ partd==1.4.2
 patsy==1.0.1
 pillow==11.1.0
 pims==0.7
-pip==25.0
+pip==24.3.1
 platformdirs==4.3.6
 pooch==1.8.2
 propcache==0.3.0

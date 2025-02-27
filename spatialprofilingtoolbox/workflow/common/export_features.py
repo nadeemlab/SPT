@@ -90,6 +90,7 @@ class ADIFeaturesUploader(SourceToADIParser):
         if self.impute_zeros:
             self.add_imputed_zero_values()
         connection = self.get_connection()
+        connection.commit()
         connection._set_autocommit(True)
         cursor = connection.cursor()
         specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
@@ -105,7 +106,7 @@ class ADIFeaturesUploader(SourceToADIParser):
                 filter(lambda row: row[0] == specifiers, self.feature_values),
             )
             self.insert_feature_values(cursor, feature_identifier, feature_values)
-        self.get_connection().commit()
+        connection.commit()
         cursor.close()
 
     def check_nothing_to_upload(self):

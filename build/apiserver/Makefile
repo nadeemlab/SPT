@@ -21,7 +21,11 @@ combined-tests: teardown-testing
 setup-testing:
 >@rm -f buildcache.sqlite3
 >@${MESSAGE} start "apiserver" "apiserver"
->@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
+>@docker compose up -d ; bash ${P}/record_docker_logs.sh & \
+    LOG_PID=$$!; \
+    echo 'CREATE TABLE IF NOT EXISTS log_pids(pid int);' | sqlite3 buildcache.sqlite3 ; \
+    echo "INSERT INTO log_pids VALUES ($$LOG_PID);" | sqlite3 buildcache.sqlite3 ; \
+    sleep 0.2 ; \
     bash ${P}/poll_container_readiness.sh \
      spt-apiserver-testing-apiserver \
      spt-db---testing-only-apiserver \
@@ -45,6 +49,7 @@ teardown-module-testing: ${MODULE_TESTS}
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "teardown apiserver (all tests)" "teardown apiserver (all tests)"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code=$$?; printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "teardown apiserver (all tests)" | sqlite3 buildcache.sqlite3 ;
+>@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "teardown apiserver (all tests)" "Down." "Error."
 
 ${TESTS}: setup-testing

@@ -13,4 +13,4 @@ unbuffer docker compose logs --since="$nowtime" -f testing-api-server > dlogs.ap
 unbuffer docker compose logs --since="$nowtime" -f testing-fast-counts-server > dlogs.od.txt &
 unbuffer docker compose logs --since="$nowtime" -f testing-fast-counts-server2 > dlogs.od2.txt &
 
-tail -f /dev/null
+tail --pid=$$ -f /dev/null

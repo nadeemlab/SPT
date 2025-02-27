@@ -11,3 +11,9 @@ do
 done
 
 echo
+
+for p in $(echo "SELECT pid FROM log_pids;" | sqlite3 buildcache.sqlite3);
+do
+    kill -9 "$p"
+done;
+echo 'DELETE FROM log_pids;' | sqlite3 buildcache.sqlite3;

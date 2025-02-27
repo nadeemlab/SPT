@@ -5,6 +5,7 @@ from math import isinf
 
 from spatialprofilingtoolbox.apiserver.request_scheduling.metrics_job_queue_insertion import MetricsJobQueuePusher
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import \
     UnivariateMetricsComputationResult
@@ -100,7 +101,9 @@ class GenericComputationScheduler(ABC):
         method: str,
         appendix: str | None = None,
     ) -> str:
-        with DBCursor(study=study) as cursor:
+        with DBConnection(study=study) as connection:
+            connection._set_autocommit(True)
+            cursor = connection.cursor()
             feature_specification = ADIFeatureSpecificationUploader.add_new_feature(
                 specifiers, method, data_analysis_study, cursor, appendix=appendix,
             )

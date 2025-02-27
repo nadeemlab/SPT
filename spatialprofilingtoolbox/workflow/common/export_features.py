@@ -89,7 +89,9 @@ class ADIFeaturesUploader(SourceToADIParser):
         self.test_study_existence()
         if self.impute_zeros:
             self.add_imputed_zero_values()
-        cursor = self.get_connection().cursor()
+        connection = self.get_connection()
+        connection._set_autocommit(True)
+        cursor = connection.cursor()
         specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
         insert_notice = 'Inserting feature "%s" for study "%s".'
         logger.info(insert_notice, self.derivation_method, self.data_analysis_study)

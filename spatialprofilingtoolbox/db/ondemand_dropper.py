@@ -39,6 +39,7 @@ class OnDemandComputationsDropper:
                 'DELETE FROM quantitative_feature_value_queue WHERE feature=%s ;',
                 'DELETE FROM feature_specifier WHERE feature_specification=%s ;',
                 'DELETE FROM feature_specification WHERE identifier=%s ;',
+                'DELETE FROM feature_hash WHERE feature=%s ;',
             ]
             for query in queries:
                 if verbose:

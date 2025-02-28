@@ -2,7 +2,7 @@
 representation of the features. Abstracts (wraps) the actual SQL queries.
 """
 
-from typing import cast
+from hashlib import sha256
 from importlib.resources import as_file
 from importlib.resources import files
 from itertools import product
@@ -337,4 +337,6 @@ class ADIFeatureSpecificationUploader:
 
     @classmethod
     def _generate_hash(cls, specifiers: tuple) -> str:
-        return f'{specifiers}'
+        h = sha256()
+        h.update(str.encode(f'{specifiers}'))
+        return h.hexdigest()

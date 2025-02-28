@@ -29,7 +29,7 @@ datashader==0.17.0
 deprecated==1.2.18
 distributed==2025.2.0
 docrep==0.3.2
-fastapi==0.115.9
+fastapi==0.115.10
 fasteners==0.19
 fonttools==4.56.0
 frozenlist==1.5.0
@@ -118,7 +118,7 @@ sortedcontainers==2.4.0
 spatial-image==1.1.0
 spatialdata==0.2.5.post0
 squidpy==1.6.2
-starlette==0.45.3
+starlette==0.46.0
 statsmodels==0.14.4
 stdlib-list==0.11.1
 tables==3.10.2

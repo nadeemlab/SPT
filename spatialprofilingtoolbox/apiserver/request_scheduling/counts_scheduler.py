@@ -44,7 +44,7 @@ class CountsScheduler(GenericComputationScheduler):
             data_analysis_study,
             phenotype_to_phenotype_str(phenotype),
         )
-        specification = cls._create_feature_specification(study, *specifiers_arguments_str)
+        specification = cls._create_feature_specification(study, *specifiers_arguments_str, appendix=str(cells_selected))
         cls._append_cell_set(study, specification, cells_selected)
         return (specification, True)
 
@@ -130,7 +130,8 @@ class CountsScheduler(GenericComputationScheduler):
         study: str,
         data_analysis_study: str,
         phenotype: str,
+        appendix: str | None=None,
     ) -> str:
         specifiers = (phenotype,)
         method = get_feature_description('population fractions')
-        return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
+        return cls.create_feature_specification(study, specifiers, data_analysis_study, method, appendix=appendix)

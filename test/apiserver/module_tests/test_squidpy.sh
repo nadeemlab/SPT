@@ -70,11 +70,11 @@ function test_squidpy() {
         exit 1
     fi;
 
-    normalize_floats "$filename" > n1.json
-    normalize_floats squidpy.json > n2.json
-    diff n1.json n2.json
+    normalize_floats "$filename" > n1_sq.json
+    normalize_floats squidpy.json > n2_sq.json
+    diff n1_sq.json n2_sq.json
     status=$?
-    rm n1.json n2.json
+    rm n1_sq.json n2_sq.json
     [ $status -eq 0 ] || (echo "API query for squidpy metrics failed."; )
     if [ $status -eq 0 ];
     then

@@ -101,7 +101,7 @@ function test_squidpy_custom_phenotypes() {
         then
             echo
             echo -en "${yellow}Metrics available.$reset_code "
-            cat _squidpy_cp.json | python -m json.tool > squidpy.json
+            cat _squidpy_cp.json | python -m json.tool > squidpyc.json
             rm _squidpy_cp.json
             break
         else
@@ -110,27 +110,27 @@ function test_squidpy_custom_phenotypes() {
             sleep $waitperiod
         fi
     done
-    if [ ! -f squidpy.json ];
+    if [ ! -f squidpyc.json ];
     then
         echo "Test timed out."
         exit 1
     fi;
 
-    normalize_floats "$filename" > n1.json
-    normalize_floats squidpy.json > n2.json
-    diff n1.json n2.json
+    normalize_floats "$filename" > n1_sqc.json
+    normalize_floats squidpyc.json > n2_sqc.json
+    diff n1_sqc.json n2_sqc.json
     status=$?
-    rm n1.json n2.json
+    rm n1_sqc.json n2_sqc.json
     [ $status -eq 0 ] || (echo "API query for squidpy metrics failed."; )
     if [ $status -eq 0 ];
     then
-        rm squidpy.json
+        rm squidpyc.json
         echo -e "${green}Artifact matches.$reset_code"
         echo
     else
         echo -e "${red}Some error with the diff command.$reset_code"
-        cat squidpy.json
-        rm squidpy.json
+        cat squidpyc.json
+        rm squidpyc.json
         exit 1
     fi
 }

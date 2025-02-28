@@ -21,7 +21,11 @@ combined-tests: teardown-testing
 setup-testing:
 >@rm -f buildcache.sqlite3
 >@${MESSAGE} start "$@" "graphs"
->@docker compose up -d && (bash ${P}/record_docker_logs.sh &) && sleep 0.2 && \
+>@docker compose up -d ; bash ${P}/record_docker_logs.sh & \
+    LOG_PID=$$!; \
+    echo 'CREATE TABLE IF NOT EXISTS log_pids(pid int);' | sqlite3 buildcache.sqlite3 ; \
+    echo "INSERT INTO log_pids VALUES ($$LOG_PID);" | sqlite3 buildcache.sqlite3 ; \
+    sleep 0.2 ; \
     bash ${P}/poll_container_readiness.sh \
      spt-db---testing-only-graphs ; \
     status_code=$$? ; \

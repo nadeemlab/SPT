@@ -48,3 +48,4 @@ class OnDemandComputationsDropper:
             return
         cursor.execute('DELETE FROM cell_set_cache ;')
         cursor.execute('DELETE FROM quantitative_feature_value_queue ;')
+        cursor.execute('DELETE FROM feature_hash ;')

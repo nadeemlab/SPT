@@ -1,4 +1,11 @@
-spt workflow configure --workflow='graph generation' --config-file=module_tests/.workflow.config
+test_dir=nf_workflow_graph_generation
+mkdir -p $test_dir
+cp module_tests/.workflow.config $test_dir
+cp .spt_db.config.container $test_dir
+cp module_tests/.graph.config $test_dir
+cd $test_dir
+
+spt workflow configure --workflow='graph generation' --config-file=.workflow.config
 nextflow run . || { echo "Error: Nextflow run failed"; exit 1; }
 
 [ -e "results/feature_names.txt" ] || { echo "Error: results/feature_names.txt does not exist"; exit 1; }
@@ -12,14 +19,8 @@ assert len(graphs) == 4, f"Error: Graph count ({len(graphs)}) does not match tru
 '
 
 function clean() {
-    rm -f .nextflow.log*
-    rm -rf .nextflow/
-    rm -f configure.sh
-    rm -f run.sh
-    rm -f main.nf
-    rm -f nextflow.config
-    rm -rf results/
-    rm -rf nf_files/
+    cd .. ;
+    rm -rf $test_dir;
 }
 
 clean

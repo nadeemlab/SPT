@@ -1,3 +1,6 @@
+# v1.0.16
+- An error condition was fixed in which duplicate feature specifications could be inserted into the database when the same metric is requested multiple times simultaneously. Just adding a unique constraint wasn't feasible since the specifications are located in multiple tables, so an additional table was added (`feature_hash`) as a proxy for feature specification identity.
+
 # v1.0.15
 - Many updates were made to support the most recent versions of dependencies. This included PostgresQL 17.2 and Python 3.13, and a few dozen Python package dependencies.
 - The development environment was heavily modified to make future dependency-related upates easier. We have separate pinned (`requirements.txt`) and unpinned (`pyproject.toml`) dependency declarations. Now, on every run of the integration test suite, the `requirements.txt` files are updated with the latest versions, so it will be easier to make such updates incrementally (i.e. with `git status` to see version changes). As the codebase is primarily to support an application and not a library, we do not have a real need to support older versions of anything.

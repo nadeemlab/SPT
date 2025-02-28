@@ -2,7 +2,7 @@
 representation of the features. Abstracts (wraps) the actual SQL queries.
 """
 
-from typing import cast
+from hashlib import sha256
 from importlib.resources import as_file
 from importlib.resources import files
 from itertools import product
@@ -11,6 +11,7 @@ import re
 import pandas as pd  # type: ignore
 from psycopg import Connection as PsycopgConnection
 from psycopg import Cursor as PsycopgCursor
+from psycopg.errors import UniqueViolation
 
 from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.db.source_file_parser_interface import SourceToADIParser
@@ -88,7 +89,10 @@ class ADIFeaturesUploader(SourceToADIParser):
         self.test_study_existence()
         if self.impute_zeros:
             self.add_imputed_zero_values()
-        cursor = self.get_connection().cursor()
+        connection = self.get_connection()
+        connection.commit()
+        connection._set_autocommit(True)
+        cursor = connection.cursor()
         specifiers_list = sorted(list(set(row[0] for row in self.feature_values)))
         insert_notice = 'Inserting feature "%s" for study "%s".'
         logger.info(insert_notice, self.derivation_method, self.data_analysis_study)
@@ -102,7 +106,7 @@ class ADIFeaturesUploader(SourceToADIParser):
                 filter(lambda row: row[0] == specifiers, self.feature_values),
             )
             self.insert_feature_values(cursor, feature_identifier, feature_values)
-        self.get_connection().commit()
+        connection.commit()
         cursor.close()
 
     def check_nothing_to_upload(self):
@@ -177,7 +181,6 @@ class ADIFeaturesUploader(SourceToADIParser):
         specification = cls._get_feature_specification(cursor, specifiers, derivation_method)
         if specification is not None:
             return (specification, False)
-        logger.debug(f'Creating feature with specifiers: {specifiers}')
         specification = cls._create_feature_specification(
             cursor, data_analysis_study, specifiers, derivation_method,
         )
@@ -231,27 +234,30 @@ class ADIFeaturesUploader(SourceToADIParser):
         specifiers: tuple[str, ...],
         derivation_method: str,
     ) -> str:
-        Uploader = ADIFeatureSpecificationUploader
-        add = Uploader.add_new_feature
-        feature_specification = add(specifiers, derivation_method, data_analysis_study, cursor)
+        feature_specification = ADIFeatureSpecificationUploader.add_new_feature(
+            specifiers, derivation_method, data_analysis_study, cursor,
+        )
         return feature_specification
 
 
 class ADIFeatureSpecificationUploader:
     """Just upload a new feature specification."""
-    @staticmethod
-    def add_new_feature(specifiers, derivation_method, data_analysis_study, cursor: PsycopgCursor):
-        FSU = ADIFeatureSpecificationUploader
-        identifier = FSU.insert_specification(derivation_method, data_analysis_study, cursor)
-        FSU.insert_specifiers(identifier, specifiers, cursor)
+    @classmethod
+    def add_new_feature(cls, specifiers, derivation_method, data_analysis_study, cursor: PsycopgCursor, appendix: str | None = None):
+        cursor.execute('BEGIN;')
+        identifier, is_new = cls.insert_hash(derivation_method, specifiers, cursor, appendix=appendix)
+        if is_new:
+            cls.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
+            cls.insert_specifiers(identifier, specifiers, cursor)
+            cursor.execute('COMMIT;')
         return identifier
 
-    @staticmethod
-    def ondemand_descriptor():
+    @classmethod
+    def ondemand_descriptor(cls):
         return 'ondemand computed features'
 
-    @staticmethod
-    def get_data_analysis_study(measurement_study, cursor: PsycopgCursor):
+    @classmethod
+    def get_data_analysis_study(cls, measurement_study, cursor: PsycopgCursor):
         cursor.execute('''
         SELECT sc.primary_study FROM study_component sc
         WHERE sc.component_study=%s ;
@@ -265,11 +271,11 @@ class ADIFeatureSpecificationUploader:
         WHERE sc.primary_study=%s ;
         ''', (study,))
         rows = cursor.fetchall()
-        ondemand = ADIFeatureSpecificationUploader.ondemand_descriptor()
+        ondemand = cls.ondemand_descriptor()
         names = sorted([row[0] for row in rows if re.search(f'{ondemand}', row[0])])
         if len(names) >= 1:
             return names[0]
-        data_analysis_study = ADIFeatureSpecificationUploader.form_ondemand_study_name(study)
+        data_analysis_study = cls.form_ondemand_study_name(study)
         cursor.execute('''
         INSERT INTO data_analysis_study (name) VALUES (%s) ON CONFLICT DO NOTHING;
         ''', (data_analysis_study,))
@@ -278,30 +284,59 @@ class ADIFeatureSpecificationUploader:
         ''', (study, data_analysis_study))
         return data_analysis_study
 
-    @staticmethod
-    def form_ondemand_study_name(study: str) -> str:
-        ondemand = ADIFeatureSpecificationUploader.ondemand_descriptor()
+    @classmethod
+    def form_ondemand_study_name(cls, study: str) -> str:
+        ondemand = cls.ondemand_descriptor()
         return f'{study} - {ondemand}'
 
-    @staticmethod
+    @classmethod
     def insert_specification(
-        derivation_method: str, data_analysis_study: str, cursor: PsycopgCursor,
-    ) -> int:
+        cls, specification: str, derivation_method: str, data_analysis_study: str, cursor: PsycopgCursor,
+    ):
         handle = get_handle(derivation_method)
         query = '''
-        INSERT INTO feature_specification (derivation_method, study) VALUES (%s, %s)
-        RETURNING identifier ;
+        INSERT INTO feature_specification (identifier, derivation_method, study) VALUES (%s, %s, %s);
         '''
-        cursor.execute(query, (derivation_method, data_analysis_study))
-        specification = tuple(cursor.fetchall())[0][0]
-        logger.debug(f'Inserted specification {specification} ({handle}).')
-        return specification
+        cursor.execute(query, (specification, derivation_method, data_analysis_study))
 
-    @staticmethod
-    def insert_specifiers(specification, specifiers, cursor: PsycopgCursor):
+    @classmethod
+    def insert_specifiers(cls, specification: int, specifiers: tuple, cursor: PsycopgCursor):
         many = [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)]
-        for entry in many:
-            logger.debug('Inserting specifier: %s', entry)
-        cursor.executemany('''
-        INSERT INTO feature_specifier (feature_specification, specifier, ordinality) VALUES (%s, %s, %s) ;
-        ''', [(specification, specifier, str(i+1)) for i, specifier in enumerate(specifiers)])
+        logger.debug(f'Inserting specifiers ({specification}): {specifiers}')
+        cursor.executemany(
+            '''
+            INSERT INTO feature_specifier (feature_specification, specifier, ordinality) VALUES (%s, %s, %s) ;
+            ''',
+            many,
+        )
+
+    @classmethod
+    def insert_hash(cls, derivation_method: str, specifiers: tuple, cursor: PsycopgCursor, appendix: str | None=None) -> tuple[int, bool]:
+        hash_identity = cls._generate_hash(tuple([derivation_method] + list(specifiers) + ([appendix] if appendix else [])))
+        try:
+            cursor.execute(
+                '''
+                INSERT INTO
+                    feature_hash(feature, hash_identity)
+                VALUES
+                    (nextval(pg_get_serial_sequence('feature_hash', 'feature')), %s)
+                RETURNING feature
+                ;
+                ''',
+                (hash_identity,),
+            )
+            feature = tuple(cursor.fetchall())[0][0]
+            logger.debug(f'Created new feature: {feature}')
+            return (feature, True)
+        except UniqueViolation:
+            cursor.execute('COMMIT;')
+            cursor.execute('SELECT feature FROM feature_hash WHERE hash_identity=%s;', (hash_identity,))
+            feature = tuple(cursor.fetchall())[0][0]
+            logger.debug(f'Feature already exists: {feature}')
+            return (feature, False)
+
+    @classmethod
+    def _generate_hash(cls, specifiers: tuple) -> str:
+        h = sha256()
+        h.update(str.encode(f'{specifiers}'))
+        return h.hexdigest()

@@ -595,7 +595,7 @@ clean-files:
 >@for submodule in ${SUBMODULES} ; do \
         submodule_directory=${BUILD_LOCATION}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
-        rm -rf $$submodule_directory/docker.built ; \
+        rm -f $$submodule_directory/docker.built ; \
     done
 >@rm -f Dockerfile
 >@rm -f .dockerignore

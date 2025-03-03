@@ -37,29 +37,29 @@ setup-testing:
     $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
+SUBMODULE := ondemand
+DOWN := docker compose stop -t 1 && docker compose down && docker compose rm --force --stop
+
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "$@" "teardown ondemand"
->@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    $(call UPDATE_STATUS,$$status_code,$@) ;
+>@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
+>@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
+>@${CLEAN};
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "$@" "teardown ondemand"
->@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    $(call UPDATE_STATUS,$$status_code,$@) ;
+>@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
+>@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
+>@${CLEAN};
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "$@" "teardown ondemand"
->@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    $(call UPDATE_STATUS,$$status_code,$@) ;
+>@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
+>@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
+>@${CLEAN};
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 ${TESTS}: setup-testing
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
@@ -90,7 +90,6 @@ ${TESTS}: setup-testing
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:
->@rm -f ${WHEEL_FILENAME}
 >@rm -rf ../../test/ondemand/expression_data/
 >@rm -rf ../../test/test_data/fast_cache_testing
 >@rm -f buildcache.sqlite3

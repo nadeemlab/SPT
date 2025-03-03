@@ -1,13 +1,14 @@
 .RECIPEPREFIX = >
 
 help:
->@echo '  The main targets are:'
+>@echo '  This program is used for development and testing tasks.'
 >@echo ' '
 >@echo '  make release-package'
 >@echo '    Build the Python package wheel and push it to PyPI.'
 >@echo ' '
->@echo '  make build-and-push-docker-images'
->@echo '    Build the Docker images and push them to DockerHub repositories.'
+>@echo '  make build-and-push-application-images'
+>@echo '    Build the application Docker images (API server and computation workers)'
+>@echo '    and push them to DockerHub repositories.'
 >@echo ' '
 >@echo '  make force-rebuild-data-loaded-images'
 >@echo '    Rebuild the data-preloaded Docker images. This is relatively'
@@ -17,11 +18,15 @@ help:
 >@echo '  make test'
 >@echo '    Do unit and module tests.'
 >@echo ' '
+>@echo '  make -j10 test'
+>@echo '    Do all tests with e.g. 10 cores in parallel.'
+>@echo ' '
 >@echo '  make [unit | module]-test-[apiserver | graphs | ondemand | db | workflow]'
 >@echo '    Do only the unit or module tests for the indicated module.'
 >@echo ' '
 >@echo '  make clean'
 >@echo '    Attempt to remove all build or partial-build artifacts.'
+>@echo '    This will also try to start the Docker daemon if it is not already running.'
 >@echo ' '
 >@echo '  make clean-docker-images'
 >@echo '    Aggressively removes the Docker images created here.'
@@ -29,7 +34,7 @@ help:
 >@echo '    This target does not attempt to remove external images pulled as base images, however.'
 >@echo '    Note that normal `make clean` does not attempt to remove Docker images at all.'
 >@echo ' '
->@echo '  make help VERBOSE=1'
+>@echo '  make help'
 >@echo '    Show this text.'
 >@echo ' '
 >@echo 'Use VERBOSE=1 to send command outputs to STDOUT rather than log files.'
@@ -488,9 +493,6 @@ data-loaded-image-1smallnointensity: data-loaded-image-1small
 
 DATA_IMAGES := data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2
 
-# test: unit-tests module-tests
-# >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
-# >@${MESSAGE} end "start timing" "Total time:" "Error computing time."
 test: ${COMBINED_TEST_TARGETS}
 >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "start timing" "Total time:" "Error computing time."

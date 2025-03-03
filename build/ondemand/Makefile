@@ -43,21 +43,18 @@ DOWN := docker compose stop -t 1 && docker compose down && docker compose rm --f
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
 >@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
->@${CLEAN};
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
 >@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
->@${CLEAN};
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
 >@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
->@${CLEAN};
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 

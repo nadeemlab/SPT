@@ -460,20 +460,17 @@ check-docker-daemon-running:
     ${MESSAGE} end "$@" "Running." "Not running." ; \
     if [ $$status_code -gt 0 ] ; \
     then \
-        ${MESSAGE} start "Attempting to start Docker daemon" "Attempting to start Docker daemon" ; \
+        task="Attempting to start Docker daemon"; \
+        ${MESSAGE} start "$$task" "$$task" ; \
         bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/start_docker_daemon.sh ; status_code="$$?" ; \
-        printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ; \
-        if [ $$status_code -eq 1 ] ; \
-        then \
-            ${MESSAGE} end "Attempting to start Docker daemon" "--" "Timed out." ; \
-        else \
-            ${MESSAGE} end "Attempting to start Docker daemon" "Started." "Failed to start." ; \
-        fi ; \
+        printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$$task" | sqlite3 buildcache.sqlite3 ; \
+        ${MESSAGE} end "Attempting to start Docker daemon" "Running." "Failed to start." ; \
     fi ; \
     touch check-docker-daemon-running ;
 
 # Some dependencies to force serial processing (build environments would conflict if concurrent)
 clean-network-environment: initialize_message_cache
+check-docker-daemon-running: initialize_message_cache
 before_all_tests: clean-network-environment
 >@${MESSAGE} start "start timing" "Start timing"
 
@@ -529,6 +526,7 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_
         docker container run \
         -i \
         --rm \
+        -e SQLITE_MOCK_DATABASE=1 \
         --network container:temporary-spt-db-preloading \
         --mount type=bind,src=${PWD},dst=/mount_sources \
         --mount type=tmpfs,destination=/working_dir \
@@ -577,7 +575,7 @@ force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${
 
 clean: clean-files clean-network-environment
 
-clean-files: clean-network-environment
+clean-network-environment: | clean-files
 
 clean-files:
 >@rm -rf ${PACKAGE_NAME}.egg-info/

@@ -90,6 +90,10 @@ export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
 export DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
 
 PACKAGE_SOURCE_FILES := pyproject.toml $(shell find ${SOURCE_LOCATION} -type f)
+DEPENDENCY_LISTS := requirements.txt requirements.apiserver.txt requirements.ondemand.txt
+EXTRAS_requirements.txt := "[all]"
+EXTRAS_requirements.apiserver.txt := "[apiserver]"
+EXTRAS_requirements.ondemand.txt := "[ondemand]"
 
 export SHELL := ${SCRIPTS}/status_messages_only_shell.sh
 
@@ -138,7 +142,7 @@ check-for-pypi-credentials:
     $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Found." "Not found."
 
-development-image-prerequisites-installed: requirements.txt requirements.apiserver.txt requirements.ondemand.txt ${SCRIPTS}/development_prereqs.Dockerfile
+development-image-prerequisites-installed: ${DEPENDENCY_LISTS} ${SCRIPTS}/development_prereqs.Dockerfile
 >@${MESSAGE} start "$@" "Building development image precursor"
 >@cp ${SCRIPTS}/.dockerignore . 
 >@docker build \
@@ -187,23 +191,10 @@ development-image: ${PACKAGE_SOURCE_FILES} ${SCRIPTS}/development.Dockerfile dev
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
-requirements.txt: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
->@${MESSAGE} start "$@" "Determining requirements.txt"
->@${SCRIPTS}/determine_prerequisites.sh "[all]" requirements.txt; \
-    status_code=$$? ; \
-    $(call UPDATE_STATUS,$$status_code,$@) ;
->@${MESSAGE} end "$@" "Complete." "Determination failed."
-
-requirements.apiserver.txt: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
->@${MESSAGE} start "$@" "Determining requirements.apiserver.txt"
->@${SCRIPTS}/determine_prerequisites.sh "[apiserver]" requirements.apiserver.txt; \
-    status_code=$$? ; \
-    $(call UPDATE_STATUS,$$status_code,$@) ;
->@${MESSAGE} end "$@" "Complete." "Determination failed."
-
-requirements.ondemand.txt: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
->@${MESSAGE} start "$@" "Determining requirements.ondemand.txt"
->@${SCRIPTS}/determine_prerequisites.sh "[ondemand]" requirements.ondemand.txt; \
+${DEPENDENCY_LISTS}: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
+>@${MESSAGE} start "$@" "Determining $@"
+>@extras=${EXTRAS_$@}; \
+    ${SCRIPTS}/determine_prerequisites.sh "$$extras" $@; \
     status_code=$$? ; \
     $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Complete." "Determination failed."
@@ -376,9 +367,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
     repository_name=${REPO}-$$submodule_name ; \
-    cp requirements.txt $$submodule_directory ; \
-    cp requirements.apiserver.txt $$submodule_directory ; \
-    cp requirements.ondemand.txt $$submodule_directory ; \
+    cp ${DEPENDENCY_LISTS} $$submodule_directory ; \
     cp dist/${WHEEL} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
     cp ${SCRIPTS}/.dockerignore . ; \
@@ -612,9 +601,7 @@ clean-files:
 >@rm -f .dockerignore
 >@rm -rf spatialprofilingtoolbox.egg-info/
 >@rm -rf __pycache__/
->@rm -f requirements.txt
->@rm -f requirements.apiserver.txt
->@rm -f requirements.ondemand.txt
+>@rm -f ${DEPENDENCY_LISTS}
 >@rm -f development-image
 >@rm -f development-image-prerequisites-installed
 >@rm -f ${DATA_IMAGES}

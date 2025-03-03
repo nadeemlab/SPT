@@ -169,7 +169,6 @@ packages = [
     "merge_sqlite_dbs.py",
     "report_run_configuration.py",
     "configure.py",
-    "report_on_logs.py",
     "tail_logs.py",
 ]
 "spatialprofilingtoolbox.workflow.assets" = [

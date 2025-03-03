@@ -37,23 +37,22 @@ setup-testing:
     $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
-SUBMODULE := ondemand
 DOWN := docker compose stop -t 1 && docker compose down && docker compose rm --force --stop
 
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
+>@${MESSAGE} start "$@" "teardown ${MODULE_NAME}"
 >@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
+>@${MESSAGE} start "$@" "teardown ${MODULE_NAME}"
 >@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "$@" "teardown ${SUBMODULE}"
+>@${MESSAGE} start "$@" "teardown ${MODULE_NAME}"
 >@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."

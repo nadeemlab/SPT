@@ -114,6 +114,8 @@ else
 export NO_CACHE_FLAG := 
 endif
 
+UPDATE_STATUS = printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$(1)" "$(2)" | sqlite3 buildcache.sqlite3
+
 release-package: development-image check-for-pypi-credentials
 >@${MESSAGE} start "$@" "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
 >@cp ~/.pypirc .
@@ -125,7 +127,7 @@ release-package: development-image check-for-pypi-credentials
      -t ${REPO_DEV}:latest \
      /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --config-file .pypirc --repository ${PACKAGE_NAME} dist/${WHEEL} ' ;\
     status_code=$$?; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Uploaded." "Error."
 >@rm -f .pypirc
 
@@ -133,7 +135,7 @@ check-for-pypi-credentials:
 >@${MESSAGE} start "$@" "Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox"
 >@${PYTHON} ${SCRIPTS}/check_for_credentials.py pypi ; \
     status_code=$$?; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Found." "Not found."
 
 development-image-prerequisites-installed: requirements.txt requirements.apiserver.txt requirements.ondemand.txt ${SCRIPTS}/development_prereqs.Dockerfile
@@ -150,7 +152,7 @@ development-image-prerequisites-installed: requirements.txt requirements.apiserv
     then \
         touch development-image-prerequisites-installed ; \
     fi ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
@@ -181,7 +183,7 @@ development-image: ${PACKAGE_SOURCE_FILES} ${SCRIPTS}/development.Dockerfile dev
          /bin/sh -c "cp dist/${WHEEL} /buffer; chown ${LOCAL_USERID}:${LOCAL_USERID} /buffer/*; "; \
         touch development-image ; \
     fi; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
@@ -189,21 +191,21 @@ requirements.txt: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initial
 >@${MESSAGE} start "$@" "Determining requirements.txt"
 >@${SCRIPTS}/determine_prerequisites.sh "[all]" requirements.txt; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Complete." "Determination failed."
 
 requirements.apiserver.txt: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
 >@${MESSAGE} start "$@" "Determining requirements.apiserver.txt"
 >@${SCRIPTS}/determine_prerequisites.sh "[apiserver]" requirements.apiserver.txt; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Complete." "Determination failed."
 
 requirements.ondemand.txt: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
 >@${MESSAGE} start "$@" "Determining requirements.ondemand.txt"
 >@${SCRIPTS}/determine_prerequisites.sh "[ondemand]" requirements.ondemand.txt; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Complete." "Determination failed."
 
 build-and-push-application-images: ${DOCKER_PUSH_SUBMODULE_TARGETS}
@@ -227,7 +229,7 @@ ${DOCKER_PUSH_SUBMODULE_TARGETS}: ${DOCKER_BUILD_SUBMODULE_TARGETS} check-for-do
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS}: build-docker-images check-for-docker-credentials
@@ -242,7 +244,7 @@ ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS}: build-docker-images check-for-docker-crede
     echo "$$repository_name"; \
     docker push $$repository_name:dev ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
@@ -260,7 +262,7 @@ ${DOCKER_PUSH_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_DEV_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
@@ -275,7 +277,7 @@ ${DOCKER_PUSH_DEV_PLUGIN_TARGETS}: build-docker-images check-for-docker-credenti
     echo "$$repository_name"; \
     docker push $$repository_name:dev ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credentials
@@ -293,7 +295,7 @@ ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credent
     docker push $$repository_name:cuda-latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credentials
@@ -308,7 +310,7 @@ ${DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-cre
     echo "$$repository_name"; \
     docker push $$repository_name:cuda-dev ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 generic-spt-push-target: build-docker-images check-for-docker-credentials
@@ -322,7 +324,7 @@ generic-spt-push-target: build-docker-images check-for-docker-credentials
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 data-loaded-images-push-target:
@@ -342,13 +344,13 @@ data-loaded-images-push-target:
         codes=$$(( codes + exitcode )) ; \
     done; \
     status_code="$$codes" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 check-for-docker-credentials:
 >@${MESSAGE} start "$@" "Checking for Docker credentials in ~/.docker/config.json"
 >@${PYTHON} ${SCRIPTS}/check_for_credentials.py docker ; status_code="$$?"; if [[ "$$status_code" == "0" ]]; then touch check-for-docker-credentials; fi; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Found." "Not found."
 
 ensure-plugin-submodules-are-populated:
@@ -395,7 +397,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     then \
         touch $@ ;\
     fi; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     rm $$submodule_directory/${WHEEL} ; \
@@ -495,6 +497,8 @@ data-loaded-image-1: data-loaded-image-1and2
 data-loaded-image-1small: data-loaded-image-1
 data-loaded-image-1smallnointensity: data-loaded-image-1small
 
+DATA_IMAGES := data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2
+
 # test: unit-tests module-tests
 # >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
 # >@${MESSAGE} end "start timing" "Total time:" "Error computing time."
@@ -504,21 +508,21 @@ test: ${COMBINED_TEST_TARGETS}
 
 module-tests: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${MODULE_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
-${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${UNIT_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${SINGLETON_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^singleton-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory singleton-tests ;
 
-${COMBINED_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${COMBINED_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^combined-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory combined-tests ;
 
@@ -558,7 +562,7 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${SCRIPTS}/impor
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
-force-rebuild-data-loaded-images: ${DLI}-1 ${DLI}-2 ${DLI}-1and2 ${DLI}-1small ${DLI}-1smallnointensity
+force-rebuild-data-loaded-images: ${DLI}-1 ${DLI}-1and2 ${DLI}-1small ${DLI}-1smallnointensity
 
 force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${SCRIPTS}/import_test_dataset%.sh
 >@${MESSAGE} start "$@" "Rebuilding test-data-loaded spt-db image ($*)"
@@ -613,11 +617,7 @@ clean-files:
 >@rm -f requirements.ondemand.txt
 >@rm -f development-image
 >@rm -f development-image-prerequisites-installed
->@rm -f data-loaded-image-1
->@rm -f data-loaded-image-2
->@rm -f data-loaded-image-1and2
->@rm -f data-loaded-image-1small
->@rm -f data-loaded-image-1smallnointensity
+>@rm -f ${DATA_IMAGES}
 >@rm -f file_manifest.tsv.bak
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
 >@rm -rf ${BUILD_LOCATION}/lib

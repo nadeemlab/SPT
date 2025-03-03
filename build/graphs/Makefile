@@ -11,6 +11,7 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
+UPDATE_STATUS = printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$(1)" "$(2)" | sqlite3 buildcache.sqlite3
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
@@ -32,27 +33,27 @@ setup-testing:
     bash ${P}/poll_container_readiness.sh \
      spt-db---testing-only-graphs ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "$@" "teardown graphs"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "$@" "teardown graphs"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "$@" "teardown graphs"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
@@ -82,7 +83,7 @@ ${TESTS}: setup-testing
      /bin/bash -c "$$test_cmd" \
       --gpus all ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:

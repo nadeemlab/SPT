@@ -17,6 +17,7 @@ STANDALONE_MODULE_TEST_NAME := "graph-plugin-dockerized"
 TEST_DIRECTORY := ../../${TEST_LOCATION}/${MODULE_NAME}
 TD := ${TEST_DIRECTORY}
 P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
+UPDATE_STATUS = printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$(1)" "$(2)" | sqlite3 buildcache.sqlite3
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
@@ -38,13 +39,13 @@ setup-testing:
     bash ${P}/poll_container_readiness.sh \
      spt-db---testing-only-workflow; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "$@" "teardown workflow"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
@@ -52,7 +53,7 @@ teardown-unit-testing: ${UNIT_TESTS}
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "$@" "teardown workflow"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
@@ -60,7 +61,7 @@ teardown-module-testing: ${MODULE_TESTS}
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "$@" "teardown workflow"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
@@ -90,7 +91,7 @@ ${TESTS}: setup-testing
      /bin/bash -c "$$test_cmd && exit $$?" ; \
     status_code=$$? ; \
     rm -f ${TD}/nextflow.log; rm -f ${TD}/.nextflow.log*; rm -rf ${TD}/.nextflow/; rm -f ${TD}/configure.sh; rm -f ${TD}/run.sh; rm -f ${TD}/main.nf; rm -f ${TD}/nextflow.config; rm -rf ${TD}/work/; rm -rf ${TD}/results/ ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 ${STANDALONE_MODULE_TEST_TARGET}: setup-testing
@@ -102,7 +103,7 @@ ${STANDALONE_MODULE_TEST_TARGET}: setup-testing
     /bin/bash -c "cd /mount_sources && bash ${STANDALONE_MODULE_TEST_CONFIGURATION_SCRIPT}"
 >@bash ${STANDALONE_MODULE_TEST_FILE} ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:

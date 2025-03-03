@@ -21,6 +21,7 @@ OTHER_TESTS := $(filter-out ${INITIAL_TEST},${TESTS})
 ${OTHER_TESTS}: ${INITIAL_TEST}
 
 P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
+UPDATE_STATUS = printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$(1)" "$(2)" | sqlite3 buildcache.sqlite3
 
 DATA_MODEL_SOURCE_LOCATION := ${DB_SOURCE_LOCATION_ABSOLUTE}/data_model
 
@@ -53,33 +54,33 @@ setup-testing:
     bash ${P}/poll_container_readiness.sh \
      spt-db---testing-only-db ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
 teardown-singleton-testing: ${SINGLETON_TESTS}
 >@${MESSAGE} start "$@" "teardown db"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-unit-testing: ${UNIT_TESTS}
 >@${MESSAGE} start "$@" "teardown db"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-module-testing: ${MODULE_TESTS}
 >@${MESSAGE} start "$@" "teardown db"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
 teardown-testing: ${TESTS}
 >@${MESSAGE} start "$@" "teardown db"
 >@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
 
@@ -108,7 +109,7 @@ ${TESTS}: setup-testing
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd && exit $$?"; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:

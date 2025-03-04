@@ -2,6 +2,7 @@
 import base64
 import mmap
 import shapefile  # type: ignore
+from ast import literal_eval
 
 
 def extract_points(shapefile_base64_ascii):
@@ -19,3 +20,7 @@ def extract_points(shapefile_base64_ascii):
     if shape_type_name != 'POLYGON':
         raise ValueError(f'Expected shape type is "POLYGON", not {shape_type_name}.')
     return reader.shape(0).points
+
+
+def extract_centroid(shapefile_py_literal):
+    return literal_eval(shapefile_py_literal)

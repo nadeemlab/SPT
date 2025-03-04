@@ -29,6 +29,7 @@ class CellManifestsParser(SourceToADIParser):
     def __init__(self, fields, **kwargs):
         super().__init__(fields, **kwargs)
         self.dataset_design = TabularCellMetadataDesign(**kwargs)
+        self._columns = self.dataset_design.get_box_limit_column_names()
         self.scope = None
 
     def parse(self,
@@ -154,7 +155,7 @@ class CellManifestsParser(SourceToADIParser):
                 shape_file_identifier = str(shape_file_identifier_index)
                 shape_file_identifier_index += 1
                 timer.record_timepoint('Beginning of one cell iteration')
-                shape_file_contents = self.create_shape_file(cell, self.dataset_design)
+                shape_file_contents = self.create_shape_file(cell)
                 timer.record_timepoint('Created shapefile contents')
                 records['histological_structure'].append((
                     histological_structure_identifier,
@@ -162,7 +163,7 @@ class CellManifestsParser(SourceToADIParser):
                 ))
                 records['shape_file'].append((
                     shape_file_identifier,
-                    'ESRI Shapefile SHP',
+                    'centroid tuple python syntax',
                     shape_file_contents,
                 ))
                 records['histological_structure_identification'].append((
@@ -305,20 +306,13 @@ class CellManifestsParser(SourceToADIParser):
             [xmax, ymin],
         ]
 
-    def create_shape_file(self, cell, dataset_design):
-        shp = StringIO()
-        shx = StringIO()
-        dbf = StringIO()
-        points = self.get_polygon_coordinates(cell, dataset_design)
-        points = points + [points[0]]
-        writer = shapefile.Writer(shp=shp, shx=shx, dbf=dbf, shapeType=shapefile.POLYGON)
-        writer.field('name', 'C')
-        writer.poly([points])
-        writer.record()
-        writer.close()
-        encoded = base64.b64encode(shp.getvalue())
-        ascii_representation = encoded.decode('utf-8')
-        return ascii_representation
+    def get_centroid(self, cell) -> tuple[int, int]:
+        extrema = [cell[c] for c in self._columns]
+        xmin, xmax, ymin, ymax = extrema
+        return (int((xmin + xmax)/2.0), int((ymin + ymax)/2.0))
+
+    def create_shape_file(self, cell) -> str:
+        return str(self.get_centroid(cell))
 
     def wrap_up_timer(self, timer):
         df = timer.report(organize_by='fraction')

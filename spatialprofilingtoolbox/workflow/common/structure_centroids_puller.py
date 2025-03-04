@@ -7,7 +7,7 @@ from typing import cast
 from psycopg import Cursor as PsycopgCursor
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.db.shapefile_polygon import extract_points
+from spatialprofilingtoolbox.db.shapefile_polygon import extract_centroid
 from spatialprofilingtoolbox.workflow.common.structure_centroids import (
     StructureCentroids,
     StudyStructureCentroids,
@@ -196,9 +196,7 @@ class StructureCentroidsPuller:
                 study_data[current_specimen] = specimen_centroids
                 current_specimen = row[field['specimen']]
                 specimen_centroids = {}
-            specimen_centroids[int(row[field['structure']])] = self._compute_centroid(
-                extract_points(row[field['base64_contents']])
-            )
+            specimen_centroids[int(row[field['structure']])] = extract_centroid(row[field['base64_contents']])
         study_data[current_specimen] = specimen_centroids
         return study_data
 

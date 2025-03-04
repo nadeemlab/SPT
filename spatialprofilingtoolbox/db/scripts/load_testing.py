@@ -16,8 +16,8 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCr
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
-from spatialprofilingtoolbox.ondemand.providers.counts_provider import CountsProvider
-from spatialprofilingtoolbox.ondemand.providers.proximity_provider import ProximityProvider
+from spatialprofilingtoolbox.apiserver.request_scheduling.counts_scheduler import CountsScheduler
+from spatialprofilingtoolbox.apiserver.request_scheduling.proximity_scheduler import ProximityScheduler
 from spatialprofilingtoolbox.db.ondemand_dropper import OnDemandComputationsDropper
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
@@ -217,7 +217,7 @@ class LoadTester:
             measurement_study_name = StudyAccess(cursor).get_study_components(study).measurement
             data_analysis_study = get(measurement_study_name, cursor)
 
-        specification = CountsProvider._get_feature_specification(
+        specification = CountsScheduler._get_feature_specification(
             study,
             data_analysis_study,
             PhenotypeCriteria(positive_markers=(details['positive_marker'],), negative_markers=(details['negative_marker'],)),
@@ -240,7 +240,7 @@ class LoadTester:
         p1 = phenotype_to_phenotype_str(phenotype1)
         p2 = phenotype_to_phenotype_str(phenotype2)
         radius = details['radius']
-        specification = ProximityProvider._get_feature_specification(
+        specification = ProximityScheduler._get_feature_specification(
             study,
             data_analysis_study,
             p1,

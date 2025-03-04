@@ -11,6 +11,7 @@ MODULE_TESTS := $(foreach test_file,$(MODULE_TEST_FILES),test-$(test_file))
 TESTS := ${UNIT_TESTS} ${MODULE_TESTS}
 
 P := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
+UPDATE_STATUS = printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$(1)" "$(2)" | sqlite3 buildcache.sqlite3
 
 .PHONY: setup-testing teardown-unit-testing teardown-module-testing
 
@@ -23,39 +24,38 @@ setup-testing:
 >@${MESSAGE} start "$@" "ondemand"
 >@docker compose up -d ; bash ${P}/record_docker_logs.sh & \
     LOG_PID=$$!; \
-    echo 'CREATE TABLE IF NOT EXISTS log_pids(pid int);' | sqlite3 buildcache.sqlite3 ; \
-    echo "INSERT INTO log_pids VALUES ($$LOG_PID);" | sqlite3 buildcache.sqlite3 ; \
+    if ps -p $$LOG_PID > /dev/null ; \
+    then \
+        echo 'CREATE TABLE IF NOT EXISTS log_pids(pid int);' | sqlite3 buildcache.sqlite3 ; \
+        echo "INSERT INTO log_pids VALUES ($$LOG_PID);" | sqlite3 buildcache.sqlite3 ; \
+    fi ; \
     sleep 0.2 ; \
     bash ${P}/poll_container_readiness.sh \
      spt-ondemand--testing-ondemand \
      spt-db---testing-only-ondemand ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Setup env." "Env not setup."
 
+DOWN := docker compose stop -t 1 && docker compose down && docker compose rm --force --stop
+
 teardown-unit-testing: ${UNIT_TESTS}
->@${MESSAGE} start "$@" "teardown ondemand"
->@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} start "$@" "teardown ${MODULE_NAME}"
+>@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-module-testing: ${MODULE_TESTS}
->@${MESSAGE} start "$@" "teardown ondemand"
->@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} start "$@" "teardown ${MODULE_NAME}"
+>@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 teardown-testing: ${TESTS}
->@${MESSAGE} start "$@" "teardown ondemand"
->@docker compose stop -t 1 && docker compose down && docker compose rm --force --stop ; status_code="$$?" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${MESSAGE} start "$@" "teardown ${MODULE_NAME}"
+>@${DOWN}; status_code="$$?" ; $(call UPDATE_STATUS,$$status_code,$@) ;
 >@bash ${P}/print_docker_logs.sh
 >@${MESSAGE} end "$@" "Down." "Error."
->@rm -f ${TEST_LOCATION_ABSOLUTE}/ondemand/test_expression_data/.spt_db.config.generated
 
 ${TESTS}: setup-testing
 >@test_target=$$(echo $@ | sed 's/..\/..\/${TEST_LOCATION}\/${MODULE_NAME}\///g') ; \
@@ -82,11 +82,10 @@ ${TESTS}: setup-testing
      -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
      /bin/bash -c "$$test_cmd && exit $$?" ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Passed." "Failed."
 
 clean:
->@rm -f ${WHEEL_FILENAME}
 >@rm -rf ../../test/ondemand/expression_data/
 >@rm -rf ../../test/test_data/fast_cache_testing
 >@rm -f buildcache.sqlite3

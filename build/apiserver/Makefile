@@ -23,8 +23,11 @@ setup-testing:
 >@${MESSAGE} start "apiserver" "apiserver"
 >@docker compose up -d ; bash ${P}/record_docker_logs.sh & \
     LOG_PID=$$!; \
-    echo 'CREATE TABLE IF NOT EXISTS log_pids(pid int);' | sqlite3 buildcache.sqlite3 ; \
-    echo "INSERT INTO log_pids VALUES ($$LOG_PID);" | sqlite3 buildcache.sqlite3 ; \
+    if ps -p $$LOG_PID > /dev/null ; \
+    then \
+        echo 'CREATE TABLE IF NOT EXISTS log_pids(pid int);' | sqlite3 buildcache.sqlite3 ; \
+        echo "INSERT INTO log_pids VALUES ($$LOG_PID);" | sqlite3 buildcache.sqlite3 ; \
+    fi ; \
     sleep 0.2 ; \
     bash ${P}/poll_container_readiness.sh \
      spt-apiserver-testing-apiserver \

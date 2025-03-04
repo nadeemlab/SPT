@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
-version = "1.0.18"
+version = "1.0.20"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]
@@ -169,7 +169,6 @@ packages = [
     "merge_sqlite_dbs.py",
     "report_run_configuration.py",
     "configure.py",
-    "report_on_logs.py",
     "tail_logs.py",
 ]
 "spatialprofilingtoolbox.workflow.assets" = [

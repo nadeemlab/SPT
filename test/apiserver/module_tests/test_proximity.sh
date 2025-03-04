@@ -18,7 +18,7 @@ function test_proximity() {
     filename="$4"
     query="http://spt-apiserver-testing-apiserver:8080/request-spatial-metrics-computation-custom-phenotypes/?study=Melanoma%20intralesional%20IL2&feature_class=proximity&$p1&$p2&radius=$r"
     start=$SECONDS
-    while (( SECONDS - start < 15 )); do
+    while (( SECONDS - start < 120 )); do
         echo -en "Doing query $blue$query$reset_code ... "
         curl -s "$query" > _proximity.json;
         if [ "$?" -gt 0 ];

@@ -1,13 +1,14 @@
 .RECIPEPREFIX = >
 
 help:
->@echo '  The main targets are:'
+>@echo '  This program is used for development and testing tasks.'
 >@echo ' '
 >@echo '  make release-package'
 >@echo '    Build the Python package wheel and push it to PyPI.'
 >@echo ' '
->@echo '  make build-and-push-docker-images'
->@echo '    Build the Docker images and push them to DockerHub repositories.'
+>@echo '  make build-and-push-application-images'
+>@echo '    Build the application Docker images (API server and computation workers)'
+>@echo '    and push them to DockerHub repositories.'
 >@echo ' '
 >@echo '  make force-rebuild-data-loaded-images'
 >@echo '    Rebuild the data-preloaded Docker images. This is relatively'
@@ -17,11 +18,15 @@ help:
 >@echo '  make test'
 >@echo '    Do unit and module tests.'
 >@echo ' '
+>@echo '  make -j10 test'
+>@echo '    Do all tests with e.g. 10 cores in parallel.'
+>@echo ' '
 >@echo '  make [unit | module]-test-[apiserver | graphs | ondemand | db | workflow]'
 >@echo '    Do only the unit or module tests for the indicated module.'
 >@echo ' '
 >@echo '  make clean'
 >@echo '    Attempt to remove all build or partial-build artifacts.'
+>@echo '    This will also try to start the Docker daemon if it is not already running.'
 >@echo ' '
 >@echo '  make clean-docker-images'
 >@echo '    Aggressively removes the Docker images created here.'
@@ -29,7 +34,7 @@ help:
 >@echo '    This target does not attempt to remove external images pulled as base images, however.'
 >@echo '    Note that normal `make clean` does not attempt to remove Docker images at all.'
 >@echo ' '
->@echo '  make help VERBOSE=1'
+>@echo '  make help'
 >@echo '    Show this text.'
 >@echo ' '
 >@echo 'Use VERBOSE=1 to send command outputs to STDOUT rather than log files.'
@@ -42,6 +47,7 @@ MAKEFLAGS += --no-builtin-rules
 PACKAGE_NAME := spatialprofilingtoolbox
 export PYTHON := python
 export BUILD_SCRIPTS_LOCATION_ABSOLUTE := ${PWD}/build/build_scripts
+SCRIPTS := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}
 SOURCE_LOCATION := ${PACKAGE_NAME}
 PLUGIN_SOURCE_LOCATION := plugin
 BUILD_LOCATION := build
@@ -51,10 +57,13 @@ export TEST_LOCATION_ABSOLUTE := ${PWD}/${TEST_LOCATION}
 LOCAL_USERID := $(shell id -u)
 VERSION := $(shell cat pyproject.toml | grep 'version = ' | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 export WHEEL_FILENAME := ${PACKAGE_NAME}-${VERSION}-py3-none-any.whl
-export MESSAGE := bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/verbose_command_wrapper.sh
+WHEEL := ${WHEEL_FILENAME}
+export MESSAGE := bash ${SCRIPTS}/verbose_command_wrapper.sh
 
 export DOCKER_ORG_NAME := nadeemlab
 export DOCKER_REPO_PREFIX := spt
+REPO_DEV := ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development
+REPO := ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}
 export DOCKER_SCAN_SUGGEST:=false
 SUBMODULES := apiserver graphs ondemand db workflow
 DOCKERIZED_SUBMODULES := apiserver db ondemand
@@ -86,9 +95,14 @@ export DB_SOURCE_LOCATION_ABSOLUTE := ${PWD}/${SOURCE_LOCATION}/db
 export DB_BUILD_LOCATION_ABSOLUTE := ${PWD}/${BUILD_LOCATION}/db
 
 PACKAGE_SOURCE_FILES := pyproject.toml $(shell find ${SOURCE_LOCATION} -type f)
+DEPENDENCY_LISTS := requirements.txt requirements.apiserver.txt requirements.ondemand.txt
+EXTRAS_requirements.txt := "[all]"
+EXTRAS_requirements.apiserver.txt := "[apiserver]"
+EXTRAS_requirements.ondemand.txt := "[ondemand]"
 
-export SHELL := ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/status_messages_only_shell.sh
+export SHELL := ${SCRIPTS}/status_messages_only_shell.sh
 
+# By default, no verbose log output is shown. For the default "help" target, make an exception.
 ifdef VERBOSE
     export .SHELLFLAGS := -c -super-verbose
 else
@@ -109,88 +123,85 @@ else
 export NO_CACHE_FLAG := 
 endif
 
+UPDATE_STATUS = printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$(1)" "$(2)" | sqlite3 buildcache.sqlite3
+
 release-package: development-image check-for-pypi-credentials
 >@${MESSAGE} start "$@" "Uploading spatialprofilingtoolbox==${VERSION} to PyPI"
 >@cp ~/.pypirc .
->@docker run -u ${LOCAL_USERID} --rm --mount type=bind,src=${PWD},dst=/mount_sources -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --config-file .pypirc --repository ${PACKAGE_NAME} dist/${WHEEL_FILENAME} ' ;\
+>@docker run \
+     -u ${LOCAL_USERID} \
+     --rm \
+     --mount \
+     type=bind,src=${PWD},dst=/mount_sources \
+     -t ${REPO_DEV}:latest \
+     /bin/bash -c 'cd /mount_sources; PYTHONDONTWRITEBYTECODE=1 python -m twine upload --config-file .pypirc --repository ${PACKAGE_NAME} dist/${WHEEL} ' ;\
     status_code=$$?; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Uploaded." "Error."
 >@rm -f .pypirc
 
 check-for-pypi-credentials:
 >@${MESSAGE} start "$@" "Checking for PyPI credentials in ~/.pypirc for spatialprofilingtoolbox"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py pypi ; \
+>@${PYTHON} ${SCRIPTS}/check_for_credentials.py pypi ; \
     status_code=$$?; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Found." "Not found."
 
-development-image-prerequisites-installed: requirements.txt requirements.apiserver.txt requirements.ondemand.txt ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile
+development-image-prerequisites-installed: ${DEPENDENCY_LISTS} ${SCRIPTS}/development_prereqs.Dockerfile
 >@${MESSAGE} start "$@" "Building development image precursor"
->@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
+>@cp ${SCRIPTS}/.dockerignore . 
 >@docker build \
      ${NO_CACHE_FLAG} \
      --rm \
-     -f ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development_prereqs.Dockerfile \
-     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development-prereqs:latest \
+     -f ${SCRIPTS}/development_prereqs.Dockerfile \
+     -t ${REPO_DEV}-prereqs:latest \
      . ; \
     status_code=$$?; \
     if [[ "$$status_code" == "0" ]]; \
     then \
         touch development-image-prerequisites-installed ; \
     fi ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
 initialize_message_cache:
->@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/message_cache.sh; rm buildcache.sqlite3; initialize_message_cache;
+>@source ${SCRIPTS}/message_cache.sh; rm buildcache.sqlite3; initialize_message_cache;
 
-development-image: ${PACKAGE_SOURCE_FILES} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile development-image-prerequisites-installed
+development-image: ${PACKAGE_SOURCE_FILES} ${SCRIPTS}/development.Dockerfile development-image-prerequisites-installed
 >@${MESSAGE} start "$@" "Building development image"
->@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
+>@cp ${SCRIPTS}/.dockerignore . 
 >@docker build \
      ${NO_CACHE_FLAG} \
      --rm \
      --no-cache \
      --pull=false \
-     -f ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/development.Dockerfile \
-     -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
-     --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
+     -f ${SCRIPTS}/development.Dockerfile \
+     -t ${REPO_DEV}:latest \
+     --build-arg WHEEL_FILENAME=${WHEEL} \
      . ; \
     status_code=$$? ; \
     if [[ "$$status_code" == "0" ]]; \
     then \
         if [ ! -d dist/ ]; then mkdir dist ; fi; \
-        docker run --rm -v $$(pwd)/dist:/buffer ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development /bin/sh -c "cp dist/${WHEEL_FILENAME} /buffer; chown ${LOCAL_USERID}:${LOCAL_USERID} /buffer/*; "; \
-    fi; \
-    if [[ "$$status_code" == "0" ]]; \
-    then \
+        docker run \
+         --rm \
+         -v \
+         $$(pwd)/dist:/buffer \
+         ${REPO_DEV} \
+         /bin/sh -c "cp dist/${WHEEL} /buffer; chown ${LOCAL_USERID}:${LOCAL_USERID} /buffer/*; "; \
         touch development-image ; \
     fi; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
-requirements.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh | initialize_message_cache
->@${MESSAGE} start "$@" "Determining requirements.txt"
->@${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh "[all]" requirements.txt; \
+${DEPENDENCY_LISTS}: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
+>@${MESSAGE} start "$@" "Determining $@"
+>@extras=${EXTRAS_$@}; \
+    ${SCRIPTS}/determine_prerequisites.sh "$$extras" $@; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
->@${MESSAGE} end "$@" "Complete." "Determination failed."
-
-requirements.apiserver.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh | initialize_message_cache
->@${MESSAGE} start "$@" "Determining requirements.apiserver.txt"
->@${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh "[apiserver]" requirements.apiserver.txt; \
-    status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
->@${MESSAGE} end "$@" "Complete." "Determination failed."
-
-requirements.ondemand.txt: pyproject.toml ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh | initialize_message_cache
->@${MESSAGE} start "$@" "Determining requirements.ondemand.txt"
->@${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/determine_prerequisites.sh "[ondemand]" requirements.ondemand.txt; \
-    status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Complete." "Determination failed."
 
 build-and-push-application-images: ${DOCKER_PUSH_SUBMODULE_TARGETS}
@@ -202,42 +213,42 @@ build-and-push-docker-images-dev: ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS} ${DOCKER_
 ${DOCKER_PUSH_SUBMODULE_TARGETS}: ${DOCKER_BUILD_SUBMODULE_TARGETS} check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    repository_name=${REPO}-$$submodule_name ; \
     ${MESSAGE} start "$@" "Pushing Docker container $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-//g') ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     echo "$$submodule_name"; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    repository_name=${REPO}-$$submodule_name ; \
     echo "$$repository_name"; \
     docker push $$repository_name:${VERSION} ; \
     exit_code1=$$?; \
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_DEV_SUBMODULE_TARGETS}: build-docker-images check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-dev-//g') ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    repository_name=${REPO}-$$submodule_name ; \
     ${MESSAGE} start "$@" "Pushing Docker container $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/^docker-push-dev-//g') ; \
     submodule_name=$$(echo $$submodule_directory | sed 's/spatialprofilingtoolbox\///g') ; \
     echo "$$submodule_name"; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    repository_name=${REPO}-$$submodule_name ; \
     echo "$$repository_name"; \
     docker push $$repository_name:dev ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
 >@plugin_name=$$(basename $@) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     ${MESSAGE} start "$@" "Pushing Docker container $$repository_name"
 >@plugin_name=$$(basename $@) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
     echo "$$plugin_name"; \
@@ -247,30 +258,30 @@ ${DOCKER_PUSH_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_DEV_PLUGIN_TARGETS}: build-docker-images check-for-docker-credentials
 >@plugin_name=$$(basename $@) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     ${MESSAGE} start "$@" "Pushing Docker container $$repository_name"
 >@plugin_name=$$(basename $@) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-dev-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
     docker push $$repository_name:dev ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credentials
 >@plugin_name=$$(basename $@ -cuda) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     ${MESSAGE} start "$@" "Pushing Docker container $$repository_name:cuda"
 >@plugin_name=$$(basename $@ -cuda) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
     echo "$$plugin_name"; \
@@ -280,41 +291,41 @@ ${DOCKER_PUSH_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credent
     docker push $$repository_name:cuda-latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 ${DOCKER_PUSH_DEV_PLUGIN_CUDA_TARGETS}: build-docker-images check-for-docker-credentials
 >@plugin_name=$$(basename $@ -cuda) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     ${MESSAGE} start "$@" "Pushing Docker container $$repository_name:cuda"
 >@plugin_name=$$(basename $@ -cuda) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,docker-push-dev-${PACKAGE_NAME}\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
     echo "$$plugin_name"; \
     echo "$$repository_name"; \
     docker push $$repository_name:cuda-dev ; \
     status_code=$$? ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 generic-spt-push-target: build-docker-images check-for-docker-credentials
->@repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX} ; \
+>@repository_name=${REPO} ; \
     ${MESSAGE} start "$@" "Pushing Docker container $$repository_name"
->@repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX} ; \
-    docker tag ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest $$repository_name:${VERSION} ; \
+>@repository_name=${REPO} ; \
+    docker tag ${REPO_DEV}:latest $$repository_name:${VERSION} ; \
     docker push $$repository_name:${VERSION} ; \
     exit_code1=$$?; \
-    docker tag ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest $$repository_name:latest ; \
+    docker tag ${REPO_DEV}:latest $$repository_name:latest ; \
     docker push $$repository_name:latest ; \
     exit_code2=$$?; \
     status_code=$$(( exit_code1 + exit_code2 )) ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 data-loaded-images-push-target:
 >@${MESSAGE} start "$@" "Pushing preloaded data Docker containers"
->@repository_name_prefix=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded ; \
+>@repository_name_prefix=${REPO}-db-preloaded ; \
     codes=0 ; \
     for suffix in 1 2 1and2 1small 1smallnointensity; \
     do \
@@ -329,13 +340,13 @@ data-loaded-images-push-target:
         codes=$$(( codes + exitcode )) ; \
     done; \
     status_code="$$codes" ; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Pushed." "Not pushed."
 
 check-for-docker-credentials:
 >@${MESSAGE} start "$@" "Checking for Docker credentials in ~/.docker/config.json"
->@${PYTHON} ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_for_credentials.py docker ; status_code="$$?"; if [[ "$$status_code" == "0" ]]; then touch check-for-docker-credentials; fi; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+>@${PYTHON} ${SCRIPTS}/check_for_credentials.py docker ; status_code="$$?"; if [[ "$$status_code" == "0" ]]; then touch check-for-docker-credentials; fi; \
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Found." "Not found."
 
 ensure-plugin-submodules-are-populated:
@@ -355,18 +366,16 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
+    repository_name=${REPO}-$$submodule_name ; \
     ${MESSAGE} start "$@" "Building Docker image $$repository_name"
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$submodule_name ; \
-    cp requirements.txt $$submodule_directory ; \
-    cp requirements.apiserver.txt $$submodule_directory ; \
-    cp requirements.ondemand.txt $$submodule_directory ; \
-    cp dist/${WHEEL_FILENAME} $$submodule_directory ; \
+    repository_name=${REPO}-$$submodule_name ; \
+    cp ${DEPENDENCY_LISTS} $$submodule_directory ; \
+    cp dist/${WHEEL} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \
-    cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
+    cp ${SCRIPTS}/.dockerignore . ; \
     docker build \
      ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
@@ -376,32 +385,32 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
      -t $$repository_name:dev \
      --build-arg version=${VERSION} \
      --build-arg service_name=$$submodule_name \
-     --build-arg WHEEL_FILENAME=$${WHEEL_FILENAME} \
+     --build-arg WHEEL_FILENAME=${WHEEL} \
      $$submodule_directory ; status_code="$$?" ; \
     if [[ "$$status_code" == "0" ]]; \
     then \
         touch $@ ;\
     fi; \
-    printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ;
+    $(call UPDATE_STATUS,$$status_code,$@) ;
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
-    rm $$submodule_directory/${WHEEL_FILENAME} ; \
+    rm $$submodule_directory/${WHEEL} ; \
     rm ./Dockerfile ; \
     rm ./.dockerignore ; \
 
 ${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-credentials ensure-plugin-submodules-are-populated
 >@plugin_name=$$(basename $@ .docker.built) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     ${MESSAGE} start "$@" "Building Docker image $$repository_name"
 >@plugin_name=$$(basename $@ .docker.built) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,${BUILD_LOCATION_ABSOLUTE}\/plugins\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
     plugin_directory=$$(dirname $@)/$$plugin_name ; \
     mkdir -p $$plugin_directory ; \
     cp -r $$source_directory/* $$plugin_directory ; \
     cp $$(dirname $@)/$$(basename $@ .docker.built).dockerfile ./Dockerfile ; \
-    cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
+    cp ${SCRIPTS}/.dockerignore . ; \
     docker build \
      ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
@@ -423,17 +432,17 @@ ${DOCKER_BUILD_PLUGIN_TARGETS}: check-docker-daemon-running check-for-docker-cre
 
 ${DOCKER_BUILD_PLUGIN_CUDA_TARGETS}: check-docker-daemon-running check-for-docker-credentials ensure-plugin-submodules-are-populated
 >@plugin_name=$$(basename $@ -cuda.docker.built) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     ${MESSAGE} start "$@" "Building Docker image $$repository_name:cuda"
 >@plugin_name=$$(basename $@ -cuda.docker.built) ; \
-    repository_name=${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-$$plugin_name ; \
+    repository_name=${REPO}-$$plugin_name ; \
     plugin_relative_directory=$$(dirname $@ | sed 's,${BUILD_LOCATION_ABSOLUTE}\/plugins\/,,g')/$$plugin_name ; \
     source_directory=${PLUGIN_SOURCE_LOCATION}/$$plugin_relative_directory ; \
     plugin_directory=$$(dirname $@)/$$plugin_name-cuda ; \
     mkdir -p $$plugin_directory ; \
     cp $$source_directory/* $$plugin_directory ; \
     cp $$(dirname $@)/$$(basename $@ .docker.built).dockerfile ./Dockerfile ; \
-    cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . ; \
+    cp ${SCRIPTS}/.dockerignore . ; \
     docker build \
      ${NO_CACHE_FLAG} \
      -f ./Dockerfile \
@@ -460,20 +469,17 @@ check-docker-daemon-running:
     ${MESSAGE} end "$@" "Running." "Not running." ; \
     if [ $$status_code -gt 0 ] ; \
     then \
-        ${MESSAGE} start "Attempting to start Docker daemon" "Attempting to start Docker daemon" ; \
-        bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/start_docker_daemon.sh ; status_code="$$?" ; \
-        printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$@" | sqlite3 buildcache.sqlite3 ; \
-        if [ $$status_code -eq 1 ] ; \
-        then \
-            ${MESSAGE} end "Attempting to start Docker daemon" "--" "Timed out." ; \
-        else \
-            ${MESSAGE} end "Attempting to start Docker daemon" "Started." "Failed to start." ; \
-        fi ; \
+        task="Attempting to start Docker daemon"; \
+        ${MESSAGE} start "$$task" "$$task" ; \
+        bash ${SCRIPTS}/start_docker_daemon.sh ; status_code="$$?" ; \
+        printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "$$status_code" "$$task" | sqlite3 buildcache.sqlite3 ; \
+        ${MESSAGE} end "Attempting to start Docker daemon" "Running." "Failed to start." ; \
     fi ; \
     touch check-docker-daemon-running ;
 
 # Some dependencies to force serial processing (build environments would conflict if concurrent)
 clean-network-environment: initialize_message_cache
+check-docker-daemon-running: initialize_message_cache
 before_all_tests: clean-network-environment
 >@${MESSAGE} start "start timing" "Start timing"
 
@@ -485,57 +491,57 @@ data-loaded-image-1: data-loaded-image-1and2
 data-loaded-image-1small: data-loaded-image-1
 data-loaded-image-1smallnointensity: data-loaded-image-1small
 
-# test: unit-tests module-tests
-# >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
-# >@${MESSAGE} end "start timing" "Total time:" "Error computing time."
+DATA_IMAGES := data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2
+
 test: ${COMBINED_TEST_TARGETS}
 >@printf 'UPDATE times SET status_code=%s WHERE activity="%s";' "0" "start timing" | sqlite3 buildcache.sqlite3 ;
 >@${MESSAGE} end "start timing" "Total time:" "Error computing time."
 
 module-tests: ${MODULE_TEST_TARGETS}
 
-${MODULE_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${MODULE_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^module-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory module-tests ;
 
 unit-tests: ${UNIT_TEST_TARGETS}
 
-${UNIT_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${UNIT_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^unit-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory unit-tests ;
 
-${SINGLETON_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${SINGLETON_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^singleton-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory singleton-tests ;
 
-${COMBINED_TEST_TARGETS}: development-image data-loaded-image-1smallnointensity data-loaded-image-1small data-loaded-image-1 data-loaded-image-1and2 ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
+${COMBINED_TEST_TARGETS}: development-image ${DATA_IMAGES} ${DOCKER_BUILD_SUBMODULE_TARGETS} before_all_tests
 >@submodule_directory=$$(echo $@ | sed 's/^combined-test-/${BUILD_LOCATION}\//g') ; \
     ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory combined-tests ;
 
 # The below explicitly checks whether the docker image already exists locally.
 # If so, not rebuilt. To trigger rebuild, use "make clean-docker-images" first,
 # or directly force-rebuild-data-loaded-images .
-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh development-image
+data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${SCRIPTS}/import_test_dataset%.sh development-image
 >@${MESSAGE} start "$@" "Building test-data-loaded spt-db image ($*)"
->@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
->@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_image_exists.sh; \
-    exists=$$(check_image_exists ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*); \
+>@cp ${SCRIPTS}/.dockerignore . 
+>@source ${SCRIPTS}/check_image_exists.sh; \
+    exists=$$(check_image_exists ${REPO}-db-preloaded-$*); \
     if [[ "$$exists" == "no" ]]; \
     then \
-        docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=.postgres/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
+        docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=.postgres/pgdata ${REPO}-db:latest ; \
         docker container start temporary-spt-db-preloading && \
-        bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
+        bash ${SCRIPTS}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
         pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \
         docker container run \
         -i \
         --rm \
+        -e SQLITE_MOCK_DATABASE=1 \
         --network container:temporary-spt-db-preloading \
         --mount type=bind,src=${PWD},dst=/mount_sources \
         --mount type=tmpfs,destination=/working_dir \
-        -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+        -t ${REPO_DEV}:latest \
         /bin/bash -c \
         "$$pipeline_cmd" ; status_code="$$?" && \
-        docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*:latest && \
+        docker commit temporary-spt-db-preloading ${REPO}-db-preloaded-$*:latest && \
         docker container rm --force temporary-spt-db-preloading ; \
     fi; \
     if [[ "$$status_code" == "0" ]]; \
@@ -547,25 +553,25 @@ data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
-force-rebuild-data-loaded-images: ${DLI}-1 ${DLI}-2 ${DLI}-1and2 ${DLI}-1small ${DLI}-1smallnointensity
+force-rebuild-data-loaded-images: ${DLI}-1 ${DLI}-1and2 ${DLI}-1small ${DLI}-1smallnointensity
 
-force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/import_test_dataset%.sh
+force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${SCRIPTS}/import_test_dataset%.sh
 >@${MESSAGE} start "$@" "Rebuilding test-data-loaded spt-db image ($*)"
->@cp ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/.dockerignore . 
->@source ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/check_image_exists.sh; \
-    docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=.postgres/pgdata ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db:latest ; \
+>@cp ${SCRIPTS}/.dockerignore . 
+>@source ${SCRIPTS}/check_image_exists.sh; \
+    docker container create --name temporary-spt-db-preloading --network host -e POSTGRES_PASSWORD=postgres -e PGDATA=.postgres/pgdata ${REPO}-db:latest ; \
     docker container start temporary-spt-db-preloading && \
-    bash ${BUILD_SCRIPTS_LOCATION_ABSOLUTE}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
+    bash ${SCRIPTS}/poll_container_readiness_direct.sh temporary-spt-db-preloading && \
     pipeline_cmd="cd /working_dir; cp -r /mount_sources/build .; cp -r /mount_sources/test .; bash build/build_scripts/import_test_dataset$*.sh "; \
     docker run \
     --rm \
     --network container:temporary-spt-db-preloading \
     --mount type=bind,src=${PWD},dst=/mount_sources \
     --mount type=tmpfs,destination=/working_dir \
-    -t ${DOCKER_ORG_NAME}-development/${DOCKER_REPO_PREFIX}-development:latest \
+    -t ${REPO_DEV}:latest \
     /bin/bash -c \
     "$$pipeline_cmd" ; status_code="$$?" && \
-    docker commit temporary-spt-db-preloading ${DOCKER_ORG_NAME}/${DOCKER_REPO_PREFIX}-db-preloaded-$*:latest && \
+    docker commit temporary-spt-db-preloading ${REPO}-db-preloaded-$*:latest && \
     docker container rm --force temporary-spt-db-preloading ; \
     if [[ "$$status_code" == "0" ]]; \
     then \
@@ -575,9 +581,13 @@ force-rebuild-data-loaded-image-%: ${BUILD_LOCATION_ABSOLUTE}/db/docker.built ${
 >@${MESSAGE} end "$@" "Rebuilt." "Rebuild failed."
 >@rm -f .dockerignore
 
-clean: clean-files clean-network-environment
+clean: clean-files clean-files-docker-daemon clean-network-environment
 
-clean-files: clean-network-environment
+clean-network-environment: | clean-files-docker-daemon
+
+clean-files-docker-daemon:
+>@rm -f check-docker-daemon-running
+>@rm -f check-for-docker-credentials
 
 clean-files:
 >@rm -rf ${PACKAGE_NAME}.egg-info/
@@ -587,26 +597,18 @@ clean-files:
 >@for submodule in ${SUBMODULES} ; do \
         submodule_directory=${BUILD_LOCATION}/$$submodule ; \
         ${MAKE} SHELL=$(SHELL) --no-print-directory -C $$submodule_directory clean ; \
-        rm -rf $$submodule_directory/docker.built ; \
+        rm -f $$submodule_directory/docker.built ; \
     done
 >@rm -f Dockerfile
 >@rm -f .dockerignore
 >@rm -rf spatialprofilingtoolbox.egg-info/
 >@rm -rf __pycache__/
->@rm -f requirements.txt
->@rm -f requirements.apiserver.txt
->@rm -f requirements.ondemand.txt
+>@rm -f ${DEPENDENCY_LISTS}
 >@rm -f development-image
 >@rm -f development-image-prerequisites-installed
->@rm -f data-loaded-image-1
->@rm -f data-loaded-image-2
->@rm -f data-loaded-image-1and2
->@rm -f data-loaded-image-1small
->@rm -f data-loaded-image-1smallnointensity
+>@rm -f ${DATA_IMAGES}
 >@rm -f file_manifest.tsv.bak
 >@rm -f .nextflow.log; rm -f .nextflow.log.*; rm -rf .nextflow/; rm -f configure.sh; rm -f run.sh; rm -f main.nf; rm -f nextflow.config; rm -rf work/; rm -rf results/
->@rm -f check-docker-daemon-running
->@rm -f check-for-docker-credentials
 >@rm -rf ${BUILD_LOCATION}/lib
 >@rm -f build/*/log_of_build.log
 >@rm -f log_of_build.log

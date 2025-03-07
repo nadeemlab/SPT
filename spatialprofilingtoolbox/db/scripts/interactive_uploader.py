@@ -174,7 +174,7 @@ class InteractiveUploader:
         credentials = retrieve_credentials_from_file(file)
         try:
             with connect(
-                dbname='postgres',
+                dbname='spt_datasets',
                 host=credentials.endpoint,
                 user=credentials.user,
                 password=credentials.password,
@@ -184,7 +184,7 @@ class InteractiveUploader:
             pass
         self.print(f'Warning: ', style='flag', end='')
         self.print(f' credentials are invalid or database ', style='message', end='')
-        self.print('postgres', style='item', end='')
+        self.print('spt_datasets', style='item', end='')
         self.print(f' does not exist in ', style='message', end='')
         self.print(f'{file}', style='popout')
         return False

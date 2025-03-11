@@ -99,8 +99,11 @@ class StudyAccess(SimpleReadOnlyProvider):
         return self._get_study_small_artifacts('gnn_plot_configurations')
 
     def _get_study_small_artifacts(self, name: str) -> list[str]:
-        self.cursor.execute(f'SELECT txt FROM {name} ORDER BY id;')
-        return [row[0] for row in self.cursor.fetchall()]
+        try:
+            self.cursor.execute(f'SELECT txt FROM {name} ORDER BY id;')
+        except UndefinedTable:
+            return []
+        return list(map(lambda row: row[0], tuple(self.cursor.fetchall())))
 
     @staticmethod
     def _is_secondary_substudy(substudy: str) -> bool:

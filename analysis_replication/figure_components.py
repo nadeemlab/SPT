@@ -34,6 +34,25 @@ def shorten_study(study: str) -> str:
     return study.split(' collection: ')[0]
 
 
+def retrieve_all_counts() -> DataFrame:
+    with DBCursor(database_config_file=database_config_file) as cursor:
+        cursor.execute('SELECT study from study_lookup;')
+        studies = tuple(map(lambda r: r[0], cursor.fetchall()))
+    query = 'phenotype-counts'
+    access = DataAccessor(studies[0])
+    df = None
+    for study in studies:
+        parameters = urlencode([('study', study), ('negative_marker', ''), ('positive_marker', '')])
+        counts, _ = access._retrieve(query, parameters)
+        _df = DataFrame(counts['counts'])
+        _df['study'] = shorten_study(study)
+        if df is None:
+            df = _df
+        else:
+            df = concat([df, _df], axis=0)
+    return df
+
+
 def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame) -> None:
     def _expand_list(stratum_identifier, size) -> list:
         return [int(stratum_identifier)] * size
@@ -54,16 +73,14 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     plt.savefig(f'{filename}.svg')
 
 
-def generate_box_representations(summary: DataFrame, strata: DataFrame) -> None:
-    summary = summary.set_index('study')
-    df = strata.join(summary, on='study')
-    print(df.to_string())
+def generate_box_representations(strata: DataFrame) -> None:
+    df = strata
     for _, group in df.groupby(['source_site', 'study']):
-        total = group['count'].sum()
-        target_area = total / pow(10, 5)
+        total = group['cell_count'].sum()
+        target_area = total / pow(10, 4)
         groupstrata = group.copy().set_index('stratum_identifier')
-        number_boxes_strata = groupstrata['count']
-        number_boxes = int(group['count'].sum())
+        number_boxes_strata = groupstrata['sample_count']
+        number_boxes = int(group['sample_count'].sum())
         area_per_box = target_area / number_boxes
         width_count = max(1, int(sqrt(number_boxes / aspect)))
         remainder = number_boxes % width_count
@@ -114,22 +131,34 @@ def create_components():
     anatomy = anatomy.set_index('sample')
     del anatomy['study']
     strata = strata.join(anatomy, on='sample')
+
+    counts = retrieve_all_counts()
+    counts = counts.rename(columns={'specimen': 'sample', 'count': 'cell_count'})
+    counts = counts.set_index(['sample', 'study'])
+
+    strata = strata.join(counts, on=['sample', 'study'])
+
+    strata['ones'] = int(1)
     columns = ['source_site', 'study', 'stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition', 'subject_diagnosed_result']
-    counts = strata.value_counts(columns).to_frame().reset_index()
-    print(counts.to_string())
-    strata = counts
+    del strata['sample']
+    counts = strata.groupby(columns).agg('sum')
+    # counts = strata.value_counts(columns).to_frame().reset_index()
+    strata = counts.reset_index()
+    strata = strata.rename({'ones': 'sample_count'})
+    print(strata.columns)
+    print(strata)
 
-    access = DataAccessor(studies[0])
-    rows = []
-    for s in studies:
-        summary, _ = access._retrieve('study-summary', urlencode([('study', s)]))
-        samples = summary['counts']['specimens']
-        cells = summary['counts']['cells']
-        rows.append((shorten_study(s), samples, cells, cells/samples))
-    summary = DataFrame(rows, columns=['study', 'samples', 'total_cells_study', 'average'])
-    print(summary.to_string())
+    # access = DataAccessor(studies[0])
+    # rows = []
+    # for s in studies:
+    #     summary, _ = access._retrieve('study-summary', urlencode([('study', s)]))
+    #     samples = summary['counts']['specimens']
+    #     cells = summary['counts']['cells']
+    #     rows.append((shorten_study(s), samples, cells, cells/samples))
+    # summary = DataFrame(rows, columns=['study', 'samples', 'total_cells_study', 'average'])
+    # print(summary.to_string())
 
-    generate_box_representations(summary, strata)
+    generate_box_representations(strata)
 
 
 if __name__=='__main__':

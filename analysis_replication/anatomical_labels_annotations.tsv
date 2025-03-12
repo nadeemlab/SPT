@@ -1,0 +1,55 @@
+study	source_site	label
+Bone marrow aging	Bone marrow	
+Brain met IMC	Bladder	
+Brain met IMC	Breast	
+Brain met IMC	Colorectal	
+Brain met IMC	Gastric	
+Brain met IMC	Lung	
+Brain met IMC	Ovarian	
+Brain met IMC	Skin	
+Breast cancer IMC	Breast	
+GBM IMC	Brain	
+Head and neck mpIF	Base of Tongue	
+Head and neck mpIF	Glottic	
+Head and neck mpIF	Hypopharynx	
+Head and neck mpIF	Larynx	
+Head and neck mpIF	Mouth - retromolar area	
+Head and neck mpIF	Oropharynx	
+Head and neck mpIF	Pyriform Sinus	
+Head and neck mpIF	Supraglottic	
+Head and neck mpIF	Tonsil	
+Hodgkins HRS	Hematopoietic or lymphoid tissue	
+LUAD progression	Lung	
+Melanoma CyTOF ICI	acral	
+Melanoma CyTOF ICI	brain	
+Melanoma CyTOF ICI	lymph node	
+Melanoma CyTOF ICI	nonacral skin	
+Melanoma CyTOF ICI	other met	
+Melanoma IMC TME protein	brain	
+Melanoma IMC TME protein	lymph nodes	
+Melanoma IMC TME protein	lymph nodes or soft tissue	
+Melanoma IMC TME protein	mucosal	
+Melanoma IMC TME protein	parotis or lymph nodes	
+Melanoma IMC TME protein	skin	
+Melanoma IMC TME protein	skin cutaneous	
+Melanoma IMC TME protein	soft tissue	
+Melanoma IMC TME protein	subcutaneous skin	
+Melanoma IMC TME protein	undefine skin	
+Melanoma IMC TME protein	visceral	
+Melanoma intralesional IL2	Left ear	
+Melanoma intralesional IL2	Left foot	
+Melanoma intralesional IL2	Left groin	
+Melanoma intralesional IL2	Left thigh	
+Melanoma intralesional IL2	Right arm	
+Melanoma intralesional IL2	Right axilla	
+Melanoma intralesional IL2	Right chest	
+Melanoma intralesional IL2	Right leg	
+Orion CRC	Appendix	
+Orion CRC	Ascending	
+Orion CRC	Cecum	
+Orion CRC	Descending	
+Orion CRC	Rectosigmoid	
+Orion CRC	Rectum	
+Orion CRC	Sigmoid	
+Orion CRC	Transverse	
+Urothelial ICI	NaN	

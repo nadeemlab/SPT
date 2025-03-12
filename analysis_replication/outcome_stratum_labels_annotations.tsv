@@ -1,0 +1,34 @@
+study	stratum_identifier	local_temporal_position_indicator	subject_diagnosed_condition	subject_diagnosed_result
+Bone marrow aging	1		Age group of patient	>60
+Bone marrow aging	2		Age group of patient	20-60
+Bone marrow aging	3		Age group of patient	<=20
+Brain met IMC	1	Before intervention	Cancer recurrence 1 year after total resection	Did not recur
+Brain met IMC	2	Before intervention	Cancer recurrence 1 year after total resection	Censored
+Brain met IMC	3	Before intervention	Cancer recurrence 1 year after total resection	Recurred
+Breast cancer IMC	1	Before intervention	Response to hormone therapy	Refractory
+Breast cancer IMC	2	Before intervention	Response to hormone therapy	Sensitive
+Breast cancer IMC	3	Before intervention	Response to hormone therapy	Resistant
+GBM IMC	1	Before intervention	Survival or estimated survival post-surgery in days	Less than 1 year
+GBM IMC	2	Before intervention	Survival or estimated survival post-surgery in days	Between 1 and 3 years
+GBM IMC	3	Before intervention	Survival or estimated survival post-surgery in days	More than 3 years
+Head and neck mpIF	1	Before intervention	Disease and patient vitality status post-therapy	Dead of other cause
+Head and neck mpIF	2	Before intervention	Disease and patient vitality status post-therapy	Dead of disease
+Head and neck mpIF	3	Before intervention	Disease and patient vitality status post-therapy	No evidence of disease
+Head and neck mpIF	4	Before intervention	Disease and patient vitality status post-therapy	Alive with disease
+Hodgkins HRS	1		Epstein-Barr Virus infection by EBER in situ hybridization and IHC for LMP1	Negative
+Hodgkins HRS	2		Epstein-Barr Virus infection by EBER in situ hybridization and IHC for LMP1	Positive
+LUAD progression	1		Cancer progression after surgery	Did not progress
+LUAD progression	2		Cancer progression after surgery	Progressed
+Melanoma CyTOF ICI	1	Before intervention	Response to immune checkpoint inhibitor therapy	Non-responder
+Melanoma CyTOF ICI	2	Before intervention	Response to immune checkpoint inhibitor therapy	Responder
+Melanoma IMC TME protein	1			
+Melanoma intralesional IL2	1	Before intervention	Response to intralesional IL-2 injection	Non-responder
+Melanoma intralesional IL2	2	After intervention	Response to intralesional IL-2 injection	Non-responder
+Melanoma intralesional IL2	3	Before intervention	Response to intralesional IL-2 injection	Extreme responder
+Melanoma intralesional IL2	4	After intervention	Response to intralesional IL-2 injection	Extreme responder
+Orion CRC	1		Progression-Free Survival duration	Progressed within 2 years
+Orion CRC	2		Progression-Free Survival duration	Progression-free to 2 years
+Orion CRC	3		Progression-Free Survival duration	Censored
+Urothelial ICI	1	Before intervention	Response to immune checkpoint inhibitor therapy	Responder
+Urothelial ICI	2	Before intervention	Response to immune checkpoint inhibitor therapy	Non-responder
+Urothelial ICI	3	Before intervention	Response to immune checkpoint inhibitor therapy	

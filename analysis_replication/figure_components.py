@@ -144,7 +144,7 @@ def create_components():
     counts = strata.groupby(columns).agg('sum')
     # counts = strata.value_counts(columns).to_frame().reset_index()
     strata = counts.reset_index()
-    strata = strata.rename({'ones': 'sample_count'})
+    strata = strata.rename(columns={'ones': 'sample_count'})
     print(strata.columns)
     print(strata)
 

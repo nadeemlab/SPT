@@ -86,7 +86,7 @@ def generate_box_representations(strata: DataFrame) -> None:
         remainder = number_boxes % width_count
         height_count = (number_boxes // width_count) + 1 if remainder > 0 else int(number_boxes / width_count)
         print('')
-        print('cells ', list(group['total_cells_study'])[0])
+        print('cells ', total)
         print('target area ', target_area)
         print('number boxes ', number_boxes)
         print('area per box ', area_per_box)

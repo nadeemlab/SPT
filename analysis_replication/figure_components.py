@@ -52,15 +52,15 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     filename = re.sub(' ', '_', f'{source} {study}').lower()
     filename = re.sub('[^a-zA-Z0-9]', '', filename)
     plt.savefig(f'{filename}.svg')
-    plt.show()
 
 
 def generate_box_representations(summary: DataFrame, strata: DataFrame) -> None:
     summary = summary.set_index('study')
     df = strata.join(summary, on='study')
     print(df.to_string())
-    for ss, group in df.groupby(['source_site', 'study']):
-        target_area = pow(list(group['total_cells_study'])[0] / pow(10, 4), 1/3)
+    for _, group in df.groupby(['source_site', 'study']):
+        total = group['count'].sum()
+        target_area = total / pow(10, 5)
         groupstrata = group.copy().set_index('stratum_identifier')
         number_boxes_strata = groupstrata['count']
         number_boxes = int(group['count'].sum())

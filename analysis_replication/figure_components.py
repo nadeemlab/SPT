@@ -77,7 +77,7 @@ def generate_box_representations(strata: DataFrame) -> None:
     df = strata
     for _, group in df.groupby(['source_site', 'study']):
         total = group['cell_count'].sum()
-        target_area = total / pow(10, 5)
+        target_area = pow(total / pow(10, 4), 1/3)
         groupstrata = group.copy().set_index('stratum_identifier')
         number_boxes_strata = groupstrata['sample_count']
         number_boxes = int(group['sample_count'].sum())
@@ -157,7 +157,7 @@ def create_components():
     #     rows.append((shorten_study(s), samples, cells, cells/samples))
     # summary = DataFrame(rows, columns=['study', 'samples', 'total_cells_study', 'average'])
     # print(summary.to_string())
-
+    strata.to_csv('strata.tsv', sep='\t', index=False)
     generate_box_representations(strata)
 
 

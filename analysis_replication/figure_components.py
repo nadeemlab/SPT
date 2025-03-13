@@ -13,6 +13,7 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
+from pandas import read_csv
 from pandas import read_sql
 from pandas import concat
 from pandas import DataFrame
@@ -20,6 +21,8 @@ from pandas import Series
 
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from matplotlib import colormaps
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -52,8 +55,38 @@ def retrieve_all_counts() -> DataFrame:
             df = concat([df, _df], axis=0)
     return df
 
+ColorLookup = dict[tuple[str, str], tuple[str, int]]
 
-def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame) -> None:
+def get_color_lookup() -> ColorLookup:
+    df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
+    def parse_matplotlib_color_spec(c: str) -> tuple[str, int]:
+        parts = c.split(';')
+        return (parts[0], int(parts[1]))
+    lookup = {
+        (row['study'], str(row['stratum_identifier'])): parse_matplotlib_color_spec(row['color'])
+        for _, row in df.iterrows()
+    }
+    return lookup
+
+
+def outcome_label_lookup() -> dict[tuple[str, str], tuple[str, str]]:
+    df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
+    lookup = {
+        (row['study'], row['stratum_identifier']): (row['category label'], row['value label'])
+        for _, row in df.iterrows()
+    }
+    return lookup
+
+
+def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame, color_lookup: ColorLookup) -> None:
+    def get_color(cmap_name: str, value: int):
+        return colormaps[cmap_name](value)
+    study = list(strata['study'])[0]
+    color_list = [(1,1,1)] + [None] * 10
+    for _stratum_identifier in number_boxes_strata.index:
+        stratum_identifier = str(_stratum_identifier)
+        color_list[int(stratum_identifier)] = get_color(*color_lookup[(study, stratum_identifier)])
+    cmap = ListedColormap([v for v in color_list if not v is None])
     def _expand_list(stratum_identifier, size) -> list:
         return [int(stratum_identifier)] * size
     cellvalues = list(chain(*map(lambda args: _expand_list(*args), number_boxes_strata.items())))
@@ -64,8 +97,12 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     width = width_count * box_width * multiplier
     print('width ', width_count, ' * ' , area_per_box, ' * ' , multiplier, ' = ', width)
     plt.figure(figsize=(width, width * aspect))
-    ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False)
-    study = list(strata['study'])[0]
+
+    # cmap = 'tab20b'
+
+    from matplotlib.colors import Normalize
+    ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
+    # ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=20)
     source = list(strata['source_site'])[0]
     ax.set_title(f'{source} {study}')
     filename = re.sub(' ', '_', f'{source} {study}').lower()
@@ -74,6 +111,7 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
 
 
 def generate_box_representations(strata: DataFrame) -> None:
+    color_lookup = get_color_lookup()
     df = strata
     for _, group in df.groupby(['source_site', 'study']):
         total = group['cell_count'].sum()
@@ -90,7 +128,7 @@ def generate_box_representations(strata: DataFrame) -> None:
         print('target area ', target_area)
         print('number boxes ', number_boxes)
         print('area per box ', area_per_box)
-        generate_box_representation_one_study(number_boxes_strata, width_count, height_count, area_per_box, group)
+        generate_box_representation_one_study(number_boxes_strata, width_count, height_count, area_per_box, group, color_lookup)
 
 
 def combined_dataframe(query: str, studies: tuple[str, ...]) -> DataFrame:

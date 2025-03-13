@@ -110,11 +110,9 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
     source = list(strata['source_site'])[0]
     site_name = site_lookup[(study, source)]
-    ax.set_title(site_name)
+    ax.set_title(site_name, fontsize=10)
     filename = re.sub(' ', '_', f'{source} {study}').lower()
     filename = re.sub('[^a-zA-Z0-9]', '', filename)
-    # plt.subplots_adjust(left=0.2, bottom=0.2)
-    plt.tight_layout()
     plt.savefig(f'{filename}.svg')
 
 

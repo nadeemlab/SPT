@@ -69,6 +69,15 @@ def get_color_lookup() -> ColorLookup:
     return lookup
 
 
+def get_site_lookup() -> dict[tuple[str, str], str]:
+    df = read_csv('anatomical_labels_annotations.tsv', sep='\t', keep_default_na=False)
+    lookup = {
+        (row['study'], str(row['source_site'])): row['label']
+        for _, row in df.iterrows()
+    }
+    return lookup
+
+
 def outcome_label_lookup() -> dict[tuple[str, str], tuple[str, str]]:
     df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
     lookup = {
@@ -78,7 +87,7 @@ def outcome_label_lookup() -> dict[tuple[str, str], tuple[str, str]]:
     return lookup
 
 
-def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame, color_lookup: ColorLookup) -> None:
+def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame, color_lookup: ColorLookup, site_lookup: dict[tuple[str, str], str]) -> None:
     def get_color(cmap_name: str, value: int):
         return colormaps[cmap_name](value)
     study = list(strata['study'])[0]
@@ -98,20 +107,20 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     print('width ', width_count, ' * ' , area_per_box, ' * ' , multiplier, ' = ', width)
     plt.figure(figsize=(width, width * aspect))
 
-    # cmap = 'tab20b'
-
-    from matplotlib.colors import Normalize
     ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
-    # ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=20)
     source = list(strata['source_site'])[0]
-    ax.set_title(f'{source} {study}')
+    site_name = site_lookup[(study, source)]
+    ax.set_title(site_name)
     filename = re.sub(' ', '_', f'{source} {study}').lower()
     filename = re.sub('[^a-zA-Z0-9]', '', filename)
+    # plt.subplots_adjust(left=0.2, bottom=0.2)
+    plt.tight_layout()
     plt.savefig(f'{filename}.svg')
 
 
 def generate_box_representations(strata: DataFrame) -> None:
     color_lookup = get_color_lookup()
+    site_lookup = get_site_lookup()
     df = strata
     for _, group in df.groupby(['source_site', 'study']):
         total = group['cell_count'].sum()
@@ -128,7 +137,7 @@ def generate_box_representations(strata: DataFrame) -> None:
         print('target area ', target_area)
         print('number boxes ', number_boxes)
         print('area per box ', area_per_box)
-        generate_box_representation_one_study(number_boxes_strata, width_count, height_count, area_per_box, group, color_lookup)
+        generate_box_representation_one_study(number_boxes_strata, width_count, height_count, area_per_box, group, color_lookup, site_lookup)
 
 
 def combined_dataframe(query: str, studies: tuple[str, ...]) -> DataFrame:

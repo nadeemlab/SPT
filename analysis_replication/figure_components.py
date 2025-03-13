@@ -113,10 +113,10 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     ax.set_title(site_name, fontsize=10)
     filename = re.sub(' ', '_', f'{source} {study}').lower()
     filename = re.sub('[^a-zA-Z0-9]', '', filename)
-    plt.subplots_adjust(bottom = 0)
-    plt.subplots_adjust(top = 0.1)
-    plt.subplots_adjust(right = 0.1)
-    plt.subplots_adjust(left = 0)
+    plt.subplots_adjust(bottom = 0.1)
+    plt.subplots_adjust(top = 0.9)
+    plt.subplots_adjust(left = 0.1)
+    plt.subplots_adjust(right = 0.9)
     plt.savefig(f'{filename}.svg')
 
 

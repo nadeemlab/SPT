@@ -112,7 +112,7 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     width = width_count * box_width * multiplier
     plt.figure(figsize=(width, width * aspect))
 
-    ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
+    ax = sns.heatmap(df, linewidth=0.8, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
     source = list(strata['source_site'])[0]
     site_name = site_lookup[(study, source)]
     ax.set_title(site_name + '\n' + simplify_int(total_cells), fontsize=6)

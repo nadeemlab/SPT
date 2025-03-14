@@ -13,7 +13,7 @@ GBM IMC	2	Before intervention	Survival or estimated survival post-surgery in day
 GBM IMC	3	Before intervention	Survival or estimated survival post-surgery in days	More than 3 years	post-surgery survival years	>3	tab20b;14
 Head and neck mpIF	1	Before intervention	Disease and patient vitality status post-therapy	Dead of other cause	vitality and cancer status	dead of other cause	tab20b;16
 Head and neck mpIF	2	Before intervention	Disease and patient vitality status post-therapy	Dead of disease	vitality and cancer status	dead of disease	tab20b;17
-Head and neck mpIF	3	Before intervention	Disease and patient vitality status post-therapy	No evidence of disease	vitality and cancer status	no evidence of disease	Set3;11
+Head and neck mpIF	3	Before intervention	Disease and patient vitality status post-therapy	No evidence of disease	vitality and cancer status	no evidence of disease	tab20c;17
 Head and neck mpIF	4	Before intervention	Disease and patient vitality status post-therapy	Alive with disease	vitality and cancer status	alive with disease	tab20c;9
 Hodgkins HRS	1		Epstein-Barr Virus infection by EBER in situ hybridization and IHC for LMP1	Negative	Epstein-Barr Virus infection	negative	tab20;0
 Hodgkins HRS	2		Epstein-Barr Virus infection by EBER in situ hybridization and IHC for LMP1	Positive	Epstein-Barr Virus infection	positive	tab20;1

@@ -123,6 +123,7 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
 
 
 def generate_legend(df: DataFrame) -> None:
+    df = df.drop_duplicates().dropna()
     category = list(df['category label'])[0]
     legend_fig, legend_ax = plt.subplots(1, 1, figsize=(3, 1.5))
     items = [
@@ -144,8 +145,8 @@ def generate_legend(df: DataFrame) -> None:
 
 
 def generate_legends() -> None:
-    labels = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')[['study', 'stratum_identifier', 'category label', 'value label', 'color']]
-    for study, group in labels.groupby('study'):
+    labels = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')[['study', 'category label', 'value label', 'color']]
+    for _, group in labels.groupby('study'):
         generate_legend(group)
 
 
@@ -155,7 +156,7 @@ def generate_box_representations(strata: DataFrame) -> None:
     df = strata
     for _, group in df.groupby(['source_site', 'study']):
         total = group['cell_count'].sum()
-        target_area = pow(total / pow(10, 4), 1/3)
+        target_area = pow(total / pow(10, 4), 1/2)
         groupstrata = group.copy().set_index('stratum_identifier')
         number_boxes_strata = groupstrata['sample_count']
         number_boxes = int(group['sample_count'].sum())

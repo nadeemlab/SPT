@@ -3,7 +3,7 @@ Bone marrow aging	1		Age group of patient	>60	age, years	>60	tab20b;0
 Bone marrow aging	2		Age group of patient	20-60	age, years	20-60	tab20b;1
 Bone marrow aging	3		Age group of patient	<=20	age, years	<=20	tab20b;2
 Brain met IMC	1	Before intervention	Cancer recurrence 1 year after total resection	Did not recur	1-year recurrence	did not recur	tab20b;4
-Brain met IMC	2	Before intervention	Cancer recurrence 1 year after total resection	Censored	1-year recurrence	censored	tab20b;5
+Brain met IMC	2	Before intervention	Cancer recurrence 1 year after total resection	Censored	1-year recurrence	censored	tab20c;19
 Brain met IMC	3	Before intervention	Cancer recurrence 1 year after total resection	Recurred	1-year recurrence	recurred	tab20b;6
 Breast cancer IMC	1	Before intervention	Response to hormone therapy	Refractory	hormone therapy response	refractory	tab20b;8
 Breast cancer IMC	2	Before intervention	Response to hormone therapy	Sensitive	hormone therapy response	sensitive	tab20b;9
@@ -13,8 +13,8 @@ GBM IMC	2	Before intervention	Survival or estimated survival post-surgery in day
 GBM IMC	3	Before intervention	Survival or estimated survival post-surgery in days	More than 3 years	post-surgery survival years	>3	tab20b;14
 Head and neck mpIF	1	Before intervention	Disease and patient vitality status post-therapy	Dead of other cause	vitality and cancer status	dead of other cause	tab20b;16
 Head and neck mpIF	2	Before intervention	Disease and patient vitality status post-therapy	Dead of disease	vitality and cancer status	dead of disease	tab20b;17
-Head and neck mpIF	3	Before intervention	Disease and patient vitality status post-therapy	No evidence of disease	vitality and cancer status	no evidence of disease	tab20b;18
-Head and neck mpIF	4	Before intervention	Disease and patient vitality status post-therapy	Alive with disease	vitality and cancer status	alive with disease	tab20b;19
+Head and neck mpIF	3	Before intervention	Disease and patient vitality status post-therapy	No evidence of disease	vitality and cancer status	no evidence of disease	Set3;11
+Head and neck mpIF	4	Before intervention	Disease and patient vitality status post-therapy	Alive with disease	vitality and cancer status	alive with disease	tab20c;9
 Hodgkins HRS	1		Epstein-Barr Virus infection by EBER in situ hybridization and IHC for LMP1	Negative	Epstein-Barr Virus infection	negative	tab20;0
 Hodgkins HRS	2		Epstein-Barr Virus infection by EBER in situ hybridization and IHC for LMP1	Positive	Epstein-Barr Virus infection	positive	tab20;1
 LUAD progression	1		Cancer progression after surgery	Did not progress	cancer progression after surgery	did not progress	tab20;2
@@ -26,9 +26,9 @@ Melanoma intralesional IL2	1	Before intervention	Response to intralesional IL-2 
 Melanoma intralesional IL2	2	After intervention	Response to intralesional IL-2 injection	Non-responder	IL-2 therapy	non-responder	tab20;6
 Melanoma intralesional IL2	3	Before intervention	Response to intralesional IL-2 injection	Extreme responder	IL-2 therapy	extreme responder	tab20;7
 Melanoma intralesional IL2	4	After intervention	Response to intralesional IL-2 injection	Extreme responder	IL-2 therapy	extreme responder	tab20;7
-Orion CRC	1		Progression-Free Survival duration	Progressed within 2 years	progression-free survival	progressed within 2 years	tab20b;20
+Orion CRC	1		Progression-Free Survival duration	Progressed within 2 years	progression-free survival	progressed within 2 years	Accent;6
 Orion CRC	2		Progression-Free Survival duration	Progression-free to 2 years	progression-free survival	progression-free to 2 years	tab20b;21
-Orion CRC	3		Progression-Free Survival duration	Censored	progression-free survival	censored	tab20b;22
+Orion CRC	3		Progression-Free Survival duration	Censored	progression-free survival	censored	tab20c;19
 Urothelial ICI	1	Before intervention	Response to immune checkpoint inhibitor therapy	Responder	immune checkpoint inhibitor	responder	tab20;18
 Urothelial ICI	2	Before intervention	Response to immune checkpoint inhibitor therapy	Non-responder	immune checkpoint inhibitor	non-responder	tab20;19
 Urothelial ICI	3	Before intervention	Response to immune checkpoint inhibitor therapy		immune checkpoint inhibitor	NA	tab20c;19

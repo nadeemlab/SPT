@@ -105,7 +105,8 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     def _expand_list(stratum_identifier, size) -> list:
         return [int(stratum_identifier)] * size
     if study == 'Brain met IMC':
-        def adjust(k: str) -> int:
+        def adjust(i) -> int:
+            k = str(i)
             if k in ['2', '3']:
                 return (2 + 3 - int(k))
             return int(k)
@@ -162,7 +163,7 @@ def generate_box_representations(strata: DataFrame) -> None:
     df = strata
     for (_, study), group in df.groupby(['source_site', 'study']):
         total = group['cell_count'].sum()
-        target_area = pow(total / pow(10, 4), 1/2)
+        target_area = pow(total / pow(10, 4), 1/3)
         groupstrata = group.copy().set_index('stratum_identifier')
         number_boxes_strata = groupstrata['sample_count']
         number_boxes = int(group['sample_count'].sum())

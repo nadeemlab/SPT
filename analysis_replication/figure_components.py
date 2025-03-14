@@ -1,7 +1,7 @@
 
 import re
-from math import log
 from math import sqrt
+from math import log10
 from itertools import chain
 from itertools import zip_longest
 from urllib.parse import urlencode
@@ -23,6 +23,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib import colormaps
+from matplotlib.patches import Rectangle
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -55,13 +56,11 @@ def retrieve_all_counts() -> DataFrame:
             df = concat([df, _df], axis=0)
     return df
 
+
 ColorLookup = dict[tuple[str, str], tuple[str, int]]
 
 def get_color_lookup() -> ColorLookup:
     df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
-    def parse_matplotlib_color_spec(c: str) -> tuple[str, int]:
-        parts = c.split(';')
-        return (parts[0], int(parts[1]))
     lookup = {
         (row['study'], str(row['stratum_identifier'])): parse_matplotlib_color_spec(row['color'])
         for _, row in df.iterrows()
@@ -77,19 +76,26 @@ def get_site_lookup() -> dict[tuple[str, str], str]:
     }
     return lookup
 
-
-def outcome_label_lookup() -> dict[tuple[str, str], tuple[str, str]]:
-    df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
-    lookup = {
-        (row['study'], row['stratum_identifier']): (row['category label'], row['value label'])
-        for _, row in df.iterrows()
-    }
-    return lookup
+def get_color(cmap_name: str, value: int):
+    return colormaps[cmap_name](value)
 
 
-def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame, color_lookup: ColorLookup, site_lookup: dict[tuple[str, str], str]) -> None:
-    def get_color(cmap_name: str, value: int):
-        return colormaps[cmap_name](value)
+def parse_matplotlib_color_spec(c: str) -> tuple[str, int]:
+    parts = c.split(';')
+    return (parts[0], int(parts[1]))
+
+
+def simplify_int(i: int | float) -> str:
+    i = int(i)
+    scale = log10(i)
+    if scale >= 6:
+        return str(round((i / pow(10, 6)))) + 'm'
+    if scale >= 3:
+        return str(round((i / pow(10, 3)))) + 'k'
+    return str(i)
+
+
+def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame, color_lookup: ColorLookup, site_lookup: dict[tuple[str, str], str], total_cells: int) -> None:
     study = list(strata['study'])[0]
     color_list = [(1,1,1)] + [None] * 10
     for _stratum_identifier in number_boxes_strata.index:
@@ -104,20 +110,43 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     multiplier = 1.0
     box_width = sqrt(area_per_box)
     width = width_count * box_width * multiplier
-    print('width ', width_count, ' * ' , area_per_box, ' * ' , multiplier, ' = ', width)
     plt.figure(figsize=(width, width * aspect))
 
     ax = sns.heatmap(df, linewidth=0.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
     source = list(strata['source_site'])[0]
     site_name = site_lookup[(study, source)]
-    ax.set_title(site_name, fontsize=10)
+    ax.set_title(site_name + '\n' + simplify_int(total_cells), fontsize=6)
     filename = re.sub(' ', '_', f'{source} {study}').lower()
     filename = re.sub('[^a-zA-Z0-9]', '', filename)
-    plt.subplots_adjust(bottom = 0.2)
-    plt.subplots_adjust(top = 0.8)
-    plt.subplots_adjust(left = 0.2)
-    plt.subplots_adjust(right = 0.8)
     plt.savefig(f'{filename}.svg')
+    print(f'Wrote {filename}.svg')
+
+
+def generate_legend(df: DataFrame) -> None:
+    category = list(df['category label'])[0]
+    legend_fig, legend_ax = plt.subplots(1, 1, figsize=(3, 1.5))
+    items = [
+        (
+            Rectangle((0, 0), 0.25, 0.5, facecolor=get_color(*parse_matplotlib_color_spec(row['color']))),
+            str(row['value label']),
+        )
+        for _, row in df.iterrows()
+    ]
+    handles, labels = tuple(zip(*items))
+
+    legend_ax.legend(handles, labels, loc='center')
+    legend_ax.axis('off')
+    legend_fig.suptitle(category)
+    legend_fig.tight_layout()
+    sanitized = re.sub(r'[ \.\-\,]', '_', category).lower()
+    legend_fig.savefig(f'legend_{sanitized}.svg')
+    print(f'Wrote legend_{sanitized}.svg')
+
+
+def generate_legends() -> None:
+    labels = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')[['study', 'stratum_identifier', 'category label', 'value label', 'color']]
+    for study, group in labels.groupby('study'):
+        generate_legend(group)
 
 
 def generate_box_representations(strata: DataFrame) -> None:
@@ -134,12 +163,7 @@ def generate_box_representations(strata: DataFrame) -> None:
         width_count = max(1, int(sqrt(number_boxes / aspect)))
         remainder = number_boxes % width_count
         height_count = (number_boxes // width_count) + 1 if remainder > 0 else int(number_boxes / width_count)
-        print('')
-        print('cells ', total)
-        print('target area ', target_area)
-        print('number boxes ', number_boxes)
-        print('area per box ', area_per_box)
-        generate_box_representation_one_study(number_boxes_strata, width_count, height_count, area_per_box, group, color_lookup, site_lookup)
+        generate_box_representation_one_study(number_boxes_strata, width_count, height_count, area_per_box, group, color_lookup, site_lookup, total)
 
 
 def combined_dataframe(query: str, studies: tuple[str, ...]) -> DataFrame:
@@ -191,24 +215,12 @@ def create_components():
     columns = ['source_site', 'study', 'stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition', 'subject_diagnosed_result']
     del strata['sample']
     counts = strata.groupby(columns).agg('sum')
-    # counts = strata.value_counts(columns).to_frame().reset_index()
     strata = counts.reset_index()
     strata = strata.rename(columns={'ones': 'sample_count'})
-    print(strata.columns)
-    print(strata)
-
-    # access = DataAccessor(studies[0])
-    # rows = []
-    # for s in studies:
-    #     summary, _ = access._retrieve('study-summary', urlencode([('study', s)]))
-    #     samples = summary['counts']['specimens']
-    #     cells = summary['counts']['cells']
-    #     rows.append((shorten_study(s), samples, cells, cells/samples))
-    # summary = DataFrame(rows, columns=['study', 'samples', 'total_cells_study', 'average'])
-    # print(summary.to_string())
     strata.to_csv('strata.tsv', sep='\t', index=False)
     generate_box_representations(strata)
 
 
 if __name__=='__main__':
     create_components()
+    generate_legends()

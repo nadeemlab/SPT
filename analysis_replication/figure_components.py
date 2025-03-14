@@ -108,14 +108,18 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
         return [int(stratum_identifier)] * size
     if study == 'Brain met IMC':
         def key(i):
-            k = str(i)
-            if k in ['2', '3']:
-                return (2 + 3 - int(k))
-            return int(k)
+            k = int(i)
+            if k in [2, 3]:
+                return 2 + 3 - k
+            return k
         def adjust(idx) -> int:
             l = sorted(list(idx.to_numpy()), key=key)
             return Index(data=l, dtype=idx.dtype)
-        number_boxes_strata.sort_index(key=adjust)
+        print('')
+        print(tuple(number_boxes_strata.items()))
+        number_boxes_strata = number_boxes_strata.sort_index(key=adjust)
+        print(tuple(number_boxes_strata.items()))
+        print('')
     cellvalues = list(chain(*map(lambda args: _expand_list(*args), number_boxes_strata.items())))
     rows = zip_longest(*(iter(cellvalues),) * width_count, fillvalue=0)  # type: ignore
     df = DataFrame(rows)

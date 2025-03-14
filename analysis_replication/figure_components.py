@@ -1,4 +1,5 @@
 
+from os.path import exists
 import re
 from math import sqrt
 from math import log10
@@ -13,6 +14,7 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
+from pandas import Index
 from pandas import read_csv
 from pandas import read_sql
 from pandas import concat
@@ -105,11 +107,14 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     def _expand_list(stratum_identifier, size) -> list:
         return [int(stratum_identifier)] * size
     if study == 'Brain met IMC':
-        def adjust(i) -> int:
+        def key(i):
             k = str(i)
             if k in ['2', '3']:
                 return (2 + 3 - int(k))
             return int(k)
+        def adjust(idx) -> int:
+            l = sorted(list(idx.to_numpy()), key=key)
+            return Index(data=l, dtype=idx.dtype)
         number_boxes_strata.sort_index(key=adjust)
     cellvalues = list(chain(*map(lambda args: _expand_list(*args), number_boxes_strata.items())))
     rows = zip_longest(*(iter(cellvalues),) * width_count, fillvalue=0)  # type: ignore
@@ -189,7 +194,7 @@ def combined_dataframe(query: str, studies: tuple[str, ...]) -> DataFrame:
     return df
 
 
-def create_components():
+def generate_strata_df() -> DataFrame:
     with DBCursor(database_config_file=database_config_file) as cursor:
         cursor.execute('SELECT study from study_lookup;')
         studies = tuple(map(lambda r: r[0], cursor.fetchall()))
@@ -225,7 +230,15 @@ def create_components():
     counts = strata.groupby(columns).agg('sum')
     strata = counts.reset_index()
     strata = strata.rename(columns={'ones': 'sample_count'})
-    strata.to_csv('strata.tsv', sep='\t', index=False)
+    return strata
+
+
+def create_components():
+    if not exists('strata.tsv'):
+        strata = generate_strata_df()
+        strata.to_csv('strata.tsv', sep='\t', index=False)
+    else:
+        strata = read_csv('strata.tsv', sep='\t')
     generate_box_representations(strata)
 
 

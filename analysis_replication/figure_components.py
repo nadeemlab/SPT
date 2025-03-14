@@ -104,6 +104,12 @@ def generate_box_representation_one_study(number_boxes_strata: Series, width_cou
     cmap = ListedColormap([v for v in color_list if not v is None])
     def _expand_list(stratum_identifier, size) -> list:
         return [int(stratum_identifier)] * size
+    if study == 'Brain met IMC':
+        def adjust(k: str) -> int:
+            if k in ['2', '3']:
+                return (2 + 3 - int(k))
+            return int(k)
+        number_boxes_strata.sort_index(key=adjust)
     cellvalues = list(chain(*map(lambda args: _expand_list(*args), number_boxes_strata.items())))
     rows = zip_longest(*(iter(cellvalues),) * width_count, fillvalue=0)  # type: ignore
     df = DataFrame(rows)
@@ -154,7 +160,7 @@ def generate_box_representations(strata: DataFrame) -> None:
     color_lookup = get_color_lookup()
     site_lookup = get_site_lookup()
     df = strata
-    for _, group in df.groupby(['source_site', 'study']):
+    for (_, study), group in df.groupby(['source_site', 'study']):
         total = group['cell_count'].sum()
         target_area = pow(total / pow(10, 4), 1/2)
         groupstrata = group.copy().set_index('stratum_identifier')

@@ -225,7 +225,7 @@ class GenerateLegends:
 
     def _generate_legend(self, study: str) -> None:
         category = self.outcome_labels.get_category_label(study)
-        legend_fig, legend_ax = plt.subplots(1, 1, figsize=(3, 1.5))
+        legend_fig, legend_ax = plt.subplots(1, 1, figsize=(2, 1))
         items = [
             (
                 Rectangle((0, 0), 0.25, 0.5, facecolor=self.color_lookup.lookup(study, stratum_identifier)),
@@ -236,10 +236,10 @@ class GenerateLegends:
         handles, labels = tuple(zip(*items))
         legend_ax.legend(handles, labels, loc='center')
         legend_ax.axis('off')
-        legend_fig.suptitle(category)
-        legend_fig.tight_layout()
+        # legend_fig.suptitle(category)
+        # legend_fig.tight_layout()
         filename = self._form_filename(category)
-        legend_fig.savefig(filename)
+        legend_fig.savefig(filename, pad_inches=0, bbox_inches='tight')
         plt.close()
         if self.verbose:
             print(f'Wrote {filename}')

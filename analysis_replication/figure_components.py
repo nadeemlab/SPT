@@ -299,14 +299,12 @@ class SampleBoxesOverview:
     def _specify_box_diagram(self, study: str, source_site: str, counts: DataFrame) -> BoxDiagramSpecification:
         total_cells = float(counts['cell_count'].sum())
         target_area = pow(total_cells / pow(10, 5), 1/2)
-        print(f'target_area = {target_area}')
         groupstrata = counts.copy().set_index('stratum_identifier')
         number_boxes_strata = groupstrata['sample_count']
         number_boxes_by_stratum = OrderedDict()
         for key, value in number_boxes_strata.items():
             number_boxes_by_stratum[key] = int(value)
         number_boxes = int(counts['sample_count'].sum())
-        print(f'number_boxes = {number_boxes}')
         area_per_box = target_area / number_boxes
         aspect_attempted = 1.6
         width_count = max(1, round(sqrt(number_boxes / aspect_attempted)))
@@ -331,11 +329,6 @@ class SampleBoxesOverview:
         box_width = sqrt(spec.area_per_box)
         width = spec.width_count * box_width
         plt.figure(figsize=(width, width * spec.aspect))
-        print(spec)
-        print(box_width, width, width*spec.aspect)
-        print(plt.gcf().get_size_inches())
-        print('')
-        plt.autoscale(False)
 
         ax = sns.heatmap(df, linewidth=0.8, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
         ax.set_title(self._form_title(spec), fontsize=6)

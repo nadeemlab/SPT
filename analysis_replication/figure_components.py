@@ -1,4 +1,7 @@
 
+from collections import OrderedDict
+from os import mkdir
+from os.path import join
 from os.path import exists
 import re
 from math import sqrt
@@ -8,6 +11,8 @@ from itertools import zip_longest
 from urllib.parse import urlencode
 from warnings import filterwarnings
 from warnings import catch_warnings
+
+from attrs import define
 
 import pandas as pd
 pd.set_option('display.max_rows', 500)
@@ -32,220 +37,355 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 
 from accessors import DataAccessor
 
-aspect = 1.5
-database_config_file = '.spt_db.config'
 
+class GatherSampleSummaryData:
+    database_config_file: str
 
-def shorten_study(study: str) -> str:
-    return study.split(' collection: ')[0]
+    def __init__(self, database_config_file = '.spt_db.config'):
+        self.database_config_file = database_config_file
+        self.studies = self.get_studies()
 
-
-def retrieve_all_counts() -> DataFrame:
-    with DBCursor(database_config_file=database_config_file) as cursor:
-        cursor.execute('SELECT study from study_lookup;')
-        studies = tuple(map(lambda r: r[0], cursor.fetchall()))
-    query = 'phenotype-counts'
-    access = DataAccessor(studies[0])
-    df = None
-    for study in studies:
-        parameters = urlencode([('study', study), ('negative_marker', ''), ('positive_marker', '')])
-        counts, _ = access._retrieve(query, parameters)
-        _df = DataFrame(counts['counts'])
-        _df['study'] = shorten_study(study)
-        if df is None:
-            df = _df
+    def get(self) -> DataFrame:
+        filename = 'sources_and_strata.tsv'
+        if not exists(filename):
+            sources_and_strata = self._gather_source_sites_and_strata()
+            sources_and_strata.to_csv(filename, sep='\t', index=False)
         else:
-            df = concat([df, _df], axis=0)
-    return df
+            sources_and_strata = read_csv(filename, sep='\t')
+        return sources_and_strata
+
+    def _gather_source_sites_and_strata(self) -> DataFrame:
+        strata = self.get_sample_strata()
+        source_sites = self.get_source_site_assignments()
+        source_sites_and_strata_by_sample = strata.join(source_sites, on='sample')
+        cell_counts = self.get_cell_counts()
+        source_sites_strata_counts_by_sample = source_sites_and_strata_by_sample.join(cell_counts, on=['sample', 'study'])
+        source_sites_strata_counts_by_sample['ones'] = int(1)
+        columns = ['source_site', 'study', 'stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition', 'subject_diagnosed_result']
+        del source_sites_strata_counts_by_sample['sample']
+        aggregated = source_sites_strata_counts_by_sample.groupby(columns).agg('sum')
+        aggregated = aggregated.reset_index()
+        aggregated = aggregated.rename(columns={'ones': 'sample_count'})
+        return aggregated
+
+    def get_sample_strata(self) -> DataFrame:
+        query = '''
+        SELECT sample, stratum_identifier, local_temporal_position_indicator, subject_diagnosed_condition, subject_diagnosed_result
+        FROM sample_strata;
+        '''
+        return self.dataframe_combined_over_studies(query)
+
+    def get_source_site_assignments(self) -> DataFrame:
+        query = '''
+        SELECT specimen, source_site
+        FROM specimen_collection_process
+        ORDER BY source_site, specimen;
+        '''
+        df = self.dataframe_combined_over_studies(query)
+        df = df.rename(columns={'specimen': 'sample'})
+        df = df.set_index('sample')
+        del df['study']
+        return df
+
+    def dataframe_combined_over_studies(self, query: str) -> DataFrame:
+        df = None
+        for study in self.studies:
+            with DBConnection(database_config_file=self.database_config_file, study=study) as connection:
+                with catch_warnings():
+                    filterwarnings('ignore', message='pandas only supports SQLAlchemy', category=UserWarning)
+                    df_study = read_sql(query, connection)
+            df_study['study'] = self.abbreviate_study_name(study)
+            if df is None:
+                df = df_study
+            else:
+                df = concat([df, df_study], axis=0)
+        return df
+
+    def get_cell_counts(self) -> DataFrame:
+        counts = self.retrieve_cell_counts()
+        counts = counts.rename(columns={'specimen': 'sample', 'count': 'cell_count'})
+        counts = counts.set_index(['sample', 'study'])
+        return counts
+
+    def retrieve_cell_counts(self) -> DataFrame:
+        query = 'phenotype-counts'
+        access = DataAccessor(self.studies[0])
+        df = None
+        for study in self.studies:
+            parameters = urlencode([('study', study), ('negative_marker', ''), ('positive_marker', '')])
+            counts, _ = access._retrieve(query, parameters)
+            _df = DataFrame(counts['counts'])
+            _df['study'] = self.abbreviate_study_name(study)
+            if df is None:
+                df = _df
+            else:
+                df = concat([df, _df], axis=0)
+        return df
+
+    def get_studies(self) -> tuple[str, ...]:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT study from study_lookup;')
+            studies = tuple(map(lambda r: r[0], cursor.fetchall()))
+        return studies
+
+    @staticmethod
+    def abbreviate_study_name(study: str) -> str:
+        return study.split(' collection: ')[0]
 
 
-ColorLookup = dict[tuple[str, str], tuple[str, int]]
+ColorCodeLookup = dict[tuple[str, str], tuple[str, int]]
 
-def get_color_lookup() -> ColorLookup:
-    df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
-    lookup = {
-        (row['study'], str(row['stratum_identifier'])): parse_matplotlib_color_spec(row['color'])
-        for _, row in df.iterrows()
-    }
-    return lookup
+class ColorLookup:
+    _lookup: ColorCodeLookup
 
+    def __init__(self):
+        df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
+        lookup = {
+            (row['study'], str(row['stratum_identifier'])): self._parse_matplotlib_color_spec(row['color'])
+            for _, row in df.iterrows()
+        }
+        self._lookup = lookup
 
-def get_site_lookup() -> dict[tuple[str, str], str]:
-    df = read_csv('anatomical_labels_annotations.tsv', sep='\t', keep_default_na=False)
-    lookup = {
-        (row['study'], str(row['source_site'])): row['label']
-        for _, row in df.iterrows()
-    }
-    return lookup
+    def lookup(self, study: str, stratum_identifier: str) -> tuple[float, float, float, float]:
+        return self._get_mpl_color(*self._lookup[(study, stratum_identifier)])
 
-def get_color(cmap_name: str, value: int):
-    return colormaps[cmap_name](value)
+    @staticmethod
+    def _parse_matplotlib_color_spec(c: str) -> tuple[str, int]:
+        parts = c.split(';')
+        return (parts[0], int(parts[1]))
 
-
-def parse_matplotlib_color_spec(c: str) -> tuple[str, int]:
-    parts = c.split(';')
-    return (parts[0], int(parts[1]))
+    @staticmethod
+    def _get_mpl_color(cmap_name: str, value: int):
+        return colormaps[cmap_name](value)
 
 
-def simplify_int(i: int | float) -> str:
-    i = int(i)
-    scale = log10(i)
-    if scale >= 6:
-        return str(round((i / pow(10, 6)))) + 'm'
-    if scale >= 3:
-        return str(round((i / pow(10, 3)))) + 'k'
-    return str(i)
+class SiteLabels:
+    labels: dict[tuple[str, str], str]
+
+    def __init__(self):
+        self.labels = self._get_site_labels()
+
+    def lookup(self, study: str, source_site: str) -> str:
+        return self.labels[(study, source_site)]
+
+    def _get_site_labels(self) -> dict[tuple[str, str], str]:
+        df = read_csv('anatomical_labels_annotations.tsv', sep='\t', keep_default_na=False)
+        lookup = {
+            (row['study'], str(row['source_site'])): row['label']
+            for _, row in df.iterrows()
+        }
+        return lookup
 
 
-def generate_box_representation_one_study(number_boxes_strata: Series, width_count: int, height_count: int, area_per_box: float, strata: DataFrame, color_lookup: ColorLookup, site_lookup: dict[tuple[str, str], str], total_cells: int) -> None:
-    study = list(strata['study'])[0]
-    color_list = [(1,1,1)] + [None] * 10
-    for _stratum_identifier in number_boxes_strata.index:
-        stratum_identifier = str(_stratum_identifier)
-        color_list[int(stratum_identifier)] = get_color(*color_lookup[(study, stratum_identifier)])
-    cmap = ListedColormap([v for v in color_list if not v is None])
-    def _expand_list(stratum_identifier, size) -> list:
-        return [int(stratum_identifier)] * size
-    if study == 'Brain met IMC':
-        def key(i):
-            k = int(i)
-            if k in [2, 3]:
-                return 2 + 3 - k
-            return k
-        def adjust(idx) -> int:
-            l = sorted(list(idx.to_numpy()), key=key)
-            return Index(data=l, dtype=idx.dtype)
-        print('')
-        print(tuple(number_boxes_strata.items()))
-        number_boxes_strata = number_boxes_strata.sort_index(key=adjust)
-        print(tuple(number_boxes_strata.items()))
-        print('')
-    cellvalues = list(chain(*map(lambda args: _expand_list(*args), number_boxes_strata.items())))
-    rows = zip_longest(*(iter(cellvalues),) * width_count, fillvalue=0)  # type: ignore
-    df = DataFrame(rows)
-    multiplier = 1.0
-    box_width = sqrt(area_per_box)
-    width = width_count * box_width * multiplier
-    plt.figure(figsize=(width, width * aspect))
+class OutcomeLabels:
+    stratum_labels: dict[tuple[str, str], str]
+    category_labels: dict[str, str]
 
-    ax = sns.heatmap(df, linewidth=0.8, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
-    source = list(strata['source_site'])[0]
-    site_name = site_lookup[(study, source)]
-    ax.set_title(site_name + '\n' + simplify_int(total_cells), fontsize=6)
-    filename = re.sub(' ', '_', f'{source} {study}').lower()
-    filename = re.sub('[^a-zA-Z0-9]', '', filename)
-    plt.savefig(f'{filename}.svg')
-    print(f'Wrote {filename}.svg')
+    def __init__(self):
+        df = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')
+        df = df[~df['value label'].isna()]
+        lookup = {
+            row['study']: str(row['category label'])
+            for _, row in df[['study', 'category label']].drop_duplicates().iterrows()
+        }
+        self.category_labels = lookup
+        lookup = {
+            (row['study'], str(row['stratum_identifier'])): str(row['value label'])
+            for _, row in df.iterrows()
+        }
+        self.stratum_labels = lookup
+
+    def get_category_label(self, study: str) -> str:
+        return self.category_labels[study]
+
+    def get_stratum_label(self, study: str, stratum_identifier: str) -> str:
+        return self.stratum_labels[(study, stratum_identifier)]
+
+    def get_studies(self) -> tuple[str, ...]:
+        return tuple(self.category_labels.keys())
+
+    def get_strata(self, study: str) -> tuple[tuple[str, str], ...]:
+        return tuple(filter(lambda k: k[0] == study, self.stratum_labels.keys()))
 
 
-def generate_legend(df: DataFrame) -> None:
-    df = df.drop_duplicates().dropna()
-    category = list(df['category label'])[0]
-    legend_fig, legend_ax = plt.subplots(1, 1, figsize=(3, 1.5))
-    items = [
-        (
-            Rectangle((0, 0), 0.25, 0.5, facecolor=get_color(*parse_matplotlib_color_spec(row['color']))),
-            str(row['value label']),
-        )
-        for _, row in df.iterrows()
-    ]
-    handles, labels = tuple(zip(*items))
+class GenerateLegends:
+    verbose: bool
+    outcome_labels: OutcomeLabels
+    subpath: str
 
-    legend_ax.legend(handles, labels, loc='center')
-    legend_ax.axis('off')
-    legend_fig.suptitle(category)
-    legend_fig.tight_layout()
-    sanitized = re.sub(r'[ \.\-\,]', '_', category).lower()
-    legend_fig.savefig(f'legend_{sanitized}.svg')
-    print(f'Wrote legend_{sanitized}.svg')
+    def __init__(self, subpath: str, verbose: bool=False):
+        self.subpath = subpath
+        self.verbose = verbose
+
+    def generate(self) -> None:
+        self.outcome_labels = OutcomeLabels()
+        self.color_lookup = ColorLookup()
+        for study in self.outcome_labels.get_studies():
+            self._generate_legend(study)
+
+    def _generate_legend(self, study: str) -> None:
+        category = self.outcome_labels.get_category_label(study)
+        legend_fig, legend_ax = plt.subplots(1, 1, figsize=(3, 1.5))
+        items = [
+            (
+                Rectangle((0, 0), 0.25, 0.5, facecolor=self.color_lookup.lookup(study, stratum_identifier)),
+                self.outcome_labels.get_stratum_label(study, stratum_identifier),
+            )
+            for _, stratum_identifier in self.outcome_labels.get_strata(study)
+        ]
+        handles, labels = tuple(zip(*items))
+        legend_ax.legend(handles, labels, loc='center')
+        legend_ax.axis('off')
+        legend_fig.suptitle(category)
+        legend_fig.tight_layout()
+        filename = self._form_filename(category)
+        legend_fig.savefig(filename)
+        plt.close()
+        if self.verbose:
+            print(f'Wrote {filename}')
+
+    def _form_filename(self, category: str) -> str:
+        sanitized = re.sub(r'[ \.\-\,]', '_', category).lower()
+        return join(self.subpath, f'legend_{sanitized}.svg')
 
 
-def generate_legends() -> None:
-    labels = read_csv('outcome_stratum_labels_annotations.tsv', sep='\t')[['study', 'category label', 'value label', 'color']]
-    for _, group in labels.groupby('study'):
-        generate_legend(group)
+@define
+class BoxDiagramSpecification:
+    number_boxes_by_stratum: OrderedDict[str, int]
+    width_count: int
+    aspect: float
+    area_per_box: float
+    total_cells: int
+    study: str
+    source_site: str
 
 
-def generate_box_representations(strata: DataFrame) -> None:
-    color_lookup = get_color_lookup()
-    site_lookup = get_site_lookup()
-    df = strata
-    for (_, study), group in df.groupby(['source_site', 'study']):
-        total = group['cell_count'].sum()
-        target_area = pow(total / pow(10, 4), 1/3)
-        groupstrata = group.copy().set_index('stratum_identifier')
+class SampleBoxesOverview:
+    verbose: bool
+    subpath: str
+    sources_and_strata: DataFrame
+    color_lookup: ColorLookup
+    site_labels: SiteLabels
+
+    def __init__(self, subpath='diagram_components'):
+        self.subpath = subpath
+        self._create_subdirectory()
+
+    def _create_subdirectory(self) -> None:
+        try:
+            mkdir(self.subpath)
+        except FileExistsError:
+            pass
+
+    def create(self, verbose: bool=False) -> None:
+        self.verbose = verbose
+        self._retrieve_input_data()
+        self._generate_box_diagrams()
+        GenerateLegends(self.subpath, verbose=verbose).generate()
+
+    def _retrieve_input_data(self) -> None:
+        self.sources_and_strata = GatherSampleSummaryData().get()
+        self.color_lookup = ColorLookup()
+        self.site_labels = SiteLabels()
+
+    def _generate_box_diagrams(self) -> None:
+        if self.verbose:
+            print(self.sources_and_strata.to_string())
+        for (source_site, study), group in self.sources_and_strata.groupby(['source_site', 'study']):
+            spec = self._specify_box_diagram(study, source_site, group)
+            self.generate_box_representation_one_study(spec)
+
+    def _specify_box_diagram(self, study: str, source_site: str, counts: DataFrame) -> BoxDiagramSpecification:
+        total_cells = counts['cell_count'].sum()
+        target_area = pow(total_cells / pow(10, 4), 1/3)
+        groupstrata = counts.copy().set_index('stratum_identifier')
         number_boxes_strata = groupstrata['sample_count']
-        number_boxes = int(group['sample_count'].sum())
+        number_boxes_by_stratum = OrderedDict()
+        for key, value in number_boxes_strata.items():
+            number_boxes_by_stratum[key] = value
+        number_boxes = int(counts['sample_count'].sum())
         area_per_box = target_area / number_boxes
+        aspect = 1.5
         width_count = max(1, int(sqrt(number_boxes / aspect)))
-        remainder = number_boxes % width_count
-        height_count = (number_boxes // width_count) + 1 if remainder > 0 else int(number_boxes / width_count)
-        generate_box_representation_one_study(number_boxes_strata, width_count, height_count, area_per_box, group, color_lookup, site_lookup, total)
+        return BoxDiagramSpecification(
+            number_boxes_by_stratum,
+            width_count,
+            aspect,
+            area_per_box,
+            total_cells,
+            study,
+            source_site,
+        )
 
+    def generate_box_representation_one_study(self, spec: BoxDiagramSpecification) -> None:
+        cmap = self._form_cmap(spec)
+        rows = self._form_uniform_rows(spec)
+        df = DataFrame(rows)
+        box_width = sqrt(spec.area_per_box)
+        width = spec.width_count * box_width
+        plt.figure(figsize=(width, width * spec.aspect))
 
-def combined_dataframe(query: str, studies: tuple[str, ...]) -> DataFrame:
-    df = None
-    for s in studies:
-        with DBConnection(database_config_file=database_config_file, study=s) as connection:
-            with catch_warnings():
-                filterwarnings('ignore', message='pandas only supports SQLAlchemy', category=UserWarning)
-                df_study = read_sql(query, connection)
-        df_study['study'] = shorten_study(s)
-        if df is None:
-            df = df_study
-        else:
-            df = concat([df, df_study], axis=0)
-    return df
+        ax = sns.heatmap(df, linewidth=0.8, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
+        ax.set_title(self._form_title(spec), fontsize=6)
+        filename = self._form_filename(spec.source_site, spec.study)
+        plt.savefig(join(self.subpath, f'{filename}.svg'))
+        plt.close()
+        if self.verbose:
+            print(f'Wrote {filename}.svg')
 
+    def _form_cmap(self, spec: BoxDiagramSpecification) -> ListedColormap:
+        color_list = [(1,1,1)] + [None] * 20
+        for i in spec.number_boxes_by_stratum.keys():
+            stratum_identifier = str(i)
+            color_list[int(stratum_identifier)] = self.color_lookup.lookup(spec.study, stratum_identifier)
+        return ListedColormap(list(filter(lambda v: v is not None, color_list)))
 
-def generate_strata_df() -> DataFrame:
-    with DBCursor(database_config_file=database_config_file) as cursor:
-        cursor.execute('SELECT study from study_lookup;')
-        studies = tuple(map(lambda r: r[0], cursor.fetchall()))
-    print('\n'.join(studies))
+    def _form_uniform_rows(self, spec: BoxDiagramSpecification) -> list[tuple[int, ...]]:
+        def _expand_list(stratum_identifier, size) -> list:
+            return [int(stratum_identifier)] * size
+        number_boxes_by_stratum = self._apply_study_patches(spec.study, spec.number_boxes_by_stratum)
+        cellvalues = list(chain(*map(lambda args: _expand_list(*args), number_boxes_by_stratum.items())))
+        return list(zip_longest(*(iter(cellvalues),) * spec.width_count, fillvalue=0))  # type: ignore
 
-    query = '''
-    SELECT sample, stratum_identifier, local_temporal_position_indicator, subject_diagnosed_condition, subject_diagnosed_result
-    FROM sample_strata;
-    '''
-    strata = combined_dataframe(query, studies)
+    def _form_title(self, spec: BoxDiagramSpecification) -> str:
+        site_name = self.site_labels.lookup(spec.study, spec.source_site)
+        return site_name + '\n' + self.abbreviate_int(spec.total_cells)
 
-    query = '''
-    SELECT specimen, source_site
-    FROM specimen_collection_process
-    ORDER BY source_site, specimen;
-    '''
-    anatomy = combined_dataframe(query, studies)
-    print(anatomy.to_string())
-    anatomy = anatomy.rename(columns={'specimen': 'sample'})
-    anatomy = anatomy.set_index('sample')
-    del anatomy['study']
-    strata = strata.join(anatomy, on='sample')
+    def _form_filename(self, source: str, study: str) -> str:
+        filename = re.sub(' ', '_', f'{source} {study}').lower()
+        filename = re.sub('[^a-zA-Z0-9]', '', filename)
+        return filename
 
-    counts = retrieve_all_counts()
-    counts = counts.rename(columns={'specimen': 'sample', 'count': 'cell_count'})
-    counts = counts.set_index(['sample', 'study'])
+    def _apply_study_patches(self, study: str, number_boxes_by_stratum: OrderedDict[str, int]) -> OrderedDict[str, int]:
+        if study == 'Brain met IMC':
+            def key(i):
+                k = int(i)
+                if k in [2, 3]:
+                    return 2 + 3 - k
+                return k
+            keys = sorted(number_boxes_by_stratum, key=key)
+            new = OrderedDict()
+            for k in keys:
+                new[k] = number_boxes_by_stratum[k]
+            number_boxes_by_stratum = new
+        return number_boxes_by_stratum
 
-    strata = strata.join(counts, on=['sample', 'study'])
-
-    strata['ones'] = int(1)
-    columns = ['source_site', 'study', 'stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition', 'subject_diagnosed_result']
-    del strata['sample']
-    counts = strata.groupby(columns).agg('sum')
-    strata = counts.reset_index()
-    strata = strata.rename(columns={'ones': 'sample_count'})
-    return strata
-
-
-def create_components():
-    if not exists('strata.tsv'):
-        strata = generate_strata_df()
-        strata.to_csv('strata.tsv', sep='\t', index=False)
-    else:
-        strata = read_csv('strata.tsv', sep='\t')
-    generate_box_representations(strata)
+    @staticmethod
+    def abbreviate_int(i: int | float) -> str:
+        i = int(i)
+        scale = log10(i)
+        if scale >= 6:
+            return str(round((i / pow(10, 6)))) + 'm'
+        if scale >= 3:
+            return str(round((i / pow(10, 3)))) + 'k'
+        return str(i)
 
 
 if __name__=='__main__':
-    create_components()
-    generate_legends()
+    import sys
+    verbose=False
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--verbose':
+            verbose = True
+    figure = SampleBoxesOverview()
+    figure.create(verbose=verbose)

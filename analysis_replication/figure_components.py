@@ -51,7 +51,7 @@ class GatherSampleSummaryData:
             sources_and_strata = self._gather_source_sites_and_strata()
             sources_and_strata.to_csv(filename, sep='\t', index=False)
         else:
-            sources_and_strata = read_csv(filename, sep='\t')
+            sources_and_strata = read_csv(filename, sep='\t', keep_default_na=False)
         return sources_and_strata
 
     def _gather_source_sites_and_strata(self) -> DataFrame:
@@ -330,11 +330,10 @@ class SampleBoxesOverview:
         width = spec.width_count * box_width
         plt.figure(figsize=(width, width * spec.aspect))
 
-        ax = sns.heatmap(df, linewidth=0.8, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
-        ax.set_title(self._form_title(spec), fontsize=6)
+        ax = sns.heatmap(df, linewidth=1.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
+        # ax.set_title(self._form_title(spec), fontsize=6)
         filename = self._form_filename(spec.source_site, spec.study)
-        plt.gca().set_position((0, 0, 0.8, 0.8))
-        plt.savefig(join(self.subpath, f'{filename}.svg'), pad_inches=0)
+        plt.savefig(join(self.subpath, f'{filename}.svg'), pad_inches=0, bbox_inches='tight')
         plt.close()
         if self.verbose:
             print(f'Wrote {filename}.svg')

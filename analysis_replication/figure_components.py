@@ -308,7 +308,7 @@ class SampleBoxesOverview:
         number_boxes = int(counts['sample_count'].sum())
         print(f'number_boxes = {number_boxes}')
         area_per_box = target_area / number_boxes
-        aspect_attempted = 1.0
+        aspect_attempted = 1.6
         width_count = max(1, round(sqrt(number_boxes / aspect_attempted)))
         remainder = number_boxes % width_count
         height_count = (number_boxes // width_count) + 1 if remainder > 0 else int(number_boxes / width_count)

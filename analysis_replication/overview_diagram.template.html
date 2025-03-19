@@ -4,6 +4,10 @@
       table.big-overview {
         border: 1px gray solid;
       }
+      td.study-td {
+        text-align: center;
+        vertical-align: top;
+      }
       table.box-diagram-graphics {
         table-layout: fixed;
         margin: auto;
@@ -62,7 +66,7 @@
                       <td>
                         {{sample_group.site_name}}
                         <br/>
-                        {{sample_group.total_cells_short}}
+                        {{sample_group.total_cells_short}} cells
                       </td>
                     {{/study.sample_groups}}
                   </tr>

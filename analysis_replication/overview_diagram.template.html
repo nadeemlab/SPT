@@ -4,10 +4,6 @@
       table.big-overview {
         border: 1px gray solid;
       }
-      table > tbody > tr.study-row {
-        border: 1px gray solid;
-        padding: 5px;
-      }
       table.box-diagram-graphics {
         table-layout: fixed;
         margin: auto;
@@ -18,6 +14,9 @@
       table.box-diagram-array > tbody > tr > td {
         text-align: center;
         vertical-align: top;
+      }
+      table.box-diagram-array > tbody > tr > td.box-diagram-td {
+        padding-bottom: 20px;
       }
       .sample-group-color-blank {
         background: #ffffff;
@@ -52,7 +51,7 @@
       <tbody>
         {{#studies}}
           <tr class="study-row">
-            <td>
+            <td class="study-td">
               {{study.name}}
             </td>
             <td>
@@ -69,7 +68,7 @@
                   </tr>
                   <tr>
                     {{#study.sample_groups}}
-                      <td>
+                      <td class="box-diagram-td">
                         <div>
                           {{{sample_group.payload}}}
                         </div>

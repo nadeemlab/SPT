@@ -461,16 +461,10 @@ class SampleBoxesOverview:
 
         total_cells_study = float(all_counts[all_counts['study'] == study]['cell_count'].sum())
         target_area_study = self._desired_area(total_cells_study)
-        desired_width_study = 6
+        desired_width_study = 4
         target_height_study = target_area_study / desired_width_study
-        desired_average_width_portion = desired_width_study * pow(target_area / target_area_study, 2.5)
+        desired_average_width_portion = desired_width_study * pow(target_area / target_area_study, 2)
         desired_aspect = target_height_study / desired_average_width_portion
-
-        # desired_aspect_study = 0.25
-        # target_width_study = sqrt(target_area_study * desired_aspect_study) / desired_aspect_study
-        # target_height_study = sqrt(target_area_study * desired_aspect_study)
-        # portion_target_width = target_width_study * (target_area / target_area_study)
-        # desired_aspect = target_height_study / portion_target_width
 
         aspect_attempted = desired_aspect
         width_count = max(1, round(sqrt(number_boxes / aspect_attempted)))

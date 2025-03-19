@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <style>
+      table.big-overview {
+        border: 1px gray solid;
+      }
+      table > tbody > tr.study-row {
+        border: 1px gray solid;
+        padding: 5px;
+      }
+      table.box-diagram-graphics {
+        table-layout: fixed;
+      }
+      table.box-diagram-array {
+        table-layout: fixed;
+        width: 100%;
+      }
+      .sample-group-color-blank {
+        background: #ffffff;
+      }
+      {{#colormap_items}}
+      .sample-group-color-{{item.color_id}} {
+        background: {{item.hex_color}};
+      }
+      {{/colormap_items}}
+    </style>
+  </head>
+  <body>
+    <table class="big-overview">
+      <tbody>
+        {{#studies}}
+          <tr class="study-row">
+            <td>
+              {{study.name}}
+            </td>
+            <td>
+              <table class="box-diagram-array">
+                <tbody>
+                  <tr>
+                    {{#study.sample_groups}}
+                      <td>
+                        {{sample_group.site_name}}
+                        <br/>
+                        {{sample_group.total_cells_short}}
+                      </td>
+                    {{/study.sample_groups}}
+                  </tr>
+                  <tr>
+                    {{#study.sample_groups}}
+                      <td>
+                        {{{sample_group.payload}}}
+                      </td>
+                    {{/study.sample_groups}}
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+            <td>
+              {{study.legend.title}}
+              {{#study.legend.items}}
+                <br/>
+                <span class="sample-group-color-{{item.color_id}}">
+                  {{item.text}}
+                </span>
+              {{/study.legend.items}}
+            </td>
+          </tr>
+        {{/studies}}
+      </tbody>
+    </table>
+  </body>
+</html>

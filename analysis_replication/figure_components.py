@@ -4,10 +4,12 @@ from os import mkdir
 from os.path import join
 from os.path import exists
 import re
+from json import dumps as json_dumps
 from math import sqrt
 from math import log10
 from itertools import chain
 from itertools import zip_longest
+from xml.etree import ElementTree as ET
 from urllib.parse import urlencode
 from warnings import filterwarnings
 from warnings import catch_warnings
@@ -19,12 +21,16 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
+from pandas import merge
 from pandas import Index
 from pandas import read_csv
 from pandas import read_sql
 from pandas import concat
 from pandas import DataFrame
 from pandas import Series
+
+from pystache import Renderer as PystacheRenderer
+from pystache import parse as pystache_parse
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -57,13 +63,13 @@ class GatherSampleSummaryData:
     def _gather_source_sites_and_strata(self) -> DataFrame:
         strata = self.get_sample_strata()
         source_sites = self.get_source_site_assignments()
-        source_sites_and_strata_by_sample = strata.join(source_sites, on='sample')
+        joined = strata.join(source_sites, on='sample')
         cell_counts = self.get_cell_counts()
-        source_sites_strata_counts_by_sample = source_sites_and_strata_by_sample.join(cell_counts, on=['sample', 'study'])
-        source_sites_strata_counts_by_sample['ones'] = int(1)
+        by_sample = merge(joined, cell_counts, on=['sample', 'study'], how='inner')
+        by_sample['ones'] = int(1)
         columns = ['source_site', 'study', 'stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition', 'subject_diagnosed_result']
-        del source_sites_strata_counts_by_sample['sample']
-        aggregated = source_sites_strata_counts_by_sample.groupby(columns).agg('sum')
+        del by_sample['sample']
+        aggregated = by_sample.groupby(columns).agg('sum')
         aggregated = aggregated.reset_index()
         aggregated = aggregated.rename(columns={'ones': 'sample_count'})
         return aggregated
@@ -105,6 +111,7 @@ class GatherSampleSummaryData:
         counts = self.retrieve_cell_counts()
         counts = counts.rename(columns={'specimen': 'sample', 'count': 'cell_count'})
         counts = counts.set_index(['sample', 'study'])
+        del counts['percentage']
         return counts
 
     def retrieve_cell_counts(self) -> DataFrame:
@@ -146,8 +153,15 @@ class ColorLookup:
         }
         self._lookup = lookup
 
-    def lookup(self, study: str, stratum_identifier: str) -> tuple[float, float, float, float]:
-        return self._get_mpl_color(*self._lookup[(study, stratum_identifier)])
+    def lookup(self, study: str, stratum_identifier: str, hex: bool=False) -> tuple[float, float, float, float]:
+        color = self._get_mpl_color(*self._lookup[(study, stratum_identifier)])
+        if hex:
+            return self._to_hex(color)
+        return color
+
+    @staticmethod
+    def _to_hex(color: tuple[float, float, float, float]) -> str:
+        return '#%02x%02x%02x' % tuple(map(lambda v: min(255, int(v*256)), color[0:3]))
 
     @staticmethod
     def _parse_matplotlib_color_spec(c: str) -> tuple[str, int]:
@@ -157,6 +171,13 @@ class ColorLookup:
     @staticmethod
     def _get_mpl_color(cmap_name: str, value: int):
         return colormaps[cmap_name](value)
+
+    def get_ordinal(self, key: tuple[str, str]) -> int:
+        keys = sorted(list(self._lookup.keys()))
+        return keys.index(key)
+
+    def get_keys(self) -> tuple[tuple[str, str], ...]:
+        return sorted(list(self._lookup.keys()))
 
 
 class SiteLabels:
@@ -267,6 +288,7 @@ class SampleBoxesOverview:
     sources_and_strata: DataFrame
     color_lookup: ColorLookup
     site_labels: SiteLabels
+    outcome_labels: OutcomeLabels
 
     def __init__(self, subpath='diagram_components'):
         self.subpath = subpath
@@ -281,17 +303,147 @@ class SampleBoxesOverview:
     def create(self, verbose: bool=False) -> None:
         self.verbose = verbose
         self._retrieve_input_data()
-        self._generate_box_diagrams()
-        GenerateLegends(self.subpath, verbose=verbose).generate()
+        # self._generate_box_diagrams()
+        # GenerateLegends(self.subpath, verbose=verbose).generate()
+
+        self._generate_html_diagram()
 
     def _retrieve_input_data(self) -> None:
         self.sources_and_strata = GatherSampleSummaryData().get()
         self.color_lookup = ColorLookup()
         self.site_labels = SiteLabels()
+        self.outcome_labels = OutcomeLabels()
+
+    def _generate_html_diagram(self) -> None:
+        template = pystache_parse(open('overview_diagram.template.html', 'rt', encoding='utf-8').read())
+        values = self._get_template_values()
+        html = PystacheRenderer().render(template, values)
+        with open('.overview_diagram.json', 'wt', encoding='utf-8') as file:
+            file.write(json_dumps(values, indent=2))
+        with open('overview_diagram.html', 'wt', encoding='utf-8') as file:
+            file.write(html)
+
+    def _get_template_values(self) -> dict:
+        return {
+            'colormap_items': self._get_template_values_colormap(),
+            'studies': [
+                self._get_template_values_one_study(study, group)
+                for study, group in self.sources_and_strata.groupby('study')
+            ]
+        }
+
+    def _get_template_values_colormap(self) -> list:
+        return [
+            {
+                'item': {
+                    'color_id': self.color_lookup.get_ordinal(key),
+                    'hex_color': self.color_lookup.lookup(*key, hex=True),
+                }
+            }
+            for key in self.color_lookup.get_keys()
+        ]
+
+    def _get_template_values_one_study(self, study: str, df: DataFrame) -> dict:
+        return {
+            'study': {
+                'name': study,
+                'sample_groups': [
+                    self._get_template_values_one_box_diagram(self._specify_box_diagram(study, source_site, group))
+                    for source_site, group in df.groupby('source_site')
+                ],
+                'legend': self._get_template_values_legend(study),
+            }
+        }
+
+    def _get_template_values_one_box_diagram(self, spec: BoxDiagramSpecification) -> dict:
+
+        cmap = self._form_cmap(spec)
+        rows = self._form_uniform_rows(spec)
+        df = DataFrame(rows)
+        box_width = sqrt(spec.area_per_box)
+        width = spec.width_count * box_width
+        # plt.figure(figsize=(width, width * spec.aspect))
+
+        # ax = sns.heatmap(df, linewidth=1.5, square=True, cbar=False, xticklabels=False, yticklabels=False, cmap=cmap, vmin=0, vmax=df.values.max())
+        # ax.set_title(self._form_title(spec), fontsize=6)
+        # site_name = self.site_labels.lookup(spec.study, spec.source_site)
+
+
+        return {
+            'sample_group': {
+                'site_name': self.site_labels.lookup(spec.study, spec.source_site),
+                'total_cells_short': self.abbreviate_int(spec.total_cells),
+                'payload': self._create_box_graphics_html(spec),
+            }
+        }
+
+    def _create_box_graphics_html(self, spec: BoxDiagramSpecification) -> str:
+
+        rows = self._form_uniform_rows(spec)
+        df = DataFrame(rows)
+        box_width = sqrt(spec.area_per_box)
+        width = spec.width_count * box_width
+        table_width = width * 100
+
+        height = spec.height_count * box_width
+        table_height = height * 100
+        row_height = table_height / spec.height_count
+
+        e = ET.Element('table')
+        e.set('class', 'box-diagram-graphics')
+        e.set('width', f'{table_width}px')
+        e1 = ET.SubElement(e, 'tbody')
+        for _, row in df.iterrows():
+            tr = ET.SubElement(e1, 'tr')
+            tr.set('height', f'{row_height}px')
+            for entry in row:
+                td = ET.SubElement(tr, 'td')
+                if entry == 0:
+                    o = 'blank'
+                else:
+                    o = self.color_lookup.get_ordinal((spec.study, str(entry)))
+                td.set('class', f'sample-group-color-{o}')
+        return ET.tostring(e, encoding='unicode')
+
+    def _get_template_values_legend(self, study: str) -> dict:
+
+        category = self.outcome_labels.get_category_label(study)
+        # legend_fig, legend_ax = plt.subplots(1, 1, figsize=(2, 1))
+        # items = [
+        #     (
+        #         Rectangle((0, 0), 0.25, 0.5, facecolor=self.color_lookup.lookup(study, stratum_identifier)),
+        #         self.outcome_labels.get_stratum_label(study, stratum_identifier),
+        #     )
+        #     for _, stratum_identifier in self.outcome_labels.get_strata(study)
+        # ]
+        # handles, labels = tuple(zip(*items))
+        # legend_ax.legend(handles, labels, loc='center')
+        # legend_ax.axis('off')
+        # legend_fig.suptitle(category)
+        # legend_fig.tight_layout()
+        # filename = self._form_filename(category)
+        # legend_fig.savefig(filename, pad_inches=0, bbox_inches='tight')
+        # plt.close()
+        # if self.verbose:
+        #     print(f'Wrote {filename}')
+
+
+        return {
+            'title': category,
+            'items': [
+                {
+                    'item': {
+                        'text': self.outcome_labels.get_stratum_label(study, stratum_identifier),
+                        'color_id': self.color_lookup.get_ordinal((study, stratum_identifier)),
+                    }
+                }
+                for _, stratum_identifier in self.outcome_labels.get_strata(study)
+            ],
+        }
 
     def _generate_box_diagrams(self) -> None:
         if self.verbose:
-            print(self.sources_and_strata.to_string())
+            print(self.sources_and_strata.sort_values(by=['study', 'stratum_identifier', 'source_site']).to_string(index=False))
         for (source_site, study), group in self.sources_and_strata.groupby(['source_site', 'study']):
             spec = self._specify_box_diagram(study, source_site, group)
             self.generate_box_representation_one_study(spec)

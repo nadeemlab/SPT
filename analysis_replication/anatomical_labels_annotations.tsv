@@ -25,17 +25,17 @@ Melanoma CyTOF ICI	brain	melanoma brain met
 Melanoma CyTOF ICI	lymph node	melanoma lymph node met
 Melanoma CyTOF ICI	nonacral skin	skin
 Melanoma CyTOF ICI	other met	melanoma met
-Melanoma IMC TME protein	brain	melanoma met brain
-Melanoma IMC TME protein	lymph nodes	melanoma met lymph node
-Melanoma IMC TME protein	lymph nodes or soft tissue	melanoma met lymph node
-Melanoma IMC TME protein	mucosal	melanoma met mucosa
-Melanoma IMC TME protein	parotis or lymph nodes	melanoma met parotis/lymph
-Melanoma IMC TME protein	skin	melanoma met skin
-Melanoma IMC TME protein	skin cutaneous	melanoma met skin
-Melanoma IMC TME protein	soft tissue	melanoma met soft tissue
-Melanoma IMC TME protein	subcutaneous skin	melanoma met skin
-Melanoma IMC TME protein	undefine skin	melanoma met skin
-Melanoma IMC TME protein	visceral	melanoma met viscera
+Melanoma IMC TME protein	brain	brain
+Melanoma IMC TME protein	lymph nodes	lymph node
+Melanoma IMC TME protein	lymph nodes or soft tissue	lymph node
+Melanoma IMC TME protein	mucosal	mucosa
+Melanoma IMC TME protein	parotis or lymph nodes	parotis/lymph
+Melanoma IMC TME protein	skin	skin
+Melanoma IMC TME protein	skin cutaneous	skin
+Melanoma IMC TME protein	soft tissue	soft tissue
+Melanoma IMC TME protein	subcutaneous skin	skin
+Melanoma IMC TME protein	undefine skin	skin
+Melanoma IMC TME protein	visceral	viscera
 Melanoma intralesional IL2	Left ear	ear
 Melanoma intralesional IL2	Left foot	foot
 Melanoma intralesional IL2	Left groin	groin

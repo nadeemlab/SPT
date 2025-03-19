@@ -23,6 +23,10 @@
         padding-bottom: 20px;
         padding-right: 3px;
       }
+      span.show-cells {
+        font-size: 85%;
+        font-style: italic;
+      }
       .sample-group-color-blank {
         background: #ffffff;
       }
@@ -31,6 +35,9 @@
         background: {{item.hex_color}};
       }
       {{/colormap_items}}
+      .sample-marker {
+        width: 100%;
+      }
       span.legend-marker {
         display: inline-block;
         width: 18px;
@@ -41,10 +48,14 @@
       td.legend-container {
         text-align: center;
         vertical-align: top;
+        padding-bottom: 20px;
       }
       div.legend-item-group {
         text-align: left;
         border: solid gray 1px;
+      }
+      span.legend-title {
+        font-weight: bold;
       }
       span.nowrap {
         white-space: nowrap;
@@ -65,9 +76,9 @@
                   <tr>
                     {{#study.sample_groups}}
                       <td>
-                        {{sample_group.site_name}}
+                        <span>{{sample_group.site_name}}</span>
                         <br/>
-                        {{sample_group.total_cells_short}} cells
+                        <span class="show-cells">{{sample_group.total_cells_short}} cells</span>
                       </td>
                     {{/study.sample_groups}}
                   </tr>
@@ -84,7 +95,7 @@
               </table>
             </td>
             <td class="legend-container">
-              <span class="nowrap">
+              <span class="nowrap legend-title">
                 {{study.legend.title}}
               </span>
               <div class="legend-item-group">

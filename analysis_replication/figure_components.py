@@ -404,7 +404,7 @@ class SampleBoxesOverview:
                     o = 'blank'
                 else:
                     o = self.color_lookup.get_ordinal((spec.study, str(entry)))
-                td.set('class', f'sample-group-color-{o}')
+                td.set('class', f'sample-group-color-{o} sample-marker')
         return ET.tostring(e, encoding='unicode')
 
     def _get_template_values_legend(self, study: str) -> dict:

@@ -348,7 +348,7 @@ class SampleBoxesOverview:
             'study': {
                 'name': study,
                 'sample_groups': [
-                    self._get_template_values_one_box_diagram(self._specify_box_diagram(study, source_site, group))
+                    self._get_template_values_one_box_diagram(self._specify_box_diagram(study, source_site, group, df))
                     for source_site, group in df.groupby('source_site')
                 ],
                 'legend': self._get_template_values_legend(study),
@@ -445,12 +445,12 @@ class SampleBoxesOverview:
         if self.verbose:
             print(self.sources_and_strata.sort_values(by=['study', 'stratum_identifier', 'source_site']).to_string(index=False))
         for (source_site, study), group in self.sources_and_strata.groupby(['source_site', 'study']):
-            spec = self._specify_box_diagram(study, source_site, group)
+            spec = self._specify_box_diagram(study, source_site, group, self.sources_and_strata)
             self.generate_box_representation_one_study(spec)
 
-    def _specify_box_diagram(self, study: str, source_site: str, counts: DataFrame) -> BoxDiagramSpecification:
+    def _specify_box_diagram(self, study: str, source_site: str, counts: DataFrame, all_counts: DataFrame) -> BoxDiagramSpecification:
         total_cells = float(counts['cell_count'].sum())
-        target_area = pow(total_cells / pow(10, 5), 1/2)
+        target_area = self._desired_area(total_cells)
         groupstrata = counts.copy().set_index('stratum_identifier')
         number_boxes_strata = groupstrata['sample_count']
         number_boxes_by_stratum = OrderedDict()
@@ -458,7 +458,21 @@ class SampleBoxesOverview:
             number_boxes_by_stratum[key] = int(value)
         number_boxes = int(counts['sample_count'].sum())
         area_per_box = target_area / number_boxes
-        aspect_attempted = 1.6
+
+        total_cells_study = float(all_counts[all_counts['study'] == study]['cell_count'].sum())
+        target_area_study = self._desired_area(total_cells_study)
+        desired_width_study = 6
+        target_height_study = target_area_study / desired_width_study
+        desired_average_width_portion = desired_width_study * pow(target_area / target_area_study, 2.5)
+        desired_aspect = target_height_study / desired_average_width_portion
+
+        # desired_aspect_study = 0.25
+        # target_width_study = sqrt(target_area_study * desired_aspect_study) / desired_aspect_study
+        # target_height_study = sqrt(target_area_study * desired_aspect_study)
+        # portion_target_width = target_width_study * (target_area / target_area_study)
+        # desired_aspect = target_height_study / portion_target_width
+
+        aspect_attempted = desired_aspect
         width_count = max(1, round(sqrt(number_boxes / aspect_attempted)))
         remainder = number_boxes % width_count
         height_count = (number_boxes // width_count) + 1 if remainder > 0 else int(number_boxes / width_count)
@@ -473,6 +487,9 @@ class SampleBoxesOverview:
             study,
             source_site,
         )
+
+    def _desired_area(self, cell_count: int) -> float:
+        return pow(cell_count / pow(10, 5), 1/2)
 
     def generate_box_representation_one_study(self, spec: BoxDiagramSpecification) -> None:
         cmap = self._form_cmap(spec)

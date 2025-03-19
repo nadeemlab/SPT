@@ -10,10 +10,14 @@
       }
       table.box-diagram-graphics {
         table-layout: fixed;
+        margin: auto;
       }
       table.box-diagram-array {
-        table-layout: fixed;
         width: 100%;
+      }
+      table.box-diagram-array > tbody > tr > td {
+        text-align: center;
+        vertical-align: top;
       }
       .sample-group-color-blank {
         background: #ffffff;
@@ -23,6 +27,24 @@
         background: {{item.hex_color}};
       }
       {{/colormap_items}}
+      span.legend-marker {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        margin: 3px;
+      }
+      td.legend-container {
+        text-align: center;
+        vertical-align: top;
+      }
+      div.legend-item-group {
+        text-align: left;
+        border: solid gray 1px;
+      }
+      span.nowrap {
+        white-space: nowrap;
+      }
     </style>
   </head>
   <body>
@@ -48,21 +70,28 @@
                   <tr>
                     {{#study.sample_groups}}
                       <td>
-                        {{{sample_group.payload}}}
+                        <div>
+                          {{{sample_group.payload}}}
+                        </div>
                       </td>
                     {{/study.sample_groups}}
                   </tr>
                 </tbody>
               </table>
             </td>
-            <td>
-              {{study.legend.title}}
-              {{#study.legend.items}}
-                <br/>
-                <span class="sample-group-color-{{item.color_id}}">
-                  {{item.text}}
-                </span>
-              {{/study.legend.items}}
+            <td class="legend-container">
+              <span class="nowrap">
+                {{study.legend.title}}
+              </span>
+              <div class="legend-item-group">
+                {{#study.legend.items}}
+                  <span class="legend-marker sample-group-color-{{item.color_id}}">&nbsp;</span>
+                  <span class="nowrap">
+                    {{item.text}}
+                  </span>
+                  <br/>
+                {{/study.legend.items}}
+              </div>
             </td>
           </tr>
         {{/studies}}

@@ -50,12 +50,18 @@
         vertical-align: top;
         padding-bottom: 20px;
       }
+      div.legend-container-tight {
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 5px;
+        border: solid lightgray 1px;
+      }
       div.legend-item-group {
         text-align: left;
-        border: solid gray 1px;
       }
       span.legend-title {
         font-weight: bold;
+        padding: 2px;
       }
       span.nowrap {
         white-space: nowrap;
@@ -95,17 +101,19 @@
               </table>
             </td>
             <td class="legend-container">
-              <span class="nowrap legend-title">
-                {{study.legend.title}}
-              </span>
-              <div class="legend-item-group">
-                {{#study.legend.items}}
-                  <span class="legend-marker sample-group-color-{{item.color_id}}">&nbsp;</span>
-                  <span class="nowrap">
-                    {{item.text}}
-                  </span>
-                  <br/>
-                {{/study.legend.items}}
+              <div class="legend-container-tight">
+                <span class="nowrap legend-title">
+                  {{study.legend.title}}
+                </span>
+                <div class="legend-item-group">
+                  {{#study.legend.items}}
+                    <span class="legend-marker sample-group-color-{{item.color_id}}">&nbsp;</span>
+                    <span class="nowrap">
+                      {{item.text}}
+                    </span>
+                    <br/>
+                  {{/study.legend.items}}
+                </div>
               </div>
             </td>
           </tr>

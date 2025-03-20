@@ -42,10 +42,14 @@ python create_overview_diagram.py
 
 > [!NOTE]
 > `pystache` isn't a dependency of `spatialprofilingtoolbox` so in addition to primary dependencies, use:
-> `pip install pystache`
+> `pip install pystache` to make sure it is available.
 
 The figure is generated using `pystache` from template values (saved to `overview_diagram.json`) and template files:
 - `overview_diagram.template.css`
 - `overview_diagram.template.html`
 
 So you could reproduce the figure from source data `overview_diagram.json`, or a modification of it, using [Mustache](https://github.com/mustache/mustache/) directly.
+
+Note that this figure depends on some manual annotations for presentation clarity:
+- `anatomical_labels_annotations.tsv`
+- `outcome_stratum_labels_annotations.tsv`

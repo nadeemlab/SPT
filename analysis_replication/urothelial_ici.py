@@ -168,7 +168,7 @@ def spatial(access: DataAccessor):
 
 def test(host):
     study = 'Urothelial ICI'
-    access = DataAccessor(study, host=host)    
+    access = DataAccessor(study, host=host)
     channel_fractions(access)
     phenotype_fractions(access)
     spatial(access)

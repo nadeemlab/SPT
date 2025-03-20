@@ -21,6 +21,8 @@ from numpy import log
 from scipy.stats import ttest_ind  # type: ignore
 from sklearn.metrics import auc  # type:ignore
 
+from spatialprofilingtoolbox.standalone_utilities.float8 import decode as decode_float8
+
 
 def get_default_host(given: str | None) -> str | None:
     if given is not None:
@@ -73,6 +75,40 @@ class DataAccessor:
         print('\n' + Colors.bold_magenta + study + Colors.reset + '\n')
         self.cohorts = self._retrieve_cohorts()
         self.all_cells = self._retrieve_all_cells_counts()
+
+    def feature_matrix(self, sample: str) -> DataFrame:
+        parts = [
+            ('study', self.study),
+            ('sample', sample),
+        ]
+        query = urlencode(parts)
+        endpoint = 'cell-data-binary-intensity'
+        blob, url = self._retrieve(endpoint, query, binary=True)
+        names = self._retrieve_feature_names()
+        rows = self._extract_rows(blob, len(names))
+        return DataFrame(rows, columns=names)
+
+    def _retrieve_feature_names(self) -> list[str]:
+        names, _ = self._retrieve('cell-data-binary-feature-names', urlencode([('study', self.study)]))
+        return list(map(lambda d: d['symbol'], names['names']))
+
+    def _extract_rows(self, binary_matrix: bytes, number_columns: int) -> list[tuple]:
+        number_cells = self._get_number_cells(binary_matrix, number_columns)
+        global_offset = 0
+        local_offset = 4
+        rows = []
+        def position(index: int, frame: int) -> int:
+            return global_offset + local_offset + (frame * (number_columns + local_offset)) + index
+        for frame in range(number_cells):
+            row = tuple(
+                decode_float8(binary_matrix[position(i, frame): position(i, frame) + 1])
+                for i in range(number_columns)
+            )
+            rows.append(row)
+        return rows
+
+    def _get_number_cells(self, binary_matrix: bytes, number_columns: int) -> int:
+        return len(binary_matrix) // (number_columns + 4)
 
     def counts(self, phenotype_names):
         if isinstance(phenotype_names, str):
@@ -231,7 +267,12 @@ class DataAccessor:
             cursor = connection.cursor()
             cursor.execute('INSERT INTO cache(url, contents) VALUES (?, ?);', (url, pickle.dumps(contents)))
 
-    def _lookup_cache(self, url):
+    def _drop_from_cache(self, url: str) -> None:
+        with connect('cache.sqlite3') as connection:
+            cursor = connection.cursor()
+            cursor.execute('DELETE FROM cache WHERE url=?;', (url,))
+
+    def _lookup_cache(self, url, binary: bool=False):
         if not self.caching:
             return None
         with connect('cache.sqlite3') as connection:
@@ -239,18 +280,29 @@ class DataAccessor:
             cursor.execute('SELECT contents FROM cache WHERE url=?;', (url,))
             rows = cursor.fetchall()
             if len(rows) > 0:
-                return pickle.loads(rows[0][0], encoding='bytes').json(), url
+                if binary:
+                    obj = pickle.loads(rows[0][0], encoding='bytes')
+                else:
+                    obj = pickle.loads(rows[0][0], encoding='bytes').json()
+                return obj, url
         return None
 
-    def _retrieve(self, endpoint, query):
+    def _retrieve(self, endpoint, query, binary: bool=False):
         base = f'{self._get_base()}'
         url = '/'.join([base, endpoint, '?' + query])
-        c = self._lookup_cache(url)
+        c = self._lookup_cache(url, binary=binary)
         if c:
-            return c
+            if binary:
+                return c[0].content, c[1]
+            if 'is_pending' in c[0]:
+                if not c[0]['is_pending']:
+                    return c
+            else:
+                return c
         try:
             start = time()
-            content = get_request(url)
+            headers = {} if not binary else {'Accept-Encoding': 'br'}
+            content = get_request(url, headers=headers)
             end = time()
             self._add_to_cache(url, content)
             delta = str(end - start)
@@ -260,6 +312,8 @@ class DataAccessor:
         except Exception as exception:
             print(url)
             raise exception
+        if binary:
+            return content.content, url
         return content.json(), url
 
     def _phenotype_criteria(self, name):

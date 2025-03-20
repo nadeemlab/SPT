@@ -1,0 +1,55 @@
+study	source_site	label
+Bone marrow aging	Bone marrow	posterior iliac crest
+Brain met IMC	Bladder	brain met bladder
+Brain met IMC	Breast	brain met breast
+Brain met IMC	Colorectal	brain met colorectal
+Brain met IMC	Gastric	brain met stomach
+Brain met IMC	Lung	brain met lung
+Brain met IMC	Ovarian	brain met ovary
+Brain met IMC	Skin	brain met skin
+Breast cancer IMC	Breast	breast
+GBM IMC	Brain	brain
+Head and neck mpIF	Base of Tongue	tongue base
+Head and neck mpIF	Glottic	glottis
+Head and neck mpIF	Hypopharynx	hypopharynx
+Head and neck mpIF	Larynx	larynx
+Head and neck mpIF	Mouth - retromolar area	retromolar
+Head and neck mpIF	Oropharynx	oropharynx
+Head and neck mpIF	Pyriform Sinus	pyriform sinus
+Head and neck mpIF	Supraglottic	supraglottis
+Head and neck mpIF	Tonsil	tonsil
+Hodgkins HRS	Hematopoietic or lymphoid tissue	lymphoid tissue
+LUAD progression	Lung	lung
+Melanoma CyTOF ICI	acral	hand/foot
+Melanoma CyTOF ICI	brain	melanoma brain met
+Melanoma CyTOF ICI	lymph node	melanoma lymph node met
+Melanoma CyTOF ICI	nonacral skin	skin
+Melanoma CyTOF ICI	other met	melanoma met
+Melanoma IMC TME protein	brain	brain
+Melanoma IMC TME protein	lymph nodes	lymph node
+Melanoma IMC TME protein	lymph nodes or soft tissue	lymph node
+Melanoma IMC TME protein	mucosal	mucosa
+Melanoma IMC TME protein	parotis or lymph nodes	parotis/lymph
+Melanoma IMC TME protein	skin	skin
+Melanoma IMC TME protein	skin cutaneous	skin
+Melanoma IMC TME protein	soft tissue	soft tissue
+Melanoma IMC TME protein	subcutaneous skin	skin
+Melanoma IMC TME protein	undefine skin	skin
+Melanoma IMC TME protein	visceral	viscera
+Melanoma intralesional IL2	Left ear	ear
+Melanoma intralesional IL2	Left foot	foot
+Melanoma intralesional IL2	Left groin	groin
+Melanoma intralesional IL2	Left thigh	leg
+Melanoma intralesional IL2	Right arm	arm
+Melanoma intralesional IL2	Right axilla	axilla
+Melanoma intralesional IL2	Right chest	chest
+Melanoma intralesional IL2	Right leg	leg
+Orion CRC	Appendix	appendix
+Orion CRC	Ascending	ascending colon
+Orion CRC	Cecum	cecum
+Orion CRC	Descending	descending colon
+Orion CRC	Rectosigmoid	rectosigmoid colon
+Orion CRC	Rectum	rectum
+Orion CRC	Sigmoid	sigmoid colon
+Orion CRC	Transverse	transverse colon
+Urothelial ICI	NaN	urothelial cancer and met

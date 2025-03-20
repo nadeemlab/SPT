@@ -1,0 +1,51 @@
+<table class="big-overview">
+  <tbody>
+    {{#studies}}
+      <tr class="study-row">
+        <td class="study-td">
+          {{study.name}}
+        </td>
+        <td>
+          <table class="box-diagram-array">
+            <tbody>
+              <tr>
+                {{#study.sample_groups}}
+                  <td>
+                    <span>{{sample_group.site_name}}</span>
+                    <br/>
+                    <span class="show-cells">{{sample_group.total_cells_short}} cells</span>
+                  </td>
+                {{/study.sample_groups}}
+              </tr>
+              <tr>
+                {{#study.sample_groups}}
+                  <td class="box-diagram-td">
+                    <div>
+                      {{{sample_group.payload}}}
+                    </div>
+                  </td>
+                {{/study.sample_groups}}
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td class="legend-container">
+          <div class="legend-container-tight">
+            <span class="nowrap legend-title">
+              {{study.legend.title}}
+            </span>
+            <div class="legend-item-group">
+              {{#study.legend.items}}
+                <span class="legend-marker sample-group-color-{{item.color_id}}">&nbsp;</span>
+                <span class="nowrap">
+                  {{item.text}}
+                </span>
+                <br/>
+              {{/study.legend.items}}
+            </div>
+          </div>
+        </td>
+      </tr>
+    {{/studies}}
+  </tbody>
+</table>

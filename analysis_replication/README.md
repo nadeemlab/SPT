@@ -40,6 +40,10 @@ An HTML figure representing all samples available in the database is generated b
 python create_overview_diagram.py
 ```
 
+> [!NOTE]
+> `pystache` isn't a dependency of `spatialprofilingtoolbox` so in addition to primary dependencies, use:
+> `pip install pystache`
+
 The figure is generated using `pystache` from template values (saved to `overview_diagram.json`) and template files:
 - `overview_diagram.template.css`
 - `overview_diagram.template.html`

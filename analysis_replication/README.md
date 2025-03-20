@@ -44,4 +44,4 @@ The figure is generated using `pystache` from template values (saved to `overvie
 - `overview_diagram.template.css`
 - `overview_diagram.template.html`
 
-So you could reproduce the figure from source data, or modified source data, using [Mustache](https://github.com/mustache/mustache/) directly.
+So you could reproduce the figure from source data `overview_diagram.json`, or a modification of it, using [Mustache](https://github.com/mustache/mustache/) directly.

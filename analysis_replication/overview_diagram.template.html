@@ -1,125 +1,51 @@
-<html>
-  <head>
-    <style>
-      table.big-overview {
-        margin: auto;
-      }
-      td.study-td {
-        text-align: center;
-        vertical-align: top;
-      }
-      table.box-diagram-graphics {
-        table-layout: fixed;
-        margin: auto;
-      }
-      table.box-diagram-array {
-        width: 100%;
-      }
-      table.box-diagram-array > tbody > tr > td {
-        text-align: center;
-        vertical-align: top;
-      }
-      table.box-diagram-array > tbody > tr > td.box-diagram-td {
-        padding-bottom: 20px;
-        padding-right: 8px;
-      }
-      span.show-cells {
-        font-size: 85%;
-        font-style: italic;
-      }
-      .sample-group-color-blank {
-        background: #ffffff;
-      }
-      {{#colormap_items}}
-      .sample-group-color-{{item.color_id}} {
-        background: {{item.hex_color}};
-      }
-      {{/colormap_items}}
-      .sample-marker {
-        width: 100%;
-      }
-      span.legend-marker {
-        display: inline-block;
-        width: 18px;
-        height: 18px;
-        border-radius: 5px;
-        margin: 3px;
-      }
-      td.legend-container {
-        text-align: center;
-        vertical-align: top;
-        padding-bottom: 20px;
-      }
-      div.legend-container-tight {
-        background: #fafafa;
-        border-radius: 6px;
-        padding: 5px;
-        margin-top: 15px;
-        border: solid lightgray 1px;
-      }
-      div.legend-item-group {
-        text-align: left;
-      }
-      span.legend-title {
-        font-weight: bold;
-        padding: 2px;
-      }
-      span.nowrap {
-        white-space: nowrap;
-      }
-    </style>
-  </head>
-  <body>
-    <table class="big-overview">
-      <tbody>
-        {{#studies}}
-          <tr class="study-row">
-            <td class="study-td">
-              {{study.name}}
-            </td>
-            <td>
-              <table class="box-diagram-array">
-                <tbody>
-                  <tr>
-                    {{#study.sample_groups}}
-                      <td>
-                        <span>{{sample_group.site_name}}</span>
-                        <br/>
-                        <span class="show-cells">{{sample_group.total_cells_short}} cells</span>
-                      </td>
-                    {{/study.sample_groups}}
-                  </tr>
-                  <tr>
-                    {{#study.sample_groups}}
-                      <td class="box-diagram-td">
-                        <div>
-                          {{{sample_group.payload}}}
-                        </div>
-                      </td>
-                    {{/study.sample_groups}}
-                  </tr>
-                </tbody>
-              </table>
-            </td>
-            <td class="legend-container">
-              <div class="legend-container-tight">
-                <span class="nowrap legend-title">
-                  {{study.legend.title}}
-                </span>
-                <div class="legend-item-group">
-                  {{#study.legend.items}}
-                    <span class="legend-marker sample-group-color-{{item.color_id}}">&nbsp;</span>
-                    <span class="nowrap">
-                      {{item.text}}
-                    </span>
+<table class="big-overview">
+  <tbody>
+    {{#studies}}
+      <tr class="study-row">
+        <td class="study-td">
+          {{study.name}}
+        </td>
+        <td>
+          <table class="box-diagram-array">
+            <tbody>
+              <tr>
+                {{#study.sample_groups}}
+                  <td>
+                    <span>{{sample_group.site_name}}</span>
                     <br/>
-                  {{/study.legend.items}}
-                </div>
-              </div>
-            </td>
-          </tr>
-        {{/studies}}
-      </tbody>
-    </table>
-  </body>
-</html>
+                    <span class="show-cells">{{sample_group.total_cells_short}} cells</span>
+                  </td>
+                {{/study.sample_groups}}
+              </tr>
+              <tr>
+                {{#study.sample_groups}}
+                  <td class="box-diagram-td">
+                    <div>
+                      {{{sample_group.payload}}}
+                    </div>
+                  </td>
+                {{/study.sample_groups}}
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td class="legend-container">
+          <div class="legend-container-tight">
+            <span class="nowrap legend-title">
+              {{study.legend.title}}
+            </span>
+            <div class="legend-item-group">
+              {{#study.legend.items}}
+                <span class="legend-marker sample-group-color-{{item.color_id}}">&nbsp;</span>
+                <span class="nowrap">
+                  {{item.text}}
+                </span>
+                <br/>
+              {{/study.legend.items}}
+            </div>
+          </div>
+        </td>
+      </tr>
+    {{/studies}}
+  </tbody>
+</table>

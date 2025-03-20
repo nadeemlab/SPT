@@ -4,6 +4,9 @@ body {
 table.big-overview {
   margin: auto;
 }
+table.big-overview > tbody > tr > td {
+  border-bottom: 1px gray solid;
+}
 td.study-td {
   text-align: center;
   vertical-align: top;

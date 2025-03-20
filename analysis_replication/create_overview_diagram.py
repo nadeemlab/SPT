@@ -1,43 +1,32 @@
 
-from collections import OrderedDict
-from os import mkdir
-from os.path import join
-from os.path import exists
 import re
+from collections import defaultdict
+from collections import OrderedDict
+from os.path import exists
 from json import dumps as json_dumps
+from json import loads as json_loads
 from math import sqrt
 from math import log10
-from itertools import chain
 from itertools import zip_longest
 from xml.etree import ElementTree as ET
 from urllib.parse import urlencode
+from urllib.parse import quote_plus
+from string import Template
 from warnings import filterwarnings
 from warnings import catch_warnings
-from string import Template
 
 from attrs import define
 
-import pandas as pd
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
-
 from pandas import merge
-from pandas import Index
 from pandas import read_csv
 from pandas import read_sql
 from pandas import concat
 from pandas import DataFrame
-from pandas import Series
 
 from pystache import Renderer as PystacheRenderer
 from pystache import parse as pystache_parse
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 from matplotlib import colormaps
-from matplotlib.patches import Rectangle
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -52,16 +41,18 @@ class GatherSampleSummaryData:
         self.database_config_file = database_config_file
         self.studies = self.get_studies()
 
-    def get(self) -> DataFrame:
+    def get(self) -> tuple[DataFrame, dict]:
         filename = 'sources_and_strata.tsv'
         if not exists(filename):
-            sources_and_strata = self._gather_source_sites_and_strata()
+            sources_and_strata, sample_names = self._gather_source_sites_and_strata()
             sources_and_strata.to_csv(filename, sep='\t', index=False)
+            self._write_sample_names(sample_names)
         else:
             sources_and_strata = read_csv(filename, sep='\t', keep_default_na=False)
-        return sources_and_strata
+            sample_names = json_loads(open('sample_names.json', 'rt', encoding='utf-8').read())
+        return sources_and_strata, sample_names
 
-    def _gather_source_sites_and_strata(self) -> DataFrame:
+    def _gather_source_sites_and_strata(self) -> tuple[DataFrame, dict]:
         strata = self.get_sample_strata()
         source_sites = self.get_source_site_assignments()
         joined = strata.join(source_sites, on='sample')
@@ -69,11 +60,25 @@ class GatherSampleSummaryData:
         by_sample = merge(joined, cell_counts, on=['sample', 'study'], how='inner')
         by_sample['ones'] = int(1)
         columns = ['source_site', 'study', 'stratum_identifier', 'local_temporal_position_indicator', 'subject_diagnosed_condition', 'subject_diagnosed_result']
+        sample_names = by_sample[['study', 'stratum_identifier', 'source_site', 'sample']]
         del by_sample['sample']
         aggregated = by_sample.groupby(columns).agg('sum')
         aggregated = aggregated.reset_index()
         aggregated = aggregated.rename(columns={'ones': 'sample_count'})
-        return aggregated
+        return aggregated, self._form_nested_sample_names(sample_names)
+
+    def _form_nested_sample_names(self, sample_names: DataFrame) -> dict:
+        nested = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+        for study, group1 in sample_names.groupby('study'):
+            for source_site, group2 in group1.groupby('source_site'):
+                for stratum_identifier, group3 in group2.groupby('stratum_identifier'):
+                    nested[study][source_site][stratum_identifier] = sorted(list(group3['sample']))
+        return nested
+
+    def _write_sample_names(self, sample_names: dict) -> None:
+        sample_names_json = json_dumps(sample_names, indent=2)
+        with open('sample_names.json', 'wt', encoding='utf-8') as file:
+            file.write(sample_names_json)
 
     def get_sample_strata(self) -> DataFrame:
         query = '''
@@ -290,8 +295,14 @@ def _specify_box_diagram(study: str, source_site: str, counts: DataFrame, all_co
 
 class BoxDiagramBuilder:
     @classmethod
-    def create_box_graphics_html(cls, spec: BoxDiagramSpecification, color_lookup: ColorLookup) -> str:
-        rows = cls._form_uniform_rows(spec)
+    def create_box_graphics_html(cls, spec: BoxDiagramSpecification, color_lookup: ColorLookup, sample_names: dict[str, list[str]]) -> str:
+        """
+        Creates a "box diagram" with color-coded boxes in a neat grid with desired
+        size-related and aspect-related characteristics.
+        In HTML format.
+        """
+        cls._check_counts(spec, sample_names)
+        rows = cls._form_uniform_rows(spec, sample_names)
         df = DataFrame(rows)
         box_width = sqrt(spec.area_per_box)
         width = spec.width_count * box_width
@@ -301,6 +312,8 @@ class BoxDiagramBuilder:
         table_height = height * 100
         row_height = table_height / spec.height_count
 
+        study_for_url = re.sub(' ', '-', spec.study.lower())
+
         e = ET.Element('table')
         e.set('class', 'box-diagram-graphics')
         e.set('width', f'{table_width}px')
@@ -308,23 +321,36 @@ class BoxDiagramBuilder:
         for _, row in df.iterrows():
             tr = ET.SubElement(e1, 'tr')
             tr.set('height', f'{row_height}px')
-            for entry in row:
+            for entry, sample_name in row:
                 td = ET.SubElement(tr, 'td')
                 if entry == 0:
                     o = 'blank'
                 else:
                     o = color_lookup.get_ordinal((spec.study, str(entry)))
+                    td.set('data-tooltip', sample_name)
+                    td.set('class', f'sample-marker-clickable')
+                    sample_name_for_url = quote_plus(sample_name)
+                    td.set('onclick', f"window.location.href='https://oncopathtk.org/study/{study_for_url}/slide-viewer/{sample_name_for_url}';")
                 td.set('class', f'sample-group-color-{o} sample-marker')
-                td.set('data-tooltip', 'sample name 0001')
         return ET.tostring(e, encoding='unicode')
 
     @classmethod
-    def _form_uniform_rows(cls, spec: BoxDiagramSpecification) -> list[tuple[int, ...]]:
-        def _expand_list(stratum_identifier, size) -> list:
-            return [int(stratum_identifier)] * size
+    def _form_uniform_rows(
+        cls,
+        spec: BoxDiagramSpecification,
+        sample_names: dict[str, list[str]],
+    ) -> list[tuple[tuple[int, str], ...]]:
         number_boxes_by_stratum = cls._apply_study_patches(spec.study, spec.number_boxes_by_stratum)
-        cellvalues = list(chain(*map(lambda args: _expand_list(*args), number_boxes_by_stratum.items())))
-        return list(zip_longest(*(iter(cellvalues),) * spec.width_count, fillvalue=0))  # type: ignore
+        cellvalues: list[tuple[int, str]] = []
+        for key in number_boxes_by_stratum.keys():
+            cellvalues.extend(list(map(lambda n: (key, n), sample_names[str(key)])))
+        return list(zip_longest(*(iter(cellvalues),) * spec.width_count, fillvalue=(0, '')))  # type: ignore
+
+    @classmethod
+    def _check_counts(cls, spec: BoxDiagramSpecification, sample_names: dict[str, list[str]]) -> None:
+        for stratum_identifier, count in spec.number_boxes_by_stratum.items():
+            if count != len(sample_names[str(stratum_identifier)]):
+                raise ValueError(f'Expected {sample_names[stratum_identifier]} = {len(sample_names[stratum_identifier])}')
 
     @classmethod
     def _apply_study_patches(cls, study: str, number_boxes_by_stratum: OrderedDict[str, int]) -> OrderedDict[str, int]:
@@ -345,10 +371,11 @@ class BoxDiagramBuilder:
 class FigureTemplateValuesBuilder:
     template_values: dict
     lookup: LabelsColorsLookup
+    sample_names: dict
 
-    def __init__(self, sources_and_strata: DataFrame, lookup: LabelsColorsLookup):
-        self.sources_and_strata = sources_and_strata
+    def __init__(self, sources_and_strata: DataFrame, lookup: LabelsColorsLookup, sample_names: dict):
         self.lookup = lookup
+        self.sample_names = sample_names
         self.template_values = self._form_template_values(sources_and_strata)
 
     def get_template_values(self) -> dict:
@@ -382,7 +409,11 @@ class FigureTemplateValuesBuilder:
             'sample_group': {
                 'site_name': self.lookup.site_labels.lookup(spec.study, spec.source_site),
                 'total_cells_short': self._abbreviate_int(spec.total_cells),
-                'payload': BoxDiagramBuilder.create_box_graphics_html(spec, self.lookup.colors),
+                'payload': BoxDiagramBuilder.create_box_graphics_html(
+                    spec,
+                    self.lookup.colors,
+                    self.sample_names[spec.study][spec.source_site],
+                ),
             }
         }
 
@@ -432,6 +463,7 @@ class SampleBoxesOverviewFigure:
 class SampleBoxesOverview:
     file_basename: str
     sources_and_strata: DataFrame | None
+    sample_names: dict
     lookup: LabelsColorsLookup
     figure: SampleBoxesOverviewFigure | None
 
@@ -472,7 +504,7 @@ class SampleBoxesOverview:
             self._generate_html_diagram()
 
     def _retrieve_input_data(self) -> None:
-        self.sources_and_strata = GatherSampleSummaryData().get()
+        self.sources_and_strata, self.sample_names = GatherSampleSummaryData().get()
         self.lookup = LabelsColorsLookup(ColorLookup(), SiteLabels(), OutcomeLabels())
 
     def _generate_html_diagram(self) -> None:
@@ -480,7 +512,7 @@ class SampleBoxesOverview:
         self.figure = SampleBoxesOverviewFigure(css, table, template_values)
 
     def _get_html_diagram_parts(self) -> tuple[str, str, dict]:
-        template_values = FigureTemplateValuesBuilder(self.sources_and_strata, self.lookup).get_template_values()
+        template_values = FigureTemplateValuesBuilder(self.sources_and_strata, self.lookup, self.sample_names).get_template_values()
         table = self._get_figure_table(template_values)
         css = self._get_figure_css(template_values)
         return css, table, template_values

@@ -11,6 +11,7 @@ td.study-td {
 table.box-diagram-graphics {
   table-layout: fixed;
   margin: auto;
+  border-collapse: collapse;
 }
 table.box-diagram-array {
   width: 100%;
@@ -37,6 +38,12 @@ span.show-cells {
 {{/colormap_items}}
 .sample-marker {
   width: 100%;
+  border: 2px white solid;
+  border-radius: 6px;
+}
+.sample-marker-clickable:hover {
+  background: #bbbbbb;
+  cursor: pointer;
 }
 span.legend-marker {
   display: inline-block;
@@ -75,3 +82,4 @@ span.nowrap {
   background: #eee;
   padding: .25em;
 }
+

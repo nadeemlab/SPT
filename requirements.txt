@@ -10,8 +10,8 @@ asciitree==0.3.3
 attrs==25.3.0
 blosc2==3.2.0
 bokeh==3.7.0
-boto3==1.37.18
-botocore==1.37.18
+boto3==1.37.19
+botocore==1.37.19
 brotli==1.1.0
 certifi==2025.1.31
 cffi==1.17.1
@@ -110,7 +110,7 @@ scipy==1.15.2
 seaborn==0.13.2
 secure==1.0.1
 session-info==1.0.0
-setuptools==77.0.3
+setuptools==76.0.0
 shapely==2.0.7
 six==1.17.0
 slicerator==1.1.0

@@ -26,7 +26,8 @@ ARG PIP_NO_CACHE_DIR=1
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
 RUN python -m pip install -U pip
 COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+RUN grep setuptools requirements.txt | xargs python -m pip install
+RUN python -m pip install -r requirements.txt --no-build-isolation
 RUN python -m pip install build
 RUN python -m pip install twine
 COPY README.md .

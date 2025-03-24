@@ -45,7 +45,7 @@
         "component_name": "spatialprofilingtoolbox",
         "format": "Python package",
         "source": "Python package index (PyPI)",
-        "version": "1.0.19",
+        "version": "1.0.23",
         "relevant_to_reproducible_computation": true
     },
     {

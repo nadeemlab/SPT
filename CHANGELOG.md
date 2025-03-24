@@ -1,3 +1,6 @@
+# v1.0.23
+- The `spt db review-submissions` CLI was updated to include delete functionality and to handle new `finding` table treatment.
+
 # v1.0.16
 - An error condition was fixed in which duplicate feature specifications could be inserted into the database when the same metric is requested multiple times simultaneously. Just adding a unique constraint wasn't feasible since the specifications are located in multiple tables, so an additional table was added (`feature_hash`) as a proxy for feature specification identity.
 

@@ -5,7 +5,8 @@ RUN apt update && apt install -y gcc g++ libpq-dev && apt-get clean
 WORKDIR /usr/src/app
 RUN apt install -y libgdal-dev && apt-get clean
 COPY requirements.ondemand.txt .
-RUN python -m pip install -r requirements.ondemand.txt
+RUN grep setuptools requirements.ondemand.txt | xargs python -m pip install
+RUN python -m pip install -r requirements.ondemand.txt --no-build-isolation
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

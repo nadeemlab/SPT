@@ -6,7 +6,8 @@ from typing import cast
 from os import environ as os_environ
 from os import system as os_system
 from os.path import expanduser
-import warnings
+from warnings import filterwarnings
+from warnings import catch_warnings
 import re
 import string
 import time
@@ -104,9 +105,9 @@ class Reviewer:
 
     def _retrieve_findings(self) -> None:
         with DBConnection() as connection:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                self.findings = read_sql('SELECT * from public.finding;', connection)
+            with catch_warnings():
+                filterwarnings('ignore', message='pandas only supports SQLAlchemy', category=UserWarning)
+                self.findings = read_sql('SELECT * from default_study_lookup.finding;', connection)
 
     def _format_value(self, value) -> str:
         if isinstance(value, datetime) and GUESSED_LOCAL_TIMEZONE is not None:
@@ -154,7 +155,7 @@ class Reviewer:
             Printer.print('No change.', style='flag')
             return
         with DBCursor() as cursor:
-            cursor.execute('UPDATE public.finding SET description=%s WHERE id=%s;', (revision, self.finding_id))
+            cursor.execute('UPDATE default_study_lookup.finding SET description=%s WHERE id=%s;', (revision, self.finding_id))
 
     def _revise_background(self) -> None:
         confirmed = False
@@ -175,7 +176,7 @@ class Reviewer:
             Printer.print('No change.', style='flag')
             return
         with DBCursor() as cursor:
-            cursor.execute('UPDATE public.finding SET background=%s WHERE id=%s;', (revision, self.finding_id))
+            cursor.execute('UPDATE default_study_lookup.finding SET background=%s WHERE id=%s;', (revision, self.finding_id))
 
     def _update_status(self, value: FindingStatus) -> None:
         Printer.print(f'Setting finding {self.finding_id} status to: ', 'message', end='')
@@ -185,30 +186,43 @@ class Reviewer:
             Printer.print('Canceling.', 'flag')
             return
         with DBCursor() as cursor:
-            cursor.execute('UPDATE public.finding SET status=%s WHERE id=%s;', (value.value, self.finding_id))
+            cursor.execute('UPDATE default_study_lookup.finding SET status=%s WHERE id=%s;', (value.value, self.finding_id))
         if value == FindingStatus.published:
             with DBCursor() as cursor:
-                cursor.execute('SELECT publication_datetime FROM public.finding WHERE id=%s;', (self.finding_id,))
+                cursor.execute('SELECT publication_datetime FROM default_study_lookup.finding WHERE id=%s;', (self.finding_id,))
                 publication_datetime = tuple(cursor.fetchall())[0][0]
                 if publication_datetime == None:
                     publication_datetime = now()
-                    cursor.execute('UPDATE public.finding SET publication_datetime=%s WHERE id=%s;', (publication_datetime, self.finding_id))
+                    cursor.execute('UPDATE default_study_lookup.finding SET publication_datetime=%s WHERE id=%s;', (publication_datetime, self.finding_id))
                     Printer.print('Set publication datetime: ', end='', style='message')
                     Printer.print(self._format_value(publication_datetime.astimezone(timezone.utc)), style='popout')
                 else:
                     Printer.print('Already published, not updating publication datetime.', style='flag')
 
+    def _delete_permanently(self) -> None:
+        Printer.print(f'Permanently deleting finding {self.finding_id} submitted by ', 'message', end='')
+        Printer.print(self.finding['email'], 'popout')
+        confirmed = self._confirm()
+        if not confirmed:
+            Printer.print('Canceling.', 'flag')
+            return
+        with DBCursor() as cursor:
+            cursor.execute('DELETE FROM default_study_lookup.finding WHERE id=%s;', (self.finding_id,))
+        print('Done.')
+
     def _accept_commands(self) -> None:
         self._select_finding()
         action = None
         while action is None:
-            answer = input('e - edit description  b - edit background  d - defer decision  r - reject  p - publish: ')
-            if answer in ['e', 'b', 'd', 'r', 'p']:
+            answer = input('e - edit description   b - edit background   d - defer decision   D - delete permanently   r - reject   p - publish: ')
+            if answer in ['e', 'b', 'd', 'D', 'r', 'p']:
                 action = answer
         if action == 'e':
             self._revise_sentence()
         if action == 'b':
             self._revise_background()
+        if action == 'D':
+            self._delete_permanently()
         status = {
             'd': FindingStatus.deferred_decision,
             'r': FindingStatus.rejected,

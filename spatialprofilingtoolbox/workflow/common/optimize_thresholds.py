@@ -24,6 +24,10 @@ class ColumnNamings:
 Signature = tuple[tuple[str, ...], tuple[str, ...]]
 
 class SignatureConcordance:
+    """
+    This class is for evaluating the objective function for our threshold optimizer. It
+    is based on the Jaccard index.
+    """
     df: DataFrame
     signatures: dict[str, Signature]
     channels: tuple[str, ...]

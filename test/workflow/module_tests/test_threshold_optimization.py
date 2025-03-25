@@ -3,7 +3,7 @@ from os.path import join
 
 from pandas import read_csv
 from pandas import DataFrame
-from numpy import corrcoef
+from scipy.stats import pearsonr
 
 from spatialprofilingtoolbox.workflow.common.optimize_thresholds import ThresholdOptimizer
 
@@ -34,10 +34,10 @@ def compare_thresholds(t: DataFrame) -> None:
     expected = read_csv(join('module_tests', 'expected_thresholds.csv'))
     X1 = list(expected['final_threshold'])
     X2 = list(t['final_threshold'])
-    c = corrcoef(X1, X2)
-    if c < 0.5:
-        raise ValueError(f'Optimal thresholds too far from expected, correlation only: {c}')
-    print(f'Optimal thresholds correlation with expected: {c}')
+    p = float(pearsonr(X1, X2).pvalue)
+    if p > 0.1:
+        raise ValueError(f'Optimal thresholds too far from expected, Pearson p: {p}')
+    print(f'Optimal thresholds Pearson correlation with expected, p: {p}')
 
 if __name__=='__main__':
     test_threshold_optimization()

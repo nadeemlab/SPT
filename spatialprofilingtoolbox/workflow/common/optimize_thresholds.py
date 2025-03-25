@@ -94,6 +94,8 @@ class ThresholdOptimizer:
     `cell_data` should be a DataFrame with a 'sample' column, a number of numeric columns for each
     measured channel, and a number of binary 0/1 columns for phenotype assignments.
 
+    Each sample's cell data is considered as a separate optimization problem.
+
     The names of the channel columns should be expressible using a function `channel_column_namer`
     which accepts a channel name and produces the corresponding column name.
 

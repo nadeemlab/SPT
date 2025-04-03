@@ -325,6 +325,8 @@ class QueryCursor:
     get_study_gnn_plot_configurations: Callable
     has_umap: Callable
     is_public_collection: Callable
+    get_channel_annotations: Callable
+    get_channel_aliases: Callable
 
     def __init__(self, query_handler: Type):
         self.query_handler = query_handler

@@ -239,3 +239,16 @@ class StudySummary(BaseModel):
     has_umap: bool
     has_intensities: bool
     curation_notes: str | None
+
+
+class ChannelGroupAnnotation(BaseModel):
+    channels: list[str]
+    color: str
+
+
+class ChannelAnnotations(BaseModel):
+  channelGroups: dict[str, ChannelGroupAnnotation]
+
+
+class ChannelAliases(BaseModel):
+  aliases: dict[str, str]

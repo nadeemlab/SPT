@@ -2,11 +2,15 @@
 
 import re
 
+from pandas import read_sql
+
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     StudyComponents,
     StudyHandle,
     StudySummary,
+    ChannelAnnotations,
+    ChannelAliases,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeSymbol,
@@ -144,6 +148,30 @@ class QueryHandler:
     @classmethod
     def has_umap(cls, cursor, study: str) -> bool:
         return StudyAccess(cursor).has_umap()
+
+    @classmethod
+    def get_channel_annotations(cls, cursor) -> ChannelAnnotations:
+        groups = read_sql(
+            '''
+            SELECT name, color, channel_specific
+            FROM channel_in_group cg
+            JOIN channel_group g ON g.name=cg._group;
+            ''',
+            cursor.connection,
+        )
+        return ChannelAnnotations(channelGroups={
+            name: {
+                'channels': sorted(list(set(group['channel_specific']))),
+                'color': color,
+            }
+            for (name, color), group in groups.groupby(['name', 'color'])
+        })
+
+    @classmethod
+    def get_channel_aliases(cls, cursor) -> ChannelAliases:
+        cursor.execute('SELECT channel_specific, alias FROM channel_alias;')
+        rows = tuple(cursor.fetchall())
+        return ChannelAliases(aliases=dict(rows))
 
 
 def query() -> QueryCursor:

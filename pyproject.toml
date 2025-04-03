@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spatialprofilingtoolbox"
-version = "1.0.23"
+version = "1.0.24"
 authors = [
     { name = "James Mathews", email = "mathewj2@mskcc.org" }
 ]
@@ -205,6 +205,7 @@ packages = [
     "collection.py",
     "interactive_uploader.py",
     "load_testing.py",
+    "sync_annotations.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "metaschema.sql",

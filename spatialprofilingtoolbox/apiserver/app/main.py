@@ -25,6 +25,8 @@ from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
+from spatialprofilingtoolbox.db.exchange_data_formats.study import ChannelAnnotations
+from spatialprofilingtoolbox.db.exchange_data_formats.study import ChannelAliases
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeSymbol,
     PhenotypeSymbolAndCriteria,
@@ -693,3 +695,19 @@ def get_findings(
         )
         rows = tuple(cursor.fetchall())
     return list(map(lambda row: Finding(id=-1, **{key: row[i + 1] for i, key in enumerate(finding_fields)}), rows))
+
+
+@app.get("/channel-annotations/")
+async def get_channel_annotations() -> ChannelAnnotations:
+    """
+    Get the presentation-layer annotations (groupings, colors, etc.) for all channels.
+    """
+    return query().get_channel_annotations()
+
+
+@app.get("/channel-aliases/")
+async def get_channel_aliases() -> ChannelAliases:
+    """
+    Get the presentation-layer shorthand/abbreviations/aliases for all channels.
+    """
+    return query().get_channel_aliases()

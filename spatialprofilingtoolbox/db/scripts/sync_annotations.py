@@ -61,7 +61,7 @@ class SyncAnnotations:
 
             CREATE TABLE IF NOT EXISTS channel_in_group(
                 channel_specific VARCHAR(256),
-                _group VARCHAR(256) REFERENCES channel_group
+                _group VARCHAR(256) REFERENCES channel_group ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS channel_alias(

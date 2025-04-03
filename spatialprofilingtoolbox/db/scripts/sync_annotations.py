@@ -1,4 +1,4 @@
-"""Synchronize a small data artifact with the database."""
+"""Synchronize study/channel annotations in JSON file with database."""
 
 import argparse
 from json import loads as json_loads

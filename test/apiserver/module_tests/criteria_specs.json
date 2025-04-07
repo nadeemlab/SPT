@@ -1,0 +1,18 @@
+{
+  "specifications": [
+    {
+      "criteria": {
+        "positive_markers": ["CD3", "CD4"],
+        "negative_markers": []
+      },
+      "study": "Melanoma intralesional IL2"
+    },
+    {
+      "criteria": {
+        "positive_markers": ["CD3"],
+        "negative_markers": ["CD4"]
+      },
+      "study": "Melanoma intralesional IL2"
+    }
+  ]
+}

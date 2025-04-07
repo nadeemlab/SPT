@@ -476,8 +476,8 @@ def _validate_channels(channel_names: tuple[str, ...], study: str) -> tuple[bool
     names = tuple(map(lambda s: s.identifier, symbols))
     unrecognized = set(channel_names).difference(set(names))
     if len(unrecognized) > 0:
-        return [False, []]
-    return [True, list(unrecognized)]
+        [False, list(unrecognized)]
+    return [True, []]
 
 
 def _get_phenotype_counts(

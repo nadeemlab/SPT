@@ -14,5 +14,6 @@ curl -H "Content-Type: application/json" --data "$data" -s $query | python -m js
 python -c 'import sys; from json import loads; j=loads(open("c.json", "rt", encoding="utf-8").read()); sys.exit(1) if len(j)!=2 else print("2 responses, OK.")'
 
 status=$?
+rm c.json
 [ $status -eq 0 ] || (echo "API query for batch phenotype counts failed."; )
 exit $status

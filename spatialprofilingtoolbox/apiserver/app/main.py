@@ -17,6 +17,7 @@ import jwt
 
 from secure import Secure
 
+from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import finding_fields
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import Finding
@@ -312,8 +313,8 @@ def _validate_all_channels(criteria_specs: CriteriaSpecs) -> None:
             raise UnrecognizedChannelError(unrecognized, study)
 
 
-@app.post("/phenotype-counts-batch/")
-async def get_phenotype_counts_batch(criteria_specs: CriteriaSpecs) -> list[PhenotypeCounts]:
+@simple_function_cache(maxsize=2000, log=True)
+def _get_phenotype_counts_batch_cached(criteria_specs: CriteriaSpecs) -> list[PhenotypeCounts]:
     results = []
     try:
         _validate_all_channels(criteria_specs)
@@ -325,6 +326,12 @@ async def get_phenotype_counts_batch(criteria_specs: CriteriaSpecs) -> list[Phen
         negative_markers = specification.criteria.negative_markers
         counts = _get_phenotype_counts(positive_markers, negative_markers, study, blocking=False, validate_channels=False)
         results.append(counts)
+    return results
+
+
+@app.post("/phenotype-counts-batch/")
+async def get_phenotype_counts_batch(criteria_specs: CriteriaSpecs) -> list[PhenotypeCounts]:
+    results = _get_phenotype_counts_batch_cached(criteria_specs)
     return results
 
 
@@ -446,12 +453,13 @@ def _get_importance_composition(
     )
 
 
+@simple_function_cache(maxsize=2000, log=True)
 def _get_phenotype_counts_cached(
     positives: tuple[str, ...],
     negatives: tuple[str, ...],
     study: str,
     selected: tuple[int, ...],
-    blocking: bool = True,
+    blocking: bool,
 ) -> PhenotypeCounts:
     counts = OnDemandRequester.get_counts_by_specimen(
         positives,
@@ -500,7 +508,7 @@ def _get_phenotype_counts(
         tuple(negative_markers),
         study,
         tuple(sorted(list(cells_selected))) if cells_selected is not None else (),
-        blocking = blocking,
+        blocking,
     )
     return counts
 

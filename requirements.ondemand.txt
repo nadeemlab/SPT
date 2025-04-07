@@ -6,8 +6,8 @@ annotated-types==0.7.0
 array-api-compat==1.11.2
 asciitree==0.3.3
 attrs==25.3.0
-boto3==1.37.26
-botocore==1.37.26
+boto3==1.37.28
+botocore==1.37.28
 brotli==1.1.0
 certifi==2025.1.31
 charset-normalizer==3.4.1
@@ -49,7 +49,7 @@ matplotlib-scalebar==0.9.0
 mdurl==0.1.2
 more-itertools==10.6.0
 msgpack==1.1.0
-multidict==6.2.0
+multidict==6.3.2
 multipledispatch==1.0.0
 multiscale-spatial-image==1.0.1
 natsort==8.4.0
@@ -127,7 +127,7 @@ xarray-dataclasses==1.9.1
 xarray-datatree==0.0.14
 xarray-schema==0.0.3
 xarray-spatial==0.4.0
-yarl==1.18.3
+yarl==1.19.0
 zarr==2.18.5
 zict==3.0.0
 zstandard==0.23.0

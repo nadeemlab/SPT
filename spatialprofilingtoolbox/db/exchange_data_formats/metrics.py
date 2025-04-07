@@ -53,6 +53,16 @@ class PhenotypeCriteria(BaseModel):
     }
 
 
+class StudySpecificPhenotypeCriteria(BaseModel):
+    criteria: PhenotypeCriteria
+    study: str
+
+
+class CriteriaSpecs(BaseModel):
+    """Like PhenotypeCriteria, but several, to specify batch operations."""
+    specifications: list[StudySpecificPhenotypeCriteria]
+
+
 class PhenotypeSymbolAndCriteria(BaseModel):
     """The display/handle string and the internal identifier for a phenotype."""
     handle_string: str

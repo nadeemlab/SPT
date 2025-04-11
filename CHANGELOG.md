@@ -1,3 +1,6 @@
+# v1.0.28
+- Adds `ThresholdOptimizer` to improve automated gate/threshold adjustment for whole datasets.
+
 # v1.0.23
 - The `spt db review-submissions` CLI was updated to include delete functionality and to handle new `finding` table treatment.
 

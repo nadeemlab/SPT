@@ -4,6 +4,7 @@ from typing import Annotated
 from typing import Literal
 from io import BytesIO
 import os
+from itertools import chain
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
@@ -16,6 +17,7 @@ import jwt
 
 from secure import Secure
 
+from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import finding_fields
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import Finding
@@ -25,8 +27,11 @@ from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
+from spatialprofilingtoolbox.db.exchange_data_formats.study import ChannelAnnotations
+from spatialprofilingtoolbox.db.exchange_data_formats.study import ChannelAliases
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     PhenotypeSymbol,
+    CriteriaSpecs,
     PhenotypeSymbolAndCriteria,
     Channel,
     PhenotypeCriteria,
@@ -293,6 +298,43 @@ async def get_phenotype_counts(
     return counts
 
 
+def _validate_all_channels(criteria_specs: CriteriaSpecs) -> None:
+    studies = list(set(map(lambda s: s.study, criteria_specs.specifications)))
+    for study in studies:
+        all_channels = list(set(chain(*map(
+            lambda s: s.criteria.positive_markers,
+            filter(lambda s: s.study==study, criteria_specs.specifications)
+        )))) + list(set(chain(*map(
+            lambda s: s.criteria.negative_markers,
+            filter(lambda s: s.study==study, criteria_specs.specifications)
+        ))))
+        validated, unrecognized = _validate_channels(all_channels, study)
+        if not validated:
+            raise UnrecognizedChannelError(unrecognized, study)
+
+
+@simple_function_cache(maxsize=2000, log=True)
+def _get_phenotype_counts_batch_cached(criteria_specs: CriteriaSpecs) -> list[PhenotypeCounts]:
+    results = []
+    try:
+        _validate_all_channels(criteria_specs)
+    except UnrecognizedChannelError as e:
+        raise HTTPException(status_code=404, detail=e._custommessage)
+    for specification in criteria_specs.specifications:
+        study = specification.study
+        positive_markers = specification.criteria.positive_markers
+        negative_markers = specification.criteria.negative_markers
+        counts = _get_phenotype_counts(positive_markers, negative_markers, study, blocking=False, validate_channels=False)
+        results.append(counts)
+    return results
+
+
+@app.post("/phenotype-counts-batch/")
+async def get_phenotype_counts_batch(criteria_specs: CriteriaSpecs) -> list[PhenotypeCounts]:
+    results = _get_phenotype_counts_batch_cached(criteria_specs)
+    return results
+
+
 @app.get("/request-spatial-metrics-computation/")
 async def request_spatial_metrics_computation(
     study: ValidStudy,
@@ -411,12 +453,13 @@ def _get_importance_composition(
     )
 
 
+@simple_function_cache(maxsize=2000, log=True)
 def _get_phenotype_counts_cached(
     positives: tuple[str, ...],
     negatives: tuple[str, ...],
     study: str,
     selected: tuple[int, ...],
-    blocking: bool = True,
+    blocking: bool,
 ) -> PhenotypeCounts:
     counts = OnDemandRequester.get_counts_by_specimen(
         positives,
@@ -428,22 +471,44 @@ def _get_phenotype_counts_cached(
     return counts
 
 
+class UnrecognizedChannelError(ValueError):
+    def __init__(self, unrecognized: list[str], study: str):
+        self._unrecognized = unrecognized
+        self._study = study
+        self._custommessage = f'In "{study}", channels not recognized: {unrecognized}'
+        super().__init__(self._custommessage)
+
+
+def _validate_channels(channel_names: tuple[str, ...], study: str) -> tuple[bool, list[str]]:
+    symbols = cast(tuple[PhenotypeSymbol, ...], query().get_phenotype_symbols(study))
+    names = tuple(map(lambda s: s.identifier, symbols))
+    unrecognized = set(channel_names).difference(set(names))
+    if len(unrecognized) > 0:
+        [False, list(unrecognized)]
+    return [True, []]
+
+
 def _get_phenotype_counts(
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
     cells_selected: set[int] | None = None,
     blocking: bool = True,
+    validate_channels: bool = True,
 ) -> PhenotypeCounts:
     """For each specimen, return the fraction of selected/all cells expressing the phenotype."""
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
+    if validate_channels:
+        validated, unrecognized = _validate_channels(positive_markers + negative_markers, study)
+        if not validated:
+            raise UnrecognizedChannelError(unrecognized, study)
     counts = _get_phenotype_counts_cached(
         tuple(positive_markers),
         tuple(negative_markers),
         study,
         tuple(sorted(list(cells_selected))) if cells_selected is not None else (),
-        blocking = blocking,
+        blocking,
     )
     return counts
 
@@ -693,3 +758,19 @@ def get_findings(
         )
         rows = tuple(cursor.fetchall())
     return list(map(lambda row: Finding(id=-1, **{key: row[i + 1] for i, key in enumerate(finding_fields)}), rows))
+
+
+@app.get("/channel-annotations/")
+async def get_channel_annotations() -> ChannelAnnotations:
+    """
+    Get the presentation-layer annotations (groupings, colors, etc.) for all channels.
+    """
+    return query().get_channel_annotations()
+
+
+@app.get("/channel-aliases/")
+async def get_channel_aliases() -> ChannelAliases:
+    """
+    Get the presentation-layer shorthand/abbreviations/aliases for all channels.
+    """
+    return query().get_channel_aliases()

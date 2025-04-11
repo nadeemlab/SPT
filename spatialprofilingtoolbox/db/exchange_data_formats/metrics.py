@@ -33,7 +33,7 @@ class Channel(BaseModel):
     }
 
 
-class PhenotypeCriteria(BaseModel):
+class PhenotypeCriteria(BaseModel, frozen=True):
     """Criteria defining a "composite" phenotype by expression and non-expression of markers."""
     positive_markers: tuple[str, ...]
     negative_markers: tuple[str, ...]
@@ -51,6 +51,16 @@ class PhenotypeCriteria(BaseModel):
             ]
         }
     }
+
+
+class StudySpecificPhenotypeCriteria(BaseModel, frozen=True):
+    criteria: PhenotypeCriteria
+    study: str
+
+
+class CriteriaSpecs(BaseModel, frozen=True):
+    """Like PhenotypeCriteria, but several, to specify batch operations."""
+    specifications: tuple[StudySpecificPhenotypeCriteria, ...]
 
 
 class PhenotypeSymbolAndCriteria(BaseModel):

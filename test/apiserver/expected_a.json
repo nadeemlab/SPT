@@ -1,0 +1,35 @@
+{
+    "channelGroups": {
+        "identity": {
+            "channels": [
+                "CD14",
+                "CD163",
+                "CD20",
+                "CD3",
+                "CD4",
+                "CD8"
+            ],
+            "color": "#fefee9"
+        },
+        "immune functional/state": {
+            "channels": [
+                "B2M",
+                "CD27"
+            ],
+            "color": "#faf2fa"
+        },
+        "other functional/state": {
+            "channels": [
+                "CD15",
+                "CD38"
+            ],
+            "color": "#f4fcf6"
+        },
+        "tumor": {
+            "channels": [
+                "PanCK"
+            ],
+            "color": "#dce3f7"
+        }
+    }
+}

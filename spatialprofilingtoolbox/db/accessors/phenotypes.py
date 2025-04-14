@@ -92,10 +92,10 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
         )
 
     @simple_instance_method_cache(maxsize=1000)
-    def get_channel_names(self, study: str) -> tuple[str, ...]:
+    def get_channel_names(self, study: str) -> tuple[tuple[str, ...], ...]:
         components = StudyAccess(self.cursor).get_study_components(study)
         self.cursor.execute('''
-            SELECT cs.symbol
+            SELECT cs.symbol, cs.name
             FROM biological_marking_system bms
             JOIN chemical_species cs ON bms.target=cs.identifier
             WHERE bms.study=%s
@@ -103,4 +103,4 @@ class PhenotypesAccess(SimpleReadOnlyProvider):
             ''',
             (components.measurement,),
         )
-        return tuple(row[0] for row in self.cursor.fetchall())
+        return tuple((row[0], row[1]) for row in self.cursor.fetchall())

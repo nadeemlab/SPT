@@ -453,7 +453,7 @@ def _get_importance_composition(
     )
 
 
-@simple_function_cache(maxsize=2000, log=True)
+# @simple_function_cache(maxsize=2000, log=True)
 def _get_phenotype_counts_cached(
     positives: tuple[str, ...],
     negatives: tuple[str, ...],

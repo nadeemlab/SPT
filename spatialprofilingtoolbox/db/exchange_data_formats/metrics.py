@@ -22,6 +22,7 @@ class PhenotypeSymbol(BaseModel):
 class Channel(BaseModel):
     """The symbol for one of the imaged or measured channels."""
     symbol: str
+    full_name: str
     model_config = {
         "json_schema_extra": {
             "examples": [

@@ -1,80 +1,106 @@
 [
     {
-        "symbol": "B2M"
+        "symbol": "B2M",
+        "full_name": "Beta-2-Microglobulin"
     },
     {
-        "symbol": "B7H3"
+        "symbol": "B7H3",
+        "full_name": "CD276"
     },
     {
-        "symbol": "CD14"
+        "symbol": "CD14",
+        "full_name": ""
     },
     {
-        "symbol": "CD163"
+        "symbol": "CD163",
+        "full_name": ""
     },
     {
-        "symbol": "CD20"
+        "symbol": "CD20",
+        "full_name": "Pan-B cell antigen"
     },
     {
-        "symbol": "CD25"
+        "symbol": "CD25",
+        "full_name": "Interleukin-2 receptor alpha chain"
     },
     {
-        "symbol": "CD27"
+        "symbol": "CD27",
+        "full_name": ""
     },
     {
-        "symbol": "CD3"
+        "symbol": "CD3",
+        "full_name": ""
     },
     {
-        "symbol": "CD4"
+        "symbol": "CD4",
+        "full_name": ""
     },
     {
-        "symbol": "CD56"
+        "symbol": "CD56",
+        "full_name": "Neural cell adhesion molecule"
     },
     {
-        "symbol": "CD68"
+        "symbol": "CD68",
+        "full_name": ""
     },
     {
-        "symbol": "CD8"
+        "symbol": "CD8",
+        "full_name": ""
     },
     {
-        "symbol": "DAPI"
+        "symbol": "DAPI",
+        "full_name": ""
     },
     {
-        "symbol": "FOXP3"
+        "symbol": "FOXP3",
+        "full_name": "Forkhead box P3"
     },
     {
-        "symbol": "IDO1"
+        "symbol": "IDO1",
+        "full_name": "Indoleamine 2.3-Dioxygenase 1"
     },
     {
-        "symbol": "KI67"
+        "symbol": "KI67",
+        "full_name": ""
     },
     {
-        "symbol": "LAG3"
+        "symbol": "LAG3",
+        "full_name": "CD223/Lymphocyte Activating 3"
     },
     {
-        "symbol": "MHCI"
+        "symbol": "MHCI",
+        "full_name": "Major histocompatibility complex class I"
     },
     {
-        "symbol": "MHCII"
+        "symbol": "MHCII",
+        "full_name": "Major histocompatibility complex class II"
     },
     {
-        "symbol": "MRC1"
+        "symbol": "MRC1",
+        "full_name": "Mannose receptor C-type 1"
     },
     {
-        "symbol": "PD1"
+        "symbol": "PD1",
+        "full_name": "CD279/Programmed cell death protein 1"
     },
     {
-        "symbol": "PDL1"
+        "symbol": "PDL1",
+        "full_name": "CD274/Programmed cell death-ligand 1"
     },
     {
-        "symbol": "S100B"
+        "symbol": "S100B",
+        "full_name": "S100 calcium-binding protein B"
     },
     {
-        "symbol": "SOX10"
+        "symbol": "SOX10",
+        "full_name": "SRY-Box Transcription Factor 10"
     },
     {
-        "symbol": "TGM2"
+        "symbol": "TGM2",
+        "full_name": "Transglutaminase 2"
     },
     {
-        "symbol": "TIM3"
+        "symbol": "TIM3",
+        "full_name": "Hepatitis A virus cellular receptor 2"
     }
 ]

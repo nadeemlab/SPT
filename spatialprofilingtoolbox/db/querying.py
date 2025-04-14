@@ -10,6 +10,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     StudyHandle,
     StudySummary,
     ChannelAnnotations,
+    ChannelGroupAnnotation,
     ChannelAliases,
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
@@ -91,7 +92,7 @@ class QueryHandler:
         phenotype_handle: str,
         study: str
     ) -> PhenotypeCriteria:
-        channel_names = PhenotypesAccess(cursor).get_channel_names(study)
+        channel_names = tuple(map(lambda r: r[0], PhenotypesAccess(cursor).get_channel_names(study)))
         components = StudyAccess(cursor).get_study_components(study)
         if phenotype_handle in channel_names:
             return PhenotypeCriteria(positive_markers=(phenotype_handle,), negative_markers=())
@@ -100,13 +101,15 @@ class QueryHandler:
                 phenotype_handle,
                 components.analysis,
             )
+        if phenotype_handle != '':
+            raise ValueError(f'Could not determine signature for phenotype with name/handle: {phenotype_handle}')
         return PhenotypeCriteria(positive_markers=(), negative_markers=())
 
     @classmethod
     def get_channel_names(cls, cursor, study: str) -> tuple[Channel, ...]:
         return sort(tuple(
-            Channel(symbol=name)
-            for name in PhenotypesAccess(cursor).get_channel_names(study)
+            Channel(symbol=name, full_name=full_name)
+            for name, full_name in PhenotypesAccess(cursor).get_channel_names(study)
         ), key=lambda c: c.symbol)
 
     @classmethod
@@ -160,10 +163,10 @@ class QueryHandler:
             cursor.connection,
         )
         return ChannelAnnotations(channelGroups={
-            name: {
-                'channels': sorted(list(set(group['channel_specific']))),
-                'color': color,
-            }
+            name: ChannelGroupAnnotation(
+                channels = sorted(list(set(group['channel_specific']))),
+                color = color,
+            )
             for (name, color), group in groups.groupby(['name', 'color'])
         })
 

@@ -31,7 +31,7 @@ def get_ordered_feature_names(cursor) -> BitMaskFeatureNames:
         indices,
     ))
     return BitMaskFeatureNames(
-        names=tuple(Channel(symbol=n) for n in names)
+        names=tuple(Channel(symbol=n, full_name='') for n in names)
     )
 
 

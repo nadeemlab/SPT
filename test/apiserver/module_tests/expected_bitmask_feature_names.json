@@ -1,82 +1,108 @@
 {
     "names": [
         {
-            "symbol": "B2M"
+            "symbol": "B2M",
+            "full_name": ""
         },
         {
-            "symbol": "B7H3"
+            "symbol": "B7H3",
+            "full_name": ""
         },
         {
-            "symbol": "CD68"
+            "symbol": "CD68",
+            "full_name": ""
         },
         {
-            "symbol": "CD8"
+            "symbol": "CD8",
+            "full_name": ""
         },
         {
-            "symbol": "DAPI"
+            "symbol": "DAPI",
+            "full_name": ""
         },
         {
-            "symbol": "FOXP3"
+            "symbol": "FOXP3",
+            "full_name": ""
         },
         {
-            "symbol": "IDO1"
+            "symbol": "IDO1",
+            "full_name": ""
         },
         {
-            "symbol": "KI67"
+            "symbol": "KI67",
+            "full_name": ""
         },
         {
-            "symbol": "LAG3"
+            "symbol": "LAG3",
+            "full_name": ""
         },
         {
-            "symbol": "MHCI"
+            "symbol": "MHCI",
+            "full_name": ""
         },
         {
-            "symbol": "MHCII"
+            "symbol": "MHCII",
+            "full_name": ""
         },
         {
-            "symbol": "MRC1"
+            "symbol": "MRC1",
+            "full_name": ""
         },
         {
-            "symbol": "CD14"
+            "symbol": "CD14",
+            "full_name": ""
         },
         {
-            "symbol": "PD1"
+            "symbol": "PD1",
+            "full_name": ""
         },
         {
-            "symbol": "PDL1"
+            "symbol": "PDL1",
+            "full_name": ""
         },
         {
-            "symbol": "S100B"
+            "symbol": "S100B",
+            "full_name": ""
         },
         {
-            "symbol": "SOX10"
+            "symbol": "SOX10",
+            "full_name": ""
         },
         {
-            "symbol": "TGM2"
+            "symbol": "TGM2",
+            "full_name": ""
         },
         {
-            "symbol": "TIM3"
+            "symbol": "TIM3",
+            "full_name": ""
         },
         {
-            "symbol": "CD163"
+            "symbol": "CD163",
+            "full_name": ""
         },
         {
-            "symbol": "CD20"
+            "symbol": "CD20",
+            "full_name": ""
         },
         {
-            "symbol": "CD25"
+            "symbol": "CD25",
+            "full_name": ""
         },
         {
-            "symbol": "CD27"
+            "symbol": "CD27",
+            "full_name": ""
         },
         {
-            "symbol": "CD3"
+            "symbol": "CD3",
+            "full_name": ""
         },
         {
-            "symbol": "CD4"
+            "symbol": "CD4",
+            "full_name": ""
         },
         {
-            "symbol": "CD56"
+            "symbol": "CD56",
+            "full_name": ""
         }
     ]
 }

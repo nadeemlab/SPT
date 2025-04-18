@@ -15,7 +15,9 @@ class MetricsJobQueuePusher:
     def schedule_feature_computation(cls, study: str, feature_specification: int) -> None:
         with DBCursor(database_config_file=None, study=study) as cursor:
             cls._insert_jobs(cursor, feature_specification)
-        NORMAL_FEATURE_COMPUTATION_TIMEOUT = 60 * 10
+        minute = 60
+        hour = 60 * minute
+        NORMAL_FEATURE_COMPUTATION_TIMEOUT = 1 * hour
         feature_computation_timeout_handler(str(feature_specification), study, NORMAL_FEATURE_COMPUTATION_TIMEOUT)
         cls._broadcast_queue_activity()
 

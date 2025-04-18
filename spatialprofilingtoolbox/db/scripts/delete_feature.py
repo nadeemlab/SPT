@@ -157,6 +157,7 @@ class InteractiveFeatureDropper:
             cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
             cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
             cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
+            cursor.execute('DELETE FROM feature_hash WHERE feature=%s ;', param)
         self._print('Done.', 'message')
 
     def _get_specifications(self) -> tuple[tuple[str, ...], ...] | None:

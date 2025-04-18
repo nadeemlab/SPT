@@ -2,9 +2,11 @@
 
 import argparse
 from typing import cast
+from sys import exit as sys_exit
 
 from attr import define
 from pandas import DataFrame
+from pandas import read_sql
 
 from spatialprofilingtoolbox.db.database_connection import get_and_validate_database_config
 from spatialprofilingtoolbox.db.database_connection import DBCursor
@@ -27,9 +29,110 @@ def parse_args():
         '--study-name',
         dest='study_name',
         help='The name of the study for which the feature was computed.',
-        required=True
+    )
+    parser.add_argument(
+        '--bulk-null',
+        dest='bulk_null',
+        help='If set, try to find corrupt features in bulk to delete.',
+        action='store_true',
     )
     return parser.parse_args()
+
+@define
+class SuspiciousFeature:
+    feature: int
+    number_null: int
+    number_complete: int
+    total_expected: int
+    study: str
+
+class BulkDropper:
+    database_config_file: str
+    suspicious: tuple[SuspiciousFeature]
+    minimum_null: int
+    minimum_fraction_null: float
+    fraction_missing: float
+
+    def __init__(self, database_config_file: str):
+        self.database_config_file = database_config_file
+        self.minimum_null = 0
+        self.minimum_fraction_null = 0
+        self.fraction_missing = 0
+        self._start()
+
+    def _start(self) -> None:
+        self._determine_suspicious_features()
+        self._show_features()
+        self._solicit_parameters()
+        self._show_features()
+        self._confirm_delete()
+        self._do_delete()
+
+    def _determine_suspicious_features(self) -> None:
+        with DBCursor(database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT study FROM study_lookup;')
+            studies = tuple(map(lambda s: s[0], tuple(cursor.fetchall())))
+        suspicious = []
+        for study in studies:
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                cursor.execute('SELECT COUNT(*) FROM specimen_data_measurement_process;')
+                count = tuple(cursor.fetchall())[0][0]
+                df = read_sql('SELECT feature, value is null as isnull FROM quantitative_feature_value;', cursor.connection)
+            for feature, group in df.groupby('feature'):
+                n1 = sum(group['isnull'])
+                n2 = group.shape[0] - n1
+                if n1 == 0 and n2 == count:
+                    continue
+                suspicious.append(SuspiciousFeature(feature, n1, n2, count, study))
+        self.suspicious = tuple(suspicious)
+
+    def _show_features(self) -> None:
+        filtered = self._get_suspicious()
+        for s in filtered:
+            print(f'{s.feature}: {s.number_null} null, {s.number_complete} not  (of {s.total_expected} for {s.study})')
+        print('')
+
+    def _get_suspicious(self) -> tuple[SuspiciousFeature]:
+        return tuple(filter(self._focusing_on, self.suspicious))
+
+    def _focusing_on(self, s: SuspiciousFeature) -> bool:
+        if s.number_null >= self.minimum_null:
+            return True
+        if (s.number_null / s.total_expected) >= self.minimum_fraction_null:
+            return True
+        if (1 - (s.number_complete / s.total_expected)) >= self.fraction_missing:
+            return True
+        return False
+
+    def _solicit_parameters(self) -> None:
+        print('Minimum number of null values, to focus on [5]: ', end='')
+        i = input()
+        self.minimum_null = int(i) if i != '' else 5
+        print('Minimum fraction of values being null values, to focus on [0.20]: ', end='')
+        i = input()
+        self.minimum_fraction_null = float(i) if i != '' else 0.20
+        print('Fraction of missing values threshold, to focus on [0.10]: ', end='')
+        i = input()
+        self.fraction_missing = float(i) if i != '' else 0.10
+
+    def _confirm_delete(self) -> None:
+        c = len(self._get_suspicious())
+        print(f'Delete these {c} features [y/n]? ', end='')
+        i = input()
+        if i != 'y':
+            print('Cancelled.')
+            sys_exit(0)
+
+    def _do_delete(self) -> None:
+        marked = self._get_suspicious()
+        rows = list(map(lambda s: {'feature': s.feature, 'study': s.study}, marked))
+        for study, group in DataFrame(rows).groupby('study'):
+            print(study)
+            with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+                for feature in group['feature']:
+                    print(f'Deleting: {feature}')
+                    InteractiveFeatureDropper.delete_feature(feature, cursor)
+            print('')
 
 
 @define
@@ -153,12 +256,16 @@ class InteractiveFeatureDropper:
         self._print(self.specification, 'specification', end='')
         self._print('.', 'message')
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
-            param = (self.specification,)
-            cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
-            cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
-            cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
-            cursor.execute('DELETE FROM feature_hash WHERE feature=%s ;', param)
+            self.delete_feature(self.specification, cursor)
         self._print('Done.', 'message')
+
+    @staticmethod
+    def delete_feature(feature: str | int, cursor) -> None:
+        param = (feature,)
+        cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
+        cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
+        cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)
+        cursor.execute('DELETE FROM feature_hash WHERE feature=%s ;', param)
 
     def _get_specifications(self) -> tuple[tuple[str, ...], ...] | None:
         with DBCursor(database_config_file=self.database_config_file, study=self.study) as cursor:
@@ -180,8 +287,11 @@ def main():
     database_config_file = get_and_validate_database_config(args)
     study = args.study_name
     specification = args.specification
-    gui = InteractiveFeatureDropper(study, database_config_file, specification)
-    gui.start()
+    if args.bulk_null:
+        gui = BulkDropper(database_config_file)
+    else:
+        gui = InteractiveFeatureDropper(study, database_config_file, specification)
+        gui.start()
 
 
 if __name__=='__main__':

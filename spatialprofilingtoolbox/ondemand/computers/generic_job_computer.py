@@ -108,7 +108,7 @@ class GenericJobComputer(ABC):
 
     def handle_excessive_sample_size(self, cell_number_limit_variable: str , cell_number_limit_default: int) -> bool:
         if cell_number_limit_variable in os_environ:
-            cell_number_limit = os_environ[cell_number_limit_variable]
+            cell_number_limit = int(os_environ[cell_number_limit_variable])
         else:
             cell_number_limit = cell_number_limit_default
             logger.warning(f'You should set {cell_number_limit_variable} in the environment. Using default: {cell_number_limit_default}.')

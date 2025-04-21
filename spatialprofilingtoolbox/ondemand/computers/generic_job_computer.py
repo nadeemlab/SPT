@@ -1,20 +1,16 @@
-
+from os import environ as os_environ
 from abc import ABC
 from abc import abstractmethod
 from typing import Literal
 
 from numpy import asarray
 from numpy import uint64 as np_int64
-from numpy.typing import NDArray
-from attrs import define
 
 from psycopg.errors import UniqueViolation
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
-from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.ondemand.computers.cell_data_arrays import CellDataArrays
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
-from spatialprofilingtoolbox.db.accessors.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.ondemand.add_feature_value import add_feature_value
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -109,6 +105,33 @@ class GenericJobComputer(ABC):
                 add_feature_value(specification, sample, None, cursor)
             except UniqueViolation:
                 logger.warning(f'({specification}, {sample}) value already exists, can\'t insert {None}')
+
+    def handle_excessive_sample_size(self, cell_number_limit_variable: str , cell_number_limit_default: int) -> bool:
+        if cell_number_limit_variable in os_environ:
+            cell_number_limit = os_environ[cell_number_limit_variable]
+        else:
+            cell_number_limit = cell_number_limit_default
+            logger.warning(f'You should set {cell_number_limit_variable} in the environment. Using default: {cell_number_limit_default}.')
+        cell_number = self._get_cell_number()
+        if cell_number > cell_number_limit:
+            logger.warning(f'({self.job.feature_specification}, {self.job.sample}) cell number {cell_number} exceeds limit {cell_number_limit}, not attempting computation.')
+            self._insert_null()
+            return True
+        return False
+
+    def _get_cell_number(self) -> int:
+        with DBCursor(study=self.job.study) as cursor:
+            query = '''
+            SELECT
+                COUNT(*)
+            FROM histological_structure_identification hsi
+            JOIN data_file df ON df.sha256_hash=hsi.data_source
+            JOIN specimen_data_measurement_process sdmp ON sdmp.identifier=df.source_generation_process
+            WHERE sdmp.specimen=%s;
+            '''
+            cursor.execute(query, (self.job.sample,))
+            count = tuple(cursor.fetchall())[0][0]
+        return count
 
     @staticmethod
     def retrieve_specifiers(study: str, feature_specification: str) -> tuple[str, list[str]]:

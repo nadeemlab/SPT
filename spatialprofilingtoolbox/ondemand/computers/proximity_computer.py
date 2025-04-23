@@ -1,8 +1,5 @@
 """Proximity calculation from pairs of signatures."""
 
-from typing import cast
-
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_str_to_phenotype
 from spatialprofilingtoolbox.ondemand.computers.generic_job_computer import GenericJobComputer
@@ -18,6 +15,8 @@ class ProximityComputer(GenericJobComputer):
     """Do proximity calculation from pair of signatures."""
 
     def compute(self) -> None:
+        if self.handle_excessive_sample_size('CELL_NUMBER_LIMIT_PROXIMITY', 750000):
+            return
         args, arrays = self._prepare_parameters()
         if arrays.identifiers is None:
             self.handle_insert_value(None, allow_null=True)

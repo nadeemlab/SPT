@@ -27,6 +27,8 @@ class SquidpyComputer(GenericJobComputer):
     """Calculate selected squidpy metrics."""
 
     def compute(self) -> None:
+        if self.handle_excessive_sample_size('CELL_NUMBER_LIMIT_SQUIDPY', 750000):
+            return
         args, arrays = self._prepare_parameters()
         if arrays.identifiers is None:
             self.handle_insert_value(None, allow_null=True)

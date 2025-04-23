@@ -1,3 +1,6 @@
+# v1.0.34
+- Adds configurable `CELL_NUMBER_LIMIT_PROXIMITY` and `CELL_NUMBER_LIMIT_SQUIDPY` environment variables to application containers.
+
 # v1.0.28
 - Adds `ThresholdOptimizer` to improve automated gate/threshold adjustment for whole datasets.
 

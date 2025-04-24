@@ -77,7 +77,7 @@ class CountsComputer(GenericJobComputer):
         """Compute int signature of this channel name combination."""
         missing = set(channel_names).difference(all_features)
         if len(missing) > 0:
-            message = f'Cannot compute signature when these columns are requested: {missing}'
+            message = f'Cannot compute signature when these columns are requested: {missing}. Only have: {all_features}'
             raise ValueError(message)
         signature = 0
         indices = map(lambda name: all_features.index(name), channel_names)

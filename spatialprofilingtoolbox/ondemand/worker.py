@@ -102,6 +102,7 @@ class OnDemandWorker:
         provider = self._get_provider(job)
         provider._warn_no_value()
         provider._insert_null()
+        provider._pop_off_queue()
 
     def _compute(self, job: Job) -> None:
         provider = self._get_provider(job)

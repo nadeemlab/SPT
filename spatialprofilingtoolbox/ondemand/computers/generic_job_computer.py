@@ -120,6 +120,7 @@ class GenericJobComputer(ABC):
         if cell_number > cell_number_limit:
             logger.warning(f'({self.job.feature_specification}, {self.job.sample}) cell number {cell_number} exceeds limit {cell_number_limit}, not attempting computation.')
             self._insert_null()
+            self._pop_off_queue()
             return True
         return False
 

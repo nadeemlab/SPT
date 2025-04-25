@@ -1,5 +1,6 @@
 """Entry point for requesting computation by the on-demand service."""
 
+from os import environ as os_environ
 from typing import cast
 from typing import Callable
 
@@ -44,6 +45,7 @@ def _nonempty(string: str) -> bool:
 
 class OnDemandRequester:
     """Entry point for requesting computation by the on-demand service."""
+    DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS: int = 600
 
     @staticmethod
     def get_counts_by_specimen(
@@ -135,7 +137,7 @@ class OnDemandRequester:
         connection.execute('LISTEN one_job_complete ;')
         notifications = connection.notifies()
         handler = FeatureComputationTimeoutHandler(feature, study_name)
-        generic_handler = create_timeout_handler(handler.handle)
+        generic_handler = create_timeout_handler(handler.handle, cls._get_feature_timeout())
         try:
             if not counts.is_pending:
                 logger.debug(f'Feature {feature} already complete.')
@@ -153,6 +155,14 @@ class OnDemandRequester:
             pass
         finally:
             generic_handler.disalarm()
+
+    @classmethod
+    def _get_feature_timeout(cls) -> int:
+        t = 'FEATURE_COMPUTATION_TIMEOUT_SECONDS'
+        if t in os_environ:
+            return int(os_environ[t])
+        logger.warning(f'Set {t}. Using default: {cls.DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS}')
+        return cls.DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS
 
     @classmethod
     def _clear_queue_of_feature(cls, study: str, feature: int) -> None:

@@ -7,9 +7,6 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
-TIMEOUT_SECONDS_DEFAULT = 600
-
-
 class SPTTimeoutError(RuntimeError):
     def __init__(self, message: str):
         super().__init__(message)
@@ -37,7 +34,7 @@ class TimeoutHandler:
         self.active = False
 
 
-def create_timeout_handler(callback: Callable, timeout_seconds: int = TIMEOUT_SECONDS_DEFAULT) -> TimeoutHandler:
+def create_timeout_handler(callback: Callable, timeout_seconds: int) -> TimeoutHandler:
     handler = TimeoutHandler(callback, timeout_seconds)
     signal.signal(signal.SIGALRM, handler.handle)
     signal.alarm(timeout_seconds)

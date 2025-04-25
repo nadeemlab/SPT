@@ -1,5 +1,6 @@
 """Handler for requests for on demand calculations."""
 
+from os import environ as os_environ
 from typing import cast
 from traceback import print_exception
 from time import time as time_time
@@ -28,6 +29,7 @@ class OnDemandWorker:
     """Worker that computes one feature value at a time."""
     connection: PsycopgConnection
     work_start_time_seconds: float | None
+    DEFAULT_JOB_COMPUTATION_TIMEOUT_SECONDS: int = 600
 
     def __init__(self):
         self.work_start_time_seconds = None
@@ -38,9 +40,9 @@ class OnDemandWorker:
             self.connection._set_autocommit(True)
             logger.info('Initial search (and pop) over job queue.')
             self._work_until_complete()
-            self._listen_for_queue_activity()
+            self._wait_work_loop()
 
-    def _listen_for_queue_activity(self) -> None:
+    def _wait_work_loop(self) -> None:
         self.connection.execute('LISTEN new_items_in_queue ;')
         while True:
             self._wait_for_queue_activity_on_connection()
@@ -108,7 +110,7 @@ class OnDemandWorker:
         provider = self._get_provider(job)
         generic_handler = create_timeout_handler(
             lambda *arg: self._no_value_wrapup(job),
-            timeout_seconds=150,
+            self._get_job_computation_timeout(),
         )
         try:
             provider.compute()
@@ -120,6 +122,13 @@ class OnDemandWorker:
             self._no_value_wrapup(job)
         finally:
             generic_handler.disalarm()
+
+    def _get_job_computation_timeout(self) -> int:
+        t = 'JOB_COMPUTATION_TIMEOUT_SECONDS'
+        if t in os_environ:
+            return int(os_environ[t])
+        logger.warning(f'Set {t}. Using default: {self.DEFAULT_JOB_COMPUTATION_TIMEOUT_SECONDS}')
+        return self.DEFAULT_JOB_COMPUTATION_TIMEOUT_SECONDS
 
     def _notify_complete(self, job: Job) -> None:
         with DBConnection() as connection:

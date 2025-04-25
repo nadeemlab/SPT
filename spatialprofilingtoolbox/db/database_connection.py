@@ -25,6 +25,7 @@ from spatialprofilingtoolbox.db.credentials import get_credentials_from_environm
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.credentials import main_database_name
 from spatialprofilingtoolbox.db.credentials import metaschema_schema
+from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -125,9 +126,20 @@ class DBConnection(ConnectionProvider):
                 try:
                     self.get_connection().commit()
                 except OperationalError as error:
-                    logger.warning('Connection was possibly interrupted by deliberate timeout. Stack trace:')
-                    print_exception(type(error), error, error.__traceback__)
+                    message = str(error)
+                    logger.warning(f'Connection was interrupted by an OperationalError: {error}')
+                    if message == 'sending query failed: another command is already in progress':
+                        logger.info('Using psycopg cancel_safe before closing the connection.')
+                        self.get_connection().cancel_safe()
+                    else:
+                        self._handle_unexpected_exception(error)
+                except Exception as error:
+                    self._handle_unexpected_exception(error)
             self.get_connection().close()
+
+    def _handle_unexpected_exception(self, error: Exception) -> None:
+        logger.error('Exception of unexpected type:')
+        print_exception(type(error), error, error.__traceback__)
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.wrap_up_connection()

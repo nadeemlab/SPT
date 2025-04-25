@@ -1,3 +1,6 @@
+# v1.0.38
+- Adds configurable `FEATURE_COMPUTATION_TIMEOUT_SECONDS` and `JOB_COMPUTATION_TIMEOUT_SECONDS`, with reasonable defaults. When feature computation is requested via the API, if computation time for all jobs exceed the given limit (for FEATUREs), null values are inserted for the remaining samples. Similarly for individual jobs, with respect to the job-specific timeout (for JOBs).
+
 # v1.0.34
 - Adds configurable `CELL_NUMBER_LIMIT_PROXIMITY` and `CELL_NUMBER_LIMIT_SQUIDPY` environment variables to application containers.
 

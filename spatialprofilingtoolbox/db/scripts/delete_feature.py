@@ -262,6 +262,7 @@ class InteractiveFeatureDropper:
     @staticmethod
     def delete_feature(feature: str | int, cursor) -> None:
         param = (feature,)
+        cursor.execute('DELETE FROM quantitative_feature_value_queue WHERE feature=%s ;', param)
         cursor.execute('DELETE FROM quantitative_feature_value WHERE feature=%s ;', param)
         cursor.execute('DELETE FROM feature_specifier WHERE feature_specification=%s ;', param)
         cursor.execute('DELETE FROM feature_specification WHERE identifier=%s ;', param)

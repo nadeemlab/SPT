@@ -29,7 +29,7 @@ class OnDemandWorker:
     """Worker that computes one feature value at a time."""
     connection: PsycopgConnection
     work_start_time_seconds: float | None
-    DEFAULT_JOB_COMPUTATION_TIMEOUT_SECONDS: int = 600
+    DEFAULT_JOB_COMPUTATION_TIMEOUT_SECONDS: int = 150
 
     def __init__(self):
         self.work_start_time_seconds = None

@@ -72,10 +72,12 @@ class GenericJobComputer(ABC):
     def handle_insert_value(self, value: float | None, allow_null: bool=True) -> None:
         if value is not None:
             self._insert_value(value)
+            self._pop_off_queue()
         else:
             self._warn_no_value()
             if allow_null:
                 self._insert_null()
+                self._pop_off_queue()
 
     def _warn_no_value(self) -> None:
         specification = str(self.job.feature_specification)
@@ -92,9 +94,11 @@ class GenericJobComputer(ABC):
                 add_feature_value(specification, sample, str(value), cursor)
             except UniqueViolation:
                 logger.warning(f'({specification}, {sample}) value already exists, can\'t insert {value}')
-        with DBCursor(study=study) as cursor:
+
+    def _pop_off_queue(self) -> None:
+        with DBCursor(study=self.job.study) as cursor:
             query = 'DELETE FROM quantitative_feature_value_queue WHERE feature=%s and subject=%s;'
-            cursor.execute(query, (int(specification), sample))
+            cursor.execute(query, (int(self.job.feature_specification), self.job.sample))
 
     def _insert_null(self) -> None:
         study = self.job.study
@@ -116,6 +120,7 @@ class GenericJobComputer(ABC):
         if cell_number > cell_number_limit:
             logger.warning(f'({self.job.feature_specification}, {self.job.sample}) cell number {cell_number} exceeds limit {cell_number_limit}, not attempting computation.')
             self._insert_null()
+            self._pop_off_queue()
             return True
         return False
 

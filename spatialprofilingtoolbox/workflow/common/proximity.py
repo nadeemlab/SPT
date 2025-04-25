@@ -26,8 +26,8 @@ def compute_proximity_metric_for_signature_pair(
     locations: NDArray[np_int64],
     feature_names: BitMaskFeatureNames,
 ) -> float | None:
+    features = tuple(n.symbol for n in feature_names.names)
     def signature(markers: tuple[str, ...]):
-        features = tuple(n.symbol for n in feature_names.names)
         return CountsComputer._compute_signature(markers, features)
 
     marker_set1 = (phenotype1.positive_markers, phenotype1.negative_markers)

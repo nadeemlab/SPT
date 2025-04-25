@@ -25,9 +25,14 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ARG PIP_NO_CACHE_DIR=1
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
 RUN python -m pip install -U pip
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
+COPY pyproject.toml .
+RUN bash -c 'source /opt/venv/bin/activate && uv pip install --all-extras -r pyproject.toml'
 COPY requirements.txt .
 RUN grep setuptools requirements.txt | xargs python -m pip install
-RUN python -m pip install -r requirements.txt --no-build-isolation
+RUN bash -c 'source /opt/venv/bin/activate && uv pip install -r requirements.txt'
 RUN python -m pip install build
 RUN python -m pip install twine
 COPY README.md .

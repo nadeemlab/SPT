@@ -196,7 +196,10 @@ development-image: ${PACKAGE_SOURCE_FILES} ${SCRIPTS}/development.Dockerfile dev
 >@${MESSAGE} end "$@" "Built." "Build failed."
 >@rm -f .dockerignore
 
-${DEPENDENCY_LISTS}: pyproject.toml ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
+pyproject.toml.unversioned: pyproject.toml
+>@if [[ ! -f pyproject.toml.unversioned ]]; then grep -v 'version=' pyproject.toml > pyproject.toml.unversioned; fi;
+
+${DEPENDENCY_LISTS}: pyproject.toml.unversioned ${SCRIPTS}/determine_prerequisites.sh | initialize_message_cache
 >@${MESSAGE} start "$@" "Determining $@"
 >@extras=${EXTRAS_$@}; \
     ${SCRIPTS}/determine_prerequisites.sh "$$extras" $@; \
@@ -613,6 +616,7 @@ clean-files:
 >@rm -rf ${BUILD_LOCATION}/lib
 >@rm -f build/*/log_of_build.log
 >@rm -f log_of_build.log
+>@rm -f pyproject.toml.unversioned
 
 docker-compositions-rm: check-docker-daemon-running
 >@${MESSAGE} start "$@" "Running docker compose rm (remove)"

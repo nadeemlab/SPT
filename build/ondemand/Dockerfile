@@ -9,7 +9,7 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 COPY pyproject.toml .
-RUN bash -c 'source /opt/venv/bin/activate && uv pip install --all-extras -r pyproject.toml'
+RUN bash -c 'source /opt/venv/bin/activate && uv pip install --extra ondemand -r pyproject.toml'
 COPY requirements.ondemand.txt .
 RUN bash -c 'source /opt/venv/bin/activate && uv pip install -r requirements.ondemand.txt'
 ARG version

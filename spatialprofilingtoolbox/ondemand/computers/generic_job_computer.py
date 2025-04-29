@@ -145,9 +145,6 @@ class GenericJobComputer(ABC):
         if feature is None:
             return None
         count = GenericComputationScheduler._query_for_computed_feature_values(self.job.study, feature).values[self.job.sample]
-
-        logger.info(f'Feature, sample, count: {feature} {self.job.sample} {count}')
-
         return count
 
     @staticmethod

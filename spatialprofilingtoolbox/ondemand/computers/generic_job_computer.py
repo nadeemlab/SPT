@@ -13,6 +13,12 @@ from spatialprofilingtoolbox.ondemand.computers.cell_data_arrays import CellData
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.ondemand.add_feature_value import add_feature_value
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
+from spatialprofilingtoolbox.apiserver.request_scheduling.counts_scheduler import CountsScheduler
+from spatialprofilingtoolbox.apiserver.request_scheduling.computation_scheduler import GenericComputationScheduler
+from spatialprofilingtoolbox.workflow.common.export_features import \
+    ADIFeatureSpecificationUploader
+from spatialprofilingtoolbox.ondemand.providers.study_component_extraction import ComponentGetter
+from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -117,6 +123,9 @@ class GenericJobComputer(ABC):
             cell_number_limit = cell_number_limit_default
             logger.warning(f'You should set {cell_number_limit_variable} in the environment. Using default: {cell_number_limit_default}.')
         cell_number = self._get_cell_number()
+        if cell_number is None:
+            logger.warning('Cell counts feature not yet computed. Not imposing a cell number limit.')
+            return False
         if cell_number > cell_number_limit:
             logger.warning(f'({self.job.feature_specification}, {self.job.sample}) cell number {cell_number} exceeds limit {cell_number_limit}, not attempting computation.')
             self._insert_null()
@@ -124,18 +133,21 @@ class GenericJobComputer(ABC):
             return True
         return False
 
-    def _get_cell_number(self) -> int:
+    def _get_cell_counts_feature(self) -> str:
         with DBCursor(study=self.job.study) as cursor:
-            query = '''
-            SELECT
-                COUNT(*)
-            FROM histological_structure_identification hsi
-            JOIN data_file df ON df.sha256_hash=hsi.data_source
-            JOIN specimen_data_measurement_process sdmp ON sdmp.identifier=df.source_generation_process
-            WHERE sdmp.specimen=%s;
-            '''
-            cursor.execute(query, (self.job.sample,))
-            count = tuple(cursor.fetchall())[0][0]
+            measurement_study_name = ComponentGetter.get_study_components(cursor, self.job.study).measurement
+            data_analysis_study = ADIFeatureSpecificationUploader.get_data_analysis_study(measurement_study_name, cursor)
+            criteria = PhenotypeCriteria(positive_markers=(), negative_markers=())
+        return CountsScheduler._get_feature_specification(self.job.study, data_analysis_study, criteria)
+
+    def _get_cell_number(self) -> int | None:
+        feature = self._get_cell_counts_feature()
+        if feature is None:
+            return None
+        count = GenericComputationScheduler._query_for_computed_feature_values(self.job.study, feature).values[self.job.sample]
+
+        logger.info(f'Feature, sample, count: {feature} {self.job.sample} {count}')
+
         return count
 
     @staticmethod

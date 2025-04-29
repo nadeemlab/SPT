@@ -372,6 +372,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
     repository_name=${REPO}-$$submodule_name ; \
+    cp pyproject.toml $$submodule_directory ; \
     cp ${DEPENDENCY_LISTS} $$submodule_directory ; \
     cp dist/${WHEEL} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \

@@ -1,10 +1,16 @@
 FROM python:3.13-slim
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt install -y gcc libpq-dev curl && apt-get clean
-ARG PIP_NO_CACHE_DIR=1
+RUN python3.13 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
+COPY pyproject.toml .
+RUN bash -c 'source /opt/venv/bin/activate && uv pip install --all-extras -r pyproject.toml'
 COPY requirements.txt /usr/local/lib/python3.13/site-packages/spatialprofilingtoolbox/apiserver/app/
 COPY requirements.apiserver.txt .
-RUN python -m pip install -r requirements.apiserver.txt
+RUN bash -c 'source /opt/venv/bin/activate && uv pip install -r requirements.apiserver.txt'
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

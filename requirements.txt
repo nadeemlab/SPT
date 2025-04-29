@@ -10,10 +10,10 @@ asciitree==0.3.3
 attrs==25.3.0
 blosc2==3.3.1
 bokeh==3.7.2
-boto3==1.38.3
-botocore==1.38.3
+boto3==1.38.4
+botocore==1.38.4
 brotli==1.1.0
-certifi==2025.1.31
+certifi==2025.4.26
 cffi==1.17.1
 charset-normalizer==3.4.1
 click==8.1.8
@@ -59,7 +59,7 @@ msgpack==1.1.0
 multidict==6.4.3
 multipledispatch==1.0.0
 multiscale-spatial-image==1.0.1
-narwhals==1.36.0
+narwhals==1.37.1
 natsort==8.4.0
 ndindex==1.9.2
 networkx==3.4.2
@@ -82,7 +82,7 @@ pooch==1.8.2
 propcache==0.3.1
 psycopg==3.2.6
 py-cpuinfo==9.0.0
-pyarrow==19.0.1
+pyarrow==20.0.0
 pycparser==2.22
 pyct==0.5.0
 pydantic==2.11.3
@@ -108,7 +108,7 @@ scipy==1.15.2
 seaborn==0.13.2
 secure==1.0.1
 session-info==1.0.1
-setuptools==79.0.1
+setuptools==80.0.0
 shapely==2.1.0
 six==1.17.0
 slicerator==1.1.0

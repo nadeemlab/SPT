@@ -138,7 +138,7 @@ class GenericJobComputer(ABC):
             measurement_study_name = ComponentGetter.get_study_components(cursor, self.job.study).measurement
             data_analysis_study = ADIFeatureSpecificationUploader.get_data_analysis_study(measurement_study_name, cursor)
             criteria = PhenotypeCriteria(positive_markers=(), negative_markers=())
-        return CountsScheduler._get_feature_specification(self.job.study, data_analysis_study, criteria)
+        return CountsScheduler._get_feature_specification(self.job.study, data_analysis_study, criteria, ())
 
     def _get_cell_number(self) -> int | None:
         feature = self._get_cell_counts_feature()

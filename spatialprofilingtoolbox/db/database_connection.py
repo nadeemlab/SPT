@@ -25,7 +25,6 @@ from spatialprofilingtoolbox.db.credentials import get_credentials_from_environm
 from spatialprofilingtoolbox.db.credentials import retrieve_credentials_from_file
 from spatialprofilingtoolbox.db.credentials import main_database_name
 from spatialprofilingtoolbox.db.credentials import metaschema_schema
-from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)

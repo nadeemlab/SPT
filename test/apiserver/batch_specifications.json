@@ -1,0 +1,31 @@
+{
+    "specifications": [
+        {
+            "study": "Melanoma intralesional IL2",
+            "feature_class": "proximity",
+            "positive_marker": ["B2M"],
+            "negative_marker": [],
+            "positive_marker2": ["CD8"],
+            "negative_marker2": [],
+            "radius": 65.0
+        },
+        {
+            "study": "Melanoma intralesional IL2",
+            "feature_class": "proximity",
+            "positive_marker": ["CD4"],
+            "negative_marker": [],
+            "positive_marker2": ["CD20"],
+            "negative_marker2": [],
+            "radius": 65.0
+        },
+        {
+            "study": "Melanoma intralesional IL2",
+            "feature_class": "proximity",
+            "positive_marker": ["B7H3"],
+            "negative_marker": [],
+            "positive_marker2": [],
+            "negative_marker2": ["CD8"],
+            "radius": 65.0
+        }
+    ]
+}

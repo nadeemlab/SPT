@@ -365,7 +365,7 @@ build-docker-images: ${DOCKER_BUILD_SUBMODULE_TARGETS} ${DOCKER_BUILD_PLUGIN_TAR
 #   3. Copy relevant files to the build folder
 #   4. docker build the container
 #   5. Remove copied files
-${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials
+${DOCKER_BUILD_SUBMODULE_TARGETS}: pyproject.toml.unversioned ${DOCKERFILES} development-image check-docker-daemon-running check-for-docker-credentials
 >@submodule_directory=$$(echo $@ | sed 's/\/docker.built//g') ; \
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
@@ -375,7 +375,7 @@ ${DOCKER_BUILD_SUBMODULE_TARGETS}: ${DOCKERFILES} development-image check-docker
     dockerfile=$${submodule_directory}/Dockerfile ; \
     submodule_name=$$(echo $$submodule_directory | sed 's,${BUILD_LOCATION_ABSOLUTE}\/,,g') ; \
     repository_name=${REPO}-$$submodule_name ; \
-    cp pyproject.toml $$submodule_directory ; \
+    cp pyproject.toml.unversioned $$submodule_directory/pyproject.toml ; \
     cp ${DEPENDENCY_LISTS} $$submodule_directory ; \
     cp dist/${WHEEL} $$submodule_directory ; \
     cp $$submodule_directory/Dockerfile ./Dockerfile ; \

@@ -14,8 +14,8 @@ from fastapi import HTTPException
 import matplotlib.pyplot as plt  # type: ignore
 
 import jwt
-
 from secure import Secure
+from pydantic import BaseModel
 
 from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import finding_fields
@@ -59,7 +59,9 @@ from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fr
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 from spatialprofilingtoolbox.standalone_utilities.jwk_pem import pem_from_url
 from spatialprofilingtoolbox.standalone_utilities.timestamping import now
+from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
+logger = colorized_logger(__name__)
 
 VERSION = '1.0.3'
 
@@ -394,6 +396,47 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
             radius = 30.0
         return get_proximity_metrics(study, markers, radius=radius)
     return get_squidpy_metrics(study, list(markers), feature_class, radius=radius)
+
+
+class SpatialMetricsRequest(BaseModel):
+    study: ValidStudy
+    positive_marker: ValidChannelListPositives
+    negative_marker: ValidChannelListNegatives
+    positive_marker2: ValidChannelListPositives2
+    negative_marker2: ValidChannelListNegatives2
+    feature_class: ValidFeatureClass
+    radius: float | None = None
+
+
+class BatchSpatialMetricsRequest(BaseModel):
+    """
+    Specification for multiple spatial metrics computation requests.
+    """
+    specifications: list[SpatialMetricsRequest]
+
+
+@app.post("/batch-request-spatial-metrics-computation-custom-phenotypes/")
+async def batch_request_spatial_metrics_computation_custom_phenotypes(
+    batch: BatchSpatialMetricsRequest
+) -> list[UnivariateMetricsComputationResult]:
+    """
+    Spatial proximity statistics for a pair of custom-defined phenotypes (cell sets).
+    """
+    results = []
+    for i, specification in enumerate(batch.specifications):
+        s = specification
+        markers = (s.positive_marker, s.negative_marker, s.positive_marker2, s.negative_marker2)
+        if s.feature_class == 'proximity':
+            if s.radius is None:
+                radius = 30.0
+            else:
+                radius = s.radius
+            results.append(get_proximity_metrics(s.study, markers, radius=radius))
+        else:
+            results.append(get_squidpy_metrics(s.study, list(markers), s.feature_class, radius=s.radius))
+        if i % 50 == 0:
+            logger.debug(f'Completed {i+1}/{len(batch.specifications)} requests out of batch.')
+    return results
 
 
 @app.get("/available-gnn-metrics/")

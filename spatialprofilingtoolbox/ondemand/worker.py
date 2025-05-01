@@ -52,9 +52,12 @@ class OnDemandWorker:
             self._work_until_complete()
 
     def _wait_for_queue_activity_on_connection(self) -> None:
+        timeout = 3
         notifications = self.connection.notifies(timeout=3)
+        logger.debug(f'Waiting for queue activity for {timeout}s.')
         for _ in notifications:
             break
+        logger.debug
 
     def _work_until_complete(self) -> None:
         completed = True
@@ -96,7 +99,7 @@ class OnDemandWorker:
         return False
 
     def _one_job(self) -> tuple[bool, ComputationJobReference | None]:
-        job = MetricsJobQueuePopper.pop_uncomputed()
+        job = MetricsJobQueuePopper.pop_uncomputed(preference=list(self.cache.cache.keys()))
         if job is None:
             return (False, None)
         self._compute(job)

@@ -18,9 +18,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     WrapperPhenotype,
     UnivariateMetricsComputationResult,
 )
-from spatialprofilingtoolbox.ondemand.feature_computation_timeout import FeatureComputationTimeoutHandler
-from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
-from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult
 
@@ -135,26 +132,19 @@ class OnDemandRequester:
             return (counts, feature)
         connection.execute('LISTEN new_items_in_queue ;')
         connection.execute('LISTEN one_job_complete ;')
-        notifications = connection.notifies()
-        handler = FeatureComputationTimeoutHandler(feature, study_name)
-        generic_handler = create_timeout_handler(handler.handle, cls._get_feature_timeout())
-        try:
-            if not counts.is_pending:
-                logger.debug(f'Feature {feature} already complete.')
-                return (counts, feature)
-            logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
-            for notification in notifications:
-                _result = get_results()
-                if not _result[0].is_pending:
-                    logger.debug(f'Closing notification processing, {feature} ready.')
-                    notifications.close()
-                    return _result
-            logger.debug(f'Notification processing completed, giving up on feature {feature}')
-            cls._clear_queue_of_feature(study_name, int(feature))
-        except SPTTimeoutError:
-            pass
-        finally:
-            generic_handler.disalarm()
+        notifications = connection.notifies(timeout=cls._get_feature_timeout())
+        if not counts.is_pending:
+            logger.debug(f'Feature {feature} already complete.')
+            return (counts, feature)
+        logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
+        for notification in notifications:
+            _result = get_results()
+            if not _result[0].is_pending:
+                logger.debug(f'Closing notification processing, {feature} ready.')
+                notifications.close()
+                return _result
+        logger.debug(f'Notification processing completed, giving up on feature {feature}')
+        cls._clear_queue_of_feature(study_name, int(feature))
 
     @classmethod
     def _get_feature_timeout(cls) -> int:

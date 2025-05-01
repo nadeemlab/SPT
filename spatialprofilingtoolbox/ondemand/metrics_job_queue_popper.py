@@ -1,6 +1,7 @@
 """Queue of metrics to be computed as jobs."""
 
 from spatialprofilingtoolbox.ondemand.queue_query import select_active_jobs_query
+from spatialprofilingtoolbox.ondemand.queue_query import select_active_jobs_query_with_constraint
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -10,25 +11,19 @@ logger = colorized_logger(__name__)
 
 class MetricsJobQueuePopper:
     @classmethod
-    def pop_uncomputed(cls) -> ComputationJobReference | None:
+    def pop_uncomputed(cls, preference: tuple[tuple[str, str]] | None=None) -> ComputationJobReference | None:
         studies = cls._get_studies()
         number_studies = len(studies)
         studies_empty: set[str] = set([])
         while len(studies_empty) < number_studies:
             for study in set(studies).difference(studies_empty):
-                query = '''
-                DELETE FROM
-                quantitative_feature_value_queue q1
-                USING (
-                    %s
-                    LIMIT 1
-                ) q
-                WHERE q1.feature=q.feature AND q1.subject=q.subject
-                RETURNING q1.feature, q1.subject, q1.computation_start, q1.retries ;
-                ''' % select_active_jobs_query()
                 with DBCursor(database_config_file=None, study=study) as cursor:
-                    cursor.execute(query)
-                    rows = tuple(cursor.fetchall())
+                    if preference != None and len(preference) > 0:
+                        rows = cls._pop_uncomputed_with_constraint(study, preference, cursor)
+                        if len(rows) == 0:
+                            rows = cls._pop_uncomputed_without_constraint(cursor)
+                    else:
+                        rows = cls._pop_uncomputed_without_constraint(cursor)
                     if len(rows) == 1:
                         row = rows[0]
                         feature = int(row[0])
@@ -52,7 +47,38 @@ class MetricsJobQueuePopper:
                         return ComputationJobReference(feature, study, sample)
                     studies_empty.add(study)
                     continue
+        logger.debug(f'In pass over queue, no job items could be popped.')
         return None
+
+    @classmethod
+    def _base_queue_pop_query(cls) -> str:
+        return '''
+        DELETE FROM
+        quantitative_feature_value_queue q1
+        USING (
+            %s
+            LIMIT 1
+        ) q
+        WHERE q1.feature=q.feature AND q1.subject=q.subject
+        RETURNING q1.feature, q1.subject, q1.computation_start, q1.retries ;
+        '''
+
+    @classmethod
+    def _pop_uncomputed_without_constraint(cls, cursor) -> tuple:
+        query = cls._base_queue_pop_query() % select_active_jobs_query()
+        cursor.execute(query)
+        rows = tuple(cursor.fetchall())
+        return rows
+
+    @classmethod
+    def _pop_uncomputed_with_constraint(cls, study: str, constraint: list[tuple[str, str]], cursor) -> tuple:
+        samples = tuple(map(lambda pair: pair[1], filter(lambda pair: pair[0] == study, constraint)))
+        if len(samples) == 0:
+            return cls._pop_uncomputed_without_constraint(cursor)
+        query = cls._base_queue_pop_query() % select_active_jobs_query_with_constraint(samples)
+        cursor.execute(query)
+        rows = tuple(cursor.fetchall())
+        return rows
 
     @classmethod
     def _get_studies(cls) -> tuple[str, ...]:

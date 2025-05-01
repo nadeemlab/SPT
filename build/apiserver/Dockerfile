@@ -1,16 +1,22 @@
 FROM python:3.13-slim
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt install -y gcc libpq-dev curl && apt-get clean
-RUN python3.13 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
+
+RUN mkdir -p /tmp/pip-cache
+ENV PIP_CACHE_DIR=/tmp/pip-cache
+
+RUN python3.13 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY pyproject.toml .
-RUN bash -c 'source /opt/venv/bin/activate && uv pip install --extra apiserver -r pyproject.toml'
+RUN --mount=type=cache,target=${PIP_CACHE_DIR} bash -c 'source /opt/venv/bin/activate && uv pip install --extra apiserver -r pyproject.toml'
 COPY requirements.txt /opt/venv/lib/python3.13/site-packages/spatialprofilingtoolbox/apiserver/app/
 COPY requirements.apiserver.txt .
-RUN bash -c 'source /opt/venv/bin/activate && uv pip install -r requirements.apiserver.txt'
+RUN --mount=type=cache,target=${PIP_CACHE_DIR} bash -c 'source /opt/venv/bin/activate && uv pip install -r requirements.apiserver.txt'
 ARG version
 ARG service_name
 ARG WHEEL_FILENAME

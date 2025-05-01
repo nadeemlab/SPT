@@ -13,6 +13,7 @@ from spatialprofilingtoolbox.ondemand.computers.generic_job_computer import Gene
 from spatialprofilingtoolbox.ondemand.computers.counts_computer import CountsComputer
 from spatialprofilingtoolbox.ondemand.computers.proximity_computer import ProximityComputer
 from spatialprofilingtoolbox.ondemand.computers.squidpy_computer import SquidpyComputer
+from spatialprofilingtoolbox.ondemand.cell_data_cache import CellDataCache
 
 from spatialprofilingtoolbox.db.describe_features import get_handle
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
@@ -30,9 +31,11 @@ class OnDemandWorker:
     connection: PsycopgConnection
     work_start_time_seconds: float | None
     DEFAULT_JOB_COMPUTATION_TIMEOUT_SECONDS: int = 150
+    cache: CellDataCache
 
     def __init__(self):
         self.work_start_time_seconds = None
+        self.cache = CellDataCache()
 
     def start(self) -> None:
         with DBConnection() as connection:
@@ -144,7 +147,7 @@ class OnDemandWorker:
             'population fractions': CountsComputer,
             'proximity': ProximityComputer,
         }
-        return providers[get_handle(derivation_method)](job)  # type: ignore
+        return providers[get_handle(derivation_method)](job, self.cache)  # type: ignore
 
     def _retrieve_derivation_method(self, job: Job) -> str:
         with DBCursor(study=job.study) as cursor:

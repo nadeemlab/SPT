@@ -19,6 +19,7 @@ from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.ondemand.providers.study_component_extraction import ComponentGetter
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.ondemand.cell_data_cache import CellDataCache
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -27,8 +28,9 @@ logger = colorized_logger(__name__)
 class GenericJobComputer(ABC):
     job: ComputationJobReference
 
-    def __init__(self, job: ComputationJobReference):
+    def __init__(self, job: ComputationJobReference, cache: CellDataCache):
         self.job = job
+        self.cache = cache
 
     @abstractmethod
     def compute(self) -> None:
@@ -38,10 +40,15 @@ class GenericJobComputer(ABC):
         study = self.job.study
         sample = self.job.sample
         cell_identifiers = self._get_cells_selected()
-        with DBCursor(study=study) as cursor:
-            access = CellsAccess(cursor)
-            raw, _ = access.get_cells_data(sample, cell_identifiers=cell_identifiers)
-            feature_names = access.get_ordered_feature_names()
+        if len(cell_identifiers) == 0 and self.cache.has(study, sample):
+            raw, feature_names = self.cache.retrieve(study, sample)
+        else:
+            with DBCursor(study=study) as cursor:
+                access = CellsAccess(cursor)
+                raw, _ = access.get_cells_data(sample, cell_identifiers=cell_identifiers)
+                feature_names = access.get_ordered_feature_names()
+            if len(cell_identifiers) == 0:
+                self.cache.consider_insertion(study, sample, (raw, feature_names))
         number_cells = int.from_bytes(raw[0:4])
         if number_cells == 0:
             return CellDataArrays(None, None, feature_names, None)  # type: ignore

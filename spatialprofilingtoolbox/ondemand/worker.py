@@ -53,8 +53,7 @@ class OnDemandWorker:
 
     def _wait_for_queue_activity_on_connection(self) -> None:
         timeout = 3
-        notifications = self.connection.notifies(timeout=3)
-        logger.debug(f'Waiting for queue activity for {timeout}s.')
+        notifications = self.connection.notifies(timeout=timeout)
         for _ in notifications:
             break
         logger.debug

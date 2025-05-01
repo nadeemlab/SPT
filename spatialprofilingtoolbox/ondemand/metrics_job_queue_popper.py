@@ -47,7 +47,6 @@ class MetricsJobQueuePopper:
                         return ComputationJobReference(feature, study, sample)
                     studies_empty.add(study)
                     continue
-        logger.debug(f'In pass over queue, no job items could be popped.')
         return None
 
     @classmethod

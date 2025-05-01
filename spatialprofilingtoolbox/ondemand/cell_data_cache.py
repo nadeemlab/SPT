@@ -31,6 +31,8 @@ class CellDataCache:
     """
     keys: PriorityQueue[tuple[float, tuple[str, str]]]
     cache: dict[tuple[str, str], tuple[bytes, BitMaskFeatureNames]]
+    byte_sizes: dict[tuple[str, str], int]
+    mb_limit: int
 
     def __init__(self):
         v = 'DATABASE_DOWNLOAD_CACHE_SAMPLE_LIMIT'
@@ -38,9 +40,17 @@ class CellDataCache:
             limit = int(os_environ[v])
         else:
             limit = 1000
-            logger.warning(f"Set {v} (to limit the RAM usage of the ondemand service's cache), using default: {limit}")
+            logger.warning(f"Set {v} (to limit the RAM usage of the ondemand service's cache via limiting the number of cached items), using default: {limit}")
         self.keys = PriorityQueue(maxsize=limit)
         self.cache = {}
+        self.byte_sizes = {}
+        v = 'DATABASE_DOWNLOAD_CACHE_LIMIT_MB'
+        if v in os_environ:
+            mb_limit = int(os_environ[v])
+        else:
+            mb_limit = 500
+            logger.warning(f"Set {v} (to limit the RAM usage of the ondemand service's cache), using default: {mb_limit}")
+        self.mb_limit = mb_limit
 
     def has(self, study: str, sample: str) -> bool:
         return (study, sample) in self.cache
@@ -51,18 +61,33 @@ class CellDataCache:
     def consider_insertion(self, study: str, sample: str, value: tuple[bytes, BitMaskFeatureNames]) -> bool:
         if self.has(study, sample):
             return
-        self._insert(study, sample, value, self._determine_priority(len(value[0])))
+        byte_size = len(value[0])
+        self.byte_sizes[(study, sample)] = byte_size
+        self._insert(study, sample, value, self._determine_priority(byte_size))
 
     def _insert(self, study: str, sample: str, value: tuple[bytes, BitMaskFeatureNames], priority: CellDataPriority) -> bool:
-        if self.has(study, sample):
-            return
+        self._enforce_mb_limit()
         if self.keys.full():
             self._pop_one_item()
         self._insert_item(study, sample, value, priority)
 
+    def _enforce_mb_limit(self) -> None:
+        total = self._total_mb_estimate()
+        count = 0
+        while self._total_mb_estimate() > self.mb_limit and not self.keys.empty():
+            self._pop_one_item()
+            count += 1
+        new_total = self._total_mb_estimate()
+        if new_total != total:
+            logger.info(f'Enforced cache limit {self.mb_limit}MB: From {total}MB down to {new_total}MB by evicting {count} items.')
+
+    def _total_mb_estimate(self):
+        return int(sum(self.byte_sizes.values()) / 1000000)
+
     def _pop_one_item(self) -> None:
         priority, (study, sample) = self.keys.get()
         del self.cache[(study, sample)]
+        del self.byte_sizes[(study, sample)]
 
     def _insert_item(self, study: str, sample: str, value: tuple[bytes, BitMaskFeatureNames], priority: CellDataPriority) -> None:
         self.keys.put((priority, (study, sample)))

@@ -23,6 +23,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCre
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import Finding
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
@@ -280,7 +281,11 @@ def _get_anonymous_phenotype_counts_fast(
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
 ) -> PhenotypeCounts:
-    counts = _get_phenotype_counts(positive_marker, negative_marker, study)
+    connection = DBConnection()
+    connection.__enter__()
+    connection.get_connection()._set_autocommit(True)
+    counts = _get_phenotype_counts(connection, positive_marker, negative_marker, study)
+    connection.__exit__(None, None, None)
     return counts
 
 
@@ -296,7 +301,10 @@ async def get_phenotype_counts(
     "pending" flag in the response indicates which scenario is the case. If pending, poll this
     endpoint until all values are available.
     """
-    counts = _get_phenotype_counts(positive_marker, negative_marker, study, blocking=False)
+    connection = DBConnection()
+    connection.__enter__()
+    counts = _get_phenotype_counts(connection, positive_marker, negative_marker, study, blocking=False)
+    connection.__exit__(None, None, None)
     return counts
 
 
@@ -310,7 +318,7 @@ def _validate_all_channels(criteria_specs: CriteriaSpecs) -> None:
             lambda s: s.criteria.negative_markers,
             filter(lambda s: s.study==study, criteria_specs.specifications)
         ))))
-        validated, unrecognized = _validate_channels(all_channels, study)
+        validated, unrecognized = _validate_channels(tuple(all_channels), study)
         if not validated:
             raise UnrecognizedChannelError(unrecognized, study)
 
@@ -322,12 +330,15 @@ def _get_phenotype_counts_batch_cached(criteria_specs: CriteriaSpecs) -> list[Ph
         _validate_all_channels(criteria_specs)
     except UnrecognizedChannelError as e:
         raise HTTPException(status_code=404, detail=e._custommessage)
+    connection = DBConnection()
+    connection.__enter__()
     for specification in criteria_specs.specifications:
         study = specification.study
-        positive_markers = specification.criteria.positive_markers
-        negative_markers = specification.criteria.negative_markers
-        counts = _get_phenotype_counts(positive_markers, negative_markers, study, blocking=False, validate_channels=False)
+        positive_markers = list(specification.criteria.positive_markers)
+        negative_markers = list(specification.criteria.negative_markers)
+        counts = _get_phenotype_counts(connection, positive_markers, negative_markers, study, blocking=False, validate_channels=False)
         results.append(counts)
+    connection.__exit__(None, None, None)
     return results
 
 
@@ -355,7 +366,11 @@ async def request_spatial_metrics_computation(
     for criterion in criteria:
         markers.append(list(criterion.positive_markers))
         markers.append(list(criterion.negative_markers))
-    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
+    connection = DBConnection()
+    connection.__enter__()
+    metrics = get_squidpy_metrics(connection, study, markers, feature_class, radius=radius)
+    connection.__exit__(None, None, None)
+    return metrics
 
 
 @app.get("/request-spatial-metrics-computation-custom-phenotype/")
@@ -375,8 +390,11 @@ async def request_spatial_metrics_computation_custom_phenotype(
     multiple times, once for each item in the list of positive or negative markers respectively.
     """
     markers = [positive_marker, negative_marker]
-    return get_squidpy_metrics(study, markers, feature_class, radius=radius)
-
+    connection = DBConnection()
+    connection.__enter__()
+    metrics = get_squidpy_metrics(connection, study, markers, feature_class, radius=radius)
+    connection.__exit__(None, None, None)
+    return metrics
 
 @app.get("/request-spatial-metrics-computation-custom-phenotypes/")
 async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disable=too-many-arguments
@@ -391,12 +409,15 @@ async def request_spatial_metrics_computation_custom_phenotypes(  # pylint: disa
     """Spatial proximity statistics for a pair of custom-defined phenotypes (cell sets).
     """
     markers = (positive_marker, negative_marker, positive_marker2, negative_marker2)
+    connection = DBConnection()
+    connection.__enter__()
     if feature_class == 'proximity':
         if radius is None:
             radius = 30.0
-        return get_proximity_metrics(study, markers, radius=radius)
-    return get_squidpy_metrics(study, list(markers), feature_class, radius=radius)
-
+        metrics = get_proximity_metrics(connection, study, markers, radius=radius)
+    metrics =  get_squidpy_metrics(connection, study, list(markers), feature_class, radius=radius)
+    connection.__exit__(None, None, None)
+    return metrics
 
 class SpatialMetricsRequest(BaseModel):
     study: ValidStudy
@@ -423,6 +444,8 @@ async def batch_request_spatial_metrics_computation_custom_phenotypes(
     Spatial proximity statistics for a pair of custom-defined phenotypes (cell sets).
     """
     results = []
+    connection = DBConnection()
+    connection.__enter__()
     for i, specification in enumerate(batch.specifications):
         s = specification
         markers = (s.positive_marker, s.negative_marker, s.positive_marker2, s.negative_marker2)
@@ -431,11 +454,12 @@ async def batch_request_spatial_metrics_computation_custom_phenotypes(
                 radius = 30.0
             else:
                 radius = s.radius
-            results.append(get_proximity_metrics(s.study, markers, radius=radius))
+            results.append(get_proximity_metrics(connection, s.study, markers, radius=radius))
         else:
-            results.append(get_squidpy_metrics(s.study, list(markers), s.feature_class, radius=s.radius))
+            results.append(get_squidpy_metrics(connection, s.study, list(markers), s.feature_class, radius=s.radius))
         if i % 50 == 0:
             logger.debug(f'Completed {i+1}/{len(batch.specifications)} requests out of batch.')
+    connection.__exit__(None, None, None)
     return results
 
 
@@ -488,16 +512,20 @@ def _get_importance_composition(
         cohort_stratifier,
         cell_limit,
     )
-    return _get_phenotype_counts(
+    connection = DBConnection()
+    connection.__enter__()
+    counts = _get_phenotype_counts(
+        connection,
         positive_marker,
         negative_marker,
         study,
         cells_selected,
     )
+    connection.__exit__(None, None, None)
+    return counts
 
-
-# @simple_function_cache(maxsize=2000, log=True)
 def _get_phenotype_counts_cached(
+    connection: DBConnection,
     positives: tuple[str, ...],
     negatives: tuple[str, ...],
     study: str,
@@ -505,6 +533,7 @@ def _get_phenotype_counts_cached(
     blocking: bool,
 ) -> PhenotypeCounts:
     counts = OnDemandRequester.get_counts_by_specimen(
+        connection,
         positives,
         negatives,
         study,
@@ -523,15 +552,16 @@ class UnrecognizedChannelError(ValueError):
 
 
 def _validate_channels(channel_names: tuple[str, ...], study: str) -> tuple[bool, list[str]]:
-    symbols = cast(tuple[PhenotypeSymbol, ...], query().get_phenotype_symbols(study))
-    names = tuple(map(lambda s: s.identifier, symbols))
-    unrecognized = set(channel_names).difference(set(names))
+    symbols = cast(tuple[Channel, ...], query().get_channel_names(study))
+    names = tuple(map(lambda s: s.symbol, symbols))
+    unrecognized = set(list(channel_names)).difference(set(names))
     if len(unrecognized) > 0:
-        [False, list(unrecognized)]
-    return [True, []]
+        return (False, list(unrecognized))
+    return (True, [])
 
 
 def _get_phenotype_counts(
+    connection: DBConnection,
     positive_marker: ValidChannelListPositives,
     negative_marker: ValidChannelListNegatives,
     study: ValidStudy,
@@ -543,10 +573,11 @@ def _get_phenotype_counts(
     positive_markers = [m for m in positive_marker if m != '']
     negative_markers = [m for m in negative_marker if m != '']
     if validate_channels:
-        validated, unrecognized = _validate_channels(positive_markers + negative_markers, study)
+        validated, unrecognized = _validate_channels(tuple(positive_markers + negative_markers), study)
         if not validated:
             raise UnrecognizedChannelError(unrecognized, study)
     counts = _get_phenotype_counts_cached(
+        connection,
         tuple(positive_markers),
         tuple(negative_markers),
         study,
@@ -557,11 +588,13 @@ def _get_phenotype_counts(
 
 
 def get_proximity_metrics(
+    connection: DBConnection,
     study: str,
     markers: tuple[list[str], list[str], list[str], list[str]],
     radius: float,
 ) -> UnivariateMetricsComputationResult:
     return OnDemandRequester.get_proximity_metrics(
+        connection,
         study,
         radius,
         markers,
@@ -569,12 +602,14 @@ def get_proximity_metrics(
 
 
 def get_squidpy_metrics(
+    connection: DBConnection,
     study: str,
     markers: list[list[str]],
     feature_class: str,
     radius: float | None = None,
 ) -> UnivariateMetricsComputationResult:
     return OnDemandRequester.get_squidpy_metrics(
+        connection,
         study,
         markers,
         feature_class,
@@ -786,7 +821,7 @@ async def create_finding(finding: FindingCreate) -> Finding:
             'INSERT INTO finding VALUES (DEFAULT,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);',
             new_finding,
         )
-    return Finding(id=-1, **{key: new_finding[i] for i, key in enumerate(finding_fields)})
+    return Finding(id=-1, **{key: new_finding[i] for i, key in enumerate(finding_fields)})  # type: ignore
 
 
 @app.get("/findings/")

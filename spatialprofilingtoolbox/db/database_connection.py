@@ -82,7 +82,8 @@ class DBConnection(ConnectionProvider):
                 self.schema = metaschema_schema()
             else:
                 self.schema = self._retrieve_study_schema(credentials, study)
-            credentials.update_schema(self.schema)
+            if self.schema is not None:
+                credentials.update_schema(self.schema)
             super().__init__(self.make_connection(credentials))
         except PsycopgError as exception:
             message = 'Failed to connect to database: %s, %s'
@@ -91,7 +92,7 @@ class DBConnection(ConnectionProvider):
             raise exception
         self.autocommit = autocommit
 
-    def _retrieve_study_schema(self, credentials: DBCredentials, study: str) -> str:
+    def _retrieve_study_schema(self, credentials: DBCredentials, study: str) -> str | None:
         with connect(
             dbname=credentials.database,
             host=credentials.endpoint,
@@ -99,11 +100,19 @@ class DBConnection(ConnectionProvider):
             password=credentials.password,
         ) as connection:
             cursor = connection.cursor()
-            cursor.execute(f'SELECT schema_name FROM {metaschema_schema()}.study_lookup WHERE study=%s ;', (study,))
-            rows = cursor.fetchall()
-            if len(rows) == 0:
-                raise DatabaseNotFoundError(study)
-            return str(rows[0][0])
+            schema = self.retrieve_study_schema(study, cursor)
+            cursor.close()
+            return schema
+
+    @staticmethod
+    def retrieve_study_schema(study: str | None, cursor: PsycopgCursor) -> str | None:
+        if study is None:
+            return metaschema_schema()
+        cursor.execute(f'SELECT schema_name FROM {metaschema_schema()}.study_lookup WHERE study=%s ;', (study,))
+        rows = tuple(cursor.fetchall())
+        if len(rows) == 0:
+            raise DatabaseNotFoundError(study)
+        return str(rows[0][0])
 
     @staticmethod
     def make_connection(credentials: DBCredentials) -> PsycopgConnection:
@@ -147,9 +156,15 @@ class DBConnection(ConnectionProvider):
 class DBCursor(DBConnection):
     """Context manager for shortcutting right to provision of a cursor."""
     cursor: PsycopgCursor
+    existing_connection: DBConnection | None
+    study: str
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, connection: DBConnection | None=None, **kwargs):
+        self.existing_connection = connection
+        if self.existing_connection is None:
+            super().__init__(**kwargs)
+        else:
+            self.study = kwargs['study']
 
     def get_cursor(self) -> PsycopgCursor:
         return self.cursor
@@ -157,18 +172,35 @@ class DBCursor(DBConnection):
     def set_cursor(self, cursor: PsycopgCursor) -> None:
         self.cursor = cursor
 
+    def _get_connection_object(self) -> DBConnection:
+        if self.existing_connection is not None:
+            return self.existing_connection
+        return self
+
+    def _get_connection(self) -> PsycopgConnection:
+        return self._get_connection_object().get_connection()
+
+    def _is_connected(self) -> bool:
+        return self._get_connection_object().is_connected()
+
+    def _wrap_up_connection(self) -> None:
+        self._get_connection_object().wrap_up_connection()
+
     def __enter__(self):
-        self.set_cursor(self.get_connection().cursor())
-        if not self.schema:
-            logger.warning('DBConnection.schema field is empty.')
+        self.set_cursor(self._get_connection().cursor())
+        if self.existing_connection is None:
+            schema = self.schema
         else:
-            self.cursor.execute(f'SET search_path TO {self.schema} ;')
+            schema = DBConnection.retrieve_study_schema(self.study, self.get_cursor())
+        if schema is not None:
+            self.cursor.execute(f'SET search_path TO {schema} ;')
         return self.get_cursor()
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if self.is_connected():
+        if self._is_connected():
             self.get_cursor().close()
-        self.wrap_up_connection()
+        if self.existing_connection is None:
+            self._wrap_up_connection()
 
 
 def ensure_main_database_created(database_config_file: str | None) -> None:

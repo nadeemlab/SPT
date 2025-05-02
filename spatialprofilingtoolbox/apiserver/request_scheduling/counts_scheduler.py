@@ -2,6 +2,7 @@
 from typing import cast
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.relevant_specimens import retrieve_cells_selected
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
@@ -16,6 +17,7 @@ class CountsScheduler(GenericComputationScheduler):
     @classmethod
     def get_or_create_feature_specification(
         cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         phenotype: PhenotypeCriteria | None = None,
@@ -31,9 +33,9 @@ class CountsScheduler(GenericComputationScheduler):
             phenotype,
             cells_selected,
         )
-        specification = cls._get_feature_specification(study, *specifiers_arguments)
+        specification = cls._get_feature_specification(connection, study, *specifiers_arguments)
         if specification is not None:
-            _cells_selected = retrieve_cells_selected(study, specification)
+            _cells_selected = retrieve_cells_selected(connection, study, specification)
             if set(cells_selected) == set(_cells_selected):
                 return (specification, False)
         short = str(cells_selected[0:min(len(cells_selected), 5)]) + ' ...'
@@ -44,15 +46,15 @@ class CountsScheduler(GenericComputationScheduler):
             data_analysis_study,
             phenotype_to_phenotype_str(phenotype),
         )
-        specification = cls._create_feature_specification(study, *specifiers_arguments_str, appendix=str(cells_selected))
-        cls._append_cell_set(study, specification, cells_selected)
+        specification = cls._create_feature_specification(connection, study, *specifiers_arguments_str, appendix=str(cells_selected))
+        cls._append_cell_set(connection, study, specification, cells_selected) # Check that this does not need to be rolled into the transaction in the above line
         return (specification, True)
 
     @classmethod
     def _append_cell_set(
-        cls, study: str, specification: str, cells_selected: tuple[int, ...],
+        cls, connection: DBConnection, study: str, specification: str, cells_selected: tuple[int, ...],
     ) -> None:
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=connection, study=study) as cursor:
             copy_command = 'COPY cell_set_cache (feature, histological_structure) FROM STDIN'
             with cursor.copy(copy_command) as copy:
                 for cell in cells_selected:
@@ -60,9 +62,9 @@ class CountsScheduler(GenericComputationScheduler):
 
     @classmethod
     def _check_cell_set(
-        cls, study: str, feature: str, _cells_selected: tuple[int, ...],
+        cls, connection: DBConnection, study: str, feature: str, _cells_selected: tuple[int, ...],
     ) -> bool:
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=connection, study=study) as cursor:
             query = '''
             SELECT histological_structure
             FROM cell_set_cache
@@ -79,6 +81,7 @@ class CountsScheduler(GenericComputationScheduler):
 
     @classmethod
     def _get_feature_specification(cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         phenotype: PhenotypeCriteria,
@@ -91,7 +94,7 @@ class CountsScheduler(GenericComputationScheduler):
             phenotype_to_phenotype_str(phenotype),
             feature_description,
         )
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=connection, study=study) as cursor:
             cursor.execute('''
             SELECT
                 fsn.identifier,
@@ -114,7 +117,7 @@ class CountsScheduler(GenericComputationScheduler):
             if len(specifiers) == 1:
                 matches_list.append(key)
         matches = tuple(filter(
-            lambda feature: cls._check_cell_set(study, feature, cells_selected),
+            lambda feature: cls._check_cell_set(connection, study, feature, cells_selected),
             matches_list,
         ))
         if len(matches) == 0:
@@ -127,6 +130,7 @@ class CountsScheduler(GenericComputationScheduler):
 
     @classmethod
     def _create_feature_specification(cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         phenotype: str,
@@ -134,4 +138,4 @@ class CountsScheduler(GenericComputationScheduler):
     ) -> str:
         specifiers = (phenotype,)
         method = get_feature_description('population fractions')
-        return cls.create_feature_specification(study, specifiers, data_analysis_study, method, appendix=appendix)
+        return cls.create_feature_specification(connection, study, specifiers, data_analysis_study, method, appendix=appendix)

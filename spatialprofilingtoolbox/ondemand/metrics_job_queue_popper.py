@@ -3,7 +3,9 @@
 from spatialprofilingtoolbox.ondemand.queue_query import select_active_jobs_query
 from spatialprofilingtoolbox.ondemand.queue_query import select_active_jobs_query_with_constraint
 from spatialprofilingtoolbox.ondemand.job_reference import ComputationJobReference
+from psycopg import Cursor as PsycopgCursor
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -11,13 +13,17 @@ logger = colorized_logger(__name__)
 
 class MetricsJobQueuePopper:
     @classmethod
-    def pop_uncomputed(cls, preference: tuple[tuple[str, str]] | None=None) -> ComputationJobReference | None:
-        studies = cls._get_studies()
+    def pop_uncomputed(
+        cls,
+        preference: tuple[tuple[str, str], ...] | None=None,
+        connection: DBConnection | None=None,
+    ) -> ComputationJobReference | None:
+        studies = cls._get_studies(connection=connection)
         number_studies = len(studies)
         studies_empty: set[str] = set([])
         while len(studies_empty) < number_studies:
             for study in set(studies).difference(studies_empty):
-                with DBCursor(database_config_file=None, study=study) as cursor:
+                with DBCursor(connection=connection, study=study) as cursor:
                     if preference != None and len(preference) > 0:
                         rows = cls._pop_uncomputed_with_constraint(study, preference, cursor)
                         if len(rows) == 0:
@@ -63,14 +69,14 @@ class MetricsJobQueuePopper:
         '''
 
     @classmethod
-    def _pop_uncomputed_without_constraint(cls, cursor) -> tuple:
+    def _pop_uncomputed_without_constraint(cls, cursor: PsycopgCursor) -> tuple:
         query = cls._base_queue_pop_query() % select_active_jobs_query()
         cursor.execute(query)
         rows = tuple(cursor.fetchall())
         return rows
 
     @classmethod
-    def _pop_uncomputed_with_constraint(cls, study: str, constraint: list[tuple[str, str]], cursor) -> tuple:
+    def _pop_uncomputed_with_constraint(cls, study: str, constraint: tuple[tuple[str, str], ...], cursor) -> tuple:
         samples = tuple(map(lambda pair: pair[1], filter(lambda pair: pair[0] == study, constraint)))
         if len(samples) == 0:
             return cls._pop_uncomputed_without_constraint(cursor)
@@ -80,7 +86,7 @@ class MetricsJobQueuePopper:
         return rows
 
     @classmethod
-    def _get_studies(cls) -> tuple[str, ...]:
-        with DBCursor(database_config_file=None) as cursor:
+    def _get_studies(cls, connection: DBConnection | None=None) -> tuple[str, ...]:
+        with DBCursor(connection=connection, study=None) as cursor:
             cursor.execute('SELECT study FROM study_lookup ;')
             return tuple(map(lambda row: row[0], cursor.fetchall()))

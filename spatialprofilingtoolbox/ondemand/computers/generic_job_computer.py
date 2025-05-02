@@ -19,6 +19,7 @@ from spatialprofilingtoolbox.workflow.common.export_features import \
     ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.ondemand.providers.study_component_extraction import ComponentGetter
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.ondemand.cell_data_cache import CellDataCache
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
@@ -27,10 +28,12 @@ logger = colorized_logger(__name__)
 
 class GenericJobComputer(ABC):
     job: ComputationJobReference
+    connection: DBConnection
 
-    def __init__(self, job: ComputationJobReference, cache: CellDataCache):
+    def __init__(self, job: ComputationJobReference, cache: CellDataCache, connection: DBConnection):
         self.job = job
         self.cache = cache
+        self.connection = connection
 
     @abstractmethod
     def compute(self) -> None:
@@ -43,7 +46,7 @@ class GenericJobComputer(ABC):
         if len(cell_identifiers) == 0 and self.cache.has(study, sample):
             raw, feature_names = self.cache.retrieve(study, sample)
         else:
-            with DBCursor(study=study) as cursor:
+            with DBCursor(connection=self.connection, study=study) as cursor:
                 access = CellsAccess(cursor)
                 raw, _ = access.get_cells_data(sample, cell_identifiers=cell_identifiers)
                 feature_names = access.get_ordered_feature_names()
@@ -61,7 +64,7 @@ class GenericJobComputer(ABC):
         return CellDataArrays(location, phenotype, feature_names, identifiers)
 
     def _get_cells_selected(self) -> tuple[int, ...]:
-        with DBCursor(study=self.job.study) as cursor:
+        with DBCursor(connection=self.connection, study=self.job.study) as cursor:
             query = 'SELECT histological_structure FROM cell_set_cache WHERE feature=%s ;'
             cursor.execute(query, (str(self.job.feature_specification),))
             return tuple(map(lambda row: int(row[0]), cursor.fetchall()))
@@ -102,14 +105,14 @@ class GenericJobComputer(ABC):
         study = self.job.study
         specification = str(self.job.feature_specification)
         sample = self.job.sample
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=self.connection, study=study) as cursor:
             try:
                 add_feature_value(specification, sample, str(value), cursor)
             except UniqueViolation:
                 logger.warning(f'({specification}, {sample}) value already exists, can\'t insert {value}')
 
     def _pop_off_queue(self) -> None:
-        with DBCursor(study=self.job.study) as cursor:
+        with DBCursor(connection=self.connection, study=self.job.study) as cursor:
             query = 'DELETE FROM quantitative_feature_value_queue WHERE feature=%s and subject=%s;'
             cursor.execute(query, (int(self.job.feature_specification), self.job.sample))
 
@@ -117,7 +120,7 @@ class GenericJobComputer(ABC):
         study = self.job.study
         specification = str(self.job.feature_specification)
         sample = self.job.sample
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=self.connection, study=study) as cursor:
             try:
                 add_feature_value(specification, sample, None, cursor)
             except UniqueViolation:
@@ -140,24 +143,24 @@ class GenericJobComputer(ABC):
             return True
         return False
 
-    def _get_cell_counts_feature(self) -> str:
-        with DBCursor(study=self.job.study) as cursor:
+    def _get_cell_counts_feature(self) -> str | None:
+        with DBCursor(connection=self.connection, study=self.job.study) as cursor:
             measurement_study_name = ComponentGetter.get_study_components(cursor, self.job.study).measurement
             data_analysis_study = ADIFeatureSpecificationUploader.get_data_analysis_study(measurement_study_name, cursor)
             criteria = PhenotypeCriteria(positive_markers=(), negative_markers=())
-        return CountsScheduler._get_feature_specification(self.job.study, data_analysis_study, criteria, ())
+        return CountsScheduler._get_feature_specification(self.connection, self.job.study, data_analysis_study, criteria, ())
 
     def _get_cell_number(self) -> int | None:
         feature = self._get_cell_counts_feature()
         if feature is None:
             return None
-        count = GenericComputationScheduler._query_for_computed_feature_values(self.job.study, feature).values[self.job.sample]
-        return count
+        count = GenericComputationScheduler._query_for_computed_feature_values(self.connection, self.job.study, feature).values[self.job.sample]
+        return int(count) if count is not None else None
 
     @staticmethod
-    def retrieve_specifiers(study: str, feature_specification: str) -> tuple[str, list[str]]:
+    def retrieve_specifiers(connection: DBConnection, study: str, feature_specification: str) -> tuple[str, list[str]]:
         """Get specifiers for this feature specification."""
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=connection, study=study) as cursor:
             cursor.execute('''
                 SELECT fs.specifier, fs.ordinality
                 FROM feature_specifier fs
@@ -177,5 +180,5 @@ class GenericJobComputer(ABC):
                 ''',
                 (feature_specification,),
             )
-            study = cursor.fetchall()[0][0]
+            study = tuple(cursor.fetchall())[0][0]
         return study, specifiers

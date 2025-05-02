@@ -12,9 +12,10 @@ logger = colorized_logger(__name__)
 
 class MetricsJobQueuePusher:
     @classmethod
-    def schedule_feature_computation(cls, study: str, feature_specification: int) -> None:
-        with DBCursor(database_config_file=None, study=study) as cursor:
+    def schedule_feature_computation(cls, connection: DBConnection, study: str, feature_specification: int) -> None:
+        with DBCursor(connection=connection, database_config_file=None, study=study) as cursor:
             cls._insert_jobs(cursor, feature_specification)
+        connection.get_connection().commit()
         minute = 60
         hour = 60 * minute
         NORMAL_FEATURE_COMPUTATION_TIMEOUT = 1 * hour
@@ -24,7 +25,7 @@ class MetricsJobQueuePusher:
     @classmethod
     def _broadcast_queue_activity(cls) -> None:
         logger.debug('Notifying queue activity channel that there are new items.')
-        with DBConnection(database_config_file=None) as connection:
+        with DBConnection() as connection:
             connection.execute('NOTIFY new_items_in_queue ;')
 
     @classmethod

@@ -29,7 +29,7 @@ class ProximityComputer(GenericJobComputer):
     ) -> tuple[tuple[PhenotypeCriteria, PhenotypeCriteria, float], CellDataArrays]:
         study = self.job.study
         feature_specification = str(self.job.feature_specification)
-        _, specifiers = ProximityComputer.retrieve_specifiers(study, feature_specification)
+        _, specifiers = ProximityComputer.retrieve_specifiers(self.connection, study, feature_specification)
         phenotype1 = phenotype_str_to_phenotype(specifiers[0])
         phenotype2 = phenotype_str_to_phenotype(specifiers[1])
         radius = float(specifiers[2])

@@ -7,9 +7,11 @@ from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester imp
 
 
 def get_counts(study_name, positives, negatives):
-    with DBConnection() as connection:
-        return OnDemandRequester.get_counts_by_specimen(connection, positives, negatives, study_name, ())
-
+    connection = DBConnection()
+    connection.__enter__()
+    counts = OnDemandRequester.get_counts_by_specimen(connection, positives, negatives, study_name, ())
+    connection.__exit__(None, None, None)
+    return counts
 
 def main():
     if sys.argv[1] == '1':

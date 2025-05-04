@@ -8,6 +8,7 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.ondemand.feature_computation_timeout import get_feature_timeout
 from spatialprofilingtoolbox.apiserver.request_scheduling.counts_scheduler import CountsScheduler
 from spatialprofilingtoolbox.apiserver.request_scheduling.proximity_scheduler import ProximityScheduler
 from spatialprofilingtoolbox.apiserver.request_scheduling.squidpy_scheduler import SquidpyScheduler
@@ -137,7 +138,7 @@ class OnDemandRequester:
             c._set_autocommit(True)
             c.execute('LISTEN new_items_in_queue ;')
             c.execute('LISTEN one_job_complete ;')
-            notifications = c.notifies(timeout=cls._get_feature_timeout())
+            notifications = c.notifies(timeout=get_feature_timeout())
             logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
             for notification in notifications:
                 _result = get_results()
@@ -147,14 +148,6 @@ class OnDemandRequester:
                     return _result
         logger.debug(f'Notification processing completed, giving up on feature {feature}')
         cls._clear_queue_of_feature(connection, study_name, int(feature))
-
-    @classmethod
-    def _get_feature_timeout(cls) -> int:
-        t = 'FEATURE_COMPUTATION_TIMEOUT_SECONDS'
-        if t in os_environ:
-            return int(os_environ[t])
-        logger.warning(f'Set {t}. Using default: {cls.DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS}')
-        return cls.DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS
 
     @classmethod
     def _clear_queue_of_feature(cls, connection: DBConnection, study: str, feature: int) -> None:

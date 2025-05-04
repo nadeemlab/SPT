@@ -11,6 +11,15 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 
+def get_feature_timeout() -> int:
+    DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS = 600
+    t = 'FEATURE_COMPUTATION_TIMEOUT_SECONDS'
+    if t in os_environ:
+        return int(os_environ[t])
+    logger.warning(f'Set {t}. Using default: {DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS}')
+    return DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS
+
+
 class FeatureComputationTimeoutHandler:
     feature: str
     study: str

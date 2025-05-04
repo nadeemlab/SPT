@@ -5,6 +5,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.ondemand.feature_computation_timeout import feature_computation_timeout_handler
+from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -16,10 +17,8 @@ class MetricsJobQueuePusher:
         with DBCursor(connection=connection, database_config_file=None, study=study) as cursor:
             cls._insert_jobs(cursor, feature_specification)
         connection.get_connection().commit()
-        minute = 60
-        hour = 60 * minute
-        NORMAL_FEATURE_COMPUTATION_TIMEOUT = 1 * hour
-        feature_computation_timeout_handler(str(feature_specification), study, NORMAL_FEATURE_COMPUTATION_TIMEOUT)
+        timeout = OnDemandRequester._get_feature_timeout()
+        feature_computation_timeout_handler(str(feature_specification), study, timeout)
         cls._broadcast_queue_activity()
 
     @classmethod

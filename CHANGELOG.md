@@ -1,3 +1,7 @@
+# v1.0.50
+- Adds a sample data cache to the ondemand service. The containers now prefer to take computation jobs for samples it has already downloaded and cached, vastly reducing the bandwidth burden on the database. The cache is limited/controlled with configurable environment variables `DATABASE_DOWNLOAD_CACHE_SAMPLE_LIMIT` and `DATABASE_DOWNLOAD_CACHE_LIMIT_MB`. When the cache limit in MB or the number of samples limit is exceeded, cached items are dropped in order of their (rounded, binned) size until the limits are no longer exceeded.
+- Vastly reduces the number of database connections made by both the ondemand and API services. Previously new connections were made frequently for simple isolated queries. Now a connection is maintained as long as possible and reused. This increased the rate of computation job queue clearance by about 10-fold compared to the prior implementation.
+
 # v1.0.38
 - Adds configurable `FEATURE_COMPUTATION_TIMEOUT_SECONDS` and `JOB_COMPUTATION_TIMEOUT_SECONDS`, with reasonable defaults. When feature computation is requested via the API, if computation time for all jobs exceed the given limit (for FEATUREs), null values are inserted for the remaining samples. Similarly for individual jobs, with respect to the job-specific timeout (for JOBs).
 

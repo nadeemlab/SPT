@@ -6,12 +6,10 @@ from numpy import sum
 from numpy import uint64 as np_int64
 from numpy.typing import NDArray
 
-from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.computers.cell_data_arrays import CellDataArrays
 from spatialprofilingtoolbox.ondemand.relevant_specimens import retrieve_cells_selected
 from spatialprofilingtoolbox.ondemand.computers.generic_job_computer import GenericJobComputer
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_str_to_phenotype
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -31,9 +29,9 @@ class CountsComputer(GenericJobComputer):
     def _prepare_parameters(self) -> tuple[tuple[int, int, tuple[int, ...]], CellDataArrays]:
         study = self.job.study
         specification = str(self.job.feature_specification)
-        _, specifiers = self.retrieve_specifiers(study, specification)
+        _, specifiers = self.retrieve_specifiers(self.connection, study, specification)
         phenotype = phenotype_str_to_phenotype(specifiers[0])
-        cells_selected = retrieve_cells_selected(study, specification)  # to deprecate
+        cells_selected = retrieve_cells_selected(self.connection, study, specification)  # to deprecate
         marker_set = (phenotype.positive_markers, phenotype.negative_markers)
         arrays = self.get_cell_data_arrays()
         features = tuple(n.symbol for n in arrays.feature_names.names)

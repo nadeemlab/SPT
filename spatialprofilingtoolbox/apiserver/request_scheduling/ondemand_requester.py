@@ -8,6 +8,7 @@ from psycopg import Connection as PsycopgConnection
 
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.ondemand.feature_computation_timeout import get_feature_timeout
 from spatialprofilingtoolbox.apiserver.request_scheduling.counts_scheduler import CountsScheduler
 from spatialprofilingtoolbox.apiserver.request_scheduling.proximity_scheduler import ProximityScheduler
 from spatialprofilingtoolbox.apiserver.request_scheduling.squidpy_scheduler import SquidpyScheduler
@@ -18,9 +19,6 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
     WrapperPhenotype,
     UnivariateMetricsComputationResult,
 )
-from spatialprofilingtoolbox.ondemand.feature_computation_timeout import FeatureComputationTimeoutHandler
-from spatialprofilingtoolbox.ondemand.timeout import create_timeout_handler
-from spatialprofilingtoolbox.ondemand.timeout import SPTTimeoutError
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 Metrics1D = UnivariateMetricsComputationResult
 
@@ -49,6 +47,7 @@ class OnDemandRequester:
 
     @staticmethod
     def get_counts_by_specimen(
+        connection: DBConnection,
         positives: tuple[str, ...],
         negatives: tuple[str, ...],
         study_name: str,
@@ -60,12 +59,12 @@ class OnDemandRequester:
             negative_markers=tuple(filter(_nonempty, negatives)),
         )
         selected = tuple(sorted(list(cells_selected))) if cells_selected is not None else ()
-        feature1, counts, counts_all, pending = OnDemandRequester._counts(study_name, phenotype, selected, blocking)
+        feature1, counts, counts_all, pending = OnDemandRequester._counts(connection, study_name, phenotype, selected, blocking)
         combined_keys = sorted(list(set(counts.values.keys()).intersection(counts_all.values.keys())))
         missing_denominator = set(counts.values.keys()).difference(combined_keys)
         if len(missing_denominator) > 0:
             logger.warning(f'In forming population fractions, some samples were missing from denominator: {missing_denominator}')
-        expected = CountsScheduler._get_expected_samples(study_name, feature1)
+        expected = CountsScheduler._get_expected_samples(connection, study_name, feature1)
         additional = set(expected).difference(combined_keys)
         return PhenotypeCounts(
             counts=tuple([
@@ -85,6 +84,7 @@ class OnDemandRequester:
     @classmethod
     def _counts(
         cls,
+        connection: DBConnection,
         study_name: str,
         phenotype: PhenotypeCriteria,
         selected: tuple[int, ...],
@@ -94,6 +94,7 @@ class OnDemandRequester:
 
         def get_results1() -> tuple[Metrics1D, str]:
             counts, feature1 = get(
+                connection,
                 study_name,
                 phenotype=phenotype,
                 cells_selected=selected,
@@ -102,30 +103,30 @@ class OnDemandRequester:
 
         def get_results2() -> tuple[Metrics1D, str]:
             counts_all, feature2 = get(
+                connection,
                 study_name,
                 phenotype=PhenotypeCriteria(positive_markers=(), negative_markers=()),
                 cells_selected=selected,
             )
             return (counts_all, feature2)
 
-        with DBConnection() as connection:
-            connection._set_autocommit(True)
-            if blocking:
-                counts, feature1 = cls._wait_for_wrappedup(connection, get_results1, study_name)
-            else:
-                counts, feature1 =  get_results1()
+        # connection.get_connection()._set_autocommit(True)
+        if blocking:
+            counts, feature1 = cls._wait_for_wrappedup(connection, get_results1, study_name)
+        else:
+            counts, feature1 =  get_results1()
 
-            if blocking:
-                counts_all, _ = cls._wait_for_wrappedup(connection, get_results2, study_name)
-            else:
-                counts_all, _ =  get_results2()
+        if blocking:
+            counts_all, _ = cls._wait_for_wrappedup(connection, get_results2, study_name)
+        else:
+            counts_all, _ =  get_results2()
 
         return (feature1, counts, counts_all, counts.is_pending or counts_all.is_pending)
 
     @classmethod
     def _wait_for_wrappedup(
         cls,
-        connection: PsycopgConnection,
+        connection: DBConnection,
         get_results: Callable[[], tuple[Metrics1D, str]],
         study_name: str,
     ):
@@ -133,15 +134,11 @@ class OnDemandRequester:
         if not counts.is_pending:
             logger.debug(f'Feature {feature} already complete.')
             return (counts, feature)
-        connection.execute('LISTEN new_items_in_queue ;')
-        connection.execute('LISTEN one_job_complete ;')
-        notifications = connection.notifies()
-        handler = FeatureComputationTimeoutHandler(feature, study_name)
-        generic_handler = create_timeout_handler(handler.handle, cls._get_feature_timeout())
-        try:
-            if not counts.is_pending:
-                logger.debug(f'Feature {feature} already complete.')
-                return (counts, feature)
+        with DBConnection() as c:
+            c._set_autocommit(True)
+            c.execute('LISTEN new_items_in_queue ;')
+            c.execute('LISTEN one_job_complete ;')
+            notifications = c.notifies(timeout=get_feature_timeout())
             logger.debug(f'Waiting for signal that feature {feature} may be ready, because the result is not ready yet.')
             for notification in notifications:
                 _result = get_results()
@@ -149,24 +146,12 @@ class OnDemandRequester:
                     logger.debug(f'Closing notification processing, {feature} ready.')
                     notifications.close()
                     return _result
-            logger.debug(f'Notification processing completed, giving up on feature {feature}')
-            cls._clear_queue_of_feature(study_name, int(feature))
-        except SPTTimeoutError:
-            pass
-        finally:
-            generic_handler.disalarm()
+        logger.debug(f'Notification processing completed, giving up on feature {feature}')
+        cls._clear_queue_of_feature(connection, study_name, int(feature))
 
     @classmethod
-    def _get_feature_timeout(cls) -> int:
-        t = 'FEATURE_COMPUTATION_TIMEOUT_SECONDS'
-        if t in os_environ:
-            return int(os_environ[t])
-        logger.warning(f'Set {t}. Using default: {cls.DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS}')
-        return cls.DEFAULT_FEATURE_COMPUTATION_TIMEOUT_SECONDS
-
-    @classmethod
-    def _clear_queue_of_feature(cls, study: str, feature: int) -> None:
-        with DBCursor(study=study) as cursor:
+    def _clear_queue_of_feature(cls, connection: DBConnection, study: str, feature: int) -> None:
+        with DBCursor(connection=connection, study=study) as cursor:
             query = 'DELETE FROM quantitative_feature_value_queue q WHERE q.feature=%s ;'
             cursor.execute(query, (feature,))
             logger.debug(f'Cleared the job queue for feature {feature} ({study}).')
@@ -174,6 +159,7 @@ class OnDemandRequester:
     @classmethod
     def get_proximity_metrics(
         cls,
+        connection: DBConnection,
         study: str,
         radius: float,
         _signature: tuple[list[str], list[str], list[str], list[str]]
@@ -186,12 +172,13 @@ class OnDemandRequester:
             positive_markers=signature[2], negative_markers=signature[3],
         )
         get = ProximityScheduler.get_metrics_or_schedule
-        result, _ = get(study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
+        result, _ = get(connection, study, phenotype1=phenotype1, phenotype2=phenotype2, radius=radius)
         return result
 
     @classmethod
     def get_squidpy_metrics(
         cls,
+        connection: DBConnection,
         study: str,
         _signature: list[list[str]],
         feature_class: str,
@@ -214,5 +201,5 @@ class OnDemandRequester:
                 )
             )
         get = SquidpyScheduler.get_metrics_or_schedule
-        result, _ = get(study, feature_class=feature_class, phenotypes=phenotypes, radius=radius)
+        result, _ = get(connection, study, feature_class=feature_class, phenotypes=phenotypes, radius=radius)
         return result

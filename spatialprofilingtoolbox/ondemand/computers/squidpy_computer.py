@@ -4,13 +4,11 @@ from typing import cast
 
 from pandas import DataFrame  # type: ignore
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_str_to_phenotype
 from spatialprofilingtoolbox.apiserver.request_scheduling.computation_scheduler import retrieve_feature_derivation_method
 from spatialprofilingtoolbox.ondemand.computers.generic_job_computer import GenericJobComputer
 from spatialprofilingtoolbox.ondemand.computers.cell_data_arrays import CellDataArrays
-from spatialprofilingtoolbox.db.describe_features import get_feature_description
 from spatialprofilingtoolbox.workflow.common.squidpy import (
     lookup_squidpy_feature_class,
     compute_squidpy_metric_for_one_sample,
@@ -41,9 +39,9 @@ class SquidpyComputer(GenericJobComputer):
     ) -> tuple[tuple[str, tuple[PhenotypeCriteria, ...], float | None], CellDataArrays]:
         study = self.job.study
         feature_specification = str(self.job.feature_specification)
-        method = retrieve_feature_derivation_method(study, feature_specification)
+        method = retrieve_feature_derivation_method(self.connection, study, feature_specification)
         feature_class = cast(str, lookup_squidpy_feature_class(method))
-        _, specifiers = SquidpyComputer.retrieve_specifiers(study, feature_specification)
+        _, specifiers = SquidpyComputer.retrieve_specifiers(self.connection, study, feature_specification)
         phenotypes: tuple[PhenotypeCriteria, ...]
         if feature_class == 'co-occurrence':
             phenotypes = tuple(map(phenotype_str_to_phenotype, specifiers[0:2]))

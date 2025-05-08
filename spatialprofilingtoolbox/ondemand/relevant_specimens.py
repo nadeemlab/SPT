@@ -1,6 +1,7 @@
 """Common access to a query for specimens."""
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 
 def relevant_specimens_query():
     return '''
@@ -11,8 +12,8 @@ def relevant_specimens_query():
         WHERE fsn.identifier=%s
     '''
 
-def retrieve_cells_selected(study: str, specification: str) -> tuple[int, ...]:
-    with DBCursor(study=study) as cursor:
+def retrieve_cells_selected(connection: DBConnection, study: str, specification: str) -> tuple[int, ...]:
+    with DBCursor(connection=connection, study=study) as cursor:
         query = 'SELECT histological_structure FROM cell_set_cache WHERE feature=%s ;'
         cursor.execute(query, (specification,))
         rows = tuple(cursor.fetchall())

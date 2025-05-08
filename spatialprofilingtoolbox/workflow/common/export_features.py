@@ -247,7 +247,7 @@ class ADIFeatureSpecificationUploader:
         cursor.execute('BEGIN;')
         identifier, is_new = cls.insert_hash(derivation_method, specifiers, cursor, appendix=appendix)
         if is_new:
-            cls.insert_specification(identifier, derivation_method, data_analysis_study, cursor)
+            cls.insert_specification(str(identifier), derivation_method, data_analysis_study, cursor)
             cls.insert_specifiers(identifier, specifiers, cursor)
             cursor.execute('COMMIT;')
         return identifier
@@ -262,7 +262,7 @@ class ADIFeatureSpecificationUploader:
         SELECT sc.primary_study FROM study_component sc
         WHERE sc.component_study=%s ;
         ''', (measurement_study,))
-        study = cursor.fetchall()[0][0]
+        study = tuple(cursor.fetchall())[0][0]
 
         cursor.execute('''
         SELECT das.name

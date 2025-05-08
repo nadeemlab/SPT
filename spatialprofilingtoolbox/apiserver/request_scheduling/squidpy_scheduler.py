@@ -3,6 +3,7 @@ from typing import cast
 from itertools import chain
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
@@ -15,6 +16,7 @@ logger = colorized_logger(__name__)
 class SquidpyScheduler(GenericComputationScheduler):
     @classmethod
     def get_or_create_feature_specification(cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         feature_class: str | None = None,
@@ -32,6 +34,7 @@ class SquidpyScheduler(GenericComputationScheduler):
             phenotype_to_phenotype_str(phenotype) for phenotype in phenotypes
         ]
         specification = cls._get_feature_specification(
+            connection,
             study,
             data_analysis_study,
             feature_class,
@@ -47,6 +50,7 @@ class SquidpyScheduler(GenericComputationScheduler):
             message = 'Creating feature with specifiers: (%s) %s'
             logger.debug(message, data_analysis_study, str(phenotypes_strs))
         return (cls._create_feature_specification(
+            connection,
             study,
             data_analysis_study,
             feature_class,
@@ -56,6 +60,7 @@ class SquidpyScheduler(GenericComputationScheduler):
 
     @classmethod
     def _get_feature_specification(cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         feature_class:str,
@@ -70,7 +75,7 @@ class SquidpyScheduler(GenericComputationScheduler):
         variable_portion_args = list(chain(*[
             [specifier, str(i+1)] for i, specifier in enumerate(specifiers)
         ]))
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=connection, study=study) as cursor:
             cursor.execute(query, tuple([data_analysis_study] + variable_portion_args + [method]))
             rows = cursor.fetchall()
         feature_specifications: dict[str, list[str]] = {row[0]: [] for row in rows}
@@ -109,6 +114,7 @@ class SquidpyScheduler(GenericComputationScheduler):
 
     @classmethod
     def _create_feature_specification(cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         feature_class: str,
@@ -120,4 +126,4 @@ class SquidpyScheduler(GenericComputationScheduler):
         else:
             specifiers = tuple(phenotypes)
         method = cast(str, get_feature_description(feature_class))
-        return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
+        return cls.create_feature_specification(connection, study, specifiers, data_analysis_study, method)

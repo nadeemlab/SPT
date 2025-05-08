@@ -2,6 +2,7 @@
 from typing import cast
 
 from spatialprofilingtoolbox.db.database_connection import DBCursor
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
 from spatialprofilingtoolbox.ondemand.phenotype_str import phenotype_to_phenotype_str
 from spatialprofilingtoolbox.db.describe_features import get_feature_description
@@ -15,6 +16,7 @@ class ProximityScheduler(GenericComputationScheduler):
     @classmethod
     def get_or_create_feature_specification(
         cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         phenotype1: PhenotypeCriteria | None = None,
@@ -31,15 +33,16 @@ class ProximityScheduler(GenericComputationScheduler):
             phenotype_to_phenotype_str(phenotype2),
             str(radius),
         )
-        specification = cls._get_feature_specification(study, *specifiers_arguments)
+        specification = cls._get_feature_specification(connection, study, *specifiers_arguments)
         if specification is not None:
             return (specification, False)
         message = 'Creating feature with specifiers: (%s) %s, %s, %s'
         logger.debug(message, *specifiers_arguments)
-        return (cls._create_feature_specification(study, *specifiers_arguments), True)
+        return (cls._create_feature_specification(connection, study, *specifiers_arguments), True)
 
     @classmethod
     def _get_feature_specification(cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         phenotype1_str: str,
@@ -53,7 +56,7 @@ class ProximityScheduler(GenericComputationScheduler):
             radius_str,
             get_feature_description('proximity'),
         )
-        with DBCursor(study=study) as cursor:
+        with DBCursor(connection=connection, study=study) as cursor:
             cursor.execute('''
             SELECT
                 fsn.identifier,
@@ -80,6 +83,7 @@ class ProximityScheduler(GenericComputationScheduler):
 
     @classmethod
     def _create_feature_specification(cls,
+        connection: DBConnection,
         study: str,
         data_analysis_study: str,
         phenotype1: str,
@@ -88,4 +92,4 @@ class ProximityScheduler(GenericComputationScheduler):
     ) -> str:
         specifiers = (phenotype1, phenotype2, str(radius))
         method = get_feature_description('proximity')
-        return cls.create_feature_specification(study, specifiers, data_analysis_study, method)
+        return cls.create_feature_specification(connection, study, specifiers, data_analysis_study, method)

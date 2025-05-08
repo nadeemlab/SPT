@@ -5,6 +5,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.ondemand.relevant_specimens import relevant_specimens_query
 from spatialprofilingtoolbox.ondemand.feature_computation_timeout import feature_computation_timeout_handler
+from spatialprofilingtoolbox.ondemand.feature_computation_timeout import get_feature_timeout
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
@@ -12,19 +13,18 @@ logger = colorized_logger(__name__)
 
 class MetricsJobQueuePusher:
     @classmethod
-    def schedule_feature_computation(cls, study: str, feature_specification: int) -> None:
-        with DBCursor(database_config_file=None, study=study) as cursor:
+    def schedule_feature_computation(cls, connection: DBConnection, study: str, feature_specification: int) -> None:
+        with DBCursor(connection=connection, database_config_file=None, study=study) as cursor:
             cls._insert_jobs(cursor, feature_specification)
-        minute = 60
-        hour = 60 * minute
-        NORMAL_FEATURE_COMPUTATION_TIMEOUT = 1 * hour
-        feature_computation_timeout_handler(str(feature_specification), study, NORMAL_FEATURE_COMPUTATION_TIMEOUT)
+        connection.get_connection().commit()
+        timeout = get_feature_timeout()
+        feature_computation_timeout_handler(str(feature_specification), study, timeout)
         cls._broadcast_queue_activity()
 
     @classmethod
     def _broadcast_queue_activity(cls) -> None:
         logger.debug('Notifying queue activity channel that there are new items.')
-        with DBConnection(database_config_file=None) as connection:
+        with DBConnection() as connection:
             connection.execute('NOTIFY new_items_in_queue ;')
 
     @classmethod

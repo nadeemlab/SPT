@@ -2,12 +2,16 @@
 import sys
 import json
 
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 
 
 def get_counts(study_name, positives, negatives):
-    return OnDemandRequester.get_counts_by_specimen(positives, negatives, study_name, ())
-
+    connection = DBConnection()
+    connection.__enter__()
+    counts = OnDemandRequester.get_counts_by_specimen(connection, positives, negatives, study_name, ())
+    connection.__exit__(None, None, None)
+    return counts
 
 def main():
     if sys.argv[1] == '1':

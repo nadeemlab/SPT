@@ -2,12 +2,16 @@
 import json
 import sys
 
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 
 
 def main():
     study_name = 'Melanoma intralesional IL2'
-    counts = OnDemandRequester.get_counts_by_specimen(['CD3'], ['CD8', 'CD20'], study_name, ())
+    connection = DBConnection()
+    connection.__enter__()
+    counts = OnDemandRequester.get_counts_by_specimen(connection, ['CD3'], ['CD8', 'CD20'], study_name, ())
+    connection.__exit__(None, None, None)
 
     counts_json = json.dumps(counts.model_dump(), indent=4).rstrip()
     with open('module_tests/expected_counts_structured1.json', 'rt', encoding='utf-8') as file:

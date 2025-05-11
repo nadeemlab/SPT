@@ -2,7 +2,7 @@
 
 import re
 
-from pandas import read_sql
+from pandas import read_sql  # type: ignore
 
 from spatialprofilingtoolbox.db.database_connection import QueryCursor
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (

@@ -1,11 +1,15 @@
 """Test a few cases of using the counts service."""
 
+from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
 
 
 def retrieve_case(case):
     study_name = 'Melanoma intralesional IL2'
-    counts = OnDemandRequester.get_counts_by_specimen(case[0], case[1], study_name, ())
+    connection = DBConnection()
+    connection.__enter__()
+    counts = OnDemandRequester.get_counts_by_specimen(connection, case[0], case[1], study_name, ())
+    connection.__exit__(None, None, None)
     total = sum(entry.count for entry in counts.counts)
     return total
 

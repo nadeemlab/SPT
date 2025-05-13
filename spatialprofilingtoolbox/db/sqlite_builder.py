@@ -18,6 +18,16 @@ from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.verbose_sql_execution import _retrieve_script
 
+feature_computation_tables = (
+    'Quantitative feature value',
+)
+
+big_tables = (
+    'Histological structure',
+    'Shape file',
+    'Histological structure identification',
+    'Expression quantification',
+)
 
 @define
 class EdgeData:
@@ -32,10 +42,12 @@ class SQLiteBuilder:
     located inside the application database.
     """
     connection: DBConnection
+    include_feature_values: bool
 
-    def __init__(self, connection: DBConnection):
+    def __init__(self, connection: DBConnection, no_feature_values: bool=False):
         self.connection = connection
         self.schema_graph = None
+        self.include_feature_values = not no_feature_values
 
     def get_dump(self, study: str) -> bytes:
         with closing(connect(':memory:')) as db:
@@ -90,7 +102,7 @@ class SQLiteBuilder:
             n2 = edge_data.foreign_table
             if n2 == '':
                 continue
-            if n1 in self._big_tables() or n2 in self._big_tables():
+            if n1 in self._omittable_tables() or n2 in self._omittable_tables():
                 continue
             G.add_edge(
                 n1,
@@ -100,13 +112,11 @@ class SQLiteBuilder:
             )
         return G
 
-    def _big_tables(self) -> tuple[str, ...]:
-        return (
-            'Histological structure',
-            'Shape file',
-            'Histological structure identification',
-            'Expression quantification',
-        )
+    def _omittable_tables(self) -> tuple[str, ...]:
+        if self.include_feature_values:
+            return big_tables
+        else:
+            return tuple(list(feature_computation_tables) + list(big_tables))
 
     def _save_study(self, target: SQLiteCursor, study: str) -> None:
         tables = self._get_safe_table_insert_order()
@@ -118,13 +128,10 @@ class SQLiteBuilder:
     def _copy_records(self, source: PsycopgCursor, target: SQLiteCursor, table_name: str) -> None:
         query = f'SELECT * FROM {table_name};'
         source.execute(query)
-        print('Table: ' + table_name)
         for row in source.fetchall():
-            print(row)
             slots = ', '.join(['?'] * len(row))
             insert = f'INSERT INTO {table_name} VALUES ({slots});'
             target.execute(insert, self._clean_row(row))
-        print('')
 
     def _clean_row(self, row: tuple) -> tuple:
         return tuple(map(self._clean_entry, row))

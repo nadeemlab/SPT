@@ -22,6 +22,11 @@ feature_computation_tables = (
     'Quantitative feature value',
 )
 
+feature_specification_tables = (
+    'Feature specification',
+    'Feature specifier',
+)
+
 big_tables = (
     'Histological structure',
     'Shape file',
@@ -43,11 +48,13 @@ class SQLiteBuilder:
     """
     connection: DBConnection
     include_feature_values: bool
+    include_feature_specifications: bool
 
-    def __init__(self, connection: DBConnection, no_feature_values: bool=False):
+    def __init__(self, connection: DBConnection, no_feature_values: bool=False, no_feature_specifications: bool=False):
         self.connection = connection
         self.schema_graph = None
         self.include_feature_values = not no_feature_values
+        self.include_feature_specifications = not no_feature_specifications
 
     def get_dump(self, study: str) -> bytes:
         with closing(connect(':memory:')) as db:
@@ -113,10 +120,12 @@ class SQLiteBuilder:
         return G
 
     def _omittable_tables(self) -> tuple[str, ...]:
-        if self.include_feature_values:
-            return big_tables
-        else:
-            return tuple(list(feature_computation_tables) + list(big_tables))
+        omittables = list(big_tables)
+        if not self.include_feature_values:
+            omittables.extend(list(feature_computation_tables))
+        if not self.include_feature_specifications:
+            omittables.extend(list(feature_specification_tables))
+        return tuple(omittables)
 
     def _save_study(self, target: SQLiteCursor, study: str) -> None:
         tables = self._get_safe_table_insert_order()

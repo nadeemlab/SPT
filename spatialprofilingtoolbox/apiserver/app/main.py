@@ -8,13 +8,25 @@ from itertools import chain
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from fastapi import Header, Response
+from fastapi import Header, Response, Request
 from fastapi import Query
 from fastapi import HTTPException
 import matplotlib.pyplot as plt  # type: ignore
 
 import jwt
 from secure import Secure
+from secure.headers import (
+    CacheControl,
+    ContentSecurityPolicy,
+    CrossOriginOpenerPolicy,
+    ReferrerPolicy,
+    Server,
+    StrictTransportSecurity,
+    XContentTypeOptions,
+    XFrameOptions,
+)
+
+
 from pydantic import BaseModel
 
 from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
@@ -64,7 +76,7 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
-VERSION = '1.0.3'
+VERSION = '1.0.55'
 
 TITLE = 'Single cell studies data API'
 
@@ -162,13 +174,45 @@ def custom_openapi():
 
 setattr(app, 'openapi', custom_openapi)
 
-secure_headers = Secure.with_default_headers()
+headers_params = {
+    'cache': CacheControl().no_store(),
+    'coop': CrossOriginOpenerPolicy().same_origin(),
+    'hsts': StrictTransportSecurity().max_age(31536000),
+    'referrer': ReferrerPolicy().strict_origin_when_cross_origin(),
+    'server': Server().set(""),
+    'xcto': XContentTypeOptions().nosniff(),
+    'xfo': XFrameOptions().sameorigin(),
+}
+csp_general = ContentSecurityPolicy().default_src(
+        "'self'"
+    ).script_src(
+        "'self'"
+    ).style_src(
+        "'self'"
+    ).object_src("'none'")
+csp_permissive = ContentSecurityPolicy().default_src(
+        "'self'"
+    ).script_src(
+        "'self' https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
+    ).style_src(
+        "'self' 'unsafe-inline'"
+    ).object_src("'none'")
 
+secure_headers = Secure(**headers_params, csp=csp_general)  # type: ignore
+secure_headers_redoc = Secure(**headers_params, csp=csp_permissive)  # type: ignore
+
+def is_redoc(request: Request) -> bool:
+    path = request.scope['path']
+    endpoint = list(filter(lambda t: t != '', path.split('/')))[-1]
+    return endpoint == 'redoc'
 
 @app.middleware("http")
-async def add_security_headers(request, call_next):
+async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
-    await secure_headers.set_headers_async(response)
+    if is_redoc(request):
+        await secure_headers_redoc.set_headers_async(response)
+    else:
+        await secure_headers.set_headers_async(response)
     return response
 
 

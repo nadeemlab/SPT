@@ -38,6 +38,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.apiserver.request_scheduling.ondemand_requester import OnDemandRequester
+from spatialprofilingtoolbox.db.sqlite_builder import SQLiteBuilder
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudyHandle
 from spatialprofilingtoolbox.db.exchange_data_formats.study import StudySummary
 from spatialprofilingtoolbox.db.exchange_data_formats.study import ChannelAnnotations
@@ -896,3 +897,30 @@ async def get_channel_aliases() -> ChannelAliases:
     Get the presentation-layer shorthand/abbreviations/aliases for all channels.
     """
     return query().get_channel_aliases()
+
+
+@app.get("/sqlite/")
+def get_sqlite_dump(
+    study: ValidStudy,
+    no_feature_values: str | None = None,
+    no_feature_specifications: str | None = None,
+):
+    """
+    Get a SQLite database dump of all the metadata for a study.
+    By default, this includes all computed features.
+    To omit the computed feature values, include query parameter `no_feature_values`.
+    To omit even the feature specifications/definitions, include query parameter `no_feature_specifications`.
+    """
+    connection = DBConnection()
+    connection.__enter__()
+    builder = SQLiteBuilder(
+        connection,
+        no_feature_values=no_feature_values is not None,
+        no_feature_specifications=no_feature_specifications is not None,
+    )
+    sqlite_db = builder.get_dump(study)
+    connection.__exit__(None, None, None)
+    return Response(
+        sqlite_db,
+        headers={"Content-Type": 'application/vnd.sqlite3'},
+    )

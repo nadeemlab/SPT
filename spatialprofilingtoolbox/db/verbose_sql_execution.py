@@ -33,6 +33,7 @@ def _retrieve_script(
     filename_description: tuple[str, str],
     contents: str | None,
     source_package: str | None,
+    quiet: bool = False,
 ) -> str:
     filename, description = filename_description
     if description is None:
@@ -40,7 +41,8 @@ def _retrieve_script(
     if contents is None:
         if source_package is None:
             raise ValueError('Must supply package for source SQL file.')
-        logger.info('Will execute %s.', description)
+        if not quiet:
+            logger.info('Will execute %s.', description)
         with as_file(files(source_package).joinpath(filename)) as path:
             with open(path, encoding='utf-8') as file:
                 script = file.read()

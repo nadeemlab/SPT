@@ -8,7 +8,7 @@ from pandas import DataFrame
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import retrieve_study_from_specimen
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import PhenotypeCriteria
-from spatialprofilingtoolbox.db.accessors import PhenotypesAccess
+from spatialprofilingtoolbox.db.accessors.phenotypes import PhenotypesAccess
 from spatialprofilingtoolbox.db.stratification_puller import (
     StratificationPuller,
     Stratification,

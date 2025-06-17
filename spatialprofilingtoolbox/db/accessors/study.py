@@ -5,7 +5,6 @@ import re
 
 from psycopg.errors import UndefinedTable
 
-from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -21,7 +20,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     Context,
     Products,
 )
-from spatialprofilingtoolbox.db.accessors import CellsAccess
+from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import AvailableGNN
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult

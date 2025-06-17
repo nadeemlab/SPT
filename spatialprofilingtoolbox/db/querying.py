@@ -21,12 +21,10 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
 )
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
-from spatialprofilingtoolbox.db.accessors import (
-    GraphsAccess,
-    StudyAccess,
-    PhenotypesAccess,
-    CellsAccess,
-)
+from spatialprofilingtoolbox.db.accessors.graphs import GraphsAccess
+from spatialprofilingtoolbox.db.accessors.phenotypes import PhenotypesAccess
+from spatialprofilingtoolbox.db.accessors.study import StudyAccess
+from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.standalone_utilities import sort
 
 

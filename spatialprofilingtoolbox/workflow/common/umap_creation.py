@@ -18,7 +18,7 @@ from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENS
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 
 
-from spatialprofilingtoolbox.db.accessors import CellsAccess
+from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.standalone_utilities.float8 import encode_float8_with_clipping
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger

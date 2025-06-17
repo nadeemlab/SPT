@@ -5,6 +5,7 @@ import re
 
 from psycopg.errors import UndefinedTable
 
+from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.simple_method_cache import simple_instance_method_cache
 from spatialprofilingtoolbox.workflow.common.export_features import ADIFeatureSpecificationUploader
 from spatialprofilingtoolbox.db.exchange_data_formats.study import (
@@ -20,6 +21,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.study import (
     Context,
     Products,
 )
+from spatialprofilingtoolbox.db.accessors import CellsAccess
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.db.exchange_data_formats.metrics import AvailableGNN
 from spatialprofilingtoolbox.db.simple_query_patterns import GetSingleResult
@@ -217,15 +219,14 @@ class StudyAccess(SimpleReadOnlyProvider):
 
     @simple_instance_method_cache(maxsize=1000)
     def get_number_cells(self, specimen_measurement_study: str) -> int:
-        logger.debug('Querying for number of cells in "%s".', specimen_measurement_study)
-        query = '''
-        SELECT MAX(CAST(identifier AS INTEGER)) FROM histological_structure ;
-        '''
-        return GetSingleResult.integer(
-            self.cursor,
-            query=query,
-            parameters=(),
-        ) + 1
+        access = CellsAccess(self.cursor)
+        number_cells = 0
+        samples = self._get_specimens(specimen_measurement_study)
+        for sample in samples:
+            raw, _ = access.get_cells_data(sample)
+            sample_number_cells = int.from_bytes(raw[0:4])
+            number_cells += sample_number_cells
+        return number_cells
 
     def _get_number_channels(self, specimen_measurement_study: str) -> int:
         query = '''
@@ -251,6 +252,16 @@ class StudyAccess(SimpleReadOnlyProvider):
             ''',
             parameters=(specimen_measurement_study,),
         )
+
+    def _get_specimens(self, specimen_measurement_study: str) -> tuple[str, ...]:
+        query='''
+            SELECT DISTINCT specimen
+            FROM specimen_data_measurement_process
+            WHERE study=%s
+            ;
+        '''
+        self.cursor.execute(query, (specimen_measurement_study,))
+        return tuple(map(lambda row: row[0], tuple(self.cursor.fetchall())))
 
     def _get_number_composite_phenotypes(self, analysis_study: str) -> int:
         return GetSingleResult.integer(

@@ -216,16 +216,32 @@ class StudyAccess(SimpleReadOnlyProvider):
         )
         return Assay(name=name)
 
-    @simple_instance_method_cache(maxsize=1000)
-    def get_number_cells(self, specimen_measurement_study: str) -> int:
+    def get_number_cells(self, study: str, verbose: bool=False) -> int:
+        components = self.get_study_components(study)
         access = CellsAccess(self.cursor)
         number_cells = 0
-        samples = self._get_specimens(specimen_measurement_study)
-        for sample in samples:
+        samples = self._get_specimens(components.measurement)
+        if verbose:
+            logger.info(f'Counting cells for {study}')
+        for i, sample in enumerate(samples):
             raw, _ = access.get_cells_data(sample)
             sample_number_cells = int.from_bytes(raw[0:4])
             number_cells += sample_number_cells
+            if verbose:
+                if i < 50:
+                    logger.info(f'{sample_number_cells} ({sample})')
+                if i == 50:
+                    logger.info('...')
         return number_cells
+
+    @simple_instance_method_cache(maxsize=1000)
+    def _get_number_cells(self) -> int:
+        self.cursor.execute('SELECT * FROM all_samples_count;')
+        rows = tuple(self.cursor.fetchall())
+        if len(rows) == 0:
+            logger.error('Cell counts not computed.')
+            return 0
+        return int(rows[0][0])
 
     def _get_number_channels(self, specimen_measurement_study: str) -> int:
         query = '''
@@ -277,7 +293,7 @@ class StudyAccess(SimpleReadOnlyProvider):
     def _get_counts_summary(self, components: StudyComponents) -> CountsSummary:
         return CountsSummary(
             specimens=self._get_number_specimens(components.measurement),
-            cells=self.get_number_cells(components.measurement),
+            cells=self._get_number_cells(),
             channels=self._get_number_channels(components.measurement),
             composite_phenotypes=self._get_number_composite_phenotypes(components.analysis),
         )

@@ -43,12 +43,6 @@ class QueryHandler:
         return StudyAccess(cursor).get_study_handle(study)
 
     @classmethod
-    def get_number_cells(cls, cursor, study: str) -> int:
-        access = StudyAccess(cursor)
-        components = access.get_study_components(study)
-        return access.get_number_cells(components.measurement)
-
-    @classmethod
     def get_study_summary(cls, cursor, study: str) -> StudySummary:
         return StudyAccess(cursor).get_study_summary(study)
 

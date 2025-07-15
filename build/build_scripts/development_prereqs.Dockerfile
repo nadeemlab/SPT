@@ -3,7 +3,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt-get install -y apt-transport-https && apt-get clean
 RUN apt install software-properties-common -y && apt-get clean
 RUN apt-get install -y libpq-dev && apt-get clean
-RUN apt install openjdk-11-jdk -y && apt-get clean
+RUN apt install openjdk-17-jdk -y && apt-get clean
 RUN apt install xxd -y && apt-get clean
 RUN apt install file -y && apt-get clean
 RUN apt install -y bc && apt-get clean

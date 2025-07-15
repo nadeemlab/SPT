@@ -9,6 +9,7 @@ spt graphs upload-importances --config_path=build/build_scripts/.graph_transform
 
 spt db upload-sync-small --database-config-file=build/db/.spt_db.config.local findings test/test_data/findings.json
 spt db upload-sync-small --database-config-file=build/db/.spt_db.config.local gnn_plot_configurations test/test_data/gnn_plot.json
+spt db count-cells --database-config-file=build/db/.spt_db.config.local
 
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt
 diff build/build_scripts/expected_table_counts.txt table_counts.txt

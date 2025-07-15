@@ -186,7 +186,7 @@ class DBCursor(DBConnection):
     def _wrap_up_connection(self) -> None:
         self._get_connection_object().wrap_up_connection()
 
-    def __enter__(self):
+    def __enter__(self) -> PsycopgCursor:
         self.set_cursor(self._get_connection().cursor())
         if self.existing_connection is None:
             schema = self.schema

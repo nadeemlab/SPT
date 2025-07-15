@@ -28,6 +28,7 @@ spt workflow configure --workflow='tabular import' --config-file=.workflow.confi
 nextflow run .
 cat work/*/*/.command.log
 
+spt db count-cells --database-config-file=build/db/.spt_db.config.local
 nf_clean
 
 spt db status --database-config-file build/db/.spt_db.config.local > counts.txt

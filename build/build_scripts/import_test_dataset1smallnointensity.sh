@@ -8,6 +8,7 @@ spt graphs upload-importances --config_path=build/build_scripts/.graph.config --
 
 cat work/*/*/.command.log
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt
+spt db count-cells --database-config-file=build/db/.spt_db.config.local
 diff build/build_scripts/expected_table_counts_1small.txt table_counts.txt
 status=$?
 [ $status -eq 0 ] && echo "Import created correct number of records." || echo "Import failed."

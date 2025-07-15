@@ -17,6 +17,7 @@ cp study.json.bak $STUDY_JSON
 rm study.json.bak
 
 spt graphs upload-importances --config_path=build/build_scripts/.graph.small.config --importances_csv_path test/test_data/gnn_importances/3.csv
+spt db count-cells --database-config-file=build/db/.spt_db.config.local
 
 cat work/*/*/.command.log
 spt db status --database-config-file build/db/.spt_db.config.local > table_counts.txt

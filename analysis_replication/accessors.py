@@ -175,9 +175,12 @@ class DataAccessor:
         df = DataFrame(rows).set_index('sample')
         return concat([self.cohorts, self.all_cells, df], axis=1)
 
-    def _two_phenotype_spatial_metric(self, phenotype_names, feature_class):
-        criteria = [self._phenotype_criteria(p) for p in phenotype_names]
-        names = [self._name_phenotype(p) for p in phenotype_names]
+    def _two_phenotype_spatial_metric(self, phenotype_names, feature_class, criteria: list[dict] | None = None):
+        if not criteria:
+            criteria = [self._phenotype_criteria(p) for p in phenotype_names]
+            names = [self._name_phenotype(p) for p in phenotype_names]
+        else:
+            names = phenotype_names
 
         positives = criteria[0]['positive_markers']
         negatives = criteria[0]['negative_markers']
@@ -463,6 +466,7 @@ def univariate_pair_compare(
     do_log_fold: bool = False,
     show_pvalue=False,
     show_auc=False,
+    verbose: bool=True,
 ):
     list1 = list(filter(lambda element: not isnan(element) and not element==inf, list1.values))
     list2 = list(filter(lambda element: not isnan(element) and not element==inf, list2.values))
@@ -472,7 +476,8 @@ def univariate_pair_compare(
     actual = mean2 / mean1
     if expected_fold is not None:
         handle_expected_actual(expected_fold, actual)
-    print((mean2, mean1, actual), end='')
+    if verbose:
+        print((mean2, mean1, actual), end='')
 
     if do_log_fold:
         _list1 = [log(e) for e in list(filter(lambda element: element != 0, list1))]
@@ -480,23 +485,29 @@ def univariate_pair_compare(
         _mean1 = float(mean(_list1))
         _mean2 = float(mean(_list2))
         log_fold = _mean2 / _mean1
-        print('  log fold: ' + Colors.yellow + str(log_fold) + Colors.reset, end='')
+        if verbose:
+            print('  log fold: ' + Colors.yellow + str(log_fold) + Colors.reset, end='')
 
     if show_pvalue:
         if do_log_fold:
             result = ttest_ind(_list1, _list2, equal_var=False)
-            print(
-                '  p-value (after log): ' + Colors.blue + str(result.pvalue) + Colors.reset, end=''
-            )
+            if verbose:
+                print(
+                    '  p-value (after log): ' + Colors.blue + str(result.pvalue) + Colors.reset, end=''
+                )
         else:
             result = ttest_ind(list1, list2, equal_var=False)
-            print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
+            if verbose:
+                print('  p-value: ' + Colors.blue + str(result.pvalue) + Colors.reset, end='')
+            return result.pvalue, actual
 
     if show_auc:
         _auc = compute_auc(list1, list2)
-        print('  AUC: ' + Colors.blue + str(_auc) + Colors.reset, end='')
+        if verbose:
+            print('  AUC: ' + Colors.blue + str(_auc) + Colors.reset, end='')
 
-    print('')
+    if verbose:
+        print('')
 
 
 def get_fractions(df, column_numerator, column_denominator, cohort1, cohort2, omit_zeros=True):

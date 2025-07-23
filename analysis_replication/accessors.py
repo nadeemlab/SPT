@@ -519,8 +519,8 @@ def get_fractions(df, column_numerator, column_denominator, cohort1, cohort2, om
         omit1 = total1 - sum((df['cohort'] == cohort1) & mask)
         total2 = sum((df['cohort'] == cohort2))
         omit2 = total2 - sum((df['cohort'] == cohort2) & mask)
-        if omit1 !=0 or omit2 !=0:
-            print(f'(Omitting {omit1}/{total1} from {cohort1} and {omit2}/{total2} from {cohort2}.)')
+        # if omit1 !=0 or omit2 !=0:
+        #     print(f'(Omitting {omit1}/{total1} from {cohort1} and {omit2}/{total2} from {cohort2}.)')
     else:
         mask = True
     fractions1 = fractions[(df['cohort'] == cohort1) & mask]

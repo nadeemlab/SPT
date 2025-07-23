@@ -7,6 +7,7 @@ from typing import cast
 from itertools import product
 from itertools import combinations
 
+from pandas import concat
 from pandas import DataFrame
 from attrs import define
 from attrs import field
@@ -201,7 +202,7 @@ def _format_effect(e: float) -> str:
 def _format_p(p: float) -> str:
     return '{:>12}'.format('p = ' + '%.5f' % p if p >= 0.0001 else '{:.2E}'.format(Decimal(p)))
 
-def survey(host: str, study: str) -> None:
+def survey(host: str, study: str) -> DataFrame:
     a = Assessor(DataAccessor(study, host=host))
     b = TerminalScrollingBuffer(20)
     channels = a.access._retrieve_feature_names()
@@ -227,7 +228,7 @@ def survey(host: str, study: str) -> None:
         if re.search('distance', channel):
             return Phenotype([], [channel])
         return Phenotype([channel], [])
-    
+
     singleton_significants: list[Result] = []
     for channel, (c1, c2) in product(channels, combinations(cohorts, 2)):
         p1 = _form_single_phenotype(channel)
@@ -303,10 +304,32 @@ def survey(host: str, study: str) -> None:
     for result in sorted(ratio_significants, key=lambda r: (int(r.higher_cohort), _format_phenotype(r.case.other), _format_phenotype(r.case.phenotype))):
         print(_format_ratio(result))
     print('')
+
+    severe = Limits(1.5, 0.005, 0.2, 3.0)
+
     print('Proximity results:')
     for result in sorted(proximity_significants, key=lambda r: (int(r.higher_cohort), _format_phenotype(r.case.other), _format_phenotype(r.case.phenotype))):
-        print(_format_proximity(result))
+        if severe.acceptable(result.significance):
+            print(_format_proximity(result))
 
+    def _form_record(r: Result) -> dict[str, str | float | int]:
+        return {
+            'multiplier': r.significance.effect,
+            'p': r.significance.p,
+            'higher_cohort': r.higher_cohort,
+            'c1': r.case.cohorts[0],
+            'c2': r.case.cohorts[1],
+            'p1': _format_phenotype(r.case.phenotype),
+            'p2': _format_phenotype(r.case.other) if r.case.other else '',
+        }
+
+    df1 = DataFrame([_form_record(r) for r in singleton_significants])
+    df1['metric'] = 'fraction'
+    df2 = DataFrame([_form_record(r) for r in ratio_significants])
+    df2['metric'] = 'ratio'
+    df3 = DataFrame([_form_record(r) for r in proximity_significants if severe.acceptable(r.significance)])
+    df3['metric'] = 'proximity'
+    return concat([df1, df2, df3], axis=0)
 
 if __name__=='__main__':
     if len(sys.argv) == 2:
@@ -316,4 +339,4 @@ if __name__=='__main__':
     host = get_default_host(None)
     if host is None:
         raise RuntimeError('Could not determine API server hostname.')
-    survey(host, study)
+    df = survey(host, study)

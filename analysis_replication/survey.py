@@ -287,7 +287,7 @@ def survey(host: str, study: str) -> None:
                 qualification = f'(Probable confounding with {l} results)'
             else:
                 qualification = ''
-                ratio_significants.append(result)
+                proximity_significants.append(result)
             message = _format_proximity(result)
             message = f'Hit: {message}   {qualification}'
             b.add_line(message, sticky_header='Proximity assessment phase')

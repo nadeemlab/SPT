@@ -309,12 +309,11 @@ def survey(host: str, study: str) -> None:
 
 
 if __name__=='__main__':
-    host: str | None
     if len(sys.argv) == 2:
-        host = sys.argv[1]
+        study = sys.argv[1]
     else:
-        host = get_default_host(None)
+        raise ValueError('Supply a study name.')
+    host = get_default_host(None)
     if host is None:
-        raise RuntimeError('Could not determine API server.')
-    study = 'Bone marrow aging'
+        raise RuntimeError('Could not determine API server hostname.')
     survey(host, study)

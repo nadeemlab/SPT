@@ -266,6 +266,7 @@ class DataAccessor:
     def _add_to_cache(self, url, contents):
         if not self.caching:
             return
+        self._drop_from_cache(url)
         with connect('cache.sqlite3') as connection:
             cursor = connection.cursor()
             cursor.execute('INSERT INTO cache(url, contents) VALUES (?, ?);', (url, pickle.dumps(contents)))

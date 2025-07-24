@@ -57,6 +57,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
+    normalize_study_name,
     valid_study_name,
     ValidStudy,
     ValidPhenotypeSymbol,
@@ -922,5 +923,8 @@ def get_sqlite_dump(
     connection.__exit__(None, None, None)
     return Response(
         sqlite_db,
-        headers={"Content-Type": 'application/vnd.sqlite3'},
+        headers={
+            "Content-Type": 'application/vnd.sqlite3',
+            "Content-Disposition": f'attachment; filename="{normalize_study_name(study)}.sqlite"'
+        },
     )

@@ -234,7 +234,6 @@ class StudyAccess(SimpleReadOnlyProvider):
                     logger.info('...')
         return number_cells
 
-    @simple_instance_method_cache(maxsize=1000)
     def _get_number_cells(self) -> int:
         self.cursor.execute('SELECT * FROM all_samples_count;')
         rows = tuple(self.cursor.fetchall())

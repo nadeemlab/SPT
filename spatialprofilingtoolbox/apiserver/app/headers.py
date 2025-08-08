@@ -41,10 +41,12 @@ csp_general = ContentSecurityPolicy().default_src(
 csp_permissive = ContentSecurityPolicy().default_src(
         "'self'"
     ).script_src(
-        "'self' https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
+        "'self' https://cdn.jsdelivr.net/npm/redoc@2/bundles/redoc.standalone.js"
     ).style_src(
         "'self' 'unsafe-inline'"
-    ).object_src("'none'")
+    ).object_src(
+        "'none'"
+    ).worker_src("blob:")
 permissions_policy = PermissionsPolicy().geolocation().camera().microphone()
 
 secure_headers = Secure(**headers_parameters, csp=csp_general, permissions=permissions_policy)

@@ -1,7 +1,8 @@
 < HTTP/1.1 200 OK
 < server: uvicorn
-< content-length: 97
-< content-type: application/json
+< content-type: application/vnd.sqlite3
+< content-disposition: attachment; filename="melanoma-intralesional-il2.sqlite"
+< content-length: 331776
 < cache-control: no-store
 < cross-origin-opener-policy: same-origin
 < content-security-policy: default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'
@@ -10,5 +11,3 @@
 < referrer-policy: strict-origin-when-cross-origin
 < server: 
 < x-content-type-options: nosniff
-< x-frame-options: SAMEORIGIN
-< 

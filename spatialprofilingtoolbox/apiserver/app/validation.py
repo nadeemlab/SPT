@@ -6,12 +6,9 @@ import re
 from fastapi import Query
 from fastapi import Depends
 
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames
-
-
-COLLECTION_STRIP = re.compile(" collection: [a-z0-9-]{1,513}$")
-
 
 def abbreviate_string(string: str) -> str:
     abbreviation = string[0:40]
@@ -21,7 +18,7 @@ def abbreviate_string(string: str) -> str:
 
 
 def normalize_study_name(study: str) -> str:
-    return COLLECTION_STRIP.sub("", study).lower().replace(" ", "-")
+    return StudyCollectionNaming.strip_token(study)[0].lower().replace(' ', '-')
 
 
 async def valid_study_name(study: str = Query(min_length=3, examples=['Breast cancer IMC', 'Urothelial ICI'])) -> str:

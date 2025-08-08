@@ -28,8 +28,11 @@ table.box-diagram-array > tbody > tr > td.box-diagram-td {
   padding-right: 8px;
 }
 span.show-cells {
-  font-size: 85%;
+  font-size: 3em;
   font-style: italic;
+}
+span, td.study-td {
+  font-size: 3em;
 }
 .sample-group-color-blank {
   background: #ffffff;
@@ -50,10 +53,11 @@ span.show-cells {
 }
 span.legend-marker {
   display: inline-block;
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  margin: 3px;
+  width: 35px;
+  height: 35px;
+  border-radius: 10px;
+  margin: 2px;
+  vertical-align: bottom;
 }
 td.legend-container {
   text-align: center;

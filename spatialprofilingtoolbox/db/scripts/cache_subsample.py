@@ -36,6 +36,11 @@ def parse_args():
         default=DEFAULT_MAX,
         help='The maximum number of cells to subsample from each dataset.',
     )
+    parser.add_argument(
+        '--database-config-file',
+        nargs='?',
+        help='If supplied, will use non-interactive mode.'
+    )
     return parser.parse_args()
 
 
@@ -255,16 +260,23 @@ class InteractiveSubsampler:
         print()
 
     def _do_specified_caching(self) -> None:
+        InteractiveSubsampler.do_specified_caching(self.selected_database_config_file, self.maximum_number_cells, True)
+
+    @classmethod
+    def do_specified_caching(cls, database_config_file: str | None, maximum_number_cells: int, verbose: bool) -> None:
         def abbreviate(s: str) -> str:
-            if len(s) > 25:
-                return s[0:24] + '...'
+            if len(s) > 40:
+                return s[0:39] + '...'
             return s
-        for study in retrieve_study_names(self.selected_database_config_file):
-            self.print(f'Processing study ', 'message', end='')
-            self.print(f'{abbreviate(study)}', 'popout', end='')
-            self.print(f' ', 'message')
-            f = self.selected_database_config_file
-            Subsampler(study, f, maximum_number_cells=self.maximum_number_cells, verbose=True)
+        for study in retrieve_study_names(database_config_file):
+            InteractiveSubsampler.print(f'Processing study ', 'message', end='')
+            InteractiveSubsampler.print(f'{abbreviate(study)}', 'popout', end='')
+            InteractiveSubsampler.print(f' ', 'message')
+            f = database_config_file
+            Subsampler(study, f, maximum_number_cells=maximum_number_cells, verbose=verbose)
+
+
+            break
 
     @staticmethod
     def print(message: str, style: str | None, end: str = '\n') -> None:
@@ -289,11 +301,14 @@ class InteractiveSubsampler:
 
 def main():
     args = parse_args()
-    gui = InteractiveSubsampler(args.maximum_number_cells)
-    try:
-        gui.start()
-    except KeyboardInterrupt:
-        InteractiveSubsampler.print('\nCancelled by user request.', style='flag')
+    if args.database_config_file is not None:
+        InteractiveSubsampler.do_specified_caching(expanduser(args.database_config_file), args.maximum_number_cells, True)
+    else:
+        gui = InteractiveSubsampler(args.maximum_number_cells)
+        try:
+            gui.start()
+        except KeyboardInterrupt:
+            InteractiveSubsampler.print('\nCancelled by user request.', style='flag')
 
 
 if __name__=='__main__':

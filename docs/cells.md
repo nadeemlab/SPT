@@ -30,3 +30,30 @@ tail -c +21 payload.bin | xxd -b -c 20
 ```
 
 (The initial `tail` command strips out the header.)
+
+# Whole-study subsample aggregate
+
+A random subsample from the cells in a given study is provided to reduce overall size for whole-study
+analysis purposes. The file format for this consists of two sections, delimited by the ASCII file
+separator character (decimal 28):
+
+- JSON metadata section
+- binary section with intensity data for subsampled cells
+
+The JSON metadata section is structured as in the following example:
+
+```json
+{
+  "sample_names_alphabetical": ["ABC_001", "ABC_002", ...],
+  "subsample_sizes_same_order": [2500, 2000, ... ],
+  "channel_names": ["CD3", "CD4", ...],
+}
+```
+
+The binary section is as follows:
+
+| Byte range start | Byte range end | Number of bytes | Description                                                       | Data types                  |
+|------------------|----------------|-----------------|-------------------------------------------------------------------|-----------------------------|
+| 1                | N              | N               | The intensity values for each of the N channels, for first cell.  | Custom 8-bit [float format](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/standalone_utilities/float8.py) |
+| N+1              | 2N             | N               | The intensity values for each of the N channels, for second cell. | Custom 8-bit float format   |
+| ... | ... | ... | ... | ... |

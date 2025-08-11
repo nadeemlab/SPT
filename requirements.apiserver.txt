@@ -2,11 +2,11 @@ adiscstudies==0.11.0
 annotated-types==0.7.0
 anyio==4.10.0
 attrs==25.3.0
-boto3==1.40.5
-botocore==1.40.5
+boto3==1.40.6
+botocore==1.40.6
 certifi==2025.8.3
 cffi==1.17.1
-charset-normalizer==3.4.2
+charset-normalizer==3.4.3
 click==8.2.1
 contourpy==1.3.3
 cryptography==45.0.6
@@ -17,7 +17,7 @@ h11==0.16.0
 idna==3.10
 jinja2==3.1.6
 jmespath==1.0.1
-kiwisolver==1.4.8
+kiwisolver==1.4.9
 llvmlite==0.44.0
 markupsafe==3.0.2
 matplotlib==3.10.5

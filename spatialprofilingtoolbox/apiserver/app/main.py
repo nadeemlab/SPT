@@ -693,6 +693,24 @@ async def get_cell_data_binary_intensity(
     )
 
 
+@app.get("/cell-data-binary-intensity-whole-study-subsample")
+async def get_cell_data_binary_intensity_whole_study_subsample(
+    study: ValidStudy,
+    accept_encoding: Annotated[str, Header()] = '',
+):
+    """
+    Get cell-level marker intensity data for a subsample of all cells in the given study, in a
+    custom binary format. The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
+    """
+    if not 'br' in accept_encoding:
+        raise HTTPException(status_code=400, detail='Only brotli encoding supported.')
+    data = query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',))
+    return Response(
+        data,
+        headers={"Content-Encoding": 'br'},
+    )
+
+
 @app.get("/software-component-versions/")
 async def get_software_component_versions() -> list[SoftwareComponentVersion]:
     """

@@ -23,6 +23,7 @@ dependencies = [
     "attrs",
     "boto3",
     "botocore",
+    "cattrs",
     "jinja2",
     "numba>=0.44.0",
     "psycopg",
@@ -44,6 +45,7 @@ all = [
     "boto3",
     "botocore",
     "Brotli",
+    "cattrs",
     "cryptography",
     "dask[dataframe]",
     "dask-expr",
@@ -101,6 +103,7 @@ graphs = [
 ]
 ondemand = [
     "attrs",
+    "cattrs",
     "Brotli",
     "dask[dataframe]",
     "dask-expr",
@@ -211,6 +214,7 @@ packages = [
     "load_testing.py",
     "sync_annotations.py",
     "count_cells.py",
+    "cache_subsample.py",
 ]
 "spatialprofilingtoolbox.db.data_model" = [
     "metaschema.sql",

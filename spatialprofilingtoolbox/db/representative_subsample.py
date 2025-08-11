@@ -38,17 +38,18 @@ class Subsampler:
     def _compute_and_store(self) -> None:
         blob = bytearray()
 
-        metadata = self._form_subsample_metadata()
+        metadata, original_sample_sizes = self._form_subsample_metadata()
         blob.extend(make_converter().dumps(metadata).encode('utf-8'))
 
         file_separator = int.to_bytes(28)
         blob.extend(file_separator)
 
-        for sample_name, subsample_size in zip(
+        for sample_name, subsample_size, original in zip(
             metadata.sample_names_alphabetical,
             metadata.subsample_sizes_same_order,
+            original_sample_sizes,
         ):
-            blob.extend(self._get_subsample(sample_name, subsample_size, metadata.channel_names))
+            blob.extend(self._get_subsample(sample_name, subsample_size, original, metadata.channel_names))
 
         if self.verbose:
             logger.info('Compressing blob.')
@@ -61,13 +62,13 @@ class Subsampler:
             self.study, compressed_blob, '', blob_type, drop_first=True,
         )
 
-    def _form_subsample_metadata(self) -> SubsampleMetadata:
+    def _form_subsample_metadata(self) -> tuple[SubsampleMetadata, tuple[int, ...]]:
         with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
             s = StudyAccess(cursor).get_number_cells_by_sample(self.study, verbose=self.verbose)
         sample_names_alphabetical, sample_sizes = tuple(zip(*sorted(list(s), key=lambda pair: pair[0])))
         subsample_sizes_same_order = self._adjust_sample_sizes(sample_sizes)
         channel_names = self._get_channel_names()
-        return SubsampleMetadata(sample_names_alphabetical, subsample_sizes_same_order, channel_names)
+        return SubsampleMetadata(sample_names_alphabetical, subsample_sizes_same_order, channel_names), sample_sizes
 
     def _adjust_sample_sizes(self, sample_sizes: tuple[int, ...]) -> tuple[int, ...]:
         total = sum(list(sample_sizes))
@@ -91,17 +92,18 @@ class Subsampler:
             n = get_ordered_feature_names(cursor)
         return tuple(map(lambda channel: channel.symbol, n.names))
 
-    def _get_subsample(self, sample: str, size: int, channel_names: tuple[str, ...]) -> bytes:
+    def _get_subsample(self, sample: str, size: int, original: int, channel_names: tuple[str, ...]) -> bytes:
         if self.verbose:
-            logger.info(f'Subsampling: {sample} ({size} cells)')
+            logger.info(f'Subsampling: {sample} ({size}/{original} cells)')
         with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
             access = CellsAccess(cursor)
-            raw, _ = access.get_cells_data(sample)
-        sample_number_cells = int.from_bytes(raw[0:4])
+            compressed = access.get_cells_data_intensity(sample, accept_encoding=('br',))
+        raw = brotli.decompress(compressed)
         random.seed(10001)
-        indices = random.sample(list(range(sample_number_cells)), size)
+        indices = random.sample(list(range(original)), size)
         blob = bytearray()
         N = len(channel_names)
         for i in indices:
-            blob.extend(raw[4 + N*i: 4 + N*(i+1)])
+            position = (N + 4)*i
+            blob.extend(raw[position: position + N])
         return blob

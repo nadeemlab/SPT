@@ -61,8 +61,15 @@ class CompressedMatrixWriter:
                 cursor.close()
             logger.debug(f'Wrote expression index to database {study} .')
 
-    def _insert_blob(self, study: str | None, blob: bytearray, specimen: str, blob_type: str) -> None:
+    def _insert_blob(self, study: str | None, blob: bytearray, specimen: str, blob_type: str, drop_first: bool=False) -> None:
         with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+            if drop_first:
+                drop = '''
+                DELETE FROM
+                ondemand_studies_index
+                WHERE specimen=%s AND blob_type=%s ;
+                '''
+                cursor.execute(drop, (specimen, blob_type))
             insert_query = '''
                 INSERT INTO
                 ondemand_studies_index (

@@ -1,11 +1,14 @@
 from math import floor
+import random
 
 import brotli  # type: ignore
 from attrs import define
 from cattrs.preconf.json import make_converter
 
+from spatialprofilingtoolbox.db.accessors.feature_names import get_ordered_feature_names
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
+from spatialprofilingtoolbox.db.accessors.study import CellsAccess
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -47,10 +50,16 @@ class Subsampler:
         ):
             blob.extend(self._get_subsample(sample_name, subsample_size, metadata.channel_names))
 
+        if self.verbose:
+            logger.info('Compressing blob.')
         compressed_blob = brotli.compress(blob, quality=11, lgwin=24)
-        # CompressedMatrixWriter(None)._insert_blob(
-        #     self.study, compressed_blob, '', FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY,
-        # )
+
+        if self.verbose:
+            logger.info('Writing blob to database.')
+        blob_type = FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
+        CompressedMatrixWriter(self.database_config_file)._insert_blob(
+            self.study, compressed_blob, '', blob_type, drop_first=True,
+        )
 
     def _form_subsample_metadata(self) -> SubsampleMetadata:
         with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
@@ -72,18 +81,27 @@ class Subsampler:
             original = sample_sizes[index]
             if value < original:
                 approximates[index] = value + 1
+            index = (index + 1) % len(approximates)
         if not sum(approximates) == self.maximum_number_cells:
             logger.error('Something was wrong with subsampling logic, too many cells selected.')
         return tuple(approximates)
 
     def _get_channel_names(self) -> tuple[str, ...]:
-        return ()
+        with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
+            n = get_ordered_feature_names(cursor)
+        return tuple(map(lambda channel: channel.symbol, n.names))
 
     def _get_subsample(self, sample: str, size: int, channel_names: tuple[str, ...]) -> bytes:
-
-        #     blob.extend(int(histological_structure_id).to_bytes(4))
-        #     for value in data_array[histological_structure_id]:
-        #         encoded = encode_float8_with_clipping(value)
-        #         blob.extend(encoded)
-
-        return bytes()
+        if self.verbose:
+            logger.info(f'Subsampling: {sample} ({size} cells)')
+        with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
+            access = CellsAccess(cursor)
+            raw, _ = access.get_cells_data(sample)
+        sample_number_cells = int.from_bytes(raw[0:4])
+        random.seed(10001)
+        indices = random.sample(list(range(sample_number_cells)), size)
+        blob = bytearray()
+        N = len(channel_names)
+        for i in indices:
+            blob.extend(raw[4 + N*i: 4 + N*(i+1)])
+        return blob

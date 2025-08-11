@@ -170,7 +170,7 @@ class InteractiveSubsampler:
         quit_requested = False
         while not quit_requested:
             quit_requested = self._cache_loop()
-        self.print('Exiting.', style='message')
+        self.print('Finished.', style='message')
 
     def _cache_loop(self) -> bool:
         for step in (
@@ -255,15 +255,16 @@ class InteractiveSubsampler:
         print()
 
     def _do_specified_caching(self) -> None:
+        def abbreviate(s: str) -> str:
+            if len(s) > 25:
+                return s[0:24] + '...'
+            return s
         for study in retrieve_study_names(self.selected_database_config_file):
             self.print(f'Processing study ', 'message', end='')
-            self.print(f'{self.selected_database_config_file}', 'popout', end='')
+            self.print(f'{abbreviate(study)}', 'popout', end='')
             self.print(f' ', 'message')
             f = self.selected_database_config_file
             Subsampler(study, f, maximum_number_cells=self.maximum_number_cells, verbose=True)
-
-
-            break
 
     @staticmethod
     def print(message: str, style: str | None, end: str = '\n') -> None:

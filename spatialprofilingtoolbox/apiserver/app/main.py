@@ -693,7 +693,7 @@ async def get_cell_data_binary_intensity(
     )
 
 
-@app.get("/cell-data-binary-intensity-whole-study-subsample")
+@app.get("/cell-data-binary-intensity-whole-study-subsample/")
 async def get_cell_data_binary_intensity_whole_study_subsample(
     study: ValidStudy,
     accept_encoding: Annotated[str, Header()] = '',
@@ -703,7 +703,7 @@ async def get_cell_data_binary_intensity_whole_study_subsample(
     custom binary format. The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
     """
     if not 'br' in accept_encoding:
-        raise HTTPException(status_code=400, detail='Only brotli encoding supported.')
+        raise HTTPException(status_code=400, detail=f'Only brotli encoding supported. Got: "{accept_encoding}"')
     data = query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',))
     return Response(
         data,

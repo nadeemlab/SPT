@@ -8,11 +8,12 @@ anyio==4.10.0
 array-api-compat==1.12.0
 asciitree==0.3.3
 attrs==25.3.0
-blosc2==3.6.1
+blosc2==3.7.0
 bokeh==3.7.3
-boto3==1.40.6
-botocore==1.40.6
+boto3==1.40.7
+botocore==1.40.7
 brotli==1.1.0
+cattrs==25.1.1
 certifi==2025.8.3
 cffi==1.17.1
 charset-normalizer==3.4.3
@@ -59,7 +60,7 @@ msgpack==1.1.1
 multidict==6.6.4
 multipledispatch==1.0.0
 multiscale-spatial-image==1.0.1
-narwhals==2.1.0
+narwhals==2.1.1
 natsort==8.4.0
 ndindex==1.10.0
 networkx==3.5
@@ -135,7 +136,7 @@ umap-learn==0.5.9.post2
 urllib3==2.5.0
 uvicorn==0.35.0
 validators==0.35.0
-wrapt==1.17.2
+wrapt==1.17.3
 xarray==2024.9.0
 xarray-dataclasses==1.9.1
 xarray-datatree==0.0.14

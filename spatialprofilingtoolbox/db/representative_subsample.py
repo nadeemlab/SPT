@@ -15,10 +15,19 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 @define
+class SubsampleCount:
+    specimen: str
+    count: int
+
+@define
+class ChannelThreshold:
+    name: str
+    threshold: float
+
+@define
 class SubsampleMetadata:
-    sample_names_alphabetical: tuple[str, ...]
-    subsample_sizes_same_order: tuple[int, ...]
-    channel_names: tuple[str, ...]
+    subsample_counts: tuple[SubsampleCount, ...]
+    channel_order_and_thresholds: tuple[ChannelThreshold, ...]
 
 DEFAULT_MAX = 1000000
 
@@ -44,12 +53,12 @@ class Subsampler:
         file_separator = int.to_bytes(28)
         blob.extend(file_separator)
 
-        for sample_name, subsample_size, original in zip(
-            metadata.sample_names_alphabetical,
-            metadata.subsample_sizes_same_order,
+        for subsample_count, original in zip(
+            metadata.subsample_counts,
             original_sample_sizes,
         ):
-            blob.extend(self._get_subsample(sample_name, subsample_size, original, metadata.channel_names))
+            sample_name, subsample_size = subsample_count.specimen, subsample_count.count
+            blob.extend(self._get_subsample(sample_name, subsample_size, original, len(metadata.channel_order_and_thresholds)))
 
         if self.verbose:
             logger.info('Compressing blob.')
@@ -68,7 +77,15 @@ class Subsampler:
         sample_names_alphabetical, sample_sizes = tuple(zip(*sorted(list(s), key=lambda pair: pair[0])))
         subsample_sizes_same_order = self._adjust_sample_sizes(sample_sizes)
         channel_names = self._get_channel_names()
-        return SubsampleMetadata(sample_names_alphabetical, subsample_sizes_same_order, channel_names), sample_sizes
+        subsample_counts = tuple(map(
+            lambda pair: SubsampleCount(*pair),
+            zip(sample_names_alphabetical, subsample_sizes_same_order),
+        ))
+        channel_order_and_thresholds = tuple(map(
+            lambda name: ChannelThreshold(name, 0.5),
+            channel_names,
+        ))
+        return SubsampleMetadata(subsample_counts, channel_order_and_thresholds), sample_sizes
 
     def _adjust_sample_sizes(self, sample_sizes: tuple[int, ...]) -> tuple[int, ...]:
         total = sum(list(sample_sizes))
@@ -92,7 +109,7 @@ class Subsampler:
             n = get_ordered_feature_names(cursor)
         return tuple(map(lambda channel: channel.symbol, n.names))
 
-    def _get_subsample(self, sample: str, size: int, original: int, channel_names: tuple[str, ...]) -> bytes:
+    def _get_subsample(self, sample: str, size: int, original: int, number_channels: int) -> bytes:
         if self.verbose:
             logger.info(f'Subsampling: {sample} ({size}/{original} cells)')
         with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
@@ -102,7 +119,7 @@ class Subsampler:
         random.seed(10001)
         indices = random.sample(list(range(original)), size)
         blob = bytearray()
-        N = len(channel_names)
+        N = number_channels
         for i in indices:
             position = (N + 4)*i
             blob.extend(raw[position: position + N])

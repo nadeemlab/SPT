@@ -6,7 +6,7 @@ function consider_exit() {
     fi
 }
 
-spt db cache-subsample 106 --database-config-file .spt_db.config.container;
+spt db cache-subsample 106 --database-config-file .spt_db.config.container --only-uncreated;
 source module_tests/downsampled_retrieval.sh
 
 study='Melanoma+intralesional+IL2'

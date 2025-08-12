@@ -41,6 +41,11 @@ def parse_args():
         nargs='?',
         help='If supplied, will use non-interactive mode.'
     )
+    parser.add_argument(
+        '--only-uncreated',
+        action='store_true',
+        help='If supplied, only studies with no current cached downsampling will be considered.'
+    )
     return parser.parse_args()
 
 
@@ -55,11 +60,13 @@ class InteractiveSubsampler:
     connectables: tuple[str, ...]
     credentials: DBCredentials | None
     maximum_number_cells: int
+    only_uncreated: bool
 
-    def __init__(self, maximum_number_cells: int):
+    def __init__(self, maximum_number_cells: int, only_uncreated: bool):
         self.selected_database_config_file = None
         self.connectables = ()
         self.maximum_number_cells = maximum_number_cells
+        self.only_uncreated = only_uncreated
 
     def start(self) -> None:
         self._initial_assessment_of_available_options()
@@ -260,23 +267,23 @@ class InteractiveSubsampler:
         print()
 
     def _do_specified_caching(self) -> None:
-        InteractiveSubsampler.do_specified_caching(self.selected_database_config_file, self.maximum_number_cells, True)
+        InteractiveSubsampler.do_specified_caching(self.selected_database_config_file, self.maximum_number_cells, self.only_uncreated, True)
 
     @classmethod
-    def do_specified_caching(cls, database_config_file: str | None, maximum_number_cells: int, verbose: bool) -> None:
+    def do_specified_caching(cls, database_config_file: str | None, maximum_number_cells: int, only_uncreated: bool, verbose: bool) -> None:
         def abbreviate(s: str) -> str:
             if len(s) > 40:
                 return s[0:39] + '...'
             return s
         for study in retrieve_study_names(database_config_file):
+            if only_uncreated and Subsampler.cache_exists(study, database_config_file):
+                InteractiveSubsampler.print(f'Skipping "{study}" because cache exists.', 'message')
+                continue
             InteractiveSubsampler.print(f'Processing study ', 'message', end='')
             InteractiveSubsampler.print(f'{abbreviate(study)}', 'popout', end='')
             InteractiveSubsampler.print(f' ', 'message')
             f = database_config_file
             Subsampler(study, f, maximum_number_cells=maximum_number_cells, verbose=verbose)
-
-
-            break
 
     @staticmethod
     def print(message: str, style: str | None, end: str = '\n') -> None:
@@ -302,9 +309,9 @@ class InteractiveSubsampler:
 def main():
     args = parse_args()
     if args.database_config_file is not None:
-        InteractiveSubsampler.do_specified_caching(expanduser(args.database_config_file), args.maximum_number_cells, True)
+        InteractiveSubsampler.do_specified_caching(expanduser(args.database_config_file), args.maximum_number_cells, args.only_uncreated, True)
     else:
-        gui = InteractiveSubsampler(args.maximum_number_cells)
+        gui = InteractiveSubsampler(args.maximum_number_cells, args.only_uncreated)
         try:
             gui.start()
         except KeyboardInterrupt:

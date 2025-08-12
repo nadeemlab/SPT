@@ -81,6 +81,22 @@ class CompressedMatrixWriter:
             cursor.execute(insert_query, (specimen, blob_type, blob))
             cursor.close()
 
+    def blob_exists(self, study: str, specimen: str, blob_type: str) -> bool:
+        with DBCursor(database_config_file=self.database_config_file, study=study) as cursor:
+            query = '''
+            SELECT COUNT(*) FROM
+            ondemand_studies_index
+            WHERE specimen=%s AND blob_type=%s ;
+            '''
+            cursor.execute(query, (specimen, blob_type))
+            count = tuple(cursor.fetchall())
+        if count[0][0] > 1:
+            logger.error(f'ondemand_studies_index is corrupt, multipe values for specimen/blobtype {(specimen, blob_type)}')
+            return True
+        if count[0][0] == 1:
+            return True
+        return False
+
     def _write_intensities_data_array_to_db(
         self,
         data_array: dict[int, tuple[float, ...]],

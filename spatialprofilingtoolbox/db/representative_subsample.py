@@ -43,6 +43,11 @@ class Subsampler:
         self.verbose = verbose
         self._compute_and_store()
 
+    @classmethod
+    def cache_exists(cls, study: str, database_config_file: str | None) -> bool:
+        blob_type = FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
+        return CompressedMatrixWriter(database_config_file).blob_exists(study, '', blob_type)
+
     def _compute_and_store(self) -> None:
         blob = bytearray()
 

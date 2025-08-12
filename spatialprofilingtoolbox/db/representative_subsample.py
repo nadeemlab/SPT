@@ -4,7 +4,10 @@ import random
 import brotli  # type: ignore
 from attrs import define
 from cattrs.preconf.json import make_converter
+from numpy import uint64 as np_int64
 
+from spatialprofilingtoolbox.ondemand.computers.counts_computer import CountsComputer
+from spatialprofilingtoolbox.standalone_utilities.float8 import decode as decode8
 from spatialprofilingtoolbox.db.accessors.feature_names import get_ordered_feature_names
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
@@ -15,19 +18,15 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 @define
-class SubsampleCount:
+class SubsampleCountAndThresholds:
     specimen: str
     count: int
-
-@define
-class ChannelThreshold:
-    name: str
-    threshold: float
+    thresholds: dict[str, float]
 
 @define
 class SubsampleMetadata:
-    subsample_counts: tuple[SubsampleCount, ...]
-    channel_order_and_thresholds: tuple[ChannelThreshold, ...]
+    subsample_counts: tuple[SubsampleCountAndThresholds, ...]
+    channel_order: tuple[str, ...]
 
 DEFAULT_MAX = 1000000
 
@@ -58,7 +57,7 @@ class Subsampler:
             original_sample_sizes,
         ):
             sample_name, subsample_size = subsample_count.specimen, subsample_count.count
-            blob.extend(self._get_subsample(sample_name, subsample_size, original, len(metadata.channel_order_and_thresholds)))
+            blob.extend(self._get_subsample(sample_name, subsample_size, original, len(metadata.channel_order)))
 
         if self.verbose:
             logger.info('Compressing blob.')
@@ -76,16 +75,68 @@ class Subsampler:
             s = StudyAccess(cursor).get_number_cells_by_sample(self.study, verbose=self.verbose)
         sample_names_alphabetical, sample_sizes = tuple(zip(*sorted(list(s), key=lambda pair: pair[0])))
         subsample_sizes_same_order = self._adjust_sample_sizes(sample_sizes)
-        channel_names = self._get_channel_names()
+        channel_order = self._get_channel_names()
+        thresholds = self._determine_thresholds(sample_names_alphabetical, channel_order)
         subsample_counts = tuple(map(
-            lambda pair: SubsampleCount(*pair),
-            zip(sample_names_alphabetical, subsample_sizes_same_order),
+            lambda args: SubsampleCountAndThresholds(*args),
+            zip(sample_names_alphabetical, subsample_sizes_same_order, thresholds),
         ))
-        channel_order_and_thresholds = tuple(map(
-            lambda name: ChannelThreshold(name, 0.5),
-            channel_names,
-        ))
-        return SubsampleMetadata(subsample_counts, channel_order_and_thresholds), sample_sizes
+        return SubsampleMetadata(subsample_counts, channel_order), sample_sizes
+
+    def _determine_thresholds(
+        self,
+        samples: tuple[str, ...],
+        channel_names: tuple[str, ...],
+    ) -> list[dict[str, float]]:
+        t: list[dict[str, float]] = []
+        with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
+            access = CellsAccess(cursor)
+            for sample in samples:
+                compressed = access.get_cells_data_intensity(sample, accept_encoding=('br',))
+                intensities = brotli.decompress(compressed)
+                compressed, _ = access.get_cells_data(sample, accept_encoding=('br',))
+                phenotypes = brotli.decompress(compressed)
+                t.append(self._determine_thresholds_one_sample(intensities, phenotypes, channel_names))
+        return t
+
+    def _determine_thresholds_one_sample(self, intensities: bytes, phenotypes: bytes, channel_names: tuple[str, ...]) -> dict[str, float]:
+        sample_number_cells = int.from_bytes(phenotypes[0:4])
+        header_offset = 20
+        row_width = 20
+        N = len(channel_names)
+        low_values: dict[str, list[float]] = {n: [] for n in channel_names}
+        high_values: dict[str, list[float]] = {n: [] for n in channel_names}
+        signatures = {n: CountsComputer._compute_signature((n,), channel_names) for n in channel_names}
+        for i in range(sample_number_cells):
+            position1 = header_offset + i*row_width + 12
+            mask_size = 8
+            phenotype_mask_i = np_int64(int.from_bytes(
+                phenotypes[position1: position1 + mask_size], byteorder='little'
+            ))
+            position2 = (N + 4)*i
+            intensities_i = intensities[position2: position2 + N]
+            for j, n in enumerate(channel_names):
+                value = decode8(int.to_bytes(intensities_i[j]))
+                if phenotype_mask_i & signatures[n] == signatures[n]:
+                    high_values[n].append(value)
+                else:
+                    low_values[n].append(value)            
+        return {n: self._aggregate_low_high_values(low_values[n], high_values[n]) for n in channel_names}
+
+    def _aggregate_low_high_values(self, low: list[float], high: list[float]) -> float:
+        """
+        Reconstructs a threshold value dividing low and high values, using the max of the lows
+        and the min of the highs.
+        """
+        if len(high) == 0 and len(low) == 0:
+            message = 'No values recorded when iterating over cells for a given phenotype.'
+            logger.error(message)
+            raise ValueError(message)
+        if len(high) == 0:
+            return max(low)
+        if len(low) == 0:
+            return min(high)
+        return (max(low) + min(high)) / 2
 
     def _adjust_sample_sizes(self, sample_sizes: tuple[int, ...]) -> tuple[int, ...]:
         total = sum(list(sample_sizes))

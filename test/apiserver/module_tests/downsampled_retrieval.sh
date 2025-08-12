@@ -18,7 +18,7 @@ function get_downsampled() {
     head -c $offset response_decompressed.bin  | python -m json.tool > metadata.json
     echo "Saved metadata.json"
 
-    number_channels=$(jq '.channel_order_and_thresholds | length' metadata.json)
+    number_channels=$(jq '.channel_order | length' metadata.json)
 
     # Save readable representation of binary section
     offset2=$(( offset + 2 ))

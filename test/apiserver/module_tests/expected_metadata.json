@@ -1,0 +1,138 @@
+{
+    "subsample_counts": [
+        {
+            "specimen": "lesion 0_1",
+            "count": 16
+        },
+        {
+            "specimen": "lesion 0_2",
+            "count": 15
+        },
+        {
+            "specimen": "lesion 0_3",
+            "count": 15
+        },
+        {
+            "specimen": "lesion 6_1",
+            "count": 15
+        },
+        {
+            "specimen": "lesion 6_2",
+            "count": 15
+        },
+        {
+            "specimen": "lesion 6_3",
+            "count": 15
+        },
+        {
+            "specimen": "lesion 6_4",
+            "count": 15
+        }
+    ],
+    "channel_order_and_thresholds": [
+        {
+            "name": "B2M",
+            "threshold": 0.5
+        },
+        {
+            "name": "B7H3",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD68",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD8",
+            "threshold": 0.5
+        },
+        {
+            "name": "DAPI",
+            "threshold": 0.5
+        },
+        {
+            "name": "FOXP3",
+            "threshold": 0.5
+        },
+        {
+            "name": "IDO1",
+            "threshold": 0.5
+        },
+        {
+            "name": "KI67",
+            "threshold": 0.5
+        },
+        {
+            "name": "LAG3",
+            "threshold": 0.5
+        },
+        {
+            "name": "MHCI",
+            "threshold": 0.5
+        },
+        {
+            "name": "MHCII",
+            "threshold": 0.5
+        },
+        {
+            "name": "MRC1",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD14",
+            "threshold": 0.5
+        },
+        {
+            "name": "PD1",
+            "threshold": 0.5
+        },
+        {
+            "name": "PDL1",
+            "threshold": 0.5
+        },
+        {
+            "name": "S100B",
+            "threshold": 0.5
+        },
+        {
+            "name": "SOX10",
+            "threshold": 0.5
+        },
+        {
+            "name": "TGM2",
+            "threshold": 0.5
+        },
+        {
+            "name": "TIM3",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD163",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD20",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD25",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD27",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD3",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD4",
+            "threshold": 0.5
+        },
+        {
+            "name": "CD56",
+            "threshold": 0.5
+        }
+    ]
+}

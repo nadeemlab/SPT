@@ -40,7 +40,7 @@ separator character (decimal 28):
 - JSON metadata section
 - binary section with intensity data for subsampled cells
 
-The JSON metadata section is structured as in the following example (exact model is [here](spatialprofilingtoolbox/db/representative_subsample.py)):
+The JSON metadata section is structured as in the following example (exact model is [here](../spatialprofilingtoolbox/db/representative_subsample.py)):
 
 ```json
 {

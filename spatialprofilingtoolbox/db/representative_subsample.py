@@ -92,6 +92,7 @@ class Subsampler:
         with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
             access = CellsAccess(cursor)
             for sample in samples:
+                logger.info(f'Determing thresholds for {sample}.')
                 compressed = access.get_cells_data_intensity(sample, accept_encoding=('br',))
                 intensities = brotli.decompress(compressed)
                 compressed, _ = access.get_cells_data(sample, accept_encoding=('br',))

@@ -47,23 +47,27 @@ The JSON metadata section is structured as in the following example (exact model
   "subsample_counts": [
     {
       "specimen": "ABC_001",
-      "count": 2500
+      "count": 2500,
+      "thresholds": {
+        "CD3": 0.6,
+        "CD4": 0.4,
+        ...
+      }
     },
     {
       "specimen": "ABC_002",
-      "count": 2000
+      "count": 2000,
+      "thresholds": {
+        "CD3": 0.3,
+        "CD4": 0.3,
+        ...
+      }
     },
     ...
   ],
-  "channel_order_and_thresholds": [
-    {
-      "name": "CD3",
-      "threshold": 0.6,
-    },
-    {
-      "name": "CD4",
-      "threshold": 0.4
-    },
+  "channel_order": [
+    "CD3",
+    "CD4",
     ...
   ]
 }

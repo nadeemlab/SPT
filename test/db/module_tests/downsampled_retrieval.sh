@@ -11,7 +11,7 @@ function get_downsampled() {
     fs=$(xxd -r <<<'0 1c')
 
     # Locate file separator
-    offset=$(grep --byte-offset -o -a "$fs" response_decompressed.bin | cut -f1 -d':')
+    offset=$(grep --byte-offset -o -a "$fs" response_decompressed.bin | head -n1 | cut -f1 -d':')
     echo "Offset: $offset"
 
     # Save JSON metadata section

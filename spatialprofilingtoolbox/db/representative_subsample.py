@@ -13,6 +13,7 @@ from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
 from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
 from spatialprofilingtoolbox.db.accessors.cells import NoContinuousIntensitiesError
+from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -42,16 +43,29 @@ class Subsampler:
         self.database_config_file = database_config_file
         self.maximum_number_cells = maximum_number_cells
         self.verbose = verbose
-        try:
-            self._compute_and_store()
-        except NoContinuousIntensitiesError as error:
-            logger.error(error.message)
-            logger.error(f'Cannot create continuous intensities downsample, skipping {study}')
+        if not self._continuous_intensity_example_available():
+            return
+        self._compute_and_store()
 
     @classmethod
     def cache_exists(cls, study: str, database_config_file: str | None) -> bool:
         blob_type = FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
         return CompressedMatrixWriter(database_config_file).blob_exists(study, '', blob_type)
+
+    def _continuous_intensity_example_available(self) -> bool:
+        with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
+            cursor.execute('SELECT specimen FROM ondemand_studies_index WHERE LENGTH(specimen)>0 AND specimen!=%s LIMIT 1;', (VIRTUAL_SAMPLE,))
+            samples = tuple(cursor.fetchall())
+            if len(samples) == 0:
+                return False
+            sample = samples[0][0]
+            access = CellsAccess(cursor)
+            try:
+                _ = access.get_cells_data_intensity(sample, accept_encoding=('br',))
+            except NoContinuousIntensitiesError as error:
+                logger.error(error.message)
+                return False
+        return True
 
     def _compute_and_store(self) -> None:
         blob = bytearray()

@@ -24,4 +24,12 @@ function get_downsampled() {
     offset2=$(( offset + 2 ))
     tail -c +$offset2 response_decompressed.bin | xxd -b -c $number_channels > rows.txt
     echo "Saved rows.txt"
+
+    # Retrieve metadata portion directly
+    curl "http://$server/whole-study-subsample-metadata/?study=$study" | python -m json.tool > metadata_direct.json
+    echo "Saved metadata_direct.json"
+
+    # Retrieve binary portion directly
+    curl "http://$server/whole-study-subsample-binary/?study=$study" xxd -b -c $number_channels > rows_direct.txt
+    echo "Saved rows_direct.txt"
 }

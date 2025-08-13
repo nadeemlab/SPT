@@ -2,9 +2,8 @@ from math import floor
 import random
 
 import brotli  # type: ignore
-from attrs import define
-from cattrs.preconf.json import make_converter
 from numpy import uint64 as np_int64
+from pydantic import BaseModel
 
 from spatialprofilingtoolbox.ondemand.computers.counts_computer import CountsComputer
 from spatialprofilingtoolbox.standalone_utilities.float8 import decode as decode8
@@ -19,14 +18,12 @@ from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENS
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
-@define
-class SubsampleCountAndThresholds:
+class SubsampleCountAndThresholds(BaseModel):
     specimen: str
     count: int
     thresholds: dict[str, float]
 
-@define
-class SubsampleMetadata:
+class SubsampleMetadata(BaseModel):
     subsample_counts: tuple[SubsampleCountAndThresholds, ...]
     channel_order: tuple[str, ...]
 
@@ -71,7 +68,7 @@ class Subsampler:
         blob = bytearray()
 
         metadata, original_sample_sizes = self._form_subsample_metadata()
-        blob.extend(make_converter().dumps(metadata).encode('utf-8'))
+        blob.extend(metadata.model_dump_json().encode('utf-8'))
 
         file_separator = int.to_bytes(28)
         blob.extend(file_separator)
@@ -102,10 +99,14 @@ class Subsampler:
         channel_order = self._get_channel_names()
         thresholds = self._determine_thresholds(sample_names_alphabetical, channel_order)
         subsample_counts = tuple(map(
-            lambda args: SubsampleCountAndThresholds(*args),
+            lambda args: SubsampleCountAndThresholds(
+                specimen=args[0],
+                count=args[1],
+                thresholds=args[2],
+            ),
             zip(sample_names_alphabetical, subsample_sizes_same_order, thresholds),
         ))
-        return SubsampleMetadata(subsample_counts, channel_order), sample_sizes
+        return SubsampleMetadata(subsample_counts=subsample_counts, channel_order=channel_order), sample_sizes
 
     def _determine_thresholds(
         self,

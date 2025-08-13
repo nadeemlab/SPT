@@ -12,16 +12,19 @@ from fastapi import Header, Response, Request
 from fastapi import Query
 from fastapi import HTTPException
 import matplotlib.pyplot as plt  # type: ignore
-
 import jwt
-
 from pydantic import BaseModel
+from pydantic_core import from_json
+from brotli import compress as brotli_compress  # type: ignore
+from brotli import decompress as brotli_decompress  # type: ignore
 
 from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import finding_fields
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import Finding
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
+from spatialprofilingtoolbox.db.accessors.cells import NoContinuousIntensitiesError
+from spatialprofilingtoolbox.db.representative_subsample import SubsampleMetadata
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
@@ -696,7 +699,7 @@ async def get_cell_data_binary_intensity(
 @app.get("/cell-data-binary-intensity-whole-study-subsample/")
 async def get_cell_data_binary_intensity_whole_study_subsample(
     study: ValidStudy,
-    accept_encoding: Annotated[str, Header()] = '',
+    accept_encoding: Annotated[str, Header()] = 'br',
 ):
     """
     Get cell-level marker intensity data for a subsample of all cells in the given study, in a
@@ -704,11 +707,61 @@ async def get_cell_data_binary_intensity_whole_study_subsample(
     """
     if not 'br' in accept_encoding:
         raise HTTPException(status_code=400, detail=f'Only brotli encoding supported. Got: "{accept_encoding}"')
-    data = query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',))
+    try:
+        data = query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',))
+    except NoContinuousIntensitiesError as error:
+        logger.error(error.message)
+        raise HTTPException(status_code=404, detail=f'Continuous intensity data not available for this study.')
     return Response(
         data,
         headers={"Content-Encoding": 'br'},
     )
+
+
+@app.get("/whole-study-subsample-binary/")
+async def get_whole_study_subsample_binary(
+    study: ValidStudy,
+    accept_encoding: Annotated[str, Header()] = 'br',
+):
+    """
+    Convenience accessor for binary portion of cell-data-binary-intensity-whole-study-subsample response.
+    """
+    try:
+        data = brotli_decompress(query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',)))
+    except NoContinuousIntensitiesError as error:
+        logger.error(error.message)
+        raise HTTPException(status_code=404, detail=f'Continuous intensity data not available for this study.')
+    offset = cast(int, locate_offset(data))
+    data = brotli_compress(data[offset+1:], quality=11, lgwin=24)
+    return Response(
+        data,
+        headers={"Content-Encoding": 'br'},
+    )
+
+
+@app.get("/whole-study-subsample-metadata/")
+async def get_whole_study_subsample_metadata(
+    study: ValidStudy,
+) -> SubsampleMetadata:
+    """
+    Convenience accessor for metadata portion of cell-data-binary-intensity-whole-study-subsample response.
+    """
+    try:
+        data = brotli_decompress(query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',)))
+    except NoContinuousIntensitiesError as error:
+        logger.error(error.message)
+        raise HTTPException(status_code=404, detail=f'Continuous intensity data not available for this study.')
+    offset = cast(int, locate_offset(data))
+    metadata_json = data[0:offset].decode('utf-8')
+    return SubsampleMetadata.model_validate(from_json(metadata_json))
+
+
+def locate_offset(raw: bytes) -> int | None:
+    file_separator = int.to_bytes(28)
+    for i in raw:
+        if raw[i] == file_separator:
+            return i
+    return None
 
 
 @app.get("/software-component-versions/")

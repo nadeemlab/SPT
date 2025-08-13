@@ -78,6 +78,7 @@ all = [
 apiserver = [
     "adiscstudies",
     "attrs",
+    "Brotli",
     "cryptography",
     "fastapi",
     "matplotlib",

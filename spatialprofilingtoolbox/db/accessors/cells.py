@@ -23,8 +23,8 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 logger = colorized_logger(__name__)
 
 class NoContinuousIntensitiesError(ValueError):
-    def __init__(self, sample: str):
-        message = f'No continuous intensities available for sample: {sample}'
+    def __init__(self, context: str):
+        message = f'No continuous intensities available for: {context}'
         super().__init__(message)
         self.message = message
 
@@ -101,7 +101,7 @@ class CellsAccess(SimpleReadOnlyProvider):
             raise ValueError('Only "br" (brotli) encoding is supported.')
         compressed = self._retrieve_blob('', FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY)
         if compressed is None:
-            raise ValueError(f'No subsampled whole-study intensity data available for study: {study}')
+            raise NoContinuousIntensitiesError(study)
         return cast(bytes, compressed[0])
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:

@@ -26,10 +26,12 @@ function get_downsampled() {
     echo "Saved rows.txt"
 
     # Retrieve metadata portion directly
-    curl "http://$server/whole-study-subsample-metadata/?study=$study" | python -m json.tool > metadata_direct.json
+    curl "http://$server/whole-study-subsample-metadata/?study=$study" > y.json
+    cat y.json | python -m json.tool > metadata_direct.json
     echo "Saved metadata_direct.json"
 
     # Retrieve binary portion directly
-    curl "http://$server/whole-study-subsample-binary/?study=$study" xxd -b -c $number_channels > rows_direct.txt
+    curl "http://$server/whole-study-subsample-binary/?study=$study" --header "Accept-Encoding: br" | brotli -d - > x.bin
+    cat x.bin | xxd -b -c $number_channels > rows_direct.txt
     echo "Saved rows_direct.txt"
 }

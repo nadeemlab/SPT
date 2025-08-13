@@ -759,7 +759,7 @@ async def get_whole_study_subsample_metadata(
 def locate_offset(raw: bytes) -> int | None:
     file_separator = int.to_bytes(28)
     for i in range(len(raw)):
-        if raw[i] == file_separator:
+        if raw[i:i+1] == file_separator:
             return i
     return None
 

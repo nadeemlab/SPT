@@ -20,11 +20,20 @@ if [[ "$status" != "0" ]]; then echo 'Something wrong with metadata.json.'; cat 
 rm metadata.json;
 consider_exit $status
 
-
-cp rows.txt module_tests/expected_rows.txt
-
 diff module_tests/expected_rows.txt rows.txt
 status=$?
 if [[ "$status" != "0" ]]; then echo 'Something wrong with rows.txt.'; cat rows.txt; fi;
 rm rows.txt;
+consider_exit $status
+
+diff module_tests/expected_metadata.json metadata_direct.json
+status=$?
+if [[ "$status" != "0" ]]; then echo 'Something wrong with metadata_direct.json.'; cat metadata_direct.json; fi;
+rm metadata_direct.json;
+consider_exit $status
+
+diff module_tests/expected_rows.txt rows_direct.txt
+status=$?
+if [[ "$status" != "0" ]]; then echo 'Something wrong with rows_direct.txt.'; cat rows_direct.txt; fi;
+rm rows_direct.txt;
 consider_exit $status

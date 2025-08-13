@@ -22,6 +22,11 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
+class NoContinuousIntensitiesError(ValueError):
+    def __init__(self, sample: str):
+        message = f'No continuous intensities available for sample: {sample}'
+        super().__init__(message)
+        self.message = message
 
 
 class CellsAccess(SimpleReadOnlyProvider):
@@ -68,9 +73,12 @@ class CellsAccess(SimpleReadOnlyProvider):
         compressed = self._retrieve_blob(sample, FEATURE_MATRIX_WITH_INTENSITIES)
         if compressed is None:
             self.cursor.execute('SELECT specimen, blob_type FROM ondemand_studies_index;')
-            for row in tuple(self.cursor.fetchall()):
+            rows = tuple(self.cursor.fetchall())
+            for row in rows[0:min(len(rows), 20)]:
                 print(row)
-            raise ValueError(f'No intensity data available for: {sample}')
+            if len(rows) > 20:
+                print('...')
+            raise NoContinuousIntensitiesError(sample)
         return cast(bytes, compressed[0])
 
     def _retrieve_blob(self, sample: str, blob_type: str) -> tuple[bytes] | None:

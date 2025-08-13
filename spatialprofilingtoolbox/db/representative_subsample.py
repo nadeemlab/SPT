@@ -11,7 +11,8 @@ from spatialprofilingtoolbox.standalone_utilities.float8 import decode as decode
 from spatialprofilingtoolbox.db.accessors.feature_names import get_ordered_feature_names
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
-from spatialprofilingtoolbox.db.accessors.study import CellsAccess
+from spatialprofilingtoolbox.db.accessors.cells import CellsAccess
+from spatialprofilingtoolbox.db.accessors.cells import NoContinuousIntensitiesError
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
@@ -41,7 +42,11 @@ class Subsampler:
         self.database_config_file = database_config_file
         self.maximum_number_cells = maximum_number_cells
         self.verbose = verbose
-        self._compute_and_store()
+        try:
+            self._compute_and_store()
+        except NoContinuousIntensitiesError as error:
+            logger.error(error.message)
+            logger.error(f'Cannot create continuous intensities downsample, skipping {study}')
 
     @classmethod
     def cache_exists(cls, study: str, database_config_file: str | None) -> bool:

@@ -10,8 +10,8 @@ asciitree==0.3.3
 attrs==25.3.0
 blosc2==3.7.0
 bokeh==3.7.3
-boto3==1.40.8
-botocore==1.40.8
+boto3==1.40.9
+botocore==1.40.9
 brotli==1.1.0
 cattrs==25.1.1
 certifi==2025.8.3

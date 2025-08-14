@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from spatialprofilingtoolbox.ondemand.computers.counts_computer import CountsComputer
 from spatialprofilingtoolbox.standalone_utilities.float8 import decode as decode8
+from spatialprofilingtoolbox.standalone_utilities.float8 import encode as encode8
 from spatialprofilingtoolbox.db.accessors.feature_names import get_ordered_feature_names
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.accessors.study import StudyAccess
@@ -21,7 +22,7 @@ logger = colorized_logger(__name__)
 class SubsampleCountAndThresholds(BaseModel):
     specimen: str
     count: int
-    thresholds: dict[str, float]
+    thresholds: tuple[int, ...]
 
 class SubsampleMetadata(BaseModel):
     subsample_counts: tuple[SubsampleCountAndThresholds, ...]
@@ -125,7 +126,7 @@ class Subsampler:
                 t.append(self._determine_thresholds_one_sample(intensities, phenotypes, channel_names))
         return t
 
-    def _determine_thresholds_one_sample(self, intensities: bytes, phenotypes: bytes, channel_names: tuple[str, ...]) -> dict[str, float]:
+    def _determine_thresholds_one_sample(self, intensities: bytes, phenotypes: bytes, channel_names: tuple[str, ...]) -> tuple[int, ...]:
         sample_number_cells = int.from_bytes(phenotypes[0:4])
         header_offset = 20
         row_width = 20
@@ -146,8 +147,20 @@ class Subsampler:
                 if phenotype_mask_i & signatures[n] == signatures[n]:
                     high_values[n].append(value)
                 else:
-                    low_values[n].append(value)            
-        return {n: self._aggregate_low_high_values(low_values[n], high_values[n]) for n in channel_names}
+                    low_values[n].append(value)
+        def ensure_nontrivial(v: int) -> int:
+            if v == 0:
+                return 1
+            return v
+        return tuple(
+            ensure_nontrivial(int.from_bytes(encode8(
+                self._aggregate_low_high_values(
+                    low_values[n],
+                    high_values[n],
+                )
+            )))
+            for n in channel_names
+        )
 
     def _aggregate_low_high_values(self, low: list[float], high: list[float]) -> float:
         """

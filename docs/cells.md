@@ -48,20 +48,12 @@ The JSON metadata section is structured as in the following example (exact model
     {
       "specimen": "ABC_001",
       "count": 2500,
-      "thresholds": {
-        "CD3": 0.6,
-        "CD4": 0.4,
-        ...
-      }
+      "thresholds": [5, 240, ...]
     },
     {
       "specimen": "ABC_002",
       "count": 2000,
-      "thresholds": {
-        "CD3": 0.3,
-        "CD4": 0.3,
-        ...
-      }
+      "thresholds": [50, 100, ...]
     },
     ...
   ],
@@ -72,6 +64,7 @@ The JSON metadata section is structured as in the following example (exact model
   ]
 }
 ```
+The integers above use the custom 8-bit [float format](https://github.com/nadeemlab/SPT/blob/main/spatialprofilingtoolbox/standalone_utilities/float8.py).
 
 The binary section is as follows:
 

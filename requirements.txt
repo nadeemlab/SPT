@@ -93,7 +93,7 @@ pyjwt==2.10.1
 pynndescent==0.5.13
 pyogrio==0.11.1
 pyparsing==3.2.3
-pyproj==3.7.1
+pyproj==3.7.2
 pyshp==2.3.1
 python-dateutil==2.9.0.post0
 pytz==2025.2

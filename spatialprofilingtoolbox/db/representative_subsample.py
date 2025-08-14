@@ -113,8 +113,8 @@ class Subsampler:
         self,
         samples: tuple[str, ...],
         channel_names: tuple[str, ...],
-    ) -> list[dict[str, float]]:
-        t: list[dict[str, float]] = []
+    ) -> list[tuple[int, ...]]:
+        t: list[tuple[int, ...]] = []
         with DBCursor(study=self.study, database_config_file=self.database_config_file) as cursor:
             access = CellsAccess(cursor)
             for sample in samples:

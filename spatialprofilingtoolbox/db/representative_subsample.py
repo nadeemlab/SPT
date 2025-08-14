@@ -16,6 +16,7 @@ from spatialprofilingtoolbox.db.accessors.cells import NoContinuousIntensitiesEr
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.ondemand.compressed_matrix_writer import CompressedMatrixWriter
 from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
+from spatialprofilingtoolbox.ondemand.defaults import WHOLE_STUDY_SUBSAMPLE_BINARY_ONLY
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 logger = colorized_logger(__name__)
 
@@ -73,6 +74,7 @@ class Subsampler:
 
         file_separator = int.to_bytes(28)
         blob.extend(file_separator)
+        offset = len(blob)
 
         for subsample_count, original in zip(
             metadata.subsample_counts,
@@ -88,6 +90,14 @@ class Subsampler:
         if self.verbose:
             logger.info('Writing blob to database.')
         blob_type = FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
+        CompressedMatrixWriter(self.database_config_file)._insert_blob(
+            self.study, compressed_blob, '', blob_type, drop_first=True,
+        )
+
+        if self.verbose:
+            logger.info('Compressing binary portion separately, and writing to database.')
+        blob_type = WHOLE_STUDY_SUBSAMPLE_BINARY_ONLY
+        compressed_blob = brotli.compress(blob[offset:], quality=11, lgwin=24)
         CompressedMatrixWriter(self.database_config_file)._insert_blob(
             self.study, compressed_blob, '', blob_type, drop_first=True,
         )

@@ -24,7 +24,7 @@ datashader==0.18.2
 deprecated==1.2.18
 docrep==0.3.2
 fasteners==0.20
-fonttools==4.59.0
+fonttools==4.59.1
 frozenlist==1.7.0
 fsspec==2023.6.0
 geopandas==1.1.1

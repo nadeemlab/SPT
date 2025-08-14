@@ -362,6 +362,7 @@ class QueryCursor:
     get_cells_data: Callable
     get_cells_data_intensity: Callable
     get_cells_data_intensity_whole_study_subsample: Callable
+    get_cells_data_intensity_whole_study_subsample_binary_only: Callable
     get_ordered_feature_names: Callable
     get_sample_names: Callable
     get_available_gnn: Callable

@@ -13,6 +13,7 @@ from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
 from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES
 from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
+from spatialprofilingtoolbox.ondemand.defaults import WHOLE_STUDY_SUBSAMPLE_BINARY_ONLY
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
@@ -100,6 +101,18 @@ class CellsAccess(SimpleReadOnlyProvider):
         if accept_encoding != ('br',):
             raise ValueError('Only "br" (brotli) encoding is supported.')
         compressed = self._retrieve_blob('', FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY)
+        if compressed is None:
+            raise NoContinuousIntensitiesError(study)
+        return cast(bytes, compressed[0])
+
+    def get_cells_data_intensity_whole_study_subsample_binary_only(
+        self,
+        study: str,
+        accept_encoding: tuple[str, ...] = (),
+    ) -> CellsData:
+        if accept_encoding != ('br',):
+            raise ValueError('Only "br" (brotli) encoding is supported.')
+        compressed = self._retrieve_blob('', WHOLE_STUDY_SUBSAMPLE_BINARY_ONLY)
         if compressed is None:
             raise NoContinuousIntensitiesError(study)
         return cast(bytes, compressed[0])

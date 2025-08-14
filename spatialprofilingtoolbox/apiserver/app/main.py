@@ -729,12 +729,10 @@ async def get_whole_study_subsample_binary(
     if not 'br' in accept_encoding:
         raise HTTPException(status_code=400, detail=f'Only brotli encoding supported. Got: "{accept_encoding}"')
     try:
-        data = brotli_decompress(query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',)))
+        data = query().get_cells_data_intensity_whole_study_subsample_binary_only(study, accept_encoding=('br',))
     except NoContinuousIntensitiesError as error:
         logger.error(error.message)
         raise HTTPException(status_code=404, detail=f'Continuous intensity data not available for this study.')
-    offset = cast(int, locate_offset(data))
-    data = brotli_compress(data[offset+1:], quality=11, lgwin=24)
     return Response(
         data,
         headers={"Content-Encoding": 'br'},

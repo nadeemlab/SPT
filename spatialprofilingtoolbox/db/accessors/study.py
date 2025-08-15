@@ -234,6 +234,24 @@ class StudyAccess(SimpleReadOnlyProvider):
                     logger.info('...')
         return number_cells
 
+    def get_number_cells_by_sample(self, study: str, verbose: bool=False) -> tuple[tuple[str, int], ...]:
+        components = self.get_study_components(study)
+        access = CellsAccess(self.cursor)
+        samples = self._get_specimens(components.measurement)
+        if verbose:
+            logger.info(f'Retrieving cell counts for {study}')
+        counts: list[tuple[str, int]] = []
+        for i, sample in enumerate(samples):
+            raw, _ = access.get_cells_data(sample)
+            sample_number_cells = int.from_bytes(raw[0:4])
+            counts.append((sample, sample_number_cells))
+            if verbose:
+                if i < 50:
+                    logger.info(f'{sample_number_cells} ({sample})')
+                if i == 50:
+                    logger.info('...')
+        return tuple(counts)
+
     def _get_number_cells(self) -> int:
         self.cursor.execute('SELECT * FROM all_samples_count;')
         rows = tuple(self.cursor.fetchall())

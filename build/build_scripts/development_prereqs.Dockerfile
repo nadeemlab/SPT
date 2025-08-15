@@ -19,6 +19,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa && apt update
 RUN apt install python3.13 -y && apt-get clean
 RUN apt install python3.13-dev -y && apt-get clean
 RUN apt install python3.13-venv -y && apt-get clean
+RUN apt install -y jq
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3.13 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"

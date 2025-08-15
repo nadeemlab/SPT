@@ -2,8 +2,8 @@ adiscstudies==0.11.0
 annotated-types==0.7.0
 anyio==4.10.0
 attrs==25.3.0
-boto3==1.40.9
-botocore==1.40.9
+boto3==1.40.10
+botocore==1.40.10
 brotli==1.1.0
 cattrs==25.1.1
 certifi==2025.8.3

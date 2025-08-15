@@ -10,8 +10,8 @@ asciitree==0.3.3
 attrs==25.3.0
 blosc2==3.7.0
 bokeh==3.7.3
-boto3==1.40.9
-botocore==1.40.9
+boto3==1.40.10
+botocore==1.40.10
 brotli==1.1.0
 cattrs==25.1.1
 certifi==2025.8.3
@@ -60,7 +60,7 @@ msgpack==1.1.1
 multidict==6.6.4
 multipledispatch==1.0.0
 multiscale-spatial-image==1.0.1
-narwhals==2.1.1
+narwhals==2.1.2
 natsort==8.4.0
 ndindex==1.10.0
 networkx==3.5

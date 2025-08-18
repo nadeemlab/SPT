@@ -1,10 +1,12 @@
 """Strict query parameter validation."""
 from typing import Annotated
 from itertools import chain
+import re
 
 from fastapi import Query
 from fastapi import Depends
 
+from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.db.describe_features import squidpy_feature_classnames
 
@@ -13,6 +15,10 @@ def abbreviate_string(string: str) -> str:
     if len(string) > 40:
         abbreviation = abbreviation + '...'
     return abbreviation
+
+
+def normalize_study_name(study: str) -> str:
+    return StudyCollectionNaming.strip_token(study)[0].lower().replace(' ', '-')
 
 
 async def valid_study_name(study: str = Query(min_length=3, examples=['Breast cancer IMC', 'Urothelial ICI'])) -> str:

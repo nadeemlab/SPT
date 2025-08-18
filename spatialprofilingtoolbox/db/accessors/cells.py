@@ -12,6 +12,8 @@ from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_SPEC2
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE_COMPRESSED
 from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES
+from spatialprofilingtoolbox.ondemand.defaults import FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY
+from spatialprofilingtoolbox.ondemand.defaults import WHOLE_STUDY_SUBSAMPLE_BINARY_ONLY
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import CellsData
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.database_connection import SimpleReadOnlyProvider
@@ -21,6 +23,11 @@ from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_l
 
 logger = colorized_logger(__name__)
 
+class NoContinuousIntensitiesError(ValueError):
+    def __init__(self, context: str):
+        message = f'No continuous intensities available for: {context}'
+        super().__init__(message)
+        self.message = message
 
 
 class CellsAccess(SimpleReadOnlyProvider):
@@ -64,20 +71,50 @@ class CellsAccess(SimpleReadOnlyProvider):
     ) -> CellsData:
         if accept_encoding != ('br',):
             raise ValueError('Only "br" (brotli) encoding is supported.')
+        compressed = self._retrieve_blob(sample, FEATURE_MATRIX_WITH_INTENSITIES)
+        if compressed is None:
+            self.cursor.execute('SELECT specimen, blob_type FROM ondemand_studies_index;')
+            rows = tuple(self.cursor.fetchall())
+            for row in rows[0:min(len(rows), 20)]:
+                print(row)
+            if len(rows) > 20:
+                print('...')
+            raise NoContinuousIntensitiesError(sample)
+        return cast(bytes, compressed[0])
+
+    def _retrieve_blob(self, sample: str, blob_type: str) -> tuple[bytes] | None:
         self.cursor.execute(
             '''
             SELECT blob_contents
             FROM ondemand_studies_index
             WHERE specimen=%s AND blob_type=%s;
             ''',
-            (sample, FEATURE_MATRIX_WITH_INTENSITIES),
+            (sample, blob_type),
         )
-        compressed = self.cursor.fetchone()
+        return self.cursor.fetchone()
+
+    def get_cells_data_intensity_whole_study_subsample(
+        self,
+        study: str,
+        accept_encoding: tuple[str, ...] = (),
+    ) -> CellsData:
+        if accept_encoding != ('br',):
+            raise ValueError('Only "br" (brotli) encoding is supported.')
+        compressed = self._retrieve_blob('', FEATURE_MATRIX_WITH_INTENSITIES_SUBSAMPLE_WHOLE_STUDY)
         if compressed is None:
-            self.cursor.execute('SELECT specimen, blob_type FROM ondemand_studies_index;')
-            for row in tuple(self.cursor.fetchall()):
-                print(row)
-            raise ValueError(f'No intensity data available for: {sample}')
+            raise NoContinuousIntensitiesError(study)
+        return cast(bytes, compressed[0])
+
+    def get_cells_data_intensity_whole_study_subsample_binary_only(
+        self,
+        study: str,
+        accept_encoding: tuple[str, ...] = (),
+    ) -> CellsData:
+        if accept_encoding != ('br',):
+            raise ValueError('Only "br" (brotli) encoding is supported.')
+        compressed = self._retrieve_blob('', WHOLE_STUDY_SUBSAMPLE_BINARY_ONLY)
+        if compressed is None:
+            raise NoContinuousIntensitiesError(study)
         return cast(bytes, compressed[0])
 
     def get_ordered_feature_names(self) -> BitMaskFeatureNames:

@@ -12,28 +12,19 @@ from fastapi import Header, Response, Request
 from fastapi import Query
 from fastapi import HTTPException
 import matplotlib.pyplot as plt  # type: ignore
-
 import jwt
-from secure import Secure
-from secure.headers import (
-    CacheControl,
-    ContentSecurityPolicy,
-    CrossOriginOpenerPolicy,
-    ReferrerPolicy,
-    Server,
-    StrictTransportSecurity,
-    XContentTypeOptions,
-    XFrameOptions,
-)
-
-
 from pydantic import BaseModel
+from pydantic_core import from_json
+from brotli import compress as brotli_compress  # type: ignore
+from brotli import decompress as brotli_decompress  # type: ignore
 
 from spatialprofilingtoolbox.db.simple_method_cache import simple_function_cache
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import finding_fields
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import FindingCreate
 from spatialprofilingtoolbox.db.exchange_data_formats.findings import Finding
 from spatialprofilingtoolbox.workflow.common.umap_defaults import VIRTUAL_SAMPLE
+from spatialprofilingtoolbox.db.accessors.cells import NoContinuousIntensitiesError
+from spatialprofilingtoolbox.db.representative_subsample import SubsampleMetadata
 from spatialprofilingtoolbox.db.database_connection import DBCursor
 from spatialprofilingtoolbox.db.database_connection import DBConnection
 from spatialprofilingtoolbox.db.study_tokens import StudyCollectionNaming
@@ -57,6 +48,7 @@ from spatialprofilingtoolbox.db.exchange_data_formats.metrics import (
 from spatialprofilingtoolbox.db.exchange_data_formats.cells import BitMaskFeatureNames
 from spatialprofilingtoolbox.db.querying import query
 from spatialprofilingtoolbox.apiserver.app.validation import (
+    normalize_study_name,
     valid_study_name,
     ValidStudy,
     ValidPhenotypeSymbol,
@@ -69,15 +61,18 @@ from spatialprofilingtoolbox.apiserver.app.validation import (
     ValidFeatureClass2Phenotypes,
 )
 from spatialprofilingtoolbox.apiserver.app.versions import get_software_component_versions as _get_software_component_versions
+from spatialprofilingtoolbox.apiserver.app.headers import secure_headers
+from spatialprofilingtoolbox.apiserver.app.headers import secure_headers_redoc
 from spatialprofilingtoolbox.graphs.config_reader import read_plot_importance_fractions_config
 from spatialprofilingtoolbox.graphs.importance_fractions import PlotGenerator
 from spatialprofilingtoolbox.standalone_utilities.jwk_pem import pem_from_url
 from spatialprofilingtoolbox.standalone_utilities.timestamping import now
+from spatialprofilingtoolbox.standalone_utilities.configuration_settings import get_version
 from spatialprofilingtoolbox.standalone_utilities.log_formats import colorized_logger
 
 logger = colorized_logger(__name__)
 
-VERSION = '1.0.55'
+VERSION = get_version()
 
 TITLE = 'Single cell studies data API'
 
@@ -151,7 +146,6 @@ app = FastAPI(
     },
 )
 
-
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -172,50 +166,24 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
-
 setattr(app, 'openapi', custom_openapi)
-
-headers_params = {
-    'cache': CacheControl().no_store(),
-    'coop': CrossOriginOpenerPolicy().same_origin(),
-    'hsts': StrictTransportSecurity().max_age(31536000),
-    'referrer': ReferrerPolicy().strict_origin_when_cross_origin(),
-    'server': Server().set(""),
-    'xcto': XContentTypeOptions().nosniff(),
-    'xfo': XFrameOptions().sameorigin(),
-}
-csp_general = ContentSecurityPolicy().default_src(
-        "'self'"
-    ).script_src(
-        "'self'"
-    ).style_src(
-        "'self'"
-    ).object_src("'none'")
-csp_permissive = ContentSecurityPolicy().default_src(
-        "'self'"
-    ).script_src(
-        "'self' https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
-    ).style_src(
-        "'self' 'unsafe-inline'"
-    ).object_src("'none'")
-
-secure_headers = Secure(**headers_params, csp=csp_general)  # type: ignore
-secure_headers_redoc = Secure(**headers_params, csp=csp_permissive)  # type: ignore
 
 def is_redoc(request: Request) -> bool:
     path = request.scope['path']
-    endpoint = list(filter(lambda t: t != '', path.split('/')))[-1]
+    parts = list(filter(lambda t: t != '', path.split('/')))
+    if len(parts) == 0:
+        return False
+    endpoint = parts[-1]
     return endpoint == 'redoc'
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
+    headers = secure_headers
     if is_redoc(request):
-        await secure_headers_redoc.set_headers_async(response)
-    else:
-        await secure_headers.set_headers_async(response)
+        headers = secure_headers_redoc
+    await headers.set_headers_async(response)
     return response
-
 
 @app.get("/study-names/")
 async def get_study_names(
@@ -728,6 +696,74 @@ async def get_cell_data_binary_intensity(
     )
 
 
+@app.get("/cell-data-binary-intensity-whole-study-subsample/")
+async def get_cell_data_binary_intensity_whole_study_subsample(
+    study: ValidStudy,
+    accept_encoding: Annotated[str, Header()] = 'br',
+):
+    """
+    Get cell-level marker intensity data for a subsample of all cells in the given study, in a
+    custom binary format. The format is documented [here](https://github.com/nadeemlab/SPT/blob/main/docs/cells.md).
+    """
+    if not 'br' in accept_encoding:
+        raise HTTPException(status_code=400, detail=f'Only brotli encoding supported. Got: "{accept_encoding}"')
+    try:
+        data = query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',))
+    except NoContinuousIntensitiesError as error:
+        logger.error(error.message)
+        raise HTTPException(status_code=404, detail=f'Continuous intensity data not available for this study.')
+    return Response(
+        data,
+        headers={"Content-Encoding": 'br'},
+    )
+
+
+@app.get("/whole-study-subsample-binary/")
+async def get_whole_study_subsample_binary(
+    study: ValidStudy,
+    accept_encoding: Annotated[str, Header()] = 'br',
+):
+    """
+    Convenience accessor for binary portion of cell-data-binary-intensity-whole-study-subsample response.
+    """
+    if not 'br' in accept_encoding:
+        raise HTTPException(status_code=400, detail=f'Only brotli encoding supported. Got: "{accept_encoding}"')
+    try:
+        data = query().get_cells_data_intensity_whole_study_subsample_binary_only(study, accept_encoding=('br',))
+    except NoContinuousIntensitiesError as error:
+        logger.error(error.message)
+        raise HTTPException(status_code=404, detail=f'Continuous intensity data not available for this study.')
+    return Response(
+        data,
+        headers={"Content-Encoding": 'br'},
+    )
+
+
+@app.get("/whole-study-subsample-metadata/")
+async def get_whole_study_subsample_metadata(
+    study: ValidStudy,
+) -> SubsampleMetadata:
+    """
+    Convenience accessor for metadata portion of cell-data-binary-intensity-whole-study-subsample response.
+    """
+    try:
+        data = brotli_decompress(query().get_cells_data_intensity_whole_study_subsample(study, accept_encoding=('br',)))
+    except NoContinuousIntensitiesError as error:
+        logger.error(error.message)
+        raise HTTPException(status_code=404, detail=f'Continuous intensity data not available for this study.')
+    offset = cast(int, locate_offset(data))
+    metadata_json = data[0:offset].decode('utf-8')
+    return SubsampleMetadata.model_validate(from_json(metadata_json))
+
+
+def locate_offset(raw: bytes) -> int | None:
+    file_separator = int.to_bytes(28)
+    for i in range(len(raw)):
+        if raw[i:i+1] == file_separator:
+            return i
+    return None
+
+
 @app.get("/software-component-versions/")
 async def get_software_component_versions() -> list[SoftwareComponentVersion]:
     """
@@ -922,5 +958,8 @@ def get_sqlite_dump(
     connection.__exit__(None, None, None)
     return Response(
         sqlite_db,
-        headers={"Content-Type": 'application/vnd.sqlite3'},
+        headers={
+            "Content-Type": 'application/vnd.sqlite3',
+            "Content-Disposition": f'attachment; filename="{normalize_study_name(study)}.sqlite"'
+        },
     )

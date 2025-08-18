@@ -3,6 +3,8 @@
 status_code
 
 # Generated files
+uv.lock
+pyproject.toml.unversioned
 /check-for-docker-credentials
 /data-loaded-image-1
 /data-loaded-image-2
@@ -21,6 +23,8 @@ __pycache__/
 build/*/docker.built
 build/plugins/**/*.built
 build/*/requirements.txt
+build/*/requirements.ondemand.txt
+build/*/requirements.apiserver.txt
 build/*/specific_requirements.txt
 build/*/dlogs.*.txt
 build/countsserver/expression_data/
@@ -33,6 +37,7 @@ build/graphs/log_of_build.log
 build/db/log_of_build.log
 build/ondemand/log_of_build.log
 build/workflow/log_of_build.log
+test/apiserver/db*.db
 check-dockerfiles-consistency
 data-loaded-image-1smallnointensity
 development-image-prerequisites-installed
@@ -51,9 +56,13 @@ data_curation/datasets/moldoveanu/Moldoveanu2022-cytof-RAW.tar
 data_curation/datasets/moldoveanu/Moldoveanu2022-cytof-RAW.tar.gz
 data_curation/datasets/moldoveanu/sciimmunol.abi5072_tables_s1 to_s5.xlsx
 data_curation/datasets/moldoveanu/sciimmunol.abi5072_tables_s1 to_s5.zip
+test/apiserver/response_decompressed.bin
 
 # Development files
 .vscode/
 .mypy_cache/
 venv/
 .venv/
+**/buildcache.sqlite3
+analysis_replication/.spt_db.config
+analysis_replication/dbconfig_location.txt

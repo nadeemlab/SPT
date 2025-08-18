@@ -1,3 +1,9 @@
+# v1.0.66
+- Adds a statistical subsample of all cells from a given dataset, for feasibility of low-resource downstream whole-study analysis. The new command is `spt db cache-subsample`, and the API exposes:
+  - `cell-data-binary-intensity-whole-study-subsample`, a concatenation of metadata about the subsample (including default per-sample thresholds for each channel) and the intensities per-cell in a binary format.
+  - `whole-study-subsample-metadata`, the metadata portion only.
+  - `whole-study-subsample-binary`, the binary portion only.
+
 # v1.0.50
 - Adds a sample data cache to the ondemand service. The containers now prefer to take computation jobs for samples it has already downloaded and cached, vastly reducing the bandwidth burden on the database. The cache is limited/controlled with configurable environment variables `DATABASE_DOWNLOAD_CACHE_SAMPLE_LIMIT` and `DATABASE_DOWNLOAD_CACHE_LIMIT_MB`. When the cache limit in MB or the number of samples limit is exceeded, cached items are dropped in order of their (rounded, binned) size, and in the case of ties, oldest items first, until the limits are no longer exceeded.
 - Vastly reduces the number of database connections made by both the ondemand and API services. Previously new connections were made frequently for simple isolated queries. Now a connection is maintained as long as possible and reused. This increased the rate of computation job queue clearance by about 10-fold compared to the prior implementation.

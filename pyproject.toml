@@ -34,8 +34,8 @@ dependencies = [
 ]
 
 [project.urls]
-documentation = "https://github.com/nadeemlab/SMProfiler"
-repository = "https://github.com/nadeemlab/SMProfiler"
+documentation = "https://github.com/nadeemlab/smprofiler"
+repository = "https://github.com/nadeemlab/smprofiler"
 
 [project.optional-dependencies]
 all = [

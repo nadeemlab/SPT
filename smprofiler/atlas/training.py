@@ -20,6 +20,7 @@ from urllib.parse import quote_plus
 from attrs import define
 from numpy.random import default_rng
 from numpy.random import Generator as RandomNumberGenerator
+from numpy import arange as np_arange
 from numpy import newaxis as np_newaxis
 from numpy.typing import NDArray
 
@@ -36,8 +37,12 @@ from smprofiler.atlas.study_channels import StudyOrderedChannels
 from smprofiler.atlas.atlas_data import report_parquet_attributes
 from smprofiler.atlas.atlas_data import load_atlas_subset
 from smprofiler.atlas.atlas_data import load_channel_mapping
+from smprofiler.atlas.model_selection_fitting import STD_METHODS
+from smprofiler.atlas.model_selection_fitting import TREE_METHODS
 from smprofiler.atlas.model_selection_fitting import build_model_candidates
+from smprofiler.atlas.model_selection_fitting import predict_with_std
 from smprofiler.atlas.model_selection_fitting import train_and_select_best
+from smprofiler.atlas.model_selection_fitting import _tree_std_calibration
 from smprofiler.atlas.artifacts import export_to_onnx, validate_onnx, write_metadata_to_file
 
 logger = colorized_logger(__name__)
@@ -82,7 +87,7 @@ def run(
         channel_mapping_path: path to the manual SMProfiler-channel → atlas-gene mapping
             (smprofiler_channels_to_atlas.tsv).
         datasets_dir: root directory containing per-study dataset folders.
-        output_dir: directory for ONNX models, pickles, and metadata.
+        output_dir: directory for ONNX models and metadata.
         annotations_api_url: smprofiler API base URL - the source of channel
             annotations.
         max_cells: max atlas cells to use (random sample); None uses all cells.
@@ -327,7 +332,8 @@ def _train_models_for_study(
     n_zero_sum = int((~valid_mask).sum())
     if n_zero_sum:
         logger.info('  Removed %d cells with zero identity-channel sum', n_zero_sum)
-    X_identity = X_identity_unscaled[valid_mask] / row_sums_all[valid_mask, np_newaxis]
+    X_identity_raw = X_identity_unscaled[valid_mask]
+    X_identity = X_identity_raw / row_sums_all[valid_mask, np_newaxis]
     X_unscaled = X_unfiltered_unscaled[valid_mask]
     sums = row_sums_all[valid_mask]
     logger.info(
@@ -355,6 +361,7 @@ def _train_models_for_study(
             smprofiler_channel,
             final_channel_names,
             X_unscaled,
+            X_identity_raw,
             sums,
             X_identity,
             options,
@@ -371,6 +378,7 @@ def _train_model_one_marker(
     smprofiler_channel: str,
     final_channel_names: list[str],
     X_unscaled: NDArray,
+    X_identity_raw: NDArray,
     sums: NDArray,
     X_identity: NDArray,
     options: TrainingOptions,
@@ -389,24 +397,32 @@ def _train_model_one_marker(
     logger.info('  Features : %d identity markers, %s cells (after S>0 filter)', X_identity.shape[1], f'{X_identity.shape[0]:,}')
     logger.info('  Target   : "%s" (norm; range %.4f – %.4f, mean %.4f)', target_channel, float(y.min()), float(y.max()), float(y.mean()))
 
-    X_train, X_test, y_train, y_test = cast(tuple[NDArray, NDArray, NDArray, NDArray], train_test_split(
-        X_identity, y, test_size=0.2, random_state=42
+    # Split on indices so the raw (un-normalized) test rows stay available for validating
+    # the exported graph, which takes raw inputs.
+    train_indices, test_indices = cast(tuple[NDArray, NDArray], train_test_split(
+        np_arange(len(y)), test_size=0.2, random_state=42
     ))
-    logger.info('  Split    : %s train / %s test', '{len(X_train):,}', f'{len(X_test):,}')
+    X_train, X_test = X_identity[train_indices], X_identity[test_indices]
+    y_train, y_test = y[train_indices], y[test_indices]
+    logger.info('  Split    : %s train / %s test', f'{len(X_train):,}', f'{len(X_test):,}')
     logger.info('  Training %d model candidates with %d-fold CV …', len(build_model_candidates()), options.cv_folds)
     t_train_start = time.monotonic()
     best_name, best_model, cv_r2, cv_r2_std = train_and_select_best(
         X_train, y_train, cv_folds=options.cv_folds
     )
 
-    y_pred_mean, _ = best_model.predict(X_test, return_std=True)
+    y_pred_mean, y_pred_std = predict_with_std(best_model, best_name, X_test)
     test_r2 = float(r2_score(y_test, y_pred_mean))
     test_mae = float(mean_absolute_error(y_test, y_pred_mean))
     residuals = y_test - y_pred_mean
     global_std = float(residuals.std())
-    std_method = 'return_std keyword arg in sklearn or "std" output in onnx'
-    double_precision = best_name == 'gaussian_process'
-    onnx_input_dtype = 'float64' if double_precision else 'float32'
+    std_method = STD_METHODS[best_name]
+    tree_calibration = 1.0
+    if best_name in TREE_METHODS:
+        tree_calibration = _tree_std_calibration(residuals, y_pred_std)
+        logger.info('  Tree spread calibration γ = %.4f', tree_calibration)
+    double_precision = False
+    onnx_input_dtype = 'float32'
     train_seconds = time.monotonic() - t_train_start
     train_elapsed = format_elapsed(train_seconds)
     logger.info(
@@ -420,10 +436,18 @@ def _train_model_one_marker(
     onnx_path = study_out_dir / f'{safe_target}.onnx'
     meta_path = study_out_dir / f'{safe_target}.meta.json'
 
-    export_to_onnx(best_model, X_identity.shape[1], onnx_path, double_precision=double_precision)
+    export_to_onnx(
+        best_model, best_name, X_identity.shape[1], onnx_path,
+        double_precision=double_precision, tree_calibration=tree_calibration,
+    )
 
-    n_validate = min(100, X_test.shape[0])
-    ordinary, std = validate_onnx(onnx_path, best_model, X_test[:n_validate], double_precision=double_precision)
+    n_validate = min(500, len(test_indices))
+    validation_indices = test_indices[:n_validate]
+    ordinary, std = validate_onnx(
+        onnx_path, best_model, best_name,
+        X_identity_raw[validation_indices], X_unscaled[validation_indices, target_col],
+        double_precision=double_precision, tree_calibration=tree_calibration,
+    )
 
     write_metadata_to_file(
         meta_path,
@@ -442,6 +466,8 @@ def _train_model_one_marker(
         std_method=std_method,
         global_std=global_std,
         onnx_input_dtype=onnx_input_dtype,
+        onnx_has_std=True,
+        tree_calibration=tree_calibration,
     )
 
     summary_rows.append({
@@ -463,6 +489,7 @@ def _train_model_one_marker(
             'architecture_type': best_name,
             'std_method': std_method,
             'onnx_input_dtype': onnx_input_dtype,
+            'onnx_has_std': True,
             'atlas_version': ATLAS_VERSION,
             'cv_r2': cv_r2,
             'test_r2': test_r2,
@@ -473,4 +500,3 @@ def _train_model_one_marker(
             'onnx_bytes': onnx_path.read_bytes(),
         })
     return ordinary, std
-

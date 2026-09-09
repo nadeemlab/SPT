@@ -89,7 +89,7 @@ def list_atlas_models(
     if target_channel is not None:
         clauses.append('target_channel = %s')
         params.append(target_channel)
-    where = f'WHERE {' AND '.join(clauses)}' if clauses else ''
+    where = ('WHERE ' + ' AND '.join(clauses)) if clauses else ''
     columns = ', '.join(_METADATA_COLUMNS)
     cursor.execute(
         f'SELECT {columns} FROM atlas_model {where} ORDER BY created DESC, id DESC ;',

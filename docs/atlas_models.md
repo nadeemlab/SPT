@@ -1,22 +1,35 @@
 # Atlas-reference models: usage
 
-Atlas-reference models predict the intensity a **functional** marker would have in a
-"normal" cell with a given **identity**-marker profile, with respect to a reference
-normal dataset. A cell is **atlas-relative positive** for that marker when its
-measured intensity exceeds the model's expectation.
+Atlas-reference models predict, for a "normal" cell with a given **identity**-marker
+profile, both the expected intensity of a **functional** marker and the predictive
+**standard deviation** of that expectation, with respect to a reference normal dataset
+(the Allen Institute Human Immune Health Atlas). The primary per-cell output is the
+**z-score**: how many predictive standard deviations the measured intensity sits above
+the atlas expectation. A cell is **atlas-relative positive** for the marker when its
+z-score exceeds a threshold (`0` = simply above expectation; `2` = a roughly two-sigma,
+uncertainty-calibrated call).
 
-Models are small [ONNX](https://onnx.ai) regressors, one per `(study, target_channel)`, stored in the
-`atlas_model` database table with metadata and versions. This page documents how to
-**use** them; for how they are trained see [`smprofiler.atlas`](/smprofiler/atlas).
+Models are small [ONNX](https://onnx.ai) regressors, one per `(study, target_channel)`,
+stored in the `atlas_model` database table with metadata and versions. This page
+documents how to **use** them; how they are trained is described in
+[`smprofiler.atlas`](/smprofiler/atlas) and [`atlas_models_std.md`](atlas_models_std.md).
 
-Every model:
-- Takes in
-    1. an input matrix of shape `(number_cells, number_identity_markers)`, with columns
-       in the order of the model's `input_channels`, and
-    2. the functional marker column vector of size `number_cells`.
-- Expects inputs (both identity and functional markers) normalized by the given cell's 
-  identity-marker row sum (the helpers below do this for you).
-- Returns the standard deviate of the functional marker values relative to expectation.
+## Model contract
+
+Every model is a self-contained ONNX graph with two inputs and three outputs, all
+`float32`:
+
+| Tensor     | Role   | Shape                      | Meaning |
+| ---------- | ------ | -------------------------- | ------- |
+| `X`        | input  | `(n_cells, n_identity)`    | **raw** identity-marker intensities, columns in the order of the model's `input_channels` |
+| `measured` | input  | `(n_cells,)`               | **raw** measured intensity of the target functional channel |
+| `z`        | output | `(n_cells,)`               | z-score `(measured − expected) / std` — the primary result |
+| `mean`     | output | `(n_cells,)`               | expected target intensity, raw scale |
+| `std`      | output | `(n_cells,)`               | predictive standard deviation, raw scale |
+
+The identity-sum normalization used during training happens **inside the graph**, so
+callers pass raw values and treat the model as a black box. Cells whose identity
+intensities sum to zero have no atlas reference: all three outputs are `NaN` for them.
 
 ## API
 
@@ -27,19 +40,27 @@ curl "https://smprofiler.io/api/atlas-models/?study=LUAD%20progression"
 curl "https://smprofiler.io/api/atlas-models/?study=LUAD%20progression&target_channel=FOXP3"
 ```
 
-Each item is in format [`AtlasModelMetadata`](/smprofiler/db/exchange_data_formats/atlas_models.py).
+Each item is an [`AtlasModelMetadata`](/smprofiler/db/exchange_data_formats/atlas_models.py):
+`id`, `study`, `target_channel`, `input_channels`, `architecture_type`, `std_method`,
+`onnx_input_dtype`, `onnx_has_std`, metrics (`cv_r2`, `test_r2`, `test_mae`, `n_train`,
+`n_test`), `training_time_seconds`, `size_bytes`, `created`.
 
-Download the ONNX model itself for the latest model (or a specific `model_id`):
+Download the ONNX model itself, the latest for `(study, target_channel)` or a specific
+`model_id`:
 
 ```sh
 curl -OJ "https://smprofiler.io/api/atlas-model/?study=LUAD%20progression&target_channel=FOXP3"
 ```
 
+The body is the ONNX model (`application/octet-stream`). Response headers describe how to
+run it: `X-Model-Id`, `X-Onnx-Input-Dtype`, `X-Input-Channels` (comma-separated, the
+column order of `X`), `X-Architecture-Type`, `X-Std-Method`, `X-Onnx-Has-Std`.
+
 ## Python
 
 ```python
 import numpy as np
-from smprofiler.atlas.inference import load_model, atlas_relative_positive
+from smprofiler.atlas.inference import load_model, predict_z_score, atlas_relative_positive
 
 # onnx_bytes: e.g. response.content from GET /atlas-model/, or Path(...).read_bytes()
 session = load_model(onnx_bytes)
@@ -51,51 +72,21 @@ identity = np.array([
 ])
 measured_foxp3 = np.array([2.4, 0.1])   # raw measured target-channel intensity
 
-positive = atlas_relative_positive(session, identity, measured_foxp3)
-# -> array([ True, False])   (True = measured exceeds the atlas expectation)
+z = predict_z_score(session, identity, measured_foxp3)
+positive = atlas_relative_positive(session, identity, measured_foxp3, threshold=2.0)
 
-# Or get the expected intensity directly (same raw scale as `measured`):
-from smprofiler.atlas.inference import predict_expected_intensity
+# Expected intensity and predictive std on the raw scale, if needed:
+from smprofiler.atlas.inference import predict_expected_intensity, predict_expected_std
 expected = predict_expected_intensity(session, identity)
+spread = predict_expected_std(session, identity)
 ```
 
-Pass **raw** intensities — normalization is handled internally to match training. Cells
-whose identity intensities sum to zero have no reference (`expected` is `NaN`, `positive`
-is `False`).
-
-## JavaScript (browser, onnxruntime-web)
-
-```js
-import * as ort from 'onnxruntime-web';
-
-// 1. Fetch the model + the metadata needed to run it.
-const study = 'LUAD progression', channel = 'FOXP3';
-const metadata = await fetch(
-    `/api/atlas-models/?study=${encodeURIComponent(study)}&target_channel=${encodeURIComponent(channel)}`
-).json();
-const inputDtype = metadata.onnx_input_dtype;
-const inputChannels = metadata.input_channels;
-const response = await fetch(
-  `/api/atlas-model/?study=${encodeURIComponent(study)}&target_channel=${encodeURIComponent(channel)}`
-);
-const session = await ort.InferenceSession.create(new Uint8Array(await response.arrayBuffer()));
-
-// 2. Score one cell. `cellIdentity` is raw intensities in `inputChannels` order.
-async function atlasRelativeLevel(cellIdentity, measuredFunctional) {
-  const rowSum = cellIdentity.reduce((a, b) => a + b, 0);
-  if (rowSum <= 0) return false;                                      // no reference
-  const normalized = cellIdentity.map(v => v / rowSum);              // match training
-  const measuredNormalized = measuredFunctional / rowSum;
-
-  const ArrayType = inputDtype === 'float64' ? Float64Array : Float32Array;
-  const input = new ort.Tensor(inputDtype, ArrayType.from(normalized), [1, normalized.length]);
-
-  const outputs = await session.run({ [session.inputNames[0]]: input });   // input name is 'X'
-  const predictedNormalized = outputs[session.outputNames[0]].data[0];
-  const standardDeviation = ... ; 
-  return (measuredNormalized - predictedNormalized) / standardDeviation;
-}
-```
-
-For a whole slide, batch the cells into one `(number_cells, number_identity_markers)` matrix rather than
+For a whole slide, batch the cells into one `(n_cells, n_identity)` matrix rather than
 looping per cell.
+
+## Exposure
+
+The intended use is strictly backend: SMProfiler services compute z-scores and positive
+calls and serve those to clients. The model download endpoint and the Python helpers
+above are the building blocks for that. The exact contract for exposing results to the
+web frontend is still to be agreed (open item, to be discussed with Francisco).

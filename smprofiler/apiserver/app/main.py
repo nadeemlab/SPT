@@ -959,13 +959,15 @@ async def get_atlas_model(
 
     - `X-Model-Id`: the stored model id
     - `X-Onnx-Input-Dtype`: `float32` or `float64` — the dtype of the model's
-      single input tensor `X`
-    - `X-Input-Channels`: comma-separated identity channels, in input order
+      input tensors
+    - `X-Input-Channels`: comma-separated identity channels, the column order of
+      the input tensor `X`
     - `X-Architecture-Type`, `X-Std-Method`
-    - `X-Onnx-Has-Std`: `true` when the graph has a second output (per-sample std),
-      the input the z-score is computed from
+    - `X-Onnx-Has-Std`: `true` when the graph carries a per-sample std output
 
-    Run it with onnxruntime (Python or onnxruntime-web); usage examples are in
+    The graph takes raw identity intensities `X` of shape (n_cells, n_identity) and
+    the raw `measured` intensity of the target channel of shape (n_cells,), and
+    returns `z`, `mean`, `std` per cell. Run it with onnxruntime; usage is in
     [docs/atlas_models.md](https://github.com/nadeemlab/SMProfiler/blob/main/docs/atlas_models.md).
     """
     with DBCursor() as cursor:

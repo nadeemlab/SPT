@@ -359,4 +359,17 @@ The application can be deployed in several ways:
 ## Funding
 This work is funded by the 7-year NIH/NCI R37 MERIT Award ([R37CA295658](https://reporter.nih.gov/search/5dgSOlHosEKepkZEAS5_kQ/project-details/11018883#description)).
 
+## Reference
+If you find our work useful in your research or if you use parts of this code or the dataset, please cite the following paper:
+```
+@article{mathews2026spatialentropy,
+  title={Voronoi-Markov chain and spatial entropy for point pattern analysis},
+  author={Mathews, James and Couzo, Francisco and Petrov, Alexander and Chaterjee, Avijit and Nadeem, Saad},
+  journal={NeurIPS},
+  year={2026}
+}
+
+```
+
+
 

@@ -42,3 +42,27 @@ In the S3 case, you would have to make sure that credentials are available. Curr
 > ```sh
 > aws s3 cp generated_artifacts s3://bucket-name/dataset-name --recursive`
 > ```
+
+# First time setup
+
+For the first time running a local upload operation, the database needs to be setup:
+
+```sql
+CREATE DATABASE smprofiler_datasets;
+```
+
+```bash
+cat smprofiler/db/data_model/metaschema.sql
+
+# Run the script contents in psql:
+PGPASSWORD=postgres psql -h localhost -U postgres smprofiler_datasets;
+...
+```
+
+```sql
+CREATE SCHEMA default_study_lookup;
+SET search_path TO default_study_lookup;
+(paste metaschema.sql contents)
+...
+```
+

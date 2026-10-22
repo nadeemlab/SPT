@@ -40,7 +40,7 @@ In the S3 case, you would have to make sure that credentials are available. Curr
 > [!NOTE]
 > To put the `generated_artifacts/` files into an S3 bucket, you can use: 
 > ```sh
-> aws s3 cp generated_artifacts s3://bucket-name/dataset-name --recursive`
+> aws s3 cp generated_artifacts s3://bucket-name/dataset-name --recursive
 > ```
 
 # First time setup

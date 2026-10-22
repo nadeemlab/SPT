@@ -6,8 +6,8 @@ whose uncertainty varies non-trivially with input. From raw identity intensities
 measured functional intensity `measured`, every exported graph computes:
 
 ```
-S        = rowsum(X)                     # identity sum, per cell
-mean_n   = model(X / S)                  # expected target intensity, normalized scale
+S        = rowsum(X)
+mean_n   = model(X / S)
 std_n    = predictive std at X / S
 z        = ((measured / S) − mean_n) / std_n
 mean     = mean_n * S

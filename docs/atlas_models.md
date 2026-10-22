@@ -17,7 +17,7 @@ Our atlas-reference models predict, for a cell with a given **identity**-marker 
 both the expected intensity of a **functional** marker and the predictive **standard deviation**
 of that expectation. They are small [ONNX](https://onnx.ai) models, one per `(study, target_channel)`,
 stored in the `atlas_model` database table with metadata and versions. For more
-information about how these models are trained, see [`atlas_models_std.md`](atlas_models_std.md).
+information about how these models are trained, see [`atlas_models_training.md`](atlas_models_training.md).
 
 ## Model format
 Each model is a self-contained ONNX graph with two inputs and three outputs, trained only

@@ -11,9 +11,9 @@ Extraction scripts tend to be dataset-specific, but there are some common tasks 
 
 
 # Doing import / upload into the database
-The recommended import method is to use `smprofiler db interactive-uploader`.
+The recommended import method is to use `smprofiler db interactive-uploader`. Make sure you have at least one valid database configuration file at your home directory `~`, see [.smprofiler.db.config.template](smprofiler/workflow/assets/.smprofiler_db.config.template). You could copy this file and rename it e.g. `.smprofiler_db.config.local`.
 
-It will take care of creating a run directory for Nextflow, configuring it with a `workflow.config`
+The interactive uploader will take care of creating a run directory for Nextflow, configuring it with a `workflow.config`
 file like:
 
 ```ini

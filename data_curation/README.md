@@ -45,7 +45,7 @@ In the S3 case, you would have to make sure that credentials are available. Curr
 
 # First time setup
 
-For the first time running a local upload operation, the database needs to be setup:
+For the first time running a local upload operation using the interactive method, the database needs to be setup:
 
 ```sql
 CREATE DATABASE smprofiler_datasets;
